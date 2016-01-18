@@ -72,6 +72,18 @@ def get_parser():
                       mandatory=False,
                       default_value=2.5,
                       example=2.0)
+    parser.add_option(name="-weight-similarity",
+                      type_value='multiple_choice',
+                      description="Use the modes eigenvalues as weight for the similarity beta",
+                      mandatory=False,
+                      default_value=0,
+                      example=['0', '1'])
+    parser.add_option(name="-weight-label-fusion",
+                      type_value='multiple_choice',
+                      description="Use the similarity beta as weight for the label fusion",
+                      mandatory=False,
+                      default_value=0,
+                      example=['0', '1'])
     parser.add_option(name="-denoising",
                       type_value='multiple_choice',
                       description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
@@ -92,6 +104,12 @@ def get_parser():
                       mandatory=False,
                       default_value=None,
                       example=["450,540"])
+    parser.add_option(name="-k",
+                      type_value='float',
+                      description="Percentage of variability explained by the kept eigen vectors in the PCA (between 0 and 1)",
+                      mandatory=False,
+                      default_value=0.8,
+                      example=0.6)
     parser.add_option(name="-model",
                       type_value="folder",
                       description="Path to the model data",
@@ -261,7 +279,7 @@ class FullGmSegmentation:
         self.seg_param = seg_param
         sct.printv('\nBuilding the appearance model...', verbose=self.seg_param.verbose, type='normal')
         if model is None:
-            self.model = Model(model_param=self.model_param, k=0.8)
+            self.model = Model(model_param=self.model_param)
         else:
             self.model = model
         self.target_fname = check_file_to_niigz(target_fname)
@@ -569,12 +587,18 @@ if __name__ == "__main__":
             model_param.use_levels = bool(int(arguments["-use-levels"]))
         if "-weight" in arguments:
             model_param.weight_gamma = arguments["-weight"]
+        if "-weight-similarity" in arguments:
+            model_param.mode_weight_similarity = bool(int(arguments["-weight-similarity"]))
+        if "-weight-label-fusion" in arguments:
+            model_param.weight_label_fusion = bool(int(arguments["-weight-label-fusion"]))
         if "-denoising" in arguments:
             seg_param.target_denoising = bool(int(arguments["-denoising"]))
         if "-normalize" in arguments:
             seg_param.target_normalization = bool(int(arguments["-normalize"]))
         if "-means" in arguments:
             seg_param.target_means = arguments["-means"]
+        if "-k" in arguments:
+            model_param.k = arguments["-k"]
         if "-ratio" in arguments:
             if arguments["-ratio"] == '0':
                 compute_ratio = False
