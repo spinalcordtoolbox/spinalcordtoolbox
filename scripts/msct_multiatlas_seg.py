@@ -40,6 +40,8 @@ class ModelParam:
         self.reg_metric = 'MI'  # model_param
         self.use_levels = True  # model_param
         self.weight_gamma = 2.5  # model_param
+        self.model_slices_normalization = False
+        self.mean_metric = None
         self.weight_label_fusion = False  # model_param
         self.mode_weight_similarity = False  # model_param
         self.k = 0.8 # percentage of variability explained in the kept eigenvectors (PCA modes)
@@ -56,8 +58,11 @@ class ModelParam:
         s += 'reg_metric: ' + str(self.reg_metric) + '\n'
         s += 'use_levels: ' + str(self.use_levels) + '\n'
         s += 'weight_gamma: ' + str(self.weight_gamma) + '\n'
+        s += 'model_slices_normalization: ' + str(self.model_slices_normalization) + '\n'
+        s += 'mean_metric: ' + str(self.mean_metric) + '\n'
         s += 'weight_label_fusion: ' + str(self.weight_label_fusion) + '\n'
         s += 'mode_weight_similarity: ' + str(self.mode_weight_similarity) + '\n'
+        s += 'k: ' + str(self.k) + '\n'
         s += 'equation_id: ' + str(self.equation_id) + '\n'
 
 
@@ -162,6 +167,12 @@ class ModelDictionary:
 
         sct.printv('\nCo-registering all the data into the common groupwise space ...', self.param.verbose, 'normal')
         self.coregister_data(transfo_to_apply=self.coregistration_transfos)
+
+        # Normalize dictionary slices
+        if self.param.model_slices_normalization:
+            self.normalize_dic_slices()
+            # update dic_metrics after normalization
+            self.param.mean_metric = self.normalize_dic_slices(get_dic_metric=True)
 
         # update the mean image
         self.mean_image = np.mean([dic_slice.im_M for dic_slice in self.slices], axis=0) # type: numpy array
@@ -304,7 +315,30 @@ class ModelDictionary:
         pickle.dump(model_slices, gzip.open(self.param.new_model_dir + '/dictionary_slices.pklz', 'wb'), protocol=2)
 
     # ------------------------------------------------------------------------------------------------------------------
-    # END OF FUNCTIONS USED TO COMPUTE THE MODEL
+    def normalize_dic_slices(self, method='median', save=True, get_dic_metric=False):
+        dic_metrics = extract_metric_from_slice_set(self.slices, metric=method, save=save)
+        wm_metrics = []
+        gm_metrics = []
+        for wm_m, gm_m, wm_s, gm_s in dic_metrics.values():
+            wm_metrics.append(wm_m)
+            gm_metrics.append(gm_m)
+        dic_wm_mean = np.mean(wm_metrics)
+        dic_gm_mean = np.mean(gm_metrics)
+        metric = {'wm': dic_wm_mean, 'gm': dic_gm_mean}
+        if get_dic_metric:
+            return metric
+        else:
+            for slice in self.slices:
+                slice_wm_m, slice_gm_m, slice_wm_s, slice_gm_s = dic_metrics[slice.id]
+
+                old_image = slice.im_M
+                old_image[old_image < 0.0001] = 0  # put at 0 the background
+                new_image = (old_image - slice_wm_m)*(dic_gm_mean - dic_wm_mean)/(slice_gm_m - slice_wm_m) + dic_wm_mean
+                new_image[old_image < 0.0001] = 0  # put at 0 the background
+                slice.set(im_m=new_image)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # END OF FUNCTIONS USED TO COMPUTE THE MODEL DICTIONARY
     # ------------------------------------------------------------------------------------------------------------------
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -774,7 +808,7 @@ class TargetSegmentationPairwise:
             self.target_slices[0].set(level=get_key_from_val(self.model.dictionary.level_label, self.im_levels.upper()))
 
     # ------------------------------------------------------------------------------------------------------------------
-    def target_normalization(self, method='median'):
+    def target_normalization(self, method='median', dic_wm_mean=None, dic_gm_mean=None):
         """
         Normalization of the target using the intensity values of the mean dictionary image
         :return None: the target image is modified
@@ -782,14 +816,10 @@ class TargetSegmentationPairwise:
         sct.printv('Linear target normalization using '+method+' ...', self.param.verbose, 'normal')
 
         if method == 'mean' or method == 'median':
-            dic_metrics = extract_metric_from_dic(self.model.dictionary.slices, metric=method, save=True)
-            wm_metrics = []
-            gm_metrics = []
-            for wm_m, gm_m, wm_s, gm_s in dic_metrics.values():
-                wm_metrics.append(wm_m)
-                gm_metrics.append(gm_m)
-            dic_wm_mean = np.mean(wm_metrics)
-            dic_gm_mean = np.mean(gm_metrics)
+            if self.model.dictionary.param.mean_metric is None:
+                metrics = self.model.dictionary.normalize_dic_slices(method=method, get_dic_metric=True)
+                dic_wm_mean = metrics['wm']
+                dic_gm_mean = metrics['gm']
 
             # getting the mean values of WM and GM in the target
             if self.param.target_means is None:
@@ -801,7 +831,7 @@ class TargetSegmentationPairwise:
                     Image(param=np.asarray(mean_seg_by_level), absolutepath='mean_seg_by_level.nii.gz').save()
                     Image(param=np.asarray([target_slice.im_M for target_slice in self.target_slices]), absolutepath='target_moved.nii.gz').save()
 
-                    target_metric = extract_metric_from_dic(self.target_slices, seg_to_use=mean_seg_by_level, metric=method, save=True, output='metric_in_target.txt')
+                    target_metric = extract_metric_from_slice_set(self.target_slices, seg_to_use=mean_seg_by_level, metric=method, save=True, output='metric_in_target.txt')
 
                 else:
                     sct.printv('WARNING: No mean value of the white matter and gray matter intensity were provided, nor the target vertebral levels to estimate them\n'
@@ -881,7 +911,7 @@ class TargetSegmentationPairwise:
         if method == 'mean-sep':
             # test normalization with separate means
             import copy
-            dic_metrics = extract_metric_from_dic(self.model.dictionary.slices, save=True)
+            dic_metrics = extract_metric_from_slice_set(self.model.dictionary.slices, save=True)
             wm_metrics = []
             gm_metrics = []
             wm_stds = []
@@ -904,7 +934,7 @@ class TargetSegmentationPairwise:
             seg_averages_by_level_prob = self.model.dictionary.mean_seg_by_level(type='prob')[0]
             mean_seg_by_level_prob = [seg_averages_by_level_prob[self.model.dictionary.level_label[target_slice.level]] for target_slice in self.target_slices]
 
-            target_metric = extract_metric_from_dic(self.target_slices, seg_to_use=mean_seg_by_level_bin, save=True)
+            target_metric = extract_metric_from_slice_set(self.target_slices, seg_to_use=mean_seg_by_level_bin, save=True)
 
             for i, target_slice in enumerate(self.target_slices):
                 old_image = target_slice.im_M
@@ -1187,6 +1217,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=1,
                           example=['0', '1'])
+        parser.add_option(name="-model-normalization",
+                          type_value='multiple_choice',
+                          description="1: Normalize the nitensity in all the model slices (when computing the model), 0: no ",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
         parser.add_option(name="-denoising",
                           type_value='multiple_choice',
                           description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too)",
@@ -1238,6 +1274,8 @@ if __name__ == "__main__":
             model_param.weight_gamma = arguments["-weight"]
         if "-use-levels" in arguments:
             model_param.use_levels = bool(int(arguments["-use-levels"]))
+        if "model-normalization" in arguments:
+            model_param.model_slices_normalization = bool(int(arguments["-model-normalization"]))
         if "-denoising" in arguments:
             seg_param.target_denoising = bool(int(arguments["-denoising"]))
         if "-normalize" in arguments:
@@ -1250,7 +1288,7 @@ if __name__ == "__main__":
             seg_param.verbose = int(arguments["-v"])
             model_param.verbose = int(arguments["-v"])
 
-    model = Model(model_param=model_param, k=0.8)
+    model = Model(model_param=model_param)
     if input_target_fname is not None:
         seg_method = SupervisedSegmentationMethod(input_target_fname, input_level_fname, model, gm_seg_param=seg_param)
         if seg_param.verbose == 2:
