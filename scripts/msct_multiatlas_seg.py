@@ -48,7 +48,6 @@ class ModelParam:
         self.equation_id = 1  # model_param
         self.verbose = 1  # both
 
-
     def __repr__(self):
         s = ''
         s += 'path_model: ' + str(self.path_model) + '\n'
@@ -64,6 +63,7 @@ class ModelParam:
         s += 'mode_weight_similarity: ' + str(self.mode_weight_similarity) + '\n'
         s += 'k: ' + str(self.k) + '\n'
         s += 'equation_id: ' + str(self.equation_id) + '\n'
+        return s
 
 
 class SegmentationParam:
@@ -170,6 +170,7 @@ class ModelDictionary:
 
         # Normalize dictionary slices
         if self.param.model_slices_normalization:
+            sct.printv('\nNormalizing the dictionary slices ...', self.param.verbose, 'normal')
             self.normalize_dic_slices()
             # update dic_metrics after normalization
             self.param.mean_metric = self.normalize_dic_slices(get_dic_metric=True)
@@ -1274,8 +1275,9 @@ if __name__ == "__main__":
             model_param.weight_gamma = arguments["-weight"]
         if "-use-levels" in arguments:
             model_param.use_levels = bool(int(arguments["-use-levels"]))
-        if "model-normalization" in arguments:
+        if "-model-normalization" in arguments:
             model_param.model_slices_normalization = bool(int(arguments["-model-normalization"]))
+            print bool(int(arguments["-model-normalization"]))
         if "-denoising" in arguments:
             seg_param.target_denoising = bool(int(arguments["-denoising"]))
         if "-normalize" in arguments:
