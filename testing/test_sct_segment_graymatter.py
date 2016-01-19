@@ -33,6 +33,11 @@ def test(path_data, parameters=''):
     parser = sct_segment_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
+
+    #if -model is used : do not add the path before.
+    if '-model' in dict_param_with_path.keys():
+        dict_param_with_path['-model'] = dict_param_with_path['-model'][len(path_data):]
+
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
