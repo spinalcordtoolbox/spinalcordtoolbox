@@ -495,7 +495,7 @@ def save_dic_slices(path_to_model):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def extract_metric_from_dic(slices_set, seg_to_use=None, metric='Mean', gm_percentile=0.03, wm_percentile=0.05, save=False, output='metric_in_dictionary.txt'):
+def extract_metric_from_slice_set(slices_set, seg_to_use=None, metric='Mean', gm_percentile=0.03, wm_percentile=0.05, save=False, output='metric_in_dictionary.txt'):
     """
     uses the registereg images and GM segmentation (or another segmentation)to extract mean intensity values in the WM dn GM
     :param slices_set:
