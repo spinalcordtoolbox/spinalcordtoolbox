@@ -1,5 +1,9 @@
 # CHANGES TO RELEASE
 
+##2.2 (TBD)
+- BUG: Fixed major issue during installation (issue #708)
+- BUG: **sct_process_segmentation**: fixed bug occuring with small FOV (issue #706)
+
 ##2.1.1 (2016-01-15)
 - BUG: **sct_resample**: fixed issue #691
 - OPT: **sct_segment_graymatter**: improved robustness of normalization
