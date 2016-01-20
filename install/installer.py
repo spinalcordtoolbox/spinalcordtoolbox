@@ -719,22 +719,10 @@ class Installer:
 
         # check if SCT folder already exists - if so, delete it
         print ""
-        print "\nCheck if spinalcordtoolbox is already installed (if so, delete it)..."
+        print "\nCheck if spinalcordtoolbox is already installed (if so, the user need to delete it)..."
         if os.path.isdir(self.SCT_DIR):
-            # check if sudo is required for removing SCT
-            if os.access(self.path_install, os.W_OK):
-                MsgUser.message(".. No sudo needed for removing SCT.")
-                self.issudo_remove = ""
-            else:
-                MsgUser.message(".. sudo needed for removing SCT.")
-                self.issudo_remove = "sudo "
-
-            cmd = self.issudo_remove+"rm -rf "+self.SCT_DIR
-            status, output = runProcess(cmd)
-            # status, output = commands.getstatusoutput(cmd)
-            if status != 0:
-                print 'ERROR! \n' + output + '\nExit program.\n'
-                sys.exit(2)
+            print 'ERROR! You need to remove your version of SCT in order to install this one. Another solution is to change the environment variable of previous SCT version ($SCT_DIR).\nExit program.\n'
+            sys.exit(2)
 
         # create SCT folder
         print "\nCreate folder: " + self.SCT_DIR + " ..."
