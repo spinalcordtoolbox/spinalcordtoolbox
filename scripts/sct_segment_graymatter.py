@@ -62,10 +62,10 @@ def get_parser():
     parser.usage.addSection('SEGMENTATION OPTIONS')
     parser.add_option(name="-use-levels",
                       type_value='multiple_choice',
-                      description="Use the level information for the model or not",
+                      description="Use the level information as integers or float numbers for the model or not",
                       mandatory=False,
-                      default_value=1,
-                      example=['0', '1'])
+                      default_value='int',
+                      example=['0', 'int', 'float'])
     parser.add_option(name="-weight",
                       type_value='float',
                       description="weight parameter on the level differences to compute the similarities (beta)",
@@ -584,7 +584,7 @@ if __name__ == "__main__":
         if "-vert" in arguments:
             input_level_fname = arguments["-vert"]
         if "-use-levels" in arguments:
-            model_param.use_levels = bool(int(arguments["-use-levels"]))
+            model_param.use_levels = arguments["-use-levels"]
         if "-weight" in arguments:
             model_param.weight_gamma = arguments["-weight"]
         if "-weight-similarity" in arguments:

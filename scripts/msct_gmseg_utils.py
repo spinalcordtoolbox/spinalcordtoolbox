@@ -555,7 +555,7 @@ def extract_metric_from_slice_set(slices_set, seg_to_use=None, metric='Mean', gm
 
         slice_set_metric[slice_i.id] = (wm_met, gm_met, wm_std, gm_std)
         if save:
-            f.write(str(slice_i.id) + ' - ' + level_label[slice_i.level] + ' - ' + str(wm_met) + ' - ' + str(gm_met) + ' - ' + str(wm_std) + ' - ' + str(gm_std) + '\n')
+            f.write(str(slice_i.id) + ' - ' + level_label[int(slice_i.level)] + ' - ' + str(wm_met) + ' - ' + str(gm_met) + ' - ' + str(wm_std) + ' - ' + str(gm_std) + '\n')
     if save:
         f.close()
     return slice_set_metric

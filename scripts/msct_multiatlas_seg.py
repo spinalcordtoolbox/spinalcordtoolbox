@@ -38,7 +38,7 @@ class ModelParam:
         self.new_model_dir = './gm_model'  # model_param
         self.reg = ['Affine']  # model_param
         self.reg_metric = 'MI'  # model_param
-        self.use_levels = True  # model_param
+        self.use_levels = 'int'  # model_param
         self.weight_gamma = 2.5  # model_param
         self.model_slices_normalization = False
         self.mean_metric = None
@@ -199,19 +199,42 @@ class ModelDictionary:
         for subject_dir in os.listdir(self.param.path_model):
             subject_path = self.param.path_model + '/' + subject_dir
             if os.path.isdir(subject_path):
+                if self.param.use_levels == 'float':
+                    subject_levels = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
+                    j_sub = j
+                    i_slice = 0
                 for file_name in os.listdir(subject_path):
                     if 'im' in file_name:  # or 'seg_in' in file_name:
-                        slice_level = 0
+                        slice_int_level = 0
                         name_list = file_name.split('_')
                         for word in name_list:
                             if word.upper() in self.level_label.values():
-                                slice_level = get_key_from_val(self.level_label, word.upper())
+                                slice_int_level = get_key_from_val(self.level_label, word.upper())
 
-                        slices.append(Slice(slice_id=j, im=Image(subject_path + '/' + file_name).data, level=slice_level, reg_to_m=[]))
+                        slices.append(Slice(slice_id=j, im=Image(subject_path + '/' + file_name).data, level=slice_int_level, reg_to_m=[]))
 
                         seg_file = sct.extract_fname(file_name)[1][:-3] + '_seg.nii.gz'
                         slices[j].set(gm_seg=Image(subject_path + '/' + seg_file).data)
+
+                        if self.param.use_levels == 'float':
+                            subject_levels[slice_int_level].append(i_slice)
+                            i_slice += 1
                         j += 1
+                if self.param.use_levels == 'float':
+                    for int_level, slices_list in subject_levels.items():
+                        n_slices_by_level = len(slices_list)
+                        if n_slices_by_level == 1:
+                            index = slices_list[0]
+                            if index == 0:
+                                slices[j_sub+index].set(level=int_level+0.1)
+                            elif index == i_slice:
+                                slices[j_sub+index].set(level=int_level+0.9)
+                            else:
+                                slices[j_sub+index].set(level=int_level+0.5)
+                        elif n_slices_by_level > 1:
+                            gap = 1.0/(n_slices_by_level + 1)
+                            for i, index in enumerate(slices_list):
+                                slices[j_sub+index].set(level=int_level+((n_slices_by_level-i)*gap))
 
         return np.asarray(slices)
 
@@ -361,8 +384,8 @@ class ModelDictionary:
         gm_seg_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': [], '': []}
         im_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': [], '': []}
         for dic_slice in self.slices:
-            gm_seg_by_level[self.level_label[dic_slice.level]].append(dic_slice.gm_seg_M)
-            im_by_level[self.level_label[dic_slice.level]].append(dic_slice.im_M)
+            gm_seg_by_level[self.level_label[int(dic_slice.level)]].append(dic_slice.gm_seg_M)
+            im_by_level[self.level_label[int(dic_slice.level)]].append(dic_slice.im_M)
         seg_averages = {}
         im_averages = {}
         for level, seg_data_set in gm_seg_by_level.items():
@@ -516,7 +539,7 @@ class Model:
                         from scipy.spatial.distance import wminkowski
                         square_norm = wminkowski(coord_projected_slice, coord_slice_j, 2, mode_weight)
 
-                    if target_levels is not None and target_levels is not [None] and self.param.use_levels:
+                    if target_levels is not None and target_levels is not [None] and self.param.use_levels is not '0':
                         if self.param.equation_id == 1:
                             # EQUATION #1 (better results ==> kept)
                             beta_slice.append(exp(-self.param.weight_gamma*abs(target_levels[i_target] - dataset_levels[j_slice]))*exp(-tau*square_norm))  # TODO: before = no absolute
@@ -546,7 +569,7 @@ class Model:
                 else:
                     from scipy.spatial.distance import wminkowski
                     square_norm = wminkowski(coord_target, coord_slice_j, 2, mode_weight)
-                if target_levels is not None and self.param.use_levels:
+                if target_levels is not None and self.param.use_levels is not '0':
                     if self.param.equation_id == 1:
                         # EQUATION #1 (better results ==> kept)
                         beta.append(exp(-self.param.weight_gamma*abs(target_levels - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
@@ -594,7 +617,7 @@ class Model:
             for dic_slice in self.dictionary.slices:
                 projected_dic_slice_coord = self.pca.project_array(dic_slice.im_M_flat)
                 coord_dic_slice_dataset = np.delete(self.pca.dataset_coord.T, dic_slice.id, 0)
-                if self.param.use_levels:
+                if self.param.use_levels is not '0':
                     dic_slice_dataset_levels = np.delete(np.asarray(dic_levels), dic_slice.id, 0)
                     beta_dic_slice = self.compute_beta(projected_dic_slice_coord, target_levels=dic_slice.level, dataset_coord=coord_dic_slice_dataset, dataset_levels=dic_slice_dataset_levels, tau=tau)
                 else:
@@ -740,7 +763,7 @@ class TargetSegmentationPairwise:
             self.target_slices = [Slice(slice_id=0, im=self.im_target.data, reg_to_m=[])]
             self.target_dim = 2
 
-        if self.im_levels is not None and self.model.param.use_levels:
+        if self.im_levels is not None and self.model.param.use_levels is not '0':
             self.load_level()
 
         # ####### Registration of the target slices to the dictionary space #######
@@ -758,7 +781,7 @@ class TargetSegmentationPairwise:
         self.coord_projected_target = self.model.pca.project([target_slice.im_M for target_slice in self.target_slices])
 
         sct.printv('\nComputing the similarities between the target and the model slices ...', self.param.verbose, 'normal')
-        if self.im_levels is not None and self.model.param.use_levels:
+        if self.im_levels is not None and self.model.param.use_levels is not '0':
             target_levels = np.asarray([target_slice.level for target_slice in self.target_slices])
         else:
             target_levels = None
@@ -798,13 +821,32 @@ class TargetSegmentationPairwise:
         :return None: the target level is set in the function
         """
         if isinstance(self.im_levels, Image):
+            subject_levels = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
             for i_level_slice, level_slice in enumerate(self.im_levels.data):
                 try:
                     l = int(round(np.mean(level_slice[level_slice > 0])))
                     self.target_slices[i_level_slice].set(level=l)
+                    subject_levels[l].append(i_level_slice)
                 except Exception, e:
                     sct.printv('WARNING: ' + str(e) + '\nNo level label for slice ' + str(i_level_slice) + ' of target', self.param.verbose, 'warning')
                     self.target_slices[i_level_slice].set(level=0)
+
+            if self.model.param.use_levels == 'float':
+                for int_level, slices_list in subject_levels.items():
+                    n_slices_by_level = len(slices_list)
+                    if n_slices_by_level == 1:
+                        index = slices_list[0]
+                        if index == 0:
+                            self.target_slices[index].set(level=int_level+0.1)
+                        elif index == len(self.im_levels.data)-1:
+                            self.target_slices[index].set(level=int_level+0.9)
+                        else:
+                            self.target_slices[index].set(level=int_level+0.5)
+                    elif n_slices_by_level > 1:
+                        gap = 1.0/(n_slices_by_level + 1)
+                        for i, index in enumerate(slices_list):
+                            self.target_slices[index].set(level=int_level+((n_slices_by_level-i)*gap))
+
         elif isinstance(self.im_levels, str):
             self.target_slices[0].set(level=get_key_from_val(self.model.dictionary.level_label, self.im_levels.upper()))
 
@@ -824,9 +866,9 @@ class TargetSegmentationPairwise:
 
             # getting the mean values of WM and GM in the target
             if self.param.target_means is None:
-                if self.model.param.use_levels:
+                if self.model.param.use_levels is not '0':
                     seg_averages_by_level = self.model.dictionary.mean_seg_by_level(type='binary')[0]
-                    mean_seg_by_level = [seg_averages_by_level[self.model.dictionary.level_label[target_slice.level]] for target_slice in self.target_slices]
+                    mean_seg_by_level = [seg_averages_by_level[self.model.dictionary.level_label[int(target_slice.level)]] for target_slice in self.target_slices]
 
                     # saving images to check results of normalisation
                     Image(param=np.asarray(mean_seg_by_level), absolutepath='mean_seg_by_level.nii.gz').save()
@@ -931,9 +973,9 @@ class TargetSegmentationPairwise:
             print 'Dic gm: ', dic_gm_mean, ' +- ', dic_gm_std
 
             seg_averages_by_level_bin = self.model.dictionary.mean_seg_by_level(type='binary')[0]
-            mean_seg_by_level_bin = [seg_averages_by_level_bin[self.model.dictionary.level_label[target_slice.level]] for target_slice in self.target_slices]
+            mean_seg_by_level_bin = [seg_averages_by_level_bin[self.model.dictionary.level_label[int(target_slice.level)]] for target_slice in self.target_slices]
             seg_averages_by_level_prob = self.model.dictionary.mean_seg_by_level(type='prob')[0]
-            mean_seg_by_level_prob = [seg_averages_by_level_prob[self.model.dictionary.level_label[target_slice.level]] for target_slice in self.target_slices]
+            mean_seg_by_level_prob = [seg_averages_by_level_prob[self.model.dictionary.level_label[int(target_slice.level)]] for target_slice in self.target_slices]
 
             target_metric = extract_metric_from_slice_set(self.target_slices, seg_to_use=mean_seg_by_level_bin, save=True)
 
@@ -1051,7 +1093,7 @@ class TargetSegmentationPairwise:
 
     # ------------------------------------------------------------------------------------------------------------------
     def save_selected_slices(self, target_name):
-        slice_levels = np.asarray([(dic_slice.id, self.model.dictionary.level_label[dic_slice.level]) for dic_slice in self.model.dictionary.slices])
+        slice_levels = np.asarray([(dic_slice.id, self.model.dictionary.level_label[int(dic_slice.level)]) for dic_slice in self.model.dictionary.slices])
         fic_selected_slices = open(target_name + '_selected_slices.txt', 'w')
         if self.target_dim == 2:
             fic_selected_slices.write(str(slice_levels[self.selected_k_slices.reshape(self.model.dictionary.J,)]))
@@ -1100,7 +1142,7 @@ sct_Image
             else:
                 self.im_level = Image(self.level)
         else:
-            self.param.use_levels = False
+            self.param.use_levels = '0'
 
         # TARGET PAIRWISE SEGMENTATION
         self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.im_target, levels_image=self.im_level, seg_param=self.param)
@@ -1112,7 +1154,7 @@ sct_Image
             suffix += '_' + self.param.res_type
             for transfo in self.model.dictionary.coregistration_transfos:
                 suffix += '_' + transfo
-            if self.model.param.use_levels:
+            if self.model.param.use_levels is not '0':
                 suffix += '_with_levels_' + '_'.join(str(self.model.param.weight_gamma).split('.'))  # replace the '.' by a '_'
             else:
                 suffix += '_no_levels'
@@ -1195,7 +1237,7 @@ if __name__ == "__main__":
                           description="Load or compute the model",
                           mandatory=False,
                           example=['load', 'compute'])
-        parser.add_option(name="-l",
+        parser.add_option(name="-vert",
                           type_value="str",
                           description="Image containing level labels for the target or str indicating the level",
                           mandatory=False,
@@ -1214,10 +1256,10 @@ if __name__ == "__main__":
                           example=2.0)
         parser.add_option(name="-use-levels",
                           type_value='multiple_choice',
-                          description="1: Use vertebral level information, 0: no ",
+                          description="Use the level information as integers or float numbers for the model or not",
                           mandatory=False,
-                          default_value=1,
-                          example=['0', '1'])
+                          default_value='int',
+                          example=['0', 'int', 'float'])
         parser.add_option(name="-model-normalization",
                           type_value='multiple_choice',
                           description="1: Normalize the nitensity in all the model slices (when computing the model), 0: no ",
@@ -1274,7 +1316,7 @@ if __name__ == "__main__":
         if "-weight" in arguments:
             model_param.weight_gamma = arguments["-weight"]
         if "-use-levels" in arguments:
-            model_param.use_levels = bool(int(arguments["-use-levels"]))
+            model_param.use_levels = arguments["-use-levels"]
         if "-model-normalization" in arguments:
             model_param.model_slices_normalization = bool(int(arguments["-model-normalization"]))
             print bool(int(arguments["-model-normalization"]))
