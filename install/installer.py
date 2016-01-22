@@ -6,7 +6,6 @@
 # 
 # This script will install the spinal cord toolbox under and configure your environment.
 # Must be run as a non-administrator (no sudo).
-# Installation location: /usr/local/spinalcordtoolbox/
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -619,7 +618,7 @@ def edit_profile_files(path_home, SCT_DIR):
 class Installer:
     def __init__(self):
         """
-        Path by default is /usr/local/sct
+        Path by default is /usr/local/sct + version of SCT. Exemple: /usr/local/sct2.2
 
         The installation is not possible with admin rights because the location of .bashrc and .bash_profile are
         not the same when being admin (sudoer) and non-admin. Therefore, the installation needs to be done without
@@ -633,7 +632,6 @@ class Installer:
         installed in it. If the folder already exists, the installation is stopped and the user is asked to empty the
         folder.
         """
-        self.path_install = "/usr/local/spinalcordtoolbox"
         self.issudo = "sudo "
 
         # check if user is sudoer
@@ -641,6 +639,15 @@ class Installer:
             print "Sorry, you are root. Please type: ./installer.py without sudo. Your password will be required " \
                   "later. Exit program\n"
             sys.exit(2)
+
+        # fetch version of the toolbox
+        print '\nFetch version of the Spinal Cord Toolbox...'
+        with open("spinalcordtoolbox/version.txt", "r") as myfile:
+            version_sct_str = myfile.read().replace('\n', '')
+            version_sct = Version(version_sct_str)
+        print "  Version: " + str(version_sct)
+
+        self.path_install = "/usr/local/sct" + version_sct_str
 
         # Check input parameters
         try:
@@ -655,9 +662,9 @@ class Installer:
             elif opt == '-p':
                 self.path_install = arg
                 if self.path_install[-1:] == '/':
-                    self.path_install += '/sct'
+                    self.path_install += '/sct' + version_sct_str
                 else:
-                    self.path_install += 'sct'
+                    self.path_install += 'sct' + version_sct_str
 
         print ""
         print "============================="
@@ -757,12 +764,6 @@ class Installer:
         # Checking if a new version of the toolbox is available. If so, change it.
         # Check the version on GitHub Master branch. If a new release is available,
         # ask the user if he want to install it.
-        # fetch version of the toolbox
-        print '\nFetch version of the Spinal Cord Toolbox...'
-        with open("spinalcordtoolbox/version.txt", "r") as myfile:
-            version_sct_str = myfile.read().replace('\n','')
-            version_sct = Version(version_sct_str)
-        print "  Version: "+str(version_sct)
 
         # fetch version of the toolbox online
         MsgUser.message("\nCheck online if you have the latest version of SCT...")
