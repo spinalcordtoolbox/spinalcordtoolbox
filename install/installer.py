@@ -738,8 +738,9 @@ class Installer:
         print "\nCheck if SCT is already installed..."
         if os.path.isdir(self.SCT_DIR) and os.listdir(self.SCT_DIR) != []:
             print 'ERROR! SCT is already installed. Two options:\n' \
-                  '1) Manually remove the current installation (e.g., use "rm -rf").\n' \
-                  '2) Remove the declaration of SCT in your .bashrc, open a new Terminal and re-run this installer.' \
+                  '1) Use another installation path. E.g.: "./installer.py -p ~/sct"'
+                  '2) Manually remove the current installation (e.g., use "rm -rf").\n' \
+                  '3) Remove the declaration of SCT in your .bashrc, open a new Terminal and re-run this installer.\n'
             sys.exit(2)
 
         # If SCT folder does not exists, let's create it
