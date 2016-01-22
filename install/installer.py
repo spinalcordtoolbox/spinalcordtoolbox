@@ -655,9 +655,9 @@ class Installer:
             elif opt == '-p':
                 self.path_install = arg
                 if self.path_install[-1:] == '/':
-                    self.path_install += '/spinalcordtoolbox'
+                    self.path_install += '/sct'
                 else:
-                    self.path_install += 'spinalcordtoolbox'
+                    self.path_install += 'sct'
 
         print ""
         print "============================="
@@ -738,9 +738,8 @@ class Installer:
         print "\nCheck if SCT is already installed..."
         if os.path.isdir(self.SCT_DIR) and os.listdir(self.SCT_DIR) != []:
             print 'ERROR! SCT is already installed. Two options:\n' \
-                  '1) Use another installation path. E.g.: "./installer.py -p ~/sct"'
-                  '2) Manually remove the current installation (e.g., use "rm -rf").\n' \
-                  '3) Remove the declaration of SCT in your .bashrc, open a new Terminal and re-run this installer.\n'
+                  '1) Use another installation path. E.g.: "./installer.py -p ~"\n' \
+                  '2) Manually remove the current installation (e.g., use "rm -rf").\n'
             sys.exit(2)
 
         # If SCT folder does not exists, let's create it
@@ -950,8 +949,9 @@ USAGE:
 """ + os.path.basename(__file__) + """ -p <path>
 
 OPTIONS:
--p <path>         installation path. Default is: /usr/local/spinalcordtoolbox
--h                display this help
+-p <path>         Installation path. Default is: /usr/local/sct
+                    Do not specify SCT folder, only path. E.g.: "./installer.py -p ~"
+-h                Display this help
   """
 
     # exit program
