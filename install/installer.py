@@ -735,10 +735,11 @@ class Installer:
 
         # Check if SCT folder already exists. If so, check if the folder is empty. If not, stops installation.
         print ""
-        print "\nCheck if SCT is already installed (if so, the user need to delete it)..."
+        print "\nCheck if SCT is already installed..."
         if os.path.isdir(self.SCT_DIR) and os.listdir(self.SCT_DIR) != []:
-            print 'ERROR! You need to remove your version of SCT in order to install this one. Another solution is ' \
-                  'to change the environment variable of previous SCT version ($SCT_DIR).\nExit program.\n'
+            print 'ERROR! SCT is already installed. Two options:\n' \
+                  '1) Manually remove the current installation (e.g., use "rm -rf").\n' \
+                  '2) Remove the declaration of SCT in your .bashrc, open a new Terminal and re-run this installer.' \
             sys.exit(2)
 
         # If SCT folder does not exists, let's create it
