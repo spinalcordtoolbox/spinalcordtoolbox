@@ -79,6 +79,8 @@ def test(path_data, parameters=''):
             n_slice, dc = line.split(' ')
             # remove \n from dice result
             dc = dc[:-1]
+            dc = dc[:-4] if '[0m' in dc else dc
+
             if dc == '0' or dc == 'nan':
                 null_slices.append(n_slice)
             else:

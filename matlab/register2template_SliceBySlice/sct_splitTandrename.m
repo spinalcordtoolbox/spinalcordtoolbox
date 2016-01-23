@@ -1,13 +1,12 @@
 function files = sct_splitTandrename(fname)
-% files = splitandrename(fname, (uppest_level) )
-%
+% files = splitandrename(fname)
+% EXAMPLE:
 % fname : ./../file.nii.gz
 % files = {'fileT1', 'fileT2'...}
 %
 
 
 
-log = 'log';
 % read file parts
 [path, file, ext] = fileparts(fname);
 [~,file,ext2] = fileparts(file);
@@ -21,7 +20,7 @@ path = [path filesep];
 [~,dim] = read_avw(fname);
 % split by Z
 cmd = ['fslsplit ' fname ' ' path file 'T -t'];
-j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+sct_unix(cmd);
 
 %rename
 numT = j_numbering(dim(4),4,0);
