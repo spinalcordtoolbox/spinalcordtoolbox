@@ -20,6 +20,7 @@ import getopt
 from datetime import date
 import subprocess
 import signal
+import errno
 
 
 # small function for input with timeout
@@ -514,7 +515,25 @@ def download_file(url, localf, timeout=20):
             break      
     if dl_size != rf_size:
         return InstallationResult(False, InstallationResult.ERROR, "Failed to download file.")
-    return InstallationResult(True, InstallationResult.SUCCESS, '') 
+    return InstallationResult(True, InstallationResult.SUCCESS, '')
+
+
+# ======================================================================================================================
+# create_folder:  create folder (check if exists before creating it)
+#   output: 0 -> folder created
+#           1 -> folder already exist
+#           2 -> permission denied
+# ======================================================================================================================
+def create_folder(folder):
+    if not os.path.exists(folder):
+        try:
+            os.makedirs(folder)
+            return 0
+        except OSError, e:
+            if e.errno != errno.EEXIST:
+                return 2
+    else:
+        return 1
 
 
 def run(cmd, verbose=1):
@@ -680,16 +699,6 @@ class Installer:
             MsgUser.debug(str(err))
             raise InstallFailed(str(err))
 
-        # check if sudo is needed to write in installation folder
-        MsgUser.message("\nCheck if administrator permission is needed for installation...")
-        print ".. Installation path: "+self.path_install
-        if os.access(os.path.abspath(os.path.join(os.path.dirname(self.path_install), os.pardir)), os.W_OK):
-            MsgUser.message(".. no sudo needed for adding elements.")
-            self.issudo = ""
-        else:
-            MsgUser.message(".. sudo needed for adding elements.")
-            self.issudo = "sudo "
-
         self.SCT_DIR = self.path_install
 
         # Retrieving home folder because in python, paths with ~ do not seem to work.
@@ -749,13 +758,20 @@ class Installer:
                   '2) Manually remove the current installation (e.g., use "rm -rf").\n'
             sys.exit(2)
 
+        print ".. Installation path: " + self.path_install
+
         # If SCT folder does not exists, let's create it
         if not os.path.isdir(self.SCT_DIR):
-            print "\nCreate folder: " + self.SCT_DIR + " ..."
-            cmd = self.issudo + "mkdir " + self.SCT_DIR
-            status, output = run(cmd)
-            if status != 0:
-                print output + '\n'
+            print "\nCreate installation folder: " + self.SCT_DIR + " ..."
+            result_folder_creation = create_folder(self.path_install)
+            if result_folder_creation == 2:
+                MsgUser.message(".. sudo needed for adding elements.")
+                self.issudo = "sudo "
+
+                cmd = self.issudo + "mkdir " + self.SCT_DIR
+                status, output = run(cmd)
+                if status != 0:
+                    print output + '\n'
 
         """
         This section has been temporarily removed due to known issues.
