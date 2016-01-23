@@ -651,7 +651,7 @@ class Installer:
         installed in it. If the folder already exists, the installation is stopped and the user is asked to empty the
         folder.
         """
-        self.issudo = "sudo "
+        self.issudo = ""
 
         # check if user is sudoer
         if os.geteuid() == 0:
