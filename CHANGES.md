@@ -1,6 +1,6 @@
 # CHANGES TO RELEASE
 
-##2.2 (TBD)
+##2.2 (2016-01-23)
 - BUG: Fixed major issue during installation (issue #708)
 - BUG: **sct_process_segmentation**: fixed bug occuring with small FOV (issue #706)
 
