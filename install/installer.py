@@ -662,9 +662,9 @@ class Installer:
             elif opt == '-p':
                 self.path_install = arg
                 if self.path_install[-1:] == '/':
-                    self.path_install += '/sct' + version_sct_str
-                else:
                     self.path_install += 'sct' + version_sct_str
+                else:
+                    self.path_install += '/sct' + version_sct_str
 
         print ""
         print "============================="
