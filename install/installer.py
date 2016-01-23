@@ -683,7 +683,7 @@ class Installer:
         # check if sudo is needed to write in installation folder
         MsgUser.message("\nCheck if administrator permission is needed for installation...")
         print ".. Installation path: "+self.path_install
-        if os.access(os.path.abspath(os.path.join(self.path_install, os.pardir)), os.W_OK):
+        if os.access(os.path.abspath(os.path.join(os.path.dirname(self.path_install), os.pardir)), os.W_OK):
             MsgUser.message(".. no sudo needed for adding elements.")
             self.issudo = ""
         else:
