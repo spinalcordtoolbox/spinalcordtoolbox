@@ -237,6 +237,12 @@ def main():
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
+    sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
+    if not sct.check_if_same_space(fname_data, fname_seg):
+        sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    if not sct.check_if_same_space(fname_data, fname_landmarks):
+        sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
+
     sct.printv('\nCheck input labels...')
     # check if label image contains coherent labels
     image_label = Image(fname_landmarks)
