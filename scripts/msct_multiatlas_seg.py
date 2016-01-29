@@ -848,7 +848,19 @@ class TargetSegmentationPairwise:
                             self.target_slices[index].set(level=int_level+((n_slices_by_level-i)*gap))
 
         elif isinstance(self.im_levels, str):
-            self.target_slices[0].set(level=get_key_from_val(self.model.dictionary.level_label, self.im_levels.upper()))
+            if os.path.isfile(self.im_levels):
+                assert sct.extract_fname(self.im_levels)[2] == '.txt', 'ERROR: the level file is nor an image nor a text file ...'
+                level_file = open(self.im_levels, 'r')
+                lines = level_file.readlines()
+
+                for line in lines[1:]:
+                    i_slice, level = line.split(',')
+                    level = int(level[:-1])
+                    i_slice = int(i_slice)
+                    self.target_slices[i_slice].set(level=level)
+            else:
+                self.target_slices[0].set(level=get_key_from_val(self.model.dictionary.level_label, self.im_levels.upper()))
+
 
     # ------------------------------------------------------------------------------------------------------------------
     def target_normalization(self, method='median', dic_wm_mean=None, dic_gm_mean=None):
@@ -1136,11 +1148,12 @@ sct_Image
     # ------------------------------------------------------------------------------------------------------------------
     def segment(self):
         if self.level is not None:
-            if len(self.level) < 3: #TODO: replace by a check if file
-                # in this case the level is a string and not an image
-                self.im_level = self.level
-            else:
+            if os.path.isfile(self.level) and sct.extract_fname(self.level)[2] == '.nii.gz':
                 self.im_level = Image(self.level)
+            else:
+                # in this case the level is a string or a file name in .txt, not an image
+                self.im_level = self.level
+
         else:
             self.param.use_levels = '0'
 

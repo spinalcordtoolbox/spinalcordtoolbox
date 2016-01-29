@@ -42,8 +42,8 @@ def get_parser():
                             'Choose one of them')
     parser.add_option(name="-vert",
                       type_value="file",
-                      description="Image containing level labels for the target"
-                                  "If -l is used, no need to provide t2 data",
+                      description="Image containing level labels for the target or text file with for eac slice, #slice and associated level separated by a coma."
+                                  "If -vert is used, no need to provide t2 data",
                       mandatory=False,
                       example='MNI-Poly-AMU_level_IRP.nii.gz')
     parser.add_option(name="-l",
@@ -181,11 +181,12 @@ class Preprocessing:
 
         if level_fname is not None:
             t2_data = None
-            level_fname_nii = check_file_to_niigz(level_fname)
-            if level_fname_nii:
-                path_level, file_level, ext_level = sct.extract_fname(level_fname_nii)
-                self.fname_level = file_level + ext_level
-                sct.run('cp ' + level_fname_nii + ' ' + tmp_dir + '/' + self.fname_level)
+            path_level, file_level, ext_level = sct.extract_fname(level_fname)
+            if ext_level != '.txt':
+                level_fname = check_file_to_niigz(level_fname)
+            path_level, file_level, ext_level = sct.extract_fname(level_fname)
+            self.fname_level = file_level + ext_level
+            sct.run('cp ' + level_fname + ' ' + tmp_dir + '/' + self.fname_level)
         else:
             self.fname_level  = None
 
@@ -264,7 +265,7 @@ class Preprocessing:
 
         if self.t2 is not None:
             self.fname_level = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
-        elif self.fname_level is not None:
+        elif self.fname_level is not None and sct.extract_fname(self.fname_level)[2] == '.nii.gz':
             level_orientation = get_orientation(self.fname_level, filename=True)
             if level_orientation != 'IRP':
                 self.fname_level = set_orientation(self.fname_level, 'IRP', filename=True)
@@ -286,7 +287,11 @@ class FullGmSegmentation:
         self.sc_seg_fname = check_file_to_niigz(sc_seg_fname)
         self.t2_data = t2_data
         if level_fname is not None:
-            self.level_fname = check_file_to_niigz(level_fname)
+            level_path, level_file, level_ext = sct.extract_fname(level_fname)
+            if level_ext == '.txt':
+                self.level_fname = level_fname
+            else:
+                self.level_fname = check_file_to_niigz(level_fname)
         else:
             self.level_fname = level_fname
 
