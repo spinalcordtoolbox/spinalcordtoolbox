@@ -1,6 +1,6 @@
 # CHANGES TO RELEASE
 
-##2.2.1 (TBD)
+##2.2.1 (2016-01-29)
 - BUG: **sct_dmri_moco**: fixed bug related to the use of mask
 - BUG: **sct_dmri_moco**: fixed bug in the algorithm (iterative average of target DWI volume)
 
