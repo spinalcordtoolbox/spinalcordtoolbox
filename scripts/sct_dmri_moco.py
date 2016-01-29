@@ -108,6 +108,7 @@ def main():
         param.group_size = 5
         param.iterative_averaging = 1
     else:
+
         parser = get_parser()
         arguments = parser.parse(sys.argv[1:])
 
@@ -118,7 +119,7 @@ def main():
             param.fname_bvals = arguments['-bval']
         if '-g' in arguments:
             param.group_size = arguments['-g']
-        if 'm' in arguments:
+        if '-m' in arguments:
             param.fname_mask = arguments['-m']
         if '-param' in arguments:
             param.param = arguments['-param']
@@ -170,6 +171,8 @@ def main():
     sct.run('cp '+param.fname_bvecs+' '+path_tmp+bvecs_fname, param.verbose)
     if param.fname_mask != '':
         sct.run('cp '+param.fname_mask+' '+path_tmp+mask_name+ext_mask, param.verbose)
+    else:
+        sct.printv('PROBLEM!!', 1, 'error')
 
     # go to tmp folder
     os.chdir(path_tmp)
