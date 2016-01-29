@@ -65,7 +65,7 @@ def main():
     print '\nCheck input arguments...'
     print '  Volume to smooth .................. ' + fname_anat
     print '  Centerline ........................ ' + fname_centerline
-    print '  FWHM .............................. '+str(sigma)
+    print '  Sigma (mm) ........................ '+str(sigma)
     print '  Verbose ........................... '+str(verbose)
 
     # Check that input is 3D:
@@ -246,7 +246,7 @@ def get_parser():
                       deprecated_by='-s')
     parser.add_option(name="-smooth",
                       type_value="int",
-                      description="Sigma of the smoothing Gaussian kernel (in voxel).",
+                      description="Sigma of the smoothing Gaussian kernel (in mm).",
                       mandatory=False,
                       default_value=3,
                       example='2')
