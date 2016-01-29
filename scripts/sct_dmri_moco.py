@@ -94,52 +94,30 @@ def main():
     # get path of the toolbox
     status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-    # Parameters for debug mode
-    if param.debug:
-        # get path of the testing data
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
-        param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
-        param.fname_mask = path_sct_data+'/dmri/dmri.nii.gz'
-        param.remove_tmp_files = 0
-        param.verbose = 1
-        param.run_eddy = 0
-        param.otsu = 0
-        param.group_size = 5
-        param.iterative_averaging = 1
-    else:
-        parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
 
-        param.fname_data = arguments['-i']
-        param.fname_bvecs = arguments['-bvec']
+    param.fname_data = arguments['-i']
+    param.fname_bvecs = arguments['-bvec']
 
-        if '-bval' in arguments:
-            param.fname_bvals = arguments['-bval']
-        if '-g' in arguments:
-            param.group_size = arguments['-g']
-        if 'm' in arguments:
-            param.fname_mask = arguments['-m']
-        if '-param' in arguments:
-            param.param = arguments['-param']
-        if '-thr' in arguments:
-            param.otsu = arguments['-thr']
-        if '-x' in arguments:
-            param.interp = arguments['-x']
-        if '-ofolder' in arguments:
-            path_out = arguments['-ofolder']
-        if '-r' in arguments:
-            param.remove_tmp_files = int(arguments['-r'])
-        if '-v' in arguments:
-            param.verbose = int(arguments['-v'])
-
-        '''
-            # Some old options that wasn't in the doc ...
-            elif opt in ('-e'):
-                param.run_eddy = int(arg)
-            elif opt in ('-f'):
-                param.spline_fitting = int(arg)
-        '''
+    if '-bval' in arguments:
+        param.fname_bvals = arguments['-bval']
+    if '-g' in arguments:
+        param.group_size = arguments['-g']
+    if '-m' in arguments:
+        param.fname_mask = arguments['-m']
+    if '-param' in arguments:
+        param.param = arguments['-param']
+    if '-thr' in arguments:
+        param.otsu = arguments['-thr']
+    if '-x' in arguments:
+        param.interp = arguments['-x']
+    if '-ofolder' in arguments:
+        path_out = arguments['-ofolder']
+    if '-r' in arguments:
+        param.remove_tmp_files = int(arguments['-r'])
+    if '-v' in arguments:
+        param.verbose = int(arguments['-v'])
 
     # Get full path
     param.fname_data = os.path.abspath(param.fname_data)
