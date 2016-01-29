@@ -19,6 +19,7 @@ import sct_segment_graymatter
 from msct_image import Image
 import sct_utils as sct
 from numpy import sum, mean
+import time
 # append path that contains scripts, to be able to load modules
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 sys.path.append(path_sct + '/scripts')
@@ -44,7 +45,7 @@ def test(path_data, parameters=''):
     if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-vert']) and os.path.isfile(dict_param_with_path['-ref'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'dice_wm': float('nan'), 'hausdorff': float('nan'), 'med_dist': float('nan')}, index=[path_data])
+        return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'dice_wm': float('nan'), 'hausdorff': float('nan'), 'med_dist': float('nan'), 'duration_[s]': float('nan')}, index=[path_data])
 
     import time, random
     subject_folder = path_data.split('/')
@@ -56,8 +57,9 @@ def test(path_data, parameters=''):
     param_with_path += ' -ofolder ' + path_output
 
     cmd = 'sct_segment_graymatter ' + param_with_path
+    time_start = time.time()
     status, output = sct.run(cmd, 0)
-
+    duration = time.time() - time_start
 
     # initialization of results: must be NaN if test fails
     result_dice_gm, result_dice_wm, result_hausdorff, result_median_dist = float('nan'), float('nan'), float('nan'), float('nan')
@@ -143,7 +145,7 @@ def test(path_data, parameters=''):
                       'Hausdorff distance: '+str(result_hausdorff)+'\n'
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'dice_gm': result_dice_gm, 'dice_wm': result_dice_wm, 'hausdorff': result_hausdorff, 'med_dist': result_median_dist}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'dice_gm': result_dice_gm, 'dice_wm': result_dice_wm, 'hausdorff': result_hausdorff, 'med_dist': result_median_dist, 'duration_[s]': duration}, index=[path_data])
 
     return status, output, results
 
