@@ -139,6 +139,10 @@ def moco(param):
         im_out.setFileName(file_data_moco + ext)
         im_out.save()
 
+    # delete file target.nii (to avoid conflict if this function is run another time)
+    sct.printv('\nRemove temporary file...', verbose)
+    sct.run('rm target.nii')
+
 
 #=======================================================================================================================
 # register:  registration of two volumes (or two images)

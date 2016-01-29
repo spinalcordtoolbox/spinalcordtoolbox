@@ -1,6 +1,10 @@
 # CHANGES TO RELEASE
 
-##2.2 (TBD)
+##2.2.1 (TBD)
+- BUG: **sct_dmri_moco**: fixed bug related to the use of mask
+- BUG: **sct_dmri_moco**: fixed bug in the algorithm (iterative average of target DWI volume)
+
+##2.2 (2016-01-23)
 - BUG: Fixed major issue during installation (issue #708)
 - BUG: **sct_process_segmentation**: fixed bug occuring with small FOV (issue #706)
 
