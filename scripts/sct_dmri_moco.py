@@ -102,6 +102,8 @@ def main():
 
     if '-bval' in arguments:
         param.fname_bvals = arguments['-bval']
+    if '-bvalmin' in arguments:
+        param.bval_min = arguments['-bvalmin']
     if '-g' in arguments:
         param.group_size = arguments['-g']
     if '-m' in arguments:
@@ -447,6 +449,11 @@ def get_parser():
                       description='Bvals file',
                       mandatory=False,
                       example='bvals.nii.gz')
+    parser.add_option(name='-bvalmin',
+                      type_value='float',
+                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
+                      mandatory=False,
+                      example='50')
     parser.add_option(name='-a',
                       type_value=None,
                       description='Bvals file',
