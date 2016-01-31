@@ -55,15 +55,16 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
         verbose = 1
 
     # check existence of input files
-    sct.check_file_exist(fname_data, verbose)
-    sct.check_file_exist(fname_bvecs, verbose)
-    if not fname_bvals == '':
-        sct.check_file_exist(fname_bvals, verbose)
+    # sct.check_file_exist(fname_data, verbose)
+    # sct.check_file_exist(fname_bvecs, verbose)
+    # if not fname_bvals == '':
+    #     sct.check_file_exist(fname_bvals, verbose)
 
     # print arguments
     sct.printv('\nInput parameters:', verbose)
     sct.printv('  input file ............'+fname_data, verbose)
     sct.printv('  bvecs file ............'+fname_bvecs, verbose)
+    sct.printv('  bvals file ............'+fname_bvals, verbose)
     sct.printv('  average ...............'+str(average), verbose)
 
     # Get full path
@@ -106,6 +107,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
 
     # Identify b=0 and DWI images
+    print fname_bvals
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, param.bval_min, verbose)
 
     # Split into T dimension
@@ -135,9 +137,6 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     cmd = cmd[:-1]  # remove ',' at the end of the string
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue
     status, output = sct.run(cmd, param.verbose)
-
-
-
 
     # Average DWI images
     if average:
@@ -317,6 +316,11 @@ def get_parser():
                       type_value='file',
                       description='bvals file. Used to identify low b-values (in case different from 0).',
                       mandatory=False)
+    parser.add_option(name='-bvalmin',
+                      type_value='float',
+                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
+                      mandatory=False,
+                      example='50')
     parser.add_option(name='-o',
                       type_value='folder_creation',
                       description='Output folder.',
@@ -363,7 +367,9 @@ if __name__ == "__main__":
     remove_tmp_files = param.remove_tmp_files
 
     if '-bval' in arguments:
-        fname_bval = arguments['-bval']
+        fname_bvals = arguments['-bval']
+    if '-bvalmin' in arguments:
+        param.bval_min = arguments['-bvalmin']
     if '-a' in arguments:
         average = arguments['-a']
     if '-ofolder' in arguments:
