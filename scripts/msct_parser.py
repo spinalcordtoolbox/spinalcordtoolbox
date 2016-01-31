@@ -217,14 +217,14 @@ class Option:
             param_tmp = param[:-7]
             pass
         else:
-            sct.printv("ERROR : File is not a NIFTI image file. Exiting", type='error')
+            sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
 
         if nii:
             return param_tmp+'.nii'
         elif niigz:
             return param_tmp+'.nii.gz'
         else:
-            sct.printv("ERROR : File does not exist. Exiting", type='error')
+            sct.printv("ERROR: File "+param+" does not exist. Exiting", type='error')
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
