@@ -216,10 +216,8 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     else:
 
         # Open bvals file
-        #sct.printv('\nOpen bvals file...', verbose)
-        bvals = []
-        with open(fname_bvals) as f:
-            bvals = numpy.array(map(float, f.readlines()))
+        from dipy.io import read_bvals_bvecs
+        bvals, bvecs = read_bvals_bvecs(fname_bvals, fname_bvecs)
 
         # get number of lines
         nt = len(bvals)
@@ -234,7 +232,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 
     # check if no b=0 images were detected
     if index_b0 == []:
-        sct.printv('ERROR: no b=0 images detected. Maybe you are using non-null low bvals? in that case use flag -a. Exit program.', 1, 'error')
+        sct.printv('ERROR: no b=0 images detected. Maybe you are using non-null low bvals? in that case use flag -bvalmin. Exit program.', 1, 'error')
         sys.exit(2)
 
     # display stuff
