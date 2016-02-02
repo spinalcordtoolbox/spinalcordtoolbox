@@ -164,8 +164,8 @@ def main():
     verbose = int(arguments['-v'])
     if '-param-straighten' in arguments:
         param.param_straighten = arguments['-param-straighten']
-    if 'cpu-nb' in arguments:
-        arg_cpu = ' -cpu-nb '+arguments['-cpu-nb']
+    if '-cpu-nb' in arguments:
+        arg_cpu = ' -cpu-nb '+str(arguments['-cpu-nb'])
     else:
         arg_cpu = ''
     if '-param' in arguments:
