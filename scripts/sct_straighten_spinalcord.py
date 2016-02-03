@@ -397,7 +397,7 @@ class SpinalCordStraightener(object):
         self.window_length = window_length
         self.crop = crop
 
-        self.cpu_number = None
+        # self.cpu_number = None
         self.results_landmarks_curved = []
 
         self.bspline_meshsize = '5x5x10'  # JULIEN
@@ -1120,12 +1120,12 @@ def get_parser():
                       example=['0', '1'],
                       default_value='0')
 
-    parser.add_option(name="-cpu-nb",
-                      type_value="int",
-                      description="Number of CPU used for straightening. 0: no multiprocessing. If not provided, "
-                                  "it uses all the available cores.",
-                      mandatory=False,
-                      example="8")
+    # parser.add_option(name="-cpu-nb",
+    #                   type_value="int",
+    #                   description="Number of CPU used for straightening. 0: no multiprocessing. If not provided, "
+    #                               "it uses all the available cores.",
+    #                   mandatory=False,
+    #                   example="8")
 
     return parser
 
@@ -1157,8 +1157,8 @@ if __name__ == "__main__":
         sc_straight.crop = int(arguments["-f"])
     if "-v" in arguments:
         sc_straight.verbose = int(arguments["-v"])
-    if "-cpu-nb" in arguments:
-        sc_straight.cpu_number = int(arguments["-cpu-nb"])
+    # if "-cpu-nb" in arguments:
+    #     sc_straight.cpu_number = int(arguments["-cpu-nb"])
     if '-qc' in arguments:
         sc_straight.qc = int(arguments['-qc'])
 
