@@ -387,6 +387,7 @@ class SpinalCordStraightener(object):
                 deriv.x, deriv.y, deriv.z = x_centerline_deriv[iz], y_centerline_deriv[iz], z_centerline_deriv[iz]
                 temp_results.append(coord)
 
+                # compute cross
                 cross_coordinates = compute_cross_centerline(coord, deriv, self.gapxy)
 
                 for coord in cross_coordinates:
@@ -408,17 +409,22 @@ class SpinalCordStraightener(object):
             return
 
         except Exception as e:
+            print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
             raise e
 
     def worker_landmarks_curved_results(self, results):
         sorted(results, key=lambda l: l[0])
         self.results_landmarks_curved = []
         landmark_curved_value = 1
-        for iz, l_curved in results:
-            for landmark in l_curved:
-                landmark.value = landmark_curved_value
-                self.results_landmarks_curved.append(landmark)
-                landmark_curved_value += 1
+        if results:
+            print 'results: ', results
+            for iz, l_curved in results:
+                for landmark in l_curved:
+                    landmark.value = landmark_curved_value
+                    self.results_landmarks_curved.append(landmark)
+                    landmark_curved_value += 1
+        else:
+            print 'ERROR: no results of worker'
 
     def straighten(self):
         # Initialization
@@ -562,6 +568,7 @@ class SpinalCordStraightener(object):
                                 x_centerline_fit, y_centerline_fit, z_centerline)
             if self.cpu_number != 0:
                 from multiprocessing import Pool
+                print 'iz_curved : ', iz_curved
                 arguments_landmarks = [(iz, worker_arguments) for iz in range(min(iz_curved), max(iz_curved) + 1, 1)]
 
                 pool = Pool(processes=self.cpu_number)
