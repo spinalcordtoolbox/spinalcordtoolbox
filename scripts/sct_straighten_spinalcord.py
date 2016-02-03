@@ -22,13 +22,13 @@ from sct_label_utils import ProcessLabels
 from sct_crop_image import ImageCropper
 from nibabel import load, Nifti1Image, save
 from numpy import array, asarray, sum, isnan, sin, cos, arctan
-from sympy.solvers import solve
-from sympy import Symbol
+# from sympy.solvers import solve
+# from sympy import Symbol
 from scipy import ndimage
 from sct_apply_transfo import Transform
 import sct_utils as sct
 from msct_smooth import smoothing_window, evaluate_derivative_3D, evaluate_derivative_2D
-from sct_image import set_orientation
+# from sct_image import set_orientation
 from msct_types import Coordinate
 
 import copy_reg
