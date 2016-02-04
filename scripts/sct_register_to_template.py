@@ -121,11 +121,11 @@ def get_parser():
                       mandatory=False,
                       default_value='',
                       example="-params bspline_meshsize=3x3x5")
-    parser.add_option(name="-cpu-nb",
-                      type_value="int",
-                      description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
-                      mandatory=False,
-                      example="8")
+    # parser.add_option(name="-cpu-nb",
+    #                   type_value="int",
+    #                   description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
+    #                   mandatory=False,
+    #                   example="8")
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -164,10 +164,10 @@ def main():
     verbose = int(arguments['-v'])
     if '-param-straighten' in arguments:
         param.param_straighten = arguments['-param-straighten']
-    if 'cpu-nb' in arguments:
-        arg_cpu = ' -cpu-nb '+arguments['-cpu-nb']
-    else:
-        arg_cpu = ''
+    # if '-cpu-nb' in arguments:
+    #     arg_cpu = ' -cpu-nb '+str(arguments['-cpu-nb'])
+    # else:
+    #     arg_cpu = ''
     if '-param' in arguments:
         paramreg_user = arguments['-param']
         # update registration parameters
@@ -314,7 +314,7 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose)+' '+param.param_straighten+arg_cpu, verbose)
+    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose), verbose)
     # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
