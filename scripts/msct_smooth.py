@@ -85,11 +85,32 @@ def norm(x, y, z, p1, p2, p3):
 #=======================================================================================================================
 # Evaluate derivative of data points
 #=======================================================================================================================
-def evaluate_derivative_2D(x,y):
-    from numpy import array, append
-    y_deriv = array([(y[i+1]-y[i])/(x[i+1]-x[i]) for i in range(0, len(x)-1)])
-    y_deriv = append(y_deriv,(y[-1] - y[-2])/(x[-1] - x[-2]))
-    return y_deriv
+def evaluate_derivative_2D(x, y, px, py):
+    """
+    Compute derivative in 2D, accounting for pixel size in each dimension
+    :param x:
+    :param y:
+    :param px:
+    :param py:
+    :return:
+    """
+
+    from numpy import array, sqrt, insert, append
+
+    x = [x_elem*px for x_elem in x]
+    y = [y_elem*py for y_elem in y]
+
+    # compute derivative for points 2 --> n-1
+    x_deriv = array([(x[i+1]-x[i-1]) / (y[i+1]-y[i-1]) for i in range(1, len(x)-1)])
+    y_deriv = array([(y[i+1]-y[i-1]) / (x[i+1]-x[i-1]) for i in range(1, len(y)-1)])
+
+    # compute derivatives for points 1 and n.
+    x_deriv = insert(x_deriv, 0, (x[1]-x[0])/(y[1]-y[0]))
+    x_deriv = append(x_deriv, (x[-1]-x[-2])/(y[-1]-y[-2]))
+    y_deriv = insert(y_deriv, 0, (y[1]-y[0])/(x[1]-x[0]))
+    y_deriv = append(y_deriv, (y[-1]-y[-2])/(x[-1]-x[-2]))
+
+    return x_deriv, y_deriv
 
 
 
@@ -97,24 +118,32 @@ def evaluate_derivative_2D(x,y):
 # Evaluate derivative of data points in 3D
 #=======================================================================================================================
 def evaluate_derivative_3D(x, y, z, px, py, pz):
+    """
+    Compute derivative in 3D, accounting for pixel size in each dimension
+    :param x:
+    :param y:
+    :param z:
+    :param px:
+    :param py:
+    :param pz:
+    :return:
+    """
     from numpy import array, sqrt, insert, append
 
     x = [x_elem*px for x_elem in x]
     y = [y_elem*py for y_elem in y]
     z = [z_elem*pz for z_elem in z]
 
+    # compute derivative for points 2 --> n-1
     x_deriv = array([(x[i+1]-x[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range(1,len(x)-1)])
     y_deriv = array([(y[i+1]-y[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range(1,len(y)-1)])
     z_deriv = array([(z[i+1]-z[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range(1,len(z)-1)])
 
+    # compute derivatives for points 1 and n.
     x_deriv = insert(x_deriv, 0, (x[1]-x[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
     x_deriv = append(x_deriv, (x[-1]-x[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
-
-    #print len(x_deriv)
-
     y_deriv = insert(y_deriv, 0, (y[1]-y[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
     y_deriv = append(y_deriv, (y[-1]-y[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
-
     z_deriv = insert(z_deriv, 0, (z[1]-z[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
     z_deriv = append(z_deriv, (z[-1]-z[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
 
