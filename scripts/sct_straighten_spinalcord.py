@@ -183,29 +183,67 @@ def compute_cross_centerline(coordinate, derivative, gapxy=15):
 
     # initialize cross_coordinates
     cross_coordinates = [Coordinate(), Coordinate(), Coordinate(), Coordinate(),
+                         Coordinate(), Coordinate(), Coordinate(), Coordinate(),
+                         Coordinate(), Coordinate(), Coordinate(), Coordinate(),
                          Coordinate(), Coordinate(), Coordinate(), Coordinate()]
 
     i = 0
     for gap in [gapxy, gapxy/2]:
 
+        # Ordering of labels (x: left-->right, y: bottom-->top, c: centerline):
+        #
+        #  5    2    4
+        #
+        #  1    c    0
+        #
+        #  7    3    6
+
+        # Label: 0
         cross_coordinates[i].x = x + gap * cos(ax)
         cross_coordinates[i].y = y
         cross_coordinates[i].z = z - gap * sin(ax)
         i += 1
 
+        # Label: 1
         cross_coordinates[i].x = x - gap * cos(ax)
         cross_coordinates[i].y = y
         cross_coordinates[i].z = z + gap * sin(ax)
         i += 1
 
+        # Label: 2
         cross_coordinates[i].x = x
         cross_coordinates[i].y = y + gap * cos(ay)
         cross_coordinates[i].z = z - gap * sin(ay)
         i += 1
 
+        # Label: 3
         cross_coordinates[i].x = x
         cross_coordinates[i].y = y - gap * cos(ay)
         cross_coordinates[i].z = z + gap * sin(ay)
+        i += 1
+
+        # Label: 4
+        cross_coordinates[i].x = x + gap * cos(ax)
+        cross_coordinates[i].y = y + gap * cos(ay)
+        cross_coordinates[i].z = z - gap * sin(ax) - gap * sin(ay)
+        i += 1
+
+        # Label: 5
+        cross_coordinates[i].x = x - gap * cos(ax)
+        cross_coordinates[i].y = y + gap * cos(ay)
+        cross_coordinates[i].z = z + gap * sin(ax) - gap * sin(ay)
+        i += 1
+
+        # Label: 6
+        cross_coordinates[i].x = x + gap * cos(ax)
+        cross_coordinates[i].y = y - gap * cos(ay)
+        cross_coordinates[i].z = z - gap * sin(ax) + gap * sin(ay)
+        i += 1
+
+        # Label: 7
+        cross_coordinates[i].x = x - gap * cos(ax)
+        cross_coordinates[i].y = y - gap * cos(ay)
+        cross_coordinates[i].z = z + gap * sin(ax) + gap * sin(ay)
         i += 1
 
     for i, coord in enumerate(cross_coordinates):
@@ -318,18 +356,6 @@ class SpinalCordStraightener(object):
         # get path of the toolbox
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
         sct.printv(path_sct, verbose)
-
-        if self.debug == 1:
-            print "\n*** WARNING: DEBUG MODE ON ***\n"
-            fname_anat = path_sct + "/testing/sct_testing_data/data/t2/t2.nii.gz"
-            fname_centerline = path_sct + "/testing/sct_testing_data/data/t2/t2_seg.nii.gz"
-            remove_temp_files = 0
-            type_window = "hanning"
-            verbose = 2
-
-        # check existence of input files
-        # sct.check_file_exist(fname_anat, verbose)
-        # sct.check_file_exist(fname_centerline, verbose)
 
         # Display arguments
         sct.printv("\nCheck input arguments:", verbose)
@@ -591,45 +617,46 @@ class SpinalCordStraightener(object):
             sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
             # JULIEN
-            crop_landmarks = 0
-            safety_pad = 1
-            if crop_landmarks == 1:
-                # Crop landmarks (for faster computation)
-                sct.printv("\nCrop around landmarks (for faster computation)...", verbose)
-                sct.run('sct_crop_image -i tmp.landmarks_curved.nii.gz -bmax -o tmp.landmarks_curved_crop.nii.gz', verbose)
-                sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -bmax -o tmp.landmarks_straight_crop.nii.gz', verbose)
-
-                # Pad landmarks by one voxel (to avoid issue #609)
-                if safety_pad:
-                    sct.printv("\nPad landmark volume to avoid having landmarks outside...", verbose)
-                    sct.run('sct_image -i tmp.landmarks_curved_crop.nii.gz -pad '+str(safety_pad)+','+str(safety_pad)+','+str(safety_pad)+' -o tmp.landmarks_curved_crop.nii.gz', verbose)
-                    sct.run('sct_image -i tmp.landmarks_straight_crop.nii.gz -pad '+str(safety_pad)+','+str(safety_pad)+','+str(safety_pad)+' -o tmp.landmarks_straight_crop.nii.gz', verbose)
-
-                # Adjust LandmarksReal values after cropping
-                # for curved
-                x_adjust = min([int(round(i.x)) for i in landmark_curved]) + padding_x
-                y_adjust = min([int(round(i.y)) for i in landmark_curved]) + padding_y
-                z_adjust = min([int(round(i.z)) for i in landmark_curved]) + padding_z
-                landmark_curved_adjust = deepcopy(landmark_curved)  # here we use deepcopy to copy list with object
-                for index in range(0, len(landmark_curved)):
-                    landmark_curved_adjust[index].x = landmark_curved[index].x - x_adjust + safety_pad
-                    landmark_curved_adjust[index].y = landmark_curved[index].y - y_adjust + safety_pad
-                    landmark_curved_adjust[index].z = landmark_curved[index].z - z_adjust + safety_pad
-                # for straight
-                x_adjust = min([int(round(i.x)) for i in landmark_straight]) + padding_x
-                y_adjust = min([int(round(i.y)) for i in landmark_straight]) + padding_y
-                z_adjust = min([int(round(i.z)) for i in landmark_straight]) + padding_z
-                landmark_straight_adjust = deepcopy(landmark_straight)
-                for index in range(0, len(landmark_straight)):
-                    landmark_straight_adjust[index].x = landmark_straight[index].x - x_adjust + safety_pad
-                    landmark_straight_adjust[index].y = landmark_straight[index].y - y_adjust + safety_pad
-                    landmark_straight_adjust[index].z = landmark_straight[index].z - z_adjust + safety_pad
-                # copy to keep same variable name throughout the code
-                landmark_curved = deepcopy(landmark_curved_adjust)
-                landmark_straight = deepcopy(landmark_straight_adjust)
-            else:
-                sct.run('cp tmp.landmarks_curved.nii.gz tmp.landmarks_curved_crop.nii.gz', verbose)
-                sct.run('cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz', verbose)
+            # crop_landmarks = 0
+            # safety_pad = 1
+            # if crop_landmarks == 1:
+            #     # Crop landmarks (for faster computation)
+            #     sct.printv("\nCrop around landmarks (for faster computation)...", verbose)
+            #     sct.run('sct_crop_image -i tmp.landmarks_curved.nii.gz -bmax -o tmp.landmarks_curved_crop.nii.gz', verbose)
+            #     sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -bmax -o tmp.landmarks_straight_crop.nii.gz', verbose)
+            #
+            #     # Pad landmarks by one voxel (to avoid issue #609)
+            #     if safety_pad:
+            #         sct.printv("\nPad landmark volume to avoid having landmarks outside...", verbose)
+            #         sct.run('sct_image -i tmp.landmarks_curved_crop.nii.gz -pad '+str(safety_pad)+','+str(safety_pad)+','+str(safety_pad)+' -o tmp.landmarks_curved_crop.nii.gz', verbose)
+            #         sct.run('sct_image -i tmp.landmarks_straight_crop.nii.gz -pad '+str(safety_pad)+','+str(safety_pad)+','+str(safety_pad)+' -o tmp.landmarks_straight_crop.nii.gz', verbose)
+            #
+            #     # Adjust LandmarksReal values after cropping
+            #     # for curved
+            #     x_adjust = min([int(round(i.x)) for i in landmark_curved]) + padding_x
+            #     y_adjust = min([int(round(i.y)) for i in landmark_curved]) + padding_y
+            #     z_adjust = min([int(round(i.z)) for i in landmark_curved]) + padding_z
+            #     landmark_curved_adjust = deepcopy(landmark_curved)  # here we use deepcopy to copy list with object
+            #     for index in range(0, len(landmark_curved)):
+            #         landmark_curved_adjust[index].x = landmark_curved[index].x - x_adjust + safety_pad
+            #         landmark_curved_adjust[index].y = landmark_curved[index].y - y_adjust + safety_pad
+            #         landmark_curved_adjust[index].z = landmark_curved[index].z - z_adjust + safety_pad
+            #     # for straight
+            #     x_adjust = min([int(round(i.x)) for i in landmark_straight]) + padding_x
+            #     y_adjust = min([int(round(i.y)) for i in landmark_straight]) + padding_y
+            #     z_adjust = min([int(round(i.z)) for i in landmark_straight]) + padding_z
+            #     landmark_straight_adjust = deepcopy(landmark_straight)
+            #     for index in range(0, len(landmark_straight)):
+            #         landmark_straight_adjust[index].x = landmark_straight[index].x - x_adjust + safety_pad
+            #         landmark_straight_adjust[index].y = landmark_straight[index].y - y_adjust + safety_pad
+            #         landmark_straight_adjust[index].z = landmark_straight[index].z - z_adjust + safety_pad
+            #     # copy to keep same variable name throughout the code
+            #     landmark_curved = deepcopy(landmark_curved_adjust)
+            #     landmark_straight = deepcopy(landmark_straight_adjust)
+            # else:
+            # TODO: fix that thing below (no need to copy!)
+            sct.run('cp tmp.landmarks_curved.nii.gz tmp.landmarks_curved_crop.nii.gz', verbose)
+            sct.run('cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz', verbose)
 
 
             # Remove non-matching landmarks
