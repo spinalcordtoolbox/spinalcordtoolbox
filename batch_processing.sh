@@ -7,7 +7,7 @@
 # To run without fslview output, type:
 #   ./batch_processing.sh -nodisplay
 #
-# tested with v2.2_dev
+# tested with v2.2.3
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
@@ -50,8 +50,8 @@ if [ $DISPLAY = true ]; then
 fi
 # compute average cross-sectional area and volume between C3 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -vert 3:4
-# --> Mean CSA: 77.3304536573 +/- 2.05408121168 mm^2
-# --> Volume (in volume.txt): 2399.0 mm^3
+# --> Mean CSA: 77.4289770106 +/- 2.00647224442 mm^2
+# --> Volume (in volume.txt): 2402.0 mm^3
 
 # go back to root folder
 cd ..
@@ -73,7 +73,6 @@ sct_crop_image -i t1.nii.gz -m mask_t1.nii.gz -o t1_crop.nii.gz
 sct_crop_image -i t1_seg.nii.gz -m mask_t1.nii.gz -o t1_seg_crop.nii.gz
 # register to template (which was previously registered to the t2).
 sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d t1_crop.nii.gz -dseg t1_seg_crop.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,iter=3,gradStep=0.2,metric=CC
-exit
 # concatenate transformations
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_T22t1_crop.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
 sct_concat_transfo -w warp_t1_crop2MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
@@ -98,7 +97,6 @@ cd mt
 # bring T2 segmentation in MT space to help segmentation (no optimization)
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
 # needs to add short pause to make sure the output from previous line is generated (in case this batch script is launched at once)
-#sleep 0.1
 # extract centerline
 sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
 # segment mt1
@@ -109,8 +107,6 @@ if [ $DISPLAY = true ]; then
 fi
 # create mask around spinal cord for faster registration
 sct_create_mask -i mt1.nii.gz -p centerline,mt1_seg.nii.gz -size 51 -f box -o mask_mt1.nii.gz
-## use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
-#sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
 # crop data
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 sct_crop_image -i mt1_seg.nii.gz -m mask_mt1.nii.gz -o mt1_seg_crop.nii.gz
@@ -144,17 +140,17 @@ fi
 # >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.8103888002
+# --> MTR = 34.7067535734
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
 sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of left CST: 5.03783129024 +/- 0.54484209512 mm^2
+# --> Mean CSA of left CST: 4.97641126008 +/- 0.512628334474 mm^2
 sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of right CST: 4.73962761007 +/- 0.509331787755 mm^2
+# --> Mean CSA of right CST: 4.77218674544 +/- 0.472737313312 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
 sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of the left dorsal column: 9.49474672234 +/- 0.394863908719 mm^2
+# --> Mean CSA of the left dorsal column: 9.44132531044 +/- 0.462686426095 mm^2
 cd ..
 
 
@@ -187,8 +183,8 @@ fi
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -method map
-# --> 17, right lateral corticospinal tract:    0.776699872796
-# --> 2, left lateral corticospinal tract:    0.76828502254
+# --> 17, right lateral corticospinal tract:    0.787807890652
+# --> 2, left lateral corticospinal tract:    0.76589414129
 cd ..
 
 
