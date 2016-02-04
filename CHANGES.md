@@ -1,5 +1,8 @@
 # CHANGES TO RELEASE
 
+##2.2.3 (2016-02-04)
+- BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
+
 ##2.2.2 (2016-01-31)
 - OPT: **sct_dmri_moco**: added flag "-bvalmin" to specify b=0 threshold and improved reading of bval file.
 
