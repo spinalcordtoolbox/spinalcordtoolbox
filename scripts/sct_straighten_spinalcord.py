@@ -169,49 +169,6 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     return x_centerline_fit, y_centerline_fit, z_centerline_fit, \
             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
-# def compute_cross(coordinate, gapxy=15):
-#     cross_coordinates = []
-#
-#     x0, y0, z0 = coordinate.x, coordinate.y, coordinate.z
-#     initial_landmark_value = coordinate.value
-#
-#     # set x, y and z coordinates for landmarks +x
-#     cross_coordinates.append(Coordinate([x0 + gapxy, y0, z0, initial_landmark_value + 1]))
-#     # set x, y and z coordinates for landmarks -x
-#     cross_coordinates.append(Coordinate([x0 - gapxy, y0, z0, initial_landmark_value + 2]))
-#     # set x, y and z coordinates for landmarks +y
-#     cross_coordinates.append(Coordinate([x0, y0 + gapxy, z0, initial_landmark_value + 3]))
-#     # set x, y and z coordinates for landmarks -y
-#     cross_coordinates.append(Coordinate([x0, y0 - gapxy, z0, initial_landmark_value + 4]))
-#     # set x, y and z coordinates for landmarks +x+y
-#     cross_coordinates.append(Coordinate([x0 + gapxy, y0 + gapxy, z0, initial_landmark_value + 5]))
-#     # set x, y and z coordinates for landmarks -x+y
-#     cross_coordinates.append(Coordinate([x0 - gapxy, y0 + gapxy, z0, initial_landmark_value + 6]))
-#     # set x, y and z coordinates for landmarks +x-y
-#     cross_coordinates.append(Coordinate([x0 + gapxy, y0 - gapxy, z0, initial_landmark_value + 7]))
-#     # set x, y and z coordinates for landmarks -x-y
-#     cross_coordinates.append(Coordinate([x0 - gapxy, y0 - gapxy, z0, initial_landmark_value + 8]))
-#
-#     # internal crosses
-#     gapxy_internal = gapxy / 2
-#     # set x, y and z coordinates for landmarks +x
-#     cross_coordinates.append(Coordinate([x0 + gapxy_internal, y0, z0, initial_landmark_value + 9]))
-#     # set x, y and z coordinates for landmarks -x
-#     cross_coordinates.append(Coordinate([x0 - gapxy_internal, y0, z0, initial_landmark_value + 10]))
-#     # set x, y and z coordinates for landmarks +y
-#     cross_coordinates.append(Coordinate([x0, y0 + gapxy_internal, z0, initial_landmark_value + 11]))
-#     # set x, y and z coordinates for landmarks -y
-#     cross_coordinates.append(Coordinate([x0, y0 - gapxy_internal, z0, initial_landmark_value + 12]))
-#     # set x, y and z coordinates for landmarks +x+y
-#     cross_coordinates.append(Coordinate([x0 + gapxy_internal, y0 + gapxy_internal, z0, initial_landmark_value + 13]))
-#     # set x, y and z coordinates for landmarks -x+y
-#     cross_coordinates.append(Coordinate([x0 - gapxy_internal, y0 + gapxy_internal, z0, initial_landmark_value + 14]))
-#     # set x, y and z coordinates for landmarks +x-y
-#     cross_coordinates.append(Coordinate([x0 + gapxy_internal, y0 - gapxy_internal, z0, initial_landmark_value + 15]))
-#     # set x, y and z coordinates for landmarks -x-y
-#     cross_coordinates.append(Coordinate([x0 - gapxy_internal, y0 - gapxy_internal, z0, initial_landmark_value + 16]))
-#
-#     return cross_coordinates
 
 def compute_cross_centerline(coordinate, derivative, gapxy=15):
 
@@ -250,122 +207,6 @@ def compute_cross_centerline(coordinate, derivative, gapxy=15):
         cross_coordinates[i].y = y - gap * cos(ay)
         cross_coordinates[i].z = z + gap * sin(ay)
         i += 1
-
-    # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
-    # and the distance landmark/curve to be gapxy
-
-
-    # # calculate d using formula: ax + by + cz + d = 0
-    # a = derivative.x
-    # b = derivative.y
-    # c = derivative.z
-    # x = coordinate.x
-    # y = coordinate.y
-    # z = coordinate.z
-    # d = -(a * x + b * y + c * z)
-    #
-    # # set y coordinate to y_centerline_fit[iz] for elements 1 and 2 of the cross
-    # cross_coordinates = [Coordinate(), Coordinate(), Coordinate(), Coordinate(),
-    #                      Coordinate(), Coordinate(), Coordinate(), Coordinate(),
-    #                      Coordinate(), Coordinate(), Coordinate(), Coordinate(),
-    #                      Coordinate(), Coordinate(), Coordinate(), Coordinate()]
-    #
-    # cross_coordinates[0].y = coordinate.y
-    # cross_coordinates[1].y = coordinate.y
-    #
-    # # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
-    # # and the distance landmark/curve to be gapxy
-    # x_n = Symbol('x_n')
-    # cross_coordinates[1].x, cross_coordinates[0].x = solve((x_n - x) ** 2 +
-    #                                                        ((-1 / c) * (a * x_n + b * y + d) - z) ** 2 -
-    #                                                        gapxy ** 2, x_n)  # x for -x and +x
-    # cross_coordinates[0].z = (-1 / c) * (a * cross_coordinates[0].x + b * y + d)  # z for +x
-    # cross_coordinates[1].z = (-1 / c) * (a * cross_coordinates[1].x + b * y + d)  # z for -x
-    #
-    # # set x coordinate to x_centerline_fit[iz] for elements 3 and 4 of the cross
-    # cross_coordinates[2].x = coordinate.x
-    # cross_coordinates[3].x = coordinate.x
-    #
-    # # set coordinates for landmarks +y and -y. Here, x coordinate is 0 (already initialized).
-    # y_n = Symbol('y_n')
-    # cross_coordinates[3].y, cross_coordinates[2].y = solve((y_n - y) ** 2 +
-    #                                                        ((-1 / c) * (a * x + b * y_n + d) - z) ** 2 -
-    #                                                        gapxy ** 2, y_n)  # y for -y and +y
-    # cross_coordinates[2].z = (-1 / c) * (a * x + b * cross_coordinates[2].y + d)  # z for +y
-    # cross_coordinates[3].z = (-1 / c) * (a * x + b * cross_coordinates[3].y + d)  # z for -y
-    #
-    # # set the first corner
-    # cross_coordinates[4].y = coordinate.y + gapxy
-    # cross_coordinates[5].y = coordinate.y + gapxy
-    #
-    # # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
-    # # and the distance landmark/curve to be gapxy
-    # cross_coordinates[5].x, cross_coordinates[4].x = solve((x_n - x) ** 2 +
-    #                                                        ((-1 / c) * (a * x_n + b * (y + gapxy) + d)
-    #                                                         - z) ** 2 - gapxy ** 2, x_n)
-    # cross_coordinates[4].z = (-1 / c) * (a * cross_coordinates[4].x + b * (y + gapxy) + d)  # z for +x
-    # cross_coordinates[5].z = (-1 / c) * (a * cross_coordinates[5].x + b * (y + gapxy) + d)  # z for -x
-    #
-    # # set the other corner
-    # cross_coordinates[6].y = coordinate.y - gapxy
-    # cross_coordinates[7].y = coordinate.y - gapxy
-    #
-    # # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
-    # # and the distance landmark/curve to be gapxy
-    # cross_coordinates[7].x, cross_coordinates[6].x = solve((x_n - x) ** 2 +
-    #                                                        ((-1 / c) * (a * x_n + b * (y - gapxy) + d)
-    #                                                         - z) ** 2 - gapxy ** 2, x_n)
-    # cross_coordinates[6].z = (-1 / c) * (a * cross_coordinates[6].x + b * (y - gapxy) + d)  # z for +x
-    # cross_coordinates[7].z = (-1 / c) * (a * cross_coordinates[7].x + b * (y - gapxy) + d)  # z for -x
-    #
-    # gapxy /= 2
-    # cross_coordinates[8].y = coordinate.y
-    # cross_coordinates[9].y = coordinate.y
-    #
-    # # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
-    # # and the distance landmark/curve to be gapxy
-    # x_n = Symbol('x_n')
-    # cross_coordinates[9].x, cross_coordinates[8].x = solve((x_n - x) ** 2 +
-    #                                                        ((-1 / c) * (a * x_n + b * y + d) - z) ** 2 -
-    #                                                        gapxy ** 2, x_n)  # x for -x and +x
-    # cross_coordinates[8].z = (-1 / c) * (a * cross_coordinates[8].x + b * y + d)  # z for +x
-    # cross_coordinates[9].z = (-1 / c) * (a * cross_coordinates[9].x + b * y + d)  # z for -x
-    #
-    # # set x coordinate to x_centerline_fit[iz] for elements 3 and 4 of the cross
-    # cross_coordinates[10].x = coordinate.x
-    # cross_coordinates[11].x = coordinate.x
-    #
-    # # set coordinates for landmarks +y and -y. Here, x coordinate is 0 (already initialized).
-    # y_n = Symbol('y_n')
-    # cross_coordinates[11].y, cross_coordinates[10].y = solve((y_n - y) ** 2 +
-    #                                                          ((-1 / c) * (a * x + b * y_n + d) - z) ** 2 -
-    #                                                          gapxy ** 2, y_n)  # y for -y and +y
-    # cross_coordinates[10].z = (-1 / c) * (a * x + b * cross_coordinates[10].y + d)  # z for +y
-    # cross_coordinates[11].z = (-1 / c) * (a * x + b * cross_coordinates[11].y + d)  # z for -y
-    #
-    # # set the first corner
-    # cross_coordinates[12].y = coordinate.y + gapxy
-    # cross_coordinates[13].y = coordinate.y + gapxy
-    #
-    # # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
-    # # and the distance landmark/curve to be gapxy
-    # cross_coordinates[13].x, cross_coordinates[12].x = solve((x_n - x) ** 2 +
-    #                                                          ((-1 / c) * (a * x_n + b * (y + gapxy) + d)
-    #                                                           - z) ** 2 - gapxy ** 2, x_n)
-    # cross_coordinates[12].z = (-1 / c) * (a * cross_coordinates[12].x + b * (y + gapxy) + d)  # z for +x
-    # cross_coordinates[13].z = (-1 / c) * (a * cross_coordinates[13].x + b * (y + gapxy) + d)  # z for -x
-    #
-    # # set the other corner
-    # cross_coordinates[14].y = coordinate.y - gapxy
-    # cross_coordinates[15].y = coordinate.y - gapxy
-    #
-    # # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
-    # # and the distance landmark/curve to be gapxy
-    # cross_coordinates[15].x, cross_coordinates[14].x = solve((x_n - x) ** 2 +
-    #                                                          ((-1 / c) * (a * x_n + b * (y - gapxy) + d)
-    #                                                           - z) ** 2 - gapxy ** 2, x_n)
-    # cross_coordinates[14].z = (-1 / c) * (a * cross_coordinates[14].x + b * (y - gapxy) + d)  # z for +x
-    # cross_coordinates[15].z = (-1 / c) * (a * cross_coordinates[15].x + b * (y - gapxy) + d)  # z for -x
 
     for i, coord in enumerate(cross_coordinates):
         coord.value = coordinate.value + i + 1
@@ -429,15 +270,9 @@ class SpinalCordStraightener(object):
                 # compute cross
                 cross_coordinates = compute_cross_centerline(coord, deriv, self.gapxy)
                 for coord in cross_coordinates:
-                    # # check if all coordinates are real (jcohenadad, see issue #584)
-                    # if not (is_number(coord.x) and is_number(coord.y) and is_number(coord.z)):
-                    #     sct.printv('WARNING: Coordinates have complex values at iz='+str(iz)+': '+str(coord), 1, 'warning')
-                    #     # set wrong coordinates that will be removed later on
-                    #     coord.x, coord.y, coord.z = 99999, 99999, 99999
                     temp_results.append(coord)
             else:
                 # not a junction: do not create the cross.
-                # if self.all_labels >= 1:
                 temp_results.append(Coordinate([x_centerline_fit[iz], y_centerline_fit[iz], z_centerline[iz], 0], mode='continuous'))
 
             return iz, temp_results
@@ -521,6 +356,7 @@ class SpinalCordStraightener(object):
 
         try:
             # JULIEN
+            # TODO: resample at 1mm!!!
             sct.run('cp data.nii data_1mm.nii')
             sct.run('cp centerline.nii.gz centerline_1mm.nii.gz')
             # # resample data to 1mm isotropic
@@ -578,12 +414,6 @@ class SpinalCordStraightener(object):
             # find z indices along centerline given a specific gap: iz_curved
             nz_nonz = len(z_centerline)
             nb_landmark = int(round(length_centerline/gapz))
-            # if nb_landmark == 0:
-            #     nb_landmark = 1
-            # if nb_landmark == 1:
-            #     iz_curved = [0]
-            #     iz_straight = [0]
-            # else:
             iz_curved = [0]
             iz_straight = [(z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice]
             temp_length_centerline = iz_straight[0]
@@ -608,31 +438,6 @@ class SpinalCordStraightener(object):
                                 x_centerline_fit,
                                 y_centerline_fit,
                                 z_centerline)
-            # if self.cpu_number != 0:
-            #     from multiprocessing import Pool
-            #     arguments_landmarks = [(iz, worker_arguments) for iz in range(min(iz_curved), max(iz_curved) + 1, 1)]
-            #
-            #     pool = Pool(processes=self.cpu_number)
-            #     pool.map_async(self.worker_landmarks_curved, arguments_landmarks,
-            #                    callback=self.worker_landmarks_curved_results)
-            #
-            #     pool.close()
-            #     try:
-            #         pool.join()  # waiting for all the jobs to be done
-            #         if self.results_landmarks_curved:
-            #             landmark_curved = self.results_landmarks_curved
-            #         else:
-            #             raise ValueError("ERROR: no curved landmarks constructed...")
-            #     except KeyboardInterrupt:
-            #         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
-            #         pool.terminate()
-            #         sys.exit(2)
-            #     except Exception as e:
-            #         print "Error during straightening on line {}".format(sys.exc_info()[-1].tb_lineno)
-            #         print e
-            #         sys.exit(2)
-            # else:
-            # landmark_curved_temp = [self.worker_landmarks_curved((iz, worker_arguments)) for iz in range(min(iz_curved), max(iz_curved) + 1, 1)]
             landmark_curved_temp = [self.worker_landmarks_curved((iz, worker_arguments)) for iz in range(len(z_centerline))]
             landmark_curved_value = 1
             for iz, l_curved in landmark_curved_temp:
@@ -671,35 +476,6 @@ class SpinalCordStraightener(object):
                     landmark_straight.append(landmark)
                     landmark_straight_value += 1
 
-
-            # calculate the z indices corresponding to the Euclidean distance between two consecutive points on the
-            # curved centerline (approximation curve --> line)
-            # TODO: DO NOT APPROXIMATE CURVE --> LINE
-            #
-            # # initialize x0 and y0 to be at the center of the FOV
-            # x0 = int(round(nx/2))
-            # y0 = int(round(ny/2))
-            # landmark_curved_value = 1
-            # for iz in range(min(iz_curved), max(iz_curved)+1, 1):
-            #     # compute new z-coordinate based on iz, middle slice and factor_curved_straight
-            #     if iz in iz_curved:
-            #         z0 = iz_straight[iz_curved.index(iz)]
-            #         # set coordinates for landmark at the center of the cross
-            #         central_coordinate = Coordinate([x0, y0, z0, landmark_curved_value])
-            #         landmark_straight.append(central_coordinate)
-            #         landmark_straight.extend(compute_cross(central_coordinate, gapxy=gapxy))
-            #         landmark_curved_value += 17
-            #     elif self.all_labels >= 1:
-            #         z0 = (z_centerline[iz] - middle_slice) * factor_curved_straight + middle_slice
-            #         landmark_straight.append(Coordinate([x0, y0, z0, landmark_curved_value]))
-            #         landmark_curved_value += 1
-
-            # # Discard corrupted landmarks (jcohenadad, issue #584)
-            # landmark_curved_tmp = []
-            # for i_landmark_curved in landmark_curved:
-            #     if not (i_landmark_curved.x == 99999 and i_landmark_curved.y == 99999 and i_landmark_curved.z == 99999):
-            #         landmark_curved_tmp.append(i_landmark_curved)
-            # landmark_curved = landmark_curved_tmp
 
             # display curved and straight cross
             if verbose == 2:
@@ -809,7 +585,7 @@ class SpinalCordStraightener(object):
             save(img, 'tmp.landmarks_curved.nii.gz')
             sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
             # JULIEN
-            # hdr_straight_landmarks.set_data_dtype('uint32')
+            hdr_straight_landmarks.set_data_dtype('uint32')
             img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
             save(img, 'tmp.landmarks_straight.nii.gz')
             sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
