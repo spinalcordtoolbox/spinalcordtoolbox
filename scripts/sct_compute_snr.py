@@ -17,12 +17,8 @@ import numpy as np
 from msct_parser import Parser
 from msct_image import Image
 from sct_image import get_orientation, set_orientation
-from sct_utils import printv, tmp_create
-from os import rmdir
-
-class Param:
-    def __init__(self):
-        self.verbose = 1
+import sct_utils as sct
+from os import rmdir, chdir
 
 
 # PARSER
@@ -37,17 +33,22 @@ def get_parser():
                       description="Input images to compute the SNR on. Must be concatenated in time. Typically, 2 or 3 b0s concatenated in time (depending on the method used).",
                       mandatory=True,
                       example="b0s.nii.gz")
-    parser.add_option(name="-s",
+    parser.add_option(name="-m",
                       type_value='image_nifti',
-                      description='Mask of the ROI to compute the SNR in.',
+                      description='ROI within which SNR will be averaged.',
                       mandatory=True,
                       example='dwi_moco_mean_seg.nii.gz')
-    parser.add_option(name="-vertfname",
-                      type_value='image_nifti',
-                      description='File name of the vertebral labeling registered to the input images (flag -i).',
+    parser.add_option(name="-method",
+                      type_value='multiple_choice',
+                      description='Method to use to compute the SNR:\n- diff: Use the two first volumes to estimate noise variance.\n- mult: Use all volumes to estimate noise variance.',
                       mandatory=False,
-                      example='label/template/MNI-Poly-AMU_levels.nii.gz',
-                      default_value='None')
+                      default_value='diff',
+                      example=['diff', 'mult', 'background', 'nema'])
+    parser.add_option(name="-vertfile",
+                      type_value='image_nifti',
+                      description='File name of the vertebral labeling registered to the input images.',
+                      mandatory=False,
+                      default_value='label/template/MNI-Poly-AMU_level.nii.gz')
     parser.add_option(name="-vert",
                       type_value='str',
                       description='Vertebral levels where to compute the SNR.',
@@ -60,17 +61,11 @@ def get_parser():
                       mandatory=False,
                       example='2:6',
                       default_value='None')
-    parser.add_option(name="-method",
-                      type_value='str',
-                      description='Method to use to compute the SNR:\n- multi: take advantage of more than 2 images to compute SNR (reference method)\n- diff: enable to compute SNR from only two images.',
-                      mandatory=False,
-                      example='diff',
-                      default_value='multi')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic.""",
                       mandatory=False,
-                      default_value=param.verbose,
+                      default_value='0',
                       example=['0', '1'])
     return parser
 
@@ -79,50 +74,53 @@ def get_parser():
 # ==========================================================================================
 def main():
 
+    # initialization
+    fname_mask = ''
+
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-    b0s_fname = arguments["-i"]
-    mask_fname = arguments["-s"]
-    vert_label_fname = arguments["-vertfname"]
+    fname_data = arguments['-i']
+    fname_mask = arguments['-m']
+    vert_label_fname = arguments["-vertfile"]
     vert_levels = arguments["-vert"]
     slices_of_interest = arguments["-z"]
     method = arguments["-method"]
     verbose = int(arguments['-v'])
 
+
     # Check if data are in RPI
-    input_im = Image(b0s_fname)
+    input_im = Image(fname_data)
     input_orient = get_orientation(input_im)
 
     # If orientation is not RPI, change to RPI
     if input_orient != 'RPI':
-        printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
-        path_tmp = tmp_create()
+        sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
+        path_tmp = sct.tmp_create()
         # change orientation and load data
-        printv('\nChange input image orientation and load it...', verbose)
+        sct.printv('\nChange input image orientation and load it...', verbose)
         input_im_rpi = set_orientation(input_im, 'RPI', fname_out=path_tmp+'input_RPI.nii')
         input_data = input_im_rpi.data
         # Do the same for the mask
-        printv('\nChange mask orientation and load it...', verbose)
-        mask_im_rpi = set_orientation(Image(mask_fname), 'RPI', fname_out=path_tmp+'mask_RPI.nii')
+        sct.printv('\nChange mask orientation and load it...', verbose)
+        mask_im_rpi = set_orientation(Image(fname_mask), 'RPI', fname_out=path_tmp+'mask_RPI.nii')
         mask_data = mask_im_rpi.data
         # Do the same for vertebral labeling if present
         if vert_levels != 'None':
-            printv('\nChange vertebral labeling file orientation and load it...', verbose)
+            sct.printv('\nChange vertebral labeling file orientation and load it...', verbose)
             vert_label_im_rpi = set_orientation(Image(vert_label_fname), 'RPI', fname_out=path_tmp+'vert_labeling_RPI.nii')
             vert_labeling_data = vert_label_im_rpi.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
-        printv('\nRemove the temporary folder...', verbose)
+        sct.printv('\nRemove the temporary folder...', verbose)
         rmdir(path_tmp)
     else:
         # Load data
-        printv('\nLoad data...', verbose)
+        sct.printv('\nLoad data...', verbose)
         input_data = input_im.data
-        mask_data = Image(mask_fname).data
+        mask_data = Image(fname_mask).data
         if vert_levels != 'None':
             vert_labeling_data = Image(vert_label_fname).data
-    printv('\tDone.', verbose)
-
+    sct.printv('\tDone.', verbose)
 
     # Get slices corresponding to vertebral levels
     if vert_levels != 'None':
@@ -138,40 +136,32 @@ def main():
     input_data = input_data[:, :, slices_of_interest_list, :]
     mask_data = mask_data[:, :, slices_of_interest_list]
 
-    # Compute SNR in ROI
+    # Get signal and noise
     indexes_roi = np.where(mask_data == 1)
-    if method == 'multi':
-        # b0_1 = input_data[:, :, :, 0]
-        # b0_2 = input_data[:, :, :, 1]
-        # b0_3 = input_data[:, :, :, 2]
-        # mean_b0_1 = np.mean(b0_1[indexes_roi])
-        # mean_b0_2 = np.mean(b0_2[indexes_roi])
-        # mean_b0_3 = np.mean(b0_3[indexes_roi])
-        # mean_roi = np.mean([mean_b0_1, mean_b0_2, mean_b0_3])
-        mean_roi = np.mean(input_data[indexes_roi])
+    if method == 'mult':
+        signal = np.mean(input_data[indexes_roi])
         std_input_temporal = np.std(input_data, 3)
-        mean_std_temporal = np.mean(std_input_temporal[indexes_roi])
-        SNR = mean_roi/mean_std_temporal
+        noise = np.mean(std_input_temporal[indexes_roi])
     elif method == 'diff':
-        b0_1 = input_data[:, :, :, 0]
-        b0_2 = input_data[:, :, :, 1]
-        numerator = np.mean(np.add(b0_1[indexes_roi], b0_2[indexes_roi]))
-        denominator = np.sqrt(2)*np.std(np.subtract(b0_1[indexes_roi], b0_2[indexes_roi]))
-        SNR = numerator/denominator
+        data_1 = input_data[:, :, :, 0]
+        data_2 = input_data[:, :, :, 1]
+        signal = np.mean(np.add(b0_1[indexes_roi], b0_2[indexes_roi]))
+        noise = np.sqrt(2)*np.std(np.subtract(b0_1[indexes_roi], b0_2[indexes_roi]))
+    elif method == 'background':
+        sct.printv('ERROR: Sorry, method is not implemented yet.', 1, 'error')
+    elif method == 'nema':
+        sct.printv('ERROR: Sorry, method is not implemented yet.', 1, 'error')
 
-    else:
-        printv('\nERROR: unknown mehtod', type='error')
+    # compute SNR
+    SNR = signal/noise
 
     # Display result
-    printv('\nSNR = '+str(SNR)+' (used method "'+method+')', type='info')
-
+    sct.printv('\nSNR_'+method+' = '+str(SNR)+'\n', type='info')
 
 
 
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()
