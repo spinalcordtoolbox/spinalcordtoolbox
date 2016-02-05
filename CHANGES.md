@@ -1,6 +1,7 @@
 # CHANGES TO RELEASE
 
 ##TBD
+- NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
 - fixed issues #715, #719
 
 ##2.2.3 (2016-02-04)
