@@ -1,5 +1,8 @@
 # CHANGES TO RELEASE
 
+##TBD
+- fixed issues #715, #719
+
 ##2.2.3 (2016-02-04)
 - BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
 
