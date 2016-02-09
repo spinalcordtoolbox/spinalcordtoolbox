@@ -85,11 +85,32 @@ def norm(x, y, z, p1, p2, p3):
 #=======================================================================================================================
 # Evaluate derivative of data points
 #=======================================================================================================================
-def evaluate_derivative_2D(x,y):
-    from numpy import array, append
-    y_deriv = array([(y[i+1]-y[i])/(x[i+1]-x[i]) for i in range(0, len(x)-1)])
-    y_deriv = append(y_deriv,(y[-1] - y[-2])/(x[-1] - x[-2]))
-    return y_deriv
+def evaluate_derivative_2D(x, y, px, py):
+    """
+    Compute derivative in 2D, accounting for pixel size in each dimension
+    :param x:
+    :param y:
+    :param px:
+    :param py:
+    :return:
+    """
+
+    from numpy import array, sqrt, insert, append
+
+    x = [x_elem*px for x_elem in x]
+    y = [y_elem*py for y_elem in y]
+
+    # compute derivative for points 2 --> n-1
+    x_deriv = array([(x[i+1]-x[i-1]) / (y[i+1]-y[i-1]) for i in range(1, len(x)-1)])
+    y_deriv = array([(y[i+1]-y[i-1]) / (x[i+1]-x[i-1]) for i in range(1, len(y)-1)])
+
+    # compute derivatives for points 1 and n.
+    x_deriv = insert(x_deriv, 0, (x[1]-x[0])/(y[1]-y[0]))
+    x_deriv = append(x_deriv, (x[-1]-x[-2])/(y[-1]-y[-2]))
+    y_deriv = insert(y_deriv, 0, (y[1]-y[0])/(x[1]-x[0]))
+    y_deriv = append(y_deriv, (y[-1]-y[-2])/(x[-1]-x[-2]))
+
+    return x_deriv, y_deriv
 
 
 
@@ -97,24 +118,32 @@ def evaluate_derivative_2D(x,y):
 # Evaluate derivative of data points in 3D
 #=======================================================================================================================
 def evaluate_derivative_3D(x, y, z, px, py, pz):
+    """
+    Compute derivative in 3D, accounting for pixel size in each dimension
+    :param x:
+    :param y:
+    :param z:
+    :param px:
+    :param py:
+    :param pz:
+    :return:
+    """
     from numpy import array, sqrt, insert, append
 
     x = [x_elem*px for x_elem in x]
     y = [y_elem*py for y_elem in y]
     z = [z_elem*pz for z_elem in z]
 
+    # compute derivative for points 2 --> n-1
     x_deriv = array([(x[i+1]-x[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range(1,len(x)-1)])
     y_deriv = array([(y[i+1]-y[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range(1,len(y)-1)])
     z_deriv = array([(z[i+1]-z[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range(1,len(z)-1)])
 
+    # compute derivatives for points 1 and n.
     x_deriv = insert(x_deriv, 0, (x[1]-x[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
     x_deriv = append(x_deriv, (x[-1]-x[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
-
-    #print len(x_deriv)
-
     y_deriv = insert(y_deriv, 0, (y[1]-y[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
     y_deriv = append(y_deriv, (y[-1]-y[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
-
     z_deriv = insert(z_deriv, 0, (z[1]-z[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
     z_deriv = append(z_deriv, (z[-1]-z[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
 
@@ -516,34 +545,32 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError, "Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
 
-    ## Checking the window's size
-    nb_points = x.shape[0]
-    #The number of points of the curve must be superior to int(window_length/(2.0*pz))
-    if window_len > int(nb_points):
-        window_len = int(nb_points)
-        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), verbose=verbose, type='warning')
-
-    # make window_len as odd integer (x = x+1 if x is even)
-    window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
-
     # make sure there are enough points before removing those at the edge
     size_curve = x.size
     if size_curve < 10:
         remove_edge_points = 0
 
-    # s = r_[x[window_len_int-1:0:-1], x, x[-1:-window_len_int:-1]]
-
-    # Extend the curve before smoothing using mirroring technique, to avoid edge effect during smoothing
+    # remove edge points (in case segmentation is bad at the edge)
     if not remove_edge_points == 0:
         x_extended = x[remove_edge_points:-remove_edge_points]  # remove points at the edge (jcohenadad, issue #513)
     else:
         x_extended = x
-    x_extended_tmp = x_extended
-    size_padding = int(round((window_len_int-1)/2.0) + remove_edge_points)
 
+    # Checking the window's size
+    nb_points = x_extended.shape[0]
+    #The number of points of the curve must be superior to int(window_length/(2.0*pz))
+    if window_len > int(nb_points):
+        window_len = int(nb_points)
+        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), verbose=verbose, type='warning')
+
+    # Make window_len as odd integer (x = x+1 if x is even)
+    window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
+
+    # Add padding
+    size_padding = int(round((window_len_int-1)/2.0) + remove_edge_points)
     for i in range(size_padding):
-        x_extended = append(x_extended, 2*x_extended_tmp[-1] - x_extended_tmp[-2-i])
-        x_extended = insert(x_extended, 0, 2*x_extended_tmp[0] - x_extended_tmp[i+1])
+        x_extended = append(x_extended, 2*x_extended[-1-i] - x_extended[-1-2*i-1])
+        x_extended = insert(x_extended, 0, 2*x_extended[i] - x_extended[2*i+1])
 
     # Creation of the window
     if window == 'flat': #moving average
@@ -552,22 +579,21 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
         w = eval(window+'(window_len_int)')
 
     # Convolution of the window with the extended signal
+    # len(y) = (len(x_extended) + len(w)) / 2
     y = convolve(x_extended, w/w.sum(), mode='valid')
 
     # Display smoothing
     if verbose == 2:
         import matplotlib.pyplot as plt
         from copy import copy
+        z = [i + size_padding - remove_edge_points for i in range(x.shape[0])]
         z_extended = [i for i in range(x_extended.shape[0])]
         # Create x_display to visualize concording results
-        x_display = copy(x_extended)
-        for i in range(size_padding - 1):
-            x_display[i] = 0
-            x_display[-i-1] = 0
         plt.figure()
         pltx_ext, = plt.plot(z_extended, x_extended, 'go')
-        pltx, = plt.plot(z_extended[size_padding:size_padding + size_curve], x_display[size_padding:size_padding + size_curve], 'bo')
-        pltx_fit, = plt.plot(z_extended[size_padding:size_padding + size_curve], y, 'r', linewidth=2)
+        pltx, = plt.plot(z, x, 'bx')
+        #pltx, = plt.plot(z_extended[size_padding:size_padding + size_curve], x_display[size_padding:size_padding + size_curve], 'bo')
+        pltx_fit, = plt.plot(z, y, 'r', linewidth=2)
         plt.title("Type of window: %s     Window_length= %d mm" % (window, window_len))
         plt.xlabel('z')
         plt.ylabel('x')
