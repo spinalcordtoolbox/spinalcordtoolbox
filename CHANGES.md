@@ -1,5 +1,23 @@
 # CHANGES TO RELEASE
 
+##TBD
+- NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
+- fixed issues #715, #719
+
+##2.2.3 (2016-02-04)
+- BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
+
+##2.2.2 (2016-01-31)
+- OPT: **sct_dmri_moco**: added flag "-bvalmin" to specify b=0 threshold and improved reading of bval file.
+
+##2.2.1 (2016-01-29)
+- BUG: **sct_dmri_moco**: fixed bug related to the use of mask
+- BUG: **sct_dmri_moco**: fixed bug in the algorithm (iterative average of target DWI volume)
+
+##2.2 (2016-01-23)
+- BUG: Fixed major issue during installation (issue #708)
+- BUG: **sct_process_segmentation**: fixed bug occuring with small FOV (issue #706)
+
 ##2.1.1 (2016-01-15)
 - BUG: **sct_resample**: fixed issue #691
 - OPT: **sct_segment_graymatter**: improved robustness of normalization
