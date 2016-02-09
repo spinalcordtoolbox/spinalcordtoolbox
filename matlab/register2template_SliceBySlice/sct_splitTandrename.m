@@ -25,7 +25,7 @@ sct_unix(cmd);
 %rename
 numT = j_numbering(dim(4),4,0);
 for iT = 1:dim(4)
-    files{iT} = [file 'T' numT{iT}];
+    files{iT} = [file 'T' numT{iT} '.nii.gz'];
 end
 
 end

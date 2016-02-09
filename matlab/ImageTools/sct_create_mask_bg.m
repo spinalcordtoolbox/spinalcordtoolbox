@@ -1,12 +1,9 @@
-function sct_create_mask_bg(fname,threshold)
-A=load_untouch_nii(fname);
+function mask = sct_create_mask_bg(A,threshold)
 
 if ~exist('threshold','var'), threshold=0.3; end
 
-mask=false(size(A.img));
-for iz=1:size(A.img,3)
-    mask(:,:,iz)=A.img(:,:,iz)>threshold*max(max(A.img(:,:,iz)));
+mask=false(size(A));
+for iz=1:size(A,3)
+    mask(:,:,iz)=A(:,:,iz)>threshold*max(max(A(:,:,iz)));
 end
 
-A.img=mask;
-save_untouch_nii(A,[sct_tool_remove_extension(fname,1) '_bgmask.nii'])
