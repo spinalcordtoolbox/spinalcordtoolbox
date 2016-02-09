@@ -10,7 +10,7 @@ j_disp(log_spline,['\nSmoothing Patient Motion...'])
 % LOAD MATRIX
 [list, path]=sct_tools_ls(fname_mat);
 
-Z_index=cellfun(@(x) cell2mat(textscan(x,'%*[mat.T]%*u%*[_Z]%u%*[.txt]')),list);
+Z_index=double(round(cellfun(@(x) cell2mat(textscan(x,'%*[mat.T]%*u%*[_Z]%u%*[.txt]')),list)));
 T=cellfun(@(x) cell2mat(textscan(x,'%*[mat.T]%u%*[_Z]%*u%*[.txt]')),list); T=single(T);
 j_progress('loading matrix...')
 for imat=1:length(list), j_progress(imat/length(list)); M_tmp{imat}=load([path list{imat}]); X(imat)=M_tmp{imat}(1,4); Y(imat)=M_tmp{imat}(2,4); end
@@ -38,7 +38,7 @@ ind_ab = inputdlg('Enter space-separated numbers:',...
              'Volume# before abrupt motion (starting at 1)',[1 150]);
 if isempty(ind_ab), ind_ab=[]; else ind_ab = str2num(ind_ab{:}); end
 j_disp(log_spline,['Abrupt motion on Volume #: ' num2str(ind_ab)])
-ind_ab=[0 ind_ab max(T)];
+ind_ab=double([0 ind_ab max(T)]);
 
 
 

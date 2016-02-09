@@ -1156,7 +1156,8 @@ if ~strcmp(sct.dmri.moco_intra.method,'none')
         mat_folders.nb = mat_folders.nb + 1;
         mat_folders.names{mat_folders.nb} = [sct.output_path 'mat_moco/'];
         mat_folders.slicewise(mat_folders.nb) = sct.dmri.moco_intra.slicewise;
-        
+        save([sct.output_path 'workspace.mat'])
+
     elseif strcmp(sct.dmri.moco_intra.method,'dwi')
         
 %         % call motion correction module for each dwi group
