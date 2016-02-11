@@ -1,8 +1,17 @@
 #!/bin/bash
 # SPINALCORDTOOLBOX (added on 2016-01-27)
+
+
+function install_conda {
+  echo noting yet
+}
+
+
 if [ -z ${SCT_DIR} ]; then
   # set at installation
-  export SCT_DIR="/home/poquirion/neuropoly/spinalcordtoolbox"
+  SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+  SCT_DIR=${SCT_DIR%/bin}
+  #export SCT_DIR="/home/poquirion/neuropoly/spinalcordtoolbox"
   # The default
   export SCT_PYTHON=${SCT_DIR}/bin/miniconda
 
@@ -14,11 +23,11 @@ if [ -z ${SCT_DIR} ]; then
   # Will quietely fail if a virtual/conda env is not used
   . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON} > /dev/null 2>&1
 
-  if [ $(basename $0)  ]; then
+fi
+if [ $(basename $0)  ]; then
     echo running $SCT_DIR/scripts/${@}
     $SCT_DIR/scripts/${@}
 #    echo running $SCT_DIR/scripts/$(basename $0).py  ${@}
 #    $SCT_DIR/scripts/$(basename $0).py ${@}
     #${@}
-  fi
 fi
