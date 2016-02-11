@@ -3,17 +3,22 @@
 if [ -z ${SCT_DIR} ]; then
   # set at installation
   export SCT_DIR="/home/poquirion/neuropoly/spinalcordtoolbox"
-  export SCT_PYTHON=/home/poquirion/neuropoly/miniconda2
+  # The default
+  export SCT_PYTHON=${SCT_DIR}/bin/miniconda
 
   export PATH=${PATH}:$SCT_DIR/bin
   export PATH=${PATH}:$SCT_DIR/bin/linux
   export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=8
 
-  . ${SCT_PYTHON}/bin/activate /home/poquirion/neuropoly/miniconda2 > /dev/null 2>&1
+  # Will quietely fail if a virtual/conda env is not used
+  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON} > /dev/null 2>&1
+
   if [ $(basename $0)  ]; then
-    echo running $SCT_DIR/scripts/$(basename $0).py  ${@}
-    $SCT_DIR/scripts/$(basename $0).py ${@}
+    echo running $SCT_DIR/scripts/${@}
+    $SCT_DIR/scripts/${@}
+#    echo running $SCT_DIR/scripts/$(basename $0).py  ${@}
+#    $SCT_DIR/scripts/$(basename $0).py ${@}
     #${@}
   fi
 fi

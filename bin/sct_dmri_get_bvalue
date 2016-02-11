@@ -1,1 +1,2 @@
-../scripts/sct_dmri_get_bvalue.py
+#!/bin/bash
+sct_launcher $(basename $0).py $@

@@ -1,1 +1,2 @@
-../scripts/sct_check_atlas_integrity.py
+#!/bin/bash
+sct_launcher $(basename $0).py $@

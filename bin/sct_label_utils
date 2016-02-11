@@ -1,1 +1,2 @@
-../scripts/sct_label_utils.py
+#!/bin/bash
+sct_launcher $(basename $0).py $@
