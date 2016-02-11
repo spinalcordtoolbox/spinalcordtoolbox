@@ -1,1 +1,2 @@
-../scripts/sct_warp_template.py
+#!/bin/bash
+sct_launcher $(basename $0).py $@
