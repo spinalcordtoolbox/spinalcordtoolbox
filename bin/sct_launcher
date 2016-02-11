@@ -1,24 +1,79 @@
 #!/bin/bash
 # SPINALCORDTOOLBOX (added on 2016-01-27)
+# Do not modify this file
+# You can chose to pick a python install from anywhere on you system by
+# modifying the SCT_DIR variable in  in the ${HOME}/.config/sct/config file
+# e.g.
+#   export SCT_PYTHON=${SCT_DIR}/bin/miniconda
+# will run the toolbox with the system python on a standard linux distro
+#
+#
+function install_conda {
+  echo noting yet
+}
+
+function pick_system {
+
+if uname -a | grep -i  darwin > /dev/null 2>&1; then
+    # Do something under Mac OS X platform
+  SCT_OS=osx
+elif uname -a | grep -i  linux > /dev/null 2>&1; then
+  SCT_OS=linux
+else
+  echo YOUR OPERATING SYSTEM IS NOT SUPPORTED YET
+fi
+
+}
+
+
+function pathadd {
+  # will not add the path again if it is already there
+  if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
+    PATH="${1}:${PATH}"
+  fi
+}
+
+function pathbuzz {
+  # will not add the path again if it is already there
+  echo $2 $1
+  
+  if [[ ":$2:" != *":$1:"* ]]; then
+    $2="${1}:${$2}"
+    echo $tata
+    echo $2
+  fi
+}
+
+
 if [ -z ${SCT_DIR} ]; then
   # set at installation
-  export SCT_DIR="/home/poquirion/neuropoly/spinalcordtoolbox"
-  # The default
+  SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+  export SCT_DIR=${SCT_DIR%/bin}
   export SCT_PYTHON=${SCT_DIR}/bin/miniconda
 
-  export PATH=${PATH}:$SCT_DIR/bin
-  export PATH=${PATH}:$SCT_DIR/bin/linux
-  export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts
-  export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=8
+  pathadd "${SCT_DIR}/bin"
 
-  # Will quietely fail if a virtual/conda env is not used
-  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON} > /dev/null 2>&1
+  if  [ -z ${SCT_OS} ] ; then pick_system ; fi
+  pathadd "${SCT_DIR}/bin/${SCT_OS}"
+  export PATH
+  echo $PATH
 
-  if [ $(basename $0)  ]; then
-    echo running $SCT_DIR/scripts/${@}
-    $SCT_DIR/scripts/${@}
-#    echo running $SCT_DIR/scripts/$(basename $0).py  ${@}
-#    $SCT_DIR/scripts/$(basename $0).py ${@}
-    #${@}
+  export PYTHONPATH=${PYTHONPATH}:${SCT_DIR}/scripts
+  export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4
+
+  if [ -e ${HOME}/.config/sct/config ]; then
+    . ${HOME}/.config/sct/config
   fi
+  # Will quietely fail if a virtualenv or conda is not used
+  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON} > /dev/null 2>&1
+fi
+
+#echo  "$0" == "$BASH_SOURCE"  and  "$1"
+
+if   [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]  ; then
+    echo running ${SCT_DIR}/scripts/${@}
+    echo INSTALL PATH  SCT_DIR ${SCT_DIR}
+    python ${SCT_DIR}/scripts/${@}
+else
+     echo sourcing sct_laucher in your environement ${SCT_DIR}
 fi

@@ -120,9 +120,11 @@ def main():
 
     # get path of the toolbox
     print 'Check SCT path...'
-    status, output = sct.run('echo $SCT_DIR', verbose)
-    path_sct = output
-    print '.. '+path_sct
+    path_sct = os.getenv("SCT_DIR")
+    if path_sct is None :
+        raise EnvironmentError("SCT_DIR, which is the path to the "
+                               "Spinalcordtoolbox install needs to be set")
+    print ('.. {0}'.format(path_sct))
 
     # fetch version of the toolbox
     print 'Check SCT version... '
