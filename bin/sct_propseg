@@ -1,1 +1,2 @@
-../scripts/sct_propseg.py
+#!/bin/bash
+sct_launcher $(basename $0).py $@

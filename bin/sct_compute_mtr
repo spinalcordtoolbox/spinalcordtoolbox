@@ -1,1 +1,2 @@
-../scripts/sct_compute_mtr.py
+#!/bin/bash
+sct_launcher $(basename $0).py $@

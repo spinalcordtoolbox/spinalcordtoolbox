@@ -1,1 +1,2 @@
-../scripts/sct_average_data_within_mask.py
+#!/bin/bash
+sct_launcher $(basename $0).py $@
