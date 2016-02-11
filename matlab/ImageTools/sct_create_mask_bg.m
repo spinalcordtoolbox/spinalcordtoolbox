@@ -1,4 +1,5 @@
 function mask = sct_create_mask_bg(A,threshold)
+% mask = sct_create_mask_bg(A,threshold)
 
 if ~exist('threshold','var'), threshold=0.3; end
 
