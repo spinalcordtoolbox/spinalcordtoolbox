@@ -26,21 +26,12 @@ fi
 }
 
 
-function pathadd {
+function addtopath {
   # will not add the path again if it is already there
-  if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
-    PATH="${1}:${PATH}"
-  fi
-}
-
-function pathbuzz {
-  # will not add the path again if it is already there
-  echo $2 $1
-  
-  if [[ ":$2:" != *":$1:"* ]]; then
-    $2="${1}:${$2}"
-    echo $tata
-    echo $2
+  # usage: addtopath "/a/directory/to/be/added" PATH_VARIABLE
+  if [[ ":${!2}:" != *":$1:"* ]]; then
+    bidon1="${1}:${!2}"
+    eval "${2}=$bidon1"
   fi
 }
 
@@ -51,14 +42,16 @@ if [ -z ${SCT_DIR} ]; then
   export SCT_DIR=${SCT_DIR%/bin}
   export SCT_PYTHON=${SCT_DIR}/bin/miniconda
 
-  pathadd "${SCT_DIR}/bin"
+  export SCT_VERSION=$(cat $SCT_DIR/version.txt)
+
+  addtopath "${SCT_DIR}/bin" PATH
 
   if  [ -z ${SCT_OS} ] ; then pick_system ; fi
-  pathadd "${SCT_DIR}/bin/${SCT_OS}"
+  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
+  addtopath ${SCT_DIR}/scripts PYTHONPATH
   export PATH
-  echo $PATH
+  export PYTHONPATH
 
-  export PYTHONPATH=${PYTHONPATH}:${SCT_DIR}/scripts
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4
 
   if [ -e ${HOME}/.config/sct/config ]; then
@@ -68,9 +61,9 @@ if [ -z ${SCT_DIR} ]; then
   . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON} > /dev/null 2>&1
 fi
 
-#echo  "$0" == "$BASH_SOURCE"  and  "$1"
 
 if   [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]  ; then
+    echo Spinacord toolbox version $SCT_VERSION
     echo running ${SCT_DIR}/scripts/${@}
     echo INSTALL PATH  SCT_DIR ${SCT_DIR}
     python ${SCT_DIR}/scripts/${@}
