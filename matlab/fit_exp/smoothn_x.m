@@ -3,7 +3,7 @@ function Yout=smoothn_x(X,Y,Xeval,S,robust)
 if X~=round(X), error('X should be integers'); end
 
 Xbis=min(X):max(X);
-Ybis=nan(1,length(Xbis));
+Ybis=nan(1,max(Xeval));
 
 Ybis(X)=Y;
 
