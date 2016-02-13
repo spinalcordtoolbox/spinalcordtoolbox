@@ -117,53 +117,64 @@ def main(args = None):
         fname_out = None
 
     # Open file(s)
-    im_in = [Image(fn) for fn in fname_in]
+    # im_in_list = [Image(fn) for fn in fname_in]
 
     # run command
     if "-pad" in arguments:
         # TODO: check input is 3d
         padx, pady, padz = arguments["-pad"].split(',')
         padx, pady, padz = int(padx), int(pady), int(padz)
-        im_out = [pad_image(im_in[0], padding_x=padx, padding_y=pady, padding_z=padz)]
+        im_in = Image(fname_in[0])
+        im_out = [pad_image(im_in, padding_x=padx, padding_y=pady, padding_z=padz)]
 
     elif "-copy-header" in arguments:
+        im_in = Image(fname_in[0])
         im_dest = Image(arguments["-copy-header"])
-        im_out = [copy_header(im_in[0], im_dest)]
+        im_out = [copy_header(im_in, im_dest)]
 
     elif "-split" in arguments:
         dim = arguments["-split"]
         assert dim in dim_list
+        im_in = Image(fname_in[0])
         dim = dim_list.index(dim)
-        im_out = split_data(im_in[0], dim)
+        im_out = split_data(im_in, dim)
 
     elif "-concat" in arguments:
         dim = arguments["-concat"]
         assert dim in dim_list
         dim = dim_list.index(dim)
-        im_out = [concat_data(im_in, dim)]
+        im_out = [concat_data(fname_in, dim)] #TODO: adapt to fname_in
 
     elif "-getorient" in arguments:
-        orient = orientation(im_in[0], get=True, verbose=verbose)
+        im_in = Image(fname_in[0])
+        orient = orientation(im_in, get=True, verbose=verbose)
         im_out = None
 
     elif "-setorient" in arguments:
-        im_out = [orientation(im_in[0], ori=arguments["-setorient"], set=True, verbose=verbose)]
+        im_in = Image(fname_in[0])
+        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose)]
 
     elif "-setorient-data" in arguments:
-        im_out = [orientation(im_in[0], ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
+        im_in = Image(fname_in[0])
+        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
 
     elif '-mcs' in arguments:
+        im_in = Image(fname_in[0])
+
         if n_in != 1:
             printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
-        if len(im_in[0].data.shape) != 5:
+        if len(im_in.data.shape) != 5:
             printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
-        im_out = multicomponent_split(im_in[0])
+        im_out = multicomponent_split(im_in)
 
     elif '-omc' in arguments:
-        for im in im_in:
-            if im.data.shape != im_in[0].data.shape:
+        im_ref = Image(fname_in[0])
+        for fname in fname_in:
+            im = Image(fname)
+            if im.data.shape != im_ref.data.shape:
                 printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
-        im_out = [multicomponent_merge(im_in)]
+            del im
+        im_out = [multicomponent_merge(fname_in)] #TODO: adapt to fname_in
     else:
         im_out = None
         printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
@@ -278,7 +289,7 @@ def split_data(im_in, dim):
     return im_out_list
 
 
-def concat_data(im_in_list, dim):
+def concat_data(fname_in_list, dim):
     """
     Concatenate data
     :param im_in_list: list of images.
@@ -288,19 +299,30 @@ def concat_data(im_in_list, dim):
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
     from numpy import concatenate, expand_dims
 
-    data_list = [im.data for im in im_in_list]
-    # expand dimension of all elements in the list if necessary
-    if dim > im_in_list[0].data.ndim-1:
-        data_list = [expand_dims(dat, dim) for dat in data_list]
-    # concatenate
-    try:
-        data_concat = concatenate(data_list, axis=dim)
-    except Exception as e:
-        printv('\nERROR: Concatenation on line {}'.format(sys.exc_info()[-1].tb_lineno)+'\n'+str(e)+'\n', 1, 'error')
-        data_concat = None
+    im_0 = Image(fname_in_list[0])
+    # data_list = [im.data for im in im_in_list]
+
+    first = True
+    for fname in fname_in_list:
+        im = Image(fname)
+        dat = im.data
+        # expand dimension of data in the right dimension
+        dat = expand_dims(dat, dim)
+        if first:
+            data_concat = dat
+            first = False
+        else:
+            # concatenate
+            try:
+                data_concat = concatenate([data_concat, dat], axis=dim)
+            except Exception as e:
+                printv('\nERROR: Concatenation on line {}'.format(sys.exc_info()[-1].tb_lineno)+'\n'+str(e)+'\n', 1, 'error')
+                data_concat = None
+        del im
+        del dat
 
     # write file
-    im_out = im_in_list[0].copy()
+    im_out = im_0.copy()
     im_out.data = data_concat
     im_out.setFileName(im_out.file_name+'_concat'+im_out.ext)
 
@@ -327,25 +349,30 @@ def multicomponent_split(im):
     return im_out
 
 
-def multicomponent_merge(im_list):
+def multicomponent_merge(fname_list):
     from numpy import zeros, reshape
     # WARNING: output multicomponent is not optimal yet, some issues may be related to the use of this function
-    data_list = [im.data for im in im_list]
-    new_shape = list(data_list[0].shape)
+
+    im_0 = Image(fname_list[0])
+    new_shape = list(im_0.data.shape)
     if len(new_shape) == 3:
         new_shape.append(1)
-    new_shape.append(len(data_list))
+    new_shape.append(len(fname_list))
     new_shape = tuple(new_shape)
 
     data_out = zeros(new_shape)
-    for i, dat in enumerate(data_list):
+    for i, fname in enumerate(fname_list):
+        im = Image(fname)
+        dat = im.data
         if len(dat.shape) == 2:
             data_out[:, :, 0, 0, i] = dat.astype('float32')
         elif len(dat.shape) == 3:
             data_out[:, :, :, 0, i] = dat.astype('float32')
         elif len(dat.shape) == 4:
             data_out[:, :, :, :, i] = dat.astype('float32')
-    im_out = im_list[0].copy()
+        del im
+        del dat
+    im_out = im_0.copy()
     im_out.data = data_out.astype('float32')
     im_out.hdr.set_intent('vector', (), '')
     im_out.setFileName(im_out.file_name+'_multicomponent'+im_out.ext)
