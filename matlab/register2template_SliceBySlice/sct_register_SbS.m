@@ -21,9 +21,9 @@ cd ../
 
 % bring back results
 sct_unix(['mv ' tmp_folder filesep 'src_reslice_reg.nii ' basename '_reg.nii']);
-sct_unix(['mv ' tmp_folder filesep 'warp_forward.nii ' path]);
-sct_unix(['mv ' tmp_folder filesep 'warp_inverse.nii ' path]);
+sct_unix(['mv ' tmp_folder filesep 'warp_forward.nii.gz ' path]);
+sct_unix(['mv ' tmp_folder filesep 'warp_inverse.nii.gz ' path]);
 
 rmdir(tmp_folder,'s')
 disp(['>> unix('' fslview ' basename '_reg.nii ' dest ''')'])
-sct_unix(['fslview ' basename '_reg.nii -b 0,100 ' dest ' -b 0,1 &'])
+%sct_unix(['fslview ' basename '_reg.nii -b 0,100 ' dest ' -b 0,1 &'])
