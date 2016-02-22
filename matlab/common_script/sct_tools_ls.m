@@ -1,4 +1,4 @@
-function [list, path]=sct_tools_ls(fname, keeppath, keepext, folders)
+function [list, path]=sct_tools_ls(fname, keeppath, keepext, folders,select)
 % [list, path]=sct_tools_ls(fname, keeppath?, keepext?, folders?)
 % Example: sct_tools_ls('ep2d*')
 % example 2: sct_tools_ls('*',[],[],1) --> folders only
@@ -7,6 +7,7 @@ function [list, path]=sct_tools_ls(fname, keeppath, keepext, folders)
 if nargin < 2, keeppath=0; end
 if nargin < 3, keepext=1; end
 if nargin < 4, folders=0; end
+if nargin < 5, select=0; end
 % [list, path]=sct_tools_ls('*T.txt);
 list=dir(fname);
 path=[fileparts(fname) filesep];
@@ -31,7 +32,7 @@ if keeppath
 end
 
 if ~keepext
-    list=cellfun(@(x) sct_tool_remove_extension(x,1),list,'UniformOutput',false);
+    list=cellfun(@(x) sct_tool_remove_extension(x,keeppath),list,'UniformOutput',false);
 end
 
-%if length(list)==1, list=list{1}; end
+if select, list=list{select}; end
