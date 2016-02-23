@@ -894,11 +894,13 @@ class TargetSegmentationPairwise:
                     self.param.target_normalization = False
                     target_metric = None
             else:
-                target_metric = [(self.param.target_means[0], self.param.target_means[1], 0, 0) for i in range(len(self.target_slices))]
+                target_metric = {}
+                for i in range(len(self.target_slices)):
+                    target_metric[i] = (self.param.target_means[0], self.param.target_means[1], 0, 0)
 
-            if type(target_metric) == type({}): # if target_metric is a dictionary
+            if type(target_metric) == type({}):  # if target_metric is a dictionary
                 val_differences = [m[1]-m[0] for m in target_metric.values()]
-                val_std = [np.median([m[2],m[3]]) for m in target_metric.values()]
+                val_std = [np.median([m[2], m[3]]) for m in target_metric.values()]
                 val_diff_med = np.median(val_differences)
                 val_diff_std = np.std(val_differences)
 
@@ -953,7 +955,7 @@ class TargetSegmentationPairwise:
 
                 # linear with actual min (WM min)
                 old_image = target_slice.im_M
-                old_min = target_slice.im_M[target_slice.im_M > 0].min()
+                old_min = target_slice.im_M[target_slice.im_M >= 0].min()
                 old_max = target_slice.im_M.max()
                 new_image = (old_image - old_min)*(new_max - new_min)/(old_max - old_min) + new_min
                 # new_image[new_image < new_min+1] = 0  # put a 0 the min background
