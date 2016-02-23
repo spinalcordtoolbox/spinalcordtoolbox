@@ -453,6 +453,25 @@ def check_if_installed(cmd, name_software):
 
 
 #=======================================================================================================================
+# check_if_same_space
+#=======================================================================================================================
+# check if two images are in the same space and same orientation
+def check_if_same_space(fname_1, fname_2):
+    from msct_image import Image
+    from numpy import min, nonzero, all, around
+    from numpy import abs as np_abs
+    from numpy import log10 as np_log10
+
+    im_1 = Image(fname_1)
+    im_2 = Image(fname_2)
+    q1 = im_1.hdr.get_qform()
+    q2 = im_2.hdr.get_qform()
+
+    dec = int(np_abs(round(np_log10(min(np_abs(q1[nonzero(q1)]))))) + 1)
+    return all(around(q1, dec) == around(q2, dec))
+
+
+#=======================================================================================================================
 # printv: enables to print or not, depending on verbose status
 #   type: handles color: normal (default), warning (orange), error (red)
 #=======================================================================================================================

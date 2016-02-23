@@ -11,9 +11,10 @@ function [Series, desc]=sct_dcm_dir_SeriesList(dcmdir,varargin)
 %   desc(idcm).DicomName : Dicom filename
 
 dbstop if error
-list_dcm=dir(dcmdir);
-list_dcm={list_dcm.name};
-list_dcm=sort_nat(list_dcm);
+
+[list_dcm, path]=sct_tools_ls(dcmdir,0);
+currentdirectory=pwd;
+cd(path)
 for idcm=1:length(list_dcm)
     dcm=dicominfo(list_dcm{idcm});
     desc(idcm).SeriesDescription=[num2str(dcm.SeriesNumber) '_' dcm.SeriesDescription(find(~isspace(dcm.SeriesDescription)))];
@@ -48,4 +49,4 @@ if isempty(movefile) || strcmp(movefile,'Y')
         unix(['mv  ' irun_dicomlist Series{iSerie} filesep]);
     end
 end
-
+cd(currentdirectory)
