@@ -29,12 +29,12 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
   endif()
 endif()
 
-set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk")
+# set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk")
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 # This line was set up for statically linking standard libraries with the binary - does not work with clang on OSX10.10
-# set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
 set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 set(CMAKE_SHARED_LIBRARY_C_FLAGS)
@@ -91,4 +91,3 @@ vtkFiltersModeling
 vtkIOGeometry
 vtkFiltersGeneral
 )
-

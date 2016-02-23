@@ -31,6 +31,11 @@ public:
         SpatialOrientationAdapterType adapt;
         initialImageOrientation_ = adapt.FromDirectionCosines(image_->GetDirection());
     };
+    OrientationType getOrientationFromDirection(typename InputImageType::DirectionType direction)
+    {
+        SpatialOrientationAdapterType adapt;
+        return adapt.FromDirectionCosines(direction);
+    };
     InputImagePointer getOutputImage() { return outputImage_; };
     OrientationType getInitialImageOrientation() { return initialImageOrientation_; };
     void orientation(OrientationType desiredOrientation)

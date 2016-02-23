@@ -25,7 +25,7 @@ class Param:
         self.debug = 0
         self.results_folder = "results_20150210_200iter"
         self.methods_to_display = 'bin,wa,wath,ml,map'
-        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
+        self.fname_folder_to_save_fig = './result_plots' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
 
 
 # =======================================================================================================================
@@ -281,13 +281,16 @@ def main():
 
     ind_files_csf_sort = numpy.argsort(csf_values)
 
-    matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
-    plt.figure(figsize=(30, 15))
+    matplotlib.rcParams.update({'font.size': 45, 'font.family': 'trebuchet'})
+    plt.rcParams['xtick.major.pad'] = '9'
+    plt.rcParams['ytick.major.pad'] = '15'
+
+    plt.figure(figsize=(30, 16))
     width = 1.0 / (nb_method + 1)
     ind_fig = numpy.arange(len(ind_files_csf_sort)) * (1.0 + width)
-    plt.ylabel('Absolute error (%)\n', fontsize=22)
-    plt.xlabel('\nCSF values (in percentage of true value in tracts)', fontsize=22)
-    plt.title('Absolute error within all tracts as a function of CSF values\n', fontsize=24)
+    plt.ylabel('Absolute error (%)\n', fontsize=55)
+    plt.xlabel('CSF values (% of true WM value)', fontsize=55)
+    plt.title('Absolute error within all tracts as a function of CSF values\n', fontsize=65)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -296,11 +299,11 @@ def main():
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        boxprops = dict(linewidth=3, color=color)
-        flierprops = dict(color=color, markeredgewidth=0.7, markersize=7, marker='.')
-        whiskerprops = dict(color=color, linewidth=2)
-        capprops = dict(color=color, linewidth=2)
-        medianprops = dict(linewidth=3, color=color)
+        boxprops = dict(linewidth=4, color=color)
+        flierprops = dict(color=color, markeredgewidth=0.7, markersize=15, marker='.')
+        whiskerprops = dict(color=color, linewidth=3)
+        capprops = dict(color=color, linewidth=3)
+        medianprops = dict(linewidth=4, color=color)
         meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
         meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
         plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_files_csf_sort, :, i_meth]), positions=ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
@@ -309,22 +312,24 @@ def main():
 
     # add alternated vertical background colored bars
     for i_xtick in range(0, len(ind_fig), 2):
-        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_method + 1) * width - width / 4, facecolor='grey', alpha=0.3)
+        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_method + 1) * width - width / 4, facecolor='grey', alpha=0.1)
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.legend(box_plots, methods_to_display, loc='best', fontsize=22)
+    # plt.legend(box_plots, methods_to_display, loc='best', fontsize=22)
     # convert xtick labels into integers
     xtick_labels = [int(xtick) for xtick in csf_values[ind_files_csf_sort]]
     plt.xticks(ind_fig + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), xtick_labels)
     plt.gca().set_xlim([-width, numpy.max(ind_fig) + (nb_method + 0.5) * width])
-    plt.gca().set_ylim([0, 20])
-    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1.0))
+    plt.gca().set_ylim([0, 18])
+    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2.0))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
-    plt.grid(b=True, axis='y', which='both')
+    plt.grid(b=True, axis='y', which='both', alpha=0.5)
+    plt.subplots_adjust(left=0.1)
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_csf_values')
 
-    plt.show()
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_csf_values.pdf', format='PDF')
+
+    plt.show(block=False)
 
 #=======================================================================================================================
 # Start program

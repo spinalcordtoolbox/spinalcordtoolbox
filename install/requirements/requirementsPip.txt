@@ -1,2 +1,2 @@
-nibabel
 tabulate
+nibabel==2.0.1

@@ -21,7 +21,7 @@ string FlagToString(OrientationType orientation);
 OrientationType StringToFlag(string orientation);
 void printAvailableOrientation();
 
-template<typename TPixelType>
+template<typename TPixelType, unsigned int N>
 int changeOrientationMethod(string inputFilename, string outputFilename, OrientationType orientation, bool changeOrientation, bool displayInitialOrientation, bool displayAvailableOrientation);
 
 void help()
@@ -114,38 +114,38 @@ int main(int argc, char *argv[])
     const ScalarPixelType pixelType = io->GetComponentType();
     unsigned int numberOfDimensions = io->GetNumberOfDimensions();
     
-    if (io->GetComponentTypeAsString(pixelType)=="char")
-        return changeOrientationMethod<char>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else if (io->GetComponentTypeAsString(pixelType)=="unsigned_char")
-        return changeOrientationMethod<unsigned char>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else if (io->GetComponentTypeAsString(pixelType)=="short")
-        return changeOrientationMethod<short>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else if (io->GetComponentTypeAsString(pixelType)=="unsigned_short")
-        return changeOrientationMethod<unsigned short>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else if (io->GetComponentTypeAsString(pixelType)=="int")
-        return changeOrientationMethod<int>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else if (io->GetComponentTypeAsString(pixelType)=="unsigned_int")
-        return changeOrientationMethod<unsigned int>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else if (io->GetComponentTypeAsString(pixelType)=="long")
-        return changeOrientationMethod<long>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else if (io->GetComponentTypeAsString(pixelType)=="unsigned_long")
-        return changeOrientationMethod<unsigned long>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else if (io->GetComponentTypeAsString(pixelType)=="float")
-        return changeOrientationMethod<float>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else if (io->GetComponentTypeAsString(pixelType)=="double")
-        return changeOrientationMethod<double>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
-    else {
-        cout << "Pixel type " << io->GetComponentTypeAsString(pixelType) << " is not supported" << endl;
-        return EXIT_FAILURE;
-    }
+        if (io->GetComponentTypeAsString(pixelType)=="char")
+            return changeOrientationMethod<char, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else if (io->GetComponentTypeAsString(pixelType)=="unsigned_char")
+            return changeOrientationMethod<unsigned char, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else if (io->GetComponentTypeAsString(pixelType)=="short")
+            return changeOrientationMethod<short, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else if (io->GetComponentTypeAsString(pixelType)=="unsigned_short")
+            return changeOrientationMethod<unsigned short, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else if (io->GetComponentTypeAsString(pixelType)=="int")
+            return changeOrientationMethod<int, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else if (io->GetComponentTypeAsString(pixelType)=="unsigned_int")
+            return changeOrientationMethod<unsigned int, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else if (io->GetComponentTypeAsString(pixelType)=="long")
+            return changeOrientationMethod<long, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else if (io->GetComponentTypeAsString(pixelType)=="unsigned_long")
+            return changeOrientationMethod<unsigned long, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else if (io->GetComponentTypeAsString(pixelType)=="float")
+            return changeOrientationMethod<float, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else if (io->GetComponentTypeAsString(pixelType)=="double")
+            return changeOrientationMethod<double, 3>(inputFilename,outputFilename,orientation,changeOrientation,displayInitialOrientation,displayAvailableOrientation);
+        else {
+            cout << "Pixel type " << io->GetComponentTypeAsString(pixelType) << " is not supported" << endl;
+            return EXIT_FAILURE;
+        }
 
     return EXIT_SUCCESS;
 }
 
-template<typename TPixelType>
+template<typename TPixelType, unsigned int N>
 int changeOrientationMethod(string inputFilename, string outputFilename, OrientationType orientation, bool changeOrientation, bool displayInitialOrientation, bool displayAvailableOrientation)
 {
-    typedef itk::Image< TPixelType, 3 >	ImageType;
+    typedef itk::Image< TPixelType, N >	ImageType;
     typedef itk::ImageFileReader<ImageType> ReaderType;
     typedef itk::ImageFileWriter<ImageType> WriterType;
     
@@ -153,21 +153,46 @@ int changeOrientationMethod(string inputFilename, string outputFilename, Orienta
 	itk::NiftiImageIO::Pointer io = itk::NiftiImageIO::New();
 	reader->SetImageIO(io);
 	reader->SetFileName(inputFilename);
-    try {
-        reader->Update();
-    } catch( itk::ExceptionObject & e ) {
-        std::cerr << "Exception caught while reading input image " << std::endl;
-        std::cerr << e << std::endl;
-    }
     
     OrientImage<ImageType> orientationFilter;
     orientationFilter.setInputImage(reader->GetOutput());
     
 	if (displayInitialOrientation)
-		cout << "Input image orientation : " << FlagToString(orientationFilter.getInitialImageOrientation()) << endl;
+    {
+        try {
+            io->SetFileName(inputFilename);
+            io->ReadImageInformation();
+            //reader->Update();
+        } catch( itk::ExceptionObject & e ) {
+            std::cerr << "Exception caught while reading input image " << std::endl;
+            std::cerr << e << std::endl;
+        }
+        
+        typename ImageType::DirectionType direction;
+        vector<double> dir0 = io->GetDirection(0);
+        for (int i=0; i<dir0.size(); i++)
+            direction(i,0) = dir0[i];
+        vector<double> dir1 = io->GetDirection(1);
+        for (int i=0; i<dir1.size(); i++)
+            direction(i,1) = dir1[i];
+        vector<double> dir2 = io->GetDirection(2);
+        for (int i=0; i<dir2.size(); i++)
+            direction(i,2) = dir2[i];
+        cout << direction << endl;
+        cout << "Input image orientation : " << FlagToString(orientationFilter.getOrientationFromDirection(direction)) << endl;
+    }
     
 	if (changeOrientation)
 	{
+        try {
+            io->SetFileName(inputFilename);
+            io->ReadImageInformation();
+            //reader->Update();
+        } catch( itk::ExceptionObject & e ) {
+            std::cerr << "Exception caught while reading input image " << std::endl;
+            std::cerr << e << std::endl;
+        }
+        
 		orientationFilter.orientation(orientation);
         
 		typename WriterType::Pointer writer = WriterType::New();

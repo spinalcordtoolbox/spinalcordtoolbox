@@ -113,7 +113,7 @@ def main():
     ### Beause it takes time there's a output that were computed on guillimin /home/django/jtouati/data/test_templateANTS/final_preprocessed/MI/test/tmp.141015123447
 
      #
-    cmd = 'sct_antsRegistration \
+    cmd = 'isct_antsRegistration \
     --dimensionality 3 \
     --transform Syn[0.5,3,0] \
     --metric MI[mirror_right.nii.gz,left.nii.gz,1,32] \
@@ -130,8 +130,8 @@ def main():
     #output are : l2r0InverseWarp.nii.gz l2r.nii.gz l2r0Warp.nii.gz
 
     # separate the 2 warping fields along the 3 directions
-    status, output = sct.run('sct_c3d -mcs l2r0Warp.nii.gz -oo l2rwarpx.nii.gz l2rwarpy.nii.gz l2rwarpz.nii.gz')
-    status, output = sct.run('sct_c3d -mcs l2r0InverseWarp.nii.gz -oo l2rinvwarpx.nii.gz l2rinvwarpy.nii.gz l2rinvwarpz.nii.gz')
+    status, output = sct.run('isct_c3d -mcs l2r0Warp.nii.gz -oo l2rwarpx.nii.gz l2rwarpy.nii.gz l2rwarpz.nii.gz')
+    status, output = sct.run('isct_c3d -mcs l2r0InverseWarp.nii.gz -oo l2rinvwarpx.nii.gz l2rinvwarpy.nii.gz l2rinvwarpz.nii.gz')
     print 'Loading ..'
     # load warping fields
     warpx = nibabel.load('l2rwarpx.nii.gz')
@@ -192,17 +192,17 @@ def main():
     nibabel.save(img,file_name)
     print 'Copy ..'
     # copy transform
-    status,output = sct.run('sct_c3d l2rwarpx.nii.gz warpx_demi.nii.gz -copy-transform -o warpx_demi.nii.gz')
-    status,output = sct.run('sct_c3d l2rwarpy.nii.gz warpy_demi.nii.gz -copy-transform -o warpy_demi.nii.gz')
-    status,output = sct.run('sct_c3d l2rwarpz.nii.gz warpz_demi.nii.gz -copy-transform -o warpz_demi.nii.gz')
-    status,output = sct.run('sct_c3d l2rinvwarpx.nii.gz invwarpx_demi.nii.gz -copy-transform -o invwarpx_demi.nii.gz')
-    status,output = sct.run('sct_c3d l2rinvwarpy.nii.gz invwarpy_demi.nii.gz -copy-transform -o invwarpy_demi.nii.gz')
-    status,output = sct.run('sct_c3d l2rinvwarpz.nii.gz invwarpz_demi.nii.gz -copy-transform -o invwarpz_demi.nii.gz')
+    status,output = sct.run('isct_c3d l2rwarpx.nii.gz warpx_demi.nii.gz -copy-transform -o warpx_demi.nii.gz')
+    status,output = sct.run('isct_c3d l2rwarpy.nii.gz warpy_demi.nii.gz -copy-transform -o warpy_demi.nii.gz')
+    status,output = sct.run('isct_c3d l2rwarpz.nii.gz warpz_demi.nii.gz -copy-transform -o warpz_demi.nii.gz')
+    status,output = sct.run('isct_c3d l2rinvwarpx.nii.gz invwarpx_demi.nii.gz -copy-transform -o invwarpx_demi.nii.gz')
+    status,output = sct.run('isct_c3d l2rinvwarpy.nii.gz invwarpy_demi.nii.gz -copy-transform -o invwarpy_demi.nii.gz')
+    status,output = sct.run('isct_c3d l2rinvwarpz.nii.gz invwarpz_demi.nii.gz -copy-transform -o invwarpz_demi.nii.gz')
     
     # combine warping fields
     print 'Combine ..'
-    sct.run('sct_c3d warpx_demi.nii.gz warpy_demi.nii.gz warpz_demi.nii.gz -omc 3 warpl2r_demi.nii.gz')
-    sct.run('sct_c3d invwarpx_demi.nii.gz invwarpy_demi.nii.gz invwarpz_demi.nii.gz -omc 3 invwarpl2r_demi.nii.gz')
+    sct.run('isct_c3d warpx_demi.nii.gz warpy_demi.nii.gz warpz_demi.nii.gz -omc 3 warpl2r_demi.nii.gz')
+    sct.run('isct_c3d invwarpx_demi.nii.gz invwarpy_demi.nii.gz invwarpz_demi.nii.gz -omc 3 invwarpl2r_demi.nii.gz')
     
     #warpl2r_demi.nii.gz invwarpl2r_demi.nii.gz
     

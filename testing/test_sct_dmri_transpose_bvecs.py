@@ -22,7 +22,7 @@ def test(data_path):
     file_data = ['bvecs.txt']
 
     # define command
-    cmd = 'sct_dmri_transpose_bvecs ' + data_path + folder_data[0] + file_data[0]
+    cmd = 'sct_dmri_transpose_bvecs -i ' + data_path + folder_data[0] + file_data[0]
 
     # return
     return commands.getstatusoutput(cmd)

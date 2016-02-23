@@ -418,7 +418,7 @@ def main():
     # Pad input volume to deal with the fact that some landmarks on the curved centerline might be outside the FOV
     # N.B. IT IS VERY IMPORTANT TO PAD ALSO ALONG X and Y, OTHERWISE SOME LANDMARKS MIGHT GET OUT OF THE FOV!!!
     print '\nPad input volume to deal with the fact that some landmarks on the curved centerline might be outside the FOV...'
-    sct.run('sct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
+    sct.run('isct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
     
     # TODO: don't pad input volume: no need for that! instead, try to increase size of hdr when saving landmarks.
     
@@ -469,7 +469,7 @@ def main():
     
     # Estimate rigid transformation
     print '\nEstimate rigid transformation between paired landmarks...'
-    sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt')
+    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt')
     
     # Apply rigid transformation
     print '\nApply rigid transformation to curved landmarks...'
@@ -477,31 +477,31 @@ def main():
     
     # Estimate b-spline transformation curve --> straight
     print '\nEstimate b-spline transformation: curve --> straight...'
-    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x5 3 2 0')
+    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x5 3 2 0')
     
     # Concatenate rigid and non-linear transformations...
     print '\nConcatenate rigid and non-linear transformations...'
-    #sct.run('sct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
+    #sct.run('isct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
     # TODO: use sct.run() when output from the following command will be different from 0 (currently there seem to be a bug)
-    cmd = 'sct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
+    cmd = 'isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
     print('>> '+cmd)
     commands.getstatusoutput(cmd)
     
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
     print '\nEstimate b-spline transformation: straight --> curve...'
-    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x5 3 2 0')
+    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x5 3 2 0')
     
     # Concatenate rigid and non-linear transformations...
     print '\nConcatenate rigid and non-linear transformations...'
-    #sct.run('sct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
+    #sct.run('isct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
     # TODO: use sct.run() when output from the following command will be different from 0 (currently there seem to be a bug)
-    cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+    cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
     print('>> '+cmd)
     commands.getstatusoutput(cmd)
     
     #print '\nPad input image...'
-    #sct.run('sct_c3d '+fname_anat+' -pad '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox 0 -o tmp.anat_pad.nii')
+    #sct.run('isct_c3d '+fname_anat+' -pad '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox 0 -o tmp.anat_pad.nii')
     
     # Unpad landmarks...
     # THIS WAS REMOVED ON 2014-06-03 because the output data was cropped at the edge, which caused landmarks to sometimes disappear

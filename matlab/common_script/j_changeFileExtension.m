@@ -1,7 +1,7 @@
 function j_changeFileExtension(ext_old,ext_new)
 % =========================================================================
 % 
-% Change file extension. Run locally.
+% Change file extension of all files in current directory.
 % N.B. Case sensitive!!! I.e., "IMA" is not the same as "ima"
 % 
 % 
