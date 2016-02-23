@@ -30,9 +30,8 @@ public:
 
 	void setInitSlice(float initSlice) { initSlice_=initSlice; };
     
-    vector<int> symmetryDetectionFull(int dimension=1);
+    //vector<int> symmetryDetectionFull(int dimension=1);
     int symmetryDetection(int dimension=1);
-    int symmetryDetectionAP();
     ImageType::Pointer cropping();
     
 private:
