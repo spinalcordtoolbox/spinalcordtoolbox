@@ -706,9 +706,11 @@ def save_by_slice(dic_dir):
             for file_name in os.listdir(subject_path):
                 if 'level' in file_name:
                     path_file_levels = subject_path + '/' + file_name
+
                     if 'IRP' not in file_name:
-                        sct.run('sct_image -i ' + subject_path + '/' + file_name + ' -setorient IRP')
-                        path_file_levels = subject_path + '/' + sct.extract_fname(file_name)[1] + '_IRP.nii.gz'
+                        path_file_levels_IRP = sct.add_suffix(path_file_levels, '_IRP')
+                        sct.run('sct_image -i ' + subject_path + '/' + file_name + ' -setorient IRP -o '+path_file_levels_IRP)
+                        path_file_levels = path_file_levels_IRP # subject_path + '/' + sct.extract_fname(file_name)[1] + '_IRP.nii.gz'
 
             if path_file_levels is None and 'label' in os.listdir(subject_path):
                 if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
@@ -729,7 +731,7 @@ def save_by_slice(dic_dir):
                         label_by_slice[i_level_slice] = 0
 
             for file_name in os.listdir(subject_path):
-                if 'seg_in' in file_name and 'croped' in file_name:
+                if 'seg_in' in file_name and 'croped' in file_name and 'IRP' in file_name:
                     im = Image(subject_path + '/' + file_name)
                     im_zooms = im.hdr.get_zooms()
                     slice_zoom = (im_zooms[1], im_zooms[2], im_zooms[0])
@@ -740,7 +742,8 @@ def save_by_slice(dic_dir):
                                 i_slice_str = '0' + i_slice_str
                             else:
                                 i_slice_str = str(i_slice)
-                            im_slice = Image(param=im_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_im.nii.gz', hdr=im.hdr)
+                            fname_slice = dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_im.nii.gz'
+                            im_slice = Image(param=im_slice, absolutepath=fname_slice, hdr=im.hdr)
 
                             if len(im_slice.hdr.get_zooms()) == 3:
                                 im_slice.hdr.set_zooms(slice_zoom)
@@ -753,13 +756,14 @@ def save_by_slice(dic_dir):
                                 i_slice_str = '0' + i_slice_str
                             else:
                                 i_slice_str = str(i_slice)
-                            im_slice = Image(param=im_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_im.nii.gz', hdr=im.hdr)
+                            fname_slice = dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_im.nii.gz'
+                            im_slice = Image(param=im_slice, absolutepath=fname_slice, hdr=im.hdr)
 
                             if len(im_slice.hdr.get_zooms()) == 3:
                                 im_slice.hdr.set_zooms(slice_zoom)
                             im_slice.save()
 
-                if 'manual_gmseg' in file_name and 'croped' in file_name:
+                if 'manual_gmseg' in file_name and 'croped' in file_name and 'IRP' in file_name:
                     seg = Image(dic_dir + '/' + subject_dir + '/' + file_name)
                     seg_zooms = seg.hdr.get_zooms()
                     slice_zoom = (seg_zooms[1], seg_zooms[2], seg_zooms[0])
@@ -896,7 +900,7 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
                 t2star_im.data = denoise_ornlm(t2star_im.data)
                 t2star_im.save()
 
-            mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
+            mask_box, fname_seg_in_IRP = crop_t2_star(t2star, scseg, box_size=model_image_size)
 
             gmseg_im = Image(gmseg)
             mask_im = Image(mask_box)
