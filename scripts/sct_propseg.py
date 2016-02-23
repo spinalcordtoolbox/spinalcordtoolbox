@@ -35,7 +35,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="image_nifti",
                       description="input image.",
                       mandatory=True,
-                      example="t2.nii.gz")
+                      example="t1.nii.gz")
     parser.add_option(name="-t",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
