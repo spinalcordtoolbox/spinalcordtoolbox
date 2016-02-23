@@ -47,7 +47,7 @@ j_disp(fname_log,['=============================================================
 j_disp(fname_log,['.. Started: ',datestr(now)])
 
 
-fname_output = [fname_data,output_suffix];
+fname_output = [sct_tool_remove_extension(fname_data,1),output_suffix];
 % Check parameters
 j_disp(fname_log,['\nCheck parameters:'])
 j_disp(fname_log,['.. Input data:        ',fname_data])
@@ -126,7 +126,7 @@ else
 end
 
     % sort by bvals
-    [dummyvar,index_bvals] = sort(bvals);
+    [dummyvar,index_bvals] = sort(bvals); index_bvals=index_bvals(:);
     j_disp(fname_log, ['bvalues index : ' num2str(index_bvals')]);
     
     cmd = [fsloutput 'fslmerge -t ' fname_output];

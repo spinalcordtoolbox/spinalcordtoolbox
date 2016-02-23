@@ -23,6 +23,8 @@ import sys
 import commands
 import numpy as np
 import sct_utils as sct
+from msct_image import Image
+from sct_image import split_data
 
 
 #=======================================================================================================================
@@ -61,7 +63,8 @@ def moco(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data)
+    data_im = Image(file_data+ext)
+    nx, ny, nz, nt, px, py, pz, pt = data_im.dim
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
     # copy file_target to a temporary file
@@ -71,8 +74,10 @@ def moco(param):
 
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
+    data_split_list = split_data(data_im, dim=3)
+    for im in data_split_list:
+        im.save()
     file_data_splitT = file_data + '_T'
-    sct.run(fsloutput + 'fslsplit ' + file_data + ' ' + file_data_splitT, verbose)
 
     # Motion correction: initialization
     index = np.arange(nt)
@@ -96,8 +101,10 @@ def moco(param):
 
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
-        if param.iterative_averaging and indice_index<10 and failed_transfo[it] == 0:
-            sct.run('sct_c3d '+file_target+ext+' -scale '+str(indice_index+1)+' '+file_data_splitT_moco_num[it]+ext+' -add -scale '+str(float(1)/(indice_index+2))+' -o '+file_target+ext)
+        if param.iterative_averaging and indice_index < 10 and failed_transfo[it] == 0:
+            sct.run('sct_maths -i '+file_target+ext+' -mul '+str(indice_index+1)+' -o '+file_target+ext)
+            sct.run('sct_maths -i '+file_target+ext+' -add '+file_data_splitT_moco_num[it]+ext+' -o '+file_target+ext)
+            sct.run('sct_maths -i '+file_target+ext+' -div '+str(indice_index+2)+' -o '+file_target+ext)
 
     # Replace failed transformation with the closest good one
     sct.printv(('\nReplace failed transformations...'), verbose)
@@ -111,7 +118,7 @@ def moco(param):
             # copy transformation
             sct.run('cp '+file_mat[gT[index_good]]+'Warp.nii.gz'+' '+file_mat[fT[it]]+'Warp.nii.gz')
             # apply transformation
-            sct.run('sct_apply_transfo -i '+file_data_splitT_num[fT[it]]+'.nii -d '+file_target+'.nii -w '+file_mat[fT[it]]+'Warp.nii.gz'+' -o '+file_data_splitT_moco_num[fT[it]]+'.nii'+' -p '+param.interp, verbose)
+            sct.run('sct_apply_transfo -i '+file_data_splitT_num[fT[it]]+'.nii -d '+file_target+'.nii -w '+file_mat[fT[it]]+'Warp.nii.gz'+' -o '+file_data_splitT_moco_num[fT[it]]+'.nii'+' -x '+param.interp, verbose)
         else:
             # exit program if no transformation exists.
             sct.printv('\nERROR in '+os.path.basename(__file__)+': No good transformation exist. Exit program.\n', verbose, 'error')
@@ -121,10 +128,20 @@ def moco(param):
     file_data_moco = file_data+suffix
     if todo != 'estimate':
         sct.printv('\nMerge data back along T...', verbose)
-        cmd = fsloutput + 'fslmerge -t ' + file_data_moco
+        # cmd = fsloutput + 'fslmerge -t ' + file_data_moco
+        # for indice_index in range(len(index)):
+        #     cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
+        from sct_image import concat_data
+        im_list = []
         for indice_index in range(len(index)):
-            cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
-        sct.run(cmd, verbose)
+            im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
+        im_out = concat_data(im_list, 3)
+        im_out.setFileName(file_data_moco + ext)
+        im_out.save()
+
+    # delete file target.nii (to avoid conflict if this function is run another time)
+    sct.printv('\nRemove temporary file...', verbose)
+    sct.run('rm target.nii')
 
 
 #=======================================================================================================================
@@ -143,7 +160,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
 
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
-        cmd = 'sct_antsSliceRegularizedRegistration' \
+        cmd = 'isct_antsSliceRegularizedRegistration' \
               ' -p '+param.param[0]+ \
               ' --transform Translation['+param.param[2]+']' \
               ' --metric '+param.param[3]+'['+file_dest+'.nii, '+file_src+'.nii, 1, '+metric_radius+', Regular, 0.2]' \
@@ -151,7 +168,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
               ' --shrinkFactors 1' \
               ' --smoothingSigmas '+param.param[1]+ \
               ' --output ['+file_mat+','+file_out+'.nii]' \
-              +sct.get_interpolation('sct_antsSliceRegularizedRegistration', param.interp)
+              +sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
         if not param.fname_mask == '':
             cmd += ' -x '+param.fname_mask
     if param.todo == 'apply':

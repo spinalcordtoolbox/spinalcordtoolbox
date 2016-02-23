@@ -22,14 +22,12 @@ def test(path_data):
 
 
     cmd = 'sct_dmri_moco -i ' + path_data + folder_data + file_data[0] \
-                + ' -b '+ path_data + folder_data + file_data[1] \
+                + ' -bvec '+ path_data + folder_data + file_data[1] \
                 + ' -v 1'\
                 + ' -g 3'\
-                + ' -r 1'\
+                + ' -r 0'\
                 + ' -x spline'
 
-    # return
-    #return sct.run(cmd, 0)
     return commands.getstatusoutput(cmd)
 
 

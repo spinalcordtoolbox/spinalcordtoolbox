@@ -106,7 +106,8 @@ def main():
     elif type_output == 'uint64':
         hdr.set_data_dtype(np.uint64)
     elif type_output == 'float16':
-        hdr.set_data_dtype(np.float16)
+        sct.printv('Error: voxel type (float16) not supported by nibabel (although it is supported by numpy)... See usage.', 1, 'error')
+        #hdr.set_data_dtype(np.float16)
     elif type_output == 'float32':
         hdr.set_data_dtype(np.float32)
     elif type_output == 'float64':
@@ -139,7 +140,7 @@ USAGE
 
 MANDATORY ARGUMENTS
   -i <data>         input image name
-  -t <filename>     output image name
+  -o <filename>     output image name
 
 OPTIONAL ARGUMENTS
   -t <type>         type of output image. default: int32

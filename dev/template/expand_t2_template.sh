@@ -21,7 +21,7 @@ sct_c3d tmp.MNI-Poly-AMU_WMGM.nii.gz -threshold 0.2 10 1 0 -o tmp.MNI-Poly-AMU_W
 fslmaths tmp.MNI-Poly-AMU_WMGM_th -s 0.5 tmp.MNI-Poly-AMU_WMGM_th_smooth
 
 # registration
-sct_antsRegistration --dimensionality 3 --transform SyN[0.1,3,0] --metric CC[tmp.MNI-Poly-AMU_WMGM_th_smooth.nii.gz,tmp.MNI-Poly-AMU_T2.nii.gz,1,4] --convergence 30x10 --shrink-factors 2x1 --smoothing-sigmas 0x0mm --Restrict-Deformation 1x1x0 --output [tmp.reg,MNI-Poly-AMU_WMGM_T2_reg.nii.gz] --collapse-output-transforms 1 --interpolation BSpline[3] --winsorize-image-intensities [0.005,0.995] -x [tmp.MNI-Poly-AMU_WMGM_th.nii.gz]
+isct_antsRegistration --dimensionality 3 --transform SyN[0.1,3,0] --metric CC[tmp.MNI-Poly-AMU_WMGM_th_smooth.nii.gz,tmp.MNI-Poly-AMU_T2.nii.gz,1,4] --convergence 30x10 --shrink-factors 2x1 --smoothing-sigmas 0x0mm --Restrict-Deformation 1x1x0 --output [tmp.reg,MNI-Poly-AMU_WMGM_T2_reg.nii.gz] --collapse-output-transforms 1 --interpolation BSpline[3] --winsorize-image-intensities [0.005,0.995] -x [tmp.MNI-Poly-AMU_WMGM_th.nii.gz]
 
 # apply transformation to other files
 WarpImageMultiTransform 3 tmp.MNI-Poly-AMU_cord.nii.gz MNI-Poly-AMU_cord.nii.gz -R tmp.MNI-Poly-AMU_cord.nii.gz --use-NN tmp.reg0Warp.nii.gz

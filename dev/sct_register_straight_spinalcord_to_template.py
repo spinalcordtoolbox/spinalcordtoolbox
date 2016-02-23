@@ -44,7 +44,7 @@
 
 # TODO: register using intermediate step from segmentations
 # TODO: try to register template 2 straight using MI
-# TODO: don't apply affine transfo-- estimate with init option uner sct_antsRegistration
+# TODO: don't apply affine transfo-- estimate with init option uner isct_antsRegistration
 # TODO: the user would only have to select at two locations, e.g., C2 and T2, and would put values = 2 and 9 (7+2). Then add a function that would remove unused labels on the template, to keep only 2 and 9. Then, generate a cross in order to have the proper affine transfo.
 # TODO: mask template
 # TODO: add number of thread: ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$NUMBEROFTHREADS // export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS
@@ -178,7 +178,7 @@ def main():
 
     # Estimate transformation: straight --> template (deformation)
     print '\nEstimate transformation: straight --> template (diffeomorphic transformation). Takes ~15-45 minutes...'
-    cmd = 'sct_antsRegistration \
+    cmd = 'isct_antsRegistration \
 --dimensionality 3 \
 --transform SyN[0.2,3] \
 --metric MI['+fname_template+',tmp.straight2templateAffine.nii,1,32] \
@@ -234,7 +234,7 @@ def main():
 #     # Estimate transformation using ANTS
 #     print('\nStep #1: Estimate transformation using spinal cord segmentations...')
 #
-#     cmd = 'sct_antsRegistration \
+#     cmd = 'isct_antsRegistration \
 # --dimensionality 3 \
 # --transform SyN[0.2,3,0] \
 # --metric MI['+fname_template_seg+',tmp.straightSeg2templateAffine.nii,1,32] \
@@ -257,7 +257,7 @@ def main():
 #
 #     # Estimate transformation: straight --> template (deformation)
 #     print '\nEstimate transformation: straight --> template (diffeomorphic transformation). Takes 10-45 minutes...'
-#     cmd = 'sct_antsRegistration \
+#     cmd = 'isct_antsRegistration \
 # --dimensionality 3 \
 # --transform SyN[0.1,1,0] \
 # --metric CC['+fname_template+',tmp.straight2templateStep1.nii,1,4] \
@@ -346,7 +346,7 @@ def usage():
         'OPTIONAL ARGUMENTS\n' \
         '  -m <mask>                   mask on anatomical image.\n' \
         '  -r <0,1>                    remove temporary files. Default='+str(param.remove_temp_files)+'. \n' \
-        '  -n <nxm>                    change the iteration number of the registration (sct_antsRegistration).\n' \
+        '  -n <nxm>                    change the iteration number of the registration (isct_antsRegistration).\n' \
         '  -v <0,1>                    verbose. Default='+str(param.verbose)+'\n'
 
     # exit program

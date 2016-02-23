@@ -22,6 +22,7 @@ import sys
 import commands
 import getopt
 import sct_utils as sct
+from msct_parser import Parser
 import nibabel as nib
 import numpy as np
 
@@ -54,51 +55,23 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
     else:
         # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:s:m:g:t:v:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in ('-i'):
-                path_atlas = arg
-            elif opt in ('-s'):
-                param.fname_seg = arg
-            elif opt in ('-m'):
-                param.fname_GM = arg
-            elif opt in ('-t'):
-                param.threshold_atlas = float(arg)
-            elif opt in ('-g'):
-                param.threshold_GM = float(arg)
-            elif opt in ('-v'):
-                param.verbose = int(arg)
-    
-    # display usage if a mandatory argument is not provided
-    if path_atlas == '' and not param.debug:
-        # get path of the toolbox
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        path_atlas = path_sct+'/data/atlas/'
-        param.fname_seg = path_sct+'/data/template/MNI-Poly-AMU_cord.nii.gz'
-        param.fname_GM = path_sct+'/data/template/MNI-Poly-AMU_GM.nii.gz'
+        parser = get_parser()
+        arguments = parser.parse(sys.argv[1:])
 
-    # print arguments
-    if param.verbose:
-        print 'Check input parameters...'
-        print '.. Atlas folder path:                '+path_atlas
-        print '.. Spinal cord segmentation path:    '+param.fname_seg
-        print '.. Spinal cord gray matter path:     '+param.fname_GM
-        print '.. Atlas threshold=                  '+str(param.threshold_atlas)
+        path_atlas = arguments['-i']
 
-    # Check for end-caracter of folder path
-    if path_atlas[-1] != "/": path_atlas=path_atlas+"/";
+        if '-s' in arguments:
+            param.fname_seg = arguments['-s']
+        if '-gm' in arguments:
+            param.fname_GM = arguments['gm']
+        if '-thr' in arguments:
+            param.threshold_atlas = arguments['-thr']
+        if '-thrgm' in arguments:
+            param.threshold_GM = arguments['-thrgm']
+        if '-v' in arguments:
+            param.verbose = int(arguments['-v'])
 
-    # Check folder existence
-    sct.printv('\nCheck atlas existence...', param.verbose)
-    sct.check_folder_exist(path_atlas)
-    
+
     # Extract atlas info
     atlas_id, atlas_name, atlas_file = read_label_file(path_atlas)
     nb_tracts_total = len(atlas_id)
@@ -275,39 +248,60 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
             total_percentage_overlap = float(total_overlaps/total_sum_tracts)
             sct.printv('\nTotal percentage of present tracts overlapping gray matter: ' + str(round(total_percentage_overlap*100, 2)) + '%', param.verbose)
 
-# Print usage
+
 # ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-        
-DESCRIPTION
-  Check the integrity of the warped atlas by (i) evaluating the number of tracts that disappeared
-  given a threshold, (ii) evaluating the number of voxels outside the spinal cord segmentation and
-  (iii) evaluating the overlap between the white matter tracts and the gray matter.
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Check the integrity of the warped atlas by (i) evaluating the number of tracts that disappeared given a threshold, (ii) evaluating the number of voxels outside the spinal cord segmentation and (iii) evaluating the overlap between the white matter tracts and the gray matter.')
+    parser.add_option(name="-i",
+                      type_value="folder",
+                      description="Atlas folder path.",
+                      mandatory=True,
+                      example='label/atlas')
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="Segmentation of the cord.",
+                      mandatory=False,
+                      example='label/template/MNI-Poly-AMU_cord.nii.gz')
+    parser.add_option(name="-gm",
+                      type_value="file",
+                      description="Segmentation of the Gray matter",
+                      mandatory=False,
+                      example='label/template/MNI-Poly-AMU_GM.nii.gz')
+    parser.add_option(name="-m",
+                      type_value=None,
+                      description="Segmentation of the Gray matter",
+                      deprecated_by="-gm",
+                      mandatory=False)
+    parser.add_option(name="-thr",
+                      type_value="float",
+                      description="Atlas threshold, between 0 and 1.",
+                      mandatory=False,
+                      example='0.4')
+    parser.add_option(name="-t",
+                      type_value=None,
+                      description="Atlas threshold, between 0 and 1.",
+                      deprecated_by="-thr",
+                      mandatory=False)
+    parser.add_option(name="-thrgm",
+                      type_value="float",
+                      description="Gray matter image threshold, between 0 and 1.",
+                      mandatory=False,
+                      example='0.4')
+    parser.add_option(name="-g",
+                      type_value=None,
+                      description="Gray matter image threshold, between 0 and 1.",
+                      deprecated_by="-thrgm",
+                      mandatory=False)
 
-USAGE
-"""+os.path.basename(__file__)+""" -i <atlas>
-            
-MANDATORY ARGUMENTS
-  -i <folder>           atlas folder path.
-            
-OPTIONAL ARGUMENTS
-  -s <segmentation>     segmentation image path.
-  -m <graymatter>       gray matter image path.
-  -t [0,1]              float, atlas threshold. Default="""+str(param_default.threshold_atlas)+"""
-  -g [0,1]              float, gray matter image threshold. Default="""+str(param_default.threshold_GM)+"""
-  -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
-  -h                    help. Show this message.
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -i ./template/atlas/ -s t2_seg.nii.gz
-    """
-    # exit program
-    sys.exit(2)
-
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
+    return parser
 
 
 #=======================================================================================================================

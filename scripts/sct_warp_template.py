@@ -18,7 +18,13 @@ import commands
 import getopt
 import os
 import time
+
+from msct_parser import Parser
 import sct_utils as sct
+from sct_extract_metric import read_label_file
+
+
+
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -30,177 +36,126 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.folder_out = 'label'  # name of output folder
-        self.path_template = path_sct+'/data/'
+        self.path_template = path_sct+'/data'
         self.folder_template = 'template'
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'
         self.file_info_label = 'info_label.txt'
+        # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
+        self.list_labels_nn = ['MNI-Poly-AMU_level.nii.gz', 'MNI-Poly-AMU_CSF.nii.gz', 'MNI-Poly-AMU_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
+        self.list_labels_spline = ['']  # list of files for which spline interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
+        self.qc = 1
 
 
 # MAIN
 # ==========================================================================================
-def main():
+class WarpTemplate:
+    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc):
 
-    # Initialization
-    fname_src = ''
-    fname_transfo = ''
-    folder_out = param.folder_out
-    path_template = param.path_template
-    folder_template = param.folder_template
-    folder_atlas = param.folder_atlas
-    folder_spinal_levels = param.folder_spinal_levels
-    file_info_label = param.file_info_label
-    warp_atlas = param.warp_atlas
-    warp_spinal_levels = param.warp_spinal_levels
-    verbose = param.verbose
-    start_time = time.time()
+        # Initialization
+        self.fname_src = fname_src
+        self.fname_transfo = fname_transfo
+        self.warp_atlas = warp_atlas
+        self.warp_spinal_levels = warp_spinal_levels
+        self.folder_out = folder_out
+        self.path_template = path_template
+        self.folder_template = param.folder_template
+        self.folder_atlas = param.folder_atlas
+        self.folder_spinal_levels = param.folder_spinal_levels
+        self.verbose = verbose
+        self.qc = qc
+        start_time = time.time()
 
+        # Check file existence
+        sct.printv('\nCheck file existence...', self.verbose)
+        sct.check_file_exist(self.fname_src)
+        sct.check_file_exist(self.fname_transfo)
 
-    # Parameters for debug mode
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_src = path_sct+'/testing/sct_testing_data/data/mt/mtr.nii.gz'
-        fname_transfo = path_sct+'/testing/sct_testing_data/data/mt/warp_template2mt.nii.gz'
-        warp_atlas = 1
-        warp_spinal_levels = 1
-        verbose = 1
-    else:
-        # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'ha:d:w:o:s:t:v:')
-        except getopt.GetoptError:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in ("-a"):
-                warp_atlas = int(arg)
-            elif opt in ("-d"):
-                fname_src = arg
-            elif opt in ("-o"):
-                folder_out = arg
-            elif opt in ("-t"):
-                path_template = arg
-            elif opt in ("-s"):
-                warp_spinal_levels = int(arg)
-            elif opt in ('-v'):
-                verbose = int(arg)
-            elif opt in ("-w"):
-                fname_transfo = arg
+        # add slash at the end of folder name (in case there is no slash)
+        self.path_template = sct.slash_at_the_end(self.path_template, 1)
+        self.folder_out = sct.slash_at_the_end(self.folder_out, 1)
+        self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
+        self.folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
+        self.folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
 
-    # display usage if a mandatory argument is not provided
-    if fname_src == '' or fname_transfo == '':
-        usage()
+        # print arguments
+        print '\nCheck parameters:'
+        print '  Destination image ........ '+self.fname_src
+        print '  Warping field ............ '+self.fname_transfo
+        print '  Path template ............ '+self.path_template
+        print '  Output folder ............ '+self.folder_out+'\n'
 
-    # Check file existence
-    sct.printv('\nCheck file existence...', verbose)
-    sct.check_file_exist(fname_src)
-    sct.check_file_exist(fname_transfo)
+        # Extract path, file and extension
+        path_src, file_src, ext_src = sct.extract_fname(self.fname_src)
 
-    # add slash at the end of folder name (in case there is no slash)
-    path_template = sct.slash_at_the_end(path_template, 1)
-    folder_out = sct.slash_at_the_end(folder_out, 1)
-    folder_template = sct.slash_at_the_end(folder_template, 1)
-    folder_atlas = sct.slash_at_the_end(folder_atlas, 1)
-    folder_spinal_levels = sct.slash_at_the_end(folder_spinal_levels, 1)
-
-    # print arguments
-    print '\nCheck parameters:'
-    print '  Destination image ........ '+fname_src
-    print '  Warping field ............ '+fname_transfo
-    print '  Path template ............ '+path_template
-    print '  Output folder ............ '+folder_out+'\n'
-
-    # Extract path, file and extension
-    path_src, file_src, ext_src = sct.extract_fname(fname_src)
-
-    # create output folder
-    if os.path.exists(folder_out):
-        sct.printv('WARNING: Output folder already exists. Deleting it...', verbose)
-        sct.run('rm -rf '+folder_out)
-    sct.run('mkdir '+folder_out)
-
-    # Warp template objects
-    sct.printv('\nWarp template objects...', verbose)
-    sct.run('mkdir '+folder_out+folder_template, verbose)
-    # TODO: read info_label, and create a list and loop across list elements-- see sct_extract_metric
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_T2.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x spline', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_GM.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_GM.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_WM.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_level.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_CSF.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_cord.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_cord.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
-    sct.run('cp '+path_template+folder_template+file_info_label+' '+folder_out+folder_template)
-
-    # Warp atlas
-    if warp_atlas == 1:
-        sct.printv('\nWarp atlas of white matter tracts...', verbose)
         # create output folder
-        sct.run('mkdir '+folder_out+folder_atlas)
-        # get atlas files
-        # TODO: read info_label.txt instead of ls
-        status, output = sct.run('ls '+path_template+folder_atlas+'*.nii.gz', verbose)
-        fname_list = output.split()
+        if os.path.exists(self.folder_out):
+            sct.printv('WARNING: Output folder already exists. Deleting it...', self.verbose, 'warning')
+            sct.run('rm -rf '+self.folder_out)
+        sct.run('mkdir '+self.folder_out)
+
+        # Warp template objects
+        sct.printv('\nWarp template objects...', self.verbose)
+        warp_label(self.path_template, self.folder_template, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+
         # Warp atlas
-        for i in xrange(0, len(fname_list)):
-            path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
-            sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_atlas+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
-        # Copy list.txt
-        sct.run('cp '+path_template+folder_atlas+file_info_label+' '+folder_out+folder_atlas)
+        if self.warp_atlas == 1:
+            sct.printv('\nWarp atlas of white matter tracts...', self.verbose)
+            warp_label(self.path_template, self.folder_atlas, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
-    # Warp spinal levels
-    if warp_spinal_levels == 1:
-        sct.printv('\nWarp spinal levels...', verbose)
-        # create output folder
-        sct.run('mkdir '+folder_out+folder_spinal_levels, verbose)
-        # get spinal level files
-        status, output = sct.run('ls '+path_template+folder_spinal_levels+'*.nii.gz', verbose)
-        fname_list = output.split()
-        # Warp levels
-        for i in xrange(0, len(fname_list)):
-            path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
-            sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_spinal_levels+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
+        # Warp spinal levels
+        if self.warp_spinal_levels == 1:
+            sct.printv('\nWarp spinal levels...', self.verbose)
+            warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
-    # to view results
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview '+fname_src+' '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz -b 0,4000 '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 '+folder_out+folder_template+'MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &', verbose)
-    print
+        # to view results
+        sct.printv('\nDone! To view results, type:', self.verbose)
+        sct.printv('fslview '+self.fname_src+' '+self.folder_out+self.folder_template+'MNI-Poly-AMU_T2.nii.gz -b 0,4000 '+self.folder_out+self.folder_template+'MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 '+self.folder_out+self.folder_template+'MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+self.folder_out+self.folder_template+'MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &\n', self.verbose, 'info')
+
+        if self.qc:
+            from msct_image import Image
+            # output QC image
+            im = Image(self.fname_src)
+            im_wm = Image(self.folder_out+self.folder_template+'MNI-Poly-AMU_WM.nii.gz')
+            im.save_quality_control(plane='axial', n_slices=4, seg=im_wm, thr=0.5, cmap_col='blue-cyan', path_output=self.folder_out)
 
 
-# Print usage
+# Warp labels
 # ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
+    # read label file and check if file exists
+    sct.printv('\nRead label file...', param.verbose)
+    template_label_ids, template_label_names, template_label_file = read_label_file(path_label+folder_label, file_label)
+    # create output folder
+    sct.run('mkdir '+path_out+folder_label, param.verbose)
+    # Warp label
+    for i in xrange(0, len(template_label_file)):
+        fname_label = path_label+folder_label+template_label_file[i]
+        # check if file exists
+        # sct.check_file_exist(fname_label)
+        # apply transfo
+        sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] +' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i]), param.verbose)
+    # Copy list.txt
+    sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
 
-DESCRIPTION
-  This function warps the template and all atlases to a given image (e.g. fMRI, DTI, MTR, etc.).
 
-USAGE
-  """+os.path.basename(__file__)+""" -d <dest> -w <warp>
 
-MANDATORY ARGUMENTS
-  -d <dest>             destination image the template will be warped into
-  -w <warp>             warping field
-
-OPTIONAL ARGUMENTS
-  -a {0,1}              warp atlas of white matter. Default="""+str(param_default.warp_atlas)+"""
-  -s {0,1}              warp spinal levels. Default="""+str(param_default.warp_spinal_levels)+"""
-  -o <folder_out>       name of output folder. Default="""+param_default.folder_out+"""
-  -t <path_template>    Specify path to template data. Default="""+str(param_default.path_template)+"""
-  -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
-  -h                    help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -d dwi_mean.nii.gz -w warp_template2dmri.nii.gz -o label\n"""
-
-    # exit program
-    sys.exit(2)
+# Get interpolation method
+# ==========================================================================================
+def get_interp(file_label):
+    # default interp
+    interp = 'linear'
+    # NN interp
+    if file_label in param.list_labels_nn:
+        interp = 'nn'
+    # spline interp
+    if file_label in param.list_labels_spline:
+        interp = 'spline'
+    # output
+    return interp
 
 
 # START PROGRAM
@@ -209,5 +164,73 @@ if __name__ == "__main__":
     # initialize parameters
     param = Param()
     param_default = Param()
+
+    # Initialize parser
+    parser = Parser(__file__)
+
+    # Mandatory arguments
+    parser.usage.set_description('This function warps the template and all atlases to a given image (e.g. fMRI, DTI, MTR, etc.).')
+    parser.add_option(name="-d",
+                      type_value="file",
+                      description="destination image the template will be warped into",
+                      mandatory=True,
+                      example="dwi_mean.nii.gz")
+    parser.add_option(name="-w",
+                      type_value="file",
+                      description="warping field",
+                      mandatory=True,
+                      example="warp_template2dmri.nii.gz")
+    parser.add_option(name="-a",
+                      type_value="multiple_choice",
+                      description="warp atlas of white matter",
+                      mandatory=False,
+                      default_value=str(param_default.warp_atlas),
+                      example=['0', '1'])
+    parser.add_option(name="-s",
+                      type_value="multiple_choice",
+                      description="warp spinal levels.",
+                      mandatory=False,
+                      default_value=str(param_default.warp_spinal_levels),
+                      example=['0', '1'])
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="name of output folder.",
+                      mandatory=False,
+                      default_value=param_default.folder_out,
+                      example="label")
+    parser.add_option(name="-o",
+                      type_value=None,
+                      description="name of output folder.",
+                      mandatory=False,
+                      deprecated_by='-ofolder')
+    parser.add_option(name="-t",
+                      type_value="folder",
+                      description="Specify path to template data.",
+                      mandatory=False,
+                      default_value=str(param_default.path_template))
+    parser.add_option(name='-qc',
+                      type_value='multiple_choice',
+                      description='Output images for quality control.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+
+    arguments = parser.parse(sys.argv[1:])
+
+    fname_src = arguments["-d"]
+    fname_transfo = arguments["-w"]
+    warp_atlas = int(arguments["-a"])
+    warp_spinal_levels = int(arguments["-s"])
+    folder_out = arguments["-ofolder"]
+    path_template = arguments["-t"]
+    verbose = int(arguments["-v"])
+    qc = int(arguments["-qc"])
+
     # call main function
-    main()
+    WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc)

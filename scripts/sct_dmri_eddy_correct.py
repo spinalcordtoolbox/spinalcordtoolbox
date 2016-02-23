@@ -11,20 +11,20 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add test.
+# TODO: remove FSL dependency
+
 # check if needed Python libraries are already installed or not
 import sys
 import os
 import commands
 import getopt
 import time
-# import matplotlib.pyplot as plt
 import numpy as np
-
+from msct_image import Image
+import sct_utils as sct
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
-import sct_utils as sct
 
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
@@ -153,13 +153,19 @@ def eddy_correct(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...',verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt),verbose)
 
     # split along T dimension
     sct.printv('\nSplit along T dimension...',verbose)
-    cmd = fsloutput + 'fslsplit ' + fname_data_new + ' ' + file_data + '_T'
-    status, output = sct.run(cmd,verbose)
+    from sct_image import split_data
+    im_to_split = Image(fname_data_new+'.nii')
+    im_split_list = split_data(im_to_split, 3)
+    for im in im_split_list:
+        im.save()
+
+    # cmd = fsloutput + 'fslsplit ' + fname_data_new + ' ' + file_data + '_T'
+    # status, output = sct.run(cmd,verbose)
 
     #Slice-wise or Volume based method
     if param.slicewise:
@@ -226,13 +232,20 @@ def eddy_correct(param):
             sct.printv('\nSplit volumes across Z...',verbose)
             fname_plus = file_data + '_T' + str(i_plus).zfill(4)
             fname_plus_Z = file_data + '_T' + str(i_plus).zfill(4) + '_Z'
-            cmd = fsloutput + 'fslsplit ' + fname_plus + ' ' + fname_plus_Z + ' -z'
-            status, output = sct.run(cmd,verbose)
+            im_plus = Image(fname_plus+'.nii')
+            im_plus_split_list = split_data(im_plus, 2)
+            for im_p in im_plus_split_list:
+                im_p.save()
+            # cmd = fsloutput + 'fslsplit ' + fname_plus + ' ' + fname_plus_Z + ' -z'
+            # status, output = sct.run(cmd,verbose)
 
             fname_minus = file_data + '_T' + str(i_minus).zfill(4)
             fname_minus_Z = file_data + '_T' + str(i_minus).zfill(4) + '_Z'
-            cmd = fsloutput + 'fslsplit ' + fname_minus + ' ' + fname_minus_Z + ' -z'
-            status, output = sct.run(cmd,verbose)
+            im_minus = Image(fname_minus+'.nii')
+            im_minus_split_list = split_data(im_minus, 2)
+            for im_m in im_minus_split_list:
+                im_m.save()            # cmd = fsloutput + 'fslsplit ' + fname_minus + ' ' + fname_minus_Z + ' -z'
+            # status, output = sct.run(cmd,verbose)
 
         #loop across Z
         for iZ in range(nb_loops):

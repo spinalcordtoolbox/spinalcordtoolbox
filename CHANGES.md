@@ -1,7 +1,114 @@
-
 # CHANGES TO RELEASE
 
-##1.1.2 (beta)
+##TBD
+- NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
+- fixed issues #715, #719
+
+##2.2.3 (2016-02-04)
+- BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
+
+##2.2.2 (2016-01-31)
+- OPT: **sct_dmri_moco**: added flag "-bvalmin" to specify b=0 threshold and improved reading of bval file.
+
+##2.2.1 (2016-01-29)
+- BUG: **sct_dmri_moco**: fixed bug related to the use of mask
+- BUG: **sct_dmri_moco**: fixed bug in the algorithm (iterative average of target DWI volume)
+
+##2.2 (2016-01-23)
+- BUG: Fixed major issue during installation (issue #708)
+- BUG: **sct_process_segmentation**: fixed bug occuring with small FOV (issue #706)
+
+##2.1.1 (2016-01-15)
+- BUG: **sct_resample**: fixed issue #691
+- OPT: **sct_segment_graymatter**: improved robustness of normalization
+- OPT: **sct_process_segmentation**: default parameter does not smooth CSA results anymore
+
+##2.1 (2015-12-01)
+- NEW: **sct_testing**: test SCT functions and their integrity
+- NEW: **sct_maths**: performs basic operations on images. Similar to fslmaths.
+- NEW: **sct_get_centerline -method auto**: uses advanced image processing methods for finding the spinal cord centerline automatically on any type of contrast. This script should be followed by sct_propseg for finer cord segmentation.
+- NEW: **sct_label_vertebrae**: can automatically label vertebral levels given an anatomical scan, a centerline and few prior info.
+- NEW: **sct_segment_graymatter**: segment spinal cord gray matter using multi-atlas approach from Asman et al.
+- NEW: **sct_process_segmentation**: feature to estimate CSA based on labels
+- NEW: **sct_label_utils**: new functionality for creating labels based on vertebral labeling
+- NEW: added "-qc" flag to some functions to output png images for quality control.
+- BUG: **install_patch**: now possible to install as non-admin (issues #380, #434)
+- BUG: **sct_extract_metric**: fix the case when averaging labels from different clusters with method map
+- INST: no more dependence with FSL
+- INST: no more dependence with c3d
+- OPT: **sct_straighten_spinalcord**: improved accuracy (issues #371, #425, #452, #472)
+- OPT: **sct_registration_to_template**: improved accuracy
+- REF: harmonization of flags. Most flags from v2.0 still work but a message of deprecation is sent.
+
+##2.1_beta21 (2015-11-30)
+- **sct_process_segmentation**: fixed issue with computation of volume based on vertebral level (slice selection now using centerline)
+
+##2.1_beta20 (2015-11-30)
+- fixed compatibility with new PAM50 template
+
+##2.1_beta19 (2015-11-25)
+- harmonized flags
+- **sct_process_segmentation**: now computes volume
+
+##2.0.6 (2015-06-30)
+- BUG: **sct_process_segmentation**: fixed bug of output file location (issue #395)
+
+##2.0.5 (2015-06-10)
+- BUG: **sct_process_segmentation**: fixed error when calculating CSA (issue #388)
+
+##2.0.4 (2015-06-06)
+- BUG: **sct_process_segmentation**: fixed error when calculating CSA (issue #388)
+- BUG: Hanning smoothing: fixed error that occurred when window size was larger than data (issue #390)
+- OPT: **sct_check_dependences**: now checks if git is installed
+- OPT: simplified batch_processing.sh
+
+##2.0.3 (2015-05-19)
+- BUG: **sct_register_to_template**: fixed issue related to appearance of two overlapped templates in some cases (issue #367)
+- BUG: **sct_register_to_template**: now all input data are resampled to 1mm iso to avoid label mismatch (issue #368)
+- BUG: **sct_resample**: fixed bug when user specified output file
+- OPT: **sct_create_mask**: improved speed
+
+##2.0.2 (2015-05-16)
+- BUG: **sct_fmri_compute_tsnr**: fixed issue when input path includes folder
+- BUG: **sct_orientation**: now possibility to change orientation even if no qform in header (issue #360)
+- BUG: **msct_smooth**: fixed error with small Hanning window (issue #363)
+- BUG: **sct_straighten_spinalcord**: fixed issue with relative path (issue #365)
+- NEW: **sct_label_utils**: added new function to transform group of labels into discrete label points
+- NEW: **sct_orientation**: added a tool to fix wrong orientation of an image (issue #366)
+- OPT: **sct_register_to_template**: twice as fast! (issue #343)
+
+##2.0.1 (2015-04-28)
+- BUG: **sct_extract_metric**: MAP method did not scale properly with the data. Now fixed (issue #348)
+- BUG: fixed issue with parser when typing a command to see usage (it crashed)
+
+##2.0 (2015-04-17)
+
+- NEW: **sct_fmri_compute_tsnr**: new function to compute TSNR from fMRI data (performs moco before)
+- OPT: **sct_straighten_spinalcord**: now MUCH faster and more accurate (issue #240)
+- OPT: **sct_register_to_template**: allows more flexibility by allowing multiple steps for registration (flag -p).
+  - N.B. flag "-m" has been replaced by "-s"
+- OPT: **sct_register_multimodal**: allows more flexibility by imposing only one stage. Several stages can be run sequentially and then transformations can be concatenated.
+  - N.B. flags "-s" and "-t" were replaced with "-iseg" and "-dseg" respectively
+- OPT: **sct_extract_metric**: 
+  - new methods for extraction: maximum likelihood and maximum a posteriori, which take into account partial volume effect
+  - now possible to specify global regions for extraction with flag -l: wm, gm, sc
+  - now possible to include a bunch of labels using ":". Example: 2:29
+- NEW: **sct_get_centerline_from_labels**: obtain a centerline using a combination of labels and/or segmentations
+  - N.B. sct_get_centerline was renamed for sct_get_centerline_automatic
+- NEW: **sct_compute_ernst_angle**: new script to compute and display Ernst angle depending on T1 and TR
+- OPT: **sct_process_segmentation**:
+  - can compute average CSA across vertebral levels or slices
+  - can compute length of segmentation
+  - can compute CSA on non-binary images such as probabilistic gray/white matter maps
+  - N.B. process names were simplified to: "csa", "length" and "centerline"
+- OPT: **sct_crop_image**: now possible to crop an image based on a reference space
+- OPT: new WM atlas: added gray matter and CSF for computing partial volume
+- OPT: now use all available cores for ANTs and adjust variable when running dmri_moco (issue #238)
+- INST: new installer in python, simpler to use and check for latest patches
+- REF: msct_parser: new parser that generate documentation/usage
+- REF: msct_image, sct_label_utils: smoothly converting the toolbox to objet-oriented, some scripts can be used as python module
+
+##1.1.2_beta (2014-12-25)
 
 - BUG: sct_dmri_moco: fixed crash when using mask (issue # 245)
 - OPT: sct_create_mask: (1) updated usage (size in vox instead of mm), (2) fixed minor issues related to mask size.
