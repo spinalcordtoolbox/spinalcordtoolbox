@@ -525,8 +525,7 @@ Version: """ + str(self.get_sct_version())
         self.example = '\n\nEXAMPLE\n' + \
             basename(self.file)
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
-        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
-        for opt in [opt[0] for opt in sorted_arguments if (self.arguments[opt[0]].example)]:
+        for opt in [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].example and not self.arguments[opt[0]].deprecated_by]:
             if type(self.arguments[opt].example) is list:
                 self.example += ' ' + opt + ' ' + str(self.arguments[opt].example[0])
             else:
