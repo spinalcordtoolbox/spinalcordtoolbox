@@ -15,7 +15,7 @@ import os
 import sys
 import commands
 
-# TODO: under run(): add a flag "ignore error" for sct_ComposeMultiTransform
+# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'

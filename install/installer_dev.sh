@@ -27,7 +27,6 @@ USAGE
 `basename ${0}` -p <path>
 
 MANDATORY ARGUMENTS
--p <path>                   installation path
 -h                          display this help
 
 EOF
@@ -40,7 +39,7 @@ echo "============================="
 
 # check if user is sudoer
 if [ "$(whoami)" == "root" ]; then
-  echo "Sorry, you are root. Please type: ./installer without sudo. Your password will be required later."
+  echo "Sorry, you are root. Please type: ./installer_dev.sh without sudo. Your password will be required later."
   echo
   exit 1
 fi
@@ -109,9 +108,9 @@ export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts
 echo 'export SCT_DIR PATH' >> ~/.bashrc
 export SCT_DIR PATH
 # forbid to run several ITK instances in parallel (see issue #201).
-echo 'export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1' >> ~/.bashrc
-export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-
+NUMBEROFCORES=`sysctl hw.ncpu | awk '{print $2}'`
+echo "export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$NUMBEROFCORES" >> ~/.bashrc
+export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=$NUMBEROFCORES
 echo "PATH=${PATH}"
 
 # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
@@ -139,6 +138,12 @@ cd requirements
 cmd="./requirements.sh"
 echo ">> $cmd"; $cmd
 cd ..
+
+# Create links to python scripts
+echo
+echo "Create links to python scripts..."
+cmd="${SCT_DIR}/install/create_links.sh -a"
+echo ">> $cmd"; $cmd
 
 # check if other dependent software are installed
 echo

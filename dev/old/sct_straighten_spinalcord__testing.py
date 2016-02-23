@@ -2586,30 +2586,30 @@ def main():
 
             # Padding of all images involved with ANTs
             print 'Pad source image, straightened image, gaussian mask and landmarks ...'
-            cmd = 'sct_c3d ' + FILE_VOLUME + '.nii.gz' + ' -pad 0x0x'+str(padding)+'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_pad' + str(padding) + '.nii.gz'
+            cmd = 'isct_c3d ' + FILE_VOLUME + '.nii.gz' + ' -pad 0x0x'+str(padding)+'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_pad' + str(padding) + '.nii.gz'
             print(">> "+cmd)
             status, output = getstatusoutput(cmd)
-            cmd = 'sct_c3d ' + FILE_VOLUME + '_orthogonal_landmarks.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_orthogonal_landmarks_pad' + str(padding) + '.nii.gz'
+            cmd = 'isct_c3d ' + FILE_VOLUME + '_orthogonal_landmarks.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_orthogonal_landmarks_pad' + str(padding) + '.nii.gz'
             print(">> "+cmd)
             status, output = getstatusoutput(cmd)
-            cmd = 'sct_c3d ' + FILE_VOLUME + '_horizontal_landmarks.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_horizontal_landmarks_pad' + str(padding) + '.nii.gz'
+            cmd = 'isct_c3d ' + FILE_VOLUME + '_horizontal_landmarks.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_horizontal_landmarks_pad' + str(padding) + '.nii.gz'
             print(">> "+cmd)
             status, output = getstatusoutput(cmd)
             if GAUSS != '':
-                cmd = 'sct_c3d ' + GAUSS + '.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + GAUSS + '_pad' + str(padding) + '.nii.gz'
+                cmd = 'isct_c3d ' + GAUSS + '.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + GAUSS + '_pad' + str(padding) + '.nii.gz'
                 print(">> "+cmd)
                 status, output = getstatusoutput(cmd)
             if GAUSS == '':
-                cmd = 'sct_c3d ' + FILE_VOLUME + '_gaussian_mask.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_gaussian_mask_pad' + str(padding) + '.nii.gz'
+                cmd = 'isct_c3d ' + FILE_VOLUME + '_gaussian_mask.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_gaussian_mask_pad' + str(padding) + '.nii.gz'
                 print(">> "+cmd)
                 status, output = getstatusoutput(cmd)
-            cmd = 'sct_c3d ' + FILE_VOLUME + '_fitted_straightened.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_fitted_straightened_pad' + str(padding) + '.nii.gz'
+            cmd = 'isct_c3d ' + FILE_VOLUME + '_fitted_straightened.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_fitted_straightened_pad' + str(padding) + '.nii.gz'
             print(">> "+cmd)
             status, output = getstatusoutput(cmd)
-            cmd = 'sct_c3d ' + FILE_VOLUME + '_orthogonal_resampling.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_orthogonal_resampling_pad' + str(padding) + '.nii.gz'
+            cmd = 'isct_c3d ' + FILE_VOLUME + '_orthogonal_resampling.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_orthogonal_resampling_pad' + str(padding) + '.nii.gz'
             print(">> "+cmd)
             status, output = getstatusoutput(cmd)
-            cmd = 'sct_c3d ' + FILE_VOLUME + '_orthogonal_resampled_gaussian_mask.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_orthogonal_resampled_gaussian_mask_pad' + str(padding) + '.nii.gz'
+            cmd = 'isct_c3d ' + FILE_VOLUME + '_orthogonal_resampled_gaussian_mask.nii.gz' + ' -pad 0x0x' + str(padding) + 'vox 0x0x' + str(padding) + 'vox 0 -o ' + FILE_VOLUME + '_orthogonal_resampled_gaussian_mask_pad' + str(padding) + '.nii.gz'
             print(">> "+cmd)
             status, output = getstatusoutput(cmd)
 

@@ -17,18 +17,12 @@ bin/sct*
 bin/isct*
 bin/msct*
 tmp/**/*
-testing/sct_crop/results
-testing/sct_dmri_moco/results
-testing/sct_get_centerline/results
-testing/sct_process_segmentation/results
-testing/sct_register_multimodal/results
-testing/sct_register_to_template/results
-testing/sct_segmentation_propagation/results
-testing/sct_smooth_spinalcord/results
-testing/sct_straighten_spinalcord/results
-testing/sct_dmri_separate_b0_and_dwi/results
-testing/sct_warp_template/results
 spinalcordtoolbox_v*
 dev/atlas/create_atlas/WMtracts_outputs
 dev/atlas/validate_atlas/tmp.*
 
+scripts/.idea/misc.xml
+scripts/.idea/modules.xml
+scripts/.idea/scripts.iml
+scripts/.idea/vcs.xml
+scripts/.idea/workspace.xml

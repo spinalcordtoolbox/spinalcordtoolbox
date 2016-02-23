@@ -21,7 +21,11 @@ import time
 import commands
 import numpy
 import sct_utils as sct
-
+from msct_image import Image
+from sct_image import split_data, concat_data
+from msct_parser import Parser
+# import glob
+# from sct_average_data_across_dimension import average_data_across_dimension
 
 class Param:
     def __init__(self):
@@ -34,17 +38,10 @@ class Param:
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files):
 
     # Initialization
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
-    fname_data = ''
-    fname_bvecs = ''
-    fname_bvals = ''
-    path_out = ''
-    average = param.average
-    verbose = param.verbose
-    remove_tmp_files = param.remove_tmp_files
     start_time = time.time()
 
     # get path of the toolbox
@@ -56,46 +53,18 @@ def main():
         fname_bvecs = path_sct+'/testing/data/errsm_23/dmri/bvecs.txt'
         average = 1
         verbose = 1
-    else:
-        # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:],'ha:b:i:m:o:r:v:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in ("-a"):
-                average = int(arg)
-            elif opt in ("-b"):
-                fname_bvecs = arg
-            elif opt in ("-i"):
-                fname_data = arg
-            elif opt in ('-m'):
-                fname_bvals = arg
-            elif opt in ("-o"):
-                path_out = arg
-            elif opt in ("-r"):
-                remove_temp_file = int(arg)
-            elif opt in ('-v'):
-                verbose = int(arg)
-
-    # display usage if a mandatory argument is not provided
-    if fname_data == '' or fname_bvecs == '':
-        usage()
 
     # check existence of input files
-    sct.check_file_exist(fname_data, verbose)
-    sct.check_file_exist(fname_bvecs, verbose)
-    if not fname_bvals == '':
-        sct.check_file_exist(fname_bvals, verbose)
+    # sct.check_file_exist(fname_data, verbose)
+    # sct.check_file_exist(fname_bvecs, verbose)
+    # if not fname_bvals == '':
+    #     sct.check_file_exist(fname_bvals, verbose)
 
     # print arguments
     sct.printv('\nInput parameters:', verbose)
     sct.printv('  input file ............'+fname_data, verbose)
     sct.printv('  bvecs file ............'+fname_bvecs, verbose)
+    sct.printv('  bvals file ............'+fname_bvals, verbose)
     sct.printv('  average ...............'+str(average), verbose)
 
     # Get full path
@@ -114,60 +83,79 @@ def main():
     path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, verbose)
 
-    # copy files into tmp folder
+    # copy files into tmp folder and convert to nifti
     sct.printv('\nCopy files into temporary folder...', verbose)
-    sct.run('cp '+fname_data+' '+path_tmp+'dmri'+ext_data, verbose)
+    ext = '.nii'
+    dmri_name = 'dmri'
+    b0_name = 'b0'
+    b0_mean_name = b0_name+'_mean'
+    dwi_name = 'dwi'
+    dwi_mean_name = dwi_name+'_mean'
+
+    from sct_convert import convert
+    if not convert(fname_data, path_tmp+dmri_name+ext):
+        sct.printv('ERROR in convert.', 1, 'error')
     sct.run('cp '+fname_bvecs+' '+path_tmp+'bvecs', verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Get size of data
+    im_dmri = Image(dmri_name+ext)
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('dmri'+ext_data)
+    nx, ny, nz, nt, px, py, pz, pt = im_dmri.dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
 
     # Identify b=0 and DWI images
+    print fname_bvals
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, param.bval_min, verbose)
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
-    sct.run(fsloutput+' fslsplit dmri dmri_T', verbose)
+    im_dmri_split_list = split_data(im_dmri, 3)
+    for im_d in im_dmri_split_list:
+        im_d.save()
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)
-    cmd = fsloutput + 'fslmerge -t b0'
-    for iT in range(nb_b0):
-        cmd = cmd + ' dmri_T' + str(index_b0[iT]).zfill(4)
-    sct.run(cmd, verbose)
+    cmd = 'sct_image -concat t -o '+b0_name+ext+' -i '
+    for it in range(nb_b0):
+        cmd = cmd+dmri_name+'_T' + str(index_b0[it]).zfill(4)+ext+','
+    cmd = cmd[:-1]  # remove ',' at the end of the string
+    # WARNING: calling concat_data in python instead of in command line causes a non understood issue
+    status, output = sct.run(cmd, param.verbose)
 
     # Average b=0 images
     if average:
         sct.printv('\nAverage b=0...', verbose)
-        sct.run(fsloutput + 'fslmaths b0 -Tmean b0_mean', verbose)
+        sct.run('sct_maths -i '+b0_name+ext+' -o '+b0_mean_name+ext+' -mean t', verbose)
 
     # Merge DWI
-    sct.printv('\nMerge DWI...', verbose)
-    cmd = fsloutput + 'fslmerge -t dwi'
-    for iT in range(nb_dwi):
-        cmd = cmd + ' dmri_T' + str(index_dwi[iT]).zfill(4)
-    sct.run(cmd, verbose)
+    cmd = 'sct_image -concat t -o '+dwi_name+ext+' -i '
+    for it in range(nb_dwi):
+        cmd = cmd+dmri_name+'_T' + str(index_dwi[it]).zfill(4) + ext+ ','
+    cmd = cmd[:-1]  # remove ',' at the end of the string
+    # WARNING: calling concat_data in python instead of in command line causes a non understood issue
+    status, output = sct.run(cmd, param.verbose)
 
     # Average DWI images
     if average:
         sct.printv('\nAverage DWI...', verbose)
-        sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
+        sct.run('sct_maths -i '+dwi_name+ext+' -o '+dwi_mean_name+ext+' -mean t', verbose)
+        # if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
+        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'b0.nii', path_out+'b0'+ext_data, verbose)
-    sct.generate_output_file(path_tmp+'dwi.nii', path_out+'dwi'+ext_data, verbose)
+    sct.generate_output_file(path_tmp+b0_name+ext, path_out+b0_name+ext_data, verbose)
+    sct.generate_output_file(path_tmp+dwi_name+ext, path_out+dwi_name+ext_data, verbose)
     if average:
-        sct.generate_output_file(path_tmp+'b0_mean.nii', path_out+'b0_mean'+ext_data, verbose)
-        sct.generate_output_file(path_tmp+'dwi_mean.nii', path_out+'dwi_mean'+ext_data, verbose)
+        sct.generate_output_file(path_tmp+b0_mean_name+ext, path_out+b0_mean_name+ext_data, verbose)
+        sct.generate_output_file(path_tmp+dwi_mean_name+ext, path_out+dwi_mean_name+ext_data, verbose)
 
     # Remove temporary files
     if remove_tmp_files == 1:
@@ -227,10 +215,8 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     else:
 
         # Open bvals file
-        #sct.printv('\nOpen bvals file...', verbose)
-        bvals = []
-        with open(fname_bvals) as f:
-            bvals = numpy.array(map(float, f.readlines()))
+        from dipy.io import read_bvals_bvecs
+        bvals, bvecs = read_bvals_bvecs(fname_bvals, fname_bvecs)
 
         # get number of lines
         nt = len(bvals)
@@ -245,7 +231,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 
     # check if no b=0 images were detected
     if index_b0 == []:
-        sct.printv('ERROR: no b=0 images detected. Maybe you are using non-null low bvals? in that case use flag -a. Exit program.', 1, 'error')
+        sct.printv('ERROR: no b=0 images detected. Maybe you are using non-null low bvals? in that case use flag -bvalmin. Exit program.', 1, 'error')
         sys.exit(2)
 
     # display stuff
@@ -290,6 +276,76 @@ EXAMPLE
     #Exit Program
     sys.exit(2)
 
+def get_parser():
+    # Initialize parser
+    param_default = Param()
+    parser = Parser(__file__)
+
+    # Mandatory arguments
+    parser.usage.set_description("Separate b=0 and DW images from diffusion dataset.")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='Diffusion data',
+                      mandatory=True,
+                      example='dmri.nii.gz')
+    parser.add_option(name='-b',
+                      type_value='file',
+                      description='bvecs file',
+                      mandatory=False,
+                      example='bvecs.txt',
+                      deprecated_by='-bvec')
+    parser.add_option(name='-bvec',
+                      type_value='file',
+                      description='bvecs file',
+                      mandatory=True,
+                      example='bvecs.txt')
+
+    # Optional arguments
+    parser.add_option(name='-a',
+                      type_value='multiple_choice',
+                      description='average b=0 and DWI data.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.average))
+    parser.add_option(name='-m',
+                      type_value='file',
+                      description='bvals file. Used to identify low b-values (in case different from 0).',
+                      mandatory=False,
+                      deprecated_by='-bval')
+    parser.add_option(name='-bval',
+                      type_value='file',
+                      description='bvals file. Used to identify low b-values (in case different from 0).',
+                      mandatory=False)
+    parser.add_option(name='-bvalmin',
+                      type_value='float',
+                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
+                      mandatory=False,
+                      example='50')
+    parser.add_option(name='-o',
+                      type_value='folder_creation',
+                      description='Output folder.',
+                      mandatory=False,
+                      default_value='./',
+                      deprecated_by='-ofolder')
+    parser.add_option(name='-ofolder',
+                      type_value='folder_creation',
+                      description='Output folder.',
+                      mandatory=False,
+                      default_value='./')
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
+                      description='Verbose.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.verbose))
+    parser.add_option(name='-r',
+                      type_value='multiple_choice',
+                      description='remove temporary files.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.remove_tmp_files))
+
+    return parser
 
 # START PROGRAM
 # ==========================================================================================
@@ -298,4 +354,29 @@ if __name__ == "__main__":
     param = Param()
     param_default = Param()
     # call main function
-    main()
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    fname_data = arguments['-i']
+    fname_bvecs = arguments['-bvec']
+
+    fname_bvals = ''
+    path_out = ''
+    average = param.average
+    verbose = param.verbose
+    remove_tmp_files = param.remove_tmp_files
+
+    if '-bval' in arguments:
+        fname_bvals = arguments['-bval']
+    if '-bvalmin' in arguments:
+        param.bval_min = arguments['-bvalmin']
+    if '-a' in arguments:
+        average = arguments['-a']
+    if '-ofolder' in arguments:
+        path_out = arguments['-ofolder']
+    if '-v' in arguments:
+        verbose = int(arguments['-v'])
+    if '-r' in arguments:
+        remove_tmp_files = int(arguments['-r'])
+
+    main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files)

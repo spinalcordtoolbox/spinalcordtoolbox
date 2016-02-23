@@ -15,43 +15,60 @@ from msct_parser import Parser
 import sys
 import sct_utils as sct
 
-if __name__ == "__main__":
+
+def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Utility function for labels.')
+    parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
+Initialization is provided by a spinal cord detection module based on the elliptical Hough transform on multiple axial slices. The result of the detection is available as a PNG image using option -detection-display.
+Parameters of the spinal cord detection are :
+ - the position (in inferior-superior direction) of the initialization
+ - the number of axial slices
+ - the gap (in pixel) between two axial slices
+ - the approximate radius of the spinal cord
+
+Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image (-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).
+Cross-sectional areas along the spinal cord can be available (-cross).
+Several tips on segmentation correction can be found on the "Correction Tips" page of the documentation while advices on parameters adjustments can be found on the "Parameters" page.
+If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the segmentation again.''')
     parser.add_option(name="-i",
-                      type_value="file",
+                      type_value="image_nifti",
                       description="input image.",
                       mandatory=True,
                       example="t2.nii.gz")
     parser.add_option(name="-t",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
+                      mandatory=False,
+                      deprecated=1,
+                      deprecated_by="-c",
+                      example=['t1','t2'])
+    parser.add_option(name="-c",
+                      type_value="multiple_choice",
+                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
                       example=['t1','t2'])
     parser.usage.addSection("General options")
-    parser.add_option(name="-o",
+    parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="output folder.",
                       mandatory=False,
                       example="My_Output_Folder/",
-                      default_value="./")
+                      default_value="")
     parser.add_option(name="-down",
                       type_value="int",
                       description="down limit of the propagation, default is 0",
-                      mandatory=False,
-                      default_value="0")
+                      mandatory=False)
     parser.add_option(name="-up",
                       type_value="int",
                       description="up limit of the propagation, default is the highest slice of the image",
-                      mandatory=False,
-                      default_value="0")
+                      mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
                       mandatory=False,
-                      example=["0","1"],
-                      default_value="0")
+                      example=["0", "1"],
+                      default_value="1")
     parser.add_option(name="-h",
                       type_value=None,
                       description="display this help",
@@ -97,7 +114,7 @@ if __name__ == "__main__":
 
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
-                      type_value="file",
+                      type_value="image_nifti",
                       description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",
                       mandatory=False)
     parser.add_option(name="-init",
@@ -105,7 +122,7 @@ if __name__ == "__main__":
                       description="axial slice where the propagation starts, default is middle axial slice",
                       mandatory=False)
     parser.add_option(name="-init-mask",
-                      type_value="file",
+                      type_value="image_nifti",
                       description="mask containing three center of the spinal cord, used to initiate the propagation",
                       mandatory=False)
     parser.add_option(name="-radius",
@@ -144,19 +161,23 @@ if __name__ == "__main__":
                       type_value="float",
                       description="trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results.",
                       mandatory=False)
+    return parser
 
+if __name__ == "__main__":
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     input_filename = arguments["-i"]
-    contrast_type = arguments["-t"]
+    contrast_type = arguments["-c"]
 
     # Building the command
     cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
 
-    folder_output = "./"
-    if "-o" in arguments:
-        folder_output = arguments["-o"]
-        cmd += " -o " + folder_output
+    if "-ofolder" in arguments:
+        folder_output = arguments["-ofolder"]
+    else:
+        folder_output = '.'
+    cmd += " -o " + folder_output
 
     if "-down" in arguments:
         cmd += " -down " + str(arguments["-down"])
@@ -166,7 +187,7 @@ if __name__ == "__main__":
     verbose = 0
     if "-v" in arguments:
         if arguments["-v"] is "1":
-            verbose = 1
+            verbose = 2
             cmd += " -verbose"
 
     # Output options
@@ -215,12 +236,21 @@ if __name__ == "__main__":
     if "-d" in arguments:
         cmd += " -d " + str(arguments["-d"])
 
-    sct.runProcess(cmd, verbose)
+    # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(input_filename).dim
+    if nt > 1:
+        sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
-    sct.printv("\nDone!",1,"normal")
-    sct.printv("Type the following command in the terminal to see the results:", 1, "normal")
+    sct.run(cmd, verbose)
 
+    sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname+"_seg"+ext_fname
-    sct.printv("fslview "+input_filename+" "+folder_output+output_filename+" -l Red -b 0,1 -t 0.7")
+
+    if folder_output == ".":
+        output_name = output_filename
+    else:
+        output_name = folder_output+"/"+output_filename
+    sct.printv("fslview "+input_filename+" "+output_name+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
