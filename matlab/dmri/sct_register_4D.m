@@ -1,5 +1,5 @@
 function sct_register_4D(data1,data2)
-% sct_register_4D(data1,data2)
+% sct_register_4D(data14D,data24D)
 dbstop if error
 [data1_basename,~,ext]=sct_tool_remove_extension(data1,1);
 
