@@ -4,8 +4,18 @@
 # For information about acquisition parameters, see: https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf
 # N.B. The parameters are set for these type of data. With your data, parameters might be slightly different.
 #
-# tested with v2.1_beta21
+# To run without fslview output, type:
+#   ./batch_processing.sh -nodisplay
+#
+# tested with v2.2.3
 
+# Check if display is on or off
+if [[ $@ == *"-nodisplay"* ]]; then
+   DISPLAY=false
+   echo "Display mode turned off."
+else
+   DISPLAY=true
+fi
 
 # download example data (errsm_30)
 sct_download_data -d sct_example_data
@@ -20,27 +30,28 @@ cd sct_example_data
 # ===========================================================================================
 cd t2
 # spinal cord segmentation
-sct_propseg -i t2.nii.gz -c t2 -mesh -max-deformation 4 -init 130
-# tips: we use "-max-deformation 4" otherwise the segmentation does not cover the whole spinal cord
-# tips: we use "-init 130" to start propagation closer to a region which would otherwise give poor segmentation (try it with and without the parameter).
-# tips: we use "-mesh" to get the mesh of the segmentation, which can be viewed using MITKWORKBENCH
+sct_propseg -i t2.nii.gz -c t2
 # check your results:
-fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
+if [ $DISPLAY = true ]; then
+   fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
+fi
 # vertebral labeling. Here we use the fact that the FOV is centered at C7.
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -initcenter 7
 # create labels at C2 and T2 vertebral levels
 sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -vert 2,9
 # register to template
 # tips: here we used only iter=1 for the third step for faster processing. 
-sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=1,metric=MeanSquares:step=3,type=im,algo=syn,metric=CC,iter=1 -r 0
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=1,metric=MeanSquares:step=3,type=im,algo=syn,metric=CC,iter=1
 # warp template and white matter atlas
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 # check results
-fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
+if [ $DISPLAY = true ]; then
+   fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
+fi
 # compute average cross-sectional area and volume between C3 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -vert 3:4
-# --> Mean CSA: 78.2997424349 +/- 0.652378703122 mm^2
-# --> Volume (in volume.txt): 2437.0 mm^3
+# --> Mean CSA: 77.4289770106 +/- 2.00647224442 mm^2
+# --> Volume (in volume.txt): 2402.0 mm^3
 
 # go back to root folder
 cd ..
@@ -52,7 +63,9 @@ cd t1
 # spinal cord segmentation
 sct_propseg -i t1.nii.gz -c t1
 # check results
-fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
+if [ $DISPLAY = true ]; then
+   fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
+fi
 # create mask around spinal cord (for cropping)
 sct_create_mask -i t1.nii.gz -p centerline,t1_seg.nii.gz -size 61 -f box -o mask_t1.nii.gz
 # crop t1 and t1_seg (for faster registration)
@@ -66,11 +79,15 @@ sct_concat_transfo -w warp_t1_crop2MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat2templa
 # warp template
 sct_warp_template -d t1.nii.gz -w warp_template2t1.nii.gz -a 0
 # check results
-fslview t1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
+if [ $DISPLAY = true ]; then
+   fslview t1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
+fi
 # warp T1 to template space
 sct_apply_transfo -i t1.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_t12template.nii.gz
 # check registration of T1 to template
-fslview $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 t1_reg.nii.gz -b 0,800 &
+if [ $DISPLAY = true ]; then
+   fslview $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 t1_reg.nii.gz -b 0,800 &
+fi
 cd ..
 
 
@@ -79,16 +96,17 @@ cd ..
 cd mt
 # bring T2 segmentation in MT space to help segmentation (no optimization)
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
+# needs to add short pause to make sure the output from previous line is generated (in case this batch script is launched at once)
 # extract centerline
 sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
 # segment mt1
 sct_propseg -i mt1.nii.gz -c t2 -init-centerline t2_seg_reg_centerline.nii.gz
 # check results
-fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
+if [ $DISPLAY = true ]; then
+   fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
+fi
 # create mask around spinal cord for faster registration
 sct_create_mask -i mt1.nii.gz -p centerline,mt1_seg.nii.gz -size 51 -f box -o mask_mt1.nii.gz
-## use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
-#sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
 # crop data
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 sct_crop_image -i mt1_seg.nii.gz -m mask_mt1.nii.gz -o mt1_seg_crop.nii.gz
@@ -116,21 +134,23 @@ sct_concat_transfo -w warp_template2mt.nii.gz,warp_MNI-Poly-AMU_WM2mt0mt1_wmseg.
 # warp template (final warp template for mt1)
 sct_warp_template -d mt0mt1.nii.gz -w warp_template2mt_corrected.nii.gz
 # check registration result
-fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
+if [ $DISPLAY = true ]; then
+   fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
+fi
 # >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.1270294493
+# --> MTR = 34.7067535734
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
 sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of left CST: 5.04738066335 +/- 0.420587529988 mm^2
+# --> Mean CSA of left CST: 4.97641126008 +/- 0.512628334474 mm^2
 sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of right CST: 4.79736063018 +/- 0.479421869486 mm^2
+# --> Mean CSA of right CST: 4.77218674544 +/- 0.472737313312 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
 sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of the left dorsal column: 9.74672398599 +/- 0.427696321242 mm^2
+# --> Mean CSA of the left dorsal column: 9.44132531044 +/- 0.462686426095 mm^2
 cd ..
 
 
@@ -146,7 +166,9 @@ sct_get_centerline -p auto -i dwi_moco_mean.nii.gz -c t1
 # fine segmentation with propseg
 sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline dwi_moco_mean_centerline.nii.gz
 # check segmentation
-fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 & 
+if [ $DISPLAY = true ]; then
+   fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 & 
+fi
 # register template to dwi: here we use the template registered to the MT data in order to account for gray matter segmentation
 sct_register_multimodal -i ../mt/template2anat_reg.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
 # concatenate transfo: the first warping field contains : warp template -> anat ; warp anat --> MT ; warp correction of the internal structure 
@@ -154,13 +176,15 @@ sct_concat_transfo -w ../mt/warp_template2mt_corrected.nii.gz,warp_template2anat
 # warp template and white matter atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # visualize white matter template and lateral CST on DWI
-fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
+if [ $DISPLAY = true ]; then
+   fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
+fi
 # compute DTI metrics
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -method map
-# --> 17, right lateral corticospinal tract:    0.780527684999
-# --> 2, left lateral corticospinal tract:    0.773460376585
+# --> 17, right lateral corticospinal tract:    0.787807890652
+# --> 2, left lateral corticospinal tract:    0.76589414129
 cd ..
 
 
@@ -182,7 +206,9 @@ sct_propseg -i fmri_moco_mean.nii.gz -c t2 -init-centerline t2_seg_reg_centerlin
 # tips: we use "-radius 5" otherwise the segmentation is too small
 # tips: we use "-max-deformation 4" to prevent the propagation from stopping at the edge
 # check segmentation
-fslview fmri_moco_mean -b 0,1000 fmri_moco_mean_seg -l Red -t 0.5 &
+if [ $DISPLAY = true ]; then
+   fslview fmri_moco_mean -b 0,1000 fmri_moco_mean_seg -l Red -t 0.5 &
+fi
 # here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
 # register template to fmri: here we use the template register to the MT to get the correction of the internal structure
 sct_register_multimodal -i ../mt/template2anat_reg.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
@@ -191,7 +217,9 @@ sct_concat_transfo -w ../mt/warp_template2mt_corrected.nii.gz,warp_template2anat
 # warp template, atlas and spinal levels
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
 # check results
-fslview fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
+if [ $DISPLAY = true ]; then
+   fslview fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
+fi
 # also see: https://dl.dropboxusercontent.com/u/20592661/spinalcordtoolbox/result_batch_processing_fmri.png
 
 # display ending time:
