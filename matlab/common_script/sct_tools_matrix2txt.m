@@ -4,7 +4,7 @@ output_fid = fopen(output,'w+');
 for i_line=1:size(M,1)
     for i_column=1:size(M,2)
     % write bvecs
-    fprintf(output_fid, '%f ',M(i_line,i_column));
+    fprintf(output_fid, '%d ',M(i_line,i_column));
     end
     fprintf(output_fid, '\n',M(i_line,i_column));
 end

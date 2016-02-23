@@ -1,7 +1,9 @@
-function sct_reorient(nifti)
+function nifti_reorient=sct_reorient(nifti)
 % sct_reorient(nifti)
-% sct_reorient('img.nii')
+% Example:
+% sct_reorient('img.nii') --> output 'img_RPI.nii'
 [basename,~, ext]=sct_tool_remove_extension(nifti,1);
+cmd=['sct_image -i ' nifti ' -setorient RPI'];
+unix(cmd)
 
-nii=load_nii(nifti);
-save_nii(nii, [basename '_reorient' ext]);
+nifti_reorient=[basename '_RPI' ext];

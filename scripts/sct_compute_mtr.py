@@ -18,7 +18,7 @@ import getopt
 import commands
 import sct_utils as sct
 import time
-
+from msct_parser import Parser
 
 # DEFAULT PARAMETERS
 class Param:
@@ -56,39 +56,13 @@ def main():
         verbose = 1
     else:
         # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:j:r:v:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in '-i':
-                fname_mt0 = arg
-            elif opt in '-j':
-                fname_mt1 = arg
-            elif opt in '-r':
-                remove_tmp_files = int(arg)
-            elif opt in '-v':
-                verbose = int(arg)
-            # elif opt in '-x':
-            #     register = int(arg)
+        parser = get_parser()
+        arguments = parser.parse(sys.argv[1:])
 
-    # display usage if a mandatory argument is not provided
-    if fname_mt0 == '' or fname_mt1 == '':
-        sct.printv('ERROR: All mandatory arguments are not provided. See usage (add -h).', 1, 'error')
-
-    # display input parameters
-    sct.printv('\nInput parameters:', verbose)
-    sct.printv('  mt0 ...................'+fname_mt0, verbose)
-    sct.printv('  mt1 ...................'+fname_mt1, verbose)
-
-    # check existence of input files
-    sct.printv('\ncheck existence of input files...', verbose)
-    sct.check_file_exist(fname_mt0, verbose)
-    sct.check_file_exist(fname_mt1, verbose)
+        fname_mt0 = arguments['-mt0']
+        fname_mt1 = arguments['-mt1']
+        remove_tmp_files = int(arguments['-r'])
+        verbose = int(arguments['-v'])
 
     # Extract path/file/extension
     path_mt0, file_mt0, ext_mt0 = sct.extract_fname(fname_mt0)
@@ -101,15 +75,26 @@ def main():
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_c3d '+fname_mt0+' -o '+path_tmp+'mt0.nii')
-    sct.run('sct_c3d '+fname_mt1+' -o '+path_tmp+'mt1.nii')
+    from sct_convert import convert
+    convert(fname_mt0, path_tmp+'mt0.nii', type='float32')
+    convert(fname_mt1, path_tmp+'mt1.nii', type='float32')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
-    sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
+    from msct_image import Image
+    nii_mt1 = Image('mt1.nii')
+    data_mt1 = nii_mt1.data
+    data_mt0 = Image('mt0.nii').data
+    data_mtr = 100 * (data_mt0 - data_mt1) / data_mt0
+    # save MTR file
+    nii_mtr = nii_mt1
+    nii_mtr.data = data_mtr
+    nii_mtr.setFileName('mtr.nii')
+    nii_mtr.save()
+    # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
 
     # come back to parent folder
     os.chdir('..')
@@ -125,38 +110,48 @@ def main():
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &', verbose, 'code')
-    print
+    sct.printv('fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &\n', verbose, 'info')
 
 
-# Print usage
 # ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Compute magnetization transfer ratio (MTR). Output is given in percentage.')
+    parser.add_option(name="-mt0",
+                      type_value="file",
+                      description="Image without MT pulse (MT0)",
+                      mandatory=True,
+                      example='mt0.nii.gz')
+    parser.add_option(name="-i",
+                      type_value=None,
+                      description="Image without MT pulse (MT0)",
+                      mandatory=False,
+                      deprecated_by='-mt0')
+    parser.add_option(name="-mt1",
+                      type_value="file",
+                      description="Image with MT pulse (MT1)",
+                      mandatory=True,
+                      example='mt1.nii.gz')
+    parser.add_option(name="-j",
+                      type_value=None,
+                      description="Image with MT pulse (MT1)",
+                      mandatory=False,
+                      deprecated_by="-mt1")
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
 
-DESCRIPTION
-  Compute magnetization transfer ratio (MTR). Output is given in percentage.
-
-USAGE
-  """+os.path.basename(__file__)+""" -i <mt0> -j <mt1>
-
-MANDATORY ARGUMENTS
-  -i <mt0>         image without MT pulse
-  -j <mt1>         image with MT pulse
-
-OPTIONAL ARGUMENTS
-  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
-  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
-  -h               help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -i mt0.nii.gz -j mt1.nii.gz\n"""
-
-    # exit program
-    sys.exit(2)
+    return parser
 
 
 #=======================================================================================================================

@@ -3,6 +3,8 @@
 #
 # Module containing several useful functions.
 #
+# PLEASE!! SORT FUNCTIONS ALPHABETICALLY!
+#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
@@ -14,34 +16,53 @@
 import os
 import errno
 import sys
-import traceback
 import commands
 import subprocess
 import re
+import time
 
-# TODO: under run(): add a flag "ignore error" for sct_ComposeMultiTransform
+# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
 
 # define class color
-class bcolors:
-    blue = '\033[94m'
+class bcolors(object):
+    normal = '\033[0m'
+    red = '\033[91m'
     green = '\033[92m'
     yellow = '\033[93m'
-    red = '\033[91m'
-    normal = '\033[0m'
-    purple = '\033[95m'
+    blue = '\033[94m'
+    magenta = '\033[95m'
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
 
-#==============e=========================================================================================================
+
+
+#=======================================================================================================================
+# add suffix
+#=======================================================================================================================
+def add_suffix(fname, suffix):
+    """
+    Add suffix between end of file name and extension on a nii or nii.gz file.
+    :param fname: absolute or relative file name. Example: t2.nii
+    :param suffix: suffix. Example: _mean
+    :return: file name with suffix. Example: t2_mean.nii
+    """
+    # get index of extension. Here, we search from the end to avoid issue with folders that have ".nii" in their name.
+    ind_nii = fname.rfind('.nii')
+    # return file name with suffix
+    return fname[:ind_nii] + suffix + fname[ind_nii:]
+
+
+
+#=======================================================================================================================
 # run
 #=======================================================================================================================
 # Run UNIX command
-def run(cmd, verbose=1):
+def run_old(cmd, verbose=1):
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
@@ -50,7 +71,10 @@ def run(cmd, verbose=1):
     else:
         return status, output
 
-def runProcess(cmd, verbose=1):
+
+def run(cmd, verbose=1, error_exit='error', raise_exception=False):
+    if verbose==2:
+        printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -60,25 +84,29 @@ def runProcess(cmd, verbose=1):
         if output == '' and process.poll() is not None:
             break
         if output:
-            if verbose==1:
+            if verbose == 2:
                 print output.strip()
             output_final += output.strip()+'\n'
-    '''
-    if timeout is None:
-        process.wait()
+    status_output = process.returncode
+    # process.stdin.close()
+    # process.stdout.close()
+    # process.terminate()
+
+    # need to remove the last \n character in the output -> return output_final[0:-1]
+    if status_output:
+        # from inspect import stack
+        printv(output_final[0:-1], 1, error_exit)
+        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
+        # sys.exit()
+        if raise_exception:
+            raise Exception(output_final[0:-1])
     else:
-        while process.poll() is None:
-            time.sleep(0.2)
-            now = datetime.datetime.now()
-            if (now - start).seconds > timeout:
-                os.kill(process.pid, signal.SIGKILL)
-                os.waitpid(-1, os.WNOHANG)
-                return None, "Error, a timeout for this process occurred"
-    '''
+        # no need to output process.returncode (because different from 0)
+        return status_output, output_final[0:-1]
 
-    return process.returncode, output_final
 
-#==============e=========================================================================================================
+
+#=======================================================================================================================
 # check RAM usage
 # work only on Mac OSX
 #=======================================================================================================================
@@ -106,7 +134,7 @@ def checkRAM(os,verbose=1):
         processLines = ps.split('\n')
         sep = re.compile('[\s]+')
         rssTotal = 0 # kB
-        for row in range(1,len(processLines)):
+        for row in range(1, len(processLines)):
             rowText = processLines[row].strip()
             rowElements = sep.split(rowText)
             try:
@@ -134,12 +162,71 @@ def checkRAM(os,verbose=1):
         return ram_total
 
 
+class Timer:
+    def __init__(self, number_of_iteration=1):
+        self.start_timer = 0
+        self.time_list = []
+        self.total_number_of_iteration = number_of_iteration
+        self.number_of_iteration_done = 0
+        self.is_started = False
+
+    def start(self):
+        self.start_timer = time.time()
+        self.is_started = True
+
+    def add_iteration(self, num_iteration_done=1):
+        self.number_of_iteration_done += num_iteration_done
+        self.time_list.append(time.time() - self.start_timer)
+        remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
+        time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
+        remaining_time = remaining_iterations * time_one_iteration
+        hours, rem = divmod(remaining_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def iterations_done(self, total_num_iterations_done):
+        if total_num_iterations_done != 0:
+            self.number_of_iteration_done = total_num_iterations_done
+            self.time_list.append(time.time() - self.start_timer)
+            remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
+            time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
+            remaining_time = remaining_iterations * time_one_iteration
+            hours, rem = divmod(remaining_time, 3600)
+            minutes, seconds = divmod(rem, 60)
+            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def stop(self):
+        self.time_list.append(time.time() - self.start_timer)
+        hours, rem = divmod(self.time_list[-1], 3600)
+        minutes, seconds = divmod(rem, 60)
+        printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        self.is_started = False
+
+    def printRemainingTime(self):
+        remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
+        time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
+        remaining_time = remaining_iterations * time_one_iteration
+        hours, rem = divmod(remaining_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        if self.is_started:
+            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        else:
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def printTotalTime(self):
+        hours, rem = divmod(self.time_list[-1], 3600)
+        minutes, seconds = divmod(rem, 60)
+        if self.is_started:
+            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        else:
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+
 #=======================================================================================================================
 # extract_fname
 #=======================================================================================================================
 # Extract path, file and extension
 def extract_fname(fname):
-
     # extract path
     path_fname = os.path.dirname(fname)+'/'
     # check if only single file was entered (without path)
@@ -153,8 +240,8 @@ def extract_fname(fname):
     if ext_fname == '.gz':
         file_fname = file_fname[0:len(file_fname)-4]
         ext_fname = ".nii.gz"
-
     return path_fname, file_fname, ext_fname
+
 
 #=======================================================================================================================
 # get_absolute_path
@@ -170,7 +257,12 @@ def get_absolute_path(fname):
 # check_file_exist:  Check existence of a file or path
 #=======================================================================================================================
 def check_file_exist(fname, verbose=1):
-    if os.path.isfile(fname):
+    if fname[0] == '-':
+        # fname should be a warping field that will be inverted, ignore the "-"
+        fname_to_test = fname[1:]
+    else:
+        fname_to_test = fname
+    if os.path.isfile(fname_to_test):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
         pass
@@ -184,11 +276,13 @@ def check_file_exist(fname, verbose=1):
 #=======================================================================================================================
 def check_folder_exist(fname, verbose=1):
     if os.path.isdir(fname):
-        if verbose:
-            printv('  OK: '+fname, verbose, 'normal')
+        printv('  OK: '+fname, verbose, 'normal')
+        return True
         pass
     else:
-        printv('\nERROR: The directory ' + str(fname) + ' does not exist. Exit program.\n', 1, 'error')
+        printv('\nWarning: The directory ' + str(fname) + ' does not exist.\n', 1, 'warning')
+        return False
+
 
 #=======================================================================================================================
 # check_write_permission:  Check existence of a folder.
@@ -227,18 +321,26 @@ def create_folder(folder):
 # check_if_3d
 #=======================================================================================================================
 def check_if_3d(fname):
-    nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname)
+    """
+    Check if input volume is 3d or less.
+    :param fname:
+    :return: True or False
+    """
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
-        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
-
+        return False
+        # printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
+    else:
+        return True
 
 #=======================================================================================================================
 # check_if_rpi:  check if data are in RPI orientation
 #=======================================================================================================================
 def check_if_rpi(fname):
-    from sct_orientation import get_orientation
-    if not get_orientation(fname) == 'RPI':
-        printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_orientation to reorient your data. Exit program.\n', 1, 'error')
+    from sct_image import get_orientation
+    if not get_orientation(fname, filename=True) == 'RPI':
+        printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_image -setorient to reorient your data. Exit program.\n', 1, 'error')
 
 
 #=======================================================================================================================
@@ -256,43 +358,49 @@ def find_file_within_folder(fname, directory):
                 all_path.append(os.path.join(root, file))
     return all_path
 
+#=======================================================================================================================
+# create temporary folder and return path of tmp dir
+#=======================================================================================================================
+
+def tmp_create(verbose=1):
+    # path_tmp = tmp_create()
+    printv('\nCreate temporary folder...', verbose)
+    import time
+    import random
+    path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S")+'_'+str(random.randint(1, 1000000)), 1)
+    run('mkdir '+path_tmp, verbose)
+    return path_tmp
+
 
 #=======================================================================================================================
-# get_dimension
+# copy a nifti file to (temporary) folder and convert to .nii or .nii.gz
 #=======================================================================================================================
-# Get dimensions of a nifti file using FSL
-def get_dimension(fname):
-    # apply fslsize on data
-    cmd = 'fslsize '+fname
-    status, output = commands.getstatusoutput(cmd)
-    # split output according to \n field
-    output_split = output.split()
+def tmp_copy_nifti(fname,path_tmp,fname_out='data.nii',verbose=0):
+    # tmp_copy_nifti('input.nii', path_tmp, 'raw.nii')
+    path_fname, file_fname, ext_fname = extract_fname(fname)
+    path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)
 
-    if output_split[0] == 'ERROR:':
-        printv('\n'+output,1,'error')
-    else:
-        # extract dimensions as integer
-        nx = int(output_split[1])
-        ny = int(output_split[3])
-        nz = int(output_split[5])
-        nt = int(output_split[7])
-        px = float(output_split[9])
-        py = float(output_split[11])
-        pz = float(output_split[13])
-        pt = float(output_split[15])
-        return nx, ny, nz, nt, px, py, pz, pt
+    run('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
+    if ext_fname_out == '.nii':
+       run('fslchfiletype NIFTI ' + path_tmp + file_fname_out,0)
+    elif ext_fname_out == '.nii.gz':
+        run('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out,0)
+
 
 
 #=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
 def generate_output_file(fname_in, fname_out, verbose=1):
+    """
+    Generate output file. Only works for images (e.g., nifti, nifti_gz)
+    :param fname_in:
+    :param fname_out:
+    :param verbose:
+    :return: fname_out
+    """
     # import stuff
     import shutil  # for moving files
-    # get absolute fname
-    fname_in = os.path.abspath(fname_in)
-    fname_out = os.path.abspath(fname_out)
-    # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
@@ -301,49 +409,36 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
+        printv('  WARNING: fname_in and fname_out are the same. Do nothing.', verbose, 'warning')
         print '  File created: '+path_out+file_out+ext_out
         return path_out+file_out+ext_out
-    # if fname_out already exists in nii or nii.gz
-    if path_in != os.path.abspath(path_out):
-        # first, check if path_in is different from path_out
-        if os.path.isfile(path_out+file_out+'.nii'):
-            printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Deleting it...', 1, 'warning')
-            os.remove(path_out+file_out+'.nii')
-#            os.system('rm '+path_out+file_out+'.nii')  # 
-            # use remove instead of rm because: https://github.com/neuropoly/spinalcordtoolbox/issues/259
-        if os.path.isfile(path_out+file_out+'.nii.gz'):
-            printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Deleting it...', 1, 'warning')
-            os.remove(path_out+file_out+'.nii.gz')
-#            os.system('rm '+path_out+file_out+'.nii.gz')
-    # if path_in the same as path_out, only delete fname_out with specific ext_out extension
+    # if fname_out already exists in nii or nii.gz format
+    if os.path.isfile(path_out+file_out+ext_out):
+        printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
+        os.remove(path_out+file_out+ext_out)
+    if ext_in != ext_out:
+        # Generate output file
+        from sct_convert import convert
+        convert(fname_in, fname_out)
     else:
-        if os.path.isfile(path_out+file_out+ext_out):
-            printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
-            os.remove(path_out+file_out+ext_out)
-            #os.system('rm '+path_out+file_out+ext_out)
-    # Move file to output folder (keep the same extension as input)
-    shutil.move(fname_in, path_out+file_out+ext_in)
-    # convert to nii (only if necessary)
-    if ext_out == '.nii' and ext_in != '.nii':
-        os.system('fslchfiletype NIFTI '+path_out+file_out)
-    # convert to nii.gz (only if necessary)
-    if ext_out == '.nii.gz' and ext_in != '.nii.gz':
-        os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
+        # Generate output file without changing the extension
+        shutil.move(fname_in, fname_out)
+
+    # # Move file to output folder (keep the same extension as input)
+    # shutil.move(fname_in, path_out+file_out+ext_in)
+    # # convert to nii (only if necessary)
+    # if ext_out == '.nii' and ext_in != '.nii':
+    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+    #     os.remove(path_out+file_out+ext_in)  # remove nii.gz file
+    # # convert to nii.gz (only if necessary)
+    # if ext_out == '.nii.gz' and ext_in != '.nii.gz':
+    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+    #     os.remove(path_out+file_out+ext_in)  # remove nii file
     # display message
-    if verbose:
-        print '  File created: '+path_out+file_out+ext_out
+    printv('  File created: '+path_out+file_out+ext_out, verbose)
+    # if verbose:
+    #     print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
-
-
-#=======================================================================================================================
-# sign
-#=======================================================================================================================
-# Get the sign of a number. Returns 1 if x>=0 and -1 if x<0
-def sign(x):
-    if x >= 0:
-        return 1
-    else:
-        return -1
 
 
 #=======================================================================================================================
@@ -355,6 +450,25 @@ def check_if_installed(cmd, name_software):
     if status != 0:
         print('\nERROR: '+name_software+' is not installed.\nExit program.\n')
         sys.exit(2)
+
+
+#=======================================================================================================================
+# check_if_same_space
+#=======================================================================================================================
+# check if two images are in the same space and same orientation
+def check_if_same_space(fname_1, fname_2):
+    from msct_image import Image
+    from numpy import min, nonzero, all, around
+    from numpy import abs as np_abs
+    from numpy import log10 as np_log10
+
+    im_1 = Image(fname_1)
+    im_2 = Image(fname_2)
+    q1 = im_1.hdr.get_qform()
+    q2 = im_2.hdr.get_qform()
+
+    dec = int(np_abs(round(np_log10(min(np_abs(q1[nonzero(q1)]))))) + 1)
+    return all(around(q1, dec) == around(q2, dec))
 
 
 #=======================================================================================================================
@@ -375,15 +489,31 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.blue
     elif type == 'bold':
         color = bcolors.bold
+    elif type == 'process':
+        color = bcolors.magenta
 
     # print message
     if verbose:
         print(color+string+bcolors.normal)
 
-    # if error, exit prohram
+    # if error, exit program
     if type == 'error':
-        #raise NameError('Error!')
+        from inspect import stack
+        frame,filename,line_number,function_name,lines,index = stack()[1]
+        # print(frame,filename,line_number,function_name,lines,index)
+        print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
         sys.exit(2)
+
+
+#=======================================================================================================================
+# sign
+#=======================================================================================================================
+# Get the sign of a number. Returns 1 if x>=0 and -1 if x<0
+def sign(x):
+    if x >= 0:
+        return 1
+    else:
+        return -1
 
 
 #=======================================================================================================================
@@ -397,6 +527,8 @@ def slash_at_the_end(path, slash=0):
         if not path[-1:] == '/':
             path = path+'/'
     return path
+
+
 
 
 #=======================================================================================================================
@@ -428,7 +560,7 @@ def get_interpolation(program, interp):
         elif interp == 'spline':
             interp_program = ' -interp spline'
     # ANTs
-    elif program == 'ants' or program == 'ants_affine' or program == 'sct_antsApplyTransforms' or program == 'sct_antsSliceRegularizedRegistration':
+    elif program == 'ants' or program == 'ants_affine' or program == 'isct_antsApplyTransforms' or program == 'isct_antsSliceRegularizedRegistration':
         if interp == 'nn':
             interp_program = ' -n NearestNeighbor'
         elif interp == 'linear':
@@ -659,16 +791,6 @@ class Version(object):
         result = result+"_"+self.beta
         return result
 
-class shell_colours(object):
-    default = '\033[0m'
-    rfg_kbg = '\033[91m'
-    gfg_kbg = '\033[92m'
-    yfg_kbg = '\033[93m'
-    mfg_kbg = '\033[95m'
-    yfg_bbg = '\033[104;93m'
-    bfg_kbg = '\033[34m'
-    bold = '\033[1m'
-
 class MsgUser(object): 
     __debug = False
     __quiet = False
@@ -717,20 +839,20 @@ class MsgUser(object):
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg ) )
+        print "".join( (bcolors.magenta, "[Skipped] ", bcolors.normal, msg ) )
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg ) )
+        print "".join( (bcolors.green, "[OK] ", bcolors.normal, msg ) )
     
     @classmethod
     def failed(cls, msg):
-        print "".join( (shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg ) )
+        print "".join( (bcolors.red, "[FAILED] ", bcolors.normal, msg ) )
     
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg ) )
+        print "".join( (bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg ) )

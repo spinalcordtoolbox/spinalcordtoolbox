@@ -23,7 +23,6 @@ def test(path_data):
 
     cmd = 'sct_resample -i ' + path_data + folder_data + file_data[0] \
                 + ' -f 0.5x0.5x1' \
-                + ' -r 0' \
                 + ' -v 1'
 
     # return

@@ -56,7 +56,7 @@
 #
 # TODO: copy src locally
 # TODO: unpad inverse Warp
-# TODO: !!! crop the warping field after padding!!!! cannot do it directly with sct_c3d because it's a composite image:
+# TODO: !!! crop the warping field after padding!!!! cannot do it directly with isct_c3d because it's a composite image:
 # TODO: the use of a gaussian mask gives the following error: itk::ERROR: Image(0x7fb849404ce0): A spacing of 0 is not allowed: Spacing is [0, 0.0357143].
 # TODO: make fname_anat_mask optional
 # TODO: adjust gradient step based on native resolution
@@ -229,7 +229,7 @@ def main():
     # If mask exist, put it in the space of the source for more robust registration
     if fname_anat_mask != '':
         print '\nReslice: mask --> source...'
-        cmdsct_c3d'c3d '+fname_src+' '+fname_anat_mask+' -reslice-identity tmp.mask2src.nii.gz'
+        cmdisct_c3d'c3d '+fname_src+' '+fname_anat_mask+' -reslice-identity tmp.mask2src.nii.gz'
         print('>> '+cmd)
         status, output = commands.getstatusoutput(cmd)
         if debugging:
@@ -237,7 +237,7 @@ def main():
 
     # Pad the source image (because ants doesn't deform the extremities)
     print '\nPad source image and mask...'
-   sct_c3dd = 'c3d '+fname_src+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o tmp.src_padded.nii.gz'
+   isct_c3dd = 'c3d '+fname_src+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o tmp.src_padded.nii.gz'
     print(">> "+cmd)
     status, output = commands.getstatusoutput(cmd)
     cmd = 'c3d tmp.mask2src.nii.gz -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o tmp.mask2src_padded.nii.gz'

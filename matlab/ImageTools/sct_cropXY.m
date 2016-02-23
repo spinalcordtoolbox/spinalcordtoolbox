@@ -1,18 +1,31 @@
-function sct_cropXY(data_file,varargin)
+function [fslroi_input,minX,maxX,minY,maxY,minZ,maxZ]=sct_cropXY(data_file,varargin)
+%sct_cropXY(data_file [,method,param])
+% EXAMPLES:
 % sct_cropXY data_file.nii
+% sct_cropXY data_file.nii centerline 20
 % sct_cropXY data_file.nii autobox
 % sct_cropXY data_file.nii autobox 30
+% sct_cropXY('data_file.nii', 'autobox', '30')
+%
+% METHODS
+% 1- centerline (default)
+% 2- box (not functional)
+% 3- manual (not functional)
+% 4- autobox --> crop at the center of the image
+%
+% PARAM
+% margin around the spinal cord 30 --> crop around 3cm in X and Y
 
 dbstop if error
 
-[data_file,data_path]=sct_tool_remove_extension(data_file,0);
+[data_file,data_path, data_ext]=sct_tool_remove_extension(data_file,0);
 fname_data = [data_path,data_file];
 
 if isempty(varargin), crop_method='centerline'; else crop_method=varargin{1}; end
 if length(varargin)>1, crop_margin=str2num(varargin{2}); else crop_margin=30; end
 
-
-[~, dims] = read_avw(fname_data);
+nii=load_nii([fname_data data_ext]);
+dims=size(nii.img);
 
 % Find which SHELL is running
 disp(['\nFind which SHELL is running...'])
@@ -71,7 +84,7 @@ switch (crop_method)
         for iZ = 1:dims(3)
             % load mask
             fname_mask = [fname_mask_splitZ,numZ{iZ}];
-            mask = read_avw(fname_mask);
+            mask_nii = load_nii(fname_mask); mask=mask_nii.img;
             if length(mask)==1, error('CHECK FILE NAME FOR THE MASK! Exit program.'); end
             % Find the size of the mask
             for i=1:size(mask,3)
@@ -153,6 +166,7 @@ switch (crop_method)
         if crop_margin < 3, margin=15; else margin = crop_margin; end % crop size around centerline
         
         fname_datacrop = [data_path,data_file,'_crop'];
+        minX=dims(1)/2-margin; maxX=dims(1)/2+margin; minY=dims(2)/2-margin; maxY=dims(2)/2+margin; minZ=0; maxZ=dims(3);
         cmd = [fsloutput,'fslroi ',fname_data,' ',fname_datacrop,' ',num2str(dims(1)/2-margin),' ',num2str(2*margin),' ',num2str(dims(2)/2-margin),' ',num2str(2*margin),' 0 -1'];
         disp(['>> ',cmd]);
         [status result] = unix(cmd); % run UNIX command
@@ -166,7 +180,7 @@ switch (crop_method)
         disp(['.. Cropping method: ',crop_method])
         
         % extract one image (to reslice center_line from anat to dw images)
-        cmd = [fsloutput,'fslroi ',fname_data,' ','tmp.dmri.crop.',data_file, '_1',' ','1 1'];
+        cmd = [fsloutput,'fslmaths ',fname_data,' -Tmean ','tmp.dmri.crop.',data_file, '_1'];
         disp(['>> ',cmd]);
         [status result] = unix(cmd);
         if status, error(result); end
@@ -204,9 +218,7 @@ switch (crop_method)
         
         fname_datacrop = [data_path,data_file,'_crop'];
         
-        param.interval = floor(dims(3)/3);
-        param.img = file_data_1;
-        centerline = sct_get_centerline(param);
+        centerline = sct_get_centerline_manual([file_data_1 '.nii']);
         
         if crop_margin < 3, margin=15; else margin = crop_margin; end % crop size around centerline
         minX = min(centerline(:,1))- margin;
@@ -249,3 +261,5 @@ switch (crop_method)
         disp(['-----------------------------------------------'])
         error(['croping method ' crop_method ' isn''t correct'])
 end
+
+fslroi_input = [minX maxX-minX minY maxY-minY minZ maxZ-minZ];

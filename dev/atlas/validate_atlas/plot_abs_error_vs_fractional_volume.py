@@ -25,7 +25,7 @@ class Param:
         self.debug = 0
         self.results_folder = "results_20150210_200iter"
         self.methods_to_display = 'wath,ml,map'
-        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
+        self.fname_folder_to_save_fig = './result_plots' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
         self.noise_std_to_display = 10
         self.tracts_std_to_display = 10
         self.csf_value_to_display = 5
@@ -319,7 +319,11 @@ def main():
 
 
     # Compute fractional volume per label
-    labels_id_FV, labels_name_FV, fract_vol_per_lab, labels_name_FV_RL_gathered, fract_vol_per_lab_RL_gathered = isct_get_fractional_volume.get_fractional_volume_per_label('/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/', 'info_label.txt')
+    labels_id_FV, labels_name_FV, fract_vol_per_lab, labels_name_FV_RL_gathered, fract_vol_per_lab_RL_gathered = isct_get_fractional_volume.get_fractional_volume_per_label('./cropped_atlas/', 'info_label.txt')
+    # # Get the number of voxels including at least one tract
+    # nb_voxels_in_WM = isct_get_fractional_volume.get_nb_voxel_in_WM('./cropped_atlas/', 'info_label.txt')
+    # normalize by the number of voxels in WM and express it as a percentage
+    fract_vol_norm = numpy.divide(fract_vol_per_lab_RL_gathered, numpy.sum(fract_vol_per_lab_RL_gathered)/100)
 
     # NOT NECESSARY NOW WE AVERAGE ACROSS BOTH SIDES (which orders the labels)
     # # check if the order of the labels returned by the function computing the fractional volumes is the same (which should be the case)
@@ -330,7 +334,7 @@ def main():
     # labels_id_FV_29, labels_name_FV_29, fract_vol_per_lab_29 = labels_id_FV[:-2], labels_name_FV[:-2], fract_vol_per_lab[:-2]
 
     # indexes of labels sort according to the fractional volume
-    ind_labels_sort = numpy.argsort(fract_vol_per_lab_RL_gathered)
+    ind_labels_sort = numpy.argsort(fract_vol_norm)
 
     # Find index of the file generated with noise variance = 10 and tracts std = 10
     ind_file_to_display = numpy.where((snr == noise_std_to_display) & (tracts_std == tracts_std_to_display) & (csf_values == csf_value_to_display))
@@ -344,11 +348,14 @@ def main():
 
     # stringColor = Color()
     matplotlib.rcParams.update({'font.size': 50, 'font.family': 'trebuchet'})
+    # plt.rcParams['xtick.major.pad'] = '11'
+    plt.rcParams['ytick.major.pad'] = '15'
+
     fig = plt.figure(figsize=(60, 37))
     width = 1.0 / (nb_method + 1)
     ind_fig = numpy.arange(len(labels_name_sort)) * (1.0 + width)
     plt.ylabel('Absolute error (%)\n', fontsize=65)
-    plt.xlabel('Fractional volume', fontsize=65)
+    plt.xlabel('Fractional volume (% of the total number of voxels in WM)', fontsize=65)
     plt.title('Absolute error per tract as a function of their fractional volume\n\n', fontsize=30)
     plt.suptitle('(Noise std='+str(snr[ind_file_to_display[0]][0])+', Tracts std='+str(tracts_std[ind_file_to_display[0]][0])+', CSF value='+str(csf_values[ind_file_to_display[0]][0])+')', fontsize=30)
 
@@ -366,12 +373,12 @@ def main():
 
     # add alternated vertical background colored bars
     for i_xtick in range(0, len(ind_fig), 2):
-        plt.axvspan(ind_fig[i_xtick] - width - width / 2, ind_fig[i_xtick] + (nb_method + 1) * width - width / 2, facecolor='grey', alpha=0.2)
+        plt.axvspan(ind_fig[i_xtick] - width - width / 2, ind_fig[i_xtick] + (nb_method + 1) * width - width / 2, facecolor='grey', alpha=0.1)
 
     # concatenate value of fractional volume to labels'name
-    xtick_labels = [labels_name_sort[i_lab]+'\n'+r'$\bf{['+str(round(fract_vol_per_lab_RL_gathered[ind_labels_sort][i_lab], 2))+']}$' for i_lab in range(0, len(labels_name_sort))]
+    xtick_labels = [labels_name_sort[i_lab]+'\n'+r'$\bf{['+str(round(fract_vol_norm[ind_labels_sort][i_lab], 2))+']}$' for i_lab in range(0, len(labels_name_sort))]
     ind_lemniscus = numpy.where(labels_name_sort == 'spinal lemniscus (spinothalamic and spinoreticular tracts)')[0][0]
-    xtick_labels[ind_lemniscus] = 'spinal lemniscus\n'+r'$\bf{['+str(round(fract_vol_per_lab_RL_gathered[ind_labels_sort][ind_lemniscus], 2))+']}$'
+    xtick_labels[ind_lemniscus] = 'spinal lemniscus\n'+r'$\bf{['+str(round(fract_vol_norm[ind_labels_sort][ind_lemniscus], 2))+']}$'
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     plt.legend(errorbar_plots, methods_to_display, loc=1, fontsize=50, numpoints=1)
@@ -385,9 +392,9 @@ def main():
     plt.grid(b=True, axis='y', which='both')
     fig.autofmt_xdate()
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_fractional_volume')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_fractional_volume.pdf', format='PDF')
 
-    plt.show()
+    plt.show(block=False)
 
 
 #=======================================================================================================================

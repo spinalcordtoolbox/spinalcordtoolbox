@@ -51,7 +51,7 @@ function param = j_mri_moco_v8(param)
 % 2011-12-04: Only applies. Create a mat/ folder to put all the junk.
 % 2011-12-11: Add a flag to avoid merging data after moco
 %
-% François Marcoux <francois.marcoux@polymtl.ca>
+% Franï¿½ois Marcoux <francois.marcoux@polymtl.ca>
 % 2013-03-04: Modified so only transformation data is saved in mat folder
 % 2013-03-20: In slicewise mode, the files split along z are now tmp_moco files.
 %             If a file is not indexed, its moco version is no longer created.
@@ -181,7 +181,7 @@ if isempty(fname_schedule)
     error('Schedule file was not found. Thanks for playing with us.')
 end
 j_disp(fname_log,['.. Schedule file: ',fname_schedule])
-copyfile(fname_schedule,schedule_file);
+unix(['cp ' fname_schedule ' ' schedule_file]);
 j_disp(fname_log,['.. File created (locally): ',schedule_file])
 
 
@@ -297,7 +297,7 @@ for indice_index = 1:length(param.index)
         fname_data_splitT_splitZ = [fname_data_splitT_num{iT},'_splitZ'];
         cmd = [fsloutput,'fslsplit ',fname_data_splitT_num{iT},' ',fname_data_splitT_splitZ,' -z'];
         j_disp(fname_log,['>> ',cmd]);
-        [status result] = unix(cmd);
+        [status, result] = unix(cmd);
         if status, error(result); end
         
         
@@ -306,10 +306,11 @@ for indice_index = 1:length(param.index)
         if strcmp(todo,'estimate') && strcmp(program,'ANTS')
             j_disp(fname_log,['Process with ANTS'])
             mat_tmp=[folder_mat,'mat.T',num2str(iT),'_tmp']; 
-            out= [folder_mat 'unused.nii'];
-            cmd = ['sct_antsSliceRegularizedRegistration -p 2 --output [' mat_tmp ', ' out '] --transform Translation[0.1] --metric MeanSquares[ ' fname_target '.nii* , ' fname_data_splitT_num{iT} '.nii*  , 1 , 16 , Regular , 0.2 ] --iterations 20 -f 1 -s 2'];
+            if ~exist([folder_mat 'nifti_reg'],'dir'), mkdir([folder_mat 'nifti_reg']); end
+            out= [folder_mat 'nifti_reg' filesep num2str(iT) '.nii'];
+            cmd = ['isct_antsSliceRegularizedRegistration -p 2 --output [' mat_tmp ', ' out '] --transform Translation[0.1] --metric MeanSquares[ ' fname_target '.nii* , ' fname_data_splitT_num{iT} '.nii*  , 1 , 16 , Regular , 0.2 ] --iterations 20 -f 1 -s 2'];
             j_disp(fname_log,['>> ',cmd]);
-            [status result] = unix(cmd);
+            [status, result] = unix(cmd); if status, error(result); end
             unix(['rm ' out ' ' mat_tmp 'W* ' mat_tmp 'I*'])
             mat_tmp=[mat_tmp 'TxTy_poly.csv'];
         end
@@ -586,7 +587,7 @@ for indice_index = 1:length(param.index)
                             % open and write matrix file
                             fid = fopen(fname_mat{iT},'w');
                             transfo=spm_coreg2(ref_header,fname_data_splitT_header,options_spm_coreg);
-                            matrix_transfo = spm_matrix(transfo); % Permet de convertir les données de transfo en matrice de transfo
+                            matrix_transfo = spm_matrix(transfo); % Permet de convertir les donnï¿½es de transfo en matrice de transfo
                             for line=1:4
                                 fprintf(fid,'%f %f %f %f\n',matrix_transfo(line,1),matrix_transfo(line,2),matrix_transfo(line,3),matrix_transfo(line,4));
                             end
