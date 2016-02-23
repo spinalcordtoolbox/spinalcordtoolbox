@@ -770,16 +770,34 @@ int main(int argc, char *argv[])
         PropagatedDeformableModel* prop_CSF = new PropagatedDeformableModel(radialResolution,axialResolution,radius*factor_CSF,numberOfDeformIteration,numberOfPropagationIteration,axialStep,propagationLength);
         if (maxDeformation != 0.0) prop_CSF->setMaxDeformation(maxDeformation*factor_CSF);
         if (maxArea != 0.0) prop_CSF->setMaxArea(maxArea*factor_CSF*2);
-        prop->setMinContrast(minContrast);
+        prop_CSF->setMinContrast(minContrast);
         prop_CSF->setInitialPointAndNormals(point,normal1,normal2);
         prop_CSF->setStretchingFactor(stretchingFactor);
         prop_CSF->setUpAndDownLimits(downSlice,upSlice);
         image3DGrad->setTypeImageFactor(-image3DGrad->getTypeImageFactor());
         prop_CSF->setImage3D(image3DGrad);
-        if (init_with_centerline) {
+        if (init_with_centerline)
+        {
             prop_CSF->propagationWithCenterline();
-            for (unsigned int k=0; k<centerline.size(); k++) prop->addPointToCenterline(centerline[k]);
-            if (initialisation <= 1) prop->setInitPosition(initialisation);
+            for (unsigned int k=0; k<centerline.size(); k++)
+            {
+                //cout << centerline[k] << endl;
+                prop_CSF->addPointToCenterline(centerline[k]);
+            }
+            //cout << endl;
+            if (initialisation <= 1) prop_CSF->setInitPosition(initialisation);
+        }
+        else
+        {
+            prop_CSF->propagationWithCenterline();
+            centerline = extractCenterline(outputFilenameBinary);
+            for (unsigned int k=0; k<centerline.size(); k++)
+            {
+                //cout << centerline[k] << endl;
+                prop_CSF->addPointToCenterline(centerline[k]);
+            }
+            //cout << endl;
+            if (initialisation <= 1) prop_CSF->setInitPosition(initialisation);
         }
         prop_CSF->setVerbose(verbose);
         prop_CSF->computeMeshInitial();
