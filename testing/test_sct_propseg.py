@@ -15,7 +15,7 @@
 import commands
 
 
-def test(path_data):
+def test(path_data='', parameters=''):
 
     # parameters
     folder_data = 't2/'
