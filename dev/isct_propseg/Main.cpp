@@ -911,29 +911,75 @@ vector<CVector3> extractCenterline(string filename)
         itk::Point<double,3> point;
         ImageIterator it( image_centerline, image_centerline->GetRequestedRegion() );
         it.GoToBegin();
+        vector<int> result_no_double;
+        vector<int> result_no_double_number;
         while(!it.IsAtEnd())
         {
             if (it.Get()!=0)
             {
                 ind = it.GetIndex();
                 image_centerline->TransformIndexToPhysicalPoint(ind, point);
-                bool added = false;
-                if (result.size() == 0) {
-                    result.push_back(CVector3(point[0],point[1],point[2]));
-                    added = true;
-                }
-                else {
-                    for (vector<CVector3>::iterator it=result.begin(); it!=result.end(); it++) {
-                        if (point[2] < (*it)[2]) {
-                            result.insert(it, CVector3(point[0],point[1],point[2]));
-                            added = true;
-                            break;
-                        }
+                CVector3 point_cvec = CVector3(point[0],point[1],point[2]);
+
+                bool hasDouble = false;
+                int double_point = 0;
+                for (int j=0; j<result_no_double.size(); j++)
+                {
+                    if (ind[1] == result_no_double[j])
+                    {
+                        hasDouble = true;
+                        double_point = j;
+                        break;
                     }
                 }
-                if (!added) result.push_back(CVector3(point[0],point[1],point[2]));
+
+                if (hasDouble)
+                {
+                    result[double_point] += point_cvec;
+                    result_no_double_number[double_point] += 1;
+                }
+                else
+                {
+                    bool added = false;
+                    if (result.size() == 0) {
+                        result.push_back(point_cvec);
+                        result_no_double.push_back(ind[1]);
+                        result_no_double_number.push_back(1);
+                        added = true;
+                    }
+                    else
+                    {
+                        vector<CVector3> result_average = result;
+                        for (int j=0; j<result_average.size(); j++)
+                        {
+                            result_average[j] /= result_no_double_number[j];
+                        }
+                        for (int k=0; k<result_average.size(); k++)
+                        {
+                            if (point[2] < result_average[k][2])
+                            {
+                                result.insert(result.begin()+k, point_cvec);
+                                result_no_double.insert(result_no_double.begin()+k, ind[1]);
+                                result_no_double_number.insert(result_no_double_number.begin()+k, 1);
+                                added = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!added)
+                    {
+                        result.push_back(point_cvec);
+                        result_no_double.push_back(ind[1]);
+                        result_no_double_number.push_back(1);
+                    }
+                }
             }
             ++it;
+        }
+
+        for (int j=0; j<result.size(); j++)
+        {
+            result[j] /= result_no_double_number[j];
         }
         
         /*// spline approximation to produce correct centerline
