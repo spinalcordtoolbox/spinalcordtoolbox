@@ -397,8 +397,8 @@ int main(int argc, char *argv[])
     unsigned found_slash = inputFilename.find_last_of("/\\");
     string inputFilename_nameonly = inputFilename.substr(found_slash+1);
     unsigned found_point = inputFilename_nameonly.find_first_of(".");
-    inputFilename_nameonly = inputFilename_nameonly.substr(0,found_point);
-    
+    inputFilename_nameonly = inputFilename_nameonly.substr(0,pos);
+
     // Check if output folder ends with /
     if (outputPath!="" && outputPath.compare(outputPath.length()-1,1,"/")) outputPath += "/"; // add "/" if missing
     
