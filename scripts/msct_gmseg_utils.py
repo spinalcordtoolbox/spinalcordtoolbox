@@ -533,25 +533,36 @@ def extract_metric_from_slice_set(slices_set, seg_to_use=None, metric='Mean', gm
         if gm_percentile != 0:
             # removing outliers with a percentile
             gm_dat = sorted(gm_dat.flatten())
-            gm_dat = gm_dat[int(round(gm_percentile*len(gm_dat)/2.0)):-int(round(gm_percentile*len(gm_dat)/2.0))]
+            n_gm_outliers = int(round(gm_percentile*len(gm_dat)/2.0))
+            if n_gm_outliers != 0 and n_gm_outliers*2 < len(gm_dat):
+                gm_dat = gm_dat[n_gm_outliers:-n_gm_outliers]
 
-        if metric.lower() == 'mean':
-            gm_met = np.mean(gm_dat)
-        elif metric.lower() == 'median':
-            gm_met = np.median(gm_dat)
-        gm_std = np.std(gm_dat)
+        if gm_dat == []:
+            gm_met = 0
+            gm_std = 0
+        else:
+            if metric.lower() == 'mean':
+                gm_met = np.mean(gm_dat)
+            elif metric.lower() == 'median':
+                gm_met = np.median(gm_dat)
+            gm_std = np.std(gm_dat)
 
         # metric in WM
         if wm_percentile != 0:
             # removing outliers with a percentile
             wm_dat = sorted(wm_dat.flatten())
-            wm_dat = wm_dat[int(round(wm_percentile*len(wm_dat)/2.0)):-int(round(wm_percentile*len(wm_dat)/2.0))]
-
-        if metric.lower() == 'mean':
-            wm_met = np.mean(wm_dat)
-        elif metric.lower() == 'median':
-            wm_met = np.median(wm_dat)
-        wm_std = np.std(wm_dat)
+            n_wm_outliers = int(round(wm_percentile*len(wm_dat)/2.0))
+            if n_wm_outliers != 0 and n_wm_outliers*2 < len(wm_dat):
+                wm_dat = wm_dat[n_wm_outliers:-n_wm_outliers]
+        if wm_dat == []:
+            wm_met = 0
+            wm_std = 0
+        else:
+            if metric.lower() == 'mean':
+                wm_met = np.mean(wm_dat)
+            elif metric.lower() == 'median':
+                wm_met = np.median(wm_dat)
+            wm_std = np.std(wm_dat)
 
         slice_set_metric[slice_i.id] = (wm_met, gm_met, wm_std, gm_std)
         if save:
