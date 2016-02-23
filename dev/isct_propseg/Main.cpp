@@ -915,7 +915,8 @@ vector<CVector3> extractCenterline(string filename)
         vector<int> result_no_double_number;
         while(!it.IsAtEnd())
         {
-            if (it.Get()!=0)
+            double pixel_value = it.Get();
+            if (pixel_value!=0)
             {
                 ind = it.GetIndex();
                 image_centerline->TransformIndexToPhysicalPoint(ind, point);
@@ -936,7 +937,7 @@ vector<CVector3> extractCenterline(string filename)
                 if (hasDouble)
                 {
                     result[double_point] += point_cvec;
-                    result_no_double_number[double_point] += 1;
+                    result_no_double_number[double_point] += pixel_value;
                 }
                 else
                 {
@@ -944,7 +945,7 @@ vector<CVector3> extractCenterline(string filename)
                     if (result.size() == 0) {
                         result.push_back(point_cvec);
                         result_no_double.push_back(ind[1]);
-                        result_no_double_number.push_back(1);
+                        result_no_double_number.push_back(pixel_value);
                         added = true;
                     }
                     else
@@ -960,7 +961,7 @@ vector<CVector3> extractCenterline(string filename)
                             {
                                 result.insert(result.begin()+k, point_cvec);
                                 result_no_double.insert(result_no_double.begin()+k, ind[1]);
-                                result_no_double_number.insert(result_no_double_number.begin()+k, 1);
+                                result_no_double_number.insert(result_no_double_number.begin()+k, pixel_value);
                                 added = true;
                                 break;
                             }
@@ -970,7 +971,7 @@ vector<CVector3> extractCenterline(string filename)
                     {
                         result.push_back(point_cvec);
                         result_no_double.push_back(ind[1]);
-                        result_no_double_number.push_back(1);
+                        result_no_double_number.push_back(pixel_value);
                     }
                 }
             }
