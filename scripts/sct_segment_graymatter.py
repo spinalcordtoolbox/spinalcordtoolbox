@@ -9,6 +9,36 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
+'''
+INFORMATION:
+The model used in this function is compound of:
+  - a dictionary of WM/GM contrasted images with their manual segmentations
+  - a PCA representing ths dictionary (ie. eigenvectors and eigenvalues)
+  - a parameter value
+  - an information file indicating which parameters were used to construct this model
+
+A constructed model is provided in the toolbox here: $PATH_SCT/data/gm_model.
+It's made from T2* images of 37 subjects and computed with the parameters that gives the best gray matter segmentation results.
+However you can compute you own model with your own data or with other parameters and use it to segment gray matter by using  the flag -model path_new_gm_model/.
+
+To do so, you should have a folder (path_to_dataset/) containing for each subject (with a folder per subject):
+        - a WM/GM contrasted image (for ex T2*-w) containing 'im' in its name
+        - a segmentation of the spinal cord containing 'seg' in its name
+        - a manual segmentation of the gray matter containing 'gm' in its name
+        - a 'level image' containing 'level' in its name : the level image is an image containing a level label per slice indicating at wich vertebral level correspond this slice (usually obtained by registering the MNI-Poly-AMU template to the WM/GM contrasted image).
+
+Use the following command lines :
+# Preprocess the data
+msct_gmseg_utils -preprocess path_to_dataset/
+
+# Compute the model
+msct_multi_atlas_seg -model path_to_dataset_by_slice/ -todo-model compute
+
+Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function the flag -model gm_model/
+
+'''
+
 import sct_utils as sct
 import os
 import time
