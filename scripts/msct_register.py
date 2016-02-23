@@ -106,23 +106,29 @@ def register_slicereg2d(fname_source,
         hdr_warp = im_warp_x.hdr
         hdr_warp_inverse = im_inv_warp_x.hdr
 
-        #Outliers deletion
-        print'\n\tDeleting outliers...'
-        mask_x_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x)
-        mask_y_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y)
-        mask_x_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x_inverse)
-        mask_y_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y_inverse)
-        #Outliers replacement by linear interpolation using closest non-outlier points
-        data_warp_x_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_x_a)
-        data_warp_y_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_a)
-        data_warp_x_inverse_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_x_inverse_a)
-        data_warp_y_inverse_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_inverse_a)
-        #Smoothing of results along z
-        print'\n\tSmoothing results...'
-        data_warp_x_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_no_outliers)
-        data_warp_x_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_inverse_no_outliers)
-        data_warp_y_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_no_outliers)
-        data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_inverse_no_outliers)
+        # #Outliers deletion
+        # print'\n\tDeleting outliers...'
+        # mask_x_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x)
+        # mask_y_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y)
+        # mask_x_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x_inverse)
+        # mask_y_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y_inverse)
+        # #Outliers replacement by linear interpolation using closest non-outlier points
+        # data_warp_x_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_x_a)
+        # data_warp_y_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_a)
+        # data_warp_x_inverse_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_x_inverse_a)
+        # data_warp_y_inverse_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_inverse_a)
+        # #Smoothing of results along z
+        # print'\n\tSmoothing results...'
+        # data_warp_x_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_no_outliers)
+        # data_warp_x_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_inverse_no_outliers)
+        # data_warp_y_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_no_outliers)
+        # data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_inverse_no_outliers)
+
+        # JULIEN
+        data_warp_x_smooth = data_warp_x
+        data_warp_x_smooth_inverse = data_warp_x_inverse
+        data_warp_y_smooth = data_warp_y
+        data_warp_y_smooth_inverse = data_warp_y_inverse
 
         print'\nSaving regularized warping fields...'
         # TODO: MODIFY NEXT PART
