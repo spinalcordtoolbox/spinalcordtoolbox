@@ -247,6 +247,8 @@ int main(int argc, char *argv[])
     int numberOfPropagationIteration = 200;
     double maxDeformation = 0.0, maxArea = 0.0, minContrast = 50.0, tradeoff_d;
 	bool tradeoff_d_bool = false;
+	double distance_search = -1.0;
+	double alpha_param = -1.0;
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i],"-i")==0) {
             i++;
@@ -363,6 +365,14 @@ int main(int argc, char *argv[])
             CSF_segmentation = true;
             if (maxArea == 0.0) maxArea = 120;
             if (maxDeformation == 0.0) maxDeformation = 2.5;
+        }
+        else if (strcmp(argv[i],"-dsearch")==0) {
+            i++;
+            distance_search = atof(argv[i]);
+        }
+        else if (strcmp(argv[i],"-alpha")==0) {
+            i++;
+            alpha_param = atof(argv[i]);
         }
 		else if (strcmp(argv[i],"-verbose")==0) {
             verbose = true;
@@ -715,6 +725,16 @@ int main(int argc, char *argv[])
     prop->setStretchingFactor(stretchingFactor);
 	prop->setUpAndDownLimits(downSlice,upSlice);
 	prop->setImage3D(image3DGrad);
+	if (distance_search != -1.0)
+	{
+	    prop->changedParameters();
+	    prop->setLineSearch(distance_search);
+	}
+	if (alpha_param != -1.0)
+	{
+	    prop->changedParameters();
+	    prop->setAlpha(alpha_param);
+	}
     if (init_with_centerline) {
         prop->propagationWithCenterline();
         for (unsigned int k=0; k<centerline.size(); k++) prop->addPointToCenterline(centerline[k]);
@@ -723,7 +743,7 @@ int main(int argc, char *argv[])
 	if (tradeoff_d_bool) {
 		prop->setTradeOffDistanceFeature(tradeoff_d);
 	}
-    prop->setVerbose(false);
+    prop->setVerbose(true);
 	prop->computeMeshInitial();
     if (output_init_tube) {
         SpinalCord *tube1 = prop->getInitialMesh(), *tube2 = prop->getInverseInitialMesh();
