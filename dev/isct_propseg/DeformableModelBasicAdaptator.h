@@ -193,8 +193,7 @@ public:
 		}
 		
         // define startPos as meanRadius of the mesh
-        int startPos = 0;
-        
+        int startPos = line_search;
         
 		double resultCkMax = 0.0, resultCk;
 		CVector3 xi, ni, ck, ci, index, gradient;
