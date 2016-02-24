@@ -159,7 +159,15 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-d",
                       type_value="float",
-                      description="trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results.",
+                      description="trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results, default is 10",
+                      mandatory=False)
+    parser.add_option(name="-distance-search",
+                      type_value="float",
+                      description="maximum distance of optimal points computation along the surface normals. Range of values from 0 to 30, default is 15",
+                      mandatory=False)
+    parser.add_option(name="-alpha",
+                      type_value="float",
+                      description="trade-off between internal and external forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
     return parser
 
@@ -235,6 +243,10 @@ if __name__ == "__main__":
         cmd += " -min-contrast " + str(arguments["-min-contrast"])
     if "-d" in arguments:
         cmd += " -d " + str(arguments["-d"])
+    if "-distance-search" in arguments:
+        cmd += " -dsearch " + str(arguments["-distance-search"])
+    if "-alpha" in arguments:
+        cmd += " -alpha " + str(arguments["-alpha"])
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
