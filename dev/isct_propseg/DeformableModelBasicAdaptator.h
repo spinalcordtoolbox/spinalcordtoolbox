@@ -211,22 +211,23 @@ public:
 			xi = trianglesBarycentre_[i].getPosition();
 			ni = trianglesBarycentre_[i].getNormal();
 			k = 0;
+			resultCkMax = 0.0;
 			for (int j=-startPos; j<=line_search; j++) {
 				if (image_->TransformPhysicalPointToContinuousIndex(xi + j*deltaNormale*ni,index)) {
 					resultCk = type_image_factor*ni*image_->GetContinuousPixelVector(index) - tradeOff*deltaNormale*deltaNormale*j*j;
-                    imageDistance(i,j+startPos) = resultCk;
-					/*if (resultCk >= resultCkMax) {
+                    //imageDistance(i,j+startPos) = resultCk;
+					if (resultCk >= resultCkMax) {
 						k = j;
 						resultCkMax = resultCk;
-					}*/
+					}
 				}
 			}
-			//listeXiOpt[i] = xi + k*deltaNormale*ni;
-			//listeDistancePointsOpt[i] = k*deltaNormale;
-            //listeWi[i] = max(0.0,resultCkMax);
+			listeXiOpt[i] = xi + k*deltaNormale*ni;
+			listeDistancePointsOpt[i] = k*deltaNormale;
+            listeWi[i] = max(0.0,resultCkMax);
 		}
         
-        vector<int> indexOptPoints = minimalPath(imageDistance, true);
+        /*vector<int> indexOptPoints = minimalPath(imageDistance, true);
         double posDist;
         for (unsigned int i=0; i<indexOptPoints.size(); i++)
         {
@@ -236,7 +237,7 @@ public:
             listeXiOpt[i] = xi + posDist*deltaNormale*ni;
             listeDistancePointsOpt[i] = posDist*deltaNormale;
             listeWi[i] = max(0.0,imageDistance(i,indexOptPoints[i]));
-        }
+        }*/
 
 		meanDistance = 0.0;
 		meanAbsoluteDistance = 0.0;
@@ -531,7 +532,7 @@ public:
 private:
 	void InitParameters()
 	{
-        line_search = 25; //15;
+        line_search = 15; //15;
 		alpha = 25; // 25
 		beta = 0.0;
 		deltaNormale = 0.2;
