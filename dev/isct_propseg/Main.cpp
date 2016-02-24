@@ -603,7 +603,7 @@ int main(int argc, char *argv[])
         {
             if (verbose) cout << "Initialization - spinal cord detection on axial slices" << endl;
             Initialisation init(image,typeImageFactor);
-            init.setVerbose(verbose);
+            init.setVerbose(false);
             init.setGap(gapInterSlices); // gap between slices is necessary to provide good normals
             init.setRadius(radius); // approximate radius of spinal cord. This parameter is used to initiate Hough transform
             init.setNumberOfSlices(nbSlicesInitialisation);
@@ -723,7 +723,7 @@ int main(int argc, char *argv[])
 	if (tradeoff_d_bool) {
 		prop->setTradeOffDistanceFeature(tradeoff_d);
 	}
-    prop->setVerbose(verbose);
+    prop->setVerbose(false);
 	prop->computeMeshInitial();
     if (output_init_tube) {
         SpinalCord *tube1 = prop->getInitialMesh(), *tube2 = prop->getInverseInitialMesh();
