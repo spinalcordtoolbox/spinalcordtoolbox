@@ -743,7 +743,7 @@ int main(int argc, char *argv[])
 	if (tradeoff_d_bool) {
 		prop->setTradeOffDistanceFeature(tradeoff_d);
 	}
-    prop->setVerbose(true);
+    prop->setVerbose(false);
 	prop->computeMeshInitial();
     if (output_init_tube) {
         SpinalCord *tube1 = prop->getInitialMesh(), *tube2 = prop->getInverseInitialMesh();
