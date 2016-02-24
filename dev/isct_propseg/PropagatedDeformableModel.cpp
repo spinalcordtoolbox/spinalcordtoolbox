@@ -51,6 +51,10 @@ PropagatedDeformableModel::PropagatedDeformableModel()
 
 	tradeoff_d_bool = false;
 	tradeoff_d_ = 0.0;
+
+	line_search = 15;
+	alpha = 25.0;
+	beta = 0.0;
 }
 
 
@@ -85,6 +89,10 @@ PropagatedDeformableModel::PropagatedDeformableModel(int resolutionRadiale, int 
 
 	tradeoff_d_bool = false;
 	tradeoff_d_ = 0.0;
+
+	line_search = 15;
+	alpha = 25.0;
+	beta = 0.0;
 }
 
 
@@ -337,7 +345,7 @@ void PropagatedDeformableModel::computeNewBand(SpinalCord* mesh, CVector3 initia
             point[2] += stretchingFactorWorld[2]*vecPoint[2];
 			mesh->addPoint(new Vertex(point,(point-pointIntermediaire).Normalize()));
 		}
-		// Ajout des triangles - attention à la structure en cercle
+		// Ajout des triangles - attention ï¿½ la structure en cercle
 		for (int k=0; k<resolutionRadiale_-1; k++)
 		{
 			mesh->addTriangle(offsetTriangles+(len-1)*resolutionRadiale_+k,offsetTriangles+(len-1)*resolutionRadiale_+k+1,offsetTriangles+len*resolutionRadiale_+k);
@@ -398,7 +406,7 @@ SpinalCord* PropagatedDeformableModel::mergeBidirectionalSpinalCord(SpinalCord* 
 		{
 			mesh->addPoint(new Vertex(*listPoints1[(numberOfDisk-i)*radialResolution-1-j]));//(numberOfDisk-1-i)*radialResolution+j]));
 		}
-		// Ajout des triangles - attention à la structure en cercle
+		// Ajout des triangles - attention ï¿½ la structure en cercle
 		for (int k=0; k<radialResolution-1; k++)
 		{
 			mesh->addTriangle((i-1)*radialResolution+k,(i-1)*radialResolution+k+1,i*radialResolution+k);
@@ -433,7 +441,7 @@ SpinalCord* PropagatedDeformableModel::mergeBidirectionalSpinalCord(SpinalCord* 
 		{
 			mesh->addPoint(new Vertex(*listPoints2[i*radialResolution+(j+indexMin)%radialResolution]));
 		}
-		// Ajout des triangles - attention à la structure en cercle
+		// Ajout des triangles - attention ï¿½ la structure en cercle
 		for (int k=0; k<radialResolution-1; k++)
 		{
 			mesh->addTriangle(offsetTriangles+(i-1)*radialResolution+k,offsetTriangles+(i-1)*radialResolution+k+1,offsetTriangles+i*radialResolution+k);
@@ -680,6 +688,7 @@ SpinalCord* PropagatedDeformableModel::propagationMesh(int numberOfMesh)
                     deformableAdaptator->changedParameters();
                     deformableAdaptator->setAlpha(alpha);
                     deformableAdaptator->setBeta(beta);
+                    deformableAdaptator->setLineSearch(line_search);
                 }
                 
                 /******************************************************************************************
@@ -796,6 +805,7 @@ void PropagatedDeformableModel::rafinementGlobal()
     if (tradeoff_d_bool) deformableAdaptator->setTradeOff(tradeoff_d_);
 	deformableAdaptator->setVerbose(verbose_);
 	deformableAdaptator->changedParameters();
+	deformableAdaptator->setLineSearch(15);
 	deformableAdaptator->setAlpha(25);
 	deformableAdaptator->setBeta(50);
 	deformableAdaptator->setNumberOptimizerIteration(250);

@@ -49,6 +49,7 @@ public:
 	void changedParameters() { this->changedParameters_ = true; };
 	void setAlpha(double alpha) { this->alpha = alpha; };
 	void setBeta(double beta) { this->beta = beta; };
+	void setLineSearch(double line_search) { this->line_search = line_search; };
 	void setContrast(double contrast) { this->meanContrast = contrast; };
 	double getContrast() { return meanContrast; };
     
@@ -92,7 +93,7 @@ private:
 
 	// Deformable models adaptator parameters
 	bool changedParameters_;
-	double alpha, beta, meanContrast, area[3], meanArea;
+	double line_search, alpha, beta, meanContrast, area[3], meanArea;
     vector< pair<CVector3,double> > contrast;
     
     double maxDeformation, maxArea, minContrast;
