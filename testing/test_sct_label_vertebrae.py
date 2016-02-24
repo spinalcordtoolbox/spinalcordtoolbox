@@ -16,6 +16,7 @@ import time, random
 import sct_label_vertebrae
 from pandas import DataFrame
 import os.path
+from copy import deepcopy
 # import commands
 from msct_image import Image
 from numpy import where
@@ -31,7 +32,7 @@ def test(path_data='', parameters=''):
 
     parser = sct_label_vertebrae.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
+    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
