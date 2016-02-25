@@ -65,6 +65,8 @@ public:
     void setVerbose(bool verbose) { verbose_ = verbose; };
     bool getVerbose() { return verbose_; };
 
+    void addCorrectionPoints(vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
+
 private:
 	SpinalCord* mergeBidirectionalSpinalCord(SpinalCord* spinalCord1, SpinalCord* spinalCord2);
 	SpinalCord* propagationMesh(int numberOfMesh=1);
@@ -105,6 +107,8 @@ private:
     double range;
     
     bool verbose_;
+
+    vector<CVector3> points_mask_correction_;
 };
 
 #endif
