@@ -25,6 +25,10 @@
 
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
 # TODO: testing script for all cases
+# TODO: add following feature:
+#-r of isct_antsRegistration at the initial step (step 0).
+#-r [' dest ',' src ',0] --> align the geometric center of the two images
+#-r [' dest ',' src ',1] --> align the maximum intensities of the two images I use that quite often...
 
 # Note for the developer: DO NOT use --collapse-output-transforms 1, otherwise inverse warping field is not output
 
@@ -165,40 +169,25 @@ def main():
                       description="Name of output file.",
                       mandatory=False,
                       example="src_reg.nii.gz")
-    parser.add_option(name="-p",
-                      type_value=[[':'],'str'],
-                      description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
-                                  "step: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\n"
-                                  "algo: Default="+paramreg.steps['1'].algo+"\n"
-                                    "  global registration: {rigid,  affine,  syn,  bsplinesyn}\n"
-                                    "  Slice By Slice registration: {slicereg: regularized translations (see: goo.gl/Sj3ZeU),  slicereg2d_translation: regularized using moving average (Hanning window), slicereg2d_rigid, slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg. Designed for centerlines)}\n" # , slicereg2d_affine, slicereg2d_bsplinesyn, slicereg2d_syn
-                                    "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
-                                    "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
-                                    "shrink: <int> Shrink factor (only for SyN). Default="+paramreg.steps['1'].shrink+"\n"
-                                    "smooth: <int> Smooth factor (only for SyN). Default="+paramreg.steps['1'].smooth+"\n"
-                                    "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
-                                    "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
-                                    "window_length: <int> Size of Hanning window for smoothing along z for slicereg2d_x algo.Default="+paramreg.steps['1'].window_length+"\n"  # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
-                                    "detect_outlier: <int> Factor for outlier detection based on median. Default="+paramreg.steps['1'].detect_outlier, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
-                      deprecated_by='-param',
-                      mandatory=False,
-                      example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-param",
                       type_value=[[':'],'str'],
                       description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
                                   "step: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\n"
                                   "algo: Default="+paramreg.steps['1'].algo+"\n"
-                                    "  global registration: {rigid,  affine,  syn,  bsplinesyn}\n"
-                                    "  Slice By Slice registration: {slicereg: regularized translations (see: goo.gl/Sj3ZeU),  slicereg2d_translation: regularized using moving average (Hanning window), slicereg2d_rigid, slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg. Designed for centerlines)}\n" # , slicereg2d_affine, slicereg2d_bsplinesyn, slicereg2d_syn
+                                    "  translation: translation in X-Y plane (2dof)\n"
+                                    "  rigid: translation + rotation in X-Y plane (4dof)\n"
+                                    "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
+                                    "  syn: non-linear symmetric normalization\n"
+                                    "  bsplinesyn: syn regularized with b-splines\n"
+                                    "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
+                                    "  centermass: registration based on the Center of Mass of each slice (only use with type=seg)\n"
+                                    "slicewise: <int> Slice-by-slice 2d transformation. Default="+paramreg.steps['1'].slicewise+"\n"
                                     "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
                                     "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
-                                    "shrink: <int> Shrink factor (only for SyN). Default="+paramreg.steps['1'].shrink+"\n"
-                                    "smooth: <int> Smooth factor (only for SyN). Default="+paramreg.steps['1'].smooth+"\n"
+                                    "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default="+paramreg.steps['1'].shrink+"\n"
+                                    "smooth: <int> Smooth factor. Default="+paramreg.steps['1'].smooth+"\n"
                                     "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
-                                    "slicewise: <int> Slice-by-slice 2d transformation. Default="+paramreg.steps['1'].slicewise+"\n"
-                                    "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
-                                    "window_length: <int> Size of Hanning window for smoothing along z for slicereg2d_x algo.Default="+paramreg.steps['1'].window_length+"\n"  # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
-                                    "detect_outlier: <int> Factor for outlier detection based on median. Default="+paramreg.steps['1'].detect_outlier, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
+                                    "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -402,8 +391,6 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
 
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI'
-
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
@@ -504,10 +491,10 @@ def register(src, dest, paramreg, param, i_step_str):
 
     # ANTS 2d
     elif paramreg.steps[i_step_str].slicewise == '1':
-        from msct_register import register_slicereg2d
+        from msct_register import register_slicewise
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
-        register_slicereg2d(src,
+        register_slicewise(src,
                             dest,
                             window_length=paramreg.steps[i_step_str].window_length,
                             paramreg=paramreg.steps[i_step_str],
@@ -519,14 +506,15 @@ def register(src, dest, paramreg, param, i_step_str):
                             verbose=param.verbose,
                             ants_registration_params=ants_registration_params)
 
-    # pointwise
-    # TODO: CHANGE NAME
-    # TODO: CHECK THAT type=seg
-    elif paramreg.steps[i_step_str].algo in ['slicereg2d_pointwise']:
-        from msct_register import register_slicereg2d
+    # centermass
+    elif paramreg.steps[i_step_str].algo == 'centermass':
+        # check if type=seg
+        if not paramreg.steps[i_step_str].type == 'seg':
+            sct.printv('\nERROR: algo '+paramreg.steps[i_step_str].algo+' should only be used with type=seg. Exit program\n', 1, 'error')
+        from msct_register import register_slicewise
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
-        register_slicereg2d(src,
+        register_slicewise(src,
                             dest,
                             window_length=paramreg.steps[i_step_str].window_length,
                             paramreg=paramreg.steps[i_step_str],
