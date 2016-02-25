@@ -456,7 +456,7 @@ def register(src, dest, paramreg, param, i_step_str):
         status, output = sct.run(cmd, param.verbose)
 
     # ANTS 3d
-    elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params:
+    elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params and paramreg.steps[i_step_str].slicewise == '0':
         # Pad the destination image (because ants doesn't deform the extremities)
         # N.B. no need to pad if iter = 0
         if not paramreg.steps[i_step_str].iter == '0':
@@ -490,7 +490,7 @@ def register(src, dest, paramreg, param, i_step_str):
         status, output = sct.run(cmd, param.verbose)
 
     # ANTS 2d
-    elif paramreg.steps[i_step_str].slicewise == '1':
+    elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params and paramreg.steps[i_step_str].slicewise == '1':
         from msct_register import register_slicewise
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'

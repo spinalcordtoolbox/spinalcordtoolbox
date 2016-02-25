@@ -10,15 +10,17 @@
 #=======================================================================================================================
 #
 import sys, commands
+from os import chdir
 import sct_utils as sct
 from numpy import array, asarray, zeros, sqrt, dot
 from scipy import ndimage
+from msct_image import Image
 
 # # Get path of the toolbox
 # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # # Append path that contains scripts, to be able to load modules
 # sys.path.append(path_sct + '/scripts')
-# from sct_register_multimodal import Paramreg
+from sct_register_multimodal import Paramreg
 
 
 def register_slicewise(fname_source,
@@ -44,14 +46,15 @@ def register_slicewise(fname_source,
     #     if paramreg.algo == 'slicereg2d_pointwise':
     #         sct.printv('\nERROR: Algorithm slicereg2d_pointwise only operates for segmentation type.', verbose, 'error')
     #         sys.exit(2)
+
     # convert SCT flags into ANTs-compatible flags
     algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN'}
     paramreg.algo = algo_dic[paramreg.algo]
     res_reg = register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
 
-    else:
-        sct.printv('\nERROR: wrong registration type inputed. pleas choose \'im\', or \'seg\'.', verbose, 'error')
-        sys.exit(2)
+    # else:
+    #     sct.printv('\nERROR: wrong registration type inputed. pleas choose \'im\', or \'seg\'.', verbose, 'error')
+    #     sys.exit(2)
 
     # if algo is slicereg2d _pointwise, -translation or _rigid: x_disp and y_disp are displacement fields
     # if algo is slicereg2d _affine, _syn or _bsplinesyn: x_disp and y_disp are warping fields names
@@ -97,7 +100,6 @@ def register_slicewise(fname_source,
         generate_warping_field(fname_source, -x_disp, -y_disp, -theta_rot if theta_rot is not None else None, fname=warp_inverse_out)
 
     elif paramreg.algo in ['affine', 'syn', 'bsplinesyn']:
-        from msct_image import Image
         warp_x, inv_warp_x, warp_y, inv_warp_y = res_reg
         im_warp_x = Image(warp_x)
         im_inv_warp_x = Image(inv_warp_x)
@@ -139,7 +141,6 @@ def register_slicewise(fname_source,
         print'\nSaving regularized warping fields...'
         # TODO: MODIFY NEXT PART
         #Get image dimensions of destination image
-        from msct_image import Image
         from nibabel import load, Nifti1Image, save
         nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
         data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
@@ -280,7 +281,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
 
     # create temporary folder
     print('\nCreate temporary folder...')
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    path_tmp = sct.tmp_create(verbose)
     sct.create_folder(path_tmp)
     print '\nCopy input data...'
     sct.run('cp '+fname_source+ ' ' + path_tmp +'/'+ root_i+ext_i)
@@ -289,7 +290,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         sct.run('cp '+mask+ ' '+path_tmp +'/mask.nii.gz')
 
     # go to temporary folder
-    os.chdir(path_tmp)
+    chdir(path_tmp)
 
     # Split input volume along z
     print '\nSplit input volume...'
@@ -463,7 +464,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         sct.run('cp '+inv_warp_y+' ../')
 
     #Delete tmp folder
-    os.chdir('../')
+    # os.chdir('../')
     # if remove_tmp_folder:
     #     print('\nRemove temporary files...')
     #     sct.run('rm -rf '+path_tmp, error_exit='warning')
