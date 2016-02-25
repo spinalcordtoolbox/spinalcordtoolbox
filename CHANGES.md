@@ -4,6 +4,7 @@
 - NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
 - BUG: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #735.
 - fixed issues #715, #719
+- NEW: package now includes python (from miniconda), which simplifies the installation and allows users to have another Python installed without generating conflicts.
 
 ##2.2.3 (2016-02-04)
 - BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
