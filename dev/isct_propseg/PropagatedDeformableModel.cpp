@@ -483,6 +483,8 @@ SpinalCord* PropagatedDeformableModel::propagationMesh(int numberOfMesh)
     deformableAdaptator->setStopCondition(0.05);
 	if (tradeoff_d_bool) deformableAdaptator->setTradeOff(tradeoff_d_);
     //deformableAdaptator->setProgressiveLineSearchLength(true);// tested but not optimal
+    deformableAdaptator->addCorrectionPoints(points_mask_correction_);
+
     deformableAdaptator->adaptation(); // launch the deformation
     meshOutput = deformableAdaptator->getSpinalCordOutput(); // get the spinal cord segmentation mesh
     delete deformableAdaptator; // release memory
@@ -690,6 +692,7 @@ SpinalCord* PropagatedDeformableModel::propagationMesh(int numberOfMesh)
                     deformableAdaptator->setBeta(beta);
                     deformableAdaptator->setLineSearch(line_search);
                 }
+                deformableAdaptator->addCorrectionPoints(points_mask_correction_);
                 
                 /******************************************************************************************
                  * Deformation of the mesh
@@ -810,6 +813,7 @@ void PropagatedDeformableModel::rafinementGlobal()
 	deformableAdaptator->setBeta(50);
 	deformableAdaptator->setNumberOptimizerIteration(250);
 	deformableAdaptator->setNumberOfIteration(3);
+	deformableAdaptator->addCorrectionPoints(points_mask_correction_);
 	deformableAdaptator->adaptation();
 	delete meshOutputFinal;
 	meshOutputFinal = deformableAdaptator->getSpinalCordOutput();

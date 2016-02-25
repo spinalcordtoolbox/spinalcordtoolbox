@@ -195,7 +195,7 @@ public:
         // define startPos as meanRadius of the mesh
         int startPos = line_search;
         
-		double resultCkMax = 0.0, resultCk;
+		double resultCkMax = 0.0, resultCkMax_mask = 0.0, resultCk;
 		CVector3 xi, ni, ck, ci, index, gradient;
 		int k;
         
@@ -204,6 +204,10 @@ public:
 		listeXiOpt.resize(sizeBary);
 		listeWi.resize(sizeBary);
 		vector<double> listeDistancePointsOpt(sizeBary);
+
+		double threshold_distance_mask = 2.0;
+		CVector3 point_position;
+		double distance_point_from_mask = 0.0;
         
 		for (unsigned int i=0; i<sizeBary; i++)
 		{
@@ -211,19 +215,51 @@ public:
 			ni = trianglesBarycentre_[i].getNormal();
 			k = 0;
 			resultCkMax = 0.0;
-			for (int j=-startPos; j<=line_search; j++) {
-				if (image_->TransformPhysicalPointToContinuousIndex(xi + j*deltaNormale*ni,index)) {
+
+			bool has_point_mask = false;
+			int k_point_mask = 0;
+			double distance_min_mask = 100000.0;
+
+			for (int j=-startPos; j<=line_search; j++)
+			{
+			    point_position = xi + j*deltaNormale*ni;
+				if (image_->TransformPhysicalPointToContinuousIndex(point_position,index)) {
 					resultCk = type_image_factor*ni*image_->GetContinuousPixelVector(index) - tradeOff*deltaNormale*deltaNormale*j*j;
                     //imageDistance(i,j+startPos) = resultCk;
 					if (resultCk >= resultCkMax) {
 						k = j;
 						resultCkMax = resultCk;
 					}
+
+					// including information from correction mask
+					for (int ind_mask=0; ind_mask<points_mask_correction_.size(); ind_mask++)
+					{
+					    distance_point_from_mask = sqrt((points_mask_correction_[ind_mask][0]-point_position[0])*(points_mask_correction_[ind_mask][0]-point_position[0]) + (points_mask_correction_[ind_mask][1]-point_position[1])*(points_mask_correction_[ind_mask][1]-point_position[1]) + (points_mask_correction_[ind_mask][2]-point_position[2])*(points_mask_correction_[ind_mask][2]-point_position[2]));
+                        if (distance_point_from_mask <= threshold_distance_mask && distance_point_from_mask < distance_min_mask)
+                        {
+                            cout << distance_point_from_mask << endl;
+                            k_point_mask = j;
+                            distance_min_mask = distance_point_from_mask;
+                            resultCkMax_mask = 1000;
+                            has_point_mask = true;
+                        }
+					}
 				}
 			}
-			listeXiOpt[i] = xi + k*deltaNormale*ni;
-			listeDistancePointsOpt[i] = k*deltaNormale;
-            listeWi[i] = max(0.0,resultCkMax);
+
+			if (has_point_mask)
+			{
+                listeXiOpt[i] = xi + k_point_mask*deltaNormale*ni;
+			    listeDistancePointsOpt[i] = k_point_mask*deltaNormale;
+                listeWi[i] = max(0.0,resultCkMax_mask);
+                cout << "Point detected!" << endl;
+			}
+			else
+			{
+			    listeXiOpt[i] = xi + k*deltaNormale*ni;
+			    listeDistancePointsOpt[i] = k*deltaNormale;
+                listeWi[i] = max(0.0,resultCkMax);
+            }
 		}
         
         /*vector<int> indexOptPoints = minimalPath(imageDistance, true);
@@ -528,6 +564,8 @@ public:
     void setVerbose(bool verbose) { verbose_ = verbose; };
     bool getVerbose() { return verbose_; };
 
+    void addCorrectionPoints(vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
+
 private:
 	void InitParameters()
 	{
@@ -559,6 +597,8 @@ private:
     double meanRadius_;
     
     bool verbose_;
+
+    vector<CVector3> points_mask_correction_;
 };
 
 /*!
@@ -599,6 +639,8 @@ public:
     void setVerbose(bool verbose) { verbose_ = verbose; };
     bool getVerbose() { return verbose_; };
 
+    void addCorrectionPoints(vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
+
 private:
 	Image3D* image_;
 	int numberOfIteration_;
@@ -614,6 +656,8 @@ private:
     bool progressiveLineSearchLength, tradeoff_bool;
     
     bool verbose_;
+
+    vector<CVector3> points_mask_correction_;
 };
 
 #endif
