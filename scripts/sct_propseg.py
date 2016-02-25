@@ -125,6 +125,10 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="image_nifti",
                       description="mask containing three center of the spinal cord, used to initiate the propagation",
                       mandatory=False)
+    parser.add_option(name="-mask-correction",
+                      type_value="image_nifti",
+                      description="mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and CSF or in the presence of artefacts/pathologies.",
+                      mandatory=False)
     parser.add_option(name="-radius",
                       type_value="float",
                       description="approximate radius of the spinal cord, default is 4 mm",
@@ -225,6 +229,8 @@ if __name__ == "__main__":
         cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
         cmd += " -init-mask " + str(arguments["-init-mask"])
+    if "-mask-correction" in arguments:
+        cmd += " -mask-correction " + str(arguments["-mask-correction"])
     if "-radius" in arguments:
         cmd += " -radius " + str(arguments["-radius"])
     if "-detect-n" in arguments:
