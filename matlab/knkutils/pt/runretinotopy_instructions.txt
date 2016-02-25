@@ -1,0 +1,61 @@
+- For additional information, see http://kendrickkay.net/analyzePRF/
+
+%%%%%%%%%%%%%%%%%% INSTRUCTIONS FOR PRESENTING STIMULI
+
+- quit all unnecessary applications
+- consider turning off networking
+- plug in the power cord (if laptop)
+- change to a directory where you want to save the stimulus presentation .mat files
+- start an experiment by running the runretinotopy.m script
+- to quit a run early, press ESC
+- the run starts when a "t" is detected on the keyboard (this is configurable in the script file)
+- make sure the stimulus starts at exactly the right time! (the <tfun> input prints out a 
+  message to the command window when the trigger is detected.)
+- after a run completes, a .mat file is written out with timing information and button 
+  press information.  these are important; keep these files!
+- make sure to test an entire run (with button presses and so forth) before an actual scan!
+
+%%%%%%%%%%%%%%%%%% INFORMATION ON THE STIMULI
+
+- there are several types of experiments, and they are numbered as follows:
+  89. wedges CCW
+  90. wedges CW
+  91. rings expand
+  92. rings contract
+  93. multidirectional bars
+  94. wedge/ring combination
+- each of the five run types is exactly 300 seconds long
+- there are some rest periods at the beginning and end and in the middle of the runs.  
+  the subject should always be fixating the central dot and doing the task.
+- stimuli are constructed for a resolution of 768 pixels
+- it is assumed the refresh rate of the display is 60 Hz
+- either run at 1024 x 768 or a higher resolution (in which case the stimuli won't 
+  fill the whole display)
+  
+%%%%%%%%%%%%%%%%%% INFORMATION ON THE TASK
+
+- the task is a fixation task.  there is a central dot that can take on different colors.
+  the dot switches color randomly.  the time between switches is chosen randomly 
+  (uniformly) within a certain range.  these properties are all configurable in the
+  runretinotopy.m script.
+- a suggested task is to press a button whenever the dot color changes.  
+
+%%%%%%%%%%%%%%%%%% TIMING ISSUES
+
+- there are exactly 300 seconds in each run
+- the refresh rate of the stimulus is 15 Hz, so there are 4500 frames in each run
+- the stimulus presentation code attempts to compensate for any glitches (missed frames).
+  after the stimulus is complete, make sure the number of glitches reported is low
+  (e.g. 5 or less).
+- after the presentation of the stimulus is finished, some information is output to the 
+  screen regarding timing.  important here is the actual empirical time that it took to 
+  show the stimulus.  this number may not be exactly 300.000 s because the display device
+  may not actually be at 60 Hz (e.g. it might run at 60.2 Hz).  make sure to test a 
+  complete stimulus run with the laptop computer connected to the display device to 
+  see what the precise time is.
+- I like to set the TR to be exactly the time that is necessary, so that the total 
+  duration of the scan is exactly the total duration of the stimulus presentation.
+- for ease of analysis, it would be nice if the TR was either 1 second or 2 seconds 
+  (so that you get 300 or 150 volumes per run).  (of course, the precise number might 
+  be something like 998.952 ms or 2002.056 ms if you are trying to get it precisely 
+  matched to the stimulus computer.)
