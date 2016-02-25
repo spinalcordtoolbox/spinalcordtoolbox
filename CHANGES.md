@@ -2,6 +2,7 @@
 
 ##TBD
 - NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
+- BUG: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #735.
 - fixed issues #715, #719
 
 ##2.2.3 (2016-02-04)
