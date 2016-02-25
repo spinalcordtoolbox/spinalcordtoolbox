@@ -163,6 +163,7 @@ double DeformableModelBasicAdaptator::adaptation()
 
 	FoncteurDeformableBasicLocalAdaptation* costFunction = new FoncteurDeformableBasicLocalAdaptation(image_,mesh_,initialValue,nbPoints);
     costFunction->setVerbose(verbose_);
+    costFunction->addCorrectionPoints(points_mask_correction_);
 	/*if (contrast != -1.0) costFunction->setTradeOff(0.0001*contrast*contrast+0.026*contrast-1.6242);
     else {
         unsigned int index_nearest = 0;

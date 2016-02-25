@@ -142,6 +142,7 @@ typedef itk::ImageSeriesReader< ImageType > DICOMReaderType;
 
 bool extractPointAndNormalFromMask(string filename, CVector3 &point, CVector3 &normal1, CVector3 &normal2);
 vector<CVector3> extractCenterline(string filename);
+vector<CVector3> extractPointsFromMask(string filename);
 
 // Small procedure to manage length of string
 string StrPad(string original, size_t charCount, string prefix="")
@@ -237,7 +238,7 @@ int main(int argc, char *argv[])
         help();
         return EXIT_FAILURE;
     }
-    string inputFilename = "", outputPath = "", outputFilenameBinary = "", outputFilenameMesh = "", outputFilenameBinaryCSF = "", outputFilenameMeshCSF = "", outputFilenameAreas = "", outputFilenameAreasCSF = "", outputFilenameCenterline = "", outputFilenameCenterlineBinary = "", inputCenterlineFilename = "", initMaskFilename = "";
+    string inputFilename = "", outputPath = "", outputFilenameBinary = "", outputFilenameMesh = "", outputFilenameBinaryCSF = "", outputFilenameMeshCSF = "", outputFilenameAreas = "", outputFilenameAreasCSF = "", outputFilenameCenterline = "", outputFilenameCenterlineBinary = "", inputCenterlineFilename = "", initMaskFilename = "", maskCorrectionFilename = "";
     double typeImageFactor = 0.0, initialisation = 0.5;
     int downSlice = -10000, upSlice = 10000;
     string suffix;
@@ -247,6 +248,7 @@ int main(int argc, char *argv[])
     int numberOfPropagationIteration = 200;
     double maxDeformation = 0.0, maxArea = 0.0, minContrast = 50.0, tradeoff_d;
 	bool tradeoff_d_bool = false;
+	bool bool_maskCorrectionFilename = false;
 	double distance_search = -1.0;
 	double alpha_param = -1.0;
     for (int i = 0; i < argc; ++i) {
@@ -334,6 +336,11 @@ int main(int argc, char *argv[])
             i++;
             initMaskFilename = argv[i];
             init_with_mask = true;
+        }
+        else if (strcmp(argv[i],"-mask-correction")==0) {
+            i++;
+            maskCorrectionFilename = argv[i];
+            bool_maskCorrectionFilename = true;
         }
         else if (strcmp(argv[i],"-init-tube")==0) {
             output_init_tube = true;
@@ -564,8 +571,7 @@ int main(int argc, char *argv[])
 	image3DGrad->setImageOriginale(initialImage);
 	image3DGrad->setCroppedImageOriginale(image);
 	image3DGrad->setImageMagnitudeGradient(imageGradient);
-    
-    
+
 	/******************************************
      // Initialization of Propagated Deformable Model of Spinal Cord
      ******************************************/
@@ -749,6 +755,16 @@ int main(int argc, char *argv[])
         SpinalCord *tube1 = prop->getInitialMesh(), *tube2 = prop->getInverseInitialMesh();
         tube1->save(outputPath+"InitialTube1.vtk");
         tube2->save(outputPath+"InitialTube2.vtk");
+    }
+
+    /******************************************
+    // Extraction of points from correction mask, if provided
+    ******************************************/
+    vector<CVector3> points_mask_correction;
+    if (bool_maskCorrectionFilename)
+    {
+        points_mask_correction = extractPointsFromMask(maskCorrectionFilename);
+        prop->addCorrectionPoints(points_mask_correction);
     }
 	
 	prop->adaptationGlobale(); // Propagation
@@ -1096,5 +1112,39 @@ vector<CVector3> extractCenterline(string filename)
     }
     else cerr << "Error: Centerline input file not supported" << endl;
     
+    return result;
+}
+
+vector<CVector3> extractPointsFromMask(string filename)
+{
+    vector<CVector3> result;
+
+    ReaderType::Pointer reader = ReaderType::New();
+	itk::NiftiImageIO::Pointer io = itk::NiftiImageIO::New();
+	reader->SetImageIO(io);
+	reader->SetFileName(filename);
+    try {
+        reader->Update();
+    } catch( itk::ExceptionObject & e ) {
+        cerr << "Exception caught while reading input image " << endl;
+        cerr << e << endl;
+    }
+    ImageType::Pointer image = reader->GetOutput();
+
+    ImageType::IndexType ind;
+    itk::Point<double,3> pnt;
+    ImageIterator it( image, image->GetRequestedRegion() );
+    it.GoToBegin();
+    while(!it.IsAtEnd())
+    {
+        if (it.Get()!=0)
+        {
+            ind = it.GetIndex();
+            image->TransformIndexToPhysicalPoint(ind, pnt);
+            result.push_back(CVector3(pnt[0],pnt[1],pnt[2]));
+        }
+        ++it;
+    }
+
     return result;
 }
