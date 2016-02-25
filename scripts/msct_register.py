@@ -18,6 +18,7 @@ sys.path.append(path_sct + '/scripts')
 from sct_register_multimodal import Paramreg
 
 
+
 def register_slicereg2d(fname_source,
                         fname_dest,
                         fname_mask='',
@@ -32,6 +33,7 @@ def register_slicereg2d(fname_source,
     from msct_register_regularized import register_seg, register_images, generate_warping_field
     from numpy import asarray, apply_along_axis, zeros
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
+
     # Calculate displacement
     current_algo = paramreg.algo
     if paramreg.type == 'seg':
@@ -53,44 +55,48 @@ def register_slicereg2d(fname_source,
     # if algo is slicereg2d _pointwise, -translation or _rigid: x_disp and y_disp are displacement fields
     # if algo is slicereg2d _affine, _syn or _bsplinesyn: x_disp and y_disp are warping fields names
 
-    if current_algo in ['slicereg2d_pointwise', 'slicereg2d_translation', 'slicereg2d_rigid']:
+
+    # here, we need to convert transformation matrices into warping fields
+    if current_algo in ['centermass', 'translation', 'rigid']:
         # Change to array
         x_disp, y_disp, theta_rot = res_reg
         x_disp_a = asarray(x_disp)
         y_disp_a = asarray(y_disp)
-        # Detect outliers
-        if not detect_outlier == '0':
-            mask_x_a = outliers_detection(x_disp_a, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=verbose)
-            mask_y_a = outliers_detection(y_disp_a, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=verbose)
-            # Replace value of outliers by linear interpolation using closest non-outlier points
-            x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
-            y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
-        else:
-            x_disp_a_no_outliers = x_disp_a
-            y_disp_a_no_outliers = y_disp_a
-        # Smooth results
-        if not window_length == '0':
-            x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose=verbose)
-            y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose=verbose)
-        else:
-            x_disp_smooth = x_disp_a_no_outliers
-            y_disp_smooth = y_disp_a_no_outliers
-
-        if theta_rot is not None:
-            # same steps for theta_rot:
-            theta_rot_a = asarray(theta_rot)
-            mask_theta_a = outliers_detection(theta_rot_a, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=verbose)
-            theta_rot_a_no_outliers = outliers_completion(mask_theta_a, verbose=0)
-            theta_rot_smooth = smoothing_window(theta_rot_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
-        else:
-            theta_rot_smooth = None
+        # <<<<< old code with outliers detection and smoothing
+        # # Detect outliers
+        # if not detect_outlier == '0':
+        #     mask_x_a = outliers_detection(x_disp_a, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=verbose)
+        #     mask_y_a = outliers_detection(y_disp_a, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=verbose)
+        #     # Replace value of outliers by linear interpolation using closest non-outlier points
+        #     x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
+        #     y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
+        # else:
+        #     x_disp_a_no_outliers = x_disp_a
+        #     y_disp_a_no_outliers = y_disp_a
+        # # Smooth results
+        # if not window_length == '0':
+        #     x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose=verbose)
+        #     y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose=verbose)
+        # else:
+        #     x_disp_smooth = x_disp_a_no_outliers
+        #     y_disp_smooth = y_disp_a_no_outliers
+        #
+        # if theta_rot is not None:
+        #     # same steps for theta_rot:
+        #     theta_rot_a = asarray(theta_rot)
+        #     mask_theta_a = outliers_detection(theta_rot_a, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=verbose)
+        #     theta_rot_a_no_outliers = outliers_completion(mask_theta_a, verbose=0)
+        #     theta_rot_smooth = smoothing_window(theta_rot_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
+        # else:
+        #     theta_rot_smooth = None
+        # >>>>>
 
         # Generate warping field
-        generate_warping_field(fname_dest, x_disp_smooth, y_disp_smooth, theta_rot_smooth, fname=warp_forward_out)  #name_warp= 'step'+str(paramreg.step)
+        generate_warping_field(fname_dest, x_disp, y_disp, theta_rot, fname=warp_forward_out)  #name_warp= 'step'+str(paramreg.step)
         # Inverse warping field
-        generate_warping_field(fname_source, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth if theta_rot_smooth is not None else None, fname=warp_inverse_out)
+        generate_warping_field(fname_source, -x_disp, -y_disp, -theta_rot if theta_rot is not None else None, fname=warp_inverse_out)
 
-    elif current_algo in ['slicereg2d_affine', 'slicereg2d_syn', 'slicereg2d_bsplinesyn']:
+    elif current_algo in ['affine', 'syn', 'bsplinesyn']:
         from msct_image import Image
         warp_x, inv_warp_x, warp_y, inv_warp_y = res_reg
         im_warp_x = Image(warp_x)
@@ -152,3 +158,67 @@ def register_slicereg2d(fname_source,
         save(img_inverse, filename=warp_inverse_out)
         print'\tFile ' + warp_inverse_out + ' saved.'
         return warp_forward_out, warp_inverse_out
+
+
+
+def register_seg(seg_input, seg_dest, verbose=1):
+    """Slice-by-slice registration by translation of two segmentations.
+    For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
+    mass in voxel unit.
+    The segmentations can be of different sizes but the output segmentation must be smaller than the input segmentation.
+
+    input:
+        seg_input: name of moving segmentation file (type: string)
+        seg_dest: name of fixed segmentation file (type: string)
+
+    output:
+        x_displacement: list of translation along x axis for each slice (type: list)
+        y_displacement: list of translation along y axis for each slice (type: list)
+
+    """
+
+    seg_input_img = Image(seg_input)
+    seg_dest_img = Image(seg_dest)
+    seg_input_data = seg_input_img.data
+    seg_dest_data = seg_dest_img.data
+
+    x_center_of_mass_input = [0] * seg_dest_data.shape[2]
+    y_center_of_mass_input = [0] * seg_dest_data.shape[2]
+    sct.printv('\nGet center of mass of the input segmentation for each slice '
+               '(corresponding to a slice in the output segmentation)...', verbose)  # different if size of the two seg are different
+    # TODO: select only the slices corresponding to the output segmentation
+
+    # grab physical coordinates of destination origin
+    coord_origin_dest = seg_dest_img.transfo_pix2phys([[0, 0, 0]])
+
+    # grab the voxel coordinates of the destination origin from the source image
+    [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
+
+    # calculate center of mass for each slice of the input image
+    for iz in xrange(seg_dest_data.shape[2]):
+        # starts from z_o, which is the origin of the destination image in the source image
+        x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
+
+    # initialize data
+    x_center_of_mass_output = [0] * seg_dest_data.shape[2]
+    y_center_of_mass_output = [0] * seg_dest_data.shape[2]
+
+    # calculate center of mass for each slice of the destination image
+    sct.printv('\nGet center of mass of the destination segmentation for each slice ...', verbose)
+    for iz in xrange(seg_dest_data.shape[2]):
+        try:
+            x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(array(seg_dest_data[:, :, iz]))
+        except Exception as e:
+            sct.printv('WARNING: Exception error in msct_register_regularized during register_seg:', 1, 'warning')
+            print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
+            print e
+
+    # calculate displacement in voxel space
+    x_displacement = [0] * seg_input_data.shape[2]
+    y_displacement = [0] * seg_input_data.shape[2]
+    sct.printv('\nGet displacement by voxel...', verbose)
+    for iz in xrange(seg_dest_data.shape[2]):
+        x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
+        y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
+
+    return x_displacement, y_displacement, None
