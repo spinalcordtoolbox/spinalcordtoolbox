@@ -787,7 +787,19 @@ int main(int argc, char *argv[])
 	if (output_mesh) meshOutputFinal->save(outputFilenameMesh,initialImage);
 	if (output_centerline_coord) meshOutputFinal->computeCenterline(true,outputFilenameCenterline,true);
 	if (output_cross) meshOutputFinal->computeCrossSectionalArea(true,outputFilenameAreas,true,image3DGrad);
-	image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinary,orientationFilter.getInitialImageOrientation());
+	if (upSlice != 10000 || downSlice != -10000)
+	{
+	    vector<CVector3> centerline_spinalcord = meshOutputFinal->computeCenterline();
+	    CVector3* upSlicePoint = new CVector3(centerline_spinalcord[centerline_spinalcord.size()-1]);
+	    CVector3* upSliceNormal = new CVector3(0,0,1);
+	    CVector3* downSlicePoint = new CVector3(centerline_spinalcord[0]);
+	    CVector3* downSliceNormal = new CVector3(0,0,-1);
+	    image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinary,orientationFilter.getInitialImageOrientation(), false, true, upSlicePoint, upSliceNormal, downSlicePoint, downSliceNormal);
+	}
+	else
+	{
+	    image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinary,orientationFilter.getInitialImageOrientation());
+	}
 	if (output_centerline_binary) meshOutputFinal->saveCenterlineAsBinaryImage(initialImage,outputFilenameCenterlineBinary,orientationFilter.getInitialImageOrientation());
     
 	if (verbose) {

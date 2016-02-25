@@ -194,7 +194,7 @@ void SpinalCord::subdivisionAxiale()
 	for (int i=1; i<numberOfDisks; i++)
 	{
 		int offsetPoint = getNbrOfPoints();
-		// Ajout des points intermédiaires
+		// Ajout des points intermï¿½diaires
 		for (int k=0; k<radialResolution_; k++)
 			addPoint(new Vertex((points[i*radialResolution_+k]->getPosition()+points[(i-1)*radialResolution_+k]->getPosition())/2));
 		// Ajout de la nouvelle bande de triangles
@@ -225,7 +225,7 @@ void SpinalCord::subdivisionAxiale()
 
 void SpinalCord::subdivisionRadiale()
 {
-	// Pour chaque disque, on doit ajouter un point entre deux points. La résolution radiale de sortie est donc 2*resolutionRadiale
+	// Pour chaque disque, on doit ajouter un point entre deux points. La rï¿½solution radiale de sortie est donc 2*resolutionRadiale
 	int numberOfDisks = getNbrOfPoints()/radialResolution_, newRadialResolution = 2*radialResolution_;
 	vector<Vertex*> copyPoints = getListPoints(), points(copyPoints.size());
 	for (unsigned int k=0; k<copyPoints.size(); k++)
@@ -243,7 +243,7 @@ void SpinalCord::subdivisionRadiale()
 	for (int i=1; i<numberOfDisks; i++)
 	{
 		int offsetPoint = getNbrOfPoints();
-		// Ajout des points intermédiaires
+		// Ajout des points intermï¿½diaires
 		for (int k=0; k<radialResolution_-1; k++)
 		{
 			addPoint(points[i*radialResolution_+k]);
@@ -478,8 +478,7 @@ void SpinalCord::saveCrossSectionalArea(string filename, Image3D* im)
 }
 
 
-
-void SpinalCord::reduceMeshUpAndDown(CVector3 upperSlicePoint, CVector3 upperSliceNormal, CVector3 downSlicePoint, CVector3 downSliceNormal, string filename)
+vtkSmartPointer<vtkPolyData> SpinalCord::reduceMeshUpAndDown(CVector3 upperSlicePoint, CVector3 upperSliceNormal, CVector3 downSlicePoint, CVector3 downSliceNormal, string filename)
 {
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkDoubleArray> pointNormalsArray = vtkSmartPointer<vtkDoubleArray>::New();
@@ -519,11 +518,14 @@ void SpinalCord::reduceMeshUpAndDown(CVector3 upperSlicePoint, CVector3 upperSli
 	upperClipper->InsideOutOn();
 	upperClipper->Update();
 
-	vtkSmartPointer<vtkBYUWriter> writer = vtkSmartPointer<vtkBYUWriter>::New();
+	/*vtkSmartPointer<vtkBYUWriter> writer = vtkSmartPointer<vtkBYUWriter>::New();
 	string fileN = filename + "_CuttedMesh.byu";
 	writer->SetGeometryFileName(fileN.c_str());
 	writer->SetInputData(upperClipper->GetOutput());
-	writer->Write();
+	writer->Write();*/
+
+    vtkSmartPointer<vtkPolyData> polyData = upperClipper->GetOutput();
+	return polyData;
 }
 
 // Extract last disks from meshOutput
@@ -627,7 +629,7 @@ SpinalCord* SpinalCord::extractPartOfMesh(int numberOfDisk, bool moving1, bool m
 		{
 			result->addPoint(new Vertex(lastDisks[numberOfDisk-1-i][j],moving2));
 		}
-		// Ajout des triangles - attention à la structure en cercle
+		// Ajout des triangles - attention ï¿½ la structure en cercle
 		for (int k=0; k<radialResolution_-1; k++)
 		{
 			result->addTriangle((i-1)*radialResolution_+k,(i-1)*radialResolution_+k+1,i*radialResolution_+k);
