@@ -237,7 +237,6 @@ public:
 					    distance_point_from_mask = sqrt((points_mask_correction_[ind_mask][0]-point_position[0])*(points_mask_correction_[ind_mask][0]-point_position[0]) + (points_mask_correction_[ind_mask][1]-point_position[1])*(points_mask_correction_[ind_mask][1]-point_position[1]) + (points_mask_correction_[ind_mask][2]-point_position[2])*(points_mask_correction_[ind_mask][2]-point_position[2]));
                         if (distance_point_from_mask <= threshold_distance_mask && distance_point_from_mask < distance_min_mask)
                         {
-                            cout << distance_point_from_mask << endl;
                             k_point_mask = j;
                             distance_min_mask = distance_point_from_mask;
                             resultCkMax_mask = 1000;
@@ -252,7 +251,6 @@ public:
                 listeXiOpt[i] = xi + k_point_mask*deltaNormale*ni;
 			    listeDistancePointsOpt[i] = k_point_mask*deltaNormale;
                 listeWi[i] = max(0.0,resultCkMax_mask);
-                cout << "Point detected!" << endl;
 			}
 			else
 			{
