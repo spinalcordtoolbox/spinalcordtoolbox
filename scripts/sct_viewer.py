@@ -8,16 +8,150 @@
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Benjamin De Leener
 # Created: 2015-01-30
-# Modified: 2015-02-02
+# Modified: 2016-02-26
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 import sys
 from msct_parser import Parser
 from msct_image import Image
+from bisect import bisect
+from numpy import arange
+from msct_types import *
+import matplotlib.pyplot as plt
 
 
 # from matplotlib.widgets import Slider, Button, RadioButtons
+
+class SinglePlot:
+    """
+        This class manages mouse events on one image.
+    """
+    def __init__(self, fig, volume, viewer, number_of_slices=0, gap_inter_slice=0):
+        self.fig = fig
+        self.volume = volume
+        self.viewer = viewer
+
+        self.image_dim = self.volume.data.shape
+
+        self.list_points = []
+        self.list_points_useful_notation = ''
+
+        self.list_slices = []
+
+        self.number_of_slices = number_of_slices
+        self.gap_inter_slice = gap_inter_slice
+        if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
+            central_slice = int(self.image_dim[1]/2)
+            first_slice = central_slice - (self.number_of_slices / 2) * self.gap_inter_slice
+            last_slice = central_slice + (self.number_of_slices / 2) * self.gap_inter_slice
+            self.list_slices = list(range(first_slice, last_slice, self.number_of_slices))
+        elif self.number_of_slices != 0:
+            self.list_slices = list(range(0, self.image_dim[1], self.number_of_slices))
+        elif self.gap_inter_slice != 0:
+            self.list_slices = list(arange(0, self.image_dim[1], self.gap_inter_slice))
+        else:
+            self.number_of_slices = int(self.image_dim[1] / 10)
+            self.list_slices = list(range(0, self.image_dim[1], self.number_of_slices))
+
+        if self.list_slices[-1] != self.image_dim[1]-1:
+            self.list_slices.append(self.image_dim[1]-1)
+        self.current_slice = 0
+
+        # variable to check if all slices have been processed
+        self.all_processed = False
+
+    def connect(self):
+        """
+        connect to all the events we need
+        :return:
+        """
+        self.cidpress = self.fig.figure.canvas.mpl_connect('button_press_event', self.on_press)
+
+    def draw(self):
+        self.fig.figure.canvas.draw()
+
+    def updateSlice(self, target_slice):
+        """
+        This function change the viewer to update the current slice
+        :param slice: number of the slice to go on
+        :return:
+        """
+        if 0 <= slice < self.image_dim[1]:
+            self.fig.set_data(self.volume.data[:, target_slice, :])
+            self.current_slice = bisect(self.list_slices, target_slice)
+            self.fig.figure.canvas.draw()
+
+    def on_press(self, event):
+        """
+        when pressing on the screen, add point into a list, then change current slice
+        if finished, close the window and send the result
+        :param event:
+        :return:
+        """
+        if event.button == 1:
+            self.list_points.append(Coordinate([int(event.ydata), int(self.list_slices[self.current_slice]), int(event.xdata), 1]))
+
+            self.current_slice += 1
+            if self.current_slice < len(self.list_slices):
+                self.fig.set_data(self.volume.data[:, self.list_slices[self.current_slice], :])
+                self.fig.figure.canvas.draw()
+                self.viewer.update_current_slice(self.list_slices[self.current_slice])
+            else:
+                for coord in self.list_points:
+                    #print 'Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value)
+                    if self.list_points_useful_notation != '':
+                        self.list_points_useful_notation = self.list_points_useful_notation + ':'
+                    self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+                self.all_processed = True
+                plt.close()
+
+        return
+
+
+class ClickViewer(object):
+    """
+    This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
+    """
+    def __init__(self, image):
+        if isinstance(image, Image):
+            self.image = image
+        else:
+            print "Error, the image is actually not an image"
+        self.current_slice = 0
+        self.window = None
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
+
+    def update_current_slice(self, current_slice):
+        self.current_slice = current_slice
+
+    def get_results(self):
+        if self.window:
+            return self.window.list_points
+        else:
+            return None
+
+    def start(self):
+        self.fig = plt.figure()
+        self.fig.subplots_adjust(bottom=0.1, left=0.1)
+
+        self.im_size = self.image.data.shape
+
+        ax = self.fig.add_subplot(111)
+        self.im_plot_axial = ax.imshow(self.image.data[:, int(self.im_size[1] / 2), :])
+        self.im_plot_axial.set_cmap('gray')
+        self.im_plot_axial.set_interpolation('nearest')
+
+        self.window = SinglePlot(self.im_plot_axial, self.image, self, self.number_of_slices, self.gap_inter_slice)
+        self.window.connect()
+
+        plt.show()
+
+        if self.window.all_processed:
+            return self.window.list_points_useful_notation
+        else:
+            return None
 
 
 class TrioPlot:
@@ -31,27 +165,21 @@ class TrioPlot:
         self.volume = volume
 
     def connect(self):
-        'connect to all the events we need'
-        self.cidpress = self.fig_axial.figure.canvas.mpl_connect(
-            'button_press_event', self.on_press)
-        self.cidrelease = self.fig_axial.figure.canvas.mpl_connect(
-            'button_release_event', self.on_release)
-        self.cidmotion = self.fig_axial.figure.canvas.mpl_connect(
-            'motion_notify_event', self.on_motion)
+        """
+        connect to all the events we need
+        :return:
+        """
+        self.cidpress = self.fig_axial.figure.canvas.mpl_connect('button_press_event', self.on_press)
+        self.cidrelease = self.fig_axial.figure.canvas.mpl_connect('button_release_event', self.on_release)
+        self.cidmotion = self.fig_axial.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
-        self.cidpress = self.fig_frontal.figure.canvas.mpl_connect(
-            'button_press_event', self.on_press)
-        self.cidrelease = self.fig_frontal.figure.canvas.mpl_connect(
-            'button_release_event', self.on_release)
-        self.cidmotion = self.fig_frontal.figure.canvas.mpl_connect(
-            'motion_notify_event', self.on_motion)
+        self.cidpress = self.fig_frontal.figure.canvas.mpl_connect('button_press_event', self.on_press)
+        self.cidrelease = self.fig_frontal.figure.canvas.mpl_connect('button_release_event', self.on_release)
+        self.cidmotion = self.fig_frontal.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
-        self.cidpress = self.fig_sagittal.figure.canvas.mpl_connect(
-            'button_press_event', self.on_press)
-        self.cidrelease = self.fig_sagittal.figure.canvas.mpl_connect(
-            'button_release_event', self.on_release)
-        self.cidmotion = self.fig_sagittal.figure.canvas.mpl_connect(
-            'motion_notify_event', self.on_motion)
+        self.cidpress = self.fig_sagittal.figure.canvas.mpl_connect('button_press_event', self.on_press)
+        self.cidrelease = self.fig_sagittal.figure.canvas.mpl_connect('button_release_event', self.on_release)
+        self.cidmotion = self.fig_sagittal.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
     def on_press(self, event):
         self.press = event.xdata, event.ydata
@@ -154,7 +282,6 @@ class VolViewer(object):
         self.fig = plt.figure()
         self.fig.subplots_adjust(bottom=0.1, left=0.1)
 
-
         self.im_size = self.image.data.shape
 
         ax = self.fig.add_subplot(221)
@@ -182,7 +309,6 @@ class VolViewer(object):
         plt.show()
 
 
-
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
@@ -193,5 +319,5 @@ if __name__ == "__main__":
     arguments = parser.parse(sys.argv[1:])
 
     image = Image(arguments["-i"])
-    viewer = VolViewer(image)
-    viewer.show()
+    viewer = ClickViewer(image)
+    viewer.start()
