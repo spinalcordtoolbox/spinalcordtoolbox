@@ -29,6 +29,7 @@
 #-r of isct_antsRegistration at the initial step (step 0).
 #-r [' dest ',' src ',0] --> align the geometric center of the two images
 #-r [' dest ',' src ',1] --> align the maximum intensities of the two images I use that quite often...
+# TODO: output reg for ants2d and centermass (2016-02-25)
 
 # Note for the developer: DO NOT use --collapse-output-transforms 1, otherwise inverse warping field is not output
 
