@@ -223,12 +223,19 @@ if __name__ == "__main__":
         cmd += " -detect-png"
 
     # Helping options
+    use_viewer = None
     if "-init-centerline" in arguments:
-        cmd += " -init-centerline " + str(arguments["-init-centerline"])
+        if str(arguments["-init-centerline"]) == "viewer":
+            use_viewer = "centerline"
+        else:
+            cmd += " -init-centerline " + str(arguments["-init-centerline"])
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
-        cmd += " -init-mask " + str(arguments["-init-mask"])
+        if str(arguments["-init-centerline"]) == "viewer":
+            use_viewer = "mask"
+        else:
+            cmd += " -init-mask " + str(arguments["-init-mask"])
     if "-mask-correction" in arguments:
         cmd += " -mask-correction " + str(arguments["-mask-correction"])
     if "-radius" in arguments:
@@ -256,9 +263,28 @@ if __name__ == "__main__":
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
-    nx, ny, nz, nt, px, py, pz, pt = Image(input_filename).dim
+    image_input = Image(input_filename)
+    nx, ny, nz, nt, px, py, pz, pt = image_input.dim
     if nt > 1:
         sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
+
+
+    # if centerline or mask is asked using viewer
+    if use_viewer:
+        from sct_viewer import ClickViewer
+        viewer = ClickViewer(image_input)
+        if use_viewer == "centerline":
+            viewer.gap_inter_slice = 15
+        elif use_viewer == "mask":
+            viewer.number_of_slices = 3
+            viewer.gap_inter_slice = 10
+        mask_points = viewer.start()
+        mask_filename = sct.add_suffix(input_filename, "_mask")
+        sct.run("sct_label_utils -i " + input_filename + " -p create -coord " + mask_points + " -o " + mask_filename, verbose)
+        if use_viewer == "centerline":
+            cmd += " -init-centerline " + mask_filename
+        elif use_viewer == "mask":
+            cmd += " -init-mask " + mask_filename
 
     sct.run(cmd, verbose)
 
