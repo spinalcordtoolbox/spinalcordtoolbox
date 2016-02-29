@@ -142,6 +142,7 @@ typedef itk::ImageSeriesReader< ImageType > DICOMReaderType;
 
 bool extractPointAndNormalFromMask(string filename, CVector3 &point, CVector3 &normal1, CVector3 &normal2);
 vector<CVector3> extractCenterline(string filename);
+vector<CVector3> extractPointsFromMask(string filename);
 
 // Small procedure to manage length of string
 string StrPad(string original, size_t charCount, string prefix="")
@@ -237,7 +238,7 @@ int main(int argc, char *argv[])
         help();
         return EXIT_FAILURE;
     }
-    string inputFilename = "", outputPath = "", outputFilenameBinary = "", outputFilenameMesh = "", outputFilenameBinaryCSF = "", outputFilenameMeshCSF = "", outputFilenameAreas = "", outputFilenameAreasCSF = "", outputFilenameCenterline = "", outputFilenameCenterlineBinary = "", inputCenterlineFilename = "", initMaskFilename = "";
+    string inputFilename = "", outputPath = "", outputFilenameBinary = "", outputFilenameMesh = "", outputFilenameBinaryCSF = "", outputFilenameMeshCSF = "", outputFilenameAreas = "", outputFilenameAreasCSF = "", outputFilenameCenterline = "", outputFilenameCenterlineBinary = "", inputCenterlineFilename = "", initMaskFilename = "", maskCorrectionFilename = "";
     double typeImageFactor = 0.0, initialisation = 0.5;
     int downSlice = -10000, upSlice = 10000;
     string suffix;
@@ -247,6 +248,9 @@ int main(int argc, char *argv[])
     int numberOfPropagationIteration = 200;
     double maxDeformation = 0.0, maxArea = 0.0, minContrast = 50.0, tradeoff_d;
 	bool tradeoff_d_bool = false;
+	bool bool_maskCorrectionFilename = false;
+	double distance_search = -1.0;
+	double alpha_param = -1.0;
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i],"-i")==0) {
             i++;
@@ -333,6 +337,11 @@ int main(int argc, char *argv[])
             initMaskFilename = argv[i];
             init_with_mask = true;
         }
+        else if (strcmp(argv[i],"-mask-correction")==0) {
+            i++;
+            maskCorrectionFilename = argv[i];
+            bool_maskCorrectionFilename = true;
+        }
         else if (strcmp(argv[i],"-init-tube")==0) {
             output_init_tube = true;
         }
@@ -364,6 +373,14 @@ int main(int argc, char *argv[])
             if (maxArea == 0.0) maxArea = 120;
             if (maxDeformation == 0.0) maxDeformation = 2.5;
         }
+        else if (strcmp(argv[i],"-dsearch")==0) {
+            i++;
+            distance_search = atof(argv[i]);
+        }
+        else if (strcmp(argv[i],"-alpha")==0) {
+            i++;
+            alpha_param = atof(argv[i]);
+        }
 		else if (strcmp(argv[i],"-verbose")==0) {
             verbose = true;
         }
@@ -385,20 +402,21 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
-    // output files must have the same extension as input file
-    string nii=".nii", niigz=".nii.gz"; suffix=niigz;
-    size_t pos = inputFilename.find(niigz);
-    if (pos == string::npos) {
-        pos = inputFilename.find(nii);
-        suffix = nii;
-    }
+
     
     // Extract the input file name
     unsigned found_slash = inputFilename.find_last_of("/\\");
     string inputFilename_nameonly = inputFilename.substr(found_slash+1);
-    unsigned found_point = inputFilename_nameonly.find_first_of(".");
-    inputFilename_nameonly = inputFilename_nameonly.substr(0,found_point);
-    
+
+    // output files must have the same extension as input file
+    string nii=".nii", niigz=".nii.gz"; suffix=niigz;
+    size_t pos = inputFilename_nameonly.find(niigz);
+    if (pos == string::npos) {
+        pos = inputFilename_nameonly.find(nii);
+        suffix = nii;
+    }
+    inputFilename_nameonly = inputFilename_nameonly.substr(0,pos);
+
     // Check if output folder ends with /
     if (outputPath!="" && outputPath.compare(outputPath.length()-1,1,"/")) outputPath += "/"; // add "/" if missing
     
@@ -554,8 +572,7 @@ int main(int argc, char *argv[])
 	image3DGrad->setImageOriginale(initialImage);
 	image3DGrad->setCroppedImageOriginale(image);
 	image3DGrad->setImageMagnitudeGradient(imageGradient);
-    
-    
+
 	/******************************************
      // Initialization of Propagated Deformable Model of Spinal Cord
      ******************************************/
@@ -603,7 +620,7 @@ int main(int argc, char *argv[])
         {
             if (verbose) cout << "Initialization - spinal cord detection on axial slices" << endl;
             Initialisation init(image,typeImageFactor);
-            init.setVerbose(verbose);
+            init.setVerbose(false);
             init.setGap(gapInterSlices); // gap between slices is necessary to provide good normals
             init.setRadius(radius); // approximate radius of spinal cord. This parameter is used to initiate Hough transform
             init.setNumberOfSlices(nbSlicesInitialisation);
@@ -713,8 +730,18 @@ int main(int argc, char *argv[])
     prop->setMinContrast(minContrast);
 	prop->setInitialPointAndNormals(point,normal1,normal2);
     prop->setStretchingFactor(stretchingFactor);
-	prop->setUpAndDownLimits(downSlice,upSlice);
+	prop->setUpAndDownLimits(downSlice-5,upSlice+5);
 	prop->setImage3D(image3DGrad);
+	if (distance_search != -1.0)
+	{
+	    prop->changedParameters();
+	    prop->setLineSearch(distance_search);
+	}
+	if (alpha_param != -1.0)
+	{
+	    prop->changedParameters();
+	    prop->setAlpha(alpha_param);
+	}
     if (init_with_centerline) {
         prop->propagationWithCenterline();
         for (unsigned int k=0; k<centerline.size(); k++) prop->addPointToCenterline(centerline[k]);
@@ -723,12 +750,22 @@ int main(int argc, char *argv[])
 	if (tradeoff_d_bool) {
 		prop->setTradeOffDistanceFeature(tradeoff_d);
 	}
-    prop->setVerbose(verbose);
+    prop->setVerbose(false);
 	prop->computeMeshInitial();
     if (output_init_tube) {
         SpinalCord *tube1 = prop->getInitialMesh(), *tube2 = prop->getInverseInitialMesh();
         tube1->save(outputPath+"InitialTube1.vtk");
         tube2->save(outputPath+"InitialTube2.vtk");
+    }
+
+    /******************************************
+    // Extraction of points from correction mask, if provided
+    ******************************************/
+    vector<CVector3> points_mask_correction;
+    if (bool_maskCorrectionFilename)
+    {
+        points_mask_correction = extractPointsFromMask(maskCorrectionFilename);
+        prop->addCorrectionPoints(points_mask_correction);
     }
 	
 	prop->adaptationGlobale(); // Propagation
@@ -751,7 +788,20 @@ int main(int argc, char *argv[])
 	if (output_mesh) meshOutputFinal->save(outputFilenameMesh,initialImage);
 	if (output_centerline_coord) meshOutputFinal->computeCenterline(true,outputFilenameCenterline,true);
 	if (output_cross) meshOutputFinal->computeCrossSectionalArea(true,outputFilenameAreas,true,image3DGrad);
-	image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinary,orientationFilter.getInitialImageOrientation());
+	if (upSlice != 10000 || downSlice != -10000)
+	{
+
+	    vector<CVector3> centerline_spinalcord = meshOutputFinal->computeCenterline();
+	    CVector3* upSlicePoint = new CVector3(image3DGrad->TransformIndexToPhysicalPoint(CVector3(0,upSlice,0)));
+	    CVector3* upSliceNormal = new CVector3(0,0,1);
+	    CVector3* downSlicePoint = new CVector3(image3DGrad->TransformIndexToPhysicalPoint(CVector3(0,downSlice,0)));
+	    CVector3* downSliceNormal = new CVector3(0,0,-1);
+	    image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinary,orientationFilter.getInitialImageOrientation(), false, true, upSlicePoint, upSliceNormal, downSlicePoint, downSliceNormal);
+	}
+	else
+	{
+	    image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinary,orientationFilter.getInitialImageOrientation());
+	}
 	if (output_centerline_binary) meshOutputFinal->saveCenterlineAsBinaryImage(initialImage,outputFilenameCenterlineBinary,orientationFilter.getInitialImageOrientation());
     
 	if (verbose) {
@@ -770,16 +820,34 @@ int main(int argc, char *argv[])
         PropagatedDeformableModel* prop_CSF = new PropagatedDeformableModel(radialResolution,axialResolution,radius*factor_CSF,numberOfDeformIteration,numberOfPropagationIteration,axialStep,propagationLength);
         if (maxDeformation != 0.0) prop_CSF->setMaxDeformation(maxDeformation*factor_CSF);
         if (maxArea != 0.0) prop_CSF->setMaxArea(maxArea*factor_CSF*2);
-        prop->setMinContrast(minContrast);
+        prop_CSF->setMinContrast(minContrast);
         prop_CSF->setInitialPointAndNormals(point,normal1,normal2);
         prop_CSF->setStretchingFactor(stretchingFactor);
         prop_CSF->setUpAndDownLimits(downSlice,upSlice);
         image3DGrad->setTypeImageFactor(-image3DGrad->getTypeImageFactor());
         prop_CSF->setImage3D(image3DGrad);
-        if (init_with_centerline) {
+        if (init_with_centerline)
+        {
             prop_CSF->propagationWithCenterline();
-            for (unsigned int k=0; k<centerline.size(); k++) prop->addPointToCenterline(centerline[k]);
-            if (initialisation <= 1) prop->setInitPosition(initialisation);
+            for (unsigned int k=0; k<centerline.size(); k++)
+            {
+                //cout << centerline[k] << endl;
+                prop_CSF->addPointToCenterline(centerline[k]);
+            }
+            //cout << endl;
+            if (initialisation <= 1) prop_CSF->setInitPosition(initialisation);
+        }
+        else
+        {
+            prop_CSF->propagationWithCenterline();
+            centerline = extractCenterline(outputFilenameBinary);
+            for (unsigned int k=0; k<centerline.size(); k++)
+            {
+                //cout << centerline[k] << endl;
+                prop_CSF->addPointToCenterline(centerline[k]);
+            }
+            //cout << endl;
+            if (initialisation <= 1) prop_CSF->setInitPosition(initialisation);
         }
         prop_CSF->setVerbose(verbose);
         prop_CSF->computeMeshInitial();
@@ -911,29 +979,76 @@ vector<CVector3> extractCenterline(string filename)
         itk::Point<double,3> point;
         ImageIterator it( image_centerline, image_centerline->GetRequestedRegion() );
         it.GoToBegin();
+        vector<int> result_no_double;
+        vector<int> result_no_double_number;
         while(!it.IsAtEnd())
         {
-            if (it.Get()!=0)
+            double pixel_value = it.Get();
+            if (pixel_value!=0)
             {
                 ind = it.GetIndex();
                 image_centerline->TransformIndexToPhysicalPoint(ind, point);
-                bool added = false;
-                if (result.size() == 0) {
-                    result.push_back(CVector3(point[0],point[1],point[2]));
-                    added = true;
-                }
-                else {
-                    for (vector<CVector3>::iterator it=result.begin(); it!=result.end(); it++) {
-                        if (point[2] < (*it)[2]) {
-                            result.insert(it, CVector3(point[0],point[1],point[2]));
-                            added = true;
-                            break;
-                        }
+                CVector3 point_cvec = CVector3(point[0],point[1],point[2]);
+
+                bool hasDouble = false;
+                int double_point = 0;
+                for (int j=0; j<result_no_double.size(); j++)
+                {
+                    if (ind[1] == result_no_double[j])
+                    {
+                        hasDouble = true;
+                        double_point = j;
+                        break;
                     }
                 }
-                if (!added) result.push_back(CVector3(point[0],point[1],point[2]));
+
+                if (hasDouble)
+                {
+                    result[double_point] += point_cvec;
+                    result_no_double_number[double_point] += pixel_value;
+                }
+                else
+                {
+                    bool added = false;
+                    if (result.size() == 0) {
+                        result.push_back(point_cvec);
+                        result_no_double.push_back(ind[1]);
+                        result_no_double_number.push_back(pixel_value);
+                        added = true;
+                    }
+                    else
+                    {
+                        vector<CVector3> result_average = result;
+                        for (int j=0; j<result_average.size(); j++)
+                        {
+                            result_average[j] /= result_no_double_number[j];
+                        }
+                        for (int k=0; k<result_average.size(); k++)
+                        {
+                            if (point[2] < result_average[k][2])
+                            {
+                                result.insert(result.begin()+k, point_cvec);
+                                result_no_double.insert(result_no_double.begin()+k, ind[1]);
+                                result_no_double_number.insert(result_no_double_number.begin()+k, pixel_value);
+                                added = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!added)
+                    {
+                        result.push_back(point_cvec);
+                        result_no_double.push_back(ind[1]);
+                        result_no_double_number.push_back(pixel_value);
+                    }
+                }
             }
             ++it;
+        }
+
+        for (int j=0; j<result.size(); j++)
+        {
+            result[j] /= result_no_double_number[j];
         }
         
         /*// spline approximation to produce correct centerline
@@ -1011,5 +1126,39 @@ vector<CVector3> extractCenterline(string filename)
     }
     else cerr << "Error: Centerline input file not supported" << endl;
     
+    return result;
+}
+
+vector<CVector3> extractPointsFromMask(string filename)
+{
+    vector<CVector3> result;
+
+    ReaderType::Pointer reader = ReaderType::New();
+	itk::NiftiImageIO::Pointer io = itk::NiftiImageIO::New();
+	reader->SetImageIO(io);
+	reader->SetFileName(filename);
+    try {
+        reader->Update();
+    } catch( itk::ExceptionObject & e ) {
+        cerr << "Exception caught while reading input image " << endl;
+        cerr << e << endl;
+    }
+    ImageType::Pointer image = reader->GetOutput();
+
+    ImageType::IndexType ind;
+    itk::Point<double,3> pnt;
+    ImageIterator it( image, image->GetRequestedRegion() );
+    it.GoToBegin();
+    while(!it.IsAtEnd())
+    {
+        if (it.Get()!=0)
+        {
+            ind = it.GetIndex();
+            image->TransformIndexToPhysicalPoint(ind, pnt);
+            result.push_back(CVector3(pnt[0],pnt[1],pnt[2]));
+        }
+        ++it;
+    }
+
     return result;
 }

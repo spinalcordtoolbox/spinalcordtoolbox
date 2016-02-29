@@ -199,6 +199,7 @@ class Option:
         sct.printv("Check file existence...", 0)
         nii = False
         niigz = False
+        viewer = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
             if self.parser.check_file_exist:
@@ -216,6 +217,9 @@ class Option:
                 nii, niigz = False, True
             param_tmp = param[:-7]
             pass
+        elif param.lower() == "viewer":
+            viewer = True
+            pass
         else:
             sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
 
@@ -223,6 +227,8 @@ class Option:
             return param_tmp+'.nii'
         elif niigz:
             return param_tmp+'.nii.gz'
+        elif viewer:
+            return param
         else:
             sct.printv("ERROR: File "+param+" does not exist. Exiting", type='error')
 
@@ -525,8 +531,7 @@ Version: """ + str(self.get_sct_version())
         self.example = '\n\nEXAMPLE\n' + \
             basename(self.file)
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
-        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
-        for opt in [opt[0] for opt in sorted_arguments if (self.arguments[opt[0]].example)]:
+        for opt in [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].example and not self.arguments[opt[0]].deprecated_by]:
             if type(self.arguments[opt].example) is list:
                 self.example += ' ' + opt + ' ' + str(self.arguments[opt].example[0])
             else:
