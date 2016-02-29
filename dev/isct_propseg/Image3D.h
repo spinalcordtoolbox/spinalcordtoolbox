@@ -75,7 +75,7 @@ public:
 	void NormalizeByMaximum();
 	void DeleteHighVector();
 
-	void TransformMeshToBinaryImage(Mesh* m, string filename, OrientationType orient, bool sub_segmentation=false);
+	void TransformMeshToBinaryImage(Mesh* m, string filename, OrientationType orient, bool sub_segmentation=false, bool cropUpDown=false, CVector3* upperSlicePoint=0, CVector3* upperSliceNormal=0, CVector3* downSlicePoint=0, CVector3* downSliceNormal=0);
 
 	void setImageOriginale(ImageType::Pointer i);
 	ImageType::Pointer getImageOriginale() { return imageOriginale_; };
