@@ -729,7 +729,7 @@ int main(int argc, char *argv[])
     prop->setMinContrast(minContrast);
 	prop->setInitialPointAndNormals(point,normal1,normal2);
     prop->setStretchingFactor(stretchingFactor);
-	prop->setUpAndDownLimits(downSlice,upSlice);
+	prop->setUpAndDownLimits(downSlice-5,upSlice+5);
 	prop->setImage3D(image3DGrad);
 	if (distance_search != -1.0)
 	{
@@ -789,10 +789,11 @@ int main(int argc, char *argv[])
 	if (output_cross) meshOutputFinal->computeCrossSectionalArea(true,outputFilenameAreas,true,image3DGrad);
 	if (upSlice != 10000 || downSlice != -10000)
 	{
+
 	    vector<CVector3> centerline_spinalcord = meshOutputFinal->computeCenterline();
-	    CVector3* upSlicePoint = new CVector3(centerline_spinalcord[centerline_spinalcord.size()-1]);
+	    CVector3* upSlicePoint = new CVector3(image3DGrad->TransformIndexToPhysicalPoint(CVector3(0,upSlice,0)));
 	    CVector3* upSliceNormal = new CVector3(0,0,1);
-	    CVector3* downSlicePoint = new CVector3(centerline_spinalcord[0]);
+	    CVector3* downSlicePoint = new CVector3(image3DGrad->TransformIndexToPhysicalPoint(CVector3(0,downSlice,0)));
 	    CVector3* downSliceNormal = new CVector3(0,0,-1);
 	    image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinary,orientationFilter.getInitialImageOrientation(), false, true, upSlicePoint, upSliceNormal, downSlicePoint, downSliceNormal);
 	}
