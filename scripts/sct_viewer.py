@@ -16,7 +16,7 @@ import sys
 from msct_parser import Parser
 from msct_image import Image
 from bisect import bisect
-from numpy import arange
+from numpy import arange, min
 from msct_types import *
 import matplotlib.pyplot as plt
 
@@ -61,12 +61,17 @@ class SinglePlot:
         # variable to check if all slices have been processed
         self.all_processed = False
 
+        # zoom variables
+        self.zoom_factor = 0
+
     def connect(self):
         """
         connect to all the events we need
         :return:
         """
-        self.cidpress = self.fig.figure.canvas.mpl_connect('button_press_event', self.on_press)
+        self.fig.set_data(self.volume.data[:, int(self.list_slices[self.current_slice]), :])
+        self.cidpress_click = self.fig.figure.canvas.mpl_connect('button_press_event', self.on_press)
+        self.cidpress_scroll = self.fig.figure.canvas.mpl_connect('scroll_event', self.on_scroll)
 
     def draw(self):
         self.fig.figure.canvas.draw()
@@ -105,6 +110,48 @@ class SinglePlot:
                     self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
                 self.all_processed = True
                 plt.close()
+
+        return
+
+    def on_scroll(self, event):
+        """
+        when scrooling with the wheel, image is zoomed toward position on the screen
+        :param event:
+        :return:
+        """
+        base_scale = 2.
+        xdata, ydata = event.xdata, event.ydata
+
+        # get the current x and y limits
+        cur_xlim = self.fig.axes.get_xlim()
+        cur_ylim = self.fig.axes.get_ylim()
+
+        # Get distance from the cursor to the edge of the figure frame
+        x_left = xdata - cur_xlim[0]
+        x_right = cur_xlim[1] - xdata
+        y_top = ydata - cur_ylim[0]
+        y_bottom = cur_ylim[1] - ydata
+
+        if event.button == 'down':
+            # deal with zoom in
+            scale_factor = 1 / base_scale
+        elif event.button == 'up':
+            # deal with zoom out
+            scale_factor = base_scale
+        else:
+            # deal with something that should never happen
+            scale_factor = 1
+            print event.button
+
+        print '\n'
+        #print self.zoom_factor, [self.image_dim[2], self.image_dim[0]], mouse_x, mouse_y
+        #print mouse_x - (self.image_dim[2] - self.zoom_factor), mouse_x + (self.image_dim[2] - self.zoom_factor), mouse_y - (self.image_dim[0] - self.zoom_factor), mouse_y + (self.image_dim[0] - self.zoom_factor)
+        print [xdata - x_left * scale_factor, xdata + x_right * scale_factor], [ydata - y_top * scale_factor, ydata + y_bottom * scale_factor]
+        self.fig.axes.set_xlim([xdata - x_left * scale_factor, xdata + x_right * scale_factor])
+        self.fig.axes.set_ylim([ydata - y_top * scale_factor, ydata + y_bottom * scale_factor])
+        #self.fig.axes.set_xlim(mouse_x - (self.image_dim[2] - self.zoom_factor), mouse_x + (self.image_dim[2] - self.zoom_factor))
+        #self.fig.axes.set_ylim(mouse_y - (self.image_dim[0] - self.zoom_factor), mouse_y + (self.image_dim[0] - self.zoom_factor))
+        self.fig.figure.canvas.draw()
 
         return
 
