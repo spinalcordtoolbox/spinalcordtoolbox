@@ -16,7 +16,7 @@ import sys
 from msct_parser import Parser
 from msct_image import Image
 from bisect import bisect
-from numpy import arange, max, pad, linspace
+from numpy import arange, max, pad, linspace, mean, median, std, percentile
 from msct_types import *
 import matplotlib.pyplot as plt
 
@@ -68,15 +68,32 @@ class SinglePlot:
         # zoom variables
         self.zoom_factor = 1.0
 
+        self.fig.set_data(self.volume.data[:, int(self.list_slices[self.current_slice]), :])
+        plt.title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
+            self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
+
+        # intensity variables
+        flattened_volume = self.volume.flatten()
+        self.mean_intensity_factor = 0.5
+        self.std_intensity_factor = 0.5
+        self.first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
+        self.last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
+        self.mean_intensity = (self.first_percentile + self.last_percentile) / 2
+        self.std_intensity = self.last_percentile - self.first_percentile
+        min_intensity = (self.mean_intensity + (self.mean_intensity_factor - 0.5) * self.mean_intensity) - (self.std_intensity + (self.std_intensity_factor - 0.5) * self.std_intensity)
+        max_intensity = (self.mean_intensity + (self.mean_intensity_factor - 0.5) * self.mean_intensity) + (self.std_intensity + (self.std_intensity_factor - 0.5) * self.std_intensity)
+        self.fig.set_clim(min_intensity, max_intensity)
+        self.press = [0, 0]
+
     def connect(self):
         """
         connect to all the events we need
         :return:
         """
-        self.fig.set_data(self.volume.data[:, int(self.list_slices[self.current_slice]), :])
-        plt.title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]))
         self.cidpress_click = self.fig.figure.canvas.mpl_connect('button_press_event', self.on_press)
-        self.cidpress_scroll = self.fig.figure.canvas.mpl_connect('scroll_event', self.on_scroll)
+        self.cidscroll = self.fig.figure.canvas.mpl_connect('scroll_event', self.on_scroll)
+        self.cidrelease = self.fig.figure.canvas.mpl_connect('button_release_event', self.on_release)
+        self.cidmotion = self.fig.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
     def draw(self):
         self.fig.figure.canvas.draw()
@@ -109,7 +126,7 @@ class SinglePlot:
                     self.fig.set_data(self.volume.data[:, self.list_slices[self.current_slice], :])
                     self.fig.figure.canvas.draw()
                     self.viewer.update_current_slice(self.list_slices[self.current_slice])
-                    title_obj = plt.title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]))
+                    title_obj = plt.title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(self.image_dim[1]-1) + ' (' + str(self.current_slice+1) + '/' + str(len(self.list_slices)) + ')')
                     plt.setp(title_obj, color='k')
                     self.fig.figure.canvas.draw()
                 else:
@@ -124,7 +141,36 @@ class SinglePlot:
                 plt.setp(title_obj, color='r')
                 self.fig.figure.canvas.draw()
 
+        elif event.button == 3 and event.inaxes == self.fig.axes:
+            self.press = event.xdata, event.ydata
+
         return
+
+    def change_intensity(self, event):
+        if event.xdata and abs(event.xdata - self.press[0]) < 1 and abs(event.ydata - self.press[1]) < 1:
+            self.press = event.xdata, event.ydata
+            return
+
+        if event.inaxes == self.fig.axes:
+            xlim, ylim = self.fig.axes.get_xlim(), self.fig.axes.get_ylim()
+            self.mean_intensity_factor = - ((event.xdata - xlim[0]) / float(xlim[1] - xlim[0]) - 0.5) * 1.2
+            self.std_intensity_factor = ((event.ydata - ylim[1]) / float(ylim[0] - ylim[1]) - 0.5) * 1.2
+            min_intensity = (self.mean_intensity + self.mean_intensity_factor * self.mean_intensity) - (self.std_intensity + self.std_intensity_factor * self.std_intensity)
+            max_intensity = (self.mean_intensity + self.mean_intensity_factor * self.mean_intensity) + (self.std_intensity + self.std_intensity_factor * self.std_intensity)
+            self.fig.set_clim(min_intensity, max_intensity)
+            self.draw()
+
+    def on_motion(self, event):
+        if event.button == 3:
+            return self.change_intensity(event)
+        else:
+            return
+
+    def on_release(self, event):
+        if event.button == 3:
+            return self.change_intensity(event)
+        else:
+            return
 
     def on_scroll(self, event):
         """
@@ -255,7 +301,7 @@ class TrioPlot:
         self.fig_sagittal.figure.canvas.draw()
 
     def move(self, event):
-        if event.xdata and abs(event.xdata-self.press[0])<1 and abs(event.ydata-self.press[0])<1:
+        if event.xdata and abs(event.xdata-self.press[0])<1 and abs(event.ydata-self.press[1])<1:
             self.press = event.xdata, event.ydata
             return
 
