@@ -274,7 +274,7 @@ if __name__ == "__main__":
         from sct_image import orientation
         image_input_orientation = orientation(image_input, get=True, verbose=False)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(input_filename, "_AIL")
-        sct.run('sct_image -i ' + input_filename + ' -o ' + reoriented_image_filename + ' -setorient AIL -v 0')
+        sct.run('sct_image -i ' + input_filename + ' -o ' + reoriented_image_filename + ' -setorient AIL -v 0', verbose=False)
 
         from sct_viewer import ClickViewer
         image_input_reoriented = Image(reoriented_image_filename)
@@ -287,20 +287,22 @@ if __name__ == "__main__":
 
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
+        if mask_points:
+            # create the mask containing either the three-points or centerline mask for initialization
+            mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
+            sct.run("sct_label_utils -i " + reoriented_image_filename + " -p create -coord " + mask_points + " -o " + mask_filename, verbose=False)
 
-        # create the mask containing either the three-points or centerline mask for initialization
-        mask_filename = sct.add_suffix(reoriented_image_filename, "_mask")
-        sct.run("sct_label_utils -i " + reoriented_image_filename + " -p create -coord " + mask_points + " -o " + mask_filename, verbose)
+            # reorient the initialization mask to correspond to input image orientation
+            mask_reoriented_filename = sct.add_suffix(input_filename, "_mask_viewer")
+            sct.run('sct_image -i ' + mask_filename + ' -o ' + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
-        # reorient the initialization mask to correspond to input image orientation
-        mask_reoriented_filename = sct.add_suffix(input_filename, "_mask")
-        sct.run('sct_image -i ' + mask_filename + ' -o ' + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0')
-
-        # add mask filename to parameters string
-        if use_viewer == "centerline":
-            cmd += " -init-centerline " + mask_reoriented_filename
-        elif use_viewer == "mask":
-            cmd += " -init-mask " + mask_reoriented_filename
+            # add mask filename to parameters string
+            if use_viewer == "centerline":
+                cmd += " -init-centerline " + mask_reoriented_filename
+            elif use_viewer == "mask":
+                cmd += " -init-mask " + mask_reoriented_filename
+        else:
+            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
 
     sct.run(cmd, verbose)
 

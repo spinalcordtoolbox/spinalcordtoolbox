@@ -16,7 +16,7 @@ import sys
 from msct_parser import Parser
 from msct_image import Image
 from bisect import bisect
-from numpy import arange, min
+from numpy import arange, max, pad
 from msct_types import *
 import matplotlib.pyplot as plt
 
@@ -62,7 +62,7 @@ class SinglePlot:
         self.all_processed = False
 
         # zoom variables
-        self.zoom_factor = 0
+        self.zoom_factor = 1.0
 
     def connect(self):
         """
@@ -70,6 +70,7 @@ class SinglePlot:
         :return:
         """
         self.fig.set_data(self.volume.data[:, int(self.list_slices[self.current_slice]), :])
+        plt.title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]))
         self.cidpress_click = self.fig.figure.canvas.mpl_connect('button_press_event', self.on_press)
         self.cidpress_scroll = self.fig.figure.canvas.mpl_connect('scroll_event', self.on_scroll)
 
@@ -94,22 +95,30 @@ class SinglePlot:
         :param event:
         :return:
         """
-        if event.button == 1:
-            self.list_points.append(Coordinate([int(event.ydata), int(self.list_slices[self.current_slice]), int(event.xdata), 1]))
+        if event.button == 1 and event.inaxes == self.fig.axes:
+            target_point = Coordinate([int(event.ydata) - self.viewer.offset[1], int(self.list_slices[self.current_slice]), int(event.xdata) - self.viewer.offset[0], 1])
+            if 0 <= target_point.x < self.image_dim[0] - 2 * self.viewer.offset[1] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2] - 2 * self.viewer.offset[0]:
+                self.list_points.append(target_point)
 
-            self.current_slice += 1
-            if self.current_slice < len(self.list_slices):
-                self.fig.set_data(self.volume.data[:, self.list_slices[self.current_slice], :])
-                self.fig.figure.canvas.draw()
-                self.viewer.update_current_slice(self.list_slices[self.current_slice])
+                self.current_slice += 1
+                if self.current_slice < len(self.list_slices):
+                    self.fig.set_data(self.volume.data[:, self.list_slices[self.current_slice], :])
+                    self.fig.figure.canvas.draw()
+                    self.viewer.update_current_slice(self.list_slices[self.current_slice])
+                    title_obj = plt.title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]))
+                    plt.setp(title_obj, color='k')
+                    self.fig.figure.canvas.draw()
+                else:
+                    for coord in self.list_points:
+                        if self.list_points_useful_notation != '':
+                            self.list_points_useful_notation += ':'
+                        self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+                    self.all_processed = True
+                    plt.close()
             else:
-                for coord in self.list_points:
-                    #print 'Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value)
-                    if self.list_points_useful_notation != '':
-                        self.list_points_useful_notation = self.list_points_useful_notation + ':'
-                    self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-                self.all_processed = True
-                plt.close()
+                title_obj = plt.title('The point you selected in not in the image. Please try again.')
+                plt.setp(title_obj, color='r')
+                self.fig.figure.canvas.draw()
 
         return
 
@@ -119,39 +128,37 @@ class SinglePlot:
         :param event:
         :return:
         """
-        base_scale = 2.
-        xdata, ydata = event.xdata, event.ydata
+        if event.inaxes == self.fig.axes:
+            base_scale = 0.5
+            xdata, ydata = event.xdata, event.ydata
 
-        # get the current x and y limits
-        cur_xlim = self.fig.axes.get_xlim()
-        cur_ylim = self.fig.axes.get_ylim()
+            # get the current x and y limits
+            cur_xlim = self.fig.axes.get_xlim()
+            cur_ylim = self.fig.axes.get_ylim()
 
-        # Get distance from the cursor to the edge of the figure frame
-        x_left = xdata - cur_xlim[0]
-        x_right = cur_xlim[1] - xdata
-        y_top = ydata - cur_ylim[0]
-        y_bottom = cur_ylim[1] - ydata
+            # Get distance from the cursor to the edge of the figure frame
+            x_left = xdata - cur_xlim[0]
+            x_right = cur_xlim[1] - xdata
+            y_top = ydata - cur_ylim[0]
+            y_bottom = cur_ylim[1] - ydata
 
-        if event.button == 'down':
-            # deal with zoom in
-            scale_factor = 1 / base_scale
-        elif event.button == 'up':
-            # deal with zoom out
-            scale_factor = base_scale
-        else:
-            # deal with something that should never happen
-            scale_factor = 1
-            print event.button
+            if event.button == 'up':
+                # deal with zoom in
+                scale_factor = 1 / base_scale
+            elif event.button == 'down':
+                # deal with zoom out
+                scale_factor = base_scale
+            else:
+                # deal with something that should never happen
+                scale_factor = 1.0
+                print event.button
 
-        print '\n'
-        #print self.zoom_factor, [self.image_dim[2], self.image_dim[0]], mouse_x, mouse_y
-        #print mouse_x - (self.image_dim[2] - self.zoom_factor), mouse_x + (self.image_dim[2] - self.zoom_factor), mouse_y - (self.image_dim[0] - self.zoom_factor), mouse_y + (self.image_dim[0] - self.zoom_factor)
-        print [xdata - x_left * scale_factor, xdata + x_right * scale_factor], [ydata - y_top * scale_factor, ydata + y_bottom * scale_factor]
-        self.fig.axes.set_xlim([xdata - x_left * scale_factor, xdata + x_right * scale_factor])
-        self.fig.axes.set_ylim([ydata - y_top * scale_factor, ydata + y_bottom * scale_factor])
-        #self.fig.axes.set_xlim(mouse_x - (self.image_dim[2] - self.zoom_factor), mouse_x + (self.image_dim[2] - self.zoom_factor))
-        #self.fig.axes.set_ylim(mouse_y - (self.image_dim[0] - self.zoom_factor), mouse_y + (self.image_dim[0] - self.zoom_factor))
-        self.fig.figure.canvas.draw()
+            if 0.005 < self.zoom_factor * scale_factor <= 1.5:
+                self.zoom_factor *= scale_factor
+
+                self.fig.axes.set_xlim([xdata - x_left * scale_factor, xdata + x_right * scale_factor])
+                self.fig.axes.set_ylim([ydata - y_top * scale_factor, ydata + y_bottom * scale_factor])
+                self.fig.figure.canvas.draw()
 
         return
 
@@ -170,6 +177,14 @@ class ClickViewer(object):
         self.number_of_slices = 0
         self.gap_inter_slice = 0
 
+        self.fig = None
+
+        # pad the image so that it is square in axial view (useful for zooming)
+        self.im_size = self.image.data.shape
+        max_size = max([self.im_size[0], self.im_size[2]])
+        self.offset = [int((max_size - self.im_size[2])/2), int((max_size - self.im_size[0])/2)]
+        self.image.data = pad(self.image.data, ((self.offset[1], self.offset[1]), (0, 0), (self.offset[0], self.offset[0])), 'constant', constant_values=(0, 0))
+
     def update_current_slice(self, current_slice):
         self.current_slice = current_slice
 
@@ -183,9 +198,7 @@ class ClickViewer(object):
         self.fig = plt.figure()
         self.fig.subplots_adjust(bottom=0.1, left=0.1)
 
-        self.im_size = self.image.data.shape
-
-        ax = self.fig.add_subplot(111)
+        ax = self.fig.add_subplot(111, axisbg='k')
         self.im_plot_axial = ax.imshow(self.image.data[:, int(self.im_size[1] / 2), :])
         self.im_plot_axial.set_cmap('gray')
         self.im_plot_axial.set_interpolation('nearest')
