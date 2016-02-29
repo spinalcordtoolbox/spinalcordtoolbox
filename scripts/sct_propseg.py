@@ -232,7 +232,7 @@ if __name__ == "__main__":
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
-        if str(arguments["-init-centerline"]) == "viewer":
+        if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
         else:
             cmd += " -init-mask " + str(arguments["-init-mask"])

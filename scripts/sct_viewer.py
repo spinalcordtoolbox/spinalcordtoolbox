@@ -16,7 +16,7 @@ import sys
 from msct_parser import Parser
 from msct_image import Image
 from bisect import bisect
-from numpy import arange, max, pad
+from numpy import arange, max, pad, linspace
 from msct_types import *
 import matplotlib.pyplot as plt
 
@@ -45,17 +45,21 @@ class SinglePlot:
             central_slice = int(self.image_dim[1]/2)
             first_slice = central_slice - (self.number_of_slices / 2) * self.gap_inter_slice
             last_slice = central_slice + (self.number_of_slices / 2) * self.gap_inter_slice
-            self.list_slices = list(range(first_slice, last_slice, self.number_of_slices))
+            self.list_slices = [int(item) for item in linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
         elif self.number_of_slices != 0:
-            self.list_slices = list(range(0, self.image_dim[1], self.number_of_slices))
+            self.list_slices = [int(item) for item in linspace(0, self.image_dim[1], self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[1] - 1:
+                self.list_slices.append(self.image_dim[1] - 1)
         elif self.gap_inter_slice != 0:
             self.list_slices = list(arange(0, self.image_dim[1], self.gap_inter_slice))
+            if self.list_slices[-1] != self.image_dim[1] - 1:
+                self.list_slices.append(self.image_dim[1] - 1)
         else:
             self.number_of_slices = int(self.image_dim[1] / 10)
-            self.list_slices = list(range(0, self.image_dim[1], self.number_of_slices))
+            self.list_slices = [int(item) for item in linspace(0, self.image_dim[1], self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[1] - 1:
+                self.list_slices.append(self.image_dim[1] - 1)
 
-        if self.list_slices[-1] != self.image_dim[1]-1:
-            self.list_slices.append(self.image_dim[1]-1)
         self.current_slice = 0
 
         # variable to check if all slices have been processed
