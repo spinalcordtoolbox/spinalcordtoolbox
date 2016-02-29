@@ -402,18 +402,19 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
-    // output files must have the same extension as input file
-    string nii=".nii", niigz=".nii.gz"; suffix=niigz;
-    size_t pos = inputFilename.find(niigz);
-    if (pos == string::npos) {
-        pos = inputFilename.find(nii);
-        suffix = nii;
-    }
+
     
     // Extract the input file name
     unsigned found_slash = inputFilename.find_last_of("/\\");
     string inputFilename_nameonly = inputFilename.substr(found_slash+1);
-    unsigned found_point = inputFilename_nameonly.find_first_of(".");
+
+    // output files must have the same extension as input file
+    string nii=".nii", niigz=".nii.gz"; suffix=niigz;
+    size_t pos = inputFilename_nameonly.find(niigz);
+    if (pos == string::npos) {
+        pos = inputFilename_nameonly.find(nii);
+        suffix = nii;
+    }
     inputFilename_nameonly = inputFilename_nameonly.substr(0,pos);
 
     // Check if output folder ends with /
