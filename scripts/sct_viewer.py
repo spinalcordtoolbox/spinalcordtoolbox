@@ -47,7 +47,7 @@ class SinglePlot:
             last_slice = central_slice + (self.number_of_slices / 2) * self.gap_inter_slice
             self.list_slices = [int(item) for item in linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
         elif self.number_of_slices != 0:
-            self.list_slices = [int(item) for item in linspace(0, self.image_dim[1], self.number_of_slices, endpoint=True)]
+            self.list_slices = [int(item) for item in linspace(0, self.image_dim[1]-1, self.number_of_slices, endpoint=True)]
             if self.list_slices[-1] != self.image_dim[1] - 1:
                 self.list_slices.append(self.image_dim[1] - 1)
         elif self.gap_inter_slice != 0:
@@ -55,8 +55,9 @@ class SinglePlot:
             if self.list_slices[-1] != self.image_dim[1] - 1:
                 self.list_slices.append(self.image_dim[1] - 1)
         else:
-            self.number_of_slices = int(self.image_dim[1] / 10)
-            self.list_slices = [int(item) for item in linspace(0, self.image_dim[1], self.number_of_slices, endpoint=True)]
+            self.gap_inter_slice = int(max([round(self.image_dim[1] / 15.0), 1]))
+            self.number_of_slices = int(round(self.image_dim[1] / self.gap_inter_slice))
+            self.list_slices = [int(item) for item in linspace(0, self.image_dim[1]-1, self.number_of_slices, endpoint=True)]
             if self.list_slices[-1] != self.image_dim[1] - 1:
                 self.list_slices.append(self.image_dim[1] - 1)
 
