@@ -279,9 +279,7 @@ if __name__ == "__main__":
         from sct_viewer import ClickViewer
         image_input_reoriented = Image(reoriented_image_filename)
         viewer = ClickViewer(image_input_reoriented)
-        if use_viewer == "centerline":
-            viewer.gap_inter_slice = 15
-        elif use_viewer == "mask":
+        if use_viewer == "mask":
             viewer.number_of_slices = 3
             viewer.gap_inter_slice = 10
 
