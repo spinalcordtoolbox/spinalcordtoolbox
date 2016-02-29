@@ -59,6 +59,15 @@ def test(path_data='', parameters=''):
         return status, output, DataFrame(
             data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
 
+    import time, random
+    subject_folder = path_data.split('/')
+    if subject_folder[-1] == '' and len(subject_folder) > 1:
+        subject_folder = subject_folder[-2]
+    else:
+        subject_folder = subject_folder[-1]
+    path_output = sct.slash_at_the_end('sct_propseg_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
+    param_with_path += ' -ofolder ' + path_output
+
     # run command
     cmd = 'sct_propseg ' + param_with_path
     output = '\n====================================================================================================\n'\
@@ -72,7 +81,7 @@ def test(path_data='', parameters=''):
     # extract name of manual segmentation
     # by convention, manual segmentation are called inputname_seg_manual.nii.gz where inputname is the filename
     # of the input image
-    segmentation_filename = path_data + contrast_folder + sct.add_suffix(input_filename, '_seg')
+    segmentation_filename = path_output + sct.add_suffix(input_filename, '_seg')
     manual_segmentation_filename = path_data + contrast_folder + sct.add_suffix(input_filename, '_seg_manual')
 
     dice_segmentation = float('nan')
