@@ -268,23 +268,39 @@ if __name__ == "__main__":
     if nt > 1:
         sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
-
     # if centerline or mask is asked using viewer
     if use_viewer:
+        # make sure image is in AIL orientation, as it is the orientation used by PropSeg
+        from sct_image import orientation
+        image_input_orientation = orientation(image_input, get=True, verbose=False)
+        reoriented_image_filename = 'tmp.' + sct.add_suffix(input_filename, "_AIL")
+        sct.run('sct_image -i ' + input_filename + ' -o ' + reoriented_image_filename + ' -setorient AIL -v 0')
+
         from sct_viewer import ClickViewer
-        viewer = ClickViewer(image_input)
+        image_input_reoriented = Image(reoriented_image_filename)
+        viewer = ClickViewer(image_input_reoriented)
         if use_viewer == "centerline":
             viewer.gap_inter_slice = 15
         elif use_viewer == "mask":
             viewer.number_of_slices = 3
             viewer.gap_inter_slice = 10
+
+        # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
-        mask_filename = sct.add_suffix(input_filename, "_mask")
-        sct.run("sct_label_utils -i " + input_filename + " -p create -coord " + mask_points + " -o " + mask_filename, verbose)
+
+        # create the mask containing either the three-points or centerline mask for initialization
+        mask_filename = sct.add_suffix(reoriented_image_filename, "_mask")
+        sct.run("sct_label_utils -i " + reoriented_image_filename + " -p create -coord " + mask_points + " -o " + mask_filename, verbose)
+
+        # reorient the initialization mask to correspond to input image orientation
+        mask_reoriented_filename = sct.add_suffix(input_filename, "_mask")
+        sct.run('sct_image -i ' + mask_filename + ' -o ' + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0')
+
+        # add mask filename to parameters string
         if use_viewer == "centerline":
-            cmd += " -init-centerline " + mask_filename
+            cmd += " -init-centerline " + mask_reoriented_filename
         elif use_viewer == "mask":
-            cmd += " -init-mask " + mask_filename
+            cmd += " -init-mask " + mask_reoriented_filename
 
     sct.run(cmd, verbose)
 
