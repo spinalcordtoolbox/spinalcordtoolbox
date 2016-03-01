@@ -2,6 +2,9 @@
 
 ##TBD
 - NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
+- BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
+- NEW: **sct_propseg**: now accepts a correction solution for sct_propseg in case of missing CSF/SC contrast and/or artefacts (see issue #664 for details)
+- NEW: **sct_propseg**: added flag to open a viewer for initializing spinal cord segmentation by manually providing a few points (issue #741)
 - fixed issues #715, #719
 
 ##2.2.3 (2016-02-04)
