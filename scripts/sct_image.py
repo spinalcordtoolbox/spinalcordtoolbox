@@ -130,13 +130,13 @@ def main(args = None):
         im_in = Image(fname_in[0])
         padx, pady, padz = arguments["-pad"].split(',')
         padx, pady, padz = int(padx), int(pady), int(padz)
-        im_out = [pad_image(im_in[0], pad_x_i=padx, pad_x_f=padx, pad_y_i=pady, pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
+        im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady, pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
     elif "-pad-asym" in arguments:
         # TODO: check input is 3d
         im_in = Image(fname_in[0])
         padxi, padxf, padyi, padyf, padzi, padzf = arguments["-pad-asym"].split(',')
         padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
-        im_out = [pad_image(im_in[0], pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
+        im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
         
     elif "-copy-header" in arguments:
         im_in = Image(fname_in[0])
