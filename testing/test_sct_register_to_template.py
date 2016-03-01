@@ -19,6 +19,7 @@ import sct_register_to_template
 from msct_parser import Parser
 from pandas import DataFrame
 import os.path
+from copy import deepcopy
 
 
 def test(path_data='', parameters=''):
@@ -33,7 +34,7 @@ def test(path_data='', parameters=''):
 
     parser = sct_register_to_template.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
+    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
@@ -55,16 +56,20 @@ def test(path_data='', parameters=''):
     # get contrast folder from -i option.
     # We suppose we can extract it as the first object when spliting with '/' delimiter.
     contrast_folder = ''
+    input_filename = ''
+    if dict_param['-i'][0] == '/':
+        dict_param['-i'] = dict_param['-i'][1:]
     input_split = dict_param['-i'].split('/')
-    if input_split[0]:
+    if len(input_split) == 2:
         contrast_folder = input_split[0] + '/'
+        input_filename = input_split[1]
     else:
-        contrast_folder = input_split[1] + '/'
+        input_filename = input_split[0]
     if not contrast_folder:  # if no contrast folder, send error.
         status = 201
         output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
         return status, output, DataFrame(
-            data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
+            data={'status': status, 'output': output, 'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')}, index=[path_data])
 
     import time, random
     subject_folder = path_data.split('/')

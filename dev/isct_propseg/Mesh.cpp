@@ -867,3 +867,18 @@ double Mesh::computeStandardDeviationFromPixelsInside(ImageType::Pointer image)
     return mean;
 }
 
+double Mesh::computeMeanRadius(int numberOfPointsPerDisk)
+{
+    double result = 0.0;
+    int number = points_.size()%numberOfPointsPerDisk;
+    for (int i=0; i<number; i++)
+    {
+        CVector3 meanVertex;
+        for (int k=0; k<numberOfPointsPerDisk; k++)
+        {
+            meanVertex += points_[i*numberOfPointsPerDisk+k]->getPosition();
+        }
+    }
+    return result;
+}
+
