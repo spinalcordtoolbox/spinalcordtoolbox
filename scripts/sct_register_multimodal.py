@@ -391,6 +391,7 @@ def register(src, dest, paramreg, param, i_step_str):
     ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
+    output = ''  # default output if problem
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
