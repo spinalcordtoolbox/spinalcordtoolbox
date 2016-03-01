@@ -50,6 +50,7 @@ def register_slicewise(fname_source,
     # convert SCT flags into ANTs-compatible flags
     algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN'}
     paramreg.algo = algo_dic[paramreg.algo]
+    # run slicewise registration
     res_reg = register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
 
     # else:
@@ -60,7 +61,7 @@ def register_slicewise(fname_source,
     # if algo is slicereg2d _affine, _syn or _bsplinesyn: x_disp and y_disp are warping fields names
 
     # here, we need to convert transformation matrices into warping fields
-    if paramreg.algo in ['centermass', 'translation', 'rigid']:
+    if paramreg.algo.lower() in ['centermass', 'translation', 'rigid']:
         # Change to array
         x_disp, y_disp, theta_rot = res_reg
         x_disp_a = asarray(x_disp)
@@ -99,7 +100,7 @@ def register_slicewise(fname_source,
         # Inverse warping field
         generate_warping_field(fname_source, -x_disp, -y_disp, -theta_rot if theta_rot is not None else None, fname=warp_inverse_out)
 
-    elif paramreg.algo in ['affine', 'syn', 'bsplinesyn']:
+    elif paramreg.algo.lower() in ['affine', 'syn', 'bsplinesyn']:
         warp_x, inv_warp_x, warp_y, inv_warp_y = res_reg
         im_warp_x = Image(warp_x)
         im_inv_warp_x = Image(inv_warp_x)
@@ -404,7 +405,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
 
         # if an exception occurs with ants, take the last value for the transformation
         except Exception, e:
-            sct.printv('WARNING, an error occurred: '+str(e)+'\n', verbose, 'warning')
+            sct.printv('WARNING: Exception occurred: '+str(e)+'\n', 1, 'warning')
             if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
                 x_displacement[i] = x_displacement[i-1]
                 y_displacement[i] = y_displacement[i-1]
@@ -463,8 +464,8 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         sct.run('cp '+warp_y+' ../')
         sct.run('cp '+inv_warp_y+' ../')
 
-    #Delete tmp folder
-    # os.chdir('../')
+    # go back to parent folder
+    chdir('../')
     # if remove_tmp_folder:
     #     print('\nRemove temporary files...')
     #     sct.run('rm -rf '+path_tmp, error_exit='warning')
@@ -512,7 +513,7 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
     transformation parameters must be precised for each slice of the image.
 
     inputs:
-        fname_dest: name of destination image (type: string)
+        fname_dest: name of destination image (type: string). NEEDS TO BE RPI ORIENTATION!!!
         x_trans: list of translations along x axis for each slice (type: list, length: height of fname_dest)
         y_trans: list of translations along y axis for each slice (type: list, length: height of fname_dest)
         theta_rot[optional]: list of rotation angles in radian (and in ITK's coordinate system) for each slice (type: list)
@@ -524,16 +525,15 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
     output:
         creation of a warping field of name 'fname' with an header similar to the destination image.
     """
-    from nibabel import load
+    from nibabel import load, Nifti1Image, save
     from math import cos, sin
-    from sct_image import get_orientation
 
-    #Make sure image is in rpi format
-    sct.printv('\nChecking if the image of destination is in RPI orientation for the warping field generation ...', verbose)
-    orientation = get_orientation(fname_dest, filename=True)
-    if orientation != 'RPI':
-        sct.printv('\nWARNING: The image of destination is not in RPI format. Dimensions of the warping field might be inverted.', verbose)
-    else: sct.printv('\tOK', verbose)
+    # #Make sure image is in rpi format
+    # sct.printv('\nChecking if the image of destination is in RPI orientation for the warping field generation ...', verbose)
+    # orientation = get_orientation(fname_dest, filename=True)
+    # if orientation != 'RPI':
+    #     sct.printv('\nWARNING: The image of destination is not in RPI format. Dimensions of the warping field might be inverted.', verbose)
+    # else: sct.printv('\tOK', verbose)
 
     sct.printv('\n\nCreating warping field ' + fname + ' for transformations along z...', verbose)
 
@@ -591,7 +591,7 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
     # Generate warp file as a warping field
     hdr_warp.set_intent('vector', (), '')
     hdr_warp.set_data_dtype('float32')
-    img = nibabel.Nifti1Image(data_warp, None, hdr_warp)
-    nibabel.save(img, fname)
+    img = Nifti1Image(data_warp, None, hdr_warp)
+    save(img, fname)
     sct.printv('\nDONE ! Warping field generated: '+fname, verbose)
 
