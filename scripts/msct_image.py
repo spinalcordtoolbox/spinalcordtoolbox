@@ -438,8 +438,8 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            from sct_image import get_orientation
-            self.orientation = get_orientation(self)
+            from sct_image import get_orientation_3d
+            self.orientation = get_orientation_3d(self)
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
