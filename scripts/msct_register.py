@@ -51,7 +51,7 @@ def register_slicewise(fname_source,
     algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN'}
     paramreg.algo = algo_dic[paramreg.algo]
     # run slicewise registration
-    res_reg = register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
+    res_reg = register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params, verbose=verbose)
 
     # else:
     #     sct.printv('\nERROR: wrong registration type inputed. pleas choose \'im\', or \'seg\'.', verbose, 'error')
@@ -427,7 +427,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                 list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
     if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN' or paramreg.algo == 'Affine':
-        print'\nMerge along z of the warping fields...'
+        print'\nMerge warping fields along z...'
         warp_x = name_warp_final + '_x.nii.gz'
         inv_warp_x = name_warp_final + '_x_inverse.nii.gz'
         warp_y = name_warp_final + '_y.nii.gz'
@@ -437,7 +437,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         sct.run('sct_image -i '+','.join(list_warp_y)+' -o '+warp_y+' -concat z')
         sct.run('sct_image -i '+','.join(list_warp_y_inv)+' -o '+inv_warp_y+' -concat z')
 
-        print'\nChange resolution of warping fields to match the resolution of the destination image...'
+        sct.printv('\nCopy header dest --> warp...', verbose)
         from sct_image import copy_header
         im_dest = Image(fname_dest)
         im_src = Image(fname_source)
@@ -452,9 +452,11 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         im_inv_warp_y = copy_header(im_src, im_inv_warp_y)
 
         for im_warp in [im_warp_x, im_inv_warp_x, im_warp_y, im_inv_warp_y]:
-            im_warp.save()
+            im_warp.save(verbose=0)  # here we set verbose=0 to avoid warning message when overwriting file
 
-        if paramreg.algo != 'Affine':
+        if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
+            print'\nChange resolution of warping fields to match the resolution of the destination image...'
+            # change resolution of warping field if shrink factor was used
             for warp in [warp_x, inv_warp_x, warp_y, inv_warp_y]:
                 sct.run('sct_resample -i '+warp+' -f '+str(paramreg.shrink)+'x'+str(paramreg.shrink)+'x1 -o '+warp)
 

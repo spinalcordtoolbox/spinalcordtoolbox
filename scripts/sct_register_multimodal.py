@@ -541,7 +541,7 @@ def register(src, dest, paramreg, param, i_step_str):
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
-        if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
+        if paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine'] and paramreg.steps[i_step_str].slicewise == '0':
             warp_forward = 'warp_forward_'+i_step_str+'.mat'
             os.rename(warp_forward_out, warp_forward)
             warp_inverse = '-warp_forward_'+i_step_str+'.mat'
