@@ -199,12 +199,15 @@ def get_parser():
 
 
 class Preprocessing:
-    def __init__(self, target_fname, sc_seg_fname, tmp_dir='', t2_data=None, level_fname=None, denoising=True):
+    def __init__(self, target_fname, sc_seg_fname, tmp_dir='', t2_data=None, level_fname=None, denoising=True, verbose=1):
 
         # initiate de file names and copy the files into the temporary directory
         self.original_target = 'target.nii.gz'
+        self.t2star = self.original_target
         self.original_sc_seg = 'target_sc_seg.nii.gz'
+        self.sc_seg = self.original_sc_seg
         self.resample_to = 0.3
+        self.verbose = verbose
 
         self.tmp_dir = tmp_dir
         self.denoising = denoising
@@ -257,6 +260,12 @@ class Preprocessing:
         self.original_py = pix_dim[index_y]
 
         if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
+            if round(self.original_px, 2) < self.resample_to or round(self.original_py, 2) < self.resample_to:
+                sct.printv('\n\n-----------------------------------------------------------------------------------------'
+                           '\nWARNING: the in-plane resolution of the input image is higher than the resolution of the model images (0.3x0.3mm). '
+                           'The size of the result images might be different than the original image. '
+                           'To avoid this, please resample your input image to an axial resolution of 0.3x0.3mm.'
+                           '\n-----------------------------------------------------------------------------------------', self.verbose, 'warning')
             self.t2star = resample_image(self.original_target, npx=self.resample_to, npy=self.resample_to)
             self.sc_seg = resample_image(self.original_sc_seg, binary=True, npx=self.resample_to, npy=self.resample_to)
 
@@ -373,7 +382,7 @@ class FullGmSegmentation:
     # ------------------------------------------------------------------------------------------------------------------
     def segmentation_pipeline(self):
         sct.printv('\nDoing target pre-processing ...', verbose=self.seg_param.verbose, type='normal')
-        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.seg_param.target_denoising)
+        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.seg_param.target_denoising, verbose=self.seg_param.verbose)
         self.preprocessed.process()
 
         os.chdir(self.tmp_dir)
