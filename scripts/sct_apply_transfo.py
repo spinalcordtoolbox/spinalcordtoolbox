@@ -168,9 +168,8 @@ class Transform:
         if nt == 1:
             # Apply transformation
             sct.printv('\nApply transformation...', verbose)
-            status, output = sct.run('isct_antsApplyTransforms -d 3 -i '+fname_src+' -o '+fname_out+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
-            if not status == 0:
-                sct.printv('ERROR: Apply transformation failed.\n'+output, 1, 'error')
+            # print 'HOLA1'
+            sct.run('isct_antsApplyTransforms -d 3 -i '+fname_src+' -o '+fname_out+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
 
         # if 4d, loop across the T dimension
         else:
@@ -206,7 +205,7 @@ class Transform:
             for it in range(nt):
                 file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
                 file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-                sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert_tmp)+' -r '+file_dest+ext_dest+interp, verbose)
+                status, output = sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert_tmp)+' -r '+file_dest+ext_dest+interp, verbose)
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
