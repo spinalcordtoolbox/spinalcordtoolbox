@@ -84,7 +84,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="""Verbose.""",
                       mandatory=False,
-                      default_value='0',
+                      default_value='1',
                       example=['0', '1', '2'])
 
     return parser
@@ -139,14 +139,6 @@ class Transform:
         if ext_fname in ['.txt', '.mat']:
             isLastAffine = True
 
-        # Check file existence
-        sct.printv('\nCheck file existence...', verbose)
-        sct.check_file_exist(fname_src, self.verbose)
-        sct.check_file_exist(fname_dest, self.verbose)
-        for i in range(len(fname_warp_list)):
-            # check if file exist
-            sct.check_file_exist(fname_warp_list[i], self.verbose)
-
         # check if destination file is 3d
         if not sct.check_if_3d(fname_dest):
             sct.printv('ERROR: Destination data must be 3d')
@@ -176,7 +168,9 @@ class Transform:
         if nt == 1:
             # Apply transformation
             sct.printv('\nApply transformation...', verbose)
-            sct.run('isct_antsApplyTransforms -d 3 -i '+fname_src+' -o '+fname_out+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
+            status, output = sct.run('isct_antsApplyTransforms -d 3 -i '+fname_src+' -o '+fname_out+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
+            if not status == 0:
+                sct.printv('ERROR: Apply transformation failed.\n'+output, 1, 'error')
 
         # if 4d, loop across the T dimension
         else:
