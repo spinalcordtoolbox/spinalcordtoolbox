@@ -14,6 +14,7 @@ from os import chdir
 import sct_utils as sct
 from numpy import array, asarray, zeros, sqrt, dot
 from scipy import ndimage
+from scipy.io import loadmat
 from msct_image import Image
 
 # # Get path of the toolbox
@@ -134,27 +135,29 @@ def register_slicewise(fname_source,
         # data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_inverse_no_outliers)
 
         # JULIEN
-        data_warp_x_smooth = data_warp_x
-        data_warp_x_smooth_inverse = data_warp_x_inverse
-        data_warp_y_smooth = data_warp_y
-        data_warp_y_smooth_inverse = data_warp_y_inverse
+        # data_warp_x_smooth = data_warp_x
+        # data_warp_x_smooth_inverse = data_warp_x_inverse
+        # data_warp_y_smooth = data_warp_y
+        # data_warp_y_smooth_inverse = data_warp_y_inverse
 
-        print'\nSaving regularized warping fields...'
+        print'\nSaving warping fields...'
         # TODO: MODIFY NEXT PART
         #Get image dimensions of destination image
         from nibabel import load, Nifti1Image, save
         nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
-        data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
-        data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
-        data_warp_smooth[:,:,:,0,1] = data_warp_y_smooth
-        data_warp_smooth_inverse = zeros(((((nx, ny, nz, 1, 3)))))
-        data_warp_smooth_inverse[:,:,:,0,0] = data_warp_x_smooth_inverse
-        data_warp_smooth_inverse[:,:,:,0,1] = data_warp_y_smooth_inverse
-        # Force header's parameter to intent so that the file may be recognised as a warping field by ants
+        # initialise warping field compatible with ITK/ANTs, with dim = (nx, ny, nz, 1, 3)
+        data_warp = zeros(((((nx, ny, nz, 1, 3)))))
+        data_warp[:, :, :, 0, 0] = data_warp_x
+        data_warp[:, :, :, 0, 1] = data_warp_y
+        # do the same for the inverse warping field
+        data_warp_inverse = zeros(((((nx, ny, nz, 1, 3)))))
+        data_warp_inverse[:, :, :, 0, 0] = data_warp_x_inverse
+        data_warp_inverse[:, :, :, 0, 1] = data_warp_y_inverse
+        # Force header's parameter to intent so that the file is recognised as a warping field by ants
         hdr_warp.set_intent('vector', (), '')
         hdr_warp_inverse.set_intent('vector', (), '')
-        img = Nifti1Image(data_warp_smooth, None, header=hdr_warp)
-        img_inverse = Nifti1Image(data_warp_smooth_inverse, None, header=hdr_warp_inverse)
+        img = Nifti1Image(data_warp, None, header=hdr_warp)
+        img_inverse = Nifti1Image(data_warp_inverse, None, header=hdr_warp_inverse)
         save(img, filename=warp_forward_out)
         print'\tFile ' + warp_forward_out + ' saved.'
         save(img_inverse, filename=warp_inverse_out)
@@ -331,6 +334,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
     # loop across slices
     for i in range(nz):
         # set masking
+        sct.printv('Registering slice '+str(i)+'/'+str(nz-1)+'...', verbose)
         num = numerotation(i)
         num_2 = numerotation(int(num) + int(z_o))
         if mask:
@@ -372,11 +376,11 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                 name_warp_null_dest = 'warp_null_dest' + num + '.nii.gz'
                 name_warp_mat = 'transform_' + num + '0GenericAffine.mat'
                 # Generating null nifti warping fields
-                nx, ny, nz, nt, px, py, pz, pt = Image(name_reg).dim
+                nx_r, ny_r, nz_r, nt_r, px_r, py_r, pz_r, pt_r = Image(name_reg).dim
                 nx_d, ny_d, nz_d, nt_d, px_d, py_d, pz_d, pt_d = Image(name_dest).dim
-                x_trans = [0 for i in range(nz)]
+                x_trans = [0 for i in range(nz_r)]
                 x_trans_d = [0 for i in range(nz_d)]
-                y_trans= [0 for i in range(nz)]
+                y_trans= [0 for i in range(nz_r)]
                 y_trans_d = [0 for i in range(nz_d)]
                 generate_warping_field(name_reg, x_trans=x_trans, y_trans=y_trans, fname=name_warp_null, verbose=0)
                 generate_warping_field(name_dest, x_trans=x_trans_d, y_trans=y_trans_d, fname=name_warp_null_dest, verbose=0)
@@ -404,6 +408,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                 list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
         # if an exception occurs with ants, take the last value for the transformation
+        # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)
         except Exception, e:
             sct.printv('WARNING: Exception occurred: '+str(e)+'\n', 1, 'warning')
             if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
