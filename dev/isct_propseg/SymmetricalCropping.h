@@ -8,6 +8,8 @@
  */
 
 #include <itkImage.h>
+#include <vector>
+using namespace std;
 
 /*!
  * \class SymmetricalCropping
@@ -28,7 +30,8 @@ public:
 
 	void setInitSlice(float initSlice) { initSlice_=initSlice; };
     
-    int symmetryDetection();
+    //vector<int> symmetryDetectionFull(int dimension=1);
+    int symmetryDetection(int dimension=1);
     ImageType::Pointer cropping();
     
 private:

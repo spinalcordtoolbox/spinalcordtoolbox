@@ -49,6 +49,7 @@ public:
 	void changedParameters() { this->changedParameters_ = true; };
 	void setAlpha(double alpha) { this->alpha = alpha; };
 	void setBeta(double beta) { this->beta = beta; };
+	void setLineSearch(double line_search) { this->line_search = line_search; };
 	void setContrast(double contrast) { this->meanContrast = contrast; };
 	double getContrast() { return meanContrast; };
     
@@ -63,6 +64,8 @@ public:
     
     void setVerbose(bool verbose) { verbose_ = verbose; };
     bool getVerbose() { return verbose_; };
+
+    void addCorrectionPoints(vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
 
 private:
 	SpinalCord* mergeBidirectionalSpinalCord(SpinalCord* spinalCord1, SpinalCord* spinalCord2);
@@ -92,7 +95,7 @@ private:
 
 	// Deformable models adaptator parameters
 	bool changedParameters_;
-	double alpha, beta, meanContrast, area[3], meanArea;
+	double line_search, alpha, beta, meanContrast, area[3], meanArea;
     vector< pair<CVector3,double> > contrast;
     
     double maxDeformation, maxArea, minContrast;
@@ -104,6 +107,8 @@ private:
     double range;
     
     bool verbose_;
+
+    vector<CVector3> points_mask_correction_;
 };
 
 #endif
