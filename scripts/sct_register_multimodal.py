@@ -23,6 +23,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: check syn with shrink=4
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
 # TODO: testing script for all cases
 # TODO: add following feature:
@@ -291,15 +292,15 @@ def main():
     # copy files to temporary folder
     from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    convert(fname_src, path_tmp+'/src.nii')
-    convert(fname_dest, path_tmp+'/dest.nii')
+    convert(fname_src, path_tmp+'src.nii')
+    convert(fname_dest, path_tmp+'dest.nii')
 
     if fname_src_seg:
-        convert(fname_src_seg, path_tmp+'/src_seg.nii')
-        convert(fname_dest_seg, path_tmp+'/dest_seg.nii')
+        convert(fname_src_seg, path_tmp+'src_seg.nii')
+        convert(fname_dest_seg, path_tmp+'dest_seg.nii')
 
     if fname_mask != '':
-        convert(fname_mask, path_tmp+'/mask.nii.gz')
+        convert(fname_mask, path_tmp+'mask.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
