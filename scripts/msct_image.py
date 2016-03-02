@@ -89,7 +89,7 @@ class Image(object):
         """
         from nibabel import load, spatialimages
         from sct_utils import check_file_exist, printv, extract_fname, run
-        from sct_image import get_orientation
+        from sct_image import get_orientation_3d
 
         # check_file_exist(path, verbose=verbose)
         im_file = None
@@ -97,7 +97,7 @@ class Image(object):
             im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        self.orientation = get_orientation(path, filename=True)
+        self.orientation = get_orientation_3d(path, filename=True)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
         self.absolutepath = path
@@ -438,8 +438,8 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            from sct_image import get_orientation
-            self.orientation = get_orientation(self)
+            from sct_image import get_orientation_3d
+            self.orientation = get_orientation_3d(self)
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 

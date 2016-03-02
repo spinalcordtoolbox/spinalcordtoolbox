@@ -49,7 +49,7 @@ from msct_image import Image, get_dimension
 import random
 from msct_multiatlas_seg import ModelParam, Model, SegmentationParam, SupervisedSegmentationMethod
 from msct_gmseg_utils import *
-from sct_image import set_orientation, get_orientation, orientation,pad_image
+from sct_image import set_orientation, get_orientation_3d, orientation,pad_image
 import shutil
 
 
@@ -296,7 +296,7 @@ class Preprocessing:
         if self.t2 is not None:
             self.fname_level = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
         elif self.fname_level is not None and sct.extract_fname(self.fname_level)[2] == '.nii.gz':
-            level_orientation = get_orientation(self.fname_level, filename=True)
+            level_orientation = get_orientation_3d(self.fname_level, filename=True)
             if level_orientation != 'IRP':
                 self.fname_level = set_orientation(self.fname_level, 'IRP', filename=True)
 
