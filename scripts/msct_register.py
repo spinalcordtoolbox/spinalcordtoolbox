@@ -55,7 +55,7 @@ def register_slicewise(fname_source,
     algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN'}
     paramreg.algo = algo_dic[paramreg.algo]
     # run slicewise registration
-    register_images(fname_source, fname_dest, fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
+    register2d(fname_source, fname_dest, fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
 
     # else:
     #     sct.printv('\nERROR: wrong registration type inputed. pleas choose \'im\', or \'seg\'.', verbose, 'error')
@@ -173,7 +173,7 @@ def register_seg(seg_input, seg_dest, verbose=1):
 
 
 
-def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
+def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}, verbose=0):
     """Slice-by-slice registration of two images.
@@ -473,12 +473,11 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
         fname_dest: name of destination image (type: string). NEEDS TO BE RPI ORIENTATION!!!
         x_trans: list of translations along x axis for each slice (type: list, length: height of fname_dest)
         y_trans: list of translations along y axis for each slice (type: list, length: height of fname_dest)
-        theta_rot[optional]: list of rotation angles in radian (and in ITK's coordinate system) for each slice (type: list)
-        center_rotation[optional]: pixel coordinates in plan xOy of the wanted center of rotation (type: list,
-            length: 2, example: [0,ny/2])
-        fname[optional]: name of output warp (type: string)
+        theta_rot: list of rotation angles in radian (and in ITK's coordinate system) for each slice (type: list)
+    inputs (optional):
+        center_rotation: pixel coordinates in plan xOy of the wanted center of rotation (type: list, length: 2, example: [0,ny/2])
+        fname: name of output warp (type: string)
         verbose: display parameter (type: int)
-
     output:
         creation of a warping field of name 'fname' with an header similar to the destination image.
     """
