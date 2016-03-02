@@ -190,12 +190,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
-    # Define x and y displacement as list
-    # TODO: NOT HERE!
-    x_displacement = [0 for i in range(nz)]
-    y_displacement = [0 for i in range(nz)]
-    theta_rotation = [0 for i in range(nz)]
-
     # Split input volume along z
     sct.printv('\nSplit input volume...', verbose)
     from sct_image import split_data
@@ -219,11 +213,16 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         for im in split_mask_list:
             im.save()
 
-    coord_origin_dest = im_dest.transfo_pix2phys([[0,0,0]])
-    coord_origin_input = im_src.transfo_pix2phys([[0,0,0]])
-    coord_diff_origin = (asarray(coord_origin_dest[0]) - asarray(coord_origin_input[0])).tolist()
-    [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
+    # coord_origin_dest = im_dest.transfo_pix2phys([[0,0,0]])
+    # coord_origin_input = im_src.transfo_pix2phys([[0,0,0]])
+    # coord_diff_origin = (asarray(coord_origin_dest[0]) - asarray(coord_origin_input[0])).tolist()
+    # [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
+    # initialization
+    if paramreg.algo in ['Rigid', 'Translation']:
+        x_displacement = [0 for i in range(nz)]
+        y_displacement = [0 for i in range(nz)]
+        theta_rotation = [0 for i in range(nz)]
     if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
         list_warp = []
         list_warp_inv = []
@@ -263,7 +262,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                 theta_rotation[i] = asin(array_transfo[2]) # angle of rotation theta in ITK'S coordinate system (minus theta for fslview)
 
             if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
-                # List names of 2d warping fields for subsequence merge along Z
+                # List names of 2d warping fields for subsequent merge along Z
                 file_warp2d = prefix_warp2d+'0Warp.nii.gz'
                 file_warp2d_inv = prefix_warp2d+'0InverseWarp.nii.gz'
                 list_warp.append(file_warp2d)
