@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from msct_image import Image, get_dimension
 import sct_utils as sct
 from msct_parser import Parser
-from sct_image import set_orientation, get_orientation
+from sct_image import set_orientation, get_orientation_3d
 
 def get_parser():
     parser = Parser(__file__)
@@ -821,7 +821,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     :return: file name after resampling (or original fname if it was already in the correct resolution)
     """
     im_in = Image(fname)
-    orientation = get_orientation(im_in)
+    orientation = get_orientation_3d(im_in)
     if orientation != 'RPI':
         im_in = set_orientation(im_in, 'RPI')
         im_in.save()
@@ -888,7 +888,7 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
             new_names = []
             for f_name in [t2star, scseg, gmseg]:
                 im = Image(f_name)
-                orientation = get_orientation(im)
+                orientation = get_orientation_3d(im)
                 if orientation != 'RPI':
                     im = set_orientation(im, 'RPI')
                     new_names.append(im.absolutepath)
