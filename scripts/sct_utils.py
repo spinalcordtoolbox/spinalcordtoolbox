@@ -338,8 +338,8 @@ def check_if_3d(fname):
 # check_if_rpi:  check if data are in RPI orientation
 #=======================================================================================================================
 def check_if_rpi(fname):
-    from sct_image import get_orientation
-    if not get_orientation(fname, filename=True) == 'RPI':
+    from sct_image import get_orientation_3d
+    if not get_orientation_3d(fname, filename=True) == 'RPI':
         printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_image -setorient to reorient your data. Exit program.\n', 1, 'error')
 
 
