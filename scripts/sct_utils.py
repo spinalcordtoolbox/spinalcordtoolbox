@@ -418,8 +418,12 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         os.remove(path_out+file_out+ext_out)
     if ext_in != ext_out:
         # Generate output file
-        from sct_convert import convert
-        convert(fname_in, fname_out)
+        if ext_in == '.nii.gz' and ext_out == '.nii':  # added to resolve issue #728
+            run('gunzip -f ' + fname_in)
+            os.rename(path_in + file_in + '.nii', fname_out)
+        else:
+            from sct_convert import convert
+            convert(fname_in, fname_out)
     else:
         # Generate output file without changing the extension
         shutil.move(fname_in, fname_out)
