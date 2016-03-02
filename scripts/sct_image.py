@@ -352,7 +352,7 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     # warp3d = tuple([nx, ny, nz, 1, 3])
     warp3d = zeros([nx, ny, nz, 1, 3])
     for iz, fname in enumerate(fname_list):
-        warp2d = nib.load(fname).data
+        warp2d = nib.load(fname).get_data()
         warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
         warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
         del warp2d
@@ -360,7 +360,9 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     im_dest = nib.load(fname_dest)
     affine_dest = im_dest.get_affine()
     im_warp3d = nib.Nifti1Image(warp3d, affine_dest)
-    nib.save(im_warp3d, 'new_img.nii.gz')
+    # set "intent" code to vector, to be interpreted as warping field
+    im_warp3d.header.set_intent('vector', (), '')
+    nib.save(im_warp3d, fname_warp3d)
     # copy header from 2d warping field
     #
     # im_dest = Image(fname_dest)
@@ -378,6 +380,12 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
 
 
 def multicomponent_split(im):
+    """
+    Convert composite image (e.g., ITK warping field, 5dim) into several 3d volumes.
+    Replaces "c3d -mcs warp_comp.nii -oo warp_vecx.nii warp_vecy.nii warp_vecz.nii"
+    :param im:
+    :return:
+    """
     from numpy import reshape
     data = im.data
     assert len(data.shape) == 5
