@@ -69,70 +69,10 @@ def register_slicewise(fname_src,
     sct.printv('\nMove warping fields to parent folder...', verbose)
     sct.run('mv '+warp_forward_out+' ../')
     sct.run('mv '+warp_inverse_out+' ../')
-        # sct.run('cp '+warp_x+' ../')
-        # sct.run('cp '+inv_warp_x+' ../')
-        # sct.run('cp '+warp_y+' ../')
-        # sct.run('cp '+inv_warp_y+' ../')
 
     # go back to parent folder
     chdir('../')
 
-    # elif paramreg.type == 'im':
-    #     if paramreg.algo == 'slicereg2d_pointwise':
-    #         sct.printv('\nERROR: Algorithm slicereg2d_pointwise only operates for segmentation type.', verbose, 'error')
-    #         sys.exit(2)
-
-
-    # else:
-    #     sct.printv('\nERROR: wrong registration type inputed. pleas choose \'im\', or \'seg\'.', verbose, 'error')
-    #     sys.exit(2)
-
-    # if algo is slicereg2d _pointwise, -translation or _rigid: x_disp and y_disp are displacement fields
-    # if algo is slicereg2d _affine, _syn or _bsplinesyn: x_disp and y_disp are warping fields names
-
-    # here, we need to convert transformation matrices into warping fields
-    # if paramreg.algo in ['centermass', 'Translation', 'Rigid']:
-    #     # Change to array
-    #     x_disp, y_disp, theta_rot = res_reg
-    #     x_disp_a = asarray(x_disp)
-    #     y_disp_a = asarray(y_disp)
-    #     if theta_rot is not None:
-    #         theta_rot_a = asarray(theta_rot)
-    #     else:
-    #         theta_rot_a = None
-        # <<<<< old code with outliers detection and smoothing
-        # # Detect outliers
-        # if not detect_outlier == '0':
-        #     mask_x_a = outliers_detection(x_disp_a, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=verbose)
-        #     mask_y_a = outliers_detection(y_disp_a, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=verbose)
-        #     # Replace value of outliers by linear interpolation using closest non-outlier points
-        #     x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
-        #     y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
-        # else:
-        #     x_disp_a_no_outliers = x_disp_a
-        #     y_disp_a_no_outliers = y_disp_a
-        # # Smooth results
-        # if not window_length == '0':
-        #     x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose=verbose)
-        #     y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose=verbose)
-        # else:
-        #     x_disp_smooth = x_disp_a_no_outliers
-        #     y_disp_smooth = y_disp_a_no_outliers
-        #
-        # if theta_rot is not None:
-        #     # same steps for theta_rot:
-        #     theta_rot_a = asarray(theta_rot)
-        #     mask_theta_a = outliers_detection(theta_rot_a, type='median', factor=int(detect_outlier), return_filtered_signal='no', verbose=verbose)
-        #     theta_rot_a_no_outliers = outliers_completion(mask_theta_a, verbose=0)
-        #     theta_rot_smooth = smoothing_window(theta_rot_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
-        # else:
-        #     theta_rot_smooth = None
-        # >>>>>
-
-        # # Generate warping field
-        # generate_warping_field(fname_dest, x_disp_a, y_disp_a, theta_rot_a, fname=warp_forward_out)  #name_warp= 'step'+str(paramreg.step)
-        # # Inverse warping field
-        # generate_warping_field(fname_source, -x_disp_a, -y_disp_a, theta_rot_a, fname=warp_inverse_out)
 
 
 def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=1):
@@ -153,18 +93,6 @@ def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         y_displacement: list of translation along y axis for each slice (type: list)
 
     """
-    #
-    # # create temporary folder
-    # sct.printv('\nCreate temporary folder...', verbose)
-    # path_tmp = sct.tmp_create(verbose)
-    #
-    # # copy data to temp folder
-    # sct.printv('\nCopy input data to temp folder...', verbose)
-    # convert(fname_src, path_tmp+'src.nii')
-    # convert(fname_dest, path_tmp+'dest.nii')
-    #
-    # # go to temporary folder
-    # chdir(path_tmp)
     seg_input_img = Image('src.nii')
     seg_dest_img = Image('dest.nii')
     seg_input_data = seg_input_img.data
@@ -256,16 +184,12 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             creation of two 3D warping fields (forward and inverse) that are the concatenations of the slice-by-slice
             warps.
     """
-    # Extracting names
-    # path_src, file_src, ext_src = sct.extract_fname(fname_source)
-    # path_dest, file_src, ext_dest = sct.extract_fname(fname_dest)
 
     # set metricSize
     if paramreg.metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
     else:
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
-
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
@@ -317,7 +241,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         sct.printv('Registering slice '+str(i)+'/'+str(nz-1)+'...', verbose)
         num = numerotation(i)
         prefix_warp2d = 'warp2d_'+num
-        # num_2 = numerotation(int(num) + int(z_o))
         # if mask is used, prepare command for ANTs
         if fname_mask != '':
             masking = '-x mask_Z' +num+ '.nii.gz'
@@ -361,47 +284,11 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                 # Concatenating mat transfo and null 2d warping field to obtain 2d warping field of affine transformation
                 sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d + ' -R dest_Z'+num+'.nii warp2d_null0Warp.nii.gz ' + file_mat)
                 sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d_inv + ' -R src_Z'+num+'.nii warp2d_null0InverseWarp.nii.gz -i ' + file_mat)
-                # nx_r, ny_r, nz_r, nt_r, px_r, py_r, pz_r, pt_r = Image(name_reg).dim
-                # nx_d, ny_d, nz_d, nt_d, px_d, py_d, pz_d, pt_d = Image(name_dest).dim
-                # x_trans = [0 for i in range(nz_r)]
-                # x_trans_d = [0 for i in range(nz_d)]
-                # y_trans = [0 for i in range(nz_r)]
-                # y_trans_d = [0 for i in range(nz_d)]
-                # TODO: NO NEED TO GENERATE A NULL WARPING FIELD EACH TIME-- COULD BE DONE ONCE (julien 2016-03-01)
-                # generate_warping_field(name_reg, x_trans=x_trans, y_trans=y_trans, fname=name_warp_null, verbose=0)
-                # generate_warping_field(name_dest, x_trans=x_trans_d, y_trans=y_trans_d, fname=name_warp_null_dest, verbose=0)
-                # Split the warping fields into two for displacement along x and y before merge
-                # sct.run('sct_image -i ' + name_output_warp + ' -mcs -o transform_'+num+'0Warp.nii.gz')
-                # sct.run('sct_image -i ' + name_output_warp_inverse + ' -mcs -o transform_'+num+'0InverseWarp.nii.gz')
-                # List names of warping fields for future merge
-                # list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
-                # list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
-                # list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
-                # list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
         # if an exception occurs with ants, take the last value for the transformation
         # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)
         except Exception, e:
             sct.printv('ERROR: Exception occurred.\n'+str(e), 1, 'error')
-            # if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
-            #     x_displacement[i] = x_displacement[i-1]
-            #     y_displacement[i] = y_displacement[i-1]
-            #     theta_rotation[i] = theta_rotation[i-1]
-            #
-            # if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN' or paramreg.algo == 'Affine':
-            #     print'Problem with ants for slice '+str(i)+'. Copy of the last warping field.'
-            #     sct.run('cp transform_' + numerotation(i-1) + '0Warp.nii.gz transform_' + num + '0Warp.nii.gz')
-            #     sct.run('cp transform_' + numerotation(i-1) + '0InverseWarp.nii.gz transform_' + num + '0InverseWarp.nii.gz')
-            #     # Split the warping fields into two for displacement along x and y before merge
-            #     # sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
-            #     # sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
-            #     sct.run('sct_image -i transform_'+num+'0Warp.nii.gz -mcs -o transform_'+num+'0Warp.nii.gz')
-            #     sct.run('sct_image -i transform_'+num+'0InverseWarp.nii.gz -mcs -o transform_'+num+'0InverseWarp.nii.gz')
-            #     # List names of warping fields for futur merge
-            #     list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
-            #     list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
-            #     list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
-            #     list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
     # Merge warping field along z
     sct.printv('\nMerge warping fields along z...', verbose)
@@ -417,58 +304,11 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
 
     if paramreg.algo in ['BSplineSyN', 'SyN', 'Affine']:
-        # fname_warp = 'warp_forward_3d.nii.gz'
-        # fname_warp_inv = 'warp_inverse_3d.nii.gz'
         from sct_image import concat_warp2d
         # concatenate 2d warping fields along z
         concat_warp2d(list_warp, fname_warp, 'dest.nii')
         concat_warp2d(list_warp_inv, fname_warp_inv, 'src.nii')
 
-        # sct.printv('\nCopy header dest --> warp...', verbose)
-        # from sct_image import copy_header
-        # im_dest = Image(fname_dest)
-        # im_src = Image(fname_source)
-        # im_warp = Image(fname_warp)
-        # im_inv_warp = Image(fname_warp_inv)
-
-        # im_warp_x = Image(warp_x)
-        # im_warp_y = Image(warp_y)
-        # im_inv_warp_x = Image(inv_warp_x)
-        # im_inv_warp_y = Image(inv_warp_y)
-
-        # im_warp = copy_header(im_dest, im_warp)
-        # im_inv_warp = copy_header(im_src, im_inv_warp)
-        # im_warp_y = copy_header(im_dest, im_warp_y)
-        # im_inv_warp_y = copy_header(im_src, im_inv_warp_y)
-
-        # for im_warp in [im_warp, im_inv_warp]:
-        #     im_warp.save(verbose=0)  # here we set verbose=0 to avoid warning message when overwriting file
-
-        # if paramreg.algo in ['BSplineSyN', 'SyN']:
-        #     print'\nChange resolution of warping fields to match the resolution of the destination image...'
-        #     change resolution of warping field if shrink factor was used
-            # for warp in [warp_x, inv_warp_x, warp_y, inv_warp_y]:
-            #     sct.run('sct_resample -i '+warp+' -f '+str(paramreg.shrink)+'x'+str(paramreg.shrink)+'x1 -o '+warp)
-
-    # sct.printv('\nMove warping fields to parent folder...', verbose)
-    # sct.run('mv '+fname_warp+' ../')
-    # sct.run('mv '+fname_warp_inv+' ../')
-        # sct.run('cp '+warp_x+' ../')
-        # sct.run('cp '+inv_warp_x+' ../')
-        # sct.run('cp '+warp_y+' ../')
-        # sct.run('cp '+inv_warp_y+' ../')
-
-    # go back to parent folder
-    # chdir('../')
-    # if remove_tmp_folder:
-    #     print('\nRemove temporary files...')
-    #     sct.run('rm -rf '+path_tmp, error_exit='warning')
-    # if paramreg.algo == 'Rigid':
-    #     return x_displacement, y_displacement, theta_rotation
-    # if paramreg.algo == 'Translation':
-    #     return x_displacement, y_displacement, None
-    # if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
-    #     return warp_x, inv_warp_x, warp_y, inv_warp_y
 
 
 def numerotation(nb):
@@ -499,6 +339,7 @@ def numerotation(nb):
     return nb_output
 
 
+
 def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotation=None, fname='warping_field.nii.gz', verbose=1):
     """Generation of a warping field towards an image and given transformation parameters.
 
@@ -518,16 +359,6 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
     output:
         creation of a warping field of name 'fname' with an header similar to the destination image.
     """
-    # from nibabel import load, Nifti1Image, save
-    # from math import cos, sin
-
-    # #Make sure image is in rpi format
-    # sct.printv('\nChecking if the image of destination is in RPI orientation for the warping field generation ...', verbose)
-    # orientation = get_orientation(fname_dest, filename=True)
-    # if orientation != 'RPI':
-    #     sct.printv('\nWARNING: The image of destination is not in RPI format. Dimensions of the warping field might be inverted.', verbose)
-    # else: sct.printv('\tOK', verbose)
-
     sct.printv('\n\nCreating warping field ' + fname + ' for transformations along z...', verbose)
 
     file_dest = load(fname_dest)
@@ -550,28 +381,6 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
 
     # Calculate displacement for each voxel
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
-    # # For translations
-    # if theta_rot == None:
-    #     for i in range(nx):
-    #         for j in range(ny):
-    #             for k in range(nz):
-    #                 data_warp[i, j, k, 0, 0] = px * x_trans[k]
-    #                 data_warp[i, j, k, 0, 1] = py * y_trans[k]
-    #                 data_warp[i, j, k, 0, 2] = 0
-    # # For rigid transforms (not optimized)
-    # if theta_rot != None:
-    #     for k in range(nz):
-    #         for i in range(nx):
-    #             for j in range(ny):
-    #                 # data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) - x_trans[k]
-    #                 # data_warp[i, j, k, 0, 1] = -(sin(theta_rot[k]) * (i - x_a) + (cos(theta_rot[k])-1) * (j - y_a)) + y_trans[k]
-    #
-    #                 data_warp[i, j, k, 0, 0] = (cos(theta_rot[k]) - 1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) + x_trans[k] #+ sin(theta_rot[k]) * (int(round(nx/2))-x_a)
-    #                 data_warp[i, j, k, 0, 1] = - sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k]) - 1) * (j - y_a) + y_trans[k] #- sin(theta_rot[k]) * (int(round(nx/2))-x_a)
-    #                 data_warp[i, j, k, 0, 2] = 0
-
-    # For rigid transforms with array (time optimization)
-    # if theta_rot != None:
     vector_i = [[[i-x_a], [j-y_a]] for i in range(nx) for j in range(ny)]
     for k in range(nz):
         matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
