@@ -16,6 +16,8 @@ from numpy import array, asarray, zeros, sqrt, dot
 from scipy import ndimage
 from scipy.io import loadmat
 from msct_image import Image
+from math import asin, cos, sin
+from nibabel import load, Nifti1Image, save
 
 # # Get path of the toolbox
 # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -62,11 +64,15 @@ def register_slicewise(fname_source,
     # if algo is slicereg2d _affine, _syn or _bsplinesyn: x_disp and y_disp are warping fields names
 
     # here, we need to convert transformation matrices into warping fields
-    if paramreg.algo.lower() in ['centermass', 'translation', 'rigid']:
+    if paramreg.algo in ['centermass', 'Translation', 'Rigid']:
         # Change to array
         x_disp, y_disp, theta_rot = res_reg
         x_disp_a = asarray(x_disp)
         y_disp_a = asarray(y_disp)
+        if theta_rot is not None:
+            theta_rot_a = asarray(theta_rot)
+        else:
+            theta_rot_a = None
         # <<<<< old code with outliers detection and smoothing
         # # Detect outliers
         # if not detect_outlier == '0':
@@ -97,9 +103,9 @@ def register_slicewise(fname_source,
         # >>>>>
 
         # Generate warping field
-        generate_warping_field(fname_dest, x_disp, y_disp, theta_rot, fname=warp_forward_out)  #name_warp= 'step'+str(paramreg.step)
+        generate_warping_field(fname_dest, x_disp_a, y_disp_a, theta_rot_a, fname=warp_forward_out)  #name_warp= 'step'+str(paramreg.step)
         # Inverse warping field
-        generate_warping_field(fname_source, -x_disp, -y_disp, -theta_rot if theta_rot is not None else None, fname=warp_inverse_out)
+        generate_warping_field(fname_source, -x_disp_a, -y_disp_a, theta_rot_a, fname=warp_inverse_out)
 
     elif paramreg.algo.lower() in ['affine', 'syn', 'bsplinesyn']:
         warp_x, inv_warp_x, warp_y, inv_warp_y = res_reg
@@ -350,7 +356,6 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                '--convergence '+str(paramreg.iter)+' '
                '--shrink-factors '+str(paramreg.shrink)+' '
                '--smoothing-sigmas '+str(paramreg.smooth)+'mm '
-               #'--restrict-deformation 1x1x0 '    # how to restrict? should not restrict here, if transform is precised...?
                '--output [transform_' + num + ','+root_i+'_Z'+ num_2 +'reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
                +masking)
@@ -380,23 +385,24 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                 nx_d, ny_d, nz_d, nt_d, px_d, py_d, pz_d, pt_d = Image(name_dest).dim
                 x_trans = [0 for i in range(nz_r)]
                 x_trans_d = [0 for i in range(nz_d)]
-                y_trans= [0 for i in range(nz_r)]
+                y_trans = [0 for i in range(nz_r)]
                 y_trans_d = [0 for i in range(nz_d)]
+                # TODO: NO NEED TO GENERATE A NULL WARPING FIELD EACH TIME-- COULD BE DONE ONCE (julien 2016-03-01)
                 generate_warping_field(name_reg, x_trans=x_trans, y_trans=y_trans, fname=name_warp_null, verbose=0)
                 generate_warping_field(name_dest, x_trans=x_trans_d, y_trans=y_trans_d, fname=name_warp_null_dest, verbose=0)
                 # Concatenating mat wrp and null nifti warp to obtain equivalent nifti warp to mat warp
                 sct.run('isct_ComposeMultiTransform 2 ' + name_output_warp + ' -R ' + name_reg + ' ' + name_warp_null + ' ' + name_warp_mat)
                 sct.run('isct_ComposeMultiTransform 2 ' + name_output_warp_inverse + ' -R ' + name_dest + ' ' + name_warp_null_dest + ' -i ' + name_warp_mat)
                 # Split the warping fields into two for displacement along x and y before merge
-                sct.run('sct_image -i ' + name_output_warp + '  -mcs -o transform_'+num+'0Warp.nii.gz')
-                sct.run('sct_image -i ' + name_output_warp_inverse + '  -mcs -o transform_'+num+'0InverseWarp.nii.gz')
-                # List names of warping fields for futur merge
+                sct.run('sct_image -i ' + name_output_warp + ' -mcs -o transform_'+num+'0Warp.nii.gz')
+                sct.run('sct_image -i ' + name_output_warp_inverse + ' -mcs -o transform_'+num+'0InverseWarp.nii.gz')
+                # List names of warping fields for future merge
                 list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
                 list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
                 list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
                 list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
-            if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
+            if paramreg.algo in ['BSplineSyN', 'SyN']:
                 # Split the warping fields into two for displacement along x and y before merge
                 # Need to separate the merge for x and y displacement as merge of 3d warping fields does not work properly
                 sct.run('sct_image -i transform_'+num+'0Warp.nii.gz  -mcs -o transform_'+num+'0Warp.nii.gz')
@@ -431,7 +437,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                 list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
                 list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
-    if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN' or paramreg.algo == 'Affine':
+    if paramreg.algo in ['BSplineSyN', 'SyN', 'Affine']:
         print'\nMerge warping fields along z...'
         warp_x = name_warp_final + '_x.nii.gz'
         inv_warp_x = name_warp_final + '_x_inverse.nii.gz'
@@ -459,7 +465,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         for im_warp in [im_warp_x, im_inv_warp_x, im_warp_y, im_inv_warp_y]:
             im_warp.save(verbose=0)  # here we set verbose=0 to avoid warning message when overwriting file
 
-        if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
+        if paramreg.algo in ['BSplineSyN', 'SyN']:
             print'\nChange resolution of warping fields to match the resolution of the destination image...'
             # change resolution of warping field if shrink factor was used
             for warp in [warp_x, inv_warp_x, warp_y, inv_warp_y]:
@@ -480,7 +486,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         return x_displacement, y_displacement, theta_rotation
     if paramreg.algo == 'Translation':
         return x_displacement, y_displacement, None
-    if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN' or paramreg.algo == 'Affine':
+    if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
         return warp_x, inv_warp_x, warp_y, inv_warp_y
 
 
@@ -532,8 +538,8 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
     output:
         creation of a warping field of name 'fname' with an header similar to the destination image.
     """
-    from nibabel import load, Nifti1Image, save
-    from math import cos, sin
+    # from nibabel import load, Nifti1Image, save
+    # from math import cos, sin
 
     # #Make sure image is in rpi format
     # sct.printv('\nChecking if the image of destination is in RPI orientation for the warping field generation ...', verbose)
@@ -588,8 +594,8 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
     if theta_rot != None:
         vector_i = [[[i-x_a],[j-y_a]] for i in range(nx) for j in range(ny)]
         for k in range(nz):
-            matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])],[-sin(theta_rot[k]), -cos(theta_rot[k])]])
-            tmp = matrix_rot_a + array(((-1,0),(0,1)))
+            matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
+            tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
             result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
             for i in range(nx):
                 data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
