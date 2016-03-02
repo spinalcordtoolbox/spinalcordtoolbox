@@ -2,13 +2,13 @@
 
 ##TBD
 - NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
-- BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
 - NEW: **sct_propseg**: now accepts a correction solution for sct_propseg in case of missing CSF/SC contrast and/or artefacts (see issue #664 for details)
 - NEW: **sct_propseg**: added flag to open a viewer for initializing spinal cord segmentation by manually providing a few points (issue #741)
-- OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #735, #749
-- fixed issues #715, #719
 - NEW: package now includes python (from miniconda), which simplifies the installation and allows users to have another Python installed without generating conflicts.
-- OPT: **sct_register_to_template**: now uses affine transfo (instead of slicewise translation) for first step, which improves accuracy (issue #666)
+- BUG: Fixed issues #715, #719
+- BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
+- OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #735, #749
+- OPT: **sct_register_to_template**: now uses slicewise rigid transfo at first step (instead of slicereg), which improves accuracy (issue #666)
 
 ##2.2.3 (2016-02-04)
 - BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
