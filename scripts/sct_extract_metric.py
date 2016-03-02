@@ -29,7 +29,7 @@ import nibabel as nib
 import numpy as np
 
 import sct_utils as sct
-from sct_image import get_orientation, set_orientation
+from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from msct_parser import Parser
 
@@ -292,7 +292,7 @@ def main(fname_data, path_label, method, labels_of_interest, slices_of_interest,
 
     # Check if the orientation of the data is RPI
     input_im = Image(fname_data)
-    orientation_data = get_orientation(input_im)
+    orientation_data = get_orientation_3d(input_im)
 
     # If orientation is not RPI, change to RPI
     if orientation_data != 'RPI':
