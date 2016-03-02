@@ -7,7 +7,7 @@
 - NEW: package now includes python (from miniconda), which simplifies the installation and allows users to have another Python installed without generating conflicts.
 - BUG: Fixed issues #715, #719
 - BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
-- OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #735, #749
+- OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #350, #404, #414, #499, #650, #735, #749
 - OPT: **sct_register_to_template**: now uses slicewise rigid transfo at first step (instead of slicereg), which improves accuracy (issue #666)
 
 ##2.2.3 (2016-02-04)
