@@ -65,15 +65,15 @@ def register_slicewise(fname_source,
     # if algo is slicereg2d _affine, _syn or _bsplinesyn: x_disp and y_disp are warping fields names
 
     # here, we need to convert transformation matrices into warping fields
-    if paramreg.algo in ['centermass', 'Translation', 'Rigid']:
-        # Change to array
-        x_disp, y_disp, theta_rot = res_reg
-        x_disp_a = asarray(x_disp)
-        y_disp_a = asarray(y_disp)
-        if theta_rot is not None:
-            theta_rot_a = asarray(theta_rot)
-        else:
-            theta_rot_a = None
+    # if paramreg.algo in ['centermass', 'Translation', 'Rigid']:
+    #     # Change to array
+    #     x_disp, y_disp, theta_rot = res_reg
+    #     x_disp_a = asarray(x_disp)
+    #     y_disp_a = asarray(y_disp)
+    #     if theta_rot is not None:
+    #         theta_rot_a = asarray(theta_rot)
+    #     else:
+    #         theta_rot_a = None
         # <<<<< old code with outliers detection and smoothing
         # # Detect outliers
         # if not detect_outlier == '0':
@@ -103,10 +103,10 @@ def register_slicewise(fname_source,
         #     theta_rot_smooth = None
         # >>>>>
 
-        # Generate warping field
-        generate_warping_field(fname_dest, x_disp_a, y_disp_a, theta_rot_a, fname=warp_forward_out)  #name_warp= 'step'+str(paramreg.step)
-        # Inverse warping field
-        generate_warping_field(fname_source, -x_disp_a, -y_disp_a, theta_rot_a, fname=warp_inverse_out)
+        # # Generate warping field
+        # generate_warping_field(fname_dest, x_disp_a, y_disp_a, theta_rot_a, fname=warp_forward_out)  #name_warp= 'step'+str(paramreg.step)
+        # # Inverse warping field
+        # generate_warping_field(fname_source, -x_disp_a, -y_disp_a, theta_rot_a, fname=warp_inverse_out)
 
 
 def register_seg(seg_input, seg_dest, verbose=1):
@@ -302,8 +302,8 @@ def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forwa
             sct.run(cmd)
 
             if paramreg.algo in ['Rigid', 'Translation']:
-                f = 'transform_' +num+ '0GenericAffine.mat'
-                matfile = loadmat(f, struct_as_record=True)
+                file_mat = prefix_warp2d+'0GenericAffine.mat'
+                matfile = loadmat(file_mat, struct_as_record=True)
                 array_transfo = matfile['AffineTransform_double_2_2']
                 x_displacement[i] = array_transfo[4][0]  # Tx in ITK'S coordinate system
                 y_displacement[i] = array_transfo[5][0]  # Ty  in ITK'S and fslview's coordinate systems
@@ -366,8 +366,22 @@ def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forwa
             #     list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
             #     list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
+    # Merge warping field along z
+    sct.printv('\nMerge warping fields along z...', verbose)
+
+    if paramreg.algo in ['Rigid', 'Translation']:
+        x_disp_a = asarray(x_displacement)
+        y_disp_a = asarray(y_displacement)
+        if theta_rotation is not None:
+            theta_rot_a = asarray(theta_rotation)
+        else:
+            theta_rot_a = None
+        # Generate warping field
+        generate_warping_field('dest.nii', x_disp_a, y_disp_a, theta_rot_a, fname=fname_warp)  #name_warp= 'step'+str(paramreg.step)
+        # Inverse warping field
+        generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
+
     if paramreg.algo in ['BSplineSyN', 'SyN', 'Affine']:
-        print'\nMerge warping fields along z...'
         # fname_warp = 'warp_forward_3d.nii.gz'
         # fname_warp_inv = 'warp_inverse_3d.nii.gz'
         from sct_image import concat_warp2d
@@ -401,9 +415,9 @@ def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forwa
             # for warp in [warp_x, inv_warp_x, warp_y, inv_warp_y]:
             #     sct.run('sct_resample -i '+warp+' -f '+str(paramreg.shrink)+'x'+str(paramreg.shrink)+'x1 -o '+warp)
 
-        print'\nMove to parent folder...'
-        sct.run('mv '+fname_warp+' ../')
-        sct.run('mv '+fname_warp_inv+' ../')
+    sct.printv('\nMove warping fields to parent folder...', verbose)
+    sct.run('mv '+fname_warp+' ../')
+    sct.run('mv '+fname_warp_inv+' ../')
         # sct.run('cp '+warp_x+' ../')
         # sct.run('cp '+inv_warp_x+' ../')
         # sct.run('cp '+warp_y+' ../')
@@ -414,10 +428,10 @@ def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forwa
     # if remove_tmp_folder:
     #     print('\nRemove temporary files...')
     #     sct.run('rm -rf '+path_tmp, error_exit='warning')
-    if paramreg.algo == 'Rigid':
-        return x_displacement, y_displacement, theta_rotation
-    if paramreg.algo == 'Translation':
-        return x_displacement, y_displacement, None
+    # if paramreg.algo == 'Rigid':
+    #     return x_displacement, y_displacement, theta_rotation
+    # if paramreg.algo == 'Translation':
+    #     return x_displacement, y_displacement, None
     # if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
     #     return warp_x, inv_warp_x, warp_y, inv_warp_y
 
