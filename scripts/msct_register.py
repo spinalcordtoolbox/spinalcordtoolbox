@@ -330,11 +330,11 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
     [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
     if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
-        list_warp_x = []
-        list_warp_x_inv = []
-        list_warp_y = []
-        list_warp_y_inv = []
-        name_warp_final = 'Warp_total' #if modified, name should also be modified in msct_register (algo slicereg2d_bsplinesyn and slicereg2d_syn)
+        list_warp = []
+        list_warp_inv = []
+    #     list_warp_y = []
+    #     list_warp_y_inv = []
+    #     name_warp_final = 'Warp_total' #if modified, name should also be modified in msct_register (algo slicereg2d_bsplinesyn and slicereg2d_syn)
 
     # loop across slices
     for i in range(nz):
@@ -407,13 +407,15 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                 # Need to separate the merge for x and y displacement as merge of 3d warping fields does not work properly
                 # sct.run('c2d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_X.nii.gz transform_'+num+'0Warp_Y.nii.gz')
                 # sct.run('c2d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_X.nii.gz transform_'+num+'0InverseWarp_Y.nii.gz')
-                sct.run('sct_image -i transform_'+num+'0Warp.nii.gz -mcs -o transform_'+num+'0Warp.nii.gz')
-                sct.run('sct_image -i transform_'+num+'0InverseWarp.nii.gz -mcs -o transform_'+num+'0InverseWarp.nii.gz')
+                # sct.run('sct_image -i transform_'+num+'0Warp.nii.gz -mcs -o transform_'+num+'0Warp.nii.gz')
+                # sct.run('sct_image -i transform_'+num+'0InverseWarp.nii.gz -mcs -o transform_'+num+'0InverseWarp.nii.gz')
                 # List names of warping fields for futur merge
-                list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
-                list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
-                list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
-                list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
+                list_warp.append('transform_'+num+'0Warp.nii.gz')
+                list_warp_inv.append('transform_'+num+'0InverseWarp.nii.gz')
+                # list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
+                # list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
+                # list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
+                # list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
         # if an exception occurs with ants, take the last value for the transformation
         # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)
@@ -441,43 +443,55 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
 
     if paramreg.algo in ['BSplineSyN', 'SyN', 'Affine']:
         print'\nMerge warping fields along z...'
-        warp_x = name_warp_final + '_x.nii.gz'
-        inv_warp_x = name_warp_final + '_x_inverse.nii.gz'
-        warp_y = name_warp_final + '_y.nii.gz'
-        inv_warp_y = name_warp_final + '_y_inverse.nii.gz'
-        sct.run('sct_image -i '+','.join(list_warp_x)+' -o '+warp_x+' -concat z')
-        sct.run('sct_image -i '+','.join(list_warp_x_inv)+' -o '+inv_warp_x+' -concat z')
-        sct.run('sct_image -i '+','.join(list_warp_y)+' -o '+warp_y+' -concat z')
-        sct.run('sct_image -i '+','.join(list_warp_y_inv)+' -o '+inv_warp_y+' -concat z')
+        fname_warp = 'warp_forward_3d.nii.gz'
+        fname_warp_inv = 'warp_inverse_3d.nii.gz'
+        # TODO: concat warping field is NOT the same as concat image... need to create vector for z
+        from sct_image import concat_warp2d
+        concat_warp2d(list_warp, fname_warp, fname_dest)
+        # sct.run('sct_image -i '+','.join(list_warp)+' -o '+fname_warp+' -concat z')
+        # sct.run('sct_image -i '+','.join(list_warp_inv)+' -o '+fname_warp_inv+' -concat z')
+        # warp_x = name_warp_final + '_x.nii.gz'
+        # inv_warp_x = name_warp_final + '_x_inverse.nii.gz'
+        # warp_y = name_warp_final + '_y.nii.gz'
+        # inv_warp_y = name_warp_final + '_y_inverse.nii.gz'
+        # sct.run('sct_image -i '+','.join(list_warp_x)+' -o '+warp_x+' -concat z')
+        # sct.run('sct_image -i '+','.join(list_warp_x_inv)+' -o '+inv_warp_x+' -concat z')
+        # sct.run('sct_image -i '+','.join(list_warp_y)+' -o '+warp_y+' -concat z')
+        # sct.run('sct_image -i '+','.join(list_warp_y_inv)+' -o '+inv_warp_y+' -concat z')
 
         sct.printv('\nCopy header dest --> warp...', verbose)
         from sct_image import copy_header
         im_dest = Image(fname_dest)
         im_src = Image(fname_source)
-        im_warp_x = Image(warp_x)
-        im_warp_y = Image(warp_y)
-        im_inv_warp_x = Image(inv_warp_x)
-        im_inv_warp_y = Image(inv_warp_y)
+        im_warp = Image(fname_warp)
+        im_inv_warp = Image(fname_warp_inv)
 
-        im_warp_x = copy_header(im_dest, im_warp_x)
-        im_inv_warp_x = copy_header(im_src, im_inv_warp_x)
-        im_warp_y = copy_header(im_dest, im_warp_y)
-        im_inv_warp_y = copy_header(im_src, im_inv_warp_y)
+        # im_warp_x = Image(warp_x)
+        # im_warp_y = Image(warp_y)
+        # im_inv_warp_x = Image(inv_warp_x)
+        # im_inv_warp_y = Image(inv_warp_y)
 
-        for im_warp in [im_warp_x, im_inv_warp_x, im_warp_y, im_inv_warp_y]:
+        im_warp = copy_header(im_dest, im_warp)
+        im_inv_warp = copy_header(im_src, im_inv_warp)
+        # im_warp_y = copy_header(im_dest, im_warp_y)
+        # im_inv_warp_y = copy_header(im_src, im_inv_warp_y)
+
+        for im_warp in [im_warp, im_inv_warp]:
             im_warp.save(verbose=0)  # here we set verbose=0 to avoid warning message when overwriting file
 
-        if paramreg.algo in ['BSplineSyN', 'SyN']:
-            print'\nChange resolution of warping fields to match the resolution of the destination image...'
-            # change resolution of warping field if shrink factor was used
-            for warp in [warp_x, inv_warp_x, warp_y, inv_warp_y]:
-                sct.run('sct_resample -i '+warp+' -f '+str(paramreg.shrink)+'x'+str(paramreg.shrink)+'x1 -o '+warp)
+        # if paramreg.algo in ['BSplineSyN', 'SyN']:
+        #     print'\nChange resolution of warping fields to match the resolution of the destination image...'
+        #     change resolution of warping field if shrink factor was used
+            # for warp in [warp_x, inv_warp_x, warp_y, inv_warp_y]:
+            #     sct.run('sct_resample -i '+warp+' -f '+str(paramreg.shrink)+'x'+str(paramreg.shrink)+'x1 -o '+warp)
 
         print'\nCopy to parent folder...'
-        sct.run('cp '+warp_x+' ../')
-        sct.run('cp '+inv_warp_x+' ../')
-        sct.run('cp '+warp_y+' ../')
-        sct.run('cp '+inv_warp_y+' ../')
+        sct.run('cp '+fname_warp+' ../')
+        sct.run('cp '+fname_warp_inv+' ../')
+        # sct.run('cp '+warp_x+' ../')
+        # sct.run('cp '+inv_warp_x+' ../')
+        # sct.run('cp '+warp_y+' ../')
+        # sct.run('cp '+inv_warp_y+' ../')
 
     # go back to parent folder
     chdir('../')
