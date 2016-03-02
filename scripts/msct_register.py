@@ -19,11 +19,6 @@ from msct_image import Image
 from math import asin, cos, sin
 from nibabel import load, Nifti1Image, save
 from sct_convert import convert
-
-# # Get path of the toolbox
-# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# # Append path that contains scripts, to be able to load modules
-# sys.path.append(path_sct + '/scripts')
 from sct_register_multimodal import Paramreg
 
 
@@ -38,8 +33,6 @@ def register_slicewise(fname_src,
                         detect_outlier='0',
                         remove_temp_files=1,
                         verbose=0):
-    from numpy import asarray, apply_along_axis, zeros
-    from msct_smooth import smoothing_window, outliers_detection, outliers_completion
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
