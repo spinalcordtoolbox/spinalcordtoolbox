@@ -468,6 +468,7 @@ def check_if_same_space(fname_1, fname_2):
     q2 = im_2.hdr.get_qform()
 
     dec = int(np_abs(round(np_log10(min(np_abs(q1[nonzero(q1)]))))) + 1)
+    dec = 4 if dec > 4 else dec
     return all(around(q1, dec) == around(q2, dec))
 
 
