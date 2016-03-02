@@ -147,16 +147,16 @@ def main(args = None):
 
     elif "-getorient" in arguments:
         im_in = Image(fname_in[0])
-        orient = orientation(im_in, get=True, verbose=verbose)
+        orient = orientation(im_in, get=True, verbose_init=verbose)
         im_out = None
 
     elif "-setorient" in arguments:
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose)]
+        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose_init=verbose)]
 
     elif "-setorient-data" in arguments:
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
+        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose_init=verbose)]
 
     elif '-mcs' in arguments:
         im_in = Image(fname_in[0])
@@ -435,20 +435,36 @@ def multicomponent_merge(fname_list):
     return im_out
 
 
-def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
-    verbose = 0 if get else verbose
+def orientation(im, ori=None, set=False, get=False, set_data=False, verbose_init=1):
+    verbose = 0 if get else verbose_init
     printv('\nGet dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
+    # if data are 2d, get orientation from header using fslhd
+    if nz == 1:
+        if get:
+            try:
+                ori = get_orientation(im)
+            except Exception, e:
+                printv('ERROR: an error occurred: \n'+str(e), verbose_init,'error')
+            return ori
+        elif set:
+            # set orientation
+            printv('\nChange orientation...', verbose)
+            im_out = set_orientation(im, ori)
+        elif set_data:
+            im_out = set_orientation(im, ori, True)
+
+
     # if data are 3d, directly set or get orientation
-    if nt == 1:
+    elif nt == 1:
         if get:
             # get orientation
             printv('\nGet orientation...', verbose)
             im_out = None
-            return get_orientation(im)
+            return get_orientation_3d(im)
         elif set:
             # set orientation
             printv('\nChange orientation...', verbose)
@@ -469,7 +485,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             # get orientation
             printv('\nGet orientation...', verbose)
             im_out=None
-            return get_orientation(im_split_list[0])
+            return get_orientation_3d(im_split_list[0])
         elif set:
             # set orientation
             printv('\nChange orientation...', verbose)
@@ -488,9 +504,26 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
     return im_out
 
 
+def get_orientation(im):
+    from nibabel import orientations
+    orientation_dic = {
+        (0, 1): 'L',
+        (0, -1): 'R',
+        (1, 1): 'P',
+        (1, -1): 'A',
+        (2, 1): 'I',
+        (2, -1): 'S',
+    }
+
+    orientation_matrix = orientations.io_orientation(im.hdr.get_best_affine())
+    ori = orientation_dic[tuple(orientation_matrix[0])] + orientation_dic[tuple(orientation_matrix[1])] + orientation_dic[tuple(orientation_matrix[2])]
+
+    return ori
+
+
 # get_orientation
 # ==========================================================================================
-def get_orientation(im, filename=False):
+def get_orientation_3d(im, filename=False):
     """
     Get orientation from 3D data
     :param im:
