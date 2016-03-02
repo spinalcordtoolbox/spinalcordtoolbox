@@ -27,7 +27,7 @@ from sct_convert import convert
 from sct_register_multimodal import Paramreg
 
 
-def register_slicewise(fname_source,
+def register_slicewise(fname_src,
                         fname_dest,
                         fname_mask='',
                         window_length='0',
@@ -41,16 +41,41 @@ def register_slicewise(fname_source,
     from numpy import asarray, apply_along_axis, zeros
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
 
+    # create temporary folder
+    sct.printv('\nCreate temporary folder...', verbose)
+    path_tmp = sct.tmp_create(verbose)
+
+    # copy data to temp folder
+    sct.printv('\nCopy input data to temp folder...', verbose)
+    convert(fname_src, path_tmp+'src.nii')
+    convert(fname_dest, path_tmp+'dest.nii')
+    if fname_mask != '':
+        convert(fname_mask, path_tmp+'mask.nii.gz')
+
+    # go to temporary folder
+    chdir(path_tmp)
+
     # Calculate displacement
     if paramreg.algo == 'centermass':
         # calculate translation of center of mass between source and destination in voxel space
-        register2d_centermass(fname_source, fname_dest, verbose)
+        register2d_centermass('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
     else:
         # convert SCT flags into ANTs-compatible flags
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
         paramreg.algo = algo_dic[paramreg.algo]
         # run slicewise registration
-        register2d(fname_source, fname_dest, fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
+        register2d('src.nii', 'dest.nii', fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
+
+    sct.printv('\nMove warping fields to parent folder...', verbose)
+    sct.run('mv '+warp_forward_out+' ../')
+    sct.run('mv '+warp_inverse_out+' ../')
+        # sct.run('cp '+warp_x+' ../')
+        # sct.run('cp '+inv_warp_x+' ../')
+        # sct.run('cp '+warp_y+' ../')
+        # sct.run('cp '+inv_warp_y+' ../')
+
+    # go back to parent folder
+    chdir('../')
 
     # elif paramreg.type == 'im':
     #     if paramreg.algo == 'slicereg2d_pointwise':
@@ -110,7 +135,7 @@ def register_slicewise(fname_source,
         # generate_warping_field(fname_source, -x_disp_a, -y_disp_a, theta_rot_a, fname=warp_inverse_out)
 
 
-def register2d_centermass(fname_src, fname_dest, verbose=1):
+def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=1):
     """Slice-by-slice registration by translation of two segmentations.
     For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
     mass in voxel unit.
@@ -119,33 +144,36 @@ def register2d_centermass(fname_src, fname_dest, verbose=1):
     input:
         seg_input: name of moving segmentation file (type: string)
         seg_dest: name of fixed segmentation file (type: string)
-
+    input optional:
+        fname_warp: name of output 3d forward warping field
+        fname_warp_inv: name of output 3d inverse warping field
+        verbose
     output:
         x_displacement: list of translation along x axis for each slice (type: list)
         y_displacement: list of translation along y axis for each slice (type: list)
 
     """
-
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.tmp_create(verbose)
-
-    # copy data to temp folder
-    sct.printv('\nCopy input data to temp folder...', verbose)
-    convert(fname_src, path_tmp+'src.nii')
-    convert(fname_dest, path_tmp+'dest.nii')
-
-    # go to temporary folder
-    chdir(path_tmp)
-    seg_input_img = Image(seg_input)
-    seg_dest_img = Image(seg_dest)
+    #
+    # # create temporary folder
+    # sct.printv('\nCreate temporary folder...', verbose)
+    # path_tmp = sct.tmp_create(verbose)
+    #
+    # # copy data to temp folder
+    # sct.printv('\nCopy input data to temp folder...', verbose)
+    # convert(fname_src, path_tmp+'src.nii')
+    # convert(fname_dest, path_tmp+'dest.nii')
+    #
+    # # go to temporary folder
+    # chdir(path_tmp)
+    seg_input_img = Image('src.nii')
+    seg_dest_img = Image('dest.nii')
     seg_input_data = seg_input_img.data
     seg_dest_data = seg_dest_img.data
 
     x_center_of_mass_input = [0] * seg_dest_data.shape[2]
     y_center_of_mass_input = [0] * seg_dest_data.shape[2]
-    sct.printv('\nGet center of mass of the input segmentation for each slice '
-               '(corresponding to a slice in the output segmentation)...', verbose)  # different if size of the two seg are different
+
+    sct.printv('\nGet center of mass of source image...', verbose)
     # TODO: select only the slices corresponding to the output segmentation
 
     # grab physical coordinates of destination origin
@@ -164,7 +192,7 @@ def register2d_centermass(fname_src, fname_dest, verbose=1):
     y_center_of_mass_output = [0] * seg_dest_data.shape[2]
 
     # calculate center of mass for each slice of the destination image
-    sct.printv('\nGet center of mass of the destination segmentation for each slice ...', verbose)
+    sct.printv('\nGet center of mass of destination image...', verbose)
     for iz in xrange(seg_dest_data.shape[2]):
         try:
             x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(array(seg_dest_data[:, :, iz]))
@@ -176,26 +204,22 @@ def register2d_centermass(fname_src, fname_dest, verbose=1):
     # calculate displacement in voxel space
     x_displacement = [0] * seg_input_data.shape[2]
     y_displacement = [0] * seg_input_data.shape[2]
-    sct.printv('\nGet displacement by voxel...', verbose)
+    sct.printv('\nGet X-Y displacement for each slice...', verbose)
     for iz in xrange(seg_dest_data.shape[2]):
         x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
         y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
 
-    # create theta vector (for easier code management)
-    theta_rotation = zeros(range(seg_dest_data.shape[2]))
-
     # convert to array
     x_disp_a = asarray(x_displacement)
     y_disp_a = asarray(y_displacement)
-    theta_rot_a = asarray(theta_rotation)
+
+    # create theta vector (for easier code management)
+    theta_rot_a = zeros(seg_dest_data.shape[2])
 
     # Generate warping field
     generate_warping_field('dest.nii', x_disp_a, y_disp_a, theta_rot_a, fname=fname_warp)  #name_warp= 'step'+str(paramreg.step)
     # Inverse warping field
     generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
-
-
-    return x_displacement, y_displacement, theta_rot
 
 
 
@@ -254,20 +278,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     x_displacement = [0 for i in range(nz)]
     y_displacement = [0 for i in range(nz)]
     theta_rotation = [0 for i in range(nz)]
-
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.tmp_create(verbose)
-
-    # copy data to temp folder
-    sct.printv('\nCopy input data to temp folder...', verbose)
-    convert(fname_src, path_tmp+'src.nii')
-    convert(fname_dest, path_tmp+'dest.nii')
-    if fname_mask != '':
-        convert(fname_mask, path_tmp+'mask.nii.gz')
-
-    # go to temporary folder
-    chdir(path_tmp)
 
     # Split input volume along z
     sct.printv('\nSplit input volume...', verbose)
@@ -440,16 +450,16 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             # for warp in [warp_x, inv_warp_x, warp_y, inv_warp_y]:
             #     sct.run('sct_resample -i '+warp+' -f '+str(paramreg.shrink)+'x'+str(paramreg.shrink)+'x1 -o '+warp)
 
-    sct.printv('\nMove warping fields to parent folder...', verbose)
-    sct.run('mv '+fname_warp+' ../')
-    sct.run('mv '+fname_warp_inv+' ../')
+    # sct.printv('\nMove warping fields to parent folder...', verbose)
+    # sct.run('mv '+fname_warp+' ../')
+    # sct.run('mv '+fname_warp_inv+' ../')
         # sct.run('cp '+warp_x+' ../')
         # sct.run('cp '+inv_warp_x+' ../')
         # sct.run('cp '+warp_y+' ../')
         # sct.run('cp '+inv_warp_y+' ../')
 
     # go back to parent folder
-    chdir('../')
+    # chdir('../')
     # if remove_tmp_folder:
     #     print('\nRemove temporary files...')
     #     sct.run('rm -rf '+path_tmp, error_exit='warning')
