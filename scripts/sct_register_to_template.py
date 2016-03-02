@@ -57,7 +57,7 @@ class Param:
 
 
 # get default parameters
-step1 = Paramreg(step='1', type='seg', algo='slicereg2d_translation')
+step1 = Paramreg(step='1', type='seg', algo='rigid', metric='MeanSquares', slicewise='1', smooth='5')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='5', smooth='1')
 step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
 paramreg = ParamregMultiStep([step1, step2, step3])
