@@ -44,18 +44,19 @@ def register_slicewise(fname_source,
     # Calculate displacement
     if paramreg.algo == 'centermass':
         # calculate translation of center of mass between source and destination in voxel space
-        res_reg = register_seg(fname_source, fname_dest, verbose)
+        register2d_centermass(fname_source, fname_dest, verbose)
+    else:
+        # convert SCT flags into ANTs-compatible flags
+        algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
+        paramreg.algo = algo_dic[paramreg.algo]
+        # run slicewise registration
+        register2d(fname_source, fname_dest, fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
 
     # elif paramreg.type == 'im':
     #     if paramreg.algo == 'slicereg2d_pointwise':
     #         sct.printv('\nERROR: Algorithm slicereg2d_pointwise only operates for segmentation type.', verbose, 'error')
     #         sys.exit(2)
 
-    # convert SCT flags into ANTs-compatible flags
-    algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN'}
-    paramreg.algo = algo_dic[paramreg.algo]
-    # run slicewise registration
-    register2d(fname_source, fname_dest, fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
 
     # else:
     #     sct.printv('\nERROR: wrong registration type inputed. pleas choose \'im\', or \'seg\'.', verbose, 'error')
@@ -109,7 +110,7 @@ def register_slicewise(fname_source,
         # generate_warping_field(fname_source, -x_disp_a, -y_disp_a, theta_rot_a, fname=warp_inverse_out)
 
 
-def register_seg(seg_input, seg_dest, verbose=1):
+def register2d_centermass(fname_src, fname_dest, verbose=1):
     """Slice-by-slice registration by translation of two segmentations.
     For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
     mass in voxel unit.
@@ -125,6 +126,17 @@ def register_seg(seg_input, seg_dest, verbose=1):
 
     """
 
+    # create temporary folder
+    sct.printv('\nCreate temporary folder...', verbose)
+    path_tmp = sct.tmp_create(verbose)
+
+    # copy data to temp folder
+    sct.printv('\nCopy input data to temp folder...', verbose)
+    convert(fname_src, path_tmp+'src.nii')
+    convert(fname_dest, path_tmp+'dest.nii')
+
+    # go to temporary folder
+    chdir(path_tmp)
     seg_input_img = Image(seg_input)
     seg_dest_img = Image(seg_dest)
     seg_input_data = seg_input_img.data
@@ -169,7 +181,21 @@ def register_seg(seg_input, seg_dest, verbose=1):
         x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
         y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
 
-    return x_displacement, y_displacement, None
+    # create theta vector (for easier code management)
+    theta_rotation = zeros(range(seg_dest_data.shape[2]))
+
+    # convert to array
+    x_disp_a = asarray(x_displacement)
+    y_disp_a = asarray(y_displacement)
+    theta_rot_a = asarray(theta_rotation)
+
+    # Generate warping field
+    generate_warping_field('dest.nii', x_disp_a, y_disp_a, theta_rot_a, fname=fname_warp)  #name_warp= 'step'+str(paramreg.step)
+    # Inverse warping field
+    generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
+
+
+    return x_displacement, y_displacement, theta_rot
 
 
 
@@ -224,6 +250,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # Define x and y displacement as list
+    # TODO: NOT HERE!
     x_displacement = [0 for i in range(nz)]
     y_displacement = [0 for i in range(nz)]
     theta_rotation = [0 for i in range(nz)]
