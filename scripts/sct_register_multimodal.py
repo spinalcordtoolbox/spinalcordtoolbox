@@ -495,6 +495,10 @@ def register(src, dest, paramreg, param, i_step_str):
     # ANTS 2d
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params and paramreg.steps[i_step_str].slicewise == '1':
         from msct_register import register_slicewise
+        # if shrink!=1, force it to be 1 (otherwise, it generates a wrong 3d warping field). TODO: fix that!
+        if not paramreg.steps[i_step_str].shrink == '1':
+            sct.printv('\nWARNING: when using slicewise with SyN or BSplineSyN, shrink factor needs to be one. Forcing shrink=1.', 1, 'warning')
+            paramreg.steps[i_step_str].shrink = '1'
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
         register_slicewise(src,
