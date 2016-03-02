@@ -513,7 +513,9 @@ def register(src, dest, paramreg, param, i_step_str):
     elif paramreg.steps[i_step_str].algo == 'centermass':
         # check if type=seg
         if not paramreg.steps[i_step_str].type == 'seg':
-            sct.printv('\nERROR: algo '+paramreg.steps[i_step_str].algo+' should only be used with type=seg. Exit program\n', 1, 'error')
+            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should only be used with type=seg.', 1, 'warning')
+        if not fname_mask == '':
+            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.', 1, 'warning')
         from msct_register import register_slicewise
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
