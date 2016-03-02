@@ -320,7 +320,7 @@ def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forwa
                 # Generating null 2d warping field (for subsequent concatenation with affine transformation)
                 sct.run('isct_antsRegistration -d 2 -t SyN[1, 1, 1] -c 0 -m MI[dest_Z'+num+'.nii, src_Z'+num+'.nii, 1, 32] -o warp2d_null -f 1 -s 0')
                 # --> outputs: warp2d_null0Warp.nii.gz, warp2d_null0InverseWarp.nii.gz
-                file_mat = 'transform_' + num + '0GenericAffine.mat'
+                file_mat = prefix_warp2d + '0GenericAffine.mat'
                 # Concatenating mat transfo and null 2d warping field to obtain 2d warping field of affine transformation
                 sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d + ' -R dest_Z'+num+'.nii warp2d_null0Warp.nii.gz ' + file_mat)
                 sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d_inv + ' -R src_Z'+num+'.nii warp2d_null0InverseWarp.nii.gz -i ' + file_mat)
