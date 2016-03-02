@@ -115,7 +115,8 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
     except KeyboardInterrupt:
         return 'KeyboardException'
     except Exception as e:
-        print e
+        sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
+        sct.printv(str(e), 1, 'warning')
         sys.exit(2)
 
 
@@ -162,7 +163,8 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
         pool.join()
         sys.exit(2)
     except Exception as e:
-        print e
+        sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
+        sct.printv(str(e), 1, 'warning')
         pool.terminate()
         pool.join()
         sys.exit(2)

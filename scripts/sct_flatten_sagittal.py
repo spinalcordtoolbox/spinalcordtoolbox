@@ -23,7 +23,7 @@ from shutil import move
 import sct_utils as sct
 from msct_nurbs import NURBS
 from sct_utils import fsloutput
-from sct_image import get_orientation, set_orientation
+from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from sct_image import split_data, concat_data
 from msct_parser import Parser
@@ -67,7 +67,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     
     # Get input image orientation
     im_anat = Image(fname_anat)
-    input_image_orientation = get_orientation(im_anat)
+    input_image_orientation = get_orientation_3d(im_anat)
 
     # Reorient input data into RL PA IS orientation
     im_centerline = Image(fname_centerline)

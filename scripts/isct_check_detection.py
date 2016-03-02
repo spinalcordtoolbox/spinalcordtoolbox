@@ -75,15 +75,16 @@ def main():
     X, Y, Z = (data>0).nonzero()
     status = 0
     for i in range(0,len(X)):
-        if data_seg(X[i],Y[i],Z[i]) == 0:
+        if data_seg[X[i],Y[i],Z[i]] == 0:
             status = 1
             break;
 
     if status is not 0:
-        sct.printv('ERROR: detected point is not in segmentation',1,'error')
+        sct.printv('ERROR: detected point is not in segmentation',1,'warning')
     else:
         sct.printv('OK: detected point is in segmentation')
-        sys.exit(0)
+
+    sys.exit(status)
 
 #=======================================================================================================================
 # usage

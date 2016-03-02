@@ -12,6 +12,8 @@
 #include "Image3D.h"
 #include <vector>
 #include <itkImage.h>
+#include <vtkSmartPointer.h>
+#include <vtkPolyData.h>
 
 typedef itk::Image< double, 3 >	ImageType;
 typedef itk::SpatialOrientation::ValidCoordinateOrientationFlags OrientationType;
@@ -51,7 +53,7 @@ public:
 	vector<double> computeCrossSectionalArea(bool saveFile=false, string filename="", bool spline=false, Image3D* im=0);
 	double computeLastCrossSectionalArea();
 
-	void reduceMeshUpAndDown(CVector3 upperSlicePoint, CVector3 upperSliceNormal, CVector3 downSlicePoint, CVector3 downSliceNormal, string filename);
+	virtual vtkSmartPointer<vtkPolyData> reduceMeshUpAndDown(CVector3 upperSlicePoint, CVector3 upperSliceNormal, CVector3 downSlicePoint, CVector3 downSliceNormal, string filename="");
     
     void setCompleteCenterline(bool centerline) { completeCenterline_ = centerline; };
     bool getCompleteCenterline() { return completeCenterline_; };

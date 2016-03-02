@@ -1,0 +1,48 @@
+# These are Linux udev rules (man udev) that setup device access permissions on your
+# Linux system so that unprivileged user processes like Matlab and Octave - and thereby
+# Psychtoolbox - can access pieces of hardware relevant to Psychtoolbox.
+#
+# This allows to run Matlab/Octave safely as non-root user (without the "sudo" command)
+# and thus have full access to Linux low-level functionality.
+#
+# This file should be copied to /etc/udev/rules.d/ on a Debian/Ubuntu compatible/derived
+# Linux distribution. It has been tested on Ubuntu Linux 10.10. After copying the
+# file you need to reboot your machine once for all settings to take effect.
+
+# Rules to allow Psychtoolbox to access the MMIO registers of all supported GPU's
+# while running inside an unprivileged Matlab/Octave userspace process without sudo root:
+
+# For each attached ATI GPU, set the permissions on its resource2 file to o+rw to allow mapping BAR-2 from unprivileged userspace apps like Psychtoolbox:
+ACTION=="add", SUBSYSTEM=="pci", ATTR{class}=="0x030000", ATTR{vendor}=="0x1002", RUN+="/bin/chmod o+rw %S%p/resource2"
+
+# For each attached AMD GPU, set the permissions on its resource2 file to o+rw to allow mapping BAR-2 from unprivileged userspace apps like Psychtoolbox:
+ACTION=="add", SUBSYSTEM=="pci", ATTR{class}=="0x030000", ATTR{vendor}=="0x1022", RUN+="/bin/chmod o+rw %S%p/resource2"
+
+# For each attached NVidia GPU, set the permissions on its resource0 file to o+rw to allow mapping BAR-0 from unprivileged userspace apps like Psychtoolbox:
+ACTION=="add", SUBSYSTEM=="pci", ATTR{class}=="0x030000", ATTR{vendor}=="0x10de", RUN+="/bin/chmod o+rw %S%p/resource0"
+
+# For each attached Intel GPU, set the permissions on its resource0 file to o+rw to allow mapping BAR-0 from unprivileged userspace apps like Psychtoolbox:
+ACTION=="add", SUBSYSTEM=="pci", ATTR{class}=="0x030000", ATTR{vendor}=="0x8086", RUN+="/bin/chmod o+rw %S%p/resource0"
+# Intel GEN-2 hardware uses BAR-1 instead of BAR-0, therefore need to enable it as well:
+ACTION=="add", SUBSYSTEM=="pci", ATTR{class}=="0x030000", ATTR{vendor}=="0x8086", RUN+="/bin/chmod o+rw %S%p/resource1"
+
+# Make devices from "Cambridge Research Systems" accessible by unprivileged user processes:
+ATTR{manufacturer}=="CRS Ltd", MODE="0666"
+ATTR{idVendor}=="0861", MODE="0666"
+
+# Make devices from "VPixx Inc." accessible by unprivileged user processes:
+ATTR{manufacturer}=="VPixx", MODE="0666"
+
+# Set latency timer of FTDI serial-over-usb chips to 1 msec, as this is used by
+# our PsychRTBox.m driver and similar drivers for low-latency data reception over
+# FTDI USB serial ports. We have this here just as a backup. The IOPort driver itself
+# will set the latency_timer to 1 msecs if 'ReceiveLatency' is set to a value <= 0.001
+# seconds. Yet another way to do it is to use the user-callable shell command:
+# "setserial /dev/ttyUSB0 low_latency"
+# On current Linux kernels, this isn't strictly needed, because the ftdi_sio
+# kernel driver inits low-latency mode on its devices by default since kernel 2.6.31
+# from June 2009:
+ACTION=="add", SUBSYSTEM=="usb-serial", DRIVER=="ftdi_sio", ATTR{latency_timer}="1"
+
+# Enable non-root access of libusb to the USB-HID DAQ devices supported by the DAQ toolbox:
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="09db", MODE="0666"
