@@ -22,7 +22,7 @@ import sct_utils as sct
 from numpy import mgrid, zeros, exp, unravel_index, argmax, poly1d, polyval, linalg, max, polyfit, sqrt, abs, savetxt
 import glob
 from sct_utils import fsloutput
-from sct_image import get_orientation, set_orientation
+from sct_image import get_orientation_3d, set_orientation
 from sct_convert import convert
 from msct_image import Image
 from sct_image import copy_header, split_data, concat_data
@@ -84,7 +84,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     file_schedule = path_sct + param.schedule_file
 
     # Get input image orientation
-    input_image_orientation = get_orientation(fname_anat, filename=True)
+    input_image_orientation = get_orientation_3d(fname_anat, filename=True)
 
     # Display arguments
     print '\nCheck input arguments...'
@@ -427,10 +427,10 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
     file_0 = Image('data.nii')
     data_concatenation = file_0.data
     hdr_0 = file_0.hdr
-    orientation_file_0 = get_orientation(file_0)
+    orientation_file_0 = get_orientation_3d(file_0)
     if len(list_fname_labels) > 0:
        for i in range(0, len(list_fname_labels)):
-            orientation_file_temp = get_orientation(file_labels[i], filename=True)
+            orientation_file_temp = get_orientation_3d(file_labels[i], filename=True)
             if orientation_file_0 != orientation_file_temp :
                 print 'ERROR: The files ', fname_in, ' and ', file_labels[i], ' are not in the same orientation. Use sct_image -setorient to change the orientation of a file.'
                 sys.exit(2)
