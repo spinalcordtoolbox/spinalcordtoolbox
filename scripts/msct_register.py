@@ -279,10 +279,11 @@ def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forwa
         # set masking
         sct.printv('Registering slice '+str(i)+'/'+str(nz-1)+'...', verbose)
         num = numerotation(i)
+        prefix_warp2d = 'warp2d_'+num
         # num_2 = numerotation(int(num) + int(z_o))
         # if mask is used, prepare command for ANTs
         if fname_mask != '':
-            masking = '-x mask_Z' +num+ '.nii'
+            masking = '-x mask_Z' +num+ '.nii.gz'
         else:
             masking = ''
         # main command for registration
@@ -294,7 +295,7 @@ def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forwa
                '--convergence '+str(paramreg.iter)+' '
                '--shrink-factors '+str(paramreg.shrink)+' '
                '--smoothing-sigmas '+str(paramreg.smooth)+'mm '
-               '--output [transform_' + num + ',src_Z'+ num +'reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
+               '--output ['+prefix_warp2d+',src_Z'+ num +'_reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
                + masking)
         try:
@@ -310,8 +311,8 @@ def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forwa
 
             if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
                 # List names of 2d warping fields for subsequence merge along Z
-                file_warp2d = 'warp2d_Z'+num+'0Warp.nii.gz'
-                file_warp2d_inv = 'warp2d_Z'+num+'0InverseWarp.nii.gz'
+                file_warp2d = prefix_warp2d+'0Warp.nii.gz'
+                file_warp2d_inv = prefix_warp2d+'0InverseWarp.nii.gz'
                 list_warp.append(file_warp2d)
                 list_warp_inv.append(file_warp2d_inv)
 
