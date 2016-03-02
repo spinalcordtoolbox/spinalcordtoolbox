@@ -370,12 +370,10 @@ def register_images(fname_src, fname_dest, fname_mask='', fname_warp='warp_forwa
     sct.printv('\nMerge warping fields along z...', verbose)
 
     if paramreg.algo in ['Rigid', 'Translation']:
+        # convert to array
         x_disp_a = asarray(x_displacement)
         y_disp_a = asarray(y_displacement)
-        if theta_rotation is not None:
-            theta_rot_a = asarray(theta_rotation)
-        else:
-            theta_rot_a = None
+        theta_rot_a = asarray(theta_rotation)
         # Generate warping field
         generate_warping_field('dest.nii', x_disp_a, y_disp_a, theta_rot_a, fname=fname_warp)  #name_warp= 'step'+str(paramreg.step)
         # Inverse warping field
@@ -464,7 +462,7 @@ def numerotation(nb):
     return nb_output
 
 
-def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_rotation=None, fname='warping_field.nii.gz', verbose=1):
+def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotation=None, fname='warping_field.nii.gz', verbose=1):
     """Generation of a warping field towards an image and given transformation parameters.
 
     Given a destination image and transformation parameters this functions creates a NIFTI 3D warping field that can be
@@ -516,14 +514,14 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
 
     # Calculate displacement for each voxel
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
-    # For translations
-    if theta_rot == None:
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    data_warp[i, j, k, 0, 0] = px * x_trans[k]
-                    data_warp[i, j, k, 0, 1] = py * y_trans[k]
-                    data_warp[i, j, k, 0, 2] = 0
+    # # For translations
+    # if theta_rot == None:
+    #     for i in range(nx):
+    #         for j in range(ny):
+    #             for k in range(nz):
+    #                 data_warp[i, j, k, 0, 0] = px * x_trans[k]
+    #                 data_warp[i, j, k, 0, 1] = py * y_trans[k]
+    #                 data_warp[i, j, k, 0, 2] = 0
     # # For rigid transforms (not optimized)
     # if theta_rot != None:
     #     for k in range(nz):
@@ -537,15 +535,15 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
     #                 data_warp[i, j, k, 0, 2] = 0
 
     # For rigid transforms with array (time optimization)
-    if theta_rot != None:
-        vector_i = [[[i-x_a],[j-y_a]] for i in range(nx) for j in range(ny)]
-        for k in range(nz):
-            matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
-            tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
-            result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
-            for i in range(nx):
-                data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
-                data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
+    # if theta_rot != None:
+    vector_i = [[[i-x_a], [j-y_a]] for i in range(nx) for j in range(ny)]
+    for k in range(nz):
+        matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
+        tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
+        result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
+        for i in range(nx):
+            data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
+            data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
 
     # Generate warp file as a warping field
     hdr_warp.set_intent('vector', (), '')
