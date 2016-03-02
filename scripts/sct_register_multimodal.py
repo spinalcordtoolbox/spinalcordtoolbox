@@ -363,10 +363,10 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    fname_src2dest = sct.generate_output_file(path_tmp+'/src_reg.nii', path_out+file_out+ext_out, verbose)
-    sct.generate_output_file(path_tmp+'/warp_src2dest.nii.gz', path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz', verbose)
-    fname_dest2src = sct.generate_output_file(path_tmp+'/dest_reg.nii', path_out+file_dest+'_reg'+ext_dest, verbose)
-    sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
+    fname_src2dest = sct.generate_output_file(path_tmp+'src_reg.nii', path_out+file_out+ext_out, verbose)
+    sct.generate_output_file(path_tmp+'warp_src2dest.nii.gz', path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz', verbose)
+    fname_dest2src = sct.generate_output_file(path_tmp+'dest_reg.nii', path_out+file_dest+'_reg'+ext_dest, verbose)
+    sct.generate_output_file(path_tmp+'warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
     # sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_dest2src.nii.gz')
 
     # Delete temporary files
