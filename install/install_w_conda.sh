@@ -1,6 +1,7 @@
 #!/bin/bash
 #USAGE
-#  ./install_w_conda.sh
+#  bash install_w_conda.sh
+# This is the spinal cord toolbox installer
 
 #TODO add some doc to the installer
 
@@ -114,7 +115,6 @@ else
    echo Not adding ${INSTALL_DIR} to \$PATH
    echo You can always add it later or call SCT FUNCTIONS with full path ${SCT_DIR}/bin/sct_function
 fi
-
 
 #Make sure sct script are executable
 find ${SCT_DIR}/bin/ -maxdepth 2 -type f -exec chmod 755 {} \;
