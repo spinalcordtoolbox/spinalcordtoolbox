@@ -97,9 +97,9 @@ class Image(object):
             im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        self.orientation = get_orientation(self)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
+        self.orientation = get_orientation(self)
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
         self.dim = get_dimension(im_file)
