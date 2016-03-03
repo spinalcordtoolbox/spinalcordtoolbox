@@ -493,14 +493,15 @@ def register(src, dest, paramreg, param, i_step_str):
         if not paramreg.steps[i_step_str].init == '':
             init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
             cmd += ' -r ['+dest+','+src+','+init_dict[paramreg.steps[i_step_str].init]+']'
+        # run command
+        status, output = sct.run(cmd, param.verbose)
+        # get appropriate file name for transformation
         if paramreg.steps[i_step_str].algo in ['rigid', 'affine', 'translation']:
             warp_forward_out = 'step'+i_step_str+'0GenericAffine.mat'
             warp_inverse_out = '-step'+i_step_str+'0GenericAffine.mat'
         else:
             warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
             warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
-        # run command
-        status, output = sct.run(cmd, param.verbose)
 
     # ANTS 2d
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params and paramreg.steps[i_step_str].slicewise == '1':
@@ -513,13 +514,10 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
         register_slicewise(src,
                             dest,
-                            window_length=paramreg.steps[i_step_str].window_length,
                             paramreg=paramreg.steps[i_step_str],
                             fname_mask=fname_mask,
                             warp_forward_out=warp_forward_out,
                             warp_inverse_out=warp_inverse_out,
-                            detect_outlier=paramreg.steps[i_step_str].detect_outlier,
-                            remove_temp_files=param.remove_temp_files,
                             verbose=param.verbose,
                             ants_registration_params=ants_registration_params)
 
@@ -535,13 +533,10 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
         register_slicewise(src,
                             dest,
-                            window_length=paramreg.steps[i_step_str].window_length,
                             paramreg=paramreg.steps[i_step_str],
                             fname_mask=fname_mask,
                             warp_forward_out=warp_forward_out,
                             warp_inverse_out=warp_inverse_out,
-                            detect_outlier=paramreg.steps[i_step_str].detect_outlier,
-                            remove_temp_files=param.remove_temp_files,
                             verbose=param.verbose,
                             ants_registration_params=ants_registration_params)
 
