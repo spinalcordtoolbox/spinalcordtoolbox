@@ -50,7 +50,7 @@ def test(path_data='', parameters=''):
 
     if not os.path.isdir(dict_param_with_path['-t']):
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        dict_param_with_path['-t'] = path_sct + '/data/template/'
+        dict_param_with_path['-t'] = path_sct + '/data/'
         param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # get contrast folder from -i option.
