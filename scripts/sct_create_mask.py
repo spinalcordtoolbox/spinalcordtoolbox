@@ -104,31 +104,35 @@ def create_mask():
     if method_type == 'centerline':
         sct.check_file_exist(method_val, param.verbose)
 
-    # check if orientation is RPI
-    sct.printv('\nCheck if orientation is RPI...', param.verbose)
-    ori = get_orientation_3d(param.fname_data, filename=True)
-    if not ori == 'RPI':
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_image -setorient to put your image in RPI.\n', 1, 'error')
-
     # Extract path/file/extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
 
     # Get output folder and file name
     if param.fname_out == '':
         param.fname_out = param.file_prefix+file_data+ext_data
-    #fname_out = os.path.abspath(path_out+file_out+ext_out)
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
     path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, param.verbose)
 
-    # Copying input data to tmp folder and convert to nii
+    sct.printv('\nCheck if orientation is RPI...', param.verbose)
+    orientation_input = get_orientation_3d(param.fname_data, filename=True)
+    reorient_coordinates = False
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(param.fname_data, path_tmp+'data.nii')
-    # sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
+    if not orientation_input == 'RPI':
+        sct.run('sct_image -i ' + param.fname_data + ' -o ' + path_tmp + 'data.nii' + ' -setorient RPI -v 0', verbose=False)
+        reorient_coordinates = True
+    else:
+        # Copying input data to tmp folder and convert to nii
+        convert(param.fname_data, path_tmp+'data.nii')
+
     if method_type == 'centerline':
-        convert(method_val, path_tmp+'centerline.nii.gz')
+        orientation_centerline = get_orientation_3d(method_val, filename=True)
+        if not orientation_centerline == 'RPI':
+            sct.run('sct_image -i ' + method_val + ' -o ' + path_tmp + 'centerline.nii.gz' + ' -setorient RPI -v 0', verbose=False)
+        else:
+            convert(method_val, path_tmp+'centerline.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -155,6 +159,7 @@ def create_mask():
         fname_point = method_val
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
+        # TODO: change this way to remove dependence to sct.run. ProcessLabels.display_voxel returns list of coordinates
         status, output = sct.run('sct_label_utils -i '+fname_point+' -p display-voxel', param.verbose)
         # parse to get coordinate
         coord = output[output.find('Position=')+10:-17].split(',')
@@ -194,10 +199,24 @@ def create_mask():
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
     # merge along Z
     # cmd = 'fslmerge -z mask '
+
+    # CHANGE THAT CAN IMPACT SPEED:
+    # related to issue #755, we cannot open more than 256 files at one time.
+    # to solve this issue, we do not open more than 100 files
     im_list = []
+    im_temp = []
     for iz in range(nz):
-        im_list.append(Image(file_mask+str(iz)+'.nii'))
-    im_out = concat_data(im_list, 2)
+        if iz != 0 and iz % 100 == 0:
+            im_temp.append(concat_data(im_list, 2))
+            im_list = [Image(file_mask + str(iz) + '.nii')]
+        else:
+            im_list.append(Image(file_mask+str(iz)+'.nii'))
+
+    if im_temp:
+        im_temp.append(concat_data(im_list, 2))
+        im_out = concat_data(im_temp, 2, no_expand=True)
+    else:
+        im_out = concat_data(im_list, 2)
     im_out.setFileName('mask.nii.gz')
     im_out.save()
 
@@ -212,6 +231,8 @@ def create_mask():
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
+    if not orientation_input == 'RPI':
+        sct.run('sct_image -i ' + path_tmp + 'mask.nii.gz' + ' -o ' + path_tmp + 'mask.nii.gz' + ' -setorient ' + orientation_input + ' -v 0', verbose=False)
     sct.generate_output_file(path_tmp+'mask.nii.gz', param.fname_out)
 
     # Remove temporary files
@@ -250,7 +271,9 @@ def create_line(fname, coord, nz):
 # create_mask2d
 # ==========================================================================================
 def create_mask2d(center, shape, size, nx, ny, even=0):
-    # extract offset
+    # extract offset d = 2r+1 --> r=ceil((d-1)/2.0)
+    # s=11 -> r=5
+    # s=10 -> r=5
     offset = param.offset.split(',')
     offset[0] = int(offset[0])
     offset[1] = int(offset[1])
@@ -260,16 +283,11 @@ def create_mask2d(center, shape, size, nx, ny, even=0):
     mask2d = numpy.zeros((nx, ny))
     xc = center[0]
     yc = center[1]
-    if even != 0:
-        radius = int(size / 2)
-    else:
-        radius = round(float(size + 1) / 2)  # add 1 because the radius includes the center.
+    from numpy import ceil
+    radius = ceil((size - 1) / 2.0)
 
     if shape == 'box':
-        if even != 0:
-            mask2d[xc - radius:xc + radius, yc - radius:yc + radius] = 1
-        else:
-            mask2d[xc-radius:xc+radius+1, yc-radius:yc+radius+1] = 1
+        mask2d[xc - radius:xc + radius + 1, yc - radius:yc + radius + 1] = 1
 
     elif shape == 'cylinder':
         mask2d = ((xx+offset[0]-xc)**2 + (yy+offset[1]-yc)**2 <= radius**2)*1
@@ -283,6 +301,7 @@ def create_mask2d(center, shape, size, nx, ny, even=0):
     # plt.show()
 
     return mask2d
+
 
 def get_parser():
     # Initialize the parser
