@@ -1,7 +1,21 @@
 #!/bin/bash
-#USAGE
-#  bash install_w_conda.sh
-# This is the spinal cord toolbox installer
+# USAGE
+# > bash install_w_conda.sh
+#
+# This is the spinalcord toolbox (SCT) installer
+# It downloads the Conda (http://conda.pydata.org/) version
+# of python and install the SCT requirements over it
+#
+# The SCT can be install in place where you dowload it. It
+# is the default installation in user mode. But then do no
+# delete the source code or you will delete the installation too!
+#
+# If you run the installer as super user, the default install is /opt, if you
+# choose this option or any other directory other than the source location,
+# you can get rid of the source code after the installation is successful.
+#
+#
+
 
 #TODO add some doc to the installer
 
@@ -29,8 +43,8 @@ fi
 
 if [[ $UID == 0 ]]; then
   # sudo mode
-  THE_BASHRC=/etc/bash.bashrc
-  THE_CSHRC=/etc/csh.cshrc
+  THE_BASHRC=/etc/profile.d/sct.sh
+  THE_CSHRC=/etc/profile.d/sct.csh
   INSTALL_DIR=/opt
 else
   # user mode
@@ -110,13 +124,11 @@ done
 echo ""
 if [[ ${add_to_path} =~ ^[Yy] ]]; then
   # assuming bash
-  echo "#SPINALCORDTOOLBOX PATH" >> ${THE_BASHRC}
+  echo "#SPINALCORDTOOLBOX PATH" > ${THE_BASHRC}
   echo "export PATH=${SCT_DIR}/bin:\$PATH" >> ${THE_BASHRC}
-  if [ -e ${THE_CSHRC} ]; then
-    # (t)csh for good measure
-    echo "#SPINALCORDTOOLBOX PATH" >> ${THE_CSHRC}
-    echo "setenv PATH ${SCT_DIR}/bin:\$PATH" ${THE_CSHRC}
-  fi
+  # (t)csh for good measure
+  echo "#SPINALCORDTOOLBOX PATH" > ${THE_CSHRC}
+  echo "setenv PATH \"${SCT_DIR}/bin:\$PATH\"" >> ${THE_CSHRC}
 else
    echo Not adding ${INSTALL_DIR} to \$PATH
    echo You can always add it later or call SCT FUNCTIONS with full path ${SCT_DIR}/bin/sct_function
