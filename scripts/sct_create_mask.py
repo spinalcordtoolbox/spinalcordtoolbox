@@ -322,26 +322,26 @@ def get_parser():
                       example='data.nii.gz')
     parser.add_option(name='-p',
                       type_value=[[','], 'str'],
-                      description='Process to generate mask and associated value.\n'
-                                  '   coord: X,Y coordinate of center of mask. E.g.: coord,20x15\n'
-                                  '   point: volume that contains a single point. E.g.: point,label.nii.gz\n'
-                                  '   center: mask is created at center of FOV. In that case, "val" is not required.\n'
-                                  '   centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
+                      description='Process to generate mask.\n'
+                                  'coord: X,Y coordinate of center of mask. E.g.: coord,20x15\n'
+                                  'point: volume that contains a single point. E.g.: point,label.nii.gz\n'
+                                  'center: mask is created at center of FOV.\n'
+                                  'centerline: volume that contains centerline or segmentation. E.g.: centerline,t2_seg.nii.gz',
                       mandatory=True,
                       default_value=param_default.process,
                       example=['centerline,data_centerline.nii.gz'])
     parser.add_option(name='-m',
                       type_value=None,
-                      description='Process to generate mask and associated value.'
-                                  '   coord: X,Y coordinate of center of mask. E.g.: coord,20x15'
-                                  '   point: volume that contains a single point. E.g.: point,label.nii.gz'
-                                  '   center: mask is created at center of FOV. In that case, "val" is not required.'
-                                  '   centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
+                      description='Process to generate mask and associated value.\n'
+                                  '  coord: X,Y coordinate of center of mask. E.g.: coord,20x15'
+                                  '  point: volume that contains a single point. E.g.: point,label.nii.gz'
+                                  '  center: mask is created at center of FOV. In that case, "val" is not required.'
+                                  '  centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
                       mandatory=False,
                       deprecated_by='-p')
     parser.add_option(name='-size',
                       type_value='str',
-                      description='Size can be provided in pixel or mm.\nPixel: provide directly the desired value (ex: 11). Even values are added with 1 (for mask to be symmetrical).\nmm: provide size with mm at the end (ex: 11mm).\nIf shape=gaussian, size corresponds to "sigma"',
+                      description='Size of the mask in the axial plane, given in pixel (ex: 35) or in millimeter (ex: 35mm). If shape=gaussian, size corresponds to "sigma"',
                       mandatory=False,
                       default_value=param_default.size,
                       example=['45'])
@@ -361,7 +361,6 @@ def get_parser():
                       description='Name of output mask.',
                       mandatory=False,
                       example=['data.nii'])
-    parser.usage.addSection('MISC')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
