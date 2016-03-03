@@ -111,10 +111,10 @@ echo ""
 if [[ ${add_to_path} =~ ^[Yy] ]]; then
   # assuming bash
   echo "#SPINALCORDTOOLBOX PATH" >> ${THE_BASHRC}
-  echo "export PATH=${SCT_DIR}/bin:\$PATH" >> ${THE_CSHRC}
-  if [ -e ${HOME}/.cshrc ]; then
+  echo "export PATH=${SCT_DIR}/bin:\$PATH" >> ${THE_BASHRC}
+  if [ -e ${THE_CSHRC} ]; then
     # (t)csh for good measure
-    echo "#SPINALCORDTOOLBOX PATH" >> ${THE_BASHRC}
+    echo "#SPINALCORDTOOLBOX PATH" >> ${THE_CSHRC}
     echo "setenv PATH ${SCT_DIR}/bin:\$PATH" ${THE_CSHRC}
   fi
 else
