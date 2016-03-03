@@ -2,17 +2,61 @@
 #USAGE
 #  ./install_w_conda.sh
 
+#TODO add some doc to the installer
 
-SCT_SOURCE=${PWD}
-SCT_SOURCE=${SCT_SOURCE%/}
-SCT_SOURCE=${SCT_SOURCE%/*}
-
-INSTALL_DIR=${SCT_SOURCE}
-
-SUDO=
-if [[ $UID == 0 ]]; then SUDO=1 ;fi
+SCT_FOLDER_NAME="spinalcordtoolbox"
 
 echo "Welcome to the SCT installer V2.0 "
+
+START_DIR=$PWD
+function finish {
+#  Clean at exit
+  cd ${START_DIR}
+}
+trap finish EXIT
+
+# Check where the install script is ran from
+if [[ $PWD =~ /spinalcordtoolbox$ ]] ;then
+  SCT_SOURCE=${PWD}
+elif  [[ $PWD =~ /spinalcordtoolbox/install$ ]] ;then
+  SCT_SOURCE=${PWD%/install}
+elif  [ ls $SCT_FOLDER_NAME ] ;then
+  SCT_SOURCE=${PWD}/${SCT_FOLDER_NAME}
+else
+   echo I can\'t find the SpinalCord Toolbox source folder \"${SCT_FOLDER_NAME}/\"
+fi
+
+if [[ $UID == 0 ]]; then
+  # sudo mode
+  THE_BASHRC=/etc/bash.bashrc
+  THE_CSHRC=/etc/csh.cshrc
+  INSTALL_DIR=/opt
+else
+  # user mode
+  THE_BASHRC=${HOME}/.bashrc
+  THE_CSHRC=${HOME}/.cshrc
+  INSTALL_DIR=${SCT_SOURCE%/*}
+fi
+# !!! DEBUG
+#INSTALL_DIR=/home/poquirion/test
+
+# Set install dir
+while  true ; do
+  echo Sct will be installed here [${INSTALL_DIR}]
+  echo -n Type Enter or a different path:
+  read new_install
+  if [ -d "${new_install}" ]; then
+    INSTALL_DIR=${new_install}
+    break
+  elif [ ! "${new_install}" ]; then
+    break
+  else
+    echo invalid directory
+    continue
+  fi
+done
+
+SCT_DIR=${INSTALL_DIR%/}/${SCT_FOLDER_NAME}
 
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
     # Do something under Mac OS X platformn
@@ -24,39 +68,56 @@ elif uname -a | grep -i  linux > /dev/null 2>&1; then
   conda_installer=Miniconda-latest-Linux-x86_64.sh
   echo LINUX MACHINE
 else
-  echo Sorry, the installer only support Linux and OSX
+  echo Sorry, the installer only support Linux and OSX, quiting installer
   exit 1
+fi
+
+if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
+  echo copying source files to "${SCT_DIR}"
+  mkdir -p ${SCT_DIR}/bin
+  cd ${SCT_SOURCE}/bin
+  find  . -type f -not -path '*/miniconda/*' -exec cp -v --parent {} ${SCT_DIR}/bin \;
+  cd ${START_DIR}
+  cp -r ${SCT_SOURCE}/scripts  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/version.txt  ${SCT_DIR}/.
+  mkdir -p ${SCT_DIR}/install
+  cp -rp ${SCT_SOURCE}/install/requirements ${SCT_DIR}/install
 fi
 
 echo installing conda ...
 
-bash ${SCT_SOURCE}/external/${conda_installer} -p ${SCT_SOURCE}/bin/${OS}/miniconda -b -f
+bash ${SCT_SOURCE}/external/${conda_installer} -p ${SCT_DIR}/bin/${OS}/miniconda -b -f
 
-. ${SCT_SOURCE}/bin/${OS}/miniconda/bin/activate ${SCT_SOURCE}/bin/${OS}/miniconda
-echo ${SCT_SOURCE}/bin/${OS}/miniconda/bin/activate
+. ${SCT_DIR}/bin/${OS}/miniconda/bin/activate ${SCT_DIR}/bin/${OS}/miniconda
+echo ${SCT_DIR}/bin/${OS}/miniconda/bin/activate
 
 echo Installing dependencies
 conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
-pip install -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+echo All requirement installed
 
-
-read -p "Do you want to be add the sct_* script to your paths? Y/N " -n 1 -r
-echo    # (optional) move to a new line
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
+  echo -n "Do you want to add the sct_* script to your PATH environenemnt? Yes/No: "
+  read add_to_path
+done
+echo ""
+if [[ ${add_to_path} =~ ^[Yy] ]]; then
   # assuming bash
-  echo "#SPINALCORDTOOLBOX PATH" #>> ${HOME}/.bashrc
-  echo "export PATH=${INSTALL_DIR}/bin:\$PATH" #>> ${HOME}/.bashrc
+  echo "#SPINALCORDTOOLBOX PATH" >> ${THE_BASHRC}
+  echo "export PATH=${SCT_DIR}/bin:\$PATH" >> ${THE_CSHRC}
   if [ -e ${HOME}/.cshrc ]; then
-    # (t)csh for good mesure
-    echo "#SPINALCORDTOOLBOX PATH" #>> ${HOME}/.cshrc
-    echo "setenv PATH ${INSTALL_DIR}/bin:\$PATH" #>> ${HOME}/.cshrc
+    # (t)csh for good measure
+    echo "#SPINALCORDTOOLBOX PATH" >> ${THE_BASHRC}
+    echo "setenv PATH ${SCT_DIR}/bin:\$PATH" ${THE_CSHRC}
   fi
 else
    echo Not adding ${INSTALL_DIR} to \$PATH
-   echo you can always add it later or call sct_FUNCTIONS directly from ${INSTALL_DIR}/bin
+   echo You can always add it later or call SCT FUNCTIONS with full path ${SCT_DIR}/bin/sct_function
 fi
 
-# TODO edit sct_fct to get a default fallback to the local sct_laucher
-. ${INSTALL_DIR}/bin/sct_launcher
-${INSTALL_DIR}/bin/sct_check_dependences
-echo ISTALLATION SUCSESSFULL
+
+#Make sure sct script are executable
+find ${SCT_DIR}/bin/ -maxdepth 2 -type f -exec chmod 755 {} \;
+
+${SCT_DIR}/bin/sct_check_dependences
+echo INSTALLATION DONE

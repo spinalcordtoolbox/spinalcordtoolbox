@@ -1,24 +1,24 @@
 #!/bin/bash
 # SPINALCORDTOOLBOX (added on 2016-01-27)
 # Do not modify this file
-# You can chose to pick a python install from anywhere on you system by
-# modifying the SCT_DIR variable in  in the ${HOME}/.config/sct/config file
-# e.g.
-#   export SCT_PYTHON=${SCT_DIR}/bin/miniconda
-# will run the toolbox with the system python on a standard linux distro
+# You modify SCT env vars by exporting them in your ${HOME}/.sct file
+# e.g., to use a different python environment
+#   export SCT_PYTHON=/some/path/to/a/python/virtualenv_or_conda/
 #
 #
 function install_conda {
   echo noting yet
 }
 
-function pick_system {
+function set_system_dependent_var {
 
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
     # Do something under Mac OS X platform
   SCT_OS=osx
+  logicalCpuCount=$(sysctl -n hw.logicalcpu_max)
 elif uname -a | grep -i  linux > /dev/null 2>&1; then
   SCT_OS=linux
+  logicalCpuCount=$(lscpu -p | egrep -v '^#' | wc -l)
 else
   echo YOUR OPERATING SYSTEM IS NOT SUPPORTED YET
 fi
@@ -38,34 +38,38 @@ function addtopath {
 
 if [ -z ${SCT_DIR} ]; then
   # set at installation
+  set_system_dependent_var
+
   SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
   export SCT_DIR=${SCT_DIR%/bin}
-  export SCT_PYTHON=${SCT_DIR}/bin/miniconda
+  export SCT_PYTHON=${SCT_DIR}/bin/${SCT_OS}/miniconda
 
   export SCT_VERSION=$(cat $SCT_DIR/version.txt)
 
   addtopath "${SCT_DIR}/bin" PATH
 
-  if  [ -z ${SCT_OS} ] ; then pick_system ; fi
   addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
   addtopath ${SCT_DIR}/scripts PYTHONPATH
   export PATH
   export PYTHONPATH
 
-  export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4
+  export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
 
   if [ -e ${HOME}/.config/sct/config ]; then
-    . ${HOME}/.config/sct/config
+#    Overwrite parameter with local config
+    . ${HOME}/.sct
   fi
   # Will quietely fail if a virtualenv or conda is not used
-  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON} > /dev/null 2>&1
+  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
+    echo SpinalCord Toolbox version $SCT_VERSION
+    echo SCT installed in ${SCT_DIR}
+   echo PYTHON  $(which python) $SCT_PYTHON $SCT_DIR
+
 fi
 
 
 if   [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]  ; then
-    echo Spinacord toolbox version $SCT_VERSION
     echo running ${SCT_DIR}/scripts/${@}
-    echo INSTALL PATH  SCT_DIR ${SCT_DIR}
     python ${SCT_DIR}/scripts/${@}
 else
      echo sourcing sct_laucher in your environement ${SCT_DIR}
