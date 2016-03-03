@@ -45,8 +45,12 @@ ALMOST_ZERO = 0.0000001
 
 # main
 #=======================================================================================================================
-def main():
-    
+def main(args=None):
+
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+
     # Initialization
     path_atlas = ''
     
@@ -56,7 +60,7 @@ def main():
     else:
         # Check input parameters
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
 
         path_atlas = arguments['-i']
 

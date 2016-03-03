@@ -72,14 +72,16 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
 
+    if args is None:
+        args = sys.argv[1:]
     # initialization
     fname_mask = ''
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     fname_data = arguments['-i']
     fname_mask = arguments['-m']
     vert_label_fname = arguments["-vertfile"]

@@ -78,7 +78,7 @@ def main(args = None):
 
     # Building the command, do sanity checks
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parsea(args)
     fname_in = arguments["-i"]
     fname_out = arguments["-o"]
 

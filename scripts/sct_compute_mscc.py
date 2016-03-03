@@ -56,7 +56,7 @@ def main(args=None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     di = arguments['-di']
     da = arguments['-da']
     db = arguments['-db']

@@ -105,16 +105,19 @@ def get_parser():
                       default_value='1')
     return parser
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
+def main(args=None):
+
     # initialize parameters
     param = Param()
     param_default = Param()
 
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+
+    # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     input_t1 = arguments["-t1"]
     input_fname_output = None
@@ -144,4 +147,8 @@ if __name__ == "__main__":
         graph.draw(input_tr_min, input_tr_max)
 
 
-
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+    main()

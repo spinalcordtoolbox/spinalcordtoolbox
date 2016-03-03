@@ -363,11 +363,14 @@ def get_parser():
                       deprecated_by="-bmax",
                       mandatory=False)
     return parser
+def main(args=None):
 
-if __name__ == "__main__":
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
     # Fetching script arguments
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     # assigning variables to arguments
     input_filename = arguments["-i"]
@@ -412,3 +415,6 @@ if __name__ == "__main__":
             cropper.mesh = arguments["-mesh"]
 
         cropper.crop()
+
+if __name__ == "__main__":
+    main()

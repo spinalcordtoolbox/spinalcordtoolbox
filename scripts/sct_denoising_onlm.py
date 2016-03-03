@@ -25,7 +25,7 @@ class Param:
         self.output_file_name = ''
 
 
-def main(file_to_denoise, param, output_file_name) :
+def go(file_to_denoise, param, output_file_name) :
 
     path, file, ext = sct.extract_fname(file_to_denoise)
 
@@ -103,12 +103,13 @@ def main(file_to_denoise, param, output_file_name) :
     nib.save(img_diff, file + '_difference' +ext)
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
-    # initialize parameters
+def get_parser():
+    # parser initialisation
+    parser = Parser(__file__)
 
+    # initialize parameters
+    param = Param()
+    param_default = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -149,6 +150,19 @@ if __name__ == "__main__":
                       mandatory=False,
                       default_value='0',
                       example=['0', '1', '2'])
+
+    return parser
+
+
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     parameter = arguments["-p"]
@@ -170,4 +184,4 @@ if __name__ == "__main__":
     param.remove_temp_files =remove_temp_files
     param.parameter = parameter
 
-    main(file_to_denoise, param, output_file_name)
+    go(file_to_denoise, param, output_file_name)
