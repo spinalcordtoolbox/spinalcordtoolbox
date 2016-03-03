@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 
+# internal stuff or stuff under development that should not be linked
+FILES_TO_REMOVE="msct_nurbs  sct_utils sct_dmri_eddy_correct sct_change_image_type sct_invert_image msct_moco msct_parser msct_smooth sct_viewer sct_denoising_onlm"
+
 read  -d '' boiler_plate << EOF
 #!/bin/bash
-sct_launcher \$(basename \$0).py \$@
+\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )/sct_launcher \$(basename \$0).py \$@
 EOF
 
 echo "$boiler_plate"
 
-grep -l "Parser(" scripts/*.py | while read -r filename ; do
+grep -l "__main__" ../scripts/*.py | while read -r filename ; do
+
   filename=$(basename ${filename})
   filename=${filename%.*}
 
-  echo "$boiler_plate" > bin/${filename}
-  chmod 755 bin/${filename}
+  [[ $FILES_TO_REMOVE =~ $filename ]] && echo "no ${filename}" && continue || echo "yes ${filename}"
+
+  echo "$boiler_plate" > ../bin/${filename}
+  chmod 755 ../bin/${filename}
 
 done
 
