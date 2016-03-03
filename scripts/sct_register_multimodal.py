@@ -61,7 +61,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3', window_length = '0', detect_outlier = '0', slicewise='0'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='3', slicewise='0'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -71,9 +71,10 @@ class Paramreg(object):
         self.smooth = smooth
         self.gradStep = gradStep
         self.slicewise = slicewise
+        self.init = init
         self.poly = poly  # slicereg only
-        self.window_length = window_length  # str
-        self.detect_outlier = detect_outlier  # str. detect outliers, for methods slicereg2d_xx
+        # self.window_length = window_length  # str
+        # self.detect_outlier = detect_outlier  # str. detect outliers, for methods slicereg2d_xx
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -189,6 +190,10 @@ def main():
                                     "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default="+paramreg.steps['1'].shrink+"\n"
                                     "smooth: <int> Smooth factor. Default="+paramreg.steps['1'].smooth+"\n"
                                     "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
+                                    "init: <int> Initial translation alignment based on:\n"
+                                      "  geometric: Geometric center of images\n"
+                                      "  centermass: Center of mass of images\n"
+                                      "  origin: Physical origin of images\n"
                                     "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
@@ -481,9 +486,14 @@ def register(src, dest, paramreg, param, i_step_str):
                '--output [step'+i_step_str+','+scr_regStep+'] '
                '--interpolation BSpline[3] '
                +masking)
+        # add verbose
         if param.verbose >= 1:
             cmd += ' --verbose 1'
-        if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
+        # add init translation
+        if not paramreg.steps[i_step_str].init == '':
+            init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
+            cmd += ' -r ['+dest+','+src+','+init_dict[paramreg.steps[i_step_str].init]+']'
+        if paramreg.steps[i_step_str].algo in ['rigid', 'affine', 'translation']:
             warp_forward_out = 'step'+i_step_str+'0GenericAffine.mat'
             warp_inverse_out = '-step'+i_step_str+'0GenericAffine.mat'
         else:
