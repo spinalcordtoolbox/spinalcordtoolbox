@@ -62,11 +62,15 @@ SCT_DIR=${INSTALL_DIR%/}/${SCT_FOLDER_NAME}
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
     # Do something under Mac OS X platformn
   OS=osx
-  conda_installer=Miniconda-latest-MacOSX-x86_64.sh
+  conda_installer=$(find ${SCT_SOURCE}/external -type f -name "Miniconda*OSX*")
+  dipy_whl=$(find ${SCT_SOURCE}/external -type f -name "dipy*osx*")
+  ornlm_whl=$(find ${SCT_SOURCE}/external -type f -name "ornlm*osx*")
   echo OSX MACHINE
 elif uname -a | grep -i  linux > /dev/null 2>&1; then
   OS=linux
-  conda_installer=Miniconda-latest-Linux-x86_64.sh
+  conda_installer=$(find ${SCT_SOURCE}/external -type f -name "Miniconda*Linux*")
+  dipy_whl=$(find ${SCT_SOURCE}/external -type f -name "dipy*linux*")
+  ornlm_whl=$(find ${SCT_SOURCE}/external -type f -name "ornlm*linux*")
   echo LINUX MACHINE
 else
   echo Sorry, the installer only support Linux and OSX, quiting installer
@@ -87,7 +91,7 @@ fi
 
 echo installing conda ...
 
-bash ${SCT_SOURCE}/external/${conda_installer} -p ${SCT_DIR}/bin/${OS}/miniconda -b -f
+bash ${conda_installer} -p ${SCT_DIR}/bin/${OS}/miniconda -b -f
 
 . ${SCT_DIR}/bin/${OS}/miniconda/bin/activate ${SCT_DIR}/bin/${OS}/miniconda
 echo ${SCT_DIR}/bin/${OS}/miniconda/bin/activate
@@ -95,6 +99,8 @@ echo ${SCT_DIR}/bin/${OS}/miniconda/bin/activate
 echo Installing dependencies
 conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
 pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+pip install --ignore-installed  ${dipy_whl}  ${ornlm_whl}
+
 echo All requirement installed
 
 while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
