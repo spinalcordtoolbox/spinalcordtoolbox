@@ -1,3 +1,0 @@
-#!/usr/bin/env
-. sct_launcher
-which python

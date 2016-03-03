@@ -1,2 +1,2 @@
 #!/bin/bash
-sct_launcher $(basename $0).py $@
+$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/sct_launcher $(basename $0).py $@
