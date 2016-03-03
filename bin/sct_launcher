@@ -2,9 +2,9 @@
 # SPINALCORDTOOLBOX (added on 2016-01-27)
 # Do not modify this file
 # You modify SCT env vars by exporting them in your ${HOME}/.sct file
-# e.g., to use a different python environment
-#   export SCT_PYTHON=/some/path/to/a/python/virtualenv_or_conda/
-#
+# e.g.
+# To limit the number of thread used by some of the tools to N
+#   echo "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS = N" >> $HOME/.sctrc
 #
 function install_conda {
   echo noting yet
@@ -57,7 +57,7 @@ if [ -z ${SCT_DIR} ]; then
 
   if [ -e ${HOME}/.config/sct/config ]; then
 #    Overwrite parameter with local config
-    . ${HOME}/.sct
+    . ${HOME}/.sctrc
   fi
   # Will quietely fail if a virtualenv or conda is not used
   . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
