@@ -29,8 +29,8 @@ fi
 
 if [[ $UID == 0 ]]; then
   # sudo mode
-  THE_BASHRC=/etc/bash.bashrc
-  THE_CSHRC=/etc/csh.cshrc
+  THE_BASHRC=/etc/profile.d/sct.sh
+  THE_CSHRC=/etc/profile.d/sct.csh
   INSTALL_DIR=/opt
 else
   # user mode
@@ -112,10 +112,9 @@ if [[ ${add_to_path} =~ ^[Yy] ]]; then
   # assuming bash
   echo "#SPINALCORDTOOLBOX PATH" >> ${THE_BASHRC}
   echo "export PATH=${SCT_DIR}/bin:\$PATH" >> ${THE_BASHRC}
-  if [ -e ${THE_CSHRC} ]; then
-    # (t)csh for good measure
-    echo "#SPINALCORDTOOLBOX PATH" >> ${THE_CSHRC}
-    echo "setenv PATH ${SCT_DIR}/bin:\$PATH" ${THE_CSHRC}
+  # (t)csh for good measure
+  echo "#SPINALCORDTOOLBOX PATH" >> ${THE_CSHRC}
+  echo "setenv PATH \"${SCT_DIR}/bin:\$PATH\"" ${THE_CSHRC}
   fi
 else
    echo Not adding ${INSTALL_DIR} to \$PATH
