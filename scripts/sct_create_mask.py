@@ -40,7 +40,7 @@ class Param:
         self.process = 'center'  # default method
         self.shape_list = ['cylinder', 'box', 'gaussian']
         self.shape = 'cylinder'  # default shape
-        self.size = 41  # in voxel. if gaussian, size corresponds to sigma.
+        self.size = '41'  # in voxel. if gaussian, size corresponds to sigma.
         self.even = 0
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
@@ -60,7 +60,7 @@ def main():
         param.fname_data = path_sct_data+'/mt/mt1.nii.gz'
         param.process = 'point,'+path_sct_data+'/mt/mt1_point.nii.gz' #'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
         param.shape = 'cylinder'
-        param.size = 20
+        param.size = '20'
         param.remove_tmp_files = 1
         param.verbose = 1
     else:
@@ -181,6 +181,7 @@ def create_mask():
     centerline = nibabel.load(fname_centerline)  # open centerline
     hdr = centerline.get_header()  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
+    spacing = hdr.structarr['pixdim']
     data_centerline = centerline.get_data()  # get centerline
     z_centerline = [iz for iz in range(0, nz, 1) if data_centerline[:, :, iz].any()]
     nz = len(z_centerline)
@@ -193,7 +194,7 @@ def create_mask():
     file_mask = 'data_mask'
     for iz in range(nz):
         center = numpy.array([cx[iz], cy[iz]])
-        mask2d = create_mask2d(center, param.shape, param.size, nx, ny, param.even)
+        mask2d = create_mask2d(center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
         # Write NIFTI volumes
         img = nibabel.Nifti1Image(mask2d, None, hdr)
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
@@ -270,7 +271,7 @@ def create_line(fname, coord, nz):
 
 # create_mask2d
 # ==========================================================================================
-def create_mask2d(center, shape, size, nx, ny, even=0):
+def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
     # extract offset d = 2r+1 --> r=ceil((d-1)/2.0)
     # s=11 -> r=5
     # s=10 -> r=5
@@ -283,8 +284,15 @@ def create_mask2d(center, shape, size, nx, ny, even=0):
     mask2d = numpy.zeros((nx, ny))
     xc = center[0]
     yc = center[1]
-    from numpy import ceil
-    radius = ceil((size - 1) / 2.0)
+    if 'mm' in size:
+        from numpy import ceil
+        size = int(size[:-2])
+        mean_spacing_xy = (spacing[1] + spacing[2]) / 2.0
+        length = round(float(size) / mean_spacing_xy)
+        radius = ceil((int(length) - 1) / 2.0)
+    else:
+        from numpy import ceil
+        radius = ceil((int(size) - 1) / 2.0)
 
     if shape == 'box':
         mask2d[xc - radius:xc + radius + 1, yc - radius:yc + radius + 1] = 1
@@ -332,8 +340,8 @@ def get_parser():
                       mandatory=False,
                       deprecated_by='-p')
     parser.add_option(name='-size',
-                      type_value='int',
-                      description='Size in voxel. Odd values are better (for mask to be symmetrical). If shape=gaussian, size corresponds to "sigma"',
+                      type_value='str',
+                      description='Size can be provided in pixel or mm.\nPixel: provide directly the desired value (ex: 11). Even values are added with 1 (for mask to be symmetrical).\nmm: provide size with mm at the end (ex: 11mm).\nIf shape=gaussian, size corresponds to "sigma"',
                       mandatory=False,
                       default_value=param_default.size,
                       example=['45'])
