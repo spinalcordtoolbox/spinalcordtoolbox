@@ -36,7 +36,11 @@ class Param:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
 
     # Initialization
     fname_in = ''
@@ -57,7 +61,7 @@ def main():
     else:
         # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:o:c:r:t:l:dx:')
+            opts, args = getopt.getopt(args, 'hi:o:c:r:t:l:dx:')
         except getopt.GetoptError as err:
             print str(err)
             usage()

@@ -50,7 +50,10 @@ class Param:
 
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     # Parameters for debug mode
     if param.debug:
@@ -66,7 +69,7 @@ def main():
     else:
         # Check input parameters
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
 
         param.fname_data = arguments['-i']
 

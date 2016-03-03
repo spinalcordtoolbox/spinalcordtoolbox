@@ -26,3 +26,4 @@ scripts/.idea/modules.xml
 scripts/.idea/scripts.iml
 scripts/.idea/vcs.xml
 scripts/.idea/workspace.xml
+bin/*/miniconda

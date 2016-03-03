@@ -415,16 +415,24 @@ def get_parser():
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
 
-if __name__ == "__main__":
+def main(args=None):
+
+    # initialize parameters
     param = Param()
+    # check user arguments
+
+    if not args:
+        args = sys.argv[1:]
+
+    # Get parser info
     input_fname = None
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
     else:
         param_default = Param()
-        parser = get_parser()
 
-        arguments = parser.parse(sys.argv[1:])
+        parser = get_parser()
+        arguments = parser.parse(args)
         input_fname = arguments["-i"]
         input_second_fname = ''
         output_fname = 'hausdorff_distance.txt'
@@ -474,3 +482,7 @@ if __name__ == "__main__":
 
         os.chdir('..')
         # print 'Total time: ', time.time() - now
+
+
+if __name__ == "__main__":
+    main()
