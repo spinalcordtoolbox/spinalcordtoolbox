@@ -56,6 +56,21 @@ def test(path_data):
     status += s
     output += o
 
+    # check other method
+    algo = 'affine'
+    cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
+          + ' -d ' + path_data + folder_data + file_data[1] \
+          + ' -o data_'+algo+'_reg.nii.gz'  \
+          + ' -param step=1,algo='+algo+',iter=1,smooth=0,shrink=4,metric=MeanSquares,slicewise=1'  \
+          + ' -r 0' \
+          + ' -v 1'
+    output += '\n====================================================================================================\n'\
+              +cmd+\
+              '\n====================================================================================================\n\n'  # copy command
+    s, o = commands.getstatusoutput(cmd)
+    status += s
+    output += o
+
     # if command ran without error, test integrity
     if status == 0:
         from msct_image import Image
@@ -73,7 +88,6 @@ def test(path_data):
             Image(param=diff, absolutepath='res_differences_from_gold_standard.nii.gz').save()
             status = 99
             output += '\nResulting image differs from gold-standard (sum of the difference of intensity: '+str(np.sum(diff))+').'
-
 
     return status, output
 
