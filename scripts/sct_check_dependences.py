@@ -89,11 +89,6 @@ def main():
             (status, output) = sct.run('more ~/.bashrc', verbose)
             print output
 
-    # check if user is root (should not be!)
-    if os.geteuid() == 0:
-       print 'Looks like you are root. Please run this script without sudo. Exit program\n'
-       sys.exit(2)
-
     # check OS
     print 'Check which OS is running... '
     platform_running = sys.platform
