@@ -147,17 +147,17 @@ def main(args = None):
 
     elif "-getorient" in arguments:
         im_in = Image(fname_in[0])
-        orient = orientation(im_in, get=True, verbose_init=verbose)
+        orient = orientation(im_in, get=True, verbose=verbose)
         im_out = None
 
     elif "-setorient" in arguments:
         print fname_in[0]
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose_init=verbose)]
+        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose)]
 
     elif "-setorient-data" in arguments:
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose_init=verbose)]
+        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
 
     elif '-mcs' in arguments:
         im_in = Image(fname_in[0])
@@ -437,8 +437,8 @@ def multicomponent_merge(fname_list):
     return im_out
 
 
-def orientation(im, ori=None, set=False, get=False, set_data=False, verbose_init=1):
-    verbose = 0 if get else verbose_init
+def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
+    verbose = 0 if get else verbose
     printv('\nGet dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
@@ -450,7 +450,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose_init
             try:
                 ori = get_orientation(im)
             except Exception, e:
-                printv('ERROR: an error occurred: \n'+str(e), verbose_init,'error')
+                printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
             return ori
         elif set:
             # set orientation
