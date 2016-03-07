@@ -86,7 +86,7 @@ Step-by-step procedure (to do for each contrast):
     * value 22: L2-L3
 * Save the mask under: ``labels_vertebral.nii.gz`` (cmd+s).
 * Use the following command to get label coordinates and keep them for later (see below, the LIST_OF_LABELS field).
-  * ``sct_label_utils -i labels_vertebral.nii.gz -p display-voxel`
+  * ``sct_label_utils -i labels_vertebral.nii.gz -p display-voxel``
 * Crop **data_RPI.nii.gz** slightly above the brainstem (if available) and slightly below L2-L3.
   * ``sct_crop_image –i data_RPI.nii.gz –dim 2 XXX -o data_RPI_crop.nii.gz``
 * Report where you are cropping the image in the file **crop.txt** using this format:
