@@ -59,15 +59,19 @@ PATH_OUTPUT = '/Users/benjamindeleener/data/template_preprocessing_final'  # fol
 
 # folder to dataset
 folder_data_errsm = '/Volumes/data_shared/montreal_criugm/errsm'
+folder_data_sct = '/Volumes/data_shared/montreal_criugm/sct'
 folder_data_marseille = '/Volumes/data_shared/marseille'
 folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
 
-# out because movement artefact:
+# removed because movement artefact:
 # ['errsm_22', folder_data_errsm+'/errsm_22/29-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_22/25-SPINE_T2'],\
+# removed because of low contrast:
+# ['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_data_errsm+'/errsm_02/28-SPINE_T2'],
+# removed because of stitching issue
+# ['TM', folder_data_marseille+'/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/TM_T057c/01_0105_t2-composing'],
 
 # define subject
 SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
-                 ['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_data_errsm+'/errsm_02/28-SPINE_T2'],
                  ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
                  ['errsm_05', folder_data_errsm+'/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_05/24-SPINE_SPACE'],
                  ['errsm_09', folder_data_errsm+'/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', folder_data_errsm+'/errsm_09/33-SPINE_SPACE'],
@@ -87,6 +91,8 @@ SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09
                  ['errsm_31', folder_data_errsm+'/errsm_31/31-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_31/32-SPINE_T2'],
                  ['errsm_32', folder_data_errsm+'/errsm_32/16-SPINE_T1/echo_2.09 ', folder_data_errsm+'/errsm_32/19-SPINE_T2'],
                  ['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
+                 ['sct_001', folder_data_sct+'/sct_001/17-SPINE_T1/echo_2.09', folder_data_sct+'/sct_001/16-SPINE_T2'],
+                 ['sct_002', folder_data_sct+'/sct_002/12-SPINE_T1/echo_2.09', folder_data_sct+'/sct_002/18-SPINE_T2'],
                  ['ED', folder_data_marseille+'/ED/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-101', folder_data_marseille+'/ED/01_0008_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-65'],
                  ['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
                  ['JD', folder_data_marseille+'/JD/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23', folder_data_marseille+'/JD/01_0100_compo-space'],
@@ -101,7 +107,6 @@ SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09
                  ['pain_pilot_1', folder_data_pain+'/d_sp_pain_pilot1/24-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot1/25-SPINE'],
                  ['pain_pilot_2', folder_data_pain+'/d_sp_pain_pilot2/13-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot2/30-SPINE_T2'],
                  ['pain_pilot_4', folder_data_pain+'/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot4/32-SPINE_T2'],
-                 ['TM', folder_data_marseille+'/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/TM_T057c/01_0105_t2-composing'],
                  ['errsm_20', folder_data_errsm+'/errsm_20/12-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_20/34-SPINE_T2'],
                  ['pain_pilot_3', folder_data_pain+'/d_sp_pain_pilot3/16-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot3/31-SPINE_T2'],
                  ['errsm_34', folder_data_errsm+'/errsm_34/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_34/40-SPINE_T2'],
