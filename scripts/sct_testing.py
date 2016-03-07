@@ -163,6 +163,7 @@ def fill_functions():
     functions.append('sct_straighten_spinalcord')
     functions.append('sct_warp_template')
     functions.append('sct_documentation')
+    functions.append('sct_dmri_create_noisemask')
     return functions
 
 
