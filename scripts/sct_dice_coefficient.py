@@ -93,7 +93,7 @@ if __name__ == "__main__":
     if '-bzmax' in arguments and arguments['-bzmax'] == '1':
         cmd += ' -bzmax'
     if '-o' in arguments:
-        cmd += ' -o '+arguments['o']
+        cmd += ' -o '+arguments['-o']
 
     verbose = arguments['-v']
     if verbose == '0':
