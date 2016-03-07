@@ -162,6 +162,7 @@ def main(args = None):
         im_out = None
 
     elif "-setorient" in arguments:
+        print fname_in[0]
         im_in = Image(fname_in[0])
         im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose)]
 
@@ -293,7 +294,7 @@ def split_data(im_in, dim):
     return im_out_list
 
 
-def concat_data(fname_in_list, dim):
+def concat_data(fname_in_list, dim, no_expand=False):
     """
     Concatenate data
     :param im_in_list: list of images.
@@ -301,7 +302,7 @@ def concat_data(fname_in_list, dim):
     :return im_out: concatenated image
     """
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
-    from numpy import concatenate, expand_dims
+    from numpy import concatenate, expand_dims, squeeze
 
     im_0 = Image(fname_in_list[0])
     # data_list = [im.data for im in im_in_list]
@@ -311,7 +312,8 @@ def concat_data(fname_in_list, dim):
         im = Image(fname)
         dat = im.data
         # expand dimension of data in the right dimension
-        dat = expand_dims(dat, dim)
+        if not no_expand:
+            dat = expand_dims(dat, dim)
         if first:
             data_concat = dat
             first = False
@@ -581,8 +583,6 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
         im_out.change_orientation(orientation, True)
         im_out.setFileName(fname_out)
     return im_out
-
-
 
 
 # START PROGRAM
