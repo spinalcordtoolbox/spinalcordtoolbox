@@ -38,12 +38,13 @@ if not os.path.isdir(path_results + '/' + 'T2'):
 
 # folder to dataset
 folder_data_errsm = '/Volumes/data_shared/montreal_criugm/errsm'
+folder_data_sct = '/Volumes/data_shared/montreal_criugm/sct'
 folder_data_marseille = '/Volumes/data_shared/marseille'
 folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
 
 # Creation of necessary files for T2 preprocessing
 
-"""
+
 # Preprocessing for subject errsm_36
 if not os.path.isdir(path_results + '/T2/errsm_36'):
     os.makedirs(path_results + '/T2/errsm_36')
@@ -123,8 +124,8 @@ os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
 
-
-# Preprocessing for subject errsm_02
+"""
+# Preprocessing for subject errsm_02 - removed because of low contrast
 if not os.path.isdir(path_results + '/T2/errsm_02'):
     os.makedirs(path_results + '/T2/errsm_02')
 os.chdir(path_results + '/T2/errsm_02')
@@ -142,7 +143,7 @@ os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
-
+"""
 
 # Preprocessing for subject errsm_04
 if not os.path.isdir(path_results + '/T2/errsm_04'):
@@ -542,7 +543,7 @@ os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
 
-"""
+
 # Preprocessing for subject errsm_34
 if not os.path.isdir(path_results + '/T2/errsm_34'):
     os.makedirs(path_results + '/T2/errsm_34')
@@ -561,7 +562,45 @@ os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
-"""
+
+
+# Preprocessing for subject sct_001
+if not os.path.isdir(path_results + '/T2/sct_001'):
+    os.makedirs(path_results + '/T2/sct_001')
+os.chdir(path_results + '/T2/sct_001')
+sct.run('dcm2nii -o . -r N '+folder_data_sct+'/sct_001/16-SPINE_T2/*.dcm')
+sct.run('mv *.nii.gz data.nii.gz')
+sct.run('sct_image -i data.nii.gz -setorient RPI')
+sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 5,165,19,23:10,159,53,22:12,151,87,21:14,144,119,20:16,135,150,19:17,129,180,18:18,127,208,17:18,125,234,16:19,125,260,15:19,126,284,14:20,130,308,13:20,137,331,12:20,146,351,11:20,155,371,10:20,166,390,9:21,175,407,8:22,179,423,7:23,181,439,6:25,182,456,5:26,183,474,4:27,185,492,3:28,185,551,2:26,193,571,1')
+sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start 40 -end 588')
+f_crop = open('crop.txt', 'w')
+f_crop.write('40,588,0,493')
+f_crop.close()
+sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o centerline_propseg_RPI.nii.gz -t create -x 9,151,0,1:11,145,25,1:12,140,42,1:13,135,65,1:14,132,83,1:15,128,104,1:16,125,123,1:17,123,145,1:18,121,163,1:18,120,180,1:19,120,195,1:19,120,211,1:19,120,227,1:20,121,246,1:20,125,264,1:20,130,285,1:20,136,301,1:20,144,319,1:20,151,333,1:20,158,350,1:21,166,367,1:22,172,385,1:23,175,404,1:24,176,421,1:26,177,440,1:27,177,455,1:28,175,471,1:28,174,484,1:28,177,496,1:28,183,509,1:27,186,522,1:26,189,531,1:26,195,540,1:26,200,548,1')
+os.remove('data.nii.gz')
+os.remove('data_RPI.nii.gz')
+os.remove('data_RPI_crop.nii.gz')
+os.chdir('../..')
+
+
+# Preprocessing for subject sct_002
+if not os.path.isdir(path_results + '/T2/sct_002'):
+    os.makedirs(path_results + '/T2/sct_002')
+os.chdir(path_results + '/T2/sct_002')
+sct.run('dcm2nii -o . -r N '+folder_data_sct+'/sct_002/18-SPINE_T2/*.dcm')
+sct.run('mv *.nii.gz data.nii.gz')
+sct.run('sct_image -i data.nii.gz -setorient RPI')
+sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 20,132,10,24:21,127,41,23:21,124,76,22:21,120,110,21:20,118,142,20:20,116,170,19:20,113,195,18:20,112,220,17:21,112,244,16:22,111,267,15:23,112,290,14:24,115,311,13:24,120,331,12:25,125,351,11:26,132,370,10:26,140,389,9:25,146,405,8:24,149,421,7:24,152,437,6:24,156,451,5:24,159,465,4:26,161,479,3:26,167,536,2:26,173,554,1')
+sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start 65 -end 571')
+f_crop = open('crop.txt', 'w')
+f_crop.write('65,571,42,451')
+f_crop.close()
+sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o centerline_propseg_RPI.nii.gz -t create -x ')
+os.remove('data.nii.gz')
+os.remove('data_RPI.nii.gz')
+os.remove('data_RPI_crop.nii.gz')
+os.chdir('../..')
+
 
 # Preprocessing for subject ALT
 if not os.path.isdir(path_results + '/T2/ALT'):
@@ -759,8 +798,8 @@ os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
 
-
-# Preprocessing for subject TM
+"""
+# Preprocessing for subject TM - removed because of stitching issue
 if not os.path.isdir(path_results + '/T2/TM'):
     os.makedirs(path_results + '/T2/TM')
 os.chdir(path_results + '/T2/TM')
@@ -777,7 +816,7 @@ os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
-
+"""
 
 # Preprocessing for subject errsm_20
 if not os.path.isdir(path_results + '/T2/errsm_20'):
@@ -1060,8 +1099,8 @@ os.chdir('../..')
 
 
 # Creation of necessary files for T1 preprocessing
-
-# Preprocessing for subject errsm_02
+"""
+# Preprocessing for subject errsm_02 - removed because of low contrast
 if not os.path.isdir(path_results + '/T1/errsm_02'):
     os.makedirs(path_results + '/T1/errsm_02')
 os.chdir(path_results + '/T1/errsm_02')
@@ -1079,7 +1118,7 @@ os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
-
+"""
 
 # Preprocessing for subject errsm_04
 if not os.path.isdir(path_results + '/T1/errsm_04'):
@@ -1479,6 +1518,44 @@ os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
 
 
+# Preprocessing for subject sct_001
+if not os.path.isdir(path_results + '/T1/sct_001'):
+    os.makedirs(path_results + '/T1/sct_001')
+os.chdir(path_results + '/T1/sct_001')
+sct.run('dcm2nii -o . -r N '+folder_data_sct+'/sct_001/17-SPINE_T1/echo_2.09/*.dcm')
+sct.run('mv *.nii.gz data.nii.gz')
+sct.run('sct_image -i data.nii.gz -setorient RPI')
+sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 63,86,19,23:68,81,52,22:71,72,86,21:73,64,119,20:73,56,150,19:75,50,179,18:76,48,208,17:77,46,233,16:77,45,259,15:77,46,283,14:78,50,308,13:78,57,330,12:79,64,351,11:79,73,370,10:80,83,389,9:80,91,407,8:81,96,423,7:82,99,438,6:83,101,454,5:84,102,472,4:85,102,490,3:86,104,551,2:86,110,570,1')
+sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start 40 -end 586')
+f_crop = open('crop.txt', 'w')
+f_crop.write('40,586,18,490')
+f_crop.close()
+sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o centerline_propseg_RPI.nii.gz -t create -x 65,73,0,1:67,69,10,1:69,65,22,1:71,63,39,1:71,58,55,1:72,55,70,1:73,53,86,1:74,49,102,1:75,46,119,1:75,45,134,1:76,43,151,1:76,42,167,1:77,40,184,1:77,39,199,1:77,40,212,1:78,40,228,1:78,41,243,1:78,43,257,1:78,47,273,1:78,52,289,1:79,57,302,1:79,62,316,1:80,69,330,1:80,75,343,1:80,81,356,1:81,88,369,1:81,92,383,1:82,95,395,1:83,96,410,1:84,97,424,1:84,98,437,1:85,97,450,1:86,96,466,1:86,95,478,1:86,96,491,1:86,100,503,1:86,105,516,1:86,109,526,1:85,113,536,1:85,122,546,1')
+os.remove('data.nii.gz')
+os.remove('data_RPI.nii.gz')
+os.remove('data_RPI_crop.nii.gz')
+os.chdir('../..')
+
+
+# Preprocessing for subject sct_002
+if not os.path.isdir(path_results + '/T1/sct_002'):
+    os.makedirs(path_results + '/T1/sct_002')
+os.chdir(path_results + '/T1/sct_002')
+sct.run('dcm2nii -o . -r N '+folder_data_sct+'/sct_002/12-SPINE_T1/echo_2.09/*.dcm')
+sct.run('mv *.nii.gz data.nii.gz')
+sct.run('sct_image -i data.nii.gz -setorient RPI')
+sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 83,83,10,24:84,78,41,23:84,75,75,22:83,70,110,21:83,69,141,20:83,66,169,19:83,64,195,18:83,63,220,17:84,62,243,16:85,63,266,15:86,63,288,14:87,66,310,13:87,71,331,12:88,76,350,11:88,82,370,10:88,91,388,9:88,98,405,8:87,101,420,7:87,104,435,6:87,108,450,5:88,111,463,4:88,113,479,3:89,119,534,2:88,123,553,1')
+sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start 65 -end 570')
+f_crop = open('crop.txt', 'w')
+f_crop.write('65,570,37,453')
+f_crop.close()
+sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o centerline_propseg_RPI.nii.gz -t create -x 82,70,0,1:83,66,22,1:84,62,58,1:84,60,87,1:85,60,121,1:86,62,141,1:86,62,170,1:87,65,207,1:87,70,241,1:89,80,272,1:90,93,301,1:91,109,332,1:91,121,367,1:91,123,404,1:89,119,441,1:88,127,484,1:89,131,500,1:88,138,523,1')
+os.remove('data.nii.gz')
+os.remove('data_RPI.nii.gz')
+os.remove('data_RPI_crop.nii.gz')
+os.chdir('../..')
+
+
 # Preprocessing for subject 1
 if not os.path.isdir(path_results + '/T1/1'):
     os.makedirs(path_results + '/T1/1')
@@ -1744,8 +1821,8 @@ os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
 
-
-# Preprocessing for subject TM
+"""
+# Preprocessing for subject TM - removed because of stitching issue
 if not os.path.isdir(path_results + '/T1/TM'):
     os.makedirs(path_results + '/T1/TM')
 os.chdir(path_results + '/T1/TM')
@@ -1762,7 +1839,7 @@ os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
-
+"""
 
 # Preprocessing for subject errsm_20
 if not os.path.isdir(path_results + '/T1/errsm_20'):
@@ -2048,4 +2125,3 @@ os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
 
-"""
