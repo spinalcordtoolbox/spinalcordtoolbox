@@ -25,13 +25,10 @@ from sct_register_multimodal import Paramreg
 def register_slicewise(fname_src,
                         fname_dest,
                         fname_mask='',
-                        window_length='0',
                         warp_forward_out='step0Warp.nii.gz',
                         warp_inverse_out='step0InverseWarp.nii.gz',
                         paramreg=None,
                         ants_registration_params=None,
-                        detect_outlier='0',
-                        remove_temp_files=1,
                         verbose=0):
 
     # create temporary folder
@@ -250,7 +247,13 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                '--output ['+prefix_warp2d+',src_Z'+ num +'_reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
                + masking)
+        # add init translation
+        if not paramreg.init == '':
+            init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
+            cmd += ' -r [dest_Z'+num+'.nii'+',src_Z'+num+'.nii,'+init_dict[paramreg.init]+']'
+
         try:
+            # run registration
             sct.run(cmd)
 
             if paramreg.algo in ['Rigid', 'Translation']:
