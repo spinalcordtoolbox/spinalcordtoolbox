@@ -182,6 +182,7 @@ class TimeObject:
 timer = dict()
 timer['T1'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
 timer['T2'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['align'] = TimeObject(number_of_subjects=1)
 
 def main():
     timer['T1'].start()
@@ -190,7 +191,6 @@ def main():
     create_cross('T1')
     push_into_templace_space('T1')
     average_levels('T1')
-    align_vertebrae('T1')
     timer['T1'].stop()
 
     timer['T2'].start()
@@ -199,13 +199,20 @@ def main():
     create_cross('T2')
     push_into_templace_space('T2')
     average_levels('T2')
-    align_vertebrae('T2')
     timer['T2'].stop()
+
+    timer['align'].start()
+    average_levels('both')
+    align_vertebrae('T1')
+    align_vertebrae('T2')
+    timer['align'].stop()
 
     sct.printv('T1 time:')
     timer['T2'].printTotalTime()
     sct.printv('T2 time:')
     timer['T2'].printTotalTime()
+    sct.printv('Align time:')
+    timer['align'].printTotalTime()
 
 
 def do_preprocessing(contrast):
@@ -506,12 +513,75 @@ def push_into_templace_space(contrast):
 
 # Calculate mean labels and save it into folder "labels_vertebral"
 def average_levels(contrast):
-    print '\nGo to output folder '+ PATH_OUTPUT + '/labels_vertebral_' + contrast + '\n'
-    os.chdir(PATH_OUTPUT +'/labels_vertebral_' + contrast)
-    print'\nCalculate mean along subjects of files labels_vertebral and save it into '+PATH_OUTPUT +'/labels_vertebral_' + contrast +' as template_landmarks.nii.gz'
-    template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
-    # this function looks at all files inside the folder "labels_vertebral_T*" and find the average vertebral levels across subjects
-    sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + ' -t '+ template_shape +' -n '+ str(number_labels_for_template))
+    if contrast == 'both':
+        print 'Averaging levels from T1 and T2 contrasts...'
+
+        from numpy import mean, zeros, array
+        n_i, n_l = 2, number_labels_for_template
+        average = zeros((n_i, n_l))
+        compteur = 0
+
+        img_T1 = nibabel.load(PATH_OUTPUT + '/labels_vertebral_T1/template_landmarks.nii.gz')
+        data_T1 = img_T1.get_data()
+        X, Y, Z = (data_T1 > 0).nonzero()
+        Z = [Z[i] for i in Z.argsort()]
+        Z.reverse()
+
+        for i in xrange(n_l):
+            if i < len(Z):
+                average[compteur][i] = Z[i]
+
+        compteur = compteur + 1
+
+        img_T2 = nibabel.load(PATH_OUTPUT + '/labels_vertebral_T2/template_landmarks.nii.gz')
+        data_T2 = img_T2.get_data()
+        X, Y, Z = (data_T1 > 0).nonzero()
+        Z = [Z[i] for i in Z.argsort()]
+        Z.reverse()
+
+        for i in xrange(n_l):
+            if i < len(Z):
+                average[compteur][i] = Z[i]
+
+        average = array([int(round(mean([average[average[:, i] > 0, i]]))) for i in xrange(n_l)])
+
+        template_absolute_path = path_sct + '/dev/template_creation/template_shape.nii.gz'
+        print template_absolute_path
+        print '\nGet dimensions of template...'
+        from msct_image import Image
+        nx, ny, nz, nt, px, py, pz, pt = Image(template_absolute_path).dim
+        print '.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)
+        print '.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm'
+
+        img = nibabel.load(template_absolute_path)
+        data = img.get_data()
+        hdr = img.get_header()
+        data[:, :, :] = 0
+        compteur = 1
+        for i in average:
+            print int(round(nx / 2.0)), int(round(ny / 2.0)), int(round(i)), int(round(compteur))
+            data[int(round(nx / 2.0)), int(round(ny / 2.0)), int(round(i))] = int(round(compteur))
+            compteur = compteur + 1
+
+        print '\nSave volume ...'
+        # hdr.set_data_dtype('float32') # set imagetype to uint8
+        # save volume
+        # data = data.astype(float32, copy =False)
+        img = nibabel.Nifti1Image(data, None, hdr)
+        file_name = PATH_OUTPUT + '/labels_vertebral_T1/template_landmarks.nii.gz'
+        nibabel.save(img, file_name)
+        print '\nFile created : ' + file_name
+        file_name = PATH_OUTPUT + '/labels_vertebral_T2/template_landmarks.nii.gz'
+        nibabel.save(img, file_name)
+        print '\nFile created : ' + file_name
+
+    else:
+        print '\nGo to output folder '+ PATH_OUTPUT + '/labels_vertebral_' + contrast + '\n'
+        os.chdir(PATH_OUTPUT +'/labels_vertebral_' + contrast)
+        print'\nCalculate mean along subjects of files labels_vertebral and save it into '+PATH_OUTPUT +'/labels_vertebral_' + contrast +' as template_landmarks.nii.gz'
+        template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
+        # this function looks at all files inside the folder "labels_vertebral_T*" and find the average vertebral levels across subjects
+        sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + ' -t '+ template_shape +' -n '+ str(number_labels_for_template))
 
 
 # Aligning vertebrae for all subjects and copy results into "Final_results". Plus: save png images of all subject into a folder named Image_results.
