@@ -329,8 +329,7 @@ def check_if_3d(fname):
     from msct_image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
-        return False
-        # printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
+        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
     else:
         return True
 
