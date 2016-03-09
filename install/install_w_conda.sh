@@ -17,11 +17,14 @@
 #
 
 
-#TODO add some doc to the installer
+# TODO add some doc to the installer
+# TODO: remove create_links, installer_dev.sh, create_launchs, install_ants_osx.sh, install_external.py
+# TODO: rename this installer to "installer.sh"
+
 
 SCT_FOLDER_NAME="spinalcordtoolbox"
 
-echo "Welcome to the SCT installer V2.0 "
+echo "Welcome to the SCT installer!"
 
 START_DIR=$PWD
 function finish {
