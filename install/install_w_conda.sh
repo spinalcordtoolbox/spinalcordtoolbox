@@ -19,7 +19,7 @@
 
 # TODO add some doc to the installer
 # TODO: remove create_links, installer_dev.sh, create_launchs, install_ants_osx.sh, install_external.py
-# TODO: rename this installer to "installer.sh"
+# TODO: rename this installer to "install_sct"
 
 
 SCT_FOLDER_NAME="spinalcordtoolbox"
