@@ -38,9 +38,10 @@ elif  [[ $PWD =~ /spinalcordtoolbox/install$ ]] ;then
 elif  [ ls $SCT_FOLDER_NAME ] ;then
   SCT_SOURCE=${PWD}/${SCT_FOLDER_NAME}
 else
-   echo I can\'t find the SpinalCord Toolbox source folder \"${SCT_FOLDER_NAME}/\"
+   echo I can\'t find SCT source folder \"${SCT_FOLDER_NAME}/\"
 fi
 
+# TODO: deal with OSX which does not have .bashrc (and not sourced in bash_profile)
 if [[ $UID == 0 ]]; then
   # sudo mode
   THE_BASHRC=/etc/profile.d/sct.sh
@@ -57,7 +58,7 @@ fi
 
 # Set install dir
 while  true ; do
-  echo Sct will be installed here [${INSTALL_DIR}]
+  echo SCT will be installed here: [${INSTALL_DIR}]
   echo -n Type Enter or a different path:
   read new_install
   if [ -d "${new_install}" ]; then
@@ -73,6 +74,7 @@ done
 
 SCT_DIR=${INSTALL_DIR%/}/${SCT_FOLDER_NAME}
 
+# create fetching variables for Python packages
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
     # Do something under Mac OS X platformn
   OS=osx
@@ -87,10 +89,11 @@ elif uname -a | grep -i  linux > /dev/null 2>&1; then
   ornlm_whl=$(find ${SCT_SOURCE}/external -type f -name "ornlm*linux*")
   echo LINUX MACHINE
 else
-  echo Sorry, the installer only support Linux and OSX, quiting installer
+  echo Sorry, the installer only supports Linux and OSX, quitting installer
   exit 1
 fi
 
+# Copy files to destination directory
 if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
   echo copying source files to "${SCT_DIR}"
   mkdir -p ${SCT_DIR}/bin
@@ -112,32 +115,39 @@ bash ${conda_installer} -p ${SCT_DIR}/bin/${OS}/miniconda -b -f
 echo ${SCT_DIR}/bin/${OS}/miniconda/bin/activate
 
 echo Installing dependencies
+# N.B. the flag --ignore-installed is required because if user already has other dependencies, it will not install
 conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
 pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
 pip install --ignore-installed  ${dipy_whl}  ${ornlm_whl}
 
 echo All requirement installed
 
+# update PATH environment
+# TODO: do not add path if sudo, but display message
+# TODO: change intro line for: SPINALCORDTOOLBOX (installed on 2016-03-09 10:31)
+# TODO: check if line is there in case of re-installation
+# TODO: deal with OSX which does not source .bashrc: add to bash_profile (create if does not exist)
 while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
-  echo -n "Do you want to add the sct_* script to your PATH environenemnt? Yes/No: "
+  echo -n "Do you want to add the sct_* script to your PATH environment? Yes/No: "
   read add_to_path
 done
 echo ""
 if [[ ${add_to_path} =~ ^[Yy] ]]; then
   # assuming bash
-  echo "#SPINALCORDTOOLBOX PATH" > ${THE_BASHRC}
+  echo "# SPINALCORDTOOLBOX" > ${THE_BASHRC}
   echo "export PATH=${SCT_DIR}/bin:\$PATH" >> ${THE_BASHRC}
   # (t)csh for good measure
-  echo "#SPINALCORDTOOLBOX PATH" >> ${THE_CSHRC}
+  echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
   echo "setenv PATH \"${SCT_DIR}/bin:\$PATH\"" ${THE_CSHRC}
-  fi
 else
    echo Not adding ${INSTALL_DIR} to \$PATH
-   echo You can always add it later or call SCT FUNCTIONS with full path ${SCT_DIR}/bin/sct_function
+   echo You can always add it later or call SCT functions with full path ${SCT_DIR}/bin/sct_function
 fi
 
 #Make sure sct script are executable
 find ${SCT_DIR}/bin/ -maxdepth 2 -type f -exec chmod 755 {} \;
 
+# Run check dependencies
+# TODO: update to check_dependencies
 ${SCT_DIR}/bin/sct_check_dependences
 echo INSTALLATION DONE
