@@ -101,6 +101,7 @@ if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
   cp ${SCT_SOURCE}/version.txt  ${SCT_DIR}/.
   mkdir -p ${SCT_DIR}/install
   cp -rp ${SCT_SOURCE}/install/requirements ${SCT_DIR}/install
+  cp -rp ${SCT_SOURCE}/testing ${SCT_DIR}/.
 fi
 
 echo installing conda ...
