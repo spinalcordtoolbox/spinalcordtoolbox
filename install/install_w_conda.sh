@@ -128,8 +128,9 @@ if [[ ${add_to_path} =~ ^[Yy] ]]; then
   echo "#SPINALCORDTOOLBOX PATH" > ${THE_BASHRC}
   echo "export PATH=${SCT_DIR}/bin:\$PATH" >> ${THE_BASHRC}
   # (t)csh for good measure
-  echo "#SPINALCORDTOOLBOX PATH" > ${THE_CSHRC}
-  echo "setenv PATH \"${SCT_DIR}/bin:\$PATH\"" >> ${THE_CSHRC}
+  echo "#SPINALCORDTOOLBOX PATH" >> ${THE_CSHRC}
+  echo "setenv PATH \"${SCT_DIR}/bin:\$PATH\"" ${THE_CSHRC}
+  fi
 else
    echo Not adding ${INSTALL_DIR} to \$PATH
    echo You can always add it later or call SCT FUNCTIONS with full path ${SCT_DIR}/bin/sct_function
