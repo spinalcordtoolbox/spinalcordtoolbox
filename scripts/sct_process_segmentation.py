@@ -26,7 +26,7 @@ import scipy
 import nibabel
 import sct_utils as sct
 from msct_nurbs import NURBS
-from sct_image import get_orientation, set_orientation
+from sct_image import get_orientation_3d, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
 from shutil import move, copyfile
