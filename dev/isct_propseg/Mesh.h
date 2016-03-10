@@ -10,9 +10,12 @@
 #include <string>
 #include <vector>
 #include "Vertex.h"
+#include "util/Vector3.h"
 #include "referential.h"
 
 #include <itkImage.h>
+#include <vtkSmartPointer.h>
+#include <vtkPolyData.h>
 
 using namespace std;
 
@@ -84,6 +87,9 @@ public:
     bool getVerbose() { return verbose_; };
     
     void cropUpAndDown(CVector3 upperSlicePoint, CVector3 upperSliceNormal, CVector3 downSlicePoint, CVector3 downSliceNormal);
+    virtual vtkSmartPointer<vtkPolyData> reduceMeshUpAndDown(CVector3 upperSlicePoint, CVector3 upperSliceNormal, CVector3 downSlicePoint, CVector3 downSliceNormal, string filename="") { return 0; };
+    
+    double computeMeanRadius(int numberOfPointsPerDisk);
 
 protected:
 	void calculateLocalPoints(CMatrix3x3 rotation, CVector3 translation);
