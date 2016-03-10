@@ -20,7 +20,8 @@ class Param:
         self.gap = (100, 200)
         self.smooth = 0.8
 
-        self.param_reg = 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
+        self.param_reg = 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=syn,metric=MeanSquares,iter=10,smooth=1,shrink=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
+        # Previous default param (less efficient): 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
 
         self.output_folder = './'
         self.verbose = 1
@@ -102,7 +103,7 @@ class MultiLabelRegistration:
 
         # Register multilabel images together
         cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -param '+self.param.param_reg
-        if 'pointwise' in self.param.param_reg:
+        if 'centermass' in self.param.param_reg:
             fname_template_ml_seg = sct.add_suffix(fname_template_ml, '_bin')
             sct.run('sct_maths -i '+fname_template_ml+' -bin -o '+fname_template_ml_seg)
 
@@ -115,11 +116,12 @@ class MultiLabelRegistration:
         sct.run(cmd_reg)
         fname_warp_multilabel_template2auto = 'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz'
         fname_warp_multilabel_auto2template = 'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz'
-        fname_warp_multilabel_template2auto = pad_im(fname_warp_multilabel_template2auto, nx, ny, nz, xi, xf, yi, yf, zi, zf)
-        fname_warp_multilabel_auto2template = pad_im(fname_warp_multilabel_auto2template, nx, ny, nz, xi, xf, yi, yf, zi, zf)
+        # fname_warp_multilabel_template2auto = pad_im(fname_warp_multilabel_template2auto, nx, ny, nz, xi, xf, yi, yf, zi, zf)
+        # fname_warp_multilabel_auto2template = pad_im(fname_warp_multilabel_auto2template, nx, ny, nz, xi, xf, yi, yf, zi, zf)
 
         sct.run('sct_concat_transfo -w '+file_warp_template+ext_warp_template+','+fname_warp_multilabel_template2auto+' -d '+file_target+ext_target+' -o warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         sct.run('sct_warp_template -d '+fname_target+' -w warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
+        # sct.run('sct_warp_template -d '+fname_target+' -w '+file_warp_template+ext_warp_template+','+fname_warp_multilabel_template2auto)
 
         os.chdir('..')
 
@@ -332,6 +334,7 @@ def pad_im(fname_im, nx_full, ny_full, nz_full,  xi, xf, yi, yf, zi, zf):
             fname_comp_pad_list.append(fname_comp_pad)
         components = ','.join(fname_comp_pad_list)
         sct.run('sct_image -i '+components+' -omc -o '+fname_im_pad)
+        sct.check_file_exist(fname_im_pad, verbose=1)
     else:
         sct.run('sct_image -i '+fname_im+' -pad-asym '+pad+' -o '+fname_im_pad)
     return fname_im_pad
