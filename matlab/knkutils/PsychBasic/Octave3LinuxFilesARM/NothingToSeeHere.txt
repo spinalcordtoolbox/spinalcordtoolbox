@@ -1,0 +1,6 @@
+Current v3.0.12 of Psychtoolbox does not contain
+any mex files to support ARM based systems, e.g.,
+tablets. We may or may not add such support back.
+
+Psychtoolbox-3.0.11 does support at least the
+Google Nexus-7 2012 edition with Ubuntu 13.04.
