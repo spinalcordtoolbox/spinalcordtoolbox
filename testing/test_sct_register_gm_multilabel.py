@@ -83,11 +83,11 @@ def test(path_data, parameters=''):
             else:
                 n_slice, wm_dc, wm_diff, gm_dc, gm_diff = dc_list
                 gm_diff = gm_diff[:-1]
-
-                wm_dice_list.append(float(wm_dc))
-                wm_diff_list.append(float(wm_diff))
-                gm_dice_list.append(float(gm_dc))
-                gm_diff_list.append(float(gm_diff))
+                if wm_dc != 'nan' and gm_dc != 'nan' and wm_dc != '0' and gm_dc != '0':
+                    wm_dice_list.append(float(wm_dc))
+                    wm_diff_list.append(float(wm_diff))
+                    gm_dice_list.append(float(gm_dc))
+                    gm_diff_list.append(float(gm_diff))
 
         result_dice_wm = mean(wm_dice_list)
         result_diff_dc_wm = mean(wm_diff_list)
@@ -111,10 +111,11 @@ def test(path_data, parameters=''):
             if values[0] not in null_slices:
                 n_slice, hd, hd_diff, md, md_diff = values
 
-                hausdorff_list.append(float(hd))
-                hd_diff_list.append(float(hd_diff))
-                max_med_list.append(float(md))
-                md_diff_list.append(float(md_diff))
+                if hd != 'nan' and md != 'nan' and hd != '0.0' and md != '0.0':
+                    hausdorff_list.append(float(hd))
+                    hd_diff_list.append(float(hd_diff))
+                    max_med_list.append(float(md))
+                    md_diff_list.append(float(md_diff))
 
         result_hausdorff = mean(hausdorff_list)
         result_diff_hd = mean(hd_diff_list)
