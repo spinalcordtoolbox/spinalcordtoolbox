@@ -329,8 +329,7 @@ def check_if_3d(fname):
     from msct_image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
-        return False
-        # printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
+        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
     else:
         return True
 
@@ -418,12 +417,15 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         os.remove(path_out+file_out+ext_out)
     if ext_in != ext_out:
         # Generate output file
+        '''
+        # TRY TO UNCOMMENT THIS LINES AND RUN IT IN AN OTHER STATION THAN EVANS (testing of sct_label_vertebrae and sct_smooth_spinalcord never stops with this lines on evans)
         if ext_in == '.nii.gz' and ext_out == '.nii':  # added to resolve issue #728
             run('gunzip -f ' + fname_in)
             os.rename(path_in + file_in + '.nii', fname_out)
         else:
-            from sct_convert import convert
-            convert(fname_in, fname_out)
+        '''
+        from sct_convert import convert
+        convert(fname_in, fname_out)
     else:
         # Generate output file without changing the extension
         shutil.move(fname_in, fname_out)

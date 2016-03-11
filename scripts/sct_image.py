@@ -143,20 +143,22 @@ def main(args = None):
         dim = arguments["-concat"]
         assert dim in dim_list
         dim = dim_list.index(dim)
+        print '\n------------------------------------------------------------------------------------', dim
         im_out = [concat_data(fname_in, dim)] #TODO: adapt to fname_in
 
     elif "-getorient" in arguments:
         im_in = Image(fname_in[0])
-        orient = orientation(im_in, get=True, verbose_init=verbose)
+        orient = orientation(im_in, get=True, verbose=verbose)
         im_out = None
 
     elif "-setorient" in arguments:
+        print fname_in[0]
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose_init=verbose)]
+        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose)]
 
     elif "-setorient-data" in arguments:
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose_init=verbose)]
+        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
 
     elif '-mcs' in arguments:
         im_in = Image(fname_in[0])
@@ -289,7 +291,7 @@ def split_data(im_in, dim):
     return im_out_list
 
 
-def concat_data(fname_in_list, dim):
+def concat_data(fname_in_list, dim, no_expand=False):
     """
     Concatenate data
     :param im_in_list: list of images.
@@ -297,37 +299,40 @@ def concat_data(fname_in_list, dim):
     :return im_out: concatenated image
     """
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
-    from numpy import concatenate, expand_dims
+    from numpy import concatenate, expand_dims, squeeze
 
-    im_0 = Image(fname_in_list[0])
-    # data_list = [im.data for im in im_in_list]
+    dat_list = []
+    data_concat_list = []
 
-    first = True
-    for fname in fname_in_list:
-        im = Image(fname)
-        dat = im.data
-        # expand dimension of data in the right dimension
-        dat = expand_dims(dat, dim)
-        if first:
-            data_concat = dat
-            first = False
+    for i, fname in enumerate(fname_in_list):
+        if i != 0 and i % 100 == 0:
+            data_concat_list.append(concatenate(dat_list, axis=dim))
+            im = Image(fname)
+            dat = im.data
+            if not no_expand:
+                dat = expand_dims(dat, dim)
+            dat_list = [dat]
+            del im
+            del dat
         else:
-            # concatenate
-            try:
-                data_concat = concatenate([data_concat, dat], axis=dim)
-            except Exception as e:
-                printv('\nERROR: Concatenation on line {}'.format(sys.exc_info()[-1].tb_lineno)+'\n'+str(e)+'\n', 1, 'error')
-                data_concat = None
-        del im
-        del dat
-
+            im = Image(fname)
+            dat = im.data
+            if not no_expand:
+                dat = expand_dims(dat, dim)
+            dat_list.append(dat)
+            del im
+            del dat
+    if data_concat_list:
+        data_concat_list.append(concatenate(dat_list, axis=dim))
+        data_concat = concatenate(data_concat_list, axis=dim)
+    else:
+        data_concat = concatenate(dat_list, axis=dim)
     # write file
-    im_out = im_0.copy()
+    im_out = Image(fname_in_list[0]).copy()
     im_out.data = data_concat
     im_out.setFileName(im_out.file_name+'_concat'+im_out.ext)
 
     return im_out
-
 
 
 def concat_warp2d(fname_list, fname_warp3d, fname_dest):
@@ -435,8 +440,8 @@ def multicomponent_merge(fname_list):
     return im_out
 
 
-def orientation(im, ori=None, set=False, get=False, set_data=False, verbose_init=1):
-    verbose = 0 if get else verbose_init
+def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
+    verbose = 0 if get else verbose
     printv('\nGet dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
@@ -448,7 +453,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose_init
             try:
                 ori = get_orientation(im)
             except Exception, e:
-                printv('ERROR: an error occurred: \n'+str(e), verbose_init,'error')
+                printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
             return ori
         elif set:
             # set orientation
@@ -577,8 +582,6 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
         im_out.change_orientation(orientation, True)
         im_out.setFileName(fname_out)
     return im_out
-
-
 
 
 # START PROGRAM
