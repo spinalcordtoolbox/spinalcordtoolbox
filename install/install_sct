@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # USAGE
-# > bash install_sct
+# > ./install_sct
 #
 # This is the spinalcord toolbox (SCT) installer
 # It downloads the Conda (http://conda.pydata.org/) version
@@ -129,7 +129,14 @@ fi
 # Set install dir
 while  true ; do
   echo SCT will be installed here: [${INSTALL_DIR}]
-  echo -n Type Enter or a different path:
+  while  [[ ! ${change_default_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
+    echo -n "Do you agree Yes/No: "
+    read change_default_path
+  done
+  if [[ ${change_default_path} =~ ^[Yy] ]]; then
+    break
+  fi
+  echo -n choose install dir:
   read new_install
   if [ -d "${new_install}" ]; then
     INSTALL_DIR=${new_install}
