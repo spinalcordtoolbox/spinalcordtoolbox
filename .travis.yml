@@ -29,29 +29,11 @@ matrix:
 before_install:
   - echo "HOME="
   - echo $HOME
-# Install miniconda
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=${HOME}/miniconda2/bin:$PATH
-  - conda update --yes conda
-
 install:
-# Install requirements
-  - cd install/requirements
-  - python requirements.py
-  - cd ../../
-# set PATH
-  - SCT_DIR="${HOME}/build/neuropoly/spinalcordtoolbox"
-  - PATH=${PATH}:${SCT_DIR}/bin
-  - PATH=${PATH}:${SCT_DIR}/bin/${TRAVIS_OS_NAME}
-  - export SCT_DIR PATH
-  - export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts
-  - . ~/.bashrc
-# create links
-  - ./install/create_links.sh -a
-# install external libraries
-  - ./install/install_external.py
+# update tools
+  - cd install
+  - ./update_bin.sh
+  - yes | ./install_sct
 
 script:
   - sct_check_dependencies   # test dependences
