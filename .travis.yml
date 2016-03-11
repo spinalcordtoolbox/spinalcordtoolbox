@@ -54,7 +54,7 @@ install:
   - ./install/install_external.py
 
 script:
-  - sct_check_dependences   # test dependences
+  - sct_check_dependencies   # test dependences
   - sct_testing -d 1  # test functions & integrity
   - cd install
   - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
