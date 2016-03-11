@@ -264,7 +264,7 @@ def test_function(script_name):
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Crash test for functions of the Spinal Cord Toolbox.')
+    parser.usage.set_description('Crash and integrity testing for functions of the Spinal Cord Toolbox.')
     parser.add_option(name="-f",
                       type_value="str",
                       description="Test this specific script (do not add extension).",
