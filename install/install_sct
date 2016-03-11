@@ -15,7 +15,11 @@
 # source location, you can get rid of the source code after the
 # installation is successful.
 #
-#
+#########################################################################################
+# Copyright (c) 2016 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: PO Quirion
+# License: see the file LICENSE.TXT
+#########################################################################################
 
 
 # TODO add some doc to the installer
@@ -24,13 +28,47 @@ SCT_FOLDER_NAME="spinalcordtoolbox"
 
 echo "Welcome to the SCT installer!"
 
+# functions
+START_DIR=$PWD
+finish (){
+#  Clean at exit
+  cd ${START_DIR}
+}
+trap finish EXIT
+
+force_bashrc_loading (){
+
+  sourceblock="
+if [ -n \"\$BASH_VERSION\" ]; then
+    # include .bashrc if it exists
+    if [ -f \"\$HOME/.bashrc\" ]; then
+    . \"\$HOME/.bashrc\"
+    fi
+fi"
+
+  for profiles in  ~/.bash_profile ~/.bash_login ~/.profile ; do
+    if [[ -a $profiles ]] ; then
+       if ! grep -E "(\.|source) .*bashrc" ${profiles} > /dev/null ; then
+       echo HUP
+         echo "${sourceblock}" >> ${profiles}
+       fi
+       bidon=0
+       break
+    fi
+  done
+
+  if [ -z ${bidon} ] ; then
+    echo "${sourceblock}" >> ~/.bash_profile
+  fi
+
+}
 
 install_refresh (){
   # Taking care of the old style install_sct
   sed -i'-sct.bak' -e '
   /^# SPINALCORDTOOLBOX/  {
     N
-    /^SCT_DIR=/ {
+    /SCT_DIR=/ {
       N
       /export PATH.*SCT_DIR\/bin/ {
         N
@@ -39,7 +77,7 @@ install_refresh (){
           /export SCT_DIR PATH/{
             N
             /export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=[0-9]*/ {
-              s|\(.*\n\)\(.*\n\)\(.*\n\)\(.*\n\)\(.*\n\)\(.*\)|\1#\2#\3#\4#\5#\6|
+              s|\(.*\n\)\(S.*\n\)\(.*\n\)\(.*\n\)\(.*\n\)\(.*\)|\1#\2#\3#\4#\5#\6|
               }
             }
           }
@@ -48,28 +86,23 @@ install_refresh (){
     }
   '  ${THE_BASHRC}
 
-  sed -i'-sct.bak' -e "
-  /# SPINALCORDTOOLBOX/ {
-    N
-    /export PATH=\$PATH:.*$SCT_FOLDER_NAME\/bin/ {
-      s|\(# SPINALCORDTOOLBOX \)(.*)\(\nexport PATH=\$PATH:\).*$SCT_FOLDER_NAME/bin|\1 (installed on $(date +%Y-%m-%d\ %H:%M))\2$SCT_DIR/bin|
+  if  grep -qPzo "^# SPINALCORDTOOLBOX.*\nexport .*$SCT_FOLDER_NAME.*" ${THE_BASHRC} > /dev/null ; then
+    sed -i'-sct.bak' -e "
+    /# SPINALCORDTOOLBOX/ {
+      N
+      /export PATH=\$PATH:.*$SCT_FOLDER_NAME\/bin/ {
+        s|\(# SPINALCORDTOOLBOX\).*\(\nexport PATH=\$PATH:\).*$SCT_FOLDER_NAME/bin|\1 (installed on $(date +%Y-%m-%d\ %H:%M))\2$SCT_DIR/bin|
+      }
     }
-  }
-  "  ${THE_BASHRC}
-
-  if  ! grep -qPzo "^# SPINALCORDTOOLBOX.*\nexport .*$SCT_FOLDER_NAME.*" ${THE_BASHRC} ; then
+    "  ${THE_BASHRC}
+  else
     echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
     echo "export PATH=\$PATH:${SCT_DIR}/bin" >> ${THE_BASHRC}
-  fi
+ fi
+
 }
 
-START_DIR=$PWD
-finish (){
-#  Clean at exit
-  cd ${START_DIR}
-}
-trap finish EXIT
-
+# Script
 # Check where the install script is ran from
 if [[ $PWD =~ /spinalcordtoolbox$ ]] ;then
   SCT_SOURCE=${PWD}
@@ -81,7 +114,6 @@ else
    echo I can\'t find SCT source folder \"${SCT_FOLDER_NAME}/\"
 fi
 
-# TODO: deal with OSX which does not have .bashrc (and not sourced in bash_profile)
 if [[ $UID == 0 ]]; then
   # sudo mode
   THE_BASHRC=/etc/profile.d/sct.sh
@@ -91,7 +123,7 @@ else
   # user mode
   THE_BASHRC=${HOME}/.bashrc
   THE_CSHRC=${HOME}/.cshrc
-  INSTALL_DIR=${SCT_SOURCE%/*}
+  INSTALL_DIR="${HOME}"
 fi
 
 # Set install dir
@@ -114,12 +146,14 @@ SCT_DIR=${INSTALL_DIR%/}/${SCT_FOLDER_NAME}
 
 # create fetching variables for Python packages
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
-    # Do something under Mac OS X platformn
+  # Do something under Mac OS X platformn
   OS=osx
   conda_installer=$(find ${SCT_SOURCE}/external -type f -name "Miniconda*OSX*")
   dipy_whl=$(find ${SCT_SOURCE}/external -type f -name "dipy*osx*")
   ornlm_whl=$(find ${SCT_SOURCE}/external -type f -name "ornlm*osx*")
   echo OSX MACHINE
+  #  Deals with the non X nature of OSX !
+  force_bashrc_loading
 elif uname -a | grep -i  linux > /dev/null 2>&1; then
   OS=linux
   conda_installer=$(find ${SCT_SOURCE}/external -type f -name "Miniconda*Linux*")
@@ -163,8 +197,6 @@ pip install --ignore-installed  ${dipy_whl}  ${ornlm_whl}
 echo All requirement installed
 
 # update PATH environment
-# TODO: check if line is there in case of re-installation
-# TODO: deal with OSX which does not source .bashrc: add to bash_profile (create if does not exist)
 if [[ $UID != 0 ]]; then
   while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
     echo -n "Do you want to add the sct_* script to your PATH environment? Yes/No: "
@@ -175,8 +207,10 @@ if [[ $UID != 0 ]]; then
     # assuming bash
     install_refresh
     # (t)csh for good measure
-    echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
-    echo "setenv PATH \"\$PATH:${SCT_DIR}/bin\"" >> ${THE_CSHRC}
+    if ! grep SPINALCORDTOOLBOX ${THE_CSHRC} > /dev/null; then
+        echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
+        echo "setenv PATH \"\$PATH:${SCT_DIR}/bin\"" >> ${THE_CSHRC}
+    fi
   else
      echo Not adding ${INSTALL_DIR} to \$PATH
      echo You can always add it later or call SCT functions with full path ${SCT_DIR}/bin/sct_function
@@ -187,10 +221,11 @@ fi
 find ${SCT_DIR}/bin/ -maxdepth 2 -type f -exec chmod 755 {} \;
 
 # Run check dependencies
-# TODO: update to check_dependencies
-${SCT_DIR}/bin/sct_check_dependences
-echo INSTALLATION DONE
-
-if [[ $UID == 0 ]]; then
-  echo You can add the $SCT_DIR to your $PATH to get acces to the sct tools
+if ${SCT_DIR}/bin/sct_check_dependencies ; then
+   echo INSTALLATION DONE
+  if [[ $UID == 0 ]]; then
+    echo You can add the $SCT_DIR to your $PATH to get acces to the sct tools
+  fi
+else
+   echo INSTALLATION ERROR
 fi
