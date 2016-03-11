@@ -56,13 +56,13 @@ if strcmp(input(end-3:end),'.mat') == 0
     
     param.nii=load_nii(input);
     m_nifti=double(param.nii.img); 
-    dims=param.nii.dims; scales=param.nii.scales;
+    dims=size(m_nifti); scales=param.nii.scales;
     
 else
     load(input);
     m_nifti=m_phantom;
     scales=[1 1 1 1];
-    dims=[size(m_nifti)'; 1];
+    dims=[size(m_nifti)'; 1]; dims=dims(:)';
     param.file_type = '.mat';
     param.orient_init = 'PSL';
     param.orient_new = param.orient_init;
