@@ -34,7 +34,7 @@ install:
   - cd install
   - ./update_bin.sh
   - yes | ./install_sct
-
+  - . $HOME/.bashrc
 script:
   - sct_check_dependencies   # test dependences
   - sct_testing -d 1  # test functions & integrity
