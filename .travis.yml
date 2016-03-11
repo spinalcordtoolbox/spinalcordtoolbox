@@ -30,8 +30,7 @@ install:
   - cd install
   - ./update_bin.sh
   - yes | ./install_sct
-  - source ~/.bashrc
-  - cat ~/.bashrc
+  - source $HOME/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
 script:
   - sct_check_dependencies   # test dependences
