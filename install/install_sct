@@ -6,9 +6,8 @@
 # It downloads the Conda (http://conda.pydata.org/) version
 # of python and install the SCT requirements over it
 #
-# The SCT can be install in place where you dowload it. It
-# is the default installation in user mode. But then do no
-# delete the source code or you will delete the installation too!
+# The SCT can be install in place where you download it. But then do
+# not delete the source code or you will delete the installation too!
 #
 # If you run the installer as super user, the default install is /opt,
 # if you choose this option or any other directory other than the
