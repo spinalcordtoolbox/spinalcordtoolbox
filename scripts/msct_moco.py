@@ -140,8 +140,8 @@ def moco(param):
 
     # delete file target.nii (to avoid conflict if this function is run another time)
     sct.printv('\nRemove temporary file...', verbose)
-    os.remove('target.nii')
-    # sct.run('rm target.nii')
+    #os.remove('target.nii')
+    sct.run('rm target.nii')
 
 
 #=======================================================================================================================
