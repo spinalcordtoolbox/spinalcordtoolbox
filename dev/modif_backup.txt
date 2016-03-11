@@ -45,4 +45,4 @@ sct_get_centerline.py = Fri Oct 2 16:11:34 2015
 sct_dmri_moco.py = Fri Sep 11 10:42:31 2015 
 sct_average_data_within_mask.py = Fri Aug 21 13:49:50 2015 
 sct_maths.py = Fri Oct 2 17:28:42 2015 
-sct_check_dependences.py = Mon Oct 5 19:54:08 2015 
+sct_check_dependencies.py = Mon Oct 5 19:54:08 2015

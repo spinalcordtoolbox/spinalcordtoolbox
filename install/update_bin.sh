@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# Convenience script to creates the boilerplate-script/wrapper of
+# the bin/ directory
+#
+#
+#########################################################################################
+# Copyright (c) 2016 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: PO Quirion
+# License: see the file LICENSE.TXT
+#########################################################################################
 
 # internal stuff or stuff under development that should not be linked
 FILES_TO_REMOVE="msct_nurbs  sct_utils sct_dmri_eddy_correct sct_change_image_type sct_invert_image msct_moco msct_parser msct_smooth sct_viewer sct_denoising_onlm"
@@ -9,6 +18,9 @@ read  -d '' boiler_plate << EOF
 EOF
 
 echo "$boiler_plate"
+
+rm ../bin/* 2> /dev/null
+cp sct_launcher ../bin/.
 
 grep -l "__main__" ../scripts/*.py | while read -r filename ; do
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Check the installation and environment variables of the toolbox and its dependences.
+# Check the installation and environment variables of the toolbox and its dependencies.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -309,7 +309,8 @@ def check_package_version(installed, required, package_name):
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Check the installation and environment variables of the toolbox and its dependences.')
+    parser.usage.set_description('Check the installation and environment variables of the'
+                                 ' toolbox and its dependencies.')
     parser.add_option(name="-c",
                       description="Complete test.",
                       mandatory=False)
