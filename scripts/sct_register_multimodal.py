@@ -269,9 +269,9 @@ def main():
     param.remove_temp_files = remove_temp_files
 
     # Get if input is 3D
-    # sct.printv('\nCheck if input data are 3D...', verbose)
-    # sct.check_if_3d(fname_src)
-    # sct.check_if_3d(fname_dest)
+    sct.printv('\nCheck if input data are 3D...', verbose)
+    sct.check_if_3d(fname_src)
+    sct.check_if_3d(fname_dest)
 
     # check if destination data is RPI
     sct.printv('\nCheck if destination data is RPI...', verbose)

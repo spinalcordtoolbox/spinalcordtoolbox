@@ -86,7 +86,7 @@ Step-by-step procedure (to do for each contrast):
     * value 22: L2-L3
 * Save the mask under: ``labels_vertebral.nii.gz`` (cmd+s).
 * Use the following command to get label coordinates and keep them for later (see below, the LIST_OF_LABELS field).
-  * ``sct_label_utils -i labels_vertebral.nii.gz -p display-voxel`
+  * ``sct_label_utils -i labels_vertebral.nii.gz -p display-voxel``
 * Crop **data_RPI.nii.gz** slightly above the brainstem (if available) and slightly below L2-L3.
   * ``sct_crop_image –i data_RPI.nii.gz –dim 2 XXX -o data_RPI_crop.nii.gz``
 * Report where you are cropping the image in the file **crop.txt** using this format:
@@ -98,7 +98,7 @@ Step-by-step procedure (to do for each contrast):
   * Open ``data_RPI_crop.nii.gz`` with flsview and create a mask (cmd+c).
   * Put labels of value 1 at the center of the cord all along the spinal cord, approximately every 30 slices. Note that you need to put a label at the first slice (z=0) and at the last slice (z=nz) as this file will be used for the straightening of the image.
 * Generate the segmentation using propseg
-  * ``sct_propseg -i data_RPI_crop.nii.gz -t XXX -init-centerline centerline_propseg_RPI.nii.gz`` (here, XXX is t1 or t2 depending on the contrast)
+  * ``sct_propseg -i data_RPI_crop.nii.gz -c XXX -init-centerline centerline_propseg_RPI.nii.gz`` (here, XXX is t1 or t2 depending on the contrast)
   * Check if the segmentation is correct. Since propseg often diverges at edges, you need to crop the segmentation and report the crop values in the file ``crop.txt`` that was previously created. Use this format:
     * zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg (or: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg,ymin_anatomic,ymax_anatomic if you cropped along y at the previous step).
       * N.B.: If you only want to crop the segmentation at the bottom, you can write **max** instead of zmax_seg (e.g.: 15,max  if you are cropping at slice 15).
@@ -115,11 +115,11 @@ Step-by-step procedure (to do for each contrast):
 #Preprocessing for subject XXX
 os.makedirs(path_results + '/T1/XXX')
 os.chdir(path_results + '/T1/XXX')
-sct.run('dcm2nii -o . -r N /Volumes/data_shared/montreal_criugm/errsm_32/16-SPINE_T1/echo_2.09 /*.dcm')
+sct.run('dcm2nii -o . -r N /Volumes/data_shared/montreal_criugm/errsm_32/16-SPINE_T1/echo_2.09/*.dcm')
 sct.run('mv *.nii.gz data.nii.gz')
 sct.run('sct_orientation -i data.nii.gz -s RPI')
 sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x LIST_OF_LABELS')
-sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start  7 -end 559 ')
+sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start 7 -end 559 ')
 f_crop = open('crop.txt', 'w')
 f_crop.write('7,559,0,484')
 f_crop.close()
