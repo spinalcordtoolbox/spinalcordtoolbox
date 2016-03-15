@@ -28,7 +28,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="Name of the dataset.",
                       mandatory=True,
-                      example=['sct_example_data', 'sct_testing_data'])
+                      example=['sct_example_data', 'sct_testing_data', 'PAM50'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -47,8 +47,9 @@ def main(args=None):
 
     # initialization
     verbose = 1
-    url_start = 'https://github.com/neuropoly/'
-    url_end = '/archive/master.zip'
+    dict_url = {'sct_example_data': 'https://github.com/neuropoly/sct_example_data/archive/master.zip',
+                'sct_testing_data': 'https://github.com/neuropoly/sct_testing_data/archive/master.zip',
+                'PAM50': 'https://dl.dropboxusercontent.com/u/20592661/sct/PAM50.zip'}
     tmp_file = 'tmp.data.zip'
 
     # check user arguments
@@ -63,7 +64,7 @@ def main(args=None):
         verbose = int(arguments['-v'])
 
     # Download data
-    url = url_start + data_name +url_end
+    url = dict_url[data_name]
     printv('\nDownload dataset from: '+url, verbose)
     urlretrieve(url, tmp_file)
 
@@ -78,9 +79,10 @@ def main(args=None):
     zf = zipfile.ZipFile(tmp_file)
     zf.extractall()
 
-    # rename folder
-    printv('Rename folder...', verbose)
-    rename(data_name+'-master', data_name)
+    # if downloaded from GitHub, need to remove the "-master" suffix
+    if 'master.zip' in url:
+        printv('Rename folder...', verbose)
+        rename(data_name+'-master', data_name)
 
     # remove zip file
     printv('Remove temporary file...', verbose)

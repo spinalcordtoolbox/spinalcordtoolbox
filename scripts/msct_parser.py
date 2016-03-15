@@ -199,6 +199,7 @@ class Option:
         sct.printv("Check file existence...", 0)
         nii = False
         niigz = False
+        viewer = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
             if self.parser.check_file_exist:
@@ -216,15 +217,20 @@ class Option:
                 nii, niigz = False, True
             param_tmp = param[:-7]
             pass
+        elif param.lower() == "viewer":
+            viewer = True
+            pass
         else:
-            sct.printv("ERROR : File is not a NIFTI image file. Exiting", type='error')
+            sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
 
         if nii:
             return param_tmp+'.nii'
         elif niigz:
             return param_tmp+'.nii.gz'
+        elif viewer:
+            return param
         else:
-            sct.printv("ERROR : File does not exist. Exiting", type='error')
+            sct.printv("ERROR: File "+param+" does not exist. Exiting", type='error')
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
@@ -366,16 +372,15 @@ class Parser:
                 else:
                     self.usage.error("ERROR: argument "+arg+" does not exist. See documentation.")
 
-        if dictionary:
-            # check if all mandatory arguments are provided by the user
-            for option in [opt for opt in self.options if self.options[opt].mandatory]:
-                if option not in dictionary:
-                    self.usage.error('ERROR: ' + option + ' is a mandatory argument.\n')
+        # check if all mandatory arguments are provided by the user
+        for option in [opt for opt in self.options if self.options[opt].mandatory and self.options[opt].deprecated_by is None]:
+            if option not in dictionary:
+                self.usage.error('ERROR: ' + option + ' is a mandatory argument.\n')
 
-            # check if optional arguments with default values are all in the dictionary. If not, add them.
-            for option in [opt for opt in self.options if not self.options[opt].mandatory]:
-                if option not in dictionary and self.options[option].default_value:
-                    dictionary[option] = self.options[option].default_value
+        # check if optional arguments with default values are all in the dictionary. If not, add them.
+        for option in [opt for opt in self.options if not self.options[opt].mandatory]:
+            if option not in dictionary and self.options[option].default_value:
+                dictionary[option] = self.options[option].default_value
 
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
@@ -398,7 +403,7 @@ class Parser:
                             option[i] = path_to_add + value
                         dictionary[key] = option
                     else:
-                        dictionary[key] = path_to_add + option
+                        dictionary[key] = str(path_to_add) + str(option)
             else:
                 sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
 
@@ -507,6 +512,9 @@ Version: """ + str(self.get_sct_version())
                 line = ["  "+opt+" "+type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
 
+        if len(self.arguments)+1 in self.section:
+            self.arguments_string += self.section[len(self.arguments)+1] + '\n'
+
     def refactor_type_value(self, opt):
         if self.arguments[opt].type_value is None:
             type_value = ''
@@ -523,8 +531,7 @@ Version: """ + str(self.get_sct_version())
         self.example = '\n\nEXAMPLE\n' + \
             basename(self.file)
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
-        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
-        for opt in [opt[0] for opt in sorted_arguments if (self.arguments[opt[0]].example)]:
+        for opt in [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].example and not self.arguments[opt[0]].deprecated_by]:
             if type(self.arguments[opt].example) is list:
                 self.example += ' ' + opt + ' ' + str(self.arguments[opt].example[0])
             else:
@@ -626,6 +633,7 @@ class DocSourceForge:
     # Constructor
     def __init__(self, parser, file):
         self.file = file
+        self.parser = parser
         self.header = ''
         self.version = ''
         self.usage = ''
@@ -680,14 +688,15 @@ class DocSourceForge:
         if optional:
             self.arguments_string += '\n\nOPTIONAL ARGUMENTS  |` `\n--------------------|---\n'
             for opt in optional:
-                self.arguments_string += '`'
-                # check if section description has to been displayed
-                if self.arguments[opt].order in self.section:
-                    self.arguments_string += self.section[self.arguments[opt].order] + '\n'
-                # display argument
-                type_value = self.refactor_type_value(opt)
-                line = ["  "+opt+" "+type_value+'`', '|'+self.arguments[opt].description]
-                self.arguments_string += self.tab(line) + '\n'
+                if not self.arguments[opt].deprecated_rm and not self.arguments[opt].deprecated and self.arguments[opt].deprecated_by is None:
+                    self.arguments_string += '`'
+                    # check if section description has to been displayed
+                    if self.arguments[opt].order in self.section:
+                        self.arguments_string += self.section[self.arguments[opt].order] + '\n'
+                    # display argument
+                    type_value = self.refactor_type_value(opt)
+                    line = ["  "+opt+" "+type_value+'`', '|'+self.arguments[opt].description]
+                    self.arguments_string += self.tab(line) + '\n'
 
     def refactor_type_value(self, opt):
         if self.arguments[opt].type_value is None:
@@ -715,6 +724,7 @@ class DocSourceForge:
 
     def generate(self, error=None):
         self.set_header()
+        self.set_description(self.parser.usage.description[2+len('description'):])
         self.set_arguments()
         self.set_usage()
         self.set_example()

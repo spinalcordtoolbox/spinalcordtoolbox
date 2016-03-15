@@ -31,15 +31,15 @@ before_install:
   - echo $HOME
 # Install miniconda
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
-  - export PATH=${HOME}/miniconda/bin:$PATH
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
+  - export PATH=${HOME}/miniconda2/bin:$PATH
   - conda update --yes conda
 
 install:
 # Install requirements
   - cd install/requirements
-  - ./requirements.sh
+  - python requirements.py
   - cd ../../
 # set PATH
   - SCT_DIR="${HOME}/build/neuropoly/spinalcordtoolbox"
@@ -54,7 +54,7 @@ install:
   - ./install/install_external.py
 
 script:
-  - sct_check_dependences   # test dependences
+  - sct_check_dependencies   # test dependences
   - sct_testing -d 1  # test functions & integrity
   - cd install
   - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation

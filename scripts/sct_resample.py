@@ -32,8 +32,8 @@ class Param:
         self.fname_out = ''
         self.new_size = ''
         self.new_size_type = ''
-        self.interpolation = 'trilinear'
-        self.x_to_order = {'nn': 0, 'trilinear': 1, 'spline': 2}
+        self.interpolation = 'linear'
+        self.x_to_order = {'nn': 0, 'linear': 1, 'spline': 2}
         self.mode = 'reflect'  # How to fill the points outside the boundaries of the input, possible options: constant, nearest, reflect or wrap
         # constant put the superior edges to 0, wrap does something weird with the superior edges, nearest and reflect are fine
         self.file_suffix = '_resampled'  # output suffix
@@ -57,7 +57,7 @@ def resample():
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
     path_out, file_out, ext_out = '', file_data, ext_data
     if param.fname_out != '':
-        file_out = sct.extract_fname(param.fname_out)[1]
+        path_out, file_out, ext_out = sct.extract_fname(param.fname_out)
     else:
         file_out += param.file_suffix
     param.fname_out = path_out+file_out+ext_out
@@ -93,7 +93,7 @@ def resample():
     sct.printv('  ' + str(px_new) + ' x ' + str(py_new) + ' x ' + str(pz_new)+ ' x ' + str(pt)+'mm', param.verbose)
 
     zooms = (px, py, pz)  # input_im.hdr.get_zooms()[:3]
-    affine = input_im.hdr.get_base_affine()
+    affine = input_im.hdr.get_qform()  # get_base_affine()
     new_zooms = (px_new, py_new, pz_new)
 
     if type(param.interpolation) == int:
@@ -102,7 +102,7 @@ def resample():
         order = param.x_to_order[param.interpolation]
     else:
         order = 1
-        sct.printv('WARNING: wrong input for the interpolation. Using default value = trilinear', param.verbose, 'warning')
+        sct.printv('WARNING: wrong input for the interpolation. Using default value = linear', param.verbose, 'warning')
 
     new_data, new_affine = dp_iso.reslice(input_im.data, affine, zooms, new_zooms, mode=param.mode, order=order)
 
@@ -119,8 +119,9 @@ def resample():
     new_im.hdr = input_im.hdr
     new_im.hdr.set_zooms(zooms_to_set)
 
-    # Set the sform correctly:
-    new_im.hdr.set_sform(new_im.hdr.get_qform())
+    # Set the new sform and qform:
+    new_im.hdr.set_sform(new_affine)
+    new_im.hdr.set_qform(new_affine)
 
     new_im.save()
 
@@ -128,6 +129,55 @@ def resample():
     sct.printv('\nDone! To view results, type:', param.verbose)
     sct.printv('fslview '+param.fname_out+' &', param.verbose, 'info')
 
+
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Anisotropic resampling of 3D or 4D data.')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Image to segment. Can be 3D or 4D. (Cannot be 2D)",
+                      mandatory=True,
+                      example='dwi.nii.gz')
+    parser.usage.addSection('TYPE OF THE NEW SIZE INPUT : with a factor of resampling, in mm or in number of voxels\n'
+                            'Please choose only one of the 3 options.')
+    parser.add_option(name="-f",
+                      type_value="str",
+                      description="Resampling factor in each dimensions (x,y,z). Separate with \"x\"\n"
+                                  "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
+                      mandatory=False,
+                      example='0.5x0.5x1')
+    parser.add_option(name="-mm",
+                      type_value="str",
+                      description="Resampling size in mm in each dimensions (x,y,z). Separate with \"x\"",
+                      mandatory=False)
+                      # example='0.1x0.1x5')
+    parser.add_option(name="-vox",
+                      type_value="str",
+                      description="Resampling size in number of voxels in each dimensions (x,y,z). Separate with \"x\"",
+                      mandatory=False)
+                      # example='50x50x20')
+    parser.usage.addSection('MISC')
+    parser.add_option(name="-x",
+                      type_value='multiple_choice',
+                      description="Interpolation. nn (nearest neighbor : spline of order 0), linear (spline of order 1), or spline (cubic spline: order 2).\n"
+                                  "You can also choose the order of the spline using an integer from 3 to 5.",
+                      mandatory=False,
+                      default_value='linear',
+                      example=['nn', 'linear', 'spline', '3', '4', '5'])
+
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="Output file name",
+                      mandatory=False,
+                      example='dwi_resampled.nii.gz')
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended.",
+                      mandatory=False,
+                      default_value=1,
+                      example=['0', '1', '2'])
+    return parser
 
 # ======================================================================================================================
 # Start program
@@ -147,53 +197,7 @@ if __name__ == "__main__":
         param.remove_tmp_files = 0
         param.verbose = 1
     else:
-        # Initialize the parser
-        parser = Parser(__file__)
-        parser.usage.set_description('Anisotropic resampling of 3D or 4D data.')
-        parser.add_option(name="-i",
-                          type_value="file",
-                          description="Image to segment. Can be 3D or 4D. (Cannot be 2D)",
-                          mandatory=True,
-                          example='dwi.nii.gz')
-        parser.usage.addSection('TYPE OF THE NEW SIZE INPUT : with a factor of resampling, in mm or in number of voxels\n'
-                                'Please choose only one of the 3 options.')
-        parser.add_option(name="-f",
-                          type_value="str",
-                          description="Resampling factor in each dimensions (x,y,z). Separate with \"x\"\n"
-                                      "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
-                          mandatory=False,
-                          example='0.5x0.5x1')
-        parser.add_option(name="-mm",
-                          type_value="str",
-                          description="Resampling size in mm in each dimensions (x,y,z). Separate with \"x\"",
-                          mandatory=False)
-                          # example='0.1x0.1x5')
-        parser.add_option(name="-vox",
-                          type_value="str",
-                          description="Resampling size in number of voxels in each dimensions (x,y,z). Separate with \"x\"",
-                          mandatory=False)
-                          # example='50x50x20')
-        parser.usage.addSection('MISC')
-        parser.add_option(name="-x",
-                          type_value='multiple_choice',
-                          description="Interpolation. nn (nearest neighbor : spline of order 0), linear (spline of order 1), or spline (cubic spline: order 2).\n"
-                                      "You can also choose the order of the spline using an integer from 3 to 5.",
-                          mandatory=False,
-                          default_value='linear',
-                          example=['nn', 'linear', 'spline', '3', '4', '5'])
-
-        parser.add_option(name="-o",
-                          type_value="file_output",
-                          description="Output file name",
-                          mandatory=False,
-                          example='dwi_resampled.nii.gz')
-        parser.add_option(name="-v",
-                          type_value='multiple_choice',
-                          description="verbose: 0 = nothing, 1 = classic, 2 = expended.",
-                          mandatory=False,
-                          default_value=1,
-                          example=['0', '1', '2'])
-
+        parser = get_parser()
         arguments = parser.parse(sys.argv[1:])
         param.fname_data = arguments["-i"]
         arg = 0

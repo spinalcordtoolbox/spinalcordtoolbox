@@ -42,6 +42,7 @@ import types
 import signal
 import pandas as pd
 import commands
+from time import time, gmtime, strftime
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
@@ -115,7 +116,8 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
     except KeyboardInterrupt:
         return 'KeyboardException'
     except Exception as e:
-        print e
+        sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
+        sct.printv(str(e), 1, 'warning')
         sys.exit(2)
 
 
@@ -152,7 +154,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
 
     try:
         async_results = pool.map_async(function_launcher, data_and_params).get(9999999)
-            # results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        # results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
         pool.close()
         pool.join()  # waiting for all the jobs to be done
         results = process_results(async_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
@@ -162,7 +164,8 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
         pool.join()
         sys.exit(2)
     except Exception as e:
-        print e
+        sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
+        sct.printv(str(e), 1, 'warning')
         pool.terminate()
         pool.join()
         sys.exit(2)
@@ -233,7 +236,10 @@ if __name__ == "__main__":
 
     verbose = arguments["-v"]
 
-    print 'Testing...'
+    # start timer
+    start_time = time()
+
+    print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
     results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
@@ -263,3 +269,7 @@ if __name__ == "__main__":
     print 'Dataset: ' + dataset
     print results_display.to_string()
     print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
+
+    # display elapsed time
+    elapsed_time = time() - start_time
+    print 'Total duration: ' + str(int(round(elapsed_time)))+'s'

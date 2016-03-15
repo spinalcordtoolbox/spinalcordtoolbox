@@ -97,9 +97,9 @@ class Image(object):
             im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        self.orientation = get_orientation(path, filename=True)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
+        self.orientation = get_orientation(self)
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
         self.dim = get_dimension(im_file)
@@ -427,6 +427,30 @@ class Image(object):
         self.data = self.data.max() - self.data
         return self
 
+    @staticmethod
+    def get_permutation_from_orientations(orientation_in, orientation_out):
+        """
+        This function return the permutation necessary to convert a coordinate/image from orientation_in
+        to orientation_out
+        :param orientation_in: string (ex: AIL)
+        :param orientation_out: string (ex: RPI)
+        :return: two lists: permutation list (int) and inversion list (-1 if need to inverse)
+        """
+        opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+
+        # change the orientation of the image
+        perm = [0, 1, 2]
+        inversion = [1, 1, 1]
+        for i, character in enumerate(orientation_in):
+            try:
+                perm[i] = orientation_out.index(character)
+            except ValueError:
+                perm[i] = orientation_out.index(opposite_character[character])
+                inversion[i] = -1
+
+        return perm, inversion
+
+
     def change_orientation(self, orientation='RPI', inversion_orient=False):
         """
         This function changes the orientation of the data by swapping the image axis.
@@ -438,8 +462,8 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            from sct_image import get_orientation
-            self.orientation = get_orientation(self)
+            from sct_image import get_orientation_3d
+            self.orientation = get_orientation_3d(self)
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
@@ -448,15 +472,7 @@ class Image(object):
             self.orientation = orientation
             orientation = temp_orientation
 
-        # change the orientation of the image
-        perm = [0, 1, 2]
-        inversion = [1, 1, 1]
-        for i, character in enumerate(self.orientation):
-            try:
-                perm[i] = orientation.index(character)
-            except ValueError:
-                perm[i] = orientation.index(opposite_character[character])
-                inversion[i] = -1
+        perm, inversion = self.get_permutation_from_orientations(self.orientation, orientation)
 
         # axes inversion
         self.data = self.data[::inversion[0], ::inversion[1], ::inversion[2]]
@@ -483,6 +499,10 @@ class Image(object):
             print 'Error: wrong orientation'
         # update dim
         # http://math.stackexchange.com/questions/122916/what-is-the-inverse-cycle-of-permutation
+        # TODO: change permutations
+        # a = np.array([0,1,2,3,4])
+        # perm = [4,1,2,0,3]
+        # a[perm].tolist() --> [4, 1, 2, 0, 3]
         dim_temp = list(self.dim)
         dim_temp[0] = self.dim[[i for i, x in enumerate(perm) if x == 0][0]]  # nx
         dim_temp[1] = self.dim[[i for i, x in enumerate(perm) if x == 1][0]]  # ny
@@ -587,18 +607,167 @@ class Image(object):
 
             return coordi_pix_list
 
-    def saveSagittalPlan(self, format='.png'):
+    def get_slice(self, plane='sagittal', index=None, seg=None):
+        """
+
+        :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
+        :param index: index of the slice to save (if none, middle slice in the given direction/plan)
+        :param seg: segmentation to add in transparency to the image to save. Type Image.
+        :return slice, slice_seg: ndarrays of the selected slices
+        """
         copy_rpi = Image(self)
         copy_rpi.change_orientation('RPI')
+        if seg is not None:
+            seg.change_orientation('RPI')
         nx, ny, nz, nt, px, py, pz, pt = self.dim
-        sagittal_slice = copy_rpi.data[int(round(nx/2)), :, :]
+        slice = None
+        slice_seg = None
+        if plane == 'sagittal':
+            if index is None:
+                slice = copy_rpi.data[int(round(nx/2)), :, :]
+                if seg is not None:
+                    slice_seg = seg.data[int(round(nx/2)), :, :]
+            else:
+                assert index < nx, 'Index larger than image dimension.'
+                slice = copy_rpi.data[index, :, :]
+                if seg is not None:
+                    slice_seg = seg.data[index, :, :]
+
+        elif plane == 'coronal':
+            if index is None:
+                slice = copy_rpi.data[:, int(round(ny/2)), :]
+                if seg is not None:
+                    slice_seg = seg.data[:, int(round(ny/2)), :]
+            else:
+                assert index < ny, 'Index larger than image dimension.'
+                slice = copy_rpi.data[:, index, :]
+                if seg is not None:
+                    slice_seg = seg.data[:, index, :]
+
+        elif plane == 'axial' or plane == 'transverse':
+            if index is None:
+                slice = copy_rpi.data[:, :, int(round(nz/2))]
+                if seg is not None:
+                    slice_seg = seg.data[:, :, int(round(nz/2))]
+            else:
+                assert index < nz, 'Index larger than image dimension.'
+                slice = copy_rpi.data[:, :, index]
+                if seg is not None:
+                    slice_seg = seg.data[:, :, index]
+        else:
+            from sct_utils import printv
+            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+
+        return (slice, slice_seg)
+
+    #
+    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0, cmap_col='red', path_output='./'):
+        """
+        Save a slice of self in the specified plan.
+
+        :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
+
+        :param index: index of the slice to save (if none, middle slice in the given direction/plan)
+
+        :param format: format to be saved in. default = '.png'
+
+        :param suffix: suffix to add to the image file name.
+
+        :param seg: segmentation to add in transparency to the image to save. Type Image.
+
+        :param thr: threshold to apply to the segmentation
+
+        :param col: colormap description : 'red', 'red-yellow', or 'blue-cyan'
+
+        :return filename_png: file name of the saved image
+        """
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
-        filename_png = copy_rpi.file_name + format
-        plt.imshow(sagittal_slice, cmap=cm.gray, interpolation='nearest')
-        plt.axis('off')
-        plt.savefig(filename_png, bbox_inches='tight')
-        return filename_png
+        from math import sqrt
+        from sct_utils import slash_at_the_end
+        if type(index) is not list:
+            index = [index]
+
+        slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
+        path_output = slash_at_the_end(path_output, 1)
+        if seg is not None:
+            import matplotlib.colors as col
+            color_white = col.colorConverter.to_rgba('white', alpha=0.0)
+            if cmap_col == 'red-yellow':
+                color_red = col.colorConverter.to_rgba('red', alpha=0.7)
+                color_yellow = col.colorConverter.to_rgba('yellow', alpha=0.8)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_yellow, color_red], N=256)
+            elif cmap_col == 'blue-cyan':
+                color_blue = col.colorConverter.to_rgba('blue', alpha=0.7)
+                color_cyan = col.colorConverter.to_rgba('cyan', alpha=0.8)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_blue, color_cyan], N=256)
+            else:
+                color_red = col.colorConverter.to_rgba('red', alpha=0.7)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_red], N=256)
+
+        n_lines = int(sqrt(len(slice_list)))
+        n_col = int(len(slice_list)/n_lines)
+        n_lines += 1
+
+        try:
+            fig = plt.figure(figsize=(n_lines*10, n_col*20))
+            for i, slices in enumerate(slice_list):
+                slice_im, slice_seg = slices
+                plot = fig.add_subplot(n_lines, n_col, i+1)
+                plot.imshow(slice_im, cmap=cm.gray, interpolation='nearest')
+                if index[i] is None:
+                    title = 'mid slice'
+                else:
+                    title = 'slice '+str(index[i])
+                plot.set_title(title)
+                if seg is not None:
+                    slice_seg[slice_seg < thr] = 0
+                    plot.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
+                plt.axis('off')
+
+            # plt.imshow(slice, cmap=cm.gray, interpolation='nearest')
+            # if seg is not None:
+            #     plt.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
+            # plt.axis('off')
+            fname_png = path_output + self.file_name + suffix + format
+            plt.savefig(fname_png, bbox_inches='tight')
+        except RuntimeError, e:
+            from sct_utils import printv
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
+        return fname_png
+
+    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', path_output='./', verbose=1):
+        from sct_utils import printv
+        nx, ny, nz, nt, px, py, pz, pt = self.dim
+        if plane == 'sagittal':
+            max_n_slices = nx
+        elif plane == 'coronal':
+            max_n_slices = ny
+        elif plane == 'axial' or plane == 'transverse':
+            max_n_slices = nz
+        else:
+            max_n_slices = None
+            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+
+        if n_slices > max_n_slices:
+            index_list = range(max_n_slices)
+        elif n_slices == 1:
+            index_list = [int(round(max_n_slices/2))]
+        else:
+            gap = max_n_slices/n_slices
+            index_list = [((i+1)*gap)-1 for i in range(n_slices)]
+        index_list.sort()
+        try:
+            filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list, format=format, path_output=path_output)
+            info_str = 'QC output image: ' + filename_image_png
+            if seg is not None:
+                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
+                info_str += ' & ' + filename_gmseg_image_png
+            printv(info_str, verbose, 'info')
+        except RuntimeError, e:
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
 
 
 

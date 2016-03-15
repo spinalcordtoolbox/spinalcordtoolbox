@@ -19,6 +19,7 @@ import sys
 import commands
 import subprocess
 import re
+import time
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -161,6 +162,66 @@ def checkRAM(os,verbose=1):
         return ram_total
 
 
+class Timer:
+    def __init__(self, number_of_iteration=1):
+        self.start_timer = 0
+        self.time_list = []
+        self.total_number_of_iteration = number_of_iteration
+        self.number_of_iteration_done = 0
+        self.is_started = False
+
+    def start(self):
+        self.start_timer = time.time()
+        self.is_started = True
+
+    def add_iteration(self, num_iteration_done=1):
+        self.number_of_iteration_done += num_iteration_done
+        self.time_list.append(time.time() - self.start_timer)
+        remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
+        time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
+        remaining_time = remaining_iterations * time_one_iteration
+        hours, rem = divmod(remaining_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def iterations_done(self, total_num_iterations_done):
+        if total_num_iterations_done != 0:
+            self.number_of_iteration_done = total_num_iterations_done
+            self.time_list.append(time.time() - self.start_timer)
+            remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
+            time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
+            remaining_time = remaining_iterations * time_one_iteration
+            hours, rem = divmod(remaining_time, 3600)
+            minutes, seconds = divmod(rem, 60)
+            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def stop(self):
+        self.time_list.append(time.time() - self.start_timer)
+        hours, rem = divmod(self.time_list[-1], 3600)
+        minutes, seconds = divmod(rem, 60)
+        printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        self.is_started = False
+
+    def printRemainingTime(self):
+        remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
+        time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
+        remaining_time = remaining_iterations * time_one_iteration
+        hours, rem = divmod(remaining_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        if self.is_started:
+            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        else:
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def printTotalTime(self):
+        hours, rem = divmod(self.time_list[-1], 3600)
+        minutes, seconds = divmod(rem, 60)
+        if self.is_started:
+            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        else:
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+
 #=======================================================================================================================
 # extract_fname
 #=======================================================================================================================
@@ -196,7 +257,12 @@ def get_absolute_path(fname):
 # check_file_exist:  Check existence of a file or path
 #=======================================================================================================================
 def check_file_exist(fname, verbose=1):
-    if os.path.isfile(fname):
+    if fname[0] == '-':
+        # fname should be a warping field that will be inverted, ignore the "-"
+        fname_to_test = fname[1:]
+    else:
+        fname_to_test = fname
+    if os.path.isfile(fname_to_test):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
         pass
@@ -263,8 +329,7 @@ def check_if_3d(fname):
     from msct_image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
-        return False
-        # printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
+        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
     else:
         return True
 
@@ -272,8 +337,8 @@ def check_if_3d(fname):
 # check_if_rpi:  check if data are in RPI orientation
 #=======================================================================================================================
 def check_if_rpi(fname):
-    from sct_image import get_orientation
-    if not get_orientation(fname, filename=True) == 'RPI':
+    from sct_image import get_orientation_3d
+    if not get_orientation_3d(fname, filename=True) == 'RPI':
         printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_image -setorient to reorient your data. Exit program.\n', 1, 'error')
 
 
@@ -352,6 +417,13 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         os.remove(path_out+file_out+ext_out)
     if ext_in != ext_out:
         # Generate output file
+        '''
+        # TRY TO UNCOMMENT THIS LINES AND RUN IT IN AN OTHER STATION THAN EVANS (testing of sct_label_vertebrae and sct_smooth_spinalcord never stops with this lines on evans)
+        if ext_in == '.nii.gz' and ext_out == '.nii':  # added to resolve issue #728
+            run('gunzip -f ' + fname_in)
+            os.rename(path_in + file_in + '.nii', fname_out)
+        else:
+        '''
         from sct_convert import convert
         convert(fname_in, fname_out)
     else:
@@ -384,6 +456,26 @@ def check_if_installed(cmd, name_software):
     if status != 0:
         print('\nERROR: '+name_software+' is not installed.\nExit program.\n')
         sys.exit(2)
+
+
+#=======================================================================================================================
+# check_if_same_space
+#=======================================================================================================================
+# check if two images are in the same space and same orientation
+def check_if_same_space(fname_1, fname_2):
+    from msct_image import Image
+    from numpy import min, nonzero, all, around
+    from numpy import abs as np_abs
+    from numpy import log10 as np_log10
+
+    im_1 = Image(fname_1)
+    im_2 = Image(fname_2)
+    q1 = im_1.hdr.get_qform()
+    q2 = im_2.hdr.get_qform()
+
+    dec = int(np_abs(round(np_log10(min(np_abs(q1[nonzero(q1)]))))) + 1)
+    dec = 4 if dec > 4 else dec
+    return all(around(q1, dec) == around(q2, dec))
 
 
 #=======================================================================================================================

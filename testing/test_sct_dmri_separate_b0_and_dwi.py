@@ -27,7 +27,7 @@ def test(data_path):
     cmd = 'sct_dmri_separate_b0_and_dwi -i ' + data_path + folder_data + file_data[0] \
           + ' -b ' + data_path + folder_data + file_data[1]\
           + ' -a 1'\
-          + ' -o ./'\
+          + ' -ofolder ./'\
           + ' -v 1'\
           + ' -r 0'
     # return
