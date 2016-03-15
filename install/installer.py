@@ -919,7 +919,7 @@ class Installer:
 
         # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
-        cmd = "sct_check_dependences"
+        cmd = "sct_check_dependencies"
         status, output = run(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
@@ -939,8 +939,8 @@ class Installer:
 Installation finished!
 
 If you noticed errors during installation, please start a new Terminal and run:
-sct_check_dependences -c -l
-Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
+sct_check_dependencies -c -l
+Then send the generated file "sct_check_dependencies.log" to <jcohen@polymtl.ca>
 
 To get started, open a new Terminal, go back to the downloaded folder and run: ./batch_processing.sh
 
