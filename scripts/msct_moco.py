@@ -118,7 +118,7 @@ def moco(param):
             # copy transformation
             sct.run('cp '+file_mat[gT[index_good]]+'Warp.nii.gz'+' '+file_mat[fT[it]]+'Warp.nii.gz')
             # apply transformation
-            sct.run('sct_apply_transfo -i '+file_data_splitT_num[fT[it]]+'.nii -d '+file_target+'.nii -w '+file_mat[fT[it]]+'Warp.nii.gz'+' -o '+file_data_splitT_moco_num[fT[it]]+'.nii'+' -p '+param.interp, verbose)
+            sct.run('sct_apply_transfo -i '+file_data_splitT_num[fT[it]]+'.nii -d '+file_target+'.nii -w '+file_mat[fT[it]]+'Warp.nii.gz'+' -o '+file_data_splitT_moco_num[fT[it]]+'.nii'+' -x '+param.interp, verbose)
         else:
             # exit program if no transformation exists.
             sct.printv('\nERROR in '+os.path.basename(__file__)+': No good transformation exist. Exit program.\n', verbose, 'error')
@@ -128,16 +128,20 @@ def moco(param):
     file_data_moco = file_data+suffix
     if todo != 'estimate':
         sct.printv('\nMerge data back along T...', verbose)
-        # cmd = fsloutput + 'fslmerge -t ' + file_data_moco
-        # for indice_index in range(len(index)):
-        #     cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
         from sct_image import concat_data
-        im_list = []
+        # im_list = []
+        fname_list = []
         for indice_index in range(len(index)):
-            im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
-        im_out = concat_data(im_list, 3)
+            # im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
+            fname_list.append(file_data_splitT_moco_num[indice_index] + ext)
+        im_out = concat_data(fname_list, 3)
         im_out.setFileName(file_data_moco + ext)
         im_out.save()
+
+    # delete file target.nii (to avoid conflict if this function is run another time)
+    sct.printv('\nRemove temporary file...', verbose)
+    #os.remove('target.nii')
+    sct.run('rm target.nii')
 
 
 #=======================================================================================================================
