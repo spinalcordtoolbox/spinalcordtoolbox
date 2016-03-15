@@ -26,10 +26,11 @@ import scipy
 import nibabel
 import sct_utils as sct
 from msct_nurbs import NURBS
-from sct_image import get_orientation, set_orientation
+from sct_image import get_orientation_3d, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
 from shutil import move, copyfile
+from msct_parser import Parser
 
 
 # DEFAULT PARAMETERS
@@ -40,7 +41,7 @@ class Param:
         self.verbose = 1  # verbose
         self.step = 1  # step of discretized plane in mm default is min(x_scale,py)
         self.remove_temp_files = 1
-        self.smoothing_param = 50  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
+        self.smoothing_param = 0  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
         self.fname_csa = 'csa.txt'  # output name for txt CSA
         self.file_csa_volume = 'csa_volume.nii.gz'
@@ -48,15 +49,114 @@ class Param:
         self.name_method = 'counting_z_plane'  # for compute_CSA
         self.slices = ''
         self.vertebral_levels = ''
-        self.path_to_template = './label/template'
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
+        self.fname_vertebral_labeling = './label/template/MNI-Poly-AMU_level.nii.gz'
+
+
+def get_parser():
+    """
+    :return: Returns the parser with the command line documentation contained in it.
+    """
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description("""This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='Spinal Cord segmentation',
+                      mandatory=True,
+                      example='seg.nii.gz')
+    parser.add_option(name='-p',
+                      type_value='multiple_choice',
+                      description='type of process to be performed:\n'
+                                  '- centerline: extract centerline as binary file.\n'
+                                  '- length: compute length of the segmentation.\n'
+                                  '- csa: computes cross-sectional area by counting pixels in each.\n'
+                                  '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
+                                  '  - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),\n'
+                                  '  - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).\n',
+                      mandatory=True,
+                      example=['centerline', 'length', 'csa'])
+    parser.usage.addSection('Optional Arguments')
+    parser.add_option(name='-s',
+                      type_value=None,
+                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
+                      mandatory=False,
+                      deprecated_by='-size')
+    parser.add_option(name='-z',
+                      type_value='str',
+                      description= 'Slice range to compute the CSA across (requires \"-p csa\").',
+                      mandatory=False,
+                      example='5:23')
+    parser.add_option(name='-l',
+                      type_value='str',
+                      description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      deprecated_by='-vert',
+                      example='2:9')
+    parser.add_option(name='-vert',
+                      type_value='str',
+                      description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      example='2:9')
+    parser.add_option(name='-t',
+                      type_value='image_nifti',
+                      description='Vertebral labeling file. Only use with flag -vert',
+                      mandatory=False,
+                      default_value='label/template/MNI-Poly-AMU_level.nii.gz',
+                      example='label/template/MNI-Poly-AMU_level.nii.gz')
+    parser.add_option(name='-m',
+                      type_value='multiple_choice',
+                      description='Method to compute CSA',
+                      mandatory=False,
+                      default_value='counting_z_plane',
+                      deprecated_by='-method',
+                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    parser.add_option(name='-method',
+                      type_value='multiple_choice',
+                      description='Method to compute CSA',
+                      mandatory=False,
+                      default_value='counting_z_plane',
+                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    parser.add_option(name='-r',
+                      type_value='multiple_choice',
+                      description= 'Removes the temporary folder and debug folder used for the algorithm at the end of execution',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name='-size',
+                      type_value='int',
+                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
+                      mandatory=False,
+                      default_value=0)
+    parser.add_option(name='-a',
+                      type_value='multiple_choice',
+                      description= 'Algorithm for curve fitting.',
+                      mandatory=False,
+                      default_value='hanning',
+                      example=['hanning', 'nurbs'])
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
+                      description='1: display on, 0: display off (default)',
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
+    parser.add_option(name='-h',
+                      type_value=None,
+                      description='display this help',
+                      mandatory=False)
+
+    return parser
+
 
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args):
+
+    parser = get_parser()
+    arguments = parser.parse(args)
 
     # Initialization
     path_script = os.path.dirname(__file__)
@@ -78,70 +178,49 @@ def main():
     figure_fit = param.figure_fit
     slices = param.slices
     vert_lev = param.vertebral_levels
-    path_to_template = param.path_to_template
-    
-    # Parameters for debug mode
-    if param.debug:
-        fname_segmentation = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'  #path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
-        name_process = 'csa'
-        verbose = 1
-        remove_temp_files = 0
-    else:
-        # Check input parameters
-        try:
-             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:z:a:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts :
-            if opt == '-h':
-                usage()
-            elif opt in ("-i"):
-                fname_segmentation = arg
-            elif opt in ("-p"):
-                name_process = arg
-            elif opt in("-m"):
-                name_method = arg
-            elif opt in('-l'):
-                vert_lev = arg
-            elif opt in('-r'):
-                remove_temp_files = int(arg)
-            elif opt in ('-s'):
-                smoothing_param = int(arg)
-            elif opt in ('-f'):
-                figure_fit = int(arg)
-            elif opt in ('-t'):
-                path_to_template = arg
-            elif opt in ('-v'):
-                verbose = int(arg)
-            elif opt in ('-z'):
-                slices = arg
-            elif opt in ('-a'):
-                param.algo_fitting = str(arg)
+    fname_vertebral_labeling = param.fname_vertebral_labeling
 
-    # display usage if a mandatory argument is not provided
-    if fname_segmentation == '' or name_process == '':
-        usage()
+    if '-i' in arguments:
+        fname_segmentation = arguments['-i']
+    if '-p' in arguments:
+        name_process = arguments['-p']
+    if '-method' in arguments:
+        name_method = arguments['-method']
+    if '-vert' in arguments:
+        vert_lev = arguments['-vert']
+    if '-r' in arguments:
+        remove_temp_files = arguments['-r']
+    if '-size' in arguments:
+        smoothing_param = arguments['-size']
+    if '-t' in arguments:
+        fname_vertebral_labeling = arguments['-t']
+    if '-v' in arguments:
+        verbose = arguments['-v']
+    if '-z' in arguments:
+        slices = arguments['-z']
+    if '-a' in arguments:
+        param.algo_fitting = arguments['-a']
 
-    # display usage if the requested process is not available
-    if name_process not in processes:
-        usage()
+    # # Check input parameters
+    # try:
+    #      opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:l:r:s:t:f:v:z:a:')
+    # except getopt.GetoptError:
+    #     usage()
+    # for opt, arg in opts :
+    #     if opt in ('-f'):
+    #         figure_fit = int(arg)
 
     # display usage if incorrect method
     if name_process == 'csa' and (name_method not in method_CSA):
-        usage()
-    
+        sct.printv(parser.usage.generate(error='ERROR: wrong method for CSA process'))
+
     # display usage if no method provided
     if name_process == 'csa' and method_CSA == '':
-        usage() 
+        sct.printv(parser.usage.generate(error='ERROR: no method for CSA process'))
 
     # update fields
     param.verbose = verbose
 
-    # check existence of input files
-    sct.check_file_exist(fname_segmentation)
-    
     # print arguments
     print '\nCheck parameters:'
     print '.. segmentation file:             '+fname_segmentation
@@ -153,13 +232,14 @@ def main():
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, path_to_template, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
+        compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_param, figure_fit, param.file_csa_volume, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
         sct.printv('\nDone!', param.verbose)
         sct.printv('Output CSA volume: '+param.file_csa_volume, param.verbose, 'info')
         if slices or vert_lev:
-            sct.printv('Output CSA file (averaged): csa_mean.txt', param.verbose, 'info')
-        sct.printv('Output CSA file (all slices): '+param.fname_csa+'\n', param.verbose, 'info')
+            sct.printv('Output file of the mean CSA: csa_mean.txt', param.verbose, 'info')
+            sct.printv('Output file of the volume between the selected slices: volume.txt', param.verbose, 'info')
+        sct.printv('Output file of CSA for each slice: '+param.fname_csa+'\n', param.verbose, 'info')
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
@@ -243,7 +323,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # set_orientation(im_seg, 'RPI')
     # im_seg.setFileName(fname_segmentation_orient)
     # im_seg.save()
-    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz')
+    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz', verbose)
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
@@ -283,7 +363,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
 
     if verbose == 2:
             import matplotlib.pyplot as plt
@@ -356,7 +436,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, path_to_template, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_param, figure_fit, file_csa_volume, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -390,7 +470,6 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
     # # Extract min and max index in Z direction
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
-    # Xp, Yp = (data_seg[:, :, 0] >= 0).nonzero()  # X and Y range
 
     # extract centerline and smooth it
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
@@ -401,25 +480,24 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
 
     # Empty arrays in which CSA for each z slice will be stored
     csa = np.zeros(max_z_index-min_z_index+1)
-    # csa = [0.0 for i in xrange(0, max_z_index-min_z_index+1)]
 
-    for iz in xrange(0, len(z_centerline)):
+    for iz in xrange(min_z_index, max_z_index+1):
 
         # compute the vector normal to the plane
-        normal = normalize(np.array([x_centerline_deriv[iz], y_centerline_deriv[iz], z_centerline_deriv[iz]]))
+        normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
 
         # compute the angle between the normal vector of the plane and the vector z
         angle = np.arccos(np.dot(normal, [0, 0, 1]))
 
         # compute the number of voxels, assuming the segmentation is coded for partial volume effect between 0 and 1.
-        number_voxels = sum(sum(data_seg[:, :, iz+min_z_index]))
+        number_voxels = np.sum(data_seg[:, :, iz])
 
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
-        csa[iz] = number_voxels * px * py * np.cos(angle)
+        csa[iz-min_z_index] = number_voxels * px * py * np.cos(angle)
 
+    sct.printv('\nSmooth CSA across slices...', verbose)
     if smoothing_param:
         from msct_smooth import smoothing_window
-        sct.printv('\nSmooth CSA across slices...', verbose)
         sct.printv('.. Hanning window: '+str(smoothing_param)+' mm', verbose)
         csa_smooth = smoothing_window(csa, window_len=smoothing_param/pz, window='hanning', verbose=0)
         # display figure
@@ -435,6 +513,9 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
             plt.show()
         # update variable
         csa = csa_smooth
+    else:
+        sct.printv('.. No smoothing!', verbose)
+
 
     # Create output text file
     sct.printv('\nWrite text file...', verbose)
@@ -471,7 +552,7 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
     # get orientation of the input data
     im_seg_original = Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
-    sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o '+param.file_csa_volume)
+    sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o '+file_csa_volume)
 
     # come back to parent folder
     os.chdir('..')
@@ -480,67 +561,148 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
     sct.printv('\nGenerate output files...', verbose)
     copyfile(path_tmp+'csa.txt', path_data+param.fname_csa)
     # sct.generate_output_file(path_tmp+'csa.txt', path_data+param.fname_csa)  # extension already included in param.fname_csa
-    sct.generate_output_file(path_tmp+param.file_csa_volume, path_data+param.file_csa_volume)  # extension already included in name_output
+    sct.generate_output_file(path_tmp+file_csa_volume, path_data+file_csa_volume)  # extension already included in name_output
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
+        from sct_extract_metric import save_metrics
 
-        if vert_levels and not path_to_template:
-            sct.printv('\nERROR: Path to template is missing. See usage.\n', 1, 'error')
-            sys.exit(2)
-        elif vert_levels and path_to_template:
-            abs_path_to_template = os.path.abspath(path_to_template)
+        warning = ''
+        if vert_levels and not fname_vertebral_labeling:
+            sct.printv('\nERROR: Vertebral labeling file is missing. See usage.\n', 1, 'error')
 
-        # go back to tmp folder
-        os.chdir(path_tmp)
+        elif vert_levels and fname_vertebral_labeling:
 
-        # create temporary folder
-        sct.printv('\nCreate temporary folder to average csa...', verbose)
-        path_tmp_extract_metric = sct.slash_at_the_end('label_temp', 1)
-        sct.run('mkdir '+path_tmp_extract_metric, verbose)
+            # from sct_extract_metric import get_slices_matching_with_vertebral_levels
+            sct.printv('\tSelected vertebral levels... '+vert_levels)
+            # convert the vertebral labeling file to RPI orientation
+            im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
 
-        # Copying output CSA volume in the temporary folder
-        sct.printv('\nCopy data to tmp folder...', verbose)
-        sct.run('cp ../'+param.file_csa_volume+' '+path_tmp_extract_metric)
+            # get the slices corresponding to the vertebral levels
+            # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, x_centerline_fit, y_centerline_fit, z_centerline)
 
-        # create file info_label
-        # path_fname_seg, file_fname_seg, ext_fname_seg = sct.extract_fname(param.file_csa_volume)
-        create_info_label('info_label.txt', path_tmp_extract_metric, param.file_csa_volume)
+        elif not vert_levels:
+            vert_levels_list = []
 
-        # average CSA
-        if slices:
-            # here we use os.system to display result
-            os.system("sct_extract_metric -i "+path_data+param.file_csa_volume+" -f "+path_tmp_extract_metric+" -m wa -o ../csa_mean.txt -z "+slices)
-        if vert_levels:
-            sct.run('cp -R '+abs_path_to_template+' .')
-            # here we use os.system to display result
-            os.system('sct_extract_metric -i '+path_data+param.file_csa_volume+' -f '+path_tmp_extract_metric+' -m wa -o ../csa_mean.txt -v '+vert_levels)
+        sct.printv('Average CSA across slices...', type='info')
 
-        os.chdir('..')
+        # parse the selected slices
+        slices_lim = slices.strip().split(':')
+        slices_list = range(int(slices_lim[0]), int(slices_lim[1])+1)
 
-        # Remove temporary files
-        print('\nRemove temporary folder used to average CSA...')
-        sct.run('rm -rf '+path_tmp_extract_metric, error_exit='warning')
+        CSA_for_selected_slices = []
+        # Read the file csa.txt and get the CSA for the selected slices
+        with open(path_data+param.fname_csa) as openfile:
+            for line in openfile:
+                line_split = line.strip().split(',')
+                if int(line_split[0]) in slices_list:
+                    CSA_for_selected_slices.append(float(line_split[1]))
+
+        # average the CSA
+        mean_CSA = np.mean(np.asarray(CSA_for_selected_slices))
+        std_CSA = np.std(np.asarray(CSA_for_selected_slices))
+
+        sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
+
+        # write result into output file
+        save_metrics([0], [file_data], slices, [mean_CSA], [std_CSA], path_data + 'csa_mean.txt', path_data+file_csa_volume, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^3)', '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+
+        # compute volume between the selected slices
+        sct.printv('Compute the volume in between the selected slices...', type='info')
+        nb_vox = np.sum(data_seg[:, :, slices_list])
+        volume = nb_vox*px*py*pz
+        sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
+
+        # write result into output file
+        save_metrics([0], [file_data], slices, [volume], [np.nan], path_data + 'volume.txt', path_data+file_data, 'nb_voxels x px x py x pz (in mm^3)', '', actual_vert=vert_levels_list, warning_vert_levels=warning)
 
     # Remove temporary files
     if remove_temp_files:
-        print('\nRemove temporary files...')
+        sct.printv('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp, error_exit='warning')
 
 
-#=======================================================================================================================
-# create text file info_label.txt
-#=======================================================================================================================
-def create_info_label(file_name, path_folder, fname_seg):
+# ======================================================================================================================
+# Find min and max slices corresponding to vertebral levels based on the fitted centerline coordinates
+# ======================================================================================================================
+def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels, vertebral_labeling_data, x_centerline_fit, y_centerline_fit, z_centerline):
 
-    os.chdir(path_folder)
-    file_info_label = open(file_name, 'w')
-    file_info_label.write('# Spinal cord segmentation\n')
-    file_info_label.write('# ID, name, file\n')
-    file_info_label.write('0, mean CSA, '+fname_seg)
-    file_info_label.close()
-    os.chdir('..')
+    # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
+    vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
 
+    # If only one vertebral level was selected (n), consider as n:n
+    if len(vert_levels_list) == 1:
+        vert_levels_list = [vert_levels_list[0], vert_levels_list[0]]
+
+    # Check if there are only two values [start_level, end_level] and if the end level is higher than the start level
+    if (len(vert_levels_list) > 2) or (vert_levels_list[0] > vert_levels_list[1]):
+        sct.printv('\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n', type='error')
+
+    # Extract the vertebral levels available in the metric image
+    vertebral_levels_available = np.array(list(set(vertebral_labeling_data[vertebral_labeling_data > 0])))
+
+    # Check if the vertebral levels selected are available
+    warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
+    min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
+    max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
+    if vert_levels_list[0] < min_vert_level_available:
+        vert_levels_list[0] = min_vert_level_available
+        warning.append('WARNING: the bottom vertebral level you selected is lower to the lowest level available --> '
+                       'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
+                       # warning to write it later in the .txt output file
+        sct.printv('WARNING: the bottom vertebral level you selected is lower to the lowest ' \
+                                          'level available \n--> Selected the lowest vertebral level available: '+\
+              str(int(vert_levels_list[0])), type='warning')
+
+    if vert_levels_list[1] > max_vert_level_available:
+        vert_levels_list[1] = max_vert_level_available
+        warning.append('WARNING: the top vertebral level you selected is higher to the highest level available --> '
+                       'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
+        # warning to write it later in the .txt output file
+
+        sct.printv('WARNING: the top vertebral level you selected is higher to the highest ' \
+                                          'level available \n--> Selected the highest vertebral level available: ' + \
+              str(int(vert_levels_list[1])), type='warning')
+
+    if vert_levels_list[0] not in vertebral_levels_available:
+        distance = vertebral_levels_available - vert_levels_list[0]  # relative distance
+        distance_min_among_negative_value = min(abs(distance[distance < 0]))  # minimal distance among the negative
+        # relative distances
+        vert_levels_list[0] = vertebral_levels_available[distance == distance_min_among_negative_value]  # element
+        # of the initial list corresponding to this minimal distance
+        warning.append('WARNING: the bottom vertebral level you selected is not available --> Selected the nearest '
+                       'inferior level available: ' + str(int(vert_levels_list[0])))
+        sct.printv('WARNING: the bottom vertebral level you selected is not available \n--> Selected the ' \
+                             'nearest inferior level available: '+str(int(vert_levels_list[0])), type='warning')  # record the
+        # warning to write it later in the .txt output file
+
+    if vert_levels_list[1] not in vertebral_levels_available:
+        distance = vertebral_levels_available - vert_levels_list[1]  # relative distance
+        distance_min_among_positive_value = min(abs(distance[distance > 0]))  # minimal distance among the negative
+        # relative distances
+        vert_levels_list[1] = vertebral_levels_available[distance == distance_min_among_positive_value]  # element
+        # of the initial list corresponding to this minimal distance
+        warning.append('WARNING: the top vertebral level you selected is not available --> Selected the nearest superior'
+                       ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in the .txt output file
+
+        sct.printv('WARNING: the top vertebral level you selected is not available \n--> Selected the ' \
+                             'nearest superior level available: ' + str(int(vert_levels_list[1])), type='warning')
+
+    # Find slices included in the vertebral levels wanted by the user
+    sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
+    nz = len(z_centerline)
+    matching_slices_centerline_vert_labeling = []
+    for i_z in range(0, nz):
+        # if the centerline is in the vertebral levels asked by the user, record the slice number
+        if vertebral_labeling_data[np.round(x_centerline_fit[i_z]), np.round(y_centerline_fit[i_z]), z_centerline[i_z]] in range(vert_levels_list[0], vert_levels_list[1]+1):
+            matching_slices_centerline_vert_labeling.append(z_centerline[i_z])
+
+    # now, find the min and max slices that are included in the vertebral levels
+    slices = str(min(matching_slices_centerline_vert_labeling))+':'+str(max(matching_slices_centerline_vert_labeling))
+    sct.printv('\t'+slices)
+
+    return slices, vert_levels_list, warning
 
 #=======================================================================================================================
 # b_spline_centerline
@@ -645,51 +807,6 @@ def edge_detection(f):
     return mag
 
 
-# Print usage
-# ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  This function performs various types of processing from the spinal cord segmentation:
-
-USAGE
-  """+os.path.basename(__file__)+"""  -i <segmentation> -p <process>
-
-MANDATORY ARGUMENTS
-  -i <segmentation>     spinal cord segmentation (e.g., use sct_segmentation_propagation)
-  -p <process>          type of process to be performed:
-                        - centerline: extract centerline as binary file.
-                        - length: compute length of the segmentation
-                        - csa: computes cross-sectional area by counting pixels in each
-                          slice and then geometrically adjusting using centerline orientation. Outputs:
-                          - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),
-                          - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).
-
-OPTIONAL ARGUMENTS
-  -s <window_smooth>    Window size (in mm) for smoothing CSA. 0 for no smoothing. Default="""+str(param_default.smoothing_param)+"""
-  -z <zmin:zmax>        Slice range to compute the CSA across (requires \"-p csa\").
-                          Example: 5:23. First slice is 0.
-                          You can also select specific slices using commas. Example: 0,2,3,5,12
-  -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p csa\").
-                          Example: 2:9 for C2 to T2.
-  -t <path_template>    Path to warped template. Default: ./label/template. Only use with flag -l
-  -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
-  -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
-  -a {hanning,nurbs}    Algorithm for curve fitting. Default="""+str(param_default.algo_fitting)+"""
-  -h                    Help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p csa\n
-  To compute CSA across vertebral levels C2 to C4:
-  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p csa -t label/template -l 2:4\n"""
-
-    # exit program
-    sys.exit(2)
-
 
 # START PROGRAM
 # =========================================================================================
@@ -698,4 +815,4 @@ if __name__ == "__main__":
     param = Param()
     param_default = Param()
     # call main function
-    main()
+    main(sys.argv[1:])

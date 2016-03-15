@@ -58,18 +58,18 @@ j_disp(fname_log,['.. ',path_dicom])
 
 % get scaling info
 j_disp(fname_log,['\nRead dicom to get scaling factors...'])
-scaling_factor = zeros(1,nb_files);
 for i_file = 1:nb_files
 	fname = [path_dicom,filesep,list_fname(i_file).name];
+    dcmhd=dicominfo(fname);
 	fid = fopen(fname,'r','ieee-le');
 	fseek(fid,1,'bof');
 	dcm = fread(fid,20000,'*char')';
     fclose(fid);
 	ind_scale = strfind(dcm,'Scale Factor');
- 	scaling_factor(i_file) = sscanf(dcm(ind_scale+14:ind_scale+20),'%f');
+ 	scaling_factor(dcmhd.InstanceNumber) = sscanf(dcm(ind_scale+14:ind_scale+20),'%f');
 % 	hdr = dicominfo(fname);
 % 	scaling_factor(i_file) = str2num(hdr.ImageComments(15:21));
-	j_disp(fname_log,['.. ',list_fname(i_file).name,' --> Scaling factor = ',num2str(scaling_factor(i_file))])
+	j_disp(fname_log,['.. ',list_fname(i_file).name,' --> Scaling factor = ',num2str(scaling_factor(dcmhd.InstanceNumber))])
 end
 
 % save to mat file
@@ -88,7 +88,7 @@ numT = j_numbering_local(nb_files,4,0);
 
 % Adjust scaling for each file
 j_disp(fname_log,['\nAdjust scaling for each file...'])
-for i_file = 1:nb_files
+for i_file = 1:length(scaling_factor)
 	fname_nifti_split = ['tmp.data_splitT_',numT{i_file}];
 	fname_nifti_split_scaled = ['tmp.data_splitT_scaled_',numT{i_file}];	
 	cmd = ['fslmaths ',fname_nifti_split,' -div ',num2str(scaling_factor(i_file)),' ',fname_nifti_split_scaled,' -odt float'];
@@ -101,7 +101,7 @@ end
 j_disp(fname_log,['\nMerge back...'])
 fname_nifti_scaled = [fname_nifti,'_scaled'];
 cmd = ['fslmerge -t ',fname_nifti_scaled];
-for iT = 1:nb_files
+for iT = 1:length(scaling_factor)
 	cmd = cat(2,cmd,[' tmp.data_splitT_scaled_',numT{iT}]);
 end
 j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end

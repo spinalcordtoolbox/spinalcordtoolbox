@@ -10,7 +10,7 @@ j_disp(log_spline,['\nSmoothing Patient Motion...'])
 % LOAD MATRIX
 [list, path]=sct_tools_ls(fname_mat);
 
-Z_index=cellfun(@(x) cell2mat(textscan(x,'%*[mat.T]%*u%*[_Z]%u%*[.txt]')),list);
+Z_index=double(round(cellfun(@(x) cell2mat(textscan(x,'%*[mat.T]%*u%*[_Z]%u%*[.txt]')),list)));
 T=cellfun(@(x) cell2mat(textscan(x,'%*[mat.T]%u%*[_Z]%*u%*[.txt]')),list); T=single(T);
 j_progress('loading matrix...')
 for imat=1:length(list), j_progress(imat/length(list)); M_tmp{imat}=load([path list{imat}]); X(imat)=M_tmp{imat}(1,4); Y(imat)=M_tmp{imat}(2,4); end
@@ -38,7 +38,7 @@ ind_ab = inputdlg('Enter space-separated numbers:',...
              'Volume# before abrupt motion (starting at 1)',[1 150]);
 if isempty(ind_ab), ind_ab=[]; else ind_ab = str2num(ind_ab{:}); end
 j_disp(log_spline,['Abrupt motion on Volume #: ' num2str(ind_ab)])
-ind_ab=[0 ind_ab max(T)];
+ind_ab=double([0 ind_ab max(T)]);
 
 
 
@@ -46,7 +46,7 @@ ind_ab=[0 ind_ab max(T)];
 %% GENERATE SPLINE
 msgbox({'Use the slider (figure 28, bottom) to calibrate the smoothness of the regularization along time' 'Press any key when are done..'})
 
-hsl = uicontrol('Style','slider','Min',-10,'Max',10,...
+hsl = uicontrol('Style','slider','Min',-10,'Max',0,...
                 'SliderStep',[1 1]./10,'Value',-2,...
                 'Position',[20 20 200 20]);
 set(hsl,'Callback',@(hObject,eventdata) GenerateSplines(X,Y,T,Z_index,ind_ab,10^(get(hObject,'Value')),color ))
@@ -108,20 +108,21 @@ drawnow;
 
 
 function M_motion_t_smooth = spline(T,M_motion_t,smoothness,Tout)
-M_motion_t_smooth=smoothn_x(T,M_motion_t,Tout,smoothness,1);
+ M_motion_t_smooth=smoothn_x(T,M_motion_t,Tout,10000*smoothness,1);
 
-% 
+
 % %% Fit: 'sct_moco_spline'.
 % [xData, yData] = prepareCurveData( T, M_motion_t );
 % % Set up fittype and options.
 % ft = fittype( 'smoothingspline' );
 % opts = fitoptions( ft );
 % opts.SmoothingParam = smoothness;
+% opts.Robust='Bisquare';
 % 
 % % Fit model to data.
 % [fitresult, gof] = fit( xData, yData, ft, opts );
-% M_motion_t = feval(fitresult,T);
-% 
+% M_motion_t_smooth = feval(fitresult,Tout);
+% % 
 % 
 % 
 % 
