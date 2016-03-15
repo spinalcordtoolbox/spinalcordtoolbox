@@ -212,8 +212,10 @@ class Transform:
             from sct_image import concat_data
             import glob
             path_out, name_out, ext_out = sct.extract_fname(fname_out)
-            im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]
-            im_out = concat_data(im_list, 3)
+            # im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]
+            # concat_data use to take a list of image in input, now takes a list of file names to open the files one by one (see issue #715)
+            fname_list = glob.glob('data_reg_T*.nii')
+            im_out = concat_data(fname_list, 3)
             im_out.setFileName(name_out+ext_out)
             im_out.save()
             os.chdir('..')
