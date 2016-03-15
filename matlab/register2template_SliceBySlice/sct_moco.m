@@ -8,7 +8,7 @@ sct_unix(['fslroi data.nii data_ref.nii ' num2str(ref-1) ' 1'])
 sct_unix(['sct_image -i data_ref.nii.gz -setorient RPI'])
 dataT=sct_splitTandrename('data.nii');
 for it=1:length(dataT)
-    sct_unix(['sct_register_multimodal -i ' dataT{it} ' -d data_ref_RPI.nii.gz -p step=1,algo=slicereg2d_translation,metric=CC']);
+    sct_unix(['sct_register_multimodal -i ' dataT{it} ' -d data_ref_RPI.nii.gz -param step=1,algo=translation,slicewise=1,metric=CC']);
     dataT{it} = [sct_tool_remove_extension(dataT{it},0) '_reg.nii.gz'];
 end
 
