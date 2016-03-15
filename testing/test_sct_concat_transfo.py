@@ -18,7 +18,7 @@ import commands
 def test(data_path):
 
     # parameters
-    folder_data = ['t2/', 'mt/', 'template/']
+    folder_data = ['t2/', 'mt/', 'template/template/']
     file_data = ['warp_template2anat.nii.gz', 'warp_template2mt.nii.gz', 'MNI-Poly-AMU_T2.nii.gz']
 
     # define command

@@ -22,6 +22,7 @@ import os
 from numpy import asarray, sqrt
 import nibabel
 from sct_utils import printv
+from msct_parser import Parser
 
 
 # PARAMETERS
@@ -46,41 +47,26 @@ def main():
         tmask = '0'
         zmask = '445'
     else:
-        try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:m:t:z:v:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            # no option supplied
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in ("-i"):
-                fname_src = arg
-                exist_image(fname_src)
-            elif opt in ("-m"):
-                fname_mask = arg
-                exist_image(fname_mask)
-            elif opt in ("-t"):
-                tmask = arg
-            elif opt in ("-z"):
-                zmask = arg
-            elif opt in ("-v"):
-                verbose = int(arg)
+        parser = get_parser()
+        arguments = parser.parse(sys.argv[1:])
 
+        fname_src = arguments['-i']
+        fname_mask = arguments['-m']
 
-    # check mandatory arguments
-    if fname_src == '' or fname_mask == '':
-        usage()
+        if '-nvol' in arguments:
+            tmask = arguments['-nvol']
+        if '-z' in arguments:
+            zmask = arguments['-z']
+        if '-v' in arguments:
+            verbose = int(arguments['-v'])
 
     # print arguments
     if verbose:
         print '\nCheck input parameters...'
         print '.. Image:    '+fname_src
         print '.. Mask:     '+fname_mask
-        print '.. tmask:    '+tmask
-        print '.. zmask:    '+zmask
+        print '.. tmask:    '+str(tmask)
+        print '.. zmask:    '+str(zmask)
 
     # Extract path, file and extension
     #path_src, file_src, ext_src = extract_fname(fname_src)
@@ -112,12 +98,13 @@ def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=1):
     if tmask == '':
         data_mask = header_mask.get_data()
     else:
-        data_mask = header_mask.get_data()[:,:,:,int(tmask)]
+        assert len(header_mask.get_data().shape) == 4, 'ERROR: mask is not 4D, cannot use option -nvol.'
+        data_mask = header_mask.get_data()[:,:,:,tmask]
 
     # if user specified zmin and zmax, put rest of slices to 0
     if zmask != '':
-        data_mask[:,:,:int(zmask)] = 0
-        data_mask[:,:,int(zmask)+1:] = 0
+        data_mask[:,:,:zmask] = 0
+        data_mask[:,:,zmask+1:] = 0
 
     # find indices of non-zero elements the mask
     ind_nonzero = data_mask.nonzero()
@@ -149,63 +136,42 @@ def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=1):
     # Display created files
 
 
-# Extracts path, file and extension
-# ==========================================================================================
-def extract_fname(fname):
-    # extract path
-    path_fname = os.path.dirname(fname)+'/'
-    # check if only single file was entered (without path)
-    if path_fname == '/':
-        path_fname = ''
-    # extract file and extension
-    file_fname = fname
-    file_fname = file_fname.replace(path_fname,'')
-    file_fname, ext_fname = os.path.splitext(file_fname)
-    # check if .nii.gz file
-    if ext_fname == '.gz':
-        file_fname = file_fname[0:len(file_fname)-4]
-        ext_fname = ".nii.gz"
-    return path_fname, file_fname, ext_fname
-
-
-# Print usage
-# ==========================================================================================
-def usage():
-    path_func, file_func, ext_func = extract_fname(sys.argv[0])
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        'Average data within mask. Compute a weighted average if mask is non-binary (values distributed ' \
-        'between 0 and 1).\n' \
-        '\n' \
-        'USAGE\n' \
-        +file_func+ext_func+' -i <inputvol> -m <mask>\n\n' \
-        '' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i inputvol          image to extract values from\n' \
-        '  -m mask              binary or weighted mask (values between 0 and 1).\n' \
-        '' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -t numbvol           volume number (if mask is 4D).\n' \
-        '  -z slice             slice number to compute average on (other slices will not be considered)\n' \
-        '  -v verbose           verbose. 0 or 1. (default=1).\n' \
-        '\n' \
-
-    sys.exit(2)
-
-# Check existence of a file
-# ==========================================================================================
-def exist_image(fname):
-    if os.path.isfile(fname) or os.path.isfile(fname+'.nii') or os.path.isfile(fname+'.nii.gz'):
-        pass
-    else:
-        print('\nERROR: '+fname+' does not exist. Exit program.\n')
-        sys.exit(2)
-
-
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Average data within mask. Compute a weighted average if mask is non-binary (values distributed between 0 and 1).')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Image to extract values from",
+                      mandatory=True,
+                      example='t2.nii.gz')
+    parser.add_option(name="-m",
+                      type_value="file",
+                      description="Binary or weighted mask (values between 0 and 1).",
+                      mandatory=True,
+                      example='t2_seg.nii.gz')
+    parser.add_option(name="-nvol",
+                      type_value="int",
+                      description="Volume number (if mask is 4D).",
+                      mandatory=False,
+                      example='2')
+    parser.add_option(name="-t",
+                      type_value=None,
+                      description="Volume number (if mask is 4D).",
+                      deprecated_by="-nvol",
+                      mandatory=False)
+    parser.add_option(name="-z",
+                      type_value="int",
+                      description="Slice number to compute average on (other slices will not be considered).",
+                      mandatory=False,
+                      example='5')
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
+    return parser
 
 # START PROGRAM
 # ==========================================================================================

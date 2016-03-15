@@ -1,17 +1,61 @@
 # CHANGES TO RELEASE
 
-##2.1 (TBD)
+##TBD
+- NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
+- NEW: **sct_propseg**: now accepts a correction solution for sct_propseg in case of missing CSF/SC contrast and/or artefacts (see issue #664 for details)
+- NEW: **sct_propseg**: added flag to open a viewer for initializing spinal cord segmentation by manually providing a few points (issue #741)
+- NEW: package now includes python (from miniconda), which simplifies the installation and allows users to have another Python installed without generating conflicts.
+- BUG: Fixed issues #715, #719
+- BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
+- OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #350, #404, #414, #499, #650, #735, #737, #749
+- OPT: **sct_register_to_template**: now uses slicewise rigid transfo at first step (instead of slicereg), which improves accuracy (issue #666)
+- NEW: **sct_dmri_create_noisemask**: Identification and estimation of noise in the diffusion signal, implemented by the Dipy software project (http://nipy.org/dipy/), based on the PIESNO method
+
+##2.2.3 (2016-02-04)
+- BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
+
+##2.2.2 (2016-01-31)
+- OPT: **sct_dmri_moco**: added flag "-bvalmin" to specify b=0 threshold and improved reading of bval file.
+
+##2.2.1 (2016-01-29)
+- BUG: **sct_dmri_moco**: fixed bug related to the use of mask
+- BUG: **sct_dmri_moco**: fixed bug in the algorithm (iterative average of target DWI volume)
+
+##2.2 (2016-01-23)
+- BUG: Fixed major issue during installation (issue #708)
+- BUG: **sct_process_segmentation**: fixed bug occuring with small FOV (issue #706)
+
+##2.1.1 (2016-01-15)
+- BUG: **sct_resample**: fixed issue #691
+- OPT: **sct_segment_graymatter**: improved robustness of normalization
+- OPT: **sct_process_segmentation**: default parameter does not smooth CSA results anymore
+
+##2.1 (2015-12-01)
 - NEW: **sct_testing**: test SCT functions and their integrity
 - NEW: **sct_maths**: performs basic operations on images. Similar to fslmaths.
 - NEW: **sct_get_centerline -method auto**: uses advanced image processing methods for finding the spinal cord centerline automatically on any type of contrast. This script should be followed by sct_propseg for finer cord segmentation.
 - NEW: **sct_label_vertebrae**: can automatically label vertebral levels given an anatomical scan, a centerline and few prior info.
 - NEW: **sct_segment_graymatter**: segment spinal cord gray matter using multi-atlas approach from Asman et al.
-- NEW: **sct_register_graymatter**: improve registration to the template using gray matter segmentation
-- NEW: no more dependence with FSL
-- NEW: no more dependence with c3d
+- NEW: **sct_process_segmentation**: feature to estimate CSA based on labels
 - NEW: **sct_label_utils**: new functionality for creating labels based on vertebral labeling
+- NEW: added "-qc" flag to some functions to output png images for quality control.
 - BUG: **install_patch**: now possible to install as non-admin (issues #380, #434)
+- BUG: **sct_extract_metric**: fix the case when averaging labels from different clusters with method map
+- INST: no more dependence with FSL
+- INST: no more dependence with c3d
 - OPT: **sct_straighten_spinalcord**: improved accuracy (issues #371, #425, #452, #472)
+- OPT: **sct_registration_to_template**: improved accuracy
+- REF: harmonization of flags. Most flags from v2.0 still work but a message of deprecation is sent.
+
+##2.1_beta21 (2015-11-30)
+- **sct_process_segmentation**: fixed issue with computation of volume based on vertebral level (slice selection now using centerline)
+
+##2.1_beta20 (2015-11-30)
+- fixed compatibility with new PAM50 template
+
+##2.1_beta19 (2015-11-25)
+- harmonized flags
+- **sct_process_segmentation**: now computes volume
 
 ##2.0.6 (2015-06-30)
 - BUG: **sct_process_segmentation**: fixed bug of output file location (issue #395)

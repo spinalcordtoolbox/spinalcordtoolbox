@@ -115,7 +115,7 @@ def main():
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
-    sct.run('sct_smooth_spinalcord -i data_up.nii -c data_up.nii'+' -s '+str(smoothing_sigma)+' -r '+str(remove_temp_files)+' -v '+str(verbose), verbose)
+    sct.run('sct_smooth_spinalcord -i data_up.nii -s data_up.nii'+' -smooth '+str(smoothing_sigma)+' -r '+str(remove_temp_files)+' -v '+str(verbose), verbose)
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
