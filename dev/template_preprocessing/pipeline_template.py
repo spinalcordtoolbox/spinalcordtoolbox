@@ -70,6 +70,11 @@ folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
 # removed because of stitching issue
 # ['TM', folder_data_marseille+'/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/TM_T057c/01_0105_t2-composing'],
 
+"""
+
+
+                 """
+
 # define subject
 SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
                  ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
@@ -129,7 +134,7 @@ height_of_template_space = 1100
 x_size_of_template_space = 200
 y_size_of_template_space = 200
 number_labels_for_template = 20  # vertebral levels
-straightening_parameters = '-params bspline_meshsize=5x5x15'
+straightening_parameters = '-params algo_fitting=nurbs,bspline_meshsize=5x5x15'
 
 class TimeObject:
     def __init__(self, number_of_subjects=1):
@@ -187,24 +192,25 @@ timer['align'] = TimeObject(number_of_subjects=1)
 def main():
     timer['T1'].start()
     # Processing of T1 data for template
-    do_preprocessing('T1')
-    create_cross('T1')
-    push_into_templace_space('T1')
-    average_levels('T1')
+    #do_preprocessing('T1')
+    #create_cross('T1')
+    #push_into_templace_space('T1')
+    #average_levels('T1')
     timer['T1'].stop()
 
     timer['T2'].start()
     # Processing of T2 data for template
-    do_preprocessing('T2')
-    create_cross('T2')
-    push_into_templace_space('T2')
-    average_levels('T2')
+    #do_preprocessing('T2')
+    #create_cross('T2')
+    #push_into_templace_space('T2')
+    #average_levels('T2')
     timer['T2'].stop()
 
-    timer['align'].start()
-    average_levels('both')
-    align_vertebrae('T1')
+    #timer['align'].start()
+    #average_levels('both')
+    #align_vertebrae('T1')
     align_vertebrae('T2')
+    timer['T2'].stop()
     timer['align'].stop()
 
     sct.printv('T1 time:')
@@ -348,8 +354,7 @@ def do_preprocessing(contrast):
             sct.run('sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz')
             sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz seg_and_labels.nii.gz')
         else:
-            sct.run(
-                'sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+            sct.run('sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
             sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz seg_and_labels.nii.gz')
 
 
@@ -367,7 +372,7 @@ def do_preprocessing(contrast):
         # - warp_curve2straight.nii.gz
         # - data_RPI_crop_normalized_straight.nii.gz
         print '\nStraightening image using centerline...'
-        cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -c ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -a nurbs -o data_RPI_crop_normalized_straight.nii.gz '+straightening_parameters)
+        cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -s ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -o data_RPI_crop_normalized_straight.nii.gz '+straightening_parameters)
         #sct.printv(cmd_straighten)
         sct.run(cmd_straighten)
 
