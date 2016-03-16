@@ -22,7 +22,6 @@
 
 
 # TODO add some doc to the installer
-
 SCT_FOLDER_NAME="spinalcordtoolbox"
 
 echo "Welcome to the SCT installer!"
@@ -47,7 +46,7 @@ fi"
 
   for profiles in  ~/.bash_profile ~/.bash_login ~/.profile ; do
     if [[ -a $profiles ]] ; then
-       if ! grep -E "(\.|source) .*bashrc" ${profiles} > /dev/null ; then
+       if ! grep -E "(\.|source) .*bashrc" ${profiles} > /dev/null 2>&1 ; then
        echo HUP
          echo "${sourceblock}" >> ${profiles}
        fi
@@ -85,7 +84,7 @@ install_refresh (){
     }
   '  ${THE_BASHRC}
 
-  if  grep -qPzo "^# SPINALCORDTOOLBOX.*\nexport .*$SCT_FOLDER_NAME.*" ${THE_BASHRC} > /dev/null ; then
+  if  grep -A 1 "^# SPINALCORDTOOLBOX" ${THE_BASHRC} | grep "^export .*$SCT_FOLDER_NAME.*" ${THE_BASHRC} > /dev/null ; then
     sed -i'-sct.bak' -e "
     /# SPINALCORDTOOLBOX/ {
       N
@@ -103,14 +102,16 @@ install_refresh (){
 
 # Script
 # Check where the install script is ran from
-if [[ $PWD =~ /spinalcordtoolbox$ ]] ;then
+if [[ $PWD =~ /$SCT_FOLDER_NAME$ ]] ;then
   SCT_SOURCE=${PWD}
-elif  [[ $PWD =~ /spinalcordtoolbox/install$ ]] ;then
+elif  [[ $PWD =~ /$SCT_FOLDER_NAME/install$ ]] ;then
   SCT_SOURCE=${PWD%/install}
-elif  [ ls $SCT_FOLDER_NAME ] ;then
+elif   ls $SCT_FOLDER_NAME  ;then
   SCT_SOURCE=${PWD}/${SCT_FOLDER_NAME}
 else
    echo I can\'t find SCT source folder \"${SCT_FOLDER_NAME}/\"
+   echo Asumming I am in /install folder
+   SCT_SOURCE=${PWD%/install}
 fi
 
 if [[ $UID == 0 ]]; then
@@ -173,17 +174,17 @@ fi
 
 # Copy files to destination directory
 if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
-  echo copying source files to "${SCT_DIR}"
+  echo copying source ${SCT_SOURCE} files to "${SCT_DIR}"
   mkdir -p ${SCT_DIR}/bin
   cd ${SCT_SOURCE}/bin
-  find  . -type f -not -path '*/miniconda/*' -exec cp -v --parent {} ${SCT_DIR}/bin \;
+  find  . -type f -not -path '*/miniconda/*' -exec cp -v {} ${SCT_DIR}/bin \;
   cd ${START_DIR}
-  cp -r ${SCT_SOURCE}/scripts  ${SCT_DIR}/.
+  cp -vR ${SCT_SOURCE}/scripts  ${SCT_DIR}/.
   cp ${SCT_SOURCE}/version.txt  ${SCT_DIR}/.
   mkdir -p ${SCT_DIR}/install
-  cp -rp ${SCT_SOURCE}/install/requirements ${SCT_DIR}/install
-  cp -rp ${SCT_SOURCE}/testing ${SCT_DIR}/.
-  cp -rp ${SCT_SOURCE}/data ${SCT_DIR}/.
+  cp -vRp ${SCT_SOURCE}/install/requirements ${SCT_DIR}/install
+  cp -vRp ${SCT_SOURCE}/testing ${SCT_DIR}/.
+  cp -vRp ${SCT_SOURCE}/data ${SCT_DIR}/.
 fi
 
 echo installing conda ...
@@ -213,7 +214,7 @@ if [[ $UID != 0 ]]; then
     # assuming bash
     install_refresh
     # (t)csh for good measure
-    if ! grep SPINALCORDTOOLBOX ${THE_CSHRC} > /dev/null; then
+    if ! grep SPINALCORDTOOLBOX ${THE_CSHRC} > /dev/null 2>&1 ; then
         echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
         echo "setenv PATH \"\$PATH:${SCT_DIR}/bin\"" >> ${THE_CSHRC}
     fi
