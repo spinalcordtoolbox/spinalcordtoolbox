@@ -204,6 +204,7 @@ def create_mask():
     # CHANGE THAT CAN IMPACT SPEED:
     # related to issue #755, we cannot open more than 256 files at one time.
     # to solve this issue, we do not open more than 100 files
+    '''
     im_list = []
     im_temp = []
     for iz in range(nz):
@@ -218,6 +219,9 @@ def create_mask():
         im_out = concat_data(im_temp, 2, no_expand=True)
     else:
         im_out = concat_data(im_list, 2)
+    '''
+    fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
+    im_out = concat_data(fname_list, dim=2)
     im_out.setFileName('mask.nii.gz')
     im_out.save()
 

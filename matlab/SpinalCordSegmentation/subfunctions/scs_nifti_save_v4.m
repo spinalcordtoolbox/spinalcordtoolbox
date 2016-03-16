@@ -61,7 +61,7 @@ end
 % Save of the centerline in a NIfTI image
 CL=param.nii;
 CL.img=logical(m_cl); CL.hdr.dime.bitpix=1;
-save_nii(CL, output2);
+save_nii_v2(CL, output2);
 
 j_disp(fname_log,['\n\nCenterline saved in NIfTI.']);
 
@@ -74,13 +74,13 @@ j_disp(fname_log,['\n\nCenterline saved in NIfTI.']);
 m_surface = false(size(m_surface));
 
 for i=1:size(centerline,3)
-    m_surface(:,round(cl_last_iter(3,i)),:) = poly2mask(contour(:,1,i),contour(:,2,i),size(m_surface,1),size(m_surface,3));
+    m_surface(:,:,round(cl_last_iter(3,i))) = poly2mask(contour(:,2,i),contour(:,1,i),size(m_surface,1),size(m_surface,2));
 end
 
 SF=param.nii;
 SF.img=logical(m_surface); SF.hdr.dime.bitpix=1;
 % Save of the surface in a NIfTI image
-save_nii(SF, output3);
+save_nii_v2(SF, output3);
 
 j_disp(fname_log,['\nSegmented surfaces saved in NIfTI.']);
 
@@ -92,7 +92,12 @@ j_disp(fname_log,['\nSegmented surfaces saved in NIfTI.']);
 load(output_straightnened);
 ST=param.nii;
 ST.img=m_straight;
-save_nii(ST,output_straightnened)
+save_nii_v2(ST,output_straightnened)
+
+% ------------------------------------------------------------------------
+% Saving the reoriented data
+% ------------------------------------------------------------------------
+save_nii_v2(param.nii,[param.nii.fileprefix '_reorient' param.ext])
 
 end
 
