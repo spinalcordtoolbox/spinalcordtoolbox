@@ -96,9 +96,6 @@ cd ..
 cd mt
 # bring T2 segmentation in MT space to help segmentation (no optimization)
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
-# needs to add short pause to make sure the output from previous line is generated (in case this batch script is launched at once)
-# extract centerline
-sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
 # segment mt1
 sct_propseg -i mt1.nii.gz -c t2 -init-centerline t2_seg_reg_centerline.nii.gz
 # check results
@@ -160,11 +157,11 @@ cd dmri
 # create mask to help moco
 sct_create_mask -i dmri.nii.gz -p coord,110x20 -size 60 -f cylinder
 # motion correction
-sct_dmri_moco -i dmri.nii.gz -bvec bvecs.txt -g 3 -m mask_dmri.nii.gz -param 2,2,1,MeanSquares -thr 0
-# detect approximate spinal cord centerline
-sct_get_centerline -p auto -i dwi_moco_mean.nii.gz -c t1
-# fine segmentation with propseg
-sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline dwi_moco_mean_centerline.nii.gz
+sct_dmri_moco -i dmri.nii.gz -bvec bvecs.txt -m mask_dmri.nii.gz
+# bring T2 segmentation in dmri space to help segmentation (no optimization)
+sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dwi_moco_mean.nii.gz -identity 1 -x nn
+# segmentation with propseg
+sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline t2_seg_reg.nii.gz
 # check segmentation
 if [ $DISPLAY = true ]; then
    fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 & 
