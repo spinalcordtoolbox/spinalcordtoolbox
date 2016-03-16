@@ -45,9 +45,8 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.method = 'wath'
-        self.path_label = ''
+        self.path_label = path_sct+'/data/atlas'
         self.verbose = 1
-        self.labels_of_interest = ''  # list. Example: '1,3,4'. . For all labels, leave empty.
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
@@ -76,27 +75,18 @@ def get_parser():
 
     param_default = Param()
 
-    # read the .txt files referencing the labels
-    if param_default.path_label != '':
-        file_label = param_default.path_label + '/' + param_default.file_info_label
-        sct.check_file_exist(file_label, 0)
-        default_info_label = open(file_label, 'r')
-        label_references = default_info_label.read()
-    else:
-        label_references = ''
-
     parser = Parser(__file__)
     parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with 'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels. The labels should be in the same space coordinates as the input image.""")
     parser.add_option(name='-i',
                       type_value='image_nifti',
                       description='File to extract metrics from.',
                       mandatory=True,
-                      example='fmri.nii.gz')
+                      example='FA.nii.gz')
     parser.add_option(name='-f',
                       type_value='folder',
                       description='Folder including labels to extract the metric from.',
                       mandatory=True,
-                      example='$SCT_DIR/data/template')
+                      example=path_sct+'/data/atlas')
     parser.add_option(name='-l',
                       type_value='str',
                       description="""Label number to extract the metric from. Example: 1,3 for left fasciculus cuneatus and left ventral spinocerebellar tract in folder '/atlas'. Default = all labels.
@@ -105,8 +95,7 @@ Following shortcuts are also available for the folder label "atlas/":
  -l sc: extract in the spinal cord cord
  -l wm: extract in the white matter
  -l gm: extract in the gray matter""",
-                      mandatory=False,
-                      default_value=param_default.labels_of_interest)
+                      mandatory=False)
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description="""Method to extract metrics.
@@ -138,8 +127,7 @@ bin: binarize mask (threshold=0.5)""",
                       description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
 #1: standard deviation of metrics across labels
 #2: standard deviation of the noise (assumed Gaussian)""",
-                      mandatory=False,
-                      example=param_default.adv_param[0]+','+param_default.adv_param[1])
+                      mandatory=False)
     parser.add_option(name='-p',
                       type_value=None,
                       description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
@@ -160,19 +148,18 @@ bin: binarize mask (threshold=0.5)""",
                       type_value='str',
                       description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
                       mandatory=False,
-                      example='2:9',
+                      example='2:5',
                       default_value=param_default.vertebral_levels)
     parser.add_option(name='-v',
                       type_value='str',
                       description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
                       mandatory=False,
-                      example='2:9',
+                      example='2:5',
                       deprecated_by='-vert')
     parser.add_option(name='-z',
                       type_value='str',
                       description='Slice range to estimate the metric from. First slice is 0. Example: 5:23\nYou can also select specific slices using commas. Example: 0,2,3,5,12',
                       mandatory=False,
-                      example='5:23',
                       default_value=param_default.slices_of_interest)
     parser.add_option(name='-norm-file',
                       type_value='image_nifti',
@@ -188,24 +175,23 @@ bin: binarize mask (threshold=0.5)""",
                       description='Method to use for normalization:\n- sbs: normalization slice-by-slice\n- whole: normalization by the metric value in the whole label for all slices.',
                       example=['sbs', 'whole'],
                       mandatory=False)
-    parser.add_option(name='-w',
-                      type_value='image_nifti',
-                      description='Filename of the label by which the user wants to normalize',
-                      mandatory=False,
-                      deprecated_by='-norm-method')
+
+    # read the .txt files referencing the labels
+    file_label = param_default.path_label + '/' + param_default.file_info_label
+    sct.check_file_exist(file_label, 0)
+    default_info_label = open(file_label, 'r')
+    label_references = default_info_label.read()
+    default_info_label.close()
 
     str_section = """\n
-To list template labels:
-""" + os.path.basename(__file__) + """ -f $SCT_DIR/data/template
-
-To list white matter atlas labels:
-""" + os.path.basename(__file__) + """ -f $SCT_DIR/data/atlas
+To list white matter atlas labels, type:
+""" + os.path.basename(__file__) + """ -f """+path_sct+"""/data/atlas
 
 To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
 """ + os.path.basename(__file__) + """ -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
     if label_references != '':
         str_section += """
-List of labels in: """ + file_label + """:
+\nList of labels in """ + file_label + """:
 ==========
 """ + label_references + """
 =========="""
