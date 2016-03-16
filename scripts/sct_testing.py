@@ -264,7 +264,7 @@ def test_function(script_name):
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Crash test for functions of the Spinal Cord Toolbox.')
+    parser.usage.set_description('Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
     parser.add_option(name="-f",
                       type_value="str",
                       description="Test this specific script (do not add extension).",
@@ -272,7 +272,7 @@ def get_parser():
                       example='sct_propseg')
     parser.add_option(name="-d",
                       type_value="multiple_choice",
-                      description="Test this specific script (do not add extension).",
+                      description="Download testing data.",
                       mandatory=False,
                       default_value=param.download,
                       example=['0', '1'])
