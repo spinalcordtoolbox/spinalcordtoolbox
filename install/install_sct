@@ -162,24 +162,35 @@ while  true ; do
     read change_default_path
   done
   if [[ ${change_default_path} =~ ^[Yy] ]]; then
+    # user accepts default path --> exit loop
     break
   fi
   echo -n "Choose install directory (e.g. /usr/django/sct): "
+  # user enters new path
   read new_install
   if [ -d "${new_install}" ]; then
+    # directory exists --> update INSTALL_DIR and exit loop
+    echo -e "WARNING: Directory already exists. Files will be overwritten."
     INSTALL_DIR=${new_install}
     break
   elif [ ! "${new_install}" ]; then
+    # TODO: not sure what this does?? (julien)
     break
   else
-    echo invalid directory
-    continue
+    # directory does not exist. Creating it.
+    echo -e "Directory does not exist. Creating it..."
+    INSTALL_DIR=${new_install}
+    mkdir ${new_install}
+#    echo invalid directory
+    break
+#    continue
   fi
 done
 
 # TODO: deal with slash at the end (remove if present)
 # SCT_DIR=${INSTALL_DIR%/}/${SCT_FOLDER_NAME}
 SCT_DIR=${INSTALL_DIR}
+
 
 # create fetching variables for Python packages
 echo -e "\nFetch OS type..."
