@@ -22,7 +22,8 @@
 
 
 # TODO add some doc to the installer
-SCT_FOLDER_NAME="spinalcordtoolbox"
+# TODO: folder name should include SCT version
+SCT_FOLDER_NAME=sct_v`cat version.txt`
 
 echo "Welcome to the SCT installer!"
 
@@ -136,7 +137,7 @@ while  true ; do
   if [[ ${change_default_path} =~ ^[Yy] ]]; then
     break
   fi
-  echo -n choose install dir:
+  echo -n "Choose install directory (e.g. /usr/django): "
   read new_install
   if [ -d "${new_install}" ]; then
     INSTALL_DIR=${new_install}
@@ -149,6 +150,7 @@ while  true ; do
   fi
 done
 
+# TODO: deal with slash at the end
 SCT_DIR=${INSTALL_DIR%/}/${SCT_FOLDER_NAME}
 
 # create fetching variables for Python packages
