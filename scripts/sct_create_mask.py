@@ -225,8 +225,12 @@ def create_mask():
     im_out.setFileName('mask.nii.gz')
     im_out.save()
 
-    # copy geometry
-    im_dat = Image('data.nii')
+    # reorient if necessary
+    if not orientation_input == 'RPI':
+        sct.run('sct_image -i mask.nii.gz -o mask.nii.gz -setorient ' + orientation_input, param.verbose)
+
+    # copy header input --> mask
+    im_dat = Image('../'+file_data+ext_data)
     im_mask = Image('mask.nii.gz')
     im_mask = copy_header(im_dat, im_mask)
     im_mask.save()
@@ -236,8 +240,6 @@ def create_mask():
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    if not orientation_input == 'RPI':
-        sct.run('sct_image -i ' + path_tmp + 'mask.nii.gz' + ' -o ' + path_tmp + 'mask.nii.gz' + ' -setorient ' + orientation_input + ' -v 0', verbose=False)
     sct.generate_output_file(path_tmp+'mask.nii.gz', param.fname_out)
 
     # Remove temporary files
