@@ -27,14 +27,23 @@ echo -e "\nWelcome to the SCT installer!"
 
 echo -e "\nCheck SCT version..."
 if [ -e "version.txt" ]; then
+  # version.txt is in the same folder as the installer, therefore this installation is from a package
   SCT_VERSION=`cat version.txt`
+  INSTALL_TYPE="package"
+  SCT_SOURCE=${PWD}
 elif [ -e "../version.txt" ]; then
+  # version.txt is in folder "../", therefore this installation is from a git folder.
   SCT_VERSION=`cat ../version.txt`
+  INSTALL_TYPE="git"
+  SCT_SOURCE=$(dirname "$PWD")
 else
   echo "ERROR: version.txt not found."
   exit
 fi
 echo ".. "$SCT_VERSION
+
+echo -e "\nCheck installation type..."
+echo ".. "$INSTALL_TYPE
 
 # create folder for SCT installation
 SCT_FOLDER_NAME=sct_$SCT_VERSION
@@ -61,7 +70,6 @@ fi"
   for profiles in  ~/.bash_profile ~/.bash_login ~/.profile ; do
     if [[ -a $profiles ]] ; then
        if ! grep -E "(\.|source) .*bashrc" ${profiles} > /dev/null 2>&1 ; then
-       echo HUP
          echo "${sourceblock}" >> ${profiles}
        fi
        bidon=0
@@ -116,17 +124,18 @@ install_refresh (){
 
 # Script
 # Check where the install script is ran from
-if [[ $PWD =~ /$SCT_FOLDER_NAME$ ]] ;then
-  SCT_SOURCE=${PWD}
-elif  [[ $PWD =~ /$SCT_FOLDER_NAME/install$ ]] ;then
-  SCT_SOURCE=${PWD%/install}
-elif   ls $SCT_FOLDER_NAME  ;then
-  SCT_SOURCE=${PWD}/${SCT_FOLDER_NAME}
-else
-   echo I can\'t find SCT source folder \"${SCT_FOLDER_NAME}/\"
-   echo Asumming I am in /install folder
-   SCT_SOURCE=${PWD%/install}
-fi
+#if [[ $PWD =~ /$SCT_FOLDER_NAME$ ]] ;then
+  #
+#  SCT_SOURCE=${PWD}
+#elif  [[ $PWD =~ /$SCT_FOLDER_NAME/install$ ]] ;then
+#  SCT_SOURCE=${PWD%/install}
+#elif   ls $SCT_FOLDER_NAME  ;then
+#  SCT_SOURCE=${PWD}/${SCT_FOLDER_NAME}
+#else
+#   echo I can\'t find SCT source folder \"${SCT_FOLDER_NAME}/\"
+#   echo Asumming I am in /install folder
+#   SCT_SOURCE=${PWD%/install}
+#fi
 
 if [[ $UID == 0 ]]; then
   # sudo mode
@@ -140,17 +149,22 @@ else
   INSTALL_DIR="${HOME}"
 fi
 
+# if installing from git folder, then becomes default installation folder
+if [[ $INSTALL_TYPE == "git" ]]; then
+  INSTALL_DIR=$(dirname "$PWD")
+fi
+
 # Set install dir
 while  true ; do
-  echo SCT will be installed here: [${INSTALL_DIR}]
+  echo -e "\nSCT will be installed here: [${INSTALL_DIR}]"
   while  [[ ! ${change_default_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
-    echo -n "Do you agree Yes/No: "
+    echo -n "Do you agree? yes/no: "
     read change_default_path
   done
   if [[ ${change_default_path} =~ ^[Yy] ]]; then
     break
   fi
-  echo -n "Choose install directory (e.g. /usr/django): "
+  echo -n "Choose install directory (e.g. /usr/django/sct): "
   read new_install
   if [ -d "${new_install}" ]; then
     INSTALL_DIR=${new_install}
@@ -163,17 +177,19 @@ while  true ; do
   fi
 done
 
-# TODO: deal with slash at the end
-SCT_DIR=${INSTALL_DIR%/}/${SCT_FOLDER_NAME}
+# TODO: deal with slash at the end (remove if present)
+# SCT_DIR=${INSTALL_DIR%/}/${SCT_FOLDER_NAME}
+SCT_DIR=${INSTALL_DIR}
 
 # create fetching variables for Python packages
+echo -e "\nFetch OS type..."
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
   # Do something under Mac OS X platformn
   OS=osx
   conda_installer=$(find ${SCT_SOURCE}/external -type f -name "Miniconda*OSX*")
   dipy_whl=$(find ${SCT_SOURCE}/external -type f -name "dipy*osx*")
   ornlm_whl=$(find ${SCT_SOURCE}/external -type f -name "ornlm*osx*")
-  echo OSX MACHINE
+  echo ".. osx"
   #  Deals with the non X nature of OSX !
   force_bashrc_loading
 elif uname -a | grep -i  linux > /dev/null 2>&1; then
@@ -181,7 +197,7 @@ elif uname -a | grep -i  linux > /dev/null 2>&1; then
   conda_installer=$(find ${SCT_SOURCE}/external -type f -name "Miniconda*Linux*")
   dipy_whl=$(find ${SCT_SOURCE}/external -type f -name "dipy*linux*")
   ornlm_whl=$(find ${SCT_SOURCE}/external -type f -name "ornlm*linux*")
-  echo LINUX MACHINE
+  echo ".. linux"
 else
   echo Sorry, the installer only supports Linux and OSX, quitting installer
   exit 1
@@ -189,7 +205,7 @@ fi
 
 # Copy files to destination directory
 if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
-  echo copying source ${SCT_SOURCE} files to "${SCT_DIR}"
+  echo -e "\nCopying source files from ${SCT_SOURCE} to ${SCT_DIR}"
   mkdir -p ${SCT_DIR}/bin
   cd ${SCT_SOURCE}/bin
   find  . -type f -not -path '*/miniconda/*' -exec cp -v {} ${SCT_DIR}/bin \;
@@ -200,6 +216,8 @@ if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
   cp -vRp ${SCT_SOURCE}/install/requirements ${SCT_DIR}/install
   cp -vRp ${SCT_SOURCE}/testing ${SCT_DIR}/.
   cp -vRp ${SCT_SOURCE}/data ${SCT_DIR}/.
+else
+  echo -e "\nSkipping copy of source files (source and destination folders are the same)"
 fi
 
 echo -e "\nInstalling conda..."
@@ -221,7 +239,7 @@ echo -e "All requirement installed!"
 # update PATH environment
 if [[ $UID != 0 ]]; then
   while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
-    echo -e -n "\nDo you want to add the sct_* script to your PATH environment? Yes/No: "
+    echo -e -n "\nDo you want to add the sct_* script to your PATH environment? yes/no: "
     read add_to_path
   done
   echo ""
@@ -245,10 +263,10 @@ find ${SCT_DIR}/bin/ -maxdepth 2 -type f -exec chmod 755 {} \;
 # Run check dependencies
 echo -e "Run sct_check_dependencies..."
 if ${SCT_DIR}/bin/sct_check_dependencies ; then
-   echo INSTALLATION DONE
+   echo -e "INSTALLATION DONE!\n"
   if [[ $UID == 0 ]]; then
     echo You can add the $SCT_DIR to your $PATH to get acces to the sct tools
   fi
 else
-   echo INSTALLATION ERROR
+   echo -e "INSTALLATION ERROR!\n"
 fi
