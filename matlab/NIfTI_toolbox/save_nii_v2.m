@@ -141,14 +141,13 @@ function save_nii_v2(nii, fileprefix, old_nii_fname,datatype)
 
    write_nii(nii, filetype, fileprefix, old_RGB);
    % reorient in RPI
-%    unix(['sct_orientation -i ' fileprefix '.nii -s RPI -o ' fileprefix '.nii'])
-%    if exist('old_nii_fname','var')
-%        unix(['sct_orientation -i ' old_nii_fname ' -s RPI'])
-%        unix(['fslcpgeom ' sct_tool_remove_extension(old_nii_fname,1) '_RPI ' fileprefix '.nii -d']);
-%    elseif isstruct(nii)
-%        unix(['sct_orientation -i ' nii.fileprefix ' -s RPI'])
-%        unix(['fslcpgeom ' nii.fileprefix '_RPI ' fileprefix '.nii -d']);
-%    end
+   
+   if exist('old_nii_fname','var')
+       [~,orient_dest] = unix(['sct_image -i ' old_nii_fname ' -getorient']); orient_dest=orient_dest(1:end-1);
+       unix(['sct_image -i ' fileprefix '.nii -setorient ' orient_dest]);
+       unix(['mv ' fileprefix '_RPI.nii ' fileprefix '.nii'])
+       unix(['fslcpgeom ' old_nii_fname ' ' fileprefix '.nii -d']);
+   end
    
    %  gzip output file if requested
    %
