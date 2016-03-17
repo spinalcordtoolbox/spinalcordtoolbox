@@ -22,10 +22,23 @@
 
 
 # TODO add some doc to the installer
-# TODO: folder name should include SCT version
-SCT_FOLDER_NAME=sct_v`cat version.txt`
 
-echo "Welcome to the SCT installer!"
+echo -e "\nWelcome to the SCT installer!"
+
+echo -e "\nCheck SCT version..."
+if [ -e "version.txt" ]; then
+  SCT_VERSION=`cat version.txt`
+elif [ -e "../version.txt" ]; then
+  SCT_VERSION=`cat ../version.txt`
+else
+  echo "ERROR: version.txt not found."
+  exit
+fi
+echo ".. "$SCT_VERSION
+
+# create folder for SCT installation
+SCT_FOLDER_NAME=sct_$SCT_VERSION
+
 
 # functions
 START_DIR=$PWD
@@ -189,26 +202,26 @@ if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
   cp -vRp ${SCT_SOURCE}/data ${SCT_DIR}/.
 fi
 
-echo installing conda ...
+echo -e "\nInstalling conda..."
 
 bash ${conda_installer} -p ${SCT_DIR}/bin/${OS}/miniconda -b -f
 
 . ${SCT_DIR}/bin/${OS}/miniconda/bin/activate ${SCT_DIR}/bin/${OS}/miniconda
 echo ${SCT_DIR}/bin/${OS}/miniconda/bin/activate
 
-echo Installing dependencies
+echo -e "\nInstalling dependencies..."
 # N.B. the flag --ignore-installed is required because if user already
 # has other dependencies, it will not install
 conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
 pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
 pip install --ignore-installed  ${dipy_whl}  ${ornlm_whl}
 
-echo All requirement installed
+echo -e "All requirement installed!"
 
 # update PATH environment
 if [[ $UID != 0 ]]; then
   while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
-    echo -n "Do you want to add the sct_* script to your PATH environment? Yes/No: "
+    echo -e -n "\nDo you want to add the sct_* script to your PATH environment? Yes/No: "
     read add_to_path
   done
   echo ""
@@ -226,10 +239,11 @@ if [[ $UID != 0 ]]; then
   fi
 fi
 
-#Make sure sct script are executable
+# Make sure sct script are executable
 find ${SCT_DIR}/bin/ -maxdepth 2 -type f -exec chmod 755 {} \;
 
 # Run check dependencies
+echo -e "Run sct_check_dependencies..."
 if ${SCT_DIR}/bin/sct_check_dependencies ; then
    echo INSTALLATION DONE
   if [[ $UID == 0 ]]; then
