@@ -143,7 +143,6 @@ def main(args = None):
         dim = arguments["-concat"]
         assert dim in dim_list
         dim = dim_list.index(dim)
-        print '\n------------------------------------------------------------------------------------', dim
         im_out = [concat_data(fname_in, dim)] #TODO: adapt to fname_in
 
     elif "-getorient" in arguments:
