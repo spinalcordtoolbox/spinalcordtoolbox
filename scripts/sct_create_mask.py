@@ -119,6 +119,8 @@ def create_mask():
     sct.printv('\nCheck if orientation is RPI...', param.verbose)
     orientation_input = get_orientation_3d(param.fname_data, filename=True)
     reorient_coordinates = False
+
+    # copy input data to tmp folder and orient to RPI (if necessary)
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     if not orientation_input == 'RPI':
         sct.run('sct_image -i ' + param.fname_data + ' -o ' + path_tmp + 'data.nii' + ' -setorient RPI -v 0', verbose=False)
