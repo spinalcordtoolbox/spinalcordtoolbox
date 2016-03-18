@@ -117,7 +117,7 @@ install_refresh (){
     "  ${THE_BASHRC}
   else
     echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
-    echo "export PATH=\$PATH:${SCT_DIR}/bin" >> ${THE_BASHRC}
+    echo "export PATH=${SCT_DIR}/bin:$PATH" >> ${THE_BASHRC}
  fi
 
 }
@@ -281,3 +281,5 @@ if ${SCT_DIR}/bin/sct_check_dependencies ; then
 else
    echo -e "INSTALLATION ERROR!\n"
 fi
+
+# TODO: source .bashrc
