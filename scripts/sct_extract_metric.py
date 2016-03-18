@@ -14,7 +14,6 @@
 #########################################################################################
 
 # TODO: find another method to update label in case average_all_labels == 1. E.g., recreate tmp label file.
-# TODO: remove class color and use sct_printv
 # TODO: add documentation for new features
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
 
@@ -24,15 +23,13 @@ import getopt
 import sys
 import commands
 import time
-
 import nibabel as nib
 import numpy as np
-
 import sct_utils as sct
 from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from msct_parser import Parser
-
+import xlwt
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -45,6 +42,7 @@ class Param:
     def __init__(self):
         self.method = 'wath'
         self.path_label = path_sct+'/data/atlas'
+        self.output_type = 'txt'
         self.verbose = 1
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
@@ -55,20 +53,6 @@ class Param:
         self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
         self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
                           '10'] # STD of the assumed gaussian-distributed noise
-
-class Color:
-    def __init__(self):
-        self.purple = '\033[95m'
-        self.cyan = '\033[96m'
-        self.darkcyan = '\033[36m'
-        self.blue = '\033[94m'
-        self.green = '\033[92m'
-        self.yellow = '\033[93m'
-        self.red = '\033[91m'
-        self.bold = '\033[1m'
-        self.underline = '\033[4m'
-        self.end = '\033[0m'
-
 
 def get_parser():
 
@@ -86,15 +70,6 @@ def get_parser():
                       description='Folder including labels to extract the metric from.',
                       mandatory=True,
                       example=path_sct+'/data/atlas')
-    parser.add_option(name='-l',
-                      type_value='str',
-                      description="""Label number to extract the metric from. Example: 1,3 for left fasciculus cuneatus and left ventral spinocerebellar tract in folder '/atlas'. Default = all labels.
-You can also select labels using 1:3 to get labels 1,2,3.
-Following shortcuts are also available for the folder label "atlas/":
- -l sc: extract in the spinal cord cord
- -l wm: extract in the white matter
- -l gm: extract in the gray matter""",
-                      mandatory=False)
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description="""Method to extract metrics.
@@ -121,6 +96,11 @@ bin: binarize mask (threshold=0.5)""",
                       mandatory=False,
                       default_value=param_default.method,
                       deprecated_by='-method')
+    parser.add_option(name='-output-type',
+                      type_value='str',
+                      description="""Type of the output file collecting the metric estimation results.""",
+                      mandatory=False,
+                      default_value=param_default.output_type)
     parser.add_option(name='-param',
                       type_value='str',
                       description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
@@ -139,10 +119,6 @@ bin: binarize mask (threshold=0.5)""",
                       description='File containing the results of metrics extraction.',
                       mandatory=False,
                       default_value=param_default.fname_output)
-    parser.add_option(name='-a',
-                      type_value=None,
-                      description='Average all selected labels.',
-                      mandatory=False)
     parser.add_option(name='-vert',
                       type_value='str',
                       description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
@@ -200,7 +176,7 @@ To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using bi
     return parser
 
 
-def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, fname_normalizing_label, normalization_method, adv_param_user):
+def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, fname_normalizing_label, normalization_method, adv_param_user):
     """Main."""
 
     # Initialization
@@ -210,8 +186,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     verbose = param.verbose
     ml_clusters = param.ml_clusters
     adv_param = param.adv_param
-    clustered_labels = []
-    matching_cluster_labels = []
     normalizing_label = []
 
     # add slash at the end
@@ -247,7 +221,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     print '  slices of interest ........ '+slices_of_interest
     print '  vertebral levels .......... '+vertebral_levels
     print '  vertebral labeling file.... '+fname_vertebral_labeling
-    print '  advanced parameters ....... '+str(adv_param)
+    print '  advanced parameters ....... '+str(adv_param)+'\n'
 
     # parse labels according to the file info_label.txt
     # label_id, label_name, label_file = read_label_file(path_label, param.file_info_label, method)
@@ -288,6 +262,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         # Load image
         sct.printv('\nLoad image...', verbose)
         data = nib.load(fname_data).get_data()
+        sct.printv('\tDone.', verbose)
         # Load labels
         sct.printv('\nLoad labels...', verbose)
         labels = np.empty([nb_labels], dtype=object)
@@ -298,6 +273,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
         if vertebral_levels:  # if vertebral levels were selected,
             data_vertebral_labeling = nib.load(fname_vertebral_labeling).get_data()
+        sct.printv('\tDone.', verbose)
+
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
@@ -336,18 +313,24 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     for i_combined_labels in range(0, len(combined_labels_id_groups)):
         combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, combined_labels_id_groups[i_combined_labels])
 
-    # # display metrics
-    # sct.printv('\nEstimation results:', 1)
-    # for i in range(0, metric_mean.size):
-    #     sct.printv(str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])+' +/- '+str(metric_std[i]), 1, 'info')
-    #
-    # # save results in the selected output file type
-    # save_metrics(label_id_user, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data,
-    #              method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    # display metrics
+    sct.printv('\nResults:', 1)
+    sct.printv('\nIndividual labels:', 1, 'info')
+    for i_indiv_label in range(0, indiv_labels_value.size):
+        sct.printv(str(indiv_labels_ids[i_indiv_label])+', '+str(indiv_labels_names[i_indiv_label])+':    '+str(indiv_labels_value[i_indiv_label])+' +/- '+str(indiv_labels_std[i_indiv_label]), 1, 'info')
+    sct.printv('\nCombined labels:', 1, 'info')
+    for i_combined_labels in range(0, combined_labels_value.size):
+        sct.printv(str(combined_labels_ids[i_combined_labels])+', '+str(combined_labels_names[i_combined_labels])+':    '+str(combined_labels_value[i_combined_labels])+' +/- '+str(combined_labels_std[i_combined_labels]), 1, 'info')
+
+    # save results in the selected output file type
+    save_metrics(indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
 def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
     """Extract metric in the labels specified by the file info_label.txt in the atlas folder."""
+
+    # Initialization to default values
+    clustered_labels, matching_cluster_labels = [], []
 
     nb_labels_total = len(indiv_labels_ids)
 
@@ -461,9 +444,6 @@ def read_label_file(path_info_label, file_info_label):
 
 def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
     """Return the slices of the input image corresponding to the vertebral levels given as argument."""
-    
-    # TODO: use sct_utils instead (jcohenadad)
-    color = Color()
 
     sct.printv('\nFind slices corresponding to vertebral levels...', verbose)
 
@@ -491,9 +471,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         warning.append('WARNING: the bottom vertebral level you selected is lower to the lowest level available --> '
                        'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
                        # warning to write it later in the .txt output file
-        print color.yellow + 'WARNING: the bottom vertebral level you selected is lower to the lowest ' \
-                                          'level available \n--> Selected the lowest vertebral level available: '+\
-              str(int(vert_levels_list[0])) + color.end
+        sct.printv('WARNING: the bottom vertebral level you selected is lower to the lowest level available \n--> Selected the lowest vertebral level available: '+ str(int(vert_levels_list[0])), type='warning')
 
     if vert_levels_list[1] > max_vert_level_available:
         vert_levels_list[1] = max_vert_level_available
@@ -501,9 +479,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
                        'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
         # warning to write it later in the .txt output file
 
-        print color.yellow + 'WARNING: the top vertebral level you selected is higher to the highest ' \
-                                          'level available \n--> Selected the highest vertebral level available: ' + \
-              str(int(vert_levels_list[1])) + color.end
+        sct.printv('WARNING: the top vertebral level you selected is higher to the highest level available \n--> Selected the highest vertebral level available: '+str(int(vert_levels_list[1])), type='warning')
 
     if vert_levels_list[0] not in vertebral_levels_available:
         distance = vertebral_levels_available - vert_levels_list[0]  # relative distance
@@ -513,8 +489,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         # of the initial list corresponding to this minimal distance
         warning.append('WARNING: the bottom vertebral level you selected is not available --> Selected the nearest '
                        'inferior level available: ' + str(int(vert_levels_list[0])))
-        print color.yellow + 'WARNING: the bottom vertebral level you selected is not available \n--> Selected the ' \
-                             'nearest inferior level available: '+str(int(vert_levels_list[0]))  # record the
+        sct.printv('WARNING: the bottom vertebral level you selected is not available \n--> Selected the nearest inferior level available: '+str(int(vert_levels_list[0])), type='warning') # record the
         # warning to write it later in the .txt output file
 
     if vert_levels_list[1] not in vertebral_levels_available:
@@ -526,8 +501,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         warning.append('WARNING: the top vertebral level you selected is not available --> Selected the nearest superior'
                        ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in the .txt output file
 
-        print color.yellow + 'WARNING: the top vertebral level you selected is not available \n--> Selected the ' \
-                             'nearest superior level available: ' + str(int(vert_levels_list[1]))
+        sct.printv('WARNING: the top vertebral level you selected is not available \n--> Selected the nearest superior level available: ' + str(int(vert_levels_list[1])), type='warning')
 
     # Extract metric data size X, Y, Z
     [mx, my, mz] = metric_data.shape
@@ -608,56 +582,128 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
-def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
-    """Save in txt file."""
+def save_metrics(indiv_labels_id, combined_labels_id, indiv_labels_name, combined_labels_name, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+    """Save results in the output type selected by user."""
 
-    # CSV format, header lines start with "#"
+    sct.printv('\nSave results in: '+fname_output+'.'+output_type+' ...')
 
-    # Save metric in a .txt file
-    sct.printv('\nWrite results in ' + fname_output + '...')
+    if output_type == 'txt':
+        # CSV format, header lines start with "#"
 
-    # Write mode of file
-    fid_metric = open(fname_output, 'w')
+        # Write mode of file
+        fid_metric = open(fname_output+'.'+output_type, 'w')
 
-    # WRITE HEADER:
-    # Write date and time
-    fid_metric.write('# Date - Time: '+ time.strftime('%Y/%m/%d - %H:%M:%S'))
-    # Write metric data file path
-    fid_metric.write('\n'+'# Metric file: '+ os.path.abspath(fname_data))
-    # If it's the case, write the label used to normalize the metric estimation:
-    if fname_normalizing_label:
-        fid_metric.write('\n' + '# Label used to normalize the metric estimation slice-by-slice: ' +
-                         fname_normalizing_label)
-    # Write method used for the metric estimation
-    fid_metric.write('\n'+'# Extraction method: '+method)
+        # WRITE HEADER:
+        # Write date and time
+        fid_metric.write('# Date - Time: '+ time.strftime('%Y/%m/%d - %H:%M:%S'))
+        # Write metric data file path
+        fid_metric.write('\n'+'# Metric file: '+ os.path.abspath(fname_data))
+        # If it's the case, write the label used to normalize the metric estimation:
+        if fname_normalizing_label:
+            fid_metric.write('\n'+'# Label used to normalize the metric estimation slice-by-slice: '+fname_normalizing_label)
+        # Write method used for the metric estimation
+        fid_metric.write('\n'+'# Extraction method: '+method)
 
-    # Write selected vertebral levels
-    if actual_vert:
-        if warning_vert_levels:
-            for i in range(0, len(warning_vert_levels)):
-                fid_metric.write('\n# '+str(warning_vert_levels[i]))
-        fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
-    else:
-        fid_metric.write('\n# Vertebral levels: ALL')
+        # Write selected vertebral levels
+        if actual_vert:
+            if warning_vert_levels:
+                for i in range(0, len(warning_vert_levels)):
+                    fid_metric.write('\n# '+str(warning_vert_levels[i]))
+            fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
+        else:
+            fid_metric.write('\n# Vertebral levels: ALL')
 
-    # Write selected slices
-    fid_metric.write('\n'+'# Slices (z): ')
-    if slices_of_interest != '':
-        fid_metric.write(slices_of_interest)
-    else:
-        fid_metric.write('ALL')
+        # Write selected slices
+        fid_metric.write('\n'+'# Slices (z): ')
+        if slices_of_interest != '':
+            fid_metric.write(slices_of_interest)
+        else:
+            fid_metric.write('ALL')
 
-    # label info
-    fid_metric.write('%s' % ('\n'+'# ID, label name, mean, std\n\n'))
+        # label headers
+        fid_metric.write('%s' % ('\n'+'# ID, label name, mean, std\n\n'))
 
-    # WRITE RESULTS
+        # WRITE RESULTS
+        # individual labels
+        fid_metric.write('\n# White matter atlas\n')
+        for i in range(0, len(indiv_labels_name)):
+            fid_metric.write('%i, %s, %f, %f\n' % (indiv_labels_id[i], indiv_labels_name[i], indiv_labels_value[i], indiv_labels_std[i]))
+        # combined labels
+        fid_metric.write('\n# Combined labels\n')
+        for i in range(0, len(combined_labels_name)):
+            fid_metric.write('%i, %s, %f, %f\n' % (combined_labels_id[i], combined_labels_name[i], combined_labels_value[i], combined_labels_std[i]))
 
-    # Write metric for label chosen in file .txt
-    for i in range(0, len(ind_labels)):
-        fid_metric.write('%i, %s, %f, %f\n' % (ind_labels[i], label_name[ind_labels[i]], metric_mean[i], metric_std[i]))
+        # Close file .txt
+        fid_metric.close()
 
-    # Close file .txt
-    fid_metric.close()
+    elif output_type == 'xls':
+        book = xlwt.Workbook()
+
+        sh_param = book.add_sheet('Parameters used for estimation', cell_overwrite_ok=True)
+
+        row_index = 0
+
+        sh_param.write(row_index, 0, 'Date - Time')
+        sh_param.write(row_index, 1, time.strftime('%Y/%m/%d - %H:%M:%S'))
+        row_index += 1
+
+        sh_param.write(row_index, 0, 'Metric file')
+        sh_param.write(row_index, 1, os.path.abspath(fname_data))
+        row_index += 1
+
+        if fname_normalizing_label:
+            sh_param.write(row_index, 0, 'Label used to normalize the metric estimation slice-by-slice')
+            sh_param.write(row_index, 1, fname_normalizing_label)
+            row_index += 1
+
+        sh_param.write(row_index, 0, 'Extraction method')
+        sh_param.write(row_index, 1, method)
+        row_index += 1
+
+        if actual_vert:
+            if warning_vert_levels:
+                for i in range(0, len(warning_vert_levels)):
+                    sh_param.write(row_index, 0, str(warning_vert_levels[i]))
+                    row_index += 1
+
+            sh_param.write(row_index, 0, 'Vertebral levels')
+            sh_param.write(row_index, 1, '%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
+            row_index += 1
+
+        else:
+            sh_param.write(row_index, 0, 'Vertebral levels')
+            sh_param.write(row_index, 1, 'ALL')
+            row_index += 1
+
+        sh_param.write(row_index, 0, 'Slices (z)')
+        if slices_of_interest != '':
+            sh_param.write(row_index, 1, slices_of_interest)
+        else:
+            sh_param.write(row_index, 1, 'ALL')
+        row_index += 1
+
+        sh_results = book.add_sheet('Results', cell_overwrite_ok=True)
+
+        sh_results.write(0, 0, 'ID')
+        sh_results.write(0, 1, 'label name')
+        sh_results.write(0, 2, 'metric value')
+        sh_results.write(0, 3, 'metric std')
+
+        sh_results.write(1, 0, 'White matter atlas')
+        for i_row in range(2, 2+len(indiv_labels_name)):
+            sh_results.write(i_row, 0, indiv_labels_id[i_row-2])
+            sh_results.write(i_row, 1, indiv_labels_name[i_row-2])
+            sh_results.write(i_row, 2, indiv_labels_value[i_row-2])
+            sh_results.write(i_row, 3, indiv_labels_std[i_row-2])
+        sh_results.write(2+len(indiv_labels_name), 0, 'Combined labels')
+        for i_row in range(3+len(indiv_labels_name), 3+len(indiv_labels_name)+len(combined_labels_name)):
+            sh_results.write(i_row, 0, combined_labels_id[i_row-(3+len(indiv_labels_name))])
+            sh_results.write(i_row, 1, combined_labels_name[i_row-(3+len(indiv_labels_name))])
+            sh_results.write(i_row, 2, combined_labels_value[i_row-(3+len(indiv_labels_name))])
+            sh_results.write(i_row, 3, combined_labels_std[i_row-(3+len(indiv_labels_name))])
+
+        book.save(fname_output+'.'+output_type)
+
     sct.printv('\tDone.')
 
 
@@ -932,19 +978,16 @@ def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbo
 if __name__ == "__main__":
     param_default = Param()
     param = Param()
-    color = Color()
 
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     # Initialization to defaults parameters
+    vertebral_levels = ''
+    # output_type = param_default.output_type
+
     fname_data = arguments['-i']
     path_label = arguments['-f']
-    # labels_of_interest = ''
-    vertebral_levels = ''
-
-    # if '-l' in arguments:
-    #     labels_of_interest = arguments['-l']
     method = arguments['-method']
     adv_param_user = ''
     if '-param' in arguments:
@@ -954,10 +997,9 @@ if __name__ == "__main__":
         slices_of_interest = arguments['-z']
     if '-vert' in arguments:
         vertebral_levels = arguments['-vert']
-    # average_all_labels = param.average_all_labels
-    # if '-a' in arguments:
-    #     average_all_labels = 1
     fname_output = arguments['-o']
+    if '-output-type' in arguments:
+        output_type = arguments['-output-type']
     fname_normalizing_label = ''
     if '-norm-file' in arguments:
         fname_normalizing_label = arguments['-norm-file']
@@ -966,4 +1008,4 @@ if __name__ == "__main__":
         normalization_method = arguments['-norm-method']
 
     # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, fname_normalizing_label, normalization_method, adv_param_user)
+    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, fname_normalizing_label, normalization_method, adv_param_user)
