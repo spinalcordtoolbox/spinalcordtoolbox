@@ -69,7 +69,7 @@ for opt, arg in opts:
 
 # check if OS exists
 if OSname not in listOS:
-    sct.printv('\nERROR: OS name should be one of the following: '+'[%s]' % ', '.join(map(str,listOS))+'\n', 1, 'error')
+    sct.printv('\nERROR: OS name should be one of the following: '+'[%s]' % ', '.join(map(str, listOS))+'\n', 1, 'error')
 
 # check if ANTs folder exists
 if not os.path.exists(folder_ants):
