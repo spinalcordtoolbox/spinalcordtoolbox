@@ -234,9 +234,7 @@ echo -e "\nInstalling binaries for OS: "$OS
 mkdir -p ${SCT_DIR}/bin
 cd ${SCT_DIR}/bin
 #find  . -type f -not -path '*/miniconda/*' -exec cp -v {} ${SCT_DIR}/bin \;
-if [ $OS == "osx" ]; then
-  curl -o sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/bin/osx/sct_binaries.tar.gz
-fi
+cmd="curl -o sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/bin/${OS}/sct_binaries.tar.gz"; echo $cmd; $cmd
 # unzip binaries
 tar -zxvf sct_binaries.tar.gz
 # remove zip file
