@@ -297,8 +297,8 @@ echo -e "\nRun sct_check_dependencies..."
 if ${SCT_DIR}/bin/sct_check_dependencies ; then
    echo -e "INSTALLATION DONE!\n"
   if [[ $UID == 0 ]]; then
-    echo -e "\nWARNING: sudo mode: Profile files was not edited. To access SCT functions, please add the following line to the appropriate file (e.g., .bashrc):"
-    echo "export PATH=${SCT_DIR}/bin:\$PATH"
+    echo -e "WARNING: sudo mode: Profile files was not edited. To access SCT functions, please add the following line to the appropriate file (e.g., .bashrc):"
+    echo -e "export PATH=${SCT_DIR}/bin:\$PATH\n"
   fi
 else
    echo -e "INSTALLATION ERROR!\n"
