@@ -106,7 +106,7 @@ def main(args = None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     fname_in = arguments["-i"]
     n_in = len(fname_in)
     verbose = int(arguments['-v'])
@@ -143,7 +143,6 @@ def main(args = None):
         dim = arguments["-concat"]
         assert dim in dim_list
         dim = dim_list.index(dim)
-        print '\n------------------------------------------------------------------------------------', dim
         im_out = [concat_data(fname_in, dim)] #TODO: adapt to fname_in
 
     elif "-getorient" in arguments:
@@ -201,7 +200,7 @@ def main(args = None):
 
         printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
-        print orient
+        print(orient)
     else:
         printv('An error occurred in sct_image...', verbose, "error")
 
