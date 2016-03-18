@@ -11,7 +11,7 @@
 import os
 import getopt
 import sys
-from numpy import loadtxt
+
 sys.path.append('../scripts')
 import sct_utils as sct
 
@@ -26,19 +26,11 @@ def usage():
         '\n'\
         'DESCRIPTION\n' \
         '  Create a package of the Spinal Cord Toolbox.\n' \
-        '\n' \
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+'\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -s <OS name>      name of the OS {osx,linux}.\n' \
         '\n'\
-        'EXAMPLE:\n' \
-        '  create_package.py -s linux\n'
-    sys.exit(2)
+    # sys.exit(2)
 
-listOS = ['osx', 'linux']
-OSname = ''
+# listOS = ['osx', 'linux']
+# OSname = ''
 # Check input param
 try:
     opts, args = getopt.getopt(sys.argv[1:],'hs:')
@@ -48,60 +40,61 @@ except getopt.GetoptError as err:
 for opt, arg in opts:
     if opt == '-h':
         usage()
-    elif opt in ('-s'):
-        OSname = str(arg)
+    # elif opt in ('-s'):
+    #     OSname = str(arg)
 
-if OSname not in listOS:
-    print 'ERROR: OS name should be one of the following: '+'[%s]' % ', '.join(map(str,listOS))
-    usage()
+# if OSname not in listOS:
+#     print 'ERROR: OS name should be one of the following: '+'[%s]' % ', '.join(map(str,listOS))
+#     usage()
 
 # get version
 with open ("../version.txt", "r") as myfile:
     version = myfile.read().replace('\n', '')
 
 # create output folder
-folder_sct = '../spinalcordtoolbox_v'+version+'_'+OSname+'/'
+folder_sct = '../sct_v'+version+'/'
 if os.path.exists(folder_sct):
     sct.run('rm -rf '+folder_sct)
 sct.run('mkdir '+folder_sct)
 
 # copy folders
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox')
-sct.run('cp installer.py '+folder_sct)
-sct.run('cp ../README.md '+folder_sct+'spinalcordtoolbox/')
-sct.run('cp ../LICENSE '+folder_sct+'spinalcordtoolbox/')
-sct.run('cp ../version.txt '+folder_sct+'spinalcordtoolbox/')
-sct.run('cp ../batch_processing.sh '+folder_sct+'spinalcordtoolbox/')
+sct.run('mkdir '+folder_sct+'sct')
+sct.run('cp install_sct '+folder_sct)
+sct.run('cp ../README.md '+folder_sct+'sct/')
+sct.run('cp ../LICENSE '+folder_sct+'sct/')
+sct.run('cp ../version.txt '+folder_sct+'sct/')
+sct.run('cp ../batch_processing.sh '+folder_sct+'sct/')
 sct.run('cp ../batch_processing.sh '+folder_sct)
-sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
-sct.run('cp -r ../external '+folder_sct+'spinalcordtoolbox/')
+sct.run('cp -r ../scripts '+folder_sct+'sct/')
+sct.run('cp -r ../external '+folder_sct+'sct/')
 
 # install
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/install')
-sct.run('cp -r ../install/create_links.sh '+folder_sct + 'spinalcordtoolbox/install/')
-sct.run('cp -r ../install/install_external.py '+folder_sct + 'spinalcordtoolbox/install/')
-sct.run('cp -r ../install/requirements ' + folder_sct + 'spinalcordtoolbox/install/')
+sct.run('mkdir '+folder_sct+'sct/install')
+# sct.run('cp -r ../install/create_links.sh '+folder_sct + 'spinalcordtoolbox/install/')
+# sct.run('cp -r ../install/install_external.py '+folder_sct + 'spinalcordtoolbox/install/')
+sct.run('cp -r ../install/requirements ' + folder_sct + 'sct/install/')
 
 # bin
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')
-if OSname == 'osx':
-    sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
-elif OSname == 'linux':
-    sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
+sct.run('mkdir '+folder_sct+'sct/bin')
+sct.run('cp -r ../bin '+folder_sct+'sct/')
+# if OSname == 'osx':
+#     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
+# elif OSname == 'linux':
+#     sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
 
 # data
-sct.run('cp -rf ../data '+folder_sct+'spinalcordtoolbox/')
+sct.run('cp -rf ../data '+folder_sct+'sct/')
 
 # testing
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing')
-sct.run('cp ../testing/*.py '+folder_sct+'spinalcordtoolbox/testing/')
+sct.run('mkdir '+folder_sct+'sct/testing')
+sct.run('cp ../testing/*.py '+folder_sct+'sct/testing/')
 
 # remove .DS_Store files
 sct.run('find '+folder_sct+' -type f -name .DS_Store -delete')
 
 # remove AppleDouble files - doesn't work on Linux
-if OSname == 'osx':
-    sct.run('find '+folder_sct+' -type d | xargs dot_clean -m')
+# if OSname == 'osx':
+#     sct.run('find '+folder_sct+' -type d | xargs dot_clean -m')
 
 # remove Pycharm-related files
 sct.run('rm '+folder_sct+'spinalcordtoolbox/scripts/*.pyc')
@@ -112,10 +105,8 @@ if os.path.exists(folder_sct+'spinalcordtoolbox/scripts/.idea'):
 os.chdir('../')
 
 # compress folder
-folder_sct_temp = 'spinalcordtoolbox_v'+version+'_'+OSname+'/'
+folder_sct_temp = 'sct_v'+version+'/'
 
-sct.run('tar -cvzf spinalcordtoolbox_v'+version+'_'+OSname+'.tar.gz '+folder_sct_temp)
+sct.run('tar -cvzf sct_v'+version+'_'+'.tar.gz '+folder_sct_temp)
 
 print "done!\n"
-
-
