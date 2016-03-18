@@ -30,13 +30,13 @@ install:
   - cd install
   - ./update_bin.sh
   - yes | ./install_sct
-  - source $HOME/spinalcordtoolbox/bin/sct_launcher
+  - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
 script:
-  - sct_check_dependencies   # test dependences
+  - sct_check_dependencies   # test dependencies
   - sct_testing -d 1  # test functions & integrity
   - cd install
   - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
   - cd ../spinalcordtoolbox_v*
-  - python installer.py -p ~/sct  # test installation of package
+  - yes | ./install_sct  # test installation of package
   - echo "DONE"
