@@ -30,7 +30,8 @@ install:
   - cd install
 #  - ./update_bin.sh
   - yes | ./install_sct
-#  - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
+# run launcher in order to update PATH
+  - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
 script:
 #  - sct_check_dependencies   # test dependencies
