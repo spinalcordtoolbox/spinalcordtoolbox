@@ -51,17 +51,14 @@ set_system_dependent_var
 
 SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export SCT_DIR=${SCT_DIR%/bin}
-export SCT_PYTHON=${SCT_DIR}/bin/${SCT_OS}/miniconda
-
+export SCT_PYTHON=${SCT_DIR}/python
 export SCT_VERSION=$(cat $SCT_DIR/version.txt)
 
 addtopath "${SCT_DIR}/bin" PATH
-
 addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
 addtopath ${SCT_DIR}/scripts PYTHONPATH
 export PATH
 export PYTHONPATH
-
 export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
 
 if [ -e ${HOME}/.sctrc ]; then
@@ -72,12 +69,12 @@ fi
 . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
   echo SpinalCord Toolbox version $SCT_VERSION
   echo SCT installed in ${SCT_DIR}
- echo PYTHON  $(which python) $SCT_PYTHON $SCT_DIR
+  echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
 
 
-if   [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]  ; then
-    echo running ${SCT_DIR}/scripts/${@}
-    python ${SCT_DIR}/scripts/${@}
+if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
+  echo running ${SCT_DIR}/scripts/${@}
+  python ${SCT_DIR}/scripts/${@}
 else
-     echo sourcing sct_laucher in your environement ${SCT_DIR}
+  echo sourcing sct_laucher in your environement ${SCT_DIR}
 fi
