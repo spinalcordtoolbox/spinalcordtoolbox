@@ -1,0 +1,305 @@
+#!/usr/bin/env bash
+# USAGE
+# > ./install_sct
+#
+# This is the spinalcord toolbox (SCT) installer
+# It downloads the Conda (http://conda.pydata.org/) version
+# of python and install the SCT requirements over it
+#
+# The SCT can be install in place where you download it. But then do
+# not delete the source code or you will delete the installation too!
+#
+# If you run the installer as super user, the default install is /opt,
+# if you choose this option or any other directory other than the
+# source location, you can get rid of the source code after the
+# installation is successful.
+#
+#########################################################################################
+# Copyright (c) 2016 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: PO Quirion
+# License: see the file LICENSE.TXT
+#########################################################################################
+
+# N.B. to generate and compress binaries, go to binary folder and type: tar -czf sct_binaries.tar.gz isct_*
+
+# TODO add some doc to the installer
+# TODO: deal with installation folder with "~", like: ~/test. --> current error: mkdir: ~: No such file or directory
+# TODO: check if curl/wget installed
+# TODO: remove python folder if not empty
+# TODO: no need to copy .pyc, etc.
+
+
+# functions
+# ========================================================================
+finish (){
+#  Clean at exit
+  cd ${START_DIR}
+}
+trap finish EXIT
+
+force_bashrc_loading (){
+
+  sourceblock="
+if [ -n \"\$BASH_VERSION\" ]; then
+    # include .bashrc if it exists
+    if [ -f \"\$HOME/.bashrc\" ]; then
+    . \"\$HOME/.bashrc\"
+    fi
+fi"
+
+  for profiles in  ~/.bash_profile ~/.bash_login ~/.profile ; do
+    if [[ -a $profiles ]] ; then
+       if ! grep -E "(\.|source) .*bashrc" ${profiles} > /dev/null 2>&1 ; then
+         echo "${sourceblock}" >> ${profiles}
+       fi
+       bidon=0
+       break
+    fi
+  done
+
+  if [ -z ${bidon} ] ; then
+    echo "${sourceblock}" >> ~/.bash_profile
+  fi
+
+}
+
+install_refresh (){
+#  # Taking care of the old style install_sct
+#  sed -i'-sct.bak' -e '
+#  /^# SPINALCORDTOOLBOX/  {
+#    N
+#    /SCT_DIR=/ {
+#      N
+#      /export PATH.*SCT_DIR\/bin/ {
+#        N
+#        /export PYTHONPATH.*SCT_DIR\/script/{
+#          N
+#          /export SCT_DIR PATH/{
+#            N
+#            /export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=[0-9]*/ {
+#              s|\(.*\n\)\(S.*\n\)\(.*\n\)\(.*\n\)\(.*\n\)\(.*\)|\1#\2#\3#\4#\5#\6|
+#              }
+#            }
+#          }
+#        }
+#      }
+#    }
+#  '  ${THE_BASHRC}
+#
+#  if  grep -A 1 "^# SPINALCORDTOOLBOX" ${THE_BASHRC} | grep "^export .*$SCT_FOLDER_NAME.*" ${THE_BASHRC} > /dev/null ; then
+#    sed -i'-sct.bak' -e "
+#    /# SPINALCORDTOOLBOX/ {
+#      N
+#      /export PATH=\$PATH:.*$SCT_FOLDER_NAME\/bin/ {
+#        s|\(# SPINALCORDTOOLBOX\).*\(\nexport PATH=\$PATH:\).*$SCT_FOLDER_NAME/bin|\1 (installed on $(date +%Y-%m-%d\ %H:%M))\2$SCT_DIR/bin|
+#      }
+#    }
+#    "  ${THE_BASHRC}
+#  else
+  echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
+  echo "export PATH=${SCT_DIR}/bin:\$PATH" >> ${THE_BASHRC}
+# fi
+}
+
+
+# SCRIPT STARTS HERE
+# ========================================================================
+echo -e "\nWelcome to the SCT installer!"
+
+SCT_SOURCE=$PWD
+
+if [ -e "version.txt" ]; then
+  SCT_VERSION=`cat version.txt`
+#elif [ -e "../version.txt" ]; then
+#  SCT_VERSION=`cat ../version.txt`
+#  SCT_SOURCE=$(dirname "$PWD")
+else
+  echo "ERROR: version.txt not found."
+  exit
+fi
+
+# Get installation type (from git or from package)
+if [ -d ".git" ]; then
+  # folder .git exist, therefore it is a git installation
+  INSTALL_TYPE="git"
+else
+  INSTALL_TYPE="package"
+#  SCT_SOURCE=${PWD}
+fi
+
+# Fetch OS type
+if uname -a | grep -i  darwin > /dev/null 2>&1; then
+  OS=osx
+elif uname -a | grep -i  linux > /dev/null 2>&1; then
+  OS=linux
+else
+  echo Sorry, the installer only supports Linux and OSX, quitting installer
+  exit 1
+fi
+
+#echo -e "\nInstallation info:"
+echo -e "\nSCT version ......... "$SCT_VERSION
+echo -e "Installation type ... "$INSTALL_TYPE
+echo -e "Operating system .... "$OS
+
+# Define bash files
+THE_BASHRC=${HOME}/.bashrc
+THE_CSHRC=${HOME}/.cshrc
+
+# if installing from git folder, then becomes default installation folder
+if [[ $INSTALL_TYPE == "git" ]]; then
+  INSTALL_DIR=$SCT_SOURCE
+else
+  INSTALL_DIR="${HOME}sct_${SCT_VERSION}"
+fi
+
+# Set install dir
+while  true ; do
+  echo -e "\nSCT will be installed here: [${INSTALL_DIR}]"
+  while  [[ ! ${change_default_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
+    echo -n "Do you agree? yes/no: "
+    read change_default_path
+  done
+  if [[ ${change_default_path} =~ ^[Yy] ]]; then
+    # user accepts default path --> exit loop
+    break
+  fi
+  echo -n "Choose install directory. Warning! Give full path (e.g. /usr/django/sct_v3.0): "
+  # user enters new path
+  read new_install
+  if [ -d "${new_install}" ]; then
+    # directory exists --> update INSTALL_DIR and exit loop
+    echo -e "WARNING: Directory already exists. Files will be overwritten."
+    INSTALL_DIR=${new_install}
+    break
+  elif [ ! "${new_install}" ]; then
+    # TODO: not sure what this does?? (julien)
+    break
+  else
+    # directory does not exist. Creating it.
+    echo -e "Directory does not exist. Creating it..."
+    cmd="mkdir ${new_install}"; echo $cmd; $cmd
+    # check if directory was created
+    if [ ! "${new_install}" ]; then
+      echo "ERROR: Directory was not created. Check permissions and make sure you entered absolute path."
+      exit
+    fi
+    INSTALL_DIR=${new_install}
+    break
+  fi
+done
+# TODO: deal with slash at the end (remove if present)
+SCT_DIR=${INSTALL_DIR}
+
+# Copy files to destination directory
+if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
+  echo -e "\nCopying source files from ${SCT_SOURCE} to ${SCT_DIR}"
+  cd ${START_DIR}
+  cp -vR ${SCT_SOURCE}/scripts  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/version.txt  ${SCT_DIR}/.
+  mkdir -p ${SCT_DIR}/install
+  cp -vRp ${SCT_SOURCE}/install ${SCT_DIR}
+  cp -vRp ${SCT_SOURCE}/testing ${SCT_DIR}/.
+else
+  echo -e "\nSkipping copy of source files (source and destination folders are the same)"
+fi
+
+# Go to installation folder
+cd ${SCT_DIR}
+
+# Download data
+echo -e "\nInstalling data..."
+cmd="curl -o data.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/MNI-Poly-AMU.tar.gz"; echo $cmd; $cmd
+# unzip binaries
+tar -zxvf data.tar.gz
+# remove zip file
+rm data.tar.gz
+
+# Create launchers for Python scripts
+echo -e "\nCreate launchers for Python scripts"
+mkdir -p bin
+cd install
+./update_bin.sh  # N.B. This script needs to be run from /install folder (because uses relative path)
+cd ..
+
+# Copy binaries
+echo -e "\nInstalling binaries..."
+cd bin
+#find  . -type f -not -path '*/miniconda/*' -exec cp -v {} ${SCT_DIR}/bin \;
+cmd="curl -o sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/bin/${OS}/sct_binaries.tar.gz"; echo $cmd; $cmd
+# unzip binaries
+tar -zxvf sct_binaries.tar.gz
+# remove zip file
+rm sct_binaries.tar.gz
+cd ..
+
+# Install Python conda
+echo -e "\nInstalling conda..."
+mkdir python
+cd python
+# downloading
+cmd="curl -o miniconda.sh https://dl.dropboxusercontent.com/u/20592661/sct/miniconda/${OS}/miniconda.sh"; echo $cmd; $cmd
+# run conda installer
+cmd="bash miniconda.sh -p ${SCT_DIR}/python -b -f"; echo $cmd; $cmd
+#cmd="bash ${conda_installer} -p ${SCT_DIR}/python -b -f"; echo $cmd; $cmd
+# activate miniconda
+cmd=". ${SCT_DIR}/python/bin/activate ${SCT_DIR}/python"; echo $cmd; $cmd
+# remove file
+rm miniconda.sh
+cd ..
+
+# Install Python dependencies
+echo -e "\nInstalling Python dependencies..."
+# N.B. the flag --ignore-installed is required because if user already
+# has other dependencies, it will not install
+conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
+pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+
+# Install wheels
+echo -e "\nInstalling external Python dependencies..."
+cmd="curl -o wheels.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/wheel/${OS}/wheels.tar.gz"; echo $cmd; $cmd
+tar -zxvf wheels.tar.gz
+# get file names
+dipy_whl=`ls dipy*.whl`
+ornlm_whl=`ls ornlm*.whl`
+pip install --ignore-installed ${dipy_whl} ${ornlm_whl}
+# remove temporary files
+rm wheels.tar.gz dipy*.whl ornlm*.whl
+
+echo -e "All requirement installed!"
+
+# update PATH environment
+if [[ $UID != 0 ]]; then
+  while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
+    echo -e -n "\nDo you want to add the sct_* script to your PATH environment? yes/no: "
+    read add_to_path
+  done
+  echo ""
+  if [[ ${add_to_path} =~ ^[Yy] ]]; then
+    # assuming bash
+    install_refresh
+    # (t)csh for good measure
+    if ! grep SPINALCORDTOOLBOX ${THE_CSHRC} > /dev/null 2>&1 ; then
+        echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
+        echo "setenv PATH \"\$PATH:${SCT_DIR}/bin\"" >> ${THE_CSHRC}
+    fi
+  else
+     echo Not adding ${INSTALL_DIR} to \$PATH
+     echo You can always add it later or call SCT functions with full path ${SCT_DIR}/bin/sct_function
+  fi
+fi
+
+# Make sure sct script are executable
+find ${SCT_DIR}/bin/ -maxdepth 2 -type f -exec chmod 755 {} \;
+
+# Run check dependencies
+echo -e "\nRun sct_check_dependencies..."
+if ${SCT_DIR}/bin/sct_check_dependencies ; then
+   echo -e "INSTALLATION DONE!\n"
+  if [[ $UID == 0 ]]; then
+    echo -e "WARNING: sudo mode: Profile files was not edited. To access SCT functions, please add the following line to the appropriate file (e.g., .bashrc):"
+    echo -e "export PATH=${SCT_DIR}/bin:\$PATH\n"
+  fi
+else
+   echo -e "INSTALLATION ERROR!\n"
+fi
