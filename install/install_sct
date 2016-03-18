@@ -248,7 +248,7 @@ cd ${SCT_DIR}/install
 # Install Python conda
 echo -e "\nInstalling conda..."
 # this will run conda installer for proper OS
-bash ${conda_installer} -p ${SCT_DIR}/python -b -f
+cmd="bash ${conda_installer} -p ${SCT_DIR}/python -b -f"; echo $cmd; $cmd
 # activate miniconda
 cmd=". ${SCT_DIR}/python/bin/activate ${SCT_DIR}/python"; echo $cmd; $cmd
 
