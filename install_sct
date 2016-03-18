@@ -28,35 +28,9 @@
 # TODO: remove python folder if not empty
 # --> current error: mkdir: ~: No such file or directory
 
-echo -e "\nWelcome to the SCT installer!"
-
-if [ -e "version.txt" ]; then
-  SCT_VERSION=`cat version.txt`
-  SCT_SOURCE=${PWD}
-else
-  echo "ERROR: version.txt not found."
-  exit
-fi
-
-# Fetch OS type
-if uname -a | grep -i  darwin > /dev/null 2>&1; then
-  OS=osx
-elif uname -a | grep -i  linux > /dev/null 2>&1; then
-  OS=linux
-else
-  echo Sorry, the installer only supports Linux and OSX, quitting installer
-  exit 1
-fi
-
-#echo -e "\nInstallation info:"
-echo -e "\nSCT version ......... "$SCT_VERSION
-echo -e "Operating system .... "$OS
-
-# create folder for SCT installation
-SCT_FOLDER_NAME=sct_$SCT_VERSION
 
 # functions
-START_DIR=$PWD
+# ========================================================================
 finish (){
 #  Clean at exit
   cd ${START_DIR}
@@ -128,7 +102,50 @@ install_refresh (){
 
 }
 
-# Script
+
+# SCRIPT STARTS HERE
+# ========================================================================
+echo -e "\nWelcome to the SCT installer!"
+
+SCT_SOURCE=$PWD
+
+if [ -e "version.txt" ]; then
+  SCT_VERSION=`cat version.txt`
+#elif [ -e "../version.txt" ]; then
+#  SCT_VERSION=`cat ../version.txt`
+#  SCT_SOURCE=$(dirname "$PWD")
+else
+  echo "ERROR: version.txt not found."
+  exit
+fi
+
+# Get installation type (from git or from package)
+if [ -d ".git" ]; then
+  # folder .git exist, therefore it is a git installation
+  INSTALL_TYPE="git"
+else
+  INSTALL_TYPE="package"
+#  SCT_SOURCE=${PWD}
+fi
+
+# Fetch OS type
+if uname -a | grep -i  darwin > /dev/null 2>&1; then
+  OS=osx
+elif uname -a | grep -i  linux > /dev/null 2>&1; then
+  OS=linux
+else
+  echo Sorry, the installer only supports Linux and OSX, quitting installer
+  exit 1
+fi
+
+#echo -e "\nInstallation info:"
+echo -e "\nSCT version ......... "$SCT_VERSION
+echo -e "Installation type ... "$INSTALL_TYPE
+echo -e "Operating system .... "$OS
+
+# create folder for SCT installation
+#SCT_FOLDER_NAME=sct_$SCT_VERSION
+
 # Check where the install script is ran from
 #if [[ $PWD =~ /$SCT_FOLDER_NAME$ ]] ;then
   #
@@ -143,21 +160,23 @@ install_refresh (){
 #   SCT_SOURCE=${PWD%/install}
 #fi
 
-if [[ $UID == 0 ]]; then
+#if [[ $UID == 0 ]]; then
   # sudo mode
-  THE_BASHRC=/etc/profile.d/sct.sh
-  THE_CSHRC=/etc/profile.d/sct.csh
-  INSTALL_DIR=/opt
-else
-  # user mode
-  THE_BASHRC=${HOME}/.bashrc
-  THE_CSHRC=${HOME}/.cshrc
-  INSTALL_DIR="${HOME}"
-fi
+#  THE_BASHRC=/etc/profile.d/sct.sh
+#  THE_CSHRC=/etc/profile.d/sct.csh
+#  INSTALL_DIR=/opt
+#else
+# user mode
+THE_BASHRC=${HOME}/.bashrc
+THE_CSHRC=${HOME}/.cshrc
+
+#fi
 
 # if installing from git folder, then becomes default installation folder
 if [[ $INSTALL_TYPE == "git" ]]; then
-  INSTALL_DIR=$(dirname "$PWD")
+  INSTALL_DIR=$SCT_SOURCE
+else
+  INSTALL_DIR="${HOME}sct_${SCT_VERSION}"
 fi
 
 # Set install dir
