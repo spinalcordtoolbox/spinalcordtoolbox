@@ -24,6 +24,8 @@
 
 # TODO add some doc to the installer
 # TODO: deal with installation folder with "~", like: ~/test.
+# TODO: check if curl/wget installed
+# TODO: remove python folder if not empty
 # --> current error: mkdir: ~: No such file or directory
 
 echo -e "\nWelcome to the SCT installer!"
@@ -281,6 +283,9 @@ if [[ $UID != 0 ]]; then
      echo Not adding ${INSTALL_DIR} to \$PATH
      echo You can always add it later or call SCT functions with full path ${SCT_DIR}/bin/sct_function
   fi
+else
+  echo -e "\nWARNING: sudo mode: Profile files will not be edited. To access SCT functions, please add the following line to the appropriate file (e.g., .bashrc):"
+  echo "export PATH=${SCT_DIR}/bin:\$PATH"
 fi
 
 # Make sure sct script are executable
