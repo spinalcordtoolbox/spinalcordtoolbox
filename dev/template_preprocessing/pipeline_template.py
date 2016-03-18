@@ -59,15 +59,24 @@ PATH_OUTPUT = '/Users/benjamindeleener/data/template_preprocessing_final'  # fol
 
 # folder to dataset
 folder_data_errsm = '/Volumes/data_shared/montreal_criugm/errsm'
+folder_data_sct = '/Volumes/data_shared/montreal_criugm/sct'
 folder_data_marseille = '/Volumes/data_shared/marseille'
 folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
 
-# out because movement artefact:
+# removed because movement artefact:
 # ['errsm_22', folder_data_errsm+'/errsm_22/29-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_22/25-SPINE_T2'],\
+# removed because of low contrast:
+# ['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_data_errsm+'/errsm_02/28-SPINE_T2'],
+# removed because of stitching issue
+# ['TM', folder_data_marseille+'/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/TM_T057c/01_0105_t2-composing'],
+
+"""
+
+
+                 """
 
 # define subject
 SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
-                 ['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_data_errsm+'/errsm_02/28-SPINE_T2'],
                  ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
                  ['errsm_05', folder_data_errsm+'/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_05/24-SPINE_SPACE'],
                  ['errsm_09', folder_data_errsm+'/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', folder_data_errsm+'/errsm_09/33-SPINE_SPACE'],
@@ -87,6 +96,8 @@ SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09
                  ['errsm_31', folder_data_errsm+'/errsm_31/31-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_31/32-SPINE_T2'],
                  ['errsm_32', folder_data_errsm+'/errsm_32/16-SPINE_T1/echo_2.09 ', folder_data_errsm+'/errsm_32/19-SPINE_T2'],
                  ['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
+                 ['sct_001', folder_data_sct+'/sct_001/17-SPINE_T1/echo_2.09', folder_data_sct+'/sct_001/16-SPINE_T2'],
+                 ['sct_002', folder_data_sct+'/sct_002/12-SPINE_T1/echo_2.09', folder_data_sct+'/sct_002/18-SPINE_T2'],
                  ['ED', folder_data_marseille+'/ED/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-101', folder_data_marseille+'/ED/01_0008_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-65'],
                  ['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
                  ['JD', folder_data_marseille+'/JD/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23', folder_data_marseille+'/JD/01_0100_compo-space'],
@@ -101,7 +112,6 @@ SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09
                  ['pain_pilot_1', folder_data_pain+'/d_sp_pain_pilot1/24-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot1/25-SPINE'],
                  ['pain_pilot_2', folder_data_pain+'/d_sp_pain_pilot2/13-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot2/30-SPINE_T2'],
                  ['pain_pilot_4', folder_data_pain+'/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot4/32-SPINE_T2'],
-                 ['TM', folder_data_marseille+'/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/TM_T057c/01_0105_t2-composing'],
                  ['errsm_20', folder_data_errsm+'/errsm_20/12-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_20/34-SPINE_T2'],
                  ['pain_pilot_3', folder_data_pain+'/d_sp_pain_pilot3/16-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot3/31-SPINE_T2'],
                  ['errsm_34', folder_data_errsm+'/errsm_34/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_34/40-SPINE_T2'],
@@ -124,7 +134,7 @@ height_of_template_space = 1100
 x_size_of_template_space = 200
 y_size_of_template_space = 200
 number_labels_for_template = 20  # vertebral levels
-straightening_parameters = '-params bspline_meshsize=5x5x15'
+straightening_parameters = '-params algo_fitting=nurbs,bspline_meshsize=5x5x15'
 
 class TimeObject:
     def __init__(self, number_of_subjects=1):
@@ -177,30 +187,38 @@ class TimeObject:
 timer = dict()
 timer['T1'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
 timer['T2'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['align'] = TimeObject(number_of_subjects=1)
 
 def main():
     timer['T1'].start()
     # Processing of T1 data for template
-    do_preprocessing('T1')
-    create_cross('T1')
-    push_into_templace_space('T1')
-    average_levels('T1')
-    align_vertebrae('T1')
+    #do_preprocessing('T1')
+    #create_cross('T1')
+    #push_into_templace_space('T1')
+    #average_levels('T1')
     timer['T1'].stop()
 
     timer['T2'].start()
     # Processing of T2 data for template
-    do_preprocessing('T2')
-    create_cross('T2')
-    push_into_templace_space('T2')
-    average_levels('T2')
+    #do_preprocessing('T2')
+    #create_cross('T2')
+    #push_into_templace_space('T2')
+    #average_levels('T2')
+    timer['T2'].stop()
+
+    #timer['align'].start()
+    #average_levels('both')
+    #align_vertebrae('T1')
     align_vertebrae('T2')
     timer['T2'].stop()
+    timer['align'].stop()
 
     sct.printv('T1 time:')
     timer['T2'].printTotalTime()
     sct.printv('T2 time:')
     timer['T2'].printTotalTime()
+    sct.printv('Align time:')
+    timer['align'].printTotalTime()
 
 
 def do_preprocessing(contrast):
@@ -336,8 +354,7 @@ def do_preprocessing(contrast):
             sct.run('sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz')
             sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz seg_and_labels.nii.gz')
         else:
-            sct.run(
-                'sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+            sct.run('sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
             sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz seg_and_labels.nii.gz')
 
 
@@ -355,7 +372,7 @@ def do_preprocessing(contrast):
         # - warp_curve2straight.nii.gz
         # - data_RPI_crop_normalized_straight.nii.gz
         print '\nStraightening image using centerline...'
-        cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -c ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -a nurbs -o data_RPI_crop_normalized_straight.nii.gz '+straightening_parameters)
+        cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -s ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -o data_RPI_crop_normalized_straight.nii.gz '+straightening_parameters)
         #sct.printv(cmd_straighten)
         sct.run(cmd_straighten)
 
@@ -501,12 +518,75 @@ def push_into_templace_space(contrast):
 
 # Calculate mean labels and save it into folder "labels_vertebral"
 def average_levels(contrast):
-    print '\nGo to output folder '+ PATH_OUTPUT + '/labels_vertebral_' + contrast + '\n'
-    os.chdir(PATH_OUTPUT +'/labels_vertebral_' + contrast)
-    print'\nCalculate mean along subjects of files labels_vertebral and save it into '+PATH_OUTPUT +'/labels_vertebral_' + contrast +' as template_landmarks.nii.gz'
-    template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
-    # this function looks at all files inside the folder "labels_vertebral_T*" and find the average vertebral levels across subjects
-    sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + ' -t '+ template_shape +' -n '+ str(number_labels_for_template))
+    if contrast == 'both':
+        print 'Averaging levels from T1 and T2 contrasts...'
+
+        from numpy import mean, zeros, array
+        n_i, n_l = 2, number_labels_for_template
+        average = zeros((n_i, n_l))
+        compteur = 0
+
+        img_T1 = nibabel.load(PATH_OUTPUT + '/labels_vertebral_T1/template_landmarks.nii.gz')
+        data_T1 = img_T1.get_data()
+        X, Y, Z = (data_T1 > 0).nonzero()
+        Z = [Z[i] for i in Z.argsort()]
+        Z.reverse()
+
+        for i in xrange(n_l):
+            if i < len(Z):
+                average[compteur][i] = Z[i]
+
+        compteur = compteur + 1
+
+        img_T2 = nibabel.load(PATH_OUTPUT + '/labels_vertebral_T2/template_landmarks.nii.gz')
+        data_T2 = img_T2.get_data()
+        X, Y, Z = (data_T1 > 0).nonzero()
+        Z = [Z[i] for i in Z.argsort()]
+        Z.reverse()
+
+        for i in xrange(n_l):
+            if i < len(Z):
+                average[compteur][i] = Z[i]
+
+        average = array([int(round(mean([average[average[:, i] > 0, i]]))) for i in xrange(n_l)])
+
+        template_absolute_path = path_sct + '/dev/template_creation/template_shape.nii.gz'
+        print template_absolute_path
+        print '\nGet dimensions of template...'
+        from msct_image import Image
+        nx, ny, nz, nt, px, py, pz, pt = Image(template_absolute_path).dim
+        print '.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)
+        print '.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm'
+
+        img = nibabel.load(template_absolute_path)
+        data = img.get_data()
+        hdr = img.get_header()
+        data[:, :, :] = 0
+        compteur = 1
+        for i in average:
+            print int(round(nx / 2.0)), int(round(ny / 2.0)), int(round(i)), int(round(compteur))
+            data[int(round(nx / 2.0)), int(round(ny / 2.0)), int(round(i))] = int(round(compteur))
+            compteur = compteur + 1
+
+        print '\nSave volume ...'
+        # hdr.set_data_dtype('float32') # set imagetype to uint8
+        # save volume
+        # data = data.astype(float32, copy =False)
+        img = nibabel.Nifti1Image(data, None, hdr)
+        file_name = PATH_OUTPUT + '/labels_vertebral_T1/template_landmarks.nii.gz'
+        nibabel.save(img, file_name)
+        print '\nFile created : ' + file_name
+        file_name = PATH_OUTPUT + '/labels_vertebral_T2/template_landmarks.nii.gz'
+        nibabel.save(img, file_name)
+        print '\nFile created : ' + file_name
+
+    else:
+        print '\nGo to output folder '+ PATH_OUTPUT + '/labels_vertebral_' + contrast + '\n'
+        os.chdir(PATH_OUTPUT +'/labels_vertebral_' + contrast)
+        print'\nCalculate mean along subjects of files labels_vertebral and save it into '+PATH_OUTPUT +'/labels_vertebral_' + contrast +' as template_landmarks.nii.gz'
+        template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
+        # this function looks at all files inside the folder "labels_vertebral_T*" and find the average vertebral levels across subjects
+        sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + ' -t '+ template_shape +' -n '+ str(number_labels_for_template))
 
 
 # Aligning vertebrae for all subjects and copy results into "Final_results". Plus: save png images of all subject into a folder named Image_results.

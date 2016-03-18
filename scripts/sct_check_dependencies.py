@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Check the installation and environment variables of the toolbox and its dependences.
+# Check the installation and environment variables of the toolbox and its dependencies.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -89,11 +89,6 @@ def main():
             (status, output) = sct.run('more ~/.bashrc', verbose)
             print output
 
-    # check if user is root (should not be!)
-    if os.geteuid() == 0:
-       print 'Looks like you are root. Please run this script without sudo. Exit program\n'
-       sys.exit(2)
-
     # check OS
     print 'Check which OS is running... '
     platform_running = sys.platform
@@ -120,9 +115,11 @@ def main():
 
     # get path of the toolbox
     print 'Check SCT path...'
-    status, output = sct.run('echo $SCT_DIR', verbose)
-    path_sct = output
-    print '.. '+path_sct
+    path_sct = os.getenv("SCT_DIR")
+    if path_sct is None :
+        raise EnvironmentError("SCT_DIR, which is the path to the "
+                               "Spinalcordtoolbox install needs to be set")
+    print ('.. {0}'.format(path_sct))
 
     # fetch version of the toolbox
     print 'Check SCT version... '
@@ -312,7 +309,8 @@ def check_package_version(installed, required, package_name):
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Check the installation and environment variables of the toolbox and its dependences.')
+    parser.usage.set_description('Check the installation and environment variables of the'
+                                 ' toolbox and its dependencies.')
     parser.add_option(name="-c",
                       description="Complete test.",
                       mandatory=False)
