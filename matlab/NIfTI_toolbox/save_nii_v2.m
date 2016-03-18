@@ -48,7 +48,7 @@
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %  - "old_RGB" related codes in "save_nii.m" are added by Mike Harms (2006.06.28) 
 %
-function save_nii_v2(nii, fileprefix, old_nii_fname,datatype)
+function save_nii_v2(nii, fileprefix, old_nii_fname,datatype,reorient)
    dbstop if error
    if ~exist('nii','var') | isempty(nii) %| ~isfield(nii,'hdr') | ...
 	%~isfield(nii,'img') | ~exist('fileprefix','var') | isempty(fileprefix)
@@ -142,10 +142,12 @@ function save_nii_v2(nii, fileprefix, old_nii_fname,datatype)
    write_nii(nii, filetype, fileprefix, old_RGB);
    % reorient in RPI
    
-   if exist('old_nii_fname','var')
+   if ~exist('reorient','var'), reorient=1; end
+   if exist('old_nii_fname','var') && reorient
        [~,orient_dest] = unix(['sct_image -i ' old_nii_fname ' -getorient']); orient_dest=orient_dest(1:end-1);
        unix(['sct_image -i ' fileprefix '.nii -setorient ' orient_dest]);
-       unix(['mv ' fileprefix '_RPI.nii ' fileprefix '.nii'])
+       if exist([fileprefix '.nii.gz'],'file'), unix(['rm ' fileprefix '.nii.gz']); end
+       unix(['mv ' fileprefix '_RPI.nii ' fileprefix '.nii']);
        unix(['fslcpgeom ' old_nii_fname ' ' fileprefix '.nii -d']);
    end
    
