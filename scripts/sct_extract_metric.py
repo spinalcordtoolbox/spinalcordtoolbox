@@ -417,7 +417,7 @@ def read_label_file(path_info_label, file_info_label):
     section = ''
     for line in lines:
         # update section index
-        if ('# White matter atlas' in line) or ('# Combined tracts' in line):
+        if ('# White matter atlas' in line) or ('# Combined labels' in line):
             section = line
         # record the label according to its section
         if ('# White matter atlas' in section) and (line[0] != '#'):
@@ -426,7 +426,7 @@ def read_label_file(path_info_label, file_info_label):
             indiv_labels_names.append(parsed_line[1].strip())
             indiv_labels_files.append(parsed_line[2].strip())
 
-        elif '# Combined tracts' in section and (line[0] != '#'):
+        elif '# Combined labels' in section and (line[0] != '#'):
             parsed_line = line.split(',')
             combined_labels_ids.append(int(parsed_line[0]))
             combined_labels_names.append(parsed_line[1].strip())
