@@ -35,7 +35,7 @@ install:
 script:
   - sct_check_dependencies   # test dependencies
   - sct_testing -d 1  # test functions & integrity
-  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
-  - cd ../spinalcordtoolbox_v*
-  - yes | ./install_sct  # test installation of package
+#  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
+#  - cd ../spinalcordtoolbox_v*
+#  - yes | ./install_sct  # test installation of package
   - echo "DONE"
