@@ -31,15 +31,8 @@
 echo -e "\nWelcome to the SCT installer!"
 
 if [ -e "version.txt" ]; then
-  # version.txt is in the same folder as the installer, therefore this installation is from a package
   SCT_VERSION=`cat version.txt`
-  INSTALL_TYPE="package"
   SCT_SOURCE=${PWD}
-elif [ -e "../version.txt" ]; then
-  # version.txt is in folder "../", therefore this installation is from a git folder.
-  SCT_VERSION=`cat ../version.txt`
-  INSTALL_TYPE="git"
-  SCT_SOURCE=$(dirname "$PWD")
 else
   echo "ERROR: version.txt not found."
   exit
@@ -57,7 +50,6 @@ fi
 
 #echo -e "\nInstallation info:"
 echo -e "\nSCT version ......... "$SCT_VERSION
-echo -e "Installation type ... "$INSTALL_TYPE
 echo -e "Operating system .... "$OS
 
 # create folder for SCT installation
@@ -239,7 +231,7 @@ fi
 echo -e "\nCreate launchers for Python scripts"
 mkdir -p ${SCT_DIR}/bin
 cd ${SCT_DIR}/install
-./update_bin.sh
+install/update_bin.sh
 
 # Copy binaries
 echo -e "\nInstalling binaries for "$OS
