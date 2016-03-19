@@ -299,7 +299,11 @@ if ${SCT_DIR}/bin/sct_check_dependencies ; then
   if [[ $UID == 0 ]]; then
     echo -e "WARNING: sudo mode: Profile files was not edited. To access SCT functions, please add the following line to the appropriate file (e.g., .bashrc):"
     echo -e "export PATH=${SCT_DIR}/bin:\$PATH\n"
+  else
+    echo -e "Open a new Terminal window to load environment variables, or run: source ~.bashrc\n"
   fi
 else
-   echo -e "INSTALLATION ERROR!\n"
+   echo -e "INSTALLATION ERROR!"
+   echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
+   echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
 fi
