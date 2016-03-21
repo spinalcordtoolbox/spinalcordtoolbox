@@ -36,6 +36,73 @@ class InstallationResult(object):
         self.message = message
 
 
+class MsgUser(object):
+    __debug = False
+    __quiet = False
+
+    @classmethod
+    def debugOn(cls):
+        cls.__debug = True
+    @classmethod
+    def debugOff(cls):
+        cls.__debug = False
+    @classmethod
+    def quietOn(cls):
+        cls.__quiet = True
+    @classmethod
+    def quietOff(cls):
+        cls.__quiet = False
+
+    @classmethod
+    def isquiet(cls):
+        return cls.__quiet
+
+    @classmethod
+    def isdebug(cls):
+        return cls.__debug
+
+    @classmethod
+    def debug(cls, message, newline=True):
+        if cls.__debug:
+            from sys import stderr
+            mess = str(message)
+            if newline:
+                mess += "\n"
+            stderr.write(mess)
+
+    @classmethod
+    def message(cls, msg):
+        if cls.__quiet:
+            return
+        print msg
+
+    @classmethod
+    def question(cls, msg):
+        print msg,
+
+    @classmethod
+    def skipped(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (bcolors.magenta, "[Skipped] ", bcolors.normal, msg ) )
+
+    @classmethod
+    def ok(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (bcolors.green, "[OK] ", bcolors.normal, msg ) )
+
+    @classmethod
+    def failed(cls, msg):
+        print "".join( (bcolors.red, "[FAILED] ", bcolors.normal, msg ) )
+
+    @classmethod
+    def warning(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg ) )
+
+
 def open_url(url, start=0, timeout=20):
     """
     Open URL
