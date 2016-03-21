@@ -239,7 +239,7 @@ if not path_ants:
     print 'ANTs folder not specified. Cloning from SCT repository...'
     path_ants = pwd + '/'
     # from installer import download_file, InstallationResult
-    file_download_result = sct.download_file(url_to_ants_repository, ants_downloaded_file)
+    file_download_result = download_file(url_to_ants_repository, ants_downloaded_file)
     if file_download_result.status == InstallationResult.SUCCESS:
         # unzip ants repository
         cmd = 'unzip -u -d ./ ' + ants_downloaded_file
