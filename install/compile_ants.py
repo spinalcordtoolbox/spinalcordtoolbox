@@ -210,7 +210,6 @@ ants_scripts = ['ANTSLandmarksBSplineTransform',
                 'antsApplyTransforms',
                 'antsRegistration',
                 'antsSliceRegularizedRegistration',
-                'ANTSUseLandmarkImagesToGetAffineTransform',
                 'ComposeMultiTransform']
 
 pwd = os.getcwd()
@@ -284,12 +283,15 @@ else:
     os.chdir(path_ants + 'antsbin/')
 
 sct.run('make -j 8', verbose=2)
-status, path_sct = sct.run('echo $SCT_DIR')
+# status, path_sct = sct.run('echo $SCT_DIR')
 
+# copy scripts to ants_binaries
+os.chdir(pwd)
+sct.run('mkdir ants_binaries')
 for script in scripts:
-    sct.run('cp ' + path_ants + 'antsbin/bin/' + script + ' ' + path_sct + '/bin/' + os_target + '/isct_' + script,
-            verbose=2)
+    sct.run('cp ' + path_ants + 'antsbin/bin/' + script + ' ants_binaries/isct_' + script, verbose=2)
 
 # some cleaning
-os.chdir(pwd)
 sct.run('rm -rf ANTs/')
+
+print "DONE! binaries are under antsbin/bin"
