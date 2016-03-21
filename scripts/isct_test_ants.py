@@ -17,6 +17,7 @@
 import sys
 
 import numpy as np
+
 import nibabel as nib
 
 import getopt
@@ -105,7 +106,7 @@ def main():
     sct.run('sct_dice_coefficient -i data_dest.nii.gz -d data_src_reg.nii.gz -o dice.txt', verbose)
     with open ("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
-    printv('Dice coeff = '+str(dice), verbose)
+    printv('Dice coeff = '+str(dice)+' (should be above '+str(dice_acceptable)+')', verbose)
 
     # Check if DICE coefficient is above acceptable value
     if dice > dice_acceptable:
