@@ -224,7 +224,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     print '  advanced parameters ....... '+str(adv_param)+'\n'
 
     # parse labels according to the file info_label.txt
-    # label_id, label_name, label_file = read_label_file(path_label, param.file_info_label, method)
     indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label, param.file_info_label)
 
     nb_labels = len(indiv_labels_files)
@@ -410,8 +409,8 @@ def read_label_file(path_info_label, file_info_label):
     # look at first line
     header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
     info_label_title = header_lines[0].split('-')[0].strip()
-    if '# White matter atlas' not in info_label_title:
-        sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
+    # if '# White matter atlas' not in info_label_title:
+    #     sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
 
     # remove header lines (every line starting with "#")
     section = ''
