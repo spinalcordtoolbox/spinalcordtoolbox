@@ -9,8 +9,9 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-from msct_parser import Parser
 import sys
+
+from msct_parser import Parser
 import sct_utils as sct
 
 
@@ -93,7 +94,7 @@ if __name__ == "__main__":
     if '-bzmax' in arguments and arguments['-bzmax'] == '1':
         cmd += ' -bzmax'
     if '-o' in arguments:
-        cmd += ' -o '+arguments['o']
+        cmd += ' -o '+arguments['-o']
 
     verbose = arguments['-v']
     if verbose == '0':
