@@ -565,7 +565,6 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
-        from sct_extract_metric import save_metrics
 
         warning = ''
         if vert_levels and not fname_vertebral_labeling:
@@ -606,7 +605,7 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
 
         # write result into output file
-        save_metrics([0], [file_data], slices, [mean_CSA], [std_CSA], path_data + 'csa_mean.txt', path_data+file_csa_volume, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^3)', '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(path_data + 'csa_mean.txt', file_data, 'CSA', 0, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
         sct.printv('Compute the volume in between the selected slices...', type='info')
@@ -615,13 +614,56 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
 
         # write result into output file
-        save_metrics([0], [file_data], slices, [volume], [np.nan], path_data + 'volume.txt', path_data+file_data, 'nb_voxels x px x py x pz (in mm^3)', '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(path_data + 'volume.txt', file_data, 'volume', 0, 'nb_voxels x px x py x pz (in mm^3)', volume, [np.nan], slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp, error_exit='warning')
 
+# ======================================================================================================================
+# Save CSA or volume estimation in a .txt file
+# ======================================================================================================================
+def save_results(fname_output, fname_data, metric_name, label_id, method, mean, std, slices_of_interest, actual_vert, warning_vert_levels):
+
+    sct.printv('\nSave results in: '+fname_output+'.txt ...')
+
+    # CSV format, header lines start with "#"
+    # Write mode of file
+    fid_metric = open(fname_output+'.txt', 'w')
+
+    # WRITE HEADER:
+    # Write date and time
+    fid_metric.write('# Date - Time: '+time.strftime('%Y/%m/%d - %H:%M:%S'))
+    # Write metric data file path
+    fid_metric.write('\n'+'# Metric: '+metric_name)
+    # Write method used for the metric estimation
+    fid_metric.write('\n'+'# Calculation method: '+method)
+
+    # Write selected vertebral levels
+    if actual_vert:
+        if warning_vert_levels:
+            for i in range(0, len(warning_vert_levels)):
+                fid_metric.write('\n# '+str(warning_vert_levels[i]))
+        fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
+    else:
+        fid_metric.write('\n# Vertebral levels: ALL')
+
+    # Write selected slices
+    fid_metric.write('\n'+'# Slices (z): ')
+    if slices_of_interest != '':
+        fid_metric.write(slices_of_interest)
+    else:
+        fid_metric.write('ALL')
+
+    # label headers
+    fid_metric.write('%s' % ('\n'+'# ID, file used for computation, mean, std\n\n'))
+
+    # WRITE RESULTS
+    fid_metric.write('%i, %s, %f, %f\n' % (label_id, os.path.abspath(fname_data), mean, std))
+
+    # Close file .txt
+    fid_metric.close()
 
 # ======================================================================================================================
 # Find min and max slices corresponding to vertebral levels based on the fitted centerline coordinates
