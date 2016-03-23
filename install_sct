@@ -130,6 +130,7 @@ fi
 # Fetch OS type
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
   OS=osx
+  force_bashrc_loading
 elif uname -a | grep -i  linux > /dev/null 2>&1; then
   OS=linux
 else
@@ -217,6 +218,7 @@ rm data.tar.gz
 
 # Create launchers for Python scripts
 echo -e "\nCreate launchers for Python scripts"
+rm bin/* 2> /dev/null
 mkdir -p bin
 cd install
 ./update_bin.sh  # N.B. This script needs to be run from /install folder (because uses relative path)
