@@ -17,7 +17,7 @@
 import sys
 import os
 import getopt
-import commands
+from commands import getstatusoutput
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -45,7 +45,7 @@ def main(args=None):
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        status, path_sct_data = getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz,-'+path_sct_data+'/mt/warp_template2mt.nii.gz'
         fname_dest = path_sct_data+'/mt/mtr.nii.gz'
         verbose = 1
@@ -94,7 +94,11 @@ def main(args=None):
     fname_warp_list_invert.reverse()
     cmd = 'isct_ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
     sct.printv('>> '+cmd, verbose)
-    commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
+    status, output = getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
+
+    # check if output was generated
+    if not os.path.isfile('warp_final.nii.gz'):
+        sct.printv('ERROR: Warping field was not generated.\n'+output, 1, 'error')
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)

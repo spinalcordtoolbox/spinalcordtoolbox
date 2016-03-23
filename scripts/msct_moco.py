@@ -128,19 +128,19 @@ def moco(param):
     file_data_moco = file_data+suffix
     if todo != 'estimate':
         sct.printv('\nMerge data back along T...', verbose)
-        # cmd = fsloutput + 'fslmerge -t ' + file_data_moco
-        # for indice_index in range(len(index)):
-        #     cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
         from sct_image import concat_data
-        im_list = []
+        # im_list = []
+        fname_list = []
         for indice_index in range(len(index)):
-            im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
-        im_out = concat_data(im_list, 3)
+            # im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
+            fname_list.append(file_data_splitT_moco_num[indice_index] + ext)
+        im_out = concat_data(fname_list, 3)
         im_out.setFileName(file_data_moco + ext)
         im_out.save()
 
     # delete file target.nii (to avoid conflict if this function is run another time)
     sct.printv('\nRemove temporary file...', verbose)
+    #os.remove('target.nii')
     sct.run('rm target.nii')
 
 

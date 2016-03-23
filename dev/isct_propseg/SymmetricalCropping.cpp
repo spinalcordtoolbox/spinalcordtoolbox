@@ -28,7 +28,7 @@ SymmetricalCropping::SymmetricalCropping()
 	initSlice_ = -1.0;
 }
 
-int SymmetricalCropping::symmetryDetection()
+int SymmetricalCropping::symmetryDetection(int dimension)
 {
     ImageType::SpacingType spacingIm = inputImage_->GetSpacing();
     int cropSize = cropWidth_/spacingIm[2];

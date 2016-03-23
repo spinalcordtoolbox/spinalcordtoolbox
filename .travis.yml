@@ -19,45 +19,23 @@ matrix:
   include:
     - os: linux
       python: 2.7  # these are just to make travis's UI a bit prettier
-      env:
-        - MINICONDA="Linux-x86_64"
     - os: osx
       language: generic
-      env:
-        - MINICONDA="MacOSX-x86_64"
 
 before_install:
   - echo "HOME="
   - echo $HOME
-# Install miniconda
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=${HOME}/miniconda2/bin:$PATH
-  - conda update --yes conda
-
 install:
-# Install requirements
-  - cd install/requirements
-  - python requirements.py
-  - cd ../../
-# set PATH
-  - SCT_DIR="${HOME}/build/neuropoly/spinalcordtoolbox"
-  - PATH=${PATH}:${SCT_DIR}/bin
-  - PATH=${PATH}:${SCT_DIR}/bin/${TRAVIS_OS_NAME}
-  - export SCT_DIR PATH
-  - export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts
-  - . ~/.bashrc
-# create links
-  - ./install/create_links.sh -a
-# install external libraries
-  - ./install/install_external.py
-
+# update tools
+#  - ./update_bin.sh
+  - yes | ./install_sct
+# run launcher in order to update PATH
+  - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
+  - echo $PATH
 script:
-  - sct_check_dependences   # test dependences
+#  - sct_check_dependencies   # test dependencies
   - sct_testing -d 1  # test functions & integrity
-  - cd install
-  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
-  - cd ../spinalcordtoolbox_v*
-  - python installer.py -p ~/sct  # test installation of package
+#  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
+#  - cd ../spinalcordtoolbox_v*
+#  - yes | ./install_sct  # test installation of package
   - echo "DONE"

@@ -329,8 +329,7 @@ def check_if_3d(fname):
     from msct_image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
-        return False
-        # printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
+        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
     else:
         return True
 
@@ -338,8 +337,8 @@ def check_if_3d(fname):
 # check_if_rpi:  check if data are in RPI orientation
 #=======================================================================================================================
 def check_if_rpi(fname):
-    from sct_image import get_orientation
-    if not get_orientation(fname, filename=True) == 'RPI':
+    from sct_image import get_orientation_3d
+    if not get_orientation_3d(fname, filename=True) == 'RPI':
         printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_image -setorient to reorient your data. Exit program.\n', 1, 'error')
 
 
@@ -418,6 +417,13 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         os.remove(path_out+file_out+ext_out)
     if ext_in != ext_out:
         # Generate output file
+        '''
+        # TRY TO UNCOMMENT THIS LINES AND RUN IT IN AN OTHER STATION THAN EVANS (testing of sct_label_vertebrae and sct_smooth_spinalcord never stops with this lines on evans)
+        if ext_in == '.nii.gz' and ext_out == '.nii':  # added to resolve issue #728
+            run('gunzip -f ' + fname_in)
+            os.rename(path_in + file_in + '.nii', fname_out)
+        else:
+        '''
         from sct_convert import convert
         convert(fname_in, fname_out)
     else:
@@ -468,6 +474,7 @@ def check_if_same_space(fname_1, fname_2):
     q2 = im_2.hdr.get_qform()
 
     dec = int(np_abs(round(np_log10(min(np_abs(q1[nonzero(q1)]))))) + 1)
+    dec = 4 if dec > 4 else dec
     return all(around(q1, dec) == around(q2, dec))
 
 

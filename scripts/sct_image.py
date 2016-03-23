@@ -28,7 +28,7 @@ def get_parser():
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Perform mathematical operations on images. Some inputs can be either a number or a 4d image or several 3d images separated with ","')
+    parser.usage.set_description('Perform manipulations on images (e.g., pad, change space, split along dimension). Inputs can be a number, a 4d image, or several 3d images separated with ","')
     parser.add_option(name="-i",
                       type_value=[[','], 'file'],
                       description="Input file(s). If several inputs: separate them by a coma without white space.\n",
@@ -106,7 +106,7 @@ def main(args = None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     fname_in = arguments["-i"]
     n_in = len(fname_in)
     verbose = int(arguments['-v'])
@@ -151,6 +151,7 @@ def main(args = None):
         im_out = None
 
     elif "-setorient" in arguments:
+        print fname_in[0]
         im_in = Image(fname_in[0])
         im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose)]
 
@@ -199,7 +200,7 @@ def main(args = None):
 
         printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
-        print orient
+        print(orient)
     else:
         printv('An error occurred in sct_image...', verbose, "error")
 
@@ -289,7 +290,7 @@ def split_data(im_in, dim):
     return im_out_list
 
 
-def concat_data(fname_in_list, dim):
+def concat_data(fname_in_list, dim, no_expand=False):
     """
     Concatenate data
     :param im_in_list: list of images.
@@ -297,39 +298,98 @@ def concat_data(fname_in_list, dim):
     :return im_out: concatenated image
     """
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
-    from numpy import concatenate, expand_dims
+    from numpy import concatenate, expand_dims, squeeze
 
-    im_0 = Image(fname_in_list[0])
-    # data_list = [im.data for im in im_in_list]
+    dat_list = []
+    data_concat_list = []
 
-    first = True
-    for fname in fname_in_list:
-        im = Image(fname)
-        dat = im.data
-        # expand dimension of data in the right dimension
-        dat = expand_dims(dat, dim)
-        if first:
-            data_concat = dat
-            first = False
+    for i, fname in enumerate(fname_in_list):
+        if i != 0 and i % 100 == 0:
+            data_concat_list.append(concatenate(dat_list, axis=dim))
+            im = Image(fname)
+            dat = im.data
+            if not no_expand:
+                dat = expand_dims(dat, dim)
+            dat_list = [dat]
+            del im
+            del dat
         else:
-            # concatenate
-            try:
-                data_concat = concatenate([data_concat, dat], axis=dim)
-            except Exception as e:
-                printv('\nERROR: Concatenation on line {}'.format(sys.exc_info()[-1].tb_lineno)+'\n'+str(e)+'\n', 1, 'error')
-                data_concat = None
-        del im
-        del dat
-
+            im = Image(fname)
+            dat = im.data
+            if not no_expand:
+                dat = expand_dims(dat, dim)
+            dat_list.append(dat)
+            del im
+            del dat
+    if data_concat_list:
+        data_concat_list.append(concatenate(dat_list, axis=dim))
+        data_concat = concatenate(data_concat_list, axis=dim)
+    else:
+        data_concat = concatenate(dat_list, axis=dim)
     # write file
-    im_out = im_0.copy()
+    im_out = Image(fname_in_list[0]).copy()
     im_out.data = data_concat
     im_out.setFileName(im_out.file_name+'_concat'+im_out.ext)
 
     return im_out
 
 
+def concat_warp2d(fname_list, fname_warp3d, fname_dest):
+    """
+    Concatenate 2d warping fields into a 3d warping field along z dimension. The 3rd dimension of the resulting warping
+    field will be zeroed.
+    :param
+    fname_list: list of 2d warping fields (along X and Y).
+    fname_warp3d: output name of 3d warping field
+    fname_dest: 3d destination file (used to copy header information)
+    :return: none
+    """
+    from numpy import zeros, reshape
+    from msct_image import get_dimension
+    import nibabel as nib
+
+    # get dimensions
+    # nib.load(fname_list[0])
+    # im_0 = Image(fname_list[0])
+    nx, ny = nib.load(fname_list[0]).shape[0:2]
+    nz = len(fname_list)
+    # warp3d = tuple([nx, ny, nz, 1, 3])
+    warp3d = zeros([nx, ny, nz, 1, 3])
+    for iz, fname in enumerate(fname_list):
+        warp2d = nib.load(fname).get_data()
+        warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
+        warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
+        del warp2d
+    # save new image
+    im_dest = nib.load(fname_dest)
+    affine_dest = im_dest.get_affine()
+    im_warp3d = nib.Nifti1Image(warp3d, affine_dest)
+    # set "intent" code to vector, to be interpreted as warping field
+    im_warp3d.header.set_intent('vector', (), '')
+    nib.save(im_warp3d, fname_warp3d)
+    # copy header from 2d warping field
+    #
+    # im_dest = Image(fname_dest)
+    # im_warp3d = im_dest.copy()
+    # im_warp3d.data = warp3d.astype('float32')
+    # # add dimension between 3rd and 5th
+    # im_warp3d.hdr.set_data_shape([nx, ny, nz, 1, 3])
+    #
+    # im_warp3d.hdr.set_intent('vector', (), '')
+    # im_warp3d.setFileName(fname_warp3d)
+    # # save 3d warping field
+    # im_warp3d.save()
+    # return im_out
+
+
+
 def multicomponent_split(im):
+    """
+    Convert composite image (e.g., ITK warping field, 5dim) into several 3d volumes.
+    Replaces "c3d -mcs warp_comp.nii -oo warp_vecx.nii warp_vecy.nii warp_vecz.nii"
+    :param im:
+    :return:
+    """
     from numpy import reshape
     data = im.data
     assert len(data.shape) == 5
@@ -386,13 +446,29 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
 
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
+    # if data are 2d, get orientation from header using fslhd
+    if nz == 1:
+        if get:
+            try:
+                ori = get_orientation(im)
+            except Exception, e:
+                printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
+            return ori
+        elif set:
+            # set orientation
+            printv('\nChange orientation...', verbose)
+            im_out = set_orientation(im, ori)
+        elif set_data:
+            im_out = set_orientation(im, ori, True)
+
+
     # if data are 3d, directly set or get orientation
-    if nt == 1:
+    elif nt == 1:
         if get:
             # get orientation
             printv('\nGet orientation...', verbose)
             im_out = None
-            return get_orientation(im)
+            return get_orientation_3d(im)
         elif set:
             # set orientation
             printv('\nChange orientation...', verbose)
@@ -413,7 +489,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             # get orientation
             printv('\nGet orientation...', verbose)
             im_out=None
-            return get_orientation(im_split_list[0])
+            return get_orientation_3d(im_split_list[0])
         elif set:
             # set orientation
             printv('\nChange orientation...', verbose)
@@ -432,9 +508,26 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
     return im_out
 
 
+def get_orientation(im):
+    from nibabel import orientations
+    orientation_dic = {
+        (0, 1): 'L',
+        (0, -1): 'R',
+        (1, 1): 'P',
+        (1, -1): 'A',
+        (2, 1): 'I',
+        (2, -1): 'S',
+    }
+
+    orientation_matrix = orientations.io_orientation(im.hdr.get_best_affine())
+    ori = orientation_dic[tuple(orientation_matrix[0])] + orientation_dic[tuple(orientation_matrix[1])] + orientation_dic[tuple(orientation_matrix[2])]
+
+    return ori
+
+
 # get_orientation
 # ==========================================================================================
-def get_orientation(im, filename=False):
+def get_orientation_3d(im, filename=False):
     """
     Get orientation from 3D data
     :param im:
@@ -488,8 +581,6 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
         im_out.change_orientation(orientation, True)
         im_out.setFileName(fname_out)
     return im_out
-
-
 
 
 # START PROGRAM
