@@ -45,33 +45,35 @@ function addtopath {
 }
 
 
-#if [ -z ${SCT_DIR} ]; then
-# set at installation
-set_system_dependent_var
+if [ -z "${SCT_LOADED_ONCE}" ]; then
+  # Do not needs to be reloaded on subsequent system calls
+  export SCT_LOADED_ONCE="loaded"
+  # set at installation
+  set_system_dependent_var
 
-SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export SCT_DIR=${SCT_DIR%/bin}
-export SCT_PYTHON=${SCT_DIR}/python
-export SCT_VERSION=$(cat $SCT_DIR/version.txt)
+  SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+  export SCT_DIR=${SCT_DIR%/bin}
+  export SCT_PYTHON=${SCT_DIR}/python
+  export SCT_VERSION=$(cat $SCT_DIR/version.txt)
 
-addtopath "${SCT_DIR}/bin" PATH
-addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
-addtopath ${SCT_DIR}/scripts PYTHONPATH
-export PATH
-export PYTHONPATH
-export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
+  addtopath "${SCT_DIR}/bin" PATH
+  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
+  addtopath ${SCT_DIR}/scripts PYTHONPATH
+  export PATH
+  export PYTHONPATH
+  export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
 
-if [ -e ${HOME}/.sctrc ]; then
-# Overwrite parameter with local config
-  . ${HOME}/.sctrc
+  if [ -e ${HOME}/.sctrc ]; then
+  # Overwrite parameter with local config
+    . ${HOME}/.sctrc
+  fi
+  # Will quietely fail if a virtualenv or conda is not used
+  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
+    echo SpinalCord Toolbox version $SCT_VERSION
+    echo SCT installed in ${SCT_DIR}
+    echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
+
 fi
-# Will quietely fail if a virtualenv or conda is not used
-. ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
-  echo SpinalCord Toolbox version $SCT_VERSION
-  echo SCT installed in ${SCT_DIR}
-  echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
-
-
 if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
   echo running ${SCT_DIR}/scripts/${@}
   python ${SCT_DIR}/scripts/${@}
