@@ -129,9 +129,16 @@ fi
 
 # Fetch OS type
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
+  # OSX
   OS=osx
 elif uname -a | grep -i  linux > /dev/null 2>&1; then
-  OS=linux
+  if cat /etc/issue | grep -i centos | grep 6. > 2>&1; then
+    # CentOS 6.X
+    OS=linux_centos6
+  else
+    # Other Linux
+    OS=linux
+  fi
 else
   echo Sorry, the installer only supports Linux and OSX, quitting installer
   exit 1
