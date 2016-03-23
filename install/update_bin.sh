@@ -19,7 +19,6 @@ EOF
 
 echo "$boiler_plate"
 
-# rm ../bin/* 2> /dev/null
 cp sct_launcher ../bin/.
 
 grep -l "__main__" ../scripts/*.py | while read -r filename ; do
