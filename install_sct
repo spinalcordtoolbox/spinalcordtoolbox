@@ -130,6 +130,7 @@ fi
 # Fetch OS type
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
   OS=osx
+  force_bashrc_loading
 elif uname -a | grep -i  linux > /dev/null 2>&1; then
   OS=linux
 else
