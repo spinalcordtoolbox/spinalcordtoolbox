@@ -131,6 +131,7 @@ fi
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
   # OSX
   OS=osx
+  force_bashrc_loading
 elif uname -a | grep -i  linux > /dev/null 2>&1; then
   if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
     # CentOS 6.X
