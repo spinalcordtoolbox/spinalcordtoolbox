@@ -15,6 +15,7 @@ sct_utils.pyc
 # Can also ignore all directories and files in a directory.
 bin
 python
+data
 tmp/**/*
 spinalcordtoolbox_v*
 dev/atlas/create_atlas/WMtracts_outputs

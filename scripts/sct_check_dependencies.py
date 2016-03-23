@@ -11,6 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: if fail, run with log and display message to send to sourceforge.
 # TODO: check chmod of binaries
 # TODO: find another way to create log file. E.g. sct.print(). For color as well.
 # TODO: manage .cshrc files
@@ -24,13 +25,13 @@ class Param:
         self.create_log_file = 0
         self.complete_test = 0
 
-import os
+
 import sys
+
+import os
 import commands
 import platform
-import getopt
 import importlib
-
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -188,18 +189,44 @@ def main():
         print_fail()
         install_software = 1
 
-    # check if ANTs is compatible with OS
+    # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
-    cmd = 'isct_antsRegistration'
-    status, output = commands.getstatusoutput(cmd)
-    if status in [0, 256]:
+    cmd = 'isct_test_ants'
+    # here, cannot use commands.getstatusoutput because status is wrong (because of launcher)
+    # status = os.system(cmd+" &> /dev/null")
+    # status, output = sct.run(cmd, 0)
+    # import subprocess
+    # process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # status = subprocess.call(cmd, shell=True)
+    # status = process.returncode
+    (status, output) = commands.getstatusoutput(cmd)
+    # from subprocess import call
+    # status, output = call(cmd)
+    # print status
+    # print output
+    # if status in [0, 256]:
+    if status == 0:
         print_ok()
     else:
         print_fail()
+        print output
         e = 1
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
+
+    # check if ANTs is compatible with OS
+    # print_line('Check ANTs compatibility with OS ')
+    # cmd = 'isct_antsRegistration'
+    # status, output = commands.getstatusoutput(cmd)
+    # if status in [0, 256]:
+    #     print_ok()
+    # else:
+    #     print_fail()
+    #     e = 1
+    # if complete_test:
+    #     print '>> '+cmd
+    #     print (status, output), '\n'
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
