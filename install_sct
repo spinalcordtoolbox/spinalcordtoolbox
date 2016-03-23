@@ -218,6 +218,7 @@ rm data.tar.gz
 
 # Create launchers for Python scripts
 echo -e "\nCreate launchers for Python scripts"
+rm ../bin/* 2> /dev/null
 mkdir -p bin
 cd install
 ./update_bin.sh  # N.B. This script needs to be run from /install folder (because uses relative path)
