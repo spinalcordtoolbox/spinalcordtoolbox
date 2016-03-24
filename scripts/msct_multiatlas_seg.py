@@ -1214,8 +1214,11 @@ sct_Image
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
+def main(args=None):
 
-if __name__ == "__main__":
+    if args is None:
+        args = sys.argv[1:]
+
     model_param = ModelParam()
     seg_param = SegmentationParam()
     input_target_fname = None
@@ -1225,7 +1228,6 @@ if __name__ == "__main__":
         fname_input = model_param.path_model + "/errsm_34.nii.gz"
         fname_input = model_param.path_model + "/errsm_34_seg_in.nii.gz"
     else:
-        param_default = SegmentationParam()
 
         # Initialize the parser
         parser = Parser(__file__)
@@ -1352,3 +1354,6 @@ if __name__ == "__main__":
         seg_method = SupervisedSegmentationMethod(input_target_fname, input_level_fname, model, gm_seg_param=seg_param)
         if seg_param.verbose == 2:
             seg_method.show()
+
+if __name__ == "__main__":
+    main()

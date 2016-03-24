@@ -23,7 +23,10 @@ from msct_parser import Parser
 
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     # Initialization
     GYRO = float(42.576 * 10 ** 6) # gyromagnetic ratio (in Hz.T^-1)
@@ -32,7 +35,7 @@ def main():
     smalldelta = []
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     gradamp = arguments['-g']
     bigdelta = arguments['-b']
     smalldelta = arguments['-d']

@@ -39,6 +39,9 @@ class Param:
         self.fname_seg = ''
         self.fname_GM = ''
 
+# initialize parameters
+param = Param()
+
 # constants
 ALMOST_ZERO = 0.0000001
 
@@ -312,8 +315,5 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main()

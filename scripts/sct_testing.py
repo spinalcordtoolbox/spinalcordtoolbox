@@ -52,10 +52,13 @@ class param:
 
 # START MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     if '-d' in arguments:
         param.download = int(arguments['-d'])

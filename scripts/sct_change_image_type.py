@@ -25,18 +25,18 @@ import math
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    #  The constructor
     def __init__(self):
         self.debug = 0
         self.fname_label_output = 'labels.nii.gz'
         self.labels = []
         self.verbose = 1
 
-
 #=======================================================================================================================
 # main
 #=======================================================================================================================
 def main(args=None):
+    param = Param()
 
     # check user arguments
     if not args:
@@ -161,8 +161,5 @@ OPTIONAL ARGUMENTS
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main()

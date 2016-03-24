@@ -21,17 +21,13 @@ class Param:
     ## The constructor
     def __init__(self):
         self.verbose = 1
+# initialize parameters
+param = Param()
 
 
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # initialize parameters
-    param = Param()
-    param_default = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -78,7 +74,7 @@ def main(args = None):
 
     # Building the command, do sanity checks
     parser = get_parser()
-    arguments = parser.parsea(args)
+    arguments = parser.parse(args)
     fname_in = arguments["-i"]
     fname_out = arguments["-o"]
 
@@ -90,8 +86,6 @@ def main(args = None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()
 

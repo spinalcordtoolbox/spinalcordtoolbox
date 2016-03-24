@@ -27,6 +27,8 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.fname_warp_final = 'warp_final.nii.gz'
+# initialize parameters
+param = Param()
 
 
 # main
@@ -141,7 +143,5 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()

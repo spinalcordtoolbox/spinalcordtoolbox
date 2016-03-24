@@ -29,6 +29,8 @@ class Param:
         self.verbose = 1
         self.file_out = 'mtr'
         self.remove_tmp_files = 1
+# initialize parameters
+param = Param()
 
 
 # main
@@ -161,8 +163,5 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main()

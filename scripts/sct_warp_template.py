@@ -24,8 +24,6 @@ import sct_utils as sct
 from sct_extract_metric import read_label_file
 
 
-
-
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -48,6 +46,7 @@ class Param:
         self.list_labels_spline = ['']  # list of files for which spline interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
         self.qc = 1
+param = Param()
 
 
 # MAIN
@@ -160,9 +159,11 @@ def get_interp(file_label):
 
 # START PROGRAM
 # ==========================================================================================
-if __name__ == "__main__":
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
     # initialize parameters
-    param = Param()
     param_default = Param()
 
     # Initialize parser
@@ -221,7 +222,7 @@ if __name__ == "__main__":
                       default_value='1',
                       example=['0', '1'])
 
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     fname_src = arguments["-d"]
     fname_transfo = arguments["-w"]
@@ -234,3 +235,7 @@ if __name__ == "__main__":
 
     # call main function
     WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc)
+
+
+if __name__ == "__main__":
+    main()

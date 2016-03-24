@@ -219,7 +219,44 @@ List of labels in: """ + file_label + """:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main(fname_data, path_label, method, labels_of_interest, slices_of_interest, vertebral_levels, average_all_labels, fname_output, fname_normalizing_label, normalization_method, adv_param_user):
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+    param = Param()
+    color = Color()
+
+    parser = get_parser()
+    arguments = parser.parse(args)
+
+    # Initialization to defaults parameters
+    fname_data = arguments['-i']
+    path_label = arguments['-f']
+    labels_of_interest = ''
+    vertebral_levels = ''
+
+    if '-l' in arguments:
+        labels_of_interest = arguments['-l']
+    method = arguments['-method']
+    adv_param_user = ''
+    if '-param' in arguments:
+        adv_param_user = arguments['-param']
+    slices_of_interest = ''
+    if '-z' in arguments:
+        slices_of_interest = arguments['-z']
+    if '-vert' in arguments:
+        vertebral_levels = arguments['-vert']
+    average_all_labels = param.average_all_labels
+    if '-a' in arguments:
+        average_all_labels = 1
+    fname_output = arguments['-o']
+    fname_normalizing_label = ''
+    if '-norm-file' in arguments:
+        fname_normalizing_label = arguments['-norm-file']
+    normalization_method = ''
+    if '-norm-method' in arguments:
+        normalization_method = arguments['-norm-method']
+
     # Initialization to defaults parameters
     fname_vertebral_labeling = param.fname_vertebral_labeling
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
@@ -263,7 +300,7 @@ def main(fname_data, path_label, method, labels_of_interest, slices_of_interest,
                 fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
 
     # Check input parameters
-    check_method(method, fname_normalizing_label, normalization_method)
+    check_method(method, fname_normalizing_label, normalization_method, parser)
 
     # parse argument for param
     if not adv_param_user == '':
@@ -276,7 +313,8 @@ def main(fname_data, path_label, method, labels_of_interest, slices_of_interest,
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
-    label_id_user, average_all_labels = check_labels(labels_of_interest, nb_labels_total, average_all_labels, method)  # If 'labels_of_interest' is empty, then
+    label_id_user, average_all_labels = check_labels(labels_of_interest, nb_labels_total, average_all_labels, method
+                                                     , parser=parser)  # If 'labels_of_interest' is empty, then
     # 'label_id_user' contains the index of all labels in the file info_label.txt
 
     # print parameters
@@ -708,7 +746,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
 #=======================================================================================================================
 # Check the consistency of the methods asked by the user
 #=======================================================================================================================
-def check_method(method, fname_normalizing_label, normalization_method):
+def check_method(method, fname_normalizing_label, normalization_method, parser):
     if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'map'):
         sct.printv(parser.usage.generate(error='ERROR: Method "' + method + '" is not correct. See help. Exit program.\n'))
 
@@ -723,7 +761,7 @@ def check_method(method, fname_normalizing_label, normalization_method):
 #=======================================================================================================================
 # Check the consistency of the labels asked by the user
 #=======================================================================================================================
-def check_labels(labels_of_interest, nb_labels, average_labels, method):
+def check_labels(labels_of_interest, nb_labels, average_labels, method, parser=None):
 
     # by default, all labels are selected
     list_label_id = range(0, nb_labels)
@@ -978,40 +1016,6 @@ def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbo
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param_default = Param()
-    param = Param()
-    color = Color()
-
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
-    # Initialization to defaults parameters
-    fname_data = arguments['-i']
-    path_label = arguments['-f']
-    labels_of_interest = ''
-    vertebral_levels = ''
-
-    if '-l' in arguments:
-        labels_of_interest = arguments['-l']
-    method = arguments['-method']
-    adv_param_user = ''
-    if '-param' in arguments:
-        adv_param_user = arguments['-param']
-    slices_of_interest = ''
-    if '-z' in arguments:
-        slices_of_interest = arguments['-z']
-    if '-vert' in arguments:
-        vertebral_levels = arguments['-vert']
-    average_all_labels = param.average_all_labels
-    if '-a' in arguments:
-        average_all_labels = 1
-    fname_output = arguments['-o']
-    fname_normalizing_label = ''
-    if '-norm-file' in arguments:
-        fname_normalizing_label = arguments['-norm-file']
-    normalization_method = ''
-    if '-norm-method' in arguments:
-        normalization_method = arguments['-norm-method']
 
     # call main function
-    main(fname_data, path_label, method, labels_of_interest, slices_of_interest, vertebral_levels, average_all_labels, fname_output, fname_normalizing_label, normalization_method, adv_param_user)
+    main()

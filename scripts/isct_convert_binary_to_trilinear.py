@@ -30,12 +30,16 @@ class Param:
         self.suffix = '_trilin' # output suffix
         self.remove_temp_files = 1
         self.verbose = 1
-        
+param = Param()
+param_default = Param()
 
 # main
 #=======================================================================================================================
-def main():
-    
+def main(args=None):
+
+    if not args:
+        args = sys.argv[1:]
+
     # Initialization
     fname_data = ''
     interp_factor = param.interp_factor
@@ -58,7 +62,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:s:')
+            opts, args = getopt.getopt(args, 'hi:v:r:s:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -180,8 +184,5 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main()

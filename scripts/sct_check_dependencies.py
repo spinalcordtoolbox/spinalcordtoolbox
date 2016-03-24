@@ -47,6 +47,7 @@ class bcolors:
 # MAIN
 # ==========================================================================================
 def main(args=None):
+    param = Param()
 
     if not args:
         args = sys.argv[1:]
@@ -333,7 +334,5 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()

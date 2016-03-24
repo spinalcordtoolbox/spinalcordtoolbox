@@ -31,6 +31,8 @@ class Param:
         self.debug = 0
         self.thinning = True
         self.verbose = 1
+# initialize parameters
+param = Param()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -417,8 +419,6 @@ def get_parser():
 
 def main(args=None):
 
-    # initialize parameters
-    param = Param()
     # check user arguments
 
     if not args:
@@ -429,7 +429,6 @@ def main(args=None):
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
     else:
-        param_default = Param()
 
         parser = get_parser()
         arguments = parser.parse(args)

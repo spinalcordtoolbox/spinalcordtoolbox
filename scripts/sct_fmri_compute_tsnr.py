@@ -23,6 +23,8 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.verbose = 1
+param = Param()
+
 
 ########################################################################################################################
 ######------------------------------------------------- Classes --------------------------------------------------######
@@ -32,10 +34,7 @@ class Param:
 # TSNR -----------------------------------------------------------------------------------------------------------------
 class Tsnr:
     def __init__(self, param=None, fmri=None, anat=None):
-        if param is not None:
-            self.param = param
-        else:
-            self.param = Param()
+        self.param = param
         self.fmri = fmri
         self.anat = anat
 
@@ -105,16 +104,17 @@ def get_parser():
                       example=['0', '1'])
     return parser
 
-if __name__ == '__main__':
-    param = Param()
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
     else:
-        param_default = Param()
 
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
         input_fmri = arguments['-i']
 
         if '-v' in arguments:
@@ -122,6 +122,11 @@ if __name__ == '__main__':
 
         tsnr = Tsnr(param=param, fmri=input_fmri)
         tsnr.compute()
+
+
+if __name__ == '__main__':
+    main()
+
 
 
 
