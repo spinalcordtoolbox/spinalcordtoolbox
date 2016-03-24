@@ -14,6 +14,7 @@
 
 # TODO: update function to reflect the new get_dimension
 
+
 class Image(object):
     """
 
@@ -42,6 +43,7 @@ class Image(object):
         # load an image from file
         if type(param) is str:
             self.loadFromPath(param, verbose)
+            self.compute_transform_matrix()
         # copy constructor
         elif isinstance(param, type(self)):
             self.copy(param)
@@ -522,10 +524,14 @@ class Image(object):
         imgplot.set_interpolation('nearest')
         show()
 
+    def compute_transform_matrix(self):
+        from numpy import array
+        m_p2f = self.hdr.get_sform()
+        self.m_p2f_transfo = m_p2f[0:3, 0:3]
+        self.coord_origin = array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
+
     def transfo_pix2phys(self, coordi=None):
         """
-
-
         This function returns the physical coordinates of all points of 'coordi'. 'coordi' is a list of list of size
         (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical
         coordinates of the points in the space of the image.
@@ -537,18 +543,16 @@ class Image(object):
 
         :return:
         """
-        from numpy import zeros, array, transpose, dot, asarray
+        from numpy import transpose, dot, asarray
 
-        m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3,0:3]
-        coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
-
+        """
         if coordi != None:
-            coordi_pix = transpose(asarray(coordi))
-            coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))
-            coordi_phys_list = coordi_phys.tolist()
-
-            return coordi_phys_list
+            coordi_phys = transpose(self.coord_origin + dot(self.m_p2f_transfo, transpose(asarray(coordi))))
+            return coordi_phys.tolist()
+        else:
+            return None
+        """
+        return transpose(self.coord_origin + dot(self.m_p2f_transfo, transpose(asarray(coordi))))
 
     def transfo_phys2pix(self, coordi=None):
         """

@@ -20,6 +20,7 @@ import commands
 import subprocess
 import re
 import time
+from sys import stdout
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -182,7 +183,8 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+        stdout.flush()
 
     def iterations_done(self, total_num_iterations_done):
         if total_num_iterations_done != 0:
@@ -193,13 +195,14 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            stdout.flush()
 
     def stop(self):
         self.time_list.append(time.time() - self.start_timer)
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
-        printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
         self.is_started = False
 
     def printRemainingTime(self):
@@ -209,17 +212,19 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            stdout.flush()
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
     def printTotalTime(self):
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            stdout.flush()
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
 
 #=======================================================================================================================
