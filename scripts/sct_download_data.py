@@ -58,7 +58,7 @@ def main(args=None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     data_name = arguments["-d"]
     if '-v' in arguments:
         verbose = int(arguments['-v'])

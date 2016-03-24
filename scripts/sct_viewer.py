@@ -423,12 +423,19 @@ class VolViewer(object):
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
-if __name__ == "__main__":
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
     parser = Parser(__file__)
     parser.usage.set_description('Volume Viewer')
     parser.add_option("-i", "file", "file", True)
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     image = Image(arguments["-i"])
     viewer = ClickViewer(image)
     viewer.start()
+
+if __name__ == "__main__":
+    main()

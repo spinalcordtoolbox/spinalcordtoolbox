@@ -13,15 +13,21 @@
 #########################################################################################
 
 # TODO: update function to reflect the new get_dimension
+import sys
+
+from numpy import zeros, ndarray, generic
+from nibabel import AnalyzeHeader
+
+from msct_parser import Parser
+from sct_utils import extract_fname
+from sct_utils import add_suffix
+
 
 class Image(object):
     """
 
     """
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
-        from numpy import zeros, ndarray, generic
-        from sct_utils import extract_fname
-        from nibabel import AnalyzeHeader
 
         # initialization of all parameters
         self.data = None
@@ -418,7 +424,6 @@ class Image(object):
         self.change_orientation(original_orientation)
         mask.change_orientation(mask_original_orientation)
         if save:
-            from sct_utils import add_suffix
             self.file_name += suffix
             add_suffix(self.absolutepath, suffix)
             self.save()
@@ -862,10 +867,11 @@ def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
 # =======================================================================================================================
 # Start program
 #=======================================================================================================================
-if __name__ == "__main__":
-    from msct_parser import Parser
-    from sct_utils import add_suffix
-    import sys
+
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     parser = Parser(__file__)
     parser.usage.set_description('Image processing functions')
@@ -880,11 +886,13 @@ if __name__ == "__main__":
                       mandatory=False,
                       example='im_out.nii.gz')
 
-
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     image = Image(arguments["-i"])
     image.changeType('minimize')
     name_out = ''
     if "-o" in arguments:
         name_out = arguments["-o"]
+
+if __name__ == "__main__":
+    main()

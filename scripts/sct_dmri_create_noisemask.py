@@ -52,7 +52,21 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(fname_in, freedom_degree,file_output):
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
+    parser = get_parser()
+    arguments = parser.parse(args)
+
+    fname_in = arguments['-i']
+    freedom_degree = int(arguments['-dof'])
+
+    if "-o" in arguments:
+        file_output = arguments["-o"]
+    else:
+        file_output = 'noise_mask.nii.gz'
 
     img = nib.load(fname_in)
     data = img.get_data()
@@ -67,15 +81,4 @@ def main(fname_in, freedom_degree,file_output):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == '__main__':
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
-    fname_in = arguments['-i']
-    freedom_degree = int(arguments['-dof'])
-
-    if "-o" in arguments:
-        file_output = arguments["-o"]
-    else:
-        file_output = 'noise_mask.nii.gz'
-
-    main(fname_in, freedom_degree,file_output)
+    main()

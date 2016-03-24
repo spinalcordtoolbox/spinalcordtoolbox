@@ -26,7 +26,7 @@ from msct_parser import Parser
 
 
 # PARAMETERS
-debugging           = 0 # automatic file names for debugging
+debugging = 0  # automatic file names for debugging
 
 
 # MAIN

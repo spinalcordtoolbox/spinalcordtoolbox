@@ -47,6 +47,8 @@ class Param:
         self.verbose = 1
         self.remove_tmp_files = 1
         self.offset = '0,0'
+param = Param()
+param_default = Param()
 
 
 # main
@@ -400,6 +402,4 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = Param()
-    param_default = Param()
     main()

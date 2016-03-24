@@ -76,12 +76,17 @@ class Param:
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
         self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
+param = Param()
+param_default = Param()
 
 
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     # initialization
     start_time = time.time()
@@ -95,7 +100,7 @@ def main():
     status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     param.fname_data = arguments['-i']
     param.fname_bvecs = arguments['-bvec']
@@ -415,13 +420,6 @@ def dmri_moco(param):
 
 
 def get_parser():
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('  Motion correction of dMRI data. Some robust features include:\n'
@@ -541,6 +539,4 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = Param()
-    param_default = Param()
     main()

@@ -102,15 +102,15 @@ class ProcessLabels(object):
             else:
                 self.output_image.save()
 
-    @staticmethod
-    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
+    def get_crosses_coordinates(self, coordinates_input, gapxy=15, image_ref=None, dilate=False):
         from msct_types import Coordinate
 
         # if reference image is provided (segmentation), we draw the cross perpendicular to the centerline
         if image_ref is not None:
             # smooth centerline
             from sct_straighten_spinalcord import smooth_centerline
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_ref, verbose=self.verbose)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, \
+            z_centerline_deriv = smooth_centerline(self.image_ref, verbose=self.verbose)
 
         # compute crosses
         cross_coordinates = []
@@ -616,12 +616,6 @@ class ProcessLabels(object):
                     coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
 
 
-
-class Param:
-    def __init__(self):
-        self.verbose = '1'
-
-
 # PARSER
 # ==========================================================================================
 def get_parser():
@@ -730,7 +724,7 @@ def main(args=None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     input_filename = arguments['-i']
     process_type = arguments['-p']
     input_fname_output = None
@@ -760,8 +754,5 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main()

@@ -1529,16 +1529,22 @@ def compute_level_similarities(data_path):
     level_file.close()
     os.chdir('..')
 
+def main(args=None):
 
-if __name__ == "__main__":
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     if "-crop" in arguments:
         crop_t2_star_pipeline(arguments['-crop'])
     if "-loocv" in arguments:
-        dic_path, dic_3d, denoising, reg, metric, use_levels, weight, eq, mode_weighted_sim, weighted_label_fusion = arguments['-loocv']
-        leave_one_out_by_subject(dic_path, dic_3d, denoising=bool(int(denoising)), reg=reg, metric=metric, weight=float(weight), eq=int(eq), mode_weighted_sim=bool(int(mode_weighted_sim)), weighted_label_fusion=bool(int(weighted_label_fusion)))
+        dic_path, dic_3d, denoising, reg, metric, use_levels, weight, eq, mode_weighted_sim, weighted_label_fusion = \
+        arguments['-loocv']
+        leave_one_out_by_subject(dic_path, dic_3d, denoising=bool(int(denoising)), reg=reg, metric=metric,
+                                 weight=float(weight), eq=int(eq), mode_weighted_sim=bool(int(mode_weighted_sim)),
+                                 weighted_label_fusion=bool(int(weighted_label_fusion)))
     if "-error-map" in arguments:
         compute_error_map_by_level(arguments['-error-map'])
     if "-hausdorff" in arguments:
@@ -1554,4 +1560,5 @@ if __name__ == "__main__":
         scseg_im = Image(scseg)
         inverse_gmseg_to_wmseg(gmseg_im, scseg_im, sct.extract_fname(gmseg)[1])
 
-
+if __name__ == "__main__":
+    main()

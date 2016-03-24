@@ -20,11 +20,13 @@ from sct_utils import printv, add_suffix, extract_fname
 class Param:
     def __init__(self):
         self.verbose = '1'
+# # initialize parameters
+param = Param()
+
 
 # PARSER
 # ==========================================================================================
 def get_parser():
-    param = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -98,7 +100,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args = None):
+def main(args=None):
     dim_list = ['x', 'y', 'z', 't']
 
     if not args:
@@ -586,7 +588,5 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # # initialize parameters
-    param = Param()
     # call main function
     main()

@@ -44,8 +44,24 @@ class Param:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
-    
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
+    # initialize parameters
+    param = Param()
+
+    parser = get_parser()
+    arguments = parser.parse(args)
+    fname_anat = arguments['-i']
+    fname_centerline = arguments['-s']
+    degree_poly = arguments['-d']
+    centerline_fitting = arguments['-f']
+    interp = arguments['-x']
+    remove_temp_files = arguments['-r']
+    verbose = int(arguments['-v'])
+
     # extract path of the script
     path_script = os.path.dirname(__file__)+'/'
     
@@ -302,19 +318,6 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    fname_anat = arguments['-i']
-    fname_centerline = arguments['-s']
-    degree_poly = arguments['-d']
-    centerline_fitting = arguments['-f']
-    interp = arguments['-x']
-    remove_temp_files = arguments['-r']
-    verbose = int(arguments['-v'])
 
     # call main function
-    main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose)
+    main()

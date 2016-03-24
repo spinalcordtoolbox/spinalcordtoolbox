@@ -218,9 +218,13 @@ def get_parser():
 # ====================================================================================================
 # Start program
 # ====================================================================================================
-if __name__ == "__main__":
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+
+    arguments = parser.parse(args)
 
     function_to_test = arguments["-f"]
     dataset = arguments["-d"]
@@ -239,7 +243,7 @@ if __name__ == "__main__":
     # start timer
     start_time = time()
 
-    print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
+    print 'Testing... (started on: ' + strftime("%Y-%m-%d %H:%M:%S") + ')'
     results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
@@ -272,4 +276,8 @@ if __name__ == "__main__":
 
     # display elapsed time
     elapsed_time = time() - start_time
-    print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
+    print 'Total duration: ' + str(int(round(elapsed_time))) + 's'
+
+
+if __name__ == "__main__":
+    main()

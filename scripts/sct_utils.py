@@ -73,36 +73,46 @@ def run_old(cmd, verbose=1):
 
 
 def run(cmd, verbose=1, error_exit='error', raise_exception=False):
-    if verbose==2:
-        printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
-    if verbose:
-        print(bcolors.blue+cmd+bcolors.normal)
-    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    output_final = ''
-    while True:
-        output = process.stdout.readline()
-        if output == '' and process.poll() is not None:
-            break
-        if output:
-            if verbose == 2:
-                print output.strip()
-            output_final += output.strip()+'\n'
-    status_output = process.returncode
-    # process.stdin.close()
-    # process.stdout.close()
-    # process.terminate()
 
-    # need to remove the last \n character in the output -> return output_final[0:-1]
-    if status_output:
-        # from inspect import stack
-        printv(output_final[0:-1], 1, error_exit)
-        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
-        # sys.exit()
-        if raise_exception:
-            raise Exception(output_final[0:-1])
+    cmd_list = cmd.split()
+    if cmd_list[0].startswith("sct") \
+            and not cmd_list[0].startswith("sct_dice") \
+            and not cmd_list[0].startswith("sct_strai") \
+            and not cmd_list[0].startswith("sct_crop"):
+        module_str = cmd_list[0]
+        sct_args = cmd_list[1:]
+        import importlib
+        sct_script = importlib.import_module(module_str)
+        sct_script.main(sct_args)
+        return 0, ""
     else:
-        # no need to output process.returncode (because different from 0)
-        return status_output, output_final[0:-1]
+        if verbose==2:
+            printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
+        if verbose:
+            print(bcolors.blue+cmd+bcolors.normal)
+        process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output_final = ''
+        while True:
+            output = process.stdout.readline()
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                if verbose == 2:
+                    print output.strip()
+                output_final += output.strip()+'\n'
+        status_output = process.returncode
+
+        # need to remove the last \n character in the output -> return output_final[0:-1]
+        if status_output:
+            # from inspect import stack
+            printv(output_final[0:-1], 1, error_exit)
+            # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
+            # sys.exit()
+            if raise_exception:
+                raise Exception(output_final[0:-1])
+        else:
+            # no need to output process.returncode (because different from 0)
+            return status_output, output_final[0:-1]
 
 
 

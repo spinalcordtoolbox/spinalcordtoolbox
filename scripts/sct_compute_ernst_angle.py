@@ -24,14 +24,16 @@ class Param:
         self.debug = 0
         self.verbose = 1
         self.t1=0
-
+# initialize parameters
+param = Param()
+param_default = Param()
 
 
 class ErnstAngle:
     ## The constructor
     def __init__(self, t1,tr=None, fname_output=None):
-        self.t1=t1
-        self.tr=tr
+        self.t1 = t1
+        self.tr = tr
         self.fname_output = fname_output
 
 
@@ -106,10 +108,6 @@ def get_parser():
     return parser
 
 def main(args=None):
-
-    # initialize parameters
-    param = Param()
-    param_default = Param()
 
     # check user arguments
     if not args:

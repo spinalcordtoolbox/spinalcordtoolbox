@@ -305,7 +305,8 @@ class Preprocessing:
 
 class FullGmSegmentation:
 
-    def __init__(self, target_fname, sc_seg_fname, t2_data, level_fname, ref_gm_seg=None, model=None, compute_ratio=False, model_param=None, seg_param=None):
+    def __init__(self, target_fname, sc_seg_fname, t2_data, level_fname, ref_gm_seg=None
+                 , model=None, compute_ratio_type=False, model_param=None, seg_param=None):
         self.model_param = model_param
         self.seg_param = seg_param
         sct.printv('\nBuilding the appearance model...', verbose=self.seg_param.verbose, type='normal')
@@ -332,6 +333,7 @@ class FullGmSegmentation:
         self.dice_name = None
         self.hausdorff_name = None
         self.tmp_dir = 'tmp_' + sct.extract_fname(self.target_fname)[1] + '_' + time.strftime("%y%m%d%H%M%S")+ '_'+str(random.randint(1, 1000000))+'/'
+        self.compute_ratio_type = compute_ratio_type
 
     def segment(self):
         before = time.time()
@@ -345,7 +347,7 @@ class FullGmSegmentation:
         if self.ref_gm_seg_fname is not None:
             sct.generate_output_file(self.tmp_dir+self.dice_name, self.seg_param.output_path+self.dice_name)
             sct.generate_output_file(self.tmp_dir+self.hausdorff_name, self.seg_param.output_path+self.hausdorff_name)
-        if compute_ratio:
+        if self.compute_ratio_type:
             sct.generate_output_file(self.tmp_dir+self.ratio_name, self.seg_param.output_path+self.ratio_name)
 
         after = time.time()
@@ -397,9 +399,9 @@ class FullGmSegmentation:
             sct.printv('Computing Dice coefficient and Hausdorff distance ...', verbose=self.seg_param.verbose, type='normal')
             self.dice_name, self.hausdorff_name = self.validation(ref_gmseg)
 
-        if compute_ratio:
+        if self.compute_ratio_type:
             sct.printv('\nComputing ratio GM/WM ...', verbose=self.seg_param.verbose, type='normal')
-            self.ratio_name = self.compute_ratio(type=compute_ratio)
+            self.ratio_name = self.compute_ratio(type=self.compute_ratio_type)
 
         os.chdir('..')
 
@@ -591,7 +593,11 @@ class FullGmSegmentation:
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
-if __name__ == "__main__":
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
     model_param = ModelParam()
     seg_param = SegmentationParam()
     input_target_fname = None
@@ -606,7 +612,7 @@ if __name__ == "__main__":
         fname_input = model_param.path_model + "/errsm_34_seg_in.nii.gz"
     else:
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
         input_target_fname = arguments["-i"]
         input_sc_seg_fname = arguments["-s"]
         if "-model" in arguments:
@@ -660,5 +666,8 @@ if __name__ == "__main__":
             model_param.use_levels = False
             model_param.weight_gamma = 0
 
-    gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_t2_data, input_level_fname, ref_gm_seg=input_ref_gm_seg, compute_ratio=compute_ratio, model_param=model_param, seg_param=seg_param)
+    gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_t2_data, input_level_fname, ref_gm_seg=input_ref_gm_seg, compute_ratio_type=compute_ratio, model_param=model_param, seg_param=seg_param)
     gmsegfull.segment()
+
+if __name__ == "__main__":
+    main()

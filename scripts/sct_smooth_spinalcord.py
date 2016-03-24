@@ -39,7 +39,12 @@ class Param:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    param = Param()
+
+    if args is None:
+        args = sys.argv[1:]
 
     # Initialization
     fname_anat = ''
@@ -50,7 +55,7 @@ def main():
     start_time = time.time()
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     fname_anat = arguments['-i']
     fname_centerline = arguments['-s']
@@ -271,6 +276,4 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = Param()
-    param_default = Param()
     main()
