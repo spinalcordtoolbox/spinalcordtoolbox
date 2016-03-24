@@ -76,7 +76,7 @@ except ImportError:
 
 
 class NURBS():
-    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01, maxControlPoints=50):
+    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.005, maxControlPoints=50, all_slices=True):
         #(self, degre=3, precision=1000, liste=None, sens=False, nurbs_ctl_points=None, size=None, div=None)
         """
         Ce constructeur initialise une NURBS et la construit.
@@ -94,6 +94,7 @@ class NURBS():
         self.tolerance = tolerance  # in mm
         self.maxControlPoints = maxControlPoints
         self.verbose = verbose
+        self.all_slices = all_slices
 
         if sens:                  #### si on donne les points de controle#####
             if type(liste[0][0]).__name__ == 'list':
@@ -130,7 +131,12 @@ class NURBS():
 
                 list_param_that_worked = []
                 last_error_curve = 0.0
-                while abs(error_curve-last_error_curve) > self.tolerance and self.nbControle < len(P_x) and self.nbControle <= self.maxControlPoints:
+                second_last_error_curve = 0.0
+                while self.nbControle < len(P_x) and self.nbControle <= self.maxControlPoints:
+                    if abs(error_curve-last_error_curve) <= self.tolerance and abs(error_curve-second_last_error_curve) <= self.tolerance and error_curve <= last_error_curve and error_curve <= last_error_curve :
+                        break
+
+                    second_last_error_curve = last_error_curve
                     last_error_curve = error_curve
 
                     # compute the nurbs based on input data and number of controle points
@@ -143,10 +149,10 @@ class NURBS():
 
                         # compute error between the input data and the nurbs
                         error_curve = 0.0
-                        for i in range(0,len(P_x)):
+                        for i in range(0, len(P_x)):
                             min_dist = 10000.0
                             for k in range(0,len(self.courbe3D[0])):
-                                dist = (self.courbe3D[0][k]-P_x[i])**2+(self.courbe3D[1][k]-P_y[i])**2+(self.courbe3D[2][k]-P_z[i])**2
+                                dist = (self.courbe3D[0][k]-P_x[i])**2 + (self.courbe3D[1][k]-P_y[i])**2 + (self.courbe3D[2][k]-P_z[i])**2
                                 if dist < min_dist:
                                     min_dist = dist
                             error_curve += min_dist
@@ -178,7 +184,7 @@ class NURBS():
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        print 'The number of points was too low. The fitting of the curve was done using ', nbControle_that_last_worked, ' points of controle: the number that gave the best results. \nError on approximation = ' + str(round(error_curve_that_last_worked, 2)) + ' mm'
+                        print 'The fitting of the curve was done using ', nbControle_that_last_worked, ' points of controle: the number that gave the best results. \nError on approximation = ' + str(round(error_curve_that_last_worked, 2)) + ' mm'
                     else:
                         print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
             else:
@@ -355,33 +361,35 @@ class NURBS():
         P_x_d=array(P_x_d)
         P_y_d=array(P_y_d)
         P_z_d=array(P_z_d)
-        P_z=array([int(round(P_z[i])) for i in range(0, len(P_z))])
 
-        #not perfect but works (if "enough" points), in order to deal with missing z slices
-        for i in range(min(P_z), max(P_z)+1, 1):
-            if i not in P_z:
-                #print ' Missing z slice '
-                #print i
-                P_z_temp = insert(P_z,where(P_z==i-1)[-1][-1]+1,i)
-                P_x_temp = insert(P_x,where(P_z==i-1)[-1][-1]+1,(P_x[where(P_z==i-1)[-1][-1]]+P_x[where(P_z==i-1)[-1][-1]+1])/2)
-                P_y_temp = insert(P_y,where(P_z==i-1)[-1][-1]+1,(P_y[where(P_z==i-1)[-1][-1]]+P_y[where(P_z==i-1)[-1][-1]+1])/2)
-                P_x_d_temp = insert(P_x_d,where(P_z==i-1)[-1][-1]+1,(P_x_d[where(P_z==i-1)[-1][-1]]+P_x_d[where(P_z==i-1)[-1][-1]+1])/2)
-                P_y_d_temp = insert(P_y_d,where(P_z==i-1)[-1][-1]+1,(P_y_d[where(P_z==i-1)[-1][-1]]+P_y_d[where(P_z==i-1)[-1][-1]+1])/2)
-                P_z_d_temp = insert(P_z_d,where(P_z==i-1)[-1][-1]+1,(P_z_d[where(P_z==i-1)[-1][-1]]+P_z_d[where(P_z==i-1)[-1][-1]+1])/2)
-                P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
+        if self.all_slices:
+            P_z=array([int(round(P_z[i])) for i in range(0, len(P_z))])
 
-        coord_mean = array([[mean(P_x[P_z==i]),mean(P_y[P_z==i]),i] for i in range(min(P_z),max(P_z)+1,1)])
+            #not perfect but works (if "enough" points), in order to deal with missing z slices
+            for i in range(min(P_z), max(P_z)+1, 1):
+                if i not in P_z:
+                    #print ' Missing z slice '
+                    #print i
+                    P_z_temp = insert(P_z,where(P_z==i-1)[-1][-1]+1,i)
+                    P_x_temp = insert(P_x,where(P_z==i-1)[-1][-1]+1,(P_x[where(P_z==i-1)[-1][-1]]+P_x[where(P_z==i-1)[-1][-1]+1])/2)
+                    P_y_temp = insert(P_y,where(P_z==i-1)[-1][-1]+1,(P_y[where(P_z==i-1)[-1][-1]]+P_y[where(P_z==i-1)[-1][-1]+1])/2)
+                    P_x_d_temp = insert(P_x_d,where(P_z==i-1)[-1][-1]+1,(P_x_d[where(P_z==i-1)[-1][-1]]+P_x_d[where(P_z==i-1)[-1][-1]+1])/2)
+                    P_y_d_temp = insert(P_y_d,where(P_z==i-1)[-1][-1]+1,(P_y_d[where(P_z==i-1)[-1][-1]]+P_y_d[where(P_z==i-1)[-1][-1]+1])/2)
+                    P_z_d_temp = insert(P_z_d,where(P_z==i-1)[-1][-1]+1,(P_z_d[where(P_z==i-1)[-1][-1]]+P_z_d[where(P_z==i-1)[-1][-1]+1])/2)
+                    P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
 
-        P_x=coord_mean[:,:][:,0]
-        P_y=coord_mean[:,:][:,1]
+            coord_mean = array([[mean(P_x[P_z==i]),mean(P_y[P_z==i]),i] for i in range(min(P_z),max(P_z)+1,1)])
 
-        coord_mean_d = array([[mean(P_x_d[P_z==i]),mean(P_y_d[P_z==i]),mean(P_z_d[P_z==i])] for i in range(min(P_z),max(P_z)+1,1)])
+            P_x=coord_mean[:,:][:,0]
+            P_y=coord_mean[:,:][:,1]
 
-        P_z=coord_mean[:,:][:,2]
-    
-        P_x_d=coord_mean_d[:,:][:,0]
-        P_y_d=coord_mean_d[:,:][:,1]
-        P_z_d=coord_mean_d[:,:][:,2]
+            coord_mean_d = array([[mean(P_x_d[P_z==i]),mean(P_y_d[P_z==i]),mean(P_z_d[P_z==i])] for i in range(min(P_z),max(P_z)+1,1)])
+
+            P_z=coord_mean[:,:][:,2]
+
+            P_x_d=coord_mean_d[:,:][:,0]
+            P_y_d=coord_mean_d[:,:][:,1]
+            P_z_d=coord_mean_d[:,:][:,2]
 
         return [P_x,P_y,P_z], [P_x_d,P_y_d,P_z_d]
 
