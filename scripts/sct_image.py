@@ -14,7 +14,7 @@ import sys
 from numpy import concatenate, shape, newaxis
 from msct_parser import Parser
 from msct_image import Image, get_dimension
-from sct_utils import printv, add_suffix, extract_fname
+from sct_utils import printv, add_suffix, extract_fname, run, tmp_create
 
 
 class Param:
@@ -84,6 +84,11 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name='-omc',
                       description='Multi-component output. Merge inputted images into one multi-component image. (need several inputs.)',
+                      mandatory=False)
+
+    parser.usage.addSection("\nWarping field operations:")
+    parser.add_option(name='-display-warp',
+                      description='Create a grid and deform it using provided warping field.',
                       mandatory=False)
 
     parser.usage.addSection("\nMisc")
@@ -177,6 +182,12 @@ def main(args = None):
                 printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
             del im
         im_out = [multicomponent_merge(fname_in)] #TODO: adapt to fname_in
+
+    elif '-display-warp' in arguments:
+        im_in = fname_in[0]
+        visualize_warp(im_in, fname_grid=None, step=3, rm_tmp=True)
+        im_out = None
+
     else:
         im_out = None
         printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
@@ -202,6 +213,8 @@ def main(args = None):
         printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
         print orient
+    elif '-display-warp' in arguments:
+        printv('Warping grid generated.\n', verbose, 'info')
     else:
         printv('An error occurred in sct_image...', verbose, "error")
 
@@ -582,6 +595,46 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
         im_out.change_orientation(orientation, True)
         im_out.setFileName(fname_out)
     return im_out
+
+
+def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
+    if fname_grid is None:
+        from numpy import zeros
+        tmp_dir = tmp_create()
+        im_warp = Image(fname_warp)
+        status, out = run('fslhd '+fname_warp)
+        from os import chdir
+        chdir(tmp_dir)
+        dim1 = 'dim1           '
+        dim2 = 'dim2           '
+        dim3 = 'dim3           '
+        nx = int(out[out.find(dim1):][len(dim1):out[out.find(dim1):].find('\n')])
+        ny = int(out[out.find(dim2):][len(dim2):out[out.find(dim2):].find('\n')])
+        nz = int(out[out.find(dim3):][len(dim3):out[out.find(dim3):].find('\n')])
+        sq = zeros((step, step))
+        sq[step-1] = 1
+        sq[:, step-1] = 1
+        dat = zeros((nx, ny, nz))
+        for i in range(0, dat.shape[0], step):
+            for j in range(0, dat.shape[1], step):
+                for k in range(dat.shape[2]):
+                    if dat[i:i+step, j:j+step, k].shape == (step, step):
+                        dat[i:i+step, j:j+step, k] = sq
+        fname_grid = 'grid_'+str(step)+'.nii.gz'
+        im_grid = Image(param=dat)
+        grid_hdr = im_warp.hdr
+        im_grid.hdr = grid_hdr
+        im_grid.setFileName(fname_grid)
+        im_grid.save()
+        fname_grid_resample = add_suffix(fname_grid, '_resample')
+        run('sct_resample -i '+fname_grid+' -f 3x3x1 -x nn -o '+fname_grid_resample)
+        fname_grid = tmp_dir+fname_grid_resample
+        chdir('..')
+    path_warp, file_warp, ext_warp = extract_fname(fname_warp)
+    grid_warped = path_warp+extract_fname(fname_grid)[1]+'_'+file_warp+ext_warp
+    run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
+    if rm_tmp:
+        run('rm -rf '+tmp_dir, error_exit='warning')
 
 
 # START PROGRAM
