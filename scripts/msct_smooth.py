@@ -270,9 +270,7 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
 #=======================================================================================================================
 # 3D B-Spline function, sct_nurbs
 #=======================================================================================================================
-#def b_spline_nurbs(x, y, z, control_points=0, degree=3,point_number=3000):
-
-def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1, verbose=1):
+def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1, verbose=1, all_slices=True):
 
     from math import log
     from msct_nurbs import NURBS
@@ -295,7 +293,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
         nbControl = 30*log(centerlineSize, 10) - 42
         nbControl = round(nbControl)
 
-    nurbs = NURBS(degree, point_number, data, False, nbControl, verbose)
+    nurbs = NURBS(degree, point_number, data, False, nbControl, verbose, all_slices=all_slices)
 
     P = nurbs.getCourbe3D()
     x_fit=P[0]
