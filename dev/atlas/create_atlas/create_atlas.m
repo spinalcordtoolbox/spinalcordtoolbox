@@ -19,7 +19,10 @@
 %   each region
 % - m_linear_interp.m
 %
-% Other dependencies: FSL, sct_c3d, ANTs
+% Other dependencies: 
+% - FSL
+% - c3d
+% - ANTs
 
 dbstop if error
 
@@ -36,32 +39,29 @@ dbstop if error
 % label_values: vector containing the list of label values in the atlas,
 %   which should be integers in range [0,255]
 %addpath(genpath('~/code/'));
-
 % get path of FSL
 [status, path_fsl] = unix('echo $FSLDIR');
 % get FSL matlab functions
 path_fsl_matlab = strcat(path_fsl, '/etc/matlab');
 % add to path
 addpath(path_fsl_matlab);
-% get path of the toolbox
-[status, path_sct] = unix('echo $SCT_DIR');
+% define SCT path
+path_sct = '/Users/julien/code/spinalcordtoolbox/'
 % define path of template
-path_template = strcat(path_sct, '/data/template/');
-% name of the WM template. Default is 'MNI-Poly-AMU_WM'
-file_template = 'MNI-Poly-AMU_WM';
+path_template = '/Users/julien/data/PAM50/';
+% name of the WM template. Don't put extension.
+file_template = 'PAM50_WM';  % PAM50_WM
+
+%--------------------------------------------------------------------------
+% PARAMETERS FOR THE LABELS
+%--------------------------------------------------------------------------
 % path to the image file that contains the drawing of the WM atlas from Grays anatomy.
-path_atlas_data = strcat(path_sct, '/dev/atlas/raw_data/');
+path_atlas_data = strcat(path_sct, 'dev/atlas/raw_data/');
 % file name of the full atlas
 file_atlas = 'atlas_grays_cerv_sym_correc_r5';
 % file name of the binary mask that helps for the registration to the MNI-Poly-AMU
 file_mask = 'mask_grays_cerv_sym_correc_r5';
 ext_atlas = '.png';
-
-% corresponds to mid-C4 in the MNI-Poly-AMU template
-z_slice_ref = 387;
-% interpolation factor for the MNI-Poly-AMU template in order to match the hi-res grays atlas
-interp_factor = 6;
-
 % values of the label in the atlas file (file_atlas). Each value corresponds to a given tract, e.g., corticospinal left.
 % NB: 238=WM, 255=CSF (added by jcohen on 2014-12-08)
 % label_values = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121 146 152 159 167 173 180 187 194 199 204 208 214 219 224 230 238 255];
@@ -69,11 +69,39 @@ label_left = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121];
 label_right = [146 152 159 167 173 180 187 194 199 204 208 214 219 224 230];
 label_pve = [238 255];
 label_values = [label_left, label_right, label_pve];
-% these are the value corresponding to the slice number (z) on the MNI-Poly-AMU template, at which the atlas will be warped. It corresponds to the mid-levels as well as the level of the intervertebral disks.
-% NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template.
-z_disks_mid = [483 476 466 455 440 423 406 387 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
-% same as before-- except that C4 mid-vertebral is not listed. 
-z_disks_mid_noC4 = [483 476 466 455 440 423 406 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
+
+which_template = 'PAM50'; % 'MNI-Poly-AMU'
+
+if strcmp(which_template, 'MNI-Poly-AMU')
+    %--------------------------------------------------------------------------
+    % PARAMETERS FOR THE MNI-Poly-AMU template
+    %--------------------------------------------------------------------------
+    % corresponds to mid-C4 in the MNI-Poly-AMU template
+    z_slice_ref = 387;
+    % interpolation factor for the MNI-Poly-AMU template in order to match the hi-res grays atlas
+    interp_factor = 6;
+    % these are the value corresponding to the slice number (z) on the MNI-Poly-AMU template, at which the atlas will be warped. It corresponds to the mid-levels as well as the level of the intervertebral disks.
+    % NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template.
+    z_disks_mid = [483 476 466 455 440 423 406 387 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
+    % same as before-- except that C4 mid-vertebral is not listed. 
+    z_disks_mid_noC4 = [483 476 466 455 440 423 406 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
+
+elseif strcmp(which_template, 'PAM50')
+    %--------------------------------------------------------------------------
+    % PARAMETERS FOR THE PAM50 template
+    %--------------------------------------------------------------------------
+    % corresponds to mid-C4 in the template
+    z_slice_ref = 837;
+    % interpolation factor for the template in order to match the hi-res grays atlas
+    interp_factor = 6;
+    % values of the label in the atlas file (file_atlas). Each value corresponds to a given tract, e.g., corticospinal left.
+    % NB: 238=WM, 255=CSF (added by jcohen on 2014-12-08)
+    % these are the value corresponding to the slice number (z) on the template, at which the atlas will be warped. It corresponds to the levels of the intervertebral disks.
+    % NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template
+    z_disks_mid = [945 921 891 855 823 789 757 721 682 641 601 557 509 460 409 355 301 246 185 151];
+    % same as before-- except that C4 mid-vertebral is not listed. 
+%     z_disks_mid_noC4 = [483 476 466 455 440 423 406 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
+end
 
 
 %--------------------------------------------------------------------------
@@ -134,12 +162,12 @@ end
 %--- Preliminary operations: cropping and interpolation of the template ---
 
 % Thresholding the template
-cmd = ['sct_c3d ' path_template file_template ext ' -threshold -inf 0.001 0 1 -o ' template_mask ext];
+cmd = ['c3d ' path_template file_template ext ' -threshold -inf 0.001 0 1 -o ' template_mask ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
 
-cmd = ['sct_c3d ' path_template file_template ext ' ' template_mask ext ' -multiply -o ' template_mask ext];
+cmd = ['c3d ' path_template file_template ext ' ' template_mask ext ' -multiply -o ' template_mask ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
