@@ -76,7 +76,7 @@ except ImportError:
 
 
 class NURBS():
-    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.005, maxControlPoints=50, all_slices=True):
+    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01, maxControlPoints=50, all_slices=True):
         #(self, degre=3, precision=1000, liste=None, sens=False, nurbs_ctl_points=None, size=None, div=None)
         """
         Ce constructeur initialise une NURBS et la construit.
