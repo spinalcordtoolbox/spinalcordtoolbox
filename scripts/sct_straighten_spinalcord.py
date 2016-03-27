@@ -18,7 +18,7 @@ import commands
 import sys
 from msct_parser import Parser
 from nibabel import Nifti1Image, save
-from numpy import array, asarray, sum, isnan, round, mgrid, zeros
+from numpy import array, asarray, sum, isnan, round, mgrid, zeros, mean, std
 from scipy import ndimage
 from sct_apply_transfo import Transform
 import sct_utils as sct
@@ -65,11 +65,38 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     x_centerline_deriv = [0 for _ in range(0, nz_nonz, 1)]
     y_centerline_deriv = [0 for _ in range(0, nz_nonz, 1)]
     z_centerline_deriv = [0 for _ in range(0, nz_nonz, 1)]
+    num_features = [0 for _ in range(0, nz_nonz, 1)]
+    distances = []
 
     # get center of mass of the centerline/segmentation
     sct.printv('.. Get center of mass of the centerline/segmentation...', verbose)
     for iz in range(0, nz_nonz, 1):
-        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:, :, z_centerline[iz]]))
+        slice = array(data[:, :, z_centerline[iz]])
+        labeled_array, num_f = ndimage.measurements.label(slice)
+        num_features[iz] = num_f
+        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(slice)
+        if iz != 0:
+            distances.append(sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2))
+
+    mean_distances = mean(distances)
+    std_distances = std(distances)
+
+    # ascending verification
+    for iz in range(0, nz_nonz/2, 1):
+        distance = sqrt((x_centerline[iz]-x_centerline[iz+1]) ** 2 + (y_centerline[iz]-y_centerline[iz+1]) ** 2)
+        if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
+            del x_centerline[iz]
+            del y_centerline[iz]
+            del z_centerline[iz]
+
+    # descending verification
+    for iz in range(nz_nonz-1, nz_nonz/2, -1):
+        distance = sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2)
+        if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
+            del x_centerline[iz]
+            del y_centerline[iz]
+            del z_centerline[iz]
+    print len(z_centerline)
 
     if phys_coordinates:
         sct.printv('.. Computing physical coordinates of centerline/segmentation...', verbose)
@@ -116,6 +143,9 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
     elif algo_fitting == "nurbs":
         from msct_smooth import b_spline_nurbs
+
+        # TODO: remove outliers that are at the edges of the spinal cord
+        # simple way to do it: go from one end and remove point if the distance from mean is higher than 2 * std
 
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv,\
             z_centerline_deriv = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None,
