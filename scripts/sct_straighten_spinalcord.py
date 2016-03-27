@@ -370,7 +370,7 @@ class SpinalCordStraightener(object):
             indexes_out_distance_curved = distances_curved > threshold_distance
             indexes_out_distance_straight = distances_straight > threshold_distance
             time_get_distances_from_planes = time.time() - time_get_distances_from_planes
-            print 'Time to compute distance between voxels and nearest plans: ' + str(round(time_get_distances_from_planes * 1000.0)) + ' ms'
+            print 'Time to compute distance between voxels and nearest planes: ' + str(round(time_get_distances_from_planes * 1000.0)) + ' ms'
 
             # c. compute the position of the voxel in the plane coordinate system
             # (X and Y distance from centreline, along the plane)
@@ -378,7 +378,7 @@ class SpinalCordStraightener(object):
             projected_points_curved = centerline.get_projected_coordinates_on_planes(physical_coordinates, nearest_indexes_curved)
             projected_points_straight = centerline_straight.get_projected_coordinates_on_planes(physical_coordinates, nearest_indexes_straight)
             time_get_projected_coordinates_on_planes = time.time() - time_get_projected_coordinates_on_planes
-            print 'Time to get projected voxels on plans: ' + str(round(time_get_projected_coordinates_on_planes * 1000.0)) + ' ms'
+            print 'Time to get projected voxels on planes: ' + str(round(time_get_projected_coordinates_on_planes * 1000.0)) + ' ms'
 
             # e. find the correspondance of the voxel in the corresponding plane
             time_get_in_plans_coordinates = time.time()

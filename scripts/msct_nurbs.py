@@ -184,7 +184,7 @@ class NURBS():
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        print 'The fitting of the curve was done using ', nbControle_that_last_worked, ' points of controle: the number that gave the best results. \nError on approximation = ' + str(round(error_curve_that_last_worked, 2)) + ' mm'
+                        print 'The fitting of the curve was done using ', nbControle_that_last_worked, ' control points: the number that gave the best results. \nError on approximation = ' + str(round(error_curve_that_last_worked, 2)) + ' mm'
                     else:
                         print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
             else:
