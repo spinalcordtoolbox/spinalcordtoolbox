@@ -322,7 +322,7 @@ class SpinalCordStraightener(object):
             x, y, z = mgrid[0:nx, 0:ny, 0:nz]
             indexes = array(zip(x.ravel(), y.ravel(), z.ravel()))
             time_generation_volumes = time.time() - time_generation_volumes
-            print 'Time to generate volumes and indexes: ' + str(round(time_generation_volumes * 1000.0)) + ' ms'
+            print 'Time to generate volumes and indices: ' + str(round(time_generation_volumes * 1000.0)) + ' ms'
 
             time_find_nearest_indexes = time.time()
             physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
@@ -355,7 +355,7 @@ class SpinalCordStraightener(object):
             coord_in_planes_curved = centerline.get_in_plans_coordinates(projected_points_curved, nearest_indexes_curved)
             coord_in_planes_straight = centerline_straight.get_in_plans_coordinates(projected_points_straight, nearest_indexes_straight)
             time_get_in_plans_coordinates = time.time() - time_get_in_plans_coordinates
-            print 'Time to get in-plan coordinates: ' + str(round(time_get_in_plans_coordinates * 1000.0)) + ' ms'
+            print 'Time to get in-plane coordinates: ' + str(round(time_get_in_plans_coordinates * 1000.0)) + ' ms'
 
             # 6. generate warping fields for each transformations
             # compute coordinate in straight space based on position on plane
