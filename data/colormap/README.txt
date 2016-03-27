@@ -1,1 +1,0 @@
-Nice colormaps compatible with fslview.
