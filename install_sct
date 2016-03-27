@@ -24,7 +24,7 @@
 
 # TODO add some doc to the installer
 # TODO: deal with installation folder with "~", like: ~/test. --> current error: mkdir: ~: No such file or directory
-# TODO: check if curl/wget installed
+# Note to Todoer: ~ is never expended inside quotes. ~/test is ok, "~/test" is not.
 # TODO: remove python folder if not empty
 # TODO: no need to copy .pyc, etc.
 
@@ -221,6 +221,26 @@ if [ ! -f "version.txt" ]; then
   exit
 fi
 
+
+download (){
+  # Use cUrl or wget to download goodies
+  set -x
+  if hash "curl" ; then
+    curl -o $1 $2
+  elif hash "wget"; then
+    wget -O $1 $2
+  else
+    set +x
+    echo You need to install "curl" OR "wget" before you can install the SPINALCORDTOOLBOX
+    echo run
+    echo "   > sudo apt-get install wget"
+    echo and rerun the installer
+    exit 1
+  fi
+  set +x
+
+}
+
 # Create launchers for Python scripts
 echo -e "\nCreate launchers for Python scripts"
 cmd="pwd"; echo ">> "$cmd; $cmd
@@ -233,7 +253,7 @@ cmd="cd .."; echo ">> "$cmd; $cmd
 # Copy binaries
 echo -e "\nInstalling binaries..."
 cmd="cd bin"; echo ">> "$cmd; $cmd
-cmd="curl -o sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/bin/${OS}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
+download  sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/bin/${OS}/sct_binaries.tar.gz
 # unzip binaries
 cmd="tar -zxvf sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
 # remove zip file
@@ -246,7 +266,7 @@ cmd="rm -rf python"; echo ">> "$cmd; $cmd
 cmd="mkdir python"; echo ">> "$cmd; $cmd
 cmd="cd python"; echo ">> "$cmd; $cmd
 # downloading
-cmd="curl -o miniconda.sh https://dl.dropboxusercontent.com/u/20592661/sct/miniconda/${OS}/miniconda.sh"; echo ">> "$cmd; $cmd
+download  miniconda.sh https://dl.dropboxusercontent.com/u/20592661/sct/miniconda/${OS}/miniconda.sh
 # run conda installer
 cmd="bash miniconda.sh -p ${SCT_DIR}/python -b -f"; echo ">> "$cmd; $cmd
 #cmd="bash ${conda_installer} -p ${SCT_DIR}/python -b -f"; echo $cmd; $cmd
@@ -265,7 +285,7 @@ pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requiremen
 
 # Install wheels
 echo -e "\nInstalling external Python dependencies..."
-cmd="curl -o wheels.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/wheel/${OS}/wheels.tar.gz"; echo ">> "$cmd; $cmd
+download  wheels.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/wheel/${OS}/wheels.tar.gz
 tar -zxvf wheels.tar.gz
 # get file names
 dipy_whl=`ls dipy*.whl`
@@ -280,7 +300,7 @@ echo -e "All requirement installed!"
 echo -e "\nInstalling data..."
 cmd="pwd"; echo ">> "$cmd; $cmd
 cmd="rm -rf data"; echo ">> "$cmd; $cmd
-cmd="curl -o data.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/MNI-Poly-AMU.tar.gz"; echo ">> "$cmd; $cmd
+download  data.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/MNI-Poly-AMU.tar.gz
 # unzip binaries
 cmd="tar -zxvf data.tar.gz"; echo ">> "$cmd; $cmd
 # remove zip file
