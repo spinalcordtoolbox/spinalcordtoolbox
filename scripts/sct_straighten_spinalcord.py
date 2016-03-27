@@ -18,7 +18,7 @@ import commands
 import sys
 from msct_parser import Parser
 from nibabel import Nifti1Image, save
-from numpy import array, asarray, sum, isnan, round, mgrid, zeros, mean, std
+from numpy import array, asarray, sum, isnan, round, mgrid, zeros, mean, std, delete
 from scipy import ndimage
 from sct_apply_transfo import Transform
 import sct_utils as sct
@@ -68,7 +68,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     num_features = [0 for _ in range(0, nz_nonz, 1)]
     distances = []
 
-    # get center of mass of the centerline/segmentation
+    # get center of mass of the centerline/segmentation and remove outliers
     sct.printv('.. Get center of mass of the centerline/segmentation...', verbose)
     for iz in range(0, nz_nonz, 1):
         slice = array(data[:, :, z_centerline[iz]])
@@ -80,23 +80,23 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
     mean_distances = mean(distances)
     std_distances = std(distances)
+    indices_to_remove = []
 
     # ascending verification
     for iz in range(0, nz_nonz/2, 1):
         distance = sqrt((x_centerline[iz]-x_centerline[iz+1]) ** 2 + (y_centerline[iz]-y_centerline[iz+1]) ** 2)
         if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
-            del x_centerline[iz]
-            del y_centerline[iz]
-            del z_centerline[iz]
+            indices_to_remove.append(iz)
 
     # descending verification
     for iz in range(nz_nonz-1, nz_nonz/2, -1):
         distance = sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2)
         if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
-            del x_centerline[iz]
-            del y_centerline[iz]
-            del z_centerline[iz]
-    print len(z_centerline)
+            indices_to_remove.append(iz)
+
+    x_centerline = delete(x_centerline, indices_to_remove)
+    y_centerline = delete(y_centerline, indices_to_remove)
+    z_centerline = delete(z_centerline, indices_to_remove)
 
     if phys_coordinates:
         sct.printv('.. Computing physical coordinates of centerline/segmentation...', verbose)

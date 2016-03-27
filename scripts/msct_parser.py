@@ -312,7 +312,7 @@ class Parser:
                     temp_str = arguments[index]
                     index_temp = index
                     if index_temp < len(arguments)-1:
-                        if arguments[index] == '"':
+                        if arguments[index][0] == '"':
                             while arguments[index_temp + 1][-1] != '"':  # loop until we find a double quote. Then concatenate.
                                 temp_str += ' ' + arguments[index_temp + 1]
                                 index_temp += 1
@@ -327,7 +327,8 @@ class Parser:
                                 if index_temp >= len(arguments)-1:
                                     break
                     index_next = index_temp+1
-                    arguments_temp.append(temp_str)
+                    if '"' not in temp_str:
+                        arguments_temp.append(temp_str)
         arguments = arguments_temp
 
         skip = False
