@@ -13,13 +13,14 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
 import errno
 import sys
+import time
+
+import os
 import commands
 import subprocess
 import re
-import time
 from sys import stdout
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
@@ -591,6 +592,7 @@ class UnsupportedOs(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
+
 
 class Os(object):
     '''Work out which platform we are running on'''
