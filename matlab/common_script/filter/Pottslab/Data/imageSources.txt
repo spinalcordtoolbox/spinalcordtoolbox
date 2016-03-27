@@ -1,8 +1,0 @@
-The images stem from the following sources:
-
-The Berkeley Segmentation Dataset and Benchmark (http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/segbench/)
-    - church.jpg
-    - desert.jpg         
-
-Wikipedia (http://en.wikipedia.org/wiki/Look_Mickey)
-    - lookmickey.jpg 
