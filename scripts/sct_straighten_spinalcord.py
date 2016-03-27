@@ -162,7 +162,7 @@ class SpinalCordStraightener(object):
 
     def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15, padding=30,
                  leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='nurbs',
-                 precision=2.0, type_window='hanning', window_length=50, crop=1, output_filename=''):
+                 precision=2.0, threshold_distance=1.0, type_window='hanning', window_length=50, crop=1, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -178,6 +178,7 @@ class SpinalCordStraightener(object):
         self.verbose = verbose
         self.algo_fitting = algo_fitting  # 'hanning' or 'nurbs'
         self.precision = precision
+        self.threshold_distance = threshold_distance
         self.type_window = type_window  # !! for more choices, edit msct_smooth. Possibilities: 'flat', 'hanning',
         # 'hamming', 'bartlett', 'blackman'
         self.window_length = window_length
@@ -366,9 +367,8 @@ class SpinalCordStraightener(object):
             time_get_distances_from_planes = time.time()
             distances_curved = centerline.get_distances_from_planes(physical_coordinates, nearest_indexes_curved)
             distances_straight = centerline_straight.get_distances_from_planes(physical_coordinates, nearest_indexes_straight)
-            threshold_distance = 1.0
-            indexes_out_distance_curved = distances_curved > threshold_distance
-            indexes_out_distance_straight = distances_straight > threshold_distance
+            indexes_out_distance_curved = distances_curved > self.threshold_distance
+            indexes_out_distance_straight = distances_straight > self.threshold_distance
             time_get_distances_from_planes = time.time() - time_get_distances_from_planes
             print 'Time to compute distance between voxels and nearest planes: ' + str(round(time_get_distances_from_planes * 1000.0)) + ' ms'
 
@@ -585,7 +585,8 @@ def get_parser():
                       type_value=None,
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
-                                  "\nprecision: [1.0,inf] Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0",
+                                  "\nprecision: [1.0,inf[ Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
+                                  "\nthreshold_distance: [0.0,inf[ Threshold for which voxels are not considered into displacement. Default=1.0",
                       mandatory=False,
                       deprecated_by='-param')
 
@@ -640,5 +641,7 @@ if __name__ == "__main__":
                 sc_straight.algo_fitting = param_split[1]
             if param_split[0] == 'precision':
                 sc_straight.precision = float(param_split[1])
+            if param_split[0] == 'threshold_distance':
+                sc_straight.threshold_distance = float(param_split[1])
 
     sc_straight.straighten()
