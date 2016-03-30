@@ -215,6 +215,7 @@ class Preprocessing:
 
         self.tmp_dir = tmp_dir
         self.denoising = denoising
+        self.high_res = False
 
         if level_fname is not None:
             t2_data = None
@@ -264,6 +265,15 @@ class Preprocessing:
         self.original_py = pix_dim[index_y]
 
         if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
+            if round(self.original_px, 2) < self.resample_to or round(self.original_py, 2) < self.resample_to:
+                sct.printv('\n\n-----------------------------------------------------------------------------------------'
+                '\nWARNING: the in-plane resolution of the input image is higher than the resolution of the model images (0.3x0.3mm). '
+                'The size of the result images might be different than the original image and an extra post-processing will be added.'
+                'This post-processing can be time consuming and can slow down your computer. '
+                'To avoid this, please resample your input image to an axial resolution of 0.3x0.3mm.'
+                '\n-----------------------------------------------------------------------------------------', self.verbose, 'warning')
+                self.high_res = True
+
             self.t2star = resample_image(self.original_target, npx=self.resample_to, npy=self.resample_to)
             self.sc_seg = resample_image(self.original_sc_seg, binary=True, npx=self.resample_to, npy=self.resample_to)
 
@@ -434,7 +444,12 @@ class FullGmSegmentation:
                 bin = True
             else:
                 bin = False
+
             old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
+            if self.preprocessed.high_res:
+                old_res_name_correct_space = sct.extract_fname(old_res_name)[1]+'_correct_spacing'+ext
+                sct.run('sct_register_multimodal -i '+old_res_name+' -d ../'+self.target_fname+' -identity 1 -o '+old_res_name_correct_space)
+                old_res_name = old_res_name_correct_space
 
             if self.seg_param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
