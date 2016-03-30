@@ -32,7 +32,7 @@ def test(data_path):
     s0, o0 = commands.getstatusoutput(cmd)
     status += s0
     output += o0
-    '''
+
     ## Removed orientation test: see issue #765 for guidelines of what to do to put it back
     # TEST ORIENTATION
     # test 3d data
@@ -51,7 +51,7 @@ def test(data_path):
     s2, o2 = commands.getstatusoutput(cmd)
     status += s2
     output += o2
-    '''
+
     # TEST SPLIT DATA
     cmd = 'sct_image -i '+ data_path + folder_data[2] + file_data[2] +' -split t'
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
