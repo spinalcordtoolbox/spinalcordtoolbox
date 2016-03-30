@@ -623,8 +623,8 @@ if __name__ == "__main__":
 
         if "-t2" in arguments:
             input_t2_data = arguments["-t2"]
-        if "-vert" in arguments:
-            input_level_fname = arguments["-vert"]
+        if "-vertfile" in arguments:
+            input_level_fname = arguments["-vertfile"]
         if "-use-levels" in arguments:
             model_param.use_levels = arguments["-use-levels"]
         if "-weight" in arguments:
