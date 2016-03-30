@@ -70,18 +70,25 @@ def get_parser():
                       example='sc_seg.nii.gz')
     parser.usage.addSection('STRONGLY RECOMMENDED ARGUMENTS\n'
                             'Choose one of them')
-    parser.add_option(name="-vert",
+    parser.add_option(name="-vertfile",
                       type_value="file",
                       description="Image containing level labels for the target or text file with for eac slice, #slice and associated level separated by a coma."
                                   "If -vert is used, no need to provide t2 data",
                       mandatory=False,
                       example='MNI-Poly-AMU_level_IRP.nii.gz')
+    parser.add_option(name="-vert",
+                      type_value="file",
+                      description="Image containing level labels for the target or text file with for eac slice, #slice and associated level separated by a coma."
+                                  "If -vert is used, no need to provide t2 data",
+                      mandatory=False,
+                      example='MNI-Poly-AMU_level_IRP.nii.gz',
+                      deprecated_by='-vertfile')
     parser.add_option(name="-l",
                       type_value=None,
                       description="Image containing level labels for the target"
                                   "If -l is used, no need to provide t2 data",
                       mandatory=False,
-                      deprecated_by='-vert')
+                      deprecated_by='-vertfile')
     parser.add_option(name="-t2",
                       type_value=[[','], 'file'],
                       description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels\n"
