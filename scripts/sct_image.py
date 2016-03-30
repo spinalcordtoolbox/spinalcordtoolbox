@@ -447,9 +447,11 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
     # if data are 2d, get orientation from header using fslhd
-    if nz == 1:
+    if nz == 1 or nt==1:
         if get:
             try:
+                printv('\nGet orientation...', verbose)
+                im_out = None
                 ori = get_orientation(im)
             except Exception, e:
                 printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
@@ -460,26 +462,11 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             im_out = set_orientation(im, ori)
         elif set_data:
             im_out = set_orientation(im, ori, True)
-
-
-    # if data are 3d, directly set or get orientation
-    elif nt == 1:
-        if get:
-            # get orientation
-            printv('\nGet orientation...', verbose)
-            im_out = None
-            return get_orientation_3d(im)
-        elif set:
-            # set orientation
-            printv('\nChange orientation...', verbose)
-            im_out = set_orientation(im, ori)
-        elif set_data:
-            im_out = set_orientation(im, ori, True)
         else:
             im_out = None
 
     else:
-        from os import chdir, remove
+        from os import chdir
         # 4D data: split along T dimension
         # Create a temporary directory and go in it
         tmp_folder = tmp_create(verbose)
@@ -493,7 +480,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             # get orientation
             printv('\nGet orientation...', verbose)
             im_out=None
-            ori = get_orientation_3d(im_split_list[0])
+            ori = get_orientation(im_split_list[0])
             chdir('..')
             run('rm -rf '+tmp_folder, error_exit='warning')
             return ori
