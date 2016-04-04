@@ -47,7 +47,9 @@ addpath(pwd);
 %   template close to the atlas slice
 % label_values: vector containing the list of label values in the atlas,
 %   which should be integers in range [0,255]
-%addpath(genpath('~/code/'));
+
+% Absolute path of output results (add "/" at the end)
+path_out = '/Users/julien/code/spinalcordtoolbox/dev/atlas/create_atlas/results/';
 % get path of FSL
 [status, path_fsl] = unix('echo $FSLDIR');
 % get FSL matlab functions
@@ -114,15 +116,16 @@ elseif strcmp(which_template, 'PAM50')
 end
 
 
+
 %--------------------------------------------------------------------------
 %----------------------- Starting the pipeline -------------------------
 %--------------------------------------------------------------------------
 
 ext = '.nii.gz'; % .nii.gz. N.B. THIS NEEDS TO BE IN nii.gz BECAUSE THE FUNCTION save_avw SAVES IN nii.gz!!!
 fsloutputype = 'export FSLOUTPUTTYPE=NIFTI_GZ; ';
-path_out = 'WMtracts_outputs/';
-path_ctrl = ['registered_template/'];
-path_results = ['final_results/'];
+folder_tracts = ['WMtracts_outputs/'];
+folder_ctrl = ['registered_template/'];
+folder_final = ['final_results/'];
 prefix_out = 'WMtract_';
 
 template_mask = [file_template '_mask'];
@@ -152,27 +155,28 @@ suffix_ants = '_reg';
 
 
 % if folder exists, delete it
-if exist(path_out)
+if exist(path_out, 'dir')
     m = input('Output folder already exists. Delete it? (y/n) ', 's');
     if m == 'y'
         cmd = ['rm -rf ' path_out];
         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
-        mkdir(path_out);
-        mkdir(path_ctrl);
-        mkdir(path_results);
     end
-else
-    mkdir(path_out);
-    mkdir(path_ctrl);
-    mkdir(path_results);
 end
-
-% go to output path
+% create output folder
+mkdir(path_out);
+% go to path output
 cd(path_out)
+% create subfolders
+mkdir(folder_tracts);
+mkdir(folder_ctrl);
+mkdir(folder_final);
 
 
 %--------------------------------------------------------------------------
 %--- Preliminary operations: cropping and interpolation of the template ---
+
+% go to WMtracts folder
+cd(folder_tracts)
 
 % Thresholding the template
 cmd = ['c3d ' path_template file_template ext ' -threshold -inf 0.001 0 1 -o ' template_mask ext];
@@ -495,10 +499,10 @@ for iz = 1:nb_slices
             for izconcat = izref-1:-1:iz
                 cmd = [cmd, ' ', prefix_ants num2str(z_disks_mid(izconcat)) 'to' num2str(z_disks_mid(izconcat+1)), '_0InverseWarp', ext];
             end
-        disp(cmd)
-        [status, result] = unix(cmd);
         end
-     else
+        % run command
+        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+    else
         % zslice = z_slice_ref: do nothing
     end
 end
@@ -580,134 +584,141 @@ for iz = 1:nb_slices
     
     disp(['SLICE #: ', num2str(iz), '/', num2str(nb_slices)])
     
-    zslice = z_disks_mid_noC4(iz);
-    numSlice = zslice+1;
-    templatecit_slice = [templateci_thresh '_slice' num2str(zslice)];
-    atlas_slice = [atlas_nifti suffix_ants num2str(zslice)];
-    warp_slice = [ prefix_ants, 'concat_sym_', num2str(zslice), ext];
-    
-    % Apply transform to reference slice as a control
-    cmd = ['isct_antsApplyTransforms -d 2 -i ' templatecit_slice_ref ext ' -o ' templatecit_slice_ref suffix_ants num2str(zslice) ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
-    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-    
-    % Apply transform to the initial atlas as a control
-%     cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' warp_slice ' ' Warp_atlas ' '  affine_atlas ' -R ' templatecit_slice ext];
-    cmd = ['isct_antsApplyTransforms -d 2 -i ' atlas_nifti ext ' -o ' atlas_slice ext ' -t ' Warp_atlas ' '  affine_atlas ' -r ' templateci_slice_ref_thresh ext];
-    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-    cmd = ['c3d ' templatecit_slice_ref ' ' atlas_slice ext ' -copy-transform -o ' atlas_slice ext];  % copy geom-- added: 2014-08-30
-    disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-    cmd = ['isct_antsApplyTransforms -d 2 -i ' atlas_slice ext ' -o ' atlas_slice suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
-    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-    
-    % Apply tranform to the WM tract files and constraint to be symmetric
-    for label = 1:length(label_left)
-        label_l = label;
-        label_r = label+length(label_left);
-        tract_atlas_g = [ 'tract_atlas_' num2str(label_l)];
-        tract_atlas_d = [ 'tract_atlas_' num2str(label_r)];
+    zslice = z_disks_mid(iz);
 
-        % LEFT
-        cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas_g ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' Warp_atlas ' '  affine_atlas ' -r ' templateci_slice_ref_thresh ext];
-        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['c3d ' templatecit_slice_ref ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext ext];  % copy geom-- added: 2014-08-30
-        disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas_g suffix_ants ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
-        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-        
-        % RIGHT
-        cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas_d ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' Warp_atlas ' '  affine_atlas ' -r ' templateci_slice_ref_thresh ext];
-        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['c3d ' templatecit_slice_ref ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext ext];  % copy geom-- added: 2014-08-30
-        disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas_d suffix_ants ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
-        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+    if zslice ~= z_slice_ref
 
-        % copy header from template to registered atlas
-        % NB: changed templateci_slice to templatecit_slice (2014-08-04)
-        cmd = ['c3d ' templatecit_slice ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
-        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-        
-        cmd = ['c3d ' templatecit_slice ext ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext];
-        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-        
-        tract_reg_g = [ 'tract_atlas_' num2str(label_l) suffix_ants];
-        temp_g = read_avw(tract_reg_g);
-        
-        tract_reg_d = [ 'tract_atlas_' num2str(label_r) suffix_ants];
-        temp_d = read_avw(tract_reg_d);
-        
-        % Replace isolated values with the mean of the adjacent values
-        for i = 2:size(temp_g,1)-1
-            for j = 2:size(temp_g,2)-1
-                test = (temp_g(i,j)==temp_g(i-1,j)) || (temp_g(i,j)==temp_g(i,j-1)) || (temp_g(i,j)==temp_g(i+1,j)) || (temp_g(i,j)==temp_g(i,j+1));
-                if(~test)
-                    temp_g(i,j) = (temp_g(i-1,j) + temp_g(i+1,j) + temp_g(i,j+1) + temp_g(i,j-1))/4;
+        numSlice = zslice+1;
+        templatecit_slice = [templateci_thresh '_slice' num2str(zslice)];
+        atlas_slice = [atlas_nifti suffix_ants num2str(zslice)];
+        warp_slice = [ prefix_ants, 'concat_sym_refto', num2str(zslice), ext];
+
+        % Apply transform to reference slice as a control
+        cmd = ['isct_antsApplyTransforms -d 2 -i ' templatecit_slice_ref ext ' -o ' templatecit_slice_ref suffix_ants num2str(zslice) ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
+        % run command and check results. Note: here we cannot use status,
+        % because if isct_antsApplyTransforms errors, then status=0.
+        disp(cmd); [status,result] = unix(cmd); if(~exist([templatecit_slice_ref suffix_ants num2str(zslice) ext])), error(result); end
+
+        % Apply transform to the initial atlas as a control
+    %     cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' warp_slice ' ' Warp_atlas ' '  affine_atlas ' -R ' templatecit_slice ext];
+        cmd = ['isct_antsApplyTransforms -d 2 -i ' atlas_nifti ext ' -o ' atlas_slice ext ' -t ' Warp_atlas ' '  affine_atlas ' -r ' templateci_slice_ref_thresh ext];
+        disp(cmd); [status,result] = unix(cmd); if(~exist([atlas_slice ext])), error(result); end
+        cmd = ['c3d ' templatecit_slice_ref ' ' atlas_slice ext ' -copy-transform -o ' atlas_slice ext];  % copy geom-- added: 2014-08-30
+        disp(cmd); [status,result] = unix(cmd); if(~exist([atlas_slice ext])), error(result); end
+        cmd = ['isct_antsApplyTransforms -d 2 -i ' atlas_slice ext ' -o ' atlas_slice suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
+        disp(cmd); [status,result] = unix(cmd); if(~exist([atlas_slice suffix_ants ext])), error(result); end
+
+        % Apply tranform to the WM tract files and constraint to be symmetric
+        for label = 1:length(label_left)
+            label_l = label;
+            label_r = label+length(label_left);
+            tract_atlas_g = [ 'tract_atlas_' num2str(label_l)];
+            tract_atlas_d = [ 'tract_atlas_' num2str(label_r)];
+
+            % LEFT
+            cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas_g ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' Warp_atlas ' '  affine_atlas ' -r ' templateci_slice_ref_thresh ext];
+            disp(cmd); [status,result] = unix(cmd); if(~exist([tract_atlas_g suffix_ants ext])), error(result); end
+            cmd = ['c3d ' templatecit_slice_ref ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext ext];  % copy geom-- added: 2014-08-30
+            disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
+            cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas_g suffix_ants ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
+            disp(cmd); [status,result] = unix(cmd); if(~exist([tract_atlas_g suffix_ants ext])), error(result); end
+
+            % RIGHT
+            cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas_d ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' Warp_atlas ' '  affine_atlas ' -r ' templateci_slice_ref_thresh ext];
+            disp(cmd); [status,result] = unix(cmd); if(~exist([tract_atlas_d suffix_ants ext])), error(result); end
+            cmd = ['c3d ' templatecit_slice_ref ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext ext];  % copy geom-- added: 2014-08-30
+            disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
+            cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas_d suffix_ants ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
+            disp(cmd); [status,result] = unix(cmd); if(~exist([tract_atlas_d suffix_ants ext])), error(result); end
+
+            % copy header from template to registered atlas
+            % NB: changed templateci_slice to templatecit_slice (2014-08-04)
+            cmd = ['c3d ' templatecit_slice ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
+            disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+
+            cmd = ['c3d ' templatecit_slice ext ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext];
+            disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+
+            tract_reg_g = [ 'tract_atlas_' num2str(label_l) suffix_ants];
+            temp_g = read_avw(tract_reg_g);
+
+            tract_reg_d = [ 'tract_atlas_' num2str(label_r) suffix_ants];
+            temp_d = read_avw(tract_reg_d);
+
+            % Replace isolated values with the mean of the adjacent values
+            for i = 2:size(temp_g,1)-1
+                for j = 2:size(temp_g,2)-1
+                    test = (temp_g(i,j)==temp_g(i-1,j)) || (temp_g(i,j)==temp_g(i,j-1)) || (temp_g(i,j)==temp_g(i+1,j)) || (temp_g(i,j)==temp_g(i,j+1));
+                    if(~test)
+                        temp_g(i,j) = (temp_g(i-1,j) + temp_g(i+1,j) + temp_g(i,j+1) + temp_g(i,j-1))/4;
+                    end
                 end
             end
-        end
-        
-        for i = 2:size(temp_d,1)-1
-            for j = 2:size(temp_d,2)-1
-                test = (temp_d(i,j)==temp_d(i-1,j)) || (temp_d(i,j)==temp_d(i,j-1)) || (temp_d(i,j)==temp_d(i+1,j)) || (temp_d(i,j)==temp_d(i,j+1));
-                if(~test)
-                    temp_d(i,j) = (temp_d(i-1,j) + temp_d(i+1,j) + temp_d(i,j+1) + temp_d(i,j-1))/4;
+
+            for i = 2:size(temp_d,1)-1
+                for j = 2:size(temp_d,2)-1
+                    test = (temp_d(i,j)==temp_d(i-1,j)) || (temp_d(i,j)==temp_d(i,j-1)) || (temp_d(i,j)==temp_d(i+1,j)) || (temp_d(i,j)==temp_d(i,j+1));
+                    if(~test)
+                        temp_d(i,j) = (temp_d(i-1,j) + temp_d(i+1,j) + temp_d(i,j+1) + temp_d(i,j-1))/4;
+                    end
                 end
             end
+
+            % Symmetry constraint for left and right tracts
+            temp_sum = temp_g + temp_d;
+            temp_sum_flip = temp_sum(end:-1:1,:);
+            temp_sym = (temp_sum + temp_sum_flip) / 2;
+
+            temp_g(1:end/2,:) = 0;
+            temp_g(1+end/2:end,:) = temp_sym(1+end/2:end,:);
+            temp_d(1:end/2,:) = temp_sym(1:end/2,:);
+            temp_d(1+end/2:end,:) = 0;
+
+            tractsHR{label_l}(:,:,numSlice) = temp_g;
+            tractsHR{label_r}(:,:,numSlice) = temp_d;
+
         end
-        
-        % Symmetry constraint for left and right tracts
-        temp_sum = temp_g + temp_d;
-        temp_sum_flip = temp_sum(end:-1:1,:);
-        temp_sym = (temp_sum + temp_sum_flip) / 2;
-        
-        temp_g(1:end/2,:) = 0;
-        temp_g(1+end/2:end,:) = temp_sym(1+end/2:end,:);
-        temp_d(1:end/2,:) = temp_sym(1:end/2,:);
-        temp_d(1+end/2:end,:) = 0;
-        
-        tractsHR{label_l}(:,:,numSlice) = temp_g;
-        tractsHR{label_r}(:,:,numSlice) = temp_d;
-        
-    end
 
-    % Apply tranform to the PVE tract files
-    for label = length([label_left, label_right])+1:length(label_values)
-        tract_atlas = [ 'tract_atlas_' num2str(label)];
+        % Apply tranform to the PVE tract files
+        for label = length([label_left, label_right])+1:length(label_values)
+            tract_atlas = [ 'tract_atlas_' num2str(label)];
 
-        cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas ext ' -o ' tract_atlas suffix_ants ext ' -t ' Warp_atlas ' '  affine_atlas ' -r ' templateci_slice_ref_thresh ext];
-        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['c3d ' templatecit_slice_ref ' ' tract_atlas suffix_ants ext ' -copy-transform -o ' tract_atlas suffix_ants ext ext];  % copy geom-- added: 2014-08-30
-        disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas suffix_ants ext ' -o ' tract_atlas suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
-        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-        
-        % copy header from template to registered atlas
-        % NB: changed templateci_slice to templatecit_slice (2014-08-04)
-        cmd = ['c3d ' templatecit_slice ext ' ' tract_atlas suffix_ants ext ' -copy-transform -o ' tract_atlas suffix_ants ext];
-        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-                
-        tract_reg = [ 'tract_atlas_' num2str(label) suffix_ants];
-        temp_g = read_avw(tract_reg);
-                
-        % Replace isolated values with the mean of the adjacent values
-        for i = 2:size(temp_g,1)-1
-            for j = 2:size(temp_g,2)-1
-                test = (temp_g(i,j)==temp_g(i-1,j)) || (temp_g(i,j)==temp_g(i,j-1)) || (temp_g(i,j)==temp_g(i+1,j)) || (temp_g(i,j)==temp_g(i,j+1));
-                if(~test)
-                    temp_g(i,j) = (temp_g(i-1,j) + temp_g(i+1,j) + temp_g(i,j+1) + temp_g(i,j-1))/4;
+            cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas ext ' -o ' tract_atlas suffix_ants ext ' -t ' Warp_atlas ' '  affine_atlas ' -r ' templateci_slice_ref_thresh ext];
+            disp(cmd); [status,result] = unix(cmd); if(~exist([tract_atlas suffix_ants ext])), error(result); end
+            cmd = ['c3d ' templatecit_slice_ref ' ' tract_atlas suffix_ants ext ' -copy-transform -o ' tract_atlas suffix_ants ext ext];  % copy geom-- added: 2014-08-30
+            disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
+            cmd = ['isct_antsApplyTransforms -d 2 -i ' tract_atlas suffix_ants ext ' -o ' tract_atlas suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
+            disp(cmd); [status,result] = unix(cmd); if(~exist([tract_atlas suffix_ants ext])), error(result); end
+
+            % copy header from template to registered atlas
+            % NB: changed templateci_slice to templatecit_slice (2014-08-04)
+            cmd = ['c3d ' templatecit_slice ext ' ' tract_atlas suffix_ants ext ' -copy-transform -o ' tract_atlas suffix_ants ext];
+            disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+
+            tract_reg = [ 'tract_atlas_' num2str(label) suffix_ants];
+            temp_g = read_avw(tract_reg);
+
+            % Replace isolated values with the mean of the adjacent values
+            for i = 2:size(temp_g,1)-1
+                for j = 2:size(temp_g,2)-1
+                    test = (temp_g(i,j)==temp_g(i-1,j)) || (temp_g(i,j)==temp_g(i,j-1)) || (temp_g(i,j)==temp_g(i+1,j)) || (temp_g(i,j)==temp_g(i,j+1));
+                    if(~test)
+                        temp_g(i,j) = (temp_g(i-1,j) + temp_g(i+1,j) + temp_g(i,j+1) + temp_g(i,j-1))/4;
+                    end
                 end
             end
-        end
-        
-        % Symmetry constraint for left and right tracts
-        tractsHR{label}(:,:,numSlice) = temp_g;
-    end    
-   
-    % Move control files to control folder
-    reg_slice_current = [templatecit_slice_ref suffix_ants num2str(zslice)];
-    movefile([reg_slice_current ext],path_ctrl);
-    movefile([atlas_slice suffix_ants ext],path_ctrl);
 
+            % Symmetry constraint for left and right tracts
+            tractsHR{label}(:,:,numSlice) = temp_g;
+        end    
+
+        % Move control files to control folder
+        reg_slice_current = [templatecit_slice_ref suffix_ants num2str(zslice)];
+        movefile([reg_slice_current ext], [path_out folder_ctrl]);
+        movefile([atlas_slice suffix_ants ext], [path_out folder_ctrl]);
+    else
+        disp(['Reference slice: skipping this step.'])
+    end   
 end
 
 
@@ -742,7 +753,7 @@ cell_tract = m_numbering(length(label_values), 2, 0);
 for label = 1:length(label_values)
     
     % Save ML version and copy geometry
-    filetractML = [path_results prefix_out '_' cell_tract{label}];
+    filetractML = [path_out folder_final prefix_out '_' cell_tract{label}];
     save_avw(tracts{label},filetractML,'d',scalesCROP);
     cmd = ['c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
@@ -758,9 +769,7 @@ end
 
 
 % FINISHED!
-bricon = ' -b 0.2,1 '
+bricon = ' -b 0.5,1 '
 disp 'Done! To see results, type:'
-disp(['cd ',path_results])
-disp(['fslview ',path_template,'MNI-Poly-AMU_T2.nii.gz -b 0,5000 ',path_template,'MNI-Poly-AMU_WM.nii.gz -b 0.2,1 WMtract__00.nii.gz -l Red',bricon,'WMtract__01.nii.gz -l Green',bricon,'WMtract__02.nii.gz -l Blue',bricon,'WMtract__03.nii.gz -l Yellow',bricon,'WMtract__04.nii.gz -l Pink ',bricon,'WMtract__30.nii.gz -l Cool ',bricon,'WMtract__31.nii.gz -l Copper ',bricon,' &'])
-
-
+disp(['cd ',path_out folder_final])
+disp(['fslview ',path_template,'PAM50_T2.nii.gz -b 0,3000 ',path_template,'PAM50_WM.nii.gz',bricon,' -l Blue-Lightblue WMtract__00.nii.gz -l Red',bricon,'WMtract__01.nii.gz -l Green',bricon,'WMtract__02.nii.gz -l Blue',bricon,'WMtract__03.nii.gz -l Yellow',bricon,'WMtract__04.nii.gz -l Pink ',bricon,'WMtract__30.nii.gz -l Red-Yellow ',bricon,'WMtract__31.nii.gz -l Copper ',bricon,' &'])
