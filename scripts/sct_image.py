@@ -14,7 +14,7 @@ import sys
 from numpy import concatenate, shape, newaxis
 from msct_parser import Parser
 from msct_image import Image, get_dimension
-from sct_utils import printv, add_suffix, extract_fname
+from sct_utils import printv, add_suffix, extract_fname, tmp_create, run
 
 
 class Param:
@@ -111,7 +111,7 @@ def main(args = None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     fname_in = arguments["-i"]
     n_in = len(fname_in)
     verbose = int(arguments['-v'])
@@ -211,7 +211,7 @@ def main(args = None):
 
         printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
-        print orient
+        print(orient)
     else:
         printv('An error occurred in sct_image...', verbose, "error")
 
@@ -304,36 +304,38 @@ def concat_data(fname_in_list, dim, no_expand=False):
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
     from numpy import concatenate, expand_dims, squeeze
 
-    im_0 = Image(fname_in_list[0])
-    # data_list = [im.data for im in im_in_list]
+    dat_list = []
+    data_concat_list = []
 
-    first = True
-    for fname in fname_in_list:
-        im = Image(fname)
-        dat = im.data
-        # expand dimension of data in the right dimension
-        if not no_expand:
-            dat = expand_dims(dat, dim)
-        if first:
-            data_concat = dat
-            first = False
+    for i, fname in enumerate(fname_in_list):
+        if i != 0 and i % 100 == 0:
+            data_concat_list.append(concatenate(dat_list, axis=dim))
+            im = Image(fname)
+            dat = im.data
+            if not no_expand:
+                dat = expand_dims(dat, dim)
+            dat_list = [dat]
+            del im
+            del dat
         else:
-            # concatenate
-            try:
-                data_concat = concatenate([data_concat, dat], axis=dim)
-            except Exception as e:
-                printv('\nERROR: Concatenation on line {}'.format(sys.exc_info()[-1].tb_lineno)+'\n'+str(e)+'\n', 1, 'error')
-                data_concat = None
-        del im
-        del dat
-
+            im = Image(fname)
+            dat = im.data
+            if not no_expand:
+                dat = expand_dims(dat, dim)
+            dat_list.append(dat)
+            del im
+            del dat
+    if data_concat_list:
+        data_concat_list.append(concatenate(dat_list, axis=dim))
+        data_concat = concatenate(data_concat_list, axis=dim)
+    else:
+        data_concat = concatenate(dat_list, axis=dim)
     # write file
-    im_out = im_0.copy()
+    im_out = Image(fname_in_list[0]).copy()
     im_out.data = data_concat
     im_out.setFileName(im_out.file_name+'_concat'+im_out.ext)
 
     return im_out
-
 
 
 def concat_warp2d(fname_list, fname_warp3d, fname_dest):
@@ -449,9 +451,11 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
     # if data are 2d, get orientation from header using fslhd
-    if nz == 1:
+    if nz == 1 or nt==1:
         if get:
             try:
+                printv('\nGet orientation...', verbose)
+                im_out = None
                 ori = get_orientation(im)
             except Exception, e:
                 printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
@@ -462,26 +466,15 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             im_out = set_orientation(im, ori)
         elif set_data:
             im_out = set_orientation(im, ori, True)
-
-
-    # if data are 3d, directly set or get orientation
-    elif nt == 1:
-        if get:
-            # get orientation
-            printv('\nGet orientation...', verbose)
-            im_out = None
-            return get_orientation_3d(im)
-        elif set:
-            # set orientation
-            printv('\nChange orientation...', verbose)
-            im_out = set_orientation(im, ori)
-        elif set_data:
-            im_out = set_orientation(im, ori, True)
         else:
             im_out = None
 
     else:
+        from os import chdir
         # 4D data: split along T dimension
+        # Create a temporary directory and go in it
+        tmp_folder = tmp_create(verbose)
+        chdir(tmp_folder)
         printv('\nSplit along T dimension...', verbose)
         im_split_list = split_data(im, 3)
         for im_s in im_split_list:
@@ -491,7 +484,10 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             # get orientation
             printv('\nGet orientation...', verbose)
             im_out=None
-            return get_orientation_3d(im_split_list[0])
+            ori = get_orientation(im_split_list[0])
+            chdir('..')
+            run('rm -rf '+tmp_folder, error_exit='warning')
+            return ori
         elif set:
             # set orientation
             printv('\nChange orientation...', verbose)
@@ -505,6 +501,10 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             printv('\nSet orientation of the data only is not compatible with 4D data...', verbose, 'error')
         else:
             im_out = None
+
+        # Go back to previous directory:
+        chdir('..')
+        run('rm -rf '+tmp_folder, error_exit='warning')
 
     im_out.setFileName(im.file_name+'_'+ori+im.ext)
     return im_out

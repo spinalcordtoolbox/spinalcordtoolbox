@@ -1,8 +1,0 @@
-# Template labels - generated on 2014-08-11
-# ID, name, file
-0, T2-weighted template, MNI-Poly-AMU_T2.nii.gz
-1, spinal cord, MNI-Poly-AMU_cord.nii.gz
-2, cerebrospinal fluid, MNI-Poly-AMU_CSF.nii.gz
-3, white matter, MNI-Poly-AMU_WM.nii.gz
-4, gray matter, MNI-Poly-AMU_GM.nii.gz
-5, vertebral labeling, MNI-Poly-AMU_level.nii.gz

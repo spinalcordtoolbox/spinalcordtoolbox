@@ -80,9 +80,8 @@ class Paramreg(object):
     def update(self, paramreg_user):
         list_objects = paramreg_user.split(',')
         for object in list_objects:
-            if len(object)<2:
-                sct.printv('Please check parameter -p (usage changed)',1,type='error')
-
+            if len(object) < 2:
+                sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
             obj = object.split('=')
             setattr(self, obj[0], obj[1])
 
@@ -269,9 +268,9 @@ def main():
     param.remove_temp_files = remove_temp_files
 
     # Get if input is 3D
-    # sct.printv('\nCheck if input data are 3D...', verbose)
-    # sct.check_if_3d(fname_src)
-    # sct.check_if_3d(fname_dest)
+    sct.printv('\nCheck if input data are 3D...', verbose)
+    sct.check_if_3d(fname_src)
+    sct.check_if_3d(fname_dest)
 
     # check if destination data is RPI
     sct.printv('\nCheck if destination data is RPI...', verbose)
