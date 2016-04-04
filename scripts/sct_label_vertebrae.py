@@ -117,9 +117,9 @@ def main(args=None):
     fname_seg = arguments['-s']
     # contrast = arguments['-t']
     if '-o' in arguments:
-        fname_out = arguments["-o"]
+        file_out = arguments["-o"]
     else:
-        fname_out = ''
+        file_out = ''
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
     else:
@@ -202,17 +202,17 @@ def main(args=None):
     printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')
 
-    # Build fname_out
-    if fname_out == '':
+    # Build file_out
+    if file_out == '':
         path_seg, file_seg, ext_seg = extract_fname(fname_seg)
-        fname_out = path_seg+file_seg+'_labeled'+ext_seg
+        file_out = file_seg+'_labeled'+ext_seg
 
     # come back to parent folder
     chdir('..')
 
     # Generate output files
     printv('\nGenerate output files...', verbose)
-    generate_output_file(path_tmp+'segmentation_labeled.nii.gz', path_output+fname_out)
+    generate_output_file(path_tmp+'segmentation_labeled.nii.gz', path_output+file_out)
 
     # Remove temporary files
     if remove_tmp_files == 1:
@@ -221,7 +221,7 @@ def main(args=None):
 
     # to view results
     printv('\nDone! To view results, type:', verbose)
-    printv('fslview '+fname_in+' '+path_output+fname_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
+    printv('fslview '+fname_in+' '+path_output+file_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
 
 
