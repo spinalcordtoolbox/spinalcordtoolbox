@@ -15,12 +15,11 @@
 
 # from msct_base_classes import BaseScript
 import sys
-from time import strftime
 
 from os import chdir
 import numpy as np
 from scipy.signal import argrelextrema, gaussian
-from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end
+from sct_utils import extract_fname, printv, run, generate_output_file, tmp_create
 from msct_parser import Parser
 from msct_image import Image
 
@@ -135,8 +134,7 @@ def main(args=None):
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
-    path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    run('mkdir '+path_tmp, verbose)
+    path_tmp = tmp_create(verbose=verbose)
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
@@ -163,7 +161,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -param all_labels=0,bspline_meshsize=3x3x5 -qc 0')  # here using all_labels=0 because of issue #610
+    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
