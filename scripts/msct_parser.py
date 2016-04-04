@@ -283,7 +283,7 @@ class Parser:
 
         # check if help is asked by the user
         if "-h" in arguments:
-            print self.usage.generate()
+            print(self.usage.generate())
             exit(1)
 
         if "-sf" in arguments:

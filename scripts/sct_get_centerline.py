@@ -352,18 +352,21 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
-    im_anat_list = [Image(fname) for fname in glob.glob('tmp.anat_orient_fit_z*.nii')]
-    im_anat_concat = concat_data(im_anat_list, 2)
+    # im_anat_list = [Image(fname) for fname in glob.glob('tmp.anat_orient_fit_z*.nii')]
+    fname_anat_list = glob.glob('tmp.anat_orient_fit_z*.nii')
+    im_anat_concat = concat_data(fname_anat_list, 2)
     im_anat_concat.setFileName('tmp.anat_orient_fit.nii')
     im_anat_concat.save()
 
-    im_mask_list = [Image(fname) for fname in glob.glob('tmp.mask_orient_fit_z*.nii')]
-    im_mask_concat = concat_data(im_mask_list, 2)
+    # im_mask_list = [Image(fname) for fname in glob.glob('tmp.mask_orient_fit_z*.nii')]
+    fname_mask_list = glob.glob('tmp.mask_orient_fit_z*.nii')
+    im_mask_concat = concat_data(fname_mask_list, 2)
     im_mask_concat.setFileName('tmp.mask_orient_fit.nii')
     im_mask_concat.save()
 
-    im_point_list = [Image(fname) for fname in 	glob.glob('tmp.point_orient_fit_z*.nii')]
-    im_point_concat = concat_data(im_point_list, 2)
+    # im_point_list = [Image(fname) for fname in 	glob.glob('tmp.point_orient_fit_z*.nii')]
+    fname_point_list = glob.glob('tmp.point_orient_fit_z*.nii')
+    im_point_concat = concat_data(fname_point_list, 2)
     im_point_concat.setFileName('tmp.point_orient_fit.nii')
     im_point_concat.save()
 

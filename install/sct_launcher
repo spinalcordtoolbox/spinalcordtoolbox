@@ -1,0 +1,82 @@
+#!/bin/bash
+#
+# Launcher for SCT
+#
+# Do not modify this file
+# Your modify SCT can be stored in your ${HOME}/.sctrc file
+# e.g.
+# To limit the number of thread used by some of the tools to N
+#   echo "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS = N" >> $HOME/.sctrc
+#
+#########################################################################################
+# Copyright (c) 2016 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: PO Quirion
+# License: see the file LICENSE.TXT
+#########################################################################################
+
+
+function install_conda {
+  echo noting yet
+}
+
+
+function set_system_dependent_var {
+  # Retrieve OS and number of CPU cores
+  if uname -a | grep -i  darwin > /dev/null 2>&1; then
+      # Do something under Mac OS X platform
+    SCT_OS=osx
+    logicalCpuCount=$(sysctl -n hw.logicalcpu_max)
+  elif uname -a | grep -i  linux > /dev/null 2>&1; then
+    SCT_OS=linux
+    logicalCpuCount=$(lscpu -p | egrep -v '^#' | wc -l)
+  else
+    echo YOUR OPERATING SYSTEM IS NOT SUPPORTED YET
+  fi
+}
+
+
+function addtopath {
+  # will not add the path again if it is already there
+  # usage: addtopath "/a/directory/to/be/added" PATH_VARIABLE
+  if [[ ":${!2}:" != *":$1:"* ]]; then
+    bidon1="${1}:${!2}"
+    eval "${2}=$bidon1"
+  fi
+}
+
+
+if [ -z "${SCT_LOADED_ONCE}" ]; then
+  # Do not needs to be reloaded on subsequent system calls
+  export SCT_LOADED_ONCE="loaded"
+  # set at installation
+  set_system_dependent_var
+
+  SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+  export SCT_DIR=${SCT_DIR%/bin}
+  export SCT_PYTHON=${SCT_DIR}/python
+  export SCT_VERSION=$(cat $SCT_DIR/version.txt)
+
+  addtopath "${SCT_DIR}/bin" PATH
+  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
+  addtopath ${SCT_DIR}/scripts PYTHONPATH
+  export PATH
+  export PYTHONPATH
+  export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
+
+  if [ -e ${HOME}/.sctrc ]; then
+  # Overwrite parameter with local config
+    . ${HOME}/.sctrc
+  fi
+  # Will quietely fail if a virtualenv or conda is not used
+  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
+    echo SpinalCord Toolbox version $SCT_VERSION
+    echo SCT installed in ${SCT_DIR}
+    echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
+
+fi
+if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
+  echo running ${SCT_DIR}/scripts/${@}
+  python ${SCT_DIR}/scripts/${@}
+else
+  echo sourcing sct_laucher in your environement ${SCT_DIR}
+fi
