@@ -15,8 +15,9 @@
 
 # from msct_base_classes import BaseScript
 import sys
-from os import chdir
 from time import strftime
+
+from os import chdir
 import numpy as np
 from scipy.signal import argrelextrema, gaussian
 from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end
@@ -61,6 +62,11 @@ def get_parser():
                       mandatory=False,
                       default_value='',
                       example='t2_seg_labeled.nii.gz')
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="Output folder.",
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name="-denoise",
                       type_value="multiple_choice",
                       description="Apply denoising filter to the data. Sometimes denoising is too aggressive, so use with care.",
@@ -114,6 +120,10 @@ def main(args=None):
         fname_out = arguments["-o"]
     else:
         fname_out = ''
+    if '-ofolder' in arguments:
+        path_output = arguments['-ofolder']
+    else:
+        path_output = ''
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -202,7 +212,7 @@ def main(args=None):
 
     # Generate output files
     printv('\nGenerate output files...', verbose)
-    generate_output_file(path_tmp+'segmentation_labeled.nii.gz', fname_out)
+    generate_output_file(path_tmp+'segmentation_labeled.nii.gz', path_output+fname_out)
 
     # Remove temporary files
     if remove_tmp_files == 1:
@@ -211,7 +221,7 @@ def main(args=None):
 
     # to view results
     printv('\nDone! To view results, type:', verbose)
-    printv('fslview '+fname_in+' '+fname_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
+    printv('fslview '+fname_in+' '+path_output+fname_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
 
 
