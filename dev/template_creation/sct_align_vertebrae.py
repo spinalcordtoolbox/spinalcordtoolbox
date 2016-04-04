@@ -39,7 +39,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # Append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 
-
+import numpy as np
 import sct_utils as sct
 import os
 import time
@@ -158,10 +158,6 @@ def main():
         X,Y,Z = data_labels_input.nonzero()
         x_middle = int(round(nx/2.0))
         y_middle = int(round(ny/2.0))
-        for i in range(len(Z)):
-            data_labels_middle[x_middle, y_middle, Z[i]] = data_labels_input[X[i], Y[i], Z[i]]
-        img = nibabel.Nifti1Image(data_labels_middle, None, hdr_labels_input)
-        nibabel.save(img, 'labels_input_middle_xy.nii.gz')
 
         #put labels of the template at the center of the image (for plan xOy)  #probably not necessary as already done by average labels
         file_labels_template = nibabel.load(template_landmark)
@@ -170,8 +166,26 @@ def main():
         data_template_middle = copy(data_labels_template)
         data_template_middle *= 0
 
-        x,y,z = data_labels_template.nonzero()
-        for i in range(len(Z)):
+        x, y, z = data_labels_template.nonzero()
+
+        max_num = min([len(z), len(Z)])
+        index_sort = np.argsort(Z)
+        index_sort = index_sort[::-1]
+        X = X[index_sort]
+        Y = Y[index_sort]
+        Z = Z[index_sort]
+        index_sort = np.argsort(z)
+        index_sort = index_sort[::-1]
+        x = x[index_sort]
+        y = y[index_sort]
+        z = z[index_sort]
+
+        for i in range(max_num):
+            data_labels_middle[x_middle, y_middle, Z[i]] = data_labels_input[X[i], Y[i], Z[i]]
+        img = nibabel.Nifti1Image(data_labels_middle, None, hdr_labels_input)
+        nibabel.save(img, 'labels_input_middle_xy.nii.gz')
+
+        for i in range(max_num):
             data_template_middle[x_middle, y_middle, z[i]] = data_labels_template[x[i], y[i], z[i]]
         img_template = nibabel.Nifti1Image(data_template_middle, None, hdr_labels_template)
         nibabel.save(img_template, 'labels_template_middle_xy.nii.gz')

@@ -9,8 +9,9 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-from msct_parser import Parser
 import sys
+
+from msct_parser import Parser
 import sct_utils as sct
 
 

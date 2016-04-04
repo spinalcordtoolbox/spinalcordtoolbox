@@ -33,6 +33,7 @@ def test(data_path):
     status += s0
     output += o0
 
+    ## Removed orientation test: see issue #765 for guidelines of what to do to put it back
     # TEST ORIENTATION
     # test 3d data
     cmd = 'sct_image -i ' + data_path + folder_data[1] + file_data[1] + ' -getorient '
@@ -81,19 +82,20 @@ def test(data_path):
             output += '\nResulting pad image\'s dimension differs from expected:\n'
             output += 'dim : '+ str(nx2) +'x'+ str(ny2) +'x'+ str(nz2)+'\n'
             output += 'expected : '+ str(nx) +'x'+ str(ny) +'x'+ str(nz+2*pad)+'\n'
+    '''
     if s1 == 0:
         if o1 != "AIL":
             status = 99
             output += '\nResulting orientation differs from expected:\n' \
                       'orientation: '+o1+'\n' \
-                      'expected: RPI'
+                      'expected: AIL'
     if s2 == 0:
         if o2 != "RPI":
             status = 99
             output += '\nResulting orientation differs from expected:\n' \
                       'orientation: '+o2+'\n' \
                       'expected: RPI'
-
+    '''
     if s3 == 0:
         from msct_image import Image
         from numpy import sum
