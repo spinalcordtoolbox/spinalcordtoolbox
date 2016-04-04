@@ -12,14 +12,11 @@
 
 import sct_utils as sct
 # from msct_parser import Parser
-import time, random
 import sct_label_vertebrae
 from pandas import DataFrame
 import os.path
 from copy import deepcopy
 # import commands
-from msct_image import Image
-from numpy import where
 # # append path that contains scripts, to be able to load modules
 # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # sys.path.append(path_sct + '/scripts')
@@ -36,10 +33,21 @@ def test(path_data='', parameters=''):
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s'])):
+    if not (os.path.isfile(dict_param_with_path['-i']) and
+            os.path.isfile(dict_param_with_path['-s'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
+
+    # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
+    import time, random
+    subject_folder = path_data.split('/')
+    if subject_folder[-1] == '' and len(subject_folder) > 1:
+        subject_folder = subject_folder[-2]
+    else:
+        subject_folder = subject_folder[-1]
+    path_output = sct.slash_at_the_end('sct_label_vertebrae_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
+    param_with_path += ' -ofolder ' + path_output
 
     # add initialization parameter contained in file: init_label_vertebrae.txt
     if not os.path.isfile(path_data+'t2/'+file_init_label_vertebrae):
@@ -62,12 +70,12 @@ def test(path_data='', parameters=''):
 
     if status == 0:
         # extract center of vertebral labels
-        sct.run('sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -o t2_seg_labeled_center.nii.gz', verbose=0)
+        sct.run('sct_label_utils -i '+path_output+'t2_seg_labeled.nii.gz -p label-vertebrae -o '+path_output+'t2_seg_labeled_center.nii.gz', verbose=0)
         # open labels
         from sct_label_utils import ProcessLabels
         from numpy import linalg
         from math import sqrt
-        label_results = ProcessLabels('t2_seg_labeled_center.nii.gz')
+        label_results = ProcessLabels(path_output+'t2_seg_labeled_center.nii.gz')
         list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
         label_manual = ProcessLabels(path_data+'t2/t2_labeled_center_manual.nii.gz')
         list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
