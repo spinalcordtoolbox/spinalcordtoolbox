@@ -71,7 +71,7 @@ def test(path_data='', parameters=''):
 
     if status == 0:
         # copy input data (for easier debugging)
-        sct.run('cp '+dict_param_with_path['-s']+' '+path_output, verbose=0)
+        sct.run('cp '+dict_param_with_path['-i']+' '+path_output, verbose=0)
         # extract center of vertebral labels
         sct.run('sct_label_utils -i '+path_output+'t2_seg_labeled.nii.gz -p label-vertebrae -o '+path_output+'t2_seg_labeled_center.nii.gz', verbose=0)
         # open labels
