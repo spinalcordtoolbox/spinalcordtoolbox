@@ -92,9 +92,9 @@ def test(path_data='', parameters=''):
             for coord in list_label_results:
                 if round(coord.value) == round(coord_manual.value):
                     # Calculate MSE
-                    mse += (((coord_manual.x - coord.x)/px) ** 2 + ((coord_manual.y - coord.y)/py) ** 2 + ((coord_manual.z - coord.z)/pz) ** 2) / float(3)
+                    mse += (((coord_manual.x - coord.x)*px) ** 2 + ((coord_manual.y - coord.y)*py) ** 2 + ((coord_manual.z - coord.z)*pz) ** 2) / float(3)
                     # Calculate distance (Frobenius norm)
-                    dist = linalg.norm([(coord_manual.x - coord.x), (coord_manual.y - coord.y), (coord_manual.z - coord.z)])
+                    dist = linalg.norm([(coord_manual.x - coord.x)*px, (coord_manual.y - coord.y)*py, (coord_manual.z - coord.z)*pz])
                     if dist > max_dist:
                         max_dist = dist
                     break
