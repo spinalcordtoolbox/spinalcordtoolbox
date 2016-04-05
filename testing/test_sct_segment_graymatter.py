@@ -29,7 +29,7 @@ sys.path.append(path_sct + '/scripts')
 def test(path_data, parameters=''):
 
     if not parameters:
-        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -vert mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz -qc 0'
+        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -vertfile mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz -qc 0'
 
     parser = sct_segment_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
@@ -42,7 +42,7 @@ def test(path_data, parameters=''):
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-vert']) and os.path.isfile(dict_param_with_path['-ref'])):
+    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-vertfile']) and os.path.isfile(dict_param_with_path['-ref'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'dice_wm': float('nan'), 'hausdorff': float('nan'), 'med_dist': float('nan'), 'duration_[s]': float('nan')}, index=[path_data])

@@ -78,7 +78,7 @@
 #########################################################################################
 
 import sct_utils as sct
-from msct_types import Coordinate # useful for Coordinate
+
 
 ########################################################################################################################
 ####### OPTION
@@ -459,7 +459,6 @@ Version: """ + str(self.get_sct_version())
 
     def get_sct_version(self):
         from commands import getstatusoutput
-        from os.path import basename
         status, path_sct = getstatusoutput('echo $SCT_DIR')
         fname = str(path_sct)+'/version.txt'
         content = ""

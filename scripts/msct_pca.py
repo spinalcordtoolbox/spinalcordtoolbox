@@ -31,7 +31,6 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
-import matplotlib.pyplot as plt
 import numpy as np
 import sct_utils as sct
 from math import sqrt
@@ -90,6 +89,7 @@ class PCA:
         self.mean_image = self.mean_data_vect.reshape(n, n)
 
         if self.verbose == 2:
+            import matplotlib as plt
             plt.figure()
             plt.imshow(self.mean_image.astype(np.float))
             plt.set_cmap('gray')
@@ -123,6 +123,7 @@ class PCA:
 
         # --> The eigenvectors are the modes of the PCA
         if self.verbose == 2:
+            import matplotlib as plt
             eig_val = [pair[0] for pair in self.eig_pairs]
             eig_val = 100*np.asarray(eig_val)/float(np.sum(eig_val))
             n = 100
@@ -299,6 +300,7 @@ class PCA:
         Displays the kept PCA modes as images
         """
         from math import sqrt
+        import matplotlib as plt
 
         n = int(sqrt(self.N))
         fig = plt.figure()
@@ -326,6 +328,7 @@ class PCA:
 
         :param mode: mode to display
         """
+        import matplotlib as plt
         from math import sqrt
         # TODO: improve mode visualization
         n = int(sqrt(self.N))
@@ -388,6 +391,7 @@ class PCA:
 
         :param to_highlight: indexes of some points to highlight as a tuple (target_slice, [list of data slices])
         """
+        import matplotlib as plt
         cmap = 'gist_ncar'
         cmin = 0
         cmax = 9
