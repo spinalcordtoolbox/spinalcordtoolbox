@@ -37,7 +37,7 @@ def test(path_data='', parameters=''):
             os.path.isfile(dict_param_with_path['-s'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
+        return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
 
     # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
     import time, random
@@ -53,7 +53,8 @@ def test(path_data='', parameters=''):
     if not os.path.isfile(path_data+'t2/'+file_init_label_vertebrae):
         status = 200
         output = 'ERROR: the file init_label_vertebrae.txt does not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
+        return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
+        # return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
     else:
         file = open(path_data+'t2/'+file_init_label_vertebrae, 'r')
         param_with_path += ' '+file.read().replace('\n', '')
@@ -69,6 +70,8 @@ def test(path_data='', parameters=''):
     result_mse = float('nan'), float('nan')
 
     if status == 0:
+        # copy input data (for easier debugging)
+        sct.run('cp '+dict_param_with_path['-s']+' '+path_output, verbose=0)
         # extract center of vertebral labels
         sct.run('sct_label_utils -i '+path_output+'t2_seg_labeled.nii.gz -p label-vertebrae -o '+path_output+'t2_seg_labeled_center.nii.gz', verbose=0)
         # open labels
