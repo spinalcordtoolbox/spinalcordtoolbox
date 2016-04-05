@@ -392,8 +392,8 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
             plt.title("y and y_fit coordinates")
             plt.show()
 
-
     # Create an image with the centerline
+    min_z_index, max_z_index = int(round(min(z_centerline_fit))), int(round(max(z_centerline_fit)))
     for iz in range(min_z_index, max_z_index+1):
         data[round(x_centerline_fit[iz-min_z_index]), round(y_centerline_fit[iz-min_z_index]), iz] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
     # Write the centerline image in RPI orientation
