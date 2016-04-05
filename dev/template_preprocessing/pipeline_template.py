@@ -71,13 +71,8 @@ folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
 # ['TM', folder_data_marseille+'/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/TM_T057c/01_0105_t2-composing'],
 
 """
-
-
-                 """
-
 # define subject
-SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
-                 ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
+SUBJECTS_LIST = [['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
                  ['errsm_05', folder_data_errsm+'/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_05/24-SPINE_SPACE'],
                  ['errsm_09', folder_data_errsm+'/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', folder_data_errsm+'/errsm_09/33-SPINE_SPACE'],
                  ['errsm_10', folder_data_errsm+'/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_10/20-SPINE_SPACE'],
@@ -94,7 +89,7 @@ SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09
                  ['errsm_25', folder_data_errsm+'/errsm_25/25-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_25/26-SPINE_T2'],
                  ['errsm_30', folder_data_errsm+'/errsm_30/51-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_30/50-SPINE_T2'],
                  ['errsm_31', folder_data_errsm+'/errsm_31/31-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_31/32-SPINE_T2'],
-                 ['errsm_32', folder_data_errsm+'/errsm_32/16-SPINE_T1/echo_2.09 ', folder_data_errsm+'/errsm_32/19-SPINE_T2'],
+                 ['errsm_32', folder_data_errsm+'/errsm_32/16-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_32/19-SPINE_T2'],
                  ['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
                  ['sct_001', folder_data_sct+'/sct_001/17-SPINE_T1/echo_2.09', folder_data_sct+'/sct_001/16-SPINE_T2'],
                  ['sct_002', folder_data_sct+'/sct_002/12-SPINE_T1/echo_2.09', folder_data_sct+'/sct_002/18-SPINE_T2'],
@@ -129,12 +124,79 @@ SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09
                  ['PA', folder_data_marseille+'/PA/01_0034_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/PA/01_0038_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7']
                  ]
 
+
+
+                 ['errsm_04', new_folder+'/errsm_04/T1', new_folder+'/errsm_04/T2'],
+                 ['errsm_05', new_folder+'/errsm_05/T1', new_folder+'/errsm_05/T2'],
+                 ['errsm_09', new_folder+'/errsm_09/T1', new_folder+'/errsm_09/T2'],
+                 ['errsm_10', new_folder+'/errsm_10/T1', new_folder+'/errsm_10/T2'],
+                 ['errsm_12', new_folder+'/errsm_12/T1', new_folder+'/errsm_12/T2'],
+                 ['errsm_13', new_folder+'/errsm_13/T1', new_folder+'/errsm_13/T2'],
+                 ['errsm_14', new_folder+'/errsm_14/T1', new_folder+'/errsm_14/T2'],
+                 ['errsm_16', new_folder+'/errsm_16/T1', new_folder+'/errsm_16/T2'],
+                 ['errsm_17', new_folder+'/errsm_17/T1', new_folder+'/errsm_17/T2'],
+                 ['errsm_18', new_folder+'/errsm_18/T1', new_folder+'/errsm_18/T2'],
+                 ['errsm_11', new_folder+'/errsm_11/T1', new_folder+'/errsm_11/T2'],
+                 ['errsm_21', new_folder+'/errsm_21/T1', new_folder+'/errsm_21/T2'],
+                 ['errsm_23', new_folder+'/errsm_23/T1', new_folder+'/errsm_23/T2'],
+                 ['errsm_24', new_folder+'/errsm_24/T1', new_folder+'/errsm_24/T2'],
+                 ['errsm_25', new_folder+'/errsm_25/T1', new_folder+'/errsm_25/T2'],
+                 ['errsm_30', new_folder+'/errsm_30/T1', new_folder+'/errsm_30/T2'],
+                 ['errsm_31', new_folder+'/errsm_31/T1', new_folder+'/errsm_31/T2'],
+                 ['errsm_32', new_folder+'/errsm_32/T1', new_folder+'/errsm_32/T2'],
+                 ['errsm_33', new_folder+'/errsm_33/T1', new_folder+'/errsm_33/T2'],
+                 ['sct_001', new_folder+'/sct_001/T1', new_folder+'/sct_001/T2'],
+                 ['sct_002', new_folder+'/sct_002/T1', new_folder+'/sct_002/T2'],
+                 ['ED', new_folder+'/ED/T1', new_folder+'/ED/T2'],
+                 ['ALT', new_folder+'/ALT/T1', new_folder+'/ALT/T2'],
+                 ['JD', new_folder+'/JD/T1', new_folder+'/JD/T2'],
+                 ['JW', new_folder+'/JW/T1', new_folder+'/JW/T2'],
+                 ['MLL', new_folder+'/MLL/T1', new_folder+'/MLL/T2'],
+                 ['MT', new_folder+'/MT/T1', new_folder+'/MT/T2'],
+                 ['T045', new_folder+'/T045/T1', new_folder+'/T045/T2'],
+                 ['T047', new_folder+'/T047/T1', new_folder+'/T047/T2'],
+                 ['VC', new_folder+'/VC/T1', new_folder+'/VC/T2'],
+                 ['VG', new_folder+'/VG/T1', new_folder+'/VG/T2'],
+                 ['VP', new_folder+'/VP/T1', new_folder+'/VP/T2'],
+                 ['pain_pilot_1', new_folder+'/pain_pilot_1/T1', new_folder+'/pain_pilot_1/T2'],
+                 ['pain_pilot_2', new_folder+'/pain_pilot_2/T1', new_folder+'/pain_pilot_2/T2'],
+                 ['pain_pilot_4', new_folder+'/pain_pilot_4/T1', new_folder+'/pain_pilot_4/T2'],
+                 ['errsm_20', new_folder+'/errsm_20/T1', new_folder+'/errsm_20/T2'],
+                 ['pain_pilot_3', new_folder+'/pain_pilot_3/T1', new_folder+'/pain_pilot_3/T2'],
+                 ['errsm_34', new_folder+'/errsm_34/T1', new_folder+'/errsm_34/T2'],
+                 ['errsm_35', new_folder+'/errsm_35/T1', new_folder+'/errsm_35/T2'],
+                 ['pain_pilot_7', new_folder+'/pain_pilot_7/T1', new_folder+'/pain_pilot_7/T2'],
+                 ['errsm_03', new_folder+'/errsm_03/T1', new_folder+'/errsm_03/T2'],
+                 ['FR', new_folder+'/FR/T1', new_folder+'/FR/T2'],
+                 ['GB', new_folder+'/GB/T1', new_folder+'/GB/T2'],
+                 ['errsm_36', new_folder+'/errsm_36/T1', new_folder+'/errsm_36/T2'],
+                 ['errsm_37', new_folder+'/errsm_37/T1', new_folder+'/errsm_37/T2'],
+                 ['errsm_43', new_folder+'/errsm_43/T1', new_folder+'/errsm_43/T2'],
+                 ['errsm_44', new_folder+'/errsm_44/T1', new_folder+'/errsm_44/T2'],
+                 ['AM', new_folder+'/AM/T1', new_folder+'/AM/T2'],
+                 ['HB', new_folder+'/HB/T1', new_folder+'/HB/T2'],
+                 ['PA', new_folder+'/PA/T1', new_folder+'/PA/T2']
+
+                 """
+
+
+
+new_folder = "/Users/benjamindeleener/data/template_data"
+SUBJECTS_LIST = [['ED', new_folder + '/ED/T1', new_folder + '/ED/T2']]
+
+propseg_parameters = {
+                        'errsm_36/T2': ' -init 0.55',
+                        'MLL/T2': ' -init 0.6',
+                        'T047/T2': ' -init 0.6',
+                        'pain_pilot_7/T2': ' -init 0.6'
+                     }
+
 #Parameters:
 height_of_template_space = 1100
-x_size_of_template_space = 200
-y_size_of_template_space = 200
+x_size_of_template_space = 201
+y_size_of_template_space = 201
 number_labels_for_template = 20  # vertebral levels
-straightening_parameters = '-params algo_fitting=nurbs,bspline_meshsize=5x5x15'
+straightening_parameters = '-params algo_fitting=nurbs'
 
 class TimeObject:
     def __init__(self, number_of_subjects=1):
@@ -200,7 +262,7 @@ def main():
 
     timer['T2'].start()
     # Processing of T2 data for template
-    #do_preprocessing('T2')
+    do_preprocessing('T2')
     #create_cross('T2')
     #push_into_templace_space('T2')
     #average_levels('T2')
@@ -209,9 +271,9 @@ def main():
     #timer['align'].start()
     #average_levels('both')
     #align_vertebrae('T1')
-    align_vertebrae('T2')
-    timer['T2'].stop()
-    timer['align'].stop()
+    #align_vertebrae('T2')
+    #timer['T2'].stop()
+    #timer['align'].stop()
 
     sct.printv('T1 time:')
     timer['T2'].printTotalTime()
@@ -223,7 +285,7 @@ def main():
 
 def do_preprocessing(contrast):
 
-   # Loop across subjects
+    # Loop across subjects
     for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
@@ -297,16 +359,21 @@ def do_preprocessing(contrast):
         for k in range(len(list_dir)):
             if list_dir[k] == 'centerline_propseg_RPI.nii.gz':
                 centerline_proseg = True
-        if centerline_proseg == True:
+        if centerline_proseg:
+            cmd = ''
             if contrast == 'T1':
-                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t1 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+                cmd = 'sct_propseg -i data_RPI_crop.nii.gz -c t1 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz'
             if contrast == 'T2':
-                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t2 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+                cmd = 'sct_propseg -i data_RPI_crop.nii.gz -c t2 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz'
+            if subject + '/' + contrast in propseg_parameters:
+                cmd += propseg_parameters[subject + '/' + contrast]
+
+            sct.run(cmd)
         else:
             if contrast == 'T1':
-                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t1')
+                sct.run('sct_propseg -i data_RPI_crop.nii.gz -c t1')
             if contrast == 'T2':
-                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t2')
+                sct.run('sct_propseg -i data_RPI_crop.nii.gz -c t2')
 
         # Erase 3 top and 3 bottom slices of the segmentation to avoid edge effects  (Done because propseg tends to diverge on edges)
         print '\nErasing 3 top and 3 bottom slices of the segmentation to avoid edge effects of propseg...'
@@ -351,10 +418,10 @@ def do_preprocessing(contrast):
         if labels_updown:
             # Creation of centerline from seg and labels for intensity normalization.
             print '\nExtracting centerline for intensity normalization...'
-            sct.run('sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz')
+            sct.run('sct_get_centerline.py -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz')
             sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz seg_and_labels.nii.gz')
         else:
-            sct.run('sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+            sct.run('sct_get_centerline.py -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
             sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz seg_and_labels.nii.gz')
 
 
