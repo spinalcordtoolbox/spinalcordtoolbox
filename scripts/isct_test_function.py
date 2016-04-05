@@ -44,6 +44,7 @@ import copy_reg
 import types
 import pandas as pd
 
+
 # get path of the toolbox
 # TODO: put it back below when working again (julien 2016-04-04)
 # <<<
@@ -281,3 +282,4 @@ if __name__ == "__main__":
     # display elapsed time
     elapsed_time = time() - start_time
     print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
+    print 'Status legend: 0 = Passed, 99 = Failed, 200 = File(s) missing'
