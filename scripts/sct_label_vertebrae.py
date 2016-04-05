@@ -230,7 +230,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
     shift_AP = 17  # shift the centerline towards the spine (in mm).
     size_AP = 4  # window size in AP direction (=y) in mm
     size_RL = 7  # window size in RL direction (=x) in mm
-    size_IS = 7  # window size in RL direction (=z) in mm
+    size_IS = 7  # window size in IS direction (=z) in mm
     searching_window_for_maximum = 5  # size used for finding local maxima
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
     gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
@@ -263,9 +263,11 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
     # Compute intensity profile across vertebrae
     #==================================================
 
-    shift_AP = shift_AP * py
-    size_AP = size_AP * py
-    size_RL = size_RL * px
+    # convert mm to voxel index
+    shift_AP = int(round(shift_AP / py))
+    size_AP = int(round(size_AP / py))
+    size_RL = int(round(size_RL / px))
+    size_IS = int(round(size_IS / pz))
 
     # define z: vector of indices along spine
     z = range(nz)
@@ -336,21 +338,26 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
             ind_I = 0
             for iz in range(length_z_corr):
                 if direction == 'superior':
-                    data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z+iz-size_IS:current_z+iz+size_IS+1]
-                    # if part of the data is missing, calculate size of missing data.
-                    padding_size = pattern.shape[2] - data_chunk3d.shape[2]
-                    # pad data with zeros
-                    data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
+                    # if pattern extends towards the top part of the image, then crop and pad with zeros
+                    if current_z+iz+size_IS > nz:
+                        padding_size = current_z+iz+size_IS
+                        data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z+iz-size_IS:current_z+iz+size_IS+1-padding_size]
+                        data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
+                    else:
+                        data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z+iz-size_IS:current_z+iz+size_IS+1]
                 elif direction == 'inferior':
-                    data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z-iz-size_IS:current_z-iz+size_IS+1]
-                    # if part of the data is missing, calculate size of missing data.
-                    padding_size = pattern.shape[2] - data_chunk3d.shape[2]
-                    # pad data with zeros
-                    data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
+                    # if pattern extends towards bottom part of the image, then crop and pad with zeros
+                    if current_z-iz-size_IS < 0:
+                        padding_size = abs(current_z-iz-size_IS)
+                        data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z-iz-size_IS+padding_size:current_z-iz+size_IS+1]
+                        data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
+                    else:
+                        data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z-iz-size_IS:current_z-iz+size_IS+1]
                 # plt.matshow(np.flipud(np.mean(data_chunk3d, axis=0).transpose()), cmap=plt.cm.gray), plt.title('Data chunk averaged across R-L'), plt.draw(), plt.savefig('datachunk_disc'+str(current_disc)+'iz'+str(iz))
                 data_chunk1d = data_chunk3d.ravel()
                 # check if data_chunk1d contains at least one non-zero value
-                if np.any(data_chunk1d):
+                # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
+                if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
                     I_corr[ind_I][ind_y] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
                 else:
                     allzeros = 1
