@@ -165,6 +165,8 @@ def main(args=None):
     # run('sct_resample -i segmentation.nii.gz -mm 1x1x1 -x linear -o segmentation_1mm.nii.gz', verbose)
     # run('sct_resample -i labelz.nii.gz -mm 1x1x1 -x linear -o labelz_1mm.nii', verbose)
 
+    exit(2)
+
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
     run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
