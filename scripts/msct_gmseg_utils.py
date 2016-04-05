@@ -17,7 +17,6 @@ from math import sqrt
 import os
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 
 from msct_image import Image, get_dimension
 import sct_utils as sct
