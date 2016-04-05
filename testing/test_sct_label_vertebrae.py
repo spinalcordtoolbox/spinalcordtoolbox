@@ -74,10 +74,14 @@ def test(path_data='', parameters=''):
         sct.run('cp '+dict_param_with_path['-i']+' '+path_output, verbose=0)
         # extract center of vertebral labels
         sct.run('sct_label_utils -i '+path_output+'t2_seg_labeled.nii.gz -p label-vertebrae -o '+path_output+'t2_seg_labeled_center.nii.gz', verbose=0)
-        # open labels
         from sct_label_utils import ProcessLabels
         from numpy import linalg
         from math import sqrt
+        # get dimension
+        from msct_image import Image
+        img = Image(path_output+'t2_seg_labeled.nii.gz')
+        nx, ny, nz, nt, px, py, pz, pt = img.dim
+        # open labels
         label_results = ProcessLabels(path_output+'t2_seg_labeled_center.nii.gz')
         list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
         label_manual = ProcessLabels(path_data+'t2/t2_labeled_center_manual.nii.gz')
@@ -88,7 +92,7 @@ def test(path_data='', parameters=''):
             for coord in list_label_results:
                 if round(coord.value) == round(coord_manual.value):
                     # Calculate MSE
-                    mse += ((coord_manual.x - coord.x) ** 2 + (coord_manual.y - coord.y) ** 2 + (coord_manual.z - coord.z) ** 2) / float(3)
+                    mse += (((coord_manual.x - coord.x)/px) ** 2 + ((coord_manual.y - coord.y)/py) ** 2 + ((coord_manual.z - coord.z)/pz) ** 2) / float(3)
                     # Calculate distance (Frobenius norm)
                     dist = linalg.norm([(coord_manual.x - coord.x), (coord_manual.y - coord.y), (coord_manual.z - coord.z)])
                     if dist > max_dist:
@@ -104,11 +108,11 @@ def test(path_data='', parameters=''):
         # sct.printv('Diff manual-test = ' + str(diff_manual_result))
 
         # check if MSE is superior to threshold
-        th_rmse = 2
+        th_rmse = 3
         if rmse > th_rmse:
             status = 99
             output += '\nWARNING: RMSE = '+str(rmse)+' > '+str(th_rmse)
-        th_max_dist = 3.2
+        th_max_dist = 5
         if max_dist > th_max_dist:
             status = 99
             output += '\nWARNING: Max distance = '+str(max_dist)+' > '+str(th_max_dist)
