@@ -26,7 +26,7 @@ from msct_smooth import smoothing_window, evaluate_derivative_3D
 from math import sqrt
 
 
-def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0, nurbs_pts_number=1000, all_slices=True, phys_coordinates=False):
+def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0, nurbs_pts_number=1000, all_slices=True, phys_coordinates=False, remove_outliers=False):
     """
     :param fname_centerline: centerline in RPI orientation, or an Image
     :return: x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
@@ -78,25 +78,26 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         if iz != 0:
             distances.append(sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2))
 
-    mean_distances = mean(distances)
-    std_distances = std(distances)
-    indices_to_remove = []
+    if remove_outliers:
+        mean_distances = mean(distances)
+        std_distances = std(distances)
+        indices_to_remove = []
 
-    # ascending verification
-    for iz in range(0, nz_nonz/2, 1):
-        distance = sqrt((x_centerline[iz]-x_centerline[iz+1]) ** 2 + (y_centerline[iz]-y_centerline[iz+1]) ** 2)
-        if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
-            indices_to_remove.append(iz)
+        # ascending verification
+        for iz in range(0, nz_nonz/2, 1):
+            distance = sqrt((x_centerline[iz]-x_centerline[iz+1]) ** 2 + (y_centerline[iz]-y_centerline[iz+1]) ** 2)
+            if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
+                indices_to_remove.append(iz)
 
-    # descending verification
-    for iz in range(nz_nonz-1, nz_nonz/2, -1):
-        distance = sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2)
-        if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
-            indices_to_remove.append(iz)
+        # descending verification
+        for iz in range(nz_nonz-1, nz_nonz/2, -1):
+            distance = sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2)
+            if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
+                indices_to_remove.append(iz)
 
-    x_centerline = delete(x_centerline, indices_to_remove)
-    y_centerline = delete(y_centerline, indices_to_remove)
-    z_centerline = delete(z_centerline, indices_to_remove)
+        x_centerline = delete(x_centerline, indices_to_remove)
+        y_centerline = delete(y_centerline, indices_to_remove)
+        z_centerline = delete(z_centerline, indices_to_remove)
 
     if phys_coordinates:
         sct.printv('.. Computing physical coordinates of centerline/segmentation...', verbose)
@@ -162,7 +163,7 @@ class SpinalCordStraightener(object):
 
     def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15, padding=30,
                  leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='nurbs',
-                 precision=2.0, threshold_distance=1.0, type_window='hanning', window_length=50, crop=1, output_filename=''):
+                 precision=2.0, threshold_distance=1.5, type_window='hanning', window_length=50, crop=1, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -281,7 +282,7 @@ class SpinalCordStraightener(object):
                 number_of_points = int(self.precision * nz)
 
             # 2. extract bspline fitting of the centreline, and its derivatives
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
             from msct_types import Centerline
             centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
