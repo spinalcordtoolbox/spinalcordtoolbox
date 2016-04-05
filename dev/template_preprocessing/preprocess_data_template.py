@@ -975,7 +975,7 @@ os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
-"""
+
 
 # Preprocessing for subject 1
 if not os.path.isdir(path_results + '/T2/ED'):
@@ -1013,7 +1013,7 @@ os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 #os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
-
+"""
 
 # Preprocessing for subject VG
 if not os.path.isdir(path_results + '/T2/VG'):
