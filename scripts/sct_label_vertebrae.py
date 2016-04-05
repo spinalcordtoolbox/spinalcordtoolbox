@@ -159,6 +159,12 @@ def main(args=None):
     else:
         printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
 
+    # # resample to 1mm isotropic
+    # printv('\nResample to 1mm isotropic...', verbose)
+    # run('sct_resample -i data.nii -mm 1x1x1 -x linear -o data_1mm.nii', verbose)
+    # run('sct_resample -i segmentation.nii.gz -mm 1x1x1 -x linear -o segmentation_1mm.nii.gz', verbose)
+    # run('sct_resample -i labelz.nii.gz -mm 1x1x1 -x linear -o labelz_1mm.nii', verbose)
+
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
     run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
