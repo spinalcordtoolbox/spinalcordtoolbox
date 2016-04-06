@@ -40,9 +40,9 @@ def test(path_data='', parameters=''):
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i']) and
             os.path.isfile(dict_param_with_path['-s'])):
-        status = int(200)
+        status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
     # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
     import time, random
@@ -56,9 +56,9 @@ def test(path_data='', parameters=''):
 
     # add initialization parameter contained in file: init_label_vertebrae.txt
     if not os.path.isfile(path_data+'t2/'+file_init_label_vertebrae):
-        status = int(200)
+        status = 200
         output = 'ERROR: the file init_label_vertebrae.txt does not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
         # return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
     else:
         file = open(path_data+'t2/'+file_init_label_vertebrae, 'r')
@@ -70,7 +70,7 @@ def test(path_data='', parameters=''):
     try:
         status, o = sct.run(cmd, 0)
     except:
-        status, o = int(1), 'ERROR: Function crashed!'
+        status, o = 1, 'ERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
 
