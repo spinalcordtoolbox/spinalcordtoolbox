@@ -18,7 +18,7 @@ python
 data
 tmp/**/*
 spinalcordtoolbox_v*
-dev/atlas/create_atlas/WMtracts_outputs
+dev/atlas/create_atlas/results
 dev/atlas/validate_atlas/tmp.*
 
 scripts/.idea/misc.xml
