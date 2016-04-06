@@ -40,7 +40,7 @@ def test(path_data='', parameters=''):
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i']) and
             os.path.isfile(dict_param_with_path['-s'])):
-        status = 200
+        status = int(200)
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
 
@@ -56,7 +56,7 @@ def test(path_data='', parameters=''):
 
     # add initialization parameter contained in file: init_label_vertebrae.txt
     if not os.path.isfile(path_data+'t2/'+file_init_label_vertebrae):
-        status = 200
+        status = int(200)
         output = 'ERROR: the file init_label_vertebrae.txt does not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
         # return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
@@ -70,7 +70,7 @@ def test(path_data='', parameters=''):
     try:
         status, o = sct.run(cmd, 0)
     except:
-        status, o = 1, 'ERROR: Function crashed!'
+        status, o = int(1), 'ERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
 
@@ -130,7 +130,7 @@ def test(path_data='', parameters=''):
             output += '\nWARNING: Diff manual-result = '+str(diff_manual_result)+' > '+str(th_diff_manual_result)
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result, 'duration [s]': duration}, index=[path_data])
+    results = DataFrame(data={'status': int(status), 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': int(diff_manual_result), 'duration [s]': duration}, index=[path_data])
 
     return status, output, results
 
