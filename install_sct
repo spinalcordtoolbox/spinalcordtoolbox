@@ -28,7 +28,7 @@
 # functions
 # ========================================================================
 # Where tmp file are stored
-TMP_DIR=`mktemp -d`
+TMP_DIR=`mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR'`
 # Start Directory So we go back there at the end of the Script
 SCT_SOURCE=$PWD
 
@@ -240,7 +240,7 @@ if [ -d "${SCT_DIR}/${SCRIPT_DIR}" ] || [ -d "${SCT_DIR}/${BIN_DIR}" ] \
     find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
   fi
 
-fi  
+fi
 
 # Copy files to destination directory
 if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
