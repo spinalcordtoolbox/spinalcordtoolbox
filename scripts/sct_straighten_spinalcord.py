@@ -294,14 +294,14 @@ class SpinalCordStraightener(object):
             from math import sqrt
 
             length_centerline = centerline.length
-            size_z_centerline = nz * pz
+            size_z_centerline = z_centerline[-1] - z_centerline[0]
 
             # compute the size factor between initial centerline and straight bended centerline
             factor_curved_straight = length_centerline / size_z_centerline
             middle_slice = (z_centerline[0] + z_centerline[-1]) / 2.0
             if verbose == 2:
                 print "Length of spinal cord = ", str(length_centerline)
-                print "Size of spinal cord in z direction = ", str(nz * pz)
+                print "Size of spinal cord in z direction = ", str(size_z_centerline)
                 print "Ratio length/size = ", str(factor_curved_straight)
 
             # 4. compute and generate straight space
@@ -313,11 +313,16 @@ class SpinalCordStraightener(object):
             sct.printv('\nPad input volume to account for landmarks that fall outside the FOV...', verbose)
             from numpy import ceil
             start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
-            padding_z = int(ceil(abs(start_point/float(nz))))
+            end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
+
+            padding_z = int(ceil(abs(start_point / float(nz)))) + 1
             sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,'+str(padding_z))
             image_centerline_pad = Image('tmp.centerline_pad.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
             hdr_warp = image_centerline_pad.hdr.copy()
+
+            start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point + padding_z]])[0]
+            end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point + padding_z]])[0]
 
             number_of_voxel = nx * ny * nz
             sct.printv("Number of voxel = " + str(number_of_voxel))
@@ -330,7 +335,7 @@ class SpinalCordStraightener(object):
             from numpy import linspace
             ix_straight = [int(round(nx / 2))] * number_of_points
             iy_straight = [int(round(ny / 2))] * number_of_points
-            iz_straight = linspace(0, nz, number_of_points)
+            iz_straight = linspace(start_point_coord[2], end_point_coord[2], number_of_points)
             dx_straight = [0.0] * number_of_points
             dy_straight = [0.0] * number_of_points
             dz_straight = [1.0] * number_of_points
