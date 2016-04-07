@@ -30,7 +30,7 @@ sys.path.append(path_sct + '/scripts')
 def test(path_data, parameters=''):
 
     if not parameters:
-        parameters = '-d mt/mt0.nii.gz -t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt0_gmseg.nii.gz -wm mt/mt0_wmseg.nii.gz -manual-gm mt/mt0_manual_gmseg.nii.gz -sc mt/mt0_seg.nii.gz -qc 0'
+        parameters = ' -t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt0_gmseg.nii.gz -wm mt/mt0_wmseg.nii.gz -manual-gm mt/mt0_manual_gmseg.nii.gz -sc mt/mt0_seg.nii.gz -qc 0' #-d mt/mt0.nii.gz
 
     parser = sct_register_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
@@ -38,7 +38,7 @@ def test(path_data, parameters=''):
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-d']) and os.path.isfile(dict_param_with_path['-w']) and os.path.isfile(dict_param_with_path['-gm']) and os.path.isfile(dict_param_with_path['-wm']) and os.path.isfile(dict_param_with_path['-manual-gm']) and os.path.isfile(dict_param_with_path['-sc'])):
+    if not (os.path.isfile(dict_param_with_path['-w']) and os.path.isfile(dict_param_with_path['-gm']) and os.path.isfile(dict_param_with_path['-wm']) and os.path.isfile(dict_param_with_path['-manual-gm']) and os.path.isfile(dict_param_with_path['-sc'])): #(os.path.isfile(dict_param_with_path['-d']) and
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'diff_dc_gm': float('nan'), 'dice_wm': float('nan'), 'diff_dc_wm': float('nan'), 'hausdorff': float('nan'), 'diff_hd': float('nan'), 'med_dist': float('nan'), 'diff_md': float('nan'), 'duration_[s]': float('nan')}, index=[path_data])
