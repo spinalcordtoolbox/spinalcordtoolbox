@@ -139,7 +139,10 @@ def main():
         try:
             module = importlib.import_module(module)
             # get version
-            version = module.__version__
+            try:
+                version = module.__version__
+            except:
+                version = module.__VERSION__
             # check if version matches requirements
             if check_package_version(version, version_requirements, i):
                 print_ok()
