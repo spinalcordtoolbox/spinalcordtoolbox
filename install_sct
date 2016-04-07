@@ -246,9 +246,6 @@ done
 
 SCT_DIR=${INSTALL_DIR}
 
-echo $SCT_DIR
-exit 0
-
 # Clean old install setup in bin/
 echo "Removing sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
 find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
