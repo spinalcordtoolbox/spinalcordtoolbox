@@ -17,7 +17,7 @@ import sys
 import os
 import time
 from pandas import DataFrame
-import sct_register_gm_multilabel
+import sct_register_graymatter
 from msct_image import Image
 import sct_utils as sct
 from numpy import sum, mean
@@ -32,7 +32,7 @@ def test(path_data, parameters=''):
     if not parameters:
         parameters = '-d mt/mt0.nii.gz -t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt0_gmseg.nii.gz -wm mt/mt0_wmseg.nii.gz -manual-gm mt/mt0_manual_gmseg.nii.gz -sc mt/mt0_seg.nii.gz -qc 0'
 
-    parser = sct_register_gm_multilabel.get_parser()
+    parser = sct_register_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
@@ -49,7 +49,7 @@ def test(path_data, parameters=''):
         subject_folder = subject_folder[-2]
     else:
         subject_folder = subject_folder[-1]
-    path_output = sct.slash_at_the_end('sct_register_gm_multilabel_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
+    path_output = sct.slash_at_the_end('sct_register_graymatter' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
     param_with_path += ' -ofolder ' + path_output
 
     cmd = 'sct_register_graymatter ' + param_with_path
