@@ -14,13 +14,17 @@
 #########################################################################################
 
 import sct_utils as sct
-from msct_parser import Parser
 import sct_straighten_spinalcord
 from pandas import DataFrame
 import os.path
 
 
 def test(path_data='', parameters=''):
+
+    # initializations
+    result_mse = 'NaN'
+    result_dist_max = 'NaN'
+    result_dice = 'NaN'
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -qc 0'
@@ -34,7 +38,8 @@ def test(path_data='', parameters=''):
     if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+        # return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
 
     # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
     import time, random
@@ -50,7 +55,10 @@ def test(path_data='', parameters=''):
     cmd = 'sct_straighten_spinalcord ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
-    status, o = sct.run(cmd, 0)
+    try:
+        status, o = sct.run(cmd, 0)
+    except:
+        status, o = 1, 'ERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
 
@@ -88,7 +96,7 @@ def test(path_data='', parameters=''):
             output += '\nWARNING: DICE = '+str(result_dice)+' < '+str(th_dice)
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max, 'dice': result_dice, 'duration': duration}, index=[path_data])
+    results = DataFrame(data={'status': int(status), 'output': output, 'mse': result_mse, 'dist_max': result_dist_max, 'dice': result_dice, 'duration': duration}, index=[path_data])
 
     return status, output, results
 

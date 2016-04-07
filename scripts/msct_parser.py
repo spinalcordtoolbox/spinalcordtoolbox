@@ -78,7 +78,7 @@
 #########################################################################################
 
 import sct_utils as sct
-from msct_types import Coordinate # useful for Coordinate
+from msct_types import *
 
 ########################################################################################################################
 ####### OPTION
@@ -312,7 +312,7 @@ class Parser:
                     temp_str = arguments[index]
                     index_temp = index
                     if index_temp < len(arguments)-1:
-                        if arguments[index] == '"':
+                        if arguments[index][0] == '"':
                             while arguments[index_temp + 1][-1] != '"':  # loop until we find a double quote. Then concatenate.
                                 temp_str += ' ' + arguments[index_temp + 1]
                                 index_temp += 1
@@ -327,7 +327,8 @@ class Parser:
                                 if index_temp >= len(arguments)-1:
                                     break
                     index_next = index_temp+1
-                    arguments_temp.append(temp_str)
+                    if '"' not in temp_str:
+                        arguments_temp.append(temp_str)
         arguments = arguments_temp
 
         skip = False
@@ -458,7 +459,6 @@ Version: """ + str(self.get_sct_version())
 
     def get_sct_version(self):
         from commands import getstatusoutput
-        from os.path import basename
         status, path_sct = getstatusoutput('echo $SCT_DIR')
         fname = str(path_sct)+'/version.txt'
         content = ""
