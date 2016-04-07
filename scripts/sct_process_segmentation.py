@@ -104,6 +104,13 @@ def get_parser():
                       type_value='image_nifti',
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
+                      deprecated_by='-vertfile',
+                      default_value='label/template/MNI-Poly-AMU_level.nii.gz',
+                      example='label/template/MNI-Poly-AMU_level.nii.gz')
+    parser.add_option(name='-vertfile',
+                      type_value='image_nifti',
+                      description='Vertebral labeling file. Only use with flag -vert',
+                      mandatory=False,
                       default_value='label/template/MNI-Poly-AMU_level.nii.gz',
                       example='label/template/MNI-Poly-AMU_level.nii.gz')
     parser.add_option(name='-m',
@@ -161,8 +168,6 @@ def main(args):
     # Initialization
     path_script = os.path.dirname(__file__)
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
-    # THIS DOES NOT WORK IN MY LAPTOP: path_sct = os.environ['SCT_DIR'] # path to spinal cord toolbox
-    #path_sct = path_script[:-8] # TODO: make it cleaner!
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
     fname_segmentation = ''
     name_process = ''
