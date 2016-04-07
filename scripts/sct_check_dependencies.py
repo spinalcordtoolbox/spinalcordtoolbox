@@ -230,11 +230,12 @@ def main():
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
-    (status, output) = commands.getstatusoutput('sct_propseg')
+    (status, output) = commands.getstatusoutput('isct_propseg')
     if status in [0, 256]:
         print_ok()
     else:
         print_fail()
+        print output
         e = 1
     if complete_test:
         print (status, output), '\n'
