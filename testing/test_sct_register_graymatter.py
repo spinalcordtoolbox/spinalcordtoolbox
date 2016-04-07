@@ -52,7 +52,7 @@ def test(path_data, parameters=''):
     path_output = sct.slash_at_the_end('sct_register_gm_multilabel_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
     param_with_path += ' -ofolder ' + path_output
 
-    cmd = 'sct_register_gm_multilabel ' + param_with_path
+    cmd = 'sct_register_graymatter ' + param_with_path
     time_start = time.time()
     status, output = sct.run(cmd, 0)
     duration = time.time() - time_start
