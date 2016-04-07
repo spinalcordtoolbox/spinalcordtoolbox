@@ -254,6 +254,8 @@ class Preprocessing:
         os.chdir(self.tmp_dir)
         im_target = Image(self.original_target)
         im_sc_seg = Image(self.original_sc_seg)
+
+        assert im_target.orientation == im_sc_seg.orientation, "ERROR: the image to segment and it's SC segmentation are not in the same orientation"
         self.original_header = im_target.hdr
         self.original_orientation = im_target.orientation
         index_x = self.original_orientation.find('R') if 'R' in self.original_orientation else self.original_orientation.find('L')
@@ -262,6 +264,16 @@ class Preprocessing:
 
         # resampling of the images
         nx, ny, nz, nt, px, py, pz, pt = im_target.dim
+        nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = im_sc_seg.dim
+
+        assert (nx == nx_s) and (ny == ny_s) and (nz == nz_s), "ERROR: the image to segment and it's SC segmentation does not have the same size"
+
+        if self.fname_level is not None:
+            im_level = Image(self.fname_level)
+            assert im_target.orientation == im_level.orientation, "ERROR: the image to segment and the level image are not in the same orientation"
+            nx_l, ny_l, nz_l, nt_l, px_l, py_l, pz_l, pt_l = im_level.dim
+            assert (nx == nx_l) and (ny == ny_l) and (nz == nz_l), "ERROR: the image to segment and the level image does not have the same size"
+
 
         pix_dim = [px, py, pz]
         self.original_px = pix_dim[index_x]
