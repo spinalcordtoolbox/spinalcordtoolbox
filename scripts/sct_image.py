@@ -14,7 +14,7 @@ import sys
 from numpy import concatenate, shape, newaxis
 from msct_parser import Parser
 from msct_image import Image, get_dimension
-from sct_utils import printv, add_suffix, extract_fname
+from sct_utils import printv, add_suffix, extract_fname, tmp_create, run
 
 
 class Param:
@@ -447,9 +447,11 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
     # if data are 2d, get orientation from header using fslhd
-    if nz == 1:
+    if nz == 1 or nt==1:
         if get:
             try:
+                printv('\nGet orientation...', verbose)
+                im_out = None
                 ori = get_orientation(im)
             except Exception, e:
                 printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
@@ -460,26 +462,15 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             im_out = set_orientation(im, ori)
         elif set_data:
             im_out = set_orientation(im, ori, True)
-
-
-    # if data are 3d, directly set or get orientation
-    elif nt == 1:
-        if get:
-            # get orientation
-            printv('\nGet orientation...', verbose)
-            im_out = None
-            return get_orientation_3d(im)
-        elif set:
-            # set orientation
-            printv('\nChange orientation...', verbose)
-            im_out = set_orientation(im, ori)
-        elif set_data:
-            im_out = set_orientation(im, ori, True)
         else:
             im_out = None
 
     else:
+        from os import chdir
         # 4D data: split along T dimension
+        # Create a temporary directory and go in it
+        tmp_folder = tmp_create(verbose)
+        chdir(tmp_folder)
         printv('\nSplit along T dimension...', verbose)
         im_split_list = split_data(im, 3)
         for im_s in im_split_list:
@@ -489,7 +480,10 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             # get orientation
             printv('\nGet orientation...', verbose)
             im_out=None
-            return get_orientation_3d(im_split_list[0])
+            ori = get_orientation(im_split_list[0])
+            chdir('..')
+            run('rm -rf '+tmp_folder, error_exit='warning')
+            return ori
         elif set:
             # set orientation
             printv('\nChange orientation...', verbose)
@@ -503,6 +497,10 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             printv('\nSet orientation of the data only is not compatible with 4D data...', verbose, 'error')
         else:
             im_out = None
+
+        # Go back to previous directory:
+        chdir('..')
+        run('rm -rf '+tmp_folder, error_exit='warning')
 
     im_out.setFileName(im.file_name+'_'+ori+im.ext)
     return im_out
