@@ -112,7 +112,7 @@ download (){
 
 usage() {
           echo -e "\nUsage: $0 [-d ] [-m ]" 1>&2;
-          echo -e "\tWe only recomend the -d and -m options for developpers"
+          echo -e "\tWe only recomend the -d and -m options for developers"
 
           echo -e "\nOPTION"
           echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
@@ -211,6 +211,12 @@ while  true ; do
   echo -n "Choose install directory. Warning! Give full path (e.g. /usr/django/sct_v3.0): "
   # user enters new path
   read new_install
+
+   # Expand ~/
+   new_install=${new_install/#\~\//$HOME\/}
+   # Remove trailing /
+   new_install=${new_install%/}
+
   # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
   if [ "${new_install}" == "/" ] || [ "${HOME}" == "${new_install%/}" ] ; then
     echo Cannot be installed directly in ${new_install}
@@ -237,8 +243,11 @@ while  true ; do
     break
   fi
 done
-SCT_DIR=${INSTALL_DIR%/}
 
+SCT_DIR=${INSTALL_DIR}
+
+echo $SCT_DIR
+exit 0
 
 # Clean old install setup in bin/
 echo "Removing sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
