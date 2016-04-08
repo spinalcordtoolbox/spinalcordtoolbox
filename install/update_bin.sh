@@ -2,6 +2,7 @@
 # Convenience script to creates the boilerplate-script/wrapper of
 # the bin/ directory
 #
+# This script needs to be run in the install/ directory
 #
 #########################################################################################
 # Copyright (c) 2016 Polytechnique Montreal <www.neuro.polymtl.ca>
