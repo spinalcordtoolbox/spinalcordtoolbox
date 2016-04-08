@@ -7,7 +7,7 @@
 # To run without fslview output, type:
 #   ./batch_processing.sh -nodisplay
 #
-# tested with v2.2.3
+# tested with v3.0_dev
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
@@ -16,6 +16,9 @@ if [[ $@ == *"-nodisplay"* ]]; then
 else
    DISPLAY=true
 fi
+
+# get SCT_DIR
+source sct_env
 
 # download example data (errsm_30)
 sct_download_data -d sct_example_data
