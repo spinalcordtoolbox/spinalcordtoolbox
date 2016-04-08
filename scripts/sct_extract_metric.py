@@ -31,8 +31,9 @@ from msct_image import Image
 from msct_parser import Parser
 import xlwt
 
-# get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# get path of the script and the toolbox
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
 
 # constants
 ALMOST_ZERO = 0.000001
