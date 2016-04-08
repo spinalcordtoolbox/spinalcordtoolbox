@@ -98,7 +98,7 @@ bin: binarize mask (threshold=0.5)""",
                       deprecated_by='-method')
     parser.add_option(name='-output-type',
                       type_value='str',
-                      description="""Type of the output file collecting the metric estimation results.""",
+                      description="""Type of the output file collecting the metric estimation results: xls or txt.""",
                       mandatory=False,
                       default_value=param_default.output_type)
     parser.add_option(name='-param',
@@ -416,16 +416,16 @@ def read_label_file(path_info_label, file_info_label):
     section = ''
     for line in lines:
         # update section index
-        if ('# White matter atlas' in line) or ('# Combined labels' in line):
+        if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line):
             section = line
         # record the label according to its section
-        if ('# White matter atlas' in section) and (line[0] != '#'):
+        if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
             parsed_line = line.split(',')
             indiv_labels_ids.append(int(parsed_line[0]))
             indiv_labels_names.append(parsed_line[1].strip())
             indiv_labels_files.append(parsed_line[2].strip())
 
-        elif '# Combined labels' in section and (line[0] != '#'):
+        elif ('# Combined labels' in section) and (line[0] != '#'):
             parsed_line = line.split(',')
             combined_labels_ids.append(int(parsed_line[0]))
             combined_labels_names.append(parsed_line[1].strip())
