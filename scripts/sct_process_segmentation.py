@@ -488,8 +488,13 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
     for iz in xrange(min_z_index, max_z_index+1):
 
-        # compute the vector normal to the plane
-        normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
+        # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
+        try:
+            # compute the vector normal to the plane
+            normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
+
+        except IndexError:
+            sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
         # compute the angle between the normal vector of the plane and the vector z
         angle = np.arccos(np.dot(normal, [0, 0, 1]))
