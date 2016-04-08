@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# Set environment variables for SCT
+#
+#########################################################################################
+# Copyright (c) 2016 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: jcohenadad
+# License: see the file LICENSE.TXT
+#########################################################################################
+
+
+SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export SCT_DIR=${SCT_DIR%/bin}
