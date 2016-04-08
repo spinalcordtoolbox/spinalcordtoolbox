@@ -35,8 +35,8 @@
 
 # Combined labels
 # ID, name, IDs
-32, Spinal cord, 0:30
-33, White matter, 0:29
-34, Dorsal column, 0,1,15,16
-35, Lateral funiculi, 2,3,4,5,6,17,18,19,20,21
-36, Ventral funiculi, 7,8,9,10,11,12,13,14,22,23,24,25,26,27,28,29
+32, spinal cord, 0:30
+33, white matter, 0:29
+34, dorsal columns, 0,1,15,16
+35, lateral funiculi, 2,3,4,5,6,17,18,19,20,21
+36, ventral funiculi, 7,8,9,10,11,12,13,14,22,23,24,25,26,27,28,29
