@@ -25,9 +25,9 @@ from sct_extract_metric import read_label_file
 
 
 
-
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
 
 
 # DEFAULT PARAMETERS
