@@ -206,12 +206,15 @@ def get_parser():
 
 
 class Preprocessing:
-    def __init__(self, target_fname, sc_seg_fname, tmp_dir='', t2_data=None, level_fname=None, denoising=True):
+    def __init__(self, target_fname, sc_seg_fname, tmp_dir='', t2_data=None, level_fname=None, denoising=True, verbose=1):
 
         # initiate de file names and copy the files into the temporary directory
         self.original_target = 'target.nii.gz'
+        self.t2star = self.original_target
         self.original_sc_seg = 'target_sc_seg.nii.gz'
+        self.sc_seg = self.original_sc_seg
         self.resample_to = 0.3
+        self.verbose = verbose
 
         self.tmp_dir = tmp_dir
         self.denoising = denoising
@@ -251,6 +254,8 @@ class Preprocessing:
         os.chdir(self.tmp_dir)
         im_target = Image(self.original_target)
         im_sc_seg = Image(self.original_sc_seg)
+
+        assert im_target.orientation == im_sc_seg.orientation, "ERROR: the image to segment and it's SC segmentation are not in the same orientation"
         self.original_header = im_target.hdr
         self.original_orientation = im_target.orientation
         index_x = self.original_orientation.find('R') if 'R' in self.original_orientation else self.original_orientation.find('L')
@@ -259,6 +264,16 @@ class Preprocessing:
 
         # resampling of the images
         nx, ny, nz, nt, px, py, pz, pt = im_target.dim
+        nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = im_sc_seg.dim
+
+        assert (nx == nx_s) and (ny == ny_s) and (nz == nz_s), "ERROR: the image to segment and it's SC segmentation does not have the same size"
+
+        if self.fname_level is not None:
+            im_level = Image(self.fname_level)
+            assert im_target.orientation == im_level.orientation, "ERROR: the image to segment and the level image are not in the same orientation"
+            nx_l, ny_l, nz_l, nt_l, px_l, py_l, pz_l, pt_l = im_level.dim
+            assert (nx == nx_l) and (ny == ny_l) and (nz == nz_l), "ERROR: the image to segment and the level image does not have the same size"
+
 
         pix_dim = [px, py, pz]
         self.original_px = pix_dim[index_x]
@@ -390,7 +405,7 @@ class FullGmSegmentation:
     # ------------------------------------------------------------------------------------------------------------------
     def segmentation_pipeline(self):
         sct.printv('\nDoing target pre-processing ...', verbose=self.seg_param.verbose, type='normal')
-        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.seg_param.target_denoising)
+        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.seg_param.target_denoising, verbose=self.seg_param.verbose)
         self.preprocessed.process()
 
         os.chdir(self.tmp_dir)
