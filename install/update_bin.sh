@@ -21,6 +21,7 @@ EOF
 echo "$boiler_plate"
 
 cp sct_launcher ../bin/.
+cp sct_env ../bin/.
 
 grep -l "__main__" ../scripts/*.py | while read -r filename ; do
 

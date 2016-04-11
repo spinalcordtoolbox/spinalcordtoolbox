@@ -7,7 +7,7 @@
 # To run without fslview output, type:
 #   ./batch_processing.sh -nodisplay
 #
-# tested with v2.2.3
+# tested with v2.2_dev on 2016-04-11 at 13.20
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
@@ -16,6 +16,9 @@ if [[ $@ == *"-nodisplay"* ]]; then
 else
    DISPLAY=true
 fi
+
+# get SCT_DIR
+source sct_env
 
 # download example data (errsm_30)
 sct_download_data -d sct_example_data
@@ -50,8 +53,8 @@ if [ $DISPLAY = true ]; then
 fi
 # compute average cross-sectional area and volume between C3 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -vert 3:4
-# --> Mean CSA: 77.4289770106 +/- 2.00647224442 mm^2
-# --> Volume (in volume.txt): 2402.0 mm^3
+# --> Mean CSA: 77.233663906 +/- 1.99475778691 mm^2
+# --> Volume (in volume.txt): 2396.0 mm^3
 
 # go back to root folder
 cd ..
@@ -97,7 +100,7 @@ cd mt
 # bring T2 segmentation in MT space to help segmentation (no optimization)
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
 # segment mt1
-sct_propseg -i mt1.nii.gz -c t2 -init-centerline t2_seg_reg_centerline.nii.gz
+sct_propseg -i mt1.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz
 # check results
 if [ $DISPLAY = true ]; then
    fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
@@ -136,18 +139,18 @@ if [ $DISPLAY = true ]; then
 fi
 # >>>>>>>>>>
 # extract MTR within the white matter
-sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.7067535734
+sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map -o mtr_in_whitematter.txt
+# --> MTR = 34.2184255681
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
-sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of left CST: 4.97641126008 +/- 0.512628334474 mm^2
+sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz -o csa_leftCST.txt
+# --> Mean CSA of left CST: 5.14874876116 +/- 0.705719447293 mm^2
 sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of right CST: 4.77218674544 +/- 0.472737313312 mm^2
+# --> Mean CSA of right CST: 4.92502099412 +/- 0.599001576209 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
 sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of the left dorsal column: 9.44132531044 +/- 0.462686426095 mm^2
+# --> Mean CSA of the left dorsal column: 9.80594348877 +/- 0.534758227893 mm^2
 cd ..
 
 
@@ -179,9 +182,9 @@ fi
 # compute DTI metrics
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
-sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -method map
-# --> 17, right lateral corticospinal tract:    0.787807890652
-# --> 2, left lateral corticospinal tract:    0.76589414129
+sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -method map -o fa_in_cst.txt
+# --> 17, right lateral corticospinal tract:    0.797974493382
+# --> 2, left lateral corticospinal tract:    0.753757041634
 cd ..
 
 
@@ -218,6 +221,14 @@ if [ $DISPLAY = true ]; then
    fslview fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
 fi
 # also see: https://dl.dropboxusercontent.com/u/20592661/spinalcordtoolbox/result_batch_processing_fmri.png
+cd ..
+
+
+# display results (to compare integrity across SCT versions)
+# ----------
+cat t2/csa_mean.txt
+cat mt/mtr_in_whitematter.txt
+cat dmri/fa_in_cst.txt
 
 # display ending time:
 echo "Ended at: $(date +%x_%r)"
