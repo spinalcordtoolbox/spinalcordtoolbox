@@ -33,18 +33,29 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-from msct_parser import Parser
 import sys
+import signal
+from time import time, strftime
+
+from msct_parser import Parser
 import sct_utils as sct
 import os
 import copy_reg
 import types
-import signal
 import pandas as pd
-import commands
-from time import time, gmtime, strftime
+
+
+
+
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# TODO: put it back below when working again (julien 2016-04-04)
+# <<<
+# OLD
+# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# NEW
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
+# >>>
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 sys.path.append(path_sct + '/testing')
@@ -123,7 +134,14 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
 
 def function_launcher(args):
     import importlib
+    # import traceback
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
+    # try:
+    #     output = script_to_be_run.test(*args[1:])
+    # except:
+    #     print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
+    #     output = (1, 'ERROR: Function crashed', 'No result')
+    # return output
     return script_to_be_run.test(*args[1:])
 
 
@@ -273,3 +291,4 @@ if __name__ == "__main__":
     # display elapsed time
     elapsed_time = time() - start_time
     print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
+    print 'Status legend: 0: Passed, 1: Crashed, 99: Failed, 200: File(s) missing'

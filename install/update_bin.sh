@@ -2,6 +2,7 @@
 # Convenience script to creates the boilerplate-script/wrapper of
 # the bin/ directory
 #
+# This script needs to be run in the install/ directory
 #
 #########################################################################################
 # Copyright (c) 2016 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -20,6 +21,7 @@ EOF
 echo "$boiler_plate"
 
 cp sct_launcher ../bin/.
+cp sct_env ../bin/.
 
 grep -l "__main__" ../scripts/*.py | while read -r filename ; do
 
