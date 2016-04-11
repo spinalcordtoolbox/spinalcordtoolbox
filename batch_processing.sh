@@ -100,7 +100,7 @@ cd mt
 # bring T2 segmentation in MT space to help segmentation (no optimization)
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
 # segment mt1
-sct_propseg -i mt1.nii.gz -c t2 -init-centerline t2_seg_reg_centerline.nii.gz
+sct_propseg -i mt1.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz
 # check results
 if [ $DISPLAY = true ]; then
    fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
