@@ -183,8 +183,8 @@ fi
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -method map
-# --> 17, right lateral corticospinal tract:    0.787807890652
-# --> 2, left lateral corticospinal tract:    0.76589414129
+# --> 17, right lateral corticospinal tract:    0.797974493382
+# --> 2, left lateral corticospinal tract:    0.753757041634
 cd ..
 
 
