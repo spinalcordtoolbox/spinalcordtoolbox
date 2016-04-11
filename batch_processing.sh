@@ -139,11 +139,11 @@ if [ $DISPLAY = true ]; then
 fi
 # >>>>>>>>>>
 # extract MTR within the white matter
-sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map -o mtr_in_whitematter.txt
+sct_extract_metric -i mtr.nii.gz -f label/atlas/ -m map -o mtr_in_whitematter
 # --> MTR = 34.2184255681
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
-sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz -o csa_leftCST.txt
+sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
 # --> Mean CSA of left CST: 5.14874876116 +/- 0.705719447293 mm^2
 sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
 # --> Mean CSA of right CST: 4.92502099412 +/- 0.599001576209 mm^2
@@ -182,7 +182,7 @@ fi
 # compute DTI metrics
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
-sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -method map -o fa_in_cst.txt
+sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -z 1:3 -method map -o fa_in_cst
 # --> 17, right lateral corticospinal tract:    0.797974493382
 # --> 2, left lateral corticospinal tract:    0.753757041634
 cd ..

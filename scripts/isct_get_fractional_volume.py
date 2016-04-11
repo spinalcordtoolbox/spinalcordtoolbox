@@ -24,7 +24,7 @@ def get_fractional_volume_per_label(atlas_folder, file_label, nb_RL_labels=15):
     import nibabel
     import numpy
 
-    [label_id, label_name, label_file] = sct_extract_metric.read_label_file(atlas_folder, file_label)
+    label_id, label_name, label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = sct_extract_metric.read_label_file(atlas_folder, file_label)
     nb_label = len(label_file)
 
     fract_volume_per_lab = numpy.zeros((nb_label))
@@ -61,7 +61,7 @@ def get_nb_voxel_in_WM(atlas_folder, file_label):
     import nibabel
     import numpy
 
-    [label_id, label_name, label_file] = sct_extract_metric.read_label_file(atlas_folder, file_label)
+    label_id, label_name, label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = sct_extract_metric.read_label_file(atlas_folder, file_label)
     nb_label = len(label_file)
 
     # sum of all the labels
