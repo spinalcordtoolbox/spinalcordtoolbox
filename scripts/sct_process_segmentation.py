@@ -614,7 +614,7 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
 
         # write result into output file
-        save_results(path_data + 'csa_mean.txt', file_data, 'CSA', 0, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(path_data + 'csa_mean', file_data, 'CSA', 0, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
         sct.printv('Compute the volume in between the selected slices...', type='info')
