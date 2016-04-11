@@ -7,7 +7,7 @@
 # To run without fslview output, type:
 #   ./batch_processing.sh -nodisplay
 #
-# tested with v3.0_dev
+# tested with v2.2_dev on 2016-04-11 at 13.20
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
@@ -53,8 +53,8 @@ if [ $DISPLAY = true ]; then
 fi
 # compute average cross-sectional area and volume between C3 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -vert 3:4
-# --> Mean CSA: 77.4289770106 +/- 2.00647224442 mm^2
-# --> Volume (in volume.txt): 2402.0 mm^3
+# --> Mean CSA: 77.233663906 +/- 1.99475778691 mm^2
+# --> Volume (in volume.txt): 2396.0 mm^3
 
 # go back to root folder
 cd ..
@@ -140,17 +140,17 @@ fi
 # >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.7067535734
+# --> MTR = 34.2184255681
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
 sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of left CST: 4.97641126008 +/- 0.512628334474 mm^2
+# --> Mean CSA of left CST: 5.14874876116 +/- 0.705719447293 mm^2
 sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of right CST: 4.77218674544 +/- 0.472737313312 mm^2
+# --> Mean CSA of right CST: 4.92502099412 +/- 0.599001576209 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
 sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of the left dorsal column: 9.44132531044 +/- 0.462686426095 mm^2
+# --> Mean CSA of the left dorsal column: 9.80594348877 +/- 0.534758227893 mm^2
 cd ..
 
 
