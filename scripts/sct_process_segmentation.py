@@ -623,7 +623,7 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
 
         # write result into output file
-        save_results(path_data + 'volume.txt', file_data, 'volume', 0, 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(path_data + 'volume', file_data, 'volume', 0, 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
     # Remove temporary files
     if remove_temp_files:
