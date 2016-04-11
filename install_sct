@@ -37,8 +37,10 @@ DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
 
-finish (){
-#  Force a clean exit
+
+# Force a clean exit
+finish ()
+{
   # Get back to starting point
   cd ${SCT_SOURCE}
   # remove installation tmp files
@@ -46,8 +48,10 @@ finish (){
 }
 trap finish EXIT
 
-force_bashrc_loading (){
 
+# Force bashrc loading
+force_bashrc_loading ()
+{
   sourceblock="
 if [ -n \"\$BASH_VERSION\" ]; then
     # include .bashrc if it exists
@@ -69,17 +73,21 @@ fi"
   if [ -z ${bidon} ] ; then
     echo "${sourceblock}" >> ~/.bash_profile
   fi
-
 }
 
-install_refresh (){
+
+# Installation text to insert in .bashrc
+install_refresh ()
+{
   echo
   echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
   echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${THE_BASHRC}
 }
 
 
-download (){
+# Download from URL using curl/wget
+download ()
+{
   # Use cUrl or wget to download goodies
   set -x
   if hash "curl" ; then
@@ -107,23 +115,23 @@ download (){
      echo "Please check your internet connection before relaunching the installer"
      exit 1
   fi
-
 }
 
-usage() {
-          echo -e "\nUsage: $0 [-d ] [-m ]" 1>&2;
-          echo -e "\tWe only recomend the -d and -m options for developers"
 
-          echo -e "\nOPTION"
-          echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
-          echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
-
+# Usage of this script
+usage()
+{
+  echo -e "\nUsage: $0 [-d ] [-m ]" 1>&2;
+  echo -e "\tWe only recomend the -d and -m options for developers"
+  echo -e "\nOPTION"
+  echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
+  echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
 }
+
 
 # SCRIPT STARTS HERE
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
-
 
 while getopts ":dmh" opt; do
   case $opt in
@@ -251,7 +259,6 @@ echo "Removing sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
 find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
 find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
 
-
 # Copy files to destination directory
 if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
   echo -e "\nCopying source files from ${SCT_SOURCE} to ${SCT_DIR}"
@@ -273,7 +280,6 @@ if [ ! -f "version.txt" ]; then
   exit 1
 fi
 
-
 # Create launchers for Python scripts
 echo -e "\nCreate launchers for Python scripts"
 cmd="mkdir -p ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
@@ -287,8 +293,7 @@ download  ${TMP_DIR}/sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/205
 ls ${TMP_DIR} > /dev/null
 cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${TMP_DIR}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
 
-
-
+# INSTALL DATA
 if [ ${NO_DATA_INSTALL} ]; then
   echo "data/ will not vbe (re)-install"
 else
@@ -301,6 +306,7 @@ else
   cmd="tar -C ${SCT_DIR} -zxvf ${TMP_DIR}/data.tar.gz"; echo ">> "$cmd; $cmd
 fi
 
+# INSTALL PYTHON
 if [ ${NO_CONDA_INSTALL} ]; then
   echo "python/ will not vbe (re)-install"
 else
@@ -315,7 +321,6 @@ else
 
   # activate miniconda
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-
 
   # Install Python dependencies
   echo -e "\nInstalling Python dependencies..."
@@ -332,10 +337,9 @@ else
   dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
   ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
   pip install --ignore-installed ${dipy_whl} ${ornlm_whl}
-
 fi
 
-echo -e "All requirement installed!"
+echo -e "All requirements installed!"
 
 # update PATH environment
 if [[ $UID != 0 ]]; then
