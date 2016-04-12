@@ -323,25 +323,19 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # display results
     sct.printv('\nResults:', 1)
-    # sct.printv('\nIndividual labels:', 1, 'info')
-    # for i_indiv_label in range(0, indiv_labels_value.size):
-    #     sct.printv(str(indiv_labels_ids[i_indiv_label])+', '+str(indiv_labels_names[i_indiv_label])+':    '+str(indiv_labels_value[i_indiv_label])+' +/- '+str(indiv_labels_std[i_indiv_label]), 1, 'info')
-    # sct.printv('\nCombined labels:', 1, 'info')
-    # for i_combined_labels in range(0, combined_labels_value.size):
-    #     sct.printv(str(combined_labels_ids[i_combined_labels])+', '+str(combined_labels_names[i_combined_labels])+':    '+str(combined_labels_value[i_combined_labels])+' +/- '+str(combined_labels_std[i_combined_labels]), 1, 'info')
     section = ''
     if labels_id_user[0] <= max(indiv_labels_ids):
-        section = '\nIndividual labels:'
+        section = '\nWhite matter atlas:'
     elif labels_id_user[0] > max(indiv_labels_ids):
         section = '\nCombined labels:'
     sct.printv(section, 1, 'info')
     for i_label_user in labels_id_user:
         # change section if not individual label anymore
-        if i_label_user > max(indiv_labels_ids) and section == '\nIndividual labels:':
+        if i_label_user > max(indiv_labels_ids) and section == '\nWhite matter atlas:':
             section = '\nCombined labels:'
             sct.printv(section, 1, 'info')
         # display result for this label
-        if section == '\nIndividual labels:':
+        if section == '\nWhite matter atlas:':
             index = indiv_labels_ids.index(i_label_user)
             sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ':    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
         elif section == '\nCombined labels:':
@@ -349,7 +343,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
-    save_metrics(indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
 def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
@@ -608,7 +602,7 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
-def save_metrics(indiv_labels_id, combined_labels_id, indiv_labels_name, combined_labels_name, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
     """Save results in the output type selected by user."""
 
     sct.printv('\nSave results in: '+fname_output+'.'+output_type+' ...')
@@ -650,14 +644,24 @@ def save_metrics(indiv_labels_id, combined_labels_id, indiv_labels_name, combine
         fid_metric.write('%s' % ('\n'+'# ID, label name, mean, std\n\n'))
 
         # WRITE RESULTS
-        # individual labels
-        fid_metric.write('\n# White matter atlas\n')
-        for i in range(0, len(indiv_labels_name)):
-            fid_metric.write('%i, %s, %f, %f\n' % (indiv_labels_id[i], indiv_labels_name[i], indiv_labels_value[i], indiv_labels_std[i]))
-        # combined labels
-        fid_metric.write('\n# Combined labels\n')
-        for i in range(0, len(combined_labels_name)):
-            fid_metric.write('%i, %s, %f, %f\n' % (combined_labels_id[i], combined_labels_name[i], combined_labels_value[i], combined_labels_std[i]))
+        section = ''
+        if labels_id_user[0] <= max(indiv_labels_ids):
+            section = '\n# White matter atlas\n'
+        elif labels_id_user[0] > max(indiv_labels_ids):
+            section = '\n# Combined labels\n'
+            fid_metric.write(section)
+        for i_label_user in labels_id_user:
+            # change section if not individual label anymore
+            if i_label_user > max(indiv_labels_ids) and section == '\n# White matter atlas\n':
+                section = '\n# Combined labels\n'
+                fid_metric.write(section)
+            # display result for this label
+            if section == '\n# White matter atlas\n':
+                index = indiv_labels_ids.index(i_label_user)
+                fid_metric.write('%i, %s, %f, %f\n' % (indiv_labels_ids[index], indiv_labels_names[index], indiv_labels_value[index], indiv_labels_std[index]))
+            elif section == '\n# Combined labels\n':
+                index = combined_labels_ids.index(i_label_user)
+                fid_metric.write('%i, %s, %f, %f\n' % (combined_labels_ids[index], combined_labels_names[index], combined_labels_value[index], combined_labels_std[index]))
 
         # Close file .txt
         fid_metric.close()
@@ -715,18 +719,34 @@ def save_metrics(indiv_labels_id, combined_labels_id, indiv_labels_name, combine
         sh_results.write(0, 2, 'metric value')
         sh_results.write(0, 3, 'metric std')
 
-        sh_results.write(1, 0, 'White matter atlas')
-        for i_row in range(2, 2+len(indiv_labels_name)):
-            sh_results.write(i_row, 0, indiv_labels_id[i_row-2])
-            sh_results.write(i_row, 1, indiv_labels_name[i_row-2])
-            sh_results.write(i_row, 2, indiv_labels_value[i_row-2])
-            sh_results.write(i_row, 3, indiv_labels_std[i_row-2])
-        sh_results.write(2+len(indiv_labels_name), 0, 'Combined labels')
-        for i_row in range(3+len(indiv_labels_name), 3+len(indiv_labels_name)+len(combined_labels_name)):
-            sh_results.write(i_row, 0, combined_labels_id[i_row-(3+len(indiv_labels_name))])
-            sh_results.write(i_row, 1, combined_labels_name[i_row-(3+len(indiv_labels_name))])
-            sh_results.write(i_row, 2, combined_labels_value[i_row-(3+len(indiv_labels_name))])
-            sh_results.write(i_row, 3, combined_labels_std[i_row-(3+len(indiv_labels_name))])
+        section = ''
+        if labels_id_user[0] <= max(indiv_labels_ids):
+            section = 'White matter atlas'
+        elif labels_id_user[0] > max(indiv_labels_ids):
+            section = 'Combined labels'
+        sh_results.write(1, 0, section)
+        i_row = 2
+        for i_label_user in labels_id_user:
+            # change section if not individual label anymore
+            if i_label_user > max(indiv_labels_ids) and section == 'White matter atlas':
+                section = 'Combined labels'
+                sh_results.write(i_row, 0, section)
+                i_row += 1
+            # display result for this label
+            if section == 'White matter atlas':
+                index = indiv_labels_ids.index(i_label_user)
+                sh_results.write(i_row, 0, indiv_labels_ids[index])
+                sh_results.write(i_row, 1, indiv_labels_names[index])
+                sh_results.write(i_row, 2, indiv_labels_value[index])
+                sh_results.write(i_row, 3, indiv_labels_std[index])
+                i_row += 1
+            elif section == 'Combined labels':
+                index = combined_labels_ids.index(i_label_user)
+                sh_results.write(i_row, 0, combined_labels_ids[index])
+                sh_results.write(i_row, 1, combined_labels_names[index])
+                sh_results.write(i_row, 2, combined_labels_value[index])
+                sh_results.write(i_row, 3, combined_labels_std[index])
+                i_row += 1
 
         book.save(fname_output+'.'+output_type)
 
@@ -744,16 +764,6 @@ def check_method(method, fname_normalizing_label, normalization_method):
 
     if fname_normalizing_label and normalization_method != 'sbs' and normalization_method != 'whole':
         sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:'+str(normalization_method)))
-
-
-# def check_labels_user(labels_user, indiv_labels_ids, combined_labels_ids):
-#
-#     if labels_user == '':
-#         return []
-#     else:
-#         labels_user_
-#
-#
 
 
 def check_labels(indiv_labels_ids, combined_labels_id_group):
