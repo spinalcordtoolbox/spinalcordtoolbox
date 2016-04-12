@@ -71,6 +71,11 @@ def get_parser():
                       description='Folder including labels to extract the metric from.',
                       mandatory=True,
                       example=path_sct+'/data/atlas')
+    parser.add_option(name='-l',
+                      type_value='str',
+                      description='Label IDs to extract the metric from. Example: 1,3 for left fasciculus cuneatus and left ventral spinocerebellar tracts. Default = all labels. You can also select labels using 1:3 to get labels 1,2,3.',
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description="""Method to extract metrics.
@@ -177,7 +182,7 @@ To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using bi
     return parser
 
 
-def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, fname_normalizing_label, normalization_method, adv_param_user):
+def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, labels_user, fname_normalizing_label, normalization_method, adv_param_user):
     """Main."""
 
     # Initialization
@@ -226,6 +231,9 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # parse labels according to the file info_label.txt
     indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label, param.file_info_label)
+
+    # check syntax of labels asked by user
+    labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, labels_user)
 
     nb_labels = len(indiv_labels_files)
 
@@ -313,14 +321,32 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     for i_combined_labels in range(0, len(combined_labels_id_groups)):
         combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, combined_labels_id_groups[i_combined_labels])
 
-    # display metrics
+    # display results
     sct.printv('\nResults:', 1)
-    sct.printv('\nIndividual labels:', 1, 'info')
-    for i_indiv_label in range(0, indiv_labels_value.size):
-        sct.printv(str(indiv_labels_ids[i_indiv_label])+', '+str(indiv_labels_names[i_indiv_label])+':    '+str(indiv_labels_value[i_indiv_label])+' +/- '+str(indiv_labels_std[i_indiv_label]), 1, 'info')
-    sct.printv('\nCombined labels:', 1, 'info')
-    for i_combined_labels in range(0, combined_labels_value.size):
-        sct.printv(str(combined_labels_ids[i_combined_labels])+', '+str(combined_labels_names[i_combined_labels])+':    '+str(combined_labels_value[i_combined_labels])+' +/- '+str(combined_labels_std[i_combined_labels]), 1, 'info')
+    # sct.printv('\nIndividual labels:', 1, 'info')
+    # for i_indiv_label in range(0, indiv_labels_value.size):
+    #     sct.printv(str(indiv_labels_ids[i_indiv_label])+', '+str(indiv_labels_names[i_indiv_label])+':    '+str(indiv_labels_value[i_indiv_label])+' +/- '+str(indiv_labels_std[i_indiv_label]), 1, 'info')
+    # sct.printv('\nCombined labels:', 1, 'info')
+    # for i_combined_labels in range(0, combined_labels_value.size):
+    #     sct.printv(str(combined_labels_ids[i_combined_labels])+', '+str(combined_labels_names[i_combined_labels])+':    '+str(combined_labels_value[i_combined_labels])+' +/- '+str(combined_labels_std[i_combined_labels]), 1, 'info')
+    section = ''
+    if labels_id_user[0] <= max(indiv_labels_ids):
+        section = '\nIndividual labels:'
+    elif labels_id_user[0] > max(indiv_labels_ids):
+        section = '\nCombined labels:'
+    sct.printv(section, 1, 'info')
+    for i_label_user in labels_id_user:
+        # change section if not individual label anymore
+        if i_label_user > max(indiv_labels_ids) and section == '\nIndividual labels:':
+            section = '\nCombined labels:'
+            sct.printv(section, 1, 'info')
+        # display result for this label
+        if section == '\nIndividual labels:':
+            index = indiv_labels_ids.index(i_label_user)
+            sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ':    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
+        elif section == '\nCombined labels:':
+            index = combined_labels_ids.index(i_label_user)
+            sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
     save_metrics(indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
@@ -720,6 +746,15 @@ def check_method(method, fname_normalizing_label, normalization_method):
         sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:'+str(normalization_method)))
 
 
+# def check_labels_user(labels_user, indiv_labels_ids, combined_labels_ids):
+#
+#     if labels_user == '':
+#         return []
+#     else:
+#         labels_user_
+#
+#
+
 
 def check_labels(indiv_labels_ids, combined_labels_id_group):
     """Check the consistency of the labels asked by the user."""
@@ -782,8 +817,9 @@ def check_labels(indiv_labels_ids, combined_labels_id_group):
             list_ids_of_labels_of_interest = list(set([int(x) for x in combined_labels_id_group.split(",")]))
 
         # Sort labels ID and remove redundant values
-        list_ids_of_labels_of_interest.sort()
         list_ids_of_labels_of_interest = list(set(list_ids_of_labels_of_interest))
+        list_ids_of_labels_of_interest.sort()
+
 
     return list_ids_of_labels_of_interest
 
@@ -989,7 +1025,10 @@ if __name__ == "__main__":
     fname_data = arguments['-i']
     path_label = arguments['-f']
     method = arguments['-method']
+    labels_user = ''
     adv_param_user = ''
+    if '-l' in arguments:
+        labels_user = arguments['-l']
     if '-param' in arguments:
         adv_param_user = arguments['-param']
     slices_of_interest = ''
@@ -1008,4 +1047,4 @@ if __name__ == "__main__":
         normalization_method = arguments['-norm-method']
 
     # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, fname_normalizing_label, normalization_method, adv_param_user)
+    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, labels_user, fname_normalizing_label, normalization_method, adv_param_user)
