@@ -30,7 +30,7 @@ class Param:
 
 
 class MultiLabelRegistration:
-    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template, param=None, fname_target=None):
+    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template, param=None, fname_target=None, path_new_template='label_wm_corrected_multilabel/'):
         if param is None:
             self.param = Param()
         else:
@@ -44,7 +44,7 @@ class MultiLabelRegistration:
         self.fname_target = fname_target
         self.fname_warp_template2target = fname_warp_template
 
-        self.path_new_template = 'label_wm_corrected_multilabel/'
+        self.path_new_template = path_new_template
 
     def register(self):
         # accentuate separation WM/GM
@@ -427,6 +427,12 @@ def get_parser():
                       description="Path to an output folder",
                       mandatory=False,
                       example='multilabel_registration/')
+    parser.add_option(name="-otemplate",
+                      type_value="str",
+                      description="Name of the output folder containing the template",
+                      mandatory=False,
+                      default_value='label_wm_corrected_multilabel/')
+
 
     parser.usage.addSection('VALIDATION: Use both option for validation.')
     parser.add_option(name="-manual-gm",
@@ -477,6 +483,7 @@ if __name__ == "__main__":
     fname_manual_gmseg = None
     fname_sc_seg = None
     fname_target = None
+    path_new_template = None
 
     if '-param' in arguments:
         ml_param.param_reg = arguments['-param']
@@ -486,6 +493,8 @@ if __name__ == "__main__":
         fname_sc_seg = arguments['-sc']
     if '-ofolder' in arguments:
         ml_param.output_folder = sct.slash_at_the_end(arguments['-ofolder'], 1)
+    if '-otemplate' in arguments:
+        path_new_template = sct.slash_at_the_end(arguments['-otemplate'], 1)
     if '-qc' in arguments:
         ml_param.qc = int(arguments['-qc'])
     if '-r' in arguments:
@@ -498,7 +507,7 @@ if __name__ == "__main__":
     if (fname_manual_gmseg is not None and fname_sc_seg is None) or (fname_manual_gmseg is None and fname_sc_seg is not None):
         sct.printv(parser.usage.generate(error='ERROR: you need to specify both arguments : -manual-gm and -sc.'))
 
-    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, param=ml_param, fname_target=fname_target)
+    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, param=ml_param, fname_target=fname_target, path_new_template=path_new_template)
     ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg)
