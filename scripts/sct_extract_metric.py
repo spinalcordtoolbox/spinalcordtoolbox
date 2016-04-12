@@ -107,6 +107,11 @@ bin: binarize mask (threshold=0.5)""",
                       description="""Type of the output file collecting the metric estimation results: xls or txt.""",
                       mandatory=False,
                       default_value=param_default.output_type)
+    parser.add_option(name='-overwrite',
+                      type_value='str',
+                      description="""In the case you choose \"-output-type xls\" and you specified an pre-existing file in \"-o\", this option will overwrite this .xls file instead of adding the results to it.""",
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name='-param',
                       type_value='str',
                       description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
@@ -182,7 +187,7 @@ To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using bi
     return parser
 
 
-def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, labels_user, fname_normalizing_label, normalization_method, adv_param_user):
+def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, labels_user, overwrite, fname_normalizing_label, normalization_method, adv_param_user):
     """Main."""
 
     # Initialization
@@ -343,7 +348,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
-    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
 def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
@@ -602,7 +607,7 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
-def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
     """Save results in the output type selected by user."""
 
     sct.printv('\nSave results in: '+fname_output+'.'+output_type+' ...')
@@ -766,7 +771,7 @@ def check_method(method, fname_normalizing_label, normalization_method):
         sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:'+str(normalization_method)))
 
 
-def check_labels(indiv_labels_ids, combined_labels_id_group):
+def check_labels(indiv_labels_ids, selected_labels):
     """Check the consistency of the labels asked by the user."""
 
     # TODO: allow selection of combined labels as "36, Ventral, 7:14,22:19"
@@ -774,11 +779,10 @@ def check_labels(indiv_labels_ids, combined_labels_id_group):
     # convert strings to int
     list_ids_of_labels_of_interest = map(int, indiv_labels_ids)
 
-    if combined_labels_id_group:
-        # Check if label chosen is in the right format
-        for char in combined_labels_id_group:
-            if not char in '0123456789,:':
-                sct.printv(parser.usage.generate(error='\nERROR: ' + combined_labels_id_group + ' is not the correct format to select combined labels.\n Exit program.\n'))
+    # Check if label chosen is in the right format
+    for char in selected_labels:
+        if not char in '0123456789,:':
+            sct.printv(parser.usage.generate(error='\nERROR: ' + selected_labels + ' is not the correct format to select combined labels.\n Exit program.\n'))
 
         # # if spinal cord was selected, need all 32 labels from folder atlas
         # if labels_of_interest == 'sc':
@@ -814,8 +818,8 @@ def check_labels(indiv_labels_ids, combined_labels_id_group):
         #         list_label_id = range(0, 30)
         #         average_labels = 1
 
-        if ':' in combined_labels_id_group:
-            label_ids_range = [int(x) for x in combined_labels_id_group.split(':')]
+        if ':' in selected_labels:
+            label_ids_range = [int(x) for x in selected_labels.split(':')]
             if len(label_ids_range)>2:
                 sct.printv(parser.usage.generate(error='\nERROR: Combined labels ID selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n'))
 
@@ -824,11 +828,15 @@ def check_labels(indiv_labels_ids, combined_labels_id_group):
                 list_ids_of_labels_of_interest = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
 
         else:
-            list_ids_of_labels_of_interest = list(set([int(x) for x in combined_labels_id_group.split(",")]))
+            list_ids_of_labels_of_interest = [int(x) for x in selected_labels.split(",")]
 
         # Sort labels ID and remove redundant values
         list_ids_of_labels_of_interest = list(set(list_ids_of_labels_of_interest))
         list_ids_of_labels_of_interest.sort()
+
+        # Check if the selected labels are in the available labels ids
+        if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
+            sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available. Exit program.\n\n', type='error')
 
 
     return list_ids_of_labels_of_interest
@@ -1036,6 +1044,7 @@ if __name__ == "__main__":
     path_label = arguments['-f']
     method = arguments['-method']
     labels_user = ''
+    overwrite = 0
     adv_param_user = ''
     if '-l' in arguments:
         labels_user = arguments['-l']
@@ -1049,6 +1058,8 @@ if __name__ == "__main__":
     fname_output = arguments['-o']
     if '-output-type' in arguments:
         output_type = arguments['-output-type']
+    if '-overwrite' in arguments:
+        overwrite = 1
     fname_normalizing_label = ''
     if '-norm-file' in arguments:
         fname_normalizing_label = arguments['-norm-file']
@@ -1057,4 +1068,4 @@ if __name__ == "__main__":
         normalization_method = arguments['-norm-method']
 
     # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, labels_user, fname_normalizing_label, normalization_method, adv_param_user)
+    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, labels_user, overwrite, fname_normalizing_label, normalization_method, adv_param_user)
