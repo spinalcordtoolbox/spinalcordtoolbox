@@ -40,8 +40,8 @@ if [ $DISPLAY = true ]; then
 fi
 # vertebral labeling. Here we use the fact that the FOV is centered at C7.
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -initcenter 7
-# create labels at C2 and T2 vertebral levels
-sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -vert 2,9
+# create labels at C3 and T2 vertebral levels
+sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -vert 3,9
 # register to template
 # tips: here we used only iter=1 for the third step for faster processing. 
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=1,metric=MeanSquares:step=3,type=im,algo=syn,metric=CC,iter=1
