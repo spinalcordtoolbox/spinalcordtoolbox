@@ -127,8 +127,6 @@ fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_
 fi
 # OPTIONAL PART: SEGMENT GRAY MATTER:
 # <<<<<<<<<<
-# change name of label folder to label_original (to not overwrite it)
-mv label/ label_original/
 # add mt1 and mt0 to increase GM/WM contrast
 sct_maths -i mt0_reg.nii.gz -add mt1_crop.nii.gz -o mt0mt1.nii.gz
 # segment GM
