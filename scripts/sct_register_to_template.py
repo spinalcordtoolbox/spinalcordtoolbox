@@ -102,17 +102,17 @@ def get_parser():
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description='Parameters for registration (see sct_register_multimodal). Default: \
-                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\npoly=' + paramreg.steps['1'].poly + """
-                      \n--\nstep=2\ntype=""" + paramreg.steps['2'].type + """\nalgo=""" + paramreg.steps['2'].algo + """\nmetric=""" + paramreg.steps['2'].metric + """\niter=""" + paramreg.steps['2'].iter + """\nshrink=""" + paramreg.steps['2'].shrink + """\nsmooth=""" + paramreg.steps['2'].smooth + """\ngradStep=""" + paramreg.steps['2'].gradStep + """
-                      \n--\nstep=3\ntype=""" + paramreg.steps['3'].type + """\nalgo=""" + paramreg.steps['3'].algo + """\nmetric=""" + paramreg.steps['3'].metric + """\niter=""" + paramreg.steps['3'].iter + """\nshrink=""" + paramreg.steps['3'].shrink + """\nsmooth=""" + paramreg.steps['3'].smooth + """\ngradStep=""" + paramreg.steps['3'].gradStep + '\n',
+                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\niter=' + paramreg.steps['1'].iter + '\nsmooth=' + paramreg.steps['1'].smooth + '\ngradStep=' + paramreg.steps['1'].gradStep + '\nslicewise=' + paramreg.steps['1'].slicewise + '\
+                      \n--\nstep=2\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\niter=' + paramreg.steps['2'].iter + '\nsmooth=' + paramreg.steps['2'].smooth + '\ngradStep=' + paramreg.steps['2'].gradStep + '\
+                      \n--\nstep=3\ntype=' + paramreg.steps['3'].type + '\nalgo=' + paramreg.steps['3'].algo + '\nmetric=' + paramreg.steps['3'].metric + '\niter=' + paramreg.steps['3'].iter + '\nsmooth=' + paramreg.steps['3'].smooth + '\ngradStep=' + paramreg.steps['3'].gradStep + '\n',
                       mandatory=False,
                       example="step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=5,shrink=2:step=3,type=im,algo=syn,metric=MI,iter=5,shrink=1,gradStep=0.3")
     parser.add_option(name="-p",
                       type_value=None,
                       description='Parameters for registration (see sct_register_multimodal). Default: \
-                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\npoly=' + paramreg.steps['1'].poly + """
-                      \n--\nstep=2\ntype=""" + paramreg.steps['2'].type + """\nalgo=""" + paramreg.steps['2'].algo + """\nmetric=""" + paramreg.steps['2'].metric + """\niter=""" + paramreg.steps['2'].iter + """\nshrink=""" + paramreg.steps['2'].shrink + """\nsmooth=""" + paramreg.steps['2'].smooth + """\ngradStep=""" + paramreg.steps['2'].gradStep + """
-                      \n--\nstep=3\ntype=""" + paramreg.steps['3'].type + """\nalgo=""" + paramreg.steps['3'].algo + """\nmetric=""" + paramreg.steps['3'].metric + """\niter=""" + paramreg.steps['3'].iter + """\nshrink=""" + paramreg.steps['3'].shrink + """\nsmooth=""" + paramreg.steps['3'].smooth + """\ngradStep=""" + paramreg.steps['3'].gradStep + '\n',
+                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\iter=' + paramreg.steps['1'].iter + '\smooth=' + paramreg.steps['1'].smooth + '\gradStep=' + paramreg.steps['1'].gradStep + '\slicewise=' + paramreg.steps['1'].slicewise + '\
+                      \n--\nstep=1\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\iter=' + paramreg.steps['2'].iter + '\smooth=' + paramreg.steps['2'].smooth + '\gradStep=' + paramreg.steps['2'].gradStep + '\slicewise=' + paramreg.steps['2'].slicewise + '\
+                      \n--\nstep=1\ntype=' + paramreg.steps['3'].type + '\nalgo=' + paramreg.steps['3'].algo + '\nmetric=' + paramreg.steps['3'].metric + '\iter=' + paramreg.steps['3'].iter + '\smooth=' + paramreg.steps['3'].smooth + '\gradStep=' + paramreg.steps['3'].gradStep + '\slicewise=' + paramreg.steps['3'].slicewise + '\n',
                       mandatory=False,
                       deprecated_by='-param')
     parser.add_option(name="-param-straighten",
