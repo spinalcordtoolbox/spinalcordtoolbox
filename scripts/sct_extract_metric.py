@@ -29,7 +29,6 @@ import sct_utils as sct
 from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from msct_parser import Parser
-import xlwt
 
 # get path of the script and the toolbox
 path_script = os.path.dirname(__file__)
@@ -71,6 +70,11 @@ def get_parser():
                       description='Folder including labels to extract the metric from.',
                       mandatory=True,
                       example=path_sct+'/data/atlas')
+    parser.add_option(name='-l',
+                      type_value='str',
+                      description='Label IDs to extract the metric from. Example: 1,3 for left fasciculus cuneatus and left ventral spinocerebellar tracts. Default = all labels. You can also select labels using 1:3 to get labels 1,2,3.',
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description="""Method to extract metrics.
@@ -102,6 +106,11 @@ bin: binarize mask (threshold=0.5)""",
                       description="""Type of the output file collecting the metric estimation results: xls or txt.""",
                       mandatory=False,
                       default_value=param_default.output_type)
+    parser.add_option(name='-overwrite',
+                      type_value='int',
+                      description="""In the case you choose \"-output-type xls\" and you specified a pre-existing file in \"-o\", this option will overwrite this .xls file (\"-overwrite 1\") instead of adding the results to it (\"-overwrite 0\").""",
+                      mandatory=False,
+                      default_value=1)
     parser.add_option(name='-param',
                       type_value='str',
                       description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
@@ -177,7 +186,7 @@ To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using bi
     return parser
 
 
-def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, fname_normalizing_label, normalization_method, adv_param_user):
+def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, labels_user, overwrite, fname_normalizing_label, normalization_method, adv_param_user):
     """Main."""
 
     # Initialization
@@ -226,6 +235,9 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # parse labels according to the file info_label.txt
     indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label, param.file_info_label)
+
+    # check syntax of labels asked by user
+    labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, labels_user)
 
     nb_labels = len(indiv_labels_files)
 
@@ -313,17 +325,29 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     for i_combined_labels in range(0, len(combined_labels_id_groups)):
         combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, combined_labels_id_groups[i_combined_labels])
 
-    # display metrics
+    # display results
     sct.printv('\nResults:', 1)
-    sct.printv('\nIndividual labels:', 1, 'info')
-    for i_indiv_label in range(0, indiv_labels_value.size):
-        sct.printv(str(indiv_labels_ids[i_indiv_label])+', '+str(indiv_labels_names[i_indiv_label])+':    '+str(indiv_labels_value[i_indiv_label])+' +/- '+str(indiv_labels_std[i_indiv_label]), 1, 'info')
-    sct.printv('\nCombined labels:', 1, 'info')
-    for i_combined_labels in range(0, combined_labels_value.size):
-        sct.printv(str(combined_labels_ids[i_combined_labels])+', '+str(combined_labels_names[i_combined_labels])+':    '+str(combined_labels_value[i_combined_labels])+' +/- '+str(combined_labels_std[i_combined_labels]), 1, 'info')
+    section = ''
+    if labels_id_user[0] <= max(indiv_labels_ids):
+        section = '\nWhite matter atlas:'
+    elif labels_id_user[0] > max(indiv_labels_ids):
+        section = '\nCombined labels:'
+    sct.printv(section, 1, 'info')
+    for i_label_user in labels_id_user:
+        # change section if not individual label anymore
+        if i_label_user > max(indiv_labels_ids) and section == '\nWhite matter atlas:':
+            section = '\nCombined labels:'
+            sct.printv(section, 1, 'info')
+        # display result for this label
+        if section == '\nWhite matter atlas:':
+            index = indiv_labels_ids.index(i_label_user)
+            sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ':    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
+        elif section == '\nCombined labels:':
+            index = combined_labels_ids.index(i_label_user)
+            sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
-    save_metrics(indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
 def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
@@ -582,7 +606,7 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
-def save_metrics(indiv_labels_id, combined_labels_id, indiv_labels_name, combined_labels_name, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
     """Save results in the output type selected by user."""
 
     sct.printv('\nSave results in: '+fname_output+'.'+output_type+' ...')
@@ -624,85 +648,217 @@ def save_metrics(indiv_labels_id, combined_labels_id, indiv_labels_name, combine
         fid_metric.write('%s' % ('\n'+'# ID, label name, mean, std\n\n'))
 
         # WRITE RESULTS
-        # individual labels
-        fid_metric.write('\n# White matter atlas\n')
-        for i in range(0, len(indiv_labels_name)):
-            fid_metric.write('%i, %s, %f, %f\n' % (indiv_labels_id[i], indiv_labels_name[i], indiv_labels_value[i], indiv_labels_std[i]))
-        # combined labels
-        fid_metric.write('\n# Combined labels\n')
-        for i in range(0, len(combined_labels_name)):
-            fid_metric.write('%i, %s, %f, %f\n' % (combined_labels_id[i], combined_labels_name[i], combined_labels_value[i], combined_labels_std[i]))
+        section = ''
+        if labels_id_user[0] <= max(indiv_labels_ids):
+            section = '\n# White matter atlas\n'
+        elif labels_id_user[0] > max(indiv_labels_ids):
+            section = '\n# Combined labels\n'
+            fid_metric.write(section)
+        for i_label_user in labels_id_user:
+            # change section if not individual label anymore
+            if i_label_user > max(indiv_labels_ids) and section == '\n# White matter atlas\n':
+                section = '\n# Combined labels\n'
+                fid_metric.write(section)
+            # display result for this label
+            if section == '\n# White matter atlas\n':
+                index = indiv_labels_ids.index(i_label_user)
+                fid_metric.write('%i, %s, %f, %f\n' % (indiv_labels_ids[index], indiv_labels_names[index], indiv_labels_value[index], indiv_labels_std[index]))
+            elif section == '\n# Combined labels\n':
+                index = combined_labels_ids.index(i_label_user)
+                fid_metric.write('%i, %s, %f, %f\n' % (combined_labels_ids[index], combined_labels_names[index], combined_labels_value[index], combined_labels_std[index]))
 
         # Close file .txt
         fid_metric.close()
 
     elif output_type == 'xls':
-        book = xlwt.Workbook()
 
-        sh_param = book.add_sheet('Parameters used for estimation', cell_overwrite_ok=True)
+        # if overwrite:
+        #     book = xlwt.Workbook()
+        #
+        #     sh_param = book.add_sheet('Parameters used for estimation', cell_overwrite_ok=True)
+        #
+        #     row_index = 0
+        #
+        #     sh_param.write(row_index, 0, 'Date - Time')
+        #     sh_param.write(row_index, 1, time.strftime('%Y/%m/%d - %H:%M:%S'))
+        #     row_index += 1
+        #
+        #     sh_param.write(row_index, 0, 'Metric file')
+        #     sh_param.write(row_index, 1, os.path.abspath(fname_data))
+        #     row_index += 1
+        #
+        #     if fname_normalizing_label:
+        #         sh_param.write(row_index, 0, 'Label used to normalize the metric estimation slice-by-slice')
+        #         sh_param.write(row_index, 1, fname_normalizing_label)
+        #         row_index += 1
+        #
+        #     sh_param.write(row_index, 0, 'Extraction method')
+        #     sh_param.write(row_index, 1, method)
+        #     row_index += 1
+        #
+        #     if actual_vert:
+        #         if warning_vert_levels:
+        #             for i in range(0, len(warning_vert_levels)):
+        #                 sh_param.write(row_index, 0, str(warning_vert_levels[i]))
+        #                 row_index += 1
+        #
+        #         sh_param.write(row_index, 0, 'Vertebral levels')
+        #         sh_param.write(row_index, 1, '%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
+        #         row_index += 1
+        #
+        #     else:
+        #         sh_param.write(row_index, 0, 'Vertebral levels')
+        #         sh_param.write(row_index, 1, 'ALL')
+        #         row_index += 1
+        #
+        #     sh_param.write(row_index, 0, 'Slices (z)')
+        #     if slices_of_interest != '':
+        #         sh_param.write(row_index, 1, slices_of_interest)
+        #     else:
+        #         sh_param.write(row_index, 1, 'ALL')
+        #     row_index += 1
+        #
+        #     sh_results = book.add_sheet('Results', cell_overwrite_ok=True)
+        #
+        #     sh_results.write(0, 0, 'ID')
+        #     sh_results.write(0, 1, 'label name')
+        #     sh_results.write(0, 2, 'metric value')
+        #     sh_results.write(0, 3, 'metric std')
+        #
+        #     section = ''
+        #     if labels_id_user[0] <= max(indiv_labels_ids):
+        #         section = 'White matter atlas'
+        #     elif labels_id_user[0] > max(indiv_labels_ids):
+        #         section = 'Combined labels'
+        #     sh_results.write(1, 0, section)
+        #     i_row = 2
+        #     for i_label_user in labels_id_user:
+        #         # change section if not individual label anymore
+        #         if i_label_user > max(indiv_labels_ids) and section == 'White matter atlas':
+        #             section = 'Combined labels'
+        #             sh_results.write(i_row, 0, section)
+        #             i_row += 1
+        #         # display result for this label
+        #         if section == 'White matter atlas':
+        #             index = indiv_labels_ids.index(i_label_user)
+        #             sh_results.write(i_row, 0, indiv_labels_ids[index])
+        #             sh_results.write(i_row, 1, indiv_labels_names[index])
+        #             sh_results.write(i_row, 2, indiv_labels_value[index])
+        #             sh_results.write(i_row, 3, indiv_labels_std[index])
+        #             i_row += 1
+        #         elif section == 'Combined labels':
+        #             index = combined_labels_ids.index(i_label_user)
+        #             sh_results.write(i_row, 0, combined_labels_ids[index])
+        #             sh_results.write(i_row, 1, combined_labels_names[index])
+        #             sh_results.write(i_row, 2, combined_labels_value[index])
+        #             sh_results.write(i_row, 3, combined_labels_std[index])
+        #             i_row += 1
+        #
+        #     book.save(fname_output+'.'+output_type)
 
-        row_index = 0
+        # if the user asked for no overwriting but the specified output file does not exist yet
+        if (not overwrite) and (not os.path.isfile(fname_output + '.' + output_type)):
+            sct.printv('WARNING: You asked to edit the pre-existing file \"'+fname_output + '.' + output_type+'\" but this file does not exist. It will be created.', type='warning')
+            overwrite = 1
 
-        sh_param.write(row_index, 0, 'Date - Time')
-        sh_param.write(row_index, 1, time.strftime('%Y/%m/%d - %H:%M:%S'))
+        if not overwrite:
+            from xlrd import open_workbook
+            from xlutils.copy import copy
+
+            existing_book = open_workbook(fname_output + '.' + output_type)
+
+            # get index of the first empty row and leave one empty row between the two subjects
+            row_index = existing_book.sheet_by_index(0).nrows + 1
+
+            book = copy(existing_book)
+            sh = book.get_sheet(0)
+
+        elif overwrite:
+            from xlwt import Workbook
+
+            book = Workbook()
+            sh = book.add_sheet('Results', cell_overwrite_ok=True)
+            row_index = 0
+
+
+        sh.write(row_index, 0, 'Date - Time')
+        sh.write(row_index, 1, time.strftime('%Y/%m/%d - %H:%M:%S'))
         row_index += 1
 
-        sh_param.write(row_index, 0, 'Metric file')
-        sh_param.write(row_index, 1, os.path.abspath(fname_data))
+        sh.write(row_index, 0, 'Metric file')
+        sh.write(row_index, 1, os.path.abspath(fname_data))
         row_index += 1
 
         if fname_normalizing_label:
-            sh_param.write(row_index, 0, 'Label used to normalize the metric estimation slice-by-slice')
-            sh_param.write(row_index, 1, fname_normalizing_label)
+            sh.write(row_index, 0, 'Label used to normalize the metric estimation slice-by-slice')
+            sh.write(row_index, 1, fname_normalizing_label)
             row_index += 1
 
-        sh_param.write(row_index, 0, 'Extraction method')
-        sh_param.write(row_index, 1, method)
+        sh.write(row_index, 0, 'Extraction method')
+        sh.write(row_index, 1, method)
         row_index += 1
 
         if actual_vert:
             if warning_vert_levels:
                 for i in range(0, len(warning_vert_levels)):
-                    sh_param.write(row_index, 0, str(warning_vert_levels[i]))
+                    sh.write(row_index, 0, str(warning_vert_levels[i]))
                     row_index += 1
 
-            sh_param.write(row_index, 0, 'Vertebral levels')
-            sh_param.write(row_index, 1, '%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
+            sh.write(row_index, 0, 'Vertebral levels')
+            sh.write(row_index, 1, '%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
             row_index += 1
 
         else:
-            sh_param.write(row_index, 0, 'Vertebral levels')
-            sh_param.write(row_index, 1, 'ALL')
+            sh.write(row_index, 0, 'Vertebral levels')
+            sh.write(row_index, 1, 'ALL')
             row_index += 1
 
-        sh_param.write(row_index, 0, 'Slices (z)')
+        sh.write(row_index, 0, 'Slices (z)')
         if slices_of_interest != '':
-            sh_param.write(row_index, 1, slices_of_interest)
+            sh.write(row_index, 1, slices_of_interest)
         else:
-            sh_param.write(row_index, 1, 'ALL')
+            sh.write(row_index, 1, 'ALL')
         row_index += 1
 
-        sh_results = book.add_sheet('Results', cell_overwrite_ok=True)
+        sh.write(row_index, 0, 'ID')
+        sh.write(row_index, 1, 'label name')
+        sh.write(row_index, 2, 'metric value')
+        sh.write(row_index, 3, 'metric std')
+        row_index += 1
 
-        sh_results.write(0, 0, 'ID')
-        sh_results.write(0, 1, 'label name')
-        sh_results.write(0, 2, 'metric value')
-        sh_results.write(0, 3, 'metric std')
+        section = ''
+        if labels_id_user[0] <= max(indiv_labels_ids):
+            section = 'White matter atlas'
+        elif labels_id_user[0] > max(indiv_labels_ids):
+            section = 'Combined labels'
+        sh.write(row_index, 0, section)
+        row_index += 1
 
-        sh_results.write(1, 0, 'White matter atlas')
-        for i_row in range(2, 2+len(indiv_labels_name)):
-            sh_results.write(i_row, 0, indiv_labels_id[i_row-2])
-            sh_results.write(i_row, 1, indiv_labels_name[i_row-2])
-            sh_results.write(i_row, 2, indiv_labels_value[i_row-2])
-            sh_results.write(i_row, 3, indiv_labels_std[i_row-2])
-        sh_results.write(2+len(indiv_labels_name), 0, 'Combined labels')
-        for i_row in range(3+len(indiv_labels_name), 3+len(indiv_labels_name)+len(combined_labels_name)):
-            sh_results.write(i_row, 0, combined_labels_id[i_row-(3+len(indiv_labels_name))])
-            sh_results.write(i_row, 1, combined_labels_name[i_row-(3+len(indiv_labels_name))])
-            sh_results.write(i_row, 2, combined_labels_value[i_row-(3+len(indiv_labels_name))])
-            sh_results.write(i_row, 3, combined_labels_std[i_row-(3+len(indiv_labels_name))])
+        for i_label_user in labels_id_user:
+            # change section if not individual label anymore
+            if i_label_user > max(indiv_labels_ids) and section == 'White matter atlas':
+                section = 'Combined labels'
+                sh.write(row_index, 0, section)
+                row_index += 1
 
-        book.save(fname_output+'.'+output_type)
+            # display result for this label
+            if section == 'White matter atlas':
+                index = indiv_labels_ids.index(i_label_user)
+                sh.write(row_index, 0, indiv_labels_ids[index])
+                sh.write(row_index, 1, indiv_labels_names[index])
+                sh.write(row_index, 2, indiv_labels_value[index])
+                sh.write(row_index, 3, indiv_labels_std[index])
+                row_index += 1
+
+            elif section == 'Combined labels':
+                index = combined_labels_ids.index(i_label_user)
+                sh.write(row_index, 0, combined_labels_ids[index])
+                sh.write(row_index, 1, combined_labels_names[index])
+                sh.write(row_index, 2, combined_labels_value[index])
+                sh.write(row_index, 3, combined_labels_std[index])
+                row_index += 1
+
+        book.save(fname_output + '.' + output_type)
 
     sct.printv('\tDone.')
 
@@ -720,8 +876,7 @@ def check_method(method, fname_normalizing_label, normalization_method):
         sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:'+str(normalization_method)))
 
 
-
-def check_labels(indiv_labels_ids, combined_labels_id_group):
+def check_labels(indiv_labels_ids, selected_labels):
     """Check the consistency of the labels asked by the user."""
 
     # TODO: allow selection of combined labels as "36, Ventral, 7:14,22:19"
@@ -729,61 +884,32 @@ def check_labels(indiv_labels_ids, combined_labels_id_group):
     # convert strings to int
     list_ids_of_labels_of_interest = map(int, indiv_labels_ids)
 
-    if combined_labels_id_group:
+
+    if selected_labels:
         # Check if label chosen is in the right format
-        for char in combined_labels_id_group:
+        for char in selected_labels:
             if not char in '0123456789,:':
-                sct.printv(parser.usage.generate(error='\nERROR: ' + combined_labels_id_group + ' is not the correct format to select combined labels.\n Exit program.\n'))
+                sct.printv(parser.usage.generate(error='\nERROR: ' + selected_labels + ' is not the correct format to select combined labels.\n Exit program.\n'))
 
-        # # if spinal cord was selected, need all 32 labels from folder atlas
-        # if labels_of_interest == 'sc':
-        #     if nb_labels < 32 and (method == 'ml' or method == 'map'):
-        #         sct.printv(parser.usage.generate(error='\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
-        #                    ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
-        #                     ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n'))
-        #
-        #     if nb_labels < 31 and (method != 'ml' and method != 'map'):
-        #         sct.printv(parser.usage.generate(error='\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
-        #                    ' the labels only contains '+nb_labels+' labels. You need all 30 white matter tracts and the gray matter from the folder /atlas of'
-        #                     ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 30).\nExit program.\n\n'))
-        #
-        #     else:
-        #         list_label_id = range(0, 31)
-        #         average_labels = 1
-
-        # elif labels_of_interest == 'gm':
-        #     if nb_labels < 32 and (method == 'ml' or method == 'map'):
-        #         sct.printv(parser.usage.generate(error='\nERROR: You\'ve asked to extract metric in the gray matter using the method '+method+' but your atlas folder containing'
-        #                    ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
-        #                     ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n'))
-        #     else:
-        #         list_label_id = [30]
-        #
-        # elif labels_of_interest == 'wm':
-        #     if nb_labels < 32 and (method == 'ml' or method == 'map'):
-        #         sct.printv(parser.usage.generate(error='\nERROR: You\'ve asked to extract metric in the white matter using the method '+method+' but your atlas folder containing'
-        #                    ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
-        #                     ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n'))
-        #
-        #     else:
-        #         list_label_id = range(0, 30)
-        #         average_labels = 1
-
-        if ':' in combined_labels_id_group:
-            label_ids_range = [int(x) for x in combined_labels_id_group.split(':')]
-            if len(label_ids_range)>2:
+        if ':' in selected_labels:
+            label_ids_range = [int(x) for x in selected_labels.split(':')]
+            if len(label_ids_range) > 2:
                 sct.printv(parser.usage.generate(error='\nERROR: Combined labels ID selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n'))
-
             else:
                 label_ids_range.sort()
                 list_ids_of_labels_of_interest = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
 
         else:
-            list_ids_of_labels_of_interest = list(set([int(x) for x in combined_labels_id_group.split(",")]))
+            list_ids_of_labels_of_interest = [int(x) for x in selected_labels.split(',')]
 
-        # Sort labels ID and remove redundant values
-        list_ids_of_labels_of_interest.sort()
-        list_ids_of_labels_of_interest = list(set(list_ids_of_labels_of_interest))
+    # Sort labels ID and remove redundant values
+    list_ids_of_labels_of_interest = list(set(list_ids_of_labels_of_interest))
+    list_ids_of_labels_of_interest.sort()
+
+    # Check if the selected labels are in the available labels ids
+    if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
+        sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available. Exit program.\n\n', type='error')
+
 
     return list_ids_of_labels_of_interest
 
@@ -989,7 +1115,11 @@ if __name__ == "__main__":
     fname_data = arguments['-i']
     path_label = arguments['-f']
     method = arguments['-method']
+    labels_user = ''
+    overwrite = 1
     adv_param_user = ''
+    if '-l' in arguments:
+        labels_user = arguments['-l']
     if '-param' in arguments:
         adv_param_user = arguments['-param']
     slices_of_interest = ''
@@ -1000,6 +1130,8 @@ if __name__ == "__main__":
     fname_output = arguments['-o']
     if '-output-type' in arguments:
         output_type = arguments['-output-type']
+    if '-overwrite' in arguments:
+        overwrite = arguments['-overwrite']
     fname_normalizing_label = ''
     if '-norm-file' in arguments:
         fname_normalizing_label = arguments['-norm-file']
@@ -1008,4 +1140,4 @@ if __name__ == "__main__":
         normalization_method = arguments['-norm-method']
 
     # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, fname_normalizing_label, normalization_method, adv_param_user)
+    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, output_type, labels_user, overwrite, fname_normalizing_label, normalization_method, adv_param_user)
