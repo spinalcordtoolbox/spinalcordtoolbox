@@ -355,7 +355,7 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
     output:
         creation of a warping field of name 'fname' with an header similar to the destination image.
     """
-    sct.printv('\n\nCreating warping field ' + fname + ' for transformations along z...', verbose)
+    sct.printv('\nCreating warping field for transformations along z...', verbose)
 
     file_dest = load(fname_dest)
     hdr_file_dest = file_dest.get_header()
@@ -391,5 +391,5 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
     hdr_warp.set_data_dtype('float32')
     img = Nifti1Image(data_warp, None, hdr_warp)
     save(img, fname)
-    sct.printv('\nDONE ! Warping field generated: '+fname, verbose)
+    sct.printv('\nDone! Warping field generated: '+fname, verbose)
 
