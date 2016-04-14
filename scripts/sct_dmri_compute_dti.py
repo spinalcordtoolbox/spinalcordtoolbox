@@ -129,7 +129,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method):
     elif method == 'restore':
         import dipy.denoise.noise_estimate as ne
         sigma = ne.estimate_sigma(data)
-        dti_restore = dti.TensorModel(gtab,fit_method='RESTORE', sigma=sigma)
+        dti_restore = dti.TensorModel(gtab, fit_method='RESTORE', sigma=sigma)
         tenfit = dti_restore.fit(data)
 
     # Compute metrics
