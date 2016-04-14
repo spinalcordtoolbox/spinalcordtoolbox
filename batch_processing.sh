@@ -119,7 +119,7 @@ sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg .
 # concat transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_crop.nii.gz -d mtr.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
-sct_warp_template -d mtr.nii.gz -w warp_template2mt.nii.gz -a 0
+sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # check registration result
 if [ $DISPLAY = true ]; then
 fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
@@ -128,29 +128,31 @@ fi
 # <<<<<<<<<<
 # add mt1 and mt0 to increase GM/WM contrast
 sct_maths -i mt0_reg.nii.gz -add mt1_crop.nii.gz -o mt0mt1.nii.gz
-# segment GM
+# segment WM/GM
 sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg_crop.nii.gz -vertfile label/template/MNI-Poly-AMU_level.nii.gz
-#register WM/GM template to automatic WM/GM seg
-sct_register_graymatter -gm mt0mt1_gmseg.nii.gz -wm mt0mt1_wmseg.nii.gz -w warp_template2mt.nii.gz -otemplate label/
+# register WM/GM template to WM/GM seg
+sct_register_graymatter -gm mt0mt1_gmseg.nii.gz -wm mt0mt1_wmseg.nii.gz -w warp_template2mt.nii.gz
+# warp template (this time corrected for internal structure)
+sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt0mt1_gmseg.nii.gz
 # check registration result
 if [ $DISPLAY = true ]; then
    fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
 fi
 # >>>>>>>>>>
 # extract MTR within the white matter
-sct_extract_metric -i mtr.nii.gz -f label/atlas/ -m map -o mtr_in_whitematter -l 33
-# --> without GM registration: MTR = 34.1995030242
-# --> with GM registration: MTR = 34.1995030242
+sct_extract_metric -i mtr.nii.gz -f label/atlas/ -method map -o mtr_in_whitematter -l 33
+# --> without GM registration: MTR = 34.3223936652
+# --> with GM registration: MTR = 33.5456127893
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
 sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5
-# --> Mean CSA of left CST: 5.14874876116 +/- 0.705719447293 mm^2
+# --> Mean CSA of left CST: 5.34518679837 +/- 0.682013171772 mm^2
 sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5
-# --> Mean CSA of right CST: 4.92502099412 +/- 0.599001576209 mm^2
+# --> Mean CSA of right CST: 5.3212994282 +/- 0.453658091434 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
 sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> Mean CSA of the left dorsal column: 9.80594348877 +/- 0.534758227893 mm^2
+# --> Mean CSA of the left dorsal column: 10.5106967258 +/- 0.761208033652 mm^2
 cd ..
 
 
@@ -170,7 +172,7 @@ if [ $DISPLAY = true ]; then
    fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 & 
 fi
 # register template to dwi: here we use the template registered to the MT data in order to account for gray matter segmentation
-sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
+sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=5:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3,gradStep=0.5
 # concatenate transfo: the first warping field contains : warp template -> anat ; warp anat --> MT ; warp correction of the internal structure 
 sct_concat_transfo -w ../mt/warp_template2mt0mt1_gmseg.nii.gz,warp_MNI-Poly-AMU_T22dwi_moco_mean.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
 # warp template and white matter atlas
