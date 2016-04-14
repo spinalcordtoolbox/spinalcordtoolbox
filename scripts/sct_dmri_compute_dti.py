@@ -50,6 +50,12 @@ def get_parser():
                       description="Bvecs file.",
                       mandatory=True,
                       example="bvecs.txt")
+    parser.add_option(name='-method',
+                      type_value='multiple_choice',
+                      description='Type of method to calculate the diffusion tensor:\nstandard: Standard equation [Basser, Biophys J 1994]\nrestore: Robust fitting with outlier detection [Chang, MRM 2005]',
+                      mandatory=False,
+                      default_value='standard',
+                      example=['standard', 'restore'])
     parser.add_option(name='-o',
                       type_value='str',
                       description='Output prefix.',
@@ -78,22 +84,24 @@ def main(args = None):
     fname_bvals = arguments['-bval']
     fname_bvecs = arguments['-bvec']
     prefix = arguments['-o']
+    method = arguments['-method']
     param.verbose = int(arguments['-v'])
 
     # compute DTI
-    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix):
+    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method):
         printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
 # ==========================================================================================
-def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix):
+def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method):
     """
     Compute DTI.
     :param fname_in: input 4d file.
     :param bvals: bvals txt file
     :param bvecs: bvecs txt file
     :param prefix: output prefix. Example: "dti_"
+    :param method: algo for computing dti
     :return: True/False
     """
     # Open file.
@@ -115,8 +123,14 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix):
 
     # fit tensor model
     import dipy.reconst.dti as dti
-    tenmodel = dti.TensorModel(gtab)
-    tenfit = tenmodel.fit(data)
+    if method == 'standard':
+        tenmodel = dti.TensorModel(gtab)
+        tenfit = tenmodel.fit(data)
+    elif method == 'restore':
+        import dipy.denoise.noise_estimate as ne
+        sigma = ne.estimate_sigma(data)
+        dti_restore = dti.TensorModel(gtab,fit_method='RESTORE', sigma=sigma)
+        tenfit = dti_restore.fit(data)
 
     # Compute metrics
     printv('Computing metrics...', param.verbose)
