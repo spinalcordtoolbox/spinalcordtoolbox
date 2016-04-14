@@ -423,8 +423,8 @@ def get_parser():
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Path to template (registered on target image)",
-                      mandatory=True,
-                      example='label/')
+                      mandatory=False,
+                      default_value='label/')
     '''
     parser.add_option(name="-d",
                       type_value="file",
@@ -506,6 +506,8 @@ if __name__ == "__main__":
     fname_gm = arguments['-gm']
     fname_wm = arguments['-wm']
     path_template = arguments['-t']
+    if not sct.check_folder_exist(path_template):
+        sct.printv(parser.usage.generate(error='ERROR: label/ folder does not exist. Please specify the path to the template using flag -t'))
     fname_warp_template = arguments['-w']
 
     fname_warp_target2template = None
