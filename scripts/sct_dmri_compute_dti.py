@@ -34,7 +34,7 @@ def get_parser():
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Compute Diffusion Tensor Images (DTI).')
+    parser.usage.set_description('Compute Diffusion Tensor Images (DTI) using dipy.')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Input 4d file.",
@@ -56,6 +56,11 @@ def get_parser():
                       mandatory=False,
                       default_value='standard',
                       example=['standard', 'restore'])
+    parser.add_option(name='-m',
+                      type_value='file',
+                      description='Mask used to compute DTI in for faster processing.',
+                      mandatory=False,
+                      example='mask.nii.gz')
     parser.add_option(name='-o',
                       type_value='str',
                       description='Output prefix.',
@@ -77,6 +82,9 @@ def main(args = None):
     if not args:
         args = sys.argv[1:]
 
+    # initialization
+    file_mask = ''
+
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
@@ -85,16 +93,18 @@ def main(args = None):
     fname_bvecs = arguments['-bvec']
     prefix = arguments['-o']
     method = arguments['-method']
+    if "-m" in arguments:
+        file_mask = arguments['-m']
     param.verbose = int(arguments['-v'])
 
     # compute DTI
-    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method):
+    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
         printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
 # ==========================================================================================
-def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method):
+def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     """
     Compute DTI.
     :param fname_in: input 4d file.
@@ -116,21 +126,24 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method):
     from dipy.core.gradients import gradient_table
     gtab = gradient_table(bvals, bvecs)
 
-    # # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
-    # from dipy.segment.mask import median_otsu
-    # maskdata, mask = median_otsu(data, 3, 1, True, vol_idx=range(10, 50), dilate=2)
-    # print('maskdata.shape (%d, %d, %d, %d)' % maskdata.shape)
+    # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
+    if not file_mask == '':
+        printv('Open mask file...', param.verbose)
+        # open mask file
+        nii_mask = Image(file_mask)
+        mask = nii_mask.data
 
     # fit tensor model
+    printv('Computing tensor using "'+method+'" method...', param.verbose)
     import dipy.reconst.dti as dti
     if method == 'standard':
         tenmodel = dti.TensorModel(gtab)
-        tenfit = tenmodel.fit(data)
+        tenfit = tenmodel.fit(data, mask)
     elif method == 'restore':
         import dipy.denoise.noise_estimate as ne
         sigma = ne.estimate_sigma(data)
         dti_restore = dti.TensorModel(gtab, fit_method='RESTORE', sigma=sigma)
-        tenfit = dti_restore.fit(data)
+        tenfit = dti_restore.fit(data, mask)
 
     # Compute metrics
     printv('Computing metrics...', param.verbose)
