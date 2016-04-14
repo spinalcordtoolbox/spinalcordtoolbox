@@ -143,9 +143,9 @@ sct_extract_metric -i mtr.nii.gz -f label/atlas/ -m map -o mtr_in_whitematter
 # --> with GM registration: MTR = 33.5342808264
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
-sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
+sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5
 # --> Mean CSA of left CST: 5.14874876116 +/- 0.705719447293 mm^2
-sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
+sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5
 # --> Mean CSA of right CST: 4.92502099412 +/- 0.599001576209 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
