@@ -11,8 +11,9 @@
 #########################################################################################
 
 import sys
+
 from msct_parser import Parser
-from sct_utils import extract_fname, printv
+from sct_utils import printv
 
 
 class Param:
@@ -138,12 +139,18 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     import dipy.reconst.dti as dti
     if method == 'standard':
         tenmodel = dti.TensorModel(gtab)
-        tenfit = tenmodel.fit(data, mask)
+        if file_mask == '':
+            tenfit = tenmodel.fit(data)
+        else:
+            tenfit = tenmodel.fit(data, mask)
     elif method == 'restore':
         import dipy.denoise.noise_estimate as ne
         sigma = ne.estimate_sigma(data)
         dti_restore = dti.TensorModel(gtab, fit_method='RESTORE', sigma=sigma)
-        tenfit = dti_restore.fit(data, mask)
+        if file_mask == '':
+            tenfit = dti_restore.fit(data)
+        else:
+            tenfit = dti_restore.fit(data, mask)
 
     # Compute metrics
     printv('Computing metrics...', param.verbose)
