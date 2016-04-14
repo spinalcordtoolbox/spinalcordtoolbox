@@ -646,7 +646,7 @@ def get_parser():
                       description="""process:
 - add: add label to an existing image (-i).
 - cross: create a cross. Must use flag "-cross"
-- create: create labels. Must use flag "-x" to list labels
+- create: create labels. Must use flag "-coord" to list labels
 - cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
 - display-voxel: display all labels in file
 - increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
