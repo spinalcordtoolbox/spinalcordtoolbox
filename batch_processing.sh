@@ -129,18 +129,18 @@ fi
 # add mt1 and mt0 to increase GM/WM contrast
 sct_maths -i mt0_reg.nii.gz -add mt1_crop.nii.gz -o mt0mt1.nii.gz
 # segment GM
-sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg_crop.nii.gz -vertfile label_original/template/MNI-Poly-AMU_level.nii.gz
+sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg_crop.nii.gz -vertfile label/template/MNI-Poly-AMU_level.nii.gz
 #register WM/GM template to automatic WM/GM seg
-sct_register_graymatter -gm mt0mt1_gmseg.nii.gz -wm mt0mt1_wmseg.nii.gz -t label_original/ -w warp_template2mt.nii.gz -otemplate label/# check registration result
+sct_register_graymatter -gm mt0mt1_gmseg.nii.gz -wm mt0mt1_wmseg.nii.gz -t label -w warp_template2mt.nii.gz -otemplate label
 # check registration result
 if [ $DISPLAY = true ]; then
    fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
 fi
 # >>>>>>>>>>
 # extract MTR within the white matter
-sct_extract_metric -i mtr.nii.gz -f label/atlas/ -m map -o mtr_in_whitematter
-# --> without GM registration: MTR = 33.9581470858
-# --> with GM registration: MTR = 33.5342808264
+sct_extract_metric -i mtr.nii.gz -f label/atlas/ -m map -o mtr_in_whitematter -l 33
+# --> without GM registration: MTR = 34.1995030242
+# --> with GM registration: MTR = 34.1995030242
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
 sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5
