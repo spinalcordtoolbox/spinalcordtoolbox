@@ -40,11 +40,10 @@ if [ $DISPLAY = true ]; then
 fi
 # vertebral labeling. Here we use the fact that the FOV is centered at C7.
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -initcenter 7
-# create labels at C2 and T2 vertebral levels
-sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -vert 2,9
+# create labels at C3 and T2 vertebral levels
+sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -vert 3,9
 # register to template
-# tips: here we used only iter=1 for the third step for faster processing. 
-sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=1,metric=MeanSquares:step=3,type=im,algo=syn,metric=CC,iter=1
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz
 # warp template and white matter atlas
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 # check results
@@ -53,8 +52,8 @@ if [ $DISPLAY = true ]; then
 fi
 # compute average cross-sectional area and volume between C3 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -vert 3:4
-# --> Mean CSA: 77.233663906 +/- 1.99475778691 mm^2
-# --> Volume (in volume.txt): 2396.0 mm^3
+# --> Mean CSA: 77.2454304712 +/- 2.02667261843 mm^2
+# --> Volume (in volume.txt): 2319.0 mm^3
 
 # go back to root folder
 cd ..
@@ -144,9 +143,9 @@ sct_extract_metric -i mtr.nii.gz -f label/atlas/ -m map -o mtr_in_whitematter
 # --> with GM registration: MTR = 33.5342808264
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
-sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
+sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5
 # --> Mean CSA of left CST: 5.14874876116 +/- 0.705719447293 mm^2
-sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
+sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5
 # --> Mean CSA of right CST: 4.92502099412 +/- 0.599001576209 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
