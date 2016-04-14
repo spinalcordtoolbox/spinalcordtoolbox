@@ -52,7 +52,7 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
-        self.fname_vertebral_labeling = './label/template/MNI-Poly-AMU_level.nii.gz'
+        self.fname_vertebral_labeling = ''
 
 
 def get_parser():
@@ -111,8 +111,8 @@ def get_parser():
                       type_value='image_nifti',
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
-                      default_value='label/template/MNI-Poly-AMU_level.nii.gz',
-                      example='label/template/MNI-Poly-AMU_level.nii.gz')
+                      default_value='',
+                      example='./label/template/MNI-Poly-AMU_level.nii.gz')
     parser.add_option(name='-m',
                       type_value='multiple_choice',
                       description='Method to compute CSA',
@@ -577,7 +577,7 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
         warning = ''
         if vert_levels and not fname_vertebral_labeling:
-            sct.printv('\nERROR: Vertebral labeling file is missing. See usage.\n', 1, 'error')
+            sct.printv('\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/MNI-Poly-AMU_level.nii.gz\". See usage.\n', 1, 'error')
 
         elif vert_levels and fname_vertebral_labeling:
 
