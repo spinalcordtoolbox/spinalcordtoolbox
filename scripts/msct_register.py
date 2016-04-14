@@ -9,14 +9,15 @@
 # License: see the LICENSE.TXT
 #=======================================================================================================================
 #
-import sys, commands
+import sys
+from math import asin, cos, sin
+
 from os import chdir
 import sct_utils as sct
-from numpy import array, asarray, zeros, sqrt, dot
+from numpy import array, asarray, zeros, dot
 from scipy import ndimage
 from scipy.io import loadmat
 from msct_image import Image
-from math import asin, cos, sin
 from nibabel import load, Nifti1Image, save
 from sct_convert import convert
 from sct_register_multimodal import Paramreg
@@ -381,7 +382,7 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
         matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
         tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
         result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
-        for i in range(nx):
+        for i in range(ny):
             data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
             data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
 
