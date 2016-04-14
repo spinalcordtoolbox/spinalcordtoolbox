@@ -131,7 +131,7 @@ sct_maths -i mt0_reg.nii.gz -add mt1_crop.nii.gz -o mt0mt1.nii.gz
 # segment GM
 sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg_crop.nii.gz -vertfile label/template/MNI-Poly-AMU_level.nii.gz
 #register WM/GM template to automatic WM/GM seg
-sct_register_graymatter -gm mt0mt1_gmseg.nii.gz -wm mt0mt1_wmseg.nii.gz -w warp_template2mt.nii.gz -otemplate label
+sct_register_graymatter -gm mt0mt1_gmseg.nii.gz -wm mt0mt1_wmseg.nii.gz -w warp_template2mt.nii.gz -otemplate label/
 # check registration result
 if [ $DISPLAY = true ]; then
    fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
