@@ -51,7 +51,7 @@ if [ $DISPLAY = true ]; then
    fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 fi
 # compute average cross-sectional area and volume between C3 and C4 levels
-sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -vert 3:4
+sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 3:4
 # --> Mean CSA: 77.2454304712 +/- 2.02667261843 mm^2
 # --> Volume (in volume.txt): 2319.0 mm^3
 
