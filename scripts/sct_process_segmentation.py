@@ -52,8 +52,6 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
-        self.fname_vertebral_labeling = ''
-
 
 def get_parser():
     """
@@ -111,7 +109,7 @@ def get_parser():
                       type_value='image_nifti',
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
-                      default_value='',
+                      default_value='./label/template/MNI-Poly-AMU_level.nii.gz',
                       example='./label/template/MNI-Poly-AMU_level.nii.gz')
     parser.add_option(name='-m',
                       type_value='multiple_choice',
@@ -182,7 +180,6 @@ def main(args):
     figure_fit = param.figure_fit
     slices = param.slices
     vert_lev = param.vertebral_levels
-    fname_vertebral_labeling = param.fname_vertebral_labeling
 
     if '-i' in arguments:
         fname_segmentation = arguments['-i']
@@ -581,8 +578,11 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
         elif vert_levels and fname_vertebral_labeling:
 
+            # check if vertebral labeling file exists
+            sct.check_file_exist(fname_vertebral_labeling)
+
             # from sct_extract_metric import get_slices_matching_with_vertebral_levels
-            sct.printv('\tSelected vertebral levels... '+vert_levels)
+            sct.printv('Selected vertebral levels... '+vert_levels)
             # convert the vertebral labeling file to RPI orientation
             im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
 
@@ -635,7 +635,7 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 # ======================================================================================================================
 def save_results(fname_output, fname_data, metric_name, label_id, method, mean, std, slices_of_interest, actual_vert, warning_vert_levels):
 
-    sct.printv('\nSave results in: '+fname_output+'.txt ...')
+    sct.printv('Save results in: '+fname_output+'.txt\n')
 
     # CSV format, header lines start with "#"
     # Write mode of file
