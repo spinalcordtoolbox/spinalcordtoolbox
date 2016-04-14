@@ -14,7 +14,7 @@ from math import asin, cos, sin
 
 from os import chdir
 import sct_utils as sct
-from numpy import array, asarray, zeros, dot
+from numpy import array, asarray, zeros
 from scipy import ndimage
 from scipy.io import loadmat
 from msct_image import Image
@@ -367,7 +367,7 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
-    #Center of rotation
+    # Center of rotation
     if center_rotation == None:
         x_a = int(round(nx/2))
         y_a = int(round(ny/2))
@@ -378,13 +378,27 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
     # Calculate displacement for each voxel
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
     vector_i = [[[i-x_a], [j-y_a]] for i in range(nx) for j in range(ny)]
+
+    # if theta_rot == None:
+    #     # for translations
+    #     for k in range(nz):
+    #         matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
+    #         tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
+    #         result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
+    #         for i in range(ny):
+    #             data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
+    #             data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
+
+    # else:
+        # For rigid transforms (not optimized)
+        # if theta_rot != None:
+    # TODO: this is not optimized! can do better!
     for k in range(nz):
-        matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
-        tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
-        result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
-        for i in range(ny):
-            data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
-            data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
+        for i in range(nx):
+            for j in range(ny):
+                data_warp[i, j, k, 0, 0] = (cos(theta_rot[k]) - 1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) + x_trans[k]
+                data_warp[i, j, k, 0, 1] = - sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k]) - 1) * (j - y_a) + y_trans[k]
+                data_warp[i, j, k, 0, 2] = 0
 
     # Generate warp file as a warping field
     hdr_warp.set_intent('vector', (), '')
