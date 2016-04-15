@@ -163,7 +163,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-d",
                       type_value="float",
-                      description="trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results, default is 10",
+                      description="trade-off between distance of most promising point (d is high) and feature strength (d is low), default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results, default is 10",
                       mandatory=False)
     parser.add_option(name="-distance-search",
                       type_value="float",
@@ -171,7 +171,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-alpha",
                       type_value="float",
-                      description="trade-off between internal and external forces. Range of values from 0 to 50, default is 25",
+                      description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
     return parser
 
