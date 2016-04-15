@@ -49,7 +49,7 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
-        self.suffix_csa_output_files = ['_csa_volume', '_csa_per_slice', '_csa_mean', '_volume']  # [nifti file, txt file, txt file, txt file]
+        self.suffix_csa_output_files = ['csa_volume', 'csa_per_slice', 'csa_mean', 'volume']  # [nifti file, txt file, txt file, txt file]
 
 def get_parser():
     """
@@ -80,7 +80,7 @@ def get_parser():
                       type_value='file_output',
                       description='In case you choose the option \"-p csa\", this option allows you to choose the prefix of the output result files name for CSA and volume estimations. For example, if you choose \"-o subject01\", the output files will be: subject01'+param_default.suffix_csa_output_files[0]+'.nii.gz, subject01'+param_default.suffix_csa_output_files[1]+'.txt, subject01'+param_default.suffix_csa_output_files[2]+'.txt and subject01'+param_default.suffix_csa_output_files[3]+'.txt.',
                       mandatory=False,
-                      default_value='results')
+                      default_value='')
     parser.add_option(name='-s',
                       type_value=None,
                       description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
@@ -185,7 +185,10 @@ def main(args):
 
     fname_segmentation = arguments['-i']
     name_process = arguments['-p']
-    output_prefix = arguments['-o']
+    if '-o' in arguments:
+        output_prefix = arguments['-o']
+    else:
+        output_prefix = ''
     if '-method' in arguments:
         name_method = arguments['-method']
     if '-vert' in arguments:
