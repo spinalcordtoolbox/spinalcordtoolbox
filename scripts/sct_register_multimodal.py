@@ -118,7 +118,7 @@ def main():
     fname_output = ''
     fname_mask = param.fname_mask
     fname_src_seg = ''
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI'
+    fname_dest_seg = ''
 
     start_time = time.time()
     # get path of the toolbox
@@ -277,9 +277,10 @@ def main():
     if not identity:
         sct.check_if_rpi(fname_dest)
 
-    # Check if user selected type=seg, but did not imput segmentation data
+    # Check if user selected type=seg, but did not input segmentation data
     if True in ['type=seg' in paramreg_user[i] for i in range(len(paramreg_user))]:
-        sct.printv('\nERROR: if you select type=seg you must specify -iseg and -dseg flags.\n', 1, 'error')
+        if fname_src_seg == '' or fname_dest_seg == '':
+            sct.printv('\nERROR: if you select type=seg you must specify -iseg and -dseg flags.\n', 1, 'error')
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
