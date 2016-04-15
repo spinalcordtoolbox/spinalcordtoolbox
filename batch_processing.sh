@@ -44,8 +44,8 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -initcenter 7
 sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -vert 3,9
 # register to template
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz
-# warp template and white matter atlas
-sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
+# warp template without the white matter atlas (we don't need it)
+sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # check results
 if [ $DISPLAY = true ]; then
    fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
@@ -114,8 +114,7 @@ sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,a
 # compute mtr
 sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1_crop.nii.gz
 # register template (in T2 space) to mt1
-# tips: here we only rely on the segmentation (not the image), because the close proximity of the cord with the spine can induce inaccuracies in the registration on some slices.
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg_crop.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3 -z 3
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg_crop.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=5:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3 -z 3
 # concat transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_crop.nii.gz -d mtr.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
@@ -182,11 +181,11 @@ if [ $DISPLAY = true ]; then
    fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
 fi
 # compute DTI metrics
-sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
+sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt -m mask_dmri.nii.gz
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
-sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -z 1:3 -method map -o fa_in_cst
-# --> 17, right lateral corticospinal tract:    0.797974493382
-# --> 2, left lateral corticospinal tract:    0.753757041634
+sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -z 1:3 -method map -l 2,17 -o fa_in_cst
+# --> 2, left lateral corticospinal tract:    0.748404
+# --> 17, right lateral corticospinal tract:    0.815195
 cd ..
 
 
@@ -228,9 +227,10 @@ cd ..
 
 # display results (to compare integrity across SCT versions)
 # ----------
-cat t2/csa_mean.txt
-cat mt/mtr_in_whitematter.txt
-cat dmri/fa_in_cst.txt
+echo "t2|CSA: " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
+echo "mt|MTR: " `grep -v '^#' mt/mtr_in_whitematter.txt | grep -v '^$'`
+echo "dmri|FA:"
+grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$'
 
 # display ending time:
 echo "Ended at: $(date +%x_%r)"
