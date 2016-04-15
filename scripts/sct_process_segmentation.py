@@ -49,6 +49,7 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
+        self.suffix_csa_output_files = ['_csa_volume', '_csa_per_slice', '_csa_mean', '_volume']  # [nifti file, txt file, txt file, txt file]
 
 def get_parser():
     """
@@ -77,7 +78,7 @@ def get_parser():
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-o',
                       type_value='file_output',
-                      description='In case you choose the option \"-p csa\", this option allows you to choose the prefix of the output result files name for CSA and volume estimations. For example, if you choose \"-o subject01\", the output files will be subject01_csa_volume.nii.gz, subject01_csa_per_slice.txt, subject01_csa_mean.txt and subject01_volume.txt.',
+                      description='In case you choose the option \"-p csa\", this option allows you to choose the prefix of the output result files name for CSA and volume estimations. For example, if you choose \"-o subject01\", the output files will be: subject01'+param_default.suffix_csa_output_files[0]+'.nii.gz, subject01'+param_default.suffix_csa_output_files[1]+'.txt, subject01'+param_default.suffix_csa_output_files[2]+'.txt and subject01'+param_default.suffix_csa_output_files[3]+'.txt.',
                       mandatory=False,
                       default_value='results')
     parser.add_option(name='-s',
@@ -224,7 +225,7 @@ def main(args):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
+        compute_csa(fname_segmentation, output_prefix, param_default.suffix_csa_output_files, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
@@ -421,7 +422,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+def compute_csa(fname_segmentation, output_prefix, output_suffixes, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -509,13 +510,13 @@ def compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, s
 
     # Create output text file
     sct.printv('\nCompute CSA per slice...', verbose)
-    file_results = open('../'+output_prefix+'_csa_per_slice.txt', 'w')
+    file_results = open('../'+output_prefix+output_suffixes[1]+'.txt', 'w')
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+'\n')
         # Display results
         sct.printv('z='+str(i-min_z_index)+': '+str(csa[i-min_z_index])+' mm^2', type='info')
     file_results.close()
-    sct.printv('Save results in: '+output_prefix+'_csa_per_slice.txt', verbose)
+    sct.printv('Save results in: '+output_prefix+output_suffixes[1]+'.txt', verbose)
 
 
     # output volume of csa values
@@ -551,7 +552,7 @@ def compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, s
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_prefix+'_csa_volume.nii.gz')  # extension already included in name_output
+    sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_prefix+output_suffixes[0]+'.nii.gz')  # extension already included in name_output
     print('\n')
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
@@ -587,7 +588,7 @@ def compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, s
 
         CSA_for_selected_slices = []
         # Read the file csa_per_slice.txt and get the CSA for the selected slices
-        with open(output_prefix+'_csa_per_slice.txt') as openfile:
+        with open(output_prefix+output_suffixes[1]+'.txt') as openfile:
             for line in openfile:
                 line_split = line.strip().split(',')
                 if int(line_split[0]) in slices_list:
@@ -600,7 +601,7 @@ def compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, s
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
 
         # write result into output file
-        save_results(output_prefix+'_csa_mean', file_data, 'CSA', 0, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_prefix+output_suffixes[2], file_data, 'CSA', 0, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
         sct.printv('Compute the volume in between the selected slices...', type='info')
@@ -609,7 +610,7 @@ def compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, s
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
 
         # write result into output file
-        save_results(output_prefix+'_volume', file_data, 'volume', 0, 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_prefix+output_suffixes[3], file_data, 'volume', 0, 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
     # Remove temporary files
     if remove_temp_files:
@@ -617,11 +618,11 @@ def compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, s
         sct.run('rm -rf '+path_tmp, error_exit='warning')
 
     # Sum up the output file names
-    sct.printv('\nOutput nifti file of CSA volume: ' + output_prefix+'_csa_volume.nii.gz', param.verbose, 'info')
-    sct.printv('Output result file of CSA per slice: ' + output_prefix+'_csa_per_slice.txt', param.verbose, 'info')
+    sct.printv('\nOutput nifti file of CSA volume: ' + output_prefix+output_suffixes[0]+'.nii.gz', param.verbose, 'info')
+    sct.printv('Output result file of CSA per slice: ' + output_prefix+output_suffixes[1]+'.txt', param.verbose, 'info')
     if slices or vert_levels:
-        sct.printv('Output result file of the mean CSA across the selected slices: '+output_prefix+'_csa_mean.txt', param.verbose, 'info')
-        sct.printv('Output result file of the volume in between the selected slices: '+output_prefix+'_volume.txt', param.verbose, 'info')
+        sct.printv('Output result file of the mean CSA across the selected slices: '+output_prefix+output_suffixes[2]+'.txt', param.verbose, 'info')
+        sct.printv('Output result file of the volume in between the selected slices: '+output_prefix+output_suffixes[3]+'.txt', param.verbose, 'info')
 
 # ======================================================================================================================
 # Save CSA or volume estimation in a .txt file
