@@ -393,7 +393,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         fname_grid = tmp_dir+fname_grid_resample
         os.chdir('..')
     path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
-    grid_warped = path_warp+sct.extract_fname(fname_grid)[1]+'_'+file_warp+ext_warp
+    grid_warped = path_warp+'grid_warped_gm'+ext_warp
     sct.run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
     if rm_tmp:
         sct.run('rm -rf '+tmp_dir, error_exit='warning')
