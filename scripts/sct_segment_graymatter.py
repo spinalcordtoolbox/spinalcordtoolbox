@@ -56,8 +56,12 @@ import shutil
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Segmentation of the white/gray matter on a T2star or MT image\n'
-                                 'Multi-Atlas based method: the model containing a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template is provided in the toolbox. ')
+    parser.usage.set_description('Segmentation of the white/gray matter.\n'
+                                 'Multi-Atlas based method. The model used by this method is provided in the toolbox. It contains a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template.'
+                                 '\nThis method was inspired from Asman et al., Medical Image Analysis 2014. The major differences are :\n'
+                                 '  - additional information from vertebral levels\n'
+                                 '  - intensity normalization of the image to segment (allows the segmentation of any kind of contrast)\n'
+                                 '  - registration performed using ANTs (and not through an iterative home made process)')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Target image to segment",
@@ -68,38 +72,28 @@ def get_parser():
                       description="Spinal cord segmentation of the target",
                       mandatory=True,
                       example='sc_seg.nii.gz')
-    parser.usage.addSection('STRONGLY RECOMMENDED ARGUMENTS\n'
-                            'Choose one of them')
     parser.add_option(name="-vertfile",
                       type_value="file",
-                      description="Image containing level labels for the target or text file with for eac slice, #slice and associated level separated by a coma."
-                                  "If -vert is used, no need to provide t2 data",
+                      description="Image containing level labels for the target or text file with for each slice, #slice and associated level separated by a coma.",
                       mandatory=False,
-                      example='MNI-Poly-AMU_level_IRP.nii.gz')
+                      default_value='label/template/MNI-Poly-AMU_level.nii.gz',
+                      example='MNI-Poly-AMU_level.nii.gz')
     parser.add_option(name="-vert",
                       type_value="file",
-                      description="Image containing level labels for the target or text file with for eac slice, #slice and associated level separated by a coma."
-                                  "If -vert is used, no need to provide t2 data",
+                      description="Image containing level labels for the target or text file with for each slice, #slice and associated level separated by a coma.",
                       mandatory=False,
                       example='MNI-Poly-AMU_level_IRP.nii.gz',
                       deprecated_by='-vertfile')
     parser.add_option(name="-l",
                       type_value=None,
-                      description="Image containing level labels for the target"
-                                  "If -l is used, no need to provide t2 data",
+                      description="Image containing level labels for the target",
                       mandatory=False,
                       deprecated_by='-vertfile')
-    parser.add_option(name="-t2",
-                      type_value=[[','], 'file'],
-                      description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels\n"
-                                  "In this order, without whitespace : t2_image,t2_sc_segmentation,t2_landmarks\n(see: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/)",
-                      mandatory=False,
-                      default_value=None,
-                      example='t2.nii.gz,t2_seg.nii.gz,landmarks.nii.gz')
+
     parser.usage.addSection('SEGMENTATION OPTIONS')
     parser.add_option(name="-use-levels",
                       type_value='multiple_choice',
-                      description="Use the level information as integers or float numbers for the model or not",
+                      description="Use the level information as integers or float numbers for the model or not use them",
                       mandatory=False,
                       default_value='int',
                       example=['0', 'int', 'float'])
@@ -109,6 +103,7 @@ def get_parser():
                       mandatory=False,
                       default_value=2.5,
                       example=2.0)
+    '''
     parser.add_option(name="-weight-similarity",
                       type_value='multiple_choice',
                       description="Use the modes eigenvalues as weight for the similarity beta",
@@ -121,6 +116,7 @@ def get_parser():
                       mandatory=False,
                       default_value=0,
                       example=['0', '1'])
+    '''
     parser.add_option(name="-denoising",
                       type_value='multiple_choice',
                       description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
@@ -152,7 +148,7 @@ def get_parser():
                       description="Path to the model data",
                       mandatory=False,
                       example='/home/jdoe/gm_seg_model_data/')
-    parser.usage.addSection('OUTPUT OTIONS')
+    parser.usage.addSection('\nOUTPUT OTIONS')
     parser.add_option(name="-res-type",
                       type_value='multiple_choice',
                       description="Type of result segmentation : binary or probabilistic",
@@ -206,7 +202,7 @@ def get_parser():
 
 
 class Preprocessing:
-    def __init__(self, target_fname, sc_seg_fname, tmp_dir='', t2_data=None, level_fname=None, denoising=True, verbose=1):
+    def __init__(self, target_fname, sc_seg_fname, tmp_dir='', level_fname=None, denoising=True, verbose=1):
 
         # initiate de file names and copy the files into the temporary directory
         self.original_target = 'target.nii.gz'
@@ -221,7 +217,6 @@ class Preprocessing:
         self.high_res = False
 
         if level_fname is not None:
-            t2_data = None
             path_level, file_level, ext_level = sct.extract_fname(level_fname)
             if ext_level != '.txt':
                 level_fname = check_file_to_niigz(level_fname)
@@ -231,23 +226,12 @@ class Preprocessing:
         else:
             self.fname_level  = None
 
-        if t2_data is not None:
-            self.t2 = 't2.nii.gz'
-            self.t2_seg = 't2_seg.nii.gz'
-            self.t2_landmarks = 't2_landmarks.nii.gz'
-        else:
-            self.t2 = self.t2_seg = self.t2_landmarks = None
-
         # processes:
-        self.copy_to_tmp(target_fname=target_fname, sc_seg_fname=sc_seg_fname, t2_data=t2_data)
+        self.copy_to_tmp(target_fname=target_fname, sc_seg_fname=sc_seg_fname)
 
-    def copy_to_tmp(self, target_fname, sc_seg_fname, t2_data=None):
+    def copy_to_tmp(self, target_fname, sc_seg_fname):
         sct.run('cp ' + target_fname + ' ' + self.tmp_dir + '/' + self.original_target)
         sct.run('cp ' + sc_seg_fname + ' ' + self.tmp_dir + '/' + self.original_sc_seg)
-        if self.t2 is not None:
-            sct.run('cp ' + t2_data[0] + ' ' + self.tmp_dir + '/' + self.t2)
-            sct.run('cp ' + t2_data[1] + ' ' + self.tmp_dir + '/' + self.t2_seg)
-            sct.run('cp ' + t2_data[2] + ' ' + self.tmp_dir + '/' + self.t2_landmarks)
 
     def process(self):
         # preprocessing
@@ -325,9 +309,7 @@ class Preprocessing:
 
         self.square_mask, self.processed_target = crop_t2_star(self.t2star, self.sc_seg, box_size=box_size)
 
-        if self.t2 is not None:
-            self.fname_level = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
-        elif self.fname_level is not None and sct.extract_fname(self.fname_level)[2] == '.nii.gz':
+        if self.fname_level is not None and sct.extract_fname(self.fname_level)[2] == '.nii.gz':
             level_orientation = get_orientation_3d(self.fname_level, filename=True)
             if level_orientation != 'IRP':
                 self.fname_level = set_orientation(self.fname_level, 'IRP', filename=True)
@@ -337,7 +319,7 @@ class Preprocessing:
 
 class FullGmSegmentation:
 
-    def __init__(self, target_fname, sc_seg_fname, t2_data, level_fname, ref_gm_seg=None, model=None, compute_ratio=False, model_param=None, seg_param=None):
+    def __init__(self, target_fname, sc_seg_fname, level_fname, ref_gm_seg=None, model=None, compute_ratio=False, model_param=None, seg_param=None):
         self.model_param = model_param
         self.seg_param = seg_param
         sct.printv('\nBuilding the appearance model...', verbose=self.seg_param.verbose, type='normal')
@@ -347,7 +329,6 @@ class FullGmSegmentation:
             self.model = model
         self.target_fname = check_file_to_niigz(target_fname)
         self.sc_seg_fname = check_file_to_niigz(sc_seg_fname)
-        self.t2_data = t2_data
         if level_fname is not None:
             level_path, level_file, level_ext = sct.extract_fname(level_fname)
             if level_ext == '.txt':
@@ -405,7 +386,7 @@ class FullGmSegmentation:
     # ------------------------------------------------------------------------------------------------------------------
     def segmentation_pipeline(self):
         sct.printv('\nDoing target pre-processing ...', verbose=self.seg_param.verbose, type='normal')
-        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.seg_param.target_denoising, verbose=self.seg_param.verbose)
+        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, level_fname=self.level_fname, denoising=self.seg_param.target_denoising, verbose=self.seg_param.verbose)
         self.preprocessed.process()
 
         os.chdir(self.tmp_dir)
@@ -633,7 +614,6 @@ if __name__ == "__main__":
     seg_param = SegmentationParam()
     input_target_fname = None
     input_sc_seg_fname = None
-    input_t2_data = None
     input_level_fname = None
     input_ref_gm_seg = None
     compute_ratio = False
@@ -651,8 +631,6 @@ if __name__ == "__main__":
         model_param.todo_model = 'load'
         seg_param.output_path = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
 
-        if "-t2" in arguments:
-            input_t2_data = arguments["-t2"]
         if "-vertfile" in arguments:
             input_level_fname = arguments["-vertfile"]
         if "-use-levels" in arguments:
@@ -693,9 +671,9 @@ if __name__ == "__main__":
         seg_param.qc = int(arguments["-qc"])
         seg_param.remove_tmp = int(arguments["-r"])
 
-        if input_level_fname is None and input_t2_data is None:
+        if input_level_fname is None:
             model_param.use_levels = '0'
             model_param.weight_gamma = 0
 
-    gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_t2_data, input_level_fname, ref_gm_seg=input_ref_gm_seg, compute_ratio=compute_ratio, model_param=model_param, seg_param=seg_param)
+    gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_level_fname, ref_gm_seg=input_ref_gm_seg, compute_ratio=compute_ratio, model_param=model_param, seg_param=seg_param)
     gmsegfull.segment()
