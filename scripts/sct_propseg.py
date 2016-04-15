@@ -294,6 +294,9 @@ if __name__ == "__main__":
             mask_reoriented_filename = sct.add_suffix(input_filename, "_mask_viewer")
             sct.run('sct_image -i ' + mask_filename + ' -o ' + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
+            # remove temporary files
+            sct.run('rm -rf tmp.*')
+
             # add mask filename to parameters string
             if use_viewer == "centerline":
                 cmd += " -init-centerline " + mask_reoriented_filename
