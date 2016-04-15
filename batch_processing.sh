@@ -126,7 +126,6 @@ if [ $DISPLAY = true ]; then
 fi
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm_without_gmreg -l 33
-# --> without GM registration: MTR = 33.6001933499
 # OPTIONAL PART: SEGMENT GRAY MATTER:
 # <<<<<<<<<<
 # add mt1 and mt0 to increase GM/WM contrast
@@ -144,7 +143,6 @@ fi
 # >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm_with_gmreg -l 33
-# --> with GM registration: MTR = 31.46081938
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
 sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5
@@ -175,7 +173,7 @@ if [ $DISPLAY = true ]; then
 fi
 # register template to dwi: here we use the template registered to the MT data in order to account for gray matter segmentation
 sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=5:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3,gradStep=0.5
-# concatenate transfo: (1) template -> anat --> MT --> MT_gmreg ; (2) MT_gmreg --> DWI
+# concatenate transfo: (1) template -> anat -> MT -> MT_gmreg ; (2) MT_gmreg -> DWI
 sct_concat_transfo -w ../mt/warp_template2mt0mt1_gmseg.nii.gz,warp_MNI-Poly-AMU_T22dwi_moco_mean.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
 # warp template and white matter atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
@@ -203,26 +201,25 @@ sct_register_multimodal -i ../t2/t2_seg.nii.gz -d fmri_moco_mean.nii.gz -identit
 # extract centerline
 sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
 # segment mean fMRI volume
-sct_propseg -i fmri_moco_mean.nii.gz -c t2 -init-centerline t2_seg_reg_centerline.nii.gz -radius 5 -max-deformation 4
 # tips: we use the T2 segmentation to help with fMRI segmentation
 # tips: we use "-radius 5" otherwise the segmentation is too small
 # tips: we use "-max-deformation 4" to prevent the propagation from stopping at the edge
+sct_propseg -i fmri_moco_mean.nii.gz -c t2 -init-centerline t2_seg_reg_centerline.nii.gz -radius 5 -max-deformation 4
 # check segmentation
 if [ $DISPLAY = true ]; then
   fslview fmri_moco_mean -b 0,1000 fmri_moco_mean_seg -l Red -t 0.5 &
 fi
 # here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
 # register template to fmri: here we use the template register to the MT to get the correction of the internal structure
-sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
-# concatenate transfo: the first warping field contains : warp template -> anat ; warp anat --> MT ; warp correction of the internal structure
+sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
+# concatenate transfo: (1) template -> anat -> MT -> MT_gm ; (2) MT_gm -> fmri
 sct_concat_transfo -w ../mt/warp_template2mt0mt1_gmseg.nii.gz,warp_MNI-Poly-AMU_T22fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
-# warp template, atlas and spinal levels
+# warp template and spinal levels (here we don't need the WM atlas)
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
 # check results
 if [ $DISPLAY = true ]; then
   fslview fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
 fi
-# also see: https://dl.dropboxusercontent.com/u/20592661/spinalcordtoolbox/result_batch_processing_fmri.png
 cd ..
 
 
@@ -240,5 +237,6 @@ grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$'
 #2, left lateral corticospinal tract, 0.785644, 0.000000
 #17, right lateral corticospinal tract, 0.795717, 0.000000
 
+# fMRI results: https://dl.dropboxusercontent.com/u/20592661/sct/result_batch_processing_fmri.png
 # display ending time:
 echo "Ended at: $(date +%x_%r)"
