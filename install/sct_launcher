@@ -69,14 +69,15 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   fi
   # Will quietely fail if a virtualenv or conda is not used
   . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
-    echo SpinalCord Toolbox version $SCT_VERSION
-    echo SCT installed in ${SCT_DIR}
-    echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "Spinal Cord Toolbox (version $SCT_VERSION)"
+#    echo SCT installed in ${SCT_DIR}
+#    echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
 
 fi
 if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
-  echo running ${SCT_DIR}/scripts/${@}
+  echo "Running ${SCT_DIR}/scripts/${@}"
   python ${SCT_DIR}/scripts/${@}
 else
-  echo sourcing sct_laucher in your environement ${SCT_DIR}
+  echo Sourcing sct_laucher in your environement ${SCT_DIR}
 fi
