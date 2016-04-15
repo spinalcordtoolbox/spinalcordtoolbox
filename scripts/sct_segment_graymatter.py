@@ -694,7 +694,7 @@ if __name__ == "__main__":
         seg_param.remove_tmp = int(arguments["-r"])
 
         if input_level_fname is None and input_t2_data is None:
-            model_param.use_levels = False
+            model_param.use_levels = '0'
             model_param.weight_gamma = 0
 
     gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_t2_data, input_level_fname, ref_gm_seg=input_ref_gm_seg, compute_ratio=compute_ratio, model_param=model_param, seg_param=seg_param)
