@@ -432,7 +432,7 @@ def get_parser():
                       mandatory=False,
                       example='step=1,algo=slicereg,metric=MeanSquares,step=2,algo=syn,metric=MeanSquares,iter=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1')
 
-    parser.usage.addSection('OUTPUT OTIONS')
+    parser.usage.addSection('\nOUTPUT OTIONS')
     parser.add_option(name="-winv",
                       type_value="file",
                       description="Warping field target image --> template. If you need to output the inversed warping field",
@@ -444,7 +444,7 @@ def get_parser():
                       mandatory=False,
                       example='multilabel_registration/')
 
-    parser.usage.addSection('VALIDATION: Use both option for validation.')
+    parser.usage.addSection('\nVALIDATION: Use both flags for validation.')
     parser.add_option(name="-manual-gm",
                       type_value='file',
                       description='Manual gray matter segmentation on the target image. ',
@@ -457,7 +457,7 @@ def get_parser():
                       example='t2star_seg.nii.gz')
 
 
-    parser.usage.addSection('MISC')
+    parser.usage.addSection('\nMISC')
     parser.add_option(name='-qc',
                       type_value='multiple_choice',
                       description='Output images for quality control.',
