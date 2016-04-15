@@ -48,7 +48,7 @@ def get_parser():
                       example="t2_seg.nii.gz")
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
-                      description='Initialize labeling by providing slice number (in superior-inferior direction!!) and disc value. Value corresponds to vertebral level above disc (e.g., for C3/C4 disc, value=3). Separate with ","',
+                      description='Initialize labeling by providing slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
                       mandatory=False,
                       example=['125,3'])
     parser.add_option(name="-initcenter",
