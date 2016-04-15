@@ -41,10 +41,10 @@
 
 
 import sys
-import os
-import commands
 import time
 
+import os
+import commands
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -546,13 +546,13 @@ def register(src, dest, paramreg, param, i_step_str):
         # no forward warping field for rigid and affine
         sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
-    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine']:
+    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine', 'translation']:
         # no inverse warping field for rigid and affine
         sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
-        if paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine'] and paramreg.steps[i_step_str].slicewise == '0':
+        if paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].slicewise == '0':
             warp_forward = 'warp_forward_'+i_step_str+'.mat'
             os.rename(warp_forward_out, warp_forward)
             warp_inverse = '-warp_forward_'+i_step_str+'.mat'
