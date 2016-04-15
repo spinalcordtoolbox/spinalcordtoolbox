@@ -164,7 +164,7 @@ def main(args = None):
     elif "-setorient" in arguments:
         print fname_in[0]
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose)]
+        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose, fname_out=fname_out)]
 
     elif "-setorient-data" in arguments:
         im_in = Image(fname_in[0])
@@ -443,14 +443,14 @@ def multicomponent_merge(fname_list):
     return im_out
 
 
-def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
+def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=''):
     verbose = 0 if get else verbose
     printv('\nGet dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
-    # if data are 2d, get orientation from header using fslhd
+    # if data are 2d or 3d, get orientation from header using fslhd
     if nz == 1 or nt==1:
         if get:
             try:
@@ -506,7 +506,12 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
         chdir('..')
         run('rm -rf '+tmp_folder, error_exit='warning')
 
-    im_out.setFileName(im.file_name+'_'+ori+im.ext)
+    if fname_out:
+        im_out.setFileName(fname_out)
+        if fname_out != im.file_name+'_'+ori+im.ext:
+            run('rm -f ' + im.file_name + '_' + ori + im.ext)
+    else:
+        im_out.setFileName(im.file_name + '_' + ori + im.ext)
     return im_out
 
 
