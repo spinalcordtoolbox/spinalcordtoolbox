@@ -671,7 +671,7 @@ if __name__ == "__main__":
         seg_param.qc = int(arguments["-qc"])
         seg_param.remove_tmp = int(arguments["-r"])
 
-        if not sct.check_folder_exist(input_level_fname):
+        if not sct.check_file_exist(input_level_fname):
                 sct.printv(parser.usage.generate(error='ERROR: the file '+input_level_fname+' does not exist. Please specify a file with flag -vertfile or if you don\'t want to use vertebral level information, use flag -use-levels 0' ))
         if input_level_fname is None:
             model_param.use_levels = '0'
