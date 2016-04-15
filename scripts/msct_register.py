@@ -217,11 +217,11 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     # [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
     # initialization
-    if paramreg.algo in ['Rigid', 'Translation']:
+    if paramreg.algo in ['Translation']:
         x_displacement = [0 for i in range(nz)]
         y_displacement = [0 for i in range(nz)]
         theta_rotation = [0 for i in range(nz)]
-    if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
+    if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
         list_warp = []
         list_warp_inv = []
 
@@ -257,7 +257,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             # run registration
             sct.run(cmd)
 
-            if paramreg.algo in ['Rigid', 'Translation']:
+            if paramreg.algo in ['Translation']:
                 file_mat = prefix_warp2d+'0GenericAffine.mat'
                 matfile = loadmat(file_mat, struct_as_record=True)
                 array_transfo = matfile['AffineTransform_double_2_2']
@@ -265,14 +265,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                 y_displacement[i] = array_transfo[5][0]  # Ty  in ITK'S and fslview's coordinate systems
                 theta_rotation[i] = asin(array_transfo[2]) # angle of rotation theta in ITK'S coordinate system (minus theta for fslview)
 
-            if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
+            if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
                 # List names of 2d warping fields for subsequent merge along Z
                 file_warp2d = prefix_warp2d+'0Warp.nii.gz'
                 file_warp2d_inv = prefix_warp2d+'0InverseWarp.nii.gz'
                 list_warp.append(file_warp2d)
                 list_warp_inv.append(file_warp2d_inv)
 
-            if paramreg.algo == 'Affine':
+            if paramreg.algo in ['Rigid', 'Affine']:
                 # Generating null 2d warping field (for subsequent concatenation with affine transformation)
                 sct.run('isct_antsRegistration -d 2 -t SyN[1, 1, 1] -c 0 -m MI[dest_Z'+num+'.nii, src_Z'+num+'.nii, 1, 32] -o warp2d_null -f 1 -s 0')
                 # --> outputs: warp2d_null0Warp.nii.gz, warp2d_null0InverseWarp.nii.gz
@@ -289,7 +289,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     # Merge warping field along z
     sct.printv('\nMerge warping fields along z...', verbose)
 
-    if paramreg.algo in ['Rigid', 'Translation']:
+    if paramreg.algo in ['Translation']:
         # convert to array
         x_disp_a = asarray(x_displacement)
         y_disp_a = asarray(y_displacement)
@@ -299,7 +299,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         # Inverse warping field
         generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
 
-    if paramreg.algo in ['BSplineSyN', 'SyN', 'Affine']:
+    if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
         from sct_image import concat_warp2d
         # concatenate 2d warping fields along z
         concat_warp2d(list_warp, fname_warp, 'dest.nii')
