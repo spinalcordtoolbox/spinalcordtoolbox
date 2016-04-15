@@ -115,7 +115,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
                       type_value="image_nifti",
-                      description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",
+                      description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation.\nReplace filename by 'viewer' to use interactive viewer for providing centerline. Ex: -init-centerline viewer",
                       mandatory=False)
     parser.add_option(name="-init",
                       type_value="float",
@@ -123,7 +123,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-init-mask",
                       type_value="image_nifti",
-                      description="mask containing three center of the spinal cord, used to initiate the propagation",
+                      description="mask containing three center of the spinal cord, used to initiate the propagation.\nReplace filename by 'viewer' to use interactive viewer for providing mask. Ex: -init-mask viewer",
                       mandatory=False)
     parser.add_option(name="-mask-correction",
                       type_value="image_nifti",
