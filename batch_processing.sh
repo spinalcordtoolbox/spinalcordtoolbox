@@ -7,7 +7,7 @@
 # To run without fslview output, type:
 #   ./batch_processing.sh -nodisplay
 #
-# tested with v2.2_dev on 2016-04-11 at 13.20
+# tested with dev on 2016-04-15 at 12.15
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
@@ -226,17 +226,19 @@ fi
 cd ..
 
 
-# display results (to compare integrity across SCT versions)
+# display results (to easily compare integrity across SCT versions)
 # ----------
 echo "t2/CSA: " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
-echo "mt/MTR: " `grep -v '^#' mt/mtr_in_whitematter.txt | grep -v '^$'`
+echo "mt/MTR: " `grep -v '^#' mt/mtr_in_wm_without_gmreg.txt | grep -v '^$'`
+echo "mt/MTR: " `grep -v '^#' mt/mtr_in_wm_with_gmreg.txt | grep -v '^$'`
 echo "dmri/FA:"
 grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$'
-# t2/CSA:  0, /Users/julien/sct_example_data/t2/t2_seg, 77.245430, 2.026673
-# mt/MTR:  33, white matter, 33.600193, 0.000000
-# dmri/FA:
-# 2, left lateral corticospinal tract, 0.785644, 0.000000
-# 17, right lateral corticospinal tract, 0.795717, 0.000000
+#t2/CSA:  0, /Users/julien/sct_example_data/t2/t2_seg, 77.245430, 2.026673
+#mt/MTR:  33, white matter, 33.600193, 0.000000
+#mt/MTR:  33, white matter, 31.460819, 0.000000
+#dmri/FA:
+#2, left lateral corticospinal tract, 0.785644, 0.000000
+#17, right lateral corticospinal tract, 0.795717, 0.000000
 
 # display ending time:
 echo "Ended at: $(date +%x_%r)"
