@@ -43,9 +43,6 @@ class Param:
         self.remove_temp_files = 1
         self.smoothing_param = 0  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
-        self.fname_csa = 'csa.txt'  # output name for txt CSA
-        self.file_csa_volume = 'csa_volume.nii.gz'
-        # self.fname_output = 'csa_volume.nii.gz'  # output name for slice CSA
         self.name_method = 'counting_z_plane'  # for compute_CSA
         self.slices = ''
         self.vertebral_levels = ''
@@ -70,13 +67,19 @@ def get_parser():
                       description='type of process to be performed:\n'
                                   '- centerline: extract centerline as binary file.\n'
                                   '- length: compute length of the segmentation.\n'
-                                  '- csa: computes cross-sectional area by counting pixels in each.\n'
+                                  '- csa: computes cross-sectional area by counting pixels in each'
                                   '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
-                                  '  - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),\n'
-                                  '  - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).\n',
+                                  '  - a segmentation (nifti file) where each slice\'s value is equal to the CSA (mm^2),\n'
+                                  '  - a CSV text file with z (1st column) and CSA in mm^2 (2nd column),\n'
+                                  '  - and if you select the options -z or -vert, a text file giving the mean CSA across the selected slices or vertebral levels.\n',
                       mandatory=True,
                       example=['centerline', 'length', 'csa'])
     parser.usage.addSection('Optional Arguments')
+    parser.add_option(name='-o',
+                      type_value='file_output',
+                      description='In case you choose the option \"-p csa\", this option allows you to choose the prefix of the output result files name for CSA and volume estimations. For example, if you choose \"-o subject01\", the output files will be subject01_csa_volume.nii.gz, subject01_csa_per_slice.txt, subject01_csa_mean.txt and subject01_volume.txt.',
+                      mandatory=False,
+                      default_value='results')
     parser.add_option(name='-s',
                       type_value=None,
                       description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
@@ -166,8 +169,6 @@ def main(args):
     # Initialization
     path_script = os.path.dirname(__file__)
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
-    fname_segmentation = ''
-    name_process = ''
     processes = ['centerline', 'csa', 'length']
     method_CSA = ['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane']
     name_method = param.name_method
@@ -181,10 +182,9 @@ def main(args):
     slices = param.slices
     vert_lev = param.vertebral_levels
 
-    if '-i' in arguments:
-        fname_segmentation = arguments['-i']
-    if '-p' in arguments:
-        name_process = arguments['-p']
+    fname_segmentation = arguments['-i']
+    name_process = arguments['-p']
+    output_prefix = arguments['-o']
     if '-method' in arguments:
         name_method = arguments['-method']
     if '-vert' in arguments:
@@ -201,15 +201,6 @@ def main(args):
         slices = arguments['-z']
     if '-a' in arguments:
         param.algo_fitting = arguments['-a']
-
-    # # Check input parameters
-    # try:
-    #      opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:l:r:s:t:f:v:z:a:')
-    # except getopt.GetoptError:
-    #     usage()
-    # for opt, arg in opts :
-    #     if opt in ('-f'):
-    #         figure_fit = int(arg)
 
     # display usage if incorrect method
     if name_process == 'csa' and (name_method not in method_CSA):
@@ -233,14 +224,7 @@ def main(args):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_param, figure_fit, param.file_csa_volume, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
-
-        sct.printv('\nDone!', param.verbose)
-        sct.printv('Output CSA volume: '+param.file_csa_volume, param.verbose, 'info')
-        if slices or vert_lev:
-            sct.printv('Output file of the mean CSA: csa_mean.txt', param.verbose, 'info')
-            sct.printv('Output file of the volume between the selected slices: volume.txt', param.verbose, 'info')
-        sct.printv('Output file of CSA for each slice: '+param.fname_csa+'\n', param.verbose, 'info')
+        compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
@@ -437,7 +421,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_param, figure_fit, file_csa_volume, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+def compute_csa(fname_segmentation, output_prefix, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -524,13 +508,15 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
 
     # Create output text file
-    sct.printv('\nWrite text file...', verbose)
-    file_results = open('csa.txt', 'w')
+    sct.printv('\nCompute CSA per slice...', verbose)
+    file_results = open('../'+output_prefix+'_csa_per_slice.txt', 'w')
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+'\n')
         # Display results
-        sct.printv('z='+str(i-min_z_index)+': '+str(csa[i-min_z_index])+' mm^2', verbose, 'bold')
+        sct.printv('z='+str(i-min_z_index)+': '+str(csa[i-min_z_index])+' mm^2', type='info')
     file_results.close()
+    sct.printv('Save results in: '+output_prefix+'_csa_per_slice.txt', verbose)
+
 
     # output volume of csa values
     sct.printv('\nCreate volume of CSA values...', verbose)
@@ -558,16 +544,15 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
     # get orientation of the input data
     im_seg_original = Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
-    sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o '+file_csa_volume)
+    sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o csa_volume_in_initial_orientation.nii.gz')
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    copyfile(path_tmp+'csa.txt', path_data+param.fname_csa)
-    # sct.generate_output_file(path_tmp+'csa.txt', path_data+param.fname_csa)  # extension already included in param.fname_csa
-    sct.generate_output_file(path_tmp+file_csa_volume, path_data+file_csa_volume)  # extension already included in name_output
+    sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_prefix+'_csa_volume.nii.gz')  # extension already included in name_output
+    print('\n')
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
@@ -578,11 +563,12 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
         elif vert_levels and fname_vertebral_labeling:
 
+            # from sct_extract_metric import get_slices_matching_with_vertebral_levels
+            sct.printv('Selected vertebral levels... '+vert_levels)
+
             # check if vertebral labeling file exists
             sct.check_file_exist(fname_vertebral_labeling)
 
-            # from sct_extract_metric import get_slices_matching_with_vertebral_levels
-            sct.printv('Selected vertebral levels... '+vert_levels)
             # convert the vertebral labeling file to RPI orientation
             im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
 
@@ -600,8 +586,8 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         slices_list = range(int(slices_lim[0]), int(slices_lim[1])+1)
 
         CSA_for_selected_slices = []
-        # Read the file csa.txt and get the CSA for the selected slices
-        with open(path_data+param.fname_csa) as openfile:
+        # Read the file csa_per_slice.txt and get the CSA for the selected slices
+        with open(output_prefix+'_csa_per_slice.txt') as openfile:
             for line in openfile:
                 line_split = line.strip().split(',')
                 if int(line_split[0]) in slices_list:
@@ -614,7 +600,7 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
 
         # write result into output file
-        save_results(path_data + 'csa_mean', file_data, 'CSA', 0, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_prefix+'_csa_mean', file_data, 'CSA', 0, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
         sct.printv('Compute the volume in between the selected slices...', type='info')
@@ -623,12 +609,19 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
 
         # write result into output file
-        save_results(path_data + 'volume', file_data, 'volume', 0, 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_prefix+'_volume', file_data, 'volume', 0, 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp, error_exit='warning')
+
+    # Sum up the output file names
+    sct.printv('\nOutput nifti file of CSA volume: ' + output_prefix+'_csa_volume.nii.gz', param.verbose, 'info')
+    sct.printv('Output result file of CSA per slice: ' + output_prefix+'_csa_per_slice.txt', param.verbose, 'info')
+    if slices or vert_levels:
+        sct.printv('Output result file of the mean CSA across the selected slices: '+output_prefix+'_csa_mean.txt', param.verbose, 'info')
+        sct.printv('Output result file of the volume in between the selected slices: '+output_prefix+'_volume.txt', param.verbose, 'info')
 
 # ======================================================================================================================
 # Save CSA or volume estimation in a .txt file
