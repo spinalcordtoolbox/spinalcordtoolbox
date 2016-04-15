@@ -860,11 +860,11 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
     the dataset should contain for each subject :
         - a T2*-w image containing 'im' in its name
         - a segmentation of the spinal cord containing 'seg' in its name
-        - a manual segmentation of the gray matter containing 'gm' in its name
+        - a manual segmentation of the gray matter containing 'gm' in its name (or several manual segmentations from different raters)
         - a 'level image' containing 'level' in its name : the level image is an image containing a level label per slice indicating at wich vertebral level correspond this slice
     :param path:
     """
-
+    from copy import deepcopy
     axial_pix_dim = 0.3
     model_image_size = 75
     interpolation = 'spline'  # 'Cubic'
@@ -873,49 +873,54 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
         if os.path.isdir(path_to_dataset + '/' + subject_dir):
             os.chdir(path_to_dataset + '/' + subject_dir)
             # getting the subject images
-            t2star = ''
-            scseg = ''
-            gmseg = ''
+            fname_t2star = ''
+            fname_scseg = ''
+            list_fname_gmseg = []
             for file_name in os.listdir('.'):
                 if 'im' in file_name:
-                    t2star = file_name
+                    fname_t2star = file_name
                 elif 'gm' in file_name:
-                    gmseg = file_name
+                    list_fname_gmseg.append(file_name)
                 elif 'seg' in file_name and 'gm' not in file_name:
-                    scseg = file_name
+                    fname_scseg = file_name
 
-            new_names = []
-            for f_name in [t2star, scseg, gmseg]:
+            list_new_names = []
+            list_fnames = deepcopy(list_fname_gmseg)
+            list_fnames.append(fname_scseg)
+            list_fnames.append(fname_t2star)
+
+            for f_name in list_fnames:
                 im = Image(f_name)
                 orientation = get_orientation_3d(im)
                 if orientation != 'RPI':
                     im = set_orientation(im, 'RPI')
-                    new_names.append(im.absolutepath)
+                    list_new_names.append(im.absolutepath)
                     im.save()
                     # new_names.append(output.split(':')[1][1:-1])
                 else:
-                    new_names.append(f_name)
+                    list_new_names.append(f_name)
 
-            t2star = new_names[0]
-            scseg = new_names[1]
-            gmseg = new_names[2]
+            fname_t2star = list_new_names[-1]
+            fname_scseg = list_new_names[-2]
+            list_fname_gmseg = list_new_names[:-2]
 
-            t2star = resample_image(t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
-            scseg = resample_image(scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
-            gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
+            fname_t2star = resample_image(fname_t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
+            fname_scseg = resample_image(fname_scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
+            list_fname_gmseg = [resample_image(fname_gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True) for fname_gmseg in list_fname_gmseg]
 
             if denoise:
                 from sct_maths import denoise_ornlm
-                t2star_im = Image(t2star)
+                t2star_im = Image(fname_t2star)
                 t2star_im.data = denoise_ornlm(t2star_im.data)
                 t2star_im.save()
 
-            mask_box, fname_seg_in_IRP = crop_t2_star(t2star, scseg, box_size=model_image_size)
+            mask_box, fname_seg_in_IRP = crop_t2_star(fname_t2star, fname_scseg, box_size=model_image_size)
 
-            gmseg_im = Image(gmseg)
-            mask_im = Image(mask_box)
-            gmseg_im.crop_and_stack(mask_im, suffix='_croped', save=True)
-            sct.run('sct_image -i '+sct.extract_fname(gmseg)[1] + '_croped.nii.gz -setorient IRP')
+            for fname_gmseg in list_fname_gmseg:
+                im_gmseg = Image(fname_gmseg)
+                im_mask = Image(mask_box)
+                im_gmseg.crop_and_stack(im_mask, suffix='_croped', save=True)
+                sct.run('sct_image -i '+sct.extract_fname(fname_gmseg)[1] + '_croped.nii.gz -setorient IRP')
 
             os.chdir(original_path)
     save_by_slice(path_to_dataset)
