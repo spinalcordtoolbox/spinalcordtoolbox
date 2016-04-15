@@ -267,9 +267,11 @@ def check_file_exist(fname, verbose=1):
     if os.path.isfile(fname_to_test):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
+        return True
         pass
     else:
         printv('\nERROR: The file ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        return False
 
 
 #=======================================================================================================================
