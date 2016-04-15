@@ -18,7 +18,7 @@ import commands
 import sys
 from msct_parser import Parser
 from nibabel import Nifti1Image, save
-from numpy import array, asarray, sum, isnan, round, mgrid, zeros, mean, std, delete
+from numpy import array, asarray, sum, isnan, round, mgrid, zeros, mean, std, delete, logical_or
 from scipy import ndimage
 from sct_apply_transfo import Transform
 import sct_utils as sct
@@ -163,7 +163,7 @@ class SpinalCordStraightener(object):
 
     def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15, padding=30,
                  leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='nurbs',
-                 precision=2.0, threshold_distance=1.5, type_window='hanning', window_length=50, crop=1, output_filename=''):
+                 precision=2.0, threshold_distance=2.5, type_window='hanning', window_length=50, crop=1, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -282,7 +282,7 @@ class SpinalCordStraightener(object):
                 number_of_points = int(self.precision * nz)
 
             # 2. extract bspline fitting of the centreline, and its derivatives
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=False)
             from msct_types import Centerline
             centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
@@ -315,20 +315,21 @@ class SpinalCordStraightener(object):
             start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
             end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
 
-            padding_z = int(ceil(abs(start_point / float(nz)))) + 1
+            padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz))
             sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,'+str(padding_z))
             image_centerline_pad = Image('tmp.centerline_pad.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
             hdr_warp = image_centerline_pad.hdr.copy()
 
-            start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point + padding_z]])[0]
-            end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point + padding_z]])[0]
+            start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
+            end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
             number_of_voxel = nx * ny * nz
             sct.printv("Number of voxel = " + str(number_of_voxel))
 
             time_centerlines = time.time()
-            z_centerline = [item + padding_z for item in z_centerline]
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('tmp.centerline_pad.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=False)
+            #z_centerline = [item + padding_z for item in z_centerline]
             centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
                                     x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
@@ -373,8 +374,8 @@ class SpinalCordStraightener(object):
             time_get_distances_from_planes = time.time()
             distances_curved = centerline.get_distances_from_planes(physical_coordinates, nearest_indexes_curved)
             distances_straight = centerline_straight.get_distances_from_planes(physical_coordinates, nearest_indexes_straight)
-            indexes_out_distance_curved = distances_curved > self.threshold_distance
-            indexes_out_distance_straight = distances_straight > self.threshold_distance
+            indexes_out_distance_curved = logical_or(distances_curved > self.threshold_distance, distances_curved < -self.threshold_distance)
+            indexes_out_distance_straight = logical_or(distances_straight > self.threshold_distance, distances_straight < -self.threshold_distance)
             time_get_distances_from_planes = time.time() - time_get_distances_from_planes
             print 'Time to compute distance between voxels and nearest planes: ' + str(round(time_get_distances_from_planes * 1000.0)) + ' ms'
 
