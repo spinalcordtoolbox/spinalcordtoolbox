@@ -51,7 +51,7 @@ if [ $DISPLAY = true ]; then
   fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 fi
 # compute average cross-sectional area and volume between C3 and C4 levels
-sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 3:4
+sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 3:4 -o t2
 # --> Mean CSA: 77.2454304712 +/- 2.02667261843 mm^2
 # --> Volume (in volume.txt): 2319.0 mm^3
 
@@ -104,18 +104,22 @@ sct_propseg -i mt1.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz
 if [ $DISPLAY = true ]; then
    fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
 fi
-# create mask around spinal cord for faster registration
+# create mask around spinal cord (for faster processing)
 sct_create_mask -i mt1.nii.gz -p centerline,mt1_seg.nii.gz -size 51 -f box -o mask_mt1.nii.gz
 # crop data
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 sct_crop_image -i mt1_seg.nii.gz -m mask_mt1.nii.gz -o mt1_seg_crop.nii.gz
+# create close mask around spinal cord (for more accurate registration results)
+sct_create_mask -i mt1_crop.nii.gz -p centerline,mt1_seg_crop.nii.gz -size 31 -f cylinder -o mask_mt1_crop.nii.gz
 # register mt0 on mt1
-sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,algo=slicereg,metric=MI:step=2,type=im,algo=bsplinesyn,metric=CC,iter=3,gradStep=0.2
+# tips: here we only use rigid transformation because both images have very similar sequence parameters. We don't want to use SyN/BSplineSyN to avoid introducing spurious deformations.
+sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC -m mask_mt1_crop.nii.gz -x spline
 # compute mtr
 sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1_crop.nii.gz
 # register template (in T2 space) to mt1
 # Tips: here we only use the segmentations due to poor SC/CSF contrast at the bottom slice.
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -dseg mt1_seg_crop.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=5:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3
+# Tips: First step: rigid based on images, with moderate smoothing, to capture global rotations for each slice (e.g., if patient turned his head), then at second step: slicereg based on segmentations, in order to match the center of mass of the spinal cord between subject and template.
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -dseg mt1_seg_crop.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC,smooth=3:step=2,type=seg,algo=slicereg,smooth=5
 # concat transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_crop.nii.gz -d mtr.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
@@ -145,13 +149,13 @@ fi
 sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm_with_gmreg -l 33
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
-sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5
+sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -o mt_cst_left_
 # --> Mean CSA of left CST: 5.44513005315 +/- 0.634018309407 mm^2
-sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5
+sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5 -o mt_cst_right_
 # --> Mean CSA of right CST: 5.42871286128 +/- 0.461070598388 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
-sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
+sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz -o mt_cst_dorsal_
 # --> Mean CSA of the left dorsal column: 11.26572434 +/- 0.785786800121 mm^2
 cd ..
 
@@ -159,6 +163,15 @@ cd ..
 # dmri
 # ----------
 cd dmri
+sct_maths -i dmri.nii.gz -mean t -o dmri_mean.nii.gz
+
+## bring T2 segmentation in dmri space to create mask (no optimization)
+#sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dmri_mean.nii.gz -identity 1 -x nn
+## create mask to help moco
+#sct_create_mask -i dmri_mean.nii.gz -p centerline,t2_seg_reg.nii.gz -size 51 -f cylinder
+## crop data
+#sct_crop_image -i dmri.nii.gz -m mask_dmri_mean.nii.gz -o dmri_crop.nii.gz
+
 # create mask to help moco
 sct_create_mask -i dmri.nii.gz -p coord,110x20 -size 60 -f cylinder
 # motion correction
@@ -172,7 +185,7 @@ if [ $DISPLAY = true ]; then
   fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 &
 fi
 # register template to dwi: here we use the template registered to the MT data in order to account for gray matter segmentation
-sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=5:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3,gradStep=0.5
+sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=5:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3
 # concatenate transfo: (1) template -> anat -> MT -> MT_gmreg ; (2) MT_gmreg -> DWI
 sct_concat_transfo -w ../mt/warp_template2mt0mt1_gmseg.nii.gz,warp_MNI-Poly-AMU_T22dwi_moco_mean.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
 # warp template and white matter atlas
@@ -228,14 +241,9 @@ cd ..
 echo "t2/CSA: " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
 echo "mt/MTR: " `grep -v '^#' mt/mtr_in_wm_without_gmreg.txt | grep -v '^$'`
 echo "mt/MTR: " `grep -v '^#' mt/mtr_in_wm_with_gmreg.txt | grep -v '^$'`
-echo "dmri/FA:"
-grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$'
-#t2/CSA:  0, /Users/julien/sct_example_data/t2/t2_seg, 77.245430, 2.026673
-#mt/MTR:  33, white matter, 33.600193, 0.000000
-#mt/MTR:  33, white matter, 31.460819, 0.000000
-#dmri/FA:
-#2, left lateral corticospinal tract, 0.785644, 0.000000
-#17, right lateral corticospinal tract, 0.795717, 0.000000
+echo "mt/CSA: " `grep -v '^#' mt/mt_cst_dorsal_csa_mean.txt | grep -v '^$'`
+echo "dmri/FA:" `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^2'`
+echo "dmri/FA:" `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^17'`
 
 # fMRI results: https://dl.dropboxusercontent.com/u/20592661/sct/result_batch_processing_fmri.png
 # display ending time:
