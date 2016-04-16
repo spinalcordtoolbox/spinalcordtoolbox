@@ -164,28 +164,24 @@ cd ..
 # ----------
 cd dmri
 sct_maths -i dmri.nii.gz -mean t -o dmri_mean.nii.gz
-
-## bring T2 segmentation in dmri space to create mask (no optimization)
-#sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dmri_mean.nii.gz -identity 1 -x nn
-## create mask to help moco
-#sct_create_mask -i dmri_mean.nii.gz -p centerline,t2_seg_reg.nii.gz -size 51 -f cylinder
-## crop data
-#sct_crop_image -i dmri.nii.gz -m mask_dmri_mean.nii.gz -o dmri_crop.nii.gz
-
-# create mask to help moco
-sct_create_mask -i dmri.nii.gz -p coord,110x20 -size 60 -f cylinder
+# bring T2 segmentation in dmri space to create mask (no optimization)
+sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dmri_mean.nii.gz -identity 1 -x nn
+# create mask to help moco and for faster processing
+sct_create_mask -i dmri_mean.nii.gz -p centerline,t2_seg_reg.nii.gz -size 51 -f cylinder
+# crop data
+sct_crop_image -i dmri.nii.gz -m mask_dmri_mean.nii.gz -o dmri_crop.nii.gz
 # motion correction
-sct_dmri_moco -i dmri.nii.gz -bvec bvecs.txt -m mask_dmri.nii.gz
-# bring T2 segmentation in dmri space to help segmentation (no optimization)
-sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dwi_moco_mean.nii.gz -identity 1 -x nn
+sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt -x spline
 # segmentation with propseg
 sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline t2_seg_reg.nii.gz
 # check segmentation
 if [ $DISPLAY = true ]; then
   fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 &
 fi
-# register template to dwi: here we use the template registered to the MT data in order to account for gray matter segmentation
-sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=5:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3
+# register template to dwi
+# Tips: We use the template registered to the MT data in order to account for gray matter segmentation
+# Tips: again, here, we prefer no stick to rigid registration on segmentation following by slicereg to realign center of mass. If there are susceptibility distortions in your EPI, then you might consider adding a third step with bsplinesyn or syn transformation for local adjustment.
+sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=rigid,slicewise=1,smooth=5,iter=50:step=2,type=seg,algo=slicereg,smooth=5
 # concatenate transfo: (1) template -> anat -> MT -> MT_gmreg ; (2) MT_gmreg -> DWI
 sct_concat_transfo -w ../mt/warp_template2mt0mt1_gmseg.nii.gz,warp_MNI-Poly-AMU_T22dwi_moco_mean.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
 # warp template and white matter atlas
@@ -195,7 +191,8 @@ if [ $DISPLAY = true ]; then
   fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
 fi
 # compute DTI metrics
-sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt -m mask_dmri.nii.gz
+# Tips: the flag -method "restore" allows you to estimate the tensor with robust fit (see help)
+sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -z 1:3 -method map -l 2,17 -o fa_in_cst
 cd ..
