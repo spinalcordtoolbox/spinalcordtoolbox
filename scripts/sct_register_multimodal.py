@@ -278,9 +278,10 @@ def main():
         sct.check_if_rpi(fname_dest)
 
     # Check if user selected type=seg, but did not input segmentation data
-    if True in ['type=seg' in paramreg_user[i] for i in range(len(paramreg_user))]:
-        if fname_src_seg == '' or fname_dest_seg == '':
-            sct.printv('\nERROR: if you select type=seg you must specify -iseg and -dseg flags.\n', 1, 'error')
+    if 'paramreg_user' in locals():
+        if True in ['type=seg' in paramreg_user[i] for i in range(len(paramreg_user))]:
+            if fname_src_seg == '' or fname_dest_seg == '':
+                sct.printv('\nERROR: if you select type=seg you must specify -iseg and -dseg flags.\n', 1, 'error')
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
