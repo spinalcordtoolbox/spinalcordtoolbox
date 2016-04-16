@@ -11,13 +11,14 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from msct_parser import Parser
 import sys
-import os
 import math
+import time
+
+from msct_parser import Parser
+import os
 import scipy
 import nibabel
-import time
 import sct_utils as sct
 from msct_image import Image
 
@@ -118,7 +119,7 @@ class ImageCropper(object):
 
         return self.result
 
-    # crop the image in order to keep only voxels in the mask
+    # mask the image in order to keep only voxels in the mask
     # doesn't change the image dimension
     def crop_from_mask_with_background(self):
         from numpy import asarray, einsum
@@ -159,9 +160,6 @@ class ImageCropper(object):
         suffix_out = '_crop'
         remove_temp_files = self.rm_tmp_files
         verbose = self.verbose
-
-        # for faster processing, all outputs are in NIFTI
-        fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '
 
         # Check file existence
         sct.printv('\nCheck file existence...', verbose)
