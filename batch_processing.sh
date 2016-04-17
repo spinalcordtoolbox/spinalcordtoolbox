@@ -51,7 +51,7 @@ if [ $DISPLAY = true ]; then
   fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 fi
 # compute average cross-sectional area and volume between C3 and C4 levels
-sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 3:4 -o t2
+sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 3:4
 # --> Mean CSA: 77.2454304712 +/- 2.02667261843 mm^2
 # --> Volume (in volume.txt): 2319.0 mm^3
 
@@ -163,8 +163,8 @@ cd ..
 # dmri
 # ----------
 cd dmri
-sct_maths -i dmri.nii.gz -mean t -o dmri_mean.nii.gz
 # bring T2 segmentation in dmri space to create mask (no optimization)
+sct_maths -i dmri.nii.gz -mean t -o dmri_mean.nii.gz
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dmri_mean.nii.gz -identity 1 -x nn
 # create mask to help moco and for faster processing
 sct_create_mask -i dmri_mean.nii.gz -p centerline,t2_seg_reg.nii.gz -size 51 -f cylinder
@@ -178,19 +178,19 @@ sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline t2_seg_reg.nii.gz
 if [ $DISPLAY = true ]; then
   fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 &
 fi
-# register template to dwi
+# Register template to dwi
 # Tips: We use the template registered to the MT data in order to account for gray matter segmentation
 # Tips: again, here, we prefer no stick to rigid registration on segmentation following by slicereg to realign center of mass. If there are susceptibility distortions in your EPI, then you might consider adding a third step with bsplinesyn or syn transformation for local adjustment.
 sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=rigid,slicewise=1,smooth=5,iter=50:step=2,type=seg,algo=slicereg,smooth=5
-# concatenate transfo: (1) template -> anat -> MT -> MT_gmreg ; (2) MT_gmreg -> DWI
+# Concatenate transfo: (1) template -> anat -> MT -> MT_gmreg ; (2) MT_gmreg -> DWI
 sct_concat_transfo -w ../mt/warp_template2mt0mt1_gmseg.nii.gz,warp_MNI-Poly-AMU_T22dwi_moco_mean.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
-# warp template and white matter atlas
+# Warp template and white matter atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
-# visualize white matter template and lateral CST on DWI
+# Visualize white matter template and lateral CST on DWI
 if [ $DISPLAY = true ]; then
   fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
 fi
-# compute DTI metrics
+# Compute DTI metrics
 # Tips: the flag -method "restore" allows you to estimate the tensor with robust fit (see help)
 sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
@@ -208,8 +208,6 @@ sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz
 # tips: if you have low SNR you can group consecutive images with "-g"
 # put T2 segmentation into fmri space
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d fmri_moco_mean.nii.gz -identity 1 -x nn
-# extract centerline
-sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
 # segment mean fMRI volume
 # tips: we use the T2 segmentation to help with fMRI segmentation
 # tips: we use "-radius 5" otherwise the segmentation is too small
@@ -235,13 +233,20 @@ cd ..
 
 # display results (to easily compare integrity across SCT versions)
 # ----------
-echo "t2/CSA: " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
-echo "mt/MTR: " `grep -v '^#' mt/mtr_in_wm_without_gmreg.txt | grep -v '^$'`
-echo "mt/MTR: " `grep -v '^#' mt/mtr_in_wm_with_gmreg.txt | grep -v '^$'`
-echo "mt/CSA: " `grep -v '^#' mt/mt_cst_dorsal_csa_mean.txt | grep -v '^$'`
-echo "dmri/FA:" `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^2'`
-echo "dmri/FA:" `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^17'`
-
-# fMRI results: https://dl.dropboxusercontent.com/u/20592661/sct/result_batch_processing_fmri.png
-# display ending time:
 echo "Ended at: $(date +%x_%r)"
+echo
+echo "t2/CSA:   " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
+echo "mt/MTR:   " `grep -v '^#' mt/mtr_in_wm_without_gmreg.txt | grep -v '^$'`
+echo "mt/MTRadj:" `grep -v '^#' mt/mtr_in_wm_with_gmreg.txt | grep -v '^$'`
+echo "mt/CSA:   " `grep -v '^#' mt/mt_cst_dorsal_csa_mean.txt | grep -v '^$'`
+echo "dmri/FA:  " `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^2'`
+echo "dmri/FA:  " `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^17'`
+# results on commit f1f0ccffea28da70841c721d72d51098f25159a6
+#t2/CSA:    0, /Users/julien/sct_example_data/t2/t2_seg, 77.245430, 2.026673
+#mt/MTR:    33, white matter, 32.423571, 0.000000
+#mt/MTRadj: 33, white matter, 32.484955, 0.000000
+#mt/CSA:    0, /Users/julien/sct_example_data/mt/left_dorsal_column, 10.372108, 0.824540
+#dmri/FA:   17, right lateral corticospinal tract, 0.783539, 0.000000
+#dmri/FA:   2, left lateral corticospinal tract, 0.771717, 0.000000
+#fMRI results: https://dl.dropboxusercontent.com/u/20592661/sct/result_batch_processing_fmri.png
+echo
