@@ -31,67 +31,67 @@ import time
 from math import asin
 
 
-def register_seg(seg_input, seg_dest, verbose=1):
-    """Slice-by-slice registration by translation of two segmentations.
-    For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
-    mass in voxel unit.
-    The segmentations can be of different sizes but the output segmentation must be smaller than the input segmentation.
-
-    input:
-        seg_input: name of moving segmentation file (type: string)
-        seg_dest: name of fixed segmentation file (type: string)
-
-    output:
-        x_displacement: list of translation along x axis for each slice (type: list)
-        y_displacement: list of translation along y axis for each slice (type: list)
-
-    """
-
-    seg_input_img = Image(seg_input)
-    seg_dest_img = Image(seg_dest)
-    seg_input_data = seg_input_img.data
-    seg_dest_data = seg_dest_img.data
-
-    x_center_of_mass_input = [0] * seg_dest_data.shape[2]
-    y_center_of_mass_input = [0] * seg_dest_data.shape[2]
-    sct.printv('\nGet center of mass of the input segmentation for each slice '
-               '(corresponding to a slice in the output segmentation)...', verbose)  # different if size of the two seg are different
-    # TODO: select only the slices corresponding to the output segmentation
-
-    # grab physical coordinates of destination origin
-    coord_origin_dest = seg_dest_img.transfo_pix2phys([[0, 0, 0]])
-
-    # grab the voxel coordinates of the destination origin from the source image
-    [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
-
-    # calculate center of mass for each slice of the input image
-    for iz in xrange(seg_dest_data.shape[2]):
-        # starts from z_o, which is the origin of the destination image in the source image
-        x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
-
-    # initialize data
-    x_center_of_mass_output = [0] * seg_dest_data.shape[2]
-    y_center_of_mass_output = [0] * seg_dest_data.shape[2]
-
-    # calculate center of mass for each slice of the destination image
-    sct.printv('\nGet center of mass of the destination segmentation for each slice ...', verbose)
-    for iz in xrange(seg_dest_data.shape[2]):
-        try:
-            x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(array(seg_dest_data[:, :, iz]))
-        except Exception as e:
-            sct.printv('WARNING: Exception error in msct_register_regularized during register_seg:', 1, 'warning')
-            print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
-            print e
-
-    # calculate displacement in voxel space
-    x_displacement = [0] * seg_input_data.shape[2]
-    y_displacement = [0] * seg_input_data.shape[2]
-    sct.printv('\nGet displacement by voxel...', verbose)
-    for iz in xrange(seg_dest_data.shape[2]):
-        x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
-        y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
-
-    return x_displacement, y_displacement, None
+# def register_seg(seg_input, seg_dest, verbose=1):
+#     """Slice-by-slice registration by translation of two segmentations.
+#     For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
+#     mass in voxel unit.
+#     The segmentations can be of different sizes but the output segmentation must be smaller than the input segmentation.
+#
+#     input:
+#         seg_input: name of moving segmentation file (type: string)
+#         seg_dest: name of fixed segmentation file (type: string)
+#
+#     output:
+#         x_displacement: list of translation along x axis for each slice (type: list)
+#         y_displacement: list of translation along y axis for each slice (type: list)
+#
+#     """
+#
+#     seg_input_img = Image(seg_input)
+#     seg_dest_img = Image(seg_dest)
+#     seg_input_data = seg_input_img.data
+#     seg_dest_data = seg_dest_img.data
+#
+#     x_center_of_mass_input = [0] * seg_dest_data.shape[2]
+#     y_center_of_mass_input = [0] * seg_dest_data.shape[2]
+#     sct.printv('\nGet center of mass of the input segmentation for each slice '
+#                '(corresponding to a slice in the output segmentation)...', verbose)  # different if size of the two seg are different
+#     # TODO: select only the slices corresponding to the output segmentation
+#
+#     # grab physical coordinates of destination origin
+#     coord_origin_dest = seg_dest_img.transfo_pix2phys([[0, 0, 0]])
+#
+#     # grab the voxel coordinates of the destination origin from the source image
+#     [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
+#
+#     # calculate center of mass for each slice of the input image
+#     for iz in xrange(seg_dest_data.shape[2]):
+#         # starts from z_o, which is the origin of the destination image in the source image
+#         x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
+#
+#     # initialize data
+#     x_center_of_mass_output = [0] * seg_dest_data.shape[2]
+#     y_center_of_mass_output = [0] * seg_dest_data.shape[2]
+#
+#     # calculate center of mass for each slice of the destination image
+#     sct.printv('\nGet center of mass of the destination segmentation for each slice ...', verbose)
+#     for iz in xrange(seg_dest_data.shape[2]):
+#         try:
+#             x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(array(seg_dest_data[:, :, iz]))
+#         except Exception as e:
+#             sct.printv('WARNING: Exception error in msct_register_regularized during register_seg:', 1, 'warning')
+#             print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
+#             print e
+#
+#     # calculate displacement in voxel space
+#     x_displacement = [0] * seg_input_data.shape[2]
+#     y_displacement = [0] * seg_input_data.shape[2]
+#     sct.printv('\nGet displacement by voxel...', verbose)
+#     for iz in xrange(seg_dest_data.shape[2]):
+#         x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
+#         y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
+#
+#     return x_displacement, y_displacement, None
 
 
 def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
@@ -333,9 +333,9 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
 
     #Delete tmp folder
     os.chdir('../')
-    if remove_tmp_folder:
-        print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp, error_exit='warning')
+    # if remove_tmp_folder:
+    #     print('\nRemove temporary files...')
+    #     sct.run('rm -rf '+path_tmp, error_exit='warning')
     if paramreg.algo == 'Rigid':
         return x_displacement, y_displacement, theta_rotation
     if paramreg.algo == 'Translation':
@@ -394,11 +394,11 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
     """
     from nibabel import load
     from math import cos, sin
-    from sct_image import get_orientation
+    from sct_image import get_orientation_3d
 
     #Make sure image is in rpi format
     sct.printv('\nChecking if the image of destination is in RPI orientation for the warping field generation ...', verbose)
-    orientation = get_orientation(fname_dest, filename=True)
+    orientation = get_orientation_3d(fname_dest, filename=True)
     if orientation != 'RPI':
         sct.printv('\nWARNING: The image of destination is not in RPI format. Dimensions of the warping field might be inverted.', verbose)
     else: sct.printv('\tOK', verbose)

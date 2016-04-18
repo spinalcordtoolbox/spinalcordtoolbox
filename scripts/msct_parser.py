@@ -78,7 +78,7 @@
 #########################################################################################
 
 import sct_utils as sct
-from msct_types import Coordinate # useful for Coordinate
+from msct_types import Coordinate  # DO NOT REMOVE THIS LINE!!!!!!! IT IS MANDATORY!
 
 ########################################################################################################################
 ####### OPTION
@@ -199,6 +199,7 @@ class Option:
         sct.printv("Check file existence...", 0)
         nii = False
         niigz = False
+        viewer = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
             if self.parser.check_file_exist:
@@ -216,6 +217,9 @@ class Option:
                 nii, niigz = False, True
             param_tmp = param[:-7]
             pass
+        elif param.lower() == "viewer":
+            viewer = True
+            pass
         else:
             sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
 
@@ -223,6 +227,8 @@ class Option:
             return param_tmp+'.nii'
         elif niigz:
             return param_tmp+'.nii.gz'
+        elif viewer:
+            return param
         else:
             sct.printv("ERROR: File "+param+" does not exist. Exiting", type='error')
 
@@ -277,7 +283,7 @@ class Parser:
 
         # check if help is asked by the user
         if "-h" in arguments:
-            print self.usage.generate()
+            print(self.usage.generate())
             exit(1)
 
         if "-sf" in arguments:
@@ -306,7 +312,7 @@ class Parser:
                     temp_str = arguments[index]
                     index_temp = index
                     if index_temp < len(arguments)-1:
-                        if arguments[index] == '"':
+                        if arguments[index][0] == '"':
                             while arguments[index_temp + 1][-1] != '"':  # loop until we find a double quote. Then concatenate.
                                 temp_str += ' ' + arguments[index_temp + 1]
                                 index_temp += 1
@@ -321,7 +327,8 @@ class Parser:
                                 if index_temp >= len(arguments)-1:
                                     break
                     index_next = index_temp+1
-                    arguments_temp.append(temp_str)
+                    if '"' not in temp_str:
+                        arguments_temp.append(temp_str)
         arguments = arguments_temp
 
         skip = False
@@ -434,36 +441,35 @@ class Usage:
         self.arguments_string = ''
         self.section = dict()
 
-    def set_header(self):
-        from time import gmtime
-        from os.path import basename, getmtime
-        creation = gmtime(getmtime(self.file))
-        self.header = """
-"""+basename(self.file)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-Version: """ + str(self.get_sct_version())
+#     def set_header(self):
+#         from time import gmtime
+#         from os.path import basename, getmtime
+#         creation = gmtime(getmtime(self.file))
+#         self.header = """
+# """+basename(self.file)+"""
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+# Version: """ + str(self.get_sct_version())
 
     def set_description(self, description):
-        self.description = '\n\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
+        self.description = '\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
 
     def addSection(self, section):
         self.section[len(self.arguments)+1] = section
 
-    def get_sct_version(self):
-        from commands import getstatusoutput
-        from os.path import basename
-        status, path_sct = getstatusoutput('echo $SCT_DIR')
-        fname = str(path_sct)+'/version.txt'
-        content = ""
-        with open(fname, mode = 'r') as f:
-            content = f.readlines()
-        f.close()
-        return content[0]
+    # def get_sct_version(self):
+    #     from commands import getstatusoutput
+    #     status, path_sct = getstatusoutput('echo $SCT_DIR')
+    #     fname = str(path_sct)+'/version.txt'
+    #     content = ""
+    #     with open(fname, mode = 'r') as f:
+    #         content = f.readlines()
+    #     f.close()
+    #     return content[0]
 
     def set_usage(self):
         from os.path import basename
-        self.usage = '\n\nUSAGE\n' + basename(self.file)
+        self.usage = '\n\nUSAGE\n' + basename(self.file).strip('.py')
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
         mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
         for opt in mandatory:
@@ -481,17 +487,17 @@ Version: """ + str(self.get_sct_version())
         mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory and not self.arguments[opt[0]].deprecated_by]
         optional = [opt[0] for opt in sorted_arguments if not self.arguments[opt[0]].mandatory and not self.arguments[opt[0]].deprecated_by]
         if mandatory:
-            self.arguments_string = '\n\nMANDATORY ARGUMENTS\n'
+            self.arguments_string = '\nMANDATORY ARGUMENTS\n'
             for opt in mandatory:
                 # check if section description has to been displayed
                 if self.arguments[opt].order in self.section:
                     self.arguments_string += self.section[self.arguments[opt].order] + '\n'
                 # display argument
                 type_value = self.refactor_type_value(opt)
-                line = ["  "+opt+" "+type_value, self.align(self.arguments[opt].description)]
+                line = [" "+opt+" "+type_value, self.align(self.arguments[opt].description)]
                 self.arguments_string += self.tab(line) + '\n'
         if optional:
-            self.arguments_string += '\n\nOPTIONAL ARGUMENTS\n'
+            self.arguments_string += '\nOPTIONAL ARGUMENTS\n'
             for opt in optional:
                 # check if section description has to been displayed
                 if self.arguments[opt].order in self.section:
@@ -503,7 +509,7 @@ Version: """ + str(self.get_sct_version())
                     description += " Default value = "+str(self.arguments[opt].default_value)
                 if self.arguments[opt].deprecated:
                     description += " Deprecated argument!"
-                line = ["  "+opt+" "+type_value, self.align(description)]
+                line = [" "+opt+" "+type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
 
         if len(self.arguments)+1 in self.section:
@@ -522,18 +528,17 @@ Version: """ + str(self.get_sct_version())
 
     def set_example(self):
         from os.path import basename
-        self.example = '\n\nEXAMPLE\n' + \
-            basename(self.file)
+        self.example = '\nEXAMPLE\n' + \
+            basename(self.file).strip('.py')
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
-        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
-        for opt in [opt[0] for opt in sorted_arguments if (self.arguments[opt[0]].example)]:
+        for opt in [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].example and not self.arguments[opt[0]].deprecated_by]:
             if type(self.arguments[opt].example) is list:
                 self.example += ' ' + opt + ' ' + str(self.arguments[opt].example[0])
             else:
                 self.example += ' ' + opt + ' ' + str(self.arguments[opt].example)
 
     def generate(self, error=None):
-        self.set_header()
+        # self.set_header()
         self.set_arguments()
         self.set_usage()
         self.set_example()
@@ -639,13 +644,13 @@ class DocSourceForge:
         self.arguments_string = ''
         self.section = dict()
 
-    def set_header(self):
-        from time import gmtime
-        from os.path import basename, getmtime
-        creation = gmtime(getmtime(self.file))
-        self.header = """
-"""+basename(self.file)+"""
-------"""
+#     def set_header(self):
+#         from time import gmtime
+#         from os.path import basename, getmtime
+#         creation = gmtime(getmtime(self.file))
+#         self.header = """
+# """+basename(self.file)+"""
+# ------"""
 
     def set_description(self, description):
         self.description = '-----------\n#####DESCRIPTION#####\n' + self.align(description, length=100, pad=0)
@@ -718,7 +723,7 @@ class DocSourceForge:
         self.example += '`'
 
     def generate(self, error=None):
-        self.set_header()
+        # self.set_header()
         self.set_description(self.parser.usage.description[2+len('description'):])
         self.set_arguments()
         self.set_usage()

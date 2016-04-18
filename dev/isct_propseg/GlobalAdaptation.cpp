@@ -28,9 +28,9 @@ CMatrix4x4 GlobalAdaptation::adaptation(bool itkAmoeba)
 		OptimizerType::BoundSelectionType boundSelect(3);
 		boundSelect.Fill( 2 );
 		OptimizerType::BoundValueType upperBound(3);
-		upperBound[0] = mean1+3*std1; upperBound[1] = mean2+3*std2; upperBound[2] = mean3+3*std3;
+		upperBound[0] = mean1+2*std1; upperBound[1] = mean2+2*std2; upperBound[2] = mean3+2*std3;
 		OptimizerType::BoundValueType lowerBound(3);
-		lowerBound[0] = mean1-3*std1; lowerBound[1] = mean2-3*std2; lowerBound[2] = mean3-3*std3;
+		lowerBound[0] = mean1-2*std1; lowerBound[1] = mean2-2*std2; lowerBound[2] = mean3-2*std3;
 
 		FoncteurGlobalAdaptation* f = new FoncteurGlobalAdaptation(image_,mesh_->getListTrianglesBarycentre(),numberOfParameters);
 		f->setPointRotation(pointRotation_);
@@ -68,7 +68,7 @@ CMatrix4x4 GlobalAdaptation::adaptation(bool itkAmoeba)
 			p.push_back(pFinal[i]);
 	}
 	else {
-		// Utilisation de la méthode du Simplex implémentée dans la librairie ITK
+		// Utilisation de la mï¿½thode du Simplex implï¿½mentï¿½e dans la librairie ITK
 		itk::AmoebaOptimizer::Pointer optimizer = itk::AmoebaOptimizer::New();
 	
 		SCRegion* region = new SCRegion();

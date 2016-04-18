@@ -51,6 +51,10 @@ PropagatedDeformableModel::PropagatedDeformableModel()
 
 	tradeoff_d_bool = false;
 	tradeoff_d_ = 0.0;
+
+	line_search = 15;
+	alpha = 25.0;
+	beta = 0.0;
 }
 
 
@@ -85,6 +89,10 @@ PropagatedDeformableModel::PropagatedDeformableModel(int resolutionRadiale, int 
 
 	tradeoff_d_bool = false;
 	tradeoff_d_ = 0.0;
+
+	line_search = 15;
+	alpha = 25.0;
+	beta = 0.0;
 }
 
 
@@ -337,7 +345,7 @@ void PropagatedDeformableModel::computeNewBand(SpinalCord* mesh, CVector3 initia
             point[2] += stretchingFactorWorld[2]*vecPoint[2];
 			mesh->addPoint(new Vertex(point,(point-pointIntermediaire).Normalize()));
 		}
-		// Ajout des triangles - attention à la structure en cercle
+		// Ajout des triangles - attention ï¿½ la structure en cercle
 		for (int k=0; k<resolutionRadiale_-1; k++)
 		{
 			mesh->addTriangle(offsetTriangles+(len-1)*resolutionRadiale_+k,offsetTriangles+(len-1)*resolutionRadiale_+k+1,offsetTriangles+len*resolutionRadiale_+k);
@@ -398,7 +406,7 @@ SpinalCord* PropagatedDeformableModel::mergeBidirectionalSpinalCord(SpinalCord* 
 		{
 			mesh->addPoint(new Vertex(*listPoints1[(numberOfDisk-i)*radialResolution-1-j]));//(numberOfDisk-1-i)*radialResolution+j]));
 		}
-		// Ajout des triangles - attention à la structure en cercle
+		// Ajout des triangles - attention ï¿½ la structure en cercle
 		for (int k=0; k<radialResolution-1; k++)
 		{
 			mesh->addTriangle((i-1)*radialResolution+k,(i-1)*radialResolution+k+1,i*radialResolution+k);
@@ -433,7 +441,7 @@ SpinalCord* PropagatedDeformableModel::mergeBidirectionalSpinalCord(SpinalCord* 
 		{
 			mesh->addPoint(new Vertex(*listPoints2[i*radialResolution+(j+indexMin)%radialResolution]));
 		}
-		// Ajout des triangles - attention à la structure en cercle
+		// Ajout des triangles - attention ï¿½ la structure en cercle
 		for (int k=0; k<radialResolution-1; k++)
 		{
 			mesh->addTriangle(offsetTriangles+(i-1)*radialResolution+k,offsetTriangles+(i-1)*radialResolution+k+1,offsetTriangles+i*radialResolution+k);
@@ -471,10 +479,12 @@ SpinalCord* PropagatedDeformableModel::propagationMesh(int numberOfMesh)
     if (verbose_) cout << endl << endl << "Initial deformation : " << initialMesh->getNbrOfPoints() << " points and " << initialMesh->getNbrOfTriangles() << " triangles" << endl;
     DeformableModelBasicAdaptator *deformableAdaptator = new DeformableModelBasicAdaptator(image3D_,initialMesh,numberOfDeformIteration_,const_contrast,false);
     deformableAdaptator->setVerbose(verbose_);
-    deformableAdaptator->setNumberOfIteration(8);
+    deformableAdaptator->setNumberOfIteration(8); //8
     deformableAdaptator->setStopCondition(0.05);
 	if (tradeoff_d_bool) deformableAdaptator->setTradeOff(tradeoff_d_);
     //deformableAdaptator->setProgressiveLineSearchLength(true);// tested but not optimal
+    deformableAdaptator->addCorrectionPoints(points_mask_correction_);
+
     deformableAdaptator->adaptation(); // launch the deformation
     meshOutput = deformableAdaptator->getSpinalCordOutput(); // get the spinal cord segmentation mesh
     delete deformableAdaptator; // release memory
@@ -622,15 +632,18 @@ SpinalCord* PropagatedDeformableModel::propagationMesh(int numberOfMesh)
              *****************************************************************************************/
             if (propCenterline_)
             {
-                // computation of the rotation based on centerline
-                // search of nearest point in centerline
+                // Computation of the rotation based on the centerline
+                // Find the point in centerline that is the nearest point to our new starting point.
                 double nearest_point_value = centerline_approximator.getNearestPoint(newStartPoint, range);
+                
+                // Evaluate the derivative of the centerline at this location
                 CVector3 normal = centerline_approximator.EvaluateGradient(nearest_point_value).Normalize();
                 
-                // compute normal at this position
-                if (numberOfMesh == 1) normal = -normal;
+                // Compute normal of our mesh at the starting position
+                if (numberOfMesh == 1) normal = -normal; // the normal is inverted for the first mesh
                 CVector3 lastNormalMesh = (newStartPoint-lastPoint).Normalize();
-                // compute rotation between two normals
+                
+                // Compute rotation between the two normals. We need to compute all the necessary axis for establishing referentials.
                 CVector3 directionCourantePerpendiculaireMesh, directionCourantePerpendiculaireCenterline;
                 if (lastNormalMesh[2] == 0.0) directionCourantePerpendiculaireMesh = CVector3(0.0,0.0,1.0);
                 else directionCourantePerpendiculaireMesh = CVector3(1.0,2.0,-(lastNormalMesh[0]+2*lastNormalMesh[1])/lastNormalMesh[2]).Normalize();
@@ -639,6 +652,7 @@ SpinalCord* PropagatedDeformableModel::propagationMesh(int numberOfMesh)
                 else directionCourantePerpendiculaireCenterline = CVector3(1.0,2.0,-(normal[0]+2*normal[1])/normal[2]).Normalize();
                 Referential refCenterline = Referential(normal^directionCourantePerpendiculaireCenterline, directionCourantePerpendiculaireCenterline, normal, newStartPoint);
                 CMatrix4x4 transformationRotation = refMesh.getTransformation(refCenterline);
+                // As the referential origin is the starting point of our mesh, the transformation that is computed is only a rotation and does not contain any translation.
                 
                 uniqueMesh->transform(transformationRotation,newStartPoint);
             }
@@ -676,7 +690,9 @@ SpinalCord* PropagatedDeformableModel::propagationMesh(int numberOfMesh)
                     deformableAdaptator->changedParameters();
                     deformableAdaptator->setAlpha(alpha);
                     deformableAdaptator->setBeta(beta);
+                    deformableAdaptator->setLineSearch(line_search);
                 }
+                deformableAdaptator->addCorrectionPoints(points_mask_correction_);
                 
                 /******************************************************************************************
                  * Deformation of the mesh
@@ -792,10 +808,12 @@ void PropagatedDeformableModel::rafinementGlobal()
     if (tradeoff_d_bool) deformableAdaptator->setTradeOff(tradeoff_d_);
 	deformableAdaptator->setVerbose(verbose_);
 	deformableAdaptator->changedParameters();
+	deformableAdaptator->setLineSearch(15);
 	deformableAdaptator->setAlpha(25);
 	deformableAdaptator->setBeta(50);
 	deformableAdaptator->setNumberOptimizerIteration(250);
 	deformableAdaptator->setNumberOfIteration(3);
+	deformableAdaptator->addCorrectionPoints(points_mask_correction_);
 	deformableAdaptator->adaptation();
 	delete meshOutputFinal;
 	meshOutputFinal = deformableAdaptator->getSpinalCordOutput();

@@ -8,20 +8,25 @@
 # TODO: list functions to test in help (do a search in testing folder)
 
 
-import os
-import getopt
 import sys
 import time
-import commands
+
+import os
 from msct_parser import Parser
+
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# TODO: put it back below when working again (julien 2016-04-04)
+# <<<
+# OLD
+# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# NEW
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
+# >>>
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 sys.path.append(path_sct + '/testing')
 import sct_utils as sct
-from os import listdir
-from os.path import isfile, join
 import importlib
 
 # define nice colors
@@ -148,13 +153,14 @@ def fill_functions():
     # functions.append('sct_flatten_sagittal')
     functions.append('sct_fmri_compute_tsnr')
     functions.append('sct_fmri_moco')
-    functions.append('sct_get_centerline')
+    # functions.append('sct_get_centerline')
     functions.append('sct_image')
     functions.append('sct_label_utils')
     functions.append('sct_label_vertebrae')
     functions.append('sct_maths')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
+    functions.append('sct_register_graymatter')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
     functions.append('sct_resample')
@@ -163,6 +169,7 @@ def fill_functions():
     functions.append('sct_straighten_spinalcord')
     functions.append('sct_warp_template')
     functions.append('sct_documentation')
+    functions.append('sct_dmri_create_noisemask')
     return functions
 
 
@@ -263,7 +270,7 @@ def test_function(script_name):
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Crash test for functions of the Spinal Cord Toolbox.')
+    parser.usage.set_description('Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
     parser.add_option(name="-f",
                       type_value="str",
                       description="Test this specific script (do not add extension).",
@@ -271,7 +278,7 @@ def get_parser():
                       example='sct_propseg')
     parser.add_option(name="-d",
                       type_value="multiple_choice",
-                      description="Test this specific script (do not add extension).",
+                      description="Download testing data.",
                       mandatory=False,
                       default_value=param.download,
                       example=['0', '1'])

@@ -15,11 +15,11 @@
 
 # from msct_base_classes import BaseScript
 import sys
+
 from os import chdir
-from time import strftime
 import numpy as np
 from scipy.signal import argrelextrema, gaussian
-from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end
+from sct_utils import extract_fname, printv, run, generate_output_file, tmp_create
 from msct_parser import Parser
 from msct_image import Image
 
@@ -48,7 +48,7 @@ def get_parser():
                       example="t2_seg.nii.gz")
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
-                      description='Initialize labeling by providing slice number (in superior-inferior direction!!) and disc value. Value corresponds to vertebral level above disc (e.g., for C3/C4 disc, value=3). Separate with ","',
+                      description='Initialize labeling by providing slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
                       mandatory=False,
                       example=['125,3'])
     parser.add_option(name="-initcenter",
@@ -61,6 +61,11 @@ def get_parser():
                       mandatory=False,
                       default_value='',
                       example='t2_seg_labeled.nii.gz')
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="Output folder.",
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name="-denoise",
                       type_value="multiple_choice",
                       description="Apply denoising filter to the data. Sometimes denoising is too aggressive, so use with care.",
@@ -111,9 +116,13 @@ def main(args=None):
     fname_seg = arguments['-s']
     # contrast = arguments['-t']
     if '-o' in arguments:
-        fname_out = arguments["-o"]
+        file_out = arguments["-o"]
     else:
-        fname_out = ''
+        file_out = ''
+    if '-ofolder' in arguments:
+        path_output = arguments['-ofolder']
+    else:
+        path_output = ''
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -125,8 +134,7 @@ def main(args=None):
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
-    path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    run('mkdir '+path_tmp, verbose)
+    path_tmp = tmp_create(verbose=verbose)
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
@@ -151,9 +159,15 @@ def main(args=None):
     else:
         printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
 
+    # # resample to 1mm isotropic
+    # printv('\nResample to 1mm isotropic...', verbose)
+    # run('sct_resample -i data.nii -mm 1x1x1 -x linear -o data_1mm.nii', verbose)
+    # run('sct_resample -i segmentation.nii.gz -mm 1x1x1 -x linear -o segmentation_1mm.nii.gz', verbose)
+    # run('sct_resample -i labelz.nii.gz -mm 1x1x1 -x linear -o labelz_1mm.nii', verbose)
+
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -param all_labels=0,bspline_meshsize=3x3x5 -qc 0')  # here using all_labels=0 because of issue #610
+    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -192,17 +206,17 @@ def main(args=None):
     printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')
 
-    # Build fname_out
-    if fname_out == '':
+    # Build file_out
+    if file_out == '':
         path_seg, file_seg, ext_seg = extract_fname(fname_seg)
-        fname_out = path_seg+file_seg+'_labeled'+ext_seg
+        file_out = file_seg+'_labeled'+ext_seg
 
     # come back to parent folder
     chdir('..')
 
     # Generate output files
     printv('\nGenerate output files...', verbose)
-    generate_output_file(path_tmp+'segmentation_labeled.nii.gz', fname_out)
+    generate_output_file(path_tmp+'segmentation_labeled.nii.gz', path_output+file_out)
 
     # Remove temporary files
     if remove_tmp_files == 1:
@@ -211,7 +225,7 @@ def main(args=None):
 
     # to view results
     printv('\nDone! To view results, type:', verbose)
-    printv('fslview '+fname_in+' '+fname_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
+    printv('fslview '+fname_in+' '+path_output+file_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
 
 
@@ -222,7 +236,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
     shift_AP = 17  # shift the centerline towards the spine (in mm).
     size_AP = 4  # window size in AP direction (=y) in mm
     size_RL = 7  # window size in RL direction (=x) in mm
-    size_IS = 7  # window size in RL direction (=z) in mm
+    size_IS = 7  # window size in IS direction (=z) in mm
     searching_window_for_maximum = 5  # size used for finding local maxima
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
     gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
@@ -255,9 +269,11 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
     # Compute intensity profile across vertebrae
     #==================================================
 
-    shift_AP = shift_AP * py
-    size_AP = size_AP * py
-    size_RL = size_RL * px
+    # convert mm to voxel index
+    shift_AP = int(round(shift_AP / py))
+    size_AP = int(round(size_AP / py))
+    size_RL = int(round(size_RL / px))
+    size_IS = int(round(size_IS / pz))
 
     # define z: vector of indices along spine
     z = range(nz)
@@ -328,21 +344,26 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
             ind_I = 0
             for iz in range(length_z_corr):
                 if direction == 'superior':
-                    data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z+iz-size_IS:current_z+iz+size_IS+1]
-                    # if part of the data is missing, calculate size of missing data.
-                    padding_size = pattern.shape[2] - data_chunk3d.shape[2]
-                    # pad data with zeros
-                    data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
+                    # if pattern extends towards the top part of the image, then crop and pad with zeros
+                    if current_z+iz+size_IS > nz:
+                        padding_size = current_z+iz+size_IS
+                        data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z+iz-size_IS:current_z+iz+size_IS+1-padding_size]
+                        data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
+                    else:
+                        data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z+iz-size_IS:current_z+iz+size_IS+1]
                 elif direction == 'inferior':
-                    data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z-iz-size_IS:current_z-iz+size_IS+1]
-                    # if part of the data is missing, calculate size of missing data.
-                    padding_size = pattern.shape[2] - data_chunk3d.shape[2]
-                    # pad data with zeros
-                    data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
+                    # if pattern extends towards bottom part of the image, then crop and pad with zeros
+                    if current_z-iz-size_IS < 0:
+                        padding_size = abs(current_z-iz-size_IS)
+                        data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z-iz-size_IS+padding_size:current_z-iz+size_IS+1]
+                        data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
+                    else:
+                        data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP+iy:yc+shift_AP+size_AP+1+iy, current_z-iz-size_IS:current_z-iz+size_IS+1]
                 # plt.matshow(np.flipud(np.mean(data_chunk3d, axis=0).transpose()), cmap=plt.cm.gray), plt.title('Data chunk averaged across R-L'), plt.draw(), plt.savefig('datachunk_disc'+str(current_disc)+'iz'+str(iz))
                 data_chunk1d = data_chunk3d.ravel()
                 # check if data_chunk1d contains at least one non-zero value
-                if np.any(data_chunk1d):
+                # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
+                if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
                     I_corr[ind_I][ind_y] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
                 else:
                     allzeros = 1

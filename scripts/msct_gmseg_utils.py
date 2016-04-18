@@ -17,12 +17,11 @@ from math import sqrt
 import os
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 
 from msct_image import Image, get_dimension
 import sct_utils as sct
 from msct_parser import Parser
-from sct_image import set_orientation, get_orientation
+from sct_image import set_orientation, get_orientation_3d
 
 def get_parser():
     parser = Parser(__file__)
@@ -495,7 +494,7 @@ def save_dic_slices(path_to_model):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def extract_metric_from_dic(slices_set, seg_to_use=None, metric='Mean', gm_percentile=0.03, wm_percentile=0.05, save=False, output='metric_in_dictionary.txt'):
+def extract_metric_from_slice_set(slices_set, seg_to_use=None, metric='Mean', gm_percentile=0.03, wm_percentile=0.05, save=False, output='metric_in_dictionary.txt'):
     """
     uses the registereg images and GM segmentation (or another segmentation)to extract mean intensity values in the WM dn GM
     :param slices_set:
@@ -533,29 +532,40 @@ def extract_metric_from_dic(slices_set, seg_to_use=None, metric='Mean', gm_perce
         if gm_percentile != 0:
             # removing outliers with a percentile
             gm_dat = sorted(gm_dat.flatten())
-            gm_dat = gm_dat[int(round(gm_percentile*len(gm_dat)/2.0)):-int(round(gm_percentile*len(gm_dat)/2.0))]
+            n_gm_outliers = int(round(gm_percentile*len(gm_dat)/2.0))
+            if n_gm_outliers != 0 and n_gm_outliers*2 < len(gm_dat):
+                gm_dat = gm_dat[n_gm_outliers:-n_gm_outliers]
 
-        if metric.lower() == 'mean':
-            gm_met = np.mean(gm_dat)
-        elif metric.lower() == 'median':
-            gm_met = np.median(gm_dat)
-        gm_std = np.std(gm_dat)
+        if gm_dat == []:
+            gm_met = 0
+            gm_std = 0
+        else:
+            if metric.lower() == 'mean':
+                gm_met = np.mean(gm_dat)
+            elif metric.lower() == 'median':
+                gm_met = np.median(gm_dat)
+            gm_std = np.std(gm_dat)
 
         # metric in WM
         if wm_percentile != 0:
             # removing outliers with a percentile
             wm_dat = sorted(wm_dat.flatten())
-            wm_dat = wm_dat[int(round(wm_percentile*len(wm_dat)/2.0)):-int(round(wm_percentile*len(wm_dat)/2.0))]
-
-        if metric.lower() == 'mean':
-            wm_met = np.mean(wm_dat)
-        elif metric.lower() == 'median':
-            wm_met = np.median(wm_dat)
-        wm_std = np.std(wm_dat)
+            n_wm_outliers = int(round(wm_percentile*len(wm_dat)/2.0))
+            if n_wm_outliers != 0 and n_wm_outliers*2 < len(wm_dat):
+                wm_dat = wm_dat[n_wm_outliers:-n_wm_outliers]
+        if wm_dat == []:
+            wm_met = 0
+            wm_std = 0
+        else:
+            if metric.lower() == 'mean':
+                wm_met = np.mean(wm_dat)
+            elif metric.lower() == 'median':
+                wm_met = np.median(wm_dat)
+            wm_std = np.std(wm_dat)
 
         slice_set_metric[slice_i.id] = (wm_met, gm_met, wm_std, gm_std)
         if save:
-            f.write(str(slice_i.id) + ' - ' + level_label[slice_i.level] + ' - ' + str(wm_met) + ' - ' + str(gm_met) + ' - ' + str(wm_std) + ' - ' + str(gm_std) + '\n')
+            f.write(str(slice_i.id) + ' - ' + level_label[int(slice_i.level)] + ' - ' + str(wm_met) + ' - ' + str(gm_met) + ' - ' + str(wm_std) + ' - ' + str(gm_std) + '\n')
     if save:
         f.close()
     return slice_set_metric
@@ -613,7 +623,7 @@ def crop_t2_star_pipeline(path, box_size=75):
 
                     if mask_box == '':
                         mask_box = t2star_name + '_square_mask_from_sc_seg'+ext
-                        sct.run('sct_create_mask -i ' + seg_in + ' -p centerline,' + sc_seg + ' -size ' + str(box_size - 2) + ' -o ' + mask_box + ' -f box')
+                        sct.run('sct_create_mask -i ' + seg_in + ' -p centerline,' + sc_seg + ' -size ' + str(box_size) + ' -o ' + mask_box + ' -f box')
 
                     if seg_in_croped == '':
                         seg_in_im = Image(seg_in)
@@ -658,7 +668,7 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
         sct.run('sct_crop_image -i ' + t2star + ' -m ' + sc_seg + ' -b 0 -o ' + seg_in)
 
         mask_box = t2star_name + '_square_mask_from_sc_seg'+ext
-        sct.run('sct_create_mask -i ' + seg_in + ' -p centerline,' + sc_seg + ' -size ' + str(box_size - 2) + ' -o ' + mask_box + ' -f box')
+        sct.run('sct_create_mask -i ' + seg_in + ' -p centerline,' + sc_seg + ' -size ' + str(box_size) + ' -o ' + mask_box + ' -f box')
 
         seg_in_im = Image(seg_in)
         mask_im = Image(mask_box)
@@ -706,9 +716,11 @@ def save_by_slice(dic_dir):
             for file_name in os.listdir(subject_path):
                 if 'level' in file_name:
                     path_file_levels = subject_path + '/' + file_name
+
                     if 'IRP' not in file_name:
-                        sct.run('sct_image -i ' + subject_path + '/' + file_name + ' -setorient IRP')
-                        path_file_levels = subject_path + '/' + sct.extract_fname(file_name)[1] + '_IRP.nii.gz'
+                        path_file_levels_IRP = sct.add_suffix(path_file_levels, '_IRP')
+                        sct.run('sct_image -i ' + subject_path + '/' + file_name + ' -setorient IRP -o '+path_file_levels_IRP)
+                        path_file_levels = path_file_levels_IRP # subject_path + '/' + sct.extract_fname(file_name)[1] + '_IRP.nii.gz'
 
             if path_file_levels is None and 'label' in os.listdir(subject_path):
                 if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
@@ -729,7 +741,7 @@ def save_by_slice(dic_dir):
                         label_by_slice[i_level_slice] = 0
 
             for file_name in os.listdir(subject_path):
-                if 'seg_in' in file_name and 'croped' in file_name:
+                if 'seg_in' in file_name and 'croped' in file_name and 'IRP' in file_name:
                     im = Image(subject_path + '/' + file_name)
                     im_zooms = im.hdr.get_zooms()
                     slice_zoom = (im_zooms[1], im_zooms[2], im_zooms[0])
@@ -740,7 +752,8 @@ def save_by_slice(dic_dir):
                                 i_slice_str = '0' + i_slice_str
                             else:
                                 i_slice_str = str(i_slice)
-                            im_slice = Image(param=im_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_im.nii.gz', hdr=im.hdr)
+                            fname_slice = dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_im.nii.gz'
+                            im_slice = Image(param=im_slice, absolutepath=fname_slice, hdr=im.hdr)
 
                             if len(im_slice.hdr.get_zooms()) == 3:
                                 im_slice.hdr.set_zooms(slice_zoom)
@@ -753,13 +766,14 @@ def save_by_slice(dic_dir):
                                 i_slice_str = '0' + i_slice_str
                             else:
                                 i_slice_str = str(i_slice)
-                            im_slice = Image(param=im_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_im.nii.gz', hdr=im.hdr)
+                            fname_slice = dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_im.nii.gz'
+                            im_slice = Image(param=im_slice, absolutepath=fname_slice, hdr=im.hdr)
 
                             if len(im_slice.hdr.get_zooms()) == 3:
                                 im_slice.hdr.set_zooms(slice_zoom)
                             im_slice.save()
 
-                if 'manual_gmseg' in file_name and 'croped' in file_name:
+                if 'manual_gmseg' in file_name and 'croped' in file_name and 'IRP' in file_name:
                     seg = Image(dic_dir + '/' + subject_dir + '/' + file_name)
                     seg_zooms = seg.hdr.get_zooms()
                     slice_zoom = (seg_zooms[1], seg_zooms[2], seg_zooms[0])
@@ -806,7 +820,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     :return: file name after resampling (or original fname if it was already in the correct resolution)
     """
     im_in = Image(fname)
-    orientation = get_orientation(im_in)
+    orientation = get_orientation_3d(im_in)
     if orientation != 'RPI':
         im_in = set_orientation(im_in, 'RPI')
         im_in.save()
@@ -873,7 +887,7 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
             new_names = []
             for f_name in [t2star, scseg, gmseg]:
                 im = Image(f_name)
-                orientation = get_orientation(im)
+                orientation = get_orientation_3d(im)
                 if orientation != 'RPI':
                     im = set_orientation(im, 'RPI')
                     new_names.append(im.absolutepath)
@@ -896,7 +910,7 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
                 t2star_im.data = denoise_ornlm(t2star_im.data)
                 t2star_im.save()
 
-            mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
+            mask_box, fname_seg_in_IRP = crop_t2_star(t2star, scseg, box_size=model_image_size)
 
             gmseg_im = Image(gmseg)
             mask_im = Image(mask_box)
@@ -922,11 +936,11 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
     cmd_register_template = 'sct_register_to_template -i ' + t2_fname + ' -s ' + t2_seg_fname + ' -l ' + landmarks_fname
     sct.run(cmd_register_template)
 
-    cmd_warp_template = 'sct_warp_template -d ' + t2_fname + ' -w warp_template2anat.nii.gz'
+    cmd_warp_template = 'sct_warp_template -d ' + t2_fname + ' -w warp_template2anat.nii.gz -a 0'
     sct.run(cmd_warp_template)
 
     # Registration template to t2star
-    cmd_register_multimodal = 'sct_register_multimodal -i template2anat.nii.gz -d ' + t2star_fname + ' -iseg ./label/template/MNI-Poly-AMU_cord.nii.gz -dseg ' + t2star_sc_seg_fname + ' -p step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
+    cmd_register_multimodal = 'sct_register_multimodal -i template2anat.nii.gz -d ' + t2star_fname + ' -iseg ./label/template/MNI-Poly-AMU_cord.nii.gz -dseg ' + t2star_sc_seg_fname + ' -param step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
     sct.run(cmd_register_multimodal)
 
     multimodal_warp_name = 'warp_template2anat2' + t2star_fname
@@ -934,12 +948,12 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
     cmd_concat = 'sct_concat_transfo -w warp_template2anat.nii.gz,' + multimodal_warp_name + ' -d ' + t2star_fname + ' -o ' + total_warp_name
     sct.run(cmd_concat)
 
-    cmd_warp = 'sct_warp_template -d ' + t2star_fname + ' -w ' + total_warp_name
+    cmd_warp = 'sct_warp_template -d ' + t2star_fname + ' -w ' + total_warp_name + ' -a 0 '
     sct.run(cmd_warp)
 
     sct.run('sct_image -i ./label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
 
-    return './label/template/MNI-Poly-AMU_level_IRP.nii.gz'
+    return 'MNI-Poly-AMU_level_IRP.nii.gz'
 
 
 

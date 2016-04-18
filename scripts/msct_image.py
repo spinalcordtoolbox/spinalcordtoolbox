@@ -97,9 +97,9 @@ class Image(object):
             im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        self.orientation = get_orientation(path, filename=True)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
+        self.orientation = get_orientation(self)
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
         self.dim = get_dimension(im_file)
@@ -197,7 +197,7 @@ class Image(object):
         self.data = type_build(self.data)
         self.hdr.set_data_dtype(type)
 
-    def save(self, type='', verbose=1):
+    def save(self, type='', squeeze_data=True,  verbose=1):
         """
         Write an image in a nifti file
         :param type:    if not set, the image is saved in the same type as input data
@@ -221,8 +221,9 @@ class Image(object):
         from sct_utils import printv
         from numpy import squeeze
         from os import path, remove
-        # remove singleton
-        self.data = squeeze(self.data)
+        if squeeze_data:
+            # remove singleton
+            self.data = squeeze(self.data)
         if type != '':
             self.changeType(type)
         # update header
@@ -427,6 +428,30 @@ class Image(object):
         self.data = self.data.max() - self.data
         return self
 
+    @staticmethod
+    def get_permutation_from_orientations(orientation_in, orientation_out):
+        """
+        This function return the permutation necessary to convert a coordinate/image from orientation_in
+        to orientation_out
+        :param orientation_in: string (ex: AIL)
+        :param orientation_out: string (ex: RPI)
+        :return: two lists: permutation list (int) and inversion list (-1 if need to inverse)
+        """
+        opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+
+        # change the orientation of the image
+        perm = [0, 1, 2]
+        inversion = [1, 1, 1]
+        for i, character in enumerate(orientation_in):
+            try:
+                perm[i] = orientation_out.index(character)
+            except ValueError:
+                perm[i] = orientation_out.index(opposite_character[character])
+                inversion[i] = -1
+
+        return perm, inversion
+
+
     def change_orientation(self, orientation='RPI', inversion_orient=False):
         """
         This function changes the orientation of the data by swapping the image axis.
@@ -438,8 +463,8 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            from sct_image import get_orientation
-            self.orientation = get_orientation(self)
+            from sct_image import get_orientation_3d
+            self.orientation = get_orientation_3d(self)
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
@@ -448,15 +473,7 @@ class Image(object):
             self.orientation = orientation
             orientation = temp_orientation
 
-        # change the orientation of the image
-        perm = [0, 1, 2]
-        inversion = [1, 1, 1]
-        for i, character in enumerate(self.orientation):
-            try:
-                perm[i] = orientation.index(character)
-            except ValueError:
-                perm[i] = orientation.index(opposite_character[character])
-                inversion[i] = -1
+        perm, inversion = self.get_permutation_from_orientations(self.orientation, orientation)
 
         # axes inversion
         self.data = self.data[::inversion[0], ::inversion[1], ::inversion[2]]
@@ -483,6 +500,10 @@ class Image(object):
             print 'Error: wrong orientation'
         # update dim
         # http://math.stackexchange.com/questions/122916/what-is-the-inverse-cycle-of-permutation
+        # TODO: change permutations
+        # a = np.array([0,1,2,3,4])
+        # perm = [4,1,2,0,3]
+        # a[perm].tolist() --> [4, 1, 2, 0, 3]
         dim_temp = list(self.dim)
         dim_temp[0] = self.dim[[i for i, x in enumerate(perm) if x == 0][0]]  # nx
         dim_temp[1] = self.dim[[i for i, x in enumerate(perm) if x == 1][0]]  # ny
