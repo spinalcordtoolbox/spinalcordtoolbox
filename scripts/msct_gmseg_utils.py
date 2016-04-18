@@ -72,7 +72,7 @@ class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
-    def __init__(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
+    def __init__(self, slice_id=None, im=None, sc_seg=None, list_gm_seg=None, list_wm_seg=None, reg_to_m=None, im_m=None, list_gm_seg_m=None, list_wm_seg_m=None, im_m_flat=None, list_gm_seg_m_flat=None, list_wm_seg_m_flat=None, level=None):
         """
         Slice constructor
 
@@ -80,41 +80,41 @@ class Slice:
 
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
 
-        :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
+        :param list_gm_seg: list of manual gray matter segmentation of the original image, type: numpy array
 
-        :param wm_seg: manual white matter segmentation of the original image, type: numpy array
+        :param list_wm_seg: list of manual white matter segmentation of the original image, type: numpy array
 
         :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
 
         :param im_m: image in the model space, type: numpy array
 
-        :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
+        :param list_gm_seg_m: list of manual gray matter segmentation in the model space, type: numpy array
 
-        :param wm_seg_m: manual white matter segmentation in the model space, type: numpy array
+        :param list_wm_seg_m: list of manual white matter segmentation in the model space, type: numpy array
 
         :param im_m_flat: flatten image in the model space, type: numpy array
 
-        :param gm_seg_m_flat: flatten manual gray matter  segmentation in the model space, type: numpy array
+        :param list_gm_seg_m_flat: list of flatten manual gray matter  segmentation in the model space, type: numpy array
 
-        :param wm_seg_m_flat: flatten manual white matter segmentation in the model space, type: numpy array
+        :param list_wm_seg_m_flat: list of flatten manual white matter segmentation in the model space, type: numpy array
 
         :param level: vertebral level of the slice, type: int
         """
         self.id = slice_id
         self.im = im
         self.sc_seg = sc_seg
-        self.gm_seg = gm_seg
-        self.wm_seg = wm_seg
+        self.gm_seg = list_gm_seg
+        self.wm_seg = list_wm_seg
         self.reg_to_M = reg_to_m
         self.im_M = im_m
-        self.gm_seg_M = gm_seg_m
-        self.wm_seg_M = wm_seg_m
+        self.gm_seg_M = list_gm_seg_m
+        self.wm_seg_M = list_wm_seg_m
         self.im_M_flat = im_m_flat
-        self.gm_seg_M_flat = gm_seg_m_flat
-        self.wm_seg_M_flat = wm_seg_m_flat
+        self.gm_seg_M_flat = list_gm_seg_m_flat
+        self.wm_seg_M_flat = list_wm_seg_m_flat
         self.level = level
 
-    def set(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
+    def set(self, slice_id=None, im=None, sc_seg=None, list_gm_seg=None, list_wm_seg=None, reg_to_m=None, im_m=None, list_gm_seg_m=None, list_wm_seg_m=None, im_m_flat=None, list_gm_seg_m_flat=None, list_wm_seg_m_flat=None, level=None):
         """
         Slice setter, only the specified parameters are set
 
@@ -122,23 +122,23 @@ class Slice:
 
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
 
-        :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
+        :param list_gm_seg: list of manual gray matter segmentation of the original image, type: numpy array
 
-        :param wm_seg: manual white matter segmentation of the original image, type: numpy array
+        :param list_wm_seg: list of manual white matter segmentation of the original image, type: numpy array
 
         :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
 
         :param im_m: image in the model space, type: numpy array
 
-        :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
+        :param list_gm_seg_m: list of manual gray matter segmentation in the model space, type: numpy array
 
-        :param wm_seg_m: manual white matter segmentation in the model space, type: numpy array
+        :param list_wm_seg_m: list of manual white matter segmentation in the model space, type: numpy array
 
         :param im_m_flat: flatten image in the model space, type: numpy array
 
-        :param gm_seg_m_flat: flatten manual gray matter  segmentation in the model space, type: numpy array
+        :param list_gm_seg_m_flat: list of flatten manual gray matter  segmentation in the model space, type: numpy array
 
-        :param wm_seg_m_flat: flatten manual white matter segmentation in the model space, type: numpy array
+        :param list_wm_seg_m_flat: list of flatten manual white matter segmentation in the model space, type: numpy array
 
         :param level: vertebral level of the slice, type: int
         """
@@ -148,24 +148,24 @@ class Slice:
             self.im = im
         if sc_seg is not None:
             self.sc_seg = sc_seg
-        if gm_seg is not None:
-            self.gm_seg = gm_seg
-        if wm_seg is not None:
-            self.wm_seg = wm_seg
+        if list_gm_seg is not None:
+            self.gm_seg = list_gm_seg
+        if list_wm_seg is not None:
+            self.wm_seg = list_wm_seg
         if reg_to_m is not None:
             self.reg_to_M = reg_to_m
         if im_m is not None:
             self.im_M = im_m
-        if gm_seg_m is not None:
-            self.gm_seg_M = gm_seg_m
-        if wm_seg_m is not None:
-            self.wm_seg_M = wm_seg_m
+        if list_gm_seg_m is not None:
+            self.gm_seg_M = list_gm_seg_m
+        if list_wm_seg_m is not None:
+            self.wm_seg_M = list_wm_seg_m
         if im_m_flat is not None:
             self.im_M_flat = im_m_flat
-        if gm_seg_m_flat is not None:
-            self.gm_seg_M_flat = gm_seg_m_flat
-        if wm_seg_m_flat is not None:
-            self.wm_seg_M_flat = wm_seg_m_flat
+        if list_gm_seg_m_flat is not None:
+            self.gm_seg_M_flat = list_gm_seg_m_flat
+        if list_wm_seg_m_flat is not None:
+            self.wm_seg_M_flat = list_wm_seg_m_flat
         if level is not None:
             self.level = level
 
@@ -905,8 +905,10 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
             list_fname_gmseg = list_new_names[:-2]
 
             fname_t2star = resample_image(fname_t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
-            fname_scseg = resample_image(fname_scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
-            list_fname_gmseg = [resample_image(fname_gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True) for fname_gmseg in list_fname_gmseg]
+            fname_scseg = resample_image(fname_scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True, interpolation='nn')
+            list_fname_gmseg = [resample_image(fname_gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True, interpolation='nn') for fname_gmseg in list_fname_gmseg]
+
+
 
             if denoise:
                 from sct_maths import denoise_ornlm
