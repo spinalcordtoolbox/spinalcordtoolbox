@@ -349,7 +349,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
-    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, combined_labels_id_groups, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
 def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
@@ -494,18 +494,18 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
     max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
     if vert_levels_list[0] < min_vert_level_available:
         vert_levels_list[0] = min_vert_level_available
-        warning.append('WARNING: the bottom vertebral level you selected is lower to the lowest level available --> '
+        warning.append('WARNING: the bottom vertebral level you selected is lower than the lowest level available --> '
                        'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
                        # warning to write it later in the .txt output file
-        sct.printv('WARNING: the bottom vertebral level you selected is lower to the lowest level available \n--> Selected the lowest vertebral level available: '+ str(int(vert_levels_list[0])), type='warning')
+        sct.printv('WARNING: the bottom vertebral level you selected is lower than the lowest level available \n--> Selected the lowest vertebral level available: '+ str(int(vert_levels_list[0])), type='warning')
 
     if vert_levels_list[1] > max_vert_level_available:
         vert_levels_list[1] = max_vert_level_available
-        warning.append('WARNING: the top vertebral level you selected is higher to the highest level available --> '
+        warning.append('WARNING: the top vertebral level you selected is higher than the highest level available --> '
                        'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
         # warning to write it later in the .txt output file
 
-        sct.printv('WARNING: the top vertebral level you selected is higher to the highest level available \n--> Selected the highest vertebral level available: '+str(int(vert_levels_list[1])), type='warning')
+        sct.printv('WARNING: the top vertebral level you selected is higher than the highest level available \n--> Selected the highest vertebral level available: '+str(int(vert_levels_list[1])), type='warning')
 
     if vert_levels_list[0] not in vertebral_levels_available:
         distance = vertebral_levels_available - vert_levels_list[0]  # relative distance
@@ -608,7 +608,7 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
-def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, combined_labels_id_groups, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
     """Save results in the output type selected by user."""
 
     sct.printv('\nSave results in: '+fname_output+'.'+output_type+' ...')
@@ -696,85 +696,76 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
             book = Workbook()
             sh = book.add_sheet('Results', cell_overwrite_ok=True)
-            row_index = 0
+
+            # write header line
+            sh.write(0, 0, 'Date - Time')
+            sh.write(0, 1, 'Metric file')
+            sh.write(0, 2, 'Extraction method')
+            sh.write(0, 3, 'Vertebral levels')
+            sh.write(0, 4, 'Slices (z)')
+            sh.write(0, 5, 'ID')
+            sh.write(0, 6, 'Combined labels ID')
+            sh.write(0, 7, 'Label name')
+            sh.write(0, 8, 'Metric value')
+            sh.write(0, 9, 'Metric std')
+            if fname_normalizing_label:
+                sh.write(0, 10, 'Label used to normalize the metric estimation slice-by-slice')
+
+            row_index = 1
 
 
-        sh.write(row_index, 0, 'Date - Time')
-        sh.write(row_index, 1, time.strftime('%Y/%m/%d - %H:%M:%S'))
-        row_index += 1
-
-        sh.write(row_index, 0, 'Metric file')
-        sh.write(row_index, 1, os.path.abspath(fname_data))
-        row_index += 1
-
-        if fname_normalizing_label:
-            sh.write(row_index, 0, 'Label used to normalize the metric estimation slice-by-slice')
-            sh.write(row_index, 1, fname_normalizing_label)
-            row_index += 1
-
-        sh.write(row_index, 0, 'Extraction method')
-        sh.write(row_index, 1, method)
-        row_index += 1
-
+        # define vertebral levels and slices fields
         if actual_vert:
+            vertebral_levels_field = str(int(actual_vert[0]))+' to '+str(int(actual_vert[1]))
             if warning_vert_levels:
                 for i in range(0, len(warning_vert_levels)):
-                    sh.write(row_index, 0, str(warning_vert_levels[i]))
-                    row_index += 1
-
-            sh.write(row_index, 0, 'Vertebral levels')
-            sh.write(row_index, 1, '%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
-            row_index += 1
-
+                    vertebral_levels_field += ' ['+str(warning_vert_levels[i])+']'
         else:
-            sh.write(row_index, 0, 'Vertebral levels')
-            sh.write(row_index, 1, 'ALL')
-            row_index += 1
+            vertebral_levels_field = 'ALL'
 
-        sh.write(row_index, 0, 'Slices (z)')
         if slices_of_interest != '':
-            sh.write(row_index, 1, slices_of_interest)
+            slices_of_interest_field = slices_of_interest
         else:
-            sh.write(row_index, 1, 'ALL')
-        row_index += 1
+            slices_of_interest_field = 'ALL'
 
-        sh.write(row_index, 0, 'ID')
-        sh.write(row_index, 1, 'label name')
-        sh.write(row_index, 2, 'metric value')
-        sh.write(row_index, 3, 'metric std')
-        row_index += 1
-
+        # initialize section (individual labels or combined labels)
         section = ''
         if labels_id_user[0] <= max(indiv_labels_ids):
             section = 'White matter atlas'
         elif labels_id_user[0] > max(indiv_labels_ids):
             section = 'Combined labels'
-        sh.write(row_index, 0, section)
-        row_index += 1
-
+        # iterate on user labels
         for i_label_user in labels_id_user:
+            sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
+            sh.write(row_index, 1, os.path.abspath(fname_data))
+            sh.write(row_index, 2, method)
+            sh.write(row_index, 3, vertebral_levels_field)
+            sh.write(row_index, 4, slices_of_interest_field)
+            if fname_normalizing_label:
+                sh.write(row_index, 10, fname_normalizing_label)
+
             # change section if not individual label anymore
             if i_label_user > max(indiv_labels_ids) and section == 'White matter atlas':
                 section = 'Combined labels'
-                sh.write(row_index, 0, section)
-                row_index += 1
 
             # display result for this label
             if section == 'White matter atlas':
                 index = indiv_labels_ids.index(i_label_user)
-                sh.write(row_index, 0, indiv_labels_ids[index])
-                sh.write(row_index, 1, indiv_labels_names[index])
-                sh.write(row_index, 2, indiv_labels_value[index])
-                sh.write(row_index, 3, indiv_labels_std[index])
-                row_index += 1
+                sh.write(row_index, 5, indiv_labels_ids[index])
+                sh.write(row_index, 6, indiv_labels_ids[index])  # combined labels IDs group
+                sh.write(row_index, 7, indiv_labels_names[index])
+                sh.write(row_index, 8, indiv_labels_value[index])
+                sh.write(row_index, 9, indiv_labels_std[index])
 
             elif section == 'Combined labels':
                 index = combined_labels_ids.index(i_label_user)
-                sh.write(row_index, 0, combined_labels_ids[index])
-                sh.write(row_index, 1, combined_labels_names[index])
-                sh.write(row_index, 2, combined_labels_value[index])
-                sh.write(row_index, 3, combined_labels_std[index])
-                row_index += 1
+                sh.write(row_index, 5, combined_labels_ids[index])
+                sh.write(row_index, 6, combined_labels_id_groups[index])  # combined labels IDs group
+                sh.write(row_index, 7, combined_labels_names[index])
+                sh.write(row_index, 8, combined_labels_value[index])
+                sh.write(row_index, 9, combined_labels_std[index])
+
+            row_index += 1
 
         book.save(fname_output + '.' + output_type)
 
