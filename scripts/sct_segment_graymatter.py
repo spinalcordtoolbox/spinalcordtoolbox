@@ -161,12 +161,14 @@ def get_parser():
                       mandatory=False,
                       default_value='0',
                       example=['0', 'slice', 'level'])
+    '''
     parser.add_option(name="-ratio-level",
                       type_value='str',
                       description="Compute GM/WM ratio across several vertebral levels.",
                       mandatory=False,
                       default_value='0',
                       example='C2:C4')
+    '''
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
@@ -322,6 +324,7 @@ class FullGmSegmentation:
     def __init__(self, target_fname, sc_seg_fname, level_fname, ref_gm_seg=None, model=None, compute_ratio=False, model_param=None, seg_param=None):
         self.model_param = model_param
         self.seg_param = seg_param
+        self.ratio = compute_ratio
         sct.printv('\nBuilding the appearance model...', verbose=self.seg_param.verbose, type='normal')
         if model is None:
             self.model = Model(model_param=self.model_param)
@@ -358,7 +361,7 @@ class FullGmSegmentation:
         if self.ref_gm_seg_fname is not None:
             sct.generate_output_file(self.tmp_dir+self.dice_name, self.seg_param.output_path+self.dice_name)
             sct.generate_output_file(self.tmp_dir+self.hausdorff_name, self.seg_param.output_path+self.hausdorff_name)
-        if compute_ratio:
+        if self.ratio:
             sct.generate_output_file(self.tmp_dir+self.ratio_name, self.seg_param.output_path+self.ratio_name)
 
         after = time.time()
@@ -410,9 +413,9 @@ class FullGmSegmentation:
             sct.printv('Computing Dice coefficient and Hausdorff distance ...', verbose=self.seg_param.verbose, type='normal')
             self.dice_name, self.hausdorff_name = self.validation(ref_gmseg)
 
-        if compute_ratio:
+        if self.ratio:
             sct.printv('\nComputing ratio GM/WM ...', verbose=self.seg_param.verbose, type='normal')
-            self.ratio_name = self.compute_ratio(type=compute_ratio)
+            self.ratio_name = self.compute_ratio(type=self.ratio)
 
         os.chdir('..')
 
@@ -478,14 +481,14 @@ class FullGmSegmentation:
         # go to ratio folder
         os.chdir(ratio_dir)
 
-        sct.run('sct_process_segmentation -i '+gm_seg+' -p csa -o gm_csa ', error_exit='warning')
-        sct.run('mv csa.txt gm_csa.txt')
+        sct.run('sct_process_segmentation -i '+gm_seg+' -p csa -o gm_ ', error_exit='warning')
+        # sct.run('mv csa.txt gm_csa.txt')
 
-        sct.run('sct_process_segmentation -i '+wm_seg+' -p csa -o wm_csa ', error_exit='warning')
-        sct.run('mv csa.txt wm_csa.txt')
+        sct.run('sct_process_segmentation -i '+wm_seg+' -p csa -o wm_ ', error_exit='warning')
+        # sct.run('mv csa.txt wm_csa.txt')
 
-        gm_csa = open('gm_csa.txt', 'r')
-        wm_csa = open('wm_csa.txt', 'r')
+        gm_csa = open('gm_csa_per_slice.txt', 'r')
+        wm_csa = open('wm_csa_per_slice.txt', 'r')
 
         ratio_fname = 'ratio.txt'
         ratio = open('../'+ratio_fname, 'w')
@@ -654,6 +657,7 @@ if __name__ == "__main__":
                 compute_ratio = False
             else:
                 compute_ratio = arguments["-ratio"]
+        '''
         if "-ratio-level" in arguments:
             if arguments["-ratio-level"] == '0':
                 compute_ratio = False
@@ -662,6 +666,7 @@ if __name__ == "__main__":
                     compute_ratio = arguments["-ratio-level"]
                 else:
                     sct.printv('WARNING: -ratio-level function should be used with a range of vertebral levels (for ex: "C2:C5"). Ignoring option.', 1, 'warning')
+        '''
         if "-res-type" in arguments:
             seg_param.res_type = arguments["-res-type"]
         if "-ref" in arguments:
