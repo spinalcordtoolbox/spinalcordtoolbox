@@ -207,7 +207,7 @@ THE_CSHRC=${HOME}/.cshrc
 if [[ $INSTALL_TYPE == "git" ]]; then
   INSTALL_DIR=$SCT_SOURCE
 else
-  INSTALL_DIR="${HOME}sct_${SCT_VERSION}"
+  INSTALL_DIR="${HOME}/sct_${SCT_VERSION}"
 fi
 
 # Set install dir
