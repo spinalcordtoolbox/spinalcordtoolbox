@@ -32,3 +32,11 @@
 29, right medial longitudinal fasciculus, WMtract__29.nii.gz
 30, gray matter, WMtract__30.nii.gz
 31, CSF contour, WMtract__31.nii.gz
+
+# Combined labels
+# ID, name, IDs
+32, spinal cord, 0:30
+33, white matter, 0:29
+34, dorsal columns, 0,1,15,16
+35, lateral funiculi, 2,3,4,5,6,17,18,19,20,21
+36, ventral funiculi, 7,8,9,10,11,12,13,14,22,23,24,25,26,27,28,29

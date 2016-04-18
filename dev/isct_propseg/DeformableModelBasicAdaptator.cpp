@@ -94,6 +94,10 @@ DeformableModelBasicAdaptator::DeformableModelBasicAdaptator(Image3D* image, Mes
     progressiveLineSearchLength = false;
     
     verbose_ = false;
+
+    line_search = 15;
+	alpha = 25.0;
+	beta = 0.0;
 }
 
 DeformableModelBasicAdaptator::DeformableModelBasicAdaptator(Image3D* image, Mesh* m, int nbIteration, double contrast, bool computeFinalMesh) : image_(image), mesh_(m), meshBool_(computeFinalMesh), numberOfIteration_(nbIteration)
@@ -108,6 +112,10 @@ DeformableModelBasicAdaptator::DeformableModelBasicAdaptator(Image3D* image, Mes
 	tradeoff_bool = false;
     
     verbose_ = false;
+
+    line_search = 15;
+	alpha = 25.0;
+	beta = 0.0;
 }
 
 DeformableModelBasicAdaptator::DeformableModelBasicAdaptator(Image3D* image, Mesh* m, int nbIteration, vector<pair<CVector3,double> > contrast, bool computeFinalMesh) : image_(image), mesh_(m), meshBool_(computeFinalMesh), numberOfIteration_(nbIteration)
@@ -123,6 +131,10 @@ DeformableModelBasicAdaptator::DeformableModelBasicAdaptator(Image3D* image, Mes
 	tradeoff_bool = false;
     
     verbose_ = false;
+
+    line_search = 15;
+	alpha = 25.0;
+	beta = 0.0;
 }
 
 DeformableModelBasicAdaptator::~DeformableModelBasicAdaptator()
@@ -131,7 +143,7 @@ DeformableModelBasicAdaptator::~DeformableModelBasicAdaptator()
 
 double DeformableModelBasicAdaptator::adaptation()
 {
-	//cout << "Creation des variables, de l'optimiseur et de la fonction de cout..." << endl;
+	//if (verbose_) cout << "Creation des variables, de l'optimiseur et de la fonction de cout..." << endl;
 	vector<Vertex*> points = mesh_->getListPoints();
 	int nbPoints = points.size();
 	OptimizerType::ParametersType initialValue(3*nbPoints);
@@ -151,6 +163,7 @@ double DeformableModelBasicAdaptator::adaptation()
 
 	FoncteurDeformableBasicLocalAdaptation* costFunction = new FoncteurDeformableBasicLocalAdaptation(image_,mesh_,initialValue,nbPoints);
     costFunction->setVerbose(verbose_);
+    costFunction->addCorrectionPoints(points_mask_correction_);
 	/*if (contrast != -1.0) costFunction->setTradeOff(0.0001*contrast*contrast+0.026*contrast-1.6242);
     else {
         unsigned int index_nearest = 0;
@@ -187,6 +200,8 @@ double DeformableModelBasicAdaptator::adaptation()
 	if (this->changedParameters_) {
 		costFunction->setAlpha(alpha);
 		costFunction->setBeta(beta);
+		costFunction->setLineSearchLength(line_search);
+		costFunction->computeOptimalPoints(initialValue);
 	}
 
 	OptimizerType::Pointer itkOptimizer = OptimizerType::New();
@@ -232,6 +247,7 @@ double DeformableModelBasicAdaptator::adaptation()
         }
 		try
 		{
+		    //if (verbose_) cout << "start optimization" << endl;
 			itkOptimizer->StartOptimization();
 		}
 		catch( itk::ExceptionObject & e )

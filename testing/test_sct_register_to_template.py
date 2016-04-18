@@ -16,15 +16,19 @@
 import commands
 import sct_utils as sct
 import sct_register_to_template
-from msct_parser import Parser
 from pandas import DataFrame
 import os.path
+from copy import deepcopy
 
 
 def test(path_data='', parameters=''):
     verbose = 0
     filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'
     dice_threshold = 0.85
+
+    # initializations
+    dice_template2anat = 'NaN'
+    dice_anat2template = 'NaN'
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz ' \
@@ -33,7 +37,7 @@ def test(path_data='', parameters=''):
 
     parser = sct_register_to_template.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
+    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
@@ -42,29 +46,35 @@ def test(path_data='', parameters=''):
             os.path.isfile(dict_param_with_path['-s'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(
-            data={'status': status, 'output': output,
-                  'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')},
-            index=[path_data])
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+        # return status, output, DataFrame(
+        #     data={'status': status, 'output': output,
+        #           'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')},
+        #     index=[path_data])
 
     if not os.path.isdir(dict_param_with_path['-t']):
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        dict_param_with_path['-t'] = path_sct + '/data/template/'
+        dict_param_with_path['-t'] = path_sct + '/data/'
         param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # get contrast folder from -i option.
     # We suppose we can extract it as the first object when spliting with '/' delimiter.
     contrast_folder = ''
+    input_filename = ''
+    if dict_param['-i'][0] == '/':
+        dict_param['-i'] = dict_param['-i'][1:]
     input_split = dict_param['-i'].split('/')
-    if input_split[0]:
+    if len(input_split) == 2:
         contrast_folder = input_split[0] + '/'
+        input_filename = input_split[1]
     else:
-        contrast_folder = input_split[1] + '/'
+        input_filename = input_split[0]
     if not contrast_folder:  # if no contrast folder, send error.
         status = 201
         output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
-        return status, output, DataFrame(
-            data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+        # return status, output, DataFrame(
+        #     data={'status': status, 'output': output, 'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')}, index=[path_data])
 
     import time, random
     subject_folder = path_data.split('/')
@@ -78,7 +88,10 @@ def test(path_data='', parameters=''):
     cmd = 'sct_register_to_template ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
-    status, o = sct.run(cmd, verbose)
+    try:
+        status, o = sct.run(cmd, verbose)
+    except:
+        status, o = 1, 'ERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
 
@@ -119,7 +132,7 @@ def test(path_data='', parameters=''):
         output = output + output1 + output2
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
+    results = DataFrame(data={'status': int(status), 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
 
     return status, output, results
 

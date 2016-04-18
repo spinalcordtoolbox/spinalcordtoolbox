@@ -35,7 +35,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="image_nifti",
                       description="input image.",
                       mandatory=True,
-                      example="t2.nii.gz")
+                      example="t1.nii.gz")
     parser.add_option(name="-t",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
@@ -115,7 +115,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
                       type_value="image_nifti",
-                      description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",
+                      description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation.\nReplace filename by 'viewer' to use interactive viewer for providing centerline. Ex: -init-centerline viewer",
                       mandatory=False)
     parser.add_option(name="-init",
                       type_value="float",
@@ -123,7 +123,11 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-init-mask",
                       type_value="image_nifti",
-                      description="mask containing three center of the spinal cord, used to initiate the propagation",
+                      description="mask containing three center of the spinal cord, used to initiate the propagation.\nReplace filename by 'viewer' to use interactive viewer for providing mask. Ex: -init-mask viewer",
+                      mandatory=False)
+    parser.add_option(name="-mask-correction",
+                      type_value="image_nifti",
+                      description="mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and CSF or in the presence of artefacts/pathologies.",
                       mandatory=False)
     parser.add_option(name="-radius",
                       type_value="float",
@@ -159,7 +163,15 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-d",
                       type_value="float",
-                      description="trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results.",
+                      description="trade-off between distance of most promising point (d is high) and feature strength (d is low), default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results, default is 10",
+                      mandatory=False)
+    parser.add_option(name="-distance-search",
+                      type_value="float",
+                      description="maximum distance of optimal points computation along the surface normals. Range of values from 0 to 30, default is 15",
+                      mandatory=False)
+    parser.add_option(name="-alpha",
+                      type_value="float",
+                      description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
     return parser
 
@@ -211,12 +223,21 @@ if __name__ == "__main__":
         cmd += " -detect-png"
 
     # Helping options
+    use_viewer = None
     if "-init-centerline" in arguments:
-        cmd += " -init-centerline " + str(arguments["-init-centerline"])
+        if str(arguments["-init-centerline"]) == "viewer":
+            use_viewer = "centerline"
+        else:
+            cmd += " -init-centerline " + str(arguments["-init-centerline"])
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
-        cmd += " -init-mask " + str(arguments["-init-mask"])
+        if str(arguments["-init-mask"]) == "viewer":
+            use_viewer = "mask"
+        else:
+            cmd += " -init-mask " + str(arguments["-init-mask"])
+    if "-mask-correction" in arguments:
+        cmd += " -mask-correction " + str(arguments["-mask-correction"])
     if "-radius" in arguments:
         cmd += " -radius " + str(arguments["-radius"])
     if "-detect-n" in arguments:
@@ -235,12 +256,54 @@ if __name__ == "__main__":
         cmd += " -min-contrast " + str(arguments["-min-contrast"])
     if "-d" in arguments:
         cmd += " -d " + str(arguments["-d"])
+    if "-distance-search" in arguments:
+        cmd += " -dsearch " + str(arguments["-distance-search"])
+    if "-alpha" in arguments:
+        cmd += " -alpha " + str(arguments["-alpha"])
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
-    nx, ny, nz, nt, px, py, pz, pt = Image(input_filename).dim
+    image_input = Image(input_filename)
+    nx, ny, nz, nt, px, py, pz, pt = image_input.dim
     if nt > 1:
         sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
+
+    # if centerline or mask is asked using viewer
+    if use_viewer:
+        # make sure image is in AIL orientation, as it is the orientation used by PropSeg
+        from sct_image import orientation
+        image_input_orientation = orientation(image_input, get=True, verbose=False)
+        reoriented_image_filename = 'tmp.' + sct.add_suffix(input_filename, "_AIL")
+        sct.run('sct_image -i ' + input_filename + ' -o ' + reoriented_image_filename + ' -setorient AIL -v 0', verbose=False)
+
+        from sct_viewer import ClickViewer
+        image_input_reoriented = Image(reoriented_image_filename)
+        viewer = ClickViewer(image_input_reoriented)
+        if use_viewer == "mask":
+            viewer.number_of_slices = 3
+            viewer.gap_inter_slice = 10
+
+        # start the viewer that ask the user to enter a few points along the spinal cord
+        mask_points = viewer.start()
+        if mask_points:
+            # create the mask containing either the three-points or centerline mask for initialization
+            mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
+            sct.run("sct_label_utils -i " + reoriented_image_filename + " -p create -coord " + mask_points + " -o " + mask_filename, verbose=False)
+
+            # reorient the initialization mask to correspond to input image orientation
+            mask_reoriented_filename = sct.add_suffix(input_filename, "_mask_viewer")
+            sct.run('sct_image -i ' + mask_filename + ' -o ' + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
+
+            # remove temporary files
+            sct.run('rm -rf tmp.*')
+
+            # add mask filename to parameters string
+            if use_viewer == "centerline":
+                cmd += " -init-centerline " + mask_reoriented_filename
+            elif use_viewer == "mask":
+                cmd += " -init-mask " + mask_reoriented_filename
+        else:
+            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
 
     sct.run(cmd, verbose)
 

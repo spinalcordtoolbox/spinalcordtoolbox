@@ -33,17 +33,29 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-from msct_parser import Parser
 import sys
+import signal
+from time import time, strftime
+
+from msct_parser import Parser
 import sct_utils as sct
 import os
 import copy_reg
 import types
-import signal
 import pandas as pd
-import commands
+
+
+
+
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# TODO: put it back below when working again (julien 2016-04-04)
+# <<<
+# OLD
+# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# NEW
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
+# >>>
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 sys.path.append(path_sct + '/testing')
@@ -115,13 +127,21 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
     except KeyboardInterrupt:
         return 'KeyboardException'
     except Exception as e:
-        print e
+        sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
+        sct.printv(str(e), 1, 'warning')
         sys.exit(2)
 
 
 def function_launcher(args):
     import importlib
+    # import traceback
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
+    # try:
+    #     output = script_to_be_run.test(*args[1:])
+    # except:
+    #     print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
+    #     output = (1, 'ERROR: Function crashed', 'No result')
+    # return output
     return script_to_be_run.test(*args[1:])
 
 
@@ -162,7 +182,8 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
         pool.join()
         sys.exit(2)
     except Exception as e:
-        print e
+        sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
+        sct.printv(str(e), 1, 'warning')
         pool.terminate()
         pool.join()
         sys.exit(2)
@@ -233,7 +254,10 @@ if __name__ == "__main__":
 
     verbose = arguments["-v"]
 
-    print 'Testing...'
+    # start timer
+    start_time = time()
+
+    print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
     results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
@@ -263,3 +287,8 @@ if __name__ == "__main__":
     print 'Dataset: ' + dataset
     print results_display.to_string()
     print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
+
+    # display elapsed time
+    elapsed_time = time() - start_time
+    print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
+    print 'Status legend: 0: Passed, 1: Crashed, 99: Failed, 200: File(s) missing'

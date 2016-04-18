@@ -57,7 +57,7 @@ class Param:
 
 
 # get default parameters
-step1 = Paramreg(step='1', type='seg', algo='slicereg2d_translation')
+step1 = Paramreg(step='1', type='seg', algo='rigid', metric='MeanSquares', slicewise='1', smooth='5')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='5', smooth='1')
 step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
 paramreg = ParamregMultiStep([step1, step2, step3])
@@ -102,17 +102,17 @@ def get_parser():
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description='Parameters for registration (see sct_register_multimodal). Default: \
-                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\npoly=' + paramreg.steps['1'].poly + """
-                      \n--\nstep=2\ntype=""" + paramreg.steps['2'].type + """\nalgo=""" + paramreg.steps['2'].algo + """\nmetric=""" + paramreg.steps['2'].metric + """\niter=""" + paramreg.steps['2'].iter + """\nshrink=""" + paramreg.steps['2'].shrink + """\nsmooth=""" + paramreg.steps['2'].smooth + """\ngradStep=""" + paramreg.steps['2'].gradStep + """
-                      \n--\nstep=3\ntype=""" + paramreg.steps['3'].type + """\nalgo=""" + paramreg.steps['3'].algo + """\nmetric=""" + paramreg.steps['3'].metric + """\niter=""" + paramreg.steps['3'].iter + """\nshrink=""" + paramreg.steps['3'].shrink + """\nsmooth=""" + paramreg.steps['3'].smooth + """\ngradStep=""" + paramreg.steps['3'].gradStep + '\n',
+                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\niter=' + paramreg.steps['1'].iter + '\nsmooth=' + paramreg.steps['1'].smooth + '\ngradStep=' + paramreg.steps['1'].gradStep + '\nslicewise=' + paramreg.steps['1'].slicewise + '\
+                      \n--\nstep=2\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\niter=' + paramreg.steps['2'].iter + '\nsmooth=' + paramreg.steps['2'].smooth + '\ngradStep=' + paramreg.steps['2'].gradStep + '\
+                      \n--\nstep=3\ntype=' + paramreg.steps['3'].type + '\nalgo=' + paramreg.steps['3'].algo + '\nmetric=' + paramreg.steps['3'].metric + '\niter=' + paramreg.steps['3'].iter + '\nsmooth=' + paramreg.steps['3'].smooth + '\ngradStep=' + paramreg.steps['3'].gradStep + '\n',
                       mandatory=False,
                       example="step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=5,shrink=2:step=3,type=im,algo=syn,metric=MI,iter=5,shrink=1,gradStep=0.3")
     parser.add_option(name="-p",
                       type_value=None,
                       description='Parameters for registration (see sct_register_multimodal). Default: \
-                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\npoly=' + paramreg.steps['1'].poly + """
-                      \n--\nstep=2\ntype=""" + paramreg.steps['2'].type + """\nalgo=""" + paramreg.steps['2'].algo + """\nmetric=""" + paramreg.steps['2'].metric + """\niter=""" + paramreg.steps['2'].iter + """\nshrink=""" + paramreg.steps['2'].shrink + """\nsmooth=""" + paramreg.steps['2'].smooth + """\ngradStep=""" + paramreg.steps['2'].gradStep + """
-                      \n--\nstep=3\ntype=""" + paramreg.steps['3'].type + """\nalgo=""" + paramreg.steps['3'].algo + """\nmetric=""" + paramreg.steps['3'].metric + """\niter=""" + paramreg.steps['3'].iter + """\nshrink=""" + paramreg.steps['3'].shrink + """\nsmooth=""" + paramreg.steps['3'].smooth + """\ngradStep=""" + paramreg.steps['3'].gradStep + '\n',
+                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\iter=' + paramreg.steps['1'].iter + '\smooth=' + paramreg.steps['1'].smooth + '\gradStep=' + paramreg.steps['1'].gradStep + '\slicewise=' + paramreg.steps['1'].slicewise + '\
+                      \n--\nstep=1\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\iter=' + paramreg.steps['2'].iter + '\smooth=' + paramreg.steps['2'].smooth + '\gradStep=' + paramreg.steps['2'].gradStep + '\slicewise=' + paramreg.steps['2'].slicewise + '\
+                      \n--\nstep=1\ntype=' + paramreg.steps['3'].type + '\nalgo=' + paramreg.steps['3'].algo + '\nmetric=' + paramreg.steps['3'].metric + '\iter=' + paramreg.steps['3'].iter + '\smooth=' + paramreg.steps['3'].smooth + '\gradStep=' + paramreg.steps['3'].gradStep + '\slicewise=' + paramreg.steps['3'].slicewise + '\n',
                       mandatory=False,
                       deprecated_by='-param')
     parser.add_option(name="-param-straighten",
@@ -236,6 +236,12 @@ def main():
         sct.printv('.. Degree of polynomial..... '+paramreg.steps[str(pStep)].poly, verbose)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
+
+    sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
+    if not sct.check_if_same_space(fname_data, fname_seg):
+        sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    if not sct.check_if_same_space(fname_data, fname_landmarks):
+        sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
 
     sct.printv('\nCheck input labels...')
     # check if label image contains coherent labels

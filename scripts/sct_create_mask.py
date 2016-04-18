@@ -16,14 +16,15 @@
 
 import sys
 import os
-import getopt
 import commands
-import sct_utils as sct
 import time
+
 import numpy
 import nibabel
 from scipy import ndimage
-from sct_image import get_orientation
+
+import sct_utils as sct
+from sct_image import get_orientation_3d
 from sct_convert import convert
 from msct_image import Image
 from sct_image import copy_header, concat_data
@@ -40,7 +41,7 @@ class Param:
         self.process = 'center'  # default method
         self.shape_list = ['cylinder', 'box', 'gaussian']
         self.shape = 'cylinder'  # default shape
-        self.size = 41  # in voxel. if gaussian, size corresponds to sigma.
+        self.size = '41'  # in voxel. if gaussian, size corresponds to sigma.
         self.even = 0
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
@@ -60,7 +61,7 @@ def main():
         param.fname_data = path_sct_data+'/mt/mt1.nii.gz'
         param.process = 'point,'+path_sct_data+'/mt/mt1_point.nii.gz' #'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
         param.shape = 'cylinder'
-        param.size = 20
+        param.size = '20'
         param.remove_tmp_files = 1
         param.verbose = 1
     else:
@@ -104,44 +105,58 @@ def create_mask():
     if method_type == 'centerline':
         sct.check_file_exist(method_val, param.verbose)
 
-    # check if orientation is RPI
-    sct.printv('\nCheck if orientation is RPI...', param.verbose)
-    ori = get_orientation(param.fname_data, filename=True)
-    if not ori == 'RPI':
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_image -setorient to put your image in RPI.\n', 1, 'error')
-
     # Extract path/file/extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
 
     # Get output folder and file name
     if param.fname_out == '':
         param.fname_out = param.file_prefix+file_data+ext_data
-    #fname_out = os.path.abspath(path_out+file_out+ext_out)
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
     path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, param.verbose)
 
-    # Copying input data to tmp folder and convert to nii
-    sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
+    sct.printv('\nCheck orientation...', param.verbose)
+    orientation_input = get_orientation_3d(param.fname_data, filename=True)
+    sct.printv('.. '+orientation_input, param.verbose)
+    reorient_coordinates = False
+
+    # copy input data to tmp folder
     convert(param.fname_data, path_tmp+'data.nii')
-    # sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
     if method_type == 'centerline':
         convert(method_val, path_tmp+'centerline.nii.gz')
+    if method_type == 'point':
+        convert(method_val, path_tmp+'point.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # reorient to RPI
+    sct.printv('\nReorient to RPI...', param.verbose)
+    # if not orientation_input == 'RPI':
+    sct.run('sct_image -i data.nii -o data_RPI.nii -setorient RPI -v 0', verbose=False)
+    if method_type == 'centerline':
+        sct.run('sct_image -i centerline.nii.gz -o centerline_RPI.nii.gz -setorient RPI -v 0', verbose=False)
+    if method_type == 'point':
+        sct.run('sct_image -i point.nii.gz -o point_RPI.nii.gz -setorient RPI -v 0', verbose=False)
+    #
+    # if method_type == 'centerline':
+    #     orientation_centerline = get_orientation_3d(method_val, filename=True)
+    #     if not orientation_centerline == 'RPI':
+    #         sct.run('sct_image -i ' + method_val + ' -o ' + path_tmp + 'centerline.nii.gz' + ' -setorient RPI -v 0', verbose=False)
+    #     else:
+    #         convert(method_val, path_tmp+'centerline.nii.gz')
+
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = Image('data_RPI.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
         sct.printv('WARNING in '+os.path.basename(__file__)+': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
         # extract first volume to have 3d reference
-        nii = Image('data.nii')
+        nii = Image('data_RPI.nii')
         data3d = nii.data[:,:,:,0]
         nii.data = data3d
         nii.save()
@@ -155,7 +170,8 @@ def create_mask():
         fname_point = method_val
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
-        status, output = sct.run('sct_label_utils -i '+fname_point+' -p display-voxel', param.verbose)
+        # TODO: change this way to remove dependence to sct.run. ProcessLabels.display_voxel returns list of coordinates
+        status, output = sct.run('sct_label_utils -i point_RPI.nii.gz -p display-voxel', param.verbose)
         # parse to get coordinate
         coord = output[output.find('Position=')+10:-17].split(',')
 
@@ -165,17 +181,18 @@ def create_mask():
 
     if method_type == 'centerline':
         # get name of centerline from user argument
-        fname_centerline = 'centerline.nii.gz'
+        fname_centerline = 'centerline_RPI.nii.gz'
     else:
         # generate volume with line along Z at coordinates 'coord'
         sct.printv('\nCreate line...', param.verbose)
-        fname_centerline = create_line('data.nii', coord, nz)
+        fname_centerline = create_line('data_RPI.nii', coord, nz)
 
     # create mask
     sct.printv('\nCreate mask...', param.verbose)
     centerline = nibabel.load(fname_centerline)  # open centerline
     hdr = centerline.get_header()  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
+    spacing = hdr.structarr['pixdim']
     data_centerline = centerline.get_data()  # get centerline
     z_centerline = [iz for iz in range(0, nz, 1) if data_centerline[:, :, iz].any()]
     nz = len(z_centerline)
@@ -188,20 +205,42 @@ def create_mask():
     file_mask = 'data_mask'
     for iz in range(nz):
         center = numpy.array([cx[iz], cy[iz]])
-        mask2d = create_mask2d(center, param.shape, param.size, nx, ny, param.even)
+        mask2d = create_mask2d(center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
         # Write NIFTI volumes
         img = nibabel.Nifti1Image(mask2d, None, hdr)
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
     # merge along Z
     # cmd = 'fslmerge -z mask '
+
+    # CHANGE THAT CAN IMPACT SPEED:
+    # related to issue #755, we cannot open more than 256 files at one time.
+    # to solve this issue, we do not open more than 100 files
+    '''
     im_list = []
+    im_temp = []
     for iz in range(nz):
-        im_list.append(Image(file_mask+str(iz)+'.nii'))
-    im_out = concat_data(im_list, 2)
-    im_out.setFileName('mask.nii.gz')
+        if iz != 0 and iz % 100 == 0:
+            im_temp.append(concat_data(im_list, 2))
+            im_list = [Image(file_mask + str(iz) + '.nii')]
+        else:
+            im_list.append(Image(file_mask+str(iz)+'.nii'))
+
+    if im_temp:
+        im_temp.append(concat_data(im_list, 2))
+        im_out = concat_data(im_temp, 2, no_expand=True)
+    else:
+        im_out = concat_data(im_list, 2)
+    '''
+    fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
+    im_out = concat_data(fname_list, dim=2)
+    im_out.setFileName('mask_RPI.nii.gz')
     im_out.save()
 
-    # copy geometry
+    # reorient if necessary
+    # if not orientation_input == 'RPI':
+    sct.run('sct_image -i mask_RPI.nii.gz -o mask.nii.gz -setorient ' + orientation_input, param.verbose)
+
+    # copy header input --> mask
     im_dat = Image('data.nii')
     im_mask = Image('mask.nii.gz')
     im_mask = copy_header(im_dat, im_mask)
@@ -249,8 +288,10 @@ def create_line(fname, coord, nz):
 
 # create_mask2d
 # ==========================================================================================
-def create_mask2d(center, shape, size, nx, ny, even=0):
-    # extract offset
+def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
+    # extract offset d = 2r+1 --> r=ceil((d-1)/2.0)
+    # s=11 -> r=5
+    # s=10 -> r=5
     offset = param.offset.split(',')
     offset[0] = int(offset[0])
     offset[1] = int(offset[1])
@@ -260,16 +301,18 @@ def create_mask2d(center, shape, size, nx, ny, even=0):
     mask2d = numpy.zeros((nx, ny))
     xc = center[0]
     yc = center[1]
-    if even != 0:
-        radius = int(size / 2)
+    if 'mm' in size:
+        from numpy import ceil
+        size = int(size[:-2])
+        mean_spacing_xy = (spacing[1] + spacing[2]) / 2.0
+        length = round(float(size) / mean_spacing_xy)
+        radius = ceil((int(length) - 1) / 2.0)
     else:
-        radius = round(float(size + 1) / 2)  # add 1 because the radius includes the center.
+        from numpy import ceil
+        radius = ceil((int(size) - 1) / 2.0)
 
     if shape == 'box':
-        if even != 0:
-            mask2d[xc - radius:xc + radius, yc - radius:yc + radius] = 1
-        else:
-            mask2d[xc-radius:xc+radius+1, yc-radius:yc+radius+1] = 1
+        mask2d[xc - radius:xc + radius + 1, yc - radius:yc + radius + 1] = 1
 
     elif shape == 'cylinder':
         mask2d = ((xx+offset[0]-xc)**2 + (yy+offset[1]-yc)**2 <= radius**2)*1
@@ -284,6 +327,7 @@ def create_mask2d(center, shape, size, nx, ny, even=0):
 
     return mask2d
 
+
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
@@ -295,26 +339,26 @@ def get_parser():
                       example='data.nii.gz')
     parser.add_option(name='-p',
                       type_value=[[','], 'str'],
-                      description='Process to generate mask and associated value.\n'
-                                  '   coord: X,Y coordinate of center of mask. E.g.: coord,20x15\n'
-                                  '   point: volume that contains a single point. E.g.: point,label.nii.gz\n'
-                                  '   center: mask is created at center of FOV. In that case, "val" is not required.\n'
-                                  '   centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
+                      description='Process to generate mask.\n'
+                                  'coord: X,Y coordinate of center of mask. E.g.: coord,20x15\n'
+                                  'point: volume that contains a single point. E.g.: point,label.nii.gz\n'
+                                  'center: mask is created at center of FOV.\n'
+                                  'centerline: volume that contains centerline or segmentation. E.g.: centerline,t2_seg.nii.gz',
                       mandatory=True,
                       default_value=param_default.process,
                       example=['centerline,data_centerline.nii.gz'])
     parser.add_option(name='-m',
                       type_value=None,
-                      description='Process to generate mask and associated value.'
-                                  '   coord: X,Y coordinate of center of mask. E.g.: coord,20x15'
-                                  '   point: volume that contains a single point. E.g.: point,label.nii.gz'
-                                  '   center: mask is created at center of FOV. In that case, "val" is not required.'
-                                  '   centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
+                      description='Process to generate mask and associated value.\n'
+                                  '  coord: X,Y coordinate of center of mask. E.g.: coord,20x15'
+                                  '  point: volume that contains a single point. E.g.: point,label.nii.gz'
+                                  '  center: mask is created at center of FOV. In that case, "val" is not required.'
+                                  '  centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
                       mandatory=False,
                       deprecated_by='-p')
     parser.add_option(name='-size',
-                      type_value='int',
-                      description='Size in voxel. Odd values are better (for mask to be symmetrical). If shape=gaussian, size corresponds to "sigma"',
+                      type_value='str',
+                      description='Size of the mask in the axial plane, given in pixel (ex: 35) or in millimeter (ex: 35mm). If shape=gaussian, size corresponds to "sigma"',
                       mandatory=False,
                       default_value=param_default.size,
                       example=['45'])
@@ -334,7 +378,6 @@ def get_parser():
                       description='Name of output mask.',
                       mandatory=False,
                       example=['data.nii'])
-    parser.usage.addSection('MISC')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',

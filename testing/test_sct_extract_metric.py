@@ -26,10 +26,9 @@ def test(path_data):
     cmd = 'sct_extract_metric' \
         ' -i '+path_data+folder_data[0]+file_data[0]+ \
         ' -f '+path_data+folder_data[0]+folder_data[1]+ \
-        ' -l 2,17 '+ \
         ' -method wath '+ \
         ' -vert 1:3'+ \
-        ' -o quantif_'+file_data[0]+'.txt' \
+        ' -o quantif_'+file_data[0]+ \
         ' -v 1'
 
     # return
