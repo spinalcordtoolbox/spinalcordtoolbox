@@ -126,7 +126,7 @@ sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_cro
 sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # check registration result
 if [ $DISPLAY = true ]; then
-   fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
+   fslview mtr.nii.gz -b 0,100 mt1_crop.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
 fi
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm_without_gmreg -l 33
@@ -212,7 +212,7 @@ sct_register_multimodal -i ../t2/t2_seg.nii.gz -d fmri_moco_mean.nii.gz -identit
 # tips: we use the T2 segmentation to help with fMRI segmentation
 # tips: we use "-radius 5" otherwise the segmentation is too small
 # tips: we use "-max-deformation 4" to prevent the propagation from stopping at the edge
-sct_propseg -i fmri_moco_mean.nii.gz -c t2 -init-centerline t2_seg_reg_centerline.nii.gz -radius 5 -max-deformation 4
+sct_propseg -i fmri_moco_mean.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz -radius 5 -max-deformation 4
 # check segmentation
 if [ $DISPLAY = true ]; then
   fslview fmri_moco_mean -b 0,1000 fmri_moco_mean_seg -l Red -t 0.5 &
