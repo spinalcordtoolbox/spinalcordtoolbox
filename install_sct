@@ -122,7 +122,7 @@ download ()
 usage()
 {
   echo -e "\nUsage: $0 [-d ] [-m ] [-b]" 1>&2;
-  echo -e "\tWe only recomend the -d and -m -b options for developers"
+  echo -e "\tWe only recommend the flags -d, -m and -b for developers"
   echo -e "\nOPTION"
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
