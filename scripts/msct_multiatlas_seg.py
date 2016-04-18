@@ -213,6 +213,7 @@ class ModelDictionary:
                         slices.append(Slice(slice_id=j, im=Image(subject_path + '/' + file_name).data, level=slice_int_level, reg_to_m=[]))
 
                         seg_file = sct.extract_fname(file_name)[1][:-3] + '_seg.nii.gz'
+                        #TODO load a list of gm segmentations
                         slices[j].set(gm_seg=Image(subject_path + '/' + seg_file).data)
 
                         if self.param.use_levels == 'float':
@@ -405,6 +406,7 @@ class ModelDictionary:
         """
         show the 10 first slices of the model dictionary
         """
+        import matplotlib.pyplot as plt
         for dic_slice in self.slices[:10]:
             fig = plt.figure()
 
