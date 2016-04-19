@@ -130,7 +130,7 @@ def test(path_data='', parameters=''):
             output += '\nWARNING: Diff manual-result = '+str(diff_manual_result)+' > '+str(th_diff_manual_result)
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': int(status), 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': int(diff_manual_result), 'duration [s]': duration}, index=[path_data])
+    results = DataFrame(data={'status': int(status), 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result, 'duration [s]': duration}, index=[path_data])
 
     return status, output, results
 
