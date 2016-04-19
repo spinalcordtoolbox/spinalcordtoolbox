@@ -244,18 +244,19 @@ while  true ; do
     # If no input, asking again, and again, and again
     continue
   else
-    # directory does not exist. Creating it.
-    echo -e "Directory does not exist. Creating it..."
-    cmd="mkdir ${new_install}"; echo $cmd; $cmd
-    # check if directory was created
-    if [ ! "${new_install}" ]; then
-      echo "ERROR: Directory was not created. Check permissions and make sure you entered absolute path."
-      exit 1
-    fi
     INSTALL_DIR=${new_install}
     break
   fi
 done
+
+# If directory does not exist. Creating it.
+# Stay quiet if dir already exist
+mkdir ${INSTALL_DIR} 2> /dev/null && echo -e "Directory does not exist. Creating it..."
+# check if directory was created
+if [ ! "${INSTALL_DIR}" ]; then
+  echo "ERROR: ${INSTALL_DIR} does not exist. Check permissions and make sure you entered absolute path."
+  exit 1
+fi
 
 SCT_DIR=${INSTALL_DIR}
 
