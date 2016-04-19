@@ -9,14 +9,15 @@
 # License: see the LICENSE.TXT
 #=======================================================================================================================
 #
-import sys, commands
+import sys
+from math import asin, cos, sin
+
 from os import chdir
 import sct_utils as sct
-from numpy import array, asarray, zeros, sqrt, dot
+from numpy import array, asarray, zeros
 from scipy import ndimage
 from scipy.io import loadmat
 from msct_image import Image
-from math import asin, cos, sin
 from nibabel import load, Nifti1Image, save
 from sct_convert import convert
 from sct_register_multimodal import Paramreg
@@ -216,11 +217,11 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     # [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
     # initialization
-    if paramreg.algo in ['Rigid', 'Translation']:
+    if paramreg.algo in ['Translation']:
         x_displacement = [0 for i in range(nz)]
         y_displacement = [0 for i in range(nz)]
         theta_rotation = [0 for i in range(nz)]
-    if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
+    if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
         list_warp = []
         list_warp_inv = []
 
@@ -256,7 +257,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             # run registration
             sct.run(cmd)
 
-            if paramreg.algo in ['Rigid', 'Translation']:
+            if paramreg.algo in ['Translation']:
                 file_mat = prefix_warp2d+'0GenericAffine.mat'
                 matfile = loadmat(file_mat, struct_as_record=True)
                 array_transfo = matfile['AffineTransform_double_2_2']
@@ -264,14 +265,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                 y_displacement[i] = array_transfo[5][0]  # Ty  in ITK'S and fslview's coordinate systems
                 theta_rotation[i] = asin(array_transfo[2]) # angle of rotation theta in ITK'S coordinate system (minus theta for fslview)
 
-            if paramreg.algo in ['Affine', 'BSplineSyN', 'SyN']:
+            if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
                 # List names of 2d warping fields for subsequent merge along Z
                 file_warp2d = prefix_warp2d+'0Warp.nii.gz'
                 file_warp2d_inv = prefix_warp2d+'0InverseWarp.nii.gz'
                 list_warp.append(file_warp2d)
                 list_warp_inv.append(file_warp2d_inv)
 
-            if paramreg.algo == 'Affine':
+            if paramreg.algo in ['Rigid', 'Affine']:
                 # Generating null 2d warping field (for subsequent concatenation with affine transformation)
                 sct.run('isct_antsRegistration -d 2 -t SyN[1, 1, 1] -c 0 -m MI[dest_Z'+num+'.nii, src_Z'+num+'.nii, 1, 32] -o warp2d_null -f 1 -s 0')
                 # --> outputs: warp2d_null0Warp.nii.gz, warp2d_null0InverseWarp.nii.gz
@@ -288,7 +289,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     # Merge warping field along z
     sct.printv('\nMerge warping fields along z...', verbose)
 
-    if paramreg.algo in ['Rigid', 'Translation']:
+    if paramreg.algo in ['Translation']:
         # convert to array
         x_disp_a = asarray(x_displacement)
         y_disp_a = asarray(y_displacement)
@@ -298,7 +299,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         # Inverse warping field
         generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
 
-    if paramreg.algo in ['BSplineSyN', 'SyN', 'Affine']:
+    if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
         from sct_image import concat_warp2d
         # concatenate 2d warping fields along z
         concat_warp2d(list_warp, fname_warp, 'dest.nii')
@@ -354,7 +355,7 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
     output:
         creation of a warping field of name 'fname' with an header similar to the destination image.
     """
-    sct.printv('\n\nCreating warping field ' + fname + ' for transformations along z...', verbose)
+    sct.printv('\nCreating warping field for transformations along z...', verbose)
 
     file_dest = load(fname_dest)
     hdr_file_dest = file_dest.get_header()
@@ -366,7 +367,7 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
-    #Center of rotation
+    # Center of rotation
     if center_rotation == None:
         x_a = int(round(nx/2))
         y_a = int(round(ny/2))
@@ -377,18 +378,32 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
     # Calculate displacement for each voxel
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
     vector_i = [[[i-x_a], [j-y_a]] for i in range(nx) for j in range(ny)]
+
+    # if theta_rot == None:
+    #     # for translations
+    #     for k in range(nz):
+    #         matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
+    #         tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
+    #         result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
+    #         for i in range(ny):
+    #             data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
+    #             data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
+
+    # else:
+        # For rigid transforms (not optimized)
+        # if theta_rot != None:
+    # TODO: this is not optimized! can do better!
     for k in range(nz):
-        matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
-        tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
-        result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
         for i in range(nx):
-            data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
-            data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
+            for j in range(ny):
+                data_warp[i, j, k, 0, 0] = (cos(theta_rot[k]) - 1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) + x_trans[k]
+                data_warp[i, j, k, 0, 1] = - sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k]) - 1) * (j - y_a) + y_trans[k]
+                data_warp[i, j, k, 0, 2] = 0
 
     # Generate warp file as a warping field
     hdr_warp.set_intent('vector', (), '')
     hdr_warp.set_data_dtype('float32')
     img = Nifti1Image(data_warp, None, hdr_warp)
     save(img, fname)
-    sct.printv('\nDONE ! Warping field generated: '+fname, verbose)
+    sct.printv('\nDone! Warping field generated: '+fname, verbose)
 

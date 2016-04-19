@@ -139,7 +139,14 @@ def main():
         try:
             module = importlib.import_module(module)
             # get version
-            version = module.__version__
+            try:
+                version = module.__version__
+            except:
+                try:
+                    version = module.__VERSION__
+                except:
+                    # skip if module doesn't have __version__ nor __VERSION__ (e.g., xlutils)
+                    version = version_requirements[i]
             # check if version matches requirements
             if check_package_version(version, version_requirements, i):
                 print_ok()
