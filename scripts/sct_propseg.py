@@ -115,7 +115,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
                       type_value="image_nifti",
-                      description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",
+                      description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation.\nReplace filename by 'viewer' to use interactive viewer for providing centerline. Ex: -init-centerline viewer",
                       mandatory=False)
     parser.add_option(name="-init",
                       type_value="float",
@@ -123,7 +123,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-init-mask",
                       type_value="image_nifti",
-                      description="mask containing three center of the spinal cord, used to initiate the propagation",
+                      description="mask containing three center of the spinal cord, used to initiate the propagation.\nReplace filename by 'viewer' to use interactive viewer for providing mask. Ex: -init-mask viewer",
                       mandatory=False)
     parser.add_option(name="-mask-correction",
                       type_value="image_nifti",
@@ -163,7 +163,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-d",
                       type_value="float",
-                      description="trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results, default is 10",
+                      description="trade-off between distance of most promising point (d is high) and feature strength (d is low), default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results, default is 10",
                       mandatory=False)
     parser.add_option(name="-distance-search",
                       type_value="float",
@@ -171,7 +171,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-alpha",
                       type_value="float",
-                      description="trade-off between internal and external forces. Range of values from 0 to 50, default is 25",
+                      description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
     return parser
 
@@ -295,6 +295,9 @@ if __name__ == "__main__":
             # reorient the initialization mask to correspond to input image orientation
             mask_reoriented_filename = sct.add_suffix(input_filename, "_mask_viewer")
             sct.run('sct_image -i ' + mask_filename + ' -o ' + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
+
+            # remove temporary files
+            sct.run('rm -rf tmp.*')
 
             # add mask filename to parameters string
             if use_viewer == "centerline":

@@ -11,13 +11,14 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from msct_parser import Parser
 import sys
-import os
 import math
+import time
+
+from msct_parser import Parser
+import os
 import scipy
 import nibabel
-import time
 import sct_utils as sct
 from msct_image import Image
 
@@ -70,12 +71,23 @@ class ImageCropper(object):
         self.rm_output_file = rm_output_file
 
     def crop(self):
+        """
+        Crop image (change dimension)
+        """
 
         # create command line
         self.cmd = "isct_crop_image" + " -i " + self.input_filename + " -o " + self.output_filename
         # Handling optional arguments
+
+        # if mask is specified, find -start and -end arguments
         if self.mask is not None:
-            self.cmd += " -m " + self.mask
+            # if user already specified -start or -end arguments, let him know they will be ignored
+            if self.start is not None or self.end is not None:
+                sct.printv('WARNING: Mask was specified for cropping. Arguments -start and -end will be ignored', 1, 'warning')
+            self.start, self.end = find_mask_boundaries(self.mask)
+            # overwrite dim to specify 3 dimensions
+            self.dim = [0, 1, 2]
+
         if self.start is not None:
             self.cmd += " -start " + ','.join(map(str, self.start))
         if self.end is not None:
@@ -118,7 +130,7 @@ class ImageCropper(object):
 
         return self.result
 
-    # crop the image in order to keep only voxels in the mask
+    # mask the image in order to keep only voxels in the mask
     # doesn't change the image dimension
     def crop_from_mask_with_background(self):
         from numpy import asarray, einsum
@@ -160,9 +172,6 @@ class ImageCropper(object):
         remove_temp_files = self.rm_tmp_files
         verbose = self.verbose
 
-        # for faster processing, all outputs are in NIFTI
-        fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '
-
         # Check file existence
         sct.printv('\nCheck file existence...', verbose)
         sct.check_file_exist(fname_data, verbose)
@@ -179,7 +188,6 @@ class ImageCropper(object):
         # print arguments
         print '\nCheck parameters:'
         print '  data ................... '+fname_data
-        print
 
         # Extract path/file/extension
         path_data, file_data, ext_data = sct.extract_fname(fname_data)
@@ -364,6 +372,27 @@ def get_parser():
                       mandatory=False)
     return parser
 
+
+def find_mask_boundaries(fname_mask):
+    """
+    Find boundaries of a mask, i.e., min and max indices of non-null voxels in all dimensions.
+    :param fname:
+    :return: float: ind_start, ind_end
+    """
+    from numpy import nonzero, min, max
+    # open mask
+    data = Image(fname_mask).data
+    data_nonzero = nonzero(data)
+    # find min and max boundaries of the mask
+    ind_start = [min(data_nonzero[i]) for i in range(3)]
+    ind_end = [max(data_nonzero[i]) for i in range(3)]
+    # create string indices
+    # ind_start = ','.join(str(i) for i in xyzmin)
+    # ind_end = ','.join(str(i) for i in xyzmax)
+    # return values
+    return ind_start, ind_end
+
+
 if __name__ == "__main__":
     parser = get_parser()
     # Fetching script arguments
@@ -375,6 +404,7 @@ if __name__ == "__main__":
     if "-g" in arguments:
         exec_choice = bool(int(arguments["-g"]))
 
+    # cropping with GUI
     cropper = ImageCropper(input_filename)
     if exec_choice:
         fname_data = arguments["-i"]
@@ -385,6 +415,7 @@ if __name__ == "__main__":
 
         cropper.crop_with_gui()
 
+    # cropping with specified command-line arguments
     else:
         if "-o" in arguments:
             cropper.output_filename = arguments["-o"]

@@ -31,7 +31,9 @@ from math import exp
 
 class ModelParam:
     def __init__(self):
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        path_script = os.path.dirname(__file__)
+        path_sct = os.path.dirname(path_script)
         self.path_model = path_sct+'/data/gm_model'  # model_param
         self.todo_model = 'load'  # 'compute'   # model_param
         self.new_model_dir = './gm_model'  # model_param

@@ -24,10 +24,9 @@ import sct_utils as sct
 from sct_extract_metric import read_label_file
 
 
-
-
-# get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# get path of the script and the toolbox
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
 
 
 # DEFAULT PARAMETERS
@@ -128,7 +127,7 @@ class WarpTemplate:
 def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
     # read label file and check if file exists
     sct.printv('\nRead label file...', param.verbose)
-    template_label_ids, template_label_names, template_label_file = read_label_file(path_label+folder_label, file_label)
+    template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label+folder_label, file_label)
     # create output folder
     sct.run('mkdir '+path_out+folder_label, param.verbose)
     # Warp label
