@@ -57,7 +57,7 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export SCT_VERSION=$(cat $SCT_DIR/version.txt)
 
   addtopath "${SCT_DIR}/bin" PATH
-  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
+#  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
   addtopath ${SCT_DIR}/scripts PYTHONPATH
   export PATH
   export PYTHONPATH
