@@ -89,7 +89,7 @@ class PCA:
         self.mean_image = self.mean_data_vect.reshape(n, n)
 
         if self.verbose == 2:
-            import matplotlib as plt
+            import matplotlib.pyplot as plt
             plt.figure()
             plt.imshow(self.mean_image.astype(np.float))
             plt.set_cmap('gray')
