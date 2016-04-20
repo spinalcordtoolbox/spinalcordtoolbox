@@ -8,6 +8,17 @@
 # License: see the file LICENSE.TXT
 #########################################################################################
 
+function addtopath {
+  # will not add the path again if it is already there
+  # usage: addtopath "/a/directory/to/be/added" PATH_VARIABLE
+  if [[ ":${!2}:" != *":$1:"* ]]; then
+    bidon1="${1}:${!2}"
+    eval "${2}=$bidon1"
+  fi
+}
 
 SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export SCT_DIR=${SCT_DIR%/bin}
+# Python scripts (for imports)
+addtopath ${SCT_DIR}/scripts PYTHONPATH
+export PYTHONPATH
