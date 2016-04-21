@@ -686,7 +686,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             existing_book = open_workbook(fname_output + '.' + output_type)
 
             # get index of the first empty row and leave one empty row between the two subjects
-            row_index = existing_book.sheet_by_index(0).nrows + 1
+            row_index = existing_book.sheet_by_index(0).nrows
 
             book = copy(existing_book)
             sh = book.get_sheet(0)
