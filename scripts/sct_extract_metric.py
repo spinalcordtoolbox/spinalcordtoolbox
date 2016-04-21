@@ -349,7 +349,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
-    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, combined_labels_id_groups, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
 def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
@@ -608,7 +608,7 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
-def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, combined_labels_id_groups, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
     """Save results in the output type selected by user."""
 
     sct.printv('\nSave results in: '+fname_output+'.'+output_type+' ...')
@@ -704,12 +704,11 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             sh.write(0, 3, 'Vertebral levels')
             sh.write(0, 4, 'Slices (z)')
             sh.write(0, 5, 'ID')
-            sh.write(0, 6, 'Combined labels ID')
-            sh.write(0, 7, 'Label name')
-            sh.write(0, 8, 'Metric value')
-            sh.write(0, 9, 'Metric std')
+            sh.write(0, 6, 'Label name')
+            sh.write(0, 7, 'Metric value')
+            sh.write(0, 8, 'Metric std')
             if fname_normalizing_label:
-                sh.write(0, 10, 'Label used to normalize the metric estimation slice-by-slice')
+                sh.write(0, 9, 'Label used to normalize the metric estimation slice-by-slice')
 
             row_index = 1
 
@@ -742,7 +741,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             sh.write(row_index, 3, vertebral_levels_field)
             sh.write(row_index, 4, slices_of_interest_field)
             if fname_normalizing_label:
-                sh.write(row_index, 10, fname_normalizing_label)
+                sh.write(row_index, 9, fname_normalizing_label)
 
             # change section if not individual label anymore
             if i_label_user > max(indiv_labels_ids) and section == 'White matter atlas':
@@ -752,18 +751,16 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             if section == 'White matter atlas':
                 index = indiv_labels_ids.index(i_label_user)
                 sh.write(row_index, 5, indiv_labels_ids[index])
-                sh.write(row_index, 6, indiv_labels_ids[index])  # combined labels IDs group
-                sh.write(row_index, 7, indiv_labels_names[index])
-                sh.write(row_index, 8, indiv_labels_value[index])
-                sh.write(row_index, 9, indiv_labels_std[index])
+                sh.write(row_index, 6, indiv_labels_names[index])
+                sh.write(row_index, 7, indiv_labels_value[index])
+                sh.write(row_index, 8, indiv_labels_std[index])
 
             elif section == 'Combined labels':
                 index = combined_labels_ids.index(i_label_user)
                 sh.write(row_index, 5, combined_labels_ids[index])
-                sh.write(row_index, 6, combined_labels_id_groups[index])  # combined labels IDs group
-                sh.write(row_index, 7, combined_labels_names[index])
-                sh.write(row_index, 8, combined_labels_value[index])
-                sh.write(row_index, 9, combined_labels_std[index])
+                sh.write(row_index, 6, combined_labels_names[index])
+                sh.write(row_index, 7, combined_labels_value[index])
+                sh.write(row_index, 8, combined_labels_std[index])
 
             row_index += 1
 
