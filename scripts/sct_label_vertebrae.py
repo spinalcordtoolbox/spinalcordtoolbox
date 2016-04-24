@@ -193,7 +193,7 @@ def main(args=None):
     # apply laplacian filtering
     if laplacian:
         printv('\nApply Laplacian filter...', verbose)
-        run('sct_maths -i data_straight.nii -laplace 1 -o data_straight.nii')
+        run('sct_maths -i data_straight.nii -laplacian 1 -o data_straight.nii')
 
     # detect vertebral levels on straight spinal cord
     vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc, verbose)
