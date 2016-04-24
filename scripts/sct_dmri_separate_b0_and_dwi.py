@@ -39,7 +39,6 @@ class Param:
 def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files):
 
     # Initialization
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
     start_time = time.time()
 
     # get path of the toolbox
