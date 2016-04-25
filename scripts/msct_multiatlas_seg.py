@@ -31,7 +31,9 @@ from math import exp
 
 class ModelParam:
     def __init__(self):
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        path_script = os.path.dirname(__file__)
+        path_sct = os.path.dirname(path_script)
         self.path_model = path_sct+'/data/gm_model'  # model_param
         self.todo_model = 'load'  # 'compute'   # model_param
         self.new_model_dir = './gm_model'  # model_param
@@ -722,7 +724,7 @@ class Model:
 
                 wm_slice_seg = compute_majority_vote_mean_seg(selected_slices_wmseg, weights=weights, type=type, threshold=0.50001)
                 res_wm_seg_model_space.append(wm_slice_seg)
-                target[i].set(wm_seg_m=wm_slice_seg)
+                target[i].set(list_wm_seg_m=[wm_slice_seg])
 
                 # list_selected_slices_gm = gm_segmentation_slices[selected_ind_by_slice]
                 selected_slices_gmseg = []
@@ -731,7 +733,7 @@ class Model:
                         selected_slices_gmseg.append(seg)
                 gm_slice_seg = compute_majority_vote_mean_seg(selected_slices_gmseg, weights=weights, type=type)
                 res_gm_seg_model_space.append(gm_slice_seg)
-                target[i].set(gm_seg_m=gm_slice_seg)
+                target[i].set(list_gm_seg_m=[gm_slice_seg])
 
         else:
             # 2D image
@@ -816,7 +818,8 @@ class TargetSegmentationPairwise:
 
         if self.im_levels is not None and self.model.param.use_levels is not '0':
             list_levels = load_level(self.im_levels, type=self.model.param.use_levels, verbose=self.param.verbose)
-            self.target_slices = [target_slice.set(level=l) for target_slice, l in zip(self.target_slices, list_levels)]
+            for target_slice, l in zip(self.target_slices, list_levels):
+                target_slice.set(level=l)
 
         # ####### Registration of the target slices to the dictionary space #######
         self.target_pairwise_registration()
@@ -1041,8 +1044,8 @@ class TargetSegmentationPairwise:
         else:
             # Inverse registration result in model space --> target original space
             for i, target_slice in enumerate(self.target_slices):
-                moving_wm_seg_slice = target_slice.wm_seg_M
-                moving_gm_seg_slice = target_slice.gm_seg_M
+                moving_wm_seg_slice = target_slice.wm_seg_M[0]
+                moving_gm_seg_slice = target_slice.gm_seg_M[0]
 
                 for transfo in target_slice.reg_to_M:
                     if self.param.res_type == 'binary':
@@ -1052,8 +1055,8 @@ class TargetSegmentationPairwise:
                     moving_wm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_wm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1], metric=self.model.param.reg_metric)
                     moving_gm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_gm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1], metric=self.model.param.reg_metric)
 
-                target_slice.set(wm_seg=moving_wm_seg_slice)
-                target_slice.set(gm_seg=moving_gm_seg_slice)
+                target_slice.set(list_wm_seg=[moving_wm_seg_slice])
+                target_slice.set(list_gm_seg=[moving_gm_seg_slice])
 
     # ------------------------------------------------------------------------------------------------------------------
     def z_regularisation_2d_iteration(self, coeff=0.4):
@@ -1146,14 +1149,13 @@ sct_Image
 
         self.res_wm_seg = None
         self.res_gm_seg = None
-        self.corrected_wm_seg = None
 
         self.segment()
 
     # ------------------------------------------------------------------------------------------------------------------
     def segment(self):
         if self.level is not None:
-            if os.path.isfile(self.level) and sct.extract_fname(self.level)[2] == '.nii.gz':
+            if os.path.isfile(self.level) and 'nii' in sct.extract_fname(self.level)[2]:
                 self.im_level = Image(self.level)
             else:
                 # in this case the level is a string or a file name in .txt, not an image
@@ -1186,11 +1188,11 @@ sct_Image
         ext = self.im_target.ext
 
         if len(self.target_seg_methods.target_slices) == 1: # if target is 2D (1 SLICE)
-            self.res_wm_seg = Image(param=np.asarray(self.target_seg_methods.target_slices[0].wm_seg), absolutepath=name_res_wmseg + ext)
-            self.res_gm_seg = Image(param=np.asarray(self.target_seg_methods.target_slices[0].gm_seg), absolutepath=name_res_gmseg + ext)
+            self.res_wm_seg = Image(param=np.asarray(self.target_seg_methods.target_slices[0].wm_seg[0]), absolutepath=name_res_wmseg + ext)
+            self.res_gm_seg = Image(param=np.asarray(self.target_seg_methods.target_slices[0].gm_seg[0]), absolutepath=name_res_gmseg + ext)
         else:
-            self.res_wm_seg = Image(param=np.asarray([target_slice.wm_seg for target_slice in self.target_seg_methods.target_slices]), absolutepath=name_res_wmseg + ext)
-            self.res_gm_seg = Image(param=np.asarray([target_slice.gm_seg for target_slice in self.target_seg_methods.target_slices]), absolutepath=name_res_gmseg + ext)
+            self.res_wm_seg = Image(param=np.asarray([target_slice.wm_seg[0] for target_slice in self.target_seg_methods.target_slices]), absolutepath=name_res_wmseg + ext)
+            self.res_gm_seg = Image(param=np.asarray([target_slice.gm_seg[0] for target_slice in self.target_seg_methods.target_slices]), absolutepath=name_res_gmseg + ext)
 
         self.res_wm_seg.hdr = self.original_hdr
         self.res_wm_seg.file_name = name_res_wmseg
@@ -1200,7 +1202,6 @@ sct_Image
         self.res_gm_seg.file_name = name_res_gmseg
         self.res_gm_seg.save(type='minimize')
 
-        self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.im_target, name_res_wmseg, self.original_hdr)
 
     def show(self):
 
