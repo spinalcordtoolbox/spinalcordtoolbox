@@ -421,7 +421,7 @@ class FullGmSegmentation:
     def post_processing(self):
         square_mask = Image(self.preprocessed.square_mask)
         tmp_res_names = []
-        for res_im in [self.gm_seg.res_wm_seg, self.gm_seg.res_gm_seg, self.gm_seg.corrected_wm_seg]:
+        for res_im in [self.gm_seg.res_wm_seg, self.gm_seg.res_gm_seg]:
             res_im_original_space = inverse_square_crop(res_im, square_mask)
             res_im_original_space.save()
             res_im_original_space = set_orientation(res_im_original_space, self.preprocessed.original_orientation)
@@ -457,7 +457,6 @@ class FullGmSegmentation:
             tmp_res_names.append(res_name)
         self.res_names['wm_seg'] = tmp_res_names[0]
         self.res_names['gm_seg'] = tmp_res_names[1]
-        self.res_names['corrected_wm_seg'] = tmp_res_names[2]
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_ratio(self, type='slice'):
@@ -474,7 +473,7 @@ class FullGmSegmentation:
         gm_seg = 'res_gmseg.nii.gz'
         wm_seg = 'res_wmseg.nii.gz'
         sct.run('cp '+self.res_names['gm_seg']+' '+ratio_dir+gm_seg)
-        sct.run('cp '+self.res_names['corrected_wm_seg']+' '+ratio_dir+wm_seg)
+        sct.run('cp '+self.res_names['wm_seg']+' '+ratio_dir+wm_seg)
 
         # go to ratio folder
         os.chdir(ratio_dir)
