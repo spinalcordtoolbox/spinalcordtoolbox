@@ -130,7 +130,7 @@ def main():
 
     # check if data folder is empty
     print_line('Check if data are installed')
-    if os.listdir("data"):
+    if os.listdir(path_sct+"/data"):
         print_ok()
     else:
         print_fail()
