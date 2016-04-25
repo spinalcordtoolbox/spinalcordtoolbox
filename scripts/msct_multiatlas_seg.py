@@ -331,12 +331,14 @@ class ModelDictionary:
         mean_gm_seg = compute_majority_vote_mean_seg(get_all_seg_from_dic(self.slices, type='gm'))
 
         for dic_slice in self.slices:
+            list_gm_seg_m = []
             for n_transfo, transfo in enumerate(transfo_to_apply):
                 im_m = apply_ants_transfo(self.mean_image, dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.param.new_model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
-                list_gm_seg_m = []
+
                 for gm_seg in dic_slice.gm_seg:
                     gm_seg_m = apply_ants_transfo(mean_gm_seg, gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=True, path=self.param.new_model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
                     list_gm_seg_m.append(gm_seg_m)
+                    del gm_seg_m
                 # apply_2D_rigid_transformation(self.im[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
 
             dic_slice.set(im_m=im_m)
