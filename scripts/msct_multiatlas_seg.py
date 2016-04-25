@@ -618,7 +618,7 @@ class Model:
         :return:
         """
         sct.printv('\nComputing Tau ... \n'
-                   '(Tau is a weighting parameter indicating the decay constant associated with a geodesic distance between a given atlas and a projected target image, see Asman paper, eq (16))', 1, 'normal')
+                   '(Tau is a weighting parameter indicating the decay constant associated with a geodesic distance between a given atlas and a projected target image, see [Asman et al., Medical Image Analysis 2014], eq (16))', 1, 'normal')
         from scipy.optimize import minimize
 
         def to_minimize(tau):
@@ -649,7 +649,7 @@ class Model:
                     # default case
                     est_segm_j = self.label_fusion(dic_slice, kj)[0]
 
-                sum_norm += l0_norm(dic_slice.wm_seg_M, est_segm_j.data)
+                sum_norm += l0_norm(compute_majority_vote_mean_seg(dic_slice.wm_seg_M), est_segm_j.data)
 
             return sum_norm
 
@@ -700,6 +700,8 @@ class Model:
         if isinstance(selected_index[0], (list, np.ndarray)):
             # 3D image
             for i, selected_ind_by_slice in enumerate(selected_index):  # selected_slices:
+                # did not adapted the WEIGHTED LABEL FUSION to multiple segmentations per slice
+                '''
                 if beta is None:
                     n_selected_dic_slices = wm_segmentation_slices[selected_ind_by_slice].shape[0]
                     if n_selected_dic_slices > 0:
@@ -709,6 +711,8 @@ class Model:
                 else:
                     weights = beta[i][selected_ind_by_slice]
                     weights = [w/sum(weights) for w in weights]
+                '''
+                weights = None
 
                 #list_selected_slices_wm = np.array(wm_segmentation_slices[selected_ind_by_slice])
                 selected_slices_wmseg = []
@@ -731,15 +735,29 @@ class Model:
 
         else:
             # 2D image
-            #### WARNING : PROCESSING FOR 2DIMAGE NOT UP TO DATE
+            # did not adapted the WEIGHTED LABEL FUSION to multiple segmentations per slice
+            '''
             if beta is None:
                 n_selected_dic_slices = wm_segmentation_slices[selected_index].shape[0]
                 weights = [1.0/n_selected_dic_slices] * n_selected_dic_slices
             else:
                 weights = beta[selected_index]
                 weights = [w/sum(weights) for w in weights]
-            res_wm_seg_model_space = compute_majority_vote_mean_seg(np.array(wm_segmentation_slices[selected_index]).flatten(), weights=weights, type=type, threshold=0.50001)
-            res_gm_seg_model_space = compute_majority_vote_mean_seg(np.array(gm_segmentation_slices[selected_index]).flatten(), weights=weights, type=type)
+            '''
+            weights = None
+
+            selected_slices_wmseg = []
+            for seg_by_slice in wm_segmentation_slices[selected_index]:
+                for seg in seg_by_slice:
+                    selected_slices_wmseg.append(seg)
+
+            selected_slices_gmseg = []
+            for seg_by_slice in gm_segmentation_slices[selected_index]:
+                for seg in seg_by_slice:
+                    selected_slices_gmseg.append(seg)
+
+            res_wm_seg_model_space = compute_majority_vote_mean_seg(np.array(selected_slices_wmseg), weights=weights, type=type, threshold=0.50001)
+            res_gm_seg_model_space = compute_majority_vote_mean_seg(np.array(selected_slices_gmseg), weights=weights, type=type)
 
         res_wm_seg_model_space = np.asarray(res_wm_seg_model_space)
         res_gm_seg_model_space = np.asarray(res_gm_seg_model_space)
