@@ -279,7 +279,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
         transfo_dir = transfo_type.lower() + '_transformations'
         if transfo_dir not in os.listdir(path):
             sct.run('mkdir ' + path + transfo_dir)
-        dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S") + '_' + str(time.time())
+        dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S") + '_' + str(time.time())+'/'
         sct.run('mkdir ' + dir_name, verbose=verbose)
         os.chdir('./' + dir_name)
 
@@ -324,10 +324,12 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
 
         if apply_transfo:
             if not search_reg:
-                sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + ' ./' + mat_name, verbose=verbose)
+                os.chdir('..')
+                sct.run('cp ' + path + transfo_dir + '/' + transfo_name + ' ./' + dir_name + mat_name, verbose=verbose)
                 if 'SyN' in transfo_type:
-                    sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + '_inversed' + ' ./' + inverse_mat_name,
+                    sct.run('cp ' + path + transfo_dir + '/' + transfo_name + '_inversed' + ' ./' + dir_name + inverse_mat_name,
                             verbose=verbose)
+                os.chdir('./' + dir_name)
 
             if binary or moving_im.max() == 1 or fixed_im.max() == 1:
                 apply_transfo_interpolation = 'NearestNeighbor'
