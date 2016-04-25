@@ -121,11 +121,12 @@ download ()
 # Usage of this script
 usage()
 {
-  echo -e "\nUsage: $0 [-d ] [-m ]" 1>&2;
-  echo -e "\tWe only recomend the -d and -m options for developers"
+  echo -e "\nUsage: $0 [-d ] [-m ] [-b]" 1>&2;
+  echo -e "\tWe only recommend the flags -d, -m and -b for developers"
   echo -e "\nOPTION"
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
+  echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
 }
 
 
@@ -133,7 +134,7 @@ usage()
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
 
-while getopts ":dmh" opt; do
+while getopts ":dmhb" opt; do
   case $opt in
     d)
       echo " data directory will not be (re)-installed"
@@ -142,6 +143,10 @@ while getopts ":dmh" opt; do
     m)
       echo " miniconda python will not be (re)-installed "
       NO_CONDA_INSTALL=yes
+      ;;
+    b)
+      echo " SCT binaries will not be (re)-installed "
+      NO_SCT_BIN_INSTALL=yes
       ;;
     h)
       usage
@@ -202,7 +207,7 @@ THE_CSHRC=${HOME}/.cshrc
 if [[ $INSTALL_TYPE == "git" ]]; then
   INSTALL_DIR=$SCT_SOURCE
 else
-  INSTALL_DIR="${HOME}sct_${SCT_VERSION}"
+  INSTALL_DIR="${HOME}/sct_${SCT_VERSION}"
 fi
 
 # Set install dir
@@ -239,18 +244,19 @@ while  true ; do
     # If no input, asking again, and again, and again
     continue
   else
-    # directory does not exist. Creating it.
-    echo -e "Directory does not exist. Creating it..."
-    cmd="mkdir ${new_install}"; echo $cmd; $cmd
-    # check if directory was created
-    if [ ! "${new_install}" ]; then
-      echo "ERROR: Directory was not created. Check permissions and make sure you entered absolute path."
-      exit 1
-    fi
     INSTALL_DIR=${new_install}
     break
   fi
 done
+
+# If directory does not exist. Creating it.
+# Stay quiet if dir already exist
+mkdir ${INSTALL_DIR} 2> /dev/null && echo -e "Directory does not exist. Creating it..."
+# check if directory was created
+if [ ! "${INSTALL_DIR}" ]; then
+  echo "ERROR: ${INSTALL_DIR} does not exist. Check permissions and make sure you entered absolute path."
+  exit 1
+fi
 
 SCT_DIR=${INSTALL_DIR}
 
@@ -287,11 +293,17 @@ cmd="mkdir -p ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
 cmd="cd ${SCT_DIR}/install"; echo ">> "$cmd; $cmd
 cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run from /install folder (because uses relative path)
 # Copy binaries
-echo -e "\nInstalling binaries..."
-download  ${TMP_DIR}/sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/bin/${OS}/sct_binaries.tar.gz
-# unzip binaries
-ls ${TMP_DIR} > /dev/null
-cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${TMP_DIR}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
+
+if [ ${NO_SCT_BIN_INSTALL} ]; then
+  echo "SCT binaries will not be (re)-install"
+else
+  echo -e "\nInstalling binaries..."
+  download  ${TMP_DIR}/sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/bin/${OS}/sct_binaries.tar.gz
+  # force disk buffer to refresh
+  ls ${TMP_DIR} > /dev/null
+  # unzip binaries
+  cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${TMP_DIR}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
+fi
 
 # INSTALL DATA
 if [ ${NO_DATA_INSTALL} ]; then
@@ -308,7 +320,7 @@ fi
 
 # INSTALL PYTHON
 if [ ${NO_CONDA_INSTALL} ]; then
-  echo "python/ will not vbe (re)-install"
+  echo "python/ will not be (re)-install"
 else
   cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   # Install Python conda

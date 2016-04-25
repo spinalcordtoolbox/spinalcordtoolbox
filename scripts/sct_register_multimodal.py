@@ -41,10 +41,10 @@
 
 
 import sys
-import os
-import commands
 import time
 
+import os
+import commands
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -118,7 +118,7 @@ def main():
     fname_output = ''
     fname_mask = param.fname_mask
     fname_src_seg = ''
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI'
+    fname_dest_seg = ''
 
     start_time = time.time()
     # get path of the toolbox
@@ -272,10 +272,16 @@ def main():
     sct.check_if_3d(fname_src)
     sct.check_if_3d(fname_dest)
 
-    # check if destination data is RPI
+    # Check if destination data is RPI
     sct.printv('\nCheck if destination data is RPI...', verbose)
     if not identity:
         sct.check_if_rpi(fname_dest)
+
+    # Check if user selected type=seg, but did not input segmentation data
+    if 'paramreg_user' in locals():
+        if True in ['type=seg' in paramreg_user[i] for i in range(len(paramreg_user))]:
+            if fname_src_seg == '' or fname_dest_seg == '':
+                sct.printv('\nERROR: if you select type=seg you must specify -iseg and -dseg flags.\n', 1, 'error')
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -546,13 +552,13 @@ def register(src, dest, paramreg, param, i_step_str):
         # no forward warping field for rigid and affine
         sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
-    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine']:
+    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine', 'translation']:
         # no inverse warping field for rigid and affine
         sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
-        if paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine'] and paramreg.steps[i_step_str].slicewise == '0':
+        if paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].slicewise == '0':
             warp_forward = 'warp_forward_'+i_step_str+'.mat'
             os.rename(warp_forward_out, warp_forward)
             warp_inverse = '-warp_forward_'+i_step_str+'.mat'
