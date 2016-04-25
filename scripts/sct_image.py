@@ -294,7 +294,7 @@ def split_data(im_in, dim):
     return im_out_list
 
 
-def concat_data(fname_in_list, dim, no_expand=False):
+def concat_data(fname_in_list, dim):
     """
     Concatenate data
     :param im_in_list: list of images.
@@ -307,12 +307,20 @@ def concat_data(fname_in_list, dim, no_expand=False):
     dat_list = []
     data_concat_list = []
 
+    # check if shape of first image is smaller than asked dim to concatenate along
+    data0 = Image(fname_in_list[0]).data
+    if len(data0.shape) <= dim:
+        expand_dim = True
+    else:
+        expand_dim = False
+
     for i, fname in enumerate(fname_in_list):
+        # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
         if i != 0 and i % 100 == 0:
             data_concat_list.append(concatenate(dat_list, axis=dim))
             im = Image(fname)
             dat = im.data
-            if not no_expand:
+            if expand_dim:
                 dat = expand_dims(dat, dim)
             dat_list = [dat]
             del im
@@ -320,7 +328,7 @@ def concat_data(fname_in_list, dim, no_expand=False):
         else:
             im = Image(fname)
             dat = im.data
-            if not no_expand:
+            if expand_dim:
                 dat = expand_dims(dat, dim)
             dat_list.append(dat)
             del im
