@@ -128,6 +128,13 @@ def main():
         version_sct = myfile.read().replace('\n', '')
     print ".. "+version_sct
 
+    # check if data folder is empty
+    print_line('Check if data are installed')
+    if os.listdir("data"):
+        print_ok()
+    else:
+        print_fail()
+
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
