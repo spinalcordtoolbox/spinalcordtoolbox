@@ -254,7 +254,7 @@ class Preprocessing:
 
         assert (nx == nx_s) and (ny == ny_s) and (nz == nz_s), "ERROR: the image to segment and it's SC segmentation does not have the same size"
 
-        if self.fname_level is not None:
+        if self.fname_level is not None and 'nii' in sct.extract_fname(self.fname_level)[2]:
             im_level = Image(self.fname_level)
             assert im_target.orientation == im_level.orientation, "ERROR: the image to segment and the level image are not in the same orientation"
             nx_l, ny_l, nz_l, nt_l, px_l, py_l, pz_l, pt_l = im_level.dim
