@@ -1148,7 +1148,6 @@ sct_Image
 
         self.res_wm_seg = None
         self.res_gm_seg = None
-        self.corrected_wm_seg = None
 
         self.segment()
 
@@ -1202,7 +1201,6 @@ sct_Image
         self.res_gm_seg.file_name = name_res_gmseg
         self.res_gm_seg.save(type='minimize')
 
-        self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.im_target, name_res_wmseg, self.original_hdr)
 
     def show(self):
 
