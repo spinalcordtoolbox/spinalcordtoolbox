@@ -414,6 +414,10 @@ def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5, weights=None, ty
 
 # ------------------------------------------------------------------------------------------------------------------
 def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
+    '''
+    correct WM seg edges using input SC seg
+    *** NOT USED ANYMORE***
+    '''
     wmseg_dat = (original_im.data > 0).astype(int) - res_gmseg.data
 
     # corrected_wm_seg = Image(param=(wmseg_dat > 0).astype(int))
