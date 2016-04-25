@@ -123,7 +123,7 @@ class PCA:
 
         # --> The eigenvectors are the modes of the PCA
         if self.verbose == 2:
-            import matplotlib as plt
+            import matplotlib.pyplot as plt
             eig_val = [pair[0] for pair in self.eig_pairs]
             eig_val = 100*np.asarray(eig_val)/float(np.sum(eig_val))
             n = 100
@@ -300,7 +300,7 @@ class PCA:
         Displays the kept PCA modes as images
         """
         from math import sqrt
-        import matplotlib as plt
+        import matplotlib.pyplot as plt
 
         n = int(sqrt(self.N))
         fig = plt.figure()
@@ -328,7 +328,7 @@ class PCA:
 
         :param mode: mode to display
         """
-        import matplotlib as plt
+        import matplotlib.pyplot as plt
         from math import sqrt
         # TODO: improve mode visualization
         n = int(sqrt(self.N))
@@ -391,7 +391,7 @@ class PCA:
 
         :param to_highlight: indexes of some points to highlight as a tuple (target_slice, [list of data slices])
         """
-        import matplotlib as plt
+        import matplotlib.pyplot as plt
         cmap = 'gist_ncar'
         cmin = 0
         cmax = 9
