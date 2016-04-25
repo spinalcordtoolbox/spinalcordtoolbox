@@ -1022,7 +1022,7 @@ if __name__ == "__main__":
     path_label = arguments['-f']
     method = arguments['-method']
     labels_user = ''
-    overwrite = 1
+    overwrite = 0
     adv_param_user = ''
     if '-l' in arguments:
         labels_user = arguments['-l']
