@@ -283,7 +283,7 @@ if __name__ == "__main__":
     results_display = results_display.set_index('subject').reset_index()
 
     # printing results
-    print '\nResults for "' + function_to_test + ' ' + parameters + '":'
+    print 'Results for "' + function_to_test + ' ' + parameters + '":'
     print 'Dataset: ' + dataset
     print results_display.to_string()
     print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
