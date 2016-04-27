@@ -174,13 +174,13 @@ def main(args=None):
     # Apply straightening to segmentation
     # N.B. Output is RPI
     printv('\nApply straightening to segmentation...', verbose)
-    run('sct_apply_transfo -i segmentation.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    run('sct_apply_transfo -i segmentation.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear', verbose)
     # Threshold segmentation to 0.5
-    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
+    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz', verbose)
 
     # Apply straightening to z-label
     printv('\nDilate z-label and apply straightening...', verbose)
-    run('sct_apply_transfo -i labelz.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
+    run('sct_apply_transfo -i labelz.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn', verbose)
 
     # get z value and disk value to initialize labeling
     printv('\nGet z and disc values from straight label...', verbose)
@@ -190,19 +190,19 @@ def main(args=None):
     # denoise data
     if denoise:
         printv('\nDenoise data...', verbose)
-        run('sct_maths -i data_straight.nii -denoise h=0.05 -o data_straight.nii')
+        run('sct_maths -i data_straight.nii -denoise h=0.05 -o data_straight.nii', verbose)
 
     # apply laplacian filtering
     if laplacian:
         printv('\nApply Laplacian filter...', verbose)
-        run('sct_maths -i data_straight.nii -laplacian 1 -o data_straight.nii')
+        run('sct_maths -i data_straight.nii -laplacian 1 -o data_straight.nii', verbose)
 
     # detect vertebral levels on straight spinal cord
     vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', init_disc, verbose)
 
     # un-straighten labelled spinal cord
     printv('\nUn-straighten labeling...', verbose)
-    run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn')
+    run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn', verbose)
 
     # Clean labeled segmentation
     printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
@@ -277,8 +277,8 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
     list_disc_value_template = sorted(data_disc_template[data_disc_template.nonzero()])
     list_disc_z_template = [int(np.where(data_disc_template == list_disc_value_template[i])[2]) for i in range(len(list_disc_value_template))]
     printv('\nDisc values from template: '+str(list_disc_value_template), verbose)
-    list_distance_template = np.diff(list_disc_z_template) * (-1) # multiplies by -1 to get positive distances
-    printv('Distances between discs: '+str(list_distance_template), verbose)
+    list_distance_template = (np.diff(list_disc_z_template) * (-1)).tolist() # multiplies by -1 to get positive distances
+    printv('Distances between discs (in voxel): '+str(list_distance_template), verbose)
     # create pattern for each disc
     # data_template = Image(fname_template)
 
@@ -319,7 +319,6 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
         plt.matshow(np.mean(data[xc-size_RL:xc+size_RL, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, init_disc[0], c='red', s=50)  # display init disc
         # plt.text(yc+shift_AP+4, init_disc[0], 'init', verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
 
 
@@ -358,8 +357,10 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
         # Get pattern from template corresponding to current_disc
         pattern = data_template[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z_template-size_IS:current_z_template+size_IS+1]
         pattern1d = pattern.ravel()
-        # display pattern
         if verbose == 2:
+            # display init disc
+            plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, current_z, c='red', s=50)  # display init disc
+            # display pattern
             plt.figure(fig_pattern)
             plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=fig_pattern, cmap=plt.cm.gray)
             plt.title('Pattern in sagittal averaged across R-L')
@@ -450,7 +451,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
             plt.figure(fig_corr), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
 
         # assign new z_start and disc value
-        current_z = current_z - range_z[ind_peak]
+        current_z = current_z + range_z[ind_peak]
 
         # display new disc
         if verbose == 2:
@@ -470,27 +471,30 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
         # append to main list
         if direction == 'superior':
-            # append at the end
-            list_disc_z = np.append(list_disc_z, current_z)
-            list_disc_value = np.append(list_disc_value, current_disc)
-        elif direction == 'inferior':
             # append at the beginning
-            list_disc_z = np.append(current_z, list_disc_z)
-            list_disc_value = np.append(current_disc, list_disc_value)
+            list_disc_z.insert(0, current_z)
+            list_disc_value.insert(0, current_disc)
+        elif direction == 'inferior':
+            # append at the end
+            list_disc_z.append(current_z)
+            list_disc_value.append(current_disc)
 
         # adjust correcting factor based on already-identified discs
         if len(list_disc_z) > 1:
             # compute distance between already-identified discs
-            # for indexing: starts at list_disc_value[1:], which corresponds to max disc-1
-            mean_distance_real[list_disc_value[1:]-1] = np.diff(list_disc_z)
-            # compute correcting factor for disc distances between subject and template
-            ind_distances = np.nonzero(mean_distance_real)[0]
-            correcting_factor = np.mean( mean_distance_real[ind_distances] / mean_distance[ind_distances])
+            list_distance_current = (np.diff(list_disc_z) * (-1)).tolist()
+            # retrieve the template distance corresponding to the already-identified discs
+            index_disc_identified = [i for i, j in enumerate(list_disc_value_template) if j in list_disc_value[:-1]]
+            list_distance_template_identified = [list_distance_template[i] for i in index_disc_identified]
+            # divide subject and template distances for the identified discs
+            list_subject_to_template_distance = [float(list_distance_current[i]) / list_distance_template_identified[i] for i in range(len(list_distance_current))]
+            # average across identified discs to obtain an average correcting factor
+            correcting_factor = np.mean(list_subject_to_template_distance)
             printv('.. correcting factor: '+str(correcting_factor), verbose)
         else:
             correcting_factor = 1
         # update list_distance specific for the subject
-        list_distance = list_distance_template * correcting_factor
+        list_distance = [int(round(list_distance_template[i] * correcting_factor)) for i in range(len(list_distance_template))]
         # updated average_disc_distance (in case it is needed)
         average_disc_distance = int(round(np.mean(list_distance)))
 
@@ -545,17 +549,14 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
         #     current_z = current_z - int(ind_peak)
         #     current_disc = current_disc + 1
 
-        # if current_z is larger than searching zone, switch direction (and start from initial z)
-        if current_z + approx_distance_to_next_disc >= nz or current_disc == 1:
+        # if current_z is larger than searching zone, switch direction (and start from initial z minus approximate distance from updated template distance)
+        if current_z >= nz or current_disc == 1:
             printv('.. Switching to inferior direction.', verbose)
             direction = 'inferior'
-            current_z = init_disc[0]
-            current_disc = init_disc[1]
-            # need to recalculate approximate distance to next disc
-            approx_distance_to_next_disc = int(round(mean_distance_adjusted[current_disc-1]))
-            printv('.. recalculating approximate distance to next disc: '+str(approx_distance_to_next_disc)+' mm', verbose)
+            current_disc = init_disc[1] + 1
+            current_z = init_disc[0] - list_distance[list_disc_value_template.index(current_disc)]
         # if current_z is lower than searching zone, stop searching
-        if current_z - approx_distance_to_next_disc <= 0:
+        if current_z <= 0:
             search_next_disc = False
 
         if verbose == 2:
@@ -563,28 +564,30 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
             plt.figure(fig_corr), plt.savefig('../fig_correlation_disc'+str(current_disc)+'.png'), plt.close()
             plt.figure(fig_pattern), plt.savefig('../fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
 
+    # TODO
     # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
-    upper_disc = min(list_disc_value) -1
-    if not upper_disc == 0:
-        printv('Adding top disc based on adjusted template distance: #'+str(upper_disc), verbose)
-        approx_distance_to_next_disc = int(round(mean_distance_adjusted[upper_disc-1]))
-        next_z = max(list_disc_z) + approx_distance_to_next_disc
-        printv('.. approximate distance: '+str(approx_distance_to_next_disc)+' mm', verbose)
-        # make sure next disc does not go beyond FOV in superior direction
-        if next_z > nz:
-            list_disc_z = np.append(list_disc_z, nz)
-        else:
-            list_disc_z = np.append(list_disc_z, next_z)
-        # assign disc value
-        list_disc_value = np.append(list_disc_value, upper_disc)
+    # upper_disc = min(list_disc_value) -1
+    # if not upper_disc == 0:
+    #     printv('Adding top disc based on adjusted template distance: #'+str(upper_disc), verbose)
+    #     approx_distance_to_next_disc = int(round(mean_distance_adjusted[upper_disc-1]))
+    #     next_z = max(list_disc_z) + approx_distance_to_next_disc
+    #     printv('.. approximate distance: '+str(approx_distance_to_next_disc)+' mm', verbose)
+    #     # make sure next disc does not go beyond FOV in superior direction
+    #     if next_z > nz:
+    #         list_disc_z = np.append(list_disc_z, nz)
+    #     else:
+    #         list_disc_z = np.append(list_disc_z, next_z)
+    #     # assign disc value
+    #     list_disc_value = np.append(list_disc_value, upper_disc)
 
 
     # LABEL SEGMENTATION
     # open segmentation
     seg = Image(fname_seg)
     for iz in range(nz):
-        # get index of the disk above iz
-        ind_above_iz = np.nonzero((list_disc_z-iz).clip(0))[0]
+        # get index of the disc above iz
+        # ind_above_iz = np.nonzero((list_disc_z-iz).clip(0))[0]
+        ind_above_iz = np.array([list_disc_z[i] - iz for i in range(len(list_disc_z))]).clip(0)
         if not ind_above_iz.size:
             # if ind_above_iz is empty, attribute value 0
             # vertebral_level = np.min(labeled_peaks)
