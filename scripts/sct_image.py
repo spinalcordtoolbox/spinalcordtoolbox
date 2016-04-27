@@ -196,7 +196,7 @@ def main(args = None):
         printv('\nGenerate output files...', verbose)
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
-            im_out[0].save()
+            im_out[0].save(squeeze_data=False)
         else:
             for i, im in enumerate(im_out):
                 if fname_out is not None:
@@ -459,7 +459,8 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
     # if data are 2d or 3d, get orientation from header using fslhd
-    if nz == 1 or nt==1:
+
+    if (nz == 1 or nt==1) and len(im.data.shape)<5:
         if get:
             try:
                 printv('\nGet orientation...', verbose)
@@ -516,7 +517,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             if dim == 4:
                 im_out = concat_data(im_changed_ori_list, 3)
             elif dim == 5:
-                fname_changed_ori_list = [im.absolutepath for im in im_changed_ori_list]
+                fname_changed_ori_list = [im_ch_ori.absolutepath for im_ch_ori in im_changed_ori_list]
                 im_out = multicomponent_merge(fname_changed_ori_list)
         elif set_data:
             printv('\nSet orientation of the data only is not compatible with 4D data...', verbose, 'error')
