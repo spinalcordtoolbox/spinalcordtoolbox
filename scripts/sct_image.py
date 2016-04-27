@@ -480,11 +480,18 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
     else:
         from os import chdir
         # 4D data: split along T dimension
+        # or 5D data: split along 5th dimension
         # Create a temporary directory and go in it
         tmp_folder = tmp_create(verbose)
         chdir(tmp_folder)
-        printv('\nSplit along T dimension...', verbose)
-        im_split_list = split_data(im, 3)
+        if len(im.data.shape) == 5 and im.data.shape[-1] not in [0, 1]:
+            # 5D data
+            printv('\nSplit along 5th dimension...', verbose)
+            im_split_list = multicomponent_split(im)
+        else:
+            # 4D data
+            printv('\nSplit along T dimension...', verbose)
+            im_split_list = split_data(im, 3)
         for im_s in im_split_list:
             im_s.save(verbose=verbose)
 
