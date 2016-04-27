@@ -420,7 +420,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
         # display new disc
         if verbose == 2:
-            plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, current_z, c='r', s=50), plt.draw()
+            plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, current_z, c='r', s=100, marker='x'), plt.draw()
 
         # do local adjustment to be at the center of the disc
         printv('.. local adjustment to center disc...', verbose)
