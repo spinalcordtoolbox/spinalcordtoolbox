@@ -14,8 +14,9 @@
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import sys
-import sct_utils as sct
 import math
+
+import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
 
@@ -32,7 +33,7 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose=1, vertebral_levels=None):
+                 coordinates=None, verbose=1, vertebral_levels=None, value=None):
         self.image_input = Image(fname_label, verbose=verbose)
 
         self.image_ref = None
@@ -51,8 +52,11 @@ class ProcessLabels(object):
         self.dilate = dilate
         self.coordinates = coordinates
         self.verbose = verbose
+        self.value = value
 
     def process(self, type_process):
+        if type_process == 'add':
+            self.output_image = self.add(self.value)
         if type_process == 'cross':
             self.output_image = self.cross()
         elif type_process == 'plan':
@@ -72,13 +76,13 @@ class ProcessLabels(object):
             self.output_image = self.remove_label(symmetry=True)
         elif type_process == 'centerline':
             self.extract_centerline()
+        elif type_process == 'create':
+            self.output_image = self.create_label()
+        elif type_process == 'create-add':
+            self.output_image = self.create_label(add=True)
         elif type_process == 'display-voxel':
             self.display_voxel()
             self.fname_output = None
-        elif type_process == 'create':
-            self.output_image = self.create_label()
-        elif type_process == 'add':
-            self.output_image = self.create_label(add=True)
         elif type_process == 'diff':
             self.diff()
             self.fname_output = None
@@ -91,8 +95,8 @@ class ProcessLabels(object):
             self.output_image = self.label_vertebrae(self.vertebral_levels)
         elif type_process == 'label-vertebrae-from-disks':
             self.output_image = self.label_vertebrae_from_disks(self.vertebral_levels)
-        else:
-            sct.printv('Error: The chosen process is not available.', 1, 'error')
+        # else:
+        #     sct.printv('Error: The chosen process is not available.', 1, 'error')
 
         # save the output image as minimized integers
         if self.fname_output is not None:
@@ -101,6 +105,20 @@ class ProcessLabels(object):
                 self.output_image.save('minimize_int')
             else:
                 self.output_image.save()
+
+    def add(self, value):
+        """
+        This function add a specified value to all non-zero voxels.
+        """
+        image_output = Image(self.image_input, self.verbose)
+        # image_output.data *= 0
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+
+        # for all points with non-zeros neighbors, force the neighbors to 0
+        for i, coord in enumerate(coordinates_input):
+            image_output.data[coord.x, coord.y, coord.z] = image_output.data[coord.x, coord.y, coord.z] + float(value)
+        return image_output
+
 
     @staticmethod
     def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
@@ -295,8 +313,6 @@ class ProcessLabels(object):
          groups together.
         :return: image_output
         """
-        from scipy import ndimage
-        from numpy import array, mean
 
         # 0. Initialization of output image
         output_image = self.image_input.copy()
@@ -323,9 +339,8 @@ class ProcessLabels(object):
 
     def increment_z_inverse(self):
         """
-        This function increments all the labels present in the input image, inversely ordered by Z.
-        Therefore, labels are incremented from top to bottom, assuming a RPI orientation
-        Labels are assumed to be non-zero.
+        This function takes all non-zero values, sort them along the inverse z direction, and attributes the values 1,
+        2, 3, etc. This function assuming RPI orientation.
         """
         image_output = Image(self.image_input, self.verbose)
         image_output.data *= 0
@@ -641,34 +656,24 @@ def get_parser():
                       mandatory=False,
                       example="t2_labels_cross.nii.gz",
                       default_value="labels.nii.gz")
-    parser.add_option(name="-t",
-                      type_value="str",
-                      description="""process:
-- add: add label to an existing image (-i).
-- cross: create a cross. Must use flag "-cross"
-- create: create labels. Must use flag "-coord" to list labels
-- cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
-- display-voxel: display all labels in file
-- increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
-- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. To specify vertebral levels use flag 'level', otherwise all levels will be generated.
-- MSE: compute Mean Square Error between labels input and reference input "-r"
-- remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
-                      mandatory=True,
-                      deprecated_by='-p',
-                      example="create")
+    parser.add_option(name='-add',
+                      type_value='int',
+                      description='Add value to all labels. Value can be negative.',
+                      mandatory=False)
     parser.add_option(name="-p",
                       type_value="str",
                       description="""process:
-- add: add label to an existing image (-i).
-- cross: create a cross. Must use flag "-cross"
-- create: create labels. Must use flag "-x" to list labels
-- cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
+- create: Create labels. Must use flag "-x" to list labels
+- create-add: Add label to an existing image (-i).
+- cross: Create a cross. Must use flag "-cross"
+- cubic-to-point: Compute the center-of-mass for each label value.
 - display-voxel: display all labels in file
-- increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
+- increment: takes all non-zero values, sort them along the inverse z direction, and attributes the values 1, 2, 3, etc.
 - label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. To specify vertebral levels use flag 'level', otherwise all levels will be generated.
 - MSE: compute Mean Square Error between labels input and reference input "-r"
-- remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
-                      mandatory=True,
+- remove <file_ref>: remove labels from input image (-i) that are not in reference image.
+- remove-symm: remove labels both in input and ref file. Must provide two output names separated by ',' """,
+                      mandatory=False,
                       example="create")
     parser.add_option(name="-x",
                       type_value=[[':'], 'Coordinate'],
@@ -732,7 +737,11 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     input_filename = arguments['-i']
-    process_type = arguments['-p']
+    if '-add' in arguments:
+        process_type = 'add'
+        value = arguments['-add']
+    else:
+        process_type = arguments['-p']
     input_fname_output = None
     input_fname_ref = None
     input_cross_radius = 5
@@ -753,7 +762,7 @@ def main(args=None):
         vertebral_levels = arguments["-vert"]
     if "-v" in arguments:
         input_verbose = int(arguments["-v"])
-    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels)
+    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels, value=value)
     processor.process(process_type)
 
 
