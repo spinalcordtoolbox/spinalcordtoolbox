@@ -488,10 +488,12 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             # 5D data
             printv('\nSplit along 5th dimension...', verbose)
             im_split_list = multicomponent_split(im)
+            dim = 5
         else:
             # 4D data
             printv('\nSplit along T dimension...', verbose)
             im_split_list = split_data(im, 3)
+            dim = 4
         for im_s in im_split_list:
             im_s.save(verbose=verbose)
 
@@ -511,7 +513,11 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
                 im_set = set_orientation(im_s, ori)
                 im_changed_ori_list.append(im_set)
             printv('\nMerge file back...', verbose)
-            im_out = concat_data(im_changed_ori_list, 3)
+            if dim == 4:
+                im_out = concat_data(im_changed_ori_list, 3)
+            elif dim == 5:
+                fname_changed_ori_list = [im.absolutepath for im in im_changed_ori_list]
+                im_out = multicomponent_merge(fname_changed_ori_list)
         elif set_data:
             printv('\nSet orientation of the data only is not compatible with 4D data...', verbose, 'error')
         else:
