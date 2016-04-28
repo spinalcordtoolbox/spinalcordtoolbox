@@ -12,8 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: compute MI instead of correlation
 # TODO: add user input option (show sagittal slice)
-# TODO: make better distance template
 
 import sys
 
@@ -507,7 +507,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
         elif direction == 'inferior':
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
-            except ValueError:
+            except:
                 printv('WARNING: Disc value not included in template. Using average disc distance: '+str(average_disc_distance))
                 approx_distance_to_next_disc = average_disc_distance
             # assign new current_z and disc value
