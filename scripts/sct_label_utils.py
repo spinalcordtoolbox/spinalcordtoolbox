@@ -737,11 +737,6 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     input_filename = arguments['-i']
-    if '-add' in arguments:
-        process_type = 'add'
-        value = arguments['-add']
-    else:
-        process_type = arguments['-p']
     input_fname_output = None
     input_fname_ref = None
     input_cross_radius = 5
@@ -749,6 +744,12 @@ def main(args=None):
     input_coordinates = None
     vertebral_levels = None
     input_verbose = '1'
+    value = None
+    if '-add' in arguments:
+        process_type = 'add'
+        value = arguments['-add']
+    else:
+        process_type = arguments['-p']
     input_fname_output = arguments["-o"]
     if "-ref" in arguments:
         input_fname_ref = arguments["-ref"]
