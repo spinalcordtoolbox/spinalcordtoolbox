@@ -137,7 +137,7 @@ def main(args=None):
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
     path_tmp = tmp_create(verbose=verbose)
-    # path_tmp = '/Users/julien/data/temp/errsm_11/tmp.160428070603_353604/'
+    #path_tmp = '/Users/julien/data/temp/pain_pilot_1/t2/tmp.160428095303_351039/'
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
@@ -391,17 +391,17 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
                 data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
             else:
                 data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-            if verbose == 2 and iz == 0:
-                # display template and subject patterns
-                plt.figure(fig_pattern)
-                plt.subplot(121)
-                plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-                plt.title('Template pattern')
-                plt.subplot(122)
-                plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-                plt.title('Subject pattern at iz=0')
-                # save figure
-                plt.figure(fig_pattern), plt.savefig('../fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
+            # if verbose == 2 and iz == 0:
+            #     # display template and subject patterns
+            #     plt.figure(fig_pattern)
+            #     plt.subplot(131)
+            #     plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+            #     plt.title('Template pattern')
+            #     plt.subplot(132)
+            #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+            #     plt.title('Subject pattern at iz=0')
+            #     # save figure
+            #     plt.figure(fig_pattern), plt.savefig('../fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
             # convert subject pattern to 1d
             data_chunk1d = data_chunk3d.ravel()
             # check if data_chunk1d contains at least one non-zero value
@@ -438,7 +438,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
         # Find global maximum
         # ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
-        ind_peak = np.where(I_corr_adj == I_corr_adj.max())[0]  # index of max along z
+        ind_peak = [i for i in range(len(I_corr_adj)) if I_corr_adj[i] == max(I_corr_adj)][0]  # index of max along z
         # ind_peak[1] = np.where(I_corr_adj == I_corr_adj.max())[1]  # index of max along y
         printv('.. Peak found: z='+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
         # check if correlation is high enough
@@ -447,11 +447,40 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
             ind_peak = range_z.index(0) # approx_distance_to_next_disc
             # ind_peak[1] = int(round(len(length_y_corr)/2))
 
-        # display peak
+        # # display peak
+        # if verbose == 2:
+        #     plt.figure(fig_corr), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
+        #     # save figure
+        #     plt.figure(fig_corr), plt.savefig('../fig_correlation_disc'+str(current_disc)+'.png'), plt.close()
+
+        # display patterns and correlation
         if verbose == 2:
-            plt.figure(fig_corr), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
+            # display template pattern
+            plt.figure(fig_pattern, figsize=(20,7))
+            plt.subplot(141)
+            plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+            plt.title('Template pattern')
+            # display subject pattern centered at current_z
+            plt.subplot(142)
+            iz = 0
+            data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
+            plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+            plt.title('Subject at iz=0')
+            # display subject pattern centered at current_z
+            plt.subplot(143)
+            iz = range_z[ind_peak]
+            data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
+            plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+            plt.title('Subject at iz='+str(iz))
+            # display correlation curve
+            plt.subplot(144)
+            plt.plot(I_corr_adj)
+            plt.title('Correlation between template and subject pattern')
+            plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
+            plt.axvline(x=range_z.index(0), linewidth=1, color='black', linestyle='dashed')
+            plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
             # save figure
-            plt.figure(fig_corr), plt.savefig('../fig_correlation_disc'+str(current_disc)+'.png'), plt.close()
+            plt.figure(fig_corr), plt.savefig('../fig_pattern_correlation'+str(current_disc)+'.png'), plt.close()
 
         # assign new z_start and disc value
         current_z = current_z + range_z[ind_peak]
