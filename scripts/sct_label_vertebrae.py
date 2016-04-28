@@ -584,27 +584,25 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
     # LABEL SEGMENTATION
     # open segmentation
     seg = Image(fname_seg)
+    # loop across z
     for iz in range(nz):
-        # get index of the disc above iz
-        # ind_above_iz = np.nonzero((list_disc_z-iz).clip(0))[0]
-        ind_above_iz = np.array([list_disc_z[i] - iz for i in range(len(list_disc_z))]).clip(0)
-        if not ind_above_iz.size:
+        # get index of the disc right above iz
+        try:
+            ind_above_iz = max([i for i in range(len(list_disc_z)) if list_disc_z[i] > iz])
+        except ValueError:
             # if ind_above_iz is empty, attribute value 0
-            # vertebral_level = np.min(labeled_peaks)
             vertebral_level = 0
         else:
-            # ind_disk_above = np.where(peaks-iz > 0)[0][0]
-            ind_disk_above = min(ind_above_iz)
             # assign vertebral level (add one because iz is BELOW the disk)
-            vertebral_level = list_disc_value[ind_disk_above] + 1
+            vertebral_level = list_disc_value[ind_above_iz] + 1
             # print vertebral_level
         # get voxels in mask
+        print str(iz)+', '+str(vertebral_level)
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
         if verbose == 2:
             plt.figure(fig_anat_straight)
             plt.scatter(int(round(ny/2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
-
     # write file
     seg.file_name += '_labeled'
     seg.save()
