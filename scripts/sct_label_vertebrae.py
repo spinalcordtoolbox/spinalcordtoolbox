@@ -244,7 +244,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
     gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
     fig_anat_straight = 1  # handle for figure
     fig_pattern = 2  # handle for figure
-    fig_corr = 3  # handle for figure
+    # fig_corr = 3  # handle for figure
 
     # initialization
     contrast_template = 't2'
@@ -421,11 +421,11 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
         # I_corr_adj = np.multiply(I_corr.transpose(), gaussian_window).transpose()
         I_corr_adj = I_corr
 
-        # display correlation curves
-        if verbose == 2:
-            plt.figure(fig_corr)
-            plt.plot(I_corr_adj)
-            plt.title('Correlation of pattern with data.')
+        # # display correlation curves
+        # if verbose == 2:
+        #     plt.figure(fig_corr)
+        #     plt.plot(I_corr_adj)
+        #     plt.title('Correlation of pattern with data.')
 
         # Find peak within local neighborhood defined by mean distance template
         # ind_peak = argrelextrema(I_corr_adj, np.greater, order=searching_window_for_maximum)[0]
@@ -480,7 +480,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
             plt.axvline(x=range_z.index(0), linewidth=1, color='black', linestyle='dashed')
             plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
             # save figure
-            plt.figure(fig_corr), plt.savefig('../fig_pattern_correlation'+str(current_disc)+'.png'), plt.close()
+            plt.figure(fig_pattern), plt.savefig('../fig_pattern_correlation'+str(current_disc)+'.png'), plt.close()
 
         # assign new z_start and disc value
         current_z = current_z + range_z[ind_peak]
