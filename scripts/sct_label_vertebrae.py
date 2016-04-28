@@ -438,14 +438,20 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
         # Find global maximum
         # ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
-        ind_peak = [i for i in range(len(I_corr_adj)) if I_corr_adj[i] == max(I_corr_adj)][0]  # index of max along z
-        # ind_peak[1] = np.where(I_corr_adj == I_corr_adj.max())[1]  # index of max along y
-        printv('.. Peak found: z='+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
-        # check if correlation is high enough
-        if I_corr_adj[ind_peak] < thr_corr:
-            printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
+        if np.any(I_corr_adj):
+            # if I_corr_adj contains at least a non-zero value
+            ind_peak = [i for i in range(len(I_corr_adj)) if I_corr_adj[i] == max(I_corr_adj)][0]  # index of max along z
+            # ind_peak[1] = np.where(I_corr_adj == I_corr_adj.max())[1]  # index of max along y
+            printv('.. Peak found: z='+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
+            # check if correlation is high enough
+            if I_corr_adj[ind_peak] < thr_corr:
+                printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
+                ind_peak = range_z.index(0) # approx_distance_to_next_disc
+                # ind_peak[1] = int(round(len(length_y_corr)/2))
+        else:
+            # if I_corr_adj contains only zeros
+            printv('.. WARNING: Correlation vector only contains zeros. Using adjusted template distance.', verbose)
             ind_peak = range_z.index(0) # approx_distance_to_next_disc
-            # ind_peak[1] = int(round(len(length_y_corr)/2))
 
         # # display peak
         # if verbose == 2:
