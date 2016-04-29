@@ -138,8 +138,11 @@ def main():
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
+        # need to adapt import name and module name in specific cases
         if i == 'scikit-image':
             module = 'skimage'
+        elif i == 'scikit-learn':
+            module = 'sklearn'
         else:
             module = i
         print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
