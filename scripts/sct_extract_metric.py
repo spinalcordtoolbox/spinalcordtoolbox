@@ -654,7 +654,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             fid_metric.write('ALL')
 
         # label headers
-        fid_metric.write('%s' % ('\n'+'# ID, label name, metric value, stdev\n\n'))
+        fid_metric.write('%s' % ('\n'+'# ID, label name, metric value, metric stdev within label\n\n'))
 
         # WRITE RESULTS
         labels_id_user.sort()
