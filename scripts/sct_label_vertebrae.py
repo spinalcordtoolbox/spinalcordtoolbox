@@ -17,7 +17,6 @@
 # TODO: add user input option (show sagittal slice)
 
 import sys
-
 from os import chdir
 from glob import glob
 import numpy as np
@@ -32,7 +31,10 @@ from msct_image import Image
 def get_parser():
     # parser initialisation
     parser = Parser(__file__)
-    parser.usage.set_description('''This program automatically detect the spinal cord in a MR image and output a centerline of the spinal cord.''')
+    parser.usage.set_description('''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then performs a disc search in the superior, then inferior direction, using template disc matching based on mutual information score.
+Tips: To run the function with init txt file that includes flags -initz/-initcenter:
+sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_vertebrae.txt)"
+''')
     parser.add_option(name="-i",
                       type_value="file",
                       description="input image.",
@@ -57,6 +59,10 @@ def get_parser():
     parser.add_option(name="-initcenter",
                       type_value='int',
                       description='Initialize labeling by providing the disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
+                      mandatory=False)
+    parser.add_option(name="-initfile",
+                      type_value='file',
+                      description='Initialize labeling by providing a text file which includes either -initz or -initcenter flag.',
                       mandatory=False)
     parser.add_option(name='-o',
                       type_value='file_output',
@@ -424,7 +430,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
                  #I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
                  # data_chunk2d = np.mean(data_chunk3d, 1)
                  # pattern2d = np.mean(pattern, 1)
-                 I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 64)
+                 I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 32)
                 # from sklearn import metrics
                 # I_corr[ind_I] = metrics.adjusted_mutual_info_score(data_chunk1d, pattern1d)
             else:
