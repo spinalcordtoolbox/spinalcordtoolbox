@@ -255,7 +255,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
     size_IS = 19  # window size in IS direction (=z) (in voxel)
     smooth_factor = [9, 3, 1]
     # searching_window_for_maximum = 5  # size used for finding local maxima
-    thr_corr = 0.7  # disc correlation threshold. Below this value, use template distance.
+    thr_corr = 0.6  # disc correlation threshold. Below this value, use template distance.
     # gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
     fig_anat_straight = 1  # handle for figure
     fig_pattern = 2  # handle for figure
@@ -373,8 +373,13 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
     search_next_disc = True
     while search_next_disc:
         printv('Current disc: '+str(current_disc)+' (z='+str(current_z)+'). Direction: '+direction, verbose)
-        # get z corresponding to current disc on template
-        current_z_template = int(np.where(data_disc_template == current_disc)[2])
+        try:
+            # get z corresponding to current disc on template
+            current_z_template = int(np.where(data_disc_template == current_disc)[2])
+        except TypeError:
+            # in case reached the bottom (see issue #849)
+            printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
+            break
         # Get pattern from template corresponding to current_disc
         pattern = data_template[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z_template-size_IS:current_z_template+size_IS+1]
         pattern1d = pattern.ravel()
@@ -548,19 +553,19 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
         # update list_distance specific for the subject
         list_distance = [int(round(list_distance_template[i] * correcting_factor)) for i in range(len(list_distance_template))]
         # updated average_disc_distance (in case it is needed)
-        average_disc_distance = int(round(np.mean(list_distance)))
+        # average_disc_distance = int(round(np.mean(list_distance)))
 
         # assign new current_z and disc value
         if direction == 'superior':
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc-1)]
             except ValueError:
-                printv('WARNING: Disc value not included in template. Using previously calculated distance.')
-                try:
-                    approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
-                except ValueError:
-                    printv('WARNING: Disc value not included in template. Using average disc distance: '+str(average_disc_distance))
-                    approx_distance_to_next_disc = average_disc_distance
+                printv('WARNING: Disc value not included in template. Using previously-calculated distance: '+str(approx_distance_to_next_disc))
+                # try:
+                #     approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
+                # except ValueError:
+                #     printv('WARNING: Disc value not included in template. Using previous disc distance: '+str(approx_distance_to_next_disc))
+                    # approx_distance_to_next_disc = average_disc_distance
             # assign new current_z and disc value
             current_z = current_z + approx_distance_to_next_disc
             current_disc = current_disc - 1
@@ -568,8 +573,8 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
             except:
-                printv('WARNING: Disc value not included in template. Using average disc distance: '+str(average_disc_distance))
-                approx_distance_to_next_disc = average_disc_distance
+                printv('WARNING: Disc value not included in template. Using previously-calculated distance: '+str(approx_distance_to_next_disc))
+                # approx_distance_to_next_disc = average_disc_distance
             # assign new current_z and disc value
             current_z = current_z - approx_distance_to_next_disc
             current_disc = current_disc + 1
