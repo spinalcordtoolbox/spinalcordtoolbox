@@ -618,7 +618,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
 
         # write result into output file
-        save_results(output_prefix+output_suffixes[2], output_type, overwrite, file_data, 'CSA', 0, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_prefix+output_suffixes[2], output_type, overwrite, file_data, 'CSA', 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
         sct.printv('Compute the volume in between the selected slices...', type='info')
@@ -627,7 +627,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
 
         # write result into output file
-        save_results(output_prefix+output_suffixes[3], output_type, overwrite, file_data, 'volume', 0, 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_prefix+output_suffixes[3], output_type, overwrite, file_data, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
     # Remove temporary files
     if remove_temp_files:
@@ -644,7 +644,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
 # ======================================================================================================================
 # Save CSA or volume estimation in a .txt file
 # ======================================================================================================================
-def save_results(fname_output, output_type, overwrite, fname_data, metric_name, label_id, method, mean, std, slices_of_interest, actual_vert, warning_vert_levels):
+def save_results(fname_output, output_type, overwrite, fname_data, metric_name, method, mean, std, slices_of_interest, actual_vert, warning_vert_levels):
 
     # check output-type
     if (output_type != 'txt' and output_type != 'xls'):
@@ -683,10 +683,10 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
             fid_metric.write('ALL')
 
         # label headers
-        fid_metric.write('%s' % ('\n'+'# ID, file used for calculation, MEAN across slices, STDEV across slices\n\n'))
+        fid_metric.write('%s' % ('\n'+'# File used for calculation, MEAN across slices, STDEV across slices\n\n'))
 
         # WRITE RESULTS
-        fid_metric.write('%i, %s, %f, %f\n' % (label_id, os.path.abspath(fname_data), mean, std))
+        fid_metric.write('%s, %f, %f\n' % (os.path.abspath(fname_data), mean, std))
 
         # Close file .txt
         fid_metric.close()
@@ -722,10 +722,9 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
             sh.write(0, 2, 'Calculation method')
             sh.write(0, 3, 'Vertebral levels')
             sh.write(0, 4, 'Slices (z)')
-            sh.write(0, 5, 'ID')
-            sh.write(0, 6, 'File used for calculation')
-            sh.write(0, 7, 'MEAN across slices')
-            sh.write(0, 8, 'STDEV across slices')
+            sh.write(0, 5, 'File used for calculation')
+            sh.write(0, 6, 'MEAN across slices')
+            sh.write(0, 7, 'STDEV across slices')
 
             row_index = 1
 
@@ -749,10 +748,9 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
         sh.write(row_index, 2, method)
         sh.write(row_index, 3, vertebral_levels_field)
         sh.write(row_index, 4, slices_of_interest_field)
-        sh.write(row_index, 5, label_id)
-        sh.write(row_index, 6, os.path.abspath(fname_data))
-        sh.write(row_index, 7, mean)
-        sh.write(row_index, 8, str(std))
+        sh.write(row_index, 5, os.path.abspath(fname_data))
+        sh.write(row_index, 6, mean)
+        sh.write(row_index, 7, str(std))
 
         book.save(fname_output + '.' + output_type)
 
