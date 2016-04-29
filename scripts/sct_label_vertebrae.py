@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: address the case when there is more than one max correlation
 # TODO: compute MI instead of correlation
 # TODO: add user input option (show sagittal slice)
 
@@ -195,10 +196,10 @@ def main(args=None):
     # apply laplacian filtering
     if laplacian:
         printv('\nApply Laplacian filter...', verbose)
-        run('sct_maths -i data_straight.nii -laplacian 1 -o data_straight.nii', verbose)
+        run('sct_maths -i data_straightr.nii -laplacian 1 -o data_straightr.nii', verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', init_disc, verbose)
+    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', init_disc, verbose, laplacian)
 
     # un-straighten labelled spinal cord
     printv('\nUn-straighten labeling...', verbose)
@@ -233,7 +234,7 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, init_disc, verbose):
+def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
 
     shift_AP = 32  # shift the centerline towards the spine (in voxel).
     size_AP = 11  # window size in AP direction (=y) (in voxel)
@@ -272,6 +273,12 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
     # Open template and disc labels
     data_template = Image(fname_template).data
     data_disc_template = Image(fname_disc).data
+
+    # apply Laplacian filtering to template data
+    if laplacian:
+        printv('\nApplying Laplacian filter to template data...', verbose)
+        from sct_maths import laplacian
+        data_template = laplacian(data_template.astype(float), [1, 1, 1])
 
     # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
     list_disc_value_template = sorted(data_disc_template[data_disc_template.nonzero()])
@@ -407,7 +414,9 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
             # check if data_chunk1d contains at least one non-zero value
             # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
             if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-                I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
+                 I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
+                # from sklearn import metrics
+                # I_corr[ind_I] = metrics.adjusted_mutual_info_score(data_chunk1d, pattern1d)
             else:
                 allzeros = 1
                 # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
