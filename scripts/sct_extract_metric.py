@@ -805,12 +805,12 @@ def check_labels(indiv_labels_ids, selected_labels):
         else:
             list_ids_of_labels_of_interest = [int(x) for x in selected_labels.split(',')]
 
-    # Sort labels ID and remove redundant values
+    # Remove redundant values
     list_ids_of_labels_of_interest = [i_label for n, i_label in enumerate(list_ids_of_labels_of_interest) if i_label not in list_ids_of_labels_of_interest[:n]]
 
     # Check if the selected labels are in the available labels ids
     if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
-        sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available. Exit program.\n\n', type='error')
+        sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available according to the label list from the text file in the atlas folder. Exit program.\n\n', type='error')
 
 
     return list_ids_of_labels_of_interest
