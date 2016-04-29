@@ -109,7 +109,7 @@ bin: binarize mask (threshold=0.5)""",
                       default_value=param_default.output_type)
     parser.add_option(name='-overwrite',
                       type_value='int',
-                      description="""In the case you choose \"-output-type xls\" and you specified a pre-existing file in \"-o\", this option will overwrite this .xls file (\"-overwrite 1\") instead of adding the results to it (\"-overwrite 0\").""",
+                      description="""In the case you choose \"-output-type xls\" and you specified a pre-existing file in \"-o\", this option will allow you to overwrite this .xls file (\"-overwrite 1\") or to add the results to it (\"-overwrite 0\").""",
                       mandatory=False,
                       default_value=0)
     parser.add_option(name='-param',
@@ -654,7 +654,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             fid_metric.write('ALL')
 
         # label headers
-        fid_metric.write('%s' % ('\n'+'# ID, label name, mean, std\n\n'))
+        fid_metric.write('%s' % ('\n'+'# ID, label name, metric value, stdev\n\n'))
 
         # WRITE RESULTS
         labels_id_user.sort()
@@ -714,7 +714,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             sh.write(0, 5, 'ID')
             sh.write(0, 6, 'Label name')
             sh.write(0, 7, 'Metric value')
-            sh.write(0, 8, 'Metric std')
+            sh.write(0, 8, 'Metric STDEV within label')
             if fname_normalizing_label:
                 sh.write(0, 9, 'Label used to normalize the metric estimation slice-by-slice')
 
