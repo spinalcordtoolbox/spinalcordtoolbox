@@ -144,8 +144,8 @@ def main(args=None):
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
-    # path_tmp = tmp_create(verbose=verbose)
-    path_tmp = '/Users/julien/data/temp/errsm_31/t2/tmp.160429124014_910053/'
+    path_tmp = tmp_create(verbose=verbose)
+    #path_tmp = '/Users/julien/data/temp/errsm_31/t2/tmp.160429124014_910053/'
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
@@ -171,7 +171,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    # run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
+    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
