@@ -22,7 +22,7 @@ from os import chdir
 from glob import glob
 import numpy as np
 from scipy.signal import argrelextrema, gaussian
-from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end
+from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end, tmp_create
 from msct_parser import Parser
 from msct_image import Image
 
