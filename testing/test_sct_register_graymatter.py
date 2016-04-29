@@ -89,10 +89,15 @@ def test(path_data, parameters=''):
                     gm_dice_list.append(float(gm_dc))
                     gm_diff_list.append(float(gm_diff))
 
-        result_dice_wm = mean(wm_dice_list)
-        result_diff_dc_wm = mean(wm_diff_list)
-        result_dice_gm = mean(gm_dice_list)
-        result_diff_dc_gm = mean(gm_diff_list)
+        # use try to avoid computing mean in empty lists
+        if not wm_dice_list == []:
+            result_dice_wm = mean(wm_dice_list)
+        if not wm_diff_list == []:
+            result_diff_dc_wm = mean(wm_diff_list)
+        if not gm_dice_list == []:
+            result_dice_gm = mean(gm_dice_list)
+        if not gm_diff_list == []:
+            result_diff_dc_gm = mean(gm_diff_list)
 
         # Extracting hausdorff distance results
         hd_file = open(hausdorff_fname, 'r')
@@ -117,10 +122,14 @@ def test(path_data, parameters=''):
                     max_med_list.append(float(md))
                     md_diff_list.append(float(md_diff))
 
-        result_hausdorff = mean(hausdorff_list)
-        result_diff_hd = mean(hd_diff_list)
-        result_median_dist = mean(max_med_list)
-        result_diff_md = mean(md_diff_list)
+        if not hausdorff_list == []:
+            result_hausdorff = mean(hausdorff_list)
+        if not hd_diff_list == []:
+            result_diff_hd = mean(hd_diff_list)
+        if not max_med_list == []:
+            result_median_dist = mean(max_med_list)
+        if not md_diff_list == []:
+            result_diff_md = mean(md_diff_list)
 
         # Integrity check
         hd_threshold = 2  # in mm
