@@ -22,7 +22,7 @@ from os import chdir
 from glob import glob
 import numpy as np
 from scipy.signal import argrelextrema, gaussian
-from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end, tmp_create
+from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end
 from msct_parser import Parser
 from msct_image import Image
 
@@ -104,6 +104,7 @@ def calc_MI(x, y, bins):
     from sklearn.metrics import mutual_info_score
     c_xy = np.histogram2d(x, y, bins)[0]
     mi = mutual_info_score(None, None, contingency=c_xy)
+    # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
     return mi
 
 # MAIN
@@ -143,8 +144,8 @@ def main(args=None):
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
-    path_tmp = tmp_create(verbose=verbose)
-    #path_tmp = '/Users/julien/data/temp/ALT/t2/tmp.160428174251_643402/'
+    # path_tmp = tmp_create(verbose=verbose)
+    path_tmp = '/Users/julien/data/temp/errsm_31/t2/tmp.160429124014_910053/'
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
@@ -170,7 +171,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
+    # run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
@@ -246,9 +247,10 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
     size_AP = 11  # window size in AP direction (=y) (in voxel)
     size_RL = 1  # window size in RL direction (=x) (in voxel)
     size_IS = 19  # window size in IS direction (=z) (in voxel)
-    searching_window_for_maximum = 5  # size used for finding local maxima
+    smooth_factor = [9, 3, 1]
+    # searching_window_for_maximum = 5  # size used for finding local maxima
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
-    gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
+    # gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
     fig_anat_straight = 1  # handle for figure
     fig_pattern = 2  # handle for figure
     # fig_corr = 3  # handle for figure
@@ -305,8 +307,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
 
     # smooth data
     from scipy.ndimage.filters import gaussian_filter
-    data = gaussian_filter(data, [9, 3, 1], output=None, mode="reflect")
-    # data = gaussian_filter(data, [3, 1, 0], output=None, mode="reflect")
+    data = gaussian_filter(data, smooth_factor, output=None, mode="reflect")
 
     # get dimension
     nx, ny, nz, nt, px, py, pz, pt = img.dim
@@ -420,10 +421,10 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
             # check if data_chunk1d contains at least one non-zero value
             # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
             if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-                 # I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
+                 #I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
                  # data_chunk2d = np.mean(data_chunk3d, 1)
                  # pattern2d = np.mean(pattern, 1)
-                 I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 32)
+                 I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 64)
                 # from sklearn import metrics
                 # I_corr[ind_I] = metrics.adjusted_mutual_info_score(data_chunk1d, pattern1d)
             else:
@@ -480,7 +481,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
         # display patterns and correlation
         if verbose == 2:
             # display template pattern
-            plt.figure(fig_pattern, figsize=(20,7))
+            plt.figure(fig_pattern, figsize=(20, 7))
             plt.subplot(141)
             plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
             plt.title('Template pattern')
@@ -499,12 +500,12 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose, laplacian=0):
             # display correlation curve
             plt.subplot(144)
             plt.plot(I_corr_adj)
-            plt.title('Correlation between template and subject pattern')
+            plt.title('MI between template and subject pattern')
             plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
             plt.axvline(x=range_z.index(0), linewidth=1, color='black', linestyle='dashed')
             plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
             # save figure
-            plt.figure(fig_pattern), plt.savefig('../fig_pattern_correlation'+str(current_disc)+'.png'), plt.close()
+            plt.figure(fig_pattern), plt.savefig('../fig_pattern_MI'+str(current_disc)+'.png'), plt.close()
 
         # assign new z_start and disc value
         current_z = current_z + range_z[ind_peak]
