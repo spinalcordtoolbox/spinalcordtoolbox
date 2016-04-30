@@ -70,11 +70,11 @@ def test(path_data='', parameters=''):
         result_dist_max = float(output_split[0])
         result_rmse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
         # integrity testing
-        th_result_dist_max = 4.0
+        th_result_dist_max = 2.0
         if result_dist_max > th_result_dist_max:
             status = 99
             output += '\nWARNING: Maximum x-y error = '+str(result_dist_max)+' < '+str(th_result_dist_max)
-        th_result_rmse = 1.5
+        th_result_rmse = 1.0
         if result_rmse > th_result_rmse:
             status = 99
             output += '\nWARNING: RMSE = '+str(result_rmse)+' < '+str(th_result_rmse)
@@ -90,7 +90,7 @@ def test(path_data='', parameters=''):
         status2, output2 = sct.run(cmd, 0)
         # parse output and compare to acceptable threshold
         result_dice = float(output2.split('3D Dice coefficient = ')[1].split('\n')[0])
-        th_dice = 0.95
+        th_dice = 0.9
         if result_dice < th_dice:
             status = 99
             output += '\nWARNING: DICE = '+str(result_dice)+' < '+str(th_dice)
