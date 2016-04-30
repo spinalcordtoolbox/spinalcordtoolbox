@@ -445,7 +445,12 @@ class FullGmSegmentation:
             old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
             if self.preprocessed.high_res:
                 old_res_name_correct_space = sct.extract_fname(old_res_name)[1]+'_correct_spacing'+ext
-                sct.run('sct_register_multimodal -i '+old_res_name+' -d ../'+self.target_fname+' -identity 1 -o '+old_res_name_correct_space)
+                os.chdir('..')
+                target_fname = sct.extract_fname(self.target_fname)[1]+sct.extract_fname(self.target_fname)[2]
+                sct.run('cp '+self.target_fname+' '+self.tmp_dir+'/'+target_fname)
+
+                os.chdir(self.tmp_dir)
+                sct.run('sct_register_multimodal -i '+old_res_name+' -d '+target_fname+' -identity 1 -o '+old_res_name_correct_space)
                 old_res_name = old_res_name_correct_space
 
             if self.seg_param.res_type == 'prob':
