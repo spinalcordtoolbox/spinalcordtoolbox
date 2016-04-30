@@ -116,16 +116,16 @@ def test(path_data='', parameters=''):
         # sct.printv('Diff manual-test = ' + str(diff_manual_result))
 
         # check if MSE is superior to threshold
-        th_rmse = 3
+        th_rmse = 2
         if rmse > th_rmse:
             status = 99
             output += '\nWARNING: RMSE = '+str(rmse)+' > '+str(th_rmse)
-        th_max_dist = 5
+        th_max_dist = 4
         if max_dist > th_max_dist:
             status = 99
             output += '\nWARNING: Max distance = '+str(max_dist)+' > '+str(th_max_dist)
         th_diff_manual_result = 3
-        if abs(diff_manual_result) > 3:
+        if abs(diff_manual_result) > th_diff_manual_result:
             status = 99
             output += '\nWARNING: Diff manual-result = '+str(diff_manual_result)+' > '+str(th_diff_manual_result)
 
