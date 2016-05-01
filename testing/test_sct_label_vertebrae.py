@@ -81,7 +81,7 @@ def test(path_data='', parameters=''):
         # copy input data (for easier debugging)
         sct.run('cp '+dict_param_with_path['-i']+' '+path_output, verbose=0)
         # extract center of vertebral labels
-        sct.run('sct_label_utils -i '+path_output+'t2_seg_labeled.nii.gz -label-vert -o '+path_output+'t2_seg_labeled_center.nii.gz', verbose=0)
+        sct.run('sct_label_utils -i '+path_output+'t2_seg_labeled.nii.gz -label-vert 0 -o '+path_output+'t2_seg_labeled_center.nii.gz', verbose=0)
         from sct_label_utils import ProcessLabels
         from numpy import linalg
         from math import sqrt
