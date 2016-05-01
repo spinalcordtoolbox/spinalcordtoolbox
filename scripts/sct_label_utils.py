@@ -619,7 +619,7 @@ def get_parser():
                       description='Add value to all labels. Value can be negative.',
                       mandatory=False)
     parser.add_option(name='-create',
-                      type_value='str',
+                      type_value=[[':'], 'Coordinate'],
                       description='Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2, ...',
                       example='12,34,32,1:12,35,33,2',
                       mandatory=False)
@@ -696,13 +696,13 @@ def main(args=None):
         value = arguments['-add']
     elif '-create' in arguments:
         process_type = 'create'
-        input_coordinates = arguments['-coord']
+        input_coordinates = arguments['-create']
     elif '-create-add' in arguments:
         process_type = 'create-add'
-        input_coordinates = arguments['-coord']
+        input_coordinates = arguments['-create-add']
     elif '-cross' in arguments:
         process_type = 'cross'
-        input_cross_radius = arguments["-cross"]
+        input_cross_radius = arguments['-cross']
     elif '-cubic-to-point' in arguments:
         process_type = 'cubic-to-point'
     elif '-display' in arguments:
@@ -710,7 +710,7 @@ def main(args=None):
     elif '-increment' in arguments:
         process_type = 'increment'
     elif '-label-vert' in arguments:
-        process_type = 'label-vert'
+        process_type = 'label-vertebrae'
         vertebral_levels = arguments['-label-vert']
     elif '-MSE' in arguments:
         process_type = 'MSE'
