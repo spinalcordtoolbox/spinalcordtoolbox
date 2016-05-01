@@ -41,7 +41,7 @@ fi
 # vertebral labeling. Here we use the fact that the FOV is centered at C7.
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -initcenter 7
 # create labels at C3 and T2 vertebral levels
-sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -vert 3,9
+sct_label_utils -i t2_seg_labeled.nii.gz -label-vert 3,9
 # register to template
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz
 # warp template without the white matter atlas (we don't need it)
