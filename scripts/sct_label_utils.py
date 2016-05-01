@@ -717,7 +717,7 @@ def main(args=None):
         input_fname_ref = arguments['-r']
     elif '-remove' in arguments:
         process_type = 'remove'
-        input_fname_ref = arguments['-r']
+        input_fname_ref = arguments['-remove']
     elif '-remove-symm' in arguments:
         process_type = 'remove-symm'
         input_fname_ref = arguments['-r']
