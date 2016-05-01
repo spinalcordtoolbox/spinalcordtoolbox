@@ -363,7 +363,7 @@ class ProcessLabels(object):
         # get list of coordinates for each label
         list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
         # if user did not specify levels, include all:
-        if levels_user == None:
+        if levels_user == 0:
             levels_user = [int(i.value) for i in list_coordinates]
         # loop across labels and remove those that are not listed by the user
         for i_label in range(len(list_coordinates)):
@@ -647,7 +647,7 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name='-label-vert',
                       type_value=[[','], 'int'],
-                      description='Create labels that are centered at the mid-vertebral levels. Separate levels with ",".',
+                      description='Create labels that are centered at the mid-vertebral levels. Separate levels with ",". To use all labels, enter "0".',
                       example='3,8',
                       mandatory=False)
     parser.add_option(name='-MSE',
