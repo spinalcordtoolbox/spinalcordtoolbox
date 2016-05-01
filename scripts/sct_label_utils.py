@@ -624,7 +624,7 @@ def get_parser():
                       example='12,34,32,1:12,35,33,2',
                       mandatory=False)
     parser.add_option(name='-create-add',
-                      type_value='str',
+                      type_value=[[':'], 'Coordinate'],
                       description='Same as create, but add labels to input image instead of creating a new one.',
                       example='12,34,32,1:12,35,33,2',
                       mandatory=False)
