@@ -118,8 +118,8 @@ sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,a
 sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1_crop.nii.gz
 # register template (in T2 space) to mt1
 # Tips: here we only use the segmentations due to poor SC/CSF contrast at the bottom slice.
-# Tips: First step: rigid based on images, with moderate smoothing, to capture global rotations for each slice (e.g., if patient turned his head), then at second step: slicereg based on segmentations, in order to match the center of mass of the spinal cord between subject and template.
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -dseg mt1_seg_crop.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC,smooth=3:step=2,type=seg,algo=slicereg,smooth=5
+# Tips: First step: slicereg based on images, with large smoothing to capture potential motion between anat and mt, then at second step: bpslinesyn in order to adapt the shape of the cord to the mt modality (in case there are distortions between anat and mt).
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg_crop.nii.gz -param step=1,type=seg,algo=slicereg,smooth=5:step=2,type=seg,algo=bsplinesyn,iter=3
 # concat transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_crop.nii.gz -d mtr.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
