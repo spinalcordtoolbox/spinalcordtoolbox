@@ -288,7 +288,7 @@ if __name__ == "__main__":
         if mask_points:
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
-            sct.run("sct_label_utils -i " + reoriented_image_filename + " -p create -coord " + mask_points + " -o " + mask_filename, verbose=False)
+            sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points + " -o " + mask_filename, verbose=False)
 
             # reorient the initialization mask to correspond to input image orientation
             mask_reoriented_filename = sct.add_suffix(input_filename, "_mask_viewer")
