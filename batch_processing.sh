@@ -241,12 +241,12 @@ echo "mt/MTRadj:" `grep -v '^#' mt/mtr_in_wm_with_gmreg.txt | grep -v '^$'`
 echo "mt/CSA:   " `grep -v '^#' mt/mt_cst_dorsal_csa_mean.txt | grep -v '^$'`
 echo "dmri/FA:  " `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^2'`
 echo "dmri/FA:  " `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^17'`
-# results on commit f1f0ccffea28da70841c721d72d51098f25159a6
-#t2/CSA:    0, /Users/julien/sct_example_data/t2/t2_seg, 77.245430, 2.026673
-#mt/MTR:    33, white matter, 32.423571, 0.000000
-#mt/MTRadj: 33, white matter, 32.484955, 0.000000
-#mt/CSA:    0, /Users/julien/sct_example_data/mt/left_dorsal_column, 10.372108, 0.824540
-#dmri/FA:   17, right lateral corticospinal tract, 0.783539, 0.000000
-#dmri/FA:   2, left lateral corticospinal tract, 0.771717, 0.000000
+# results from version dev-e4e9c242674eaa515efe4ad89faa67a09cd12604
+#t2/CSA:    /Users/julien/sct_example_data/t2/t2_seg, 77.299559, 2.015639
+#mt/MTR:    33, white matter, 31.301649, 0.000000
+#mt/MTRadj: 33, white matter, 31.682101, 0.000000
+#mt/CSA:    /Users/julien/sct_example_data/mt/left_dorsal_column, 10.974215, 0.388827
+#dmri/FA:   17, right lateral corticospinal tract, 0.776446, 0.000000
+#dmri/FA:   2, left lateral corticospinal tract, 0.768452, 0.000000
 #fMRI results: https://dl.dropboxusercontent.com/u/20592661/sct/result_batch_processing_fmri.png
 echo
