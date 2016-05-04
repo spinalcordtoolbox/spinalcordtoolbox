@@ -11,11 +11,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: check if use specified several processes.
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import sys
-import sct_utils as sct
 import math
+
+import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
 
@@ -27,12 +29,13 @@ class Param:
         self.debug = 0
         self.fname_label_output = 'labels.nii.gz'
         self.labels = []
-        self.verbose = 1
+        self.cross_size = 5  # cross size in mm
+        self.verbose = '1'
 
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose=1, vertebral_levels=None):
+                 coordinates=None, verbose=1, vertebral_levels=None, value=None):
         self.image_input = Image(fname_label, verbose=verbose)
 
         self.image_ref = None
@@ -51,48 +54,49 @@ class ProcessLabels(object):
         self.dilate = dilate
         self.coordinates = coordinates
         self.verbose = verbose
+        self.value = value
 
     def process(self, type_process):
+        if type_process == 'add':
+            self.output_image = self.add(self.value)
         if type_process == 'cross':
             self.output_image = self.cross()
-        elif type_process == 'plan':
+        if type_process == 'plan':
             self.output_image = self.plan(self.cross_radius, 100, 5)
-        elif type_process == 'plan_ref':
+        if type_process == 'plan_ref':
             self.output_image = self.plan_ref()
-        elif type_process == 'increment':
+        if type_process == 'increment':
             self.output_image = self.increment_z_inverse()
-        elif type_process == 'disks':
+        if type_process == 'disks':
             self.output_image = self.labelize_from_disks()
-        elif type_process == 'MSE':
+        if type_process == 'MSE':
             self.MSE()
             self.fname_output = None
-        elif type_process == 'remove':
+        if type_process == 'remove':
             self.output_image = self.remove_label()
-        elif type_process == 'remove-symm':
+        if type_process == 'remove-symm':
             self.output_image = self.remove_label(symmetry=True)
-        elif type_process == 'centerline':
+        if type_process == 'centerline':
             self.extract_centerline()
-        elif type_process == 'display-voxel':
+        if type_process == 'create':
+            self.output_image = self.create_label()
+        if type_process == 'create-add':
+            self.output_image = self.create_label(add=True)
+        if type_process == 'display-voxel':
             self.display_voxel()
             self.fname_output = None
-        elif type_process == 'create':
-            self.output_image = self.create_label()
-        elif type_process == 'add':
-            self.output_image = self.create_label(add=True)
-        elif type_process == 'diff':
+        if type_process == 'diff':
             self.diff()
             self.fname_output = None
-        elif type_process == 'dist-inter':  # second argument is in pixel distance
+        if type_process == 'dist-inter':  # second argument is in pixel distance
             self.distance_interlabels(5)
             self.fname_output = None
-        elif type_process == 'cubic-to-point':
+        if type_process == 'cubic-to-point':
             self.output_image = self.cubic_to_point()
-        elif type_process == 'label-vertebrae':
+        if type_process == 'label-vertebrae':
             self.output_image = self.label_vertebrae(self.vertebral_levels)
-        elif type_process == 'label-vertebrae-from-disks':
+        if type_process == 'label-vertebrae-from-disks':
             self.output_image = self.label_vertebrae_from_disks(self.vertebral_levels)
-        else:
-            sct.printv('Error: The chosen process is not available.', 1, 'error')
 
         # save the output image as minimized integers
         if self.fname_output is not None:
@@ -101,6 +105,70 @@ class ProcessLabels(object):
                 self.output_image.save('minimize_int')
             else:
                 self.output_image.save()
+
+    def add(self, value):
+        """
+        This function add a specified value to all non-zero voxels.
+        """
+        image_output = Image(self.image_input, self.verbose)
+        # image_output.data *= 0
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+
+        # for all points with non-zeros neighbors, force the neighbors to 0
+        for i, coord in enumerate(coordinates_input):
+            image_output.data[coord.x, coord.y, coord.z] = image_output.data[coord.x, coord.y, coord.z] + float(value)
+        return image_output
+
+
+    def create_label(self, add=False):
+        """
+        Create an image with labels listed by the user.
+        This method works only if the user inserted correct coordinates.
+
+        self.coordinates is a list of coordinates (class in msct_types).
+        a Coordinate contains x, y, z and value.
+        If only one label is to be added, coordinates must be completed with '[]'
+        examples:
+        For one label:  object_define=ProcessLabels( fname_label, coordinates=[coordi]) where coordi is a 'Coordinate' object from msct_types
+        For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and coordi2 are 'Coordinate' objects from msct_types
+        """
+        image_output = self.image_input.copy()
+        if not add:
+            image_output.data *= 0
+
+        # loop across labels
+        for i, coord in enumerate(self.coordinates):
+            # display info
+            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
+                       str(coord.value), 1)
+            image_output.data[coord.x, coord.y, coord.z] = coord.value
+
+        return image_output
+
+
+    def cross(self):
+        """
+        create a cross.
+        :return:
+        """
+        output_image = Image(self.image_input, self.verbose)
+        nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
+
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+        d = self.cross_radius  # cross radius in pixel
+        dx = d / px  # cross radius in mm
+        dy = d / py
+
+        # clean output_image
+        output_image.data *= 0
+
+        cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate)
+
+        for coord in cross_coordinates:
+            output_image.data[round(coord.x), round(coord.y), round(coord.z)] = coord.value
+
+        return output_image
+
 
     @staticmethod
     def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
@@ -168,82 +236,10 @@ class ProcessLabels(object):
         cross_coordinates = sorted(cross_coordinates, key=lambda obj: obj.value)
         return cross_coordinates
 
-    # JULIEN <<<<<<
-    # OLD IMPLEMENTATION:
-    # def cross(self):
-    #     """
-    #     create a cross.
-    #     :return:
-    #     """
-    #     image_output = Image(self.image_input, self.verbose)
-    #     nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
-    #
-    #     coordinates_input = self.image_input.getNonZeroCoordinates()
-    #     d = self.cross_radius  # cross radius in pixel
-    #     dx = d / px  # cross radius in mm
-    #     dy = d / py
-    #
-    #     # for all points with non-zeros neighbors, force the neighbors to 0
-    #     for coord in coordinates_input:
-    #         image_output.data[coord.x][coord.y][coord.z] = 0  # remove point on the center of the spinal cord
-    #         image_output.data[coord.x][coord.y + dy][
-    #             coord.z] = coord.value * 10 + 1  # add point at distance from center of spinal cord
-    #         image_output.data[coord.x + dx][coord.y][coord.z] = coord.value * 10 + 2
-    #         image_output.data[coord.x][coord.y - dy][coord.z] = coord.value * 10 + 3
-    #         image_output.data[coord.x - dx][coord.y][coord.z] = coord.value * 10 + 4
-    #
-    #         # dilate cross to 3x3
-    #         if self.dilate:
-    #             image_output.data[coord.x - 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x][coord.y + dy - 1][coord.z] = \
-    #                 image_output.data[coord.x + 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y + dy][coord.z] = \
-    #                 image_output.data[coord.x + 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x][coord.y + dy + 1][coord.z] = \
-    #                 image_output.data[coord.x - 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y + dy][coord.z] = \
-    #                 image_output.data[coord.x][coord.y + dy][coord.z]
-    #             image_output.data[coord.x + dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx][coord.y - 1][coord.z] = \
-    #                 image_output.data[coord.x + dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx + 1][coord.y][coord.z] = \
-    #                 image_output.data[coord.x + dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx][coord.y + 1][coord.z] = \
-    #                 image_output.data[coord.x + dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx - 1][coord.y][coord.z] = \
-    #                 image_output.data[coord.x + dx][coord.y][coord.z]
-    #             image_output.data[coord.x - 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x][coord.y - dy - 1][coord.z] = \
-    #                 image_output.data[coord.x + 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y - dy][coord.z] = \
-    #                 image_output.data[coord.x + 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x][coord.y - dy + 1][coord.z] = \
-    #                 image_output.data[coord.x - 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y - dy][coord.z] = \
-    #                 image_output.data[coord.x][coord.y - dy][coord.z]
-    #             image_output.data[coord.x - dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx][coord.y - 1][coord.z] = \
-    #                 image_output.data[coord.x - dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx + 1][coord.y][coord.z] = \
-    #                 image_output.data[coord.x - dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx][coord.y + 1][coord.z] = \
-    #                 image_output.data[coord.x - dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx - 1][coord.y][coord.z] = \
-    #                 image_output.data[coord.x - dx][coord.y][coord.z]
-    #
-    #     return image_output
-    # >>>>>>>>>
-    def cross(self):
-        """
-        create a cross.
-        :return:
-        """
-        output_image = Image(self.image_input, self.verbose)
-        nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
-
-        coordinates_input = self.image_input.getNonZeroCoordinates()
-        d = self.cross_radius  # cross radius in pixel
-        dx = d / px  # cross radius in mm
-        dy = d / py
-
-        # clean output_image
-        output_image.data *= 0
-
-        cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate)
-
-        for coord in cross_coordinates:
-            output_image.data[round(coord.x), round(coord.y), round(coord.z)] = coord.value
-
-        return output_image
-    # >>>
 
     def plan(self, width, offset=0, gap=1):
         """
-        This function creates a plan of thickness="width" and changes its value with an offset and a gap between labels.
+        Create a plane of thickness="width" and changes its value with an offset and a gap between labels.
         """
         image_output = Image(self.image_input, self.verbose)
         image_output.data *= 0
@@ -257,7 +253,7 @@ class ProcessLabels(object):
 
     def plan_ref(self):
         """
-        This function generate a plan in the reference space for each label present in the input image
+        Generate a plane in the reference space for each label present in the input image
         """
 
         image_output = Image(self.image_ref, self.verbose)
@@ -287,16 +283,14 @@ class ProcessLabels(object):
 
     def cubic_to_point(self):
         """
-        This function calculates the center of mass of each group of labels and returns a file of same size with only a
-         label by group at the center of mass of this group.
+        Calculate the center of mass of each group of labels and returns a file of same size with only a
+        label by group at the center of mass of this group.
         It is to be used after applying homothetic warping field to a label file as the labels will be dilated.
         Be careful: this algorithm computes the center of mass of voxels with same value, if two groups of voxels with
          the same value are present but separated in space, this algorithm will compute the center of mass of the two
          groups together.
         :return: image_output
         """
-        from scipy import ndimage
-        from numpy import array, mean
 
         # 0. Initialization of output image
         output_image = self.image_input.copy()
@@ -321,11 +315,11 @@ class ProcessLabels(object):
 
         return output_image
 
+
     def increment_z_inverse(self):
         """
-        This function increments all the labels present in the input image, inversely ordered by Z.
-        Therefore, labels are incremented from top to bottom, assuming a RPI orientation
-        Labels are assumed to be non-zero.
+        Take all non-zero values, sort them along the inverse z direction, and attributes the values 1,
+        2, 3, etc. This function assuming RPI orientation.
         """
         image_output = Image(self.image_input, self.verbose)
         image_output.data *= 0
@@ -337,9 +331,10 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def labelize_from_disks(self):
         """
-        This function creates an image with regions labelized depending on values from reference.
+        Create an image with regions labelized depending on values from reference.
         Typically, user inputs a segmentation image, and labels with disks position, and this function produces
         a segmentation image with vertebral levels labelized.
         Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
@@ -360,7 +355,7 @@ class ProcessLabels(object):
 
     def label_vertebrae(self, levels_user=None):
         """
-        Finds the center of mass of vertebral levels specified by the user.
+        Find the center of mass of vertebral levels specified by the user.
         :return: image_output: Image with labels.
         """
         # get center of mass of each vertebral level
@@ -368,7 +363,7 @@ class ProcessLabels(object):
         # get list of coordinates for each label
         list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
         # if user did not specify levels, include all:
-        if levels_user == None:
+        if levels_user == 0:
             levels_user = [int(i.value) for i in list_coordinates]
         # loop across labels and remove those that are not listed by the user
         for i_label in range(len(list_coordinates)):
@@ -380,9 +375,10 @@ class ProcessLabels(object):
         # list all labels
         return image_cubic2point
 
+
     def label_vertebrae_from_disks(self, levels_user):
         """
-        Finds the center of mass of vertebral levels specified by the user.
+        Find the center of mass of vertebral levels specified by the user.
         :param levels_user:
         :return:
         """
@@ -405,7 +401,7 @@ class ProcessLabels(object):
 
     def symmetrizer(self, side='left'):
         """
-        This function symmetrize the input image. One side of the image will be copied on the other side. We assume a
+        Symmetrize the input image. One side of the image will be copied on the other side. We assume a
         RPI orientation.
         :param side: string 'left' or 'right'. Side that will be copied on the other side.
         :return:
@@ -432,9 +428,10 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def MSE(self, threshold_mse=0):
         """
-        This function computes the Mean Square Distance Error between two sets of labels (input and ref).
+        Compute the Mean Square Distance Error between two sets of labels (input and ref).
         Moreover, a warning is generated for each label mismatch.
         If the MSE is above the threshold provided (by default = 0mm), a log is reported with the filenames considered here.
         """
@@ -469,30 +466,6 @@ class ProcessLabels(object):
 
         return result
 
-    def create_label(self, add=False):
-        """
-        This function create an image with labels listed by the user.
-        This method works only if the user inserted correct coordinates.
-
-        self.coordinates is a list of coordinates (class in msct_types).
-        a Coordinate contains x, y, z and value.
-        If only one label is to be added, coordinates must be completed with '[]'
-        examples:
-        For one label:  object_define=ProcessLabels( fname_label, coordinates=[coordi]) where coordi is a 'Coordinate' object from msct_types
-        For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and coordi2 are 'Coordinate' objects from msct_types
-        """
-        image_output = self.image_input.copy()
-        if not add:
-            image_output.data *= 0
-
-        # loop across labels
-        for i, coord in enumerate(self.coordinates):
-            # display info
-            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
-                       str(coord.value), 1)
-            image_output.data[coord.x, coord.y, coord.z] = coord.value
-
-        return image_output
 
     @staticmethod
     def remove_label_coord(coord_input, coord_ref, symmetry=False):
@@ -516,9 +489,10 @@ class ProcessLabels(object):
 
         return result_coord_input, result_coord_ref
 
+
     def remove_label(self, symmetry=False):
         """
-        This function compares two label images and remove any labels in input image that are not in reference image.
+        Compare two label images and remove any labels in input image that are not in reference image.
         The symmetry option enables to remove labels from reference image that are not in input image
         """
         # image_output = Image(self.image_input.dim, orientation=self.image_input.orientation, hdr=self.image_input.hdr, verbose=self.verbose)
@@ -543,9 +517,10 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def extract_centerline(self):
         """
-        This function write a text file with the coordinates of the centerline.
+        Write a text file with the coordinates of the centerline.
         The image is suppose to be RPI
         """
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
@@ -556,9 +531,10 @@ class ProcessLabels(object):
             fo.write("%i %i %i\n" % line)
         fo.close()
 
+
     def display_voxel(self):
         """
-        This function displays all the labels that are contained in the input image.
+        Display all the labels that are contained in the input image.
         The image is suppose to be RPI to display voxels. But works also for other orientations
         """
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
@@ -572,9 +548,10 @@ class ProcessLabels(object):
         print useful_notation
         return coordinates_input
 
+
     def diff(self):
         """
-        This function detects any label mismatch between input image and reference image
+        Detect any label mismatch between input image and reference image
         """
         coordinates_input = self.image_input.getNonZeroCoordinates()
         coordinates_ref = self.image_ref.getNonZeroCoordinates()
@@ -599,9 +576,10 @@ class ProcessLabels(object):
             if not isIn:
                 print coord_ref.value
 
+
     def distance_interlabels(self, max_dist):
         """
-        This function calculates the distances between each label in the input image.
+        Calculate the distances between each label in the input image.
         If a distance is larger than max_dist, a warning message is displayed.
         """
         coordinates_input = self.image_input.getNonZeroCoordinates()
@@ -617,106 +595,79 @@ class ProcessLabels(object):
 
 
 
-class Param:
-    def __init__(self):
-        self.verbose = '1'
-
-
 # PARSER
 # ==========================================================================================
 def get_parser():
-    param_default = Param()
+    # param_default = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Utility function for labels. Choose your process.')
+    parser.usage.set_description('Utility function for label image.')
     parser.add_option(name="-i",
                       type_value="file",
-                      description="labels or image to create labels on. Must be 3D.",
+                      description="Label image.",
                       mandatory=True,
                       example="t2_labels.nii.gz")
     parser.add_option(name="-o",
                       type_value=[[','], "file_output"],
-                      description="output volume. For 'remove_symm' option, provide two names (for input and ref files) separated by a comma.",
+                      description="Output image(s).",
                       mandatory=False,
                       example="t2_labels_cross.nii.gz",
                       default_value="labels.nii.gz")
-    parser.add_option(name="-t",
-                      type_value="str",
-                      description="""process:
-- add: add label to an existing image (-i).
-- cross: create a cross. Must use flag "-cross"
-- create: create labels. Must use flag "-coord" to list labels
-- cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
-- display-voxel: display all labels in file
-- increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
-- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. To specify vertebral levels use flag 'level', otherwise all levels will be generated.
-- MSE: compute Mean Square Error between labels input and reference input "-r"
-- remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
-                      mandatory=True,
-                      deprecated_by='-p',
-                      example="create")
-    parser.add_option(name="-p",
-                      type_value="str",
-                      description="""process:
-- add: add label to an existing image (-i).
-- cross: create a cross. Must use flag "-cross"
-- create: create labels. Must use flag "-x" to list labels
-- cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
-- display-voxel: display all labels in file
-- increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
-- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. To specify vertebral levels use flag 'level', otherwise all levels will be generated.
-- MSE: compute Mean Square Error between labels input and reference input "-r"
-- remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
-                      mandatory=True,
-                      example="create")
-    parser.add_option(name="-x",
+    parser.add_option(name='-add',
+                      type_value='int',
+                      description='Add value to all labels. Value can be negative.',
+                      mandatory=False)
+    parser.add_option(name='-create',
                       type_value=[[':'], 'Coordinate'],
-                      description="""labels x,y,z,v. Use ":" if you have multiple labels.\nx: x-coordinates\ny: y-coordinates\nz: z-coordinates\nv: value of label""",
-                      mandatory=False,
-                      deprecated_by='-coord',
-                      example="1,5,2,6:3,7,2,1:3,7,9,32")
-    parser.add_option(name="-coord",
+                      description='Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2, ...',
+                      example='12,34,32,1:12,35,33,2',
+                      mandatory=False)
+    parser.add_option(name='-create-add',
                       type_value=[[':'], 'Coordinate'],
-                      description="""labels x,y,z,v. Use ":" if you have multiple labels.\nx: x-coordinates\ny: y-coordinates\nz: z-coordinates\nv: value of label""",
-                      mandatory=False,
-                      example="1,5,2,6:3,7,2,1:3,7,9,32")
-    parser.add_option(name="-r",
-                      type_value="file",
-                      description="reference volume for label removing.",
-                      deprecated_by='-ref',
+                      description='Same as create, but add labels to input image instead of creating a new one.',
+                      example='12,34,32,1:12,35,33,2',
                       mandatory=False)
-    parser.add_option(name="-ref",
-                      type_value="file",
-                      description="reference volume for label removing.",
+    parser.add_option(name='-cross',
+                      type_value='int',
+                      description='Create a cross around each non-zero value. Input cross radius in mm.',
+                      example=param.cross_size,
                       mandatory=False)
-    parser.add_option(name="-c",
-                      type_value="int",
-                      description="cross radius in mm (default=5mm).",
-                      deprecated_by='-cross',
-                      mandatory=False)
-    parser.add_option(name="-cross",
-                      type_value="int",
-                      description="cross radius in mm (default=5mm).",
-                      mandatory=False)
-    parser.add_option(name="-d",
+    parser.add_option(name='-cubic-to-point',
                       type_value=None,
-                      description="dilatation bool for cross generation ('-cross' option).",
+                      description='Compute the center-of-mass for each label value.',
                       mandatory=False)
-    parser.add_option(name="-level",
-                      type_value=[[','], 'int'],
-                      description='Vertebral levels to make labels from. Labels will be positioned at the mid-vertebrae. Separate with ","',
-                      deprecated_by='-vert',
+    parser.add_option(name='-display',
+                      type_value=None,
+                      description='Display all labels (i.e. non-zero values).',
                       mandatory=False)
-    parser.add_option(name="-vert",
+    parser.add_option(name='-increment',
+                      type_value=None,
+                      description='Takes all non-zero values, sort them along the inverse z direction, and attributes the values 1, 2, 3, etc.',
+                      mandatory=False)
+    parser.add_option(name='-label-vert',
                       type_value=[[','], 'int'],
-                      description='Vertebral levels to make labels from. Labels will be positioned at the mid-vertebrae. Separate with ","',
+                      description='Create labels that are centered at the mid-vertebral levels. Separate levels with ",". To use all labels, enter "0".',
+                      example='3,8',
+                      mandatory=False)
+    parser.add_option(name='-MSE',
+                      type_value='file',
+                      description='Compute Mean Square Error between labels from input and reference image. Specify reference image here.',
+                      mandatory=False)
+    parser.add_option(name='-remove',
+                      type_value='file',
+                      description='Remove labels from input image (-i) that are not in reference image (specified here).',
+                      mandatory=False)
+    parser.add_option(name='-remove-sym',
+                      type_value='file',
+                      description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
                       mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
-                      description="verbose. Default=" + str(param_default.verbose),
+                      description='Verbose. 0: nothing. 1: basic. 2: extended.',
                       mandatory=False,
-                      example=['0', '1'])
+                      default_value=param.verbose,
+                      example=['0', '1', '2'])
     return parser
 
 
@@ -732,29 +683,66 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     input_filename = arguments['-i']
-    process_type = arguments['-p']
     input_fname_output = None
     input_fname_ref = None
     input_cross_radius = 5
     input_dilate = False
     input_coordinates = None
     vertebral_levels = None
-    input_verbose = '1'
-    input_fname_output = arguments["-o"]
-    if "-ref" in arguments:
-        input_fname_ref = arguments["-ref"]
-    if "-coord" in arguments:
-        input_coordinates = arguments["-coord"]
-    if "-cross" in arguments:
-        input_cross_radius = arguments["-cross"]
-    if "-d" in arguments:
-        input_dilate = arguments["-d"]
-    if "-vert" in arguments:
-        vertebral_levels = arguments["-vert"]
-    if "-v" in arguments:
-        input_verbose = int(arguments["-v"])
-    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels)
+    # input_verbose = '1'
+    value = None
+    if '-add' in arguments:
+        process_type = 'add'
+        value = arguments['-add']
+    elif '-create' in arguments:
+        process_type = 'create'
+        input_coordinates = arguments['-create']
+    elif '-create-add' in arguments:
+        process_type = 'create-add'
+        input_coordinates = arguments['-create-add']
+    elif '-cross' in arguments:
+        process_type = 'cross'
+        input_cross_radius = arguments['-cross']
+    elif '-cubic-to-point' in arguments:
+        process_type = 'cubic-to-point'
+    elif '-display' in arguments:
+        process_type = 'display-voxel'
+    elif '-increment' in arguments:
+        process_type = 'increment'
+    elif '-label-vert' in arguments:
+        process_type = 'label-vertebrae'
+        vertebral_levels = arguments['-label-vert']
+    elif '-MSE' in arguments:
+        process_type = 'MSE'
+        input_fname_ref = arguments['-r']
+    elif '-remove' in arguments:
+        process_type = 'remove'
+        input_fname_ref = arguments['-remove']
+    elif '-remove-symm' in arguments:
+        process_type = 'remove-symm'
+        input_fname_ref = arguments['-r']
+    else:
+        # no process chosen
+        sct.printv('ERROR: No process was chosen.', 1, 'error')
+    if '-o' in arguments:
+        input_fname_output = arguments['-o']
+    input_verbose = int(arguments['-v'])
+
+    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels, value=value)
     processor.process(process_type)
+
+    # elif '-ref' in arguments:
+    #     process_type = 'ref'
+    #     input_fname_ref = arguments['-ref']
+    #     input_fname_output = arguments['-o']
+    # elif '-coord' in arguments:
+    #     process_type = 'coord'
+    #     input_coordinates = arguments['-coord']
+    # elif '-d' in arguments:
+    #     process_type = 'dilate'
+    #     input_dilate = arguments['-d']
+    # if "-vert" in arguments:
+    #     vertebral_levels = arguments["-vert"]
 
 
 # START PROGRAM
@@ -762,6 +750,6 @@ def main(args=None):
 if __name__ == "__main__":
     # # initialize parameters
     param = Param()
-    param_default = Param()
+    # param_default = Param()
     # call main function
     main()

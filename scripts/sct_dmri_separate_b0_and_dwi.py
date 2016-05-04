@@ -14,18 +14,16 @@
 
 
 import sys
-import getopt
-import os
 import math
 import time
+
+import os
 import commands
-import numpy
 import sct_utils as sct
 from msct_image import Image
-from sct_image import split_data, concat_data
+from sct_image import split_data
 from msct_parser import Parser
-# import glob
-# from sct_average_data_across_dimension import average_data_across_dimension
+
 
 class Param:
     def __init__(self):
@@ -41,7 +39,6 @@ class Param:
 def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files):
 
     # Initialization
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
     start_time = time.time()
 
     # get path of the toolbox
