@@ -128,11 +128,21 @@ def main():
         version_sct = myfile.read().replace('\n', '')
     print ".. "+version_sct
 
+    # check if data folder is empty
+    print_line('Check if data are installed')
+    if os.listdir(path_sct+"/data"):
+        print_ok()
+    else:
+        print_fail()
+
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
+        # need to adapt import name and module name in specific cases
         if i == 'scikit-image':
             module = 'skimage'
+        elif i == 'scikit-learn':
+            module = 'sklearn'
         else:
             module = i
         print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')

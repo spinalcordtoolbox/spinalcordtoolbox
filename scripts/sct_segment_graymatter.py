@@ -56,47 +56,45 @@ import shutil
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Segmentation of the white/gray matter.\n'
-                                 'Multi-Atlas based method. The model used by this method is provided in the toolbox. It contains a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template.'
-                                 '\nThis method was inspired from Asman et al., Medical Image Analysis 2014. The major differences are :\n'
-                                 '  - additional information from vertebral levels\n'
-                                 '  - intensity normalization of the image to segment (allows the segmentation of any kind of contrast)\n'
-                                 '  - registration performed using ANTs (and not through an iterative home made process)')
+    parser.usage.set_description('Segmentation of the white and gray matter.'
+                                 ' The segmentation is based on a multi-atlas method that uses a dictionary of pre-segmented gray matter images (already included in SCT) and finds the most similar images for identifying the gray matter using label fusion approach. The model used by this method contains: a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template.'
+                                 ' This method was inspired from [Asman et al., Medical Image Analysis 2014] and features the following additions:\n'
+                                 '- possibility to add information from vertebral levels for improved accuracy\n'
+                                 '- intensity normalization of the image to segment (allows the segmentation of any kind of contrast)\n'
+                                 '- pre-registration based on affine transformation')
     parser.add_option(name="-i",
                       type_value="file",
-                      description="Target image to segment",
+                      description="Image to segment",
                       mandatory=True,
                       example='t2star.nii.gz')
     parser.add_option(name="-s",
                       type_value="file",
-                      description="Spinal cord segmentation of the target",
+                      description="Spinal cord segmentation",
                       mandatory=True,
                       example='sc_seg.nii.gz')
     parser.add_option(name="-vertfile",
                       type_value="file",
-                      description="Image containing level labels for the target or text file with for each slice, #slice and associated level separated by a coma.",
+                      description='Labels of vertebral levels. This could either be an image (e.g., label/template/MNI-Poly-AMU_level.nii.gz) or a text file that specifies "slice,level" at each line. Example:\n'
+                      "0,3\n"
+                      "1,3\n"
+                      "2,4\n"
+                      "3,4\n"
+                      "4,4",
                       mandatory=False,
-                      default_value='label/template/MNI-Poly-AMU_level.nii.gz',
-                      example='MNI-Poly-AMU_level.nii.gz')
+                      example='label/template/MNI-Poly-AMU_level.nii.gz')
+    parser.add_option(name="-verttype",
+                      type_value='multiple_choice',
+                      description="if float is selected, vertebral labeling is interpolated for higher accuracy. Default value = "+ModelParam().use_levels,
+                      mandatory=False,
+                      example=['int', 'float'])
     parser.add_option(name="-vert",
-                      type_value="file",
-                      description="Image containing level labels for the target or text file with for each slice, #slice and associated level separated by a coma.",
                       mandatory=False,
-                      example='MNI-Poly-AMU_level_IRP.nii.gz',
                       deprecated_by='-vertfile')
     parser.add_option(name="-l",
-                      type_value=None,
-                      description="Image containing level labels for the target",
                       mandatory=False,
                       deprecated_by='-vertfile')
 
     parser.usage.addSection('SEGMENTATION OPTIONS')
-    parser.add_option(name="-use-levels",
-                      type_value='multiple_choice',
-                      description="Use the level information as integers or float numbers for the model or not use them",
-                      mandatory=False,
-                      default_value='int',
-                      example=['0', 'int', 'float'])
     parser.add_option(name="-weight",
                       type_value='float',
                       description="weight parameter on the level differences to compute the similarities (beta)",
@@ -254,7 +252,7 @@ class Preprocessing:
 
         assert (nx == nx_s) and (ny == ny_s) and (nz == nz_s), "ERROR: the image to segment and it's SC segmentation does not have the same size"
 
-        if self.fname_level is not None:
+        if self.fname_level is not None and 'nii' in sct.extract_fname(self.fname_level)[2]:
             im_level = Image(self.fname_level)
             assert im_target.orientation == im_level.orientation, "ERROR: the image to segment and the level image are not in the same orientation"
             nx_l, ny_l, nz_l, nt_l, px_l, py_l, pz_l, pt_l = im_level.dim
@@ -423,7 +421,7 @@ class FullGmSegmentation:
     def post_processing(self):
         square_mask = Image(self.preprocessed.square_mask)
         tmp_res_names = []
-        for res_im in [self.gm_seg.res_wm_seg, self.gm_seg.res_gm_seg, self.gm_seg.corrected_wm_seg]:
+        for res_im in [self.gm_seg.res_wm_seg, self.gm_seg.res_gm_seg]:
             res_im_original_space = inverse_square_crop(res_im, square_mask)
             res_im_original_space.save()
             res_im_original_space = set_orientation(res_im_original_space, self.preprocessed.original_orientation)
@@ -447,7 +445,12 @@ class FullGmSegmentation:
             old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
             if self.preprocessed.high_res:
                 old_res_name_correct_space = sct.extract_fname(old_res_name)[1]+'_correct_spacing'+ext
-                sct.run('sct_register_multimodal -i '+old_res_name+' -d ../'+self.target_fname+' -identity 1 -o '+old_res_name_correct_space)
+                os.chdir('..')
+                target_fname = sct.extract_fname(self.target_fname)[1]+sct.extract_fname(self.target_fname)[2]
+                sct.run('cp '+self.target_fname+' '+self.tmp_dir+'/'+target_fname)
+
+                os.chdir(self.tmp_dir)
+                sct.run('sct_register_multimodal -i '+old_res_name+' -d '+target_fname+' -identity 1 -o '+old_res_name_correct_space)
                 old_res_name = old_res_name_correct_space
 
             if self.seg_param.res_type == 'prob':
@@ -459,7 +462,6 @@ class FullGmSegmentation:
             tmp_res_names.append(res_name)
         self.res_names['wm_seg'] = tmp_res_names[0]
         self.res_names['gm_seg'] = tmp_res_names[1]
-        self.res_names['corrected_wm_seg'] = tmp_res_names[2]
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_ratio(self, type='slice'):
@@ -476,7 +478,7 @@ class FullGmSegmentation:
         gm_seg = 'res_gmseg.nii.gz'
         wm_seg = 'res_wmseg.nii.gz'
         sct.run('cp '+self.res_names['gm_seg']+' '+ratio_dir+gm_seg)
-        sct.run('cp '+self.res_names['corrected_wm_seg']+' '+ratio_dir+wm_seg)
+        sct.run('cp '+self.res_names['wm_seg']+' '+ratio_dir+wm_seg)
 
         # go to ratio folder
         os.chdir(ratio_dir)
@@ -636,8 +638,12 @@ if __name__ == "__main__":
 
         if "-vertfile" in arguments:
             input_level_fname = arguments["-vertfile"]
-        if "-use-levels" in arguments:
-            model_param.use_levels = arguments["-use-levels"]
+        if "-verttype" in arguments:
+            if input_level_fname is None:
+                sct.printv('WARNING: no input vertebral level file. -verttype can not be use and will be ignored.',1, 'warning')
+            else:
+                model_param.use_levels = arguments["-verttype"]
+
         if "-weight" in arguments:
             model_param.weight_gamma = arguments["-weight"]
         if "-weight-similarity" in arguments:
@@ -676,8 +682,10 @@ if __name__ == "__main__":
         seg_param.qc = int(arguments["-qc"])
         seg_param.remove_tmp = int(arguments["-r"])
 
+        '''
         if not sct.check_file_exist(input_level_fname):
                 sct.printv(parser.usage.generate(error='ERROR: the file '+input_level_fname+' does not exist. Please specify a file with flag -vertfile or if you don\'t want to use vertebral level information, use flag -use-levels 0' ))
+        '''
         if input_level_fname is None:
             model_param.use_levels = '0'
             model_param.weight_gamma = 0
