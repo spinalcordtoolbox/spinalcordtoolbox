@@ -41,7 +41,7 @@ fi
 # vertebral labeling. Here we use the fact that the FOV is centered at C7.
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -initcenter 7
 # create labels at C3 and T2 vertebral levels
-sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -vert 3,9
+sct_label_utils -i t2_seg_labeled.nii.gz -label-vert 3,9
 # register to template
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz
 # warp template without the white matter atlas (we don't need it)
@@ -118,8 +118,8 @@ sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,a
 sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1_crop.nii.gz
 # register template (in T2 space) to mt1
 # Tips: here we only use the segmentations due to poor SC/CSF contrast at the bottom slice.
-# Tips: First step: rigid based on images, with moderate smoothing, to capture global rotations for each slice (e.g., if patient turned his head), then at second step: slicereg based on segmentations, in order to match the center of mass of the spinal cord between subject and template.
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -dseg mt1_seg_crop.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC,smooth=3:step=2,type=seg,algo=slicereg,smooth=5
+# Tips: First step: slicereg based on images, with large smoothing to capture potential motion between anat and mt, then at second step: bpslinesyn in order to adapt the shape of the cord to the mt modality (in case there are distortions between anat and mt).
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg_crop.nii.gz -param step=1,type=seg,algo=slicereg,smooth=5:step=2,type=seg,algo=bsplinesyn,iter=3
 # concat transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_crop.nii.gz -d mtr.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
@@ -241,12 +241,12 @@ echo "mt/MTRadj:" `grep -v '^#' mt/mtr_in_wm_with_gmreg.txt | grep -v '^$'`
 echo "mt/CSA:   " `grep -v '^#' mt/mt_cst_dorsal_csa_mean.txt | grep -v '^$'`
 echo "dmri/FA:  " `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^2'`
 echo "dmri/FA:  " `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^17'`
-# results on commit f1f0ccffea28da70841c721d72d51098f25159a6
-#t2/CSA:    0, /Users/julien/sct_example_data/t2/t2_seg, 77.245430, 2.026673
-#mt/MTR:    33, white matter, 32.423571, 0.000000
-#mt/MTRadj: 33, white matter, 32.484955, 0.000000
-#mt/CSA:    0, /Users/julien/sct_example_data/mt/left_dorsal_column, 10.372108, 0.824540
-#dmri/FA:   17, right lateral corticospinal tract, 0.783539, 0.000000
-#dmri/FA:   2, left lateral corticospinal tract, 0.771717, 0.000000
+# results from version dev-e4e9c242674eaa515efe4ad89faa67a09cd12604
+#t2/CSA:    /Users/julien/sct_example_data/t2/t2_seg, 77.299559, 2.015639
+#mt/MTR:    33, white matter, 31.301649, 0.000000
+#mt/MTRadj: 33, white matter, 31.682101, 0.000000
+#mt/CSA:    /Users/julien/sct_example_data/mt/left_dorsal_column, 10.974215, 0.388827
+#dmri/FA:   17, right lateral corticospinal tract, 0.776446, 0.000000
+#dmri/FA:   2, left lateral corticospinal tract, 0.768452, 0.000000
 #fMRI results: https://dl.dropboxusercontent.com/u/20592661/sct/result_batch_processing_fmri.png
 echo

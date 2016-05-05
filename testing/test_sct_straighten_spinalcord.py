@@ -22,7 +22,7 @@ import os.path
 def test(path_data='', parameters=''):
 
     # initializations
-    result_mse = 'NaN'
+    result_rmse = 'NaN'
     result_dist_max = 'NaN'
     result_dice = 'NaN'
 
@@ -63,21 +63,21 @@ def test(path_data='', parameters=''):
     duration = time.time() - time_start
 
     # initialization of results: must be NaN if test fails
-    result_mse, result_dist_max = float('nan'), float('nan')
+    result_rmse, result_dist_max = float('nan'), float('nan')
     if status == 0:
         # extraction of results
         output_split = output.split('Maximum x-y error = ')[1].split(' mm')
         result_dist_max = float(output_split[0])
-        result_mse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
+        result_rmse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
         # integrity testing
-        th_result_dist_max = 4.0
+        th_result_dist_max = 2.0
         if result_dist_max > th_result_dist_max:
             status = 99
             output += '\nWARNING: Maximum x-y error = '+str(result_dist_max)+' < '+str(th_result_dist_max)
-        th_result_mse = 1.5
-        if result_mse > th_result_mse:
+        th_result_rmse = 1.0
+        if result_rmse > th_result_rmse:
             status = 99
-            output += '\nWARNING: RMSE = '+str(result_mse)+' < '+str(th_result_mse)
+            output += '\nWARNING: RMSE = '+str(result_rmse)+' < '+str(th_result_rmse)
         # apply curved2straight, then straight2curve, then compared results
         path_input, file_input, ext_input = sct.extract_fname(dict_param_with_path['-i'])
         sct.run('sct_apply_transfo -i '+dict_param_with_path['-s']+' -d '+path_output+file_input+'_straight'+ext_input+' -w '+path_output+'warp_curve2straight.nii.gz -o '+path_output+'tmp_seg_straight.nii.gz -x linear', 0)
@@ -90,13 +90,13 @@ def test(path_data='', parameters=''):
         status2, output2 = sct.run(cmd, 0)
         # parse output and compare to acceptable threshold
         result_dice = float(output2.split('3D Dice coefficient = ')[1].split('\n')[0])
-        th_dice = 0.95
+        th_dice = 0.9
         if result_dice < th_dice:
             status = 99
             output += '\nWARNING: DICE = '+str(result_dice)+' < '+str(th_dice)
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': int(status), 'output': output, 'mse': result_mse, 'dist_max': result_dist_max, 'dice': result_dice, 'duration': duration}, index=[path_data])
+    results = DataFrame(data={'status': int(status), 'output': output, 'rmse': result_rmse, 'dist_max': result_dist_max, 'dice': result_dice, 'duration': duration}, index=[path_data])
 
     return status, output, results
 

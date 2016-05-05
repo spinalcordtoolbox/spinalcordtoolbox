@@ -329,7 +329,7 @@ def main():
     # --------------------------------------------------------------------------------
     # Remove unused label on template. Keep only label present in the input label image
     sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-    sct.run('sct_label_utils -p remove -i '+ftmp_template_label+' -o '+ftmp_template_label+' -r '+ftmp_label)
+    sct.run('sct_label_utils -i '+ftmp_template_label+' -o '+ftmp_template_label+' -remove '+ftmp_label)
 
     # Dilating the input label so they can be straighten without losing them
     sct.printv('\nDilating input labels using 3vox ball radius')
@@ -537,7 +537,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
         label_new_list.append(','.join(label_sub_new))
     label_new_list = ':'.join(label_new_list)
     # create new labels
-    sct.run('sct_label_utils -i '+fname_dest+' -p create -coord '+label_new_list+' -v 1 -o '+fname_output)
+    sct.run('sct_label_utils -i '+fname_dest+' -create '+label_new_list+' -v 1 -o '+fname_output)
 
 
 # START PROGRAM
