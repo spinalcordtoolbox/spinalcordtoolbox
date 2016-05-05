@@ -282,7 +282,7 @@ class SpinalCordStraightener(object):
                 number_of_points = int(self.precision * nz)
 
             # 2. extract bspline fitting of the centreline, and its derivatives
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=False)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
             from msct_types import Centerline
             centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
@@ -317,13 +317,17 @@ class SpinalCordStraightener(object):
 
             padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz))
             sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,'+str(padding_z))
-            image_centerline_pad = Image('tmp.centerline_pad.nii.gz')
+            image_centerline_pad = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
             hdr_warp = image_centerline_pad.hdr.copy()
+            start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
+            end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
+            print 'start_point, end_point', start_point_coord, end_point_coord
 
-            straight_size_xy = 70
-            warp_space_x = [int(round(nx / 2)) - straight_size_xy, int(round(nx / 2)) + straight_size_xy]
-            warp_space_y = [int(round(ny / 2)) - straight_size_xy, int(round(ny / 2)) + straight_size_xy]
+            straight_size_x = int(35 / px)
+            straight_size_y = int(35 / py)
+            warp_space_x = [int(round(nx / 2)) - straight_size_x, int(round(nx / 2)) + straight_size_x]
+            warp_space_y = [int(round(ny / 2)) - straight_size_y, int(round(ny / 2)) + straight_size_y]
             if warp_space_x[0] < 0:
                 warp_space_x[1] += warp_space_x[0] - 2
                 warp_space_x[0] = 0
@@ -331,10 +335,23 @@ class SpinalCordStraightener(object):
                 warp_space_y[1] += warp_space_y[0] - 2
                 warp_space_y[0] = 0
 
-            sct.run('sct_crop_image -i tmp.centerline_pad.nii.gz -o tmp.centerline_pad_crop.nii.gz -dim 0,1 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ' -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]))
+            sct.run('sct_crop_image -i tmp.centerline_pad.nii.gz -o tmp.centerline_pad_crop.nii.gz -dim 0,1,2 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0 -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord[2] - start_point_coord[2]))
             image_centerline_straight = Image('tmp.centerline_pad_crop.nii.gz')
             nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
             hdr_warp_s = image_centerline_straight.hdr.copy()
+            hdr_warp_s.set_data_dtype('float32')
+            #origin = [(nx_s * px_s)/2.0, -(ny_s * py_s)/2.0, -(nz_s * pz_s)/2.0]
+            #hdr_warp_s.structarr['qoffset_x'] = origin[0]
+            #hdr_warp_s.structarr['qoffset_y'] = origin[1]
+            #hdr_warp_s.structarr['qoffset_z'] = origin[2]
+            #hdr_warp_s.structarr['srow_x'][-1] = origin[0]
+            #hdr_warp_s.structarr['srow_y'][-1] = origin[1]
+            #hdr_warp_s.structarr['srow_z'][-1] = origin[2]
+            hdr_warp_s.structarr['srow_x'][0] = -px_s
+            hdr_warp_s.structarr['srow_y'][1] = py_s
+            hdr_warp_s.structarr['srow_z'][2] = pz_s
+            image_centerline_straight.hdr = hdr_warp_s
+            image_centerline_straight.compute_transform_matrix()
 
             start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
             end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
@@ -343,7 +360,7 @@ class SpinalCordStraightener(object):
             sct.printv("Number of voxel = " + str(number_of_voxel))
 
             time_centerlines = time.time()
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('tmp.centerline_pad.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=False)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('tmp.centerline_pad.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
             centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
                                     x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
@@ -361,7 +378,7 @@ class SpinalCordStraightener(object):
                                              dx_straight, dy_straight, dz_straight)
 
             time_centerlines = time.time() - time_centerlines
-            print 'Time to generate centerline: ' + str(round(time_centerlines * 1000.0)) + ' ms'
+            sct.printv('Time to generate centerline: ' + str(round(time_centerlines * 1000.0)) + ' ms', verbose)
 
             # Create volumes containing curved and straight warping fields
             time_generation_volumes = time.time()
@@ -376,7 +393,7 @@ class SpinalCordStraightener(object):
             x_s, y_s, z_s = mgrid[0:nx_s, 0:ny_s, 0:nz_s]
             indexes_straight = array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
             time_generation_volumes = time.time() - time_generation_volumes
-            print 'Time to generate volumes and indices: ' + str(round(time_generation_volumes * 1000.0)) + ' ms'
+            sct.printv('Time to generate volumes and indices: ' + str(round(time_generation_volumes * 1000.0)) + ' ms', verbose)
 
             time_find_nearest_indexes = time.time()
             physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
@@ -384,7 +401,7 @@ class SpinalCordStraightener(object):
             nearest_indexes_curved = centerline.find_nearest_indexes(physical_coordinates)
             nearest_indexes_straight = centerline_straight.find_nearest_indexes(physical_coordinates_straight)
             time_find_nearest_indexes = time.time() - time_find_nearest_indexes
-            print 'Time to find nearest centerline points: ' + str(round(time_find_nearest_indexes * 1000.0)) + ' ms'
+            sct.printv('Time to find nearest centerline points: ' + str(round(time_find_nearest_indexes * 1000.0)) + ' ms', verbose)
 
             # compute the distance from voxels to corresponding plans.
             # This distance is used to blackout voxels that are not in the modified image.
@@ -394,7 +411,7 @@ class SpinalCordStraightener(object):
             indexes_out_distance_curved = logical_or(distances_curved > self.threshold_distance, distances_curved < -self.threshold_distance)
             indexes_out_distance_straight = logical_or(distances_straight > self.threshold_distance, distances_straight < -self.threshold_distance)
             time_get_distances_from_planes = time.time() - time_get_distances_from_planes
-            print 'Time to compute distance between voxels and nearest planes: ' + str(round(time_get_distances_from_planes * 1000.0)) + ' ms'
+            sct.printv('Time to compute distance between voxels and nearest planes: ' + str(round(time_get_distances_from_planes * 1000.0)) + ' ms', verbose)
 
             # c. compute the position of the voxel in the plane coordinate system
             # (X and Y distance from centreline, along the plane)
@@ -402,14 +419,14 @@ class SpinalCordStraightener(object):
             projected_points_curved = centerline.get_projected_coordinates_on_planes(physical_coordinates, nearest_indexes_curved)
             projected_points_straight = centerline_straight.get_projected_coordinates_on_planes(physical_coordinates_straight, nearest_indexes_straight)
             time_get_projected_coordinates_on_planes = time.time() - time_get_projected_coordinates_on_planes
-            print 'Time to get projected voxels on planes: ' + str(round(time_get_projected_coordinates_on_planes * 1000.0)) + ' ms'
+            sct.printv('Time to get projected voxels on planes: ' + str(round(time_get_projected_coordinates_on_planes * 1000.0)) + ' ms', verbose)
 
             # e. find the correspondance of the voxel in the corresponding plane
             time_get_in_plans_coordinates = time.time()
             coord_in_planes_curved = centerline.get_in_plans_coordinates(projected_points_curved, nearest_indexes_curved)
             coord_in_planes_straight = centerline_straight.get_in_plans_coordinates(projected_points_straight, nearest_indexes_straight)
             time_get_in_plans_coordinates = time.time() - time_get_in_plans_coordinates
-            print 'Time to get in-plane coordinates: ' + str(round(time_get_in_plans_coordinates * 1000.0)) + ' ms'
+            sct.printv('Time to get in-plane coordinates: ' + str(round(time_get_in_plans_coordinates * 1000.0)) + ' ms', verbose)
 
             # 6. generate warping fields for each transformations
             # compute coordinate in straight space based on position on plane
@@ -420,26 +437,27 @@ class SpinalCordStraightener(object):
 
             displacements_curved = coord_curved2straight - physical_coordinates
             # for some reason, displacement in Z is inverted. Probably due to left/right-hended definition of referential.
+            #displacements_curved[:, 0] = -displacements_curved[:, 0]
             displacements_curved[:, 2] = -displacements_curved[:, 2]
             displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
             coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, nearest_indexes_straight)
             displacements_straight = coord_straight2curved - physical_coordinates_straight
             # for some reason, displacement in Z is inverted. Probably due to left/right-hended definition of referential.
+            #displacements_straight[:, 0] = -displacements_straight[:, 0]
             displacements_straight[:, 2] = -displacements_straight[:, 2]
             displacements_straight[indexes_out_distance_straight] = [100000.0, 100000.0, 100000.0]
 
             # For error-free interpolation purpose, warping fields are inverted in the definition of ITK.
-            print data_warp_curved2straight.shape
-            print indexes_straight.shape
-            print displacements_straight.shape
             data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0, :] = -displacements_straight
             data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
 
             time_displacements = time.time() - time_displacements
-            print 'Time to compute physical displacements: ' + str(round(time_displacements * 1000.0)) + ' ms'
+            sct.printv('Time to compute physical displacements: ' + str(round(time_displacements * 1000.0)) + ' ms', verbose)
 
             # Generate warp files as a warping fields
+            hdr_warp_s.set_intent('vector', (), '')
+            hdr_warp_s.set_data_dtype('float32')
             hdr_warp.set_intent('vector', (), '')
             hdr_warp.set_data_dtype('float32')
             img = Nifti1Image(data_warp_curved2straight, None, hdr_warp_s)
@@ -458,7 +476,7 @@ class SpinalCordStraightener(object):
             # Ideally, the error should be zero.
             # Apply deformation to input image
             sct.printv('\nApply transformation to centerline image...', verbose)
-            Transform(input_filename='centerline.nii.gz', fname_dest="tmp.centerline_pad.nii.gz",
+            Transform(input_filename='centerline.nii.gz', fname_dest="tmp.centerline_pad_crop.nii.gz",
                       output_filename="tmp.centerline_straight.nii.gz", interp="nn",
                       warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
             from msct_image import Image
