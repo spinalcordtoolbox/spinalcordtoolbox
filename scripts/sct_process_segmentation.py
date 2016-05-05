@@ -749,7 +749,7 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
         sh.write(row_index, 3, vertebral_levels_field)
         sh.write(row_index, 4, slices_of_interest_field)
         sh.write(row_index, 5, os.path.abspath(fname_data))
-        sh.write(row_index, 6, mean)
+        sh.write(row_index, 6, float(mean))
         sh.write(row_index, 7, str(std))
 
         book.save(fname_output + '.' + output_type)
