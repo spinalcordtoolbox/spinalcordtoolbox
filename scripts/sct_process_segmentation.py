@@ -81,6 +81,16 @@ def get_parser():
                       description='In case you choose the option \"-p csa\", this option allows you to choose the prefix of the output result files name for CSA and volume estimations. For example, if you choose \"-o subject01\", the output files will be: subject01'+param_default.suffix_csa_output_files[0]+'.nii.gz, subject01'+param_default.suffix_csa_output_files[1]+'.txt, subject01'+param_default.suffix_csa_output_files[2]+'.txt and subject01'+param_default.suffix_csa_output_files[3]+'.txt.',
                       mandatory=False,
                       default_value='')
+    parser.add_option(name='-output-type',
+                      type_value='str',
+                      description='In case you choose the option \"-p csa\", this option allows you to choose the file type for the output result files (CSA and volume estimations): choose txt for a CSV \"text\" file or \"xls\" for a Microsoft Excel file.',
+                      mandatory=False,
+                      default_value='txt')
+    parser.add_option(name='-overwrite',
+                      type_value='int',
+                      description='In the case you choose \"-output-type xls\" and you specified a pre-existing file in \"-o\", this option will allow you to overwrite this .xls file (\"-overwrite 1\") or to add the results to it (\"-overwrite 0\").',
+                      mandatory=False,
+                      default_value=0)
     parser.add_option(name='-s',
                       type_value=None,
                       description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
@@ -185,10 +195,14 @@ def main(args):
 
     fname_segmentation = arguments['-i']
     name_process = arguments['-p']
+    output_type = arguments['-output-type']
+    overwrite = 0
     if '-o' in arguments:
         output_prefix = arguments['-o']
     else:
         output_prefix = ''
+    if '-overwrite' in arguments:
+        overwrite = arguments['-overwrite']
     if '-method' in arguments:
         name_method = arguments['-method']
     if '-vert' in arguments:
@@ -228,7 +242,7 @@ def main(args):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, output_prefix, param_default.suffix_csa_output_files, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
+        compute_csa(fname_segmentation, output_prefix, param_default.suffix_csa_output_files, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
@@ -425,7 +439,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, output_prefix, output_suffixes, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -604,7 +618,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, verbose, rem
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
 
         # write result into output file
-        save_results(output_prefix+output_suffixes[2], file_data, 'CSA', 0, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_prefix+output_suffixes[2], output_type, overwrite, file_data, 'CSA', 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
         sct.printv('Compute the volume in between the selected slices...', type='info')
@@ -613,7 +627,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, verbose, rem
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
 
         # write result into output file
-        save_results(output_prefix+output_suffixes[3], file_data, 'volume', 0, 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_prefix+output_suffixes[3], output_type, overwrite, file_data, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
     # Remove temporary files
     if remove_temp_files:
@@ -630,46 +644,116 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, verbose, rem
 # ======================================================================================================================
 # Save CSA or volume estimation in a .txt file
 # ======================================================================================================================
-def save_results(fname_output, fname_data, metric_name, label_id, method, mean, std, slices_of_interest, actual_vert, warning_vert_levels):
+def save_results(fname_output, output_type, overwrite, fname_data, metric_name, method, mean, std, slices_of_interest, actual_vert, warning_vert_levels):
 
-    sct.printv('Save results in: '+fname_output+'.txt\n')
+    # check output-type
+    if (output_type != 'txt' and output_type != 'xls'):
+        sct.printv('ERROR: incorrect value selected for option \"-output-type\". Please select \"txt\" or \"xls\".', type='error')
 
-    # CSV format, header lines start with "#"
-    # Write mode of file
-    fid_metric = open(fname_output+'.txt', 'w')
+    sct.printv('Save results in: '+fname_output+'.'+output_type+'\n')
 
-    # WRITE HEADER:
-    # Write date and time
-    fid_metric.write('# Date - Time: '+time.strftime('%Y/%m/%d - %H:%M:%S'))
-    # Write metric data file path
-    fid_metric.write('\n'+'# Metric: '+metric_name)
-    # Write method used for the metric estimation
-    fid_metric.write('\n'+'# Calculation method: '+method)
+    if output_type == 'txt':
 
-    # Write selected vertebral levels
-    if actual_vert:
-        if warning_vert_levels:
-            for i in range(0, len(warning_vert_levels)):
-                fid_metric.write('\n# '+str(warning_vert_levels[i]))
-        fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
-    else:
-        fid_metric.write('\n# Vertebral levels: ALL')
+        # CSV format, header lines start with "#"
+        # Write mode of file
+        fid_metric = open(fname_output+'.txt', 'w')
 
-    # Write selected slices
-    fid_metric.write('\n'+'# Slices (z): ')
-    if slices_of_interest != '':
-        fid_metric.write(slices_of_interest)
-    else:
-        fid_metric.write('ALL')
+        # WRITE HEADER:
+        # Write date and time
+        fid_metric.write('# Date - Time: '+time.strftime('%Y/%m/%d - %H:%M:%S'))
+        # Write metric data file path
+        fid_metric.write('\n'+'# Metric: '+metric_name)
+        # Write method used for the metric estimation
+        fid_metric.write('\n'+'# Calculation method: '+method)
 
-    # label headers
-    fid_metric.write('%s' % ('\n'+'# ID, file used for computation, mean, std\n\n'))
+        # Write selected vertebral levels
+        if actual_vert:
+            if warning_vert_levels:
+                for i in range(0, len(warning_vert_levels)):
+                    fid_metric.write('\n# '+str(warning_vert_levels[i]))
+            fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
+        else:
+            fid_metric.write('\n# Vertebral levels: ALL')
 
-    # WRITE RESULTS
-    fid_metric.write('%i, %s, %f, %f\n' % (label_id, os.path.abspath(fname_data), mean, std))
+        # Write selected slices
+        fid_metric.write('\n'+'# Slices (z): ')
+        if slices_of_interest != '':
+            fid_metric.write(slices_of_interest)
+        else:
+            fid_metric.write('ALL')
 
-    # Close file .txt
-    fid_metric.close()
+        # label headers
+        fid_metric.write('%s' % ('\n'+'# File used for calculation, MEAN across slices, STDEV across slices\n\n'))
+
+        # WRITE RESULTS
+        fid_metric.write('%s, %f, %f\n' % (os.path.abspath(fname_data), mean, std))
+
+        # Close file .txt
+        fid_metric.close()
+
+    elif output_type == 'xls':
+
+        # if the user asked for no overwriting but the specified output file does not exist yet
+        if (not overwrite) and (not os.path.isfile(fname_output + '.' + output_type)):
+            sct.printv('WARNING: You asked to edit the pre-existing file \"' + fname_output + '.' + output_type + '\" but this file does not exist. It will be created.', type='warning')
+            overwrite = 1
+
+        if not overwrite:
+            from xlrd import open_workbook
+            from xlutils.copy import copy
+
+            existing_book = open_workbook(fname_output + '.' + output_type)
+
+            # get index of the first empty row and leave one empty row between the two subjects
+            row_index = existing_book.sheet_by_index(0).nrows
+
+            book = copy(existing_book)
+            sh = book.get_sheet(0)
+
+        elif overwrite:
+            from xlwt import Workbook
+
+            book = Workbook()
+            sh = book.add_sheet('Results', cell_overwrite_ok=True)
+
+            # write header line
+            sh.write(0, 0, 'Date - Time')
+            sh.write(0, 1, 'Metric')
+            sh.write(0, 2, 'Calculation method')
+            sh.write(0, 3, 'Vertebral levels')
+            sh.write(0, 4, 'Slices (z)')
+            sh.write(0, 5, 'File used for calculation')
+            sh.write(0, 6, 'MEAN across slices')
+            sh.write(0, 7, 'STDEV across slices')
+
+            row_index = 1
+
+        # define vertebral levels and slices fields
+        if actual_vert:
+            vertebral_levels_field = str(int(actual_vert[0])) + ' to ' + str(int(actual_vert[1]))
+            if warning_vert_levels:
+                for i in range(0, len(warning_vert_levels)):
+                    vertebral_levels_field += ' [' + str(warning_vert_levels[i]) + ']'
+        else:
+            vertebral_levels_field = 'ALL'
+
+        if slices_of_interest != '':
+            slices_of_interest_field = slices_of_interest
+        else:
+            slices_of_interest_field = 'ALL'
+
+        # write results
+        sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
+        sh.write(row_index, 1, metric_name)
+        sh.write(row_index, 2, method)
+        sh.write(row_index, 3, vertebral_levels_field)
+        sh.write(row_index, 4, slices_of_interest_field)
+        sh.write(row_index, 5, os.path.abspath(fname_data))
+        sh.write(row_index, 6, mean)
+        sh.write(row_index, 7, str(std))
+
+        book.save(fname_output + '.' + output_type)
+
 
 # ======================================================================================================================
 # Find min and max slices corresponding to vertebral levels based on the fitted centerline coordinates
