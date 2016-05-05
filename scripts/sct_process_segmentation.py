@@ -601,7 +601,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
 
         # parse the selected slices
         slices_lim = slices.strip().split(':')
-        slices_list = range(int(slices_lim[0]), int(slices_lim[1])+1)
+        slices_list = range(int(slices_lim[0]), int(slices_lim[-1])+1)
 
         CSA_for_selected_slices = []
         # Read the file csa_per_slice.txt and get the CSA for the selected slices
