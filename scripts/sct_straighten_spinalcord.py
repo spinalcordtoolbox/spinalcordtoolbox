@@ -322,7 +322,6 @@ class SpinalCordStraightener(object):
             hdr_warp = image_centerline_pad.hdr.copy()
             start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
             end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
-            print 'start_point, end_point', start_point_coord, end_point_coord
 
             straight_size_x = int(35 / px)
             straight_size_y = int(35 / py)
@@ -367,7 +366,7 @@ class SpinalCordStraightener(object):
             from numpy import linspace
             ix_straight = [int(round(nx_s / 2))] * number_of_points
             iy_straight = [int(round(ny_s / 2))] * number_of_points
-            iz_straight = linspace(start_point_coord[2], end_point_coord[2], number_of_points)
+            iz_straight = linspace(0, end_point_coord[2] - start_point_coord[2], number_of_points)
             dx_straight = [0.0] * number_of_points
             dy_straight = [0.0] * number_of_points
             dz_straight = [1.0] * number_of_points
