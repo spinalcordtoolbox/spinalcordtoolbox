@@ -242,7 +242,7 @@ echo "mt/CSA:   " `grep -v '^#' mt/mt_cst_dorsal_csa_mean.txt | grep -v '^$'`
 echo "dmri/FA:  " `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^2'`
 echo "dmri/FA:  " `grep -v '^#' dmri/fa_in_cst.txt | grep -v '^$' | grep -v '^17'`
 echo
-# results from version dev-e4e9c242674eaa515efe4ad89faa67a09cd12604
+# results from version dev-84815b36bbbbdc555c1cc87feab1aaaafbe35b80
 #t2/CSA:    /Users/julien/sct_example_data/t2/t2_seg, 77.299559, 2.015639
 #mt/MTR:    33, white matter, 418.128499, 33.723562, 0.000000
 #mt/MTRadj: 33, white matter, 406.686195, 33.436930, 0.000000
