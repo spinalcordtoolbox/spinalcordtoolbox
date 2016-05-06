@@ -1,7 +1,0 @@
-- div: denominateur utilisé pour calculer le nb de points de controls dans sct_nurbs
-- nombre de points de controls
-- size = nb_controls * div
-- MSE(x) entre la courbe straightened et la droite verticale centrée
-- MSE(y) entre la courbe straightened et la droite verticale centrée
-- mean(MSE)
-- fname

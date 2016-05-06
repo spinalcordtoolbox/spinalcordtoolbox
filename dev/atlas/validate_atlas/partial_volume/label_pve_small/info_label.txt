@@ -1,4 +1,0 @@
-# PVE masks
-# ID, name, file
-0, CSF, mask_csf.nii.gz
-1, White Matter, mask_wm.nii.gz

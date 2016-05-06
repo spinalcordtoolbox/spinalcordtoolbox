@@ -1,9 +1,0 @@
-# Date - Time: 2014/11/27 - 18:26:52
-# Metric file: /Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141127/WMtract__all.nii.gz
-# Extraction method: ml
-# Vertebral levels: ALL
-# Slices (z): ALL
-# ID, label name, mean, std
-
-0,  mask_wm, 1.000000, 0.000000
-1,  mask_inv, -0.000000, 0.000000
