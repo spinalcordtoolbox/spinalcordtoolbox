@@ -717,11 +717,11 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
 
             # write header line
             sh.write(0, 0, 'Date - Time')
-            sh.write(0, 1, 'Metric')
-            sh.write(0, 2, 'Calculation method')
-            sh.write(0, 3, 'Vertebral levels')
-            sh.write(0, 4, 'Slices (z)')
-            sh.write(0, 5, 'File used for calculation')
+            sh.write(0, 1, 'File used for calculation')
+            sh.write(0, 2, 'Metric')
+            sh.write(0, 3, 'Calculation method')
+            sh.write(0, 4, 'Vertebral levels')
+            sh.write(0, 5, 'Slices (z)')
             sh.write(0, 6, 'MEAN across slices')
             sh.write(0, 7, 'STDEV across slices')
 
@@ -743,11 +743,11 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
 
         # write results
         sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
-        sh.write(row_index, 1, metric_name)
-        sh.write(row_index, 2, method)
-        sh.write(row_index, 3, vertebral_levels_field)
-        sh.write(row_index, 4, slices_of_interest_field)
-        sh.write(row_index, 5, os.path.abspath(fname_data))
+        sh.write(row_index, 1, os.path.abspath(fname_data))
+        sh.write(row_index, 2, metric_name)
+        sh.write(row_index, 3, method)
+        sh.write(row_index, 4, vertebral_levels_field)
+        sh.write(row_index, 5, slices_of_interest_field)
         sh.write(row_index, 6, float(mean))
         sh.write(row_index, 7, str(std))
 
