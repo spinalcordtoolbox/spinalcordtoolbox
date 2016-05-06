@@ -672,7 +672,10 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
                     fid_metric.write('\n# '+str(warning_vert_levels[i]))
             fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
         else:
-            fid_metric.write('\n# Vertebral levels: ALL')
+            if slices_of_interest != '':
+                fid_metric.write('\n# Vertebral levels: nan')
+            else:
+                fid_metric.write('\n# Vertebral levels: ALL')
 
         # Write selected slices
         fid_metric.write('\n'+'# Slices (z): ')
@@ -734,7 +737,10 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
                 for i in range(0, len(warning_vert_levels)):
                     vertebral_levels_field += ' [' + str(warning_vert_levels[i]) + ']'
         else:
-            vertebral_levels_field = 'ALL'
+            if slices_of_interest != '':
+                vertebral_levels_field = str(np.nan)
+            else:
+                vertebral_levels_field = 'ALL'
 
         if slices_of_interest != '':
             slices_of_interest_field = slices_of_interest
