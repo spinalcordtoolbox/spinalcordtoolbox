@@ -270,6 +270,11 @@ if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
   echo -e "\nCopying source files from ${SCT_SOURCE} to ${SCT_DIR}"
   cp -vR ${SCT_SOURCE}/${SCRIPT_DIR}  ${SCT_DIR}/.
   cp ${SCT_SOURCE}/version.txt  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/commit.txt  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/README.md  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/CHANGES.md  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/batch_processing.sh  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/batch_processing_PAM50.sh  ${SCT_DIR}/.
   mkdir -p ${SCT_DIR}/install
   cp -vRp ${SCT_SOURCE}/install ${SCT_DIR}
   cp -vRp ${SCT_SOURCE}/testing ${SCT_DIR}/.
