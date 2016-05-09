@@ -20,7 +20,7 @@ class Param:
         self.gap = (100, 200)
         self.smooth = 0.8
 
-        self.param_reg = 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=syn,metric=MeanSquares,iter=10,smooth=1,shrink=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
+        self.param_reg = 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=syn,metric=MeanSquares,iter=10,smooth=0,shrink=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=0'
         # Previous default param (less efficient): 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
 
         self.output_folder = './'
@@ -98,9 +98,9 @@ class MultiLabelRegistration:
         fname_automatic_ml, xi, xf, yi, yf, zi, zf = crop_im(fname_automatic_ml, fname_mask)
         fname_template_ml, xi, xf, yi, yf, zi, zf = crop_im(fname_template_ml, fname_mask)
 
-        fname_automatic_ml_smooth = sct.add_suffix(fname_automatic_ml, '_smooth')
-        sct.run('sct_maths -i '+fname_automatic_ml+' -smooth '+str(self.param.smooth)+','+str(self.param.smooth)+',0 -o '+fname_automatic_ml_smooth)
-        fname_automatic_ml = fname_automatic_ml_smooth
+#        fname_automatic_ml_smooth = sct.add_suffix(fname_automatic_ml, '_smooth')
+#        sct.run('sct_maths -i '+fname_automatic_ml+' -smooth '+str(self.param.smooth)+','+str(self.param.smooth)+',0 -o '+fname_automatic_ml_smooth)
+#        fname_automatic_ml = fname_automatic_ml_smooth
 
         path_automatic_ml, file_automatic_ml, ext_automatic_ml = sct.extract_fname(fname_automatic_ml)
         path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
