@@ -253,7 +253,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
         path_tmp = sct.tmp_create()
         # metric
-        sct.printv('\nChange image orientation and load it...', verbose)
+        sct.printv('\nChange metric image orientation and load it...', verbose)
         im_orient = set_orientation(input_im, 'RPI', fname_out=path_tmp+'metric_RPI.nii')
         data = im_orient.data
         # labels
@@ -274,7 +274,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         status, output = commands.getstatusoutput('rm -rf ' + path_tmp)
     else:
         # Load image
-        sct.printv('\nLoad image...', verbose)
+        sct.printv('\nLoad metric image...', verbose)
         data = nib.load(fname_data).get_data()
         sct.printv('\tDone.', verbose)
         # Load labels
@@ -318,24 +318,25 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         if fname_normalizing_label:  # if the "normalization" option was selected,
             normalizing_label[0] = remove_slices(normalizing_label[0], slices_of_interest)
 
-    # extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
+    # Extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
     # individual labels
-    indiv_labels_value, indiv_labels_std = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method)
+    indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method)
     # combined labels
     combined_labels_value = np.zeros(len(combined_labels_id_groups), dtype=float)
     combined_labels_std = np.zeros(len(combined_labels_id_groups), dtype=float)
+    combined_labels_fract_vol = np.zeros(len(combined_labels_id_groups), dtype=float)
     for i_combined_labels in range(0, len(combined_labels_id_groups)):
-        combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, combined_labels_id_groups[i_combined_labels])
+        combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels], combined_labels_fract_vol[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, combined_labels_id_groups[i_combined_labels])
 
     # display results
-    sct.printv('\nResults:', 1)
+    sct.printv('\nResults:\nID, label name [total fractional volume of the label in number of voxels]:    metric value +/- metric STDEV within label', 1)
     for i_label_user in labels_id_user:
         if i_label_user <= max(indiv_labels_ids):
             index = indiv_labels_ids.index(i_label_user)
-            sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ':    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
+            sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ' ['+str(round(indiv_labels_fract_vol[index], 2))+']:    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
         elif i_label_user > max(indiv_labels_ids):
             index = combined_labels_ids.index(i_label_user)
-            sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
+            sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ' ['+str(round(combined_labels_fract_vol[index], 2))+']:    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
     # section = ''
     # if labels_id_user[0] <= max(indiv_labels_ids):
     #     section = '\nWhite matter atlas:'
@@ -356,7 +357,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     #         sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
-    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
 def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
@@ -417,7 +418,12 @@ def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_p
         metric_in_labels = metric_in_labels[0]
         metric_std_in_labels = metric_std_in_labels[0]
 
-    return metric_in_labels, metric_std_in_labels
+    # compute fractional volume for each label
+    fract_vol_per_label = np.zeros(metric_in_labels.size, dtype=float)
+    for i_label in range(0, metric_in_labels.size):
+        fract_vol_per_label[i_label] = np.sum(labels[i_label])
+
+    return metric_in_labels, metric_std_in_labels, fract_vol_per_label
 
 
 def read_label_file(path_info_label, file_info_label):
@@ -615,7 +621,7 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
-def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, combined_labels_value, combined_labels_std, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
     """Save results in the output type selected by user."""
 
     sct.printv('\nSave results in: '+fname_output+'.'+output_type+' ...')
@@ -644,7 +650,10 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
                     fid_metric.write('\n# '+str(warning_vert_levels[i]))
             fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
         else:
-            fid_metric.write('\n# Vertebral levels: ALL')
+            if slices_of_interest != '':
+                fid_metric.write('\n# Vertebral levels: nan')
+            else:
+                fid_metric.write('\n# Vertebral levels: ALL')
 
         # Write selected slices
         fid_metric.write('\n'+'# Slices (z): ')
@@ -654,7 +663,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             fid_metric.write('ALL')
 
         # label headers
-        fid_metric.write('%s' % ('\n'+'# ID, label name, metric value, metric stdev within label\n\n'))
+        fid_metric.write('%s' % ('\n'+'# ID, label name, total fractional volume of the label (in number of voxels), metric value, metric stdev within label\n\n'))
 
         # WRITE RESULTS
         labels_id_user.sort()
@@ -672,10 +681,10 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             # display result for this label
             if section == '\n# White matter atlas\n':
                 index = indiv_labels_ids.index(i_label_user)
-                fid_metric.write('%i, %s, %f, %f\n' % (indiv_labels_ids[index], indiv_labels_names[index], indiv_labels_value[index], indiv_labels_std[index]))
+                fid_metric.write('%i, %s, %f, %f, %f\n' % (indiv_labels_ids[index], indiv_labels_names[index], indiv_labels_fract_vol[index], indiv_labels_value[index], indiv_labels_std[index]))
             elif section == '\n# Combined labels\n':
                 index = combined_labels_ids.index(i_label_user)
-                fid_metric.write('%i, %s, %f, %f\n' % (combined_labels_ids[index], combined_labels_names[index], combined_labels_value[index], combined_labels_std[index]))
+                fid_metric.write('%i, %s, %f, %f, %f\n' % (combined_labels_ids[index], combined_labels_names[index], combined_labels_fract_vol[index], combined_labels_value[index], combined_labels_std[index]))
 
         # Close file .txt
         fid_metric.close()
@@ -713,10 +722,11 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             sh.write(0, 4, 'Slices (z)')
             sh.write(0, 5, 'ID')
             sh.write(0, 6, 'Label name')
-            sh.write(0, 7, 'Metric value')
-            sh.write(0, 8, 'Metric STDEV within label')
+            sh.write(0, 7, 'Total fractional volume of the label (in number of voxels)')
+            sh.write(0, 8, 'Metric value')
+            sh.write(0, 9, 'Metric STDEV within label')
             if fname_normalizing_label:
-                sh.write(0, 9, 'Label used to normalize the metric estimation slice-by-slice')
+                sh.write(0, 10, 'Label used to normalize the metric estimation slice-by-slice')
 
             row_index = 1
 
@@ -728,7 +738,10 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
                 for i in range(0, len(warning_vert_levels)):
                     vertebral_levels_field += ' ['+str(warning_vert_levels[i])+']'
         else:
-            vertebral_levels_field = 'ALL'
+            if slices_of_interest != '':
+                vertebral_levels_field = 'nan'
+            else:
+                vertebral_levels_field = 'ALL'
 
         if slices_of_interest != '':
             slices_of_interest_field = slices_of_interest
@@ -743,21 +756,23 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             sh.write(row_index, 3, vertebral_levels_field)
             sh.write(row_index, 4, slices_of_interest_field)
             if fname_normalizing_label:
-                sh.write(row_index, 9, fname_normalizing_label)
+                sh.write(row_index, 10, fname_normalizing_label)
 
             # display result for this label
             if i_label_user <= max(indiv_labels_ids):
                 index = indiv_labels_ids.index(i_label_user)
                 sh.write(row_index, 5, indiv_labels_ids[index])
                 sh.write(row_index, 6, indiv_labels_names[index])
-                sh.write(row_index, 7, indiv_labels_value[index])
-                sh.write(row_index, 8, indiv_labels_std[index])
+                sh.write(row_index, 7, indiv_labels_fract_vol[index])
+                sh.write(row_index, 8, indiv_labels_value[index])
+                sh.write(row_index, 9, indiv_labels_std[index])
             elif i_label_user > max(indiv_labels_ids):
                 index = combined_labels_ids.index(i_label_user)
                 sh.write(row_index, 5, combined_labels_ids[index])
                 sh.write(row_index, 6, combined_labels_names[index])
-                sh.write(row_index, 7, combined_labels_value[index])
-                sh.write(row_index, 8, combined_labels_std[index])
+                sh.write(row_index, 7, combined_labels_fract_vol[index])
+                sh.write(row_index, 8, combined_labels_value[index])
+                sh.write(row_index, 9, combined_labels_std[index])
 
             row_index += 1
 
