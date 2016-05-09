@@ -597,11 +597,10 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         elif not vert_levels:
             vert_levels_list = []
 
-        sct.printv('Average CSA across slices...', type='info')
-
         # parse the selected slices
         slices_lim = slices.strip().split(':')
-        slices_list = range(int(slices_lim[0]), int(slices_lim[1])+1)
+        slices_list = range(int(slices_lim[0]), int(slices_lim[-1])+1)
+        sct.printv('Average CSA across slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
 
         CSA_for_selected_slices = []
         # Read the file csa_per_slice.txt and get the CSA for the selected slices
@@ -618,10 +617,10 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
 
         # write result into output file
-        save_results(output_prefix+output_suffixes[2], output_type, overwrite, file_data, 'CSA', 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_prefix+output_suffixes[2], output_type, overwrite, file_data, 'CSA', 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
-        sct.printv('Compute the volume in between the selected slices...', type='info')
+        sct.printv('Compute the volume in between slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
         nb_vox = np.sum(data_seg[:, :, slices_list])
         volume = nb_vox*px*py*pz
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
@@ -673,7 +672,10 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
                     fid_metric.write('\n# '+str(warning_vert_levels[i]))
             fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
         else:
-            fid_metric.write('\n# Vertebral levels: ALL')
+            if slices_of_interest != '':
+                fid_metric.write('\n# Vertebral levels: nan')
+            else:
+                fid_metric.write('\n# Vertebral levels: ALL')
 
         # Write selected slices
         fid_metric.write('\n'+'# Slices (z): ')
@@ -718,11 +720,11 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
 
             # write header line
             sh.write(0, 0, 'Date - Time')
-            sh.write(0, 1, 'Metric')
-            sh.write(0, 2, 'Calculation method')
-            sh.write(0, 3, 'Vertebral levels')
-            sh.write(0, 4, 'Slices (z)')
-            sh.write(0, 5, 'File used for calculation')
+            sh.write(0, 1, 'File used for calculation')
+            sh.write(0, 2, 'Metric')
+            sh.write(0, 3, 'Calculation method')
+            sh.write(0, 4, 'Vertebral levels')
+            sh.write(0, 5, 'Slices (z)')
             sh.write(0, 6, 'MEAN across slices')
             sh.write(0, 7, 'STDEV across slices')
 
@@ -735,7 +737,10 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
                 for i in range(0, len(warning_vert_levels)):
                     vertebral_levels_field += ' [' + str(warning_vert_levels[i]) + ']'
         else:
-            vertebral_levels_field = 'ALL'
+            if slices_of_interest != '':
+                vertebral_levels_field = str(np.nan)
+            else:
+                vertebral_levels_field = 'ALL'
 
         if slices_of_interest != '':
             slices_of_interest_field = slices_of_interest
@@ -744,12 +749,12 @@ def save_results(fname_output, output_type, overwrite, fname_data, metric_name, 
 
         # write results
         sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
-        sh.write(row_index, 1, metric_name)
-        sh.write(row_index, 2, method)
-        sh.write(row_index, 3, vertebral_levels_field)
-        sh.write(row_index, 4, slices_of_interest_field)
-        sh.write(row_index, 5, os.path.abspath(fname_data))
-        sh.write(row_index, 6, mean)
+        sh.write(row_index, 1, os.path.abspath(fname_data))
+        sh.write(row_index, 2, metric_name)
+        sh.write(row_index, 3, method)
+        sh.write(row_index, 4, vertebral_levels_field)
+        sh.write(row_index, 5, slices_of_interest_field)
+        sh.write(row_index, 6, float(mean))
         sh.write(row_index, 7, str(std))
 
         book.save(fname_output + '.' + output_type)
