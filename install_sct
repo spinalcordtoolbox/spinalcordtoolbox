@@ -80,6 +80,7 @@ fi"
 install_refresh ()
 {
   echo
+  echo "" >> ${THE_BASHRC}
   echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
   echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${THE_BASHRC}
 }
@@ -88,7 +89,8 @@ install_refresh ()
 # Download from URL using curl/wget
 download ()
 {
-  # Use cUrl or wget to download goodies
+
+    # Use cUrl or wget to download goodies
   set -x
   if hash "curl" ; then
     curl -o $1 $2
@@ -127,6 +129,8 @@ usage()
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
+  echo -e "\n\t-o \v Use the the file form the offline installer (no internet connection required)"
+
 }
 
 
@@ -134,7 +138,7 @@ usage()
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
 
-while getopts ":dmhb" opt; do
+while getopts ":dmhbo" opt; do
   case $opt in
     d)
       echo " data directory will not be (re)-installed"
@@ -147,6 +151,10 @@ while getopts ":dmhb" opt; do
     b)
       echo " SCT binaries will not be (re)-installed "
       NO_SCT_BIN_INSTALL=yes
+      ;;
+    o)
+      echo " Using the offline folder for installation"
+      OFFLINE_INSTALL=yes
       ;;
     h)
       usage
@@ -301,6 +309,8 @@ cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run 
 
 if [ ${NO_SCT_BIN_INSTALL} ]; then
   echo "SCT binaries will not be (re)-install"
+elif [ ${OFFLINE_INSTALL} ]; then
+  cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
 else
   echo -e "\nInstalling binaries..."
   download  ${TMP_DIR}/sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/bin/${OS}/sct_binaries.tar.gz
@@ -313,6 +323,9 @@ fi
 # INSTALL DATA
 if [ ${NO_DATA_INSTALL} ]; then
   echo "data/ will not vbe (re)-install"
+elif [ ${OFFLINE_INSTALL} ]; then
+  echo "Offline install"
+  cmd="tar -C ${SCT_DIR} -zxvf ${SCT_SOURCE}/offline/data.tar.gz"; echo ">> "$cmd; $cmd
 else
   cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   # Download data
@@ -326,6 +339,28 @@ fi
 # INSTALL PYTHON
 if [ ${NO_CONDA_INSTALL} ]; then
   echo "python/ will not be (re)-install"
+elif [ ${OFFLINE_INSTALL} ]; then
+
+  echo "Offline install"
+
+  cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  # Install Python conda
+  echo -e "\nInstalling conda..."
+  cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+
+  cmd="bash ${SCT_SOURCE}/offline/miniconda_${OS}.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
+  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+
+  tar -C ${TMP_DIR} -zxvf ${SCT_SOURCE}/offline/wheels_${OS}.tar.gz
+  dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
+  ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
+
+  # replace that!
+  conda install --yes --no-deps ${SCT_SOURCE}/offline/pkgs_${OS}/*
+
+  pip install --no-deps --ignore-installed ${dipy_whl} ${ornlm_whl} ${SCT_SOURCE}/offline/*none*.whl
+
+
 else
   cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   # Install Python conda
