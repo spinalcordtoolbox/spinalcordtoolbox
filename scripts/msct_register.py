@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-#
+# Various modules for registration.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Tanguy Magnan
+# Authors: Tanguy Magnan, Julien Cohen-Adad
 #
 # License: see the LICENSE.TXT
 #=======================================================================================================================
@@ -50,6 +50,9 @@ def register_slicewise(fname_src,
     if paramreg.algo == 'centermass':
         # calculate translation of center of mass between source and destination in voxel space
         register2d_centermass('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
+    elif paramreg.algo == 'centermassrot':
+        # calculate translation of center of mass between source and destination in voxel space
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
     else:
         # convert SCT flags into ANTs-compatible flags
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
@@ -141,6 +144,116 @@ def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
 
 
+
+def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0):
+    """Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
+    of the PCA. This function should be used on segmentations (not images).
+
+    This works for 2D and 3D images.  If 3D, it splits the image and performs the rotation slice-by-slice.
+
+    input:
+        fname_source: name of moving image (type: string)
+        fname_dest: name of fixed image (type: string)
+        fname_warp: name of output 3d forward warping field
+        fname_warp_inv: name of output 3d inverse warping field
+        mode:
+
+    output:
+        if algo==translation:
+            x_displacement: list of translation along x axis for each slice (type: list)
+            y_displacement: list of translation along y axis for each slice (type: list)
+        if algo==rigid:
+            x_displacement: list of translation along x axis for each slice (type: list)
+            y_displacement: list of translation along y axis for each slice (type: list)
+            theta_rotation: list of rotation angle in radian (and in ITK's coordinate system) for each slice (type: list)
+        if algo==affine or algo==syn or algo==bsplinesyn:
+            creation of two 3D warping fields (forward and inverse) that are the concatenations of the slice-by-slice
+            warps.
+    """
+
+
+    # Get image dimensions and retrieve nz
+    sct.printv('\nGet image dimensions of destination image...', verbose)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+
+    # Split input volume along z
+    sct.printv('\nSplit input volume...', verbose)
+    from sct_image import split_data
+    im_src = Image('src.nii')
+    split_source_list = split_data(im_src, 2)
+    for im in split_source_list:
+        im.save()
+
+    # Split destination volume along z
+    sct.printv('\nSplit destination volume...', verbose)
+    im_dest = Image('dest.nii')
+    split_dest_list = split_data(im_dest, 2)
+    for im in split_dest_list:
+        im.save()
+
+    # display image
+    data_src = im_src.data
+    data_dest = im_dest.data
+
+    iz = 0
+    import matplotlib.pyplot as plt
+    #plt.subplot(121)
+    #plt.imshow(data_src[:, :, 3], cmap=plt.cm.gray)
+    #plt.title('src')
+    #plt.subplot(122)
+    #plt.imshow(data_dest[:, :, 3], cmap=plt.cm.gray)
+    #plt.title('dest')
+    #plt.show()
+    data_src2d = data_src[:, :, iz]
+    # get non-zero coordinates, and transpose to obtain nx2 dimensions
+    coordsrc = array(data_src2d.nonzero()).T
+    # center data
+    coordsrc = coordsrc - coordsrc.mean(0)
+    # normalize data
+    coordsrc /= coordsrc.std()
+    # Performs PCA
+    from sklearn.decomposition import PCA
+    pca = PCA()
+    pca.fit(coordsrc)
+    # pca_score = pca.explained_variance_ratio_
+    V = pca.components_
+    # display
+    import matplotlib.pyplot as plt
+    plt.figure
+    plt.subplot(121)
+    #ax = matplotlib.pyplot.axis()
+    plt.scatter(coordsrc[:, 0], coordsrc[:, 1], s=2, marker='o', zorder=10, color='steelblue', alpha=0.5)
+    pcaaxis = pca.components_.T
+    plt.plot([0, pcaaxis[1, 0]], [0, pcaaxis[1, 1]], linewidth=2, color='red')
+    plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[0, 1]], linewidth=2, color='orange')
+    #axis((ax[1], ax[0], ax[3], ax[2]))
+    plt.axis('equal')
+    plt.title('src')
+
+    data_src2d = data_dest[:, :, iz]
+    # get non-zero coordinates, and transpose to obtain nx2 dimensions
+    coordsrc = array(data_src2d.nonzero()).T
+    # center data
+    coordsrc = coordsrc - coordsrc.mean(0)
+    # normalize data
+    coordsrc /= coordsrc.std()
+    # Performs PCA
+    from sklearn.decomposition import PCA
+    pca = PCA()
+    pca.fit(coordsrc)
+    # pca_score = pca.explained_variance_ratio_
+    V = pca.components_
+    # display
+    plt.subplot(122)
+    plt.scatter(coordsrc[:, 0], coordsrc[:, 1], s=2, marker='o', zorder=10, color='steelblue', alpha=0.5)
+    pcaaxis = pca.components_.T
+    plt.plot([0, pcaaxis[1, 0]], [0, pcaaxis[1, 1]], linewidth=2, color='red')
+    plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[0, 1]], linewidth=2, color='orange')
+    plt.axis('equal')
+    plt.title('dest')
+    plt.show()
 
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
