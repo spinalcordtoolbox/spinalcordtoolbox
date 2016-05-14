@@ -157,18 +157,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
         mode:
-
     output:
-        if algo==translation:
-            x_displacement: list of translation along x axis for each slice (type: list)
-            y_displacement: list of translation along y axis for each slice (type: list)
-        if algo==rigid:
-            x_displacement: list of translation along x axis for each slice (type: list)
-            y_displacement: list of translation along y axis for each slice (type: list)
-            theta_rotation: list of rotation angle in radian (and in ITK's coordinate system) for each slice (type: list)
-        if algo==affine or algo==syn or algo==bsplinesyn:
-            creation of two 3D warping fields (forward and inverse) that are the concatenations of the slice-by-slice
-            warps.
     """
 
 
@@ -197,63 +186,66 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     data_src = im_src.data
     data_dest = im_dest.data
 
-    iz = 0
-    import matplotlib.pyplot as plt
-    #plt.subplot(121)
-    #plt.imshow(data_src[:, :, 3], cmap=plt.cm.gray)
-    #plt.title('src')
-    #plt.subplot(122)
-    #plt.imshow(data_dest[:, :, 3], cmap=plt.cm.gray)
-    #plt.title('dest')
-    #plt.show()
-    data_src2d = data_src[:, :, iz]
-    # get non-zero coordinates, and transpose to obtain nx2 dimensions
-    coordsrc = array(data_src2d.nonzero()).T
-    # center data
-    coordsrc = coordsrc - coordsrc.mean(0)
-    # normalize data
-    coordsrc /= coordsrc.std()
-    # Performs PCA
-    from sklearn.decomposition import PCA
-    pca = PCA()
-    pca.fit(coordsrc)
-    # pca_score = pca.explained_variance_ratio_
-    V = pca.components_
-    # display
-    import matplotlib.pyplot as plt
-    plt.figure
-    plt.subplot(121)
-    #ax = matplotlib.pyplot.axis()
-    plt.scatter(coordsrc[:, 0], coordsrc[:, 1], s=2, marker='o', zorder=10, color='steelblue', alpha=0.5)
-    pcaaxis = pca.components_.T
-    plt.plot([0, pcaaxis[1, 0]], [0, pcaaxis[1, 1]], linewidth=2, color='red')
-    plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[0, 1]], linewidth=2, color='orange')
-    #axis((ax[1], ax[0], ax[3], ax[2]))
-    plt.axis('equal')
-    plt.title('src')
+    for iz in range(0, nz):
+        # iz = 0
+        import matplotlib.pyplot as plt
+        # plt.figure(figsize=(15, 4))
+        # plt.subplot(121)
+        # plt.imshow(data_src[:, :, iz], cmap=plt.cm.gray)
+        # plt.title('src')
+        # plt.subplot(122)
+        # plt.imshow(data_dest[:, :, iz], cmap=plt.cm.gray)
+        # plt.title('dest')
+        # plt.show()
+        # coord_src = array
+        # coord_dest = array
+        coord_src, pca_src = compute_pca(data_src[:, :, iz])
+        coord_dest, pca_dest = compute_pca(data_dest[:, :, iz])
 
-    data_src2d = data_dest[:, :, iz]
+        # display
+        import matplotlib.pyplot as plt
+        plt.figure('iz='+str(iz), figsize=(9, 4))
+        # plt.title('iz='+str(iz))
+        for isub in [121, 122]:
+            # plt.figure
+            plt.subplot(isub)
+            #ax = matplotlib.pyplot.axis()
+            if isub == 121:
+                plt.scatter(coord_src[:, 0], coord_src[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                pcaaxis = pca_src.components_.T
+            else:
+                plt.scatter(coord_dest[:, 0], coord_dest[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                pcaaxis = pca_dest.components_.T
+            plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
+            plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
+            plt.axis('equal')
+            plt.axis([-3, 3, -3, 3])
+            if isub == 121:
+                plt.title('src')
+            else:
+                plt.title('dest')
+        plt.show()
+        del coord_src, coord_dest, pca_src, pca_dest
+
+    a=1
+
+
+def compute_pca(data2d):
+    # round it and make it int (otherwise end up with values like 10-7)
+    data2d = data2d.round().astype(int)
     # get non-zero coordinates, and transpose to obtain nx2 dimensions
-    coordsrc = array(data_src2d.nonzero()).T
+    coordsrc = array(data2d.nonzero()).T
     # center data
     coordsrc = coordsrc - coordsrc.mean(0)
     # normalize data
     coordsrc /= coordsrc.std()
     # Performs PCA
     from sklearn.decomposition import PCA
-    pca = PCA()
+    pca = PCA(n_components=2, copy=False, whiten=False)
     pca.fit(coordsrc)
     # pca_score = pca.explained_variance_ratio_
     V = pca.components_
-    # display
-    plt.subplot(122)
-    plt.scatter(coordsrc[:, 0], coordsrc[:, 1], s=2, marker='o', zorder=10, color='steelblue', alpha=0.5)
-    pcaaxis = pca.components_.T
-    plt.plot([0, pcaaxis[1, 0]], [0, pcaaxis[1, 1]], linewidth=2, color='red')
-    plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[0, 1]], linewidth=2, color='orange')
-    plt.axis('equal')
-    plt.title('dest')
-    plt.show()
+    return coordsrc, pca
 
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
