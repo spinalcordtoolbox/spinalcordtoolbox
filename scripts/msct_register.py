@@ -213,45 +213,48 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         import numpy as np
         np.degrees(angle_src_dest)
         # from skimage.transform import rotate
+        # angle_src_dest = 0
         R = np.matrix( ((cos(angle_src_dest), -sin(angle_src_dest)), (sin(angle_src_dest), cos(angle_src_dest))) ).T
         # data_src2d_rot = rotate(data_src[:, :, iz], np.degrees(angle_src_dest))
         # coord_src_rot, pca_src_rot = compute_pca(data_src2d_rot)
         coord_src_rot = coord_src * R
 
-        import matplotlib.pyplot as plt
-        plt.figure('iz='+str(iz), figsize=(13, 4))
-        # plt.title('iz='+str(iz))
-        for isub in [131, 132, 133]:
-            # plt.figure
-            plt.subplot(isub)
-            #ax = matplotlib.pyplot.axis()
-            if isub == 131:
-                plt.scatter(coord_src[:, 0], coord_src[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
-                pcaaxis = pca_src.components_.T
-            elif isub == 132:
-                plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
-                pcaaxis = pca_dest.components_.T
-            else:
-                plt.scatter(coord_dest[:, 0], coord_dest[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
-                pcaaxis = pca_dest.components_.T
-            plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
-            plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
-            plt.axis([-3, 3, -3, 3])
-            plt.gca().set_aspect('equal', adjustable='box')
-            # plt.axis('equal')
-            if isub == 131:
-                plt.title('src')
-            elif isub == 132:
-                plt.title('src_rot')
-            else:
-                plt.title('dest')
-        # plt.show()
+        if verbose == 2:
+            import matplotlib.pyplot as plt
+            plt.figure('iz='+str(iz), figsize=(13, 4))
+            # plt.title('iz='+str(iz))
+            for isub in [131, 132, 133]:
+                # plt.figure
+                plt.subplot(isub)
+                #ax = matplotlib.pyplot.axis()
+                if isub == 131:
+                    plt.scatter(coord_src[:, 0], coord_src[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                    pcaaxis = pca_src.components_.T
+                elif isub == 132:
+                    plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                    pcaaxis = pca_dest.components_.T
+                else:
+                    plt.scatter(coord_dest[:, 0], coord_dest[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                    pcaaxis = pca_dest.components_.T
+                plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
+                plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
+                plt.axis([-3, 3, -3, 3])
+                plt.gca().set_aspect('equal', adjustable='box')
+                # plt.axis('equal')
+                if isub == 131:
+                    plt.title('src')
+                elif isub == 132:
+                    plt.title('src_rot')
+                else:
+                    plt.title('dest')
+            plt.show()
 
         # calculate displacement in voxel space
-        # coord_init2d = zeros(data_src[:, :, iz].shape)
+        coord_init2d = zeros(data_src[:, :, iz].shape)
         row, col = np.indices((nx, ny))
         coord_init = np.array([row.ravel(), col.ravel()]).T
         coord_new = array((coord_init - centermass_src.T) * R + centermass_dest.T)
+        # coord_new = array(coord_src_rot + centermass_dest.T)
         warp_x[:, :, iz] = array([coord_new[i, 0] - coord_init[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
         warp_y[:, :, iz] = array([coord_new[i, 1] - coord_init[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
 
@@ -279,8 +282,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     # create theta vector (for easier code management)
     # theta_rot_a = zeros(seg_dest_data.shape[2])
     data_warp = zeros((nx, ny, nz, 1, 3))
-    data_warp[:, :, :, 0, 0] = warp_x
-    data_warp[:, :, :, 0, 1] = warp_y
+    data_warp[:, :, :, 0, 0] = -warp_x # need to invert due to ITK conventions
+    data_warp[:, :, :, 0, 1] = warp_y # need
     # Generate warping field
     im_dest = load(fname_dest)
     hdr_dest = im_dest.get_header()
