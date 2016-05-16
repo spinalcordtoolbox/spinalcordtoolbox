@@ -186,6 +186,10 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     data_src = im_src.data
     data_dest = im_dest.data
 
+    # displacement = zeros(data_src.shape)
+    # initialization
+    warp_x = zeros(data_src.shape)
+    warp_y = zeros(data_src.shape)
     for iz in range(0, nz):
         # iz = 0
         import matplotlib.pyplot as plt
@@ -199,44 +203,113 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # plt.show()
         # coord_src = array
         # coord_dest = array
-        coord_src, pca_src = compute_pca(data_src[:, :, iz])
-        coord_dest, pca_dest = compute_pca(data_dest[:, :, iz])
+        coord_src, pca_src, centermass_src = compute_pca(data_src[:, :, iz])
+        coord_dest, pca_dest, centermass_dest = compute_pca(data_dest[:, :, iz])
 
-        # display
+        # compute (src,dest) angle for first eigenvector
+        eigenv_src = pca_src.components_.T[0]
+        eigenv_dest = pca_dest.components_.T[0]
+        angle_src_dest = angle_between(eigenv_src, eigenv_dest)
+        import numpy as np
+        np.degrees(angle_src_dest)
+        # from skimage.transform import rotate
+        R = np.matrix( ((cos(angle_src_dest), -sin(angle_src_dest)), (sin(angle_src_dest), cos(angle_src_dest))) ).T
+        # data_src2d_rot = rotate(data_src[:, :, iz], np.degrees(angle_src_dest))
+        # coord_src_rot, pca_src_rot = compute_pca(data_src2d_rot)
+        coord_src_rot = coord_src * R
+
         import matplotlib.pyplot as plt
-        plt.figure('iz='+str(iz), figsize=(9, 4))
+        plt.figure('iz='+str(iz), figsize=(13, 4))
         # plt.title('iz='+str(iz))
-        for isub in [121, 122]:
+        for isub in [131, 132, 133]:
             # plt.figure
             plt.subplot(isub)
             #ax = matplotlib.pyplot.axis()
-            if isub == 121:
+            if isub == 131:
                 plt.scatter(coord_src[:, 0], coord_src[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
                 pcaaxis = pca_src.components_.T
+            elif isub == 132:
+                plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                pcaaxis = pca_dest.components_.T
             else:
                 plt.scatter(coord_dest[:, 0], coord_dest[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
                 pcaaxis = pca_dest.components_.T
             plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
             plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
-            plt.axis('equal')
             plt.axis([-3, 3, -3, 3])
-            if isub == 121:
+            plt.gca().set_aspect('equal', adjustable='box')
+            # plt.axis('equal')
+            if isub == 131:
                 plt.title('src')
+            elif isub == 132:
+                plt.title('src_rot')
             else:
                 plt.title('dest')
-        plt.show()
+        # plt.show()
+
+        # calculate displacement in voxel space
+        # coord_init2d = zeros(data_src[:, :, iz].shape)
+        row, col = np.indices((nx, ny))
+        coord_init = np.array([row.ravel(), col.ravel()]).T
+        coord_new = array((coord_init - centermass_src.T) * R + centermass_dest.T)
+        warp_x[:, :, iz] = array([coord_new[i, 0] - coord_init[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_y[:, :, iz] = array([coord_new[i, 1] - coord_init[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+
         del coord_src, coord_dest, pca_src, pca_dest
 
-    a=1
+    # calculate displacement in voxel space
+    # sct.printv('\nCompute X-Y displacement for each slice...', verbose)
+    # displacement = zeros(data_src.shape)
+    # for iz in xrange(nz):
+    #     cx, cy = centermass_dest - centermass_src
+    #     displacement[iz] = (coord_src - centermass_src) * R + centermass_dest
+        # x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
+        # y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
+
+    # x_displacement = [0] * data_src.shape[2]
+    # y_displacement = [0] * data_src.shape[2]
+    # for iz in xrange(data_dest.shape[2]):
+    #     x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
+    #     y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
+
+    # convert to array
+    # x_disp_a = asarray(x_displacement)
+    # y_disp_a = asarray(y_displacement)
+
+    # create theta vector (for easier code management)
+    # theta_rot_a = zeros(seg_dest_data.shape[2])
+    data_warp = zeros((nx, ny, nz, 1, 3))
+    data_warp[:, :, :, 0, 0] = warp_x
+    data_warp[:, :, :, 0, 1] = warp_y
+    # Generate warping field
+    im_dest = load(fname_dest)
+    hdr_dest = im_dest.get_header()
+    hdr_warp = hdr_dest.copy()
+    hdr_warp.set_intent('vector', (), '')
+    hdr_warp.set_data_dtype('float32')
+    img = Nifti1Image(data_warp, None, hdr_warp)
+    save(img, fname_warp)
+    sct.printv('\nDone! Warping field generated: '+fname_warp, verbose)
+
 
 
 def compute_pca(data2d):
+    """
+    Compute PCA using sklearn
+    :param data2d: 2d array. PCA will be computed on non-zeros values.
+    :return:
+        coordsrc: 2d array: centered non-zero coordinates
+        pca: object: PCA result.
+        centermass: 2x1 array: 2d coordinates of the center of mass
+    """
     # round it and make it int (otherwise end up with values like 10-7)
     data2d = data2d.round().astype(int)
     # get non-zero coordinates, and transpose to obtain nx2 dimensions
     coordsrc = array(data2d.nonzero()).T
+    # get center of mass
+    centermass = coordsrc.mean(0)
     # center data
-    coordsrc = coordsrc - coordsrc.mean(0)
+    coordsrc = coordsrc - centermass
     # normalize data
     coordsrc /= coordsrc.std()
     # Performs PCA
@@ -245,7 +318,9 @@ def compute_pca(data2d):
     pca.fit(coordsrc)
     # pca_score = pca.explained_variance_ratio_
     V = pca.components_
-    return coordsrc, pca
+    return coordsrc, pca, centermass
+
+
 
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
@@ -512,3 +587,19 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
     save(img, fname)
     sct.printv('\nDone! Warping field generated: '+fname, verbose)
 
+
+
+def angle_between(a, b):
+    """
+    compute angle between a and b. Throws an exception if a or b has zero magnitude.
+    :param a:
+    :param b:
+    :return:
+    """
+    from numpy.linalg import norm
+    from numpy import dot
+    import math
+    arccosInput = dot(a,b)/norm(a)/norm(b)
+    arccosInput = 1.0 if arccosInput > 1.0 else arccosInput
+    arccosInput = -1.0 if arccosInput < -1.0 else arccosInput
+    return math.acos(arccosInput)
