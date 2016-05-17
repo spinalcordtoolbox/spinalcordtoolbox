@@ -215,6 +215,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # from skimage.transform import rotate
         angle_src_dest = np.pi/2
         R = np.matrix( ((cos(angle_src_dest), -sin(angle_src_dest)), (sin(angle_src_dest), cos(angle_src_dest))) ).T
+        # R = np.matrix( ((cos(angle_src_dest)-1, -sin(angle_src_dest)), (-sin(angle_src_dest), -cos(angle_src_dest)+1)) ).T
         # data_src2d_rot = rotate(data_src[:, :, iz], np.degrees(angle_src_dest))
         # coord_src_rot, pca_src_rot = compute_pca(data_src2d_rot)
         coord_src_rot = coord_src * R
