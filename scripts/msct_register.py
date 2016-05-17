@@ -213,7 +213,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         import numpy as np
         # np.degrees(angle_src_dest)
         # from skimage.transform import rotate
-        # angle_src_dest = 6.28
+        angle_src_dest = np.pi/2
         R = np.matrix( ((cos(angle_src_dest), -sin(angle_src_dest)), (sin(angle_src_dest), cos(angle_src_dest))) ).T
         # data_src2d_rot = rotate(data_src[:, :, iz], np.degrees(angle_src_dest))
         # coord_src_rot, pca_src_rot = compute_pca(data_src2d_rot)
@@ -252,12 +252,20 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # calculate displacement in voxel space
         coord_init2d = zeros(data_src[:, :, iz].shape)
         row, col = np.indices((nx, ny))
-        coord_init = np.array([row.ravel(), col.ravel()]).T
-        coord_new = array((coord_init - centermass_src.T) * R + centermass_dest.T)
-        # coord_new = array( (R * (coord_init - centermass_src.T).T).T + centermass_dest.T)
-        # coord_new = array(coord_src_rot + centermass_dest.T)
-        warp_x[:, :, iz] = array([coord_new[i, 0] - coord_init[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-        warp_y[:, :, iz] = array([coord_new[i, 1] - coord_init[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+        # coord_init = np.array([row.ravel(), col.ravel()]).T
+        # coord_new = array((coord_init - centermass_src.T) * R + centermass_dest.T)
+        # warp_x[:, :, iz] = array([coord_new[i, 0] - coord_init[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+        # warp_y[:, :, iz] = array([coord_new[i, 1] - coord_init[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+        R3d = np.eye(3)
+        R3d[0:2, 0:2] = R
+        coord_init_pix = np.array([row.ravel(), col.ravel(), array(np.ones(len(row.ravel()))*iz)]).T
+        coord_init_phy = im_src.transfo_pix2phys(coord_init_pix)
+        centermass_src_phy = im_src.transfo_pix2phys([[centermass_src.T[0], centermass_src.T[1], iz]])
+        centermass_dest_phy = im_src.transfo_pix2phys([[centermass_dest.T[0], centermass_dest.T[1], iz]])
+        coord_new_phy = array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d) + np.transpose(centermass_dest_phy[0]))
+        warp_x[:, :, iz] = array([coord_new_phy[i, 0] - array(coord_init_phy)[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_y[:, :, iz] = array([coord_new_phy[i, 1] - array(coord_init_phy)[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+
 
         # display init and new coordinates
         # plt.figure('iz='+str(iz)) #, figsize=(9, 4))
@@ -294,7 +302,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # generate warping field
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
-    data_warp[:, :, :, 0, 0] = -warp_x  # need to invert due to ITK conventions
+    data_warp[:, :, :, 0, 0] = warp_x  # need to invert due to ITK conventions
     data_warp[:, :, :, 0, 1] = warp_y  # need
     # Generate warping field
     im_dest = load(fname_dest)
