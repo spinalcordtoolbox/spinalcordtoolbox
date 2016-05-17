@@ -36,8 +36,8 @@ def get_parser():
                       example="data.nii.gz")
     parser.add_option(name="-o",
                       type_value='file_output',
-                      description='Output file.',
-                      mandatory=False,
+                      description='Output file or prefix name.',
+                      mandatory=True,
                       example='data_pad.nii.gz')
 
     parser.usage.addSection('\nBasic image operations:')
@@ -82,13 +82,12 @@ def get_parser():
                       mandatory=False,
                       example='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split())
 
-    parser.usage.addSection("\nMulti-component operations:")
+    parser.usage.addSection("\nMulti-component operations on ITK composite warping fields:")
     parser.add_option(name='-mcs',
-                      description='Multi-component split. Outputs the components separately. (The sufix _x, _y and _z are added to the specified output) \n'
-                                  'Only one input',
+                      description='Multi-component split: Split ITK warping field into three separate displacement fields. The sufix _x, _y and _z and extension will be added to the specified prefix (flag -o).',
                       mandatory=False)
     parser.add_option(name='-omc',
-                      description='Multi-component output. Merge inputted images into one multi-component image. (need several inputs.)',
+                      description='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
                       mandatory=False)
 
     parser.usage.addSection("\nMisc")
@@ -200,7 +199,7 @@ def main(args = None):
         else:
             for i, im in enumerate(im_out):
                 if fname_out is not None:
-                    if len(im_out)<= len(dim_list):
+                    if len(im_out) <= len(dim_list):
                         suffix = '_'+dim_list[i].upper()
                     else:
                         suffix = '_'+str(i)
