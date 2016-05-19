@@ -8,20 +8,25 @@
 # TODO: list functions to test in help (do a search in testing folder)
 
 
-import os
-import getopt
 import sys
 import time
-import commands
+
+import os
 from msct_parser import Parser
+
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# TODO: put it back below when working again (julien 2016-04-04)
+# <<<
+# OLD
+# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# NEW
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
+# >>>
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 sys.path.append(path_sct + '/testing')
 import sct_utils as sct
-from os import listdir
-from os.path import isfile, join
 import importlib
 
 # define nice colors
@@ -158,6 +163,7 @@ def fill_functions():
     functions.append('sct_maths')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
+    functions.append('sct_register_graymatter')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
     functions.append('sct_resample')

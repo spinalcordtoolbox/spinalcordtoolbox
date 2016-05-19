@@ -18,7 +18,6 @@
 # import os
 # import sys
 # import numpy as np
-# import matplotlib.pyplot as plt
 
 from msct_pca import PCA
 # from msct_image import Image
@@ -32,7 +31,9 @@ from math import exp
 
 class ModelParam:
     def __init__(self):
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        path_script = os.path.dirname(__file__)
+        path_sct = os.path.dirname(path_script)
         self.path_model = path_sct+'/data/gm_model'  # model_param
         self.todo_model = 'load'  # 'compute'   # model_param
         self.new_model_dir = './gm_model'  # model_param
@@ -853,7 +854,11 @@ class TargetSegmentationPairwise:
                 level_file = open(self.im_levels, 'r')
                 lines = level_file.readlines()
 
-                for line in lines[1:]:
+                if 'slice' in lines[0] or 'level' in lines[0]:
+                    # first line is a header, remove it
+                    lines = lines[1:]
+                    
+                for line in lines:
                     i_slice, level = line.split(',')
                     level = int(level[:-1])
                     i_slice = int(i_slice)
@@ -1143,14 +1148,13 @@ sct_Image
 
         self.res_wm_seg = None
         self.res_gm_seg = None
-        self.corrected_wm_seg = None
 
         self.segment()
 
     # ------------------------------------------------------------------------------------------------------------------
     def segment(self):
         if self.level is not None:
-            if os.path.isfile(self.level) and sct.extract_fname(self.level)[2] == '.nii.gz':
+            if os.path.isfile(self.level) and 'nii' in sct.extract_fname(self.level)[2]:
                 self.im_level = Image(self.level)
             else:
                 # in this case the level is a string or a file name in .txt, not an image
@@ -1197,7 +1201,6 @@ sct_Image
         self.res_gm_seg.file_name = name_res_gmseg
         self.res_gm_seg.save(type='minimize')
 
-        self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.im_target, name_res_wmseg, self.original_hdr)
 
     def show(self):
 

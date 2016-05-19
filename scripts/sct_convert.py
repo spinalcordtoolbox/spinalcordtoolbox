@@ -42,12 +42,18 @@ def get_parser():
                       description="File output (indicate new extension)",
                       mandatory=True,
                       example=['data.nii'])
+    parser.add_option(name="-squeeze",
+                      type_value='multiple_choice',
+                      description='Sueeze data dimension (remove unused dimension).',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
     return parser
 
 
 # conversion
 # ==========================================================================================
-def convert(fname_in, fname_out, type=None, verbose=1):
+def convert(fname_in, fname_out, squeeze_data=True, type=None, verbose=1):
     """
     Convert data
     :return True/False
@@ -61,7 +67,7 @@ def convert(fname_in, fname_out, type=None, verbose=1):
     im.setFileName(fname_out)
     if type is not None:
         im.changeType(type=type)
-    im.save()
+    im.save(squeeze_data=squeeze_data)
     return im
 
 
@@ -77,9 +83,10 @@ def main(args = None):
     arguments = parser.parse(args)
     fname_in = arguments["-i"]
     fname_out = arguments["-o"]
+    squeeze_data = bool(int(arguments['-squeeze']))
 
     # convert file
-    convert(fname_in, fname_out)
+    convert(fname_in, fname_out, squeeze_data=squeeze_data)
 
 
 
