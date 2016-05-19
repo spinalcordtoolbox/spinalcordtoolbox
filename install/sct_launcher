@@ -55,9 +55,10 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export SCT_DIR=${SCT_DIR%/bin}
   export SCT_PYTHON=${SCT_DIR}/python
   export SCT_VERSION=$(cat $SCT_DIR/version.txt)
+  export SCT_COMMIT=$(cat $SCT_DIR/commit.txt)
 
   addtopath "${SCT_DIR}/bin" PATH
-  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
+#  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
   addtopath ${SCT_DIR}/scripts PYTHONPATH
   export PATH
   export PYTHONPATH
@@ -69,14 +70,15 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   fi
   # Will quietely fail if a virtualenv or conda is not used
   . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
-    echo SpinalCord Toolbox version $SCT_VERSION
-    echo SCT installed in ${SCT_DIR}
-    echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "Spinal Cord Toolbox (version $SCT_VERSION-$SCT_COMMIT)"
+#    echo SCT installed in ${SCT_DIR}
+#    echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
 
 fi
 if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
-  echo running ${SCT_DIR}/scripts/${@}
+  echo "Running ${SCT_DIR}/scripts/${@}"
   python ${SCT_DIR}/scripts/${@}
 else
-  echo sourcing sct_laucher in your environement ${SCT_DIR}
+  echo Sourcing sct_laucher in your environement ${SCT_DIR}
 fi

@@ -14,13 +14,17 @@
 #########################################################################################
 
 import sct_utils as sct
-from msct_parser import Parser
 import sct_straighten_spinalcord
 from pandas import DataFrame
 import os.path
 
 
 def test(path_data='', parameters=''):
+
+    # initializations
+    result_rmse = 'NaN'
+    result_dist_max = 'NaN'
+    result_dice = 'NaN'
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -qc 0'
@@ -34,7 +38,8 @@ def test(path_data='', parameters=''):
     if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+        # return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
 
     # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
     import time, random
@@ -50,26 +55,29 @@ def test(path_data='', parameters=''):
     cmd = 'sct_straighten_spinalcord ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
-    status, o = sct.run(cmd, 0)
+    try:
+        status, o = sct.run(cmd, 0)
+    except:
+        status, o = 1, 'ERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
 
     # initialization of results: must be NaN if test fails
-    result_mse, result_dist_max = float('nan'), float('nan')
+    result_rmse, result_dist_max = float('nan'), float('nan')
     if status == 0:
         # extraction of results
         output_split = output.split('Maximum x-y error = ')[1].split(' mm')
         result_dist_max = float(output_split[0])
-        result_mse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
+        result_rmse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
         # integrity testing
-        th_result_dist_max = 4.0
+        th_result_dist_max = 2.0
         if result_dist_max > th_result_dist_max:
             status = 99
             output += '\nWARNING: Maximum x-y error = '+str(result_dist_max)+' < '+str(th_result_dist_max)
-        th_result_mse = 1.5
-        if result_mse > th_result_mse:
+        th_result_rmse = 1.0
+        if result_rmse > th_result_rmse:
             status = 99
-            output += '\nWARNING: RMSE = '+str(result_mse)+' < '+str(th_result_mse)
+            output += '\nWARNING: RMSE = '+str(result_rmse)+' < '+str(th_result_rmse)
         # apply curved2straight, then straight2curve, then compared results
         path_input, file_input, ext_input = sct.extract_fname(dict_param_with_path['-i'])
         sct.run('sct_apply_transfo -i '+dict_param_with_path['-s']+' -d '+path_output+file_input+'_straight'+ext_input+' -w '+path_output+'warp_curve2straight.nii.gz -o '+path_output+'tmp_seg_straight.nii.gz -x linear', 0)
@@ -82,13 +90,13 @@ def test(path_data='', parameters=''):
         status2, output2 = sct.run(cmd, 0)
         # parse output and compare to acceptable threshold
         result_dice = float(output2.split('3D Dice coefficient = ')[1].split('\n')[0])
-        th_dice = 0.95
+        th_dice = 0.9
         if result_dice < th_dice:
             status = 99
             output += '\nWARNING: DICE = '+str(result_dice)+' < '+str(th_dice)
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max, 'dice': result_dice, 'duration': duration}, index=[path_data])
+    results = DataFrame(data={'status': int(status), 'output': output, 'rmse': result_rmse, 'dist_max': result_dist_max, 'dice': result_dice, 'duration': duration}, index=[path_data])
 
     return status, output, results
 

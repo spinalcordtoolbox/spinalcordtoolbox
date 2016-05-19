@@ -45,6 +45,10 @@ class SinglePlot:
             central_slice = int(self.image_dim[1]/2)
             first_slice = central_slice - (self.number_of_slices / 2) * self.gap_inter_slice
             last_slice = central_slice + (self.number_of_slices / 2) * self.gap_inter_slice
+            if first_slice < 0:
+                first_slice = 0
+            if last_slice >= self.image_dim[1]:
+                last_slice = self.image_dim[1] - 1
             self.list_slices = [int(item) for item in linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
         elif self.number_of_slices != 0:
             self.list_slices = [int(item) for item in linspace(0, self.image_dim[1]-1, self.number_of_slices, endpoint=True)]

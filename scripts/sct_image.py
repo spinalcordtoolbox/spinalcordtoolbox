@@ -14,7 +14,7 @@ import sys
 from numpy import concatenate, shape, newaxis
 from msct_parser import Parser
 from msct_image import Image, get_dimension
-from sct_utils import printv, add_suffix, extract_fname
+from sct_utils import printv, add_suffix, extract_fname, tmp_create, run
 
 
 class Param:
@@ -48,6 +48,11 @@ def get_parser():
                       description='Pad 3d image. Specify padding as: "x,y,z" (in voxel)',
                       mandatory=False,
                       example='0,0,1')
+    parser.add_option(name="-pad-asym",
+                      type_value="str",
+                      description='Pad 3d image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel)',
+                      mandatory=False,
+                      example='0,0,5,10,1,1')
     parser.add_option(name="-copy-header",
                       type_value="file",
                       description='Copy the header of the input image (specified in -i) to the destination image (specified here)',
@@ -124,11 +129,17 @@ def main(args=None):
     # run command
     if "-pad" in arguments:
         # TODO: check input is 3d
+        im_in = Image(fname_in[0])
         padx, pady, padz = arguments["-pad"].split(',')
         padx, pady, padz = int(padx), int(pady), int(padz)
+        im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady, pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
+    elif "-pad-asym" in arguments:
+        # TODO: check input is 3d
         im_in = Image(fname_in[0])
-        im_out = [pad_image(im_in, padding_x=padx, padding_y=pady, padding_z=padz)]
-
+        padxi, padxf, padyi, padyf, padzi, padzf = arguments["-pad-asym"].split(',')
+        padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
+        im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
+        
     elif "-copy-header" in arguments:
         im_in = Image(fname_in[0])
         im_dest = Image(arguments["-copy-header"])
@@ -155,7 +166,7 @@ def main(args=None):
     elif "-setorient" in arguments:
         print fname_in[0]
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose)]
+        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose, fname_out=fname_out)]
 
     elif "-setorient-data" in arguments:
         im_in = Image(fname_in[0])
@@ -187,7 +198,7 @@ def main(args=None):
         printv('\nGenerate output files...', verbose)
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
-            im_out[0].save()
+            im_out[0].save(squeeze_data=False)
         else:
             for i, im in enumerate(im_out):
                 if fname_out is not None:
@@ -207,40 +218,33 @@ def main(args=None):
         printv('An error occurred in sct_image...', verbose, "error")
 
 
-def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
+def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
     from numpy import zeros, dot
     nx, ny, nz, nt, px, py, pz, pt = im.dim
-    padding_x, padding_y, padding_z = int(padding_x), int(padding_y), int(padding_z)
-    padded_data = zeros((nx+2*padding_x, ny+2*padding_y, nz+2*padding_z))
+    pad_x_i, pad_x_f, pad_y_i, pad_y_f, pad_z_i, pad_z_f = int(pad_x_i), int(pad_x_f), int(pad_y_i), int(pad_y_f), int(pad_z_i), int(pad_z_f)
 
-    if padding_x == 0:
-        padxi = None
-        padxf = None
-    else:
-        padxi=padding_x
-        padxf=-padding_x
+    padded_data = zeros((nx+pad_x_i+pad_x_f, ny+pad_y_i+pad_y_f, nz+pad_z_i+pad_z_f))
 
-    if padding_y == 0:
-        padyi = None
-        padyf = None
-    else:
-        padyi = padding_y
-        padyf = -padding_y
+    if pad_x_f == 0:
+        pad_x_f = None
+    elif pad_x_f > 0:
+        pad_x_f *= -1
+    if pad_y_f == 0:
+        pad_y_f = None
+    elif pad_y_f > 0:
+        pad_y_f *= -1
+    if pad_z_f == 0:
+        pad_z_f = None
+    elif pad_z_f > 0:
+        pad_z_f *= -1
 
-    if padding_z == 0:
-        padzi = None
-        padzf = None
-    else:
-        padzi = padding_z
-        padzf = -padding_z
-
-    padded_data[padxi:padxf, padyi:padyf, padzi:padzf] = im.data
+    padded_data[pad_x_i:pad_x_f, pad_y_i:pad_y_f, pad_z_i:pad_z_f] = im.data
     im_out = im.copy()
     im_out.data = padded_data  # done after the call of the function
     im_out.setFileName(im_out.file_name+'_pad'+im_out.ext)
 
     # adapt the origin in the sform and qform matrix
-    new_origin = dot(im_out.hdr.get_qform(), [-padding_x, -padding_y, -padding_z, 1])
+    new_origin = dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
 
     im_out.hdr.structarr['qoffset_x'] = new_origin[0]
     im_out.hdr.structarr['qoffset_y'] = new_origin[1]
@@ -292,7 +296,7 @@ def split_data(im_in, dim):
     return im_out_list
 
 
-def concat_data(fname_in_list, dim, no_expand=False):
+def concat_data(fname_in_list, dim):
     """
     Concatenate data
     :param im_in_list: list of images.
@@ -305,12 +309,20 @@ def concat_data(fname_in_list, dim, no_expand=False):
     dat_list = []
     data_concat_list = []
 
+    # check if shape of first image is smaller than asked dim to concatenate along
+    data0 = Image(fname_in_list[0]).data
+    if len(data0.shape) <= dim:
+        expand_dim = True
+    else:
+        expand_dim = False
+
     for i, fname in enumerate(fname_in_list):
+        # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
         if i != 0 and i % 100 == 0:
             data_concat_list.append(concatenate(dat_list, axis=dim))
             im = Image(fname)
             dat = im.data
-            if not no_expand:
+            if expand_dim:
                 dat = expand_dims(dat, dim)
             dat_list = [dat]
             del im
@@ -318,7 +330,7 @@ def concat_data(fname_in_list, dim, no_expand=False):
         else:
             im = Image(fname)
             dat = im.data
-            if not no_expand:
+            if expand_dim:
                 dat = expand_dims(dat, dim)
             dat_list.append(dat)
             del im
@@ -441,17 +453,20 @@ def multicomponent_merge(fname_list):
     return im_out
 
 
-def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
+def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=''):
     verbose = 0 if get else verbose
     printv('\nGet dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
-    # if data are 2d, get orientation from header using fslhd
-    if nz == 1:
+    # if data are 2d or 3d, get orientation from header using fslhd
+
+    if (nz == 1 or nt==1) and len(im.data.shape)<5:
         if get:
             try:
+                printv('\nGet orientation...', verbose)
+                im_out = None
                 ori = get_orientation(im)
             except Exception, e:
                 printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
@@ -462,28 +477,26 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             im_out = set_orientation(im, ori)
         elif set_data:
             im_out = set_orientation(im, ori, True)
-
-
-    # if data are 3d, directly set or get orientation
-    elif nt == 1:
-        if get:
-            # get orientation
-            printv('\nGet orientation...', verbose)
-            im_out = None
-            return get_orientation_3d(im)
-        elif set:
-            # set orientation
-            printv('\nChange orientation...', verbose)
-            im_out = set_orientation(im, ori)
-        elif set_data:
-            im_out = set_orientation(im, ori, True)
         else:
             im_out = None
 
     else:
+        from os import chdir
         # 4D data: split along T dimension
-        printv('\nSplit along T dimension...', verbose)
-        im_split_list = split_data(im, 3)
+        # or 5D data: split along 5th dimension
+        # Create a temporary directory and go in it
+        tmp_folder = tmp_create(verbose)
+        chdir(tmp_folder)
+        if len(im.data.shape) == 5 and im.data.shape[-1] not in [0, 1]:
+            # 5D data
+            printv('\nSplit along 5th dimension...', verbose)
+            im_split_list = multicomponent_split(im)
+            dim = 5
+        else:
+            # 4D data
+            printv('\nSplit along T dimension...', verbose)
+            im_split_list = split_data(im, 3)
+            dim = 4
         for im_s in im_split_list:
             im_s.save(verbose=verbose)
 
@@ -491,7 +504,10 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
             # get orientation
             printv('\nGet orientation...', verbose)
             im_out=None
-            return get_orientation_3d(im_split_list[0])
+            ori = get_orientation(im_split_list[0])
+            chdir('..')
+            run('rm -rf '+tmp_folder, error_exit='warning')
+            return ori
         elif set:
             # set orientation
             printv('\nChange orientation...', verbose)
@@ -500,13 +516,26 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
                 im_set = set_orientation(im_s, ori)
                 im_changed_ori_list.append(im_set)
             printv('\nMerge file back...', verbose)
-            im_out = concat_data(im_changed_ori_list, 3)
+            if dim == 4:
+                im_out = concat_data(im_changed_ori_list, 3)
+            elif dim == 5:
+                fname_changed_ori_list = [im_ch_ori.absolutepath for im_ch_ori in im_changed_ori_list]
+                im_out = multicomponent_merge(fname_changed_ori_list)
         elif set_data:
             printv('\nSet orientation of the data only is not compatible with 4D data...', verbose, 'error')
         else:
             im_out = None
 
-    im_out.setFileName(im.file_name+'_'+ori+im.ext)
+        # Go back to previous directory:
+        chdir('..')
+        run('rm -rf '+tmp_folder, error_exit='warning')
+
+    if fname_out:
+        im_out.setFileName(fname_out)
+        if fname_out != im.file_name+'_'+ori+im.ext:
+            run('rm -f ' + im.file_name + '_' + ori + im.ext)
+    else:
+        im_out.setFileName(im.file_name + '_' + ori + im.ext)
     return im_out
 
 

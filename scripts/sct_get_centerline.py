@@ -469,7 +469,7 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
     # Remove temporary files
     if remove_temp_files:
        print('\nRemove temporary files...')
-       sct.run('rm -rf '+path_tmp)
+       sct.run('rm -rf '+path_tmp, error_exit='warning')
 
 
 

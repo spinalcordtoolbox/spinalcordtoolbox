@@ -16,7 +16,6 @@
 import commands
 import sct_utils as sct
 import sct_register_to_template
-from msct_parser import Parser
 from pandas import DataFrame
 import os.path
 from copy import deepcopy
@@ -25,7 +24,11 @@ from copy import deepcopy
 def test(path_data='', parameters=''):
     verbose = 0
     filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'
-    dice_threshold = 0.85
+    dice_threshold = 0.9
+
+    # initializations
+    dice_template2anat = 'NaN'
+    dice_anat2template = 'NaN'
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz ' \
@@ -43,10 +46,11 @@ def test(path_data='', parameters=''):
             os.path.isfile(dict_param_with_path['-s'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(
-            data={'status': status, 'output': output,
-                  'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')},
-            index=[path_data])
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+        # return status, output, DataFrame(
+        #     data={'status': status, 'output': output,
+        #           'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')},
+        #     index=[path_data])
 
     if not os.path.isdir(dict_param_with_path['-t']):
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -68,8 +72,9 @@ def test(path_data='', parameters=''):
     if not contrast_folder:  # if no contrast folder, send error.
         status = 201
         output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
-        return status, output, DataFrame(
-            data={'status': status, 'output': output, 'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')}, index=[path_data])
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+        # return status, output, DataFrame(
+        #     data={'status': status, 'output': output, 'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')}, index=[path_data])
 
     import time, random
     subject_folder = path_data.split('/')
@@ -83,7 +88,10 @@ def test(path_data='', parameters=''):
     cmd = 'sct_register_to_template ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
-    status, o = sct.run(cmd, verbose)
+    try:
+        status, o = sct.run(cmd, verbose)
+    except:
+        status, o = 1, 'ERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
 
@@ -124,7 +132,7 @@ def test(path_data='', parameters=''):
         output = output + output1 + output2
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
+    results = DataFrame(data={'status': int(status), 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
 
     return status, output, results
 
