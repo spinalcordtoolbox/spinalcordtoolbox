@@ -89,6 +89,11 @@ class MultiLabelRegistration:
         # TODO assert RPI, if not, change orientation
         im_automatic_ml.save()
         im_template_ml.save()
+        
+        # apply template2image warping field
+        fname_template_ml_new = sct.add_suffix(fname_template_ml, '_r')
+        sct.run('sct_apply_transfo -i '+fname_template_ml+' -d '+fname_automatic_ml+' -w '+file_warp_template2target+ext_warp_template2target + ' -o ' + fname_template_ml_new)
+        fname_template_ml = fname_template_ml_new
 
         nx, ny, nz, nt, px, py, pz, pt = im_automatic_ml.dim
         size_mask = int(22.5/px)
@@ -106,7 +111,7 @@ class MultiLabelRegistration:
         path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
 
         # Register multilabel images together
-        cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -param '+self.param.param_reg
+        cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -iseg '+fname_template_ml+' -dseg '+fname_automatic_ml+' -param '+self.param.param_reg
         if 'centermass' in self.param.param_reg:
             fname_template_ml_seg = sct.add_suffix(fname_template_ml, '_bin')
             sct.run('sct_maths -i '+fname_template_ml+' -bin -o '+fname_template_ml_seg)
