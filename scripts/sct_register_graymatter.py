@@ -93,7 +93,7 @@ class MultiLabelRegistration:
         im_template_ml.save()
         
         # apply template2image warping field
-        if self.apply_warp_template is not None:
+        if self.apply_warp_template == 1:
             fname_template_ml_new = sct.add_suffix(fname_template_ml, '_r')
             sct.run('sct_apply_transfo -i '+fname_template_ml+' -d '+fname_automatic_ml+' -w '+file_warp_template2target+ext_warp_template2target + ' -o ' + fname_template_ml_new)
             fname_template_ml = fname_template_ml_new
