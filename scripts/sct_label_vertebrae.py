@@ -151,9 +151,9 @@ def main(args=None):
         arg_initfile = initfile.split(' ')
         for i in xrange(len(arg_initfile)):
             if arg_initfile[i] == '-initz':
-                initz = arg_initfile[i+1]
+                initz = [int(x) for x in arg_initfile[i+1].split(',')]
             if arg_initfile[i] == '-initcenter':
-                initcenter = arg_initfile[i+1]
+                initcenter = int(arg_initfile[i+1])
 
     verbose = int(arguments['-v'])
     remove_tmp_files = int(arguments['-r'])
