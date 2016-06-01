@@ -27,7 +27,7 @@ try:
 except:
    import pickle
 
-path_data = '/Users/neuropoly/data/spinal_cord_segmentation_data/'
+path_data = '/home/neuropoly/data/spinal_cord_segmentation_data/'
 output_path = ''
 TRAINING_SOURCE_DATA = path_data+'training/data/'
 TRAINING_LABELS_DATA = path_data+'training/labels/'
