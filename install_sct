@@ -76,6 +76,7 @@ fi"
 }
 
 
+
 # Installation text to insert in .bashrc
 install_refresh ()
 {
@@ -379,15 +380,15 @@ else
   conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
   e_status = $?
   if e_status ; then
-    echo "conda installation did not complete properly, check logs for more details
-            and your internet connection before reinstalling"
+    echo "conda install error with exit status $e_status. Check logs for more details
+            and verify your internet connection before reinstalling"
     exit 1
   fi
   pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
   e_status = $?
   if e_status ; then
-    echo "pip installation did not complete properly, check logs for more details
-            and your internet connection before reinstalling"
+    echo "pip install error with exit status $e_status. Check logs for more details
+            and verify your internet connection before reinstalling"
      exit 1
   fi
 
