@@ -134,8 +134,14 @@ def main(args=None):
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    # sct.run('sct_resample -i data_up_smooth.nii -x linear -vox '+str(nx)+'x'+str(ny)+'x'+str(nz)+' -o data_up_smooth_down.nii', verbose)
-    sct_resample.main(args=['-i', 'data_up_smooth.nii', '-x', 'linear', '-vox', '{0}x{1}x{2}'.format(nx, ny, nz),
+#    sct.run('sct_resample -i data_up_smooth.nii '
+#            '-x linear '
+#            '-vox '+str(nx)+'x'+str(ny)+'x'+str(nz) +
+#            ' -o data_up_smooth_down.nii', verbose)
+
+    sct_resample.main(args=['-i', 'data_up_smooth.nii',
+                            '-x', 'linear',
+                            '-vox', '{0}x{1}x{2}'.format(nx, ny, nz),
                             '-o', 'data_up_smooth_down.nii'])
 
     # come back to parent folder
