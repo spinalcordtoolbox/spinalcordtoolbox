@@ -124,7 +124,7 @@ class NURBS():
                 error_curve = 1000.0
                 self.nbControle = self.degre+1
                 nb_points = len(P_x)
-                if self.nbControle > nb_points - 1 :
+                if self.nbControle > nb_points - 1:
                     print 'ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ', self.nbControle, '. Either change degre to a lower value, either add points to the curve.'
                     exit(2)
 
