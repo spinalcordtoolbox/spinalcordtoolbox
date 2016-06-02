@@ -15,7 +15,9 @@
 from math import sqrt
 
 import os
+import shutil
 import sys
+
 import numpy as np
 
 from msct_image import Image, get_dimension
@@ -278,7 +280,11 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
     try:
         transfo_dir = transfo_type.lower() + '_transformations'
         if transfo_dir not in os.listdir(path):
-            sct.run('mkdir ' + path + transfo_dir)
+            #  sct.run('mkdir ' + path + transfo_dir)
+            try :
+                os.makedirs(path + transfo_dir)
+            except OSError:
+                pass
         dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S") + '_' + str(time.time())
         sct.run('mkdir ' + dir_name, verbose=verbose)
         os.chdir('./' + dir_name)
@@ -317,7 +323,8 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
 
             sct.run(cmd_reg, verbose=verbose)
 
-            sct.run('cp ' + mat_name + ' ../' + path + transfo_dir + '/'+transfo_name, verbose=verbose)
+#            sct.run('cp ' + mat_name + ' ../' + path + transfo_dir + '/'+transfo_name, verbose=verbose)
+            shutil.copy2(mat_name, '../{0}{1}/{2}'.format(path, transfo_dir, transfo_name))
             if 'SyN' in transfo_type:
                 sct.run('cp ' + inverse_mat_name + ' ../' + path + transfo_dir + '/'+transfo_name + '_inversed',
                         verbose=verbose)
@@ -664,7 +671,7 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
     t2star_name = sct.extract_fname(t2star)[1]
     sc_seg_name = sct.extract_fname(sc_seg)[1]
     mask_box = None
-
+    fname_seg_in_IRP = None
     try:
         ext = '.nii.gz'
         seg_in_name = t2star_name + '_seg_in'
