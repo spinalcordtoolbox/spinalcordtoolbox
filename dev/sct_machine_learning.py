@@ -39,8 +39,8 @@ NUM_CHANNELS = 1
 NUM_LABELS = 2
 VALIDATION_SIZE = 256  # Size of the validation set.
 SEED = None  # Set to None for random seed. or 66478
-BATCH_SIZE = 128
-NUM_EPOCHS = 100
+BATCH_SIZE = 16
+NUM_EPOCHS = 250
 
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', '/tmp/unet_train',
@@ -422,7 +422,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                     saver.save(s, checkpoint_path, global_step=i)
                 """
 
-                if i != 0 and i % 25 == 0:
+                if i != 0 and i % 100 == 0:
                     error_rate_batch_tens = error_rate_batch.assign(error_rate(predictions, batch_labels))
                     validation_data_b = extract_data(TRAINING_SOURCE_DATA, list_images=validation_data, verbose=0)
                     validation_labels_b, validation_labels_weights = extract_label(TRAINING_LABELS_DATA, segmentation_image_size, validation_labels, verbose=0)
