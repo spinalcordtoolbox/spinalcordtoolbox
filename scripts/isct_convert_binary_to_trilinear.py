@@ -18,9 +18,15 @@ import sys
 import os
 import commands
 import getopt
+import shutil
 import time
-import sct_utils as sct
+
+from sct_convert import convert
 from msct_image import Image
+import sct_resample
+import sct_smooth_spinalcord
+import sct_utils as sct
+
 
 class Param:
     def __init__(self):
@@ -99,9 +105,9 @@ def main(args=None):
     # create temporary folder
     print('\nCreate temporary folder...')
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    #sct.run('mkdir '+path_tmp)
+    os.makedirs(path_tmp)
 
-    from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(fname_data, path_tmp+'/data.nii')
 
@@ -115,15 +121,22 @@ def main(args=None):
 
     # upsample data
     sct.printv('\nUpsample data...', verbose)
-    sct.run('sct_resample -i data.nii -x linear -vox '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+' -o data_up.nii', verbose)
+#    sct.run('sct_resample -i data.nii -x linear -vox '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+' -o data_up.nii', verbose)
+    sct_resample.main(args=['-i', 'data.nii', '-x', 'linear' '-vox',
+                       '{0}x{1}x{2}'.format(nx*interp_factor, ny*interp_factor, nz*interp_factor),
+                       '-o', 'data_up.nii'])
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
-    sct.run('sct_smooth_spinalcord -i data_up.nii -s data_up.nii'+' -smooth '+str(smoothing_sigma)+' -r '+str(remove_temp_files)+' -v '+str(verbose), verbose)
+    #sct.run('sct_smooth_spinalcord -i data_up.nii -s data_up.nii'+' -smooth '+str(smoothing_sigma)+' -r '+str(remove_temp_files)+' -v '+str(verbose), verbose)
+    sct_smooth_spinalcord.main(args=['-i', 'data_up.nii', '-s', 'data_up.nii', '-smooth', '{0}'.format(smoothing_sigma),
+                                     '-r', '{0}'.format(remove_temp_files), '-v', '{0}'.format(verbose)])
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    sct.run('sct_resample -i data_up_smooth.nii -x linear -vox '+str(nx)+'x'+str(ny)+'x'+str(nz)+' -o data_up_smooth_down.nii', verbose)
+    # sct.run('sct_resample -i data_up_smooth.nii -x linear -vox '+str(nx)+'x'+str(ny)+'x'+str(nz)+' -o data_up_smooth_down.nii', verbose)
+    sct_resample.main(args=['-i', 'data_up_smooth.nii', '-x', 'linear', '-vox', '{0}x{1}x{2}'.format(nx, ny, nz),
+                            '-o', 'data_up_smooth_down.nii'])
 
     # come back to parent folder
     os.chdir('..')
@@ -135,7 +148,8 @@ def main(args=None):
     # Delete temporary files
     if remove_temp_files == 1:
         print '\nRemove temporary files...'
-        sct.run('rm -rf '+ path_tmp)
+#        sct.run('rm -rf '+ path_tmp)
+        shutil.rmtree(path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
