@@ -393,6 +393,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             timer_training.start()
             # Loop through training steps.
             for i, step in enumerate(steps):
+                sct.printv('Step '+ str(i) + '/' + str(len(steps)))
                 sct.printv('Epoch ' + str(round(float(i) * BATCH_SIZE / train_size, 2)) + ' %')
                 timer_training.iterations_done(i)
                 # Compute the offset of the current minibatch in the data.
@@ -410,9 +411,11 @@ def main(argv=None):  # pylint: disable=unused-argument
 
                 assert not numpy.isnan(l), 'Model diverged with loss = NaN'
 
+                """
                 if i % 100 == 0 or (i + 1) == FLAGS.max_steps:
                     checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                     saver.save(s, checkpoint_path, global_step=i)
+                """
 
                 if i != 0 and i % 25 == 0:
                     error_rate_batch_tens = error_rate_batch.assign(error_rate(predictions, batch_labels))
