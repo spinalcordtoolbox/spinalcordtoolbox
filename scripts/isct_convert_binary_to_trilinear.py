@@ -14,11 +14,11 @@
 #########################################################################################
 
 
-import sys
-import os
 import commands
 import getopt
+import os
 import shutil
+import sys
 import time
 
 from sct_convert import convert
