@@ -20,10 +20,22 @@ import sys
 
 import numpy as np
 
-from msct_image import Image, get_dimension
-import sct_utils as sct
+import sct_concat_transfo
+import sct_convert
+import sct_create_mask
+import sct_crop_image
+from msct_image import Image
 from msct_parser import Parser
+import sct_image
 from sct_image import set_orientation, get_orientation_3d
+import sct_maths
+import sct_process_segmentation
+import sct_register_multimodal
+import sct_register_to_template
+import sct_resample
+import sct_utils as sct
+import sct_warp_template
+
 
 def get_parser():
     parser = Parser(__file__)
@@ -436,8 +448,10 @@ def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
     corrected_wm_seg.save()
 
     # sct.run('fslmaths ' + corrected_wm_seg.file_name + '.nii.gz -thr 0 ' + corrected_wm_seg.file_name + '.nii.gz')
-    sct.run('sct_maths -i ' + corrected_wm_seg.file_name + '.nii.gz -thr 0 -o ' + corrected_wm_seg.file_name + '.nii.gz')
-
+#    sct.run('sct_maths -i ' + corrected_wm_seg.file_name + '.nii.gz -thr 0 -o ' + corrected_wm_seg.file_name + '.nii.gz')
+    sct_maths.main(args=['-i', '{0}.nii.gz'.format(corrected_wm_seg.file_name),
+                         '-thr', '0',
+                         '-o', '{0}.nii.gz'.format(corrected_wm_seg.file_name)])
     return corrected_wm_seg
 
 
@@ -477,7 +491,8 @@ def check_file_to_niigz(file_name, verbose=1):
         if sct.extract_fname(file_name)[2] != ext:
             # sct.run('fslchfiletype NIFTI_GZ ' + file_name)
             new_file_name = sct.extract_fname(file_name)[1] + ext
-            sct.run('sct_convert -i ' + file_name + ' -o ' + new_file_name)
+            sct_convert.main(['-i', file_name,
+                              '-o', new_file_name])
         else:
             new_file_name = file_name
         return new_file_name
@@ -630,12 +645,20 @@ def crop_t2_star_pipeline(path, box_size=75):
                     if seg_in == '':
                         seg_in_name = t2star_name + '_seg_in'
                         seg_in = seg_in_name + ext
-                        sct.run('sct_crop_image -i ' + t2star + ' -m ' + sc_seg + ' -b 0 -o ' + seg_in)
+                        # sct.run('sct_crop_image -i ' + t2star + ' -m ' + sc_seg + ' -b 0 -o ' + seg_in)
+                        sct_crop_image.main(['-i', t2star,
+                                        '-m', sc_seg,
+                                        '-b', 0,
+                                        '-o', seg_in])
 
                     if mask_box == '':
                         mask_box = t2star_name + '_square_mask_from_sc_seg'+ext
-                        sct.run('sct_create_mask -i ' + seg_in + ' -p centerline,' + sc_seg + ' -size ' + str(box_size) + ' -o ' + mask_box + ' -f box')
-
+                        # sct.run('sct_create_mask -i ' + seg_in + ' -p centerline,' + sc_seg + ' -size ' + str(box_size) + ' -o ' + mask_box + ' -f box')
+                        sct_create_mask.main(args=['-i', seg_in,
+                                                   '-p', 'centerline', sc_seg,
+                                                   '-size', str(box_size),
+                                                   '-o', mask_box,
+                                                   '-f', 'box'])
                     if seg_in_croped == '':
                         seg_in_im = Image(seg_in)
                         mask_im = Image(mask_box)
@@ -676,10 +699,19 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
         ext = '.nii.gz'
         seg_in_name = t2star_name + '_seg_in'
         seg_in = seg_in_name + ext
-        sct.run('sct_crop_image -i ' + t2star + ' -m ' + sc_seg + ' -b 0 -o ' + seg_in)
+        # sct.run('sct_crop_image -i ' + t2star + ' -m ' + sc_seg + ' -b 0 -o ' + seg_in)
+        sct_crop_image.main(args=['-i', t2star,
+                                  '-m', sc_seg,
+                                  '-b', 0,
+                                  '-o', seg_in])
 
         mask_box = t2star_name + '_square_mask_from_sc_seg'+ext
-        sct.run('sct_create_mask -i ' + seg_in + ' -p centerline,' + sc_seg + ' -size ' + str(box_size) + ' -o ' + mask_box + ' -f box')
+        # sct.run('sct_create_mask -i ' + seg_in + ' -p centerline,' + sc_seg + ' -size ' + str(box_size) + ' -o ' + mask_box + ' -f box')
+        sct_create_mask.main(args=['-i', seg_in,
+                                   '-p', 'centerline,', sc_seg,
+                                   '-size', str(box_size),
+                                   '-o ', mask_box,
+                                   '-f', 'box'])
 
         seg_in_im = Image(seg_in)
         mask_im = Image(mask_box)
@@ -730,12 +762,19 @@ def save_by_slice(dic_dir):
 
                     if 'IRP' not in file_name:
                         path_file_levels_IRP = sct.add_suffix(path_file_levels, '_IRP')
-                        sct.run('sct_image -i ' + subject_path + '/' + file_name + ' -setorient IRP -o '+path_file_levels_IRP)
+                        # sct.run('sct_image -i ' + subject_path + '/' + file_name + ' -setorient IRP -o '+path_file_levels_IRP)
+                        sct_image.main(args=['-i', '{0}/{1}'.format(subject_path, file_name),
+                                             '-setorient', 'IRP',
+                                             '-o', path_file_levels_IRP])
                         path_file_levels = path_file_levels_IRP # subject_path + '/' + sct.extract_fname(file_name)[1] + '_IRP.nii.gz'
 
             if path_file_levels is None and 'label' in os.listdir(subject_path):
                 if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
-                    sct.run('sct_image -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
+                    # sct.run('sct_image -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
+
+                    sct_image.main(args=['-i', '{0}/label/template/MNI-Poly-AMU_level.nii.gz'.format(subject_path),
+                                         '-setorient', 'IRP'])
+
                 path_file_levels = subject_path + '/label/template/MNI-Poly-AMU_level_IRP.nii.gz'
             elif path_file_levels is not None:
                 im_levels = Image(path_file_levels)
@@ -843,11 +882,20 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if binary:
             interpolation = 'nn'
 
-        sct.run('sct_resample -i '+fname+' -mm '+str(npx)+'x'+str(npy)+'x'+str(pz)+' -o '+name_resample+' -x '+interpolation)
-
+        # sct.run('sct_resample -i '+fname+' -mm '+str(npx)+'x'+str(npy)+'x'+str(pz)+' -o '+name_resample+' -x '+interpolation)
+        sct_resample.main(args=['-i', fname,
+                                '-mm', '{0}x{1}x{2}'.format(npx, npy, pz),
+                                '-o', name_resample,
+                                '-x ', interpolation])
         if binary:
-            sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
-            sct.run('sct_maths -i ' + name_resample + ' -bin -o ' + name_resample)
+            # sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
+            # sct.run('sct_maths -i ' + name_resample + ' -bin -o ' + name_resample)
+            sct_maths.main(args=['-i', name_resample,
+                                 '-thr', str(thr),
+                                 '-o' + name_resample])
+            sct_maths.main(args=['-i', name_resample,
+                                 '-bin',
+                                 '-o' + name_resample])
 
         if orientation != 'RPI':
             im_resample = Image(name_resample)
@@ -926,8 +974,9 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
             gmseg_im = Image(gmseg)
             mask_im = Image(mask_box)
             gmseg_im.crop_and_stack(mask_im, suffix='_croped', save=True)
-            sct.run('sct_image -i '+sct.extract_fname(gmseg)[1] + '_croped.nii.gz -setorient IRP')
-
+            # sct.run('sct_image -i '+sct.extract_fname(gmseg)[1] + '_croped.nii.gz -setorient IRP')
+            sct_image.main(args=['-i', '{0}_croped.nii.gz'.format(sct.extract_fname(gmseg)[1]),
+                                 '-setorient', 'IRP'])
             os.chdir(original_path)
     save_by_slice(path_to_dataset)
 
@@ -944,25 +993,47 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
     :return: path ofr the level image
     """
     # Registration to template
-    cmd_register_template = 'sct_register_to_template -i ' + t2_fname + ' -s ' + t2_seg_fname + ' -l ' + landmarks_fname
-    sct.run(cmd_register_template)
+    # cmd_register_template = 'sct_register_to_template -i ' + t2_fname + ' -s ' + t2_seg_fname + ' -l ' + landmarks_fname
+    # sct.run(cmd_register_template)
+    sct_register_to_template.main(['-i', t2_fname,
+                                   '-s', t2_seg_fname,
+                                   '-l', landmarks_fname])
 
-    cmd_warp_template = 'sct_warp_template -d ' + t2_fname + ' -w warp_template2anat.nii.gz -a 0'
-    sct.run(cmd_warp_template)
+    # cmd_warp_template = 'sct_warp_template -d ' + t2_fname + ' -w warp_template2anat.nii.gz -a 0'
+    # sct.run(cmd_warp_template)
+    sct_warp_template.main(args=['-d', t2_fname,
+                                 '-w', 'warp_template2anat.nii.gz'
+                                 '-a', '0'])
 
     # Registration template to t2star
-    cmd_register_multimodal = 'sct_register_multimodal -i template2anat.nii.gz -d ' + t2star_fname + ' -iseg ./label/template/MNI-Poly-AMU_cord.nii.gz -dseg ' + t2star_sc_seg_fname + ' -param step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
-    sct.run(cmd_register_multimodal)
+    # cmd_register_multimodal = 'sct_register_multimodal -i template2anat.nii.gz -d ' + t2star_fname + ' -iseg ./label/template/MNI-Poly-AMU_cord.nii.gz -dseg ' + t2star_sc_seg_fname + ' -param step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
+    # sct.run(cmd_register_multimodal)
+    sct_register_multimodal.main(args=['-i', 'template2anat.nii.gz',
+                                       '-d', t2star_fname ,
+                                       '-iseg', './label/template/MNI-Poly-AMU_cord.nii.gz'
+                                       '-dseg', t2star_sc_seg_fname,
+                                       '-param', ('step=1,type=seg,'
+                                                  'algo=syn,metric=MeanSquares,'
+                                                  'iter=5:step=2,type=im,algo=slicereg,'
+                                                  'metric=MeanSquares,iter=5')])
 
     multimodal_warp_name = 'warp_template2anat2' + t2star_fname
     total_warp_name = 'warp_template2t2star.nii.gz'
-    cmd_concat = 'sct_concat_transfo -w warp_template2anat.nii.gz,' + multimodal_warp_name + ' -d ' + t2star_fname + ' -o ' + total_warp_name
-    sct.run(cmd_concat)
+    # cmd_concat = 'sct_concat_transfo -w warp_template2anat.nii.gz,' + multimodal_warp_name + ' -d ' + t2star_fname + ' -o ' + total_warp_name
+    # sct.run(cmd_concat)
+    sct_concat_transfo.main(args=['-w', 'warp_template2anat.nii.gz,{0}'.format(multimodal_warp_name),
+                                  '-d', t2star_fname,
+                                  '-o', total_warp_name])
 
-    cmd_warp = 'sct_warp_template -d ' + t2star_fname + ' -w ' + total_warp_name + ' -a 0 '
-    sct.run(cmd_warp)
+    # cmd_warp = 'sct_warp_template -d ' + t2star_fname + ' -w ' + total_warp_name + ' -a 0 '
+    # sct.run(cmd_warp)
+    sct_warp_template.main(args=['-d', t2star_fname,
+                                 '-w', total_warp_name,
+                                 '-a', '0'])
 
-    sct.run('sct_image -i ./label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
+    # sct.run('sct_image -i ./label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
+    sct_image.main(args=['-i', './label/template/MNI-Poly-AMU_level.nii.gz',
+                         '-setorient', 'IRP'])
 
     return 'MNI-Poly-AMU_level_IRP.nii.gz'
 
@@ -1165,7 +1236,9 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
                     wm_diff_by_level[slice_level].append(slice_wm_error)
 
                 # csa
-                sct.run('sct_process_segmentation -i ' + full_gmseg.res_names['corrected_wm_seg'] + ' -p csa')
+                # sct.run('sct_process_segmentation -i ' + full_gmseg.res_names['corrected_wm_seg'] + ' -p csa')
+                sct_process_segmentation.main(args=['-i', full_gmseg.res_names['corrected_wm_seg'],
+                                                    '-p', 'csa'])
                 tmp_csa_file = open('csa.txt')
                 csa_lines = tmp_csa_file.readlines()
                 tmp_csa_file.close()
@@ -1177,9 +1250,11 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
                         target_slice = 'slice' + target_slice
                     slice_level = subject_slices_levels[target_slice]
                     wm_csa_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + wm_csa[:-1] + '\n')
-                sct.run('mv csa.txt csa_corrected_wm_seg.txt')
-
-                sct.run('sct_process_segmentation -i ' + full_gmseg.res_names['gm_seg'] + ' -p csa')
+                # sct.run('mv csa.txt csa_corrected_wm_seg.txt')
+                os.renames('csa.txt', 'csa_corrected_wm_seg.txt')
+                # sct.run('sct_process_segmentation -i ' + full_gmseg.res_names['gm_seg'] + ' -p csa')
+                sct_process_segmentation.main(args=['-i', full_gmseg.res_names['gm_seg'],
+                                                    '-p', 'csa'])
                 tmp_csa_file = open('csa.txt')
                 csa_lines = tmp_csa_file.readlines()
                 tmp_csa_file.close()
@@ -1191,8 +1266,8 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
                         target_slice = 'slice' + target_slice
                     slice_level = subject_slices_levels[target_slice]
                     gm_csa_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + gm_csa[:-1] + '\n')
-                sct.run('mv csa.txt csa_gm_seg.txt')
-
+                # sct.run('mv csa.txt csa_gm_seg.txt')
+                os.renames('csa.txt', 'csa_gm_seg.txt')
                 os.chdir('..')
 
             except Exception, e:
@@ -1316,6 +1391,7 @@ def compute_error_map_by_level(data_path):
 
                 ref_wm_seg = 'validation/ref_wm_seg.nii.gz'
                 status, ref_ori = sct.run('sct_image -i ' + ref_wm_seg + ' -getorient')
+
                 # ref_ori = ref_ori[4:7]
                 if ref_ori != 'IRP':
                     sct.run('sct_image -i ' + ref_wm_seg + ' -setorient IRP')
