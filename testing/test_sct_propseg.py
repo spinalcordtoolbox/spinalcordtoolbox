@@ -28,7 +28,7 @@ def test(path_data='', parameters=''):
     if not parameters:
         parameters = '-i t2/t2.nii.gz -c t2'
 
-    dice_threshold = 0.95
+    dice_threshold = 0.9
 
     parser = sct_propseg.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
