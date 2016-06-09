@@ -33,7 +33,7 @@ fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 # vertebral labeling. Here we use the fact that the axial slice #146 is located at the C4/C5 disc
 sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -initz 146,4
 # create labels at C2 and T2 vertebral levels
-sct_label_utils -i t1_seg_labeled.nii.gz -p label-vertebrae -vert 2,9
+sct_label_utils -i t1_seg_labeled.nii.gz -label-vert 2,9
 # register to template
 # tips: here we used only iter=1 for the third step for faster processing.
 sct_register_to_template -i t1.nii.gz -s t1_seg.nii.gz -l labels.nii.gz -t $SCT_PAM50 -c t1 -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=1,metric=MeanSquares:step=3,type=im,algo=syn,metric=CC,iter=1 -r 0

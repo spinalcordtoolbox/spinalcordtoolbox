@@ -116,7 +116,7 @@ def get_parser():
                       example='mt.nii.gz')
     parser.add_option(name="-w",
                       type_value=[[','], 'file'],
-                      description='List of affine matrix or warping fields separated with "," N.B. if you want to use the inverse matrix, add "-" before matrix file name.',
+                      description='List of affine matrix or warping fields separated with "," N.B. if you want to use the inverse matrix, add "-" before matrix file name. N.B. You should NOT use "-" with warping fields (only with matrices). If you want to use an inverse warping field, then input it directly (e.g., warp_template2anat.nii.gz instead of warp_anat2template.nii.gz) ',
                       mandatory=True,
                       example='warp_template2anat.nii.gz,warp_anat2mt.nii.gz')
     parser.add_option(name="-o",
