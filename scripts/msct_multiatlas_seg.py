@@ -220,7 +220,7 @@ class ModelDictionary:
                             subject_levels[slice_int_level].append(i_slice)
                             i_slice += 1
 
-                    if name_slice in file_name and 'gm' in file_name:
+                    if name_slice in file_name and ('gm' in file_name or 'seg' in file_name):
                         gm_seg_list = list(slices[j].gm_seg)
                         gm_seg_list.append(Image(subject_path + '/' + file_name).data)
                         slices[j].set(list_gm_seg=gm_seg_list)
