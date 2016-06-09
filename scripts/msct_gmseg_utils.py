@@ -349,12 +349,13 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
             sct.run(cmd_apply, verbose=verbose)
 
             res_im = Image(moving_im_name + '_moved.nii.gz')
+        os.chdir('..')
     except Exception, e:
         sct.printv('WARNING: AN ERROR OCCURRED WHEN DOING RIGID REGISTRATION USING ANTs', 1, 'warning')
         print e
     else:
         sct.printv('Removing temporary files ...', verbose=verbose, type='normal')
-        os.chdir('..')
+        #os.chdir('..')
         sct.run('rm -rf ' + dir_name + '/', verbose=verbose)
 
     if apply_transfo and res_im is not None:
