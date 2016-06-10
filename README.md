@@ -16,7 +16,7 @@ Comprehensive and open-source library of analysis tools for MRI of the spinal co
 - [Cohen-Adad et al. Spinal Cord Toolbox: an open-source framework for processing spinal cord MRI data. Proceedings of the 20th Annual Meeting of OHBM, Hamburg, Germany 2014:3633](https://www.dropbox.com/s/n75ucsnlc2debnc/cohenadad_ohbm14_spinalcordtoolbox_v2.pdf?dl=0)
 - [De Leener et al. Template-based analysis of multi-parametric MRI data with the Spinal Cord Toolbox. Proc. ISMRM, Toronto, Canada 2015](https://www.dropbox.com/s/1gv81xg17lgcxfn/5798_submitted_radC862D.pdf)
 
-#### Segmentation (Propseg)
+#### Segmentation (PropSeg)
 - [De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014;98:528-536.](https://dl.dropboxusercontent.com/u/20592661/publications/DeLeener_NIMG14_PropSeg.pdf)
 - [Ullmann et al. Automatic labeling of vertebral levels using a robust template-based approach. Int J Biomed Imaging 2014;Article ID 719520.](http://downloads.hindawi.com/journals/ijbi/2014/719520.pdf)
 - [De Leener et al. Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. IEEE Transactions on Medical Imaging 2015;34(8):1705-1718](https://www.dropbox.com/s/2tsp1juxcvuq4bl/PID3727605.pdf)
