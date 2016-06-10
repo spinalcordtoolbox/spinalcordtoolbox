@@ -3,20 +3,20 @@
 #
 # Create package with appropriate version number.
 #
-# Author: Julien Cohen-Adad, Benjamin De Leener
+# Author: Julien Cohen-Adad, Benjamin De Leener, P-O Quirion
 #
 
 # TODO: remove quick fix with folder_sct_temp
 
-DEBUG = True
+DEBUG = False
 
-import argparse
 import getopt
 import os
+import platform
 import shutil
-import subprocess
 import sys
 import tarfile
+import tempfile
 import urllib2
 
 
@@ -37,10 +37,15 @@ def usage():
         '\n'\
     # sys.exit(2)
 
+
+if platform.mac_ver()[0]:
+    local_os = 'osx'
+elif platform.linux_distribution()[0]:
+    local_os = 'linux'
+
 listOS = ["linux_centos6", "linux", "osx"]
 deb_fsl = []
 tar_fsl = []
-
 
 
 
@@ -66,23 +71,27 @@ with open ("../version.txt", "r") as myfile:
     version = myfile.read().replace('\n', '')
 
 # create output folder
-folder_sct = '../sct_v'+version
+
+
+folder_sct = '{0}/sct_v{1}'.format(tempfile.gettempdir(), version)
 print("output dir creation {0}".format(folder_sct))
 if os.path.exists(folder_sct) and not DEBUG:
     shutil.rmtree(folder_sct)
-try:
-    os.mkdir(folder_sct)
-except
-    Error:
-    pass
+
 
 offline = "{0}/offline".format(folder_sct)
 
+try:
+    os.mkdir(folder_sct)
+except OSError:
+    pass
+try:
+    os.mkdir(offline)
+except OSError:
+    pass
 
 
 def download(url, dest_dir):
-
-    # urllib.urlretrieve(url, filename=dest_dir)
 
     if os.path.isfile(dest_dir) and DEBUG:
         return
@@ -109,7 +118,6 @@ def download(url, dest_dir):
 
     f.close()
 
-
 for OS in listOS:
 
     download("https://dl.dropboxusercontent.com/u/20592661/sct/bin/{OS}/sct_binaries.tar.gz".format(OS=OS),
@@ -128,23 +136,37 @@ download("https://pypi.python.org/packages/b7/12/71ff08d828319e80ad575762a5e0d7d
 print("sct web dependent package downloaded")
 
 
+# all needed package
+src_pkgs_dir = '../python/pkgs'
+src_pkgs = os.listdir(src_pkgs_dir)
+dest_pkgs = '{0}/pkgs_{1}'.format(offline, local_os)
+try:
+    os.mkdir(dest_pkgs)
+except OSError:
+    pass
+for p in src_pkgs:
+    if p.endswith('.bz2'):
+        src_bz = '{0}/{1}'.format(src_pkgs_dir, p)
+        shutil.copy2(src_bz, dest_pkgs)
+
+print('Python package copied')
+
 # copy following folders and file
 
 cp_list = [os.path.abspath(e.strip()) for e in ['../install_sct', '../README.md', '../LICENSE',
                                                 '../version.txt', '../commit.txt ', '../batch_processing.sh',
                                                 '../batch_processing.sh', '../scripts', '../install', '../testing']]
-for src in cp_list:
-    dest = "{0}/{1}".format(folder_sct, os.path.basename(src))
+for elem in cp_list:
+    dest = "{0}/{1}".format(folder_sct, os.path.basename(elem))
     if os.path.isfile(dest):
         os.remove(dest)
     elif os.path.isdir(dest):
         shutil.rmtree(dest)
         # continue
-
-    if os.path.isfile(src):
-        shutil.copyfile(src, dest)
-    elif os.path.isdir(src):
-        shutil.copytree(src, dest)
+    if os.path.isfile(elem):
+        shutil.copyfile(elem, dest)
+    elif os.path.isdir(elem):
+        shutil.copytree(elem, dest)
 
 # remove .DS_Store files
 sct.run('find '+folder_sct+' -type f -name .DS_Store -delete')
@@ -164,9 +186,9 @@ def make_tarfile(output_filename, source_dir):
         tar.add(source_dir, arcname=os.path.basename(source_dir))
 
 
-make_tarfile("sct_v{0}.tar.gz".format(version), folder_sct)
+make_tarfile("sct_v{0}_offline_{1}.tar.gz".format(version, local_os), folder_sct)
 
-
-# shutil.rmtree(folder_sct)
+if not DEBUG:
+    shutil.rmtree(folder_sct)
 
 print "done!\n"
