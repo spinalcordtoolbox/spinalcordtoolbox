@@ -299,7 +299,7 @@ if __name__ == "__main__":
             sct.run('sct_image -i ' + folder_output + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
             # remove temporary files
-            sct.run('rm -rf tmp.*')
+            sct.run('rm -rf ' + folder_output + 'tmp.*')
 
             # add mask filename to parameters string
             if use_viewer == "centerline":
