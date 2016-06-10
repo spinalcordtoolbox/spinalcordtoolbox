@@ -542,7 +542,7 @@ class Image(object):
         from numpy import zeros, array, transpose, dot, asarray
 
         m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3,0:3]
+        m_p2f_transfo = m_p2f[0:3, 0:3]
         coord_origin = array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
         if coordi != None:
