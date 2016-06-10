@@ -30,7 +30,7 @@ class Param:
 
 
 class MultiLabelRegistration:
-    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template2target, param=None, fname_warp_target2template=None):
+    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template2target, param=None, fname_warp_target2template=None, apply_warp_template=0):
         if param is None:
             self.param = Param()
         else:
@@ -48,7 +48,9 @@ class MultiLabelRegistration:
         # new warping fields:
         self.fname_warp_template2gm = ''
         self.fname_wwarp_gm2template = ''
-
+        
+        # temporary fix - related to issue #871
+        self.apply_warp_template = apply_warp_template
 
     def register(self):
         # accentuate separation WM/GM
@@ -89,6 +91,12 @@ class MultiLabelRegistration:
         # TODO assert RPI, if not, change orientation
         im_automatic_ml.save()
         im_template_ml.save()
+        
+        # apply template2image warping field
+        if self.apply_warp_template == 1:
+            fname_template_ml_new = sct.add_suffix(fname_template_ml, '_r')
+            sct.run('sct_apply_transfo -i '+fname_template_ml+' -d '+fname_automatic_ml+' -w '+file_warp_template2target+ext_warp_template2target + ' -o ' + fname_template_ml_new)
+            fname_template_ml = fname_template_ml_new
 
         nx, ny, nz, nt, px, py, pz, pt = im_automatic_ml.dim
         size_mask = int(22.5/px)
@@ -106,7 +114,7 @@ class MultiLabelRegistration:
         path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
 
         # Register multilabel images together
-        cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -param '+self.param.param_reg
+        cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -iseg '+fname_template_ml+' -dseg '+fname_automatic_ml+' -param '+self.param.param_reg
         if 'centermass' in self.param.param_reg:
             fname_template_ml_seg = sct.add_suffix(fname_template_ml, '_bin')
             sct.run('sct_maths -i '+fname_template_ml+' -bin -o '+fname_template_ml_seg)
@@ -458,6 +466,12 @@ def get_parser():
 
 
     parser.usage.addSection('\nMISC')
+    parser.add_option(name="-apply-warp",
+                      type_value='multiple_choice',
+                      description="Application of the warping field (option '-w') on the template (option '-t'). 0: do not apply it. 1: apply it.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
     parser.add_option(name='-qc',
                       type_value='multiple_choice',
                       description='Output images for quality control.',
@@ -512,11 +526,15 @@ if __name__ == "__main__":
         ml_param.remove_tmp = int(arguments['-r'])
     if '-v' in arguments:
         ml_param.verbose = int(arguments['-v'])
+    
+    apply_warp = 0
+    if '-apply-warp' in arguments:
+        apply_warp = int(arguments['-apply-warp'])
 
     if (fname_manual_gmseg is not None and fname_sc_seg is None) or (fname_manual_gmseg is None and fname_sc_seg is not None):
         sct.printv(parser.usage.generate(error='ERROR: you need to specify both arguments : -manual-gm and -sc.'))
 
-    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, param=ml_param, fname_warp_target2template=fname_warp_target2template)
+    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, param=ml_param, fname_warp_target2template=fname_warp_target2template, apply_warp_template=apply_warp)
     ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg)
