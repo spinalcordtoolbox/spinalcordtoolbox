@@ -84,7 +84,7 @@ def get_parser():
 
     parser.usage.addSection("\nMulti-component operations on ITK composite warping fields:")
     parser.add_option(name='-mcs',
-                      description='Multi-component split: Split ITK warping field into three separate displacement fields. The sufix _x, _y and _z and extension will be added to the specified prefix (flag -o).',
+                      description='Multi-component split: Split ITK warping field into three separate displacement fields. The suffix _x, _y and _z and extension will be added to the specified prefix (flag -o).',
                       mandatory=False)
     parser.add_option(name='-omc',
                       description='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
