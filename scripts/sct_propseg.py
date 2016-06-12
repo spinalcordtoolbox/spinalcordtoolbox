@@ -14,6 +14,7 @@
 from msct_parser import Parser
 import sys
 import sct_utils as sct
+import os
 
 
 def get_parser():
@@ -190,6 +191,8 @@ if __name__ == "__main__":
     else:
         folder_output = './'
     cmd += " -o " + folder_output
+    if not os.path.exists(folder_output):
+        os.makedirs(folder_output)
 
     if "-down" in arguments:
         cmd += " -down " + str(arguments["-down"])
@@ -278,7 +281,7 @@ if __name__ == "__main__":
         sct.run('sct_image -i ' + input_filename + ' -o ' + folder_output + reoriented_image_filename + ' -setorient AIL -v 0', verbose=False)
 
         from sct_viewer import ClickViewer
-        image_input_reoriented = Image(reoriented_image_filename)
+        image_input_reoriented = Image(folder_output + reoriented_image_filename)
         viewer = ClickViewer(image_input_reoriented)
         if use_viewer == "mask":
             viewer.number_of_slices = 3
@@ -296,7 +299,7 @@ if __name__ == "__main__":
             sct.run('sct_image -i ' + folder_output + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
             # remove temporary files
-            sct.run('rm -rf tmp.*')
+            sct.run('rm -rf ' + folder_output + 'tmp.*')
 
             # add mask filename to parameters string
             if use_viewer == "centerline":
