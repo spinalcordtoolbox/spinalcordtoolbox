@@ -258,12 +258,10 @@ class ClickViewer(object):
 
         max_size = max([self.im_size[0], self.im_size[2]])
         self.offset = [(max_size - self.im_size[2]) / 2, (max_size - self.im_size[0]) / 2]
-        print self.offset, self.im_size[0], self.im_size[2]
         if max_size == self.im_size[0]:
             self.offset[0] = int(self.offset[0] * self.aspect_ratio)
         else:
             self.offset[1] = int(self.offset[1] * self.aspect_ratio)
-        print self.aspect_ratio, self.offset
         self.image.data = pad(self.image.data, ((self.offset[1], self.offset[1]), (0, 0), (self.offset[0], self.offset[0])), 'constant', constant_values=(0, 0))
 
     def update_current_slice(self, current_slice):
