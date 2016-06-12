@@ -4,17 +4,6 @@
 #
 # See Usage() below for more information.
 #
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-# EXTERNAL PYTHON PACKAGES
-# none
-#
-# EXTERNAL SOFTWARE
-# - itksnap <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
-# - ants <http://stnava.github.io/ANTs/>
-#
-#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
