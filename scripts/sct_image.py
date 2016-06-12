@@ -58,7 +58,7 @@ def get_parser():
                       example='data_dest.nii.gz')
     parser.add_option(name="-split",
                       type_value="multiple_choice",
-                      description='Split data along the specified dimension',
+                      description='Split data along the specified dimension. The suffix _DIM+NUMBER will be added to the intput file name.',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
     parser.add_option(name="-concat",
@@ -84,7 +84,7 @@ def get_parser():
 
     parser.usage.addSection("\nMulti-component operations on ITK composite warping fields:")
     parser.add_option(name='-mcs',
-                      description='Multi-component split: Split ITK warping field into three separate displacement fields. The suffix _x, _y and _z will be added to the input file name.',
+                      description='Multi-component split: Split ITK warping field into three separate displacement fields. The suffix _X, _Y and _Z will be added to the input file name.',
                       mandatory=False)
     parser.add_option(name='-omc',
                       description='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
