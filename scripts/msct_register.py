@@ -10,6 +10,7 @@
 #########################################################################################
 
 # TODO: add flag for setting threshold on PCA
+# TODO: clean code for generate_warping_field (unify with centermass_rot)
 
 import sys
 from math import asin, cos, sin
