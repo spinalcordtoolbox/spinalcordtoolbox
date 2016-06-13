@@ -25,9 +25,9 @@ def test(path_data='', parameters=''):
 
     # initializations
     file_init_label_vertebrae = 'init_label_vertebrae.txt'
-    rmse = 'NaN'
-    max_dist = 'NaN'
-    diff_manual_result = 'NaN'
+    rmse = float('NaN')
+    max_dist = float('NaN')
+    diff_manual_result = float('NaN')
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -o t2_seg_labeled.nii.gz'
