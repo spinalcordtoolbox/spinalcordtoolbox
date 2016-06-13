@@ -4,17 +4,6 @@
 #
 # See Usage() below for more information.
 #
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-# EXTERNAL PYTHON PACKAGES
-# none
-#
-# EXTERNAL SOFTWARE
-# - itksnap <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
-# - ants <http://stnava.github.io/ANTs/>
-#
-#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
@@ -182,7 +171,8 @@ def main():
                                     "  syn: non-linear symmetric normalization\n"
                                     "  bsplinesyn: syn regularized with b-splines\n"
                                     "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
-                                    "  centermass: registration based on the Center of Mass of each slice (only use with type=seg)\n"
+                                    "  centermass: realign center of mass on a slice-by-slice basis (only use with type=seg)\n"
+                                    "  centermassrot: realign center of mass and find rotation using PCA (only use with type=seg)\n"
                                     "slicewise: <int> Slice-by-slice 2d transformation. Default="+paramreg.steps['1'].slicewise+"\n"
                                     "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
                                     "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
@@ -527,7 +517,7 @@ def register(src, dest, paramreg, param, i_step_str):
                             ants_registration_params=ants_registration_params)
 
     # centermass
-    elif paramreg.steps[i_step_str].algo == 'centermass':
+    elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot']:
         # check if type=seg
         if not paramreg.steps[i_step_str].type == 'seg':
             sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should generally be used with type=seg.', 1, 'warning')
