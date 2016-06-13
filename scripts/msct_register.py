@@ -9,6 +9,7 @@
 # License: see the LICENSE.TXT
 #########################################################################################
 
+# TODO: remove register2d_centermass and generalize register2d_centermassrot
 # TODO: add flag for setting threshold on PCA
 # TODO: clean code for generate_warping_field (unify with centermass_rot)
 
@@ -17,7 +18,7 @@ from math import asin, cos, sin
 
 from os import chdir
 import sct_utils as sct
-from numpy import array, asarray, zeros
+import numpy as np
 from scipy import ndimage
 from scipy.io import loadmat
 from msct_image import Image
@@ -51,11 +52,14 @@ def register_slicewise(fname_src,
 
     # Calculate displacement
     if paramreg.algo == 'centermass':
-        # calculate translation of center of mass between source and destination in voxel space
+        # translation of center of mass between source and destination in voxel space
         register2d_centermass('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
     elif paramreg.algo == 'centermassrot':
-        # calculate translation of center of mass between source and destination in voxel space
+        # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
         register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
+    elif paramreg.algo == 'columnwise':
+        # scaling R-L, then column-wise center of mass alignment and scaling
+        register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
     else:
         # convert SCT flags into ANTs-compatible flags
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
@@ -110,7 +114,7 @@ def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     # calculate center of mass for each slice of the input image
     for iz in xrange(seg_dest_data.shape[2]):
         # starts from z_o, which is the origin of the destination image in the source image
-        x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
+        x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(np.array(seg_input_data[:, :, z_o + iz]))
 
     # initialize data
     x_center_of_mass_output = [0] * seg_dest_data.shape[2]
@@ -120,7 +124,7 @@ def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     sct.printv('\nGet center of mass of destination image...', verbose)
     for iz in xrange(seg_dest_data.shape[2]):
         try:
-            x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(array(seg_dest_data[:, :, iz]))
+            x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(np.array(seg_dest_data[:, :, iz]))
         except Exception as e:
             sct.printv('WARNING: Exception error in msct_register during register_seg:', 1, 'warning')
             print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
@@ -135,11 +139,11 @@ def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
 
     # convert to array
-    x_disp_a = asarray(x_displacement)
-    y_disp_a = asarray(y_displacement)
+    x_disp_a = np.asarray(x_displacement)
+    y_disp_a = np.asarray(y_displacement)
 
     # create theta vector (for easier code management)
-    theta_rot_a = zeros(seg_dest_data.shape[2])
+    theta_rot_a = np.zeros(seg_dest_data.shape[2])
 
     # Generate warping field
     generate_warping_field('dest.nii', x_disp_a, y_disp_a, theta_rot_a, fname=fname_warp)  #name_warp= 'step'+str(paramreg.step)
@@ -161,6 +165,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         fname_warp_inv: name of output 3d inverse warping field
         mode:
     output:
+        none
     """
 
     # Get image dimensions and retrieve nz
@@ -169,7 +174,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
-    # Split input volume along z
+    # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
     from sct_image import split_data
     im_src = Image('src.nii')
@@ -188,13 +193,15 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     data_src = im_src.data
     data_dest = im_dest.data
 
-    # displacement = zeros(data_src.shape)
     # initialize forward warping field (defined in destination space)
-    warp_x = zeros(data_dest.shape)
-    warp_y = zeros(data_dest.shape)
+    warp_x = np.zeros(data_dest.shape)
+    warp_y = np.zeros(data_dest.shape)
+
     # initialize inverse warping field (defined in source space)
-    warp_inv_x = zeros(data_src.shape)
-    warp_inv_y = zeros(data_src.shape)
+    warp_inv_x = np.zeros(data_src.shape)
+    warp_inv_y = np.zeros(data_src.shape)
+
+    # Loop across slices
     for iz in range(0, nz):
         # iz = 0
         import matplotlib.pyplot as plt
@@ -215,7 +222,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         eigenv_src = pca_src.components_.T[0]
         eigenv_dest = pca_dest.components_.T[0]
         angle_src_dest = angle_between(eigenv_src, eigenv_dest)
-        import numpy as np
+        # import numpy as np
         R = np.matrix( ((cos(angle_src_dest), sin(angle_src_dest)), (-sin(angle_src_dest), cos(angle_src_dest))) )
 
         # display rotations
@@ -257,9 +264,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
-        coord_init_pix = np.array([row.ravel(), col.ravel(), array(np.ones(len(row.ravel()))*iz)]).T
+        coord_init_pix = np.array([row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel()))*iz)]).T
         # convert coordinates to physical space
-        coord_init_phy = array(im_src.transfo_pix2phys(coord_init_pix))
+        coord_init_phy = np.array(im_src.transfo_pix2phys(coord_init_pix))
         # get centermass coortinates in physical space
         centermass_src_phy = im_src.transfo_pix2phys([[centermass_src.T[0], centermass_src.T[1], iz]])
         centermass_dest_phy = im_src.transfo_pix2phys([[centermass_dest.T[0], centermass_dest.T[1], iz]])
@@ -267,15 +274,15 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         R3d = np.eye(3)
         R3d[0:2, 0:2] = R
         # apply forward transformation (in physical space)
-        coord_forward_phy = array( np.dot( (coord_init_phy - np.transpose(centermass_dest_phy[0])), R3d) + np.transpose(centermass_src_phy[0]))
+        coord_forward_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_dest_phy[0])), R3d) + np.transpose(centermass_src_phy[0]))
         # apply inverse transformation (in physical space)
-        coord_inverse_phy = array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d.T) + np.transpose(centermass_dest_phy[0]))
+        coord_inverse_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d.T) + np.transpose(centermass_dest_phy[0]))
         # compute displacement per pixel in destination space (for forward warping field)
-        warp_x[:, :, iz] = array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-        warp_y[:, :, iz] = array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
         # compute displacement per pixel in source space (for inverse warping field)
-        warp_inv_x[:, :, iz] = array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-        warp_inv_y[:, :, iz] = array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
 
         # display init and new coordinates
         # plt.figure('iz='+str(iz)) #, figsize=(9, 4))
@@ -291,7 +298,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         del coord_src, coord_dest, pca_src, pca_dest
 
     # Generate forward warping field (defined in destination space)
-    data_warp = zeros(((((nx, ny, nz, 1, 3)))))
+    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
     data_warp[:, :, :, 0, 0] = -warp_x  # need to invert due to ITK conventions
     data_warp[:, :, :, 0, 1] = -warp_y
     im_dest = load(fname_dest)
@@ -303,7 +310,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     save(img, fname_warp)
     sct.printv('\nDone! Warping field generated: '+fname_warp, verbose)
     # generate inverse warping field (defined in source space)
-    data_warp = zeros(((((nx, ny, nz, 1, 3)))))
+    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
     data_warp[:, :, :, 0, 0] = -warp_inv_x  # need to invert due to ITK conventions
     data_warp[:, :, :, 0, 1] = -warp_inv_y  # need
     im = load(fname_src)
@@ -316,34 +323,155 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     sct.printv('\nDone! Warping field generated: '+fname_warp_inv, verbose)
 
 
-def compute_pca(data2d):
+
+def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0):
     """
-    Compute PCA using sklearn
-    :param data2d: 2d array. PCA will be computed on non-zeros values.
+    Column-wise non-linear registration of segmentations. Based on an idea from Allan Martin.
+    - Assumes src/dest are segmentations (not necessarily binary), and already registered by center of mass
+    - Assumes src/dest are in RPI orientation.
+    - Split along Z, then for each slice:
+    - scale in R-L direction to match src/dest
+    - loop across R-L columns and register by (i) matching center of mass and (ii) scaling.
+    :param fname_src:
+    :param fname_dest:
+    :param fname_warp:
+    :param fname_warp_inv:
+    :param verbose:
     :return:
-        coordsrc: 2d array: centered non-zero coordinates
-        pca: object: PCA result.
-        centermass: 2x1 array: 2d coordinates of the center of mass
     """
-    # round it and make it int (otherwise end up with values like 10-7)
-    data2d = data2d.round().astype(int)
-    # get non-zero coordinates, and transpose to obtain nx2 dimensions
-    coordsrc = array(data2d.nonzero()).T
-    # get center of mass
-    centermass = coordsrc.mean(0)
-    # center data
-    coordsrc = coordsrc - centermass
-    # normalize data
-    coordsrc /= coordsrc.std()
-    # Performs PCA
-    from sklearn.decomposition import PCA
-    pca = PCA(n_components=2, copy=False, whiten=False)
-    pca.fit(coordsrc)
-    # pca_score = pca.explained_variance_ratio_
-    V = pca.components_
-    return coordsrc, pca, centermass
+
+    # Get image dimensions and retrieve nz
+    sct.printv('\nGet image dimensions of destination image...', verbose)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+
+    # Split source volume along z
+    sct.printv('\nSplit input volume...', verbose)
+    from sct_image import split_data
+    im_src = Image('src.nii')
+    split_source_list = split_data(im_src, 2)
+    for im in split_source_list:
+        im.save()
+
+    # Split destination volume along z
+    sct.printv('\nSplit destination volume...', verbose)
+    im_dest = Image('dest.nii')
+    split_dest_list = split_data(im_dest, 2)
+    for im in split_dest_list:
+        im.save()
+
+    # open image
+    data_src = im_src.data
+    data_dest = im_dest.data
+
+    # initialize forward warping field (defined in destination space)
+    warp_x = np.zeros(data_dest.shape)
+    warp_y = np.zeros(data_dest.shape)
+
+    # initialize inverse warping field (defined in source space)
+    warp_inv_x = np.zeros(data_src.shape)
+    warp_inv_y = np.zeros(data_src.shape)
+
+    # Loop across slices
+    for iz in range(0, nz):
+
+        # display src/dest slice
+        import matplotlib.pyplot as plt
+        # plt.figure(figsize=(15, 4))
+        # plt.subplot(121)
+        # plt.imshow(data_src[:, :, iz], cmap=plt.cm.gray)
+        # plt.title('src')
+        # plt.subplot(122)
+        # plt.imshow(data_dest[:, :, iz], cmap=plt.cm.gray)
+        # plt.title('dest')
+        # plt.show()
+
+        # ============================================================
+        # SCALING R-L (X dimension)
+        # ============================================================
+
+        # sum data across Y to obtain 1D signal: src_y and dest_y
+        src_y = np.sum(data_src[:, :, iz], 1)
+        dest_y = np.sum(data_dest[:, :, iz], 1)
+
+        # retrieve min/max of non-zeros elements (edge of the segmentation)
+        src_y_min, src_y_max = min(np.nonzero(src_y)[0]), max(np.nonzero(src_y)[0])
+        dest_y_min, dest_y_max = min(np.nonzero(dest_y)[0]), max(np.nonzero(dest_y)[0])
+
+        # 1D matching between src_y and dest_y
+        Ty = (dest_y_max - dest_y_min)/2 - (src_y_max - src_y_min)/2
+        Sy = (dest_y_max - dest_y_min) / float(src_y_max - src_y_min)
+
+        # apply translation and scaling to src (interpolate)
+        matrix = [[0.8, 0], [0, 1]]
+        # TODO: scaling should be applied at center of object
+        src2d_scaleX = ndimage.affine_transform(data_src[:, :, iz], matrix, offset=[0, 0])
+
+        plt.figure(figsize=(15, 4))
+        plt.subplot(131)
+        plt.imshow(data_src[:, :, iz], cmap=plt.cm.gray)
+        plt.title('src')
+        plt.subplot(132)
+        plt.imshow(src2d_scaleX, cmap=plt.cm.gray)
+        plt.title('src_scaleX')
+        plt.subplot(133)
+        plt.imshow(data_dest[:, :, iz], cmap=plt.cm.gray)
+        plt.title('dest')
+        plt.show()
+
+        # display src/dest
+        plt.figure
+        plt.plot(src_y)
+        plt.plot(src_y_scaleX)
+        plt.plot(dest_y)
+        plt.legend(['src_y', 'src_y_scaleX', 'dest'])
+        plt.show()
+        # print Ty, Sy
+        # 1D matching between src_y and dest_y
+
+        # compute mean/STD of distributions
 
 
+        # find X displacement to register mean(src_y) to mean(dest_y)
+
+        # find X scaling to apply to std(src_y) to obtain std(dest_y)
+
+        # ============================================================
+        # COLUMN-WISE REGISTRATION
+        # ============================================================
+
+        # loop across columns (X dimension)
+
+        # retrieve 1D signal along Y
+
+        # 1D matching
+
+
+    # Generate forward warping field (defined in destination space)
+    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
+    data_warp[:, :, :, 0, 0] = -warp_x  # need to invert due to ITK conventions
+    data_warp[:, :, :, 0, 1] = -warp_y
+    im_dest = load(fname_dest)
+    hdr_dest = im_dest.get_header()
+    hdr_warp = hdr_dest.copy()
+    hdr_warp.set_intent('vector', (), '')
+    hdr_warp.set_data_dtype('float32')
+    img = Nifti1Image(data_warp, None, hdr_warp)
+    save(img, fname_warp)
+    sct.printv('\nDone! Warping field generated: '+fname_warp, verbose)
+    # generate inverse warping field (defined in source space)
+    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
+    data_warp[:, :, :, 0, 0] = -warp_inv_x  # need to invert due to ITK conventions
+    data_warp[:, :, :, 0, 1] = -warp_inv_y  # need
+    im = load(fname_src)
+    hdr = im.get_header()
+    hdr_warp = hdr.copy()
+    hdr_warp.set_intent('vector', (), '')
+    hdr_warp.set_data_dtype('float32')
+    img = Nifti1Image(data_warp, None, hdr_warp)
+    save(img, fname_warp_inv)
+    sct.printv('\nDone! Warping field generated: '+fname_warp_inv, verbose)
 
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
@@ -416,7 +544,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
     # coord_origin_dest = im_dest.transfo_pix2phys([[0,0,0]])
     # coord_origin_input = im_src.transfo_pix2phys([[0,0,0]])
-    # coord_diff_origin = (asarray(coord_origin_dest[0]) - asarray(coord_origin_input[0])).tolist()
+    # coord_diff_origin = (np.asarray(coord_origin_dest[0]) - np.asarray(coord_origin_input[0])).tolist()
     # [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
     # initialization
@@ -494,9 +622,9 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
     if paramreg.algo in ['Translation']:
         # convert to array
-        x_disp_a = asarray(x_displacement)
-        y_disp_a = asarray(y_displacement)
-        theta_rot_a = asarray(theta_rotation)
+        x_disp_a = np.asarray(x_displacement)
+        y_disp_a = np.asarray(y_displacement)
+        theta_rot_a = np.asarray(theta_rotation)
         # Generate warping field
         generate_warping_field('dest.nii', x_disp_a, y_disp_a, theta_rot_a, fname=fname_warp)  #name_warp= 'step'+str(paramreg.step)
         # Inverse warping field
@@ -579,13 +707,13 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
         y_a = center_rotation[1]
 
     # Calculate displacement for each voxel
-    data_warp = zeros(((((nx, ny, nz, 1, 3)))))
+    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
     vector_i = [[[i-x_a], [j-y_a]] for i in range(nx) for j in range(ny)]
 
     # if theta_rot == None:
     #     # for translations
     #     for k in range(nz):
-    #         matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
+    #         matrix_rot_a = np.asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
     #         tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
     #         result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
     #         for i in range(ny):
@@ -626,3 +754,35 @@ def angle_between(a, b):
     arccosInput = 1.0 if arccosInput > 1.0 else arccosInput
     arccosInput = -1.0 if arccosInput < -1.0 else arccosInput
     return math.acos(arccosInput)
+
+
+
+def compute_pca(data2d):
+    """
+    Compute PCA using sklearn
+    :param data2d: 2d array. PCA will be computed on non-zeros values.
+    :return:
+        coordsrc: 2d array: centered non-zero coordinates
+        pca: object: PCA result.
+        centermass: 2x1 array: 2d coordinates of the center of mass
+    """
+    # round it and make it int (otherwise end up with values like 10-7)
+    data2d = data2d.round().astype(int)
+    # get non-zero coordinates, and transpose to obtain nx2 dimensions
+    coordsrc = np.array(data2d.nonzero()).T
+    # get center of mass
+    centermass = coordsrc.mean(0)
+    # center data
+    coordsrc = coordsrc - centermass
+    # normalize data
+    coordsrc /= coordsrc.std()
+    # Performs PCA
+    from sklearn.decomposition import PCA
+    pca = PCA(n_components=2, copy=False, whiten=False)
+    pca.fit(coordsrc)
+    # pca_score = pca.explained_variance_ratio_
+    V = pca.components_
+    return coordsrc, pca, centermass
+
+
+
