@@ -27,8 +27,8 @@ def test(path_data='', parameters=''):
     dice_threshold = 0.9
 
     # initializations
-    dice_template2anat = 'NaN'
-    dice_anat2template = 'NaN'
+    dice_template2anat = float('NaN')
+    dice_anat2template = float('NaN')
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz ' \
