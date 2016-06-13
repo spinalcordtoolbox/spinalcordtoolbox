@@ -517,7 +517,7 @@ def register(src, dest, paramreg, param, i_step_str):
                             ants_registration_params=ants_registration_params)
 
     # centermass
-    elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot']:
+    elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
         # check if type=seg
         if not paramreg.steps[i_step_str].type == 'seg':
             sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should generally be used with type=seg.', 1, 'warning')
