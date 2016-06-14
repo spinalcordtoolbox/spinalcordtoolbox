@@ -9,6 +9,8 @@
 # License: see the LICENSE.TXT
 #########################################################################################
 
+# TODO: columnwise: check inverse field
+# TODO: columnwise: add regularization: should not binarize at 0.5, especially problematic for edge (because division by zero to compute Sx, Sy).
 # TODO: remove register2d_centermass and generalize register2d_centermassrot
 # TODO: add flag for setting threshold on PCA
 # TODO: clean code for generate_warping_field (unify with centermass_rot)
@@ -405,14 +407,15 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # coord_dest2d = np.array(dest2d.nonzero()).T
 
         # display image
-        plt.figure(figsize=(15, 4))
-        plt.subplot(121)
-        plt.imshow(np.flipud(src2d.T), cmap=plt.cm.gray, interpolation='none')
-        plt.title('src')
-        plt.subplot(122)
-        plt.imshow(np.flipud(dest2d.T), cmap=plt.cm.gray, interpolation='none')
-        plt.title('dest')
-        plt.show()
+        if verbose == 2:
+            plt.figure(figsize=(15, 4))
+            plt.subplot(121)
+            plt.imshow(np.flipud(src2d.T), cmap=plt.cm.gray, interpolation='none')
+            plt.title('src')
+            plt.subplot(122)
+            plt.imshow(np.flipud(dest2d.T), cmap=plt.cm.gray, interpolation='none')
+            plt.title('dest')
+            plt.show()
 
         # SCALING R-L (X dimension)
         # ============================================================
@@ -452,13 +455,16 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # below: only for debugging purpose
         coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
         coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
-        coord_init_pix_scaleX = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
+        coord_init_pix_scaleX = np.copy(coord_init_pix)
         coord_init_pix_scaleX[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
+        coord_init_pix_scaleXinv = np.copy(coord_init_pix)
+        coord_init_pix_scaleXinv[:, 0] = (coord_init_pix[:, 0] - mean_dest ) / float(Sx) + mean_src
 
         # ============================================================
         # COLUMN-WISE REGISTRATION
         # ============================================================
-        coord_init_pix_scaleXY = np.copy(coord_init_pix_scaleX)  # need to use np.copy to avoid copying pointer
+        coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
+        coord_init_pix_scaleYinv = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
         # coord_src2d_scaleXY = np.copy(coord_src2d_scaleX)  # need to use np.copy to avoid copying pointer
         # loop across columns (X dimension)
         for ix in xrange(nx):
@@ -468,20 +474,33 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             # make sure there are non-zero data in src or dest
             if np.any(src1d) and np.any(dest1d):
                 # retrieve min/max of non-zeros elements (edge of the segmentation)
-                src1d_min, src1d_max = min(np.nonzero(src1d)[0]), max(np.nonzero(src1d)[0])
-                dest1d_min, dest1d_max = min(np.nonzero(dest1d)[0]), max(np.nonzero(dest1d)[0])
+                # src1d_min, src1d_max = min(np.nonzero(src1d)[0]), max(np.nonzero(src1d)[0])
+                # dest1d_min, dest1d_max = min(np.nonzero(dest1d)[0]), max(np.nonzero(dest1d)[0])
                 # 1D matching between src_y and dest_y
-                Ty = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
-                Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
+                # Ty = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
+                # Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
                 # apply translation and scaling to coordinates in column
-                coord_init_pix_scaleXY[ix*nx:ny+ix*nx, 1] = (coord_init_pix_scaleX[ix*nx:ny+ix*nx, 1] + Ty + ny) * Sy
-
+                src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
+                dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
+                # 1D matching between src_y and dest_y
+                mean_dest = (dest1d_max + dest1d_min)/2
+                mean_src = (src1d_max + src1d_min)/2
+                # Tx = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
+                Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
+                # apply forward transformation (in pixel space)
+                # below: only for debugging purpose
+                # coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
+                # coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
+                # coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
+                # coord_init_pix_scaleY[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
+                coord_init_pix_scaleY[ix*nx:ny+ix*nx, 1] = (coord_init_pix[ix*nx:ny+ix*nx, 1] - mean_src) * Sy + mean_dest
+                coord_init_pix_scaleYinv[ix*nx:ny+ix*nx, 1] = (coord_init_pix[ix*nx:ny+ix*nx, 1] - mean_dest) / float(Sy) + mean_src
         # display
         if verbose == 2:
             plt.figure(figsize=(15, 4))
-            list_data = [coord_init_pix, coord_init_pix_scaleX, coord_init_pix_scaleXY]
+            list_data = [coord_init_pix, coord_init_pix_scaleX, coord_init_pix_scaleY]
             list_subplot = [131, 132, 133]
-            list_title = ['src', 'src_scaleX', 'src_scaleXY']
+            list_title = ['src', 'src_scaleX', 'src_scaleY']
             for i in xrange(len(list_subplot)):
                 plt.subplot(list_subplot[i])
                 plt.scatter([list_data[i][ipix][0] for ipix in xrange(list_data[i].shape[0])],
@@ -508,16 +527,17 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # CALCULATE TRANSFORMATIONS
         # ============================================================
         # calculate forward transformation (in physical space)
-        coord_forward_phy = coord_src2d - coord_src2d_scaleX
+        coord_init_phy_scaleX = np.array(im_dest.transfo_pix2phys(coord_init_pix_scaleX))
+        coord_init_phy_scaleY = np.array(im_dest.transfo_pix2phys(coord_init_pix_scaleY))
         # calculate inverse transformation (in physical space)
-        coord_inverse_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d.T) + np.transpose(centermass_dest_phy[0]))
+        coord_init_phy_scaleXinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleXinv))
+        coord_init_phy_scaleYinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleYinv))
         # compute displacement per pixel in destination space (for forward warping field)
-        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
         # compute displacement per pixel in source space (for inverse warping field)
-        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
-
+        warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
     data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
