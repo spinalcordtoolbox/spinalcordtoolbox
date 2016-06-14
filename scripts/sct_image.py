@@ -201,8 +201,8 @@ def main(args = None):
             fname_out = []
             for i_dim in xrange(3):
                 fname_out.append(add_suffix(fname_in[0], '_'+dim_list[i_dim].upper()))
-                im_out[0].setFileName(fname_out[i_dim])
-                im_out[0].save()
+                im_out[i_dim].setFileName(fname_out[i_dim])
+                im_out[i_dim].save()
         if '-split' in arguments:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             fname_out = []
