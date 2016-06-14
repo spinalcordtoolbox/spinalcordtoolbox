@@ -340,6 +340,13 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     :return:
     """
 
+    # initialization
+    th_nonzero = 0.5  # values below are considered zero
+
+    # for display stuff
+    if verbose == 2:
+        import matplotlib.pyplot as plt
+
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
@@ -376,76 +383,140 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     # Loop across slices
     for iz in range(0, nz):
 
-        # display src/dest slice
-        import matplotlib.pyplot as plt
-        # plt.figure(figsize=(15, 4))
-        # plt.subplot(121)
-        # plt.imshow(data_src[:, :, iz], cmap=plt.cm.gray)
-        # plt.title('src')
-        # plt.subplot(122)
-        # plt.imshow(data_dest[:, :, iz], cmap=plt.cm.gray)
-        # plt.title('dest')
-        # plt.show()
-
+        # PREPARE COORDINATES
         # ============================================================
-        # SCALING R-L (X dimension)
-        # ============================================================
+        # get indices of x and y coordinates
+        row, col = np.indices((nx, ny))
+        # build 2xn array of coordinates in pixel space
+        # ordering of indices is as follows:
+        # coord_init_pix[:, 0] = 0, 0, 0, ..., 1, 1, 1..., nx, nx, nx
+        # coord_init_pix[:, 1] = 0, 1, 2, ..., 0, 1, 2..., 0, 1, 2
+        coord_init_pix = np.array([row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel()))*iz)]).T
+        # convert coordinates to physical space
+        coord_init_phy = np.array(im_src.transfo_pix2phys(coord_init_pix))
+        # get 2d data from the selected slice
+        src2d = data_src[:, :, iz]
+        dest2d = data_dest[:, :, iz]
+        # get non-zero coordinates, and transpose to obtain nx2 dimensions
+        # here we use 0.5 as threshold for non-zero value
+        coord_src2d = np.array(np.where(src2d > th_nonzero)).T
+        coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
+        # coord_src2d = np.array(src2d.nonzero()).T
+        # coord_dest2d = np.array(dest2d.nonzero()).T
 
-        # sum data across Y to obtain 1D signal: src_y and dest_y
-        src_y = np.sum(data_src[:, :, iz], 1)
-        dest_y = np.sum(data_dest[:, :, iz], 1)
-
-        # retrieve min/max of non-zeros elements (edge of the segmentation)
-        src_y_min, src_y_max = min(np.nonzero(src_y)[0]), max(np.nonzero(src_y)[0])
-        dest_y_min, dest_y_max = min(np.nonzero(dest_y)[0]), max(np.nonzero(dest_y)[0])
-
-        # 1D matching between src_y and dest_y
-        Ty = (dest_y_max - dest_y_min)/2 - (src_y_max - src_y_min)/2
-        Sy = (dest_y_max - dest_y_min) / float(src_y_max - src_y_min)
-
-        # apply translation and scaling to src (interpolate)
-        matrix = [[0.8, 0], [0, 1]]
-        # TODO: scaling should be applied at center of object
-        src2d_scaleX = ndimage.affine_transform(data_src[:, :, iz], matrix, offset=[0, 0])
-
+        # display image
         plt.figure(figsize=(15, 4))
-        plt.subplot(131)
-        plt.imshow(data_src[:, :, iz], cmap=plt.cm.gray)
+        plt.subplot(121)
+        plt.imshow(np.flipud(src2d.T), cmap=plt.cm.gray, interpolation='none')
         plt.title('src')
-        plt.subplot(132)
-        plt.imshow(src2d_scaleX, cmap=plt.cm.gray)
-        plt.title('src_scaleX')
-        plt.subplot(133)
-        plt.imshow(data_dest[:, :, iz], cmap=plt.cm.gray)
+        plt.subplot(122)
+        plt.imshow(np.flipud(dest2d.T), cmap=plt.cm.gray, interpolation='none')
         plt.title('dest')
         plt.show()
 
-        # display src/dest
-        plt.figure
-        plt.plot(src_y)
-        plt.plot(src_y_scaleX)
-        plt.plot(dest_y)
-        plt.legend(['src_y', 'src_y_scaleX', 'dest'])
-        plt.show()
-        # print Ty, Sy
+        # SCALING R-L (X dimension)
+        # ============================================================
+        # sum data across Y to obtain 1D signal: src_y and dest_y
+        src1d = np.sum(src2d, 1)
+        dest1d = np.sum(dest2d, 1)
+        # retrieve min/max of non-zeros elements (edge of the segmentation)
+        src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
+        dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
         # 1D matching between src_y and dest_y
+        mean_dest = (dest1d_max + dest1d_min)/2
+        mean_src = (src1d_max + src1d_min)/2
+        # Tx = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
+        Sx = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
+        # apply translation and scaling to src (interpolate)
+        # display
+        # if verbose == 2:
+        #     matrix = [[1/Sx, 0], [0, 1]]
+        #     src2d_scaleX = ndimage.affine_transform(src2d, matrix, offset=[-Tx-nx, 0]) #Ty+ny/2, nx/2])
+        #     plt.figure(figsize=(15, 4))
+        #     plt.subplot(131)
+        #     plt.imshow(np.swapaxes(src2d, 1, 0), cmap=plt.cm.gray, interpolation='none')
+        #     plt.title('src')
+        #     plt.xlabel('x')
+        #     plt.ylabel('y')
+        #     plt.subplot(132)
+        #     plt.imshow(np.swapaxes(src2d_scaleX, 1, 0), cmap=plt.cm.gray, interpolation='none')
+        #     plt.title('src_scaleX')
+        #     plt.xlabel('x')
+        #     plt.ylabel('y')
+        #     plt.subplot(133)
+        #     plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.gray, interpolation='none')
+        #     plt.title('dest')
+        #     plt.show()
 
-        # compute mean/STD of distributions
-
-
-        # find X displacement to register mean(src_y) to mean(dest_y)
-
-        # find X scaling to apply to std(src_y) to obtain std(dest_y)
+        # apply forward transformation (in pixel space)
+        # below: only for debugging purpose
+        coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
+        coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
+        coord_init_pix_scaleX = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
+        coord_init_pix_scaleX[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
 
         # ============================================================
         # COLUMN-WISE REGISTRATION
         # ============================================================
-
+        coord_init_pix_scaleXY = np.copy(coord_init_pix_scaleX)  # need to use np.copy to avoid copying pointer
+        # coord_src2d_scaleXY = np.copy(coord_src2d_scaleX)  # need to use np.copy to avoid copying pointer
         # loop across columns (X dimension)
+        for ix in xrange(nx):
+            # retrieve 1D signal along Y
+            src1d = src2d[ix, :]
+            dest1d = dest2d[ix, :]
+            # make sure there are non-zero data in src or dest
+            if np.any(src1d) and np.any(dest1d):
+                # retrieve min/max of non-zeros elements (edge of the segmentation)
+                src1d_min, src1d_max = min(np.nonzero(src1d)[0]), max(np.nonzero(src1d)[0])
+                dest1d_min, dest1d_max = min(np.nonzero(dest1d)[0]), max(np.nonzero(dest1d)[0])
+                # 1D matching between src_y and dest_y
+                Ty = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
+                Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
+                # apply translation and scaling to coordinates in column
+                coord_init_pix_scaleXY[ix*nx:ny+ix*nx, 1] = (coord_init_pix_scaleX[ix*nx:ny+ix*nx, 1] + Ty + ny) * Sy
 
-        # retrieve 1D signal along Y
+        # display
+        if verbose == 2:
+            plt.figure(figsize=(15, 4))
+            list_data = [coord_init_pix, coord_init_pix_scaleX, coord_init_pix_scaleXY]
+            list_subplot = [131, 132, 133]
+            list_title = ['src', 'src_scaleX', 'src_scaleXY']
+            for i in xrange(len(list_subplot)):
+                plt.subplot(list_subplot[i])
+                plt.scatter([list_data[i][ipix][0] for ipix in xrange(list_data[i].shape[0])],
+                            [list_data[i][ipix][1] for ipix in xrange(list_data[i].shape[0])],
+                            s=15, marker='+', zorder=1, color='black', alpha=1)
+                plt.scatter([coord_dest2d[ipix][0] for ipix in xrange(coord_dest2d.shape[0])],
+                            [coord_dest2d[ipix][1] for ipix in xrange(coord_dest2d.shape[0])],
+                            s=15, marker='x', zorder=2, color='red', alpha=1)
+                plt.scatter([coord_src2d[ipix][0] for ipix in xrange(coord_src2d.shape[0])],
+                            [coord_src2d[ipix][1] for ipix in xrange(coord_src2d.shape[0])],
+                            s=5, marker='o', zorder=2, color='blue', alpha=1)
+                plt.scatter([coord_src2d_scaleX[ipix][0] for ipix in xrange(coord_src2d_scaleX.shape[0])],
+                            [coord_src2d_scaleX[ipix][1] for ipix in xrange(coord_src2d_scaleX.shape[0])],
+                            s=5, marker='o', zorder=2, color='green', alpha=1)
+                plt.xlim(0, nx-1)
+                plt.ylim(0, ny-1)
+                plt.grid()
+                plt.title(list_title[i])
+                plt.xlabel('x')
+                plt.ylabel('y')
+            plt.show()
 
-        # 1D matching
+        # ============================================================
+        # CALCULATE TRANSFORMATIONS
+        # ============================================================
+        # calculate forward transformation (in physical space)
+        coord_forward_phy = coord_src2d - coord_src2d_scaleX
+        # calculate inverse transformation (in physical space)
+        coord_inverse_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d.T) + np.transpose(centermass_dest_phy[0]))
+        # compute displacement per pixel in destination space (for forward warping field)
+        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+        # compute displacement per pixel in source space (for inverse warping field)
+        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
 
 
     # Generate forward warping field (defined in destination space)
