@@ -29,23 +29,14 @@ class Slice:
     def __init__(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
         """
         Slice constructor
-
         :param slice_id: slice ID number, type: int
-
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
-
         :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
-
         :param wm_seg: manual white matter segmentation of the original image, type: numpy array
-
         :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
-
         :param im_m: image in the model space, type: numpy array
-
         :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
-
         :param wm_seg_m: manual white matter segmentation in the model space, type: numpy array
-
         :param level: vertebral level of the slice, type: int
         """
         self.id = slice_id
@@ -62,23 +53,14 @@ class Slice:
     def set(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
         """
         Slice setter, only the specified parameters are set
-
         :param slice_id: slice ID number, type: int
-
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
-
         :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
-
         :param wm_seg: manual white matter segmentation of the original image, type: numpy array
-
         :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
-
         :param im_m: image in the model space, type: numpy array
-
         :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
-
         :param wm_seg_m: manual white matter segmentation in the model space, type: numpy array
-
         :param level: vertebral level of the slice, type: int
         """
         if slice_id is not None:
@@ -137,9 +119,6 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, new_res=0.3, ma
     # reorient data (IRP is convenient to split along rostro-caudal direction)
     im_target = set_orientation(im_target, 'IRP')
     im_sc_seg = set_orientation(im_sc_seg, 'IRP')
-
-    fname_target = im_target.absolutepath
-    fname_sc_seg = im_sc_seg.absolutepath
 
     # assert size of images are identical
     assert im_target.data.shape == im_sc_seg.data.shape, "ERROR: the image to segment and it's SC segmentation does not have the same size"
