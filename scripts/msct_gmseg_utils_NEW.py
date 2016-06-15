@@ -18,6 +18,10 @@ from sct_create_mask import main as sct_create_mask_main
 from sct_utils import add_suffix, extract_fname, printv
 from sct_maths import denoise_ornlm
 import numpy as np
+import os
+import time
+import random
+import shutil
 
 ########################################################################################################################
 #                                   CLASS SLICE
@@ -26,13 +30,13 @@ class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
-    def __init__(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
+    def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
         """
         Slice constructor
         :param slice_id: slice ID number, type: int
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
-        :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
-        :param wm_seg: manual white matter segmentation of the original image, type: numpy array
+        :param gm_seg: manual gray matter segmentation of the original image, type: list of numpy array
+        :param wm_seg: manual white matter segmentation of the original image, type: list of numpy array
         :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
         :param im_m: image in the model space, type: numpy array
         :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
@@ -41,7 +45,6 @@ class Slice:
         """
         self.id = slice_id
         self.im = im
-        self.sc_seg = sc_seg
         self.gm_seg = gm_seg
         self.wm_seg = wm_seg
         self.reg_to_M = reg_to_m
@@ -50,13 +53,13 @@ class Slice:
         self.wm_seg_M = wm_seg_m
         self.level = level
 
-    def set(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
+    def set(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
         """
         Slice setter, only the specified parameters are set
         :param slice_id: slice ID number, type: int
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
-        :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
-        :param wm_seg: manual white matter segmentation of the original image, type: numpy array
+        :param gm_seg: manual gray matter segmentation of the original image, type: list of numpy array
+        :param wm_seg: manual white matter segmentation of the original image, type: list of numpy array
         :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
         :param im_m: image in the model space, type: numpy array
         :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
@@ -67,8 +70,6 @@ class Slice:
             self.id = slice_id
         if im is not None:
             self.im = im
-        if sc_seg is not None:
-            self.sc_seg = sc_seg
         if gm_seg is not None:
             self.gm_seg = gm_seg
         if wm_seg is not None:
@@ -102,8 +103,17 @@ class Slice:
 #                               FUNCTIONS USED FOR PRE-PROCESSING
 ########################################################################################################################
 # ----------------------------------------------------------------------------------------------------------------------
-def pre_processing(fname_target, fname_sc_seg, fname_level=None, new_res=0.3, mask_size_mm=22.5, denoising=True, verbose=1):
+def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, mask_size_mm=22.5, denoising=True, verbose=1):
     printv('\nPre-processing data ...', verbose, 'normal')
+
+    tmp_dir = 'tmp_preprocessing_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)) + '/'
+    if not os.path.exists(tmp_dir):
+        os.mkdir(tmp_dir)
+
+    shutil.copy(fname_target, tmp_dir)
+    shutil.copy(fname_sc_seg, tmp_dir)
+    os.chdir(tmp_dir)
+
     original_info = {}
 
     im_target = Image(fname_target)
@@ -129,9 +139,10 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, new_res=0.3, ma
     original_info['py'] = py_target
 
     # resample to an axial resolution of -new_res-
-    printv('\n\tResample to an axial resolution of '+str(new_res)+'x'+str(new_res)+'mm2 ...', verbose, 'normal')
-    im_target = axial_resample(im_target, new_res)
-    im_sc_seg = axial_resample(im_sc_seg, new_res)
+    if round(px_target, 5) != new_res or round(py_target, 5) != new_res:
+        printv('\n\tResample to an axial resolution of '+str(new_res)+'x'+str(new_res)+' mm2 ...', verbose, 'normal')
+        im_target = axial_resample(im_target, new_res)
+        im_sc_seg = axial_resample(im_sc_seg, new_res)
 
     # denoise using P. Coupe algorithm (see [Manjon et al. JMRI 2010])
     if denoising:
@@ -153,13 +164,22 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, new_res=0.3, ma
 
     # split along rostro-caudal direction create a list of axial slices
     printv('\n\tSplit along rostro-caudal direction...', verbose, 'normal')
-    list_slices_target = [Slice(slice_id=i, im=data_slice) for i, data_slice in enumerate(im_target.data)]
+    list_slices_target = [Slice(slice_id=i, im=data_slice, gm_seg=[], wm_seg=[]) for i, data_slice in enumerate(im_target.data)]
 
     # load vertebral levels
     if fname_level is not None:
         printv('\n\tLoad vertebral levels ...', verbose, 'normal')
+        os.chdir('..')
+        shutil.copy(fname_level, tmp_dir)
+        os.chdir(tmp_dir)
         list_slices_target = load_level(list_slices_target, fname_level)
 
+    # load manual gmseg if there is one (model data)
+    if fname_manual_gmseg is not None:
+        printv('\n\tLoad manual GM segmentation(s) ...', verbose, 'normal')
+        list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, new_res, pad, im_square_mask)
+
+    os.chdir('..')
     printv('\nPre-processing done!', verbose, 'normal')
     return list_slices_target, original_info
 
@@ -232,7 +252,7 @@ def load_level(list_slices_target, fname_level):
             list_med_level.append(med)
 
         # if all median of level are int for all slices : consider level as int
-        if all([type(med) == int for med in list_med_level]):
+        if all([isinstance(med, int) for med in list_med_level]):
             # level as int are placed in the middle of each vertebra (that's why there is a "+0.5")
             list_level = [int(round(l))+0.5 for l in list_level]
 
@@ -272,6 +292,47 @@ def load_level(list_slices_target, fname_level):
         target_slice.set(level=level)
 
     return list_slices_target
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, new_res, pad, im_square_mask):
+    if isinstance(list_fname_manual_gmseg, str):
+        # consider fname_manual_gmseg as a list of file names to allow multiple manual GM segmentation
+        list_fname_manual_gmseg = [list_fname_manual_gmseg]
+
+    for fname_manual_gmseg in list_fname_manual_gmseg:
+        os.chdir('..')
+        shutil.copy(fname_manual_gmseg, tmp_dir)
+        os.chdir(tmp_dir)
+
+        im_manual_gmseg = Image(fname_manual_gmseg)
+
+        # reorient to IRP
+        im_manual_gmseg = set_orientation(im_manual_gmseg, 'IRP')
+
+        # assert gmseg has the right number of slices
+        assert len(im_manual_gmseg.data) == len(list_slices_target), 'ERROR: the manual GM segmentation has not the same number of slices than the image.'
+
+        # get spacing and resample if needed
+        nz_gmseg, nx_gmseg, ny_gmseg, nt_gmseg, pz_gmseg, px_gmseg, py_gmseg, pt_gmseg = im_manual_gmseg.dim
+        if round(px_gmseg, 5) != new_res or round(py_gmseg, 5) != new_res:
+            im_manual_gmseg = axial_resample(im_manual_gmseg, new_res)
+
+        # pad in case SC is too close to the edges
+        im_manual_gmseg = pad_image(im_manual_gmseg, pad_x_i=0, pad_x_f=0, pad_y_i=pad, pad_y_f=pad, pad_z_i=pad, pad_z_f=pad)
+
+        # crop using square mask
+        im_manual_gmseg.crop_and_stack(im_square_mask, suffix='', save=False)
+
+        # load gm seg in list of slices
+        for gm_slice, im_slice in zip(im_manual_gmseg.data, list_slices_target):
+            im_slice.gm_seg.append(gm_slice)
+
+            wm_slice = (im_slice.im > 0) - gm_slice
+            im_slice.wm_seg.append(wm_slice)
+
+    return list_slices_target
+
 
 ########################################### End of pre-processing function #############################################
 
