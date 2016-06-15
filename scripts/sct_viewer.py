@@ -177,6 +177,37 @@ class SinglePlot:
         else:
             return
 
+    def update_xy_lim(self, x_center=None, y_center=None, x_scale_factor=1.0, y_scale_factor=1.0, zoom=True):
+        # get the current x and y limits
+        cur_xlim = self.fig.axes.get_xlim()
+        cur_ylim = self.fig.axes.get_ylim()
+
+
+        if x_center is None:
+            x_center = (cur_xlim[1] - cur_xlim[0]) / 2.0
+        if y_center is None:
+            y_center = (cur_ylim[1] - cur_ylim[0]) / 2.0
+
+        # Get distance from the cursor to the edge of the figure frame
+        x_left = x_center - cur_xlim[0]
+        x_right = cur_xlim[1] - x_center
+        y_top = y_center - cur_ylim[0]
+        y_bottom = cur_ylim[1] - y_center
+
+        if zoom:
+            scale_factor = (x_scale_factor + y_scale_factor) / 2.0
+            if 0.005 < self.zoom_factor * scale_factor <= 3.0:
+                self.zoom_factor *= scale_factor
+
+                self.fig.axes.set_xlim([x_center - x_left * x_scale_factor, x_center + x_right * x_scale_factor])
+                self.fig.axes.set_ylim([y_center - y_top * y_scale_factor, y_center + y_bottom * y_scale_factor])
+                self.fig.figure.canvas.draw()
+        else:
+            self.fig.axes.set_xlim([x_center - x_left * x_scale_factor, x_center + x_right * x_scale_factor])
+            self.fig.axes.set_ylim([y_center - y_top * y_scale_factor, y_center + y_bottom * y_scale_factor])
+            self.fig.figure.canvas.draw()
+
+
     def on_scroll(self, event):
         """
         when scrooling with the wheel, image is zoomed toward position on the screen
@@ -186,16 +217,6 @@ class SinglePlot:
         if event.inaxes == self.fig.axes:
             base_scale = 0.5
             xdata, ydata = event.xdata, event.ydata
-
-            # get the current x and y limits
-            cur_xlim = self.fig.axes.get_xlim()
-            cur_ylim = self.fig.axes.get_ylim()
-
-            # Get distance from the cursor to the edge of the figure frame
-            x_left = xdata - cur_xlim[0]
-            x_right = cur_xlim[1] - xdata
-            y_top = ydata - cur_ylim[0]
-            y_bottom = cur_ylim[1] - ydata
 
             if event.button == 'up':
                 # deal with zoom in
@@ -208,12 +229,7 @@ class SinglePlot:
                 scale_factor = 1.0
                 print event.button
 
-            if 0.005 < self.zoom_factor * scale_factor <= 1.5:
-                self.zoom_factor *= scale_factor
-
-                self.fig.axes.set_xlim([xdata - x_left * scale_factor, xdata + x_right * scale_factor])
-                self.fig.axes.set_ylim([ydata - y_top * scale_factor, ydata + y_bottom * scale_factor])
-                self.fig.figure.canvas.draw()
+            self.update_xy_lim(x_center=xdata, y_center=ydata, x_scale_factor=scale_factor, y_scale_factor=scale_factor, zoom=True)
 
         return
 
@@ -236,8 +252,16 @@ class ClickViewer(object):
 
         # pad the image so that it is square in axial view (useful for zooming)
         self.im_size = self.image.data.shape
+        nx, ny, nz, nt, px, py, pz, pt = self.image.dim
+        self.im_spacing = [px, py, pz]
+        self.aspect_ratio = float(self.im_spacing[0]) / float(self.im_spacing[2])
+
         max_size = max([self.im_size[0], self.im_size[2]])
-        self.offset = [int((max_size - self.im_size[2])/2), int((max_size - self.im_size[0])/2)]
+        self.offset = [(max_size - self.im_size[2]) / 2, (max_size - self.im_size[0]) / 2]
+        if max_size == self.im_size[0]:
+            self.offset[0] = int(self.offset[0] * self.aspect_ratio)
+        else:
+            self.offset[1] = int(self.offset[1] * self.aspect_ratio)
         self.image.data = pad(self.image.data, ((self.offset[1], self.offset[1]), (0, 0), (self.offset[0], self.offset[0])), 'constant', constant_values=(0, 0))
 
     def update_current_slice(self, current_slice):
@@ -254,7 +278,7 @@ class ClickViewer(object):
         self.fig.subplots_adjust(bottom=0.1, left=0.1)
 
         ax = self.fig.add_subplot(111, axisbg='k')
-        self.im_plot_axial = ax.imshow(self.image.data[:, int(self.im_size[1] / 2), :])
+        self.im_plot_axial = ax.imshow(self.image.data[:, int(self.im_size[1] / 2), :], aspect=self.aspect_ratio)
         self.im_plot_axial.set_cmap('gray')
         self.im_plot_axial.set_interpolation('nearest')
 
