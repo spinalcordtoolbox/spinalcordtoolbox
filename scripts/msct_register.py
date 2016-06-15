@@ -225,7 +225,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         angle_src_dest = angle_between(eigenv_src, eigenv_dest)
         print 'iz='+str(iz)+', angle_src_dest='+str(angle_src_dest)
         # import numpy as np
-        R = np.matrix( ((cos(angle_src_dest), sin(angle_src_dest)), (-sin(angle_src_dest), cos(angle_src_dest))) )
+        R = np.matrix( ((cos(angle_src_dest), -sin(angle_src_dest)), (sin(angle_src_dest), cos(angle_src_dest))) )
 
         # display rotations
         if verbose == 2:
@@ -235,6 +235,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             # generate figure
             import matplotlib.pyplot as plt
             plt.figure('iz='+str(iz), figsize=(9, 9))
+            plt.ion()  # enables interactive mode (allows keyboard interruption)
             # plt.title('iz='+str(iz))
             for isub in [221, 222, 223, 224]:
                 # plt.figure
@@ -256,12 +257,14 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     plt.scatter(coord_dest_rot[:, 0], coord_dest_rot[:, 1], s=5, marker='o', zorder=10, color='red', alpha=0.5)
                     pcaaxis = pca_src.components_.T
                     plt.title('dest_rot')
+                plt.text(-2.5, -2.5, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
                 plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
                 plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
                 plt.axis([-3, 3, -3, 3])
                 plt.gca().set_aspect('equal', adjustable='box')
                 # plt.axis('equal')
-            plt.show()
+            plt.savefig('fig_pca_z'+str(iz)+'.png')
+            plt.close()
 
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
@@ -276,9 +279,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         R3d = np.eye(3)
         R3d[0:2, 0:2] = R
         # apply forward transformation (in physical space)
-        coord_forward_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_dest_phy[0])), R3d.T) + np.transpose(centermass_src_phy[0]))
+        coord_forward_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_dest_phy[0])), R3d) + np.transpose(centermass_src_phy[0]))
         # apply inverse transformation (in physical space)
-        coord_inverse_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d) + np.transpose(centermass_dest_phy[0]))
+        coord_inverse_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d.T) + np.transpose(centermass_dest_phy[0]))
         # compute displacement per pixel in destination space (for forward warping field)
         warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
         warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
@@ -838,6 +841,7 @@ def angle_between(a, b):
     :param b:
     :return:
     """
+    # TODO: check if extreme value that can make the function crash-- use "try"
     # from numpy.linalg import norm
     # from numpy import dot
     # import math
@@ -881,7 +885,7 @@ def compute_pca(data2d):
     pca = PCA(n_components=2, copy=False, whiten=False)
     pca.fit(coordsrc)
     # pca_score = pca.explained_variance_ratio_
-    V = pca.components_
+    # V = pca.components_
     return coordsrc, pca, centermass
 
 
