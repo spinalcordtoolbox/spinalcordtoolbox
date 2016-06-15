@@ -426,8 +426,15 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         src1d = np.sum(src2d, 1)
         dest1d = np.sum(dest2d, 1)
         # retrieve min/max of non-zeros elements (edge of the segmentation)
-        src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
-        dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
+        for i in xrange(len(src1d)):
+            if src1d[i] > 0.5:
+                # found index above 0.5, exit loop
+                break
+        ind_before = i-1
+        ind_after = i
+        # get indices (in continuous space) at half-maximum of upward and downward slope
+        src1d_min, src1d_max = find_index_halfmax(src1d)
+        dest1d_min, dest1d_max = find_index_halfmax(dest1d)
         # 1D matching between src_y and dest_y
         mean_dest = (dest1d_max + dest1d_min)/2
         mean_src = (src1d_max + src1d_min)/2
@@ -483,8 +490,11 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 # Ty = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
                 # Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
                 # apply translation and scaling to coordinates in column
-                src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
-                dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
+                # get indices (in continuous space) at half-maximum of upward and downward slope
+                src1d_min, src1d_max = find_index_halfmax(src1d)
+                dest1d_min, dest1d_max = find_index_halfmax(dest1d)
+                # src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
+                # dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
                 # 1D matching between src_y and dest_y
                 mean_dest = (dest1d_max + dest1d_min)/2
                 mean_src = (src1d_max + src1d_min)/2
@@ -890,3 +900,30 @@ def compute_pca(data2d):
 
 
 
+def find_index_halfmax(data1d):
+    """
+    Find the two indices at half maximum for a bell-type curve (non-parametric). Uses center of mass calculation.
+    :param data1d:
+    :return: xmin, xmax
+    """
+    # normalize data between 0 and 1
+    data1d = data1d / float(np.max(data1d))
+    # loop across elements and stops when found 0.5
+    for i in xrange(len(data1d)):
+        if data1d[i] > 0.5:
+            break
+    # compute center of mass to get coordinate at 0.5
+    xmin = i - 1 + (0.5 - data1d[i-1]) / float(data1d[i] - data1d[i-1])
+    # continue for the descending slope
+    for i in range(i, len(data1d)):
+        if data1d[i] < 0.5:
+            break
+    # compute center of mass to get coordinate at 0.5
+    xmax = i - 1 + (0.5 - data1d[i-1]) / float(data1d[i] - data1d[i-1])
+    # display
+    # plt.figure()
+    # plt.plot(src1d)
+    # plt.plot(xmin, 0.5, 'o')
+    # plt.plot(xmax, 0.5, 'o')
+    # plt.show()
+    return xmin, xmax
