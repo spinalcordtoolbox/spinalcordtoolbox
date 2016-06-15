@@ -467,9 +467,11 @@ def main():
         # if step>1, apply warp_forward_concat to the src image to be used
         if i_step > 1:
             # sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
-            sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+add_suffix(src, '_reg')+' -x '+interp_step, verbose)
-            src = add_suffix(src, '_reg')
+            # apply transformation from previous step, to use as new src for registration
+            sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+add_suffix(src, '_regStep'+str(i_step-1))+' -x '+interp_step, verbose)
+            src = add_suffix(src, '_regStep'+str(i_step-1))
         # register src --> dest
+        # TODO: display param for debugging
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
         warp_forward.append(warp_forward_out)
         warp_inverse.append(warp_inverse_out)
