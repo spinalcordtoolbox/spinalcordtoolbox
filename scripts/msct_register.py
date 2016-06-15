@@ -16,8 +16,7 @@
 # TODO: clean code for generate_warping_field (unify with centermass_rot)
 
 import sys
-from math import asin, cos, sin
-
+from math import asin, cos, sin, acos
 from os import chdir
 import sct_utils as sct
 import numpy as np
@@ -224,6 +223,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         eigenv_src = pca_src.components_.T[0]
         eigenv_dest = pca_dest.components_.T[0]
         angle_src_dest = angle_between(eigenv_src, eigenv_dest)
+        print 'iz='+str(iz)+', angle_src_dest='+str(angle_src_dest)
         # import numpy as np
         R = np.matrix( ((cos(angle_src_dest), sin(angle_src_dest)), (-sin(angle_src_dest), cos(angle_src_dest))) )
 
@@ -276,9 +276,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         R3d = np.eye(3)
         R3d[0:2, 0:2] = R
         # apply forward transformation (in physical space)
-        coord_forward_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_dest_phy[0])), R3d) + np.transpose(centermass_src_phy[0]))
+        coord_forward_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_dest_phy[0])), R3d.T) + np.transpose(centermass_src_phy[0]))
         # apply inverse transformation (in physical space)
-        coord_inverse_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d.T) + np.transpose(centermass_dest_phy[0]))
+        coord_inverse_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d) + np.transpose(centermass_dest_phy[0]))
         # compute displacement per pixel in destination space (for forward warping field)
         warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
         warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
@@ -833,19 +833,28 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotat
 
 def angle_between(a, b):
     """
-    compute angle between a and b. Throws an exception if a or b has zero magnitude.
+    compute angle in radian between a and b. Throws an exception if a or b has zero magnitude.
     :param a:
     :param b:
     :return:
     """
-    from numpy.linalg import norm
-    from numpy import dot
-    import math
-    arccosInput = dot(a,b)/norm(a)/norm(b)
+    # from numpy.linalg import norm
+    # from numpy import dot
+    # import math
+    arccosInput = np.dot(a, b)/np.linalg.norm(a)/np.linalg.norm(b)
+    # print arccosInput
     arccosInput = 1.0 if arccosInput > 1.0 else arccosInput
     arccosInput = -1.0 if arccosInput < -1.0 else arccosInput
-    return math.acos(arccosInput)
+    sign_angle = np.sign(np.cross(a, b))
+    # print sign_angle
+    return sign_angle * acos(arccosInput)
 
+    # @xl_func("numpy_row v1, numpy_row v2: float")
+    # def py_ang(v1, v2):
+    # """ Returns the angle in radians between vectors 'v1' and 'v2'    """
+    # cosang = np.dot(a, b)
+    # sinang = la.norm(np.cross(a, b))
+    # return np.arctan2(sinang, cosang)
 
 
 def compute_pca(data2d):
