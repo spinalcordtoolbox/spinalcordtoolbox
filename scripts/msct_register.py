@@ -220,12 +220,12 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         coord_dest, pca_dest, centermass_dest = compute_pca(data_dest[:, :, iz])
 
         # compute (src,dest) angle for first eigenvector
-        eigenv_src = pca_src.components_.T[0]
-        eigenv_dest = pca_dest.components_.T[0]
+        eigenv_src = pca_src.components_.T[0][0], pca_src.components_.T[1][0]  # pca_src.components_.T[0]
+        eigenv_dest = pca_dest.components_.T[0][0], pca_dest.components_.T[1][0]  # pca_dest.components_.T[0]
         angle_src_dest = angle_between(eigenv_src, eigenv_dest)
         print 'iz='+str(iz)+', angle_src_dest='+str(angle_src_dest)
         # import numpy as np
-        R = np.matrix( ((cos(angle_src_dest), -sin(angle_src_dest)), (sin(angle_src_dest), cos(angle_src_dest))) )
+        R = np.matrix( ((cos(angle_src_dest), sin(angle_src_dest)), (-sin(angle_src_dest), cos(angle_src_dest))) )
 
         # display rotations
         if verbose == 2:
@@ -234,7 +234,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             coord_dest_rot = coord_dest * R.T
             # generate figure
             import matplotlib.pyplot as plt
-            plt.figure('iz='+str(iz), figsize=(9, 9))
+            plt.figure('iz='+str(iz)+', angle_src_dest='+str(angle_src_dest), figsize=(9, 9))
             plt.ion()  # enables interactive mode (allows keyboard interruption)
             # plt.title('iz='+str(iz))
             for isub in [221, 222, 223, 224]:
