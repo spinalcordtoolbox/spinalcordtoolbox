@@ -400,19 +400,15 @@ def main(argv=None):  # pylint: disable=unused-argument
                 # Compute the offset of the current minibatch in the data.
                 # Note that we could use better randomization across epochs.
                 offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
-                start_time = time.time()
                 batch_data = extract_data(TRAINING_SOURCE_DATA, list_images=list_data[offset:(offset + BATCH_SIZE)], verbose=0)
                 batch_labels, batch_labels_weights = extract_label(TRAINING_LABELS_DATA, segmentation_image_size, list_labels[offset:(offset + BATCH_SIZE)], verbose=0)
                 batch_labels = numpy.reshape(batch_labels, [batch_labels.shape[0] * batch_labels.shape[1] * batch_labels.shape[2], NUM_LABELS])
                 batch_labels_weights = numpy.reshape(batch_labels_weights, [batch_labels_weights.shape[0] * batch_labels_weights.shape[1] * batch_labels_weights.shape[2]])
-                print 'time extract images = ', time.time() - start_time
                 # This dictionary maps the batch data (as a numpy array) to the
                 # node in the graph is should be fed to.
                 feed_dict = {train_data_node: batch_data, train_labels_node: batch_labels, train_labels_weights: batch_labels_weights}
                 # Run the graph and fetch some of the nodes.
-                start_time = time.time()
                 _, l, lr, predictions = s.run([optimizer, loss, learning_rate, train_prediction], feed_dict=feed_dict)
-                print 'time train = ', time.time() - start_time
 
                 assert not numpy.isnan(l), 'Model diverged with loss = NaN'
 
@@ -437,7 +433,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                 if i != 0 and i % 5 == 0:
                     result = s.run([summary_op, learning_rate, error_rate_batch_tens, error_rate_validation_tens], feed_dict=feed_dict)
                     summary_str = result[0]
-                    sct.printv('Minibatch loss: %.3f, learning rate: %.6f, error batch %.6f, error validation %.6f' % (l, lr, error_rate_batch.eval(), error_rate_validation.eval()))
+                    sct.printv('Minibatch loss: %.6f, learning rate: %.6f, error batch %.3f, error validation %.3f' % (l, lr, error_rate_batch.eval(), error_rate_validation.eval()))
                     summary_writer.add_summary(summary_str, i)
 
                 del batch_data

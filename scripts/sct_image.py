@@ -58,7 +58,7 @@ def get_parser():
                       example='data_dest.nii.gz')
     parser.add_option(name="-split",
                       type_value="multiple_choice",
-                      description='Split data along the specified dimension',
+                      description='Split data along the specified dimension. The suffix _DIM+NUMBER will be added to the intput file name.',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
     parser.add_option(name="-concat",
@@ -82,13 +82,12 @@ def get_parser():
                       mandatory=False,
                       example='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split())
 
-    parser.usage.addSection("\nMulti-component operations:")
+    parser.usage.addSection("\nMulti-component operations on ITK composite warping fields:")
     parser.add_option(name='-mcs',
-                      description='Multi-component split. Outputs the components separately. (The sufix _x, _y and _z are added to the specified output) \n'
-                                  'Only one input',
+                      description='Multi-component split: Split ITK warping field into three separate displacement fields. The suffix _X, _Y and _Z will be added to the input file name.',
                       mandatory=False)
     parser.add_option(name='-omc',
-                      description='Multi-component output. Merge inputted images into one multi-component image. (need several inputs.)',
+                      description='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
                       mandatory=False)
 
     parser.usage.addSection("\nMisc")
@@ -172,7 +171,6 @@ def main(args = None):
 
     elif '-mcs' in arguments:
         im_in = Image(fname_in[0])
-
         if n_in != 1:
             printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
         if len(im_in.data.shape) != 5:
@@ -194,22 +192,27 @@ def main(args = None):
     # Write output
     if im_out is not None:
         printv('\nGenerate output files...', verbose)
+        # if only one output
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
             im_out[0].save(squeeze_data=False)
-        else:
+        if '-mcs' in arguments:
+            # use input file name and add _X, _Y _Z. Keep the same extension
+            fname_out = []
+            for i_dim in xrange(3):
+                fname_out.append(add_suffix(fname_in[0], '_'+dim_list[i_dim].upper()))
+                im_out[i_dim].setFileName(fname_out[i_dim])
+                im_out[i_dim].save()
+        if '-split' in arguments:
+            # use input file name and add _"DIM+NUMBER". Keep the same extension
+            fname_out = []
             for i, im in enumerate(im_out):
-                if fname_out is not None:
-                    if len(im_out)<= len(dim_list):
-                        suffix = '_'+dim_list[i].upper()
-                    else:
-                        suffix = '_'+str(i)
-                    if "-split" in arguments:
-                        suffix = '_'+dim_list[dim].upper()+str(i).zfill(4)
-                    im.setFileName(add_suffix(fname_out, suffix))
-                im.save()
+                fname_out.append(add_suffix(fname_in[0], '_'+dim_list[dim].upper()+str(i).zfill(4)))
+                im_out[0].setFileName(fname_out[i])
+                im_out[0].save()
 
-        printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
+        printv('Created file(s):\n--> '+str(fname_out)+'\n', verbose, 'info')
+        # printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
         print(orient)
     else:
