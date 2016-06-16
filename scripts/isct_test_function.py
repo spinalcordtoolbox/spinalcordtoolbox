@@ -256,26 +256,24 @@ if __name__ == "__main__":
     verbose = arguments["-v"]
 
     # check OS
-    print 'Check which OS is running... '
     platform_running = sys.platform
     if (platform_running.find('darwin') != -1):
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print '.. ' + os_running + ' (' + platform.platform() + ')'
+    print 'Check which OS is running: '+os_running+' ('+platform.platform()+')'
+
+    # check hostname
     print 'Hostname:', platform.node()
 
     # Check number of CPU cores
-    print 'Check number of CPU cores...'
     from multiprocessing import cpu_count
-
-    print '.. Available: ' + str(cpu_count())
     status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print '.. Used by SCT: ' + output
+    print 'Check number of CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
 
     # check RAM
-    print 'Check RAM... '
-    sct.checkRAM(os_running, verbose=0)
+    print 'Check RAM:'
+    sct.checkRAM(os_running)
 
     # start timer
     start_time = time()
