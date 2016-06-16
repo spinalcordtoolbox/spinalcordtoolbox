@@ -609,6 +609,14 @@ class Image(object):
 
             return coordi_pix_list
 
+    def get_value(self, coordi=None, interpolation_mode='linear'):
+        """
+        This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
+        :param coordi: continuouspix
+        :return: intensity values at continuouspix with interpolation_mode
+        """
+
+
     def get_slice(self, plane='sagittal', index=None, seg=None):
         """
 
