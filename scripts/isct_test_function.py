@@ -269,13 +269,23 @@ if __name__ == "__main__":
         handle_log = file('results_testing_'+strftime("%y%m%d%H%M%S")+'.txt', 'w')
         sys.stdout = handle_log
 
+    # get path of the toolbox
+    path_sct = os.getenv("SCT_DIR")
+    if path_sct is None :
+        raise EnvironmentError("SCT_DIR, which is the path to the "
+                               "Spinalcordtoolbox install needs to be set")
+    # fetch version of the toolbox
+    with open (path_sct+"/version.txt", "r") as myfile:
+        version_sct = myfile.read().replace('\n', '')
+    print "SCT version: "+version_sct
+
     # check OS
     platform_running = sys.platform
     if (platform_running.find('darwin') != -1):
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print 'Check which OS is running: '+os_running+' ('+platform.platform()+')'
+    print 'OS: '+os_running+' ('+platform.platform()+')'
 
     # check hostname
     print 'Hostname:', platform.node()
@@ -283,10 +293,10 @@ if __name__ == "__main__":
     # Check number of CPU cores
     from multiprocessing import cpu_count
     status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'Check number of CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
+    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
 
     # check RAM
-    print 'Check RAM:'
+    print 'RAM:'
     sct.checkRAM(os_running)
 
     # start timer
