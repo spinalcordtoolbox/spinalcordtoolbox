@@ -393,6 +393,8 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
+    print "HOLA!!!"
+    print param.verbose
 
     # display arguments
     sct.printv('Registration parameters:', param.verbose)
