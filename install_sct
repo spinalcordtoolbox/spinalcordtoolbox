@@ -76,6 +76,7 @@ fi"
 }
 
 
+
 # Installation text to insert in .bashrc
 install_refresh ()
 {
@@ -355,9 +356,7 @@ elif [ ${OFFLINE_INSTALL} ]; then
   dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
   ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
 
-  # replace that!
   conda install --yes --no-deps ${SCT_SOURCE}/offline/pkgs_${OS}/*
-
   pip install --no-deps --ignore-installed ${dipy_whl} ${ornlm_whl} ${SCT_SOURCE}/offline/*none*.whl
 
 
@@ -376,10 +375,22 @@ else
 
   # Install Python dependencies
   echo -e "\nInstalling Python dependencies..."
-  # N.B. the flag --ignore-installed is required because if user already
-  # has other dependencies, it will not install
+  # N.B. the flag --ignore-installed is required because locally install
+  # package are skip
   conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
+  e_status = $?
+  if e_status ; then
+    echo "conda install error with exit status $e_status. Check logs for more details
+            and verify your internet connection before reinstalling"
+    exit 1
+  fi
   pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+  e_status = $?
+  if e_status ; then
+    echo "pip install error with exit status $e_status. Check logs for more details
+            and verify your internet connection before reinstalling"
+     exit 1
+  fi
 
   # Install wheels
   echo -e "\nInstalling external Python dependencies..."
@@ -389,6 +400,7 @@ else
   dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
   ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
   pip install --ignore-installed ${dipy_whl} ${ornlm_whl}
+
 fi
 
 echo -e "All requirements installed!"

@@ -72,7 +72,7 @@ class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
-    def __init__(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
+    def __init__(self, slice_id=None, im=None, sc_seg=None, list_gm_seg=None, list_wm_seg=None, reg_to_m=None, im_m=None, list_gm_seg_m=None, list_wm_seg_m=None, im_m_flat=None, list_gm_seg_m_flat=None, list_wm_seg_m_flat=None, level=None):
         """
         Slice constructor
 
@@ -80,41 +80,41 @@ class Slice:
 
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
 
-        :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
+        :param list_gm_seg: list of manual gray matter segmentation of the original image, type: numpy array
 
-        :param wm_seg: manual white matter segmentation of the original image, type: numpy array
+        :param list_wm_seg: list of manual white matter segmentation of the original image, type: numpy array
 
         :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
 
         :param im_m: image in the model space, type: numpy array
 
-        :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
+        :param list_gm_seg_m: list of manual gray matter segmentation in the model space, type: numpy array
 
-        :param wm_seg_m: manual white matter segmentation in the model space, type: numpy array
+        :param list_wm_seg_m: list of manual white matter segmentation in the model space, type: numpy array
 
         :param im_m_flat: flatten image in the model space, type: numpy array
 
-        :param gm_seg_m_flat: flatten manual gray matter  segmentation in the model space, type: numpy array
+        :param list_gm_seg_m_flat: list of flatten manual gray matter  segmentation in the model space, type: numpy array
 
-        :param wm_seg_m_flat: flatten manual white matter segmentation in the model space, type: numpy array
+        :param list_wm_seg_m_flat: list of flatten manual white matter segmentation in the model space, type: numpy array
 
         :param level: vertebral level of the slice, type: int
         """
         self.id = slice_id
-        self.im = im
-        self.sc_seg = sc_seg
-        self.gm_seg = gm_seg
-        self.wm_seg = wm_seg
+        self.im = np.asarray(im)
+        self.sc_seg = np.asarray(sc_seg)
+        self.gm_seg = np.asarray(list_gm_seg)
+        self.wm_seg = np.asarray(list_wm_seg)
         self.reg_to_M = reg_to_m
-        self.im_M = im_m
-        self.gm_seg_M = gm_seg_m
-        self.wm_seg_M = wm_seg_m
+        self.im_M = np.asarray(im_m)
+        self.gm_seg_M = np.asarray(list_gm_seg_m)
+        self.wm_seg_M = np.asarray(list_wm_seg_m)
         self.im_M_flat = im_m_flat
-        self.gm_seg_M_flat = gm_seg_m_flat
-        self.wm_seg_M_flat = wm_seg_m_flat
+        self.gm_seg_M_flat = list_gm_seg_m_flat
+        self.wm_seg_M_flat = list_wm_seg_m_flat
         self.level = level
 
-    def set(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
+    def set(self, slice_id=None, im=None, sc_seg=None, list_gm_seg=None, list_wm_seg=None, reg_to_m=None, im_m=None, list_gm_seg_m=None, list_wm_seg_m=None, im_m_flat=None, list_gm_seg_m_flat=None, list_wm_seg_m_flat=None, level=None):
         """
         Slice setter, only the specified parameters are set
 
@@ -122,23 +122,23 @@ class Slice:
 
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
 
-        :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
+        :param list_gm_seg: list of manual gray matter segmentation of the original image, type: numpy array
 
-        :param wm_seg: manual white matter segmentation of the original image, type: numpy array
+        :param list_wm_seg: list of manual white matter segmentation of the original image, type: numpy array
 
         :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
 
         :param im_m: image in the model space, type: numpy array
 
-        :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
+        :param list_gm_seg_m: list of manual gray matter segmentation in the model space, type: numpy array
 
-        :param wm_seg_m: manual white matter segmentation in the model space, type: numpy array
+        :param list_wm_seg_m: list of manual white matter segmentation in the model space, type: numpy array
 
         :param im_m_flat: flatten image in the model space, type: numpy array
 
-        :param gm_seg_m_flat: flatten manual gray matter  segmentation in the model space, type: numpy array
+        :param list_gm_seg_m_flat: list of flatten manual gray matter  segmentation in the model space, type: numpy array
 
-        :param wm_seg_m_flat: flatten manual white matter segmentation in the model space, type: numpy array
+        :param list_wm_seg_m_flat: list of flatten manual white matter segmentation in the model space, type: numpy array
 
         :param level: vertebral level of the slice, type: int
         """
@@ -148,24 +148,24 @@ class Slice:
             self.im = im
         if sc_seg is not None:
             self.sc_seg = sc_seg
-        if gm_seg is not None:
-            self.gm_seg = gm_seg
-        if wm_seg is not None:
-            self.wm_seg = wm_seg
+        if list_gm_seg is not None:
+            self.gm_seg = list_gm_seg
+        if list_wm_seg is not None:
+            self.wm_seg = list_wm_seg
         if reg_to_m is not None:
             self.reg_to_M = reg_to_m
         if im_m is not None:
             self.im_M = im_m
-        if gm_seg_m is not None:
-            self.gm_seg_M = gm_seg_m
-        if wm_seg_m is not None:
-            self.wm_seg_M = wm_seg_m
+        if list_gm_seg_m is not None:
+            self.gm_seg_M = list_gm_seg_m
+        if list_wm_seg_m is not None:
+            self.wm_seg_M = list_wm_seg_m
         if im_m_flat is not None:
             self.im_M_flat = im_m_flat
-        if gm_seg_m_flat is not None:
-            self.gm_seg_M_flat = gm_seg_m_flat
-        if wm_seg_m_flat is not None:
-            self.wm_seg_M_flat = wm_seg_m_flat
+        if list_gm_seg_m_flat is not None:
+            self.gm_seg_M_flat = list_gm_seg_m_flat
+        if list_wm_seg_m_flat is not None:
+            self.wm_seg_M_flat = list_wm_seg_m_flat
         if level is not None:
             self.level = level
 
@@ -279,7 +279,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
         transfo_dir = transfo_type.lower() + '_transformations'
         if transfo_dir not in os.listdir(path):
             sct.run('mkdir ' + path + transfo_dir)
-        dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S") + '_' + str(time.time())
+        dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S") + '_' + str(time.time())+'/'
         sct.run('mkdir ' + dir_name, verbose=verbose)
         os.chdir('./' + dir_name)
 
@@ -324,10 +324,12 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
 
         if apply_transfo:
             if not search_reg:
-                sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + ' ./' + mat_name, verbose=verbose)
+                os.chdir('..')
+                sct.run('cp ' + path + transfo_dir + '/' + transfo_name + ' ./' + dir_name + mat_name, verbose=verbose)
                 if 'SyN' in transfo_type:
-                    sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + '_inversed' + ' ./' + inverse_mat_name,
+                    sct.run('cp ' + path + transfo_dir + '/' + transfo_name + '_inversed' + ' ./' + dir_name + inverse_mat_name,
                             verbose=verbose)
+                os.chdir('./' + dir_name)
 
             if binary or moving_im.max() == 1 or fixed_im.max() == 1:
                 apply_transfo_interpolation = 'NearestNeighbor'
@@ -347,12 +349,13 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
             sct.run(cmd_apply, verbose=verbose)
 
             res_im = Image(moving_im_name + '_moved.nii.gz')
+        os.chdir('..')
     except Exception, e:
         sct.printv('WARNING: AN ERROR OCCURRED WHEN DOING RIGID REGISTRATION USING ANTs', 1, 'warning')
         print e
     else:
         sct.printv('Removing temporary files ...', verbose=verbose, type='normal')
-        os.chdir('..')
+        #os.chdir('..')
         sct.run('rm -rf ' + dir_name + '/', verbose=verbose)
 
     if apply_transfo and res_im is not None:
@@ -432,6 +435,87 @@ def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
     sct.run('sct_maths -i ' + corrected_wm_seg.file_name + '.nii.gz -thr 0 -o ' + corrected_wm_seg.file_name + '.nii.gz')
 
     return corrected_wm_seg
+
+# ------------------------------------------------------------------------------------------------------------------
+def get_all_seg_from_dic(slices, type='wm'):
+    """
+    get a list of all manual segmentations in a list od slices that have multiple manual segmentations per slice
+    :return:
+    """
+    if type  == 'wm':
+        list_seg_by_slice = [dic_slice.wm_seg for dic_slice in slices]
+    elif type == 'gm':
+        list_seg_by_slice = [dic_slice.gm_seg for dic_slice in slices]
+    elif type.lower() == 'wm_m':
+        list_seg_by_slice = [dic_slice.wm_seg_M for dic_slice in slices]
+    elif type.lower() == 'gm_m':
+        list_seg_by_slice = [dic_slice.gm_seg_M for dic_slice in slices]
+
+    list_all_seg = []
+    for list_seg in list_seg_by_slice:
+        for seg in list_seg:
+            list_all_seg.append(seg)
+
+    return np.asarray(list_all_seg)
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def load_level(level_file, type='int', verbose=1):
+    """
+    Find the vertebral level of the target image slice(s) for a level image (or a string if the target is 2D)
+    :param level_file: image or text file containing level information
+    :param target_slices: list of slices in which the level needs to be set
+    :return None: the target level is set in the function
+    """
+    dic_level_by_i = {}
+    if isinstance(level_file, Image):
+        subject_levels = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: [], 11: [], 12: [], 13: [], 14: [], 15: [], 16: [], 17: [], 18: [], 19: [], 20: [], 21: [], 22: [], 23: [], 24: []}
+        for i_level_slice, level_slice in enumerate(level_file.data):
+            try:
+                l = int(round(np.mean(level_slice[level_slice > 0])))
+                dic_level_by_i[i_level_slice] = l
+                subject_levels[l].append(i_level_slice)
+            except Exception, e:
+                sct.printv('WARNING: ' + str(e) + '\nNo level label for slice ' + str(i_level_slice) + ' of target', verbose, 'warning')
+                dic_level_by_i[i_level_slice] = 0
+
+        if type == 'float':
+            for int_level, slices_list in subject_levels.items():
+                n_slices_by_level = len(slices_list)
+                if n_slices_by_level == 1:
+                    index = slices_list[0]
+                    if index == 0:
+                        dic_level_by_i[index] = int_level+0.1
+                    elif index == len(level_file.data)-1:
+                        dic_level_by_i[index] = int_level+0.9
+                    else:
+                        dic_level_by_i[index] = int_level+0.5
+                elif n_slices_by_level > 1:
+                    gap = 1.0/(n_slices_by_level + 1)
+                    for i, index in enumerate(slices_list):
+                        dic_level_by_i[index] = int_level+((n_slices_by_level-i)*gap)
+
+    elif isinstance(level_file, str):
+        if os.path.isfile(level_file):
+            assert sct.extract_fname(level_file)[2] == '.txt', 'ERROR: the level file is nor an image nor a text file ...'
+            level_txt_file = open(level_file, 'r')
+            lines = level_txt_file.readlines()
+            level_txt_file.close()
+
+            for line in lines[1:]:
+                i_slice, level = line.split(',')
+                level = int(level[:-1])
+                i_slice = int(i_slice)
+                dic_level_by_i[i_slice] = level
+        else:
+            # WARNING: This should be the same dictionary as in the class ModelDictionary.level_label
+            level_label_dic = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7', 15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1', 21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5'}
+            dic_level_by_i[0] = get_key_from_val(level_label_dic, level_file.upper())
+
+    list_level_by_slice = [dic_level_by_i[i] for i in sorted(dic_level_by_i.keys())]
+
+    return list_level_by_slice
+
 
 
 ########################################################################################################################
@@ -522,8 +606,9 @@ def extract_metric_from_slice_set(slices_set, seg_to_use=None, metric='Mean', gm
 
         # mask with the gray matter segmentation
         if seg_to_use is None:
-            gm_dat[slice_i.gm_seg_M == 0] = 0
-            wm_dat[slice_i.gm_seg_M == 1] = 0
+            mean_gm_seg_M = compute_majority_vote_mean_seg(slice_i.gm_seg_M)
+            gm_dat[mean_gm_seg_M == 0] = 0
+            wm_dat[mean_gm_seg_M == 1] = 0
         else:
             gm_dat[seg_to_use[i] == 0] = 0
             wm_dat[seg_to_use[i] == 1] = 0
@@ -712,25 +797,39 @@ def save_by_slice(dic_dir):
         subject_path = dic_dir + '/' + subject_dir
         if os.path.isdir(subject_path):
             sct.run('mkdir ' + dic_by_slice_dir + subject_dir)
+            i_manual_gm = 0
             # getting the level file
             path_file_levels = None
-            label_by_slice = {}
-            level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2',
-                           10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
+            level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7', 15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1', 21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5'}
             for file_name in os.listdir(subject_path):
                 if 'level' in file_name:
                     path_file_levels = subject_path + '/' + file_name
-
+                    '''
                     if 'IRP' not in file_name:
                         path_file_levels_IRP = sct.add_suffix(path_file_levels, '_IRP')
                         sct.run('sct_image -i ' + subject_path + '/' + file_name + ' -setorient IRP -o '+path_file_levels_IRP)
                         path_file_levels = path_file_levels_IRP # subject_path + '/' + sct.extract_fname(file_name)[1] + '_IRP.nii.gz'
-
+                    '''
             if path_file_levels is None and 'label' in os.listdir(subject_path):
+                '''
                 if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
                     sct.run('sct_image -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
-                path_file_levels = subject_path + '/label/template/MNI-Poly-AMU_level_IRP.nii.gz'
+                '''
+                path_file_levels = subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz'
+
             elif path_file_levels is not None:
+                path_level, file_level, ext_level = sct.extract_fname(path_file_levels)
+                if ext_level == '.nii.gz' or ext_level == '.nii':
+                    level_info_file = Image(path_file_levels)
+                    level_info_file.change_orientation('IRP')
+                elif ext_level == '.txt':
+                    level_info_file = path_file_levels
+                else:
+                    level_info_file = None
+                    sct.printv('WARNING: no level file for subject '+subject_dir, 1, 'warning')
+
+                list_level_by_slice = load_level(level_info_file)
+                '''
                 im_levels = Image(path_file_levels)
                 nz_coord = im_levels.getNonZeroCoordinates()
                 for i_level_slice, level_slice in enumerate(im_levels.data):
@@ -743,6 +842,7 @@ def save_by_slice(dic_dir):
                     except ZeroDivisionError:
                         sct.printv('No level label for slice ' + str(i_level_slice) + ' of subject ' + subject_dir)
                         label_by_slice[i_level_slice] = 0
+                '''
 
             for file_name in os.listdir(subject_path):
                 if 'seg_in' in file_name and 'croped' in file_name and 'IRP' in file_name:
@@ -770,14 +870,14 @@ def save_by_slice(dic_dir):
                                 i_slice_str = '0' + i_slice_str
                             else:
                                 i_slice_str = str(i_slice)
-                            fname_slice = dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_im.nii.gz'
+                            fname_slice = dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_' + level_label[list_level_by_slice[i_slice]] + '_im.nii.gz'
                             im_slice = Image(param=im_slice, absolutepath=fname_slice, hdr=im.hdr)
 
                             if len(im_slice.hdr.get_zooms()) == 3:
                                 im_slice.hdr.set_zooms(slice_zoom)
                             im_slice.save()
 
-                if 'manual_gmseg' in file_name and 'croped' in file_name and 'IRP' in file_name:
+                if 'gm' in file_name and 'croped' in file_name and 'IRP' in file_name:
                     seg = Image(dic_dir + '/' + subject_dir + '/' + file_name)
                     seg_zooms = seg.hdr.get_zooms()
                     slice_zoom = (seg_zooms[1], seg_zooms[2], seg_zooms[0])
@@ -788,7 +888,7 @@ def save_by_slice(dic_dir):
                                 i_slice_str = '0' + i_slice_str
                             else:
                                 i_slice_str = str(i_slice)
-                            seg_slice = Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_manual_gmseg.nii.gz', hdr=seg.hdr)
+                            seg_slice = Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir + '_slice' + i_slice_str + '_' + level_label[list_level_by_slice[i_slice]] + '_manual_gmseg_rater'+str(i_manual_gm)+'.nii.gz', hdr=seg.hdr)
 
                             if len(seg_slice.hdr.get_zooms()) == 3:
                                 seg_slice.hdr.set_zooms(slice_zoom)
@@ -803,11 +903,12 @@ def save_by_slice(dic_dir):
                                 i_slice_str = str(i_slice)
 
                             seg_slice = Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
-                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_seg.nii.gz', hdr=seg.hdr)
+                                  '_slice' + i_slice_str + '_' + level_label[list_level_by_slice[i_slice]] + '_manual_gmseg_rater'+str(i_manual_gm)+'.nii.gz', hdr=seg.hdr)
 
                             if len(seg_slice.hdr.get_zooms()) == 3:
                                 seg_slice.hdr.set_zooms(slice_zoom)
                             seg_slice.save()
+                    i_manual_gm += 1
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -864,11 +965,11 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
     the dataset should contain for each subject :
         - a T2*-w image containing 'im' in its name
         - a segmentation of the spinal cord containing 'seg' in its name
-        - a manual segmentation of the gray matter containing 'gm' in its name
+        - a manual segmentation of the gray matter containing 'gm' in its name (or several manual segmentations from different raters)
         - a 'level image' containing 'level' in its name : the level image is an image containing a level label per slice indicating at wich vertebral level correspond this slice
     :param path:
     """
-
+    from copy import deepcopy
     axial_pix_dim = 0.3
     model_image_size = 75
     interpolation = 'spline'  # 'Cubic'
@@ -877,49 +978,56 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
         if os.path.isdir(path_to_dataset + '/' + subject_dir):
             os.chdir(path_to_dataset + '/' + subject_dir)
             # getting the subject images
-            t2star = ''
-            scseg = ''
-            gmseg = ''
+            fname_t2star = ''
+            fname_scseg = ''
+            list_fname_gmseg = []
             for file_name in os.listdir('.'):
                 if 'im' in file_name:
-                    t2star = file_name
+                    fname_t2star = file_name
                 elif 'gm' in file_name:
-                    gmseg = file_name
+                    list_fname_gmseg.append(file_name)
                 elif 'seg' in file_name and 'gm' not in file_name:
-                    scseg = file_name
+                    fname_scseg = file_name
 
-            new_names = []
-            for f_name in [t2star, scseg, gmseg]:
+            list_new_names = []
+            list_fnames = deepcopy(list_fname_gmseg)
+            list_fnames.append(fname_scseg)
+            list_fnames.append(fname_t2star)
+
+            for f_name in list_fnames:
                 im = Image(f_name)
                 orientation = get_orientation_3d(im)
                 if orientation != 'RPI':
                     im = set_orientation(im, 'RPI')
-                    new_names.append(im.absolutepath)
+                    list_new_names.append(im.absolutepath)
                     im.save()
                     # new_names.append(output.split(':')[1][1:-1])
                 else:
-                    new_names.append(f_name)
+                    list_new_names.append(f_name)
 
-            t2star = new_names[0]
-            scseg = new_names[1]
-            gmseg = new_names[2]
+            fname_t2star = list_new_names[-1]
+            fname_scseg = list_new_names[-2]
+            list_fname_gmseg = list_new_names[:-2]
 
-            t2star = resample_image(t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
-            scseg = resample_image(scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
-            gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
+            fname_t2star = resample_image(fname_t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
+            fname_scseg = resample_image(fname_scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True, interpolation='nn')
+            list_fname_gmseg = [resample_image(fname_gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True, interpolation='nn') for fname_gmseg in list_fname_gmseg]
+
+
 
             if denoise:
                 from sct_maths import denoise_ornlm
-                t2star_im = Image(t2star)
+                t2star_im = Image(fname_t2star)
                 t2star_im.data = denoise_ornlm(t2star_im.data)
                 t2star_im.save()
 
-            mask_box, fname_seg_in_IRP = crop_t2_star(t2star, scseg, box_size=model_image_size)
+            mask_box, fname_seg_in_IRP = crop_t2_star(fname_t2star, fname_scseg, box_size=model_image_size)
 
-            gmseg_im = Image(gmseg)
-            mask_im = Image(mask_box)
-            gmseg_im.crop_and_stack(mask_im, suffix='_croped', save=True)
-            sct.run('sct_image -i '+sct.extract_fname(gmseg)[1] + '_croped.nii.gz -setorient IRP')
+            for fname_gmseg in list_fname_gmseg:
+                im_gmseg = Image(fname_gmseg)
+                im_mask = Image(mask_box)
+                im_gmseg.crop_and_stack(im_mask, suffix='_croped', save=True)
+                sct.run('sct_image -i '+sct.extract_fname(fname_gmseg)[1] + '_croped.nii.gz -setorient IRP')
 
             os.chdir(original_path)
     save_by_slice(path_to_dataset)

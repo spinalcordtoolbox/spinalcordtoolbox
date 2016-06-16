@@ -8,6 +8,7 @@
 - NEW: SCT now includes its own python (from miniconda), which simplifies the installation and allows users to have another Python installed without generating conflicts.
 - NEW: **sct_dmri_create_noisemask**: Identification and estimation of noise in the diffusion signal, implemented by the Dipy software project (http://nipy.org/dipy/), based on the PIESNO method
 - NEW: **sct_register_graymatter**: Multi-label registration that accounts for gray matter shape.
+- NEW: **sct_register_multimodal**: features two new transformations: centermassrot and columnwise.
 - BUG: Fixed issues #715, #719
 - BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
 - BUG: **sct_segment_graymatter**: fixed issues #782, #813, #815

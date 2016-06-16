@@ -22,9 +22,9 @@ import os.path
 def test(path_data='', parameters=''):
 
     # initializations
-    result_rmse = 'NaN'
-    result_dist_max = 'NaN'
-    result_dice = 'NaN'
+    result_rmse = float('NaN')
+    result_dist_max = float('NaN')
+    result_dice = float('NaN')
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -qc 0'
