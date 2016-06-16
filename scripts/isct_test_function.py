@@ -224,6 +224,13 @@ def get_parser():
                       default_value=0,
                       example='42')
 
+    parser.add_option(name="-log",
+                      type_value='multiple_choice',
+                      description="Redirects Terminal verbose to log file.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
+
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="Verbose. 0: nothing, 1: basic, 2: extended.",
@@ -248,12 +255,19 @@ if __name__ == "__main__":
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
-
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
+    create_log_file = arguments['-log']
+
 
     verbose = arguments["-v"]
+
+    # redirect to log file
+    if create_log_file:
+        orig_stdout = sys.stdout
+        handle_log = file('results_testing_'+strftime("%y%m%d%H%M%S")+'.txt', 'w')
+        sys.stdout = handle_log
 
     # check OS
     platform_running = sys.platform
