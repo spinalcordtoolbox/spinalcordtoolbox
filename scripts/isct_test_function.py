@@ -288,14 +288,20 @@ if __name__ == "__main__":
     results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
     results_display = results_subset
 
+    # save panda structure
+    results_subset.to_pickle('results_testing_'+strftime("%y%m%d%H%M%S"))
+    results_subset.to_csv('results_testing_'+strftime("%y%m%d%H%M%S")+'.csv')
+
     # mean
     results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
     results_mean['subject'] = 'Mean'
+    results_mean.set_value('status', float('NaN'))  # set status to NaN
     results_display = results_display.append(results_mean, ignore_index=True)
 
     # std
     results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
     results_std['subject'] = 'STD'
+    results_std.set_value('status', float('NaN'))  # set status to NaN
     results_display = results_display.append(results_std, ignore_index=True)
 
     # count tests that passed
