@@ -16,6 +16,7 @@
 
 import sys
 import math
+import numpy as np
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -562,6 +563,44 @@ class ProcessLabels(object):
                     coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i+1) + '[' + str(
                     coordinates_input[i+1].x) + ',' + str(coordinates_input[i+1].y) + ',' + str(coordinates_input[i+1].z) + ']=' + str(
                     coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
+
+
+    def continuous_vertebral_levels(self):
+        """
+        This function transforms the vertebral levels file from the template into a continuous file.
+        Instead of having integer representing the vertebral level on each slice, a continuous value that represents
+        the position of the slice in the vertebral level coordinate system.
+        The image must be RPI
+        :return:
+        """
+        im_input = Image(self.image_input, self.verbose)
+        im_output = Image(self.image_input, self.verbose)
+        im_output.data *= 0
+
+        # 1. extract vertebral levels from input image
+        #   a. extract centerline
+        #   b. for each slice, extract corresponding level
+        nx, ny, nz, nt, px, py, pz, pt = im_input.dim
+
+        from sct_straighten_spinalcord import smooth_centerline
+        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_input, algo_fitting='nurbs', verbose=self.verbose)
+        value_centerline = np.zeros(len(x_centerline_fit))
+        for it in range(value_centerline):
+            value_centerline[it] = im_input[im_input.]
+
+        # 2. compute distance for each vertebral level --> Di for i being the vertebral levels
+
+        # 2. for each slice:
+        #   a. identify corresponding vertebral level --> i
+        #   b. calculate distance of slice from upper vertebral level --> d
+        #   c. compute relative distance in the vertebral level coordinate system --> d/Di
+        continuous_values = np.zeros(nz)
+        for iz in range(0, nz):
+            level =
+
+
+        # 3. saving data
+        # for each slice, get all non-zero pixels and replace with continuous values
 
 
 
