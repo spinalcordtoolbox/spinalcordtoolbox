@@ -399,36 +399,6 @@ class ProcessLabels(object):
         return image_cubic2point
 
 
-    def symmetrizer(self, side='left'):
-        """
-        Symmetrize the input image. One side of the image will be copied on the other side. We assume a
-        RPI orientation.
-        :param side: string 'left' or 'right'. Side that will be copied on the other side.
-        :return:
-        """
-        image_output = Image(self.image_input, self.verbose)
-
-        image_output[0:]
-
-        """inspiration: (from atlas creation matlab script)
-        temp_sum = temp_g + temp_d;
-        temp_sum_flip = temp_sum(end:-1:1,:);
-        temp_sym = (temp_sum + temp_sum_flip) / 2;
-
-        temp_g(1:end / 2,:) = 0;
-        temp_g(1 + end / 2:end,:) = temp_sym(1 + end / 2:end,:);
-        temp_d(1:end / 2,:) = temp_sym(1:end / 2,:);
-        temp_d(1 + end / 2:end,:) = 0;
-
-        tractsHR
-        {label_l}(:,:, num_slice_ref) = temp_g;
-        tractsHR
-        {label_r}(:,:, num_slice_ref) = temp_d;
-        """
-
-        return image_output
-
-
     def MSE(self, threshold_mse=0):
         """
         Compute the Mean Square Distance Error between two sets of labels (input and ref).
