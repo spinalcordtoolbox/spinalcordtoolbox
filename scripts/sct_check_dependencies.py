@@ -91,42 +91,36 @@ def main():
             print output
 
     # check OS
-    print 'Check which OS is running... '
     platform_running = sys.platform
     if (platform_running.find('darwin') != -1):
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print '.. '+os_running+' ('+platform.platform()+')'
+    print 'Check which OS is running: '+os_running+' ('+platform.platform()+')'
 
     # Check number of CPU cores
-    print 'Check number of CPU cores...'
     from multiprocessing import cpu_count
-    print '.. Available: ' + str(cpu_count())
     status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print '.. Used by SCT: ' + output
+    print 'Check number of CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
 
     # check RAM
-    print 'Check RAM... '
+    print 'Check RAM:'
     sct.checkRAM(os_running)
 
     # check installation packages
-    print 'Check which Python is running...'
-    print '.. '+sys.executable
+    print 'Check which Python is running: '+sys.executable
 
     # get path of the toolbox
-    print 'Check SCT path...'
     path_sct = os.getenv("SCT_DIR")
     if path_sct is None :
         raise EnvironmentError("SCT_DIR, which is the path to the "
                                "Spinalcordtoolbox install needs to be set")
-    print ('.. {0}'.format(path_sct))
+    print ('Check SCT path: {0}'.format(path_sct))
 
     # fetch version of the toolbox
-    print 'Check SCT version... '
     with open (path_sct+"/version.txt", "r") as myfile:
         version_sct = myfile.read().replace('\n', '')
-    print ".. "+version_sct
+    print "Check SCT version: "+version_sct
 
     # check if data folder is empty
     print_line('Check if data are installed')

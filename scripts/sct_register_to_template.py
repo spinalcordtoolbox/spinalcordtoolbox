@@ -162,6 +162,7 @@ def main():
     contrast_template = arguments['-c']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
+    param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
     if '-param-straighten' in arguments:
         param.param_straighten = arguments['-param-straighten']
     # if '-cpu-nb' in arguments:
@@ -289,7 +290,9 @@ def main():
 
     # smooth segmentation (jcohenadad, issue #613)
     sct.printv('\nSmooth segmentation...', verbose)
-    sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
+    # sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
+    # jcohenadad: updated 2016-06-16: DO NOT smooth the seg anymore. Issue #
+    sct.run('sct_maths -i '+ftmp_seg+' -smooth 0 -o '+add_suffix(ftmp_seg, '_smooth'))
     ftmp_seg = add_suffix(ftmp_seg, '_smooth')
 
     # resample data to 1mm isotropic
@@ -467,9 +470,12 @@ def main():
         # if step>1, apply warp_forward_concat to the src image to be used
         if i_step > 1:
             # sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
-            sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+add_suffix(src, '_reg')+' -x '+interp_step, verbose)
-            src = add_suffix(src, '_reg')
+            # apply transformation from previous step, to use as new src for registration
+            sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+add_suffix(src, '_regStep'+str(i_step-1))+' -x '+interp_step, verbose)
+            src = add_suffix(src, '_regStep'+str(i_step-1))
         # register src --> dest
+        # TODO: display param for debugging
+        param.verbose
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
         warp_forward.append(warp_forward_out)
         warp_inverse.append(warp_inverse_out)
