@@ -363,7 +363,7 @@ class ProcessLabels(object):
         # get list of coordinates for each label
         list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
         # if user did not specify levels, include all:
-        if levels_user == 0:
+        if levels_user[0] == 0:
             levels_user = [int(i.value) for i in list_coordinates]
         # loop across labels and remove those that are not listed by the user
         for i_label in range(len(list_coordinates)):
