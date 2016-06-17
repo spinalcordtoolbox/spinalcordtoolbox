@@ -214,6 +214,7 @@ def main(args=None):
         printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
         print(orient)
+        return orient
     else:
         printv('An error occurred in sct_image...', verbose, "error")
 

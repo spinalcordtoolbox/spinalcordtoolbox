@@ -1390,7 +1390,8 @@ def compute_error_map_by_level(data_path):
             if res_wm_seg != '' and level != '' and sq_mask!= '':
 
                 ref_wm_seg = 'validation/ref_wm_seg.nii.gz'
-                status, ref_ori = sct.run('sct_image -i ' + ref_wm_seg + ' -getorient')
+                # status, ref_ori = sct.run('sct_image -i ' + ref_wm_seg + ' -getorient')
+                ref_ori = sct_image.main(['-i', ref_wm_seg, '-getorient'])
 
                 # ref_ori = ref_ori[4:7]
                 if ref_ori != 'IRP':
