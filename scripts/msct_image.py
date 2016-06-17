@@ -619,7 +619,7 @@ class Image(object):
         :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
         :return: intensity values at continuouspix with interpolation_mode
         """
-        return map_coordinates(self.data, coordi, order=interpolation_mode)
+        return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode)
 
     def interpolate_from_image(self, im_ref, fname_output, interpolation_mode=1):
         """
@@ -642,6 +642,10 @@ class Image(object):
         interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode)
 
         im_output = Image(im_ref)
+        if interpolation_mode == 0:
+            im_output.changeType('int32')
+        else:
+            im_output.changeType('float32')
         im_output.data = np.reshape(interpolated_values, (nx, ny, nz))
         im_output.setFileName(fname_output)
         im_output.save()
