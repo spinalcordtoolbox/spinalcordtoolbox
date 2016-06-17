@@ -545,7 +545,7 @@ class Image(object):
         m_p2f_transfo = m_p2f[0:3, 0:3]
         coord_origin = array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if coordi != None:
+        if not coordi is None:
             coordi_pix = transpose(asarray(coordi))
             coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))
             coordi_phys_list = coordi_phys.tolist()
