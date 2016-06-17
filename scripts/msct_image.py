@@ -27,6 +27,7 @@ class Image(object):
         from nibabel import AnalyzeHeader
 
         # initialization of all parameters
+        self.im_file = None
         self.data = None
         self.orientation = None
         self.absolutepath = ""
@@ -75,6 +76,7 @@ class Image(object):
         from copy import deepcopy
         from sct_utils import extract_fname
         if image is not None:
+            self.im_file = deepcopy(image.im_file)
             self.data = deepcopy(image.data)
             self.dim = deepcopy(image.dim)
             self.hdr = deepcopy(image.hdr)
@@ -95,17 +97,16 @@ class Image(object):
         from sct_image import get_orientation
 
         # check_file_exist(path, verbose=verbose)
-        im_file = None
         try:
-            im_file = load(path)
+            self.im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        self.data = im_file.get_data()
-        self.hdr = im_file.get_header()
+        self.data = self.im_file.get_data()
+        self.hdr = self.im_file.get_header()
         self.orientation = get_orientation(self)
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
-        self.dim = get_dimension(im_file)
+        self.dim = get_dimension(self.im_file)
         # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
         # self.dim = [nx, ny, nz]
 
@@ -528,8 +529,6 @@ class Image(object):
 
     def transfo_pix2phys(self, coordi=None):
         """
-
-
         This function returns the physical coordinates of all points of 'coordi'. 'coordi' is a list of list of size
         (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical
         coordinates of the points in the space of the image.
@@ -621,6 +620,18 @@ class Image(object):
         """
         return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode)
 
+    def get_transform(self, im_ref, mode='affine'):
+        aff_im_self = self.im_file.affine
+        aff_im_ref = im_ref.im_file.affine
+        transform = np.matmul(np.linalg.inv(aff_im_self), aff_im_ref)
+        return transform
+
+    def get_inverse_transform(self, im_ref, mode='affine'):
+        aff_im_self = self.im_file.affine
+        aff_im_ref = im_ref.im_file.affine
+        transform = np.matmul(np.linalg.inv(aff_im_ref), aff_im_self)
+        return transform
+
     def interpolate_from_image(self, im_ref, fname_output, interpolation_mode=1):
         """
         This function interpolates an image by following the grid of a reference image.
@@ -655,7 +666,6 @@ class Image(object):
         im_output.data = np.reshape(interpolated_values, (nx, ny, nz))
         im_output.setFileName(fname_output)
         im_output.save()
-
 
     def get_slice(self, plane='sagittal', index=None, seg=None):
         """
