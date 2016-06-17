@@ -393,8 +393,6 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
-    print "HOLA!!!"
-    print param.verbose
 
     # display arguments
     sct.printv('Registration parameters:', param.verbose)
@@ -535,9 +533,9 @@ def register(src, dest, paramreg, param, i_step_str):
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
         # check if type=seg
         if not paramreg.steps[i_step_str].type == 'seg':
-            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should be used with type=seg.', 1, 'warning')
+            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should be used with type=seg.\n', 1, 'warning')
         if not fname_mask == '':
-            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.', 1, 'warning')
+            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.\n', 1, 'warning')
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.run('sct_maths -i '+src+' -smooth '+paramreg.steps[i_step_str].smooth+' -o '+sct.add_suffix(src, '_smooth'))
