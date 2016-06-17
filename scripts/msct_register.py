@@ -205,6 +205,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # Loop across slices
     for iz in range(0, nz):
+        # initialize src/dest angle at zero if exception is raised
+        angle_src_dest = 0
+
         # iz = 0
         import matplotlib.pyplot as plt
         # plt.figure(figsize=(15, 4))
@@ -217,77 +220,82 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # plt.show()
         # coord_src = array
         # coord_dest = array
-        coord_src, pca_src, centermass_src = compute_pca(data_src[:, :, iz])
-        coord_dest, pca_dest, centermass_dest = compute_pca(data_dest[:, :, iz])
+        try:
+            coord_src, pca_src, centermass_src = compute_pca(data_src[:, :, iz])
+            coord_dest, pca_dest, centermass_dest = compute_pca(data_dest[:, :, iz])
+            # compute (src,dest) angle for first eigenvector
+            eigenv_src = pca_src.components_.T[0][0], pca_src.components_.T[1][0]  # pca_src.components_.T[0]
+            eigenv_dest = pca_dest.components_.T[0][0], pca_dest.components_.T[1][0]  # pca_dest.components_.T[0]
+            angle_src_dest = angle_between(eigenv_src, eigenv_dest)
 
-        # compute (src,dest) angle for first eigenvector
-        eigenv_src = pca_src.components_.T[0][0], pca_src.components_.T[1][0]  # pca_src.components_.T[0]
-        eigenv_dest = pca_dest.components_.T[0][0], pca_dest.components_.T[1][0]  # pca_dest.components_.T[0]
-        angle_src_dest = angle_between(eigenv_src, eigenv_dest)
-        # import numpy as np
-        R = np.matrix( ((cos(angle_src_dest), sin(angle_src_dest)), (-sin(angle_src_dest), cos(angle_src_dest))) )
+            # import numpy as np
+            R = np.matrix( ((cos(angle_src_dest), sin(angle_src_dest)), (-sin(angle_src_dest), cos(angle_src_dest))) )
 
-        # display rotations
-        if verbose == 2:
-            # compute new coordinates
-            coord_src_rot = coord_src * R
-            coord_dest_rot = coord_dest * R.T
-            # generate figure
-            import matplotlib.pyplot as plt
-            plt.figure('iz='+str(iz)+', angle_src_dest='+str(angle_src_dest), figsize=(9, 9))
-            plt.ion()  # enables interactive mode (allows keyboard interruption)
-            # plt.title('iz='+str(iz))
-            for isub in [221, 222, 223, 224]:
-                # plt.figure
-                plt.subplot(isub)
-                #ax = matplotlib.pyplot.axis()
-                if isub == 221:
-                    plt.scatter(coord_src[:, 0], coord_src[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
-                    pcaaxis = pca_src.components_.T
-                    plt.title('src')
-                elif isub == 222:
-                    plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
-                    pcaaxis = pca_dest.components_.T
-                    plt.title('src_rot')
-                elif isub == 223:
-                    plt.scatter(coord_dest[:, 0], coord_dest[:, 1], s=5, marker='o', zorder=10, color='red', alpha=0.5)
-                    pcaaxis = pca_dest.components_.T
-                    plt.title('dest')
-                elif isub == 224:
-                    plt.scatter(coord_dest_rot[:, 0], coord_dest_rot[:, 1], s=5, marker='o', zorder=10, color='red', alpha=0.5)
-                    pcaaxis = pca_src.components_.T
-                    plt.title('dest_rot')
-                plt.text(-2.5, -2.5, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
-                plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
-                plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
-                plt.axis([-3, 3, -3, 3])
-                plt.gca().set_aspect('equal', adjustable='box')
-                # plt.axis('equal')
-            plt.savefig('fig_pca_z'+str(iz)+'.png')
-            plt.close()
+            # display rotations
+            if verbose == 2 and not angle_src_dest == 0:
+                # compute new coordinates
+                coord_src_rot = coord_src * R
+                coord_dest_rot = coord_dest * R.T
+                # generate figure
+                import matplotlib.pyplot as plt
+                plt.figure('iz='+str(iz)+', angle_src_dest='+str(angle_src_dest), figsize=(9, 9))
+                plt.ion()  # enables interactive mode (allows keyboard interruption)
+                # plt.title('iz='+str(iz))
+                for isub in [221, 222, 223, 224]:
+                    # plt.figure
+                    plt.subplot(isub)
+                    #ax = matplotlib.pyplot.axis()
+                    if isub == 221:
+                        plt.scatter(coord_src[:, 0], coord_src[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                        pcaaxis = pca_src.components_.T
+                        plt.title('src')
+                    elif isub == 222:
+                        plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                        pcaaxis = pca_dest.components_.T
+                        plt.title('src_rot')
+                    elif isub == 223:
+                        plt.scatter(coord_dest[:, 0], coord_dest[:, 1], s=5, marker='o', zorder=10, color='red', alpha=0.5)
+                        pcaaxis = pca_dest.components_.T
+                        plt.title('dest')
+                    elif isub == 224:
+                        plt.scatter(coord_dest_rot[:, 0], coord_dest_rot[:, 1], s=5, marker='o', zorder=10, color='red', alpha=0.5)
+                        pcaaxis = pca_src.components_.T
+                        plt.title('dest_rot')
+                    plt.text(-2.5, -2.5, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
+                    plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
+                    plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
+                    plt.axis([-3, 3, -3, 3])
+                    plt.gca().set_aspect('equal', adjustable='box')
+                    # plt.axis('equal')
+                plt.savefig('fig_pca_z'+str(iz)+'.png')
+                plt.close()
 
-        # get indices of x and y coordinates
-        row, col = np.indices((nx, ny))
-        # build 2xn array of coordinates in pixel space
-        coord_init_pix = np.array([row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel()))*iz)]).T
-        # convert coordinates to physical space
-        coord_init_phy = np.array(im_src.transfo_pix2phys(coord_init_pix))
-        # get centermass coortinates in physical space
-        centermass_src_phy = im_src.transfo_pix2phys([[centermass_src.T[0], centermass_src.T[1], iz]])
-        centermass_dest_phy = im_src.transfo_pix2phys([[centermass_dest.T[0], centermass_dest.T[1], iz]])
-        # build 3D rotation matrix
-        R3d = np.eye(3)
-        R3d[0:2, 0:2] = R
-        # apply forward transformation (in physical space)
-        coord_forward_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_dest_phy[0])), R3d) + np.transpose(centermass_src_phy[0]))
-        # apply inverse transformation (in physical space)
-        coord_inverse_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d.T) + np.transpose(centermass_dest_phy[0]))
-        # compute displacement per pixel in destination space (for forward warping field)
-        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
-        # compute displacement per pixel in source space (for inverse warping field)
-        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+            # get indices of x and y coordinates
+            row, col = np.indices((nx, ny))
+            # build 2xn array of coordinates in pixel space
+            coord_init_pix = np.array([row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel()))*iz)]).T
+            # convert coordinates to physical space
+            coord_init_phy = np.array(im_src.transfo_pix2phys(coord_init_pix))
+            # get centermass coortinates in physical space
+            centermass_src_phy = im_src.transfo_pix2phys([[centermass_src.T[0], centermass_src.T[1], iz]])
+            centermass_dest_phy = im_src.transfo_pix2phys([[centermass_dest.T[0], centermass_dest.T[1], iz]])
+            # build 3D rotation matrix
+            R3d = np.eye(3)
+            R3d[0:2, 0:2] = R
+            # apply forward transformation (in physical space)
+            coord_forward_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_dest_phy[0])), R3d) + np.transpose(centermass_src_phy[0]))
+            # apply inverse transformation (in physical space)
+            coord_inverse_phy = np.array( np.dot( (coord_init_phy - np.transpose(centermass_src_phy[0])), R3d.T) + np.transpose(centermass_dest_phy[0]))
+            # compute displacement per pixel in destination space (for forward warping field)
+            warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+            warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+            # compute displacement per pixel in source space (for inverse warping field)
+            warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+            warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+
+        # if one of the slice is empty, ignore it
+        except ValueError:
+            sct.printv('WARNING: Slice #'+str(iz)+' is empty. It will be ignored.', verbose, 'warning')
 
         # display init and new coordinates
         # plt.figure('iz='+str(iz)) #, figsize=(9, 4))
@@ -299,11 +307,10 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         #             s=5, marker='o', zorder=10, color='red', alpha=0.5)
         # plt.gca().set_aspect('equal', adjustable='box')
         # plt.show()
-
-        del coord_src, coord_dest, pca_src, pca_dest
+        # del coord_src, coord_dest, pca_src, pca_dest
 
     # Generate forward warping field (defined in destination space)
-    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
+    data_warp = np.zeros((nx, ny, nz, 1, 3))
     data_warp[:, :, :, 0, 0] = -warp_x  # need to invert due to ITK conventions
     data_warp[:, :, :, 0, 1] = -warp_y
     im_dest = load(fname_dest)
@@ -315,7 +322,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     save(img, fname_warp)
     sct.printv('\nDone! Warping field generated: '+fname_warp, verbose)
     # generate inverse warping field (defined in source space)
-    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
+    data_warp = np.zeros((nx, ny, nz, 1, 3))
     data_warp[:, :, :, 0, 0] = -warp_inv_x  # need to invert due to ITK conventions
     data_warp[:, :, :, 0, 1] = -warp_inv_y  # need
     im = load(fname_src)
