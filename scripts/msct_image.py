@@ -14,6 +14,7 @@
 
 # TODO: update function to reflect the new get_dimension
 
+import numpy as np
 from scipy.ndimage import map_coordinates
 
 class Image(object):
@@ -619,6 +620,32 @@ class Image(object):
         :return: intensity values at continuouspix with interpolation_mode
         """
         return map_coordinates(self.data, coordi, order=interpolation_mode)
+
+    def interpolate_from_image(self, im_ref, fname_output, interpolation_mode=1):
+        """
+        This function interpolates an image by following the grid of a reference image.
+        Example of use:
+
+        from msct_image import Image
+        im_input = Image(fname_input)
+        im_ref = Image(fname_ref)
+        im_input.interpolate_from_image(im_ref, fname_output, interpolation_mode=1)
+        
+        :param im_ref: reference Image that contains the grid on which interpolate.
+        :return: a new image that has the same dimensions/grid of the reference image but the data of self image.
+        """
+        nx, ny, nz, nt, px, py, pz, pt = im_ref.dim
+        x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
+        indexes_ref = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
+        physical_coordinates_ref = im_ref.transfo_pix2phys(indexes_ref)
+        coord_im = np.array(self.transfo_phys2continuouspix(physical_coordinates_ref))
+        interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode)
+
+        im_output = Image(im_ref)
+        im_output.data = np.reshape(interpolated_values, (nx, ny, nz))
+        im_output.setFileName(fname_output)
+        im_output.save()
+
 
     def get_slice(self, plane='sagittal', index=None, seg=None):
         """
