@@ -98,11 +98,15 @@ class ProcessLabels(object):
             self.output_image = self.label_vertebrae(self.vertebral_levels)
         if type_process == 'label-vertebrae-from-disks':
             self.output_image = self.label_vertebrae_from_disks(self.vertebral_levels)
+        if type_process == 'continuous-vertebral-levels':
+            self.output_image = self.continuous_vertebral_levels()
 
         # save the output image as minimized integers
         if self.fname_output is not None:
             self.output_image.setFileName(self.fname_output)
-            if type_process != 'plan_ref':
+            if type_process == 'continuous-vertebral-levels':
+                self.output_image.save('float32')
+            elif type_process != 'plan_ref':
                 self.output_image.save('minimize_int')
             else:
                 self.output_image.save()
@@ -564,7 +568,6 @@ class ProcessLabels(object):
                     coordinates_input[i+1].x) + ',' + str(coordinates_input[i+1].y) + ',' + str(coordinates_input[i+1].z) + ']=' + str(
                     coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
 
-
     def continuous_vertebral_levels(self):
         """
         This function transforms the vertebral levels file from the template into a continuous file.
@@ -581,28 +584,48 @@ class ProcessLabels(object):
         #   a. extract centerline
         #   b. for each slice, extract corresponding level
         nx, ny, nz, nt, px, py, pz, pt = im_input.dim
-
         from sct_straighten_spinalcord import smooth_centerline
-        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_input, algo_fitting='nurbs', verbose=self.verbose)
-        value_centerline = np.zeros(len(x_centerline_fit))
-        for it in range(value_centerline):
-            value_centerline[it] = im_input[im_input.]
+        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_input, algo_fitting='nurbs', verbose=0)
+        value_centerline = np.array([im_input.data[x_centerline_fit[it], y_centerline_fit[it], z_centerline_fit[it]] for it in range(len(z_centerline_fit))])
 
         # 2. compute distance for each vertebral level --> Di for i being the vertebral levels
+        vertebral_levels = {}
+        for slice_image, level in enumerate(value_centerline):
+            if level not in vertebral_levels:
+                vertebral_levels[level] = slice_image
+
+        length_levels = {}
+        for level in vertebral_levels:
+            indexes_slice = np.where(value_centerline == level)
+            length_levels[level] = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[0][index_slice + 1]] - x_centerline_fit[indexes_slice[0][index_slice]])*px)**2 +
+                                                     ((y_centerline_fit[indexes_slice[0][index_slice + 1]] - y_centerline_fit[indexes_slice[0][index_slice]])*py)**2 +
+                                                     ((z_centerline_fit[indexes_slice[0][index_slice + 1]] - z_centerline_fit[indexes_slice[0][index_slice]])*pz)**2)
+                                           for index_slice in range(len(indexes_slice[0]) - 1)])
 
         # 2. for each slice:
         #   a. identify corresponding vertebral level --> i
         #   b. calculate distance of slice from upper vertebral level --> d
         #   c. compute relative distance in the vertebral level coordinate system --> d/Di
-        continuous_values = np.zeros(nz)
-        for iz in range(0, nz):
-            level =
-
+        continuous_values = {}
+        for it, iz in enumerate(z_centerline_fit):
+            level = value_centerline[it]
+            indexes_slice = np.where(value_centerline == level)
+            indexes_slice = indexes_slice[0][indexes_slice[0] >= it]
+            distance_from_level = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[index_slice + 1]] - x_centerline_fit[indexes_slice[index_slice]]) * px * px) ** 2 +
+                                                    ((y_centerline_fit[indexes_slice[index_slice + 1]] - y_centerline_fit[indexes_slice[index_slice]]) * py * py) ** 2 +
+                                                    ((z_centerline_fit[indexes_slice[index_slice + 1]] - z_centerline_fit[indexes_slice[index_slice]]) * pz * pz) ** 2)
+                                          for index_slice in range(len(indexes_slice) - 1)])
+            continuous_values[iz] = level + 2.0 * distance_from_level / float(length_levels[level])
 
         # 3. saving data
         # for each slice, get all non-zero pixels and replace with continuous values
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+        im_output.changeType('float32')
+        # for all points in input, find the value that has to be set up, depending on the vertebral level
+        for i, coord in enumerate(coordinates_input):
+            im_output.data[coord.x, coord.y, coord.z] = continuous_values[coord.z]
 
-
+        return im_output
 
 # PARSER
 # ==========================================================================================
@@ -671,6 +694,10 @@ def get_parser():
                       type_value='file',
                       description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
                       mandatory=False)
+    parser.add_option(name='-continuous-levels',
+                      type_value=None,
+                      description='Create a segmentation image with continuous vertebral levels.',
+                      mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description='Verbose. 0: nothing. 1: basic. 2: extended.',
@@ -730,6 +757,8 @@ def main(args=None):
     elif '-remove-symm' in arguments:
         process_type = 'remove-symm'
         input_fname_ref = arguments['-r']
+    elif '-continuous-levels' in arguments:
+        process_type = 'continuous-vertebral-levels'
     else:
         # no process chosen
         sct.printv('ERROR: No process was chosen.', 1, 'error')
