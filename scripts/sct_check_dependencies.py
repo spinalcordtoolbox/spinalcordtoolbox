@@ -107,19 +107,19 @@ def main():
     print 'RAM:'
     sct.checkRAM(os_running)
 
-    # fetch version of the toolbox
-    with open (path_sct+"/version.txt", "r") as myfile:
-        version_sct = myfile.read().replace('\n', '')
-    with open (path_sct+"/commit.txt", "r") as myfile:
-        commit_sct = myfile.read().replace('\n', '')
-    print "SCT version: "+version_sct+'-'+commit_sct
-
     # get path of the toolbox
     path_sct = os.getenv("SCT_DIR")
     if path_sct is None :
         raise EnvironmentError("SCT_DIR, which is the path to the "
                                "Spinalcordtoolbox install needs to be set")
     print ('SCT path: {0}'.format(path_sct))
+
+    # fetch version of the toolbox
+    with open (path_sct+"/version.txt", "r") as myfile:
+        version_sct = myfile.read().replace('\n', '')
+    with open (path_sct+"/commit.txt", "r") as myfile:
+        commit_sct = myfile.read().replace('\n', '')
+    print "SCT version: "+version_sct+'-'+commit_sct
 
     # check installation packages
     print 'Python path: '+sys.executable
