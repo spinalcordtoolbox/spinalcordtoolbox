@@ -14,6 +14,8 @@
 
 # TODO: update function to reflect the new get_dimension
 
+from scipy.ndimage import map_coordinates
+
 class Image(object):
     """
 
@@ -608,6 +610,15 @@ class Image(object):
                                range(len(coordi_pix_tmp))]
 
             return coordi_pix_list
+
+    def get_values(self, coordi=None, interpolation_mode=0):
+        """
+        This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
+        :param coordi: continuouspix
+        :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
+        :return: intensity values at continuouspix with interpolation_mode
+        """
+        return map_coordinates(self.data, coordi, order=interpolation_mode)
 
     def get_slice(self, plane='sagittal', index=None, seg=None):
         """
