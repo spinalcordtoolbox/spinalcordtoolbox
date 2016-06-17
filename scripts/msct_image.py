@@ -638,6 +638,12 @@ class Image(object):
         x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
         indexes_ref = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
         physical_coordinates_ref = im_ref.transfo_pix2phys(indexes_ref)
+
+        # TODO: add optional transformation from reference space to image space to physical coordinates of ref grid.
+        # TODO: add choice to do non-full transorm: translation, (rigid), affine
+        # 1. get transformation
+        # 2. apply transformation on coordinates
+
         coord_im = np.array(self.transfo_phys2continuouspix(physical_coordinates_ref))
         interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode)
 
