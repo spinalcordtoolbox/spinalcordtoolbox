@@ -547,9 +547,11 @@ class Image(object):
                     n_row_old_data_array += 1
 
             self.data = data_array
+            '''
             if save:
                 self.file_name += suffix
                 self.save()
+            '''
 
         data_array = asarray(data_array)
         data_mask = asarray(data_mask)
@@ -558,22 +560,30 @@ class Image(object):
         buffer_mask = []
 
         if len(data_array.shape) == 3:
+            empty_slices = []
             for n_slice, mask_slice in enumerate(data_mask):
                 for n_row, row in enumerate(mask_slice):
                     if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
                         buffer_mask.append(row)
                         buffer.append(data_array[n_slice][n_row])
-
-                new_slice_mask = asarray(buffer_mask).T
-                new_slice = asarray(buffer).T
-                buffer = []
-                for n_row, row in enumerate(new_slice_mask):
-                    if sum(row) != 0:
-                        buffer.append(new_slice[n_row])
-                new_slice = asarray(buffer).T
-                buffer_mask = []
-                buffer = []
+                if buffer_mask == [] and buffer == []:
+                    empty_slices.append(n_slice)
+                    new_slice = []
+                else:
+                    new_slice_mask = asarray(buffer_mask).T
+                    new_slice = asarray(buffer).T
+                    buffer = []
+                    for n_row, row in enumerate(new_slice_mask):
+                        if sum(row) != 0:
+                            buffer.append(new_slice[n_row])
+                    new_slice = asarray(buffer).T
+                    shape_mask = new_slice.shape
+                    buffer_mask = []
+                    buffer = []
                 new_data.append(new_slice)
+            if empty_slices is not []:
+                for iz in empty_slices:
+                    new_data[iz] = np.zeros(shape_mask)
 
         elif len(data_array.shape) == 2:
             for n_row, row in enumerate(data_mask):
