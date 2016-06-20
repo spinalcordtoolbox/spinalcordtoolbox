@@ -749,6 +749,7 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
     t2star_name = sct.extract_fname(t2star)[1]
     sc_seg_name = sct.extract_fname(sc_seg)[1]
     mask_box = None
+    fname_seg_in_IRP = None
 
     try:
         ext = '.nii.gz'
