@@ -169,9 +169,14 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # load vertebral levels
     if fname_level is not None:
         printv('\n\tLoad vertebral levels ...', verbose, 'normal')
+        # copy level file to tmp dir
         os.chdir('..')
         shutil.copy(fname_level, tmp_dir)
         os.chdir(tmp_dir)
+        # change fname level to only file name (path = tmp dir now)
+        path_level, file_level, ext_level = extract_fname(fname_level)
+        fname_level = file_level+ext_level
+        # load levels
         list_slices_target = load_level(list_slices_target, fname_level)
 
     # load manual gmseg if there is one (model data)
