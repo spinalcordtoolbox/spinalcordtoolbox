@@ -224,6 +224,13 @@ def get_parser():
                       default_value=0,
                       example='42')
 
+    parser.add_option(name="-log",
+                      type_value='multiple_choice',
+                      description="Redirects Terminal verbose to log file.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
+
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="Verbose. 0: nothing, 1: basic, 2: extended.",
@@ -248,34 +255,51 @@ if __name__ == "__main__":
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
-
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
+    create_log_file = arguments['-log']
+
 
     verbose = arguments["-v"]
 
+    # redirect to log file
+    if create_log_file:
+        orig_stdout = sys.stdout
+        handle_log = file('results_testing_'+strftime("%y%m%d%H%M%S")+'.txt', 'w')
+        sys.stdout = handle_log
+
+    # get path of the toolbox
+    path_sct = os.getenv("SCT_DIR")
+    if path_sct is None :
+        raise EnvironmentError("SCT_DIR, which is the path to the "
+                               "Spinalcordtoolbox install needs to be set")
+    # fetch version of the toolbox
+    with open (path_sct+"/version.txt", "r") as myfile:
+        version_sct = myfile.read().replace('\n', '')
+    with open (path_sct+"/commit.txt", "r") as myfile:
+        commit_sct = myfile.read().replace('\n', '')
+    print "SCT version: "+version_sct+'-'+commit_sct
+
     # check OS
-    print 'Check which OS is running... '
     platform_running = sys.platform
     if (platform_running.find('darwin') != -1):
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print '.. ' + os_running + ' (' + platform.platform() + ')'
+    print 'OS: '+os_running+' ('+platform.platform()+')'
+
+    # check hostname
     print 'Hostname:', platform.node()
 
     # Check number of CPU cores
-    print 'Check number of CPU cores...'
     from multiprocessing import cpu_count
-
-    print '.. Available: ' + str(cpu_count())
     status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print '.. Used by SCT: ' + output
+    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
 
     # check RAM
-    print 'Check RAM... '
-    sct.checkRAM(os_running, verbose=0)
+    print 'RAM:'
+    sct.checkRAM(os_running)
 
     # start timer
     start_time = time()
@@ -288,14 +312,20 @@ if __name__ == "__main__":
     results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
     results_display = results_subset
 
+    # save panda structure
+    results_subset.to_pickle('results_testing_'+strftime("%y%m%d%H%M%S"))
+    results_subset.to_csv('results_testing_'+strftime("%y%m%d%H%M%S")+'.csv')
+
     # mean
     results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
     results_mean['subject'] = 'Mean'
+    results_mean.set_value('status', float('NaN'))  # set status to NaN
     results_display = results_display.append(results_mean, ignore_index=True)
 
     # std
     results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
     results_std['subject'] = 'STD'
+    results_std.set_value('status', float('NaN'))  # set status to NaN
     results_display = results_display.append(results_std, ignore_index=True)
 
     # count tests that passed
