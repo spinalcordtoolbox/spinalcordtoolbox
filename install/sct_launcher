@@ -70,7 +70,7 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   fi
   # Will quietely fail if a virtualenv or conda is not used
   . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "----------------------------------------------------------------------------------------------------"
     echo "Spinal Cord Toolbox (version $SCT_VERSION-$SCT_COMMIT)"
 #    echo SCT installed in ${SCT_DIR}
 #    echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
