@@ -666,7 +666,7 @@ if __name__ == "__main__":
     if '-ofolder' in arguments:
         sc_straight.path_output = arguments['-ofolder']
     else:
-        sc_straight.path_output = ''
+        sc_straight.path_output = '.'
     if "-f" in arguments:
         sc_straight.crop = int(arguments["-f"])
     if "-v" in arguments:
