@@ -20,7 +20,9 @@ import time
 from sct_convert import convert
 from msct_image import Image
 from msct_parser import Parser
-import dipy.align.aniso2iso as dp_iso
+# You have to use reslice from dipy.align.reslice because the aniso2iso module was removed in dipy 0.10.
+# import dipy.align.aniso2iso as dp_iso
+import dipy.align.reslice as dp_iso
 
 
 # DEFAULT PARAMETERS
