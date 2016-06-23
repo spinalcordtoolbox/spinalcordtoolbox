@@ -749,6 +749,7 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
     t2star_name = sct.extract_fname(t2star)[1]
     sc_seg_name = sct.extract_fname(sc_seg)[1]
     mask_box = None
+    fname_seg_in_IRP = None
 
     try:
         ext = '.nii.gz'
@@ -1074,28 +1075,30 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
 ########################################################################################################################
 
 # ------------------------------------------------------------------------------------------------------------------
-def inverse_square_crop(croped_image, square_mask):
-    if square_mask.orientation != 'IRP':
-        square_mask = set_orientation(square_mask, 'IRP')
-    nz_coord = square_mask.getNonZeroCoordinates()
+def inverse_square_crop(im_croped, im_square_mask):
+    if im_square_mask.orientation != 'IRP':
+        im_square_mask = set_orientation(im_square_mask, 'IRP')
+    assert len(im_croped.data) == len(im_square_mask.data)
 
-    assert len(nz_coord) == croped_image.data.size
-    dim = len(croped_image.data.shape)
+    im_inverse_croped = Image(np.zeros(im_square_mask.data.shape), hdr=im_square_mask.hdr)
+    for i_slice, slice_croped in enumerate(im_croped.data):
+        i_croped = 0
+        inside = False
+        for i, row in enumerate(im_square_mask.data[i_slice] == 1):
+            j_croped = 0
+            for j, in_square in enumerate(row):
+                if in_square:
+                    im_inverse_croped.data[i_slice][i][j] = slice_croped[i_croped][j_croped]
+                    j_croped += 1
+                    if not inside:
+                        # getting inside the mask
+                        inside = True
+                elif inside:  # if we are getting out of the mask:
+                    i_croped += 1
+                    inside = False
+    im_inverse_croped.setFileName(im_croped.file_name + '_original_dimension' + im_croped.ext)
 
-    inverse_croped = square_mask.copy()
-    if dim == 3:
-        done_slices = []
-        for coord in nz_coord:
-            if coord.x not in done_slices:
-                inverse_croped.data[coord.x, coord.y: coord.y + croped_image.data.shape[1], coord.z: coord.z + croped_image.data.shape[2]] = croped_image.data[coord.x]
-                done_slices.append(coord.x)
-    elif dim == 2:
-        coord = nz_coord[0]
-        inverse_croped.data[coord.x: coord.x + croped_image.data.shape[0], coord.y: coord.y + croped_image.data.shape[1]] = croped_image.data
-
-    inverse_croped.setFileName(croped_image.file_name + '_original_dimension' + croped_image.ext)
-
-    return inverse_croped
+    return im_inverse_croped
 
 
 ########################################################################################################################
