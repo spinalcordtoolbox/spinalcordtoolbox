@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 # from matplotlib.widgets import Slider, Button, RadioButtons
 
+
 class SinglePlot:
     """
         This class manages mouse events on one image.
@@ -182,7 +183,6 @@ class SinglePlot:
         cur_xlim = self.fig.axes.get_xlim()
         cur_ylim = self.fig.axes.get_ylim()
 
-
         if x_center is None:
             x_center = (cur_xlim[1] - cur_xlim[0]) / 2.0
         if y_center is None:
@@ -206,7 +206,6 @@ class SinglePlot:
             self.fig.axes.set_xlim([x_center - x_left * x_scale_factor, x_center + x_right * x_scale_factor])
             self.fig.axes.set_ylim([y_center - y_top * y_scale_factor, y_center + y_bottom * y_scale_factor])
             self.fig.figure.canvas.draw()
-
 
     def on_scroll(self, event):
         """
@@ -393,6 +392,7 @@ class TrioPlot:
         self.fig_sagittal.figure.canvas.mpl_disconnect(self.cidrelease)
         self.fig_sagittal.figure.canvas.mpl_disconnect(self.cidmotion)
 
+
 class VolViewer(object):
     """
     This class is a visualizer for volumes (3D images).
@@ -416,7 +416,7 @@ class VolViewer(object):
             self.im_plot_sagittal.set_data(self.image.data[:,:,event.x])
             self.fig.canvas.draw()
 
-    def show(self):
+    def start(self):
         import matplotlib.pyplot as plt
         self.fig = plt.figure()
         self.fig.subplots_adjust(bottom=0.1, left=0.1)
@@ -448,15 +448,45 @@ class VolViewer(object):
         plt.show()
 
 
+def get_parser():
+    parser = Parser(__file__)
+    parser.usage.set_description('Volume Viewer')
+    parser.add_option(name="-i",
+                      type_value=[[','], 'file'],
+                      description="Images to display.",
+                      mandatory=True,
+                      example="anat.nii.gz")
+
+    parser.add_option(name='-mode',
+                      type_value='multiple_choice',
+                      description="Display mode ",
+                      mandatory=False,
+                      default_value='viewer',
+                      example=['viewer', 'axialclick'])
+
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1', '2'])
+
+    return parser
+
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    parser = Parser(__file__)
-    parser.usage.set_description('Volume Viewer')
-    parser.add_option("-i", "file", "file", True)
+    parser = get_parser()
+
     arguments = parser.parse(sys.argv[1:])
 
-    image = Image(arguments["-i"])
-    viewer = ClickViewer(image)
-    viewer.start()
+    image = Image(arguments["-i"][0])
+
+    mode = arguments['-mode']
+    if mode == 'viewer':
+        viewer = VolViewer(image)
+        viewer.start()
+    elif mode == 'axialclick':
+        viewer = ClickViewer(image)
+        viewer.start()
