@@ -35,60 +35,9 @@ class SinglePlot:
 
         self.image_dim = self.volume.data.shape
 
-        self.list_points = []
-        self.list_points_useful_notation = ''
-
-        self.list_slices = []
-
-        self.number_of_slices = number_of_slices
-        self.gap_inter_slice = gap_inter_slice
-        if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
-            central_slice = int(self.image_dim[1]/2)
-            first_slice = central_slice - (self.number_of_slices / 2) * self.gap_inter_slice
-            last_slice = central_slice + (self.number_of_slices / 2) * self.gap_inter_slice
-            if first_slice < 0:
-                first_slice = 0
-            if last_slice >= self.image_dim[1]:
-                last_slice = self.image_dim[1] - 1
-            self.list_slices = [int(item) for item in linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
-        elif self.number_of_slices != 0:
-            self.list_slices = [int(item) for item in linspace(0, self.image_dim[1]-1, self.number_of_slices, endpoint=True)]
-            if self.list_slices[-1] != self.image_dim[1] - 1:
-                self.list_slices.append(self.image_dim[1] - 1)
-        elif self.gap_inter_slice != 0:
-            self.list_slices = list(arange(0, self.image_dim[1], self.gap_inter_slice))
-            if self.list_slices[-1] != self.image_dim[1] - 1:
-                self.list_slices.append(self.image_dim[1] - 1)
-        else:
-            self.gap_inter_slice = int(max([round(self.image_dim[1] / 15.0), 1]))
-            self.number_of_slices = int(round(self.image_dim[1] / self.gap_inter_slice))
-            self.list_slices = [int(item) for item in linspace(0, self.image_dim[1]-1, self.number_of_slices, endpoint=True)]
-            if self.list_slices[-1] != self.image_dim[1] - 1:
-                self.list_slices.append(self.image_dim[1] - 1)
-
         self.current_slice = 0
-
-        # variable to check if all slices have been processed
-        self.all_processed = False
-
-        # zoom variables
         self.zoom_factor = 1.0
 
-        self.fig.set_data(self.volume.data[:, int(self.list_slices[self.current_slice]), :])
-        plt.title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
-            self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
-
-        # intensity variables
-        flattened_volume = self.volume.flatten()
-        self.mean_intensity_factor = 0.5
-        self.std_intensity_factor = 0.5
-        self.first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
-        self.last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
-        self.mean_intensity = (self.first_percentile + self.last_percentile) / 2
-        self.std_intensity = self.last_percentile - self.first_percentile
-        min_intensity = (self.mean_intensity + (self.mean_intensity_factor - 0.5) * self.mean_intensity) - (self.std_intensity + (self.std_intensity_factor - 0.5) * self.std_intensity)
-        max_intensity = (self.mean_intensity + (self.mean_intensity_factor - 0.5) * self.mean_intensity) + (self.std_intensity + (self.std_intensity_factor - 0.5) * self.std_intensity)
-        self.fig.set_clim(min_intensity, max_intensity)
         self.press = [0, 0]
 
     def connect(self):
@@ -104,16 +53,19 @@ class SinglePlot:
     def draw(self):
         self.fig.figure.canvas.draw()
 
-    def updateSlice(self, target_slice):
+    def update_slice(self, target_slice):
         """
         This function change the viewer to update the current slice
         :param slice: number of the slice to go on
         :return:
         """
-        if 0 <= slice < self.image_dim[1]:
+        if 0 <= target_slice < self.image_dim[1]:
             self.fig.set_data(self.volume.data[:, target_slice, :])
             self.current_slice = bisect(self.list_slices, target_slice)
             self.fig.figure.canvas.draw()
+
+    def is_point_in_image(self, target_point):
+        return 0 <= target_point.x < self.image_dim[0] - 2 * self.viewer.offset[1] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2] - 2 * self.viewer.offset[0]
 
     def on_press(self, event):
         """
@@ -124,7 +76,7 @@ class SinglePlot:
         """
         if event.button == 1 and event.inaxes == self.fig.axes:
             target_point = Coordinate([int(event.ydata) - self.viewer.offset[1], int(self.list_slices[self.current_slice]), int(event.xdata) - self.viewer.offset[0], 1])
-            if 0 <= target_point.x < self.image_dim[0] - 2 * self.viewer.offset[1] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2] - 2 * self.viewer.offset[0]:
+            if self.is_point_in_image(target_point):
                 self.list_points.append(target_point)
 
                 self.current_slice += 1
@@ -152,28 +104,18 @@ class SinglePlot:
 
         return
 
-    def change_intensity(self, event):
-        if event.xdata and abs(event.xdata - self.press[0]) < 1 and abs(event.ydata - self.press[1]) < 1:
-            self.press = event.xdata, event.ydata
-            return
-
-        if event.inaxes == self.fig.axes:
-            xlim, ylim = self.fig.axes.get_xlim(), self.fig.axes.get_ylim()
-            self.mean_intensity_factor = - ((event.xdata - xlim[0]) / float(xlim[1] - xlim[0]) - 0.5) * 1.2
-            self.std_intensity_factor = ((event.ydata - ylim[1]) / float(ylim[0] - ylim[1]) - 0.5) * 1.2
-            min_intensity = (self.mean_intensity + self.mean_intensity_factor * self.mean_intensity) - (self.std_intensity + self.std_intensity_factor * self.std_intensity)
-            max_intensity = (self.mean_intensity + self.mean_intensity_factor * self.mean_intensity) + (self.std_intensity + self.std_intensity_factor * self.std_intensity)
-            self.fig.set_clim(min_intensity, max_intensity)
-            self.draw()
+    def change_intensity(self, min_intensity, max_intensity):
+        self.fig.set_clim(min_intensity, max_intensity)
+        self.draw()
 
     def on_motion(self, event):
-        if event.button == 3:
+        if event.button == 3 and event.inaxes == self.fig.axes:
             return self.change_intensity(event)
         else:
             return
 
     def on_release(self, event):
-        if event.button == 3:
+        if event.button == 3 and event.inaxes == self.fig.axes:
             return self.change_intensity(event)
         else:
             return
@@ -228,7 +170,9 @@ class SinglePlot:
                 scale_factor = 1.0
                 print event.button
 
-            self.update_xy_lim(x_center=xdata, y_center=ydata, x_scale_factor=scale_factor, y_scale_factor=scale_factor, zoom=True)
+            self.update_xy_lim(x_center=xdata, y_center=ydata,
+                               x_scale_factor=scale_factor, y_scale_factor=scale_factor,
+                               zoom=True)
 
         return
 
@@ -236,6 +180,7 @@ class SinglePlot:
 class ClickViewer(object):
     """
     This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
+    Assumes AIL orientation
     """
     def __init__(self, image):
         if isinstance(image, Image):
@@ -247,21 +192,103 @@ class ClickViewer(object):
         self.number_of_slices = 0
         self.gap_inter_slice = 0
 
-        self.fig = None
-
         # pad the image so that it is square in axial view (useful for zooming)
-        self.im_size = self.image.data.shape
+        self.image_dim = self.image.data.shape
         nx, ny, nz, nt, px, py, pz, pt = self.image.dim
         self.im_spacing = [px, py, pz]
         self.aspect_ratio = float(self.im_spacing[0]) / float(self.im_spacing[2])
 
-        max_size = max([self.im_size[0], self.im_size[2]])
-        self.offset = [(max_size - self.im_size[2]) / 2, (max_size - self.im_size[0]) / 2]
-        if max_size == self.im_size[0]:
+        max_size = max([self.image_dim[0], self.image_dim[2]])
+        self.offset = [(max_size - self.image_dim[2]) / 2, (max_size - self.image_dim[0]) / 2]
+        if max_size == self.image_dim[0]:
             self.offset[0] = int(self.offset[0] * self.aspect_ratio)
         else:
             self.offset[1] = int(self.offset[1] * self.aspect_ratio)
-        self.image.data = pad(self.image.data, ((self.offset[1], self.offset[1]), (0, 0), (self.offset[0], self.offset[0])), 'constant', constant_values=(0, 0))
+        self.image.data = pad(self.image.data,
+                              ((self.offset[1], self.offset[1]), (0, 0), (self.offset[0], self.offset[0])), 'constant',
+                              constant_values=(0, 0))
+
+        # initialisation of plot
+        self.fig = plt.figure()
+        self.fig.subplots_adjust(bottom=0.1, left=0.1)
+
+        ax = self.fig.add_subplot(111, axisbg='k')
+        self.im_plot_axial = ax.imshow(self.image.data[:, int(self.im_size[1] / 2), :], aspect=self.aspect_ratio)
+        self.im_plot_axial.set_cmap('gray')
+        self.im_plot_axial.set_interpolation('nearest')
+
+        self.window = SinglePlot(self.im_plot_axial, self.image, self, self.number_of_slices, self.gap_inter_slice)
+        self.window.connect()
+
+        self.fig.set_data(self.volume.data[:, int(self.list_slices[self.current_slice]), :])
+        plt.title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
+                self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
+
+
+        self.list_points = []
+        self.list_points_useful_notation = ''
+
+        self.list_slices = []
+
+        if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
+            central_slice = int(self.image_dim[1] / 2)
+            first_slice = central_slice - (self.number_of_slices / 2) * self.gap_inter_slice
+            last_slice = central_slice + (self.number_of_slices / 2) * self.gap_inter_slice
+            if first_slice < 0:
+                first_slice = 0
+            if last_slice >= self.image_dim[1]:
+                last_slice = self.image_dim[1] - 1
+            self.list_slices = [int(item) for item in
+                                linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
+        elif self.number_of_slices != 0:
+            self.list_slices = [int(item) for item in
+                                linspace(0, self.image_dim[1] - 1, self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[1] - 1:
+                self.list_slices.append(self.image_dim[1] - 1)
+        elif self.gap_inter_slice != 0:
+            self.list_slices = list(arange(0, self.image_dim[1], self.gap_inter_slice))
+            if self.list_slices[-1] != self.image_dim[1] - 1:
+                self.list_slices.append(self.image_dim[1] - 1)
+        else:
+            self.gap_inter_slice = int(max([round(self.image_dim[1] / 15.0), 1]))
+            self.number_of_slices = int(round(self.image_dim[1] / self.gap_inter_slice))
+            self.list_slices = [int(item) for item in
+                                linspace(0, self.image_dim[1] - 1, self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[1] - 1:
+                self.list_slices.append(self.image_dim[1] - 1)
+
+        # variable to check if all slices have been processed
+        self.all_processed = False
+
+        # intensity variables
+        flattened_volume = self.image.flatten()
+        self.mean_intensity_factor = 0.5
+        self.std_intensity_factor = 0.5
+        self.first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
+        self.last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
+        self.mean_intensity = (self.first_percentile + self.last_percentile) / 2
+        self.std_intensity = self.last_percentile - self.first_percentile
+        min_intensity = (self.mean_intensity + (self.mean_intensity_factor - 0.5) * self.mean_intensity) - (
+        self.std_intensity + (self.std_intensity_factor - 0.5) * self.std_intensity)
+        max_intensity = (self.mean_intensity + (self.mean_intensity_factor - 0.5) * self.mean_intensity) + (
+        self.std_intensity + (self.std_intensity_factor - 0.5) * self.std_intensity)
+        self.fig.set_clim(min_intensity, max_intensity)
+
+    def change_intensity(self, event):
+        if event.xdata and abs(event.xdata - self.press[0]) < 1 and abs(event.ydata - self.press[1]) < 1:
+            self.press = event.xdata, event.ydata
+            return
+
+        if event.inaxes == self.fig.axes:
+            xlim, ylim = self.fig.axes.get_xlim(), self.fig.axes.get_ylim()
+            self.mean_intensity_factor = - ((event.xdata - xlim[0]) / float(xlim[1] - xlim[0]) - 0.5) * 1.2
+            self.std_intensity_factor = ((event.ydata - ylim[1]) / float(ylim[0] - ylim[1]) - 0.5) * 1.2
+            min_intensity = (self.mean_intensity + self.mean_intensity_factor * self.mean_intensity) - (
+            self.std_intensity + self.std_intensity_factor * self.std_intensity)
+            max_intensity = (self.mean_intensity + self.mean_intensity_factor * self.mean_intensity) + (
+            self.std_intensity + self.std_intensity_factor * self.std_intensity)
+            self.fig.set_clim(min_intensity, max_intensity)
+            self.draw()
 
     def update_current_slice(self, current_slice):
         self.current_slice = current_slice
@@ -273,16 +300,8 @@ class ClickViewer(object):
             return None
 
     def start(self):
-        self.fig = plt.figure()
-        self.fig.subplots_adjust(bottom=0.1, left=0.1)
 
-        ax = self.fig.add_subplot(111, axisbg='k')
-        self.im_plot_axial = ax.imshow(self.image.data[:, int(self.im_size[1] / 2), :], aspect=self.aspect_ratio)
-        self.im_plot_axial.set_cmap('gray')
-        self.im_plot_axial.set_interpolation('nearest')
 
-        self.window = SinglePlot(self.im_plot_axial, self.image, self, self.number_of_slices, self.gap_inter_slice)
-        self.window.connect()
 
         plt.show()
 
