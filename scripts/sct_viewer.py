@@ -282,7 +282,7 @@ class ThreeViewer(Viewer):
         self.windows.append(SinglePlot(ax=ax, volume=self.image, viewer=self, view=3))
 
         self.compute_offset()
-        self.pad_data()
+        #self.pad_data()
 
         for window in self.windows:
             window.connect()
@@ -343,12 +343,11 @@ class ClickViewer(Viewer):
 
         # display axes, specific to viewer
         ax = self.fig.add_subplot(111, axisbg='k')
-        self.im_plot_axial = ax.imshow(self.image.data[:, int(self.image_dim[1] / 2), :], aspect=self.aspect_ratio)
-        self.im_plot_axial.set_cmap('gray')
-        self.im_plot_axial.set_interpolation('nearest')
-
-        self.windows.append(SinglePlot(self.im_plot_axial, self.image, self, view=2))
+        self.windows.append(SinglePlot(ax, self.image, self, view=2))
         self.windows[0].connect()
+
+        self.compute_offset()
+        self.pad_data()
 
         # specialized for Click viewer
         self.list_points = []
@@ -391,6 +390,19 @@ class ClickViewer(Viewer):
         self.all_processed = False
 
         self.setup_intensity()
+
+    def compute_offset(self):
+        max_size = max([self.image_dim[0], self.image_dim[2]])
+        self.offset = [(max_size - self.image_dim[0]) / 2, 0.0, (max_size - self.image_dim[2]) / 2]
+        if max_size == self.image_dim[0]:
+            self.offset[1] = int(self.offset[1] * self.aspect_ratio[1])
+            self.offset[2] = int(self.offset[2] * self.aspect_ratio[2])
+        elif max_size == self.image_dim[1]:
+            self.offset[0] = int(self.offset[0] * self.aspect_ratio[0])
+            self.offset[2] = int(self.offset[2] * self.aspect_ratio[2])
+        elif max_size == self.image_dim[2]:
+            self.offset[0] = int(self.offset[0] * self.aspect_ratio[0])
+            self.offset[1] = int(self.offset[1] * self.aspect_ratio[1])
 
     def on_press(self, event, plot=None):
         target_point = Coordinate([int(event.ydata) - self.offset[1], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[0], 1])
