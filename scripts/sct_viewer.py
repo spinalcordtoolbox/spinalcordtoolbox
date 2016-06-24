@@ -17,6 +17,7 @@ from msct_parser import Parser
 from msct_image import Image
 from bisect import bisect
 from numpy import arange, max, pad, linspace, mean, median, std, percentile
+import numpy as np
 from msct_types import *
 import matplotlib.pyplot as plt
 
@@ -28,11 +29,26 @@ class SinglePlot:
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, fig, volume, viewer, view=2):
-        self.fig = fig
+    def __init__(self, ax, volume, viewer, view=2):
+        self.axes = ax
         self.volume = volume
         self.viewer = viewer
         self.view = view
+
+        self.image_dim = self.volume.data.shape
+
+        data_to_display = None
+        if self.view == 1:
+            data_to_display = self.volume.data[int(self.image_dim[0] / 2), :, :]
+        elif self.view == 2:
+            data_to_display = self.volume.data[:, int(self.image_dim[1] / 2), :]
+        elif self.view == 3:
+            data_to_display = self.volume.data[:, :, int(self.image_dim[2] / 2)]
+
+        self.fig = self.axes.imshow(data_to_display)
+        self.fig.set_cmap('gray')
+        self.fig.set_interpolation('nearest')
+        self.axes.set_axis_bgcolor('black')
 
         self.image_dim = self.volume.data.shape
 
@@ -65,7 +81,7 @@ class SinglePlot:
             if 0 <= target_slice < self.volume.dim[1]:
                 self.fig.set_data(self.volume.data[:, target_slice, :])
         elif self.view == 3:
-            if 0 <= target_slice < self.volume.dim[3]:
+            if 0 <= target_slice < self.volume.dim[2]:
                 self.fig.set_data(self.volume.data[:, :, target_slice])
         self.fig.figure.canvas.draw()
 
@@ -172,28 +188,39 @@ class Viewer(object):
         # initialisation of plot
         self.fig = plt.figure()
         self.fig.subplots_adjust(bottom=0.1, left=0.1)
+        self.fig.patch.set_facecolor('lightgrey')
 
         # pad the image so that it is square in axial view (useful for zooming)
         self.image_dim = self.image.data.shape
         nx, ny, nz, nt, px, py, pz, pt = self.image.dim
         self.im_spacing = [px, py, pz]
-        self.aspect_ratio = float(self.im_spacing[0]) / float(self.im_spacing[2])
-
-        max_size = max([self.image_dim[0], self.image_dim[2]])
-        self.offset = [(max_size - self.image_dim[2]) / 2, (max_size - self.image_dim[0]) / 2]
-        if max_size == self.image_dim[0]:
-            self.offset[0] = int(self.offset[0] * self.aspect_ratio)
-        else:
-            self.offset[1] = int(self.offset[1] * self.aspect_ratio)
-        self.image.data = pad(self.image.data,
-                              ((self.offset[1], self.offset[1]),
-                               (0, 0),
-                               (self.offset[0], self.offset[0])),
-                              'constant',
-                              constant_values=(0, 0))
+        self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
+                             float(self.im_spacing[0]) / float(self.im_spacing[2]),
+                             float(self.im_spacing[0]) / float(self.im_spacing[1])]
 
         self.windows = []
         self.press = [0, 0]
+
+    def compute_offset(self):
+        max_size = max([self.image_dim[0], self.image_dim[1], self.image_dim[2]])
+        self.offset = [(max_size - self.image_dim[0]) / 2, (max_size - self.image_dim[1]) / 2, (max_size - self.image_dim[2]) / 2]
+        if max_size == self.image_dim[0]:
+            self.offset[1] = int(self.offset[1] * self.aspect_ratio[1])
+            self.offset[2] = int(self.offset[2] * self.aspect_ratio[2])
+        elif max_size == self.image_dim[1]:
+            self.offset[0] = int(self.offset[0] * self.aspect_ratio[0])
+            self.offset[2] = int(self.offset[2] * self.aspect_ratio[2])
+        elif max_size == self.image_dim[2]:
+            self.offset[0] = int(self.offset[0] * self.aspect_ratio[0])
+            self.offset[1] = int(self.offset[1] * self.aspect_ratio[1])
+
+    def pad_data(self):
+        self.image.data = pad(self.image.data,
+                              ((self.offset[0], self.offset[0]),
+                               (self.offset[1], self.offset[1]),
+                               (self.offset[2], self.offset[2])),
+                              'constant',
+                              constant_values=(0, 0))
 
     def setup_intensity(self):
         # intensity variables
@@ -231,7 +258,7 @@ class Viewer(object):
 
     def draw(self):
         for window in self.windows:
-            window.figure.canvas.draw()
+            window.fig.figure.canvas.draw()
 
     def start(self):
         plt.show()
@@ -246,22 +273,16 @@ class ThreeViewer(Viewer):
         super(ThreeViewer, self).__init__(image)
 
         ax = self.fig.add_subplot(221)
-        self.im_plot_axial = ax.imshow(self.image.data[:, int(self.image_dim[1] / 2), :])
-        self.im_plot_axial.set_cmap('gray')
-        self.im_plot_axial.set_interpolation('nearest')
-        self.windows.append(SinglePlot(self.im_plot_axial, self.image, self, view=2))
+        self.windows.append(SinglePlot(ax=ax, volume=self.image, viewer=self, view=2))
 
         ax = self.fig.add_subplot(222)
-        self.im_plot_frontal = ax.imshow(self.image.data[int(self.image_dim[0] / 2), :, :])
-        self.im_plot_frontal.set_cmap('gray')
-        self.im_plot_frontal.set_interpolation('nearest')
-        self.windows.append(SinglePlot(self.im_plot_frontal, self.image, self, view=1))
+        self.windows.append(SinglePlot(ax=ax, volume=self.image, viewer=self, view=1))
 
         ax = self.fig.add_subplot(223)
-        self.im_plot_sagittal = ax.imshow(self.image.data[:, :, int(self.image_dim[2] / 2)])
-        self.im_plot_sagittal.set_cmap('gray')
-        self.im_plot_sagittal.set_interpolation('nearest')
-        self.windows.append(SinglePlot(self.im_plot_sagittal, self.image, self, view=3))
+        self.windows.append(SinglePlot(ax=ax, volume=self.image, viewer=self, view=3))
+
+        self.compute_offset()
+        self.pad_data()
 
         for window in self.windows:
             window.connect()
@@ -371,7 +392,7 @@ class ClickViewer(Viewer):
 
         self.setup_intensity()
 
-    def on_press(self, event):
+    def on_press(self, event, plot=None):
         target_point = Coordinate([int(event.ydata) - self.offset[1], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[0], 1])
         if self.is_point_in_image(target_point):
             self.list_points.append(target_point)
@@ -398,6 +419,12 @@ class ClickViewer(Viewer):
             title_obj = plt.title('The point you selected in not in the image. Please try again.')
             plt.setp(title_obj, color='r')
             self.draw()
+
+    def on_release(self, event, plot=None):
+        return
+
+    def on_motion(self, event, plot=None):
+        return
 
     def get_results(self):
         if self.list_points:
@@ -428,7 +455,7 @@ def get_parser():
                       description="Display mode ",
                       mandatory=False,
                       default_value='viewer',
-                      example=['viewer', 'axialclick'])
+                      example=['viewer', 'axial'])
 
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -453,6 +480,6 @@ if __name__ == "__main__":
     if mode == 'viewer':
         viewer = ThreeViewer(image)
         viewer.start()
-    elif mode == 'axialclick':
+    elif mode == 'axial':
         viewer = ClickViewer(image)
         viewer.start()
