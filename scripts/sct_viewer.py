@@ -20,6 +20,7 @@ from numpy import arange, max, pad, linspace, mean, median, std, percentile
 import numpy as np
 from msct_types import *
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 
 # from matplotlib.widgets import Slider, Button, RadioButtons
@@ -29,26 +30,46 @@ class SinglePlot:
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, volume, viewer, view=2):
+    def __init__(self, ax, volume, viewer, view=2, display_cross=True):
         self.axes = ax
         self.volume = volume
         self.viewer = viewer
         self.view = view
+        self.display_cross = display_cross
 
         self.image_dim = self.volume.data.shape
 
         data_to_display = None
+        self.cross_to_display = None
+        self.aspect_ratio = None
         if self.view == 1:
             data_to_display = self.volume.data[int(self.image_dim[0] / 2), :, :]
+            self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [0, self.image_dim[1]]],
+                                     [[0, self.image_dim[2]], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[0]
         elif self.view == 2:
             data_to_display = self.volume.data[:, int(self.image_dim[1] / 2), :]
+            self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [0, self.image_dim[2]]],
+                                     [[0, self.image_dim[0]], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[1]
         elif self.view == 3:
             data_to_display = self.volume.data[:, :, int(self.image_dim[2] / 2)]
+            self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [0, self.image_dim[1]]],
+                                     [[0, self.image_dim[0]], [self.viewer.current_point.y, self.viewer.current_point.y]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[2]
 
-        self.fig = self.axes.imshow(data_to_display)
+        self.fig = self.axes.imshow(data_to_display, aspect=self.aspect_ratio)
         self.fig.set_cmap('gray')
         self.fig.set_interpolation('nearest')
         self.axes.set_axis_bgcolor('black')
+        self.axes.set_xticklabels([])
+        self.axes.set_yticklabels([])
+
+        if display_cross:
+            self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
+            self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
+            self.axes.add_line(self.line_vertical)
+            self.axes.add_line(self.line_horizontal)
 
         self.image_dim = self.volume.data.shape
 
@@ -67,24 +88,46 @@ class SinglePlot:
     def draw(self):
         self.fig.figure.canvas.draw()
 
-    def update_slice(self, target_slice):
+    def update_slice(self, target, data_update=True):
         """
         This function change the viewer to update the current slice
-        :param slice: number of the slice to go on
+        :param target: number of the slice to go on
+        :param data_update: False if you don't want to update data
         :return:
         """
         data = None
-        if self.view == 1:
-            if 0 <= target_slice < self.volume.dim[0]:
-                self.fig.set_data(self.volume.data[target_slice, :, :])
-        elif self.view == 2:
-            if 0 <= target_slice < self.volume.dim[1]:
-                self.fig.set_data(self.volume.data[:, target_slice, :])
-        elif self.view == 3:
-            if 0 <= target_slice < self.volume.dim[2]:
-                self.fig.set_data(self.volume.data[:, :, target_slice])
-        self.fig.figure.canvas.draw()
+        if isinstance(target, list):
+            target_slice = target[self.view - 1]
+            list_remaining_views = list([0, 1, 2])
+            list_remaining_views.remove(self.view - 1)
+            self.cross_to_display[0][0] = [target[list_remaining_views[0]], target[list_remaining_views[0]]]
+            self.cross_to_display[1][1] = [target[list_remaining_views[1]], target[list_remaining_views[1]]]
+        else:
+            target_slice = target
 
+        if self.view == 1:
+            if 0 <= target_slice < self.volume.data.shape[0]:
+                if data_update:
+                    self.fig.set_data(self.volume.data[target_slice, :, :])
+                if self.display_cross:
+                    self.line_vertical.set_ydata(self.cross_to_display[0][0])
+                    self.line_horizontal.set_xdata(self.cross_to_display[1][1])
+        elif self.view == 2:
+            if 0 <= target_slice < self.volume.data.shape[1]:
+                if data_update:
+                    self.fig.set_data(self.volume.data[:, target_slice, :])
+                if self.display_cross:
+                    self.line_vertical.set_ydata(self.cross_to_display[0][0])
+                    self.line_horizontal.set_xdata(self.cross_to_display[1][1])
+        elif self.view == 3:
+            if 0 <= target_slice < self.volume.data.shape[2]:
+                if data_update:
+                    self.fig.set_data(self.volume.data[:, :, target_slice])
+                if self.display_cross:
+                    self.line_vertical.set_ydata(self.cross_to_display[0][0])
+                    self.line_horizontal.set_xdata(self.cross_to_display[1][1])
+
+        self.fig.figure.canvas.draw()
 
     def on_press(self, event):
         """
@@ -103,21 +146,25 @@ class SinglePlot:
 
     def change_intensity(self, min_intensity, max_intensity):
         self.fig.set_clim(min_intensity, max_intensity)
-        self.draw()
+        self.fig.figure.canvas.draw()
 
     def on_motion(self, event):
         if event.button == 1 and event.inaxes == self.fig.axes:
             return self.viewer.on_motion(event, self)
+
         elif event.button == 3 and event.inaxes == self.fig.axes:
-            return self.viewer.change_intensity(event)
+            return self.viewer.change_intensity(event, self)
+
         else:
             return
 
     def on_release(self, event):
         if event.button == 1 and event.inaxes == self.fig.axes:
             return self.viewer.on_release(event, self)
+
         elif event.button == 3 and event.inaxes == self.fig.axes:
-            return self.viewer.change_intensity(event)
+            return self.viewer.change_intensity(event, self)
+
         else:
             return
 
@@ -186,7 +233,7 @@ class Viewer(object):
             print "Error, the image is actually not an image"
 
         # initialisation of plot
-        self.fig = plt.figure()
+        self.fig = plt.figure(figsize=(8, 8))
         self.fig.subplots_adjust(bottom=0.1, left=0.1)
         self.fig.patch.set_facecolor('lightgrey')
 
@@ -197,22 +244,20 @@ class Viewer(object):
         self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[1])]
+        self.offset = [0.0, 0.0, 0.0]
+
+        self.current_point = Coordinate([int(self.image.dim[0] / 2),
+                                         int(self.image.dim[1] / 2),
+                                         int(self.image.dim[2] / 2)])
 
         self.windows = []
         self.press = [0, 0]
 
     def compute_offset(self):
         max_size = max([self.image_dim[0], self.image_dim[1], self.image_dim[2]])
-        self.offset = [(max_size - self.image_dim[0]) / 2, (max_size - self.image_dim[1]) / 2, (max_size - self.image_dim[2]) / 2]
-        if max_size == self.image_dim[0]:
-            self.offset[1] = int(self.offset[1] * self.aspect_ratio[1])
-            self.offset[2] = int(self.offset[2] * self.aspect_ratio[2])
-        elif max_size == self.image_dim[1]:
-            self.offset[0] = int(self.offset[0] * self.aspect_ratio[0])
-            self.offset[2] = int(self.offset[2] * self.aspect_ratio[2])
-        elif max_size == self.image_dim[2]:
-            self.offset[0] = int(self.offset[0] * self.aspect_ratio[0])
-            self.offset[1] = int(self.offset[1] * self.aspect_ratio[1])
+        self.offset = [int(round((max_size - self.image_dim[0]) * self.aspect_ratio[0] / 2.0)),
+                       int(round((max_size - self.image_dim[1]) * self.aspect_ratio[1] / 2.0)),
+                       int(round((max_size - self.image_dim[2]) * self.aspect_ratio[2] / 2.0))]
 
     def pad_data(self):
         self.image.data = pad(self.image.data,
@@ -225,16 +270,12 @@ class Viewer(object):
     def setup_intensity(self):
         # intensity variables
         flattened_volume = self.image.flatten()
-        self.mean_intensity_factor = 0.5
-        self.std_intensity_factor = 0.5
         self.first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
         self.last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
-        self.mean_intensity = (self.first_percentile + self.last_percentile) / 2
+        self.mean_intensity = percentile(flattened_volume[flattened_volume > 0], 98)
         self.std_intensity = self.last_percentile - self.first_percentile
-        min_intensity = (self.mean_intensity + (self.mean_intensity_factor - 0.5) * self.mean_intensity) - (
-        self.std_intensity + (self.std_intensity_factor - 0.5) * self.std_intensity)
-        max_intensity = (self.mean_intensity + (self.mean_intensity_factor - 0.5) * self.mean_intensity) + (
-        self.std_intensity + (self.std_intensity_factor - 0.5) * self.std_intensity)
+        min_intensity = self.mean_intensity - self.std_intensity
+        max_intensity = self.mean_intensity + self.std_intensity
 
         for window in self.windows:
             window.fig.set_clim(min_intensity, max_intensity)
@@ -242,19 +283,21 @@ class Viewer(object):
     def is_point_in_image(self, target_point):
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
 
-    def change_intensity(self, event):
+    def change_intensity(self, event, plot=None):
         if event.xdata and abs(event.xdata - self.press[0]) < 1 and abs(event.ydata - self.press[1]) < 1:
             self.press = event.xdata, event.ydata
             return
 
-        if event.inaxes == self.fig.axes:
-            xlim, ylim = self.fig.axes.get_xlim(), self.fig.axes.get_ylim()
-            self.mean_intensity_factor = - ((event.xdata - xlim[0]) / float(xlim[1] - xlim[0]) - 0.5) * 1.2
-            self.std_intensity_factor = ((event.ydata - ylim[1]) / float(ylim[0] - ylim[1]) - 0.5) * 1.2
-            min_intensity = (self.mean_intensity + self.mean_intensity_factor * self.mean_intensity) - (self.std_intensity + self.std_intensity_factor * self.std_intensity)
-            max_intensity = (self.mean_intensity + self.mean_intensity_factor * self.mean_intensity) + (self.std_intensity + self.std_intensity_factor * self.std_intensity)
-            for window in self.windows:
-                window.fig.change_intensity(min_intensity, max_intensity)
+        xlim, ylim = plot.axes.get_xlim(), plot.axes.get_ylim()
+        mean_intensity_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
+        std_intensity_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
+        mean_factor = self.mean_intensity - (mean_intensity_factor - 0.5) * self.mean_intensity * 3.0
+        std_factor = self.std_intensity + (std_intensity_factor - 0.5) * self.std_intensity * 2.0
+        min_intensity = mean_factor - std_factor
+        max_intensity = mean_factor + std_factor
+
+        for window in self.windows:
+            window.change_intensity(min_intensity, max_intensity)
 
     def draw(self):
         for window in self.windows:
@@ -272,6 +315,13 @@ class ThreeViewer(Viewer):
     def __init__(self, image):
         super(ThreeViewer, self).__init__(image)
 
+        self.compute_offset()
+        self.pad_data()
+
+        self.current_point = Coordinate([int(self.image.data.shape[0] / 2),
+                                         int(self.image.data.shape[1] / 2),
+                                         int(self.image.data.shape[2] / 2)])
+
         ax = self.fig.add_subplot(221)
         self.windows.append(SinglePlot(ax=ax, volume=self.image, viewer=self, view=2))
 
@@ -281,40 +331,48 @@ class ThreeViewer(Viewer):
         ax = self.fig.add_subplot(223)
         self.windows.append(SinglePlot(ax=ax, volume=self.image, viewer=self, view=3))
 
-        self.compute_offset()
-        #self.pad_data()
-
         for window in self.windows:
             window.connect()
 
-    def on_press(self, event, plot=None):
-        self.press = event.xdata, event.ydata
-        return
+        self.setup_intensity()
+
+    def get_event_coordinates(self, event, plot=None):
+        point = None
+        if plot.view == 1:
+            point = Coordinate([self.current_point.x,
+                                int(event.ydata),
+                                int(event.xdata), 1])
+        elif plot.view == 2:
+            point = Coordinate([int(event.ydata),
+                                self.current_point.y,
+                                int(event.xdata), 1])
+        elif plot.view == 3:
+            point = Coordinate([int(event.ydata),
+                                int(event.xdata),
+                                self.current_point.z, 1])
+        return point
 
     def move(self, event, plot):
         if event.xdata and abs(event.xdata - self.press[0]) < 1 and abs(event.ydata - self.press[1]) < 1:
             self.press = event.xdata, event.ydata
             return
 
+        self.current_point = self.get_event_coordinates(event, plot)
+        point = [self.current_point.x, self.current_point.y, self.current_point.z]
         for window in self.windows:
-            if window is not plot and plot.view == 1:
-                if window.view == 2:
-                    window.update_slice(event.ydata)
-                elif window.view == 3:
-                    window.update_slice(event.xdata)
-            elif window is not plot and plot.view == 2:
-                if window.view == 1:
-                    window.update_slice(event.ydata)
-                elif window.view == 3:
-                    window.update_slice(event.xdata)
-            elif window is not plot and plot.view == 3:
-                if window.view == 1:
-                    window.update_slice(event.ydata)
-                elif window.view == 2:
-                    window.update_slice(event.xdata)
+            if window is plot:
+                window.update_slice(point, data_update=False)
+            else:
+                window.update_slice(point, data_update=True)
 
         self.press = event.xdata, event.ydata
         return
+
+    def on_press(self, event, plot=None):
+        if event.button == 1:
+            return self.move(event, plot)
+        else:
+            return
 
     def on_motion(self, event, plot=None):
         if event.button == 1:
@@ -341,13 +399,13 @@ class ClickViewer(Viewer):
         self.number_of_slices = 0
         self.gap_inter_slice = 0
 
-        # display axes, specific to viewer
-        ax = self.fig.add_subplot(111, axisbg='k')
-        self.windows.append(SinglePlot(ax, self.image, self, view=2))
-        self.windows[0].connect()
-
         self.compute_offset()
         self.pad_data()
+
+        # display axes, specific to viewer
+        ax = self.fig.add_subplot(111, axisbg='k')
+        self.windows.append(SinglePlot(ax, self.image, self, view=2, display_cross=False))
+        self.windows[0].connect()
 
         # specialized for Click viewer
         self.list_points = []
@@ -393,19 +451,12 @@ class ClickViewer(Viewer):
 
     def compute_offset(self):
         max_size = max([self.image_dim[0], self.image_dim[2]])
-        self.offset = [(max_size - self.image_dim[0]) / 2, 0.0, (max_size - self.image_dim[2]) / 2]
-        if max_size == self.image_dim[0]:
-            self.offset[1] = int(self.offset[1] * self.aspect_ratio[1])
-            self.offset[2] = int(self.offset[2] * self.aspect_ratio[2])
-        elif max_size == self.image_dim[1]:
-            self.offset[0] = int(self.offset[0] * self.aspect_ratio[0])
-            self.offset[2] = int(self.offset[2] * self.aspect_ratio[2])
-        elif max_size == self.image_dim[2]:
-            self.offset[0] = int(self.offset[0] * self.aspect_ratio[0])
-            self.offset[1] = int(self.offset[1] * self.aspect_ratio[1])
+        self.offset = [int(round((max_size - self.image_dim[0]) * self.aspect_ratio[0] / 2.0)),
+                       0,
+                       int(round((max_size - self.image_dim[2]) * self.aspect_ratio[2] / 2.0))]
 
     def on_press(self, event, plot=None):
-        target_point = Coordinate([int(event.ydata) - self.offset[1], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[0], 1])
+        target_point = Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[2], 1])
         if self.is_point_in_image(target_point):
             self.list_points.append(target_point)
 
