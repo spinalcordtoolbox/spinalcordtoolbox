@@ -80,8 +80,8 @@ class SinglePlot:
             self.figs[-1].set_interpolation(my_interpolation)
 
         self.axes.set_axis_bgcolor('black')
-        #self.axes.set_xticks([])
-        #self.axes.set_yticks([])
+        self.axes.set_xticks([])
+        self.axes.set_yticks([])
 
         if display_cross:
             self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
@@ -111,7 +111,6 @@ class SinglePlot:
         :param data_update: False if you don't want to update data
         :return:
         """
-        data = None
         if isinstance(target, list):
             target_slice = target[self.view - 1]
             list_remaining_views = list([0, 1, 2])
@@ -466,18 +465,22 @@ class ClickViewer(Viewer):
         self.gap_inter_slice = 0
 
         self.compute_offset()
-        self.offset[2] /= 2
         self.pad_data()
+
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
 
         # display axes, specific to viewer
         import matplotlib.gridspec as gridspec
         gs = gridspec.GridSpec(1, 3)
 
-        ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=3, display_cross=True, im_params=visualization_parameters))
-
         ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
         self.windows.append(SinglePlot(ax, self.images, self, view=1, display_cross=False, im_params=visualization_parameters))
+        self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
+        self.windows[0].axes.set_xlim([0, self.images[0].data.shape[1]])
+        self.windows[0].axes.set_ylim([self.images[0].data.shape[2], 0])
+
+        ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
+        self.windows.append(SinglePlot(ax, self.images, self, view=3, display_cross=True, im_params=visualization_parameters))
 
         for window in self.windows:
             window.connect()
@@ -523,9 +526,7 @@ class ClickViewer(Viewer):
             else:
                 window.update_slice(point, data_update=True)
 
-        self.plot_points, = self.windows[1].axes.plot([], [], '.r', markersize=10)
-
-        plt.title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
+        self.title = self.windows[0].axes.set_title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
             self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
 
         # variable to check if all slices have been processed
@@ -534,32 +535,33 @@ class ClickViewer(Viewer):
         self.setup_intensity()
 
     def compute_offset(self):
-        max_size = max([self.image_dim[0], self.image_dim[2]])
-        self.offset = [int(round((max_size - self.image_dim[0]) * self.aspect_ratio[0] / 2.0)),
-                       0,
-                       int(round((max_size - self.image_dim[2]) * self.aspect_ratio[2] / 2.0))]
+        array_dim = [self.image_dim[1] * self.im_spacing[1], self.image_dim[2] * self.im_spacing[2]]
+        index_max = np.argmax(array_dim)
+        max_size = array_dim[index_max]
+        self.offset = [0,
+                       int(round((max_size - array_dim[0]) / self.im_spacing[1]) / 2),
+                       int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
 
     def on_press(self, event, plot=None):
         if plot.view == 1:
             target_point = Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1])
-            print target_point
             if self.is_point_in_image(target_point):
                 self.list_points.append(target_point)
 
                 self.current_slice += 1
                 if self.current_slice < len(self.list_slices):
                     self.current_point.x = self.list_slices[self.current_slice]
-                    self.windows[1].update_slice(self.list_slices[self.current_slice])
-                    title_obj = plt.title('Please select a new point on slice ' +
-                                          str(self.list_slices[self.current_slice]) + '/' +
-                                          str(self.image_dim[1] - 1) + ' (' +
-                                          str(self.current_slice + 1) + '/' +
-                                          str(len(self.list_slices)) + ')')
+                    self.windows[0].update_slice(self.list_slices[self.current_slice])
+                    title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
+                                                    str(self.list_slices[self.current_slice]) + '/' +
+                                                    str(self.image_dim[1] - 1) + ' (' +
+                                                    str(self.current_slice + 1) + '/' +
+                                                    str(len(self.list_slices)) + ')')
                     plt.setp(title_obj, color='k')
                     plot.draw()
 
                     point = [self.current_point.x, self.current_point.y, self.current_point.z]
-                    self.windows[0].update_slice(point, data_update=False)
+                    self.windows[1].update_slice(point, data_update=False)
                 else:
                     for coord in self.list_points:
                         if self.list_points_useful_notation != '':
@@ -569,7 +571,7 @@ class ClickViewer(Viewer):
                     self.all_processed = True
                     plt.close()
             else:
-                title_obj = plt.title('The point you selected in not in the image. Please try again.')
+                title_obj = self.windows[0].axes.set_title('The point you selected in not in the image. Please try again.')
                 plt.setp(title_obj, color='r')
                 plot.draw()
 
@@ -577,12 +579,11 @@ class ClickViewer(Viewer):
         if window.view == 1:
             x_data, y_data = [], []
             for pt in self.list_points:
-                if pt.y == current_slice:
+                if pt.x == current_slice:
                     x_data.append(pt.z + self.offset[2])
                     y_data.append(pt.y + self.offset[1])
             self.plot_points.set_xdata(x_data)
             self.plot_points.set_ydata(y_data)
-            window.draw()
 
     def on_release(self, event, plot=None):
         if event.button == 1 and plot.view == 3:
@@ -592,8 +593,8 @@ class ClickViewer(Viewer):
                 if window is plot:
                     window.update_slice(point, data_update=False)
                 else:
-                    window.update_slice(point, data_update=True)
                     self.draw_points(window, self.current_point.y)
+                    window.update_slice(point, data_update=True)
         return
 
     def on_motion(self, event, plot=None):
@@ -612,9 +613,8 @@ class ClickViewer(Viewer):
                 if window is plot:
                     window.update_slice(point, data_update=False)
                 else:
-                    window.update_slice(point, data_update=True)
                     self.draw_points(window, self.current_point.x)
-
+                    window.update_slice(point, data_update=True)
         return
 
     def get_results(self):
