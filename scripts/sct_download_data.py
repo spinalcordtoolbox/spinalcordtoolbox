@@ -12,6 +12,8 @@
 
 import sys
 from os import remove, rename, path
+import urllib2
+import httplib
 # import time
 # from urllib import urlretrieve
 import zipfile
@@ -66,7 +68,10 @@ def main(args=None):
 
     # Download data
     url = dict_url[data_name]
-    download_from_url(url, tmp_file)
+    try:
+        download_from_url(url, tmp_file)
+    except(KeyboardInterrupt):
+        printv('\nERROR: User canceled process.', 1, 'error')
     # try:
     #     printv('\nDownload data from: '+url, verbose)
     #     urlretrieve(url, tmp_file)
@@ -89,7 +94,7 @@ def main(args=None):
         zf = zipfile.ZipFile(tmp_file)
         zf.extractall()
     except (zipfile.BadZipfile):
-        printv('ERROR: ZIP package corrupted. Please try downloading again.', verbose, 'error')
+        printv('\nERROR: ZIP package corrupted. Please try downloading again.', verbose, 'error')
 
     # if downloaded from GitHub, need to remove the "-master" suffix
     if 'master.zip' in url:
@@ -112,12 +117,19 @@ def download_from_url(url, local):
     :param local:
     :return:
     """
-    import urllib2
-
     try:
         u = urllib2.urlopen(url)
-    except:
-        printv('ERROR: Cannot open URL.', 1, 'error')
+    except urllib2.HTTPError, e:
+        printv('\nHTTPError = ' + str(e.code), 1, 'error')
+    except urllib2.URLError, e:
+        printv('\nURLError = ' + str(e.reason), 1, 'error')
+    except httplib.HTTPException, e:
+        printv('\nHTTPException', 1, 'error')
+    except(KeyboardInterrupt):
+        printv('\nERROR: User canceled process.', 1, 'error')
+    except Exception:
+        import traceback
+        printv('\nERROR: Cannot open URL: ' + traceback.format_exc(), 1, 'error')
     h = u.info()
     totalSize = int(h["Content-Length"])
 
