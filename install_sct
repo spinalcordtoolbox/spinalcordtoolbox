@@ -389,7 +389,7 @@ else
   if e_status ; then
     echo "pip install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
-     exit 1
+    exit 1
   fi
 
   # Install wheels
