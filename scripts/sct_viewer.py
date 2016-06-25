@@ -411,7 +411,7 @@ class ThreeViewer(Viewer):
         if not is_in_axes:
             return
 
-        if event.xdata and abs(event.xdata - self.press[0]) < 0.25 and abs(event.ydata - self.press[1]) < 0.25:
+        if event.xdata and abs(event.xdata - self.press[0]) < 0.5 and abs(event.ydata - self.press[1]) < 0.5:
             self.press = event.xdata, event.ydata
             return
 
@@ -729,13 +729,13 @@ def prepare(list_images):
         orientation_images.append(orientation(Image(fname_im), get=True, verbose=False))
         path_fname, file_fname, ext_fname = sct.extract_fname(fname_im)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
-        sct.run('sct_image -i ' + fname_im + ' -o ' + reoriented_image_filename + ' -setorient SAL -v 0',verbose=False)
+        sct.run('sct_image -i ' + fname_im + ' -o ' + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
         fname_images.append(reoriented_image_filename)
     return fname_images, orientation_images
 
 
 def clean():
-    sct.run('rm -rf ' + 'tmp.*')
+    sct.run('rm -rf ' + 'tmp.*', verbose=False)
 
 #=======================================================================================================================
 # Start program
