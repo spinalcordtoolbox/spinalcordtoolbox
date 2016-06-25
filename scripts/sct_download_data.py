@@ -14,7 +14,7 @@ import sys
 from os import remove, rename, path
 import urllib2
 import httplib
-# import time
+import time
 # from urllib import urlretrieve
 import zipfile
 from sct_utils import run, printv, check_folder_exist
@@ -117,21 +117,41 @@ def download_from_url(url, local):
     :param local:
     :return:
     """
-    try:
-        u = urllib2.urlopen(url)
-    except urllib2.HTTPError, e:
-        printv('\nHTTPError = ' + str(e.code), 1, 'error')
-    except urllib2.URLError, e:
-        printv('\nURLError = ' + str(e.reason), 1, 'error')
-    except httplib.HTTPException, e:
-        printv('\nHTTPException', 1, 'error')
-    except(KeyboardInterrupt):
-        printv('\nERROR: User canceled process.', 1, 'error')
-    except Exception:
-        import traceback
-        printv('\nERROR: Cannot open URL: ' + traceback.format_exc(), 1, 'error')
-    h = u.info()
-    totalSize = int(h["Content-Length"])
+    keep_connecting = True
+    i_trial = 1
+    max_trials = 3
+
+    print 'Reaching URL...'
+    while keep_connecting:
+        try:
+            u = urllib2.urlopen(url)
+        except urllib2.HTTPError, e:
+            printv('\nHTTPError = ' + str(e.code), 1, 'error')
+        except urllib2.URLError, e:
+            printv('\nURLError = ' + str(e.reason), 1, 'error')
+        except httplib.HTTPException, e:
+            printv('\nHTTPException', 1, 'error')
+        except(KeyboardInterrupt):
+            printv('\nERROR: User canceled process.', 1, 'error')
+        except Exception:
+            import traceback
+            printv('\nERROR: Cannot open URL: ' + traceback.format_exc(), 1, 'error')
+        h = u.info()
+        try:
+            totalSize = int(h["Content-Length"])
+            keep_connecting = False
+        except:
+            # if URL was badly reached (issue #895):
+            # send warning message
+            printv('\nWARNING: URL cannot be reached. Trying again (maximum trials: '+str(max_trials)+').', 1, 'warning')
+            # pause for 0.5s
+            time.sleep(0.5)
+            # iterate i_trial and try again
+            i_trial += 1
+            # if i_trial exceeds max_trials, exit with error
+            if i_trial > max_trials:
+                printv('\nERROR: Maximum number of trials reached. Try again later.', 1, 'error')
+                keep_connecting = False
 
     print "Downloading %s bytes..." % totalSize,
     fp = open(local, 'wb')
