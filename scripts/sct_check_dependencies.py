@@ -195,17 +195,17 @@ def main():
         install_software = 1
 
     # Check if dipy is installed
-    print_line('Check if dipy ('+dipy_version+') is installed')
-    try:
-        module = importlib.import_module('dipy')
-        if module.__version__ == dipy_version:
-            print_ok()
-        else:
-            print_warning()
-            print '  Detected version: '+version+'. Required version: '+dipy_version
-    except ImportError:
-        print_fail()
-        install_software = 1
+    # print_line('Check if dipy ('+dipy_version+') is installed')
+    # try:
+    #     module = importlib.import_module('dipy')
+    #     if module.__version__ == dipy_version:
+    #         print_ok()
+    #     else:
+    #         print_warning()
+    #         print '  Detected version: '+version+'. Required version: '+dipy_version
+    # except ImportError:
+    #     print_fail()
+    #     install_software = 1
 
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
