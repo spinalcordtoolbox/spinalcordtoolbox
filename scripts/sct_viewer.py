@@ -21,8 +21,10 @@ import numpy as np
 from msct_types import *
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib import cm
 import sct_utils as sct
 from time import time
+from copy import copy
 
 
 # from matplotlib.widgets import Slider, Button, RadioButtons
@@ -41,13 +43,6 @@ class SinglePlot:
 
         self.image_dim = self.images[0].data.shape
         self.figs = []
-
-        # mask all images below minimum value (default to 0)
-        for i, image in enumerate(images):
-            if str(i) in im_params.images_parameters:
-                image.data = np.ma.masked_where(image.data <= float(im_params.images_parameters[str(i)].vmin), image.data)
-            else:
-                image.data = np.ma.masked_where(image.data <= 0.0, image.data)
 
         self.cross_to_display = None
         self.aspect_ratio = None
@@ -70,13 +65,19 @@ class SinglePlot:
                 self.aspect_ratio = self.viewer.aspect_ratio[2]
                 data_to_display = image.data[:, :, int(self.image_dim[2] / 2)]
 
-            self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio))
             if str(i) in im_params.images_parameters:
-                self.figs[-1].set_cmap(im_params.images_parameters[str(i)].cmap)
-                self.figs[-1].set_interpolation(im_params.images_parameters[str(i)].interp)
+                my_cmap = copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap))
+                my_interpolation = im_params.images_parameters[str(i)].interp
+                my_alpha = float(im_params.images_parameters[str(i)].alpha)
             else:
-                self.figs[-1].set_cmap('gray')
-                self.figs[-1].set_interpolation('nearest')
+                my_cmap = cm.get_cmap('gray')
+                my_interpolation = 'nearest'
+                my_alpha = 1.0
+
+            my_cmap.set_under('b', alpha=0)
+            self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
+            self.figs[-1].set_cmap(my_cmap)
+            self.figs[-1].set_interpolation(my_interpolation)
 
         self.axes.set_axis_bgcolor('black')
         #self.axes.set_xticks([])
@@ -159,9 +160,9 @@ class SinglePlot:
 
         return
 
-    def change_intensity(self, min_intensity, max_intensity):
-        self.figs[0].set_clim(min_intensity, max_intensity)
-        self.figs[0].figure.canvas.draw()
+    def change_intensity(self, min_intensity, max_intensity, id_image=0):
+        self.figs[id_image].set_clim(min_intensity, max_intensity)
+        self.figs[id_image].figure.canvas.draw()
 
     def on_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes:
@@ -272,14 +273,19 @@ class Viewer(object):
         self.windows = []
         self.press = [0, 0]
 
+        self.mean_intensity = []
+        self.std_intensity = []
+
         self.last_update = time()
         self.update_freq = 1.0/15.0  # 10 Hz
 
     def compute_offset(self):
-        max_size = max([self.image_dim[0], self.image_dim[1], self.image_dim[2]])
-        self.offset = [int(round((max_size - self.image_dim[0]) * self.aspect_ratio[0] / 2.0)),
-                       int(round((max_size - self.image_dim[1]) * self.aspect_ratio[1] / 2.0)),
-                       int(round((max_size - self.image_dim[2]) * self.aspect_ratio[2] / 2.0))]
+        array_dim = [self.image_dim[0]*self.im_spacing[0], self.image_dim[1]*self.im_spacing[1], self.image_dim[2]*self.im_spacing[2]]
+        index_max = np.argmax(array_dim)
+        max_size = array_dim[index_max]
+        self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
+                       int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
+                       int(round((max_size - array_dim[2]) / self.im_spacing[2]) / 2)]
 
     def pad_data(self):
         for image in self.images:
@@ -297,24 +303,28 @@ class Viewer(object):
                 vmin = self.im_params.images_parameters[str(i)].vmin
                 vmax = self.im_params.images_parameters[str(i)].vmax
                 vmean = self.im_params.images_parameters[str(i)].vmean
-                if self.im_params.images_parameters[str(i)].perc == '1':
+                if self.im_params.images_parameters[str(i)].vmode == 'percentile':
                     flattened_volume = image.flatten()
-                    self.first_percentile = percentile(flattened_volume[flattened_volume > 0], int(vmin))
-                    self.last_percentile = percentile(flattened_volume[flattened_volume > 0], int(vmax))
-                    self.mean_intensity = percentile(flattened_volume[flattened_volume > 0], int(vmean))
-                    self.std_intensity = self.last_percentile - self.first_percentile
-                else:
-                    self.mean_intensity = (float(vmax) + float(vmin)) / 2.0
-                    self.std_intensity = float(vmax) - float(vmin)
+                    first_percentile = percentile(flattened_volume[flattened_volume > 0], int(vmin))
+                    last_percentile = percentile(flattened_volume[flattened_volume > 0], int(vmax))
+                    mean_intensity = percentile(flattened_volume[flattened_volume > 0], int(vmean))
+                    std_intensity = last_percentile - first_percentile
+                elif self.im_params.images_parameters[str(i)].vmode == 'mean-std':
+                    mean_intensity = (float(vmax) + float(vmin)) / 2.0
+                    std_intensity = (float(vmax) - float(vmin)) / 2.0
+
             else:
                 flattened_volume = image.flatten()
-                self.first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
-                self.last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
-                self.mean_intensity = percentile(flattened_volume[flattened_volume > 0], 98)
-                self.std_intensity = self.last_percentile - self.first_percentile
+                first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
+                last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
+                mean_intensity = percentile(flattened_volume[flattened_volume > 0], 98)
+                std_intensity = last_percentile - first_percentile
 
-            min_intensity = self.mean_intensity - self.std_intensity
-            max_intensity = self.mean_intensity + self.std_intensity
+            self.mean_intensity.append(mean_intensity)
+            self.std_intensity.append(std_intensity)
+
+            min_intensity = mean_intensity - std_intensity
+            max_intensity = mean_intensity + std_intensity
 
             for window in self.windows:
                 window.figs[i].set_clim(min_intensity, max_intensity)
@@ -330,8 +340,8 @@ class Viewer(object):
         xlim, ylim = plot.axes.get_xlim(), plot.axes.get_ylim()
         mean_intensity_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
         std_intensity_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
-        mean_factor = self.mean_intensity - (mean_intensity_factor - 0.5) * self.mean_intensity * 3.0
-        std_factor = self.std_intensity + (std_intensity_factor - 0.5) * self.std_intensity * 2.0
+        mean_factor = self.mean_intensity[0] - (mean_intensity_factor - 0.5) * self.mean_intensity[0] * 3.0
+        std_factor = self.std_intensity[0] + (std_intensity_factor - 0.5) * self.std_intensity[0] * 2.0
         min_intensity = mean_factor - std_factor
         max_intensity = mean_factor + std_factor
 
@@ -342,15 +352,15 @@ class Viewer(object):
         point = None
         if plot.view == 1:
             point = Coordinate([self.current_point.x,
-                                int(event.ydata),
-                                int(event.xdata), 1])
+                                int(round(event.ydata)),
+                                int(round(event.xdata)), 1])
         elif plot.view == 2:
-            point = Coordinate([int(event.ydata),
+            point = Coordinate([int(round(event.ydata)),
                                 self.current_point.y,
-                                int(event.xdata), 1])
+                                int(round(event.xdata)), 1])
         elif plot.view == 3:
-            point = Coordinate([int(event.ydata),
-                                int(event.xdata),
+            point = Coordinate([int(round(event.ydata)),
+                                int(round(event.xdata)),
                                 self.current_point.z, 1])
         return point
 
@@ -376,10 +386,8 @@ class ThreeViewer(Viewer):
 
         self.compute_offset()
         self.pad_data()
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
 
-        ax = self.fig.add_subplot(221)
-        self.windows.append(SinglePlot(ax=ax, images=self.images, viewer=self, view=3, im_params=visualization_parameters))  # SAL --> sagittal
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
 
         ax = self.fig.add_subplot(222)
         self.windows.append(SinglePlot(ax=ax, images=self.images, viewer=self, view=1, im_params=visualization_parameters))  # SAL --> axial
@@ -387,13 +395,23 @@ class ThreeViewer(Viewer):
         ax = self.fig.add_subplot(223)
         self.windows.append(SinglePlot(ax=ax, images=self.images, viewer=self, view=2, im_params=visualization_parameters))  # SAL --> frontal
 
+        ax = self.fig.add_subplot(221)
+        self.windows.append(SinglePlot(ax=ax, images=self.images, viewer=self, view=3, im_params=visualization_parameters))  # SAL --> sagittal
+
         for window in self.windows:
             window.connect()
 
         self.setup_intensity()
 
     def move(self, event, plot):
-        if event.xdata and abs(event.xdata - self.press[0]) < 1 and abs(event.ydata - self.press[1]) < 1:
+        is_in_axes = False
+        for window in self.windows:
+            if event.inaxes == window.axes:
+                is_in_axes = True
+        if not is_in_axes:
+            return
+
+        if event.xdata and abs(event.xdata - self.press[0]) < 0.25 and abs(event.ydata - self.press[1]) < 0.25:
             self.press = event.xdata, event.ydata
             return
 
@@ -580,6 +598,13 @@ class ClickViewer(Viewer):
 
     def on_motion(self, event, plot=None):
         if event.button == 1 and plot.view == 3 and time() - self.last_update > self.update_freq:
+            is_in_axes = False
+            for window in self.windows:
+                if event.inaxes == window.axes:
+                    is_in_axes = True
+            if not is_in_axes:
+                return
+
             self.last_update = time()
             self.current_point = self.get_event_coordinates(event, plot)
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
@@ -631,7 +656,10 @@ def get_parser():
                                   'Separate images with \",\". Separate parameters with \":\".'
                                   '\nid: number of image in the "-i" list'
                                   '\ncmap: image colormap'
-                                  '\ninterp: image interpolation'
+                                  '\ninterp: image interpolation. Accepts: [\'nearest\' | \'bilinear\' | \'bicubic\' | \'spline16\' | '
+                                                                            '\'spline36\' | \'hanning\' | \'hamming\' | \'hermite\' | \'kaiser\' | '
+                                                                            '\'quadric\' | \'catrom\' | \'gaussian\' | \'bessel\' | \'mitchell\' | '
+                                                                            '\'sinc\' | \'lanczos\' | \'none\' |]'
                                   '\nvmin:'
                                   '\nvmax:'
                                   '\nvmean:'
@@ -650,7 +678,7 @@ def get_parser():
 
 
 class ParamImageVisualization(object):
-    def __init__(self, id='0', mode='image', cmap='gray', interp='nearest', vmin='0', vmax='99', vmean='98', perc='1'):
+    def __init__(self, id='0', mode='image', cmap='gray', interp='nearest', vmin='0', vmax='99', vmean='98', vmode='percentile', alpha='1.0'):
         self.id = id
         self.mode = mode
         self.cmap = cmap
@@ -658,7 +686,8 @@ class ParamImageVisualization(object):
         self.vmin = vmin
         self.vmax = vmax
         self.vmean = vmean
-        self.perc = perc
+        self.vmode = vmode
+        self.alpha = alpha
 
     def update(self, params):
         list_objects = params.split(',')
@@ -693,6 +722,21 @@ class ParamMultiImageVisualization(object):
         else:
             sct.printv("ERROR: parameters must contain 'id'", 1, 'error')
 
+def prepare(list_images):
+    fname_images, orientation_images = [], []
+    for fname_im in list_images:
+        from sct_image import orientation
+        orientation_images.append(orientation(Image(fname_im), get=True, verbose=False))
+        path_fname, file_fname, ext_fname = sct.extract_fname(fname_im)
+        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
+        sct.run('sct_image -i ' + fname_im + ' -o ' + reoriented_image_filename + ' -setorient SAL -v 0',verbose=False)
+        fname_images.append(reoriented_image_filename)
+    return fname_images, orientation_images
+
+
+def clean():
+    sct.run('rm -rf ' + 'tmp.*')
+
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
@@ -701,7 +745,8 @@ if __name__ == "__main__":
 
     arguments = parser.parse(sys.argv[1:])
 
-    list_images = [Image(arg) for arg in arguments["-i"]]
+    fname_images, orientation_images = prepare(arguments["-i"])
+    list_images = [Image(fname) for fname in fname_images]
 
     mode = arguments['-mode']
 
@@ -719,3 +764,4 @@ if __name__ == "__main__":
     elif mode == 'axial':
         viewer = ClickViewer(list_images, visualization_parameters)
         viewer.start()
+    clean()
