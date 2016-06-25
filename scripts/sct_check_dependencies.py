@@ -59,6 +59,7 @@ def main():
     file_log = 'sct_check_dependencies.log'
     complete_test = param.complete_test
     os_running = 'not identified'
+    dipy_version = '0.10.0dev'
     print
 
     # Check input parameters
@@ -194,10 +195,14 @@ def main():
         install_software = 1
 
     # Check if dipy is installed
-    print_line('Check if dipy is installed')
+    print_line('Check if dipy ('+dipy_version+') is installed')
     try:
-        importlib.import_module('dipy')
-        print_ok()
+        module = importlib.import_module('dipy')
+        if module.__version__ == dipy_version:
+            print_ok()
+        else:
+            print_warning()
+            print '  Detected version: '+version+'. Required version: '+dipy_version
     except ImportError:
         print_fail()
         install_software = 1
