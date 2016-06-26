@@ -59,6 +59,7 @@ def main():
     file_log = 'sct_check_dependencies.log'
     complete_test = param.complete_test
     os_running = 'not identified'
+    dipy_version = '0.10.0dev'
     print
 
     # Check input parameters
@@ -96,31 +97,33 @@ def main():
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print 'Check which OS is running: '+os_running+' ('+platform.platform()+')'
+    print 'OS: '+os_running+' ('+platform.platform()+')'
 
     # Check number of CPU cores
     from multiprocessing import cpu_count
     status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'Check number of CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
+    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
 
     # check RAM
-    print 'Check RAM:'
+    print 'RAM:'
     sct.checkRAM(os_running)
-
-    # check installation packages
-    print 'Check which Python is running: '+sys.executable
 
     # get path of the toolbox
     path_sct = os.getenv("SCT_DIR")
     if path_sct is None :
         raise EnvironmentError("SCT_DIR, which is the path to the "
                                "Spinalcordtoolbox install needs to be set")
-    print ('Check SCT path: {0}'.format(path_sct))
+    print ('SCT path: {0}'.format(path_sct))
 
     # fetch version of the toolbox
     with open (path_sct+"/version.txt", "r") as myfile:
         version_sct = myfile.read().replace('\n', '')
-    print "Check SCT version: "+version_sct
+    with open (path_sct+"/commit.txt", "r") as myfile:
+        commit_sct = myfile.read().replace('\n', '')
+    print "SCT version: "+version_sct+'-'+commit_sct
+
+    # check installation packages
+    print 'Python path: '+sys.executable
 
     # check if data folder is empty
     print_line('Check if data are installed')
@@ -192,13 +195,17 @@ def main():
         install_software = 1
 
     # Check if dipy is installed
-    print_line('Check if dipy is installed')
-    try:
-        importlib.import_module('dipy')
-        print_ok()
-    except ImportError:
-        print_fail()
-        install_software = 1
+    # print_line('Check if dipy ('+dipy_version+') is installed')
+    # try:
+    #     module = importlib.import_module('dipy')
+    #     if module.__version__ == dipy_version:
+    #         print_ok()
+    #     else:
+    #         print_warning()
+    #         print '  Detected version: '+version+'. Required version: '+dipy_version
+    # except ImportError:
+    #     print_fail()
+    #     install_software = 1
 
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
