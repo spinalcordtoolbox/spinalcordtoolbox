@@ -14,6 +14,185 @@
 
 # TODO: update function to reflect the new get_dimension
 
+import numpy as np
+from scipy.ndimage import map_coordinates
+import math
+
+
+def striu2mat(striu):
+    """
+    Construct shear matrix from upper triangular vector
+    Parameters
+    ----------
+    striu : array, shape (N,)
+       vector giving triangle above diagonal of shear matrix.
+    Returns
+    -------
+    SM : array, shape (N, N)
+       shear matrix
+    Notes
+    -----
+    Shear lengths are triangular numbers.
+    See http://en.wikipedia.org/wiki/Triangular_number
+    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    """
+    # Caching dictionary for common shear Ns, indices
+    _shearers = {}
+    for n in range(1, 11):
+        x = (n ** 2 + n) / 2.0
+        i = n + 1
+        _shearers[x] = (i, np.triu(np.ones((i, i)), 1).astype(bool))
+
+    n = len(striu)
+    # cached case
+    if n in _shearers:
+        N, inds = _shearers[n]
+    else: # General case
+        N = ((-1+math.sqrt(8*n+1))/2.0)+1 # n+1 th root
+        if N != math.floor(N):
+            raise ValueError('%d is a strange number of shear elements' %
+                             n)
+        inds = np.triu(np.ones((N,N)), 1).astype(bool)
+    M = np.eye(N)
+    M[inds] = striu
+    return M
+
+
+def compose(T, R, Z, S=None):
+    """
+    Compose translations, rotations, zooms, [shears]  to affine
+    Parameters
+    ----------
+    T : array-like shape (N,)
+        Translations, where N is usually 3 (3D case)
+    R : array-like shape (N,N)
+        Rotation matrix where N is usually 3 (3D case)
+    Z : array-like shape (N,)
+        Zooms, where N is usually 3 (3D case)
+    S : array-like, shape (P,), optional
+       Shear vector, such that shears fill upper triangle above
+       diagonal to form shear matrix.  P is the (N-2)th Triangular
+       number, which happens to be 3 for a 4x4 affine (3D case)
+    Returns
+    -------
+    A : array, shape (N+1, N+1)
+        Affine transformation matrix where N usually == 3
+        (3D case)
+    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    """
+    n = len(T)
+    R = np.asarray(R)
+    if R.shape != (n,n):
+        raise ValueError('Expecting shape (%d,%d) for rotations' % (n,n))
+    A = np.eye(n+1)
+    if S is not None:
+        Smat = striu2mat(S)
+        ZS = np.dot(np.diag(Z), Smat)
+    else:
+        ZS = np.diag(Z)
+    A[:n,:n] = np.dot(R, ZS)
+    A[:n,n] = T[:]
+    return A
+
+
+def decompose_affine_transform(A44):
+    """
+    Decompose 4x4 homogenous affine matrix into parts.
+    The parts are translations, rotations, zooms, shears.
+    This is the same as :func:`decompose` but specialized for 4x4 affines.
+    Decomposes `A44` into ``T, R, Z, S``, such that::
+       Smat = np.array([[1, S[0], S[1]],
+                        [0,    1, S[2]],
+                        [0,    0,    1]])
+       RZS = np.dot(R, np.dot(np.diag(Z), Smat))
+       A44 = np.eye(4)
+       A44[:3,:3] = RZS
+       A44[:-1,-1] = T
+    The order of transformations is therefore shears, followed by
+    zooms, followed by rotations, followed by translations.
+    This routine only works for shape (4,4) matrices
+    Parameters
+    ----------
+    A44 : array shape (4,4)
+    Returns
+    -------
+    T : array, shape (3,)
+       Translation vector
+    R : array shape (3,3)
+        rotation matrix
+    Z : array, shape (3,)
+       Zoom vector.  May have one negative zoom to prevent need for negative
+       determinant R matrix above
+    S : array, shape (3,)
+       Shear vector, such that shears fill upper triangle above
+       diagonal to form shear matrix (type ``striu``).
+    Notes
+    -----
+    The implementation inspired by:
+    *Decomposing a matrix into simple transformations* by Spencer
+    W. Thomas, pp 320-323 in *Graphics Gems II*, James Arvo (editor),
+    Academic Press, 1991, ISBN: 0120644819.
+    The upper left 3x3 of the affine consists of a matrix we'll call
+    RZS::
+       RZS = R * Z *S
+    where R is a rotation matrix, Z is a diagonal matrix of scalings::
+       Z = diag([sx, sy, sz])
+    and S is a shear matrix of form::
+       S = [[1, sxy, sxz],
+            [0,   1, syz],
+            [0,   0,   1]])
+    Running all this through sympy (see 'derivations' folder) gives
+    ``RZS`` as ::
+       [R00*sx, R01*sy + R00*sx*sxy, R02*sz + R00*sx*sxz + R01*sy*syz]
+       [R10*sx, R11*sy + R10*sx*sxy, R12*sz + R10*sx*sxz + R11*sy*syz]
+       [R20*sx, R21*sy + R20*sx*sxy, R22*sz + R20*sx*sxz + R21*sy*syz]
+    ``R`` is defined as being a rotation matrix, so the dot products between
+    the columns of ``R`` are zero, and the norm of each column is 1.  Thus
+    the dot product::
+       R[:,0].T * RZS[:,1]
+    that results in::
+       [R00*R01*sy + R10*R11*sy + R20*R21*sy + sx*sxy*R00**2 + sx*sxy*R10**2 + sx*sxy*R20**2]
+    simplifies to ``sy*0 + sx*sxy*1`` == ``sx*sxy``.  Therefore::
+       R[:,1] * sy = RZS[:,1] - R[:,0] * (R[:,0].T * RZS[:,1])
+    allowing us to get ``sy`` with the norm, and sxy with ``R[:,0].T *
+    RZS[:,1] / sx``.
+    Similarly ``R[:,0].T * RZS[:,2]`` simplifies to ``sx*sxz``, and
+    ``R[:,1].T * RZS[:,2]`` to ``sy*syz`` giving us the remaining
+    unknowns.
+    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    """
+    A44 = np.asarray(A44)
+    T = A44[:-1,-1]
+    RZS = A44[:-1,:-1]
+    # compute scales and shears
+    M0, M1, M2 = np.array(RZS).T
+    # extract x scale and normalize
+    sx = math.sqrt(np.sum(M0**2))
+    M0 /= sx
+    # orthogonalize M1 with respect to M0
+    sx_sxy = np.dot(M0, M1)
+    M1 -= sx_sxy * M0
+    # extract y scale and normalize
+    sy = math.sqrt(np.sum(M1**2))
+    M1 /= sy
+    sxy = sx_sxy / sx
+    # orthogonalize M2 with respect to M0 and M1
+    sx_sxz = np.dot(M0, M2)
+    sy_syz = np.dot(M1, M2)
+    M2 -= (sx_sxz * M0 + sy_syz * M1)
+    # extract z scale and normalize
+    sz = math.sqrt(np.sum(M2**2))
+    M2 /= sz
+    sxz = sx_sxz / sx
+    syz = sy_syz / sy
+    # Reconstruct rotation matrix, ensure positive determinant
+    Rmat = np.array([M0, M1, M2]).T
+    if np.linalg.det(Rmat) < 0:
+        sx *= -1
+        Rmat[:,0] *= -1
+    return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])
+
+
 class Image(object):
     """
 
@@ -24,6 +203,7 @@ class Image(object):
         from nibabel import AnalyzeHeader
 
         # initialization of all parameters
+        self.im_file = None
         self.data = None
         self.orientation = None
         self.absolutepath = ""
@@ -72,6 +252,7 @@ class Image(object):
         from copy import deepcopy
         from sct_utils import extract_fname
         if image is not None:
+            self.im_file = deepcopy(image.im_file)
             self.data = deepcopy(image.data)
             self.dim = deepcopy(image.dim)
             self.hdr = deepcopy(image.hdr)
@@ -92,17 +273,16 @@ class Image(object):
         from sct_image import get_orientation
 
         # check_file_exist(path, verbose=verbose)
-        im_file = None
         try:
-            im_file = load(path)
+            self.im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        self.data = im_file.get_data()
-        self.hdr = im_file.get_header()
+        self.data = self.im_file.get_data()
+        self.hdr = self.im_file.get_header()
         self.orientation = get_orientation(self)
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
-        self.dim = get_dimension(im_file)
+        self.dim = get_dimension(self.im_file)
         # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
         # self.dim = [nx, ny, nz]
 
@@ -367,9 +547,11 @@ class Image(object):
                     n_row_old_data_array += 1
 
             self.data = data_array
+            '''
             if save:
                 self.file_name += suffix
                 self.save()
+            '''
 
         data_array = asarray(data_array)
         data_mask = asarray(data_mask)
@@ -378,22 +560,30 @@ class Image(object):
         buffer_mask = []
 
         if len(data_array.shape) == 3:
+            empty_slices = []
             for n_slice, mask_slice in enumerate(data_mask):
                 for n_row, row in enumerate(mask_slice):
                     if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
                         buffer_mask.append(row)
                         buffer.append(data_array[n_slice][n_row])
-
-                new_slice_mask = asarray(buffer_mask).T
-                new_slice = asarray(buffer).T
-                buffer = []
-                for n_row, row in enumerate(new_slice_mask):
-                    if sum(row) != 0:
-                        buffer.append(new_slice[n_row])
-                new_slice = asarray(buffer).T
-                buffer_mask = []
-                buffer = []
+                if buffer_mask == [] and buffer == []:
+                    empty_slices.append(n_slice)
+                    new_slice = []
+                else:
+                    new_slice_mask = asarray(buffer_mask).T
+                    new_slice = asarray(buffer).T
+                    buffer = []
+                    for n_row, row in enumerate(new_slice_mask):
+                        if sum(row) != 0:
+                            buffer.append(new_slice[n_row])
+                    new_slice = asarray(buffer).T
+                    shape_mask = new_slice.shape
+                    buffer_mask = []
+                    buffer = []
                 new_data.append(new_slice)
+            if empty_slices is not []:
+                for iz in empty_slices:
+                    new_data[iz] = np.zeros(shape_mask)
 
         elif len(data_array.shape) == 2:
             for n_row, row in enumerate(data_mask):
@@ -525,8 +715,6 @@ class Image(object):
 
     def transfo_pix2phys(self, coordi=None):
         """
-
-
         This function returns the physical coordinates of all points of 'coordi'. 'coordi' is a list of list of size
         (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical
         coordinates of the points in the space of the image.
@@ -545,7 +733,7 @@ class Image(object):
         m_p2f_transfo = m_p2f[0:3, 0:3]
         coord_origin = array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if coordi != None:
+        if not coordi is None:
             coordi_pix = transpose(asarray(coordi))
             coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))
             coordi_phys_list = coordi_phys.tolist()
@@ -608,6 +796,106 @@ class Image(object):
                                range(len(coordi_pix_tmp))]
 
             return coordi_pix_list
+
+    def get_values(self, coordi=None, interpolation_mode=0):
+        """
+        This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
+        :param coordi: continuouspix
+        :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
+        :return: intensity values at continuouspix with interpolation_mode
+        """
+        return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode)
+
+    def get_transform(self, im_ref, mode='affine'):
+        aff_im_self = self.im_file.affine
+        aff_im_ref = im_ref.im_file.affine
+        transform = np.matmul(np.linalg.inv(aff_im_self), aff_im_ref)
+        if mode == 'affine':
+            transform = np.matmul(np.linalg.inv(aff_im_self), aff_im_ref)
+        else:
+            T_self, R_self, Sc_self, Sh_self = decompose_affine_transform(aff_im_self)
+            T_ref, R_ref, Sc_ref, Sh_ref = decompose_affine_transform(aff_im_ref)
+            if mode == 'translation':
+                T_transform = T_ref - T_self
+                R_transform = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+                Sc_transform = np.array([1.0, 1.0, 1.0])
+                transform = compose(T_transform, R_transform, Sc_transform)
+            elif mode == 'rigid':
+                T_transform = T_ref - T_self
+                R_transform = np.matmul(np.linalg.inv(R_self), R_ref)
+                Sc_transform = np.array([1.0, 1.0, 1.0])
+                transform = compose(T_transform, R_transform, Sc_transform)
+            elif mode == 'rigid_scaling':
+                T_transform = T_ref - T_self
+                R_transform = np.matmul(np.linalg.inv(R_self), R_ref)
+                Sc_transform = Sc_ref / Sc_self
+                transform = compose(T_transform, R_transform, Sc_transform)
+            else:
+                transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+        return transform
+
+    def get_inverse_transform(self, im_ref, mode='affine'):
+        aff_im_self = self.im_file.affine
+        aff_im_ref = im_ref.im_file.affine
+        if mode == 'affine':
+            transform = np.matmul(np.linalg.inv(aff_im_ref), aff_im_self)
+        else:
+            T_self, R_self, Sc_self, Sh_self = decompose_affine_transform(aff_im_self)
+            T_ref, R_ref, Sc_ref, Sh_ref = decompose_affine_transform(aff_im_ref)
+            if mode == 'translation':
+                T_transform = T_self - T_ref
+                R_transform = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+                Sc_transform = np.array([1.0, 1.0, 1.0])
+                transform = compose(T_transform, R_transform, Sc_transform)
+            elif mode == 'rigid':
+                T_transform = T_self - T_ref
+                R_transform = np.matmul(np.linalg.inv(R_ref), R_self)
+                Sc_transform = np.array([1.0, 1.0, 1.0])
+                transform = compose(T_transform, R_transform, Sc_transform)
+            elif mode == 'rigid_scaling':
+                T_transform = T_self - T_ref
+                R_transform = np.matmul(np.linalg.inv(R_ref), R_self)
+                Sc_transform = Sc_self / Sc_ref
+                transform = compose(T_transform, R_transform, Sc_transform)
+            else:
+                transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+
+        return transform
+
+    def interpolate_from_image(self, im_ref, fname_output, interpolation_mode=1):
+        """
+        This function interpolates an image by following the grid of a reference image.
+        Example of use:
+
+        from msct_image import Image
+        im_input = Image(fname_input)
+        im_ref = Image(fname_ref)
+        im_input.interpolate_from_image(im_ref, fname_output, interpolation_mode=1)
+        
+        :param im_ref: reference Image that contains the grid on which interpolate.
+        :return: a new image that has the same dimensions/grid of the reference image but the data of self image.
+        """
+        nx, ny, nz, nt, px, py, pz, pt = im_ref.dim
+        x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
+        indexes_ref = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
+        physical_coordinates_ref = im_ref.transfo_pix2phys(indexes_ref)
+
+        # TODO: add optional transformation from reference space to image space to physical coordinates of ref grid.
+        # TODO: add choice to do non-full transorm: translation, (rigid), affine
+        # 1. get transformation
+        # 2. apply transformation on coordinates
+
+        coord_im = np.array(self.transfo_phys2continuouspix(physical_coordinates_ref))
+        interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode)
+
+        im_output = Image(im_ref)
+        if interpolation_mode == 0:
+            im_output.changeType('int32')
+        else:
+            im_output.changeType('float32')
+        im_output.data = np.reshape(interpolated_values, (nx, ny, nz))
+        im_output.setFileName(fname_output)
+        im_output.save()
 
     def get_slice(self, plane='sagittal', index=None, seg=None):
         """

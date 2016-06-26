@@ -277,7 +277,9 @@ if __name__ == "__main__":
     # fetch version of the toolbox
     with open (path_sct+"/version.txt", "r") as myfile:
         version_sct = myfile.read().replace('\n', '')
-    print "SCT version: "+version_sct
+    with open (path_sct+"/commit.txt", "r") as myfile:
+        commit_sct = myfile.read().replace('\n', '')
+    print "SCT version: "+version_sct+'-'+commit_sct
 
     # check OS
     platform_running = sys.platform

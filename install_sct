@@ -378,18 +378,18 @@ else
   # N.B. the flag --ignore-installed is required because locally install
   # package are skip
   conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
-  e_status = $?
+  e_status=$?
   if e_status ; then
     echo "conda install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
     exit 1
   fi
   pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
-  e_status = $?
+  e_status=$?
   if e_status ; then
     echo "pip install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
-     exit 1
+    exit 1
   fi
 
   # Install wheels
@@ -397,10 +397,10 @@ else
   download  ${TMP_DIR}/wheels.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/wheel/${OS}/wheels.tar.gz
   tar -C ${TMP_DIR} -zxvf ${TMP_DIR}/wheels.tar.gz
   # get file names
-  dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
+#  dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
   ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
-  pip install --ignore-installed ${dipy_whl} ${ornlm_whl}
-
+#  pip install --ignore-installed ${dipy_whl} ${ornlm_whl}
+  pip install --ignore-installed ${ornlm_whl}
 fi
 
 echo -e "All requirements installed!"

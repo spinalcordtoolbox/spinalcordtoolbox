@@ -165,25 +165,26 @@ def main():
                       description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
                                   "step: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\n"
                                   "algo: Default="+paramreg.steps['1'].algo+"\n"
-                                    "  translation: translation in X-Y plane (2dof)\n"
-                                    "  rigid: translation + rotation in X-Y plane (4dof)\n"
-                                    "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
-                                    "  syn: non-linear symmetric normalization\n"
-                                    "  bsplinesyn: syn regularized with b-splines\n"
-                                    "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
-                                    "  centermass: realign center of mass on a slice-by-slice basis (only use with type=seg)\n"
-                                    "  centermassrot: realign center of mass and find rotation using PCA (only use with type=seg)\n"
-                                    "slicewise: <int> Slice-by-slice 2d transformation. Default="+paramreg.steps['1'].slicewise+"\n"
-                                    "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
-                                    "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
-                                    "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default="+paramreg.steps['1'].shrink+"\n"
-                                    "smooth: <int> Smooth factor. Default="+paramreg.steps['1'].smooth+"\n"
-                                    "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
-                                    "init: <int> Initial translation alignment based on:\n"
-                                      "  geometric: Geometric center of images\n"
-                                      "  centermass: Center of mass of images\n"
-                                      "  origin: Physical origin of images\n"
-                                    "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n",
+                                  "  translation: translation in X-Y plane (2dof)\n"
+                                  "  rigid: translation + rotation in X-Y plane (4dof)\n"
+                                  "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
+                                  "  syn: non-linear symmetric normalization\n"
+                                  "  bsplinesyn: syn regularized with b-splines\n"
+                                  "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
+                                  "  centermass: slicewise center of mass alignment (seg only).\n"
+                                  "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
+                                  "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
+                                  "slicewise: <int> Slice-by-slice 2d transformation. Default="+paramreg.steps['1'].slicewise+"\n"
+                                  "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
+                                  "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
+                                  "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default="+paramreg.steps['1'].shrink+"\n"
+                                  "smooth: <int> Smooth factor. Default="+paramreg.steps['1'].smooth+"\n"
+                                  "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
+                                  "init: <int> Initial translation alignment based on:\n"
+                                  "  geometric: Geometric center of images\n"
+                                  "  centermass: Center of mass of images\n"
+                                  "  origin: Physical origin of images\n"
+                                  "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -393,8 +394,6 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
-    print "HOLA!!!"
-    print param.verbose
 
     # display arguments
     sct.printv('Registration parameters:', param.verbose)
@@ -535,9 +534,9 @@ def register(src, dest, paramreg, param, i_step_str):
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
         # check if type=seg
         if not paramreg.steps[i_step_str].type == 'seg':
-            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should be used with type=seg.', 1, 'warning')
+            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should be used with type=seg.\n', 1, 'warning')
         if not fname_mask == '':
-            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.', 1, 'warning')
+            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.\n', 1, 'warning')
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.run('sct_maths -i '+src+' -smooth '+paramreg.steps[i_step_str].smooth+' -o '+sct.add_suffix(src, '_smooth'))
