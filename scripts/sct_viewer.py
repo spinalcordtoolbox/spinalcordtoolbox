@@ -332,11 +332,16 @@ class Viewer(object):
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
 
     def change_intensity(self, event, plot=None):
-        if event.xdata and abs(event.xdata - self.press[0]) < 1 and abs(event.ydata - self.press[1]) < 1:
+        if abs(event.xdata - self.press[0]) < 1 and abs(event.ydata - self.press[1]) < 1:
             self.press = event.xdata, event.ydata
             return
 
-        xlim, ylim = plot.axes.get_xlim(), plot.axes.get_ylim()
+        if time() - self.last_update <= self.update_freq:
+            return
+
+        self.last_update = time()
+
+        xlim, ylim = self.windows[0].axes.get_xlim(), self.windows[0].axes.get_ylim()
         mean_intensity_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
         std_intensity_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
         mean_factor = self.mean_intensity[0] - (mean_intensity_factor - 0.5) * self.mean_intensity[0] * 3.0
