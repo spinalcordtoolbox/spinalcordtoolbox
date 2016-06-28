@@ -96,12 +96,12 @@ download ()
   if hash "curl" ; then
     curl -o $1 $2
     e_status=$?
-    echo exit starus is ${e_status}
+    echo exit status is ${e_status}
 
   elif hash "wget"; then
     wget -O $1 $2
     e_status=$?
-    echo exit starus is ${e_status}
+    echo exit status is ${e_status}
 
   else
     set +x
@@ -379,14 +379,14 @@ else
   # package are skip
   conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
   e_status=$?
-  if e_status ; then
+  if [ ${e_status} != 0 ] ; then
     echo "conda install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
     exit 1
   fi
   pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
   e_status=$?
-  if e_status ; then
+  if [ ${e_status} != 0 ] ; then
     echo "pip install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
     exit 1
