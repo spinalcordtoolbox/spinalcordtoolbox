@@ -369,17 +369,13 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         from numpy import zeros
         tmp_dir = sct.tmp_create()
         im_warp = Image(fname_warp)
-        #nx, ny, nz, nt, px, py, pz, pt = im_warp.dim
-
-        status, out = sct.run('fslhd '+fname_warp)
         os.chdir(tmp_dir)
 
-        dim1 = 'dim1           '
-        dim2 = 'dim2           '
-        dim3 = 'dim3           '
-        nx = int(out[out.find(dim1):][len(dim1):out[out.find(dim1):].find('\n')])
-        ny = int(out[out.find(dim2):][len(dim2):out[out.find(dim2):].find('\n')])
-        nz = int(out[out.find(dim3):][len(dim3):out[out.find(dim3):].find('\n')])
+        assert len(im_warp.data.shape) == 5, 'ERROR: Warping field does bot have 5 dimensions...'
+        nx, ny, nz, nt, ndimwarp = im_warp.data.shape
+
+        # nx, ny, nz, nt, px, py, pz, pt = im_warp.dim
+        # This does not work because dimensions of a warping field are not correctly read : it would be 1,1,1,1,1,1,1,1
 
         sq = zeros((step, step))
         sq[step-1] = 1

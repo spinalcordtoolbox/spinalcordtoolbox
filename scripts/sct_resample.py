@@ -12,15 +12,15 @@
 #########################################################################################
 
 import sys
-import os
-import getopt
+# import os
+# import getopt
 import commands
 import sct_utils as sct
-import time
-from sct_convert import convert
+# import time
+# from sct_convert import convert
 from msct_image import Image
 from msct_parser import Parser
-import dipy.align.aniso2iso as dp_iso
+import dipy.align.reslice as dp_iso
 
 
 # DEFAULT PARAMETERS
