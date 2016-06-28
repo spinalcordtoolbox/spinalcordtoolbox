@@ -183,6 +183,23 @@ def main():
             print_fail()
             install_software = 1
 
+
+    # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
+    print_line('Check if numpy is installed')
+    try:
+        importlib.import_module('numpy')
+        print_ok()
+    except ImportError:
+        print_fail()
+        install_software = 1
+    print_line('Check if scipy is installed')
+    try:
+        importlib.import_module('scipy')
+        print_ok()
+    except ImportError:
+        print_fail()
+        install_software = 1
+
     # CHECK EXTERNAL MODULES:
     # Check if ornlm is installed
     print_line('Check if ornlm is installed')
