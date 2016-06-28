@@ -96,12 +96,12 @@ download ()
   if hash "curl" ; then
     curl -o $1 $2
     e_status=$?
-    echo exit starus is ${e_status}
+    echo exit status is ${e_status}
 
   elif hash "wget"; then
     wget -O $1 $2
     e_status=$?
-    echo exit starus is ${e_status}
+    echo exit status is ${e_status}
 
   else
     set +x
