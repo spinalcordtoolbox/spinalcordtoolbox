@@ -416,10 +416,10 @@ def denoise_ornlm(data_in, v=3, f=1, h=0.05):
     # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
     status, path_sct = getstatusoutput('echo $SCT_DIR')
     path.append(path_sct + '/external/denoise/ornlm')
-    from ornlm import ornlm
+    import ornlm
     from numpy import array, max, float64
     dat = data_in.astype(float64)
-    denoised = array(ornlm(dat, v, f, max(dat)*h))
+    denoised = array(ornlm.ornlm(dat, v, f, max(dat)*h))
     return denoised
 
 

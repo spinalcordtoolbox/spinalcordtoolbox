@@ -273,12 +273,12 @@ if __name__ == "__main__":
 
     # if centerline or mask is asked using viewer
     if use_viewer:
-        # make sure image is in AIL orientation, as it is the orientation used by PropSeg
+        # make sure image is in SAL orientation, as it is the orientation used by PropSeg
         from sct_image import orientation
         image_input_orientation = orientation(image_input, get=True, verbose=False)
         path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
-        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_AIL")
-        sct.run('sct_image -i ' + input_filename + ' -o ' + folder_output + reoriented_image_filename + ' -setorient AIL -v 0', verbose=False)
+        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
+        sct.run('sct_image -i ' + input_filename + ' -o ' + folder_output + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
 
         from sct_viewer import ClickViewer
         image_input_reoriented = Image(folder_output + reoriented_image_filename)
