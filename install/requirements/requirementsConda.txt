@@ -1,5 +1,5 @@
-numpy==1.10.4
-scipy==0.17.0
+numpy==1.11.1
+scipy==0.17.1
 sympy==0.7.6
 matplotlib==1.5.1
 scikit-learn==0.17.1
