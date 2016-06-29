@@ -267,11 +267,6 @@ void Image3D::TransformMeshToBinaryImage(Mesh* m, string filename, OrientationTy
         normals->GetOutput()->GetPointData()->SetNormals(polyData->GetPointData()->GetNormals());
         polyData = normals->GetOutput();
 
-        vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-        writer->SetFileName("test.vtk");
-        writer->SetInputData(polyData);
-        writer->Write();
-
         //
         // Transfer the points from the vtkPolyData into the itk::Mesh
         //
