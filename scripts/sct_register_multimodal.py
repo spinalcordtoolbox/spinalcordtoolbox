@@ -4,17 +4,6 @@
 #
 # See Usage() below for more information.
 #
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-# EXTERNAL PYTHON PACKAGES
-# none
-#
-# EXTERNAL SOFTWARE
-# - itksnap <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
-# - ants <http://stnava.github.io/ANTs/>
-#
-#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
@@ -176,24 +165,26 @@ def main():
                       description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
                                   "step: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\n"
                                   "algo: Default="+paramreg.steps['1'].algo+"\n"
-                                    "  translation: translation in X-Y plane (2dof)\n"
-                                    "  rigid: translation + rotation in X-Y plane (4dof)\n"
-                                    "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
-                                    "  syn: non-linear symmetric normalization\n"
-                                    "  bsplinesyn: syn regularized with b-splines\n"
-                                    "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
-                                    "  centermass: registration based on the Center of Mass of each slice (only use with type=seg)\n"
-                                    "slicewise: <int> Slice-by-slice 2d transformation. Default="+paramreg.steps['1'].slicewise+"\n"
-                                    "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
-                                    "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
-                                    "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default="+paramreg.steps['1'].shrink+"\n"
-                                    "smooth: <int> Smooth factor. Default="+paramreg.steps['1'].smooth+"\n"
-                                    "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
-                                    "init: <int> Initial translation alignment based on:\n"
-                                      "  geometric: Geometric center of images\n"
-                                      "  centermass: Center of mass of images\n"
-                                      "  origin: Physical origin of images\n"
-                                    "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n",
+                                  "  translation: translation in X-Y plane (2dof)\n"
+                                  "  rigid: translation + rotation in X-Y plane (4dof)\n"
+                                  "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
+                                  "  syn: non-linear symmetric normalization\n"
+                                  "  bsplinesyn: syn regularized with b-splines\n"
+                                  "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
+                                  "  centermass: slicewise center of mass alignment (seg only).\n"
+                                  "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
+                                  "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
+                                  "slicewise: <int> Slice-by-slice 2d transformation. Default="+paramreg.steps['1'].slicewise+"\n"
+                                  "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
+                                  "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
+                                  "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default="+paramreg.steps['1'].shrink+"\n"
+                                  "smooth: <int> Smooth factor. Default="+paramreg.steps['1'].smooth+"\n"
+                                  "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
+                                  "init: <int> Initial translation alignment based on:\n"
+                                  "  geometric: Geometric center of images\n"
+                                  "  centermass: Center of mass of images\n"
+                                  "  origin: Physical origin of images\n"
+                                  "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -272,11 +263,6 @@ def main():
     sct.check_if_3d(fname_src)
     sct.check_if_3d(fname_dest)
 
-    # Check if destination data is RPI
-    sct.printv('\nCheck if destination data is RPI...', verbose)
-    if not identity:
-        sct.check_if_rpi(fname_dest)
-
     # Check if user selected type=seg, but did not input segmentation data
     if 'paramreg_user' in locals():
         if True in ['type=seg' in paramreg_user[i] for i in range(len(paramreg_user))]:
@@ -315,6 +301,11 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # reorient destination to RPI
+    sct.run('sct_image -i dest.nii -setorient RPI -o dest_RPI.nii')
+    if fname_dest_seg:
+        sct.run('sct_image -i dest_seg.nii -setorient RPI -o dest_seg_RPI.nii')
+
     if identity:
         # overwrite paramreg and only do one identity transformation
         step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5')
@@ -335,11 +326,11 @@ def main():
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
             src = 'src.nii'
-            dest = 'dest.nii'
+            dest = 'dest_RPI.nii'
             interp_step = 'linear'
         elif paramreg.steps[str(i_step)].type == 'seg':
             src = 'src_seg.nii'
-            dest = 'dest_seg.nii'
+            dest = 'dest_seg_RPI.nii'
             interp_step = 'nn'
         else:
             src = dest = interp_step = None
@@ -403,6 +394,19 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
+
+    # display arguments
+    sct.printv('Registration parameters:', param.verbose)
+    sct.printv('  type ........... '+paramreg.steps[i_step_str].type, param.verbose)
+    sct.printv('  algo ........... '+paramreg.steps[i_step_str].algo, param.verbose)
+    sct.printv('  slicewise ...... '+paramreg.steps[i_step_str].slicewise, param.verbose)
+    sct.printv('  metric ......... '+paramreg.steps[i_step_str].metric, param.verbose)
+    sct.printv('  iter ........... '+paramreg.steps[i_step_str].iter, param.verbose)
+    sct.printv('  smooth ......... '+paramreg.steps[i_step_str].smooth, param.verbose)
+    sct.printv('  shrink ......... '+paramreg.steps[i_step_str].shrink, param.verbose)
+    sct.printv('  gradStep ....... '+paramreg.steps[i_step_str].gradStep, param.verbose)
+    sct.printv('  init ........... '+paramreg.steps[i_step_str].init, param.verbose)
+    sct.printv('  poly ........... '+paramreg.steps[i_step_str].poly, param.verbose)
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
@@ -527,12 +531,18 @@ def register(src, dest, paramreg, param, i_step_str):
                             ants_registration_params=ants_registration_params)
 
     # centermass
-    elif paramreg.steps[i_step_str].algo == 'centermass':
+    elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
         # check if type=seg
         if not paramreg.steps[i_step_str].type == 'seg':
-            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should generally be used with type=seg.', 1, 'warning')
+            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should be used with type=seg.\n', 1, 'warning')
         if not fname_mask == '':
-            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.', 1, 'warning')
+            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.\n', 1, 'warning')
+        # smooth data
+        if not paramreg.steps[i_step_str].smooth == '0':
+            sct.run('sct_maths -i '+src+' -smooth '+paramreg.steps[i_step_str].smooth+' -o '+sct.add_suffix(src, '_smooth'))
+            sct.run('sct_maths -i '+dest+' -smooth '+paramreg.steps[i_step_str].smooth+' -o '+sct.add_suffix(dest, '_smooth'))
+            src = sct.add_suffix(src, '_smooth')
+            dest = sct.add_suffix(dest, '_smooth')
         from msct_register import register_slicewise
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
@@ -569,6 +579,7 @@ def register(src, dest, paramreg, param, i_step_str):
             os.rename(warp_inverse_out, warp_inverse)
 
     return warp_forward, warp_inverse
+
 
 
 # START PROGRAM

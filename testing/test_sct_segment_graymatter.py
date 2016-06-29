@@ -42,7 +42,7 @@ def test(path_data, parameters=''):
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-vertfile']) and os.path.isfile(dict_param_with_path['-ref'])):
+    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-vertfile'])): # and os.path.isfile(dict_param_with_path['-ref'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'dice_wm': float('nan'), 'hausdorff': float('nan'), 'med_dist': float('nan'), 'duration_[s]': float('nan')}, index=[path_data])
@@ -63,7 +63,7 @@ def test(path_data, parameters=''):
 
     # initialization of results: must be NaN if test fails
     result_dice_gm, result_dice_wm, result_hausdorff, result_median_dist = float('nan'), float('nan'), float('nan'), float('nan')
-    if status == 0:
+    if status == 0 and "-ref" in dict_param_with_path.keys()    :
         target_name = sct.extract_fname(dict_param_with_path["-i"])[1]
 
         dice_fname = path_output+'dice_'+target_name+'_'+dict_param_with_path["-res-type"]+'.txt'
