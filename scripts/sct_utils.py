@@ -55,8 +55,12 @@ def add_suffix(fname, suffix):
     """
     # get index of extension. Here, we search from the end to avoid issue with folders that have ".nii" in their name.
     ind_nii = fname.rfind('.nii')
-    # return file name with suffix
-    return fname[:ind_nii] + suffix + fname[ind_nii:]
+    # in case no extension was found (i.e. only prefix was specified by user)
+    if ind_nii == -1:
+        return fname[:len(fname)] + suffix
+    else:
+        # return file name with suffix
+        return fname[:ind_nii] + suffix + fname[ind_nii:]
 
 
 

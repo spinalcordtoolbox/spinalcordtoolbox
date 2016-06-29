@@ -45,7 +45,7 @@ for program in $PROGRAM_LIST; do
   echo ">> $cmd"; $cmd
 
   echo
-  cmd="cp ${program} ${SCT_DIR_LOCAL}/bin/${PATH_BIN_SCT}/"
+  cmd="cp ${program} ${SCT_DIR_LOCAL}/bin/"
   echo ">> $cmd"; $cmd
 
   echo
