@@ -66,6 +66,11 @@ def get_parser():
                       description='Concatenate data along the specified dimension',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
+    parser.add_option(name='-type',
+                      type_value='multiple_choice',
+                      description='Change file type',
+                      mandatory=False,
+                      example=['uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64', 'uint64'])
 
     parser.usage.addSection("\nOrientation operations: ")
     parser.add_option(name="-getorient",
@@ -108,6 +113,9 @@ def main(args = None):
     if not args:
         args = sys.argv[1:]
 
+    # initialization
+    output_type = ''
+
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(args)
@@ -130,6 +138,7 @@ def main(args = None):
         padx, pady, padz = arguments["-pad"].split(',')
         padx, pady, padz = int(padx), int(pady), int(padz)
         im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady, pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
+
     elif "-pad-asym" in arguments:
         # TODO: check input is 3d
         im_in = Image(fname_in[0])
@@ -154,6 +163,11 @@ def main(args = None):
         assert dim in dim_list
         dim = dim_list.index(dim)
         im_out = [concat_data(fname_in, dim)] #TODO: adapt to fname_in
+
+    elif '-type' in arguments:
+        output_type = arguments['-type']
+        im_in = Image(fname_in[0])
+        im_out = [im_in]  #TODO: adapt to fname_in
 
     elif "-getorient" in arguments:
         im_in = Image(fname_in[0])
@@ -195,7 +209,7 @@ def main(args = None):
         # if only one output
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
-            im_out[0].save(squeeze_data=False)
+            im_out[0].save(squeeze_data=False, type=output_type)
         if '-mcs' in arguments:
             # use input file name and add _X, _Y _Z. Keep the same extension
             fname_out = []
