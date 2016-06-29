@@ -33,7 +33,7 @@ Use the following command lines :
 msct_gmseg_utils -preprocess path_to_dataset/
 
 # Compute the model
-msct_multi_atlas_seg -model path_to_dataset_by_slice/ -todo-model compute
+msct_multiatlas_seg -model path_to_dataset_by_slice/ -todo-model compute
 
 Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function the flag -model gm_model/
 

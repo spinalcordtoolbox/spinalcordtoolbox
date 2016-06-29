@@ -194,21 +194,26 @@ def create_mask():
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
     spacing = hdr.structarr['pixdim']
     data_centerline = centerline.get_data()  # get centerline
-    z_centerline = [iz for iz in range(0, nz, 1) if data_centerline[:, :, iz].any()]
-    nz = len(z_centerline)
+    z_centerline_not_null = [iz for iz in range(0, nz, 1) if data_centerline[:, :, iz].any()]
     # get center of mass of the centerline
     cx = [0] * nz
     cy = [0] * nz
     for iz in range(0, nz, 1):
-        cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, z_centerline[iz]]))
+        if iz in z_centerline_not_null:
+            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, z_centerline_not_null[iz]]))
     # create 2d masks
     file_mask = 'data_mask'
     for iz in range(nz):
-        center = numpy.array([cx[iz], cy[iz]])
-        mask2d = create_mask2d(center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
-        # Write NIFTI volumes
-        img = nibabel.Nifti1Image(mask2d, None, hdr)
-        nibabel.save(img, (file_mask+str(iz)+'.nii'))
+        if iz not in z_centerline_not_null:
+            # write an empty nifty volume
+            img = nibabel.Nifti1Image(data_centerline[:, :, iz], None, hdr)
+            nibabel.save(img, (file_mask + str(iz) + '.nii'))
+        else:
+            center = numpy.array([cx[iz], cy[iz]])
+            mask2d = create_mask2d(center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
+            # Write NIFTI volumes
+            img = nibabel.Nifti1Image(mask2d, None, hdr)
+            nibabel.save(img, (file_mask+str(iz)+'.nii'))
     # merge along Z
     # cmd = 'fslmerge -z mask '
 
@@ -218,7 +223,7 @@ def create_mask():
     '''
     im_list = []
     im_temp = []
-    for iz in range(nz):
+    for iz in range(nz_not_null):
         if iz != 0 and iz % 100 == 0:
             im_temp.append(concat_data(im_list, 2))
             im_list = [Image(file_mask + str(iz) + '.nii')]

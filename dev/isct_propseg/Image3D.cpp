@@ -24,8 +24,13 @@
 // VTK headers
 //
 #include "vtkPolyDataReader.h"
+#include "vtkPolyDataWriter.h"
 #include "vtkPoints.h"
 #include "vtkCellArray.h"
+#include <vtkFillHolesFilter.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkPointData.h>
 
 typedef itk::Image< double, 3 > ImageType;
 typedef itk::Image< unsigned char, 3 > BinaryImageType;
@@ -245,6 +250,23 @@ void Image3D::TransformMeshToBinaryImage(Mesh* m, string filename, OrientationTy
         catch (const exception& e) {
             cout << e.what() << endl;
         }
+
+        vtkSmartPointer<vtkFillHolesFilter> fillHolesFilter = vtkSmartPointer<vtkFillHolesFilter>::New();
+        fillHolesFilter->SetInputData(polyData);
+        fillHolesFilter->SetHoleSize(1000.0);
+        fillHolesFilter->Update();
+
+        // Make the triangle windong order consistent
+        vtkSmartPointer<vtkPolyDataNormals> normals = vtkSmartPointer<vtkPolyDataNormals>::New();
+        normals->SetInputData(fillHolesFilter->GetOutput());
+        normals->ConsistencyOn();
+        normals->SplittingOff();
+        normals->Update();
+
+        // Restore the original normals
+        normals->GetOutput()->GetPointData()->SetNormals(polyData->GetPointData()->GetNormals());
+        polyData = normals->GetOutput();
+
         //
         // Transfer the points from the vtkPolyData into the itk::Mesh
         //
