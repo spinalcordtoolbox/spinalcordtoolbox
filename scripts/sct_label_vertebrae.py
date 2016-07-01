@@ -39,6 +39,11 @@ class Param:
         self.size_AP_brainstem = 15
         self.shift_IS_brainstem = 15
         self.size_IS_brainstem = 30
+        self.shift_AP = 32  # shift the centerline towards the spine (in voxel).
+        self.size_AP = 11  # window size in AP direction (=y) (in voxel)
+        self.size_RL = 1  # window size in RL direction (=x) (in voxel)
+        self.size_IS = 19  # window size in IS direction (=z) (in voxel)
+        self.smooth_factor = [3, 1, 1]
 
 
 # PARSER
@@ -273,24 +278,21 @@ def main(args=None):
     printv('fslview '+fname_in+' '+path_output+file_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
 
-
 # Detect vertebral levels
 # ==========================================================================================
 def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, path_template=''):
-
-    shift_AP = 32  # shift the centerline towards the spine (in voxel).
-    size_AP = 11  # window size in AP direction (=y) (in voxel)
-    size_RL = 1  # window size in RL direction (=x) (in voxel)
-    size_IS = 19  # window size in IS direction (=z) (in voxel)
-    smooth_factor = [3, 1, 1]
-    # searching_window_for_maximum = 5  # size used for finding local maxima
-    # gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
-    fig_anat_straight = 1  # handle for figure
-    fig_pattern = 2  # handle for figure
-    # fig_corr = 3  # handle for figure
-
-    # initialization
-    # contrast_template = 't2'
+    """
+    Find intervertebral discs in straightened image using template matching
+    :param fname:
+    :param fname_seg:
+    :param contrast:
+    :param init_disc:
+    :param verbose:
+    :param path_template:
+    :return:
+    """
+    # initializations
+    fig_anat_straight = 1
 
     if path_template == '':
         # get path of SCT
@@ -317,20 +319,12 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     data_template = Image(fname_template).data
     data_disc_template = Image(fname_disc).data
 
-    # apply Laplacian filtering to template data
-    # if laplacian:
-    #     printv('\nApplying Laplacian filter to template data...', verbose)
-    #     from sct_maths import laplacian
-    #     data_template = laplacian(data_template.astype(float), [1, 1, 1])
-
     # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
     list_disc_value_template = sorted(data_disc_template[data_disc_template.nonzero()])
     list_disc_z_template = [int(np.where(data_disc_template == list_disc_value_template[i])[2]) for i in range(len(list_disc_value_template))]
     printv('\nDisc values from template: '+str(list_disc_value_template), verbose)
     list_distance_template = (np.diff(list_disc_z_template) * (-1)).tolist() # multiplies by -1 to get positive distances
     printv('Distances between discs (in voxel): '+str(list_distance_template), verbose)
-    # create pattern for each disc
-    # data_template = Image(fname_template)
 
     if verbose == 2:
         plt.ion()  # enables interactive mode
@@ -340,7 +334,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
     # smooth data
     from scipy.ndimage.filters import gaussian_filter
-    data = gaussian_filter(data, smooth_factor, output=None, mode="reflect")
+    data = gaussian_filter(data, param.smooth_factor, output=None, mode="reflect")
 
     # get dimension of src
     nx, ny, nz = data.shape
@@ -355,35 +349,16 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
     # display stuff
     if verbose == 2:
-        plt.matshow(np.mean(data[xc-size_RL:xc+size_RL, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
+        plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
         # plt.text(yc+shift_AP+4, init_disc[0], 'init', verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
 
     # if automatic mode, find C2/C3 disc
     if init_disc == []:
-
-        # get z corresponding to C2-C3 disc in the template
-        z_c2c3_template = list_disc_z_template[1]
-        # set default superior and inferior sizes for C2+brainstem pattern
-
-        z_peak = compute_corr_3d(src=data,
-                                 target=data_template,
-                                 x=xc,
-                                 xshift=0,
-                                 xsize=size_RL,
-                                 y=yc,
-                                 yshift=param.shift_AP_brainstem,
-                                 ysize=param.size_AP_brainstem,
-                                 zshift=param.shift_IS_brainstem,
-                                 zsize=param.size_IS_brainstem,
-                                 xtarget=xct,
-                                 ytarget=yct,
-                                 ztarget=z_c2c3_template,
-                                 verbose=verbose)
-
+        printv('\nDetect C2/C3 disk...', verbose)
+        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[1], verbose=verbose, save_suffix='_initC2')
         init_disc = [z_peak, 2]
-
 
     # FIND DISCS
     # ===========================================================================
@@ -396,21 +371,6 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
-    # # do local adjustment to be at the center of the disc
-    # printv('.. local adjustment to center disc', verbose)
-    # pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-size_IS:current_z+size_IS+1]
-    # current_z = local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, size_IS, searching_window_for_maximum, verbose)
-    # if verbose == 2:
-    #     plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, current_z, c='g', s=50)
-    #     plt.text(yc+shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='green', fontsize=15)
-    #     # plt.draw()
-    # append value to main list
-    # list_disc_z = np.append(list_disc_z, current_z).astype(int)
-    # list_disc_value = np.append(list_disc_value, current_disc).astype(int)
-    # # update initial value (used when switching disc search to inferior direction)
-    # init_disc[0] = current_z
-    # find_disc(data, current_z, current_disc, approx_distance_to_next_disc, direction)
-    # loop until potential new peak is inside of FOV
     direction = 'superior'
     search_next_disc = True
     while search_next_disc:
@@ -422,149 +382,153 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             # in case reached the bottom (see issue #849)
             printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
             break
-        # Get pattern from template corresponding to current_disc
-        pattern = data_template[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z_template-size_IS:current_z_template+size_IS+1]
-        pattern1d = pattern.ravel()
-        if verbose == 2:
-            # display init disc
-            plt.figure(fig_anat_straight)
-            plt.scatter(yc+shift_AP, current_z, c='red', s=50)
-            # # display template pattern
-            # plt.figure(fig_pattern)
-            # plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=fig_pattern, cmap=plt.cm.gray)
-            # plt.title('Pattern in sagittal averaged across R-L')
-            # plt.show()
-        # compute correlation between pattern and data
-        # printv('.. approximate distance to next disc: '+str(approx_distance_to_next_disc)+' mm', verbose)
-        range_z = range(-10, 10)
-        # length_y_corr = range(-5, 5)
-        # I_corr = np.zeros((length_z_corr))
-        I_corr = np.zeros(len(range_z))
-        # ind_y = 0
-        allzeros = 0
-        # for iy in length_y_corr:
-            # loop across range of z defined by template distance
-        ind_I = 0
-        for iz in range_z:
-            # if pattern extends towards the top part of the image, then crop and pad with zeros
-            if current_z+iz+size_IS > nz:
-                padding_size = current_z+iz+size_IS
-                data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1-padding_size]
-                data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
-            # if pattern extends towards bottom part of the image, then crop and pad with zeros
-            elif current_z-iz-size_IS < 0:
-                padding_size = abs(current_z-iz-size_IS)
-                data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-iz-size_IS+padding_size:current_z-iz+size_IS+1]
-                data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
-            else:
-                data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-            # if verbose == 2 and iz == 0:
-            #     # display template and subject patterns
-            #     plt.figure(fig_pattern)
-            #     plt.subplot(131)
-            #     plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-            #     plt.title('Template pattern')
-            #     plt.subplot(132)
-            #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-            #     plt.title('Subject pattern at iz=0')
-            #     # save figure
-            #     plt.figure(fig_pattern), plt.savefig('../fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
-            # convert subject pattern to 1d
-            data_chunk1d = data_chunk3d.ravel()
-            # check if data_chunk1d contains at least one non-zero value
-            # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
-            if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-                 I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
-                 # data_chunk2d = np.mean(data_chunk3d, 1)
-                 # pattern2d = np.mean(pattern, 1)
-                 # I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 32)
-            else:
-                allzeros = 1
-                # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
-            ind_I = ind_I + 1
-        # ind_y = ind_y + 1
-        if allzeros:
-            printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
-
-        # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
-        # gaussian_window = gaussian(len(range_z), std=len(range_z)/gaussian_std_factor)
-        # I_corr_adj = np.multiply(I_corr.transpose(), gaussian_window).transpose()
-        I_corr_adj = I_corr
-
-        # # display correlation curves
+        # find next disc
+        current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, verbose=verbose, save_suffix='_disc'+str(current_disc))
+        # init_disc = [z_peak, 2]
+        #
+        # # Get pattern from template corresponding to current_disc
+        # pattern = data_template[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z_template-size_IS:current_z_template+size_IS+1]
+        # pattern1d = pattern.ravel()
         # if verbose == 2:
-        #     plt.figure(fig_corr)
-        #     plt.plot(I_corr_adj)
-        #     plt.title('Correlation of pattern with data.')
-
-        # Find peak within local neighborhood defined by mean distance template
-        # ind_peak = argrelextrema(I_corr_adj, np.greater, order=searching_window_for_maximum)[0]
-        # ind_peak = np.zeros(2).astype(int)
-        # if len(ind_peak) == 0:
-        #     printv('.. WARNING: No peak found. Using adjusted template distance.', verbose)
-        #     ind_peak[0] = approx_distance_to_next_disc  # based on distance template
-        #     ind_peak[1] = 0  # no shift along y
+        #     # display init disc
+        #     plt.figure(fig_anat_straight)
+        #     plt.scatter(yc+shift_AP, current_z, c='red', s=50)
+        #     # # display template pattern
+        #     # plt.figure(fig_pattern)
+        #     # plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=fig_pattern, cmap=plt.cm.gray)
+        #     # plt.title('Pattern in sagittal averaged across R-L')
+        #     # plt.show()
+        # # compute correlation between pattern and data
+        # # printv('.. approximate distance to next disc: '+str(approx_distance_to_next_disc)+' mm', verbose)
+        # range_z = range(-10, 10)
+        # # length_y_corr = range(-5, 5)
+        # # I_corr = np.zeros((length_z_corr))
+        # I_corr = np.zeros(len(range_z))
+        # # ind_y = 0
+        # allzeros = 0
+        # # for iy in length_y_corr:
+        #     # loop across range of z defined by template distance
+        # ind_I = 0
+        # for iz in range_z:
+        #     # if pattern extends towards the top part of the image, then crop and pad with zeros
+        #     if current_z+iz+size_IS > nz:
+        #         padding_size = current_z+iz+size_IS
+        #         data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1-padding_size]
+        #         data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
+        #     # if pattern extends towards bottom part of the image, then crop and pad with zeros
+        #     elif current_z-iz-size_IS < 0:
+        #         padding_size = abs(current_z-iz-size_IS)
+        #         data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-iz-size_IS+padding_size:current_z-iz+size_IS+1]
+        #         data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
+        #     else:
+        #         data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
+        #     # if verbose == 2 and iz == 0:
+        #     #     # display template and subject patterns
+        #     #     plt.figure(fig_pattern)
+        #     #     plt.subplot(131)
+        #     #     plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+        #     #     plt.title('Template pattern')
+        #     #     plt.subplot(132)
+        #     #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+        #     #     plt.title('Subject pattern at iz=0')
+        #     #     # save figure
+        #     #     plt.figure(fig_pattern), plt.savefig('../fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
+        #     # convert subject pattern to 1d
+        #     data_chunk1d = data_chunk3d.ravel()
+        #     # check if data_chunk1d contains at least one non-zero value
+        #     # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
+        #     if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
+        #          I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
+        #          # data_chunk2d = np.mean(data_chunk3d, 1)
+        #          # pattern2d = np.mean(pattern, 1)
+        #          # I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 32)
+        #     else:
+        #         allzeros = 1
+        #         # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
+        #     ind_I = ind_I + 1
+        # # ind_y = ind_y + 1
+        # if allzeros:
+        #     printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
+        #
+        # # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
+        # # gaussian_window = gaussian(len(range_z), std=len(range_z)/gaussian_std_factor)
+        # # I_corr_adj = np.multiply(I_corr.transpose(), gaussian_window).transpose()
+        # I_corr_adj = I_corr
+        #
+        # # # display correlation curves
+        # # if verbose == 2:
+        # #     plt.figure(fig_corr)
+        # #     plt.plot(I_corr_adj)
+        # #     plt.title('Correlation of pattern with data.')
+        #
+        # # Find peak within local neighborhood defined by mean distance template
+        # # ind_peak = argrelextrema(I_corr_adj, np.greater, order=searching_window_for_maximum)[0]
+        # # ind_peak = np.zeros(2).astype(int)
+        # # if len(ind_peak) == 0:
+        # #     printv('.. WARNING: No peak found. Using adjusted template distance.', verbose)
+        # #     ind_peak[0] = approx_distance_to_next_disc  # based on distance template
+        # #     ind_peak[1] = 0  # no shift along y
+        # # else:
+        #
+        # # Find global maximum
+        # # ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
+        # if np.any(I_corr_adj):
+        #     # if I_corr_adj contains at least a non-zero value
+        #     ind_peak = [i for i in range(len(I_corr_adj)) if I_corr_adj[i] == max(I_corr_adj)][0]  # index of max along z
+        #     # ind_peak[1] = np.where(I_corr_adj == I_corr_adj.max())[1]  # index of max along y
+        #     printv('.. Peak found: z='+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
+        #     # check if correlation is high enough
+        #     if I_corr_adj[ind_peak] < thr_corr:
+        #         printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
+        #         ind_peak = range_z.index(0) # approx_distance_to_next_disc
+        #         # ind_peak[1] = int(round(len(length_y_corr)/2))
         # else:
-
-        # Find global maximum
-        # ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
-        if np.any(I_corr_adj):
-            # if I_corr_adj contains at least a non-zero value
-            ind_peak = [i for i in range(len(I_corr_adj)) if I_corr_adj[i] == max(I_corr_adj)][0]  # index of max along z
-            # ind_peak[1] = np.where(I_corr_adj == I_corr_adj.max())[1]  # index of max along y
-            printv('.. Peak found: z='+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
-            # check if correlation is high enough
-            if I_corr_adj[ind_peak] < thr_corr:
-                printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
-                ind_peak = range_z.index(0) # approx_distance_to_next_disc
-                # ind_peak[1] = int(round(len(length_y_corr)/2))
-        else:
-            # if I_corr_adj contains only zeros
-            printv('.. WARNING: Correlation vector only contains zeros. Using adjusted template distance.', verbose)
-            ind_peak = range_z.index(0) # approx_distance_to_next_disc
-
-        # # display peak
+        #     # if I_corr_adj contains only zeros
+        #     printv('.. WARNING: Correlation vector only contains zeros. Using adjusted template distance.', verbose)
+        #     ind_peak = range_z.index(0) # approx_distance_to_next_disc
+        #
+        # # # display peak
+        # # if verbose == 2:
+        # #     plt.figure(fig_corr), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
+        # #     # save figure
+        # #     plt.figure(fig_corr), plt.savefig('../fig_correlation_disc'+str(current_disc)+'.png'), plt.close()
+        #
+        # # display patterns and correlation
         # if verbose == 2:
-        #     plt.figure(fig_corr), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
+        #     # display template pattern
+        #     plt.figure(fig_pattern, figsize=(20, 7))
+        #     plt.subplot(141)
+        #     plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+        #     plt.title('Template pattern')
+        #     # display subject pattern centered at current_z
+        #     plt.subplot(142)
+        #     iz = 0
+        #     data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
+        #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+        #     plt.title('Subject at iz=0')
+        #     # display subject pattern centered at current_z
+        #     plt.subplot(143)
+        #     iz = range_z[ind_peak]
+        #     data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
+        #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+        #     plt.title('Subject at iz='+str(iz))
+        #     # display correlation curve
+        #     plt.subplot(144)
+        #     plt.plot(I_corr_adj)
+        #     plt.title('MI between template and subject pattern')
+        #     plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
+        #     plt.axvline(x=range_z.index(0), linewidth=1, color='black', linestyle='dashed')
+        #     plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         #     # save figure
-        #     plt.figure(fig_corr), plt.savefig('../fig_correlation_disc'+str(current_disc)+'.png'), plt.close()
-
-        # display patterns and correlation
-        if verbose == 2:
-            # display template pattern
-            plt.figure(fig_pattern, figsize=(20, 7))
-            plt.subplot(141)
-            plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-            plt.title('Template pattern')
-            # display subject pattern centered at current_z
-            plt.subplot(142)
-            iz = 0
-            data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-            plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-            plt.title('Subject at iz=0')
-            # display subject pattern centered at current_z
-            plt.subplot(143)
-            iz = range_z[ind_peak]
-            data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-            plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-            plt.title('Subject at iz='+str(iz))
-            # display correlation curve
-            plt.subplot(144)
-            plt.plot(I_corr_adj)
-            plt.title('MI between template and subject pattern')
-            plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
-            plt.axvline(x=range_z.index(0), linewidth=1, color='black', linestyle='dashed')
-            plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
-            # save figure
-            plt.figure(fig_pattern), plt.savefig('../fig_pattern_MI'+str(current_disc)+'.png'), plt.close()
+        #     plt.figure(fig_pattern), plt.savefig('../fig_pattern_MI'+str(current_disc)+'.png'), plt.close()
 
         # assign new z_start and disc value
-        current_z = current_z + range_z[ind_peak]
+        # current_z = current_z + range_z[ind_peak]
 
         # display new disc
         if verbose == 2:
-            plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, current_z, c='yellow', s=50)
-            plt.text(yc+shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
+            plt.figure(fig_anat_straight), plt.scatter(yc+param.shift_AP, current_z, c='yellow', s=50)
+            plt.text(yc+param.shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
 
         # append to main list
         if direction == 'superior':
@@ -842,9 +806,9 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     im_label.save()
 
 
-def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, verbose=1):
+def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, verbose=1, save_suffix=''):
     """
-    Compute correlation between src and target 3d data.
+    Find z that maximizes correlation between src and target 3d data.
     :param src:
     :param target:
     :param x:
@@ -858,7 +822,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     :param zsize:
     :return:
     """
-    # initialization
+    # parameters
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
     # get dimensions from src
     nx, ny, nz = src.shape
@@ -868,23 +832,13 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
               ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
               ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
     pattern1d = pattern.ravel()
-    # if verbose == 2:
-    #     # display template pattern
-    #     plt.figure(10)
-    #     plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=10,
-    #                 cmap=plt.cm.gray)
-    #     plt.title('Pattern in sagittal averaged across R-L')
-    #     plt.show()
-    # compute correlation between pattern and data
+    # initializations
     range_z = range(0, nz)
-
     I_corr = np.zeros(len(range_z))
-    # ind_y = 0
     allzeros = 0
-    # for iy in length_y_corr:
-    # loop across range of z defined by template distance
     current_z = 0
     ind_I = 0
+    # loop across range of z defined by src
     for iz in range_z:
         # if pattern extends towards the top part of the image, then crop and pad with zeros
         if iz + zsize > nz:
@@ -944,23 +898,21 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     if allzeros:
         printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
 
-    I_corr_adj = I_corr
-
     # Find global maximum
-    # ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
-    if np.any(I_corr_adj):
-        # if I_corr_adj contains at least a non-zero value
-        ind_peak = [i for i in range(len(I_corr_adj)) if I_corr_adj[i] == max(I_corr_adj)][
+    # ind_peak = ind_peak[np.argmax(I_corr[ind_peak])]
+    if np.any(I_corr):
+        # if I_corr contains at least a non-zero value
+        ind_peak = [i for i in range(len(I_corr)) if I_corr[i] == max(I_corr)][
             0]  # index of max along z
-        # ind_peak[1] = np.where(I_corr_adj == I_corr_adj.max())[1]  # index of max along y
-        printv('.. Peak found: z=' + str(ind_peak) + ' (correlation = ' + str(I_corr_adj[ind_peak]) + ')', verbose)
+        # ind_peak[1] = np.where(I_corr == I_corr.max())[1]  # index of max along y
+        printv('.. Peak found: z=' + str(ind_peak) + ' (correlation = ' + str(I_corr[ind_peak]) + ')', verbose)
         # check if correlation is high enough
-        if I_corr_adj[ind_peak] < thr_corr:
+        if I_corr[ind_peak] < thr_corr:
             printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
             ind_peak = range_z.index(0)  # approx_distance_to_next_disc
             # ind_peak[1] = int(round(len(length_y_corr)/2))
     else:
-        # if I_corr_adj contains only zeros
+        # if I_corr contains only zeros
         printv('.. WARNING: Correlation vector only contains zeros. Using adjusted template distance.', verbose)
         ind_peak = range_z.index(0)  # approx_distance_to_next_disc
 
@@ -984,14 +936,16 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         plt.title('Subject at iz=' + str(iz))
         # display correlation curve
         plt.subplot(133)
-        plt.plot(I_corr_adj)
+        plt.plot(I_corr)
         plt.title('MI between template and subject pattern')
-        plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
+        plt.plot(ind_peak, I_corr[ind_peak], 'ro'), plt.draw()
         plt.axvline(x=range_z.index(0), linewidth=1, color='black', linestyle='dashed')
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         # save figure
-        plt.figure(11), plt.savefig('../fig_pattern_MI_autoC2.png'), plt.close()
-    return ind_peak
+        plt.figure(11), plt.savefig('../fig_pattern_'+save_suffix+'.png'), plt.close()
+
+    # return peak index minus shift_IS to account for non-centered disc
+    return ind_peak - zshift
 
 
 def calc_MI(x, y, bins):
@@ -1016,3 +970,21 @@ if __name__ == "__main__":
     param = Param()
     # call main function
     main()
+
+
+# OLD CODE
+# # do local adjustment to be at the center of the disc
+# printv('.. local adjustment to center disc', verbose)
+# pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-size_IS:current_z+size_IS+1]
+# current_z = local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, size_IS, searching_window_for_maximum, verbose)
+# if verbose == 2:
+#     plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, current_z, c='g', s=50)
+#     plt.text(yc+shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='green', fontsize=15)
+#     # plt.draw()
+# append value to main list
+# list_disc_z = np.append(list_disc_z, current_z).astype(int)
+# list_disc_value = np.append(list_disc_value, current_disc).astype(int)
+# # update initial value (used when switching disc search to inferior direction)
+# init_disc[0] = current_z
+# find_disc(data, current_z, current_disc, approx_distance_to_next_disc, direction)
+# loop until potential new peak is inside of FOV
