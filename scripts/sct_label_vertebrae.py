@@ -31,6 +31,15 @@ import matplotlib.pyplot as plt
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
+# PARAMETERS
+class Param:
+    ## The constructor
+    def __init__(self):
+        self.shift_AP_brainstem = 25
+        self.size_AP_brainstem = 15
+        self.shift_IS_brainstem = 15
+        self.size_IS_brainstem = 30
+
 
 # PARSER
 # ==========================================================================================
@@ -116,12 +125,6 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
     return parser
 
 
-def calc_MI(x, y, bins):
-    from sklearn.metrics import mutual_info_score
-    c_xy = np.histogram2d(x, y, bins)[0]
-    mi = mutual_info_score(None, None, contingency=c_xy)
-    # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
-    return mi
 
 # MAIN
 # ==========================================================================================
@@ -279,7 +282,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     size_AP = 11  # window size in AP direction (=y) (in voxel)
     size_RL = 1  # window size in RL direction (=x) (in voxel)
     size_IS = 19  # window size in IS direction (=z) (in voxel)
-    smooth_factor = [9, 3, 1]
+    smooth_factor = [3, 1, 1]
     # searching_window_for_maximum = 5  # size used for finding local maxima
     # gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
     fig_anat_straight = 1  # handle for figure
@@ -363,91 +366,23 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         # get z corresponding to C2-C3 disc in the template
         z_c2c3_template = list_disc_z_template[1]
         # set default superior and inferior sizes for C2+brainstem pattern
-        shift_AP_brainstem = 0  #20
-        size_AP_brainstem = 29
-        shift_IS_brainstem = 0
-        size_IS_brainstem = 69
 
-        I_corr_adj = compute_corr_3d(src=data,
-                                     target=data_template,
-                                     x=xc,
-                                     xshift=0,
-                                     xsize=size_RL,
-                                     y=yc,
-                                     yshift=shift_AP_brainstem,
-                                     ysize=size_AP_brainstem,
-                                     zshift=shift_IS_brainstem,
-                                     zsize=size_IS_brainstem,
-                                     xtarget=xct,
-                                     ytarget=yct,
-                                     ztarget=z_c2c3_template,
-                                     verbose=verbose)
+        z_peak = compute_corr_3d(src=data,
+                                 target=data_template,
+                                 x=xc,
+                                 xshift=0,
+                                 xsize=size_RL,
+                                 y=yc,
+                                 yshift=param.shift_AP_brainstem,
+                                 ysize=param.size_AP_brainstem,
+                                 zshift=param.shift_IS_brainstem,
+                                 zsize=param.size_IS_brainstem,
+                                 xtarget=xct,
+                                 ytarget=yct,
+                                 ztarget=z_c2c3_template,
+                                 verbose=verbose)
 
-        # init_disc = find_c2c3_disc(data, data_template)
-
-        # Get pattern from template corresponding to current_disc
-        pattern = data_template[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z_template-size_IS:current_z_template+size_IS+1]
-        pattern1d = pattern.ravel()
-        if verbose == 2:
-            # display init disc
-            plt.figure(fig_anat_straight)
-            plt.scatter(yc+shift_AP, current_z, c='red', s=50)
-            # # display template pattern
-            # plt.figure(fig_pattern)
-            # plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=fig_pattern, cmap=plt.cm.gray)
-            # plt.title('Pattern in sagittal averaged across R-L')
-            # plt.show()
-        # compute correlation between pattern and data
-        # printv('.. approximate distance to next disc: '+str(approx_distance_to_next_disc)+' mm', verbose)
-        range_z = range(-10, 10)
-        # length_y_corr = range(-5, 5)
-        # I_corr = np.zeros((length_z_corr))
-        I_corr = np.zeros(len(range_z))
-        # ind_y = 0
-        allzeros = 0
-        # for iy in length_y_corr:
-            # loop across range of z defined by template distance
-        ind_I = 0
-        for iz in range_z:
-            # if pattern extends towards the top part of the image, then crop and pad with zeros
-            if current_z+iz+size_IS > nz:
-                padding_size = current_z+iz+size_IS
-                data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1-padding_size]
-                data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
-            # if pattern extends towards bottom part of the image, then crop and pad with zeros
-            elif current_z-iz-size_IS < 0:
-                padding_size = abs(current_z-iz-size_IS)
-                data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-iz-size_IS+padding_size:current_z-iz+size_IS+1]
-                data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
-            else:
-                data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-            # if verbose == 2 and iz == 0:
-            #     # display template and subject patterns
-            #     plt.figure(fig_pattern)
-            #     plt.subplot(131)
-            #     plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-            #     plt.title('Template pattern')
-            #     plt.subplot(132)
-            #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-            #     plt.title('Subject pattern at iz=0')
-            #     # save figure
-            #     plt.figure(fig_pattern), plt.savefig('../fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
-            # convert subject pattern to 1d
-            data_chunk1d = data_chunk3d.ravel()
-            # check if data_chunk1d contains at least one non-zero value
-            # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
-            if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-                 I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
-                 # data_chunk2d = np.mean(data_chunk3d, 1)
-                 # pattern2d = np.mean(pattern, 1)
-                 # I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 32)
-            else:
-                allzeros = 1
-                # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
-            ind_I = ind_I + 1
-        # ind_y = ind_y + 1
-        if allzeros:
-            printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
+        init_disc = [z_peak, 2]
 
 
     # FIND DISCS
@@ -933,13 +868,13 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
               ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
               ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
     pattern1d = pattern.ravel()
-    if verbose == 2:
-        # display template pattern
-        plt.figure(10)
-        plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=10,
-                    cmap=plt.cm.gray)
-        plt.title('Pattern in sagittal averaged across R-L')
-        plt.show()
+    # if verbose == 2:
+    #     # display template pattern
+    #     plt.figure(10)
+    #     plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=10,
+    #                 cmap=plt.cm.gray)
+    #     plt.title('Pattern in sagittal averaged across R-L')
+    #     plt.show()
     # compute correlation between pattern and data
     range_z = range(0, nz)
 
@@ -954,7 +889,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         # if pattern extends towards the top part of the image, then crop and pad with zeros
         if iz + zsize > nz:
             print 'iz='+str(iz)+': padding on top'
-            padding_size = iz + zsize
+            padding_size = iz + zsize - nz
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
                            y + yshift - ysize: y + yshift + ysize + 1,
@@ -964,7 +899,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif iz - zsize < 0:
             print 'iz='+str(iz)+': padding at bottom'
-            padding_size = abs(- iz - zsize)
+            padding_size = abs(iz - zsize)
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
                            y + yshift - ysize: y + yshift + ysize + 1,
@@ -1029,32 +964,16 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         printv('.. WARNING: Correlation vector only contains zeros. Using adjusted template distance.', verbose)
         ind_peak = range_z.index(0)  # approx_distance_to_next_disc
 
-    # # display peak
-    # if verbose == 2:
-    #     plt.figure(1), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
-    #     # save figure
-    #     plt.figure(1), plt.savefig('../fig_correlation_disc_autoC2.png'), plt.close()
-
     # display patterns and correlation
     if verbose == 2:
         # display template pattern
-        plt.figure(11, figsize=(20, 7))
-        plt.subplot(141)
+        plt.figure(11, figsize=(15, 7))
+        plt.subplot(131)
         plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray,
                    interpolation='none')
         plt.title('Template pattern')
-        # display subject pattern centered at current_z
-        plt.subplot(142)
-        iz = 0
-        data_chunk3d = src[
-                       x - xsize: x + xsize + 1,
-                       y + yshift - ysize: y + yshift + ysize + 1,
-                       iz - zsize: iz + zsize + 1]
-        plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray,
-                   interpolation='none')
-        plt.title('Subject at iz=0')
-        # display subject pattern centered at current_z
-        plt.subplot(143)
+        # display subject pattern at best z
+        plt.subplot(132)
         iz = range_z[ind_peak]
         data_chunk3d = src[
                        x - xsize: x + xsize + 1,
@@ -1064,7 +983,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
                    interpolation='none')
         plt.title('Subject at iz=' + str(iz))
         # display correlation curve
-        plt.subplot(144)
+        plt.subplot(133)
         plt.plot(I_corr_adj)
         plt.title('MI between template and subject pattern')
         plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
@@ -1072,12 +991,28 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         # save figure
         plt.figure(11), plt.savefig('../fig_pattern_MI_autoC2.png'), plt.close()
+    return ind_peak
 
-    return I_corr
+
+def calc_MI(x, y, bins):
+    """
+    Compute mutual information
+    :param x:
+    :param y:
+    :param bins:
+    :return:
+    """
+    from sklearn.metrics import mutual_info_score
+    c_xy = np.histogram2d(x, y, bins)[0]
+    mi = mutual_info_score(None, None, contingency=c_xy)
+    # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
+    return mi
 
 
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    # initialize parameters
+    param = Param()
     # call main function
     main()
