@@ -182,8 +182,8 @@ def main(args=None):
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
-    # path_tmp = tmp_create(verbose=verbose)
-    path_tmp = '/Users/julien/data/sct_dev/vertebral_labeling/anisha_3276/tmp.160629122058_884275/'
+    path_tmp = tmp_create(verbose=verbose)
+    # path_tmp = '/Users/julien/data/sct_dev/vertebral_labeling/anisha_3276/tmp.160629122058_884275/'
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
@@ -211,7 +211,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    # run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
+    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
@@ -392,7 +392,9 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
             break
         # find next disc
-        current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc))
+        # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead        else:
+        if not current_disc == 1:
+            current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc))
 
         # display new disc
         if verbose == 2:
@@ -453,7 +455,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             current_disc = current_disc + 1
 
         # if current_z is larger than searching zone, switch direction (and start from initial z minus approximate distance from updated template distance)
-        if current_z >= nz or current_disc == 1:
+        if current_z >= nz or current_disc == 0:
             printv('.. Switching to inferior direction.', verbose)
             direction = 'inferior'
             current_disc = init_disc[1] + 1
