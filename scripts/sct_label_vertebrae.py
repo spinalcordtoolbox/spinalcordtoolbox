@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add C1
 # TODO: address the case when there is more than one max correlation
 # TODO: add user input option (show sagittal slice) --> use new viewer
 # DONE: compute MI instead of correlation --> does not help
@@ -43,6 +44,7 @@ class Param:
         self.size_AP = 11  # window size in AP direction (=y) (in voxel)
         self.size_RL = 1  # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
+        self.shift_AP_visu = 15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]
 
 
@@ -316,6 +318,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         printv('\nERROR: File *_label_disc.nii.gz not found.', 1, 'error')
 
     # Open template and disc labels
+    printv('Open template and disc labels...', verbose)
     data_template = Image(fname_template).data
     data_disc_template = Image(fname_disc).data
 
@@ -325,9 +328,6 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     printv('\nDisc values from template: '+str(list_disc_value_template), verbose)
     list_distance_template = (np.diff(list_disc_z_template) * (-1)).tolist() # multiplies by -1 to get positive distances
     printv('Distances between discs (in voxel): '+str(list_distance_template), verbose)
-
-    if verbose == 2:
-        plt.ion()  # enables interactive mode
 
     # open anatomical volume
     data = Image(fname).data
@@ -357,8 +357,16 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     # if automatic mode, find C2/C3 disc
     if init_disc == []:
         printv('\nDetect C2/C3 disk...', verbose)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[1], verbose=verbose, save_suffix='_initC2')
+        zrange = range(0, nz)
+        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[1], zrange=zrange, verbose=verbose, save_suffix='_initC2')
         init_disc = [z_peak, 2]
+
+    # display init disc
+    if verbose == 2:
+        plt.ion()  # enables interactive mode
+        plt.figure(fig_anat_straight), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
+        plt.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
+                 verticalalignment='center', horizontalalignment='left', color='pink', fontsize=15), plt.draw()
 
     # FIND DISCS
     # ===========================================================================
@@ -371,6 +379,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
+    zrange = range(-10, 10)
     direction = 'superior'
     search_next_disc = True
     while search_next_disc:
@@ -383,152 +392,12 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
             break
         # find next disc
-        current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, verbose=verbose, save_suffix='_disc'+str(current_disc))
-        # init_disc = [z_peak, 2]
-        #
-        # # Get pattern from template corresponding to current_disc
-        # pattern = data_template[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z_template-size_IS:current_z_template+size_IS+1]
-        # pattern1d = pattern.ravel()
-        # if verbose == 2:
-        #     # display init disc
-        #     plt.figure(fig_anat_straight)
-        #     plt.scatter(yc+shift_AP, current_z, c='red', s=50)
-        #     # # display template pattern
-        #     # plt.figure(fig_pattern)
-        #     # plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=fig_pattern, cmap=plt.cm.gray)
-        #     # plt.title('Pattern in sagittal averaged across R-L')
-        #     # plt.show()
-        # # compute correlation between pattern and data
-        # # printv('.. approximate distance to next disc: '+str(approx_distance_to_next_disc)+' mm', verbose)
-        # range_z = range(-10, 10)
-        # # length_y_corr = range(-5, 5)
-        # # I_corr = np.zeros((length_z_corr))
-        # I_corr = np.zeros(len(range_z))
-        # # ind_y = 0
-        # allzeros = 0
-        # # for iy in length_y_corr:
-        #     # loop across range of z defined by template distance
-        # ind_I = 0
-        # for iz in range_z:
-        #     # if pattern extends towards the top part of the image, then crop and pad with zeros
-        #     if current_z+iz+size_IS > nz:
-        #         padding_size = current_z+iz+size_IS
-        #         data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1-padding_size]
-        #         data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
-        #     # if pattern extends towards bottom part of the image, then crop and pad with zeros
-        #     elif current_z-iz-size_IS < 0:
-        #         padding_size = abs(current_z-iz-size_IS)
-        #         data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-iz-size_IS+padding_size:current_z-iz+size_IS+1]
-        #         data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
-        #     else:
-        #         data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-        #     # if verbose == 2 and iz == 0:
-        #     #     # display template and subject patterns
-        #     #     plt.figure(fig_pattern)
-        #     #     plt.subplot(131)
-        #     #     plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-        #     #     plt.title('Template pattern')
-        #     #     plt.subplot(132)
-        #     #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-        #     #     plt.title('Subject pattern at iz=0')
-        #     #     # save figure
-        #     #     plt.figure(fig_pattern), plt.savefig('../fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
-        #     # convert subject pattern to 1d
-        #     data_chunk1d = data_chunk3d.ravel()
-        #     # check if data_chunk1d contains at least one non-zero value
-        #     # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
-        #     if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-        #          I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
-        #          # data_chunk2d = np.mean(data_chunk3d, 1)
-        #          # pattern2d = np.mean(pattern, 1)
-        #          # I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 32)
-        #     else:
-        #         allzeros = 1
-        #         # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
-        #     ind_I = ind_I + 1
-        # # ind_y = ind_y + 1
-        # if allzeros:
-        #     printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
-        #
-        # # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
-        # # gaussian_window = gaussian(len(range_z), std=len(range_z)/gaussian_std_factor)
-        # # I_corr_adj = np.multiply(I_corr.transpose(), gaussian_window).transpose()
-        # I_corr_adj = I_corr
-        #
-        # # # display correlation curves
-        # # if verbose == 2:
-        # #     plt.figure(fig_corr)
-        # #     plt.plot(I_corr_adj)
-        # #     plt.title('Correlation of pattern with data.')
-        #
-        # # Find peak within local neighborhood defined by mean distance template
-        # # ind_peak = argrelextrema(I_corr_adj, np.greater, order=searching_window_for_maximum)[0]
-        # # ind_peak = np.zeros(2).astype(int)
-        # # if len(ind_peak) == 0:
-        # #     printv('.. WARNING: No peak found. Using adjusted template distance.', verbose)
-        # #     ind_peak[0] = approx_distance_to_next_disc  # based on distance template
-        # #     ind_peak[1] = 0  # no shift along y
-        # # else:
-        #
-        # # Find global maximum
-        # # ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
-        # if np.any(I_corr_adj):
-        #     # if I_corr_adj contains at least a non-zero value
-        #     ind_peak = [i for i in range(len(I_corr_adj)) if I_corr_adj[i] == max(I_corr_adj)][0]  # index of max along z
-        #     # ind_peak[1] = np.where(I_corr_adj == I_corr_adj.max())[1]  # index of max along y
-        #     printv('.. Peak found: z='+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
-        #     # check if correlation is high enough
-        #     if I_corr_adj[ind_peak] < thr_corr:
-        #         printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
-        #         ind_peak = range_z.index(0) # approx_distance_to_next_disc
-        #         # ind_peak[1] = int(round(len(length_y_corr)/2))
-        # else:
-        #     # if I_corr_adj contains only zeros
-        #     printv('.. WARNING: Correlation vector only contains zeros. Using adjusted template distance.', verbose)
-        #     ind_peak = range_z.index(0) # approx_distance_to_next_disc
-        #
-        # # # display peak
-        # # if verbose == 2:
-        # #     plt.figure(fig_corr), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
-        # #     # save figure
-        # #     plt.figure(fig_corr), plt.savefig('../fig_correlation_disc'+str(current_disc)+'.png'), plt.close()
-        #
-        # # display patterns and correlation
-        # if verbose == 2:
-        #     # display template pattern
-        #     plt.figure(fig_pattern, figsize=(20, 7))
-        #     plt.subplot(141)
-        #     plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-        #     plt.title('Template pattern')
-        #     # display subject pattern centered at current_z
-        #     plt.subplot(142)
-        #     iz = 0
-        #     data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-        #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-        #     plt.title('Subject at iz=0')
-        #     # display subject pattern centered at current_z
-        #     plt.subplot(143)
-        #     iz = range_z[ind_peak]
-        #     data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-        #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
-        #     plt.title('Subject at iz='+str(iz))
-        #     # display correlation curve
-        #     plt.subplot(144)
-        #     plt.plot(I_corr_adj)
-        #     plt.title('MI between template and subject pattern')
-        #     plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
-        #     plt.axvline(x=range_z.index(0), linewidth=1, color='black', linestyle='dashed')
-        #     plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
-        #     # save figure
-        #     plt.figure(fig_pattern), plt.savefig('../fig_pattern_MI'+str(current_disc)+'.png'), plt.close()
-
-        # assign new z_start and disc value
-        # current_z = current_z + range_z[ind_peak]
+        current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc))
 
         # display new disc
         if verbose == 2:
-            plt.figure(fig_anat_straight), plt.scatter(yc+param.shift_AP, current_z, c='yellow', s=50)
-            plt.text(yc+param.shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
+            plt.figure(fig_anat_straight), plt.scatter(yc+param.shift_AP_visu, current_z, c='yellow', s=50)
+            plt.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
 
         # append to main list
         if direction == 'superior':
@@ -699,80 +568,6 @@ def find_c2c3_disc(data, data_template):
     """
 
 
-
-# Do local adjustement to be at the center of the current disc
-# ==========================================================================================
-def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, size_IS, searching_window_for_maximum, verbose):
-    """
-    Do local adjustment to be at the center of the current disc, using cross-correlation of mirrored disc
-    :param current_z: init current_z
-    :return: adjusted_z: adjusted current_z
-    """
-    if verbose == 2:
-        import matplotlib.pyplot as plt
-
-    size_AP_mirror = 1
-    searching_window = range(-9, 13)
-    fig_local_adjustment = 4  # fig number
-    thr_corr = 0.15  # arbitrary-- should adjust based on large dataset
-    gaussian_std_factor = 3  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
-
-    # Get pattern centered at current_z = init_disc[0]
-    pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP_mirror:yc+shift_AP+size_AP_mirror+1, current_z-size_IS:current_z+size_IS+1]
-    # if pattern is missing data (because close to the edge), do not perform correlation and return current_z
-    if not pattern.shape == (int(round(size_RL*2+1)), int(round(size_AP_mirror*2+1)), int(round(size_IS*2+1))):
-        printv('.... WARNING: Pattern is missing data (because close to the edge). Using initial current_z provided.', verbose)
-        return current_z
-    pattern1d = pattern.ravel()
-    # compute cross-correlation with mirrored pattern
-    I_corr = np.zeros((len(searching_window)))
-    ind_I = 0
-    for iz in searching_window:
-        # get pattern shifted
-        pattern_shift = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP_mirror:yc+shift_AP+size_AP_mirror+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-        # if pattern is missing data (because close to the edge), do not perform correlation and return current_z
-        if not pattern_shift.shape == (int(round(size_RL*2+1)), int(round(size_AP_mirror*2+1)), int(round(size_IS*2+1))):
-            printv('.... WARNING: Pattern is missing data (because close to the edge). Using initial current_z provided.', verbose)
-            return current_z
-        # make it 1d
-        pattern1d_shift = pattern_shift.ravel()
-        # mirror it
-        pattern1d_shift_mirr = pattern1d_shift[::-1]
-        # compute correlation
-        I_corr[ind_I] = np.corrcoef(pattern1d_shift_mirr, pattern1d)[0, 1]
-        ind_I = ind_I + 1
-    # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
-    gaussian_window = gaussian(len(searching_window), std=len(searching_window)/gaussian_std_factor)
-    I_corr_adj = np.multiply(I_corr, gaussian_window)
-    # display
-    if verbose == 2:
-        plt.figure(fig_local_adjustment), plt.plot(I_corr), plt.plot(I_corr_adj, 'k')
-        plt.legend(['I_corr', 'I_corr_adj'])
-        plt.title('Correlation of pattern with mirrored pattern.')
-    # Find peak within local neighborhood
-    ind_peak = argrelextrema(I_corr_adj, np.greater, order=searching_window_for_maximum)[0]
-    if len(ind_peak) == 0:
-        printv('.... WARNING: No peak found. Using initial current_z provided.', verbose)
-        adjusted_z = current_z
-    else:
-        # keep peak with maximum correlation
-        ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
-        printv('.... Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
-        # check if correlation is too low
-        if I_corr_adj[ind_peak] < thr_corr:
-            printv('.... WARNING: Correlation is too low. Using initial current_z provided.', verbose)
-            adjusted_z = current_z
-        else:
-            adjusted_z = int(current_z + round(searching_window[ind_peak]/2)) + 1
-            printv('.... Update init_z position to: '+str(adjusted_z), verbose)
-    if verbose == 2:
-        # display peak
-        plt.figure(fig_local_adjustment), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro')
-        # save and close figure
-        plt.figure(fig_local_adjustment), plt.savefig('../fig_local_adjustment_disc'+str(current_disc)+'.png'), plt.close()
-    return adjusted_z
-
-
 # Clean labeled segmentation
 # ==========================================================================================
 def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
@@ -806,11 +601,11 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     im_label.save()
 
 
-def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, verbose=1, save_suffix=''):
+def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, z=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, zrange=[], verbose=1, save_suffix=''):
     """
     Find z that maximizes correlation between src and target 3d data.
-    :param src:
-    :param target:
+    :param src: 3d source data
+    :param target: 3d target data
     :param x:
     :param xshift:
     :param xsize:
@@ -820,6 +615,12 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     :param z:
     :param zshift:
     :param zsize:
+    :param xtarget:
+    :param ytarget:
+    :param ztarget:
+    :param zrange:
+    :param verbose:
+    :param save_suffix:
     :return:
     """
     # parameters
@@ -833,54 +634,53 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
               ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
     pattern1d = pattern.ravel()
     # initializations
-    range_z = range(0, nz)
-    I_corr = np.zeros(len(range_z))
+    I_corr = np.zeros(len(zrange))
     allzeros = 0
     current_z = 0
     ind_I = 0
     # loop across range of z defined by src
-    for iz in range_z:
+    for iz in zrange:
         # if pattern extends towards the top part of the image, then crop and pad with zeros
-        if iz + zsize > nz:
-            print 'iz='+str(iz)+': padding on top'
+        if z + iz + zsize > nz:
+            # print 'iz='+str(iz)+': padding on top'
             padding_size = iz + zsize - nz
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
                            y + yshift - ysize: y + yshift + ysize + 1,
-                           iz - zsize: iz + zsize + 1 - padding_size]
+                           z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
                                   constant_values=0)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
-        elif iz - zsize < 0:
-            print 'iz='+str(iz)+': padding at bottom'
+        elif z + iz - zsize < 0:
+            # print 'iz='+str(iz)+': padding at bottom'
             padding_size = abs(iz - zsize)
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
                            y + yshift - ysize: y + yshift + ysize + 1,
-                           iz - zsize + padding_size: iz + zsize + 1]
+                           z + iz - zsize + padding_size: z + iz + zsize + 1]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
                                   constant_values=0)
         else:
-            print 'iz='+str(iz)+': no padding'
+            # print 'iz='+str(iz)+': no padding'
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
                            y + yshift - ysize: y + yshift + ysize + 1,
-                           iz - zsize: iz + zsize + 1]
-        if verbose == 2 and iz in range(0, nz, 10):
-            # display template and subject patterns
-            plt.figure(11)
-            plt.subplot(131)
-            plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper',
-                       cmap=plt.cm.gray,
-                       interpolation='none')
-            plt.title('Template pattern')
-            plt.subplot(132)
-            plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper',
-                       cmap=plt.cm.gray,
-                       interpolation='none')
-            plt.title('Subject pattern at iz=0')
-            # save figure
-            plt.figure(11), plt.savefig('../fig_pattern_findC2disc_z'+str(iz)+'.png'), plt.close()
+                           z + iz - zsize: z+ iz + zsize + 1]
+        # if verbose == 2 and iz in range(0, nz, 10):
+        #     # display template and subject patterns
+        #     plt.figure(11)
+        #     plt.subplot(131)
+        #     plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper',
+        #                cmap=plt.cm.gray,
+        #                interpolation='none')
+        #     plt.title('Template pattern')
+        #     plt.subplot(132)
+        #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper',
+        #                cmap=plt.cm.gray,
+        #                interpolation='none')
+        #     plt.title('Subject pattern at iz=0')
+        #     # save figure
+        #     plt.figure(11), plt.savefig('../fig_pattern'+save_suffix+'_z'+str(iz)+'.png'), plt.close()
         # convert subject pattern to 1d
         data_chunk1d = data_chunk3d.ravel()
         # check if data_chunk1d contains at least one non-zero value
@@ -902,19 +702,18 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     # ind_peak = ind_peak[np.argmax(I_corr[ind_peak])]
     if np.any(I_corr):
         # if I_corr contains at least a non-zero value
-        ind_peak = [i for i in range(len(I_corr)) if I_corr[i] == max(I_corr)][
-            0]  # index of max along z
+        ind_peak = [i for i in range(len(I_corr)) if I_corr[i] == max(I_corr)][0]  # index of max along z
         # ind_peak[1] = np.where(I_corr == I_corr.max())[1]  # index of max along y
-        printv('.. Peak found: z=' + str(ind_peak) + ' (correlation = ' + str(I_corr[ind_peak]) + ')', verbose)
+        printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr[ind_peak]) + ')', verbose)
         # check if correlation is high enough
         if I_corr[ind_peak] < thr_corr:
             printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
-            ind_peak = range_z.index(0)  # approx_distance_to_next_disc
+            ind_peak = zrange.index(0)  # approx_distance_to_next_disc
             # ind_peak[1] = int(round(len(length_y_corr)/2))
     else:
         # if I_corr contains only zeros
         printv('.. WARNING: Correlation vector only contains zeros. Using adjusted template distance.', verbose)
-        ind_peak = range_z.index(0)  # approx_distance_to_next_disc
+        ind_peak = zrange.index(0)  # approx_distance_to_next_disc
 
     # display patterns and correlation
     if verbose == 2:
@@ -926,26 +725,26 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         plt.title('Template pattern')
         # display subject pattern at best z
         plt.subplot(132)
-        iz = range_z[ind_peak]
+        iz = zrange[ind_peak]
         data_chunk3d = src[
                        x - xsize: x + xsize + 1,
                        y + yshift - ysize: y + yshift + ysize + 1,
-                       iz - zsize: iz + zsize + 1]
+                       z + iz - zsize: z + iz + zsize + 1]
         plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray,
                    interpolation='none')
         plt.title('Subject at iz=' + str(iz))
         # display correlation curve
         plt.subplot(133)
-        plt.plot(I_corr)
-        plt.title('MI between template and subject pattern')
+        plt.plot(zrange, I_corr)
+        plt.title('corr(subject, template)')
         plt.plot(ind_peak, I_corr[ind_peak], 'ro'), plt.draw()
-        plt.axvline(x=range_z.index(0), linewidth=1, color='black', linestyle='dashed')
+        plt.axvline(x=zrange.index(0), linewidth=1, color='black', linestyle='dashed')
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         # save figure
-        plt.figure(11), plt.savefig('../fig_pattern_'+save_suffix+'.png'), plt.close()
+        plt.figure(11), plt.savefig('../fig_pattern'+save_suffix+'.png'), plt.close()
 
-    # return peak index minus shift_IS to account for non-centered disc
-    return ind_peak - zshift
+    # return z-origin (z) + z-displacement minus zshift (to account for non-centered disc)
+    return z + zrange[ind_peak] - zshift
 
 
 def calc_MI(x, y, bins):
@@ -988,3 +787,75 @@ if __name__ == "__main__":
 # init_disc[0] = current_z
 # find_disc(data, current_z, current_disc, approx_distance_to_next_disc, direction)
 # loop until potential new peak is inside of FOV
+#
+# # Do local adjustement to be at the center of the current disc
+# # ==========================================================================================
+# def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, size_IS, searching_window_for_maximum, verbose):
+#     """
+#     Do local adjustment to be at the center of the current disc, using cross-correlation of mirrored disc
+#     :param current_z: init current_z
+#     :return: adjusted_z: adjusted current_z
+#     """
+#     if verbose == 2:
+#         import matplotlib.pyplot as plt
+#
+#     size_AP_mirror = 1
+#     searching_window = range(-9, 13)
+#     fig_local_adjustment = 4  # fig number
+#     thr_corr = 0.15  # arbitrary-- should adjust based on large dataset
+#     gaussian_std_factor = 3  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
+#
+#     # Get pattern centered at current_z = init_disc[0]
+#     pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP_mirror:yc+shift_AP+size_AP_mirror+1, current_z-size_IS:current_z+size_IS+1]
+#     # if pattern is missing data (because close to the edge), do not perform correlation and return current_z
+#     if not pattern.shape == (int(round(size_RL*2+1)), int(round(size_AP_mirror*2+1)), int(round(size_IS*2+1))):
+#         printv('.... WARNING: Pattern is missing data (because close to the edge). Using initial current_z provided.', verbose)
+#         return current_z
+#     pattern1d = pattern.ravel()
+#     # compute cross-correlation with mirrored pattern
+#     I_corr = np.zeros((len(searching_window)))
+#     ind_I = 0
+#     for iz in searching_window:
+#         # get pattern shifted
+#         pattern_shift = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP_mirror:yc+shift_AP+size_AP_mirror+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
+#         # if pattern is missing data (because close to the edge), do not perform correlation and return current_z
+#         if not pattern_shift.shape == (int(round(size_RL*2+1)), int(round(size_AP_mirror*2+1)), int(round(size_IS*2+1))):
+#             printv('.... WARNING: Pattern is missing data (because close to the edge). Using initial current_z provided.', verbose)
+#             return current_z
+#         # make it 1d
+#         pattern1d_shift = pattern_shift.ravel()
+#         # mirror it
+#         pattern1d_shift_mirr = pattern1d_shift[::-1]
+#         # compute correlation
+#         I_corr[ind_I] = np.corrcoef(pattern1d_shift_mirr, pattern1d)[0, 1]
+#         ind_I = ind_I + 1
+#     # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
+#     gaussian_window = gaussian(len(searching_window), std=len(searching_window)/gaussian_std_factor)
+#     I_corr_adj = np.multiply(I_corr, gaussian_window)
+#     # display
+#     if verbose == 2:
+#         plt.figure(fig_local_adjustment), plt.plot(I_corr), plt.plot(I_corr_adj, 'k')
+#         plt.legend(['I_corr', 'I_corr_adj'])
+#         plt.title('Correlation of pattern with mirrored pattern.')
+#     # Find peak within local neighborhood
+#     ind_peak = argrelextrema(I_corr_adj, np.greater, order=searching_window_for_maximum)[0]
+#     if len(ind_peak) == 0:
+#         printv('.... WARNING: No peak found. Using initial current_z provided.', verbose)
+#         adjusted_z = current_z
+#     else:
+#         # keep peak with maximum correlation
+#         ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
+#         printv('.... Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
+#         # check if correlation is too low
+#         if I_corr_adj[ind_peak] < thr_corr:
+#             printv('.... WARNING: Correlation is too low. Using initial current_z provided.', verbose)
+#             adjusted_z = current_z
+#         else:
+#             adjusted_z = int(current_z + round(searching_window[ind_peak]/2)) + 1
+#             printv('.... Update init_z position to: '+str(adjusted_z), verbose)
+#     if verbose == 2:
+#         # display peak
+#         plt.figure(fig_local_adjustment), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro')
+#         # save and close figure
+#         plt.figure(fig_local_adjustment), plt.savefig('../fig_local_adjustment_disc'+str(current_disc)+'.png'), plt.close()
+#     return adjusted_z
