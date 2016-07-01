@@ -737,7 +737,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         plt.subplot(133)
         plt.plot(zrange, I_corr)
         plt.title('corr(subject, template)')
-        plt.plot(ind_peak, I_corr[ind_peak], 'ro'), plt.draw()
+        plt.plot(zrange[ind_peak], I_corr[ind_peak], 'ro'), plt.draw()
         plt.axvline(x=zrange.index(0), linewidth=1, color='black', linestyle='dashed')
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         # save figure
