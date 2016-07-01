@@ -318,7 +318,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         printv('\nERROR: File *_label_disc.nii.gz not found.', 1, 'error')
 
     # Open template and disc labels
-    printv('Open template and disc labels...', verbose)
+    printv('\nOpen template and disc labels...', verbose)
     data_template = Image(fname_template).data
     data_disc_template = Image(fname_disc).data
 
