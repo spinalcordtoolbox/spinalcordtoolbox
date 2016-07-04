@@ -11,12 +11,14 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: label_disc: for top vertebrae, make label at the center of the cord (currently it's at the tip)
 # TODO: check if use specified several processes.
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import sys
 import math
 import numpy as np
+from scipy import ndimage
 import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
@@ -37,7 +39,6 @@ class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
                  coordinates=None, verbose=1, vertebral_levels=None, value=None):
         self.image_input = Image(fname_label, verbose=verbose)
-
         self.image_ref = None
         if fname_ref is not None:
             self.image_ref = Image(fname_ref, verbose=verbose)
@@ -57,6 +58,14 @@ class ProcessLabels(object):
         self.value = value
 
     def process(self, type_process):
+        # for some processes, change orientation of input image to RPI
+        change_orientation = False
+        if type_process in ['vert-body', 'vert-disc', 'vert-continuous']:
+            # get orientation of input image
+            input_orientation = self.image_input.orientation
+            # change orientation
+            self.image_input.change_orientation('RPI')
+            change_orientation = True
         if type_process == 'add':
             self.output_image = self.add(self.value)
         if type_process == 'cross':
@@ -105,7 +114,9 @@ class ProcessLabels(object):
         # save the output image as minimized integers
         if self.fname_output is not None:
             self.output_image.setFileName(self.fname_output)
-            if type_process == 'continuous-vertebral-levels':
+            if change_orientation:
+                self.output_image.change_orientation(input_orientation)
+            if type_process == 'vert-continuous':
                 self.output_image.save('float32')
             elif type_process != 'plan_ref':
                 self.output_image.save('minimize_int')
@@ -413,6 +424,11 @@ class ProcessLabels(object):
         Assumes RPI orientation.
         :return: image_output: Image with labels.
         """
+        from msct_types import Coordinate
+        # get dim
+        nx, ny, nz, nt, px, py, pz, pt = self.image_input.dim
+        # initialize disc as a coordinate variable
+        disc = []
         # get center of mass of each vertebral level
         image_cubic2point = self.cubic_to_point()
         # get list of coordinates for each label
@@ -425,11 +441,25 @@ class ProcessLabels(object):
         # loop across labels and remove those that are not listed by the user
         # for i_label in range(len(list_centermass)):
 
+        # TOP DISC
+        # get coordinates for value i_level
+        list_i_level = [list_coordinates[i] for i in xrange(len(list_coordinates)) if int(list_coordinates[i].value) == levels_user[0]]
+        # get max z-value
+        zmax = max([list_i_level[i].z for i in xrange(len(list_i_level))])
+        # get coordinates corresponding to bottom voxels
+        list_i_level_top = [list_i_level[i] for i in xrange(len(list_i_level)) if list_i_level[i].z == zmax]
+        # get center of mass of the top and bottom voxels
+        arr_voxels_around_disc = np.array([[list_i_level_top[i].x, list_i_level_top[i].y, list_i_level_top[i].z] for i in range(len(list_i_level_top))])
+        centermass = list(np.mean(arr_voxels_around_disc, 0))
+        centermass.append(levels_user[0]-1)
+        disc.append(Coordinate(centermass))
+        # if minimum level corresponds to z=nz, then remove it (likely corresponds to top edge of the FOV)
+        if disc[0].z == nz:
+            sct.printv('WARNING: Maximum level corresponds to z=0. Removing it (likely corresponds to edge of the FOV)', 1, 'warning')
+            # remove last element of the list
+            disc.pop()
 
-        # get list of coordinates
-        # list_coordinates = self.display_voxel()
-        # get all values
-        # list_values = [list_coordinates[i].value for i in xrange(len(list_coordinates))]
+        # ALL DISCS
         # loop across values
         for i_level in levels_user:
             # get coordinates for value i_level
@@ -438,29 +468,40 @@ class ProcessLabels(object):
             zmin = min([list_i_level[i].z for i in xrange(len(list_i_level))])
             # get coordinates corresponding to bottom voxels
             list_i_level_bottom = [list_i_level[i] for i in xrange(len(list_i_level)) if list_i_level[i].z == zmin]
-            # get coordinates for value i_level+1
-            list_i_level_plus_one = [list_coordinates[i] for i in xrange(len(list_coordinates)) if int(list_coordinates[i].value) == i_level+1]
-            # get max z-value
-            zmax = max([list_i_level[i].z for i in xrange(len(list_i_level))])
-            # get coordinates corresponding to top voxels
-            list_i_level_plus_one_top = [list_i_level[i] for i in xrange(len(list_i_level)) if list_i_level[i].z == zmax]
-            # get center of mass of these voxels
+            # get center of mass
+            # arr_i_level_bottom = np.array([[list_i_level_bottom[i].x, list_i_level_bottom[i].y] for i in range(len(list_i_level_bottom))])
+            # centermass_i_level = ndimage.measurements.center_of_mass()
+            try:
+                # get coordinates for value i_level+1
+                list_i_level_plus_one = [list_coordinates[i] for i in xrange(len(list_coordinates)) if int(list_coordinates[i].value) == i_level+1]
+                # get max z-value
+                zmax = max([list_i_level_plus_one[i].z for i in xrange(len(list_i_level_plus_one))])
+                # get coordinates corresponding to top voxels
+                list_i_level_plus_one_top = [list_i_level_plus_one[i] for i in xrange(len(list_i_level_plus_one)) if list_i_level_plus_one[i].z == zmax]
+            except:
+                # if maximum level was reached, ignore it and disc will be located at the centermass of the bottom z.
+                list_i_level_plus_one_top = []
+            # stack bottom and top voxels
+            list_voxels_around_disc = list_i_level_bottom + list_i_level_plus_one_top
+            # get center of mass of the top and bottom voxels
+            arr_voxels_around_disc = np.array([[list_voxels_around_disc[i].x, list_voxels_around_disc[i].y, list_voxels_around_disc[i].z] for i in range(len(list_voxels_around_disc))])
+            centermass = list(np.mean(arr_voxels_around_disc, 0))
+            centermass.append(i_level)
+            disc.append(Coordinate(centermass))
+        # if maximum level corresponds to z=0, then remove it (likely corresponds to edge of the FOV)
+        if disc[-1].z == 0.0:
+            sct.printv('WARNING: Maximum level corresponds to z=0. Removing it (likely corresponds to edge of the FOV)', 1, 'warning')
+            # remove last element of the list
+            disc.pop()
 
+        # loop across labels and assign voxels in image
+        image_cubic2point.data[:, :, :] = 0
+        for i_label in range(len(disc)):
+            image_cubic2point.data[int(round(disc[i_label].x)),
+                                   int(round(disc[i_label].y)),
+                                   int(round(disc[i_label].z))] = disc[i_label].value
 
-
-        # get list of coordinates for each label
-        list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
-        # if user did not specify levels, include all:
-        if levels_user[0] == 0:
-            levels_user = [int(i.value) for i in list_coordinates]
-        # loop across labels and remove those that are not listed by the user
-        for i_label in range(len(list_coordinates)):
-            # check if this level is NOT in levels_user
-            if not levels_user.count(int(list_coordinates[i_label].value)):
-                # if not, set value to zero
-                image_cubic2point.data[list_coordinates[i_label].x, list_coordinates[i_label].y, list_coordinates[i_label].z] = 0
-
-        # list all labels
+        # return image of labels
         return image_cubic2point
 
 
@@ -567,7 +608,7 @@ class ProcessLabels(object):
         fo.close()
 
 
-    def display_voxel(self):
+    def display_voxel(self, verbose=1):
         """
         Display all the labels that are contained in the input image.
         The image is suppose to be RPI to display voxels. But works also for other orientations
@@ -575,12 +616,12 @@ class ProcessLabels(object):
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
         useful_notation = ''
         for coord in coordinates_input:
-            sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), self.verbose)
+            sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose)
             if useful_notation != '':
                 useful_notation = useful_notation + ':'
             useful_notation = useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-            sct.printv('Useful notation:', self.verbose)
-            sct.printv(useful_notation, self.verbose)
+            sct.printv('Useful notation:', verbose)
+            sct.printv(useful_notation, verbose)
         return coordinates_input
 
 
