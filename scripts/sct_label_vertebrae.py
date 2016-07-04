@@ -12,6 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: find automatically if -c =t1 or t2 (using dilated seg)
+# TODO: go inferior, then superior, to have better distance adjustment for C1
 # TODO: add C1
 # TODO: address the case when there is more than one max correlation
 # TODO: add user input option (show sagittal slice) --> use new viewer
@@ -182,8 +184,8 @@ def main(args=None):
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
-    path_tmp = tmp_create(verbose=verbose)
-    # path_tmp = '/Users/julien/data/sct_dev/vertebral_labeling/anisha_3276/tmp.160629122058_884275/'
+    # path_tmp = tmp_create(verbose=verbose)
+    path_tmp = '/Users/julien/data/sct_dev/vertebral_labeling/anisha_3276/tmp.160629122058_884275/'
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
@@ -211,7 +213,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
+    # run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
@@ -392,8 +394,8 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
             break
         # find next disc
-        # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead        else:
-        if not current_disc == 1:
+        # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
+        if not current_disc in [1]:
             current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc))
 
         # display new disc
@@ -436,11 +438,6 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc-1)]
             except ValueError:
                 printv('WARNING: Disc value not included in template. Using previously-calculated distance: '+str(approx_distance_to_next_disc))
-                # try:
-                #     approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
-                # except ValueError:
-                #     printv('WARNING: Disc value not included in template. Using previous disc distance: '+str(approx_distance_to_next_disc))
-                    # approx_distance_to_next_disc = average_disc_distance
             # assign new current_z and disc value
             current_z = current_z + approx_distance_to_next_disc
             current_disc = current_disc - 1
@@ -449,7 +446,6 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
             except:
                 printv('WARNING: Disc value not included in template. Using previously-calculated distance: '+str(approx_distance_to_next_disc))
-                # approx_distance_to_next_disc = average_disc_distance
             # assign new current_z and disc value
             current_z = current_z - approx_distance_to_next_disc
             current_disc = current_disc + 1
