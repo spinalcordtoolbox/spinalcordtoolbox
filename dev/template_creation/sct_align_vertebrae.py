@@ -93,7 +93,7 @@ def main():
     if final_warp not in ['','spline','NN']:
         usage()
         
-    if transfo not in ['affine','bspline','SyN']:
+    if transfo not in ['affine', 'bspline', 'SyN', 'nurbs']:
         usage()       
     
     # check existence of input files
@@ -120,6 +120,110 @@ def main():
         print 'Computing affine transformation between subject and destination landmarks\n...'
         os.system('isct_ANTSUseLandmarkImagesToGetAffineTransform cross_template.nii.gz cross_native.nii.gz affine n2t.txt')
         warping = 'n2t.txt'
+    elif transfo == 'nurbs':
+        warping_subject2template = 'warp_subject2template.nii.gz'
+        warping_template2subject = 'warp_template2subject.nii.gz'
+        tmp_name = 'tmp.' + time.strftime("%y%m%d%H%M%S")
+        sct.run('mkdir ' + tmp_name)
+        tmp_abs_path = os.path.abspath(tmp_name)
+        sct.run('cp ' + landmark + ' ' + tmp_abs_path)
+        os.chdir(tmp_name)
+
+        from msct_image import Image
+        image_landmark = Image(landmark)
+        image_template = Image(template_landmark)
+        landmarks_input = image_landmark.getNonZeroCoordinates(sorting='value')
+        landmarks_template = image_template.getNonZeroCoordinates(sorting='value')
+        min_value = min([int(landmarks_input[0].value), int(landmarks_template[0].value)])
+        max_value = max([int(landmarks_input[-1].value), int(landmarks_template[-1].value)])
+        nx, ny, nz, nt, px, py, pz, pt = image_landmark.dim
+
+        displacement_subject2template, displacement_template2subject = [], []
+        for value in range(min_value, max_value+1):
+            is_in_input = False
+            coord_input = None
+            for coord in landmarks_input:
+                if int(value) == int(coord.value):
+                    coord_input = coord
+                    is_in_input = True
+                    break
+            is_in_template = False
+            coord_template = None
+            for coord in landmarks_template:
+                if int(value) == int(coord.value):
+                    coord_template = coord
+                    is_in_template = True
+                    break
+            if is_in_template and is_in_input:
+                displacement_subject2template.append([0.0, coord_input.z, coord_template.z - coord_input.z])
+                displacement_template2subject.append([0.0, coord_template.z, coord_input.z - coord_template.z])
+
+        # create displacement field
+        from numpy import zeros
+        from nibabel import Nifti1Image, save
+        data_warp_subject2template = zeros((nx, ny, nz, 1, 3))
+        data_warp_template2subject = zeros((nx, ny, nz, 1, 3))
+        hdr_warp = image_template.hdr.copy()
+        hdr_warp.set_intent('vector', (), '')
+        hdr_warp.set_data_dtype('float32')
+
+        # approximate displacement with nurbs
+        from msct_smooth import b_spline_nurbs
+        displacement_z = [item[1] for item in displacement_subject2template]
+        displacement_x = [item[2] for item in displacement_subject2template]
+        verbose = 1
+        displacement_z, displacement_y, displacement_y_deriv, displacement_z_deriv = b_spline_nurbs(displacement_x, displacement_z, None, nbControl=None, verbose=verbose, all_slices=True)
+
+        arg_min_z, arg_max_z = np.argmin(displacement_y), np.argmax(displacement_y)
+        min_z, max_z = int(displacement_y[arg_min_z]), int(displacement_y[arg_max_z])
+        displac = []
+        for index, iz in enumerate(displacement_y):
+            displac.append([iz, displacement_z[index]])
+        for iz in range(0, min_z):
+            displac.append([iz, displacement_z[arg_min_z]])
+
+        for iz in range(max_z, nz):
+            displac.append([iz, displacement_z[arg_max_z]])
+
+        for item in displac:
+            if 0 <= item[0] < nz:
+                data_warp_template2subject[:, :, item[0], 0, 2] = item[1] * pz
+
+        displacement_z = [item[1] for item in displacement_template2subject]
+        displacement_x = [item[2] for item in displacement_template2subject]
+        verbose = 1
+        displacement_z, displacement_y, displacement_y_deriv, displacement_z_deriv = b_spline_nurbs(displacement_x, displacement_z, None, nbControl=None, verbose=verbose, all_slices=True)
+
+        arg_min_z, arg_max_z = np.argmin(displacement_y), np.argmax(displacement_y)
+        min_z, max_z = int(displacement_y[arg_min_z]), int(displacement_y[arg_max_z])
+        displac = []
+        for index, iz in enumerate(displacement_y):
+            displac.append([iz, displacement_z[index]])
+        for iz in range(0, min_z):
+            displac.append([iz, displacement_z[arg_min_z]])
+        for iz in range(max_z, nz):
+            displac.append([iz, displacement_z[arg_max_z]])
+
+        for item in displac:
+            data_warp_subject2template[:, :, item[0], 0, 2] = item[1] * pz
+
+        img = Nifti1Image(data_warp_template2subject, None, hdr_warp)
+        save(img, warping_template2subject)
+        sct.printv('\nDONE ! Warping field generated: ' + warping_template2subject, verbose)
+        img = Nifti1Image(data_warp_subject2template, None, hdr_warp)
+        save(img, warping_subject2template)
+        sct.printv('\nDONE ! Warping field generated: ' + warping_subject2template, verbose)
+
+        # Copy warping into parent folder
+        sct.run('cp ' + warping_subject2template + ' ../' + warping_subject2template)
+        sct.run('cp ' + warping_template2subject + ' ../' + warping_template2subject)
+        warping = warping_subject2template
+
+        os.chdir('..')
+        remove_temp_files = True
+        if remove_temp_files:
+            sct.run('rm -rf ' + tmp_name)
+
     elif transfo == 'SyN':
         warping = 'warp_subject2template.nii.gz'
         tmp_name = 'tmp.'+time.strftime("%y%m%d%H%M%S")
@@ -266,7 +370,7 @@ def main():
 
 
     # Remove warping
-    os.remove(warping)
+    #os.remove(warping)
 
     # if compose :
         
