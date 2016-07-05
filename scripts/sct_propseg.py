@@ -286,6 +286,8 @@ if __name__ == "__main__":
         if use_viewer == "mask":
             viewer.number_of_slices = 3
             viewer.gap_inter_slice = 10
+        #else:
+        #    viewer.gap_inter_slice = 3
 
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
