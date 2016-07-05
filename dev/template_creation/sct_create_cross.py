@@ -101,7 +101,7 @@ def main():
         data = file.get_data()
         hdr = file.get_header()
     
-        data = data*0
+        data *= 0
 
         list_opts = []
         for i in range(len(opts)):
@@ -153,19 +153,18 @@ def main():
         nibabel.save(img,file_name)
         print '\nFile created : ' + file_name
     
-    if fname_template != '' :
+    if fname_template != '':
     
         print '\nGet dimensions of template...'
         nx, ny, nz, nt, px, py, pz, pt = Image(fname_template).dim
         print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
         print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
         
-        
         file_t = nibabel.load(fname_template)
         data_t = file_t.get_data()
         hdr_t = file_t.get_header()
 
-        data_t = data_t*0
+        data_t *= 0
         
         if cross == 'mm':
             
