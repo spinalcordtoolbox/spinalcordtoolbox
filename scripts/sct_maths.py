@@ -258,7 +258,7 @@ def main(args = None):
                 f = int(i.split('=')[1])
             if 'h' in i:
                 h = float(i.split('=')[1])
-        data_out = denoise_ornlm(data, v, f, h)
+        data_out = denoise_nlmeans(data, v, f, h)
     # if no flag is set
     else:
         data_out = None
@@ -409,17 +409,17 @@ def concatenate_along_4th_dimension(data1, data2):
     return concatenate((data1, data2), axis=3)
 
 
-def denoise_ornlm(data_in, v=3, f=1, h=0.05):
-    from commands import getstatusoutput
-    from sys import path
-    # append python path for importing module
-    # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
-    status, path_sct = getstatusoutput('echo $SCT_DIR')
-    path.append(path_sct + '/external/denoise/ornlm')
-    import ornlm
-    from numpy import array, max, float64
-    dat = data_in.astype(float64)
-    denoised = array(ornlm.ornlm(dat, v, f, max(dat)*h))
+def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
+    """
+    data_in: nd_array to denoise
+    for more info about patch_radius and block radius, please refer to the dipy website: http://nipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+    """
+    from dipy.denoise.nlmeans import nlmeans
+    from dipy.denoise.noise_estimate import estimate_sigma
+
+    sigma = estimate_sigma(data_in)
+    denoised = nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
+
     return denoised
 
 
