@@ -103,7 +103,7 @@ class Slice:
 #                               FUNCTIONS USED FOR PRE-PROCESSING
 ########################################################################################################################
 # ----------------------------------------------------------------------------------------------------------------------
-def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, mask_size_mm=22.5, denoising=True, verbose=1):
+def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1):
     printv('\nPre-processing data ...', verbose, 'normal')
 
     tmp_dir = 'tmp_preprocessing_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)) + '/'
@@ -114,57 +114,40 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     shutil.copy(fname_sc_seg, tmp_dir)
     os.chdir(tmp_dir)
 
-    original_info = {}
+    original_info = {'orientation': None, 'im_target_rpi': None, 'interpolated_images': []}
 
     im_target = Image(fname_target)
     im_sc_seg = Image(fname_sc_seg)
 
-
     # get original orientation
     printv('\n\tReorient ...', verbose, 'normal')
     original_info['orientation'] = im_target.orientation
+
     # assert images are in the same orientation
     assert im_target.orientation == im_sc_seg.orientation, "ERROR: the image to segment and it's SC segmentation are not in the same orientation"
 
-    # reorient data (IRP is convenient to split along rostro-caudal direction)
-    im_target = set_orientation(im_target, 'IRP')
-    im_sc_seg = set_orientation(im_sc_seg, 'IRP')
+    im_target_rpi = set_orientation(im_target, 'RPI')
+    im_sc_seg_rpi = set_orientation(im_sc_seg, 'RPI')
+    original_info['im_target_rpi'] = im_target_rpi  # target image in RPI will be used to post-process segmentations
 
-    # assert size of images are identical
-    assert im_target.data.shape == im_sc_seg.data.shape, "ERROR: the image to segment and it's SC segmentation does not have the same size"
 
-    # get original pixel size: x = right-left, y = antero-posterior, z = inferior-superior (IRP = zxy)
-    nz_target, nx_target, ny_target, nt_target, pz_target, px_target, py_target, pt_target = im_target.dim
-    original_info['px'] = px_target
-    original_info['py'] = py_target
+    printv('\n\t\tMask data using the spinal cord mask ...', verbose, 'normal')
+    im_target_rpi.data[im_sc_seg_rpi.data == 0] = 0
 
-    # resample to an axial resolution of -new_res-
-    if round(px_target, 5) != new_res or round(py_target, 5) != new_res:
-        printv('\n\tResample to an axial resolution of '+str(new_res)+'x'+str(new_res)+' mm2 ...', verbose, 'normal')
-        im_target = axial_resample(im_target, new_res)
-        im_sc_seg = axial_resample(im_sc_seg, new_res)
+    # interpolate image to reference square image (resample and square crop centered on SC)
+    printv('\n\tInterpolate data to the model space ...', verbose, 'normal')
+    list_im_slices = interpolate_im_to_ref(im_target_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
+    original_info['interpolated_images'] = list_im_slices
+
+    printv('\n\tSplit along rostro-caudal direction...', verbose, 'normal')
+    list_slices_target = [Slice(slice_id=i, im=im_slice.data, gm_seg=[], wm_seg=[]) for i, im_slice in enumerate(list_im_slices)]
 
     # denoise using P. Coupe algorithm (see [Manjon et al. JMRI 2010])
+    ## TODO: test dipy.nlmeans and replace
     if denoising:
         printv('\n\tDenoise ...', verbose, 'normal')
-        im_target.data = denoise_ornlm(im_target.data)
-
-    # pad in case SC is too close to the edges
-    printv('\n\tPad in case the spinal cord is to close to the edges ...', verbose, 'normal')
-    mask_size_pix = int(mask_size_mm/new_res)
-    pad = mask_size_pix/2 + 2
-
-    im_target = pad_image(im_target, pad_x_i=0, pad_x_f=0, pad_y_i=pad, pad_y_f=pad, pad_z_i=pad, pad_z_f=pad) # x=IS, y=RL, z=PA
-    im_sc_seg = pad_image(im_sc_seg, pad_x_i=0, pad_x_f=0, pad_y_i=pad, pad_y_f=pad, pad_z_i=pad, pad_z_f=pad) # x=IS, y=RL, z=PA
-
-    # mask using SC and crop around a square mask
-    printv('\n\tMask and crop data ...', verbose, 'normal')
-    im_target, im_square_mask = mask_and_crop_target(im_target, im_sc_seg, mask_size_pix, verbose=verbose)
-    original_info['square_mask'] = im_square_mask
-
-    # split along rostro-caudal direction create a list of axial slices
-    printv('\n\tSplit along rostro-caudal direction...', verbose, 'normal')
-    list_slices_target = [Slice(slice_id=i, im=data_slice, gm_seg=[], wm_seg=[]) for i, data_slice in enumerate(im_target.data)]
+        for slice in list_slices_target:
+            slice.im = denoise_ornlm(slice.im)
 
     # load vertebral levels
     if fname_level is not None:
@@ -182,7 +165,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # load manual gmseg if there is one (model data)
     if fname_manual_gmseg is not None:
         printv('\n\tLoad manual GM segmentation(s) ...', verbose, 'normal')
-        list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, new_res, pad, im_square_mask)
+        list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm)
 
     os.chdir('..')
     printv('\nPre-processing done!', verbose, 'normal')
@@ -190,42 +173,57 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def axial_resample(im, npx):
-    fname = im.absolutepath
-    fname_resample = add_suffix(fname, '_r')
+def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22.5):
+    nx, ny, nz, nt, px, py, pz, pt = im_input.dim
 
-    # image must be in IRP
-    nz, nx, ny, nt, pz, px, py, pt = im.dim
-    sct_resample_main(['-i', fname, '-mm', str(pz)+'x'+str(npx)+'x'+str(npx), '-o', fname_resample, '-v', '0'])
-    im_resample = Image(fname_resample)
+    sq_size = int(sq_size_size_mm/new_res)
+    # create a reference image : square of ones
+    im_ref = Image(np.ones((sq_size, sq_size, 1), dtype=np.int), dim=(sq_size, sq_size, 1, 0, new_res, new_res, pz, 0), orientation='RPI')
 
-    return im_resample
+    # copy input header to reference image
+    im_ref.hdr = im_input.hdr
 
+    # set correct header to reference image
+    im_ref.hdr.set_data_shape((sq_size, sq_size, 1))
+    im_ref.hdr.set_zooms((new_res, new_res, pz))
 
-# ----------------------------------------------------------------------------------------------------------------------
-def mask_and_crop_target(im_target, im_sc_seg, mask_size_pix, verbose=1):
-    # mask target using SC mask (= set background to zero)
-    printv('\n\t\tMask data using the spinal cord mask ...', verbose, 'normal')
-    im_target.data[im_sc_seg.data == 0] = 0
-    fname_target = add_suffix(im_target.absolutepath, '_masked_sc')
-    im_target.setFileName(fname_target)
-    im_target.save()
+    # save image to set orientation to RPI (not properly done at the creation of the image)
+    fname_ref = 'im_ref.nii.gz'
+    im_ref.setFileName(fname_ref)
+    im_ref.save()
+    im_ref = set_orientation(im_ref, 'RPI', fname_out=fname_ref)
 
-    # save im_sc_seg so that it can be called by sct_create_mask
-    fname_sc_seg = im_sc_seg.absolutepath
-    im_sc_seg.save()
+    # set header origin to zero to get physical coordinates of the center of the square
+    im_ref.hdr.as_analyze_map()['qoffset_x'] = 0
+    im_ref.hdr.as_analyze_map()['qoffset_y'] = 0
+    im_ref.hdr.as_analyze_map()['qoffset_z'] = 0
+    im_ref.hdr.set_sform(im_ref.hdr.get_qform())
+    im_ref.hdr.set_qform(im_ref.hdr.get_qform())
+    [[x_square_center_phys, y_square_center_phys, z_square_center_phys]] = im_ref.transfo_pix2phys(coordi=[[int(sq_size / 2), int(sq_size / 2), 0]])
 
-    # create a square mask and use it to crop
-    printv('\n\t\tCreate a square mask centered in the spinal cord ...', verbose, 'normal')
-    fname_mask = "square_mask.nii.gz"
-    sct_create_mask_main(['-i', fname_target, '-p', 'centerline,'+fname_sc_seg, '-size', str(mask_size_pix), '-f', 'box', '-o', fname_mask, '-v', '0'])
-    im_mask = Image(fname_mask)
+    list_interpolate_images = []
+    # iterate on z dimension of input image
+    for iz in range(nz):
+        # copy reference image: one reference image per slice
+        im_ref_slice_iz = im_ref.copy()
 
-    # crop along the square mask and stack slices
-    printv('\n\t\tCrop using square mask and stack slices ...', verbose, 'normal')
-    im_target.crop_and_stack(im_mask, suffix='', save=False)
+        # get center of mass of SC for slice iz
+        x_seg, y_seg = (im_input_sc.data[:, :, iz] > 0).nonzero()
+        x_center, y_center = np.mean(x_seg), np.mean(y_seg)
+        [[x_center_phys, y_center_phys, z_center_phys]] = im_input_sc.transfo_pix2phys(coordi=[[x_center, y_center, iz]])
 
-    return im_target, im_mask
+        # center reference image on SC for slice iz
+        im_ref_slice_iz.hdr.as_analyze_map()['qoffset_x'] = x_center_phys - x_square_center_phys
+        im_ref_slice_iz.hdr.as_analyze_map()['qoffset_y'] = y_center_phys - y_square_center_phys
+        im_ref_slice_iz.hdr.as_analyze_map()['qoffset_z'] = z_center_phys
+        im_ref_slice_iz.hdr.set_sform(im_ref_slice_iz.hdr.get_qform())
+        im_ref_slice_iz.hdr.set_qform(im_ref_slice_iz.hdr.get_qform())
+
+        # interpolate input image to reference image
+        im_input_interpolate_iz = im_input.interpolate_from_image(im_ref_slice_iz, interpolation_mode=3, border='reflect')
+        list_interpolate_images.append(im_input_interpolate_iz)
+
+    return list_interpolate_images
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -300,7 +298,7 @@ def load_level(list_slices_target, fname_level):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, new_res, pad, im_square_mask):
+def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm):
     if isinstance(list_fname_manual_gmseg, str):
         # consider fname_manual_gmseg as a list of file names to allow multiple manual GM segmentation
         list_fname_manual_gmseg = [list_fname_manual_gmseg]
@@ -308,36 +306,32 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, new_
     for fname_manual_gmseg in list_fname_manual_gmseg:
         os.chdir('..')
         shutil.copy(fname_manual_gmseg, tmp_dir)
+        # change fname level to only file name (path = tmp dir now)
+        path_gm, file_gm, ext_gm = extract_fname(fname_manual_gmseg)
+        fname_manual_gmseg = file_gm + ext_gm
         os.chdir(tmp_dir)
 
         im_manual_gmseg = Image(fname_manual_gmseg)
 
-        # reorient to IRP
-        im_manual_gmseg = set_orientation(im_manual_gmseg, 'IRP')
+        # reorient to RPI
+        im_manual_gmseg = set_orientation(im_manual_gmseg, 'RPI')
 
         # assert gmseg has the right number of slices
-        assert len(im_manual_gmseg.data) == len(list_slices_target), 'ERROR: the manual GM segmentation has not the same number of slices than the image.'
+        assert im_manual_gmseg.data.shape[2] == len(list_slices_target), 'ERROR: the manual GM segmentation has not the same number of slices than the image.'
 
-        # get spacing and resample if needed
+        # interpolate gm to reference image
         nz_gmseg, nx_gmseg, ny_gmseg, nt_gmseg, pz_gmseg, px_gmseg, py_gmseg, pt_gmseg = im_manual_gmseg.dim
-        if round(px_gmseg, 5) != new_res or round(py_gmseg, 5) != new_res:
-            im_manual_gmseg = axial_resample(im_manual_gmseg, new_res)
 
-        # pad in case SC is too close to the edges
-        im_manual_gmseg = pad_image(im_manual_gmseg, pad_x_i=0, pad_x_f=0, pad_y_i=pad, pad_y_f=pad, pad_z_i=pad, pad_z_f=pad)
-
-        # crop using square mask
-        im_manual_gmseg.crop_and_stack(im_square_mask, suffix='', save=False)
+        list_im_gm = interpolate_im_to_ref(im_manual_gmseg, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
 
         # load gm seg in list of slices
-        for gm_slice, im_slice in zip(im_manual_gmseg.data, list_slices_target):
-            im_slice.gm_seg.append(gm_slice)
+        for im_gm, slice_im in zip(list_im_gm, list_slices_target):
+            slice_im.gm_seg.append(im_gm.data)
 
-            wm_slice = (im_slice.im > 0) - gm_slice
-            im_slice.wm_seg.append(wm_slice)
+            wm_slice = (slice_im.im > 0) - im_gm.data
+            slice_im.wm_seg.append(wm_slice)
 
     return list_slices_target
-
 
 ########################################### End of pre-processing function #############################################
 
