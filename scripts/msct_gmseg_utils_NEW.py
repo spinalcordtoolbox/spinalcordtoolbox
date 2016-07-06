@@ -91,7 +91,7 @@ class Slice:
             s += 'Level : ' + str(self.level)
         s += '\nImage : \n' + str(self.im)
         s += '\nGray matter segmentation : \n' + str(self.gm_seg)
-        s += '\nTransformation to model space : ' + self.reg_to_M
+        s += '\nTransformation to model space : ' + str(self.reg_to_M)
         if self.im_M is not None:
             s += '\nImage in the common model space: \n' + str(self.im_M)
         if self.gm_seg_M is not None:
@@ -130,24 +130,31 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     im_sc_seg_rpi = set_orientation(im_sc_seg, 'RPI')
     original_info['im_target_rpi'] = im_target_rpi  # target image in RPI will be used to post-process segmentations
 
-
-    printv('\n\t\tMask data using the spinal cord mask ...', verbose, 'normal')
-    im_target_rpi.data[im_sc_seg_rpi.data == 0] = 0
-
     # interpolate image to reference square image (resample and square crop centered on SC)
     printv('\n\tInterpolate data to the model space ...', verbose, 'normal')
     list_im_slices = interpolate_im_to_ref(im_target_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
     original_info['interpolated_images'] = list_im_slices
 
-    printv('\n\tSplit along rostro-caudal direction...', verbose, 'normal')
-    list_slices_target = [Slice(slice_id=i, im=im_slice.data, gm_seg=[], wm_seg=[]) for i, im_slice in enumerate(list_im_slices)]
-
-    # denoise using P. Coupe algorithm (see [Manjon et al. JMRI 2010])
-    ## TODO: test dipy.nlmeans and replace
+    # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy
     if denoising:
         printv('\n\tDenoise ...', verbose, 'normal')
-        for slice in list_slices_target:
-            slice.im = denoise_ornlm(slice.im)
+        from dipy.denoise.nlmeans import nlmeans
+        from dipy.denoise.noise_estimate import estimate_sigma
+        nx, ny, nz = list_im_slices[0].data.shape
+        data = np.asarray([im.data.reshape(nx, ny) for im in list_im_slices])
+        sigma = estimate_sigma(data)
+        data_denoised = nlmeans(data, sigma)
+
+        for i in range(len(list_im_slices)):
+            list_im_slices[i].data = data_denoised[i]
+
+    printv('\n\t\tMask data using the spinal cord mask ...', verbose, 'normal')
+    list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
+    for i in range(len(list_im_slices)):
+        list_im_slices[i].data[list_sc_seg_slices[i] == 0] = 0
+
+    printv('\n\tSplit along rostro-caudal direction...', verbose, 'normal')
+    list_slices_target = [Slice(slice_id=i, im=im_slice.data, gm_seg=[], wm_seg=[]) for i, im_slice in enumerate(list_im_slices)]
 
     # load vertebral levels
     if fname_level is not None:
