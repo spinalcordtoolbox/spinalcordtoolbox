@@ -201,16 +201,7 @@ def main():
         install_software = 1
 
     # CHECK EXTERNAL MODULES:
-    # Check if ornlm is installed
-    print_line('Check if ornlm is installed')
-#    sys.path.append(path_sct + '/external/denoise/ornlm')  # append to PYTHONPATH
-    try:
-        importlib.import_module('ornlm')
-        print_ok()
-    except ImportError:
-        print_fail()
-        install_software = 1
-
+    
     # Check if dipy is installed
     # print_line('Check if dipy ('+dipy_version+') is installed')
     # try:
