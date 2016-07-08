@@ -12,25 +12,49 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 import os
-from sct_utils import slash_at_the_end
+import numpy as np
+from sct_utils import printv, slash_at_the_end
 from msct_gmseg_utils_NEW import pre_processing
 
 class ModelParam:
     def __init__(self):
         self.path_data = ''
         self.todo = 'load'# 'compute' or 'load'
-
+        self.new_model_dir = 'gmseg/'
 
 class DataParam:
     def __init__(self):
         self.denoising = True
         self.axial_res = 0.3
+        self.register_param = ''
+class Param:
+    def __init__(self):
+        self.verbose = 1
 
 class ModelDictionary:
-    def __init__(self, model_param=None, data_param=None):
+    def __init__(self, model_param=None, data_param=None, param=None):
         self.model_param = model_param if model_param is not None else ModelParam()
         self.data_param = data_param if data_param is not None else DataParam()
+        self.param = param if param is not None else Param()
+
         self.slices = []
+        self.mean_image = None
+
+    def compute_model(self):
+        printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
+        os.mkdir(self.param.new_model_dir)
+        param_fic = open(self.model_param.new_model_dir + 'info.txt', 'w')
+        param_fic.write(str(self.param))
+        param_fic.close()
+
+        printv('\n\tLoading data dictionary ...', self.param.verbose, 'normal')
+        self.load_data()
+        self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
+
+        printv('\n\tCo-register all the data into a common groupwise space (using the white matter segmentations) ...', self.param.verbose, 'normal')
+        self.coregister_data()
+
+        ## TODO: COMPLETE COMPUTE _DIC
 
     def load_data(self):
         '''
@@ -69,6 +93,10 @@ class ModelDictionary:
                     self.slices.append(slice_sub)
 
                 j += len(list_slices_sub)
+
+    def coregister_data(self):
+        pass
+
 
 
 
