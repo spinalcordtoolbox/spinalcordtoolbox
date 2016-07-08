@@ -26,6 +26,7 @@ from msct_parser import Parser
 from msct_image import Image, find_zmin_zmax
 from shutil import move
 from sct_label_utils import ProcessLabels
+import numpy as np
 
 
 # get path of the toolbox
@@ -416,6 +417,15 @@ def main():
     ftmp_data = add_suffix(ftmp_data, '_straightAffine')
     sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
     ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
+
+    # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
+    # Solution found: remove slices below and above landmarks to avoid rotation effects
+    points_straight = []
+    for coord in landmark_template:
+        points_straight.append(coord.z)
+    min_point, max_point = int(round(np.min(points_straight))), int(round(np.max(points_straight)))
+    sct.run('sct_crop_image -i ' + ftmp_seg + ' -start ' + str(min_point) + ' -end ' + str(max_point) + ' -dim 2 -b 0 -o ' + add_suffix(ftmp_seg, '_black'))
+    ftmp_seg = add_suffix(ftmp_seg, '_black')
 
     # threshold and binarize
     sct.printv('\nBinarize segmentation...', verbose)

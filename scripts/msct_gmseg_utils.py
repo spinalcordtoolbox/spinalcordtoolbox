@@ -1017,9 +1017,9 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
 
 
             if denoise:
-                from sct_maths import denoise_ornlm
+                from sct_maths import denoise_nlmeans
                 t2star_im = Image(fname_t2star)
-                t2star_im.data = denoise_ornlm(t2star_im.data)
+                t2star_im.data = denoise_nlmeans(t2star_im.data)
                 t2star_im.save()
 
             mask_box, fname_seg_in_IRP = crop_t2_star(fname_t2star, fname_scseg, box_size=model_image_size)
