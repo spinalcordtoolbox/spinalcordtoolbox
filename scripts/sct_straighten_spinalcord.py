@@ -68,6 +68,9 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     num_features = [0 for _ in range(0, nz_nonz, 1)]
     distances = []
 
+    if nz_nonz <= 5 and algo_fitting == 'nurbs':
+        algo_fitting = 'hanning'
+
     # get center of mass of the centerline/segmentation and remove outliers
     sct.printv('.. Get center of mass of the centerline/segmentation...', verbose)
     for iz in range(0, nz_nonz, 1):
