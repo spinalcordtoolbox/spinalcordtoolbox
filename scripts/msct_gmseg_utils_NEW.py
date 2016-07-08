@@ -138,13 +138,10 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy
     if denoising:
         printv('\n\tDenoise ...', verbose, 'normal')
-        from dipy.denoise.nlmeans import nlmeans
-        from dipy.denoise.noise_estimate import estimate_sigma
+        from sct_maths import denoise_nlmeans
         nx, ny, nz = list_im_slices[0].data.shape
         data = np.asarray([im.data.reshape(nx, ny) for im in list_im_slices])
-        sigma = estimate_sigma(data)
-        data_denoised = nlmeans(data, sigma)
-
+        data_denoised = denoise_nlmeans(data, block_radius = int(len(list_im_slices)/2))
         for i in range(len(list_im_slices)):
             list_im_slices[i].data = data_denoised[i]
 
