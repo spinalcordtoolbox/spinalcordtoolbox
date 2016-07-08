@@ -12,11 +12,8 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 from msct_image import Image
-from sct_image import set_orientation, pad_image
-from sct_resample import main as sct_resample_main
-from sct_create_mask import main as sct_create_mask_main
-from sct_utils import add_suffix, extract_fname, printv
-from sct_maths import denoise_ornlm
+from sct_image import set_orientation
+from sct_utils import extract_fname, printv
 import numpy as np
 import os
 import time
