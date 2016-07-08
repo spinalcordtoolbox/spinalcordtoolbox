@@ -263,11 +263,6 @@ def main():
     sct.check_if_3d(fname_src)
     sct.check_if_3d(fname_dest)
 
-    # Check if destination data is RPI
-    sct.printv('\nCheck if destination data is RPI...', verbose)
-    if not identity:
-        sct.check_if_rpi(fname_dest)
-
     # Check if user selected type=seg, but did not input segmentation data
     if 'paramreg_user' in locals():
         if True in ['type=seg' in paramreg_user[i] for i in range(len(paramreg_user))]:
@@ -306,6 +301,11 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # reorient destination to RPI
+    sct.run('sct_image -i dest.nii -setorient RPI -o dest_RPI.nii')
+    if fname_dest_seg:
+        sct.run('sct_image -i dest_seg.nii -setorient RPI -o dest_seg_RPI.nii')
+
     if identity:
         # overwrite paramreg and only do one identity transformation
         step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5')
@@ -326,11 +326,11 @@ def main():
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
             src = 'src.nii'
-            dest = 'dest.nii'
+            dest = 'dest_RPI.nii'
             interp_step = 'linear'
         elif paramreg.steps[str(i_step)].type == 'seg':
             src = 'src_seg.nii'
-            dest = 'dest_seg.nii'
+            dest = 'dest_seg_RPI.nii'
             interp_step = 'nn'
         else:
             src = dest = interp_step = None

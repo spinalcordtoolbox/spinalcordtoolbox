@@ -123,10 +123,11 @@ def get_parser():
                       example='1')
     parser.add_option(name='-denoise',
                       type_value=[[','], 'str'],
-                      description='Non-local means adaptative denoising from P. Coupe et al. Separate with ",". Example: v=3,f=1,h=0.05.\n'
-                        'v:  similar patches in the non-local means are searched for locally, inside a cube of side 2*v+1 centered at each voxel of interest. Default: v=3\n'
-                        'f:  the size of the block to be used (2*f+1)x(2*f+1)x(2*f+1) in the blockwise non-local means implementation. Default: f=1\n'
-                        'h:  the standard deviation of rician noise in the input image, expressed as a ratio of the maximum intensity in the image. The higher, the more aggressive the denoising. Default: h=0.01',
+                      description='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ",". Example: p=1,b=3\n'
+                        'p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
+                        'b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
+                        '(Block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
+                        'To use default parameters, write -denoise 1',
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nMisc")
@@ -249,16 +250,15 @@ def main(args = None):
 
     elif '-denoise' in arguments:
         # parse denoising arguments
-        v, f, h = 3, 1, 0.01  # default arguments
+        p, b = 1, 5  # default arguments
         list_denoise = arguments['-denoise']
         for i in list_denoise:
-            if 'v' in i:
-                v = int(i.split('=')[1])
-            if 'f' in i:
-                f = int(i.split('=')[1])
-            if 'h' in i:
-                h = float(i.split('=')[1])
-        data_out = denoise_ornlm(data, v, f, h)
+            if 'p' in i:
+                p = int(i.split('=')[1])
+            if 'b' in i:
+                b = int(i.split('=')[1])
+        data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
+
     # if no flag is set
     else:
         data_out = None
@@ -409,17 +409,22 @@ def concatenate_along_4th_dimension(data1, data2):
     return concatenate((data1, data2), axis=3)
 
 
-def denoise_ornlm(data_in, v=3, f=1, h=0.05):
-    from commands import getstatusoutput
-    from sys import path
-    # append python path for importing module
-    # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
-    status, path_sct = getstatusoutput('echo $SCT_DIR')
-    path.append(path_sct + '/external/denoise/ornlm')
-    import ornlm
-    from numpy import array, max, float64
-    dat = data_in.astype(float64)
-    denoised = array(ornlm.ornlm(dat, v, f, max(dat)*h))
+def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
+    """
+    data_in: nd_array to denoise
+    for more info about patch_radius and block radius, please refer to the dipy website: http://nipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+    """
+    from dipy.denoise.nlmeans import nlmeans
+    from dipy.denoise.noise_estimate import estimate_sigma
+    from numpy import asarray
+    data_in = asarray(data_in)
+
+    block_radius_max = min(data_in.shape)-1
+    block_radius = block_radius_max if block_radius > block_radius_max else block_radius
+
+    sigma = estimate_sigma(data_in)
+    denoised = nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
+
     return denoised
 
 
