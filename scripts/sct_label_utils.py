@@ -11,6 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: for vert-disc: make it faster! currently the module display-voxel is very long (esp. when ran on PAM50). We can find an alternative approach by sweeping through centerline voxels.
 # TODO: label_disc: for top vertebrae, make label at the center of the cord (currently it's at the tip)
 # TODO: check if use specified several processes.
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
