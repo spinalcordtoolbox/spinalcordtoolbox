@@ -177,7 +177,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22.5):
+def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22.5, interpolation_mode=3):
     nx, ny, nz, nt, px, py, pz, pt = im_input.dim
 
     sq_size = int(sq_size_size_mm/new_res)
@@ -224,7 +224,7 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
         im_ref_slice_iz.hdr.set_qform(im_ref_slice_iz.hdr.get_qform())
 
         # interpolate input image to reference image
-        im_input_interpolate_iz = im_input.interpolate_from_image(im_ref_slice_iz, interpolation_mode=3, border='reflect')
+        im_input_interpolate_iz = im_input.interpolate_from_image(im_ref_slice_iz, interpolation_mode=interpolation_mode, border='reflect')
         list_interpolate_images.append(im_input_interpolate_iz)
 
     return list_interpolate_images
@@ -326,7 +326,7 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
         # interpolate gm to reference image
         nz_gmseg, nx_gmseg, ny_gmseg, nt_gmseg, pz_gmseg, px_gmseg, py_gmseg, pt_gmseg = im_manual_gmseg.dim
 
-        list_im_gm = interpolate_im_to_ref(im_manual_gmseg, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
+        list_im_gm = interpolate_im_to_ref(im_manual_gmseg, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=0)
 
         # load gm seg in list of slices
         for im_gm, slice_im in zip(list_im_gm, list_slices_target):
