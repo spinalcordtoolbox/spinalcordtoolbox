@@ -27,7 +27,7 @@ def test(data_path):
 
     # if command ran without error, test integrity
     if status == 0:
-        # compute center of mass of
+        # compute center of mass of labeled segmentation
         commands.getstatusoutput('sct_label_utils -i ' + data_path + folder_data[0] + file_data[1] + ' -cubic-to-point -o test_centerofmass.nii.gz')
         status_mass, output_mass = commands.getstatusoutput('sct_label_utils -i test_centerofmass.nii.gz -display')
         centers_of_mass = '30,25,25,4:30,42,25,3:31,9,25,5:32,0,25,6:30,52,26,2'
