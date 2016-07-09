@@ -24,7 +24,6 @@ import commands
 from os import chdir
 from glob import glob
 import numpy as np
-from scipy.signal import argrelextrema, gaussian
 from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end, tmp_create
 from msct_parser import Parser
 from msct_image import Image
@@ -184,8 +183,8 @@ def main(args=None):
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
-    # path_tmp = tmp_create(verbose=verbose)
-    path_tmp = '/Users/julien/data/sct_dev/vertebral_labeling/anisha_3276/tmp.160629122058_884275/'
+    path_tmp = tmp_create(verbose=verbose)
+    # path_tmp = '/Users/julien/data/sct_dev/vertebral_labeling/anisha_3276/tmp.160629122058_884275/'
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
@@ -213,7 +212,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    # run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
+    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
@@ -314,22 +313,35 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         printv('\nERROR: No template found. Please check the provided path.', 1, 'error')
     # retrieve disc level from template
     try:
-        fname_disc_list = glob(path_template+'*_label_disc.nii.gz')
-        fname_disc = fname_disc_list[0]
+        fname_level_list = glob(path_template+'*_levels.nii.gz')
+        fname_level = fname_level_list[0]
     except IndexError:
-        printv('\nERROR: File *_label_disc.nii.gz not found.', 1, 'error')
+        printv('\nERROR: File *_levels.nii.gz not found.', 1, 'error')
 
-    # Open template and disc labels
-    printv('\nOpen template and disc labels...', verbose)
+    # Open template and vertebral levels
+    printv('\nOpen template and vertebral levels...', verbose)
     data_template = Image(fname_template).data
-    data_disc_template = Image(fname_disc).data
+    data_disc_template = Image(fname_level).data
 
     # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
-    list_disc_value_template = sorted(data_disc_template[data_disc_template.nonzero()])
-    list_disc_z_template = [int(np.where(data_disc_template == list_disc_value_template[i])[2]) for i in range(len(list_disc_value_template))]
-    printv('\nDisc values from template: '+str(list_disc_value_template), verbose)
-    list_distance_template = (np.diff(list_disc_z_template) * (-1)).tolist() # multiplies by -1 to get positive distances
-    printv('Distances between discs (in voxel): '+str(list_distance_template), verbose)
+    # get centerline of vertebral levels
+    centerline_level = data_disc_template[70, 70, :]
+    # attribute value to each disc. Starts from max level, then decrease.
+    min_level = centerline_level[centerline_level.nonzero()].min()
+    max_level = centerline_level[centerline_level.nonzero()].max()
+    list_disc_value_template = range(min_level, max_level)
+    # add disc above top one
+    list_disc_value_template.insert(0, min_level - 1)
+    printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
+    # get diff to find transitions (i.e., discs)
+    diff_centerline_level = np.diff(centerline_level)
+    # get disc z-values
+    list_disc_z_template = diff_centerline_level.nonzero()[0].tolist()
+    list_disc_z_template.reverse()
+    printv('Z-values for each disc: ' + str(list_disc_z_template), verbose)
+    list_distance_template = (
+    np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
+    printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # open anatomical volume
     data = Image(fname).data
@@ -360,7 +372,8 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     if init_disc == []:
         printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[1], zrange=zrange, verbose=verbose, save_suffix='_initC2')
+        ind_c2 = list_disc_value_template.index(2)
+        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2')
         init_disc = [z_peak, 2]
 
     # display init disc
@@ -388,7 +401,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         printv('Current disc: '+str(current_disc)+' (z='+str(current_z)+'). Direction: '+direction, verbose)
         try:
             # get z corresponding to current disc on template
-            current_z_template = int(np.where(data_disc_template == current_disc)[2])
+            current_z_template = list_disc_z_template[list_disc_value_template.index(2)]
         except TypeError:
             # in case reached the bottom (see issue #849)
             printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
@@ -467,18 +480,18 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
     # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
     upper_disc = min(list_disc_value)
-    if not upper_disc == 1:
-        printv('Adding top disc based on adjusted template distance: #'+str(upper_disc-1), verbose)
-        approx_distance_to_next_disc = list_distance[list_disc_value_template.index(upper_disc-1)]
-        next_z = max(list_disc_z) + approx_distance_to_next_disc
-        printv('.. approximate distance: '+str(approx_distance_to_next_disc), verbose)
-        # make sure next disc does not go beyond FOV in superior direction
-        if next_z > nz:
-            list_disc_z.insert(0, nz)
-        else:
-            list_disc_z.insert(0, next_z)
-        # assign disc value
-        list_disc_value.insert(0, upper_disc-1)
+    # if not upper_disc == 1:
+    printv('Adding top disc based on adjusted template distance: #'+str(upper_disc-1), verbose)
+    approx_distance_to_next_disc = list_distance[list_disc_value_template.index(upper_disc-1)]
+    next_z = max(list_disc_z) + approx_distance_to_next_disc
+    printv('.. approximate distance: '+str(approx_distance_to_next_disc), verbose)
+    # make sure next disc does not go beyond FOV in superior direction
+    if next_z > nz:
+        list_disc_z.insert(0, nz)
+    else:
+        list_disc_z.insert(0, next_z)
+    # assign disc value
+    list_disc_value.insert(0, upper_disc-1)
 
     # LABEL SEGMENTATION
     # open segmentation
@@ -555,15 +568,6 @@ def get_z_and_disc_values_from_label(fname_label):
     # get label value
     value_label = int(nii.data[x_label, y_label, z_label])
     return [z_label, value_label]
-
-
-def find_c2c3_disc(data, data_template):
-    """
-    Find C2-C3 disc using template matching. Requires that FOV shows C2-C3 disc.
-    :param data:
-    :param data_template:
-    :return:
-    """
 
 
 # Clean labeled segmentation
