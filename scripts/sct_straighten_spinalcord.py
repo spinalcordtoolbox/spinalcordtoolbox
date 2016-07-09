@@ -164,9 +164,9 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
 class SpinalCordStraightener(object):
 
-    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15, padding=30,
+    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15,
                  leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='nurbs',
-                 precision=2.0, threshold_distance=2.5, type_window='hanning', window_length=50, crop=1, output_filename=''):
+                 precision=2.0, threshold_distance=2.5, type_window='hanning', window_length=50, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -174,7 +174,6 @@ class SpinalCordStraightener(object):
         self.deg_poly = deg_poly  # maximum degree of polynomial function for fitting centerline.
         self.gapxy = gapxy  # size of cross in x and y direction for the landmarks
         self.gapz = gapz  # gap between landmarks along z voxels
-        self.padding = padding  # pad input volume in order to deal with the fact that some landmarks might be outside
         # the FOV due to the curvature of the spinal cord
         self.leftright_width = leftright_width
         self.interpolation_warp = interpolation_warp
@@ -186,7 +185,6 @@ class SpinalCordStraightener(object):
         self.type_window = type_window  # !! for more choices, edit msct_smooth. Possibilities: 'flat', 'hanning',
         # 'hamming', 'bartlett', 'blackman'
         self.window_length = window_length
-        self.crop = crop
         self.path_output = ""
 
         self.mse_straightening = 0.0
@@ -199,7 +197,6 @@ class SpinalCordStraightener(object):
         fname_output = self.output_filename
         gapxy = self.gapxy
         gapz = self.gapz
-        padding = self.padding
         leftright_width = self.leftright_width
         remove_temp_files = self.remove_temp_files
         verbose = self.verbose
@@ -207,7 +204,6 @@ class SpinalCordStraightener(object):
         algo_fitting = self.algo_fitting
         window_length = self.window_length
         type_window = self.type_window
-        crop = self.crop
         qc = self.qc
 
         # start timer
@@ -573,12 +569,6 @@ def get_parser():
                       description="centerline or segmentation.",
                       mandatory=False,
                       deprecated_by='-s')
-    parser.add_option(name="-pad",
-                      type_value="int",
-                      description="amount of padding for generating labels.",
-                      mandatory=False,
-                      example="30",
-                      default_value=30)
     parser.add_option(name="-p",
                       type_value=None,
                       description="amount of padding for generating labels.",
@@ -607,12 +597,6 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='1')
-    parser.add_option(name="-f",
-                      type_value="multiple_choice",
-                      description="Crop option. 0: no crop, 1: crop around landmarks.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="Verbose. 0: nothing, 1: basic, 2: extended.",
@@ -624,16 +608,16 @@ def get_parser():
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
-                                  "\nprecision: [1.0,inf[ Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
-                                  "\nthreshold_distance: [0.0,inf[ Threshold for which voxels are not considered into displacement. Default=1.0",
+                                  "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
+                                  "\nthreshold_distance: [0.0,inf[. Threshold for which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=1.0",
                       mandatory=False,
                       example="algo_fitting=nurbs")
     parser.add_option(name="-params",
                       type_value=None,
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
-                                  "\nprecision: [1.0,inf[ Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
-                                  "\nthreshold_distance: [0.0,inf[ Threshold for which voxels are not considered into displacement. Default=1.0",
+                                  "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
+                                  "\nthreshold_distance: [0.0,inf[. Threshold for which voxels are not considered into displacement. Default=1.0",
                       mandatory=False,
                       deprecated_by='-param')
 
@@ -660,8 +644,6 @@ if __name__ == "__main__":
     # Handling optional arguments
     if "-r" in arguments:
         sc_straight.remove_temp_files = int(arguments["-r"])
-    if "-pad" in arguments:
-        sc_straight.padding = int(arguments["-pad"])
     if "-x" in arguments:
         sc_straight.interpolation_warp = str(arguments["-x"])
     if "-o" in arguments:
@@ -670,8 +652,6 @@ if __name__ == "__main__":
         sc_straight.path_output = arguments['-ofolder']
     else:
         sc_straight.path_output = './'
-    if "-f" in arguments:
-        sc_straight.crop = int(arguments["-f"])
     if "-v" in arguments:
         sc_straight.verbose = int(arguments["-v"])
     # if "-cpu-nb" in arguments:
