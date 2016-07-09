@@ -285,7 +285,10 @@ if __name__ == "__main__":
         viewer = ClickViewer(image_input_reoriented)
         if use_viewer == "mask":
             viewer.number_of_slices = 3
-            viewer.gap_inter_slice = 10
+            viewer.gap_inter_slice = int(10 / pz)
+            if viewer.gap_inter_slice == 0:
+                viewer.gap_inter_slice = 1
+            viewer.calculate_list_slices()
         #else:
         #    viewer.gap_inter_slice = 3
 
