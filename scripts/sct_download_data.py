@@ -123,7 +123,7 @@ def download_from_url(url, local):
     i_trial = 1
     max_trials = 3
 
-    print 'Reaching URL...'
+    print 'Reaching URL: '+url
     while keep_connecting:
         try:
             u = urllib2.urlopen(url)
