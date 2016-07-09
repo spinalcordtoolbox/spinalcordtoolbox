@@ -439,7 +439,7 @@ class ProcessLabels(object):
     #     if levels_user[0] == 0:
     #         levels_user = [int(i.value) for i in list_centermass]
     #     # get list of all coordinates
-    #     list_coordinates = self.display_voxel(verbose=0)
+    #     list_coordinates = self.display_voxel()
     #     # loop across labels and remove those that are not listed by the user
     #     # for i_label in range(len(list_centermass)):
     #
@@ -610,7 +610,7 @@ class ProcessLabels(object):
         fo.close()
 
 
-    def display_voxel(self, verbose=1):
+    def display_voxel(self):
         """
         Display all the labels that are contained in the input image.
         The image is suppose to be RPI to display voxels. But works also for other orientations
@@ -618,12 +618,12 @@ class ProcessLabels(object):
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
         useful_notation = ''
         for coord in coordinates_input:
-            sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose)
+            print 'Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value)
             if useful_notation != '':
                 useful_notation = useful_notation + ':'
             useful_notation = useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-            sct.printv('Useful notation:', verbose)
-            sct.printv(useful_notation, verbose)
+            print 'Useful notation:'
+            print useful_notation
         return coordinates_input
 
 
@@ -862,7 +862,7 @@ def main(args=None):
     #     process_type = 'vert-disc'
     #     vertebral_levels = arguments['-vert-disc']
     elif '-vert-continuous' in arguments:
-        process_type = 'continuous-vertebral-levels'
+        process_type = 'vert-continuous'
     elif '-MSE' in arguments:
         process_type = 'MSE'
         input_fname_ref = arguments['-r']
