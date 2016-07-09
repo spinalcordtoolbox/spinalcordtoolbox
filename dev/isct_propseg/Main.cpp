@@ -942,7 +942,7 @@ bool extractPointAndNormalFromMask(string filename, CVector3 &point, CVector3 &n
     }
     
     if (result.size() != 3) {
-        cerr << "Error: Not enough of too many points in the binary mask. Number of point needed = 3. Detected points = " << result.size() << endl;
+        cerr << "Error: Not enough or too many points in the binary mask. Number of point needed = 3. Detected points = " << result.size() << endl;
         return false;
     }
     point = result[1];
