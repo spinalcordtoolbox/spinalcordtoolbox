@@ -21,7 +21,7 @@
 
 import sys
 import commands
-from os import chdir
+import os
 from glob import glob
 import numpy as np
 from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end, tmp_create
@@ -31,12 +31,16 @@ import sct_utils as sct
 import matplotlib.pyplot as plt
 
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
+
 
 # PARAMETERS
 class Param:
     ## The constructor
     def __init__(self):
+        # self.path_template = path_sct+'/data/template/'
         self.shift_AP_brainstem = 25
         self.size_AP_brainstem = 15
         self.shift_IS_brainstem = 15
@@ -77,7 +81,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value="folder",
                       description="Path to template.",
                       mandatory=False,
-                      default_value=path_sct+'/data/template')
+                      default_value=path_sct+'/data/template/')
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
                       description='Initialize labeling by providing slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
@@ -192,7 +196,7 @@ def main(args=None):
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    chdir(path_tmp)
+    os.chdir(path_tmp)
 
     # create label to identify disc
     printv('\nCreate label to identify disc...', verbose)
@@ -265,7 +269,7 @@ def main(args=None):
         file_out = file_seg+'_labeled'+ext_seg
 
     # come back to parent folder
-    chdir('..')
+    os.chdir('..')
 
     # Generate output files
     printv('\nGenerate output files...', verbose)
@@ -297,13 +301,22 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     # initializations
     fig_anat_straight = 1
 
-    if path_template == '':
-        # get path of SCT
-        from os import path
-        path_script = path.dirname(__file__)
-        path_sct = slash_at_the_end(path.dirname(path_script), 1)
-        folder_template = 'data/template/'
-        path_template = path_sct+folder_template
+    printv('\nLook for template...', verbose)
+    # if path_template == '':
+    #     # get path of SCT
+    #     from os import path
+    #     path_script = path.dirname(__file__)
+    #     path_sct = slash_at_the_end(path.dirname(path_script), 1)
+    #     folder_template = 'data/template/'
+    #     path_template = path_sct+folder_template
+    printv('Path template: '+path_template, verbose)
+
+    # adjust file names if MNI-Poly-AMU template is used
+    if not len(glob(path_template+'MNI-Poly-AMU*.*')) == 0:
+        contrast = contrast.upper()
+        file_level = '*_level.nii.gz'
+    else:
+        file_level = '*_levels.nii.gz'
 
     # retrieve file_template based on contrast
     try:
@@ -313,7 +326,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         printv('\nERROR: No template found. Please check the provided path.', 1, 'error')
     # retrieve disc level from template
     try:
-        fname_level_list = glob(path_template+'*_levels.nii.gz')
+        fname_level_list = glob(path_template+file_level)
         fname_level = fname_level_list[0]
     except IndexError:
         printv('\nERROR: File *_levels.nii.gz not found.', 1, 'error')
@@ -322,26 +335,6 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     printv('\nOpen template and vertebral levels...', verbose)
     data_template = Image(fname_template).data
     data_disc_template = Image(fname_level).data
-
-    # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
-    # get centerline of vertebral levels
-    centerline_level = data_disc_template[70, 70, :]
-    # attribute value to each disc. Starts from max level, then decrease.
-    min_level = centerline_level[centerline_level.nonzero()].min()
-    max_level = centerline_level[centerline_level.nonzero()].max()
-    list_disc_value_template = range(min_level, max_level)
-    # add disc above top one
-    list_disc_value_template.insert(0, min_level - 1)
-    printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
-    # get diff to find transitions (i.e., discs)
-    diff_centerline_level = np.diff(centerline_level)
-    # get disc z-values
-    list_disc_z_template = diff_centerline_level.nonzero()[0].tolist()
-    list_disc_z_template.reverse()
-    printv('Z-values for each disc: ' + str(list_disc_z_template), verbose)
-    list_distance_template = (
-    np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
-    printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # open anatomical volume
     data = Image(fname).data
@@ -360,6 +353,25 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     # define xc and yc (centered in the field of view)
     xct = int(round(nxt/2))  # direction RL
     yct = int(round(nyt/2))  # direction AP
+
+    # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
+    centerline_level = data_disc_template[xct, yct, :]
+    # attribute value to each disc. Starts from max level, then decrease.
+    min_level = centerline_level[centerline_level.nonzero()].min()
+    max_level = centerline_level[centerline_level.nonzero()].max()
+    list_disc_value_template = range(min_level, max_level)
+    # add disc above top one
+    list_disc_value_template.insert(int(0), min_level - 1)
+    printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
+    # get diff to find transitions (i.e., discs)
+    diff_centerline_level = np.diff(centerline_level)
+    # get disc z-values
+    list_disc_z_template = diff_centerline_level.nonzero()[0].tolist()
+    list_disc_z_template.reverse()
+    printv('Z-values for each disc: ' + str(list_disc_z_template), verbose)
+    list_distance_template = (
+        np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
+    printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # display stuff
     if verbose == 2:
@@ -401,7 +413,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         printv('Current disc: '+str(current_disc)+' (z='+str(current_z)+'). Direction: '+direction, verbose)
         try:
             # get z corresponding to current disc on template
-            current_z_template = list_disc_z_template[list_disc_value_template.index(2)]
+            current_z_template = list_disc_z_template[current_disc]
         except TypeError:
             # in case reached the bottom (see issue #849)
             printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
@@ -629,7 +641,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
     # get dimensions from src
     nx, ny, nz = src.shape
-    # Get pattern from template corresponding to C2-C3 disc
+    # Get pattern from template
     pattern = target[
               xtarget - xsize: xtarget + xsize + 1,
               ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
@@ -643,9 +655,9 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     # loop across range of z defined by src
     for iz in zrange:
         # if pattern extends towards the top part of the image, then crop and pad with zeros
-        if z + iz + zsize > nz:
+        if z + iz + zsize + 1 > nz:
             # print 'iz='+str(iz)+': padding on top'
-            padding_size = iz + zsize - nz
+            padding_size = z + iz + zsize + 1 - nz
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
                            y + yshift - ysize: y + yshift + ysize + 1,
@@ -742,6 +754,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         plt.plot(zrange[ind_peak], I_corr[ind_peak], 'ro'), plt.draw()
         plt.axvline(x=zrange.index(0), linewidth=1, color='black', linestyle='dashed')
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
+        plt.grid()
         # save figure
         plt.figure(11), plt.savefig('../fig_pattern'+save_suffix+'.png'), plt.close()
 
