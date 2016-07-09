@@ -623,8 +623,9 @@ def get_parser():
     parser.add_option(name="-param",
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning"
-                                  "\nprecision: [1.0,inf] Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0",
+                                  "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
+                                  "\nprecision: [1.0,inf[ Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
+                                  "\nthreshold_distance: [0.0,inf[ Threshold for which voxels are not considered into displacement. Default=1.0",
                       mandatory=False,
                       example="algo_fitting=nurbs")
     parser.add_option(name="-params",
