@@ -518,9 +518,11 @@ def printv(string, verbose=1, type='normal'):
     # if error, exit program
     if type == 'error':
         from inspect import stack
-        frame,filename,line_number,function_name,lines,index = stack()[1]
+        frame, filename, line_number, function_name, lines, index = stack()[1]
         # print(frame,filename,line_number,function_name,lines,index)
-        print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
+        import traceback
+        print('\n'+bcolors.red+filename+traceback.format_exc()+bcolors.normal)  # print error message
+        # print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
         sys.exit(2)
 
 

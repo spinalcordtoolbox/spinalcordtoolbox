@@ -30,11 +30,13 @@ def test(path_data='', parameters=''):
     diff_manual_result = float('NaN')
 
     if not parameters:
-        parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -o t2_seg_labeled.nii.gz'
+        parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -c t2 -o t2_seg_labeled.nii.gz'
 
     parser = sct_label_vertebrae.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
+    # update template path because the previous command wrongly adds path to testing data
+    dict_param_with_path['-t'] = dict_param['-t']
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
@@ -81,7 +83,7 @@ def test(path_data='', parameters=''):
         # copy input data (for easier debugging)
         sct.run('cp '+dict_param_with_path['-i']+' '+path_output, verbose=0)
         # extract center of vertebral labels
-        sct.run('sct_label_utils -i '+path_output+'t2_seg_labeled.nii.gz -label-vert 0 -o '+path_output+'t2_seg_labeled_center.nii.gz', verbose=0)
+        sct.run('sct_label_utils -i '+path_output+'t2_seg_labeled.nii.gz -vert-body 0 -o '+path_output+'t2_seg_labeled_center.nii.gz', verbose=0)
         from sct_label_utils import ProcessLabels
         from numpy import linalg
         from math import sqrt
