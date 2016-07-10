@@ -438,8 +438,8 @@ def read_label_file(path_info_label, file_info_label):
     try:
         f = open(fname_label)
     except IOError:
-        sct.printv('\nWARNING: Cannot open', 1, 'warning')
-        raise
+        sct.printv('\nWARNING: Cannot open '+fname_label, 1, 'warning')
+        # raise
     else:
         # Extract all lines in file.txt
         lines = [line for line in f.readlines() if line.strip()]
