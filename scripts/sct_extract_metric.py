@@ -434,9 +434,6 @@ def read_label_file(path_info_label, file_info_label):
     # file name of info_label.txt
     fname_label = path_info_label+file_info_label
 
-    # Check info_label.txt existence
-    sct.check_file_exist(fname_label)
-
     # Read file
     try:
         f = open(fname_label)
