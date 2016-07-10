@@ -472,7 +472,8 @@ def read_label_file(path_info_label, file_info_label):
                 combined_labels_names.append(parsed_line[1].strip())
                 combined_labels_id_groups.append(','.join(parsed_line[2:]).strip())
 
-        # check if all files listed are present in folder. If not, WARNING.
+        # check if all files listed are present in folder. If not, ERROR.
+        # TODO: better handle error
         for file in indiv_labels_files:
             sct.check_file_exist(path_info_label+file)
 
