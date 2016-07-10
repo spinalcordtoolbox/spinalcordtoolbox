@@ -30,7 +30,8 @@ import numpy as np
 
 
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
 
 # DEFAULT PARAMETERS
 class Param:
@@ -47,11 +48,9 @@ class Param:
         # self.gradientStep = '0.5'
         # self.metric = 'MI'
         self.verbose = 1  # verbose
-        self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
-        self.path_template = path_sct+'/data'
-        # self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
+        # self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
+        self.path_template = path_sct+'/data/PAM50'
         self.file_template_label = 'landmarks_center.nii.gz'
-        # self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
         self.zsubsample = '0.25'
         self.param_straighten = ''
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
@@ -64,6 +63,8 @@ step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
 paramreg = ParamregMultiStep([step1, step2, step3])
 
 
+# PARSER
+# ==========================================================================================
 def get_parser():
     param = Param()
     parser = Parser(__file__)
@@ -189,12 +190,12 @@ def main():
         contrast_template = 'T2'
 
     # retrieve file_template based on contrast
-    fname_template_list = glob(path_template+param.folder_template+'*'+contrast_template+'.nii.gz')
+    fname_template_list = glob(path_template+'template/*'+contrast_template+'.nii.gz')
     # TODO: make sure there is only one file -- check if file is there otherwise it crashes
     fname_template = fname_template_list[0]
 
     # retrieve file_template_seg
-    fname_template_seg_list = glob(path_template+param.folder_template+'*cord.nii.gz')
+    fname_template_seg_list = glob(path_template+'template/*cord.nii.gz')
     # TODO: make sure there is only one file
     fname_template_seg = fname_template_seg_list[0]
 
@@ -202,7 +203,7 @@ def main():
     start_time = time.time()
 
     # get absolute path - TO DO: remove! NEVER USE ABSOLUTE PATH...
-    path_template = os.path.abspath(path_template+param.folder_template)
+    path_template = os.path.abspath(path_template+'template/')
 
     # get fname of the template + template objects
     # fname_template = sct.slash_at_the_end(path_template, 1)+file_template
