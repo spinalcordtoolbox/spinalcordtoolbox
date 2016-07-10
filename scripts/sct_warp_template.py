@@ -14,8 +14,8 @@
 
 #import re
 import sys
-import commands
-import getopt
+# import commands
+# import getopt
 import os
 import time
 
@@ -35,8 +35,7 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.folder_out = 'label'  # name of output folder
-        self.path_template = path_sct+'/data'
-        self.folder_template = 'template'
+        self.path_template = path_sct+'/data/PAM50'
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'
         self.file_info_label = 'info_label.txt'
@@ -61,22 +60,17 @@ class WarpTemplate:
         self.warp_spinal_levels = warp_spinal_levels
         self.folder_out = folder_out
         self.path_template = path_template
-        self.folder_template = param.folder_template
+        # self.folder_template = param.folder_template
         self.folder_atlas = param.folder_atlas
         self.folder_spinal_levels = param.folder_spinal_levels
         self.verbose = verbose
         self.qc = qc
         start_time = time.time()
 
-        # Check file existence
-        sct.printv('\nCheck file existence...', self.verbose)
-        sct.check_file_exist(self.fname_src)
-        sct.check_file_exist(self.fname_transfo)
-
         # add slash at the end of folder name (in case there is no slash)
         self.path_template = sct.slash_at_the_end(self.path_template, 1)
         self.folder_out = sct.slash_at_the_end(self.folder_out, 1)
-        self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
+        # self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
         self.folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
         self.folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
 
@@ -141,7 +135,6 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
 
 
-
 # Get interpolation method
 # ==========================================================================================
 def get_interp(file_label):
@@ -157,12 +150,9 @@ def get_interp(file_label):
     return interp
 
 
-# START PROGRAM
+# PARSER
 # ==========================================================================================
-if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
+def get_parser():
 
     # Initialize parser
     parser = Parser(__file__)
@@ -204,7 +194,7 @@ if __name__ == "__main__":
                       deprecated_by='-ofolder')
     parser.add_option(name="-t",
                       type_value="folder",
-                      description="Specify path to template data.",
+                      description="Path to template.",
                       mandatory=False,
                       default_value=str(param_default.path_template))
     parser.add_option(name='-qc',
@@ -219,6 +209,15 @@ if __name__ == "__main__":
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
+    return parser
+
+
+# MAIN
+# ==========================================================================================
+def main(args=None):
+
+    parser = get_parser()
+    param = Param()
 
     arguments = parser.parse(sys.argv[1:])
 
@@ -233,3 +232,13 @@ if __name__ == "__main__":
 
     # call main function
     WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc)
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    # initialize parameters
+    param = Param()
+    param_default = Param()
+    # call main function
+    main()
