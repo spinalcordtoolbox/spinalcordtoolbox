@@ -36,14 +36,14 @@ class Param:
         self.debug = 0
         self.folder_out = 'label'  # name of output folder
         self.path_template = path_sct+'/data/PAM50'
+        self.folder_template = 'template'
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'
         self.file_info_label = 'info_label.txt'
         # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
-        self.list_labels_nn = ['MNI-Poly-AMU_level.nii.gz', 'MNI-Poly-AMU_CSF.nii.gz', 'MNI-Poly-AMU_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
-        self.list_labels_spline = ['']  # list of files for which spline interpolation should be used. Default = linear.
+        self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
         self.qc = 1
 
@@ -60,7 +60,7 @@ class WarpTemplate:
         self.warp_spinal_levels = warp_spinal_levels
         self.folder_out = folder_out
         self.path_template = path_template
-        # self.folder_template = param.folder_template
+        self.folder_template = param.folder_template
         self.folder_atlas = param.folder_atlas
         self.folder_spinal_levels = param.folder_spinal_levels
         self.verbose = verbose
@@ -70,12 +70,13 @@ class WarpTemplate:
         # add slash at the end of folder name (in case there is no slash)
         self.path_template = sct.slash_at_the_end(self.path_template, 1)
         self.folder_out = sct.slash_at_the_end(self.folder_out, 1)
-        # self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
+        self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
         self.folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
         self.folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
 
         # print arguments
         print '\nCheck parameters:'
+        print '  Working directory ........ '+os.getcwd()
         print '  Destination image ........ '+self.fname_src
         print '  Warping field ............ '+self.fname_transfo
         print '  Path template ............ '+self.path_template
@@ -121,7 +122,17 @@ class WarpTemplate:
 def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
     # read label file and check if file exists
     sct.printv('\nRead label file...', param.verbose)
-    template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label+folder_label, file_label)
+    try:
+        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(
+            path_label + folder_label, file_label)
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
+    # try:
+    #     template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label+folder_label, file_label)
+    # except Exception:
+    #     import traceback
+    #     sct.printv('\nERROR: ' + traceback.format_exc(), 1, 'error')
     # create output folder
     sct.run('mkdir '+path_out+folder_label, param.verbose)
     # Warp label
@@ -135,17 +146,15 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
 
 
+
 # Get interpolation method
 # ==========================================================================================
 def get_interp(file_label):
     # default interp
     interp = 'linear'
     # NN interp
-    if file_label in param.list_labels_nn:
+    if any(substring in file_label for substring in param.list_labels_nn):
         interp = 'nn'
-    # spline interp
-    if file_label in param.list_labels_spline:
-        interp = 'spline'
     # output
     return interp
 
