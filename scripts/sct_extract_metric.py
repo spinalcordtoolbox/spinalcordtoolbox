@@ -438,47 +438,51 @@ def read_label_file(path_info_label, file_info_label):
     sct.check_file_exist(fname_label)
 
     # Read file
-    f = open(fname_label)
+    try:
+        f = open(fname_label)
+    except IOError:
+        sct.printv('\nWARNING: Cannot open', 1, 'warning')
+        raise
+    else:
+        # Extract all lines in file.txt
+        lines = [line for line in f.readlines() if line.strip()]
+        lines[-1] += ' ' # To fix an error that could occur at the last line (deletion of the last character of the .txt file)
 
-    # Extract all lines in file.txt
-    lines = [line for line in f.readlines() if line.strip()]
-    lines[-1] += ' ' # To fix an error that could occur at the last line (deletion of the last character of the .txt file)
 
+        # Check if the White matter atlas was provided by the user
+        # look at first line
+        header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
+        info_label_title = header_lines[0].split('-')[0].strip()
+        # if '# White matter atlas' not in info_label_title:
+        #     sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
 
-    # Check if the White matter atlas was provided by the user
-    # look at first line
-    header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
-    info_label_title = header_lines[0].split('-')[0].strip()
-    # if '# White matter atlas' not in info_label_title:
-    #     sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
+        # remove header lines (every line starting with "#")
+        section = ''
+        for line in lines:
+            # update section index
+            if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line):
+                section = line
+            # record the label according to its section
+            if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
+                parsed_line = line.split(',')
+                indiv_labels_ids.append(int(parsed_line[0]))
+                indiv_labels_names.append(parsed_line[1].strip())
+                indiv_labels_files.append(parsed_line[2].strip())
 
-    # remove header lines (every line starting with "#")
-    section = ''
-    for line in lines:
-        # update section index
-        if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line):
-            section = line
-        # record the label according to its section
-        if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
-            parsed_line = line.split(',')
-            indiv_labels_ids.append(int(parsed_line[0]))
-            indiv_labels_names.append(parsed_line[1].strip())
-            indiv_labels_files.append(parsed_line[2].strip())
+            elif ('# Combined labels' in section) and (line[0] != '#'):
+                parsed_line = line.split(',')
+                combined_labels_ids.append(int(parsed_line[0]))
+                combined_labels_names.append(parsed_line[1].strip())
+                combined_labels_id_groups.append(','.join(parsed_line[2:]).strip())
 
-        elif ('# Combined labels' in section) and (line[0] != '#'):
-            parsed_line = line.split(',')
-            combined_labels_ids.append(int(parsed_line[0]))
-            combined_labels_names.append(parsed_line[1].strip())
-            combined_labels_id_groups.append(','.join(parsed_line[2:]).strip())
+        # check if all files listed are present in folder. If not, WARNING.
+        for file in indiv_labels_files:
+            sct.check_file_exist(path_info_label+file)
 
-    # check if all files listed are present in folder. If not, WARNING.
-    for file in indiv_labels_files:
-        sct.check_file_exist(path_info_label+file)
+        # Close file.txt
+        f.close()
 
-    # Close file.txt
-    f.close()
-
-    return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups
+        return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups
 
 
 def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
