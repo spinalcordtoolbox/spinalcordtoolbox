@@ -50,7 +50,7 @@ class Param:
         self.verbose = 1  # verbose
         # self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
         self.path_template = path_sct+'/data/PAM50'
-        self.file_template_label = 'landmarks_center.nii.gz'
+        # self.file_template_label = 'landmarks_center.nii.gz'
         self.zsubsample = '0.25'
         self.param_straighten = ''
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
@@ -178,19 +178,25 @@ def main():
             paramreg.addStep(paramStep)
 
     # initialize other parameters
-    file_template_label = param.file_template_label
+    # file_template_label = param.file_template_label
     output_type = param.output_type
     zsubsample = param.zsubsample
+    template = os.path.basename(os.path.normpath(path_template))
     # smoothing_sigma = param.smoothing_sigma
 
-    # capitalize letters for contrast file for old versions of template
+    # adjust file names for old versions of template
     if any(substring in path_template for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
+        # template name
         if contrast_template == 't1':
             contrast_template = 'T1'
         elif contrast_template == 't2':
             contrast_template = 'T2'
+        # label name
+        file_template_label = 'landmarks_center.nii.gz'
+    else:
+        file_template_label = template + '_label_body.nii.gz'
 
-    # retrieve file_template based on contrast
+        # retrieve file_template based on contrast
     try:
         fname_template_list = glob(path_template + 'template/*' + contrast_template + '.nii.gz')
         fname_template = fname_template_list[0]
@@ -216,6 +222,7 @@ def main():
     # fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
 
     # check file existence
+    # TODO: no need to do that!
     sct.printv('\nCheck template files...')
     sct.check_file_exist(fname_template, verbose)
     sct.check_file_exist(fname_template_label, verbose)
@@ -227,7 +234,6 @@ def main():
     sct.printv('.. Landmarks:            '+fname_landmarks, verbose)
     sct.printv('.. Segmentation:         '+fname_seg, verbose)
     sct.printv('.. Path template:        '+path_template, verbose)
-    sct.printv('.. Path output:          '+path_output, verbose)
     sct.printv('.. Output type:          '+str(output_type), verbose)
     sct.printv('.. Remove temp files:    '+str(remove_temp_files), verbose)
 
@@ -264,7 +270,7 @@ def main():
                 break
     if not hasDifferentLabels:
         sct.printv('ERROR: Wrong landmarks input. All labels must be different.', verbose, 'error')
-    # all labels must be available in tempalte
+    # check if provided labels are available in the template
     image_label_template = Image(fname_template_label)
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
     if labels[-1].value > labels_template[-1].value:
