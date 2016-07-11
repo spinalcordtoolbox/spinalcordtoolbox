@@ -48,8 +48,8 @@ class Param:
         # self.gradientStep = '0.5'
         # self.metric = 'MI'
         self.verbose = 1  # verbose
-        self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
-        self.path_template = path_sct+'/data'
+        # self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
+        self.path_template = path_sct+'/template/data'
         # self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         # self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
@@ -183,28 +183,32 @@ def main():
     zsubsample = param.zsubsample
     # smoothing_sigma = param.smoothing_sigma
 
-    # capitalize letters for contrast
-    if 'MNI-Poly-AMU' in path_template:
+    # capitalize letters for contrast file for old versions of template
+    if any(substring in path_template for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
         if contrast_template == 't1':
             contrast_template = 'T1'
         elif contrast_template == 't2':
             contrast_template = 'T2'
 
     # retrieve file_template based on contrast
-    fname_template_list = glob(path_template+param.folder_template+'*'+contrast_template+'.nii.gz')
-    # TODO: make sure there is only one file -- check if file is there otherwise it crashes
-    fname_template = fname_template_list[0]
+    try:
+        fname_template_list = glob(path_template + '*' + contrast_template + '.nii.gz')
+        fname_template = fname_template_list[0]
+    except IndexError:
+        sct.printv('\nERROR: No template found in '+path_template+'*'+contrast_template+'.nii.gz', 1, 'error')
 
     # retrieve file_template_seg
-    fname_template_seg_list = glob(path_template+param.folder_template+'*cord.nii.gz')
-    # TODO: make sure there is only one file
-    fname_template_seg = fname_template_seg_list[0]
+    try:
+        fname_template_seg_list = glob(path_template + '*cord.nii.gz')
+        fname_template_seg = fname_template_seg_list[0]
+    except IndexError:
+        sct.printv('\nERROR: No template cord segmentation found. Please check the provided path.', 1, 'error')
 
     # start timer
     start_time = time.time()
 
     # get absolute path - TO DO: remove! NEVER USE ABSOLUTE PATH...
-    path_template = os.path.abspath(path_template+param.folder_template)
+    path_template = os.path.abspath(path_template)
 
     # get fname of the template + template objects
     # fname_template = sct.slash_at_the_end(path_template, 1)+file_template
