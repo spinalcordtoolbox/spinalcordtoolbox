@@ -269,8 +269,8 @@ def main():
                    str(labels_template[-1].value), verbose, 'error')
 
     # create temporary folder
-    # path_tmp = sct.tmp_create(verbose=verbose)
-    path_tmp = '/Users/julien/data/sct_issues/20160711_issue924/tmp.160711162738_946052/'
+    path_tmp = sct.tmp_create(verbose=verbose)
+    # path_tmp = '/Users/julien/data/sct_issues/20160711_issue924/tmp.160711162738_946052/'
 
     # set temporary file names
     ftmp_data = 'data.nii'
@@ -327,7 +327,7 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    # sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -param threshold_distance=5 -v '+str(verbose), verbose)
+    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose), verbose)
     # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
