@@ -296,7 +296,7 @@ class SpinalCordStraightener(object):
             # The safe length (to remove) is computed using the safe radius (given as parameter) and the angle of the
             # last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
             # Calculate Ls for both edges and remove appropriate number of centerline points
-            radius_safe = 5.0  # mm
+            radius_safe = 0.0  # mm
 
             # inferior edge
             u = np.array([x_centerline_deriv[0], y_centerline_deriv[0], z_centerline_deriv[0]])
