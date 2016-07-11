@@ -278,19 +278,42 @@ class SpinalCordStraightener(object):
             if algo_fitting == 'hanning':
                 number_of_points = nz
             else:
-                number_of_points = int(self.precision * nz)
+                number_of_points = int(self.precision * (float(nz) / pz))
 
             # 2. extract bspline fitting of the centreline, and its derivatives
             x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
             from msct_types import Centerline
             centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
-            # Get coordinates of landmarks along curved centerline
             # ==========================================================================================
-            sct.printv("\nGet coordinates of landmarks along curved centerline...", verbose)
+            sct.printv("\nCreate the straight space and the safe zone...", verbose)
             # 3. compute length of centerline
             # compute the length of the spinal cord based on fitted centerline and size of centerline in z direction
-            from math import sqrt
+            from math import sqrt, atan2, sin
+
+            # Computation of the safe zone.
+            # The safe zone is defined as the length of the spinal ocrd for which an axial segmentation will be complete
+            # The safe length (to remove) is computed using the safe radius (given as parameter) and the angle of the
+            # last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
+            # Calculate Ls for both edges and remove appropriate number of centerline points
+            radius_safe = 0.0  # mm
+
+            # inferior edge
+            u = np.array([x_centerline_deriv[0], y_centerline_deriv[0], z_centerline_deriv[0]])
+            v = np.array([0, 0, -1])
+            angle_inferior = atan2(np.linalg.norm(np.cross(u, v)), np.dot(u, v))
+            length_safe_inferior = radius_safe * sin(angle_inferior)
+
+            # superior edge
+            u = np.array([x_centerline_deriv[-1], y_centerline_deriv[-1], z_centerline_deriv[-1]])
+            v = np.array([0, 0, 1])
+            angle_superior = atan2(np.linalg.norm(np.cross(u, v)), np.dot(u, v))
+            length_safe_superior = radius_safe * sin(angle_superior)
+
+            # remove points
+            from bisect import bisect
+            inferior_bound = bisect(centerline.progressive_length, length_safe_inferior) - 1
+            superior_bound = centerline.number_of_points - bisect(centerline.progressive_length_inverse, length_safe_superior)
 
             length_centerline = centerline.length
             size_z_centerline = z_centerline[-1] - z_centerline[0]
@@ -298,10 +321,18 @@ class SpinalCordStraightener(object):
             # compute the size factor between initial centerline and straight bended centerline
             factor_curved_straight = length_centerline / size_z_centerline
             middle_slice = (z_centerline[0] + z_centerline[-1]) / 2.0
+
+            bound_curved = [z_centerline[inferior_bound], z_centerline[superior_bound]]
+            bound_straight = [(z_centerline[inferior_bound] - middle_slice) * factor_curved_straight + middle_slice,
+                              (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice]
+
             if verbose == 2:
                 print "Length of spinal cord = ", str(length_centerline)
                 print "Size of spinal cord in z direction = ", str(size_z_centerline)
                 print "Ratio length/size = ", str(factor_curved_straight)
+                print "Safe zone boundaries: "
+                print "Curved space = ", bound_curved
+                print "Straight space = ", bound_straight
 
             # 4. compute and generate straight space
             # points along curved centerline are already regularly spaced.
@@ -309,7 +340,7 @@ class SpinalCordStraightener(object):
 
             # Create straight NIFTI volumes
             # ==========================================================================================
-            sct.printv('\nPad input volume to account for landmarks that fall outside the FOV...', verbose)
+            sct.printv('\nPad input volume to account for spinal cord length...', verbose)
             from numpy import ceil
             start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
             end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
@@ -345,11 +376,21 @@ class SpinalCordStraightener(object):
             #hdr_warp_s.structarr['srow_x'][-1] = origin[0]
             #hdr_warp_s.structarr['srow_y'][-1] = origin[1]
             #hdr_warp_s.structarr['srow_z'][-1] = origin[2]
+            hdr_warp_s.structarr['quatern_b'] = 0.0
+            hdr_warp_s.structarr['quatern_c'] = 1.0
+            hdr_warp_s.structarr['quatern_d'] = 0.0
             hdr_warp_s.structarr['srow_x'][0] = -px_s
+            hdr_warp_s.structarr['srow_x'][1] = 0.0
+            hdr_warp_s.structarr['srow_x'][2] = 0.0
+            hdr_warp_s.structarr['srow_y'][0] = 0.0
             hdr_warp_s.structarr['srow_y'][1] = py_s
+            hdr_warp_s.structarr['srow_y'][2] = 0.0
+            hdr_warp_s.structarr['srow_z'][0] = 0.0
+            hdr_warp_s.structarr['srow_z'][1] = 0.0
             hdr_warp_s.structarr['srow_z'][2] = pz_s
             image_centerline_straight.hdr = hdr_warp_s
             image_centerline_straight.compute_transform_matrix()
+            image_centerline_straight.save()
 
             start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
             end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
@@ -385,7 +426,7 @@ class SpinalCordStraightener(object):
 
             # 5. compute transformations
             # Curved and straight images and the same dimensions, so we compute both warping fields at the same time.
-            # b. determine which plane of spinal cord centreline it is includedv
+            # b. determine which plane of spinal cord centreline it is included
             x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
             indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
             x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, 0:nz_s]
@@ -452,6 +493,16 @@ class SpinalCordStraightener(object):
 
             time_displacements = time.time() - time_displacements
             sct.printv('Time to compute physical displacements: ' + str(np.round(time_displacements * 1000.0)) + ' ms', verbose)
+
+            # Creation of the safe zone based on pre-calculated safe boundaries
+            coord_bound_curved_inf, coord_bound_curved_sup = image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[0]]]), image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[1]]])
+            coord_bound_straight_inf, coord_bound_straight_sup = image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[0]]]), image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[1]]])
+
+            if radius_safe > 0:
+                data_warp_curved2straight[:, :, 0:coord_bound_straight_inf[0][2], 0, :] = 100000.0
+                data_warp_curved2straight[:, :, coord_bound_straight_sup[0][2]:, 0, :] = 100000.0
+                data_warp_straight2curved[:, :, 0:coord_bound_curved_inf[0][2], 0, :] = 100000.0
+                data_warp_straight2curved[:, :, coord_bound_curved_sup[0][2]:, 0, :] = 100000.0
 
             # Generate warp files as a warping fields
             hdr_warp_s.set_intent('vector', (), '')
