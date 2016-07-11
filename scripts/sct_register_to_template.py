@@ -39,7 +39,6 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.remove_temp_files = 1  # remove temporary files
-        self.output_type = 1
         self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         # self.speed = 'fast'  # speed of registration. slow | normal | fast
@@ -179,7 +178,6 @@ def main():
 
     # initialize other parameters
     # file_template_label = param.file_template_label
-    output_type = param.output_type
     zsubsample = param.zsubsample
     template = os.path.basename(os.path.normpath(path_template))
     # smoothing_sigma = param.smoothing_sigma
@@ -234,7 +232,6 @@ def main():
     sct.printv('.. Landmarks:            '+fname_landmarks, verbose)
     sct.printv('.. Segmentation:         '+fname_seg, verbose)
     sct.printv('.. Path template:        '+path_template, verbose)
-    sct.printv('.. Output type:          '+str(output_type), verbose)
     sct.printv('.. Remove temp files:    '+str(remove_temp_files), verbose)
 
     sct.printv('\nParameters for registration:')
@@ -499,9 +496,8 @@ def main():
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
 
     # Apply warping fields to anat and template
-    if output_type == 1:
-        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
-        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
+    sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
+    sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
 
     # come back to parent folder
     os.chdir('..')
@@ -510,9 +506,8 @@ def main():
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'warp_template2anat.nii.gz', path_output+'warp_template2anat.nii.gz', verbose)
     sct.generate_output_file(path_tmp+'warp_anat2template.nii.gz', path_output+'warp_anat2template.nii.gz', verbose)
-    if output_type == 1:
-        sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
-        sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
+    sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
+    sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
 
     # Delete temporary files
     if remove_temp_files:
