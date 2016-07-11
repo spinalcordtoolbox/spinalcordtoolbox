@@ -441,7 +441,7 @@ class SpinalCordStraightener(object):
 
             coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, nearest_indexes_straight)
             displacements_straight = coord_straight2curved - physical_coordinates_straight
-            # for some reason, displacement in Z is inverted. Probably due to left/right-hended definition of referential.
+            # for some reason, displacement in Z is inverted. Probably due to left/right-handed definition of referential.
             #displacements_straight[:, 0] = -displacements_straight[:, 0]
             displacements_straight[:, 2] = -displacements_straight[:, 2]
             displacements_straight[indexes_out_distance_straight] = [100000.0, 100000.0, 100000.0]
@@ -486,7 +486,7 @@ class SpinalCordStraightener(object):
                 if temp_mean:
                     mean_value = np.mean(temp_mean)
                     mean_coord.append(np.mean([[coord.x * coord.value / mean_value, coord.y * coord.value / mean_value]
-                                            for coord in coordinates_centerline if coord.z == z], axis=0))
+                                                for coord in coordinates_centerline if coord.z == z], axis=0))
 
             # compute error between the straightened centerline and the straight line.
             from math import sqrt
