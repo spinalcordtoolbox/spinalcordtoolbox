@@ -183,21 +183,26 @@ def main():
     zsubsample = param.zsubsample
     # smoothing_sigma = param.smoothing_sigma
 
-    # capitalize letters for contrast
-    if contrast_template == 't1':
-        contrast_template = 'T1'
-    elif contrast_template == 't2':
-        contrast_template = 'T2'
+    # capitalize letters for contrast file for old versions of template
+    if any(substring in path_template for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
+        if contrast_template == 't1':
+            contrast_template = 'T1'
+        elif contrast_template == 't2':
+            contrast_template = 'T2'
 
     # retrieve file_template based on contrast
-    fname_template_list = glob(path_template+'template/*'+contrast_template+'.nii.gz')
-    # TODO: make sure there is only one file -- check if file is there otherwise it crashes
-    fname_template = fname_template_list[0]
+    try:
+        fname_template_list = glob(path_template + 'template/*' + contrast_template + '.nii.gz')
+        fname_template = fname_template_list[0]
+    except IndexError:
+        sct.printv('\nERROR: No template found in '+path_template+'template/*'+contrast_template+'.nii.gz', 1, 'error')
 
     # retrieve file_template_seg
-    fname_template_seg_list = glob(path_template+'template/*cord.nii.gz')
-    # TODO: make sure there is only one file
-    fname_template_seg = fname_template_seg_list[0]
+    try:
+        fname_template_seg_list = glob(path_template + 'template/*cord.nii.gz')
+        fname_template_seg = fname_template_seg_list[0]
+    except IndexError:
+        sct.printv('\nERROR: No template cord segmentation found. Please check the provided path.', 1, 'error')
 
     # start timer
     start_time = time.time()
@@ -346,44 +351,30 @@ def main():
     sct.run('sct_apply_transfo -i '+ftmp_label+' -o '+add_suffix(ftmp_label, '_straight')+' -d '+add_suffix(ftmp_seg, '_straight')+' -w warp_curve2straight.nii.gz -x nn')
     ftmp_label = add_suffix(ftmp_label, '_straight')
 
-    # Create crosses for the template labels and get coordinates
-    sct.printv('\nCreate a 15 mm cross for the template labels...', verbose)
+    # Compute rigid transformation between straight landmarks and template landmarks
+    sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
+    # open template label
     template_image = Image(ftmp_template_label)
     coordinates_input = template_image.getNonZeroCoordinates(sorting='value')
     # jcohenadad, issue #628 <<<<<
     # landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
     landmark_template = coordinates_input
     # >>>>>
-    if verbose == 2:
-        # TODO: assign cross to image before saving
-        template_image.setFileName(add_suffix(ftmp_template_label, '_cross'))
-        template_image.save(type='minimize_int')
-
-    # Create crosses for the input labels into straight space and get coordinates
-    sct.printv('\nCreate a 15 mm cross for the input labels...', verbose)
+    # open data label
     label_straight_image = Image(ftmp_label)
     coordinates_input = label_straight_image.getCoordinatesAveragedByValue()  # landmarks are sorted by value
     # jcohenadad, issue #628 <<<<<
     # landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
     landmark_straight = coordinates_input
     # >>>>>
-    if verbose == 2:
-        # TODO: assign cross to image before saving
-        label_straight_image.setFileName(add_suffix(ftmp_label, '_cross'))
-        label_straight_image.save(type='minimize_int')
-
     # Reorganize landmarks
     points_fixed, points_moving = [], []
     for coord in landmark_straight:
         point_straight = label_straight_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
-
     for coord in landmark_template:
         point_template = template_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
-
-    # Register curved landmarks on straight landmarks based on python implementation
-    sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
 
     import msct_register_landmarks
     # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
@@ -419,6 +410,7 @@ def main():
     sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
     ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
 
+    """
     # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
     # Solution found: remove slices below and above landmarks to avoid rotation effects
     points_straight = []
@@ -427,6 +419,7 @@ def main():
     min_point, max_point = int(round(np.min(points_straight))), int(round(np.max(points_straight)))
     sct.run('sct_crop_image -i ' + ftmp_seg + ' -start ' + str(min_point) + ' -end ' + str(max_point) + ' -dim 2 -b 0 -o ' + add_suffix(ftmp_seg, '_black'))
     ftmp_seg = add_suffix(ftmp_seg, '_black')
+    """
 
     # threshold and binarize
     sct.printv('\nBinarize segmentation...', verbose)
