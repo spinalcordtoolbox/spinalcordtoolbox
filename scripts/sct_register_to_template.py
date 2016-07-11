@@ -30,7 +30,8 @@ import numpy as np
 
 
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
 
 # DEFAULT PARAMETERS
 class Param:
@@ -183,10 +184,11 @@ def main():
     # smoothing_sigma = param.smoothing_sigma
 
     # capitalize letters for contrast
-    if contrast_template == 't1':
-        contrast_template = 'T1'
-    elif contrast_template == 't2':
-        contrast_template = 'T2'
+    if 'MNI-Poly-AMU' in path_template:
+        if contrast_template == 't1':
+            contrast_template = 'T1'
+        elif contrast_template == 't2':
+            contrast_template = 'T2'
 
     # retrieve file_template based on contrast
     fname_template_list = glob(path_template+param.folder_template+'*'+contrast_template+'.nii.gz')
@@ -324,7 +326,7 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose), verbose)
+    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -param threshold_distance=5 -v '+str(verbose), verbose)
     # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
