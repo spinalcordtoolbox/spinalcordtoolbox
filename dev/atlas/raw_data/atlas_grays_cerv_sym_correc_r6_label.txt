@@ -1,0 +1,37 @@
+0,14,left fasciculus gracilis
+1,146,right fasciculus gracilis
+2,26,left fasciculus cuneatus
+3,152,right fasciculus cuneatus
+4,38,left lateral corticospinal tract
+5,159,right lateral corticospinal tract
+6,47,left ventral spinocerebellar tract
+7,167,right ventral spinocerebellar tract
+8,52,left rubrospinal tract
+9,173,right rubrospinal tract
+10,62,left lateral reticulospinal tract
+11,180,right lateral reticulospinal tract
+12,70,left spinal lemniscus (spinothalamic and spinoreticular tracts)
+13,187,right spinal lemniscus (spinothalamic and spinoreticular tracts)
+14,82,left spino-olivary tract
+15,194,right spino-olivary tract
+16,89,left ventrolateral reticulospinal tract
+17,199,right ventrolateral reticulospinal tract
+18,94,left lateral vestibulospinal tract
+19,204,right lateral vestibulospinal tract
+20,101,left ventral reticulospinal tract
+21,208,right ventral reticulospinal tract
+22,107,11,left ventral corticospinal tract
+23,214,right ventral corticospinal tract
+24,112,left tectospinal tract
+25,219,right tectospinal tract
+26,116,left medial reticulospinal tract
+27,224,right medial reticulospinal tract
+28,121,left medial longitudinal fasciculus
+29,230,right medial longitudinal fasciculus
+30,45,left dorsal horn
+31,150,right dorsal horn
+32,80,left intermediate zone
+33,190,right intermediate zone
+34,120,left ventral horn
+35,220,right ventral horn
+36,255,CSF contour
