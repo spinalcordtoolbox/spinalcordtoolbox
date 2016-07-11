@@ -120,8 +120,7 @@ def get_parser():
                       type_value='str',
                       description="""Parameters for straightening (see sct_straighten_spinalcord).""",
                       mandatory=False,
-                      default_value='',
-                      example="-params bspline_meshsize=3x3x5")
+                      default_value='')
     # parser.add_option(name="-cpu-nb",
     #                   type_value="int",
     #                   description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
