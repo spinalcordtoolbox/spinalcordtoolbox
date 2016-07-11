@@ -114,8 +114,9 @@ def create_mask():
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, param.verbose)
+    path_tmp = sct.tmp_create(param.verbose)
+    # )sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    # sct.run('mkdir '+path_tmp, param.verbose)
 
     sct.printv('\nCheck orientation...', param.verbose)
     orientation_input = get_orientation_3d(param.fname_data, filename=True)
