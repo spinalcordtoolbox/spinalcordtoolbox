@@ -50,7 +50,7 @@ class Param:
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         # self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
-        self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
+        # self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
         self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
                           '10'] # STD of the assumed gaussian-distributed noise
 
@@ -195,7 +195,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param.verbose
-    ml_clusters = param.ml_clusters
+    # ml_clusters = param.ml_clusters
     adv_param = param.adv_param
     normalizing_label = []
 
@@ -203,12 +203,15 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     # sct.check_folder_exist(path_label)
     # path_label = sct.slash_at_the_end(path_label, 1)
 
-    # adjust file names for old versions of template
-    # if any(substring in path_label for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
+    # adjust file names and parameters for old MNI-Poly-AMU template
     if not len(glob(path_label + 'WMtract*.*')) == 0:
-            suffix_vertebral_labeling = '*_level.nii.gz'
+        # MNI-Poly-AMU
+        suffix_vertebral_labeling = '*_level.nii.gz'
+        ml_clusters = '0:29,30,31'  # 3-class for robust maximum likelihood estimation: WM, GM and CSF
     else:
+        # PAM50 and later
         suffix_vertebral_labeling = '*_levels.nii.gz'
+        ml_clusters = '0:29,30:35,36'
 
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
