@@ -127,7 +127,7 @@ bin: binarize mask (threshold=0.5)""",
                       deprecated_by='-param')
     parser.add_option(name='-o',
                       type_value='file_output',
-                      description='File containing the results of metrics extraction.',
+                      description='File containing the results of metrics extraction. Default: '+param_default.fname_output,
                       mandatory=False,
                       default_value=param_default.fname_output)
     parser.add_option(name='-vert',
@@ -192,6 +192,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # Initialization
     # fname_vertebral_labeling = param.fname_vertebral_labeling
+    fname_vertebral_labeling = ''
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param.verbose
@@ -636,13 +637,13 @@ def remove_slices(data_to_crop, slices_of_interest):
 def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
     """Save results in the output type selected by user."""
 
-    sct.printv('\nSave results in: '+fname_output+'.'+output_type+' ...')
+    sct.printv('\nSaving results in: '+fname_output+' ...')
 
     if output_type == 'txt':
         # CSV format, header lines start with "#"
 
         # Write mode of file
-        fid_metric = open(fname_output+'.'+output_type, 'w')
+        fid_metric = open(fname_output, 'w')
 
         # WRITE HEADER:
         # Write date and time
@@ -704,15 +705,15 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
     elif output_type == 'xls':
 
         # if the user asked for no overwriting but the specified output file does not exist yet
-        if (not overwrite) and (not os.path.isfile(fname_output + '.' + output_type)):
-            sct.printv('WARNING: You asked to edit the pre-existing file \"'+fname_output + '.' + output_type+'\" but this file does not exist. It will be created.', type='warning')
+        if (not overwrite) and (not os.path.isfile(fname_output)):
+            sct.printv('WARNING: You asked to edit the pre-existing file \"'+fname_output+'\" but this file does not exist. It will be created.', type='warning')
             overwrite = 1
 
         if not overwrite:
             from xlrd import open_workbook
             from xlutils.copy import copy
 
-            existing_book = open_workbook(fname_output + '.' + output_type)
+            existing_book = open_workbook(fname_output)
 
             # get index of the first empty row and leave one empty row between the two subjects
             row_index = existing_book.sheet_by_index(0).nrows
@@ -788,7 +789,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
             row_index += 1
 
-        book.save(fname_output + '.' + output_type)
+        book.save(fname_output)
 
     sct.printv('\tDone.')
 
