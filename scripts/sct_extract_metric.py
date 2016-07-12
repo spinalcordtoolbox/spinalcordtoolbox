@@ -19,9 +19,9 @@
 
 # Import common Python libraries
 import os
-import getopt
 import sys
 import commands
+from glob import glob
 import time
 import nibabel as nib
 import numpy as np
@@ -41,7 +41,7 @@ ALMOST_ZERO = 0.000001
 class Param:
     def __init__(self):
         self.method = 'wath'
-        self.path_label = path_sct+'/data/atlas'
+        self.path_label = path_sct+'/data/PAM50/atlas/'
         self.output_type = 'txt'
         self.verbose = 1
         self.vertebral_levels = ''
@@ -49,7 +49,7 @@ class Param:
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
-        self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
+        # self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
         self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
                           '10'] # STD of the assumed gaussian-distributed noise
@@ -163,7 +163,7 @@ bin: binarize mask (threshold=0.5)""",
                       mandatory=False)
 
     # read the .txt files referencing the labels
-    file_label = param_default.path_label + '/' + param_default.file_info_label
+    file_label = param_default.path_label + param_default.file_info_label
     sct.check_file_exist(file_label, 0)
     default_info_label = open(file_label, 'r')
     label_references = default_info_label.read()
@@ -191,7 +191,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     """Main."""
 
     # Initialization
-    fname_vertebral_labeling = param.fname_vertebral_labeling
+    # fname_vertebral_labeling = param.fname_vertebral_labeling
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param.verbose
@@ -200,19 +200,26 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     normalizing_label = []
 
     # check if the atlas folder given exists and add slash at the end
-    sct.check_folder_exist(path_label)
-    path_label = sct.slash_at_the_end(path_label, 1)
+    # sct.check_folder_exist(path_label)
+    # path_label = sct.slash_at_the_end(path_label, 1)
+
+    # adjust file names for old versions of template
+    # if any(substring in path_label for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
+    if not len(glob(path_label + 'WMtract*.*')) == 0:
+            suffix_vertebral_labeling = '*_level.nii.gz'
+    else:
+        suffix_vertebral_labeling = '*_levels.nii.gz'
 
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
         if slices_of_interest:  # impossible to select BOTH specific slices and specific vertebral levels
             sct.printv(parser.usage.generate(error='ERROR: You cannot select BOTH vertebral levels AND slice numbers.'))
         else:
-            fname_vertebral_labeling_list = sct.find_file_within_folder(fname_vertebral_labeling, path_label + '..')
+            fname_vertebral_labeling_list = sct.find_file_within_folder(suffix_vertebral_labeling, path_label + '..')
             if len(fname_vertebral_labeling_list) > 1:
-                sct.printv(parser.usage.generate(error='ERROR: More than one file named "' + fname_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
+                sct.printv(parser.usage.generate(error='ERROR: More than one file named "' + suffix_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
             elif len(fname_vertebral_labeling_list) == 0:
-                sct.printv(parser.usage.generate(error='ERROR: No file named "' + fname_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
+                sct.printv(parser.usage.generate(error='ERROR: No file named "' + suffix_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
             else:
                 fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
 
@@ -1032,7 +1039,7 @@ if __name__ == "__main__":
     # output_type = param_default.output_type
 
     fname_data = arguments['-i']
-    path_label = arguments['-f']
+    path_label = sct.slash_at_the_end(arguments['-f'], 1)
     method = arguments['-method']
     labels_user = ''
     overwrite = 0
