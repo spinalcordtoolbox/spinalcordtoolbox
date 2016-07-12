@@ -81,7 +81,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value="folder",
                       description="Path to template.",
                       mandatory=False,
-                      default_value=path_sct+'/data/template/')
+                      default_value=path_sct+'/data/PAM50/template/')
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
                       description='Initialize labeling by providing slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
