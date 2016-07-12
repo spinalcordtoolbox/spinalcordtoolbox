@@ -184,10 +184,7 @@ def main():
     # adjust file names for old versions of template
     if any(substring in path_template for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
         # template name
-        if contrast_template == 't1':
-            contrast_template = 'T1'
-        elif contrast_template == 't2':
-            contrast_template = 'T2'
+        contrast_template = contrast_template.upper()
         # label name
         file_template_label = 'landmarks_center.nii.gz'
     else:
