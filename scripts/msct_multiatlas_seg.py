@@ -1275,7 +1275,7 @@ if __name__ == "__main__":
                           type_value="str",
                           description="Image containing level labels for the target or str indicating the level",
                           mandatory=False,
-                          example='MNI-Poly-AMU_level_IRP.nii.gz')
+                          example='PAM50_levels_IRP.nii.gz')
         parser.add_option(name="-reg",
                           type_value=[[','], 'str'],
                           description="list of transformations to apply to co-register the dictionary data",
