@@ -73,7 +73,7 @@ def get_parser():
                       example=path_sct+'/data/atlas')
     parser.add_option(name='-l',
                       type_value='str',
-                      description='Label IDs to extract the metric from. Example: 1,3 for left fasciculus cuneatus and left ventral spinocerebellar tracts. Default = all labels. You can also select labels using 1:3 to get labels 1,2,3.',
+                      description='Label IDs to extract the metric from. Default = all labels. Separate labels with ",". To select a group of consecutive labels use ":". Example: 1:3 is equivalent to 1,2,3',
                       mandatory=False,
                       default_value='')
     parser.add_option(name='-method',
