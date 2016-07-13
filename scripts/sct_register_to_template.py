@@ -19,7 +19,7 @@ import commands
 import time
 from glob import glob
 import sct_utils as sct
-from sct_utils import add_suffix
+from sct_utils import add_suffix, find_file_within_folder
 from sct_image import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
@@ -49,7 +49,7 @@ class Param:
         # self.metric = 'MI'
         self.verbose = 1  # verbose
         # self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
-        self.path_template = path_sct+'/template/data'
+        self.path_template = path_sct+'/data/template'
         # self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         # self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
@@ -184,7 +184,7 @@ def main():
     # smoothing_sigma = param.smoothing_sigma
 
     # capitalize letters for contrast file for old versions of template
-    if any(substring in path_template for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
+    if find_file_within_folder('MNI-Poly-AMU*.nii.gz', path_template) or find_file_within_folder('sct_testing_data', path_template):
         if contrast_template == 't1':
             contrast_template = 'T1'
         elif contrast_template == 't2':
