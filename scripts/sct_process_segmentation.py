@@ -669,6 +669,9 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         # write result into output file
         save_results(output_prefix+output_suffixes[3], output_type, overwrite, file_data, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
+    elif (not (slices or vert_levels)) and (output_type == 'xls'):
+        sct.printv('WARNING: Excel output type for the result file is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in a .txt file.', type='warning')
+
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
