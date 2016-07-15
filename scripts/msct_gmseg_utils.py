@@ -813,10 +813,10 @@ def save_by_slice(dic_dir):
                     '''
             if path_file_levels is None and 'label' in os.listdir(subject_path):
                 '''
-                if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
-                    sct.run('sct_image -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
+                if 'PAM50_levels_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
+                    sct.run('sct_image -i ' + subject_path + '/label/template/MPAM50_levels.nii.gz -setorient IRP')
                 '''
-                path_file_levels = subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz'
+                path_file_levels = subject_path + '/label/template/PAM50_levels.nii.gz'
 
             elif path_file_levels is not None:
                 path_level, file_level, ext_level = sct.extract_fname(path_file_levels)
@@ -1064,9 +1064,9 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
     cmd_warp = 'sct_warp_template -d ' + t2star_fname + ' -w ' + total_warp_name + ' -a 0 '
     sct.run(cmd_warp)
 
-    sct.run('sct_image -i ./label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
+    sct.run('sct_image -i ./label/template/PAM50_levels.nii.gz -setorient IRP')
 
-    return 'MNI-Poly-AMU_level_IRP.nii.gz'
+    return 'PAM50_levels_IRP.nii.gz'
 
 
 
