@@ -5,8 +5,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
-# Modified: 2015-03-31
+# Authors: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -190,7 +189,7 @@ def main():
     else:
         file_template_label = template + '_label_body.nii.gz'
 
-        # retrieve file_template based on contrast
+    # retrieve file_template based on contrast
     try:
         fname_template_list = glob(path_template + 'template/*' + contrast_template + '.nii.gz')
         fname_template = fname_template_list[0]
