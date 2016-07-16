@@ -16,68 +16,17 @@ import os
 import time
 import commands
 import sys
-from copy import deepcopy
 from msct_parser import Parser
-from sct_label_utils import ProcessLabels
-from sct_crop_image import ImageCropper
-from nibabel import load, Nifti1Image, save
-from numpy import array, asarray, sum, isnan, sin, cos, arctan
-# from sympy.solvers import solve
-# from sympy import Symbol
+from nibabel import Nifti1Image, save
 from scipy import ndimage
 from sct_apply_transfo import Transform
 import sct_utils as sct
-from msct_smooth import smoothing_window, evaluate_derivative_3D, evaluate_derivative_2D
-# from sct_image import set_orientation
-from msct_types import Coordinate
-
-import copy_reg
-import types
+from msct_smooth import smoothing_window, evaluate_derivative_3D
+from math import sqrt
+import numpy as np
 
 
-def _pickle_method(method):
-    """
-    Author: Steven Bethard (author of argparse)
-    http://bytes.com/topic/python/answers/552476-why-cant-you-pickle-instancemethods
-    """
-    func_name = method.im_func.__name__
-    obj = method.im_self
-    cls = method.im_class
-    cls_name = ''
-    if func_name.startswith('__') and not func_name.endswith('__'):
-        cls_name = cls.__name__.lstrip('_')
-    if cls_name:
-        func_name = '_' + cls_name + func_name
-    return _unpickle_method, (func_name, obj, cls)
-
-
-def _unpickle_method(func_name, obj, cls):
-    """
-    Author: Steven Bethard
-    http://bytes.com/topic/python/answers/552476-why-cant-you-pickle-instancemethods
-    """
-    for cls in cls.mro():
-        try:
-            func = cls.__dict__[func_name]
-        except KeyError:
-            pass
-        else:
-            break
-    return func.__get__(obj, cls)
-
-copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
-
-
-def is_number(s):
-    """Check if input is float."""
-    try:
-        float(s)
-        return True
-    except TypeError:
-        return False
-
-
-def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0):
+def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0, nurbs_pts_number=1000, all_slices=True, phys_coordinates=False, remove_outliers=False):
     """
     :param fname_centerline: centerline in RPI orientation, or an Image
     :return: x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
@@ -116,11 +65,50 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     x_centerline_deriv = [0 for _ in range(0, nz_nonz, 1)]
     y_centerline_deriv = [0 for _ in range(0, nz_nonz, 1)]
     z_centerline_deriv = [0 for _ in range(0, nz_nonz, 1)]
+    num_features = [0 for _ in range(0, nz_nonz, 1)]
+    distances = []
 
-    # get center of mass of the centerline/segmentation
+    if nz_nonz <= 5 and algo_fitting == 'nurbs':
+        algo_fitting = 'hanning'
+
+    # get center of mass of the centerline/segmentation and remove outliers
     sct.printv('.. Get center of mass of the centerline/segmentation...', verbose)
     for iz in range(0, nz_nonz, 1):
-        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:, :, z_centerline[iz]]))
+        slice = np.array(data[:, :, z_centerline[iz]])
+        labeled_array, num_f = ndimage.measurements.label(slice)
+        num_features[iz] = num_f
+        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(slice)
+        if iz != 0:
+            distances.append(sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2))
+
+    if remove_outliers:
+        mean_distances = np.mean(distances)
+        std_distances = np.std(distances)
+        indices_to_remove = []
+
+        # ascending verification
+        for iz in range(0, nz_nonz/2, 1):
+            distance = sqrt((x_centerline[iz]-x_centerline[iz+1]) ** 2 + (y_centerline[iz]-y_centerline[iz+1]) ** 2)
+            if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
+                indices_to_remove.append(iz)
+
+        # descending verification
+        for iz in range(nz_nonz-1, nz_nonz/2, -1):
+            distance = sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2)
+            if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
+                indices_to_remove.append(iz)
+
+        x_centerline = np.delete(x_centerline, indices_to_remove)
+        y_centerline = np.delete(y_centerline, indices_to_remove)
+        z_centerline = np.delete(z_centerline, indices_to_remove)
+
+    if phys_coordinates:
+        sct.printv('.. Computing physical coordinates of centerline/segmentation...', verbose)
+        coord_centerline = np.array(zip(x_centerline, y_centerline, z_centerline))
+        phys_coord_centerline = np.asarray(file_image.transfo_pix2phys(coord_centerline))
+        x_centerline = phys_coord_centerline[:, 0]
+        y_centerline = phys_coord_centerline[:, 1]
+        z_centerline = phys_coord_centerline[:, 2]
 
     sct.printv('.. Smoothing algo = '+algo_fitting, verbose)
     if algo_fitting == 'hanning':
@@ -128,8 +116,8 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         sct.printv('.. Windows length = '+str(window_length), verbose)
 
         # change to array
-        x_centerline = asarray(x_centerline)
-        y_centerline = asarray(y_centerline)
+        x_centerline = np.asarray(x_centerline)
+        y_centerline = np.asarray(y_centerline)
 
         # Smooth the curve
         x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length/pz, window=type_window,
@@ -153,15 +141,19 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
                                                                                             y_centerline_fit,
                                                                                             z_centerline, px, py, pz)
 
-        x_centerline_fit = asarray(x_centerline_fit)
-        y_centerline_fit = asarray(y_centerline_fit)
-        z_centerline_fit = asarray(z_centerline_fit)
+        x_centerline_fit = np.asarray(x_centerline_fit)
+        y_centerline_fit = np.asarray(y_centerline_fit)
+        z_centerline_fit = np.asarray(z_centerline_fit)
 
     elif algo_fitting == "nurbs":
         from msct_smooth import b_spline_nurbs
+
+        # TODO: remove outliers that are at the edges of the spinal cord
+        # simple way to do it: go from one end and remove point if the distance from mean is higher than 2 * std
+
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv,\
             z_centerline_deriv = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None,
-                                                verbose=verbose)
+                                                point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
 
     else:
         sct.printv("ERROR: wrong algorithm for fitting", 1, "error")
@@ -170,93 +162,11 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
 
-def compute_cross_centerline(coordinate, derivative, gapxy=15):
-
-    x = coordinate.x
-    y = coordinate.y
-    z = coordinate.z
-    dx = derivative.x
-    dy = derivative.y
-    dz = derivative.z
-    ax = arctan(dx)  # angle between tangent to curve and x
-    ay = arctan(dy)  # angle between tangent to curve and y
-
-    # initialize cross_coordinates
-    cross_coordinates = [Coordinate(), Coordinate(), Coordinate(), Coordinate(),
-                         Coordinate(), Coordinate(), Coordinate(), Coordinate(),
-                         Coordinate(), Coordinate(), Coordinate(), Coordinate(),
-                         Coordinate(), Coordinate(), Coordinate(), Coordinate()]
-
-    i = 0
-    for gap in [gapxy, gapxy/2]:
-
-        # Ordering of labels (x: left-->right, y: bottom-->top, c: centerline):
-        #
-        #  5    2    4
-        #
-        #  1    c    0
-        #
-        #  7    3    6
-
-        # Label: 0
-        cross_coordinates[i].x = x + gap * cos(ax)
-        cross_coordinates[i].y = y
-        cross_coordinates[i].z = z - gap * sin(ax)
-        i += 1
-
-        # Label: 1
-        cross_coordinates[i].x = x - gap * cos(ax)
-        cross_coordinates[i].y = y
-        cross_coordinates[i].z = z + gap * sin(ax)
-        i += 1
-
-        # Label: 2
-        cross_coordinates[i].x = x
-        cross_coordinates[i].y = y + gap * cos(ay)
-        cross_coordinates[i].z = z - gap * sin(ay)
-        i += 1
-
-        # Label: 3
-        cross_coordinates[i].x = x
-        cross_coordinates[i].y = y - gap * cos(ay)
-        cross_coordinates[i].z = z + gap * sin(ay)
-        i += 1
-
-        # Label: 4
-        cross_coordinates[i].x = x + gap * cos(ax)
-        cross_coordinates[i].y = y + gap * cos(ay)
-        cross_coordinates[i].z = z - gap * sin(ax) - gap * sin(ay)
-        i += 1
-
-        # Label: 5
-        cross_coordinates[i].x = x - gap * cos(ax)
-        cross_coordinates[i].y = y + gap * cos(ay)
-        cross_coordinates[i].z = z + gap * sin(ax) - gap * sin(ay)
-        i += 1
-
-        # Label: 6
-        cross_coordinates[i].x = x + gap * cos(ax)
-        cross_coordinates[i].y = y - gap * cos(ay)
-        cross_coordinates[i].z = z - gap * sin(ax) + gap * sin(ay)
-        i += 1
-
-        # Label: 7
-        cross_coordinates[i].x = x - gap * cos(ax)
-        cross_coordinates[i].y = y - gap * cos(ay)
-        cross_coordinates[i].z = z + gap * sin(ax) + gap * sin(ay)
-        i += 1
-
-    for i, coord in enumerate(cross_coordinates):
-        coord.value = coordinate.value + i + 1
-
-    return cross_coordinates
-
-
 class SpinalCordStraightener(object):
 
-    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15, padding=30,
-                 leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning',
-                 type_window='hanning', window_length=50, crop=1, output_filename=''):
+    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15,
+                 leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='nurbs',
+                 precision=2.0, threshold_distance=2.5, type_window='hanning', window_length=50, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -264,73 +174,21 @@ class SpinalCordStraightener(object):
         self.deg_poly = deg_poly  # maximum degree of polynomial function for fitting centerline.
         self.gapxy = gapxy  # size of cross in x and y direction for the landmarks
         self.gapz = gapz  # gap between landmarks along z voxels
-        self.padding = padding  # pad input volume in order to deal with the fact that some landmarks might be outside
         # the FOV due to the curvature of the spinal cord
         self.leftright_width = leftright_width
         self.interpolation_warp = interpolation_warp
         self.remove_temp_files = rm_tmp_files  # remove temporary files
         self.verbose = verbose
         self.algo_fitting = algo_fitting  # 'hanning' or 'nurbs'
+        self.precision = precision
+        self.threshold_distance = threshold_distance
         self.type_window = type_window  # !! for more choices, edit msct_smooth. Possibilities: 'flat', 'hanning',
         # 'hamming', 'bartlett', 'blackman'
         self.window_length = window_length
-        self.crop = crop
-
-        # self.cpu_number = None
-        self.results_landmarks_curved = []
-
-        self.bspline_meshsize = '5x5x10'  # JULIEN
-        self.bspline_numberOfLevels = '3'
-        self.bspline_order = '3'
-        self.all_labels = 1
-        self.use_continuous_labels = 1
+        self.path_output = ""
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
-
-    def worker_landmarks_curved(self, arguments_worker):
-        """Define landmarks along the centerline. Here, landmarks are densely defined along the centerline, and every
-        gapxy, a cross of landmarks is created
-        """
-        try:
-            iz = arguments_worker[0]
-            iz_curved, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv, x_centerline_fit, y_centerline_fit, z_centerline = arguments_worker[1]
-            temp_results = []
-
-            # loop across z_centerline (0-->zmax)
-            if z_centerline[iz] in iz_curved:
-                # at a junction (gapxy): set coordinates for landmarks at the center of the cross
-                coord = Coordinate([0, 0, 0, 0])
-                coord.x, coord.y, coord.z = x_centerline_fit[iz], y_centerline_fit[iz], z_centerline[iz]
-                deriv = Coordinate([0, 0, 0, 0])
-                deriv.x, deriv.y, deriv.z = x_centerline_deriv[iz], y_centerline_deriv[iz], z_centerline_deriv[iz]
-                temp_results.append(coord)
-                # compute cross
-                cross_coordinates = compute_cross_centerline(coord, deriv, self.gapxy)
-                for coord in cross_coordinates:
-                    temp_results.append(coord)
-            else:
-                # not a junction: do not create the cross.
-                temp_results.append(Coordinate([x_centerline_fit[iz], y_centerline_fit[iz], z_centerline[iz], 0], mode='continuous'))
-
-            return iz, temp_results
-
-        except KeyboardInterrupt:
-            return
-
-        except Exception as e:
-            print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
-            raise e
-
-    def worker_landmarks_curved_results(self, results):
-        sorted(results, key=lambda l: l[0])
-        self.results_landmarks_curved = []
-        landmark_curved_value = 1
-        for iz, l_curved in results:
-            for landmark in l_curved:
-                landmark.value = landmark_curved_value
-                self.results_landmarks_curved.append(landmark)
-                landmark_curved_value += 1
 
     def straighten(self):
         # Initialization
@@ -339,7 +197,6 @@ class SpinalCordStraightener(object):
         fname_output = self.output_filename
         gapxy = self.gapxy
         gapz = self.gapz
-        padding = self.padding
         leftright_width = self.leftright_width
         remove_temp_files = self.remove_temp_files
         verbose = self.verbose
@@ -347,7 +204,6 @@ class SpinalCordStraightener(object):
         algo_fitting = self.algo_fitting
         window_length = self.window_length
         type_window = self.type_window
-        crop = self.crop
         qc = self.qc
 
         # start timer
@@ -381,379 +237,307 @@ class SpinalCordStraightener(object):
         os.chdir(path_tmp)
 
         try:
-            # JULIEN
-            # TODO: resample at 1mm!!!
-            sct.run('cp data.nii data_1mm.nii')
-            sct.run('cp centerline.nii.gz centerline_1mm.nii.gz')
-            # # resample data to 1mm isotropic
-            # sct.printv('\nResample data to 1mm isotropic...', verbose)
-            # # fname_anat_resampled = file_anat + "_resampled.nii.gz"
-            # sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x linear -o data_1mm.nii')
-            # # fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
-            # sct.run('sct_resample -i centerline.nii.gz -mm 1.0x1.0x1.0 -x linear -o centerline_1mm.nii.gz')
-
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
-            sct.run('sct_image -i centerline_1mm.nii.gz -setorient RPI -o centerline_1mm_rpi.nii.gz')
-            # fname_centerline_orient = file_centerline + "_rpi.nii.gz"
-            # fname_centerline_orient = set_orientation(file_centerline+ext_centerline, "RPI", filename=True)
+            sct.run('sct_image -i centerline.nii.gz -setorient RPI -o centerline_rpi.nii.gz')
 
             # Get dimension
             sct.printv('\nGet dimensions...', verbose)
             from msct_image import Image
-            image_centerline = Image('centerline_1mm_rpi.nii.gz')
+            image_centerline = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
             sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
             sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
-            
-            # smooth centerline
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_1mm_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
 
-            # get 1D derivatives, for x=f(z) and y=f(z)
-            z_centerline_deriv_x, x_centerline_deriv = evaluate_derivative_2D(z_centerline, x_centerline_fit, pz, px)
-            z_centerline_deriv_y, y_centerline_deriv = evaluate_derivative_2D(z_centerline, y_centerline_fit, pz, py)
+            """
+            Steps: (everything is done in physical space)
+            1. open input image and centreline image
+            2. extract bspline fitting of the centreline, and its derivatives
+            3. compute length of centerline
+            4. compute and generate straight space
+            5. compute transformations
+                for each voxel of one space: (done using matrices --> improves speed by a factor x300)
+                    a. determine which plane of spinal cord centreline it is included
+                    b. compute the position of the voxel in the plane (X and Y distance from centreline, along the plane)
+                    c. find the correspondant centreline point in the other space
+                    d. find the correspondance of the voxel in the corresponding plane
+            6. generate warping fields for each transformations
+            7. write warping fields and apply them
 
-            # Get coordinates of landmarks along curved centerline
+            step 5.b: how to find the corresponding plane?
+                The centerline plane corresponding to a voxel correspond to the nearest point of the centerline.
+                However, we need to compute the distance between the voxel position and the plane to be sure it is part of the plane and not too distant.
+                If it is more far than a threshold, warping value should be 0.
+
+            step 5.d: how to make the correspondance between centerline point in both images?
+                Both centerline have the same lenght. Therefore, we can map centerline point via their position along the curve.
+                If we use the same number of points uniformely along the spinal cord (1000 for example), the correspondance is straight-forward.
+            """
+
+            # number of points along the spinal cord
+            if algo_fitting == 'hanning':
+                number_of_points = nz
+            else:
+                number_of_points = int(self.precision * (float(nz) / pz))
+
+            # 2. extract bspline fitting of the centreline, and its derivatives
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
+            from msct_types import Centerline
+            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
             # ==========================================================================================
-            sct.printv("\nGet coordinates of landmarks along curved centerline...", verbose)
-            # landmarks are created along the curved centerline every z=gapz. They consist of a "cross" of size gapx
-            # and gapy. In voxel space!!!
-
+            sct.printv("\nCreate the straight space and the safe zone...", verbose)
+            # 3. compute length of centerline
             # compute the length of the spinal cord based on fitted centerline and size of centerline in z direction
-            length_centerline, size_z_centerline = 0.0, 0.0
-            from math import sqrt
+            from math import sqrt, atan2, sin
 
-            for iz in range(0, len(z_centerline) - 1):
-                length_centerline += sqrt(((x_centerline_fit[iz] - x_centerline_fit[iz + 1]) * px) ** 2 +
-                                          ((y_centerline_fit[iz] - y_centerline_fit[iz + 1]) * py) ** 2 +
-                                          ((z_centerline[iz] - z_centerline[iz + 1]) * pz) ** 2)
-                size_z_centerline += abs((z_centerline[iz] - z_centerline[iz + 1]) * pz)
+            # Computation of the safe zone.
+            # The safe zone is defined as the length of the spinal ocrd for which an axial segmentation will be complete
+            # The safe length (to remove) is computed using the safe radius (given as parameter) and the angle of the
+            # last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
+            # Calculate Ls for both edges and remove appropriate number of centerline points
+            radius_safe = 0.0  # mm
+
+            # inferior edge
+            u = np.array([x_centerline_deriv[0], y_centerline_deriv[0], z_centerline_deriv[0]])
+            v = np.array([0, 0, -1])
+            angle_inferior = atan2(np.linalg.norm(np.cross(u, v)), np.dot(u, v))
+            length_safe_inferior = radius_safe * sin(angle_inferior)
+
+            # superior edge
+            u = np.array([x_centerline_deriv[-1], y_centerline_deriv[-1], z_centerline_deriv[-1]])
+            v = np.array([0, 0, 1])
+            angle_superior = atan2(np.linalg.norm(np.cross(u, v)), np.dot(u, v))
+            length_safe_superior = radius_safe * sin(angle_superior)
+
+            # remove points
+            from bisect import bisect
+            inferior_bound = bisect(centerline.progressive_length, length_safe_inferior) - 1
+            superior_bound = centerline.number_of_points - bisect(centerline.progressive_length_inverse, length_safe_superior)
+
+            length_centerline = centerline.length
+            size_z_centerline = z_centerline[-1] - z_centerline[0]
 
             # compute the size factor between initial centerline and straight bended centerline
             factor_curved_straight = length_centerline / size_z_centerline
             middle_slice = (z_centerline[0] + z_centerline[-1]) / 2.0
+
+            bound_curved = [z_centerline[inferior_bound], z_centerline[superior_bound]]
+            bound_straight = [(z_centerline[inferior_bound] - middle_slice) * factor_curved_straight + middle_slice,
+                              (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice]
+
             if verbose == 2:
                 print "Length of spinal cord = ", str(length_centerline)
                 print "Size of spinal cord in z direction = ", str(size_z_centerline)
                 print "Ratio length/size = ", str(factor_curved_straight)
+                print "Safe zone boundaries: "
+                print "Curved space = ", bound_curved
+                print "Straight space = ", bound_straight
 
-            # find z indices along centerline given a specific gap: iz_curved
-            nz_nonz = len(z_centerline)
-            nb_landmark = int(round(length_centerline/gapz))
-            iz_curved = [0]
-            iz_straight = [(z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice]
-            temp_length_centerline = iz_straight[0]
-            temp_previous_length = iz_straight[0]
-            for iz in range(1, len(z_centerline) - 1):
-                temp_length_centerline += sqrt(((x_centerline_fit[iz] - x_centerline_fit[iz + 1]) * px) ** 2 +
-                                               ((y_centerline_fit[iz] - y_centerline_fit[iz + 1]) * py) ** 2 +
-                                               ((z_centerline[iz] - z_centerline[iz + 1]) * pz) ** 2)
-                if temp_length_centerline >= temp_previous_length + gapz:
-                    iz_curved.append(iz)
-                    iz_straight.append(temp_length_centerline)
-                    temp_previous_length = temp_length_centerline
-            iz_curved.append(nz_nonz - 1)
-            iz_straight.append((z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice)
+            # 4. compute and generate straight space
+            # points along curved centerline are already regularly spaced.
+            # calculate position of points along straight centerline
 
-            # computing curved landmarks
-            landmark_curved = []
-            worker_arguments = (iz_curved,
-                                x_centerline_deriv,
-                                y_centerline_deriv,
-                                z_centerline_deriv,
-                                x_centerline_fit,
-                                y_centerline_fit,
-                                z_centerline)
-            landmark_curved_temp = [self.worker_landmarks_curved((iz, worker_arguments)) for iz in range(len(z_centerline))]
-            landmark_curved_value = 1
-            for iz, l_curved in landmark_curved_temp:
-                for landmark in l_curved:
-                    landmark.value = landmark_curved_value
-                    landmark_curved.append(landmark)
-                    landmark_curved_value += 1
-
-            # Get coordinates of landmarks along straight centerline
+            # Create straight NIFTI volumes
             # ==========================================================================================
-            sct.printv("\nGet coordinates of landmarks along straight centerline...", verbose)
-            landmark_straight = []
+            sct.printv('\nPad input volume to account for spinal cord length...', verbose)
+            from numpy import ceil
+            start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
+            end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
 
-            # compute new z-coordinates
-            z_straight = []
-            iz_straight = []
-            for iz in z_centerline:
-                z_straight.append((iz - middle_slice) * factor_curved_straight + middle_slice)
-                # get z-coordinates of junctions
-                if iz in iz_curved:
-                    iz_straight.append(z_straight[-1])
+            padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz))
+            sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,'+str(padding_z))
+            image_centerline_pad = Image('centerline_rpi.nii.gz')
+            nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
+            hdr_warp = image_centerline_pad.hdr.copy()
+            start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
+            end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
-            worker_arguments = (iz_straight,
-                                [0 for i in range(len(x_centerline_deriv))],
-                                [0 for i in range(len(y_centerline_deriv))],
-                                [0 for i in range(len(z_centerline_deriv))],
-                                [int(round(nx/2)) for i in range(len(x_centerline_fit))],
-                                [int(round(ny/2)) for i in range(len(y_centerline_fit))],
-                                z_straight)
+            straight_size_x = int(35 / px)
+            straight_size_y = int(35 / py)
+            warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
+            warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
+            if warp_space_x[0] < 0:
+                warp_space_x[1] += warp_space_x[0] - 2
+                warp_space_x[0] = 0
+            if warp_space_y[0] < 0:
+                warp_space_y[1] += warp_space_y[0] - 2
+                warp_space_y[0] = 0
 
-            landmark_straight_temp = [self.worker_landmarks_curved((iz, worker_arguments)) for iz in range(len(z_straight))]
-            landmark_straight_value = 1
-            for iz, l_curved in landmark_straight_temp:
-                for landmark in l_curved:
-                    landmark.value = landmark_straight_value
-                    landmark_straight.append(landmark)
-                    landmark_straight_value += 1
+            sct.run('sct_crop_image -i tmp.centerline_pad.nii.gz -o tmp.centerline_pad_crop.nii.gz -dim 0,1,2 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0 -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord[2] - start_point_coord[2]))
+            image_centerline_straight = Image('tmp.centerline_pad_crop.nii.gz')
+            nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
+            hdr_warp_s = image_centerline_straight.hdr.copy()
+            hdr_warp_s.set_data_dtype('float32')
+            #origin = [(nx_s * px_s)/2.0, -(ny_s * py_s)/2.0, -(nz_s * pz_s)/2.0]
+            #hdr_warp_s.structarr['qoffset_x'] = origin[0]
+            #hdr_warp_s.structarr['qoffset_y'] = origin[1]
+            #hdr_warp_s.structarr['qoffset_z'] = origin[2]
+            #hdr_warp_s.structarr['srow_x'][-1] = origin[0]
+            #hdr_warp_s.structarr['srow_y'][-1] = origin[1]
+            #hdr_warp_s.structarr['srow_z'][-1] = origin[2]
+            hdr_warp_s.structarr['quatern_b'] = 0.0
+            hdr_warp_s.structarr['quatern_c'] = 1.0
+            hdr_warp_s.structarr['quatern_d'] = 0.0
+            hdr_warp_s.structarr['srow_x'][0] = -px_s
+            hdr_warp_s.structarr['srow_x'][1] = 0.0
+            hdr_warp_s.structarr['srow_x'][2] = 0.0
+            hdr_warp_s.structarr['srow_y'][0] = 0.0
+            hdr_warp_s.structarr['srow_y'][1] = py_s
+            hdr_warp_s.structarr['srow_y'][2] = 0.0
+            hdr_warp_s.structarr['srow_z'][0] = 0.0
+            hdr_warp_s.structarr['srow_z'][1] = 0.0
+            hdr_warp_s.structarr['srow_z'][2] = pz_s
+            image_centerline_straight.hdr = hdr_warp_s
+            image_centerline_straight.compute_transform_matrix()
+            image_centerline_straight.save()
 
+            start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
+            end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
-            # display curved and straight cross
-            if verbose == 2:
-                from mpl_toolkits.mplot3d import Axes3D
-                import matplotlib.pyplot as plt
-                fig = plt.figure()
-                ax = Axes3D(fig)
-                plt_landmarks_curved, = ax.plot([coord.x for coord in landmark_curved],
-                                                [coord.y for coord in landmark_curved],
-                                                [coord.z for coord in landmark_curved],
-                                                'b.', markersize=3)
-                plt_landmarks_straight, = ax.plot([coord.x for coord in landmark_straight],
-                                                  [coord.y for coord in landmark_straight],
-                                                  [coord.z for coord in landmark_straight],
-                                                  'r.', markersize=3)
-                plt.legend([plt_landmarks_curved, plt_landmarks_straight],
-                               ['Landmarks curved', 'Landmarks straight'])
-                ax.set_xlabel('x')
-                ax.set_ylabel('y')
-                ax.set_zlabel('z')
-                ax.set_aspect('equal')
-                plt.show()
+            number_of_voxel = nx * ny * nz
+            sct.printv("Number of voxel = " + str(number_of_voxel))
 
-                # display curved labels
-                import matplotlib.pyplot as plt
-                plt.figure(1)
-                # fig1
-                ax1 = plt.subplot(121)
-                plt.plot([coord.x for coord in landmark_curved], [coord.z for coord in landmark_curved], 'b.', markersize=3)
-                plt.title('Curved labels')
-                plt.xlabel('x')
-                plt.ylabel('z')
-                plt.grid(True)
-                plt.gca().set_aspect('equal', adjustable='datalim')
-                # fig2
-                ax2 = plt.subplot(122, sharey=ax1)  # share same y-axis (corresponds to z)
-                ax2.plot([coord.y for coord in landmark_curved], [coord.z for coord in landmark_curved], 'b.', markersize=3)
-                plt.title('Curved labels')
-                plt.xlabel('y')
-                plt.ylabel('z')
-                plt.grid(True)
-                plt.gca().set_aspect('equal', adjustable='datalim')
-                plt.show()
+            time_centerlines = time.time()
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('tmp.centerline_pad.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
+            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
+                                    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
+            from numpy import linspace
+            ix_straight = [int(np.round(nx_s / 2))] * number_of_points
+            iy_straight = [int(np.round(ny_s / 2))] * number_of_points
+            iz_straight = linspace(0, end_point_coord[2] - start_point_coord[2], number_of_points)
+            dx_straight = [0.0] * number_of_points
+            dy_straight = [0.0] * number_of_points
+            dz_straight = [1.0] * number_of_points
+            coord_straight = np.array(zip(ix_straight, iy_straight, iz_straight))
+            coord_phys_straight = np.asarray(image_centerline_straight.transfo_pix2phys(coord_straight))
 
-            # Create NIFTI volumes with landmarks
-            # ==========================================================================================
-            # Pad input volume to deal with the fact that some landmarks on the curved centerline might be
-            # outside the FOV
-            # N.B. IT IS VERY IMPORTANT TO PAD ALSO ALONG X and Y, OTHERWISE SOME LANDMARKS MIGHT GET OUT OF THE FOV!!!
-            sct.printv('\nPad input volume to account for landmarks that fall outside the FOV...', verbose)
-            padding_x, padding_y, padding_z = padding, padding, padding
-            if nx + padding <= leftright_width:
-                padding_x = leftright_width - padding - nx
-            sct.run('sct_image -i centerline_1mm_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad '+str(padding_x)+','+str(padding_y)+','+str(padding_z))
+            centerline_straight = Centerline(coord_phys_straight[:, 0], coord_phys_straight[:, 1], coord_phys_straight[:, 2],
+                                             dx_straight, dy_straight, dz_straight)
 
-            # Open padded centerline for reading
-            sct.printv('\nOpen padded centerline for reading...', verbose)
-            file_image = load('tmp.centerline_pad.nii.gz')
-            data = file_image.get_data()
-            hdr = file_image.get_header()
-            hdr_straight_landmarks = hdr.copy()
-            hdr_straight_landmarks.structarr['quatern_b'] = -0.0
-            hdr_straight_landmarks.structarr['quatern_c'] = 1.0
-            hdr_straight_landmarks.structarr['quatern_d'] = 0.0
-            hdr_straight_landmarks.structarr['srow_x'][1] = hdr_straight_landmarks.structarr['srow_x'][2] = 0.0
-            hdr_straight_landmarks.structarr['srow_y'][0] = hdr_straight_landmarks.structarr['srow_y'][2] = 0.0
-            hdr_straight_landmarks.structarr['srow_z'][0] = hdr_straight_landmarks.structarr['srow_z'][1] = 0.0
-            hdr_straight_landmarks.structarr['srow_x'][0] = -1.0
-            hdr_straight_landmarks.structarr['srow_y'][1] = hdr_straight_landmarks.structarr['srow_z'][2] = 1.0
-            landmark_curved_rigid = []
+            time_centerlines = time.time() - time_centerlines
+            sct.printv('Time to generate centerline: ' + str(np.round(time_centerlines * 1000.0)) + ' ms', verbose)
 
-            # Create volumes containing curved and straight landmarks
-            data_curved_landmarks = data * 0
-            data_straight_landmarks = data * 0
+            # Create volumes containing curved and straight warping fields
+            time_generation_volumes = time.time()
+            data_warp_curved2straight = np.zeros((nx_s, ny_s, nz_s, 1, 3))
+            data_warp_straight2curved = np.zeros((nx, ny, nz, 1, 3))
 
-            # Loop across cross index
-            for index in range(0, len(landmark_curved)):
-                x, y, z = int(round(landmark_curved[index].x)), int(round(landmark_curved[index].y)), \
-                          int(round(landmark_curved[index].z))
+            # 5. compute transformations
+            # Curved and straight images and the same dimensions, so we compute both warping fields at the same time.
+            # b. determine which plane of spinal cord centreline it is included
+            x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
+            indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
+            x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, 0:nz_s]
+            indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
+            time_generation_volumes = time.time() - time_generation_volumes
+            sct.printv('Time to generate volumes and indices: ' + str(np.round(time_generation_volumes * 1000.0)) + ' ms', verbose)
 
-                # attribute landmark_value to the voxel
-                # JULIEN
-                # data_curved_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_curved[index].value
+            time_find_nearest_indexes = time.time()
+            physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
+            physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
+            nearest_indexes_curved = centerline.find_nearest_indexes(physical_coordinates)
+            nearest_indexes_straight = centerline_straight.find_nearest_indexes(physical_coordinates_straight)
+            time_find_nearest_indexes = time.time() - time_find_nearest_indexes
+            sct.printv('Time to find nearest centerline points: ' + str(np.round(time_find_nearest_indexes * 1000.0)) + ' ms', verbose)
 
-                # JULIEN
-                # attribute landmark_value to the voxel and its neighbours
-                data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
+            # compute the distance from voxels to corresponding plans.
+            # This distance is used to blackout voxels that are not in the modified image.
+            time_get_distances_from_planes = time.time()
+            distances_curved = centerline.get_distances_from_planes(physical_coordinates, nearest_indexes_curved)
+            distances_straight = centerline_straight.get_distances_from_planes(physical_coordinates_straight, nearest_indexes_straight)
+            indexes_out_distance_curved = np.logical_or(distances_curved > self.threshold_distance, distances_curved < -self.threshold_distance)
+            indexes_out_distance_straight = np.logical_or(distances_straight > self.threshold_distance, distances_straight < -self.threshold_distance)
+            time_get_distances_from_planes = time.time() - time_get_distances_from_planes
+            sct.printv('Time to compute distance between voxels and nearest planes: ' + str(np.round(time_get_distances_from_planes * 1000.0)) + ' ms', verbose)
 
-                # get x, y and z coordinates of straight landmark (rounded to closest integer)
-                x, y, z = int(round(landmark_straight[index].x)), int(round(landmark_straight[index].y)), \
-                          int(round(landmark_straight[index].z))
+            # c. compute the position of the voxel in the plane coordinate system
+            # (X and Y distance from centreline, along the plane)
+            time_get_projected_coordinates_on_planes = time.time()
+            projected_points_curved = centerline.get_projected_coordinates_on_planes(physical_coordinates, nearest_indexes_curved)
+            projected_points_straight = centerline_straight.get_projected_coordinates_on_planes(physical_coordinates_straight, nearest_indexes_straight)
+            time_get_projected_coordinates_on_planes = time.time() - time_get_projected_coordinates_on_planes
+            sct.printv('Time to get projected voxels on planes: ' + str(np.round(time_get_projected_coordinates_on_planes * 1000.0)) + ' ms', verbose)
 
-                # JULIEN
-                # data_straight_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_straight[index].value
+            # e. find the correspondance of the voxel in the corresponding plane
+            time_get_in_plans_coordinates = time.time()
+            coord_in_planes_curved = centerline.get_in_plans_coordinates(projected_points_curved, nearest_indexes_curved)
+            coord_in_planes_straight = centerline_straight.get_in_plans_coordinates(projected_points_straight, nearest_indexes_straight)
+            time_get_in_plans_coordinates = time.time() - time_get_in_plans_coordinates
+            sct.printv('Time to get in-plane coordinates: ' + str(np.round(time_get_in_plans_coordinates * 1000.0)) + ' ms', verbose)
 
-                # JULIEN
-                # attribute landmark_value to the voxel and its neighbours
-                data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
+            # 6. generate warping fields for each transformations
+            # compute coordinate in straight space based on position on plane
+            time_displacements = time.time()
+            coord_curved2straight = centerline_straight.points[nearest_indexes_curved]
+            coord_curved2straight[:, 0:2] += coord_in_planes_curved[:, 0:2]
+            coord_curved2straight[:, 2] += distances_curved
 
-            # Write NIFTI volumes
-            sct.printv('\nWrite NIFTI volumes...', verbose)
-            hdr.set_data_dtype('uint32')  # set imagetype to uint8 #TODO: maybe use int32
-            img = Nifti1Image(data_curved_landmarks, None, hdr)
-            save(img, 'tmp.landmarks_curved.nii.gz')
-            sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
-            # JULIEN
-            hdr_straight_landmarks.set_data_dtype('uint32')
-            img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
-            save(img, 'tmp.landmarks_straight.nii.gz')
-            sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
+            displacements_curved = coord_curved2straight - physical_coordinates
+            # for some reason, displacement in Z is inverted. Probably due to left/right-hended definition of referential.
+            #displacements_curved[:, 0] = -displacements_curved[:, 0]
+            displacements_curved[:, 2] = -displacements_curved[:, 2]
+            displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
-            # JULIEN
-            # crop_landmarks = 0
-            # safety_pad = 1
-            # if crop_landmarks == 1:
-            #     # Crop landmarks (for faster computation)
-            #     sct.printv("\nCrop around landmarks (for faster computation)...", verbose)
-            #     sct.run('sct_crop_image -i tmp.landmarks_curved.nii.gz -bmax -o tmp.landmarks_curved_crop.nii.gz', verbose)
-            #     sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -bmax -o tmp.landmarks_straight_crop.nii.gz', verbose)
-            #
-            #     # Pad landmarks by one voxel (to avoid issue #609)
-            #     if safety_pad:
-            #         sct.printv("\nPad landmark volume to avoid having landmarks outside...", verbose)
-            #         sct.run('sct_image -i tmp.landmarks_curved_crop.nii.gz -pad '+str(safety_pad)+','+str(safety_pad)+','+str(safety_pad)+' -o tmp.landmarks_curved_crop.nii.gz', verbose)
-            #         sct.run('sct_image -i tmp.landmarks_straight_crop.nii.gz -pad '+str(safety_pad)+','+str(safety_pad)+','+str(safety_pad)+' -o tmp.landmarks_straight_crop.nii.gz', verbose)
-            #
-            #     # Adjust LandmarksReal values after cropping
-            #     # for curved
-            #     x_adjust = min([int(round(i.x)) for i in landmark_curved]) + padding_x
-            #     y_adjust = min([int(round(i.y)) for i in landmark_curved]) + padding_y
-            #     z_adjust = min([int(round(i.z)) for i in landmark_curved]) + padding_z
-            #     landmark_curved_adjust = deepcopy(landmark_curved)  # here we use deepcopy to copy list with object
-            #     for index in range(0, len(landmark_curved)):
-            #         landmark_curved_adjust[index].x = landmark_curved[index].x - x_adjust + safety_pad
-            #         landmark_curved_adjust[index].y = landmark_curved[index].y - y_adjust + safety_pad
-            #         landmark_curved_adjust[index].z = landmark_curved[index].z - z_adjust + safety_pad
-            #     # for straight
-            #     x_adjust = min([int(round(i.x)) for i in landmark_straight]) + padding_x
-            #     y_adjust = min([int(round(i.y)) for i in landmark_straight]) + padding_y
-            #     z_adjust = min([int(round(i.z)) for i in landmark_straight]) + padding_z
-            #     landmark_straight_adjust = deepcopy(landmark_straight)
-            #     for index in range(0, len(landmark_straight)):
-            #         landmark_straight_adjust[index].x = landmark_straight[index].x - x_adjust + safety_pad
-            #         landmark_straight_adjust[index].y = landmark_straight[index].y - y_adjust + safety_pad
-            #         landmark_straight_adjust[index].z = landmark_straight[index].z - z_adjust + safety_pad
-            #     # copy to keep same variable name throughout the code
-            #     landmark_curved = deepcopy(landmark_curved_adjust)
-            #     landmark_straight = deepcopy(landmark_straight_adjust)
-            # else:
-            # TODO: fix that thing below (no need to copy!)
-            sct.run('cp tmp.landmarks_curved.nii.gz tmp.landmarks_curved_crop.nii.gz', verbose)
-            sct.run('cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz', verbose)
+            coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, nearest_indexes_straight)
+            displacements_straight = coord_straight2curved - physical_coordinates_straight
+            # for some reason, displacement in Z is inverted. Probably due to left/right-handed definition of referential.
+            #displacements_straight[:, 0] = -displacements_straight[:, 0]
+            displacements_straight[:, 2] = -displacements_straight[:, 2]
+            displacements_straight[indexes_out_distance_straight] = [100000.0, 100000.0, 100000.0]
 
+            # For error-free interpolation purpose, warping fields are inverted in the definition of ITK.
+            data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0, :] = -displacements_straight
+            data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
 
-            # Remove non-matching landmarks
-            landmark_curved, landmark_straight = ProcessLabels.remove_label_coord(landmark_curved, landmark_straight, symmetry=True)
+            time_displacements = time.time() - time_displacements
+            sct.printv('Time to compute physical displacements: ' + str(np.round(time_displacements * 1000.0)) + ' ms', verbose)
 
-            # Writing landmark curve in text file
-            landmark_curved_file = open("LandmarksRealCurve.txt", "w+")
-            for i in landmark_curved:
-                landmark_curved_file.write(
-                    str(i.x + padding_x) + "," +
-                    str(i.y + padding_y) + "," +
-                    str(i.z + padding_z) + "\n")
-            landmark_curved_file.close()
+            # Creation of the safe zone based on pre-calculated safe boundaries
+            coord_bound_curved_inf, coord_bound_curved_sup = image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[0]]]), image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[1]]])
+            coord_bound_straight_inf, coord_bound_straight_sup = image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[0]]]), image_centerline_straight.transfo_phys2pix([[0, 0, bound_straight[1]]])
 
-            # Writing landmark curve in text file
-            landmark_straight_file = open("LandmarksRealStraight.txt", "w+")
-            for i in landmark_straight:
-                landmark_straight_file.write(
-                    str(i.x + padding_x) + "," +
-                    str(i.y + padding_y) + "," +
-                    str(i.z + padding_z) + "\n")
-            landmark_straight_file.close()
+            if radius_safe > 0:
+                data_warp_curved2straight[:, :, 0:coord_bound_straight_inf[0][2], 0, :] = 100000.0
+                data_warp_curved2straight[:, :, coord_bound_straight_sup[0][2]:, 0, :] = 100000.0
+                data_warp_straight2curved[:, :, 0:coord_bound_curved_inf[0][2], 0, :] = 100000.0
+                data_warp_straight2curved[:, :, coord_bound_curved_sup[0][2]:, 0, :] = 100000.0
 
-            # Estimate b-spline transformation curve --> straight
-            sct.printv("\nEstimate b-spline transformation: curve --> straight...", verbose)
-            status, output = sct.run('isct_ANTSLandmarksBSplineTransform '
-                                     'tmp.landmarks_straight.nii.gz '
-                                     'tmp.landmarks_curved.nii.gz '
-                                     'tmp.curve2straight_rigid.txt '
-                                     'tmp.warp_curve2straight.nii.gz ' +
-                                     self.bspline_meshsize + ' ' +
-                                     self.bspline_numberOfLevels + ' '
-                                     'LandmarksRealCurve.txt '
-                                     'LandmarksRealStraight.txt ' +
-                                     self.bspline_order +
-                                     ' 0',
-                                     verbose=verbose)
+            # Generate warp files as a warping fields
+            hdr_warp_s.set_intent('vector', (), '')
+            hdr_warp_s.set_data_dtype('float32')
+            hdr_warp.set_intent('vector', (), '')
+            hdr_warp.set_data_dtype('float32')
+            img = Nifti1Image(data_warp_curved2straight, None, hdr_warp_s)
+            save(img, 'tmp.curve2straight.nii.gz')
+            sct.printv('\nDONE ! Warping field generated: tmp.curve2straight.nii.gz', verbose)
 
-            # JULIEN
-            # remove padding for straight labels
-            crop = 1
-            if crop == 1:
-                ImageCropper(input_file="tmp.landmarks_straight.nii.gz",
-                             output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0, 1, 2], bmax=True,
-                             verbose=verbose).crop()
-                pass
-            else:
-                sct.run("cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz", verbose)
-
-            # Concatenate rigid and non-linear transformations...
-            sct.printv("\nConcatenate rigid and non-linear transformations...", verbose)
-            sct.run('sct_concat_transfo -w tmp.curve2straight_rigid.txt,tmp.warp_curve2straight.nii.gz -d tmp.landmarks_straight_crop.nii.gz -o tmp.curve2straight.nii.gz')
-
-            # Estimate b-spline transformation straight --> curve
-            sct.printv("\nEstimate b-spline transformation: straight --> curve...", verbose)
-            status, output = sct.run('isct_ANTSLandmarksBSplineTransform '
-                                     'tmp.landmarks_curved.nii.gz '
-                                     'tmp.landmarks_straight.nii.gz '
-                                     'tmp.straight2curve_rigid.txt '
-                                     'tmp.warp_straight2curve.nii.gz ' +
-                                     self.bspline_meshsize + ' ' +
-                                     self.bspline_numberOfLevels + ' ' +
-                                     'LandmarksRealStraight.txt '
-                                     'LandmarksRealCurve.txt ' +
-                                     self.bspline_order +
-                                     ' 0',
-                                     verbose=verbose)
-
-            # Concatenate rigid and non-linear transformations...
-            sct.printv("\nConcatenate rigid and non-linear transformations...", verbose)
-            sct.run('sct_concat_transfo -w tmp.straight2curve_rigid.txt,tmp.warp_straight2curve.nii.gz -d data.nii -o tmp.straight2curve.nii.gz')
+            img = Nifti1Image(data_warp_straight2curved, None, hdr_warp)
+            save(img, 'tmp.straight2curve.nii.gz')
+            sct.printv('\nDONE ! Warping field generated: tmp.straight2curve.nii.gz', verbose)
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
-            sct.run('sct_apply_transfo -i data.nii -d tmp.landmarks_straight_crop.nii.gz -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x '+interpolation_warp, verbose)
-            # Transform(input_filename='data.nii', fname_dest="tmp.landmarks_straight_crop.nii.gz",
-            #           output_filename="tmp.anat_rigid_warp.nii.gz", interp=interpolation_warp,
-            #           warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
+            sct.run('sct_apply_transfo -i data.nii -d tmp.centerline_pad_crop.nii.gz -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x '+interpolation_warp, verbose)
 
             # compute the error between the straightened centerline/segmentation and the central vertical line.
             # Ideally, the error should be zero.
             # Apply deformation to input image
             sct.printv('\nApply transformation to centerline image...', verbose)
-            Transform(input_filename='centerline.nii.gz', fname_dest="tmp.landmarks_straight_crop.nii.gz",
+            Transform(input_filename='centerline.nii.gz', fname_dest="tmp.centerline_pad_crop.nii.gz",
                       output_filename="tmp.centerline_straight.nii.gz", interp="nn",
                       warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
             from msct_image import Image
             file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
             coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
             mean_coord = []
-            from numpy import mean
             for z in range(coordinates_centerline[0].z, coordinates_centerline[-1].z):
                 temp_mean = [coord.value for coord in coordinates_centerline if coord.z == z]
                 if temp_mean:
-                    mean_value = mean(temp_mean)
-                    mean_coord.append(mean([[coord.x * coord.value / mean_value, coord.y * coord.value / mean_value]
-                                            for coord in coordinates_centerline if coord.z == z], axis=0))
+                    mean_value = np.mean(temp_mean)
+                    mean_coord.append(np.mean([[coord.x * coord.value / mean_value, coord.y * coord.value / mean_value]
+                                                for coord in coordinates_centerline if coord.z == z], axis=0))
 
             # compute error between the straightened centerline and the straight line.
             from math import sqrt
@@ -761,7 +545,7 @@ class SpinalCordStraightener(object):
             y0 = file_centerline_straight.data.shape[1]/2.0
             count_mean = 0
             for coord_z in mean_coord[2:-2]:  # we don't include the four extrema because there are usually messy.
-                if not isnan(sum(coord_z)):
+                if not np.isnan(np.sum(coord_z)):
                     dist = ((x0-coord_z[0])*px)**2 + ((y0-coord_z[1])*py)**2
                     self.mse_straightening += dist
                     dist = sqrt(dist)
@@ -773,7 +557,7 @@ class SpinalCordStraightener(object):
         except Exception as e:
             sct.printv('WARNING: Exception during Straightening:', 1, 'warning')
             sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
-            sct.printv(e, 1, 'warning')
+            sct.printv(str(e), 1, 'warning')
 
         os.chdir('..')
 
@@ -796,13 +580,13 @@ class SpinalCordStraightener(object):
 
         sct.printv('\nDone!\n', verbose)
 
-        sct.printv("Maximum x-y error = " + str(round(self.max_distance_straightening, 2)) + " mm", verbose, "bold")
-        sct.printv("Accuracy of straightening (MSE) = " + str(round(self.mse_straightening, 2)) +
+        sct.printv("Maximum x-y error = " + str(np.round(self.max_distance_straightening, 2)) + " mm", verbose, "bold")
+        sct.printv("Accuracy of straightening (MSE) = " + str(np.round(self.mse_straightening, 2)) +
                    " mm", verbose, "bold")
 
         # display elapsed time
         elapsed_time = time.time() - start_time
-        sct.printv("\nFinished! Elapsed time: " + str(int(round(elapsed_time))) + "s", verbose)
+        sct.printv("\nFinished! Elapsed time: " + str(int(np.round(elapsed_time))) + "s", verbose)
         sct.printv("\nTo view results, type:", verbose)
         sct.printv("fslview " + fname_straight + " &\n", verbose, 'info')
 
@@ -836,12 +620,6 @@ def get_parser():
                       description="centerline or segmentation.",
                       mandatory=False,
                       deprecated_by='-s')
-    parser.add_option(name="-pad",
-                      type_value="int",
-                      description="amount of padding for generating labels.",
-                      mandatory=False,
-                      example="30",
-                      default_value=30)
     parser.add_option(name="-p",
                       type_value=None,
                       description="amount of padding for generating labels.",
@@ -870,12 +648,6 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='1')
-    parser.add_option(name="-f",
-                      type_value="multiple_choice",
-                      description="Crop option. 0: no crop, 1: crop around landmarks.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="Verbose. 0: nothing, 1: basic, 2: extended.",
@@ -886,33 +658,17 @@ def get_parser():
     parser.add_option(name="-param",
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nall_labels : 0,1. Default = 1"
-                                  "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning"
-                                  "\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. "
-                                  "Default=3x3x5"
-                                  "\nbspline_numberOfLevels: <int> number of levels for BSpline interpolation. "
-                                  "Default=3"
-                                  "\nbspline_order: <int> Order of BSpline for interpolation. Default=2"
-                                  "\nalgo_landmark_rigid {rigid,xy,translation,translation-xy,rotation,rotation-xy} "
-                                  "constraints on landmark-based rigid pre-registration"
-                                  "\nleftright_width: <int> Width of padded image in left-right direction. Can be set "
-                                  "improve warping field of straightening. Default=150.",
+                                  "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
+                                  "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
+                                  "\nthreshold_distance: [0.0,inf[. Threshold for which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=1.0",
                       mandatory=False,
-                      example="algo_fitting=nurbs,bspline_meshsize=5x5x12,algo_landmark_rigid=xy")
+                      example="algo_fitting=nurbs")
     parser.add_option(name="-params",
                       type_value=None,
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nall_labels : 0,1. Default = 1"
-                                  "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning"
-                                  "\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. "
-                                  "Default=3x3x5"
-                                  "\nbspline_numberOfLevels: <int> number of levels for BSpline interpolation. "
-                                  "Default=3"
-                                  "\nbspline_order: <int> Order of BSpline for interpolation. Default=2"
-                                  "\nalgo_landmark_rigid {rigid,xy,translation,translation-xy,rotation,rotation-xy} "
-                                  "constraints on landmark-based rigid pre-registration"
-                                  "\nleftright_width: <int> Width of padded image in left-right direction. Can be set "
-                                  "improve warping field of straightening. Default=150.",
+                                  "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
+                                  "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
+                                  "\nthreshold_distance: [0.0,inf[. Threshold for which voxels are not considered into displacement. Default=1.0",
                       mandatory=False,
                       deprecated_by='-param')
 
@@ -922,13 +678,6 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='0')
-
-    # parser.add_option(name="-cpu-nb",
-    #                   type_value="int",
-    #                   description="Number of CPU used for straightening. 0: no multiprocessing. If not provided, "
-    #                               "it uses all the available cores.",
-    #                   mandatory=False,
-    #                   example="8")
 
     return parser
 
@@ -946,8 +695,6 @@ if __name__ == "__main__":
     # Handling optional arguments
     if "-r" in arguments:
         sc_straight.remove_temp_files = int(arguments["-r"])
-    if "-pad" in arguments:
-        sc_straight.padding = int(arguments["-pad"])
     if "-x" in arguments:
         sc_straight.interpolation_warp = str(arguments["-x"])
     if "-o" in arguments:
@@ -955,9 +702,7 @@ if __name__ == "__main__":
     if '-ofolder' in arguments:
         sc_straight.path_output = arguments['-ofolder']
     else:
-        sc_straight.path_output = ''
-    if "-f" in arguments:
-        sc_straight.crop = int(arguments["-f"])
+        sc_straight.path_output = './'
     if "-v" in arguments:
         sc_straight.verbose = int(arguments["-v"])
     # if "-cpu-nb" in arguments:
@@ -972,21 +717,9 @@ if __name__ == "__main__":
             param_split = param.split('=')
             if param_split[0] == 'algo_fitting':
                 sc_straight.algo_fitting = param_split[1]
-            elif param_split[0] == 'bspline_meshsize':
-                sc_straight.bspline_meshsize = param_split[1]
-            elif param_split[0] == 'bspline_numberOfLevels':
-                sc_straight.bspline_numberOfLevels = param_split[1]
-            elif param_split[0] == 'bspline_order':
-                sc_straight.bspline_order = param_split[1]
-            elif param_split[0] == 'algo_landmark_rigid':
-                sct.printv('ERROR: This feature (algo_landmark_rigid) is deprecated.', 1, 'error')
-            elif param_split[0] == 'all_labels':
-                sc_straight.all_labels = int(param_split[1])
-            elif param_split[0] == 'use_continuous_labels':
-                sct.printv('ERROR: This feature (use_continuous_labels) is deprecated.', 1, 'error')
-            elif param_split[0] == 'gapz':
-                sc_straight.gapz = int(param_split[1])
-            elif param_split[0] == 'leftright_width':
-                sc_straight.leftright_width = int(param_split[1])
+            if param_split[0] == 'precision':
+                sc_straight.precision = float(param_split[1])
+            if param_split[0] == 'threshold_distance':
+                sc_straight.threshold_distance = float(param_split[1])
 
     sc_straight.straighten()

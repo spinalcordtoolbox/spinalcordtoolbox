@@ -59,7 +59,6 @@ if [ -n \"\$BASH_VERSION\" ]; then
     . \"\$HOME/.bashrc\"
     fi
 fi"
-
   for profiles in  ~/.bash_profile ~/.bash_login ~/.profile ; do
     if [[ -a $profiles ]] ; then
        if ! grep -E "(\.|source) .*bashrc" ${profiles} > /dev/null 2>&1 ; then
@@ -90,11 +89,10 @@ install_refresh ()
 # Download from URL using curl/wget
 download ()
 {
-
-    # Use cUrl or wget to download goodies
+  # Use curl or wget to download goodies
   set -x
   if hash "curl" ; then
-    curl -o $1 $2
+    curl -o $1 -L $2
     e_status=$?
     echo exit status is ${e_status}
 
@@ -314,28 +312,13 @@ elif [ ${OFFLINE_INSTALL} ]; then
   cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
 else
   echo -e "\nInstalling binaries..."
-  download  ${TMP_DIR}/sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/bin/${OS}/sct_binaries.tar.gz
+  download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta14/sct_binaries_${OS}.tar.gz
   # force disk buffer to refresh
   ls ${TMP_DIR} > /dev/null
   # unzip binaries
   cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${TMP_DIR}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
 fi
 
-# INSTALL DATA
-if [ ${NO_DATA_INSTALL} ]; then
-  echo "data/ will not vbe (re)-install"
-elif [ ${OFFLINE_INSTALL} ]; then
-  echo "Offline install"
-  cmd="tar -C ${SCT_DIR} -zxvf ${SCT_SOURCE}/offline/data.tar.gz"; echo ">> "$cmd; $cmd
-else
-  cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
-  # Download data
-  echo -e "\nInstalling data..."
-  cmd="mkdir -p ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
-  download  ${TMP_DIR}/${DATA_DIR}.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/MNI-Poly-AMU.tar.gz
-  # unzip binaries
-  cmd="tar -C ${SCT_DIR} -zxvf ${TMP_DIR}/data.tar.gz"; echo ">> "$cmd; $cmd
-fi
 
 # INSTALL PYTHON
 if [ ${NO_CONDA_INSTALL} ]; then
@@ -359,14 +342,13 @@ elif [ ${OFFLINE_INSTALL} ]; then
   conda install --yes --no-deps ${SCT_SOURCE}/offline/pkgs_${OS}/*
   pip install --no-deps --ignore-installed ${dipy_whl} ${ornlm_whl} ${SCT_SOURCE}/offline/*none*.whl
 
-
 else
-  cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   # Install Python conda
   echo -e "\nInstalling conda..."
+  cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   # downloading
-  download  ${TMP_DIR}/miniconda.sh https://dl.dropboxusercontent.com/u/20592661/sct/miniconda/${OS}/miniconda.sh
+  download  ${TMP_DIR}/miniconda.sh https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta14/miniconda_${OS}.sh
   # run conda installer
   cmd="bash ${TMP_DIR}/miniconda.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
 
@@ -393,17 +375,38 @@ else
   fi
 
   # Install wheels
-  echo -e "\nInstalling external Python dependencies..."
-  download  ${TMP_DIR}/wheels.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/wheel/${OS}/wheels.tar.gz
-  tar -C ${TMP_DIR} -zxvf ${TMP_DIR}/wheels.tar.gz
+#  echo -e "\nInstalling external Python dependencies..."
+#  download  ${TMP_DIR}/wheels.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/wheel/${OS}/wheels.tar.gz
+#  tar -C ${TMP_DIR} -zxvf ${TMP_DIR}/wheels.tar.gz
   # get file names
 #  dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
-  ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
+#  ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
 #  pip install --ignore-installed ${dipy_whl} ${ornlm_whl}
-  pip install --ignore-installed ${ornlm_whl}
+#  pip install --ignore-installed ${ornlm_whl}
 fi
 
 echo -e "All requirements installed!"
+
+
+# INSTALL DATA
+if [ ${NO_DATA_INSTALL} ]; then
+  echo "data/ will not be (re)-install"
+elif [ ${OFFLINE_INSTALL} ]; then
+  echo "Offline install"
+  cmd="tar -C ${SCT_DIR} -zxvf ${SCT_SOURCE}/offline/data.tar.gz"; echo ">> "$cmd; $cmd
+else
+  # Download data
+  echo -e "\nInstalling data..."
+  cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
+  cmd="mkdir -p ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
+  cmd="cd ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
+  cmd="cd ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
+  # Install PAM50
+  cmd="python ../scripts/sct_download_data.py -d PAM50"; echo ">> "$cmd; $cmd
+  # Install GM model
+  cmd="python ../scripts/sct_download_data.py -d gm_model"; echo ">> "$cmd; $cmd
+fi
+
 
 # update PATH environment
 if [[ $UID != 0 ]]; then

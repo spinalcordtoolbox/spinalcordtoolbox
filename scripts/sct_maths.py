@@ -123,13 +123,19 @@ def get_parser():
                       example='1')
     parser.add_option(name='-denoise',
                       type_value=[[','], 'str'],
-                      description='Non-local means adaptative denoising from P. Coupe et al. Separate with ",". Example: v=3,f=1,h=0.05.\n'
-                        'v:  similar patches in the non-local means are searched for locally, inside a cube of side 2*v+1 centered at each voxel of interest. Default: v=3\n'
-                        'f:  the size of the block to be used (2*f+1)x(2*f+1)x(2*f+1) in the blockwise non-local means implementation. Default: f=1\n'
-                        'h:  the standard deviation of rician noise in the input image, expressed as a ratio of the maximum intensity in the image. The higher, the more aggressive the denoising. Default: h=0.01',
+                      description='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ",". Example: p=1,b=3\n'
+                        'p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
+                        'b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
+                        '(Block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
+                        'To use default parameters, write -denoise 1',
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nMisc")
+    parser.add_option(name='-symmetrize',
+                      type_value='multiple_choice',
+                      description='Symmetrize data along the specified dimension.',
+                      mandatory=False,
+                      example=['0', '1', '2'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -191,7 +197,7 @@ def main(args = None):
         data_out = sum(data_concat, axis=3)
 
     elif '-sub' in arguments:
-        data2 = get_data_or_scalar(arguments["-sub"], data)
+        data2 = get_data_or_scalar(arguments['-sub'], data)
         data_out = data - data2
 
     elif "-laplacian" in arguments:
@@ -249,16 +255,18 @@ def main(args = None):
 
     elif '-denoise' in arguments:
         # parse denoising arguments
-        v, f, h = 3, 1, 0.01  # default arguments
+        p, b = 1, 5  # default arguments
         list_denoise = arguments['-denoise']
         for i in list_denoise:
-            if 'v' in i:
-                v = int(i.split('=')[1])
-            if 'f' in i:
-                f = int(i.split('=')[1])
-            if 'h' in i:
-                h = float(i.split('=')[1])
-        data_out = denoise_ornlm(data, v, f, h)
+            if 'p' in i:
+                p = int(i.split('=')[1])
+            if 'b' in i:
+                b = int(i.split('=')[1])
+        data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
+
+    elif '-symmetrize' in arguments:
+        data_out = (data + data[range(data.shape[0]-1, -1, -1), :, :]) / float(2)
+
     # if no flag is set
     else:
         data_out = None
@@ -367,14 +375,17 @@ def get_data(list_fname):
     :return: 3D or 4D numpy array.
     """
     nii = [Image(f_in) for f_in in list_fname]
+    data0 = nii[0].data
     data = nii[0].data
     # check that every images have same shape
     for i in range(1, len(nii)):
-        if not shape(nii[i].data) == shape(data):
-            printv('ERROR: all input images must have same dimensions.', 1, 'error')
+        if not shape(nii[i].data) == shape(data0):
+            printv('\nWARNING: shape('+list_fname[i]+')='+str(shape(nii[i].data))+' incompatible with shape('+list_fname[0]+')='+str(shape(data0)), 1, 'warning')
+            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
-            concatenate_along_4th_dimension(data, nii[i].data)
+            data = concatenate_along_4th_dimension(data, nii[i].data)
     return data
+
 
 def get_data_or_scalar(argument, data_in):
     """
@@ -409,17 +420,22 @@ def concatenate_along_4th_dimension(data1, data2):
     return concatenate((data1, data2), axis=3)
 
 
-def denoise_ornlm(data_in, v=3, f=1, h=0.05):
-    from commands import getstatusoutput
-    from sys import path
-    # append python path for importing module
-    # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
-    status, path_sct = getstatusoutput('echo $SCT_DIR')
-    path.append(path_sct + '/external/denoise/ornlm')
-    import ornlm
-    from numpy import array, max, float64
-    dat = data_in.astype(float64)
-    denoised = array(ornlm.ornlm(dat, v, f, max(dat)*h))
+def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
+    """
+    data_in: nd_array to denoise
+    for more info about patch_radius and block radius, please refer to the dipy website: http://nipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+    """
+    from dipy.denoise.nlmeans import nlmeans
+    from dipy.denoise.noise_estimate import estimate_sigma
+    from numpy import asarray
+    data_in = asarray(data_in)
+
+    block_radius_max = min(data_in.shape)-1
+    block_radius = block_radius_max if block_radius > block_radius_max else block_radius
+
+    sigma = estimate_sigma(data_in)
+    denoised = nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
+
     return denoised
 
 

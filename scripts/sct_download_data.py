@@ -31,7 +31,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="Name of the dataset.",
                       mandatory=True,
-                      example=['sct_example_data', 'sct_testing_data', 'PAM50'])
+                      example=['sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU', 'gm_model'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -52,7 +52,9 @@ def main(args=None):
     verbose = 1
     dict_url = {'sct_example_data': 'https://github.com/neuropoly/sct_example_data/archive/master.zip',
                 'sct_testing_data': 'https://github.com/neuropoly/sct_testing_data/archive/master.zip',
-                'PAM50': 'https://dl.dropboxusercontent.com/u/20592661/sct/PAM50.zip'}
+                'PAM50': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta14/PAM50.zip',
+                'MNI-Poly-AMU': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta14/MNI-Poly-AMU.zip',
+                'gm_model': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta14/gm_model.zip'}
     tmp_file = 'tmp.data.zip'
 
     # check user arguments
@@ -121,7 +123,7 @@ def download_from_url(url, local):
     i_trial = 1
     max_trials = 3
 
-    print 'Reaching URL...'
+    print 'Reaching URL: '+url
     while keep_connecting:
         try:
             u = urllib2.urlopen(url)

@@ -14,8 +14,8 @@
 
 #import re
 import sys
-import commands
-import getopt
+# import commands
+# import getopt
 import os
 import time
 
@@ -34,17 +34,16 @@ class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
-        self.folder_out = 'label'  # name of output folder
-        self.path_template = path_sct+'/data'
-        self.folder_template = 'template'
-        self.folder_atlas = 'atlas'
-        self.folder_spinal_levels = 'spinal_levels'
+        self.folder_out = 'label/'  # name of output folder
+        self.path_template = path_sct+'/data/PAM50/'
+        self.folder_template = 'template/'
+        self.folder_atlas = 'atlas/'
+        self.folder_spinal_levels = 'spinal_levels/'
         self.file_info_label = 'info_label.txt'
         # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
-        self.list_labels_nn = ['MNI-Poly-AMU_level.nii.gz', 'MNI-Poly-AMU_CSF.nii.gz', 'MNI-Poly-AMU_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
-        self.list_labels_spline = ['']  # list of files for which spline interpolation should be used. Default = linear.
+        self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
         self.qc = 1
 
@@ -68,27 +67,20 @@ class WarpTemplate:
         self.qc = qc
         start_time = time.time()
 
-        # Check file existence
-        sct.printv('\nCheck file existence...', self.verbose)
-        sct.check_file_exist(self.fname_src)
-        sct.check_file_exist(self.fname_transfo)
-
         # add slash at the end of folder name (in case there is no slash)
-        self.path_template = sct.slash_at_the_end(self.path_template, 1)
-        self.folder_out = sct.slash_at_the_end(self.folder_out, 1)
-        self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
-        self.folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
-        self.folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
+        # self.path_template = sct.slash_at_the_end(self.path_template, 1)
+        # self.folder_out = sct.slash_at_the_end(self.folder_out, 1)
+        # self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
+        # self.folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
+        # self.folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
 
         # print arguments
         print '\nCheck parameters:'
+        print '  Working directory ........ '+os.getcwd()
         print '  Destination image ........ '+self.fname_src
         print '  Warping field ............ '+self.fname_transfo
         print '  Path template ............ '+self.path_template
         print '  Output folder ............ '+self.folder_out+'\n'
-
-        # Extract path, file and extension
-        path_src, file_src, ext_src = sct.extract_fname(self.fname_src)
 
         # create output folder
         if os.path.exists(self.folder_out):
@@ -97,49 +89,108 @@ class WarpTemplate:
         sct.run('mkdir '+self.folder_out)
 
         # Warp template objects
-        sct.printv('\nWarp template objects...', self.verbose)
+        sct.printv('\nWARP TEMPLATE:', self.verbose)
         warp_label(self.path_template, self.folder_template, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
         # Warp atlas
         if self.warp_atlas == 1:
-            sct.printv('\nWarp atlas of white matter tracts...', self.verbose)
+            sct.printv('\nWARP ATLAS OF WHITE MATTER TRACTS:', self.verbose)
             warp_label(self.path_template, self.folder_atlas, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
         # Warp spinal levels
         if self.warp_spinal_levels == 1:
-            sct.printv('\nWarp spinal levels...', self.verbose)
+            sct.printv('\nWARP SPINAL LEVELS:', self.verbose)
             warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
         # to view results
         sct.printv('\nDone! To view results, type:', self.verbose)
-        sct.printv('fslview '+self.fname_src+' '+self.folder_out+self.folder_template+'MNI-Poly-AMU_T2.nii.gz -b 0,4000 '+self.folder_out+self.folder_template+'MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 '+self.folder_out+self.folder_template+'MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+self.folder_out+self.folder_template+'MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &\n', self.verbose, 'info')
+        sct.printv('fslview '+self.fname_src+' ' \
+                   + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'T2') + ' -b 0,4000 ' \
+                   + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'vertebral') + ' -l MGH-Cortical -t 0.5 ' \
+                   + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'gray matter') + ' -l Red-Yellow -b 0.5,1 ' \
+                   + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'white matter') + ' -l Blue-Lightblue -b 0.5,1 &\n', self.verbose, 'info')
 
         if self.qc:
             from msct_image import Image
             # output QC image
             im = Image(self.fname_src)
-            im_wm = Image(self.folder_out+self.folder_template+'MNI-Poly-AMU_WM.nii.gz')
+            im_wm = Image(self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'white matter'))
             im.save_quality_control(plane='axial', n_slices=4, seg=im_wm, thr=0.5, cmap_col='blue-cyan', path_output=self.folder_out)
 
 
 # Warp labels
 # ==========================================================================================
 def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
+    """
+    Warp label files according to info_label.txt file
+    :param path_label:
+    :param folder_label:
+    :param file_label:
+    :param fname_src:
+    :param fname_transfo:
+    :param path_out:
+    :return:
+    """
     # read label file and check if file exists
     sct.printv('\nRead label file...', param.verbose)
-    template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label+folder_label, file_label)
-    # create output folder
-    sct.run('mkdir '+path_out+folder_label, param.verbose)
-    # Warp label
-    for i in xrange(0, len(template_label_file)):
-        fname_label = path_label+folder_label+template_label_file[i]
-        # check if file exists
-        # sct.check_file_exist(fname_label)
-        # apply transfo
-        sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] +' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i]), param.verbose)
-    # Copy list.txt
-    sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
+    try:
+        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label + folder_label, file_label)
+    except:
+        sct.printv('\nWARNING: Cannot warp label: '+folder_label, 1, 'warning')
+        # raise
+    # try:
+    #     template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label+folder_label, file_label)
+    # except Exception:
+    #     import traceback
+    #     sct.printv('\nERROR: ' + traceback.format_exc(), 1, 'error')
+    else:
+        # create output folder
+        sct.run('mkdir '+path_out+folder_label, param.verbose)
+        # Warp label
+        for i in xrange(0, len(template_label_file)):
+            fname_label = path_label+folder_label+template_label_file[i]
+            # check if file exists
+            # sct.check_file_exist(fname_label)
+            # apply transfo
+            sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] +' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i]), param.verbose)
+        # Copy list.txt
+        sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
 
+
+# Get file label
+# ==========================================================================================
+def get_file_label(path_label, label):
+    """
+    Get label file name given based on info_label.txt file.
+    Label needs to be a substring of the "name" field. E.g.: T1-weighted, spinal cord, white matter, etc.
+    :param path_label:
+    :param label:
+    :return:
+    """
+    # init
+    file_label = ''
+    # Open file
+    fname_label = path_label+param.file_info_label
+    try:
+        f = open(fname_label)
+    except IOError:
+        sct.printv('\nWARNING: Cannot open ' + fname_label, 1, 'warning')
+        # raise
+    else:
+        # Extract lines from file
+        lines = [line for line in f.readlines() if line.strip()]
+        # find line corresponding to label
+        for line in lines:
+            # ignore comment
+            if not line[0] == '#':
+                # check "name" field
+                if label in line.split(',')[1].strip():
+                    file_label = line.split(',')[2].strip()
+                    # sct.printv('Found Label ' + label + ' in file: ' + file_label)
+                    break
+        if file_label == '':
+            sct.printv('\nWARNING: Label '+label+' not found.', 1, 'warning')
+        return file_label
 
 
 # Get interpolation method
@@ -148,21 +199,15 @@ def get_interp(file_label):
     # default interp
     interp = 'linear'
     # NN interp
-    if file_label in param.list_labels_nn:
+    if any(substring in file_label for substring in param.list_labels_nn):
         interp = 'nn'
-    # spline interp
-    if file_label in param.list_labels_spline:
-        interp = 'spline'
     # output
     return interp
 
 
-# START PROGRAM
+# PARSER
 # ==========================================================================================
-if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
+def get_parser():
 
     # Initialize parser
     parser = Parser(__file__)
@@ -204,7 +249,7 @@ if __name__ == "__main__":
                       deprecated_by='-ofolder')
     parser.add_option(name="-t",
                       type_value="folder",
-                      description="Specify path to template data.",
+                      description="Path to template.",
                       mandatory=False,
                       default_value=str(param_default.path_template))
     parser.add_option(name='-qc',
@@ -219,6 +264,15 @@ if __name__ == "__main__":
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
+    return parser
+
+
+# MAIN
+# ==========================================================================================
+def main(args=None):
+
+    parser = get_parser()
+    param = Param()
 
     arguments = parser.parse(sys.argv[1:])
 
@@ -226,10 +280,20 @@ if __name__ == "__main__":
     fname_transfo = arguments["-w"]
     warp_atlas = int(arguments["-a"])
     warp_spinal_levels = int(arguments["-s"])
-    folder_out = arguments["-ofolder"]
-    path_template = arguments["-t"]
-    verbose = int(arguments["-v"])
-    qc = int(arguments["-qc"])
+    folder_out = sct.slash_at_the_end(arguments['-ofolder'], 1)
+    path_template = sct.slash_at_the_end(arguments['-t'], 1)
+    verbose = int(arguments['-v'])
+    qc = int(arguments['-qc'])
 
     # call main function
     WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc)
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    # initialize parameters
+    param = Param()
+    param_default = Param()
+    # call main function
+    main()
