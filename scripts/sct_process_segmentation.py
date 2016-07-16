@@ -117,14 +117,12 @@ def get_parser():
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
                       deprecated_by='-vertfile',
-                      default_value='label/template/MNI-Poly-AMU_level.nii.gz',
-                      example='label/template/MNI-Poly-AMU_level.nii.gz')
+                      default_value='label/template/PAM50_levels.nii.gz')
     parser.add_option(name='-vertfile',
                       type_value='image_nifti',
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
-                      default_value='./label/template/MNI-Poly-AMU_level.nii.gz',
-                      example='./label/template/MNI-Poly-AMU_level.nii.gz')
+                      default_value='./label/template/PAM50_levels.nii.gz')
     parser.add_option(name='-m',
                       type_value='multiple_choice',
                       description='Method to compute CSA',
@@ -618,7 +616,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
 
         warning = ''
         if vert_levels and not fname_vertebral_labeling:
-            sct.printv('\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/MNI-Poly-AMU_level.nii.gz\". See usage.\n', 1, 'error')
+            sct.printv('\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/PAM50_levels.nii.gz\". See usage.\n', 1, 'error')
 
         elif vert_levels and fname_vertebral_labeling:
 
