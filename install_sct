@@ -312,7 +312,7 @@ elif [ ${OFFLINE_INSTALL} ]; then
   cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
 else
   echo -e "\nInstalling binaries..."
-  download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta14/sct_binaries_${OS}.tar.gz
+  download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/sct_binaries_${OS}.tar.gz
   # force disk buffer to refresh
   ls ${TMP_DIR} > /dev/null
   # unzip binaries
@@ -348,7 +348,7 @@ else
   cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   # downloading
-  download  ${TMP_DIR}/miniconda.sh https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta14/miniconda_${OS}.sh
+  download  ${TMP_DIR}/miniconda.sh https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/miniconda_${OS}.sh
   # run conda installer
   cmd="bash ${TMP_DIR}/miniconda.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
 
