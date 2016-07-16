@@ -1,6 +1,7 @@
 # CHANGES TO RELEASE
 
 ##3.0 (TBD)
+- NEW: PAM50 template now used as the default template
 - NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
 - NEW: **sct_propseg**: now accepts a correction solution for sct_propseg in case of missing CSF/SC contrast and/or artefacts (see issue #664 for details)
 - NEW: **sct_propseg**: added flag to open a viewer for initializing spinal cord segmentation by manually providing a few points (issue #741)
@@ -9,13 +10,16 @@
 - NEW: **sct_dmri_create_noisemask**: Identification and estimation of noise in the diffusion signal, implemented by the Dipy software project (http://nipy.org/dipy/), based on the PIESNO method
 - NEW: **sct_register_graymatter**: Multi-label registration that accounts for gray matter shape.
 - NEW: **sct_register_multimodal**: features two new transformations: centermassrot and columnwise.
+- BUG: **sct_straighten_spinalcord**: Fixed #917, #924
 - BUG: Fixed issues #715, #719
 - BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
 - BUG: **sct_segment_graymatter**: fixed issues #782, #813, #815
-- BUG: fixed incompatibility with CENTOS 6.X (issue #776)
+- BUG: Fixed incompatibility with CENTOS 6.X (issue #776)
+- BUG: Binaries now hosted on Gihub for accessibility from China (#927)
 - OPT: **sct_check_dependencies**: Made test more sentitive to OS incompatibilities (issue #771)
 - OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #350, #404, #414, #499, #650, #735, #737, #749, #807, #818
 - OPT: **sct_register_to_template**: now uses slicewise rigid transfo at first step (instead of slicereg), which improves accuracy (issue #666)
+- OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
 
 ##2.2.3 (2016-02-04)
 - BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
