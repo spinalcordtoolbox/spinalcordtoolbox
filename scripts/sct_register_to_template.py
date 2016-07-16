@@ -5,8 +5,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
-# Modified: 2015-03-31
+# Authors: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -19,7 +18,7 @@ import commands
 import time
 from glob import glob
 import sct_utils as sct
-from sct_utils import add_suffix, find_file_within_folder
+from sct_utils import add_suffix
 from sct_image import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
@@ -39,7 +38,6 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.remove_temp_files = 1  # remove temporary files
-        self.output_type = 1
         self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         # self.speed = 'fast'  # speed of registration. slow | normal | fast
@@ -49,10 +47,8 @@ class Param:
         # self.metric = 'MI'
         self.verbose = 1  # verbose
         # self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
-        self.path_template = path_sct+'/data/template'
-        # self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
-        self.file_template_label = 'landmarks_center.nii.gz'
-        # self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
+        self.path_template = path_sct+'/data/PAM50'
+        # self.file_template_label = 'landmarks_center.nii.gz'
         self.zsubsample = '0.25'
         self.param_straighten = ''
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
@@ -65,6 +61,8 @@ step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
 paramreg = ParamregMultiStep([step1, step2, step3])
 
 
+# PARSER
+# ==========================================================================================
 def get_parser():
     param = Param()
     parser = Parser(__file__)
@@ -121,8 +119,7 @@ def get_parser():
                       type_value='str',
                       description="""Parameters for straightening (see sct_straighten_spinalcord).""",
                       mandatory=False,
-                      default_value='',
-                      example="-params bspline_meshsize=3x3x5")
+                      default_value='')
     # parser.add_option(name="-cpu-nb",
     #                   type_value="int",
     #                   description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
@@ -178,28 +175,30 @@ def main():
             paramreg.addStep(paramStep)
 
     # initialize other parameters
-    file_template_label = param.file_template_label
-    output_type = param.output_type
+    # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
+    template = os.path.basename(os.path.normpath(path_template))
     # smoothing_sigma = param.smoothing_sigma
 
-    # capitalize letters for contrast file for old versions of template
-    if find_file_within_folder('MNI-Poly-AMU*.nii.gz', path_template) or find_file_within_folder('sct_testing_data', path_template):
-        if contrast_template == 't1':
-            contrast_template = 'T1'
-        elif contrast_template == 't2':
-            contrast_template = 'T2'
+    # adjust file names for old versions of template
+    if any(substring in path_template for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
+        # template name
+        contrast_template = contrast_template.upper()
+        # label name
+        file_template_label = 'landmarks_center.nii.gz'
+    else:
+        file_template_label = template + '_label_body.nii.gz'
 
     # retrieve file_template based on contrast
     try:
-        fname_template_list = glob(path_template + '*' + contrast_template + '.nii.gz')
+        fname_template_list = glob(path_template + 'template/*' + contrast_template + '.nii.gz')
         fname_template = fname_template_list[0]
     except IndexError:
-        sct.printv('\nERROR: No template found in '+path_template+'*'+contrast_template+'.nii.gz', 1, 'error')
+        sct.printv('\nERROR: No template found in '+path_template+'template/*'+contrast_template+'.nii.gz', 1, 'error')
 
     # retrieve file_template_seg
     try:
-        fname_template_seg_list = glob(path_template + '*cord.nii.gz')
+        fname_template_seg_list = glob(path_template + 'template/*cord.nii.gz')
         fname_template_seg = fname_template_seg_list[0]
     except IndexError:
         sct.printv('\nERROR: No template cord segmentation found. Please check the provided path.', 1, 'error')
@@ -208,7 +207,7 @@ def main():
     start_time = time.time()
 
     # get absolute path - TO DO: remove! NEVER USE ABSOLUTE PATH...
-    path_template = os.path.abspath(path_template)
+    path_template = os.path.abspath(path_template+'template/')
 
     # get fname of the template + template objects
     # fname_template = sct.slash_at_the_end(path_template, 1)+file_template
@@ -216,6 +215,7 @@ def main():
     # fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
 
     # check file existence
+    # TODO: no need to do that!
     sct.printv('\nCheck template files...')
     sct.check_file_exist(fname_template, verbose)
     sct.check_file_exist(fname_template_label, verbose)
@@ -227,8 +227,6 @@ def main():
     sct.printv('.. Landmarks:            '+fname_landmarks, verbose)
     sct.printv('.. Segmentation:         '+fname_seg, verbose)
     sct.printv('.. Path template:        '+path_template, verbose)
-    sct.printv('.. Path output:          '+path_output, verbose)
-    sct.printv('.. Output type:          '+str(output_type), verbose)
     sct.printv('.. Remove temp files:    '+str(remove_temp_files), verbose)
 
     sct.printv('\nParameters for registration:')
@@ -264,7 +262,7 @@ def main():
                 break
     if not hasDifferentLabels:
         sct.printv('ERROR: Wrong landmarks input. All labels must be different.', verbose, 'error')
-    # all labels must be available in tempalte
+    # check if provided labels are available in the template
     image_label_template = Image(fname_template_label)
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
     if labels[-1].value > labels_template[-1].value:
@@ -274,7 +272,6 @@ def main():
 
     # create temporary folder
     path_tmp = sct.tmp_create(verbose=verbose)
-    # path_tmp = '/Users/julien/data/sct_issues/20160711_issue924/tmp.160711162738_946052/'
 
     # set temporary file names
     ftmp_data = 'data.nii'
@@ -494,9 +491,8 @@ def main():
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
 
     # Apply warping fields to anat and template
-    if output_type == 1:
-        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
-        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
+    sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
+    sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
 
     # come back to parent folder
     os.chdir('..')
@@ -505,9 +501,8 @@ def main():
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'warp_template2anat.nii.gz', path_output+'warp_template2anat.nii.gz', verbose)
     sct.generate_output_file(path_tmp+'warp_anat2template.nii.gz', path_output+'warp_anat2template.nii.gz', verbose)
-    if output_type == 1:
-        sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
-        sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
+    sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
+    sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
 
     # Delete temporary files
     if remove_temp_files:

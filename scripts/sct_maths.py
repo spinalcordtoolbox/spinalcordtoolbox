@@ -131,6 +131,11 @@ def get_parser():
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nMisc")
+    parser.add_option(name='-symmetrize',
+                      type_value='multiple_choice',
+                      description='Symmetrize data along the specified dimension.',
+                      mandatory=False,
+                      example=['0', '1', '2'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -192,7 +197,7 @@ def main(args = None):
         data_out = sum(data_concat, axis=3)
 
     elif '-sub' in arguments:
-        data2 = get_data_or_scalar(arguments["-sub"], data)
+        data2 = get_data_or_scalar(arguments['-sub'], data)
         data_out = data - data2
 
     elif "-laplacian" in arguments:
@@ -258,6 +263,9 @@ def main(args = None):
             if 'b' in i:
                 b = int(i.split('=')[1])
         data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
+
+    elif '-symmetrize' in arguments:
+        data_out = (data + data[range(data.shape[0]-1, -1, -1), :, :]) / float(2)
 
     # if no flag is set
     else:
@@ -367,14 +375,17 @@ def get_data(list_fname):
     :return: 3D or 4D numpy array.
     """
     nii = [Image(f_in) for f_in in list_fname]
+    data0 = nii[0].data
     data = nii[0].data
     # check that every images have same shape
     for i in range(1, len(nii)):
-        if not shape(nii[i].data) == shape(data):
-            printv('ERROR: all input images must have same dimensions.', 1, 'error')
+        if not shape(nii[i].data) == shape(data0):
+            printv('\nWARNING: shape('+list_fname[i]+')='+str(shape(nii[i].data))+' incompatible with shape('+list_fname[0]+')='+str(shape(data0)), 1, 'warning')
+            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
-            concatenate_along_4th_dimension(data, nii[i].data)
+            data = concatenate_along_4th_dimension(data, nii[i].data)
     return data
+
 
 def get_data_or_scalar(argument, data_in):
     """
