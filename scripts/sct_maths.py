@@ -131,6 +131,11 @@ def get_parser():
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nMisc")
+    parser.add_option(name='-symmetrize',
+                      type_value='multiple_choice',
+                      description='Symmetrize data along the specified dimension.',
+                      mandatory=False,
+                      example=['0', '1', '2'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -258,6 +263,9 @@ def main(args = None):
             if 'b' in i:
                 b = int(i.split('=')[1])
         data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
+
+    elif '-symmetrize' in arguments:
+        data_out = (data + data[range(data.shape[0]-1, -1, -1), :, :]) / float(2)
 
     # if no flag is set
     else:
