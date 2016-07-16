@@ -197,7 +197,7 @@ def main(args = None):
         data_out = sum(data_concat, axis=3)
 
     elif '-sub' in arguments:
-        data2 = get_data_or_scalar(arguments["-sub"], data)
+        data2 = get_data_or_scalar(arguments['-sub'], data)
         data_out = data - data2
 
     elif "-laplacian" in arguments:
