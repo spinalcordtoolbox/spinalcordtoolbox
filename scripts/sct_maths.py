@@ -375,14 +375,17 @@ def get_data(list_fname):
     :return: 3D or 4D numpy array.
     """
     nii = [Image(f_in) for f_in in list_fname]
+    data0 = nii[0].data
     data = nii[0].data
     # check that every images have same shape
     for i in range(1, len(nii)):
-        if not shape(nii[i].data) == shape(data):
-            printv('ERROR: all input images must have same dimensions.', 1, 'error')
+        if not shape(nii[i].data) == shape(data0):
+            printv('\nWARNING: shape('+list_fname[i]+')='+str(shape(nii[i].data))+' incompatible with shape('+list_fname[0]+')='+str(shape(data0)), 1, 'warning')
+            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
-            concatenate_along_4th_dimension(data, nii[i].data)
+            data = concatenate_along_4th_dimension(data, nii[i].data)
     return data
+
 
 def get_data_or_scalar(argument, data_in):
     """
