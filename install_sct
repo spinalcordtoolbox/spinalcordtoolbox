@@ -89,10 +89,10 @@ install_refresh ()
 # Download from URL using curl/wget
 download ()
 {
-  # Use cUrl or wget to download goodies
+  # Use curl or wget to download goodies
   set -x
   if hash "curl" ; then
-    curl -o $1 $2
+    curl -o $1 -L $2
     e_status=$?
     echo exit status is ${e_status}
 
@@ -312,7 +312,7 @@ elif [ ${OFFLINE_INSTALL} ]; then
   cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
 else
   echo -e "\nInstalling binaries..."
-  download  ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta14/sct_binaries_${OS}.tar.gz
+  download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta14/sct_binaries_${OS}.tar.gz
   # force disk buffer to refresh
   ls ${TMP_DIR} > /dev/null
   # unzip binaries
