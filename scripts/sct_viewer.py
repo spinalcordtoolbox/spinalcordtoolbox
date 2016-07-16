@@ -496,6 +496,14 @@ class ClickViewer(Viewer):
 
         # compute slices to display
         self.list_slices = []
+        self.calculate_list_slices()
+
+        # variable to check if all slices have been processed
+        self.all_processed = False
+
+        self.setup_intensity()
+
+    def calculate_list_slices(self):
         if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
             central_slice = int(self.image_dim[0] / 2)
             first_slice = central_slice - (self.number_of_slices / 2) * self.gap_inter_slice
@@ -532,12 +540,7 @@ class ClickViewer(Viewer):
                 window.update_slice(point, data_update=True)
 
         self.title = self.windows[0].axes.set_title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
-            self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
-
-        # variable to check if all slices have been processed
-        self.all_processed = False
-
-        self.setup_intensity()
+                self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
 
     def compute_offset(self):
         array_dim = [self.image_dim[1] * self.im_spacing[1], self.image_dim[2] * self.im_spacing[2]]

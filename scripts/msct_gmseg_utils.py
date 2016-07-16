@@ -813,10 +813,10 @@ def save_by_slice(dic_dir):
                     '''
             if path_file_levels is None and 'label' in os.listdir(subject_path):
                 '''
-                if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
-                    sct.run('sct_image -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
+                if 'PAM50_levels_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
+                    sct.run('sct_image -i ' + subject_path + '/label/template/MPAM50_levels.nii.gz -setorient IRP')
                 '''
-                path_file_levels = subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz'
+                path_file_levels = subject_path + '/label/template/PAM50_levels.nii.gz'
 
             elif path_file_levels is not None:
                 path_level, file_level, ext_level = sct.extract_fname(path_file_levels)
@@ -1017,9 +1017,9 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
 
 
             if denoise:
-                from sct_maths import denoise_ornlm
+                from sct_maths import denoise_nlmeans
                 t2star_im = Image(fname_t2star)
-                t2star_im.data = denoise_ornlm(t2star_im.data)
+                t2star_im.data = denoise_nlmeans(t2star_im.data)
                 t2star_im.save()
 
             mask_box, fname_seg_in_IRP = crop_t2_star(fname_t2star, fname_scseg, box_size=model_image_size)
@@ -1053,7 +1053,7 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
     sct.run(cmd_warp_template)
 
     # Registration template to t2star
-    cmd_register_multimodal = 'sct_register_multimodal -i template2anat.nii.gz -d ' + t2star_fname + ' -iseg ./label/template/MNI-Poly-AMU_cord.nii.gz -dseg ' + t2star_sc_seg_fname + ' -param step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
+    cmd_register_multimodal = 'sct_register_multimodal -i template2anat.nii.gz -d ' + t2star_fname + ' -iseg ./label/template/PAM50_cord.nii.gz -dseg ' + t2star_sc_seg_fname + ' -param step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
     sct.run(cmd_register_multimodal)
 
     multimodal_warp_name = 'warp_template2anat2' + t2star_fname
@@ -1064,9 +1064,9 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
     cmd_warp = 'sct_warp_template -d ' + t2star_fname + ' -w ' + total_warp_name + ' -a 0 '
     sct.run(cmd_warp)
 
-    sct.run('sct_image -i ./label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
+    sct.run('sct_image -i ./label/template/PAM50_levels.nii.gz -setorient IRP')
 
-    return 'MNI-Poly-AMU_level_IRP.nii.gz'
+    return 'PAM50_levels_IRP.nii.gz'
 
 
 

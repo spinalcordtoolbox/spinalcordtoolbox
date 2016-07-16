@@ -26,7 +26,7 @@ To do so, you should have a folder (path_to_dataset/) containing for each subjec
         - a WM/GM contrasted image (for ex T2*-w) containing 'im' in its name
         - a segmentation of the spinal cord containing 'seg' in its name
         - a manual segmentation of the gray matter containing 'gm' in its name
-        - a 'level image' containing 'level' in its name : the level image is an image containing a level label per slice indicating at wich vertebral level correspond this slice (usually obtained by registering the MNI-Poly-AMU template to the WM/GM contrasted image).
+        - a 'level image' containing 'level' in its name : the level image is an image containing a level label per slice indicating at wich vertebral level correspond this slice (usually obtained by registering the MNI-Poly-AMU or PAM50 template to the WM/GM contrasted image).
 
 Use the following command lines :
 # Preprocess the data
@@ -74,14 +74,14 @@ def get_parser():
                       example='sc_seg.nii.gz')
     parser.add_option(name="-vertfile",
                       type_value="file",
-                      description='Labels of vertebral levels. This could either be an image (e.g., label/template/MNI-Poly-AMU_level.nii.gz) or a text file that specifies "slice,level" at each line. Example:\n'
+                      description='Labels of vertebral levels. This could either be an image (e.g., label/template/PAM50_levels.nii.gz) or a text file that specifies "slice,level" at each line. Example:\n'
                       "0,3\n"
                       "1,3\n"
                       "2,4\n"
                       "3,4\n"
                       "4,4",
                       mandatory=False,
-                      example='label/template/MNI-Poly-AMU_level.nii.gz')
+                      example='label/template/PAM50_levels.nii.gz')
     parser.add_option(name="-verttype",
                       type_value='multiple_choice',
                       description="if float is selected, vertebral labeling is interpolated for higher accuracy. Default value = "+ModelParam().use_levels,
@@ -279,8 +279,9 @@ class Preprocessing:
         # denoising (optional)
         im_target = Image(self.t2star)
         if self.denoising:
-            from sct_maths import denoise_ornlm
-            im_target.data = denoise_ornlm(im_target.data)
+            from sct_maths import denoise_nlmeans
+            print im_target.data.shape
+            im_target.data = denoise_nlmeans(im_target.data)
             im_target.save()
             self.t2star = im_target.file_name + im_target.ext
 

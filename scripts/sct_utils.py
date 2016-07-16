@@ -21,12 +21,10 @@ import os
 import commands
 import subprocess
 import re
-
+from sys import stdout
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
-
-fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
 
 # define class color
@@ -40,7 +38,6 @@ class bcolors(object):
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
-
 
 
 #=======================================================================================================================
@@ -188,7 +185,8 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+        stdout.flush()
 
     def iterations_done(self, total_num_iterations_done):
         if total_num_iterations_done != 0:
@@ -199,13 +197,14 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+            stdout.flush()
 
     def stop(self):
         self.time_list.append(time.time() - self.start_timer)
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
-        printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
         self.is_started = False
 
     def printRemainingTime(self):
@@ -215,17 +214,19 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+            stdout.flush()
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
     def printTotalTime(self):
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            stdout.flush()
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
 
 #=======================================================================================================================
@@ -514,9 +515,11 @@ def printv(string, verbose=1, type='normal'):
     # if error, exit program
     if type == 'error':
         from inspect import stack
-        frame,filename,line_number,function_name,lines,index = stack()[1]
+        frame, filename, line_number, function_name, lines, index = stack()[1]
         # print(frame,filename,line_number,function_name,lines,index)
-        print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
+        import traceback
+        print('\n'+bcolors.red+filename+traceback.format_exc()+bcolors.normal)  # print error message
+        # print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
         sys.exit(2)
 
 
@@ -542,8 +545,6 @@ def slash_at_the_end(path, slash=0):
         if not path[-1:] == '/':
             path = path+'/'
     return path
-
-
 
 
 #=======================================================================================================================
@@ -588,6 +589,22 @@ def get_interpolation(program, interp):
         interp_program = ' -n Linear'
     # return
     return interp_program
+
+
+#=======================================================================================================================
+# template file dictionary
+#=======================================================================================================================
+def template_dict(template):
+    """
+    Dictionary of file names for template
+    :param template:
+    :return: dict_template
+    """
+    if template == 'PAM50':
+        dict_template = {'t2': 'template/PAM50_t2.nii.gz',
+                         't1': 'template/PAM50_t1.nii.gz'}
+    return dict_template
+
 
 class UnsupportedOs(Exception):
     def __init__(self, value):

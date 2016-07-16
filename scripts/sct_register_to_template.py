@@ -5,8 +5,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
-# Modified: 2015-03-31
+# Authors: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -26,10 +25,12 @@ from msct_parser import Parser
 from msct_image import Image, find_zmin_zmax
 from shutil import move
 from sct_label_utils import ProcessLabels
+import numpy as np
 
 
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_script = os.path.dirname(__file__)
+path_sct = os.path.dirname(path_script)
 
 # DEFAULT PARAMETERS
 class Param:
@@ -37,7 +38,6 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.remove_temp_files = 1  # remove temporary files
-        self.output_type = 1
         self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         # self.speed = 'fast'  # speed of registration. slow | normal | fast
@@ -46,11 +46,9 @@ class Param:
         # self.gradientStep = '0.5'
         # self.metric = 'MI'
         self.verbose = 1  # verbose
-        self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
-        self.path_template = path_sct+'/data'
-        # self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
-        self.file_template_label = 'landmarks_center.nii.gz'
-        # self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
+        # self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
+        self.path_template = path_sct+'/data/PAM50'
+        # self.file_template_label = 'landmarks_center.nii.gz'
         self.zsubsample = '0.25'
         self.param_straighten = ''
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
@@ -63,6 +61,8 @@ step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
 paramreg = ParamregMultiStep([step1, step2, step3])
 
 
+# PARSER
+# ==========================================================================================
 def get_parser():
     param = Param()
     parser = Parser(__file__)
@@ -119,8 +119,7 @@ def get_parser():
                       type_value='str',
                       description="""Parameters for straightening (see sct_straighten_spinalcord).""",
                       mandatory=False,
-                      default_value='',
-                      example="-params bspline_meshsize=3x3x5")
+                      default_value='')
     # parser.add_option(name="-cpu-nb",
     #                   type_value="int",
     #                   description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
@@ -176,32 +175,39 @@ def main():
             paramreg.addStep(paramStep)
 
     # initialize other parameters
-    file_template_label = param.file_template_label
-    output_type = param.output_type
+    # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
+    template = os.path.basename(os.path.normpath(path_template))
     # smoothing_sigma = param.smoothing_sigma
 
-    # capitalize letters for contrast
-    if contrast_template == 't1':
-        contrast_template = 'T1'
-    elif contrast_template == 't2':
-        contrast_template = 'T2'
+    # adjust file names for old versions of template
+    if any(substring in path_template for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
+        # template name
+        contrast_template = contrast_template.upper()
+        # label name
+        file_template_label = 'landmarks_center.nii.gz'
+    else:
+        file_template_label = template + '_label_body.nii.gz'
 
     # retrieve file_template based on contrast
-    fname_template_list = glob(path_template+param.folder_template+'*'+contrast_template+'.nii.gz')
-    # TODO: make sure there is only one file -- check if file is there otherwise it crashes
-    fname_template = fname_template_list[0]
+    try:
+        fname_template_list = glob(path_template + 'template/*' + contrast_template + '.nii.gz')
+        fname_template = fname_template_list[0]
+    except IndexError:
+        sct.printv('\nERROR: No template found in '+path_template+'template/*'+contrast_template+'.nii.gz', 1, 'error')
 
     # retrieve file_template_seg
-    fname_template_seg_list = glob(path_template+param.folder_template+'*cord.nii.gz')
-    # TODO: make sure there is only one file
-    fname_template_seg = fname_template_seg_list[0]
+    try:
+        fname_template_seg_list = glob(path_template + 'template/*cord.nii.gz')
+        fname_template_seg = fname_template_seg_list[0]
+    except IndexError:
+        sct.printv('\nERROR: No template cord segmentation found. Please check the provided path.', 1, 'error')
 
     # start timer
     start_time = time.time()
 
     # get absolute path - TO DO: remove! NEVER USE ABSOLUTE PATH...
-    path_template = os.path.abspath(path_template+param.folder_template)
+    path_template = os.path.abspath(path_template+'template/')
 
     # get fname of the template + template objects
     # fname_template = sct.slash_at_the_end(path_template, 1)+file_template
@@ -209,6 +215,7 @@ def main():
     # fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
 
     # check file existence
+    # TODO: no need to do that!
     sct.printv('\nCheck template files...')
     sct.check_file_exist(fname_template, verbose)
     sct.check_file_exist(fname_template_label, verbose)
@@ -220,8 +227,6 @@ def main():
     sct.printv('.. Landmarks:            '+fname_landmarks, verbose)
     sct.printv('.. Segmentation:         '+fname_seg, verbose)
     sct.printv('.. Path template:        '+path_template, verbose)
-    sct.printv('.. Path output:          '+path_output, verbose)
-    sct.printv('.. Output type:          '+str(output_type), verbose)
     sct.printv('.. Remove temp files:    '+str(remove_temp_files), verbose)
 
     sct.printv('\nParameters for registration:')
@@ -257,7 +262,7 @@ def main():
                 break
     if not hasDifferentLabels:
         sct.printv('ERROR: Wrong landmarks input. All labels must be different.', verbose, 'error')
-    # all labels must be available in tempalte
+    # check if provided labels are available in the template
     image_label_template = Image(fname_template_label)
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
     if labels[-1].value > labels_template[-1].value:
@@ -344,44 +349,30 @@ def main():
     sct.run('sct_apply_transfo -i '+ftmp_label+' -o '+add_suffix(ftmp_label, '_straight')+' -d '+add_suffix(ftmp_seg, '_straight')+' -w warp_curve2straight.nii.gz -x nn')
     ftmp_label = add_suffix(ftmp_label, '_straight')
 
-    # Create crosses for the template labels and get coordinates
-    sct.printv('\nCreate a 15 mm cross for the template labels...', verbose)
+    # Compute rigid transformation between straight landmarks and template landmarks
+    sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
+    # open template label
     template_image = Image(ftmp_template_label)
     coordinates_input = template_image.getNonZeroCoordinates(sorting='value')
     # jcohenadad, issue #628 <<<<<
     # landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
     landmark_template = coordinates_input
     # >>>>>
-    if verbose == 2:
-        # TODO: assign cross to image before saving
-        template_image.setFileName(add_suffix(ftmp_template_label, '_cross'))
-        template_image.save(type='minimize_int')
-
-    # Create crosses for the input labels into straight space and get coordinates
-    sct.printv('\nCreate a 15 mm cross for the input labels...', verbose)
+    # open data label
     label_straight_image = Image(ftmp_label)
     coordinates_input = label_straight_image.getCoordinatesAveragedByValue()  # landmarks are sorted by value
     # jcohenadad, issue #628 <<<<<
     # landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
     landmark_straight = coordinates_input
     # >>>>>
-    if verbose == 2:
-        # TODO: assign cross to image before saving
-        label_straight_image.setFileName(add_suffix(ftmp_label, '_cross'))
-        label_straight_image.save(type='minimize_int')
-
     # Reorganize landmarks
     points_fixed, points_moving = [], []
     for coord in landmark_straight:
         point_straight = label_straight_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
-
     for coord in landmark_template:
         point_template = template_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
-
-    # Register curved landmarks on straight landmarks based on python implementation
-    sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
 
     import msct_register_landmarks
     # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
@@ -416,6 +407,17 @@ def main():
     ftmp_data = add_suffix(ftmp_data, '_straightAffine')
     sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
     ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
+
+    """
+    # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
+    # Solution found: remove slices below and above landmarks to avoid rotation effects
+    points_straight = []
+    for coord in landmark_template:
+        points_straight.append(coord.z)
+    min_point, max_point = int(round(np.min(points_straight))), int(round(np.max(points_straight)))
+    sct.run('sct_crop_image -i ' + ftmp_seg + ' -start ' + str(min_point) + ' -end ' + str(max_point) + ' -dim 2 -b 0 -o ' + add_suffix(ftmp_seg, '_black'))
+    ftmp_seg = add_suffix(ftmp_seg, '_black')
+    """
 
     # threshold and binarize
     sct.printv('\nBinarize segmentation...', verbose)
@@ -489,9 +491,8 @@ def main():
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
 
     # Apply warping fields to anat and template
-    if output_type == 1:
-        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
-        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
+    sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
+    sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
 
     # come back to parent folder
     os.chdir('..')
@@ -500,9 +501,8 @@ def main():
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'warp_template2anat.nii.gz', path_output+'warp_template2anat.nii.gz', verbose)
     sct.generate_output_file(path_tmp+'warp_anat2template.nii.gz', path_output+'warp_anat2template.nii.gz', verbose)
-    if output_type == 1:
-        sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
-        sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
+    sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
+    sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
 
     # Delete temporary files
     if remove_temp_files:

@@ -23,7 +23,7 @@ from copy import deepcopy
 
 def test(path_data='', parameters=''):
     verbose = 0
-    filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'
+    filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'  # used to compute DICE
     dice_threshold = 0.9
 
     # initializations
