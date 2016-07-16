@@ -7,10 +7,6 @@
 % contains the white matter tracts and a spinal cord template (or data) on
 % which we want to intergrate information on the white matter tracts
 
-% v8: fast version with one registration per vertebral level
-%       interpolation between slice to smooth in z direction
-%       full symmetrization
-
 %----------------------------- Dependencies -------------------------------
 % Matlab dependencies:
 % - image processing toolbox functions
@@ -27,7 +23,7 @@
 dbstop if error
 
 % get path of running script
-[path_script, b, c] = fileparts(which('create_atlas.m'))
+[path_script, b, c] = fileparts(which('create_atlas.m'));
 % go to this path
 cd(path_script)
 
@@ -39,7 +35,7 @@ addpath(pwd);
 % file_template: the template slice we want to show tracts on
 % file_atlas: the raw atlas information containing labeled regions 
 % file_mask: a binary version of the altas with a white matter mask
-% ext_altas: extension for the image file of the altas and its mask
+% ext_atlas: extension for the image file of the altas and its mask
 % 
 % num_slice_ref: the number of the reference slice which will be used for
 %   direct registration of the atlas
@@ -57,36 +53,38 @@ path_fsl_matlab = strcat(path_fsl, '/etc/matlab');
 % add to path
 addpath(path_fsl_matlab);
 % define SCT path
-path_sct = '/Users/julien/code/spinalcordtoolbox/'
+path_sct = '/Users/julien/code/spinalcordtoolbox/';
 % define path of template
 path_template = '/Users/julien/data/PAM50/template/';
 % name of the WM template. Don't put extension.
-file_template = 'PAM50_WM';  % PAM50_WM
+file_template = 'PAM50_wm';  % PAM50_WM
 
 %--------------------------------------------------------------------------
-% PARAMETERS FOR THE LABELS
+% LABEL PARAMETERS
 %--------------------------------------------------------------------------
 % path to the image file that contains the drawing of the WM atlas from Grays anatomy.
 path_atlas_data = strcat(path_sct, 'dev/atlas/raw_data/');
 % file name of the full atlas
-file_atlas = 'atlas_grays_cerv_sym_correc_r5';
+file_atlas = 'atlas_grays_cerv_sym_correc_r6';
 % file name of the binary mask that helps for the registration to the MNI-Poly-AMU
 file_mask = 'mask_grays_cerv_sym_correc_r5';
 ext_atlas = '.png';
+% text file linking label values, ID and description
+file_atlas_txt = 'atlas_grays_cerv_sym_correc_r6_label.txt';
 % values of the label in the atlas file (file_atlas). Each value corresponds to a given tract, e.g., corticospinal left.
 % NB: 238=WM, 255=CSF (added by jcohen on 2014-12-08)
 % label_values = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121 146 152 159 167 173 180 187 194 199 204 208 214 219 224 230 238 255];
-label_left = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121];
-label_right = [146 152 159 167 173 180 187 194 199 204 208 214 219 224 230];
-label_pve = [238 255];
+label_left = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121 45 80 120];
+label_right = [146 152 159 167 173 180 187 194 199 204 208 214 219 224 230 150 190 220];
+label_pve = [255];
 label_values = [label_left, label_right, label_pve];
 
+%--------------------------------------------------------------------------
+% TEMPLATE PARAMETERS
+%--------------------------------------------------------------------------
 which_template = 'PAM50'; % 'MNI-Poly-AMU'
-
 if strcmp(which_template, 'MNI-Poly-AMU')
-    %--------------------------------------------------------------------------
-    % PARAMETERS FOR THE MNI-Poly-AMU template
-    %--------------------------------------------------------------------------
+    % MNI-Poly-AMU template:
     % corresponds to mid-C4 in the MNI-Poly-AMU template
     z_slice_ref = 387;
     % interpolation factor for the MNI-Poly-AMU template in order to match the hi-res grays atlas
@@ -96,11 +94,8 @@ if strcmp(which_template, 'MNI-Poly-AMU')
     z_disks_mid = [483 476 466 455 440 423 406 387 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
     % same as before-- except that C4 mid-vertebral is not listed. 
     z_disks_mid_noC4 = [483 476 466 455 440 423 406 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
-
 elseif strcmp(which_template, 'PAM50')
-    %--------------------------------------------------------------------------
-    % PARAMETERS FOR THE PAM50 template
-    %--------------------------------------------------------------------------
+    % PAM50 template:
     % corresponds to mid-C4 in the template
     z_slice_ref = 837;
     % interpolation factor for the template in order to match the hi-res grays atlas
@@ -111,22 +106,22 @@ elseif strcmp(which_template, 'PAM50')
     % these are the value corresponding to the slice number (z) on the template, at which the atlas will be warped. It corresponds to the levels of the intervertebral disks.
     % NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template
     z_disks_mid = [151 185 246 301 355 409 460 509 557 601 641 682 721 757 789 823 855 891 921 945];
-    % same as before-- except that C4 mid-vertebral is not listed. 
-%     z_disks_mid_noC4 = [483 476 466 455 440 423 406 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
 end
 
+%--------------------------------------------------------------------------
+% OUTPUT PARAMETERS
+%--------------------------------------------------------------------------
+folder_tracts = ['WMtracts_outputs/'];
+folder_ctrl = ['registered_template/'];
+folder_final = ['final_results/'];
+prefix_out = 'PAM50_atlas';
+ext = '.nii.gz'; % .nii.gz. N.B. THIS NEEDS TO BE IN nii.gz BECAUSE THE FUNCTION save_avw SAVES IN nii.gz!!!
+fsloutputype = 'export FSLOUTPUTTYPE=NIFTI_GZ; ';
 
 
 %--------------------------------------------------------------------------
 %----------------------- Starting the pipeline -------------------------
 %--------------------------------------------------------------------------
-
-ext = '.nii.gz'; % .nii.gz. N.B. THIS NEEDS TO BE IN nii.gz BECAUSE THE FUNCTION save_avw SAVES IN nii.gz!!!
-fsloutputype = 'export FSLOUTPUTTYPE=NIFTI_GZ; ';
-folder_tracts = ['WMtracts_outputs/'];
-folder_ctrl = ['registered_template/'];
-folder_final = ['final_results/'];
-prefix_out = 'WMtract_';
 
 template_mask = [file_template '_mask'];
 template_cropped = [file_template '_c6v'];
@@ -152,7 +147,6 @@ affine_atlas = 'Affine0GenericAffine.mat';  %[prefix_ants_ref 'Affine.txt'];
 Warp_atlas = [prefix_ants 'Warp_init' ext];
 Warp_tmp = [prefix_ants 'Warp_init'];
 suffix_ants = '_reg';
-
 
 % if folder exists, delete it
 if exist(path_out, 'dir')
@@ -285,7 +279,7 @@ end
 
 % estimate affine transformation from atlas to template
 % here, using flag -r 0 to initialize transformations based on geometrical center of images
-cmd = ['isct_antsRegistration --dimensionality 2 -m MeanSquares[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,4] -t Affine[1] --convergence 100x10 -s 1x0 -f 2x1 -r [' templateci_slice_ref_thresh ext ',' mask_nohd ext ', 0] -o [Affine,' mask_nohd '_affine' ext ']'];
+cmd = ['isct_antsRegistration --dimensionality 2 -m MeanSquares[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,4] -t Affine[1] --convergence 100x10 -s 0x0 -f 2x1 -r [' templateci_slice_ref_thresh ext ',' mask_nohd ext ', 0] -o [Affine,' mask_nohd '_affine' ext ']'];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
 
 % estimate diffeomorphic transformation
@@ -723,7 +717,6 @@ end
 
 
 %----------------- Interpolation between computed slices ------------------
-
 for label = 1:length(label_values)
     for k = 1:length(z_disks_mid)-1
         tractsHR{label} = m_linear_interp(tractsHR{label},z_disks_mid(k)+1,z_disks_mid(k+1)+1);
@@ -731,10 +724,8 @@ for label = 1:length(label_values)
 end
 
 
-
 %-------------- Downsampling and partial volume computation ---------------
 max_indx = max(z_disks_mid(:));
-
 
 for label = 1:length(label_values)
     for zslice = 0:max_indx
@@ -743,33 +734,195 @@ for label = 1:length(label_values)
     end
 end
 
+%% open tract description file
+disp('*** Open label description file ***')
+fid = fopen([path_atlas_data, file_atlas_txt]);
+tline = fgetl(fid);
+struct_label = {};
+i=1;
+while ischar(tline)
+    disp(tline)
+    tline_split = strsplit(tline,',');
+    struct_label{i}.id = tline_split{1};
+    struct_label{i}.value = tline_split{2};
+    struct_label{i}.description = tline_split{3};
+    % go to next line
+    tline = fgetl(fid);
+    i = i+1;
+end
+fclose (fid);
 
-
-%--- Loop on labels to compute partial volume values without HR version ---
-
-% create variable of tract numbering with 2 digits starting at 00
-cell_tract = m_numbering(length(label_values), 2, 0);
+%% Loop on labels to compute partial volume values without HR version
+disp('*** Compute partial volume and save data ***')
 % loop across tracts
 for label = 1:length(label_values)
-    
+    % Compute label file name
+    for i = 1:length(struct_label)
+        if str2num(struct_label{i}.value) == label_values(label)
+            % Build suffix
+            numlabel = sprintf('%02d',str2num(struct_label{i}.id));
+            disp(['Label value: ',num2str(label_values(label)),', Label ID: ', numlabel,', Description: ',struct_label{i}.description])
+            % build file name
+            filetractML = [path_out,folder_final,prefix_out,'_',numlabel];
+%             struct_label{label}.filename = [prefix_out,'_',numlabel,ext];
+            break
+        end
+    end
     % Save ML version and copy geometry
-    filetractML = [path_out folder_final prefix_out '_' cell_tract{label}];
     save_avw(tracts{label},filetractML,'d',scalesCROP);
     cmd = ['c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-    
-	 % Reslice into native template space
+	% Reslice into native template space
 	cmd = ['c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(resul)
-
     % copy geometry from white matter template
     cmd = [fsloutputype 'fslcpgeom ', path_template, file_template, ' ', filetractML];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 end
 
+%% Create global WM and GM atlases
+% Build global WM atlas
+description = {'WM'};
+global_suffix = '_wm';
+tract_global = zeros(size(tracts{1}));
+description = {'WM', 'GM'};
+global_suffix = '_cord';
+tract_global = zeros(size(tracts{1}));
+for ilabel = 1:length(struct_label)
+    for idescription = 1:length(description)
+        if findstr(struct_label{ilabel}.description,description{idescription})
+            % loop across label_values to make sure to get the right value
+            for jlabel = 1:length(label_values)
+                if label_values(jlabel) == str2num(struct_label{ilabel}.value)
+                    disp(['Adding: ',struct_label{ilabel}.description,' (value=',struct_label{ilabel}.value,')'])
+                    tract_global = tract_global + tracts{jlabel};
+                end
+            end
+        end
+    end
+end
+% Save image and copy geometry
+filetractML = [path_out,folder_final,which_template,global_suffix];
+save_avw(tract_global,filetractML,'d',scalesCROP);
+cmd = ['c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+% Reslice into native template space
+cmd = ['c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(resul)
+% copy geometry from white matter template
+cmd = [fsloutputype 'fslcpgeom ', path_template, file_template, ' ', filetractML];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
-% FINISHED!
+% Build global GM atlas
+description = {'GM'};
+global_suffix = '_gm';
+tract_global = zeros(size(tracts{1}));
+description = {'WM', 'GM'};
+global_suffix = '_cord';
+tract_global = zeros(size(tracts{1}));
+for ilabel = 1:length(struct_label)
+    for idescription = 1:length(description)
+        if findstr(struct_label{ilabel}.description,description{idescription})
+            % loop across label_values to make sure to get the right value
+            for jlabel = 1:length(label_values)
+                if label_values(jlabel) == str2num(struct_label{ilabel}.value)
+                    disp(['Adding: ',struct_label{ilabel}.description,' (value=',struct_label{ilabel}.value,')'])
+                    tract_global = tract_global + tracts{jlabel};
+                end
+            end
+        end
+    end
+end
+% Save image and copy geometry
+filetractML = [path_out,folder_final,which_template,global_suffix];
+save_avw(tract_global,filetractML,'d',scalesCROP);
+cmd = ['c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+% Reslice into native template space
+cmd = ['c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(resul)
+% copy geometry from white matter template
+cmd = [fsloutputype 'fslcpgeom ', path_template, file_template, ' ', filetractML];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+
+% Build global cord atlas
+description = {'WM', 'GM'};
+global_suffix = '_cord';
+tract_global = zeros(size(tracts{1}));
+for ilabel = 1:length(struct_label)
+    for idescription = 1:length(description)
+        if findstr(struct_label{ilabel}.description,description{idescription})
+            % loop across label_values to make sure to get the right value
+            for jlabel = 1:length(label_values)
+                if label_values(jlabel) == str2num(struct_label{ilabel}.value)
+                    disp(['Adding: ',struct_label{ilabel}.description,' (value=',struct_label{ilabel}.value,')'])
+                    tract_global = tract_global + tracts{jlabel};
+                end
+            end
+        end
+    end
+end
+% binarize
+tract_global(tract_global<0.5) = 0;
+tract_global(tract_global>=0.5) = 1;
+% Save image and copy geometry
+filetractML = [path_out,folder_final,which_template,global_suffix];
+save_avw(tract_global,filetractML,'d',scalesCROP);
+cmd = ['c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+% Reslice into native template space
+cmd = ['c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(resul)
+% copy geometry from white matter template
+cmd = [fsloutputype 'fslcpgeom ', path_template, file_template, ' ', filetractML];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+
+%% Create file info_label.txt
+disp('*** Create file info_label.txt ***')
+% open file
+file_infolabel = [path_out,folder_final,'info_label.txt'];
+fid = fopen(file_infolabel,'w');
+fprintf(fid,'# White matter atlas. Generated on: %s\n',date);
+fprintf(fid,'# ID, name, file\n');
+% loop across tracts
+for label = 1:length(struct_label)
+    numlabel = sprintf('%02d',str2num(struct_label{i}.id));
+    fprintf(fid,'%s, %s, %s\n',struct_label{label}.id, struct_label{label}.description, [prefix_out,'_',numlabel,ext]);
+end
+% add combined labels
+fprintf(fid,'\n# Combined labels\n');
+fprintf(fid,'# ID, name, file\n');
+fprintf(fid,'50, spinal cord, 0:35\n');
+fprintf(fid,'51, white matter, 0:29\n');
+fprintf(fid,'52, gray matter, 30:35\n');
+fprintf(fid,'52, dorsal columns, 0:3\n');
+fprintf(fid,'53, lateral funiculi, 4:13\n');
+fprintf(fid,'54, ventral funiculi, 14:29\n');
+fclose(fid);
+
+%% Create global WM and GM atlases
+cmd = ['mkdir ',path_out,folder_final,'temp_wm'];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+cd([path_out,folder_final,'temp_wm']);
+% copy all WM files atlas
+cmd = ['cp ../*.nii.gz .'];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+% remove first one
+cmd = ['rm ',which_template,'_atlas_00.nii.gz'];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+% sum all WM tracts
+cmd = ['sct_maths -i ../PAM50_atlas_00.nii.gz -add *.nii.gz -o ',which_template,'_wm.nii.gz'];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+% copy file and delete temp folder
+cmd = ['cp ',which_template,'_wm.nii.gz ../'];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+cd('../')
+cmd = ['rm -rf temp_wm'];
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+
+
+%% FINISHED!
 bricon = ' -b 0.5,1 '
 disp 'Done! To see results, type:'
 disp(['cd ',path_out folder_final])
-disp(['fslview ',path_template,'PAM50_T2.nii.gz -b 0,3000 ',path_template,'PAM50_WM.nii.gz',bricon,' -l Blue-Lightblue WMtract__00.nii.gz -l Red',bricon,'WMtract__01.nii.gz -l Green',bricon,'WMtract__02.nii.gz -l Blue',bricon,'WMtract__03.nii.gz -l Yellow',bricon,'WMtract__04.nii.gz -l Pink ',bricon,'WMtract__30.nii.gz -l Red-Yellow ',bricon,'WMtract__31.nii.gz -l Copper ',bricon,' &'])
+disp(['fslview ',path_template,which_template,'_t2.nii.gz -b 0,4000 ',path_template,which_template,'_wm.nii.gz',bricon,' -l Blue-Lightblue ',prefix_out,'_00.nii.gz -l Red',bricon,prefix_out,'_01.nii.gz -l Green',bricon,prefix_out,'_02.nii.gz -l Blue',bricon,prefix_out,'_03.nii.gz -l Yellow',bricon,prefix_out,'_04.nii.gz -l Pink ',bricon,prefix_out,'_30.nii.gz -l Red-Yellow ',bricon,prefix_out,'_31.nii.gz -l Copper ',bricon,' &'])
