@@ -383,7 +383,7 @@ else
 #  ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
 #  pip install --ignore-installed ${dipy_whl} ${ornlm_whl}
 #  pip install --ignore-installed ${ornlm_whl}
-#fi
+fi
 
 echo -e "All requirements installed!"
 
