@@ -36,6 +36,7 @@ install:
 
 before_cache:
   - rm -rf ~/.matplotlib/fontList.cache
+  - rm -rf ~/.cache/matplotlib
 
 cache:
 # to address issue #774
