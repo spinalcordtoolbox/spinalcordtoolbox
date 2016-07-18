@@ -28,6 +28,7 @@ from sct_utils import extract_fname, printv, run, generate_output_file, slash_at
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
+import matplotlib.pyplot as plt
 
 # get path of the toolbox
 # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -185,8 +186,8 @@ def main(args=None):
     laplacian = int(arguments['-laplacian'])
 
     # if verbose, import matplotlib
-    if verbose == 2:
-        import matplotlib.pyplot as plt
+    # if verbose == 2:
+        # import matplotlib.pyplot as plt
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
