@@ -33,6 +33,10 @@ install:
 # run launcher in order to update PATH
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
+
+before_cache:
+  - rm -rf ~/.matplotlib/fontList.cache
+
 cache:
 # to address issue #774
   directories:
