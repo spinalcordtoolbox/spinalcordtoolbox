@@ -34,15 +34,6 @@ install:
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
 
-before_cache:
-  - rm -rf ~/.matplotlib/fontList.cache
-  - rm -rf ~/.cache/matplotlib
-
-cache:
-# to address issue #774
-  directories:
-    - $HOME/.cache/matplotlib
-
 script:
 #  - sct_check_dependencies   # test dependencies
   - sct_testing -d 1  # test functions & integrity
