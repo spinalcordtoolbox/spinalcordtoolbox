@@ -28,7 +28,6 @@ from sct_utils import extract_fname, printv, run, generate_output_file, slash_at
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
-import matplotlib.pyplot as plt
 
 # get path of the toolbox
 # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -379,6 +378,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
     # display stuff
     if verbose == 2:
+        import matplotlib.pyplot as plt
         plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
@@ -735,6 +735,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
 
     # display patterns and correlation
     if verbose == 2:
+        import matplotlib.pyplot as plt
         # display template pattern
         plt.figure(11, figsize=(15, 7))
         plt.subplot(131)
