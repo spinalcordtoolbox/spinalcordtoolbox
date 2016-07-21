@@ -322,7 +322,7 @@ def main():
     warp_forward = []
     warp_inverse = []
     for i_step in range(0, len(paramreg.steps)):
-        sct.printv('\nEstimate transformation for step #'+str(i_step)+'...', param.verbose)
+        sct.printv('\n--\nEstimate transformation for step #'+str(i_step), param.verbose)
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
             src = 'src.nii'
@@ -337,21 +337,17 @@ def main():
             sct.run('ERROR: Wrong image type.', 1, 'error')
         # if step>0, apply warp_forward_concat to the src image to be used
         if i_step > 0:
+            sct.printv('Apply transformation from previous step', param.verbose)
             sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
             src = sct.add_suffix(src, '_reg')
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
         warp_forward.append(warp_forward_out)
-        warp_inverse.append(warp_inverse_out)
-
-    # Put warp_forward_0 at the end of the list
-    warp_forward_0 = warp_forward.pop(0)
-    warp_forward.append(warp_forward_0)
+        warp_inverse.insert(0, warp_inverse_out)
 
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', verbose)
     sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d dest.nii -o warp_src2dest.nii.gz', verbose)
-    warp_inverse.reverse()
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d dest.nii -o warp_dest2src.nii.gz', verbose)
 
     # Apply warping field to src data
@@ -530,7 +526,7 @@ def register(src, dest, paramreg, param, i_step_str):
                             verbose=param.verbose,
                             ants_registration_params=ants_registration_params)
 
-    # centermass
+    # slice-wise transfo
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
         # check if type=seg
         if not paramreg.steps[i_step_str].type == 'seg':
