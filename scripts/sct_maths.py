@@ -207,7 +207,7 @@ def main(args = None):
         # elif len(sigmas) != len(data.shape):
         #     printv(parser.usage.generate(error='ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
-        [sigmas[i] / dim[i+4] for i in range(3)]
+        sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
         # smooth data
         data_out = laplacian(data, sigmas)
 
@@ -243,7 +243,7 @@ def main(args = None):
         elif len(sigmas) != len(data.shape):
             printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
-        [sigmas[i] / dim[i+4] for i in range(3)]
+        sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
         # smooth data
         data_out = smooth(data, sigmas)
 
