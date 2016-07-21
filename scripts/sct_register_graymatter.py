@@ -120,7 +120,7 @@ class MultiLabelRegistration:
         path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
 
         # Register multilabel images together
-        cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -iseg '+fname_template_ml+' -dseg '+fname_automatic_ml+' -param '+self.param.param_reg
+        cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -param '+self.param.param_reg
         if 'centermass' in self.param.param_reg:
             fname_template_ml_seg = sct.add_suffix(fname_template_ml, '_bin')
             sct.run('sct_maths -i '+fname_template_ml+' -bin -o '+fname_template_ml_seg)
