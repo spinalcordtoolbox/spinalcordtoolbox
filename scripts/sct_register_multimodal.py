@@ -539,8 +539,8 @@ def register(src, dest, paramreg, param, i_step_str):
             sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.\n', 1, 'warning')
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
-            sct.run('sct_maths -i '+src+' -smooth '+paramreg.steps[i_step_str].smooth+' -o '+sct.add_suffix(src, '_smooth'))
-            sct.run('sct_maths -i '+dest+' -smooth '+paramreg.steps[i_step_str].smooth+' -o '+sct.add_suffix(dest, '_smooth'))
+            sct.run('sct_maths -i '+src+' -smooth '+paramreg.steps[i_step_str].smooth+','+paramreg.steps[i_step_str].smooth+',0 -o '+sct.add_suffix(src, '_smooth'))
+            sct.run('sct_maths -i '+dest+' -smooth '+paramreg.steps[i_step_str].smooth+','+paramreg.steps[i_step_str].smooth+',0 -o '+sct.add_suffix(dest, '_smooth'))
             src = sct.add_suffix(src, '_smooth')
             dest = sct.add_suffix(dest, '_smooth')
         from msct_register import register_slicewise
