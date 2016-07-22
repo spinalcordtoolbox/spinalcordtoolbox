@@ -328,7 +328,7 @@ def main():
         if paramreg.steps[str(i_step)].type == 'im':
             src = 'src.nii'
             dest = 'dest_RPI.nii'
-            interp_step = 'linear'
+            interp_step = 'spline'
         elif paramreg.steps[str(i_step)].type == 'seg':
             src = 'src_seg.nii'
             dest = 'dest_seg_RPI.nii'
