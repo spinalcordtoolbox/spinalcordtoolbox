@@ -159,7 +159,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
 
 # Get file label
 # ==========================================================================================
-def get_file_label(path_label, label):
+def get_file_label(path_label='', label=''):
     """
     Get label file name given based on info_label.txt file.
     Label needs to be a substring of the "name" field. E.g.: T1-weighted, spinal cord, white matter, etc.
@@ -168,9 +168,10 @@ def get_file_label(path_label, label):
     :return:
     """
     # init
+    file_info_label = 'info_label.txt'
     file_label = ''
     # Open file
-    fname_label = path_label+param.file_info_label
+    fname_label = path_label+file_info_label
     try:
         f = open(fname_label)
     except IOError:
