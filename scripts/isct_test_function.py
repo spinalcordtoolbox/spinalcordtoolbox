@@ -178,13 +178,16 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
         pool.join()
-        sys.exit(2)
+        # return
+        # raise KeyboardInterrupt
+        # sys.exit(2)
     except Exception as e:
         sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
         sct.printv(str(e), 1, 'warning')
         pool.terminate()
         pool.join()
-        sys.exit(2)
+        # raise Exception
+        # sys.exit(2)
 
     return results
 
@@ -266,7 +269,7 @@ if __name__ == "__main__":
     # redirect to log file
     # if create_log_file:
     orig_stdout = sys.stdout
-    fname_log = 'results_testing_'+output_time+'.txt'
+    fname_log = 'results_testing_'+output_time+'.log'
     handle_log = file(fname_log, 'w')
     sys.stdout = handle_log
 
@@ -308,46 +311,50 @@ if __name__ == "__main__":
     sct.checkRAM(os_running)
 
     # test function
-    results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
-    pd.set_option('display.max_rows', 500)
-    pd.set_option('display.max_columns', 500)
-    pd.set_option('display.width', 1000)
-    results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
-    results_display = results_subset
+    try:
+        results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
+        pd.set_option('display.max_rows', 500)
+        pd.set_option('display.max_columns', 500)
+        pd.set_option('display.width', 1000)
+        results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
+        results_display = results_subset
 
-    # save panda structure
-    results_subset.to_pickle('results_testing_'+output_time+'.pickle')
-    results_subset.to_csv('results_testing_'+output_time+'.csv')
+        # save panda structure
+        results_subset.to_pickle('results_testing_'+output_time+'.pickle')
+        results_subset.to_csv('results_testing_'+output_time+'.csv')
 
-    # mean
-    results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
-    results_mean['subject'] = 'Mean'
-    results_mean.set_value('status', float('NaN'))  # set status to NaN
-    results_display = results_display.append(results_mean, ignore_index=True)
+        # mean
+        results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
+        results_mean['subject'] = 'Mean'
+        results_mean.set_value('status', float('NaN'))  # set status to NaN
+        results_display = results_display.append(results_mean, ignore_index=True)
 
-    # std
-    results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
-    results_std['subject'] = 'STD'
-    results_std.set_value('status', float('NaN'))  # set status to NaN
-    results_display = results_display.append(results_std, ignore_index=True)
+        # std
+        results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
+        results_std['subject'] = 'STD'
+        results_std.set_value('status', float('NaN'))  # set status to NaN
+        results_display = results_display.append(results_std, ignore_index=True)
 
-    # count tests that passed
-    count_passed = results_subset.status[results_subset.status == 0].count()
+        # count tests that passed
+        count_passed = results_subset.status[results_subset.status == 0].count()
 
-    # results_display = results_display.set_index('subject')
-    # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
-    results_display = results_display.set_index('subject').reset_index()
+        # results_display = results_display.set_index('subject')
+        # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
+        results_display = results_display.set_index('subject').reset_index()
 
-    # printing results
-    print 'Results for "' + function_to_test + ' ' + parameters + '":'
-    print 'Dataset: ' + dataset
-    print results_display.to_string()
-    print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
+        # printing results
+        print 'Results for "' + function_to_test + ' ' + parameters + '":'
+        print 'Dataset: ' + dataset
+        print results_display.to_string()
+        print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
 
-    # display elapsed time
-    elapsed_time = time() - start_time
-    print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
-    print 'Status legend: 0: Passed, 1: Crashed, 99: Failed, 200: File(s) missing'
+        # display elapsed time
+        elapsed_time = time() - start_time
+        print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
+        print 'Status legend: 0: Passed, 1: Crashed, 99: Failed, 200: File(s) missing'
+
+    except Exception as err:
+        print err
 
     # stop file redirection
     sys.stdout.close()
