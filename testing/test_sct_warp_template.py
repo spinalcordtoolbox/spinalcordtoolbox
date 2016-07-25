@@ -21,7 +21,7 @@ import commands
 def test(path_data):
 
     # parameters
-    folder_data = ['mt/', 'template/label']
+    folder_data = ['mt/', 'template/']
     file_data = ['mt1.nii.gz', 'warp_template2mt.nii.gz']
 
     # define command

@@ -12,21 +12,21 @@
 #########################################################################################
 
 import commands
-import sys
+# import sys
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+# sys.path.append(path_sct + '/scripts')
 
 def test(data_path):
 
-    range_mtr = [32.69, 32.70]
+    range_mtr = [31.8, 31.9]
     output = ''
     status = 0
 
     # parameters
     folder_data = 'mt/'
-    file_data = ['mt0.nii.gz', 'mt1.nii.gz', 'mt1_seg.nii.gz']
+    file_data = ['mt0_reg_slicereg_goldstandard.nii.gz', 'mt1.nii.gz', 'mt1_seg.nii.gz']
 
     # define command
     cmd = 'sct_compute_mtr -mt0 ' + data_path + folder_data + file_data[0] \
