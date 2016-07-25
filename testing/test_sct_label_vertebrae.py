@@ -31,7 +31,7 @@ def test(path_data='', parameters=''):
     max_dist = float('NaN')
     diff_manual_result = float('NaN')
 
-    if not parameters____:
+    if not parameters:
         parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -c t2 -o t2_seg_labeled.nii.gz'
 
     # retrieve flags
