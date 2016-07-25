@@ -221,12 +221,12 @@ def get_parser():
                       default_value=0,
                       example='42')
 
-    parser.add_option(name="-log",
-                      type_value='multiple_choice',
-                      description="Redirects Terminal verbose to log file.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='0')
+    # parser.add_option(name="-log",
+    #                   type_value='multiple_choice',
+    #                   description="Redirects Terminal verbose to log file.",
+    #                   mandatory=False,
+    #                   example=['0', '1'],
+    #                   default_value='0')
 
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -255,7 +255,7 @@ if __name__ == "__main__":
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
-    create_log_file = arguments['-log']
+    # create_log_file = arguments['-log']
     verbose = arguments["-v"]
 
     # start timer
@@ -264,10 +264,11 @@ if __name__ == "__main__":
     output_time = strftime("%y%m%d%H%M%S")
 
     # redirect to log file
-    if create_log_file:
-        orig_stdout = sys.stdout
-        handle_log = file('results_testing_'+output_time+'.txt', 'w')
-        sys.stdout = handle_log
+    # if create_log_file:
+    orig_stdout = sys.stdout
+    fname_log = 'results_testing_'+output_time+'.txt'
+    handle_log = file(fname_log, 'w')
+    sys.stdout = handle_log
 
     print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
 
@@ -347,3 +348,11 @@ if __name__ == "__main__":
     elapsed_time = time() - start_time
     print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
     print 'Status legend: 0: Passed, 1: Crashed, 99: Failed, 200: File(s) missing'
+
+    # stop file redirection
+    sys.stdout.close()
+    sys.stdout = orig_stdout
+
+    # display log file to Terminal
+    handle_log = file(fname_log, 'r')
+    print handle_log.read()
