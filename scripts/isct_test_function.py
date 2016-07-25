@@ -303,6 +303,8 @@ if __name__ == "__main__":
 
     # start timer
     start_time = time()
+    # create single time variable for output names
+    output_time = strftime("%y%m%d%H%M%S")
 
     print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
     results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
@@ -313,8 +315,8 @@ if __name__ == "__main__":
     results_display = results_subset
 
     # save panda structure
-    results_subset.to_pickle('results_testing_'+strftime("%y%m%d%H%M%S"))
-    results_subset.to_csv('results_testing_'+strftime("%y%m%d%H%M%S")+'.csv')
+    results_subset.to_pickle('results_testing_'+output_time+'.pickle')
+    results_subset.to_csv('results_testing_'+output_time+'.csv')
 
     # mean
     results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
