@@ -19,11 +19,13 @@ import sct_register_to_template
 from pandas import DataFrame
 import os.path
 from copy import deepcopy
+from sct_warp_template import get_file_label
 
 
 def test(path_data='', parameters=''):
     verbose = 0
-    filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'  # used to compute DICE
+    default_template = 'PAM50'
+    # filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'  # used to compute DICE
     dice_threshold = 0.9
 
     # initializations
@@ -32,7 +34,7 @@ def test(path_data='', parameters=''):
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz ' \
-                     '-param step=1,type=seg,algo=slicereg,metric=MeanSquares,iter=5:step=2,type=seg,algo=bsplinesyn,iter=3,metric=MI:step=3,iter=0 ' \
+                     '-param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares:step=3,iter=0 ' \
                      '-t template/ -r 0'
 
     parser = sct_register_to_template.get_parser()
@@ -52,9 +54,10 @@ def test(path_data='', parameters=''):
         #           'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')},
         #     index=[path_data])
 
+    # if template is not specified, use default
     if not os.path.isdir(dict_param_with_path['-t']):
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        dict_param_with_path['-t'] = path_sct + '/data/'
+        dict_param_with_path['-t'] = path_sct + default_template
         param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # get contrast folder from -i option.
@@ -97,16 +100,18 @@ def test(path_data='', parameters=''):
 
     # if command ran without error, test integrity
     if status == 0:
+        # get filename_template_seg
+        fname_template_seg = get_file_label(dict_param_with_path['-t']+'template/', 'spinal cord', output='filewithpath')
         # apply transformation to binary mask: template --> anat
         sct.run(
-            'sct_apply_transfo -i ' + dict_param_with_path['-t'] + filename_template +
+            'sct_apply_transfo -i ' + fname_template_seg +
             ' -d ' + dict_param_with_path['-s'] +
             ' -w ' + path_output + 'warp_template2anat.nii.gz' +
             ' -o ' + path_output + 'test_template2anat.nii.gz -x nn', verbose)
         # apply transformation to binary mask: anat --> template
         sct.run(
             'sct_apply_transfo -i ' + dict_param_with_path['-s'] +
-            ' -d ' + dict_param_with_path['-t'] + filename_template +
+            ' -d ' + fname_template_seg +
             ' -w ' + path_output + 'warp_anat2template.nii.gz' +
             ' -o ' + path_output + 'test_anat2template.nii.gz -x nn', verbose)
         # compute dice coefficient between template segmentation warped into anat and segmentation from anat
@@ -118,7 +123,7 @@ def test(path_data='', parameters=''):
             status1 = 99
         # compute dice coefficient between segmentation from anat warped into template and template segmentation
         # N.B. here we use -bmax because the FOV of the anat is smaller than the template
-        cmd = 'sct_dice_coefficient -i ' + dict_param_with_path['-t'] + filename_template + ' -d ' + path_output + 'test_anat2template.nii.gz -bmax 1'
+        cmd = 'sct_dice_coefficient -i ' + fname_template_seg + ' -d ' + path_output + 'test_anat2template.nii.gz -bmax 1'
         status2, output2 = sct.run(cmd, verbose)
         # parse output and compare to acceptable threshold
         dice_anat2template = float(output2.split('3D Dice coefficient = ')[1].split('\n')[0])

@@ -180,45 +180,51 @@ def main():
     template = os.path.basename(os.path.normpath(path_template))
     # smoothing_sigma = param.smoothing_sigma
 
-    # adjust file names for old versions of template
-    if any(substring in path_template for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
-        # template name
-        contrast_template = contrast_template.upper()
-        # label name
-        file_template_label = 'landmarks_center.nii.gz'
-    else:
-        file_template_label = template + '_label_body.nii.gz'
+    # retrieve template file names
+    from sct_warp_template import get_file_label
+    file_template_vertebral_labeling = get_file_label(path_template+'template/', 'vertebral')
+    file_template = get_file_label(path_template+'template/', contrast_template.upper()+'-weighted')
+    file_template_seg = get_file_label(path_template+'template/', 'spinal cord')
 
-    # retrieve file_template based on contrast
-    try:
-        fname_template_list = glob(path_template + 'template/*' + contrast_template + '.nii.gz')
-        fname_template = fname_template_list[0]
-    except IndexError:
-        sct.printv('\nERROR: No template found in '+path_template+'template/*'+contrast_template+'.nii.gz', 1, 'error')
-
-    # retrieve file_template_seg
-    try:
-        fname_template_seg_list = glob(path_template + 'template/*cord.nii.gz')
-        fname_template_seg = fname_template_seg_list[0]
-    except IndexError:
-        sct.printv('\nERROR: No template cord segmentation found. Please check the provided path.', 1, 'error')
+    # # adjust file names for old versions of template
+    # if any(substring in path_template for substring in ['MNI-Poly-AMU', 'sct_testing_data']):
+    #     # template name
+    #     contrast_template = contrast_template.upper()
+    #     # label name
+    #     file_template_label = 'landmarks_center.nii.gz'
+    # else:
+    #     file_template_label = template + '_label_body.nii.gz'
+    #
+    # # retrieve file_template based on contrast
+    # try:
+    #     fname_template_list = glob(path_template + 'template/*' + contrast_template + '.nii.gz')
+    #     fname_template = fname_template_list[0]
+    # except IndexError:
+    #     sct.printv('\nERROR: No template found in '+path_template+'template/*'+contrast_template+'.nii.gz', 1, 'error')
+    #
+    # # retrieve file_template_seg
+    # try:
+    #     fname_template_seg_list = glob(path_template + 'template/*cord.nii.gz')
+    #     fname_template_seg = fname_template_seg_list[0]
+    # except IndexError:
+    #     sct.printv('\nERROR: No template cord segmentation found. Please check the provided path.', 1, 'error')
 
     # start timer
     start_time = time.time()
 
     # get absolute path - TO DO: remove! NEVER USE ABSOLUTE PATH...
-    path_template = os.path.abspath(path_template+'template/')
+    # path_template = os.path.abspath(path_template+'template/')
 
     # get fname of the template + template objects
-    # fname_template = sct.slash_at_the_end(path_template, 1)+file_template
-    fname_template_label = sct.slash_at_the_end(path_template, 1)+file_template_label
-    # fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
+    fname_template = path_template+'template/'+file_template
+    fname_template_vertebral_labeling = path_template+'template/'+file_template_vertebral_labeling
+    fname_template_seg = path_template+'template/'+file_template_seg
 
     # check file existence
     # TODO: no need to do that!
     sct.printv('\nCheck template files...')
     sct.check_file_exist(fname_template, verbose)
-    sct.check_file_exist(fname_template_label, verbose)
+    sct.check_file_exist(fname_template_vertebral_labeling, verbose)
     sct.check_file_exist(fname_template_seg, verbose)
 
     # print arguments
@@ -262,13 +268,6 @@ def main():
                 break
     if not hasDifferentLabels:
         sct.printv('ERROR: Wrong landmarks input. All labels must be different.', verbose, 'error')
-    # check if provided labels are available in the template
-    image_label_template = Image(fname_template_label)
-    labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
-    if labels[-1].value > labels_template[-1].value:
-        sct.printv('ERROR: Wrong landmarks input. Labels must have correspondence in template space. \nLabel max '
-                   'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
-                   str(labels_template[-1].value), verbose, 'error')
 
     # create temporary folder
     path_tmp = sct.tmp_create(verbose=verbose)
@@ -288,10 +287,23 @@ def main():
     sct.run('sct_convert -i '+fname_landmarks+' -o '+path_tmp+ftmp_label)
     sct.run('sct_convert -i '+fname_template+' -o '+path_tmp+ftmp_template)
     sct.run('sct_convert -i '+fname_template_seg+' -o '+path_tmp+ftmp_template_seg)
-    sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
+    # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
 
     # go to tmp folder
     os.chdir(path_tmp)
+
+    # Generate labels from template vertebral labeling
+    sct.printv('\nGenerate labels from template vertebral labeling', verbose)
+    sct.run('sct_label_utils -i '+fname_template_vertebral_labeling+' -vert-body 0 -o '+ftmp_template_label)
+
+    # check if provided labels are available in the template
+    sct.printv('\nCheck if provided labels are available in the template', verbose)
+    image_label_template = Image(ftmp_template_label)
+    labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
+    if labels[-1].value > labels_template[-1].value:
+        sct.printv('ERROR: Wrong landmarks input. Labels must have correspondence in template space. \nLabel max '
+                   'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
+                   str(labels_template[-1].value), verbose, 'error')
 
     # smooth segmentation (jcohenadad, issue #613)
     sct.printv('\nSmooth segmentation...', verbose)
