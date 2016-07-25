@@ -37,15 +37,12 @@ import sys
 import platform
 import signal
 from time import time, strftime
-
 from msct_parser import Parser
 import sct_utils as sct
 import os
 import copy_reg
 import types
 import pandas as pd
-
-
 
 
 # get path of the toolbox
@@ -245,13 +242,13 @@ def get_parser():
 # Start program
 # ====================================================================================================
 if __name__ == "__main__":
+
+    # get parameters
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-
     function_to_test = arguments["-f"]
     dataset = arguments["-d"]
     dataset = sct.slash_at_the_end(dataset, slash=1)
-
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
@@ -259,21 +256,29 @@ if __name__ == "__main__":
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
     create_log_file = arguments['-log']
-
-
     verbose = arguments["-v"]
+
+    # start timer
+    start_time = time()
+    # create single time variable for output names
+    output_time = strftime("%y%m%d%H%M%S")
 
     # redirect to log file
     if create_log_file:
         orig_stdout = sys.stdout
-        handle_log = file('results_testing_'+strftime("%y%m%d%H%M%S")+'.txt', 'w')
+        handle_log = file('results_testing_'+output_time+'.txt', 'w')
         sys.stdout = handle_log
 
+    print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
+
     # get path of the toolbox
-    path_sct = os.getenv("SCT_DIR")
-    if path_sct is None :
-        raise EnvironmentError("SCT_DIR, which is the path to the "
-                               "Spinalcordtoolbox install needs to be set")
+    path_script = os.path.dirname(__file__)
+    path_sct = os.path.dirname(path_script)
+    # path_sct = os.getenv("SCT_DIR")
+    # if path_sct is None :
+    #     raise EnvironmentError("SCT_DIR, which is the path to the "
+    #                            "Spinalcordtoolbox install needs to be set")
+
     # fetch version of the toolbox
     with open (path_sct+"/version.txt", "r") as myfile:
         version_sct = myfile.read().replace('\n', '')
@@ -301,12 +306,7 @@ if __name__ == "__main__":
     print 'RAM:'
     sct.checkRAM(os_running)
 
-    # start timer
-    start_time = time()
-    # create single time variable for output names
-    output_time = strftime("%y%m%d%H%M%S")
-
-    print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
+    # test function
     results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
