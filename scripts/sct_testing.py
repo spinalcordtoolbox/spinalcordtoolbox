@@ -93,8 +93,9 @@ def main():
     sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
-    param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.create_folder(param.path_tmp)
+    param.path_tmp = sct.tmp_create()
+    # param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    # sct.create_folder(param.path_tmp)
     os.chdir(param.path_tmp)
 
     # get list of all scripts to test
