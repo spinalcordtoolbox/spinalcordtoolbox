@@ -11,25 +11,27 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
-import sys
+# import commands
+# import sys
 import os
 from pandas import DataFrame
 import sct_segment_graymatter
-from msct_image import Image
+# from msct_image import Image
 import sct_utils as sct
 from numpy import sum, mean
-import time
+# import time
+from sct_warp_template import get_file_label
 # append path that contains scripts, to be able to load modules
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-sys.path.append(path_sct + '/scripts')
-
+# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# sys.path.append(path_sct + '/scripts')
 
 
 def test(path_data, parameters=''):
 
     if not parameters:
-        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -vertfile mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz -qc 0'
+        # get file name of vertebral labeling from template
+        file_vertfile = get_file_label(path_data+'mt/label/template', 'vertebral', output='file')
+        parameters = '-i mt/mt1.nii.gz -s mt/mt1_seg.nii.gz -vertfile mt/label/template/'+file_vertfile+' -normalize 1 -ref mt/mt1_gmseg_goldstandard.nii.gz -qc 0'
 
     parser = sct_segment_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)

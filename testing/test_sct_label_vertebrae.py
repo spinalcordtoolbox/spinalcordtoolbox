@@ -16,6 +16,7 @@ import sct_label_vertebrae
 from pandas import DataFrame
 import os.path
 from copy import deepcopy
+
 # import commands
 # # append path that contains scripts, to be able to load modules
 # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
