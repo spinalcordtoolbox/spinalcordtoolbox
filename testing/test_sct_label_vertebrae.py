@@ -34,11 +34,6 @@ def test(path_data='', parameters=''):
     if not parameters:
         parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -c t2 -o t2_seg_labeled.nii.gz'
 
-    # return 1, 'hola', DataFrame(data={'status': int(1), 'output': 'hola'}, index=[path_data])
-
-    # import sys
-    # sys.exit(2)
-
     # retrieve flags
     try:
         parser = sct_label_vertebrae.get_parser()
@@ -148,6 +143,11 @@ def test(path_data='', parameters=''):
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': int(status), 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result, 'duration [s]': duration}, index=[path_data])
+
+    # write log file
+    fname_log = path_output + "output.log"
+    from sct_testing import write_to_log_file
+    write_to_log_file(fname_log, output, 'w')
 
     return status, output, results
 
