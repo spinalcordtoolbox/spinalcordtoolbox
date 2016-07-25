@@ -30,7 +30,7 @@ sys.path.append(path_sct + '/scripts')
 def test(path_data, parameters=''):
 
     if not parameters:
-        parameters = ' -t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt0_gmseg.nii.gz -wm mt/mt0_wmseg.nii.gz -manual-gm mt/mt0_manual_gmseg.nii.gz -sc mt/mt0_seg.nii.gz -qc 0' #-d mt/mt0.nii.gz
+        parameters = ' -t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt1_gmseg.nii.gz -wm mt/mt1_wmseg.nii.gz -manual-gm mt/mt1_gmseg_goldstandard.nii.gz -sc mt/mt1_seg.nii.gz -qc 0' #-d mt/mt0.nii.gz
 
     parser = sct_register_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
