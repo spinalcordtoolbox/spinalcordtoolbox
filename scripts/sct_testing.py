@@ -134,10 +134,8 @@ def downloaddata():
 # ==========================================================================================
 def fill_functions():
     functions = []
-    #functions.append('test_debug')  --> removed by jcohenadad. No more use for it now.
-    #functions.append('test_debug')
     functions.append('sct_apply_transfo')
-    functions.append('sct_check_atlas_integrity')
+    # functions.append('sct_check_atlas_integrity')
     functions.append('sct_compute_mtr')
     functions.append('sct_concat_transfo')
     functions.append('sct_convert')
@@ -145,10 +143,12 @@ def fill_functions():
     functions.append('sct_create_mask')
     functions.append('sct_crop_image')
     functions.append('sct_dmri_compute_dti')
+    functions.append('sct_dmri_create_noisemask')
     functions.append('sct_dmri_get_bvalue')
     functions.append('sct_dmri_transpose_bvecs')
     functions.append('sct_dmri_moco')
     functions.append('sct_dmri_separate_b0_and_dwi')
+    functions.append('sct_documentation')
     functions.append('sct_extract_metric')
     # functions.append('sct_flatten_sagittal')
     functions.append('sct_fmri_compute_tsnr')
@@ -168,8 +168,6 @@ def fill_functions():
     functions.append('sct_smooth_spinalcord')
     functions.append('sct_straighten_spinalcord')
     functions.append('sct_warp_template')
-    functions.append('sct_documentation')
-    functions.append('sct_dmri_create_noisemask')
     return functions
 
 
