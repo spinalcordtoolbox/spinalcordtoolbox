@@ -46,12 +46,12 @@ class bcolors:
 class param:
     def __init__(self):
         self.download = 0
-        self.path_data = 'sct_testing_data/data/'
+        self.path_data = 'sct_testing_data/'
         self.function_to_test = None
         # self.function_to_avoid = None
         self.remove_tmp_file = 0
         self.verbose = 1
-        self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
+        # self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
         self.path_tmp = ""
 
 
