@@ -11,6 +11,7 @@
 #########################################################################################
 
 import sct_utils as sct
+import sys
 # from msct_parser import Parser
 import sct_label_vertebrae
 from pandas import DataFrame
@@ -33,12 +34,25 @@ def test(path_data='', parameters=''):
     if not parameters:
         parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -c t2 -o t2_seg_labeled.nii.gz'
 
-    parser = sct_label_vertebrae.get_parser()
-    dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
-    # update template path because the previous command wrongly adds path to testing data
-    dict_param_with_path['-t'] = dict_param['-t']
-    param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    # return 1, 'hola', DataFrame(data={'status': int(1), 'output': 'hola'}, index=[path_data])
+
+    # import sys
+    # sys.exit(2)
+
+    # retrieve flags
+    try:
+        parser = sct_label_vertebrae.get_parser()
+        dict_param = parser.parse(parameters.split(), check_file_exist=False)
+        dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
+        # update template path because the previous command wrongly adds path to testing data
+        dict_param_with_path['-t'] = dict_param['-t']
+        param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    # in case not all mandatory flags are filled
+    except SyntaxError as err:
+        print err
+        status = 1
+        output = err
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i']) and
