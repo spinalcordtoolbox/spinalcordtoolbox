@@ -20,6 +20,7 @@
 - OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #350, #404, #414, #499, #650, #735, #737, #749, #807, #818
 - OPT: **sct_register_to_template**: now uses slicewise rigid transfo at first step (instead of slicereg), which improves accuracy (issue #666)
 - OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
+- REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
 
 ##2.2.3 (2016-02-04)
 - BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)

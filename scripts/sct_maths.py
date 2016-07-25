@@ -117,7 +117,7 @@ def get_parser():
                       mandatory=False,
                       example='0.5')
     parser.add_option(name='-laplacian',
-                      type_value='float',
+                      type_value=[[','], 'float'],
                       description='Laplacian filtering with specified standard deviations in mm for all axes (e.g.: 2).',
                       mandatory=False,
                       example='1')
@@ -202,12 +202,12 @@ def main(args = None):
 
     elif "-laplacian" in arguments:
         sigmas = arguments["-laplacian"]
-        # if len(sigmas) == 1:
-        sigmas = [sigmas for i in range(len(data.shape))]
-        # elif len(sigmas) != len(data.shape):
-        #     printv(parser.usage.generate(error='ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
+        if len(sigmas) == 1:
+            sigmas = [sigmas for i in range(len(data.shape))]
+        elif len(sigmas) != len(data.shape):
+            printv(parser.usage.generate(error='ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
-        [sigmas[i] / dim[i+4] for i in range(3)]
+        sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
         # smooth data
         data_out = laplacian(data, sigmas)
 
@@ -243,7 +243,7 @@ def main(args = None):
         elif len(sigmas) != len(data.shape):
             printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
-        [sigmas[i] / dim[i+4] for i in range(3)]
+        sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
         # smooth data
         data_out = smooth(data, sigmas)
 
