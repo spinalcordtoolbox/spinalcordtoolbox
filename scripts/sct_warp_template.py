@@ -159,12 +159,13 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
 
 # Get file label
 # ==========================================================================================
-def get_file_label(path_label='', label=''):
+def get_file_label(path_label='', label='', output='file'):
     """
     Get label file name given based on info_label.txt file.
     Label needs to be a substring of the "name" field. E.g.: T1-weighted, spinal cord, white matter, etc.
     :param path_label:
     :param label:
+    :param output: {file, filewithpath}
     :return:
     """
     # init
@@ -191,7 +192,11 @@ def get_file_label(path_label='', label=''):
                     break
         if file_label == '':
             sct.printv('\nWARNING: Label '+label+' not found.', 1, 'warning')
-        return file_label
+        # output
+        if output == 'file':
+            return file_label
+        elif output == 'filewithpath':
+            return path_label+file_label
 
 
 # Get interpolation method
