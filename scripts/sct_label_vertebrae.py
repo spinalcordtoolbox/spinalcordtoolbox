@@ -28,6 +28,7 @@ from sct_utils import extract_fname, printv, run, generate_output_file, slash_at
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
+from sct_warp_template import get_file_label
 
 # get path of the toolbox
 # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -49,7 +50,7 @@ class Param:
         self.size_RL = 1  # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
         self.shift_AP_visu = 15  # shift AP for displaying disc values
-        self.smooth_factor = [3, 1, 1]
+        self.smooth_factor = [9, 3, 1]  # [3, 1, 1]
 
 
 # PARSER
@@ -80,7 +81,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value="folder",
                       description="Path to template.",
                       mandatory=False,
-                      default_value=path_sct+'/data/PAM50/template/')
+                      default_value=path_sct+'/data/PAM50/')
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
                       description='Initialize labeling by providing slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
@@ -315,24 +316,27 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     printv('Path template: '+path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
-    if not len(glob(path_template+'MNI-Poly-AMU*.*')) == 0:
-        contrast = contrast.upper()
-        file_level = '*_level.nii.gz'
-    else:
-        file_level = '*_levels.nii.gz'
+    fname_level = get_file_label(path_template+'template/', 'vertebral', output='filewithpath')
+    fname_template = get_file_label(path_template+'template/', contrast.upper()+'-weighted', output='filewithpath')
 
-    # retrieve file_template based on contrast
-    try:
-        fname_template_list = glob(path_template + '*' + contrast + '.nii.gz')
-        fname_template = fname_template_list[0]
-    except IndexError:
-        printv('\nERROR: No template found. Please check the provided path.', 1, 'error')
+    # if not len(glob(path_template+'MNI-Poly-AMU*.*')) == 0:
+    #     contrast = contrast.upper()
+    #     file_level = '*_level.nii.gz'
+    # else:
+    #     file_level = '*_levels.nii.gz'
+    #
+    # # retrieve file_template based on contrast
+    # try:
+    #     fname_template_list = glob(path_template + '*' + contrast + '.nii.gz')
+    #     fname_template = fname_template_list[0]
+    # except IndexError:
+    #     printv('\nERROR: No template found. Please check the provided path.', 1, 'error')
     # retrieve disc level from template
-    try:
-        fname_level_list = glob(path_template+file_level)
-        fname_level = fname_level_list[0]
-    except IndexError:
-        printv('\nERROR: File *_levels.nii.gz not found.', 1, 'error')
+    # try:
+    #     fname_level_list = glob(path_template+file_level)
+    #     fname_level = fname_level_list[0]
+    # except IndexError:
+    #     printv('\nERROR: File *_levels.nii.gz not found.', 1, 'error')
 
     # Open template and vertebral levels
     printv('\nOpen template and vertebral levels...', verbose)
@@ -654,7 +658,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     # initializations
     I_corr = np.zeros(len(zrange))
     allzeros = 0
-    current_z = 0
+    # current_z = 0
     ind_I = 0
     # loop across range of z defined by src
     for iz in zrange:
@@ -704,10 +708,10 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         # check if data_chunk1d contains at least one non-zero value
         # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-            I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
+            # I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
             # data_chunk2d = np.mean(data_chunk3d, 1)
             # pattern2d = np.mean(pattern, 1)
-            # I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 32)
+            I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 32)
         else:
             allzeros = 1
             # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
