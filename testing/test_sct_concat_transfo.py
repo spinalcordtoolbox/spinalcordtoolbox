@@ -21,7 +21,7 @@ def test(data_path):
     # parameters
     folder_data = ['t2/', 'mt/', 'template/template/']
     file_data = ['warp_template2anat.nii.gz',
-                 'warp_template2mt.nii.gz',
+                 'warp_t22mt1.nii.gz',
                  get_file_label(data_path+'template/template/', 'T2-weighted')]
 
     # define command
