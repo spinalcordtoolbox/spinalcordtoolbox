@@ -218,7 +218,7 @@ def write_to_log_file(fname_log, string, mode='w'):
              + string
     # open file
     try:
-        f = open('../' + fname_log, mode)
+        f = open(fname_log, mode)
     except Exception as ex:
         raise Exception('WARNING: Cannot open log file.')
     f.write(string+'\n')
@@ -232,7 +232,7 @@ def test_function(script_name):
     #     return test_debug()  # JULIEN
     # else:
     # build script name
-    fname_log = script_name + ".log"
+    fname_log = '../' + script_name + ".log"
     tmp_script_name = script_name
     result_folder = "results_"+script_name
     script_name = "test_"+script_name
