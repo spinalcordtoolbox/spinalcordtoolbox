@@ -11,6 +11,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: test if crashes with 2d or 4d data
+
 import sys
 # import os
 # import getopt
@@ -43,6 +45,80 @@ class Param:
 # resample
 # ======================================================================================================================
 def resample():
+    """
+    Resample data using nipy. Note: we cannot use msct_image because coordmap needs to be used.
+    :return:
+    """
+
+    verbose = param.verbose
+
+    # Load data
+    sct.printv('\nLoad data...')
+    from nipy import load_image
+    nii = load_image(param.fname_data)
+    data = nii.get_data()
+    # Get dimensions of data
+    px, py, pz = nii.header.get_zooms()
+    nx, ny, nz = nii.header.get_data_shape()
+    sct.printv('  pixdim: '+str(px)+'x'+str(py)+'x'+str(pz)+'mm')
+    sct.printv('  shape: '+str(nx)+'x'+str(ny)+'x'+str(nz)+'vox')
+    # get_base_affine()
+    affine = nii.coordmap.affine
+    sct.printv('  affine matrix: \n'+str(affine))
+
+    # Calculate new dimensions
+    sct.printv('\nCalculate new dimensions...', param.verbose)
+    if param.new_size_type == 'vox':
+        nx_r = int(param.new_size[0])
+        ny_r = int(param.new_size[1])
+        nz_r = int(param.new_size[2])
+    elif param.new_size_type == 'factor':
+        nx_r = int(round(nx * param.new_size[0]))
+        ny_r = int(round(ny * param.new_size[1]))
+        nz_r = int(round(nz * param.new_size[2]))
+
+    sct.printv('  ' + str(px_new) + ' x ' + str(py_new) + ' x ' + str(pz_new)+ ' x ' + str(pt)+'mm', param.verbose)
+    # sct.printv('\nGet dimensions of data...', param.verbose)
+    # nx, ny, nz, nt, px, py, pz, pt = input_im.dim
+    # sct.printv('  ' + str(px) + ' x ' + str(py) + ' x ' + str(pz)+ ' x ' + str(pt)+'mm', param.verbose)
+    # dim = 4  # by default, will be adjusted later
+    # if nt == 1:
+    #     dim = 3
+    # if nz == 1:
+    #     dim = 2
+    #     sct.run('ERROR (sct_resample): Dimension of input data is different from 3 or 4. Exit program', param.verbose, 'error')
+
+
+
+    # create ref image
+    import numpy as np
+    # from nipy.core.api import Image, vox2mni
+    arr_r = np.zeros((60, 60, 27))
+    # nii_r = nipy.core.api.Image(arr_r, nipy.core.api.vox2mni(np.eye(4)))
+
+
+    zooms_r = np.array((0.5, 0.5, 1), dtype='f8')
+    zooms = np.array((1, 1, 1), dtype='f8')
+    R = zooms_r / zooms
+    Rx = np.eye(4)
+    Rx[:3, :3] = np.diag(R)
+
+    affine_r = np.dot(affine, Rx)
+    coordmap_r = nii.coordmap
+    coordmap_r.affine = affine_r
+
+    nii_r = nipy.core.api.Image(arr_r, coordmap_r)
+    print nii_r.coordmap
+
+    transfo = np.eye(4)
+    transfo[:3, :3] = np.diag(np.array((0.5, 0.5, 1), dtype='f8'))
+    # shift transformation to account for voxel size
+    transfo[:2, 3] = np.array((-0.25, -0.25), dtype='f8')
+    print transfo
+
+    from nipy.algorithms.registration import resample
+    data_r = resample(nii, transform=transfo, reference=nii_r, mov_voxel_coords=False, ref_voxel_coords=False, dtype=None, interp_order=3)
+
     # extract resampling factor
     sct.printv('\nParse resampling factor...', param.verbose)
     new_size_split = param.new_size.split('x')
@@ -64,33 +140,27 @@ def resample():
 
     input_im = Image(param.fname_data)
 
-    # Get dimensions of data
-    sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = input_im.dim
-    sct.printv('  ' + str(px) + ' x ' + str(py) + ' x ' + str(pz)+ ' x ' + str(pt)+'mm', param.verbose)
-    dim = 4  # by default, will be adjusted later
-    if nt == 1:
-        dim = 3
-    if nz == 1:
-        dim = 2
-        sct.run('ERROR (sct_resample): Dimension of input data is different from 3 or 4. Exit program', param.verbose, 'error')
 
-    # Calculate new dimensions
-    sct.printv('\nCalculate new dimensions...', param.verbose)
-    if param.new_size_type == 'factor':
-        px_new = px/ns_x
-        py_new = py/ns_y
-        pz_new = pz/ns_z
-    elif param.new_size_type == 'vox':
-        px_new = px*nx/ns_x
-        py_new = py*ny/ns_y
-        pz_new = pz*nz/ns_z
-    else:
-        px_new = ns_x
-        py_new = ns_y
-        pz_new = ns_z
+    # import numpy as np
+    # affine_new = np.array([[2., 0., 0., 1],
+    #                 [0., 2., 0., 1],
+    #                 [0., 0., 2., 0],
+    #                 [0., 0., 0., 1.]])
+    # import nibabel
+    # img = nibabel.Nifti1Image(input_im.data, affine=affine_new)
+    # from nilearn.image import resample_img
+    # new_data = resample_img(img, target_affine=np.eye(4), target_shape=(60, 60, 27))
+    # print new_data.shape
 
-    sct.printv('  ' + str(px_new) + ' x ' + str(py_new) + ' x ' + str(pz_new)+ ' x ' + str(pt)+'mm', param.verbose)
+    # display
+    # from matplotlib.pylab import *
+    # matshow(data[:, :, 15], cmap=cm.gray), show()
+    # matshow(data_r[:, :, 15], cmap=cm.gray), show()
+
+    # # translate before interpolation to account for voxel size
+    # from skimage import transform
+    # transform.resize()
+
 
     zooms = (px, py, pz)  # input_im.hdr.get_zooms()[:3]
     affine = input_im.hdr.get_qform()  # get_base_affine()
@@ -104,6 +174,16 @@ def resample():
         order = 1
         sct.printv('WARNING: wrong input for the interpolation. Using default value = linear', param.verbose, 'warning')
 
+    import numpy as np
+    # affine = np.array([[-2., 0., 0., 29.25],
+    #        [0., 2., 0., -29.25],
+    #        [0., 0., 2., -31.25],
+    #        [0., 0., 0., 1.]])
+    # affine = np.array([[-2, 0., 0., 28.25],
+    #                    [0., 2., 0., -27.25],
+    #                    [0., 0., 2., -31.25],
+    #                    [0., 0., 0., 1.]])
+
     new_data, new_affine = dp_iso.reslice(input_im.data, affine, zooms, new_zooms, mode=param.mode, order=order)
 
     new_im = Image(param=new_data)
@@ -112,12 +192,12 @@ def resample():
     new_im.file_name = file_out
     new_im.ext = ext_out
 
-    zooms_to_set = list(new_zooms)
-    if dim == 4:
-        zooms_to_set.append(nt)
+    # zooms_to_set = list(new_zooms)
+    # if dim == 4:
+    #     zooms_to_set.append(nt)
 
     new_im.hdr = input_im.hdr
-    new_im.hdr.set_zooms(zooms_to_set)
+    # new_im.hdr.set_zooms(zooms_to_set)
 
     # Set the new sform and qform:
     new_im.hdr.set_sform(new_affine)
@@ -147,10 +227,10 @@ def get_parser():
                                   "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
                       mandatory=False,
                       example='0.5x0.5x1')
-    parser.add_option(name="-mm",
-                      type_value="str",
-                      description="Resampling size in mm in each dimensions (x,y,z). Separate with \"x\"",
-                      mandatory=False)
+    # parser.add_option(name="-mm",
+    #                   type_value="str",
+    #                   description="Resampling size in mm in each dimensions (x,y,z). Separate with \"x\"",
+    #                   mandatory=False)
                       # example='0.1x0.1x5')
     parser.add_option(name="-vox",
                       type_value="str",
@@ -205,10 +285,10 @@ if __name__ == "__main__":
             param.new_size = arguments["-f"]
             param.new_size_type = 'factor'
             arg += 1
-        elif "-mm" in arguments:
-            param.new_size = arguments["-mm"]
-            param.new_size_type = 'mm'
-            arg += 1
+        # elif "-mm" in arguments:
+        #     param.new_size = arguments["-mm"]
+        #     param.new_size_type = 'mm'
+        #     arg += 1
         elif "-vox" in arguments:
             param.new_size = arguments["-vox"]
             param.new_size_type = 'vox'
