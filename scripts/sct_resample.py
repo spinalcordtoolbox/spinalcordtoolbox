@@ -119,8 +119,16 @@ def resample():
     # print transfo
     sct.printv('  transfo: \n'+str(transfo), verbose)
 
+    # set interpolation method
+    if param.interpolation == 'nn':
+        interp_order = 0
+    elif param.interpolation == 'linear':
+        interp_order = 1
+    elif param.interpolation == 'spline':
+        interp_order = 2
+
     # resample data
-    data_r = resample(nii, transform=transfo, reference=nii_r, mov_voxel_coords=True, ref_voxel_coords=True, dtype=None, interp_order=3)
+    data_r = resample(nii, transform=transfo, reference=nii_r, mov_voxel_coords=True, ref_voxel_coords=True, dtype=None, interp_order=interp_order)
 
     if param.fname_out == '':
         fname_out = sct.add_suffix(param.fname_data, '_r')
@@ -250,11 +258,10 @@ def get_parser():
     parser.usage.addSection('MISC')
     parser.add_option(name="-x",
                       type_value='multiple_choice',
-                      description="Interpolation. nn (nearest neighbor : spline of order 0), linear (spline of order 1), or spline (cubic spline: order 2).\n"
-                                  "You can also choose the order of the spline using an integer from 3 to 5.",
+                      description='Interpolation method.',
                       mandatory=False,
                       default_value='linear',
-                      example=['nn', 'linear', 'spline', '3', '4', '5'])
+                      example=['nn', 'linear', 'spline'])
 
     parser.add_option(name="-o",
                       type_value="file_output",
