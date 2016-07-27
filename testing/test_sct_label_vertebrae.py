@@ -11,6 +11,7 @@
 #########################################################################################
 
 import sct_utils as sct
+import sys
 # from msct_parser import Parser
 import sct_label_vertebrae
 from pandas import DataFrame
@@ -33,12 +34,20 @@ def test(path_data='', parameters=''):
     if not parameters:
         parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -c t2 -o t2_seg_labeled.nii.gz'
 
-    parser = sct_label_vertebrae.get_parser()
-    dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
-    # update template path because the previous command wrongly adds path to testing data
-    dict_param_with_path['-t'] = dict_param['-t']
-    param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    # retrieve flags
+    try:
+        parser = sct_label_vertebrae.get_parser()
+        dict_param = parser.parse(parameters.split(), check_file_exist=False)
+        dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
+        # update template path because the previous command wrongly adds path to testing data
+        dict_param_with_path['-t'] = dict_param['-t']
+        param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    # in case not all mandatory flags are filled
+    except SyntaxError as err:
+        print err
+        status = 1
+        output = err
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i']) and
@@ -134,6 +143,11 @@ def test(path_data='', parameters=''):
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': int(status), 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result, 'duration [s]': duration}, index=[path_data])
+
+    # write log file
+    fname_log = path_output + "output.log"
+    from sct_testing import write_to_log_file
+    write_to_log_file(fname_log, output, 'w')
 
     return status, output, results
 
