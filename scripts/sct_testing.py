@@ -93,8 +93,9 @@ def main():
     sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
-    param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.create_folder(param.path_tmp)
+    param.path_tmp = sct.tmp_create()
+    # param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    # sct.create_folder(param.path_tmp)
     os.chdir(param.path_tmp)
 
     # get list of all scripts to test
@@ -217,7 +218,7 @@ def write_to_log_file(fname_log, string, mode='w'):
              + string
     # open file
     try:
-        f = open('../' + fname_log, mode)
+        f = open(fname_log, mode)
     except Exception as ex:
         raise Exception('WARNING: Cannot open log file.')
     f.write(string+'\n')
@@ -231,7 +232,7 @@ def test_function(script_name):
     #     return test_debug()  # JULIEN
     # else:
     # build script name
-    fname_log = script_name + ".log"
+    fname_log = '../' + script_name + ".log"
     tmp_script_name = script_name
     result_folder = "results_"+script_name
     script_name = "test_"+script_name

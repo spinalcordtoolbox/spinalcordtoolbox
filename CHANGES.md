@@ -16,6 +16,7 @@
 - BUG: **sct_segment_graymatter**: fixed issues #782, #813, #815
 - BUG: Fixed incompatibility with CENTOS 6.X (issue #776)
 - BUG: Binaries now hosted on Gihub for accessibility from China (#927)
+- BUG: **sct_resample**: Fixed slight image shift caused by resampling (#612)
 - OPT: **sct_check_dependencies**: Made test more sentitive to OS incompatibilities (issue #771)
 - OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #350, #404, #414, #499, #650, #735, #737, #749, #807, #818
 - OPT: **sct_register_to_template**: now uses slicewise rigid transfo at first step (instead of slicereg), which improves accuracy (issue #666)
