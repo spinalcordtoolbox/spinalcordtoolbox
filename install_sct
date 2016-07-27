@@ -242,7 +242,7 @@ while  true ; do
     echo Cannot be installed directly in ${new_install}
     echo Please pick a full path
     continue
-  felif [ -d "${new_install}" ]; then
+  elif [ -d "${new_install}" ]; then
     # directory exists --> update INSTALL_DIR and exit loop
     echo -e "WARNING: Directory already exists. Files will be overwritten."
     INSTALL_DIR=${new_install}
