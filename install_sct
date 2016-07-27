@@ -316,7 +316,7 @@ else
   if [ $OS == "linux" ]; then
     download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/sct_binaries_${OS}.tar.gz
   elif [ $OS == "linux_centos6" ]; then
-    download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta19/sct_binaries_${OS}.tar.gz
+    download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta20/sct_binaries_${OS}.tar.gz
   elif [ $OS == "osx" ]; then
     download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/sct_binaries_${OS}.tar.gz
   fi
