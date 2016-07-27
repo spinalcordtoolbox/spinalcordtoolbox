@@ -62,48 +62,42 @@ def resample():
     nii = nipy.load_image(param.fname_data)
     data = nii.get_data()
     # Get dimensions of data
-    px, py, pz = nii.header.get_zooms()
-    nx, ny, nz = nii.header.get_data_shape()
-    sct.printv('  pixdim: '+str(px)+' x '+str(py)+' x '+str(pz)+' mm', verbose)
-    sct.printv('  shape: '+str(nx)+' x '+str(ny)+' x '+str(nz)+' vox', verbose)
-    # get_base_affine()
-    affine = nii.coordmap.affine
-    sct.printv('  affine matrix: \n'+str(affine))
+    p = nii.header.get_zooms()
+    n = nii.header.get_data_shape()
+    sct.printv('  pixdim: '+str(p), verbose)
+    sct.printv('  shape: '+str(n), verbose)
 
     # Calculate new dimensions
     sct.printv('\nCalculate new dimensions...', verbose)
     # parse input argument
     new_size = param.new_size.split('x')
+    # if 4d, add resampling factor to 4th dimension
+    if len(p) == 4:
+        new_size.append('1')
+    # select appropriate resampling type
     if param.new_size_type == 'vox':
-        nx_r = int(new_size[0])
-        ny_r = int(new_size[1])
-        nz_r = int(new_size[2])
+        n_r = tuple([int(new_size[i]) for i in range(len(n))])
     elif param.new_size_type == 'factor':
         if len(new_size) == 1:
             # isotropic resampling
-            new_size = [new_size[0], new_size[0], new_size[0]]
-        nx_r = int(round(nx * float(new_size[0])))
-        ny_r = int(round(ny * float(new_size[1])))
-        nz_r = int(round(nz * float(new_size[2])))
+            new_size = tuple([new_size[0] for i in range(len(n))])
+        n_r = tuple([int(round(n[i] * float(new_size[i]))) for i in range(len(n))])
     else:
         sct.printv('\nERROR: param.new_size_type is not recognized.', 1, 'error')
-    sct.printv('  new shape: '+str(nx_r)+' x '+str(ny_r)+' x '+str(nz_r)+' vox', verbose)
-    # sct.printv('\nGet dimensions of data...', param.verbose)
-    # nx, ny, nz, nt, px, py, pz, pt = input_im.dim
-    # sct.printv('  ' + str(px) + ' x ' + str(py) + ' x ' + str(pz)+ ' x ' + str(pt)+'mm', param.verbose)
-    # dim = 4  # by default, will be adjusted later
-    # if nt == 1:
-    #     dim = 3
-    # if nz == 1:
-    #     dim = 2
-    #     sct.run('ERROR (sct_resample): Dimension of input data is different from 3 or 4. Exit program', param.verbose, 'error')
+    sct.printv('  new shape: '+str(n_r), verbose)
+
+    # get_base_affine()
+    affine = nii.coordmap.affine
+    # if len(p) == 4:
+    #     affine = np.delete(affine, 3, 0)
+    #     affine = np.delete(affine, 3, 1)
+    sct.printv('  affine matrix: \n'+str(affine))
 
     # create ref image
-    arr_r = np.zeros((nx_r, ny_r, nz_r))
-    R = np.eye(4)
-    R[0, 0] = nx / float(nx_r)
-    R[1, 1] = ny / float(ny_r)
-    R[2, 2] = nz / float(nz_r)
+    arr_r = np.zeros(n_r)
+    R = np.eye(len(n)+1)
+    for i in range(len(n)):
+        R[i, i] = n[i] / float(n_r[i])
     affine_r = np.dot(affine, R)
     coordmap_r = nii.coordmap
     coordmap_r.affine = affine_r
@@ -112,10 +106,12 @@ def resample():
     sct.printv('\nCalculate affine transformation...', verbose)
     # create affine transformation
     transfo = R
-    # transfo[:3, :3] = np.diag(np.array((0.5, 0.5, 1), dtype='f8'))
-    # shift transformation to account for voxel size
-    # transfo[:3, 3] = np.array((-0.25, -0.25, -0.25), dtype='f8')
-    transfo[:3, 3] = np.array(( (R[0, 0]-1)/2, (R[1, 1]-1)/2, (R[2, 2]-1)/2 ), dtype='f8')
+    # if data are 4d, delete temporal dimension
+    if len(p) == 4:
+        transfo = np.delete(transfo, 3, 0)
+        transfo = np.delete(transfo, 3, 1)
+    # translate to account for voxel size (otherwise resulting image will be shifted by half a voxel). Modify the three first rows of the last column, corresponding to the translation.
+    transfo[:3, -1] = np.array(( (R[0, 0]-1)/2, (R[1, 1]-1)/2, (R[2, 2]-1)/2 ), dtype='f8')
     # print transfo
     sct.printv('  transfo: \n'+str(transfo), verbose)
 
@@ -127,8 +123,35 @@ def resample():
     elif param.interpolation == 'spline':
         interp_order = 2
 
+    # create 3d coordmap because resample only accepts 3d data (jcohenadad 2016-07-26)
+    if len(n) == 4:
+        from copy import deepcopy
+        coordmap3d = deepcopy(nii.coordmap)
+        from nipy.core.reference.coordinate_system import CoordinateSystem
+        coordmap3d.__setattr__('function_domain', CoordinateSystem('xyz'))
+        # create 3d affine transfo
+        affine3d = np.delete(affine, 3, 0)
+        affine3d = np.delete(affine3d, 3, 1)
+        coordmap3d.affine = affine3d
+
     # resample data
-    data_r = resample(nii, transform=transfo, reference=nii_r, mov_voxel_coords=True, ref_voxel_coords=True, dtype=None, interp_order=interp_order)
+    if len(n) == 3:
+        data_r = resample(nii, transform=transfo, reference=nii_r, mov_voxel_coords=True, ref_voxel_coords=True, dtype=None, interp_order=interp_order)
+    elif len(n) == 4:
+        data_r = np.zeros(n_r)
+        # data_r = np.zeros(n_r[0:3])
+        # data_r = np.expand_dims(data_r, 3)
+        # loop across 4th dimension
+        for it in range(n[3]):
+            # create 3d nipy-like data
+            arr3d = data[:, :, :, it]
+            nii3d = nipy.core.api.Image(arr3d, coordmap3d)
+            arr_r3d = arr_r[:, :, :, it]
+            nii_r3d = nipy.core.api.Image(arr_r3d, coordmap3d)
+            # resample data
+            data3d_r = resample(nii3d, transform=transfo, reference=nii_r3d, mov_voxel_coords=True, ref_voxel_coords=True, dtype=None, interp_order=interp_order)
+            # data_r = np.concatenate((data_r, data3d_r), axis=3)
+            data_r[:, :, :, it] = data3d_r.get_data()
 
     if param.fname_out == '':
         fname_out = sct.add_suffix(param.fname_data, '_r')
