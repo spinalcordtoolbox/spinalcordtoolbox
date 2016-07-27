@@ -74,14 +74,21 @@ def resample():
     # if 4d, add resampling factor to 4th dimension
     if len(p) == 4:
         new_size.append('1')
-    # select appropriate resampling type
+    # compute new shape based on specific resampling method
     if param.new_size_type == 'vox':
         n_r = tuple([int(new_size[i]) for i in range(len(n))])
     elif param.new_size_type == 'factor':
         if len(new_size) == 1:
             # isotropic resampling
             new_size = tuple([new_size[0] for i in range(len(n))])
+        # compute new shape as: n_r = n * f
         n_r = tuple([int(round(n[i] * float(new_size[i]))) for i in range(len(n))])
+    elif param.new_size_type == 'mm':
+        if len(new_size) == 1:
+            # isotropic resampling
+            new_size = tuple([new_size[0] for i in range(len(n))])
+        # compute new shape as: n_r = n * (p_r / p)
+        n_r = tuple([int(round(n[i] * float(new_size[i]) / float(p[i]))) for i in range(len(n))])
     else:
         sct.printv('\nERROR: param.new_size_type is not recognized.', 1, 'error')
     sct.printv('  new shape: '+str(n_r), verbose)
@@ -153,8 +160,11 @@ def resample():
             # data_r = np.concatenate((data_r, data3d_r), axis=3)
             data_r[:, :, :, it] = data3d_r.get_data()
 
+    # build output file name
     if param.fname_out == '':
         fname_out = sct.add_suffix(param.fname_data, '_r')
+    else:
+        fname_out = param.fname_out
 
     # save data
     nii_r = nipy.core.api.Image(data_r, coordmap_r)
@@ -268,11 +278,11 @@ def get_parser():
                                   "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
                       mandatory=False,
                       example='0.5x0.5x1')
-    # parser.add_option(name="-mm",
-    #                   type_value="str",
-    #                   description="Resampling size in mm in each dimensions (x,y,z). Separate with \"x\"",
-    #                   mandatory=False)
-                      # example='0.1x0.1x5')
+    parser.add_option(name="-mm",
+                      type_value="str",
+                      description="New resolution in mm. Separate dimension with \"x\"",
+                      mandatory=False,
+                      example='0.1x0.1x5')
     parser.add_option(name="-vox",
                       type_value="str",
                       description="Resampling size in number of voxels in each dimensions (x,y,z). Separate with \"x\"",
@@ -325,10 +335,10 @@ if __name__ == "__main__":
             param.new_size = arguments["-f"]
             param.new_size_type = 'factor'
             arg += 1
-        # elif "-mm" in arguments:
-        #     param.new_size = arguments["-mm"]
-        #     param.new_size_type = 'mm'
-        #     arg += 1
+        elif "-mm" in arguments:
+            param.new_size = arguments["-mm"]
+            param.new_size_type = 'mm'
+            arg += 1
         elif "-vox" in arguments:
             param.new_size = arguments["-vox"]
             param.new_size_type = 'vox'
