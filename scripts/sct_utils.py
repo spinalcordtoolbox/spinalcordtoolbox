@@ -26,8 +26,6 @@ from sys import stdout
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
-fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
-
 
 # define class color
 class bcolors(object):
@@ -40,7 +38,6 @@ class bcolors(object):
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
-
 
 
 #=======================================================================================================================
@@ -518,9 +515,11 @@ def printv(string, verbose=1, type='normal'):
     # if error, exit program
     if type == 'error':
         from inspect import stack
-        frame,filename,line_number,function_name,lines,index = stack()[1]
+        frame, filename, line_number, function_name, lines, index = stack()[1]
         # print(frame,filename,line_number,function_name,lines,index)
-        print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
+        import traceback
+        print('\n'+bcolors.red+filename+traceback.format_exc()+bcolors.normal)  # print error message
+        # print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
         sys.exit(2)
 
 
@@ -546,8 +545,6 @@ def slash_at_the_end(path, slash=0):
         if not path[-1:] == '/':
             path = path+'/'
     return path
-
-
 
 
 #=======================================================================================================================
@@ -592,6 +589,22 @@ def get_interpolation(program, interp):
         interp_program = ' -n Linear'
     # return
     return interp_program
+
+
+#=======================================================================================================================
+# template file dictionary
+#=======================================================================================================================
+def template_dict(template):
+    """
+    Dictionary of file names for template
+    :param template:
+    :return: dict_template
+    """
+    if template == 'PAM50':
+        dict_template = {'t2': 'template/PAM50_t2.nii.gz',
+                         't1': 'template/PAM50_t1.nii.gz'}
+    return dict_template
+
 
 class UnsupportedOs(Exception):
     def __init__(self, value):

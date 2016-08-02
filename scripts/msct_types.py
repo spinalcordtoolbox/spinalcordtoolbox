@@ -133,6 +133,8 @@ class Centerline:
         #self.points = []
         self.derivatives = []
         self.length = 0.0
+        self.progressive_length = [0.0]
+        self.progressive_length_inverse = [0.0]
 
         self.points = array(zip(points_x, points_y, points_z))
         self.derivatives = array(zip(deriv_x, deriv_y, deriv_z))
@@ -152,6 +154,19 @@ class Centerline:
 
         from scipy.spatial import cKDTree
         self.tree_points = cKDTree(dstack([points_x, points_y, points_z])[0])
+
+    def compute_length(self, points_x, points_y, points_z):
+        for i in range(0, self.number_of_points - 1):
+            distance = sqrt((points_x[i] - points_x[i + 1]) ** 2 +
+                            (points_y[i] - points_y[i + 1]) ** 2 +
+                            (points_z[i] - points_z[i + 1]) ** 2)
+            self.length += distance
+            self.progressive_length.append(distance)
+        for i in range(self.number_of_points, 1, -1):
+            distance = sqrt((points_x[i] - points_x[i - 1]) ** 2 +
+                            (points_y[i] - points_y[i - 1]) ** 2 +
+                            (points_z[i] - points_z[i - 1]) ** 2)
+            self.progressive_length_inverse.append(distance)
 
     def find_nearest_index(self, coord):
         """

@@ -34,7 +34,7 @@ def test(data_path):
     s, o = commands.getstatusoutput(cmd)
     status += s
     output += o
-    time.sleep(1)  # here add one second, otherwise the next test will try to create a temporary folder with the same name (because it is typically ran in less than one second)
+    # time.sleep(1)  # here add one second, otherwise the next test will try to create a temporary folder with the same name (because it is typically ran in less than one second)
 
     # method point
     cmd = 'sct_create_mask -i ' + data_path + folder_data[0] + file_data[0] \
@@ -45,7 +45,7 @@ def test(data_path):
     s, o = commands.getstatusoutput(cmd)
     status += s
     output += o
-    time.sleep(1)
+    # time.sleep(1)
 
     # method center
     cmd = 'sct_create_mask -i ' + data_path + folder_data[0] + file_data[0] \
@@ -56,7 +56,7 @@ def test(data_path):
     s, o = commands.getstatusoutput(cmd)
     status += s
     output += o
-    time.sleep(1)
+    # time.sleep(1)
 
     # method centerline
     cmd = 'sct_create_mask -i ' + data_path + folder_data[0] + file_data[0] \
@@ -67,7 +67,7 @@ def test(data_path):
     s, o = commands.getstatusoutput(cmd)
     status += s
     output += o
-    time.sleep(1)
+    # time.sleep(1)
 
     # method center on 4d data
     cmd = 'sct_create_mask -i ' + data_path + folder_data[1] + file_data[3] \
