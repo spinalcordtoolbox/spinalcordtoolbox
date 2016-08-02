@@ -50,7 +50,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='3', slicewise='0'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='3', slicewise='0', laplacian='0'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -58,6 +58,7 @@ class Paramreg(object):
         self.iter = iter
         self.shrink = shrink
         self.smooth = smooth
+        self.laplacian = laplacian
         self.gradStep = gradStep
         self.slicewise = slicewise
         self.init = init
@@ -179,6 +180,7 @@ def main():
                                   "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
                                   "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default="+paramreg.steps['1'].shrink+"\n"
                                   "smooth: <int> Smooth factor. Default="+paramreg.steps['1'].smooth+"\n"
+                                  "laplacian: <int> Laplacian filter. Default="+paramreg.steps['1'].laplacian+"\n"
                                   "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
                                   "init: <int> Initial translation alignment based on:\n"
                                   "  geometric: Geometric center of images\n"
@@ -282,7 +284,6 @@ def main():
         path_out, file_out, ext_out = sct.extract_fname(fname_output)
 
     # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
     path_tmp = sct.tmp_create()
 
     # copy files to temporary folder
@@ -322,12 +323,12 @@ def main():
     warp_forward = []
     warp_inverse = []
     for i_step in range(0, len(paramreg.steps)):
-        sct.printv('\nEstimate transformation for step #'+str(i_step)+'...', param.verbose)
+        sct.printv('\n--\nESTIMATE TRANSFORMATION FOR STEP #'+str(i_step), param.verbose)
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
             src = 'src.nii'
             dest = 'dest_RPI.nii'
-            interp_step = 'linear'
+            interp_step = 'spline'
         elif paramreg.steps[str(i_step)].type == 'seg':
             src = 'src_seg.nii'
             dest = 'dest_seg_RPI.nii'
@@ -337,21 +338,17 @@ def main():
             sct.run('ERROR: Wrong image type.', 1, 'error')
         # if step>0, apply warp_forward_concat to the src image to be used
         if i_step > 0:
+            sct.printv('\nApply transformation from previous step', param.verbose)
             sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
             src = sct.add_suffix(src, '_reg')
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
         warp_forward.append(warp_forward_out)
-        warp_inverse.append(warp_inverse_out)
-
-    # Put warp_forward_0 at the end of the list
-    warp_forward_0 = warp_forward.pop(0)
-    warp_forward.append(warp_forward_0)
+        warp_inverse.insert(0, warp_inverse_out)
 
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', verbose)
     sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d dest.nii -o warp_src2dest.nii.gz', verbose)
-    warp_inverse.reverse()
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d dest.nii -o warp_dest2src.nii.gz', verbose)
 
     # Apply warping field to src data
@@ -403,6 +400,7 @@ def register(src, dest, paramreg, param, i_step_str):
     sct.printv('  metric ......... '+paramreg.steps[i_step_str].metric, param.verbose)
     sct.printv('  iter ........... '+paramreg.steps[i_step_str].iter, param.verbose)
     sct.printv('  smooth ......... '+paramreg.steps[i_step_str].smooth, param.verbose)
+    sct.printv('  laplacian ...... '+paramreg.steps[i_step_str].laplacian, param.verbose)
     sct.printv('  shrink ......... '+paramreg.steps[i_step_str].shrink, param.verbose)
     sct.printv('  gradStep ....... '+paramreg.steps[i_step_str].gradStep, param.verbose)
     sct.printv('  init ........... '+paramreg.steps[i_step_str].init, param.verbose)
@@ -480,9 +478,16 @@ def register(src, dest, paramreg, param, i_step_str):
             dest_pad = sct.add_suffix(dest, '_pad')
             sct.run('sct_image -i '+dest+' -o '+dest_pad+' -pad 0,0,'+str(param.padding))
             dest = dest_pad
-
+        # apply Laplacian filter
+        if not paramreg.steps[i_step_str].laplacian == '0':
+            sct.printv('\nApply Laplacian filter', param.verbose)
+            sct.run('sct_maths -i '+src+' -laplacian '+paramreg.steps[i_step_str].laplacian+','+paramreg.steps[i_step_str].laplacian+',0 -o '+sct.add_suffix(src, '_laplacian'))
+            sct.run('sct_maths -i '+dest+' -laplacian '+paramreg.steps[i_step_str].laplacian+','+paramreg.steps[i_step_str].laplacian+',0 -o '+sct.add_suffix(dest, '_laplacian'))
+            src = sct.add_suffix(src, '_laplacian')
+            dest = sct.add_suffix(dest, '_laplacian')
+        # Estimate transformation
+        sct.printv('\nEstimate transformation', param.verbose)
         scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
-
         cmd = ('isct_antsRegistration '
                '--dimensionality 3 '
                '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep +
@@ -530,7 +535,7 @@ def register(src, dest, paramreg, param, i_step_str):
                             verbose=param.verbose,
                             ants_registration_params=ants_registration_params)
 
-    # centermass
+    # slice-wise transfo
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
         # check if type=seg
         if not paramreg.steps[i_step_str].type == 'seg':
@@ -539,8 +544,9 @@ def register(src, dest, paramreg, param, i_step_str):
             sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.\n', 1, 'warning')
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
-            sct.run('sct_maths -i '+src+' -smooth '+paramreg.steps[i_step_str].smooth+' -o '+sct.add_suffix(src, '_smooth'))
-            sct.run('sct_maths -i '+dest+' -smooth '+paramreg.steps[i_step_str].smooth+' -o '+sct.add_suffix(dest, '_smooth'))
+            sct.printv('\nSmooth data', param.verbose)
+            sct.run('sct_maths -i '+src+' -smooth '+paramreg.steps[i_step_str].smooth+','+paramreg.steps[i_step_str].smooth+',0 -o '+sct.add_suffix(src, '_smooth'))
+            sct.run('sct_maths -i '+dest+' -smooth '+paramreg.steps[i_step_str].smooth+','+paramreg.steps[i_step_str].smooth+',0 -o '+sct.add_suffix(dest, '_smooth'))
             src = sct.add_suffix(src, '_smooth')
             dest = sct.add_suffix(dest, '_smooth')
         from msct_register import register_slicewise
