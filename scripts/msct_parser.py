@@ -547,6 +547,7 @@ class Usage:
         if error:
             sct.printv(error+'\nAborted...',type='warning')
             sct.printv(usage,type='normal')
+            raise SyntaxError(error)
             exit(1)
         else:
             return usage

@@ -117,14 +117,12 @@ def get_parser():
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
                       deprecated_by='-vertfile',
-                      default_value='label/template/MNI-Poly-AMU_level.nii.gz',
-                      example='label/template/MNI-Poly-AMU_level.nii.gz')
+                      default_value='label/template/PAM50_levels.nii.gz')
     parser.add_option(name='-vertfile',
                       type_value='image_nifti',
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
-                      default_value='./label/template/MNI-Poly-AMU_level.nii.gz',
-                      example='./label/template/MNI-Poly-AMU_level.nii.gz')
+                      default_value='./label/template/PAM50_levels.nii.gz')
     parser.add_option(name='-m',
                       type_value='multiple_choice',
                       description='Method to compute CSA',
@@ -618,7 +616,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
 
         warning = ''
         if vert_levels and not fname_vertebral_labeling:
-            sct.printv('\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/MNI-Poly-AMU_level.nii.gz\". See usage.\n', 1, 'error')
+            sct.printv('\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/PAM50_levels.nii.gz\". See usage.\n', 1, 'error')
 
         elif vert_levels and fname_vertebral_labeling:
 
@@ -668,6 +666,9 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
 
         # write result into output file
         save_results(output_prefix+output_suffixes[3], output_type, overwrite, file_data, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+
+    elif (not (slices or vert_levels)) and (output_type == 'xls'):
+        sct.printv('WARNING: Excel output type for the result file is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in a .txt file.', type='warning')
 
     # Remove temporary files
     if remove_temp_files:

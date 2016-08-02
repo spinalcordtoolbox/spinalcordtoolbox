@@ -37,15 +37,12 @@ import sys
 import platform
 import signal
 from time import time, strftime
-
 from msct_parser import Parser
 import sct_utils as sct
 import os
 import copy_reg
 import types
 import pandas as pd
-
-
 
 
 # get path of the toolbox
@@ -181,13 +178,16 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
         pool.join()
-        sys.exit(2)
+        # return
+        # raise KeyboardInterrupt
+        # sys.exit(2)
     except Exception as e:
         sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
         sct.printv(str(e), 1, 'warning')
         pool.terminate()
         pool.join()
-        sys.exit(2)
+        # raise Exception
+        # sys.exit(2)
 
     return results
 
@@ -224,12 +224,12 @@ def get_parser():
                       default_value=0,
                       example='42')
 
-    parser.add_option(name="-log",
-                      type_value='multiple_choice',
-                      description="Redirects Terminal verbose to log file.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='0')
+    # parser.add_option(name="-log",
+    #                   type_value='multiple_choice',
+    #                   description="Redirects Terminal verbose to log file.",
+    #                   mandatory=False,
+    #                   example=['0', '1'],
+    #                   default_value='0')
 
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -245,35 +245,44 @@ def get_parser():
 # Start program
 # ====================================================================================================
 if __name__ == "__main__":
+
+    # get parameters
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-
     function_to_test = arguments["-f"]
     dataset = arguments["-d"]
     dataset = sct.slash_at_the_end(dataset, slash=1)
-
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
-    create_log_file = arguments['-log']
-
-
+    # create_log_file = arguments['-log']
     verbose = arguments["-v"]
 
+    # start timer
+    start_time = time()
+    # create single time variable for output names
+    output_time = strftime("%y%m%d%H%M%S")
+
     # redirect to log file
-    if create_log_file:
-        orig_stdout = sys.stdout
-        handle_log = file('results_testing_'+strftime("%y%m%d%H%M%S")+'.txt', 'w')
-        sys.stdout = handle_log
+    # if create_log_file:
+    orig_stdout = sys.stdout
+    fname_log = 'results_testing_'+output_time+'.log'
+    handle_log = file(fname_log, 'w')
+    sys.stdout = handle_log
+
+    print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
 
     # get path of the toolbox
-    path_sct = os.getenv("SCT_DIR")
-    if path_sct is None :
-        raise EnvironmentError("SCT_DIR, which is the path to the "
-                               "Spinalcordtoolbox install needs to be set")
+    path_script = os.path.dirname(__file__)
+    path_sct = os.path.dirname(path_script)
+    # path_sct = os.getenv("SCT_DIR")
+    # if path_sct is None :
+    #     raise EnvironmentError("SCT_DIR, which is the path to the "
+    #                            "Spinalcordtoolbox install needs to be set")
+
     # fetch version of the toolbox
     with open (path_sct+"/version.txt", "r") as myfile:
         version_sct = myfile.read().replace('\n', '')
@@ -301,47 +310,56 @@ if __name__ == "__main__":
     print 'RAM:'
     sct.checkRAM(os_running)
 
-    # start timer
-    start_time = time()
+    # test function
+    try:
+        results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
+        pd.set_option('display.max_rows', 500)
+        pd.set_option('display.max_columns', 500)
+        pd.set_option('display.width', 1000)
+        results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
+        results_display = results_subset
 
-    print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
-    results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
-    pd.set_option('display.max_rows', 500)
-    pd.set_option('display.max_columns', 500)
-    pd.set_option('display.width', 1000)
-    results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
-    results_display = results_subset
+        # save panda structure
+        results_subset.to_pickle('results_testing_'+output_time+'.pickle')
+        results_subset.to_csv('results_testing_'+output_time+'.csv')
 
-    # save panda structure
-    results_subset.to_pickle('results_testing_'+strftime("%y%m%d%H%M%S"))
-    results_subset.to_csv('results_testing_'+strftime("%y%m%d%H%M%S")+'.csv')
+        # mean
+        results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
+        results_mean['subject'] = 'Mean'
+        results_mean.set_value('status', float('NaN'))  # set status to NaN
+        results_display = results_display.append(results_mean, ignore_index=True)
 
-    # mean
-    results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
-    results_mean['subject'] = 'Mean'
-    results_mean.set_value('status', float('NaN'))  # set status to NaN
-    results_display = results_display.append(results_mean, ignore_index=True)
+        # std
+        results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
+        results_std['subject'] = 'STD'
+        results_std.set_value('status', float('NaN'))  # set status to NaN
+        results_display = results_display.append(results_std, ignore_index=True)
 
-    # std
-    results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
-    results_std['subject'] = 'STD'
-    results_std.set_value('status', float('NaN'))  # set status to NaN
-    results_display = results_display.append(results_std, ignore_index=True)
+        # count tests that passed
+        count_passed = results_subset.status[results_subset.status == 0].count()
 
-    # count tests that passed
-    count_passed = results_subset.status[results_subset.status == 0].count()
+        # results_display = results_display.set_index('subject')
+        # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
+        results_display = results_display.set_index('subject').reset_index()
 
-    # results_display = results_display.set_index('subject')
-    # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
-    results_display = results_display.set_index('subject').reset_index()
+        # printing results
+        print 'Results for "' + function_to_test + ' ' + parameters + '":'
+        print 'Dataset: ' + dataset
+        print results_display.to_string()
+        print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
 
-    # printing results
-    print 'Results for "' + function_to_test + ' ' + parameters + '":'
-    print 'Dataset: ' + dataset
-    print results_display.to_string()
-    print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
+        # display elapsed time
+        elapsed_time = time() - start_time
+        print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
+        print 'Status legend: 0: Passed, 1: Crashed, 99: Failed, 200: File(s) missing'
 
-    # display elapsed time
-    elapsed_time = time() - start_time
-    print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
-    print 'Status legend: 0: Passed, 1: Crashed, 99: Failed, 200: File(s) missing'
+    except Exception as err:
+        print err
+
+    # stop file redirection
+    sys.stdout.close()
+    sys.stdout = orig_stdout
+
+    # display log file to Terminal
+    handle_log = file(fname_log, 'r')
+    print handle_log.read()

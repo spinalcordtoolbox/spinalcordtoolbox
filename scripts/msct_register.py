@@ -393,6 +393,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     warp_inv_y = np.zeros(data_src.shape)
 
     # Loop across slices
+    sct.printv('\nEstimate columnwise transformation...', verbose)
     for iz in range(0, nz):
 
         # PREPARE COORDINATES
