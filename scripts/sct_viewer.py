@@ -34,7 +34,7 @@ class SinglePlot:
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, images, viewer, view=2, display_cross=True, im_params=None):
+    def __init__(self, ax, images, viewer, view=2, display_cross='hv', im_params=None):
         self.axes = ax
         self.images = images  # this is a list of images
         self.viewer = viewer
@@ -83,11 +83,12 @@ class SinglePlot:
         self.axes.set_xticks([])
         self.axes.set_yticks([])
 
-        if display_cross:
-            self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
-            self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
-            self.axes.add_line(self.line_vertical)
+        self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
+        self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
+        if 'h' in display_cross:
             self.axes.add_line(self.line_horizontal)
+        if 'v' in display_cross:
+            self.axes.add_line(self.line_vertical)
 
         self.zoom_factor = 1.0
 
@@ -125,24 +126,27 @@ class SinglePlot:
                 if data_update:
                     for i, image in enumerate(self.images):
                         self.figs[i].set_data(image.data[target_slice, :, :])
-                if self.display_cross:
+                if 'v' in self.display_cross:
                     self.line_vertical.set_ydata(self.cross_to_display[0][0])
+                if 'h' in self.display_cross:
                     self.line_horizontal.set_xdata(self.cross_to_display[1][1])
         elif self.view == 2:
             if 0 <= target_slice < self.images[0].data.shape[1]:
                 if data_update:
                     for i, image in enumerate(self.images):
                         self.figs[i].set_data(image.data[:, target_slice, :])
-                if self.display_cross:
+                if 'v' in self.display_cross:
                     self.line_vertical.set_ydata(self.cross_to_display[0][0])
+                if 'h' in self.display_cross:
                     self.line_horizontal.set_xdata(self.cross_to_display[1][1])
         elif self.view == 3:
             if 0 <= target_slice < self.images[0].data.shape[2]:
                 if data_update:
                     for i, image in enumerate(self.images):
                         self.figs[i].set_data(image.data[:, :, target_slice])
-                if self.display_cross:
+                if 'v' in self.display_cross:
                     self.line_vertical.set_ydata(self.cross_to_display[0][0])
+                if 'h' in self.display_cross:
                     self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
         self.figs[0].figure.canvas.draw()
@@ -456,7 +460,7 @@ class ThreeViewer(Viewer):
 class ClickViewer(Viewer):
     """
     This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
-    Assumes AIL orientation
+    Assumes SAL orientation
     """
     def __init__(self, list_images, visualization_parameters=None):
         if isinstance(list_images, Image):
@@ -479,13 +483,13 @@ class ClickViewer(Viewer):
         gs = gridspec.GridSpec(1, 3)
 
         ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=1, display_cross=False, im_params=visualization_parameters))
+        self.windows.append(SinglePlot(ax, self.images, self, view=1, display_cross='', im_params=visualization_parameters))
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
-        self.windows[0].axes.set_xlim([0, self.images[0].data.shape[1]])
-        self.windows[0].axes.set_ylim([self.images[0].data.shape[2], 0])
+        self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+        self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
 
         ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=3, display_cross=True, im_params=visualization_parameters))
+        self.windows.append(SinglePlot(ax, self.images, self, view=3, display_cross='v', im_params=visualization_parameters))
 
         for window in self.windows:
             window.connect()
@@ -539,6 +543,7 @@ class ClickViewer(Viewer):
             else:
                 window.update_slice(point, data_update=True)
 
+        self.windows[1].axes.set_title('Sagittal view\nClick and hold\nto move around')
         self.title = self.windows[0].axes.set_title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
                 self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
 
