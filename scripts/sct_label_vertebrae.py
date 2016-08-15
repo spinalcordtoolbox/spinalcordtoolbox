@@ -393,7 +393,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2')
+        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True)
         init_disc = [z_peak, 2]
 
     # display init disc
@@ -429,7 +429,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
         if not current_disc in [1]:
-            current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc))
+            current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc), gaussian_weighting=False)
 
         # display new disc
         if verbose == 2:
@@ -623,7 +623,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     im_label.save()
 
 
-def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, z=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, zrange=[], verbose=1, save_suffix=''):
+def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, z=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, zrange=[], verbose=1, save_suffix='', gaussian_weighting=True):
     """
     Find z that maximizes correlation between src and target 3d data.
     :param src: 3d source data
@@ -719,6 +719,13 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     # ind_y = ind_y + 1
     if allzeros:
         printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
+
+    # adjust correlation with Gaussian function centered at the right edge of the curve (most rostral point of FOV)
+    if gaussian_weighting:
+        gaussian_std_factor = 0.5
+        from scipy.signal import gaussian
+        gaussian_window = gaussian(len(I_corr) * 2, std=len(I_corr) * gaussian_std_factor)
+        I_corr = np.multiply(I_corr, gaussian_window[0:len(I_corr)])
 
     # Find global maximum
     # ind_peak = ind_peak[np.argmax(I_corr[ind_peak])]
