@@ -225,7 +225,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    # run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0 -param threshold_distance=5')
+    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0 -param threshold_distance=5')
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
