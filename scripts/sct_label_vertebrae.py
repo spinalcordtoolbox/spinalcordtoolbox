@@ -82,12 +82,16 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       default_value=path_sct+'/data/PAM50/')
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
-                      description='Initialize labeling by providing slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
+                      description='Initialize using slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
                       mandatory=False,
                       example=['125,3'])
     parser.add_option(name="-initcenter",
                       type_value='int',
-                      description='Initialize labeling by providing the disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
+                      description='Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
+                      mandatory=False)
+    parser.add_option(name="-initc2",
+                      type_value=None,
+                      description='Initialize by clicking on C2-C3 disc using interactive window.',
                       mandatory=False)
     parser.add_option(name="-initfile",
                       type_value='file',
@@ -143,7 +147,7 @@ def main(args=None):
     # initializations
     initz = ''
     initcenter = ''
-    find_c2c3disk = 'manual'
+    initc2 = 'auto'
 
     # check user arguments
     if not args:
@@ -179,6 +183,8 @@ def main(args=None):
                 initz = [int(x) for x in arg_initfile[i+1].split(',')]
             if arg_initfile[i] == '-initcenter':
                 initcenter = int(arg_initfile[i+1])
+    if '-initc2' in arguments:
+        initc2 = 'manual'
     verbose = int(arguments['-v'])
     remove_tmp_files = int(arguments['-r'])
     denoise = int(arguments['-denoise'])
@@ -256,7 +262,7 @@ def main(args=None):
         run('sct_maths -i data_straightr.nii -laplacian 1 -o data_straightr.nii', verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, init_disc=init_disc, verbose=verbose, path_template=path_template, find_c2c3disk=find_c2c3disk)
+    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2)
 
     # un-straighten labelled spinal cord
     printv('\nUn-straighten labeling...', verbose)
@@ -290,7 +296,7 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, path_template='', find_c2c3disk='auto'):
+def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, path_template='', initc2='auto'):
     """
     Find intervertebral discs in straightened image using template matching
     :param fname:
@@ -382,7 +388,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
 
     # if automatic mode, find C2/C3 disc
-    if init_disc == [] and find_c2c3disk == 'auto':
+    if init_disc == [] and initc2 == 'auto':
         printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
@@ -390,7 +396,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
-    if init_disc == [] and find_c2c3disk == 'manual':
+    if init_disc == [] and initc2 == 'manual':
         from sct_viewer import ClickViewer
         # reorient image to SAL to be compatible with viewer
         im_input_SAL = im_input.copy()
