@@ -12,12 +12,10 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: write label C2-C3 when user uses viewer
 # TODO: find automatically if -c =t1 or t2 (using dilated seg)
 # TODO: go inferior, then superior, to have better distance adjustment for C1
-# TODO: add C1
 # TODO: address the case when there is more than one max correlation
-# TODO: add user input option (show sagittal slice) --> use new viewer
-# DONE: compute MI instead of correlation --> does not help
 
 import sys
 import commands
@@ -410,6 +408,8 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             sct.run("sct_label_utils -i " + fname + " -create " + mask_points + " -o " + mask_filename, verbose=False)
         else:
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
+        # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
+        init_disc = [nz-int(mask_points.split(',')[0]), 2]
 
     # display init disc
     if verbose == 2:
