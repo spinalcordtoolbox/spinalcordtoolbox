@@ -201,7 +201,7 @@ def create_mask():
     cy = [0] * nz
     for iz in range(0, nz, 1):
         if iz in z_centerline_not_null:
-            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, z_centerline_not_null[iz]]))
+            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, iz]))
     # create 2d masks
     file_mask = 'data_mask'
     for iz in range(nz):
