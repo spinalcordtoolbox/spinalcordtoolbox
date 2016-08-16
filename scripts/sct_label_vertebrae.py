@@ -145,6 +145,7 @@ def main(args=None):
     # initializations
     initz = ''
     initcenter = ''
+    find_c2c3disk = 'manual'
 
     # check user arguments
     if not args:
@@ -192,7 +193,7 @@ def main(args=None):
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
     path_tmp = tmp_create(verbose=verbose)
-    # path_tmp = '/Users/julien/data/sct_issues/20160711_issue925/tmp.160711153243_327443/'
+    path_tmp = '/Users/julien/Dropbox/documents/processing/20160813_wang/t12/tmp.160814213032_725693/'
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
@@ -220,7 +221,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0 -param threshold_distance=5')
+    # run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0 -param threshold_distance=5')
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
@@ -257,7 +258,7 @@ def main(args=None):
         run('sct_maths -i data_straightr.nii -laplacian 1 -o data_straightr.nii', verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, init_disc=init_disc, verbose=verbose, path_template=path_template)
+    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, init_disc=init_disc, verbose=verbose, path_template=path_template, find_c2c3disk=find_c2c3disk)
 
     # un-straighten labelled spinal cord
     printv('\nUn-straighten labeling...', verbose)
@@ -291,7 +292,7 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, path_template=''):
+def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, path_template='', find_c2c3disk='auto'):
     """
     Find intervertebral discs in straightened image using template matching
     :param fname:
@@ -344,7 +345,8 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     data_disc_template = Image(fname_level).data
 
     # open anatomical volume
-    data = Image(fname).data
+    im_input = Image(fname)
+    data = im_input.data
 
     # smooth data
     from scipy.ndimage.filters import gaussian_filter
@@ -380,28 +382,45 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
     printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
-    # display stuff
-    if verbose == 2:
-        import matplotlib.pyplot as plt
-        plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
-        plt.title('Anatomical image')
-        plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        # plt.text(yc+shift_AP+4, init_disc[0], 'init', verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
 
     # if automatic mode, find C2/C3 disc
-    if init_disc == []:
+    if init_disc == [] and find_c2c3disk == 'auto':
         printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
         z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True)
         init_disc = [z_peak, 2]
 
+    # if manual mode, open viewer for user to click on C2/C3 disc
+    if init_disc == [] and find_c2c3disk == 'manual':
+        from sct_viewer import ClickViewer
+        # reorient image to SAL to be compatible with viewer
+        im_input_SAL = im_input.copy()
+        im_input_SAL.change_orientation('SAL')
+        viewer = ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'])
+        viewer.number_of_slices = 1
+        pz = 1
+        viewer.gap_inter_slice = int(10 / pz)
+        viewer.calculate_list_slices()
+        # start the viewer that ask the user to enter a few points along the spinal cord
+        mask_points = viewer.start()
+        if mask_points:
+            # create the mask containing either the three-points or centerline mask for initialization
+            mask_filename = sct.add_suffix(fname, "_mask_viewer")
+            sct.run("sct_label_utils -i " + fname + " -create " + mask_points + " -o " + mask_filename, verbose=False)
+        else:
+            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
+
     # display init disc
     if verbose == 2:
-        plt.ion()  # enables interactive mode
+        import matplotlib.pyplot as plt
+        plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
+        plt.title('Anatomical image')
+        plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
         plt.figure(fig_anat_straight), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
         plt.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
                  verticalalignment='center', horizontalalignment='left', color='pink', fontsize=15), plt.draw()
+        plt.ion()  # enables interactive mode
 
     # FIND DISCS
     # ===========================================================================
