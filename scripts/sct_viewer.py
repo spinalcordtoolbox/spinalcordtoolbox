@@ -645,6 +645,194 @@ class ClickViewer(Viewer):
             return None
 
 
+class (Viewer):
+    """
+    This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
+    Assumes SAL orientation
+    """
+    def __init__(self, list_images, visualization_parameters=None):
+        if isinstance(list_images, Image):
+            list_images = [list_images]
+        if not visualization_parameters:
+            visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
+        super(ClickViewer, self).__init__(list_images, visualization_parameters)
+
+        self.current_slice = 0
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
+
+        self.compute_offset()
+        self.pad_data()
+
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
+
+        # display axes, specific to viewer
+        import matplotlib.gridspec as gridspec
+        gs = gridspec.GridSpec(1, 3)
+
+        ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
+        self.windows.append(SinglePlot(ax, self.images, self, view=1, display_cross='', im_params=visualization_parameters))
+        self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
+        self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+        self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+
+        ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
+        self.windows.append(SinglePlot(ax, self.images, self, view=3, display_cross='v', im_params=visualization_parameters))
+
+        for window in self.windows:
+            window.connect()
+
+        # specialized for Click viewer
+        self.list_points = []
+        self.list_points_useful_notation = ''
+
+        # compute slices to display
+        self.list_slices = []
+        self.calculate_list_slices()
+
+        # variable to check if all slices have been processed
+        self.all_processed = False
+
+        self.setup_intensity()
+
+    def calculate_list_slices(self):
+        if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
+            central_slice = int(self.image_dim[0] / 2)
+            first_slice = central_slice - (self.number_of_slices / 2) * self.gap_inter_slice
+            last_slice = central_slice + (self.number_of_slices / 2) * self.gap_inter_slice
+            if first_slice < 0:
+                first_slice = 0
+            if last_slice >= self.image_dim[0]:
+                last_slice = self.image_dim[0] - 1
+            self.list_slices = [int(item) for item in
+                                linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
+        elif self.number_of_slices != 0:
+            self.list_slices = [int(item) for item in
+                                linspace(0, self.image_dim[0] - 1, self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[0] - 1:
+                self.list_slices.append(self.image_dim[0] - 1)
+        elif self.gap_inter_slice != 0:
+            self.list_slices = list(arange(0, self.image_dim[0], self.gap_inter_slice))
+            if self.list_slices[-1] != self.image_dim[0] - 1:
+                self.list_slices.append(self.image_dim[0] - 1)
+        else:
+            self.gap_inter_slice = int(max([round(self.image_dim[0] / 15.0), 1]))
+            self.number_of_slices = int(round(self.image_dim[0] / self.gap_inter_slice))
+            self.list_slices = [int(item) for item in
+                                linspace(0, self.image_dim[0] - 1, self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[0] - 1:
+                self.list_slices.append(self.image_dim[0] - 1)
+
+        self.current_point.x = self.list_slices[self.current_slice]
+        point = [self.current_point.x, self.current_point.y, self.current_point.z]
+        for window in self.windows:
+            if window.view == 3:
+                window.update_slice(point, data_update=False)
+            else:
+                window.update_slice(point, data_update=True)
+
+        self.windows[1].axes.set_title('Sagittal view\nClick and hold\nto move around')
+        self.title = self.windows[0].axes.set_title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
+                self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
+
+    def compute_offset(self):
+        array_dim = [self.image_dim[1] * self.im_spacing[1], self.image_dim[2] * self.im_spacing[2]]
+        index_max = np.argmax(array_dim)
+        max_size = array_dim[index_max]
+        self.offset = [0,
+                       int(round((max_size - array_dim[0]) / self.im_spacing[1]) / 2),
+                       int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
+
+    def on_press(self, event, plot=None):
+        if plot.view == 1:
+            target_point = Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1])
+            if self.is_point_in_image(target_point):
+                self.list_points.append(target_point)
+
+                self.current_slice += 1
+                if self.current_slice < len(self.list_slices):
+                    self.current_point.x = self.list_slices[self.current_slice]
+                    self.windows[0].update_slice(self.list_slices[self.current_slice])
+                    title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
+                                                    str(self.list_slices[self.current_slice]) + '/' +
+                                                    str(self.image_dim[1] - 1) + ' (' +
+                                                    str(self.current_slice + 1) + '/' +
+                                                    str(len(self.list_slices)) + ')')
+                    plt.setp(title_obj, color='k')
+                    plot.draw()
+
+                    point = [self.current_point.x, self.current_point.y, self.current_point.z]
+                    self.windows[1].update_slice(point, data_update=False)
+                else:
+                    for coord in self.list_points:
+                        if self.list_points_useful_notation != '':
+                            self.list_points_useful_notation += ':'
+                        self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
+                            coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+                    self.all_processed = True
+                    plt.close()
+            else:
+                title_obj = self.windows[0].axes.set_title('The point you selected in not in the image. Please try again.')
+                plt.setp(title_obj, color='r')
+                plot.draw()
+
+    def draw_points(self, window, current_slice):
+        if window.view == 1:
+            x_data, y_data = [], []
+            for pt in self.list_points:
+                if pt.x == current_slice:
+                    x_data.append(pt.z + self.offset[2])
+                    y_data.append(pt.y + self.offset[1])
+            self.plot_points.set_xdata(x_data)
+            self.plot_points.set_ydata(y_data)
+
+    def on_release(self, event, plot=None):
+        if event.button == 1 and plot.view == 3:
+            self.current_point.x = self.list_slices[self.current_slice]
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            for window in self.windows:
+                if window is plot:
+                    window.update_slice(point, data_update=False)
+                else:
+                    self.draw_points(window, self.current_point.y)
+                    window.update_slice(point, data_update=True)
+        return
+
+    def on_motion(self, event, plot=None):
+        if event.button == 1 and plot.view == 3 and time() - self.last_update > self.update_freq:
+            is_in_axes = False
+            for window in self.windows:
+                if event.inaxes == window.axes:
+                    is_in_axes = True
+            if not is_in_axes:
+                return
+
+            self.last_update = time()
+            self.current_point = self.get_event_coordinates(event, plot)
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            for window in self.windows:
+                if window is plot:
+                    window.update_slice(point, data_update=False)
+                else:
+                    self.draw_points(window, self.current_point.x)
+                    window.update_slice(point, data_update=True)
+        return
+
+    def get_results(self):
+        if self.list_points:
+            return self.list_points
+        else:
+            return None
+
+    def start(self):
+        super(ClickViewer, self).start()
+
+        if self.all_processed:
+            return self.list_points_useful_notation
+        else:
+            return None
+
+
 def get_parser():
     parser = Parser(__file__)
     parser.usage.set_description('Volume Viewer')
@@ -658,10 +846,11 @@ def get_parser():
                       type_value='multiple_choice',
                       description='Display mode.'
                                   '\nviewer: standard three-window viewer.'
-                                  '\naxial: one-window viewer for manual centerline.\n',
+                                  '\naxial: one-window viewer for manual centerline.'
+                                  '\nsagittal: one-window viewer for manual identification of levels.\n',
                       mandatory=False,
                       default_value='viewer',
-                      example=['viewer', 'axial'])
+                      example=['viewer', 'axial', 'sagittal'])
 
     parser.add_option(name='-param',
                       type_value=[[':'], 'str'],
@@ -735,14 +924,14 @@ class ParamMultiImageVisualization(object):
         else:
             sct.printv("ERROR: parameters must contain 'id'", 1, 'error')
 
-def prepare(list_images):
+def prepare(list_images, orient='SAL'):
     fname_images, orientation_images = [], []
     for fname_im in list_images:
         from sct_image import orientation
         orientation_images.append(orientation(Image(fname_im), get=True, verbose=False))
         path_fname, file_fname, ext_fname = sct.extract_fname(fname_im)
-        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
-        sct.run('sct_image -i ' + fname_im + ' -o ' + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
+        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_"+orient)
+        sct.run('sct_image -i ' + fname_im + ' -o ' + reoriented_image_filename + ' -setorient ' + orient + ' -v 0', verbose=False)
         fname_images.append(reoriented_image_filename)
     return fname_images, orientation_images
 
@@ -757,11 +946,13 @@ if __name__ == "__main__":
     parser = get_parser()
 
     arguments = parser.parse(sys.argv[1:])
-
-    fname_images, orientation_images = prepare(arguments["-i"])
-    list_images = [Image(fname) for fname in fname_images]
-
     mode = arguments['-mode']
+    orient = 'SAL'
+    if mode == 'sagittal':
+        orient = 'LSA'
+
+    fname_images, orientation_images = prepare(arguments["-i"], orient)
+    list_images = [Image(fname) for fname in fname_images]
 
     param_image1 = ParamImageVisualization()
     visualization_parameters = ParamMultiImageVisualization([param_image1])
@@ -774,7 +965,7 @@ if __name__ == "__main__":
     if mode == 'viewer':
         viewer = ThreeViewer(list_images, visualization_parameters)
         viewer.start()
-    elif mode == 'axial':
+    elif mode in ['axial', 'sagittal']:
         viewer = ClickViewer(list_images, visualization_parameters)
         viewer.start()
     clean()
