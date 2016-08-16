@@ -197,7 +197,7 @@ def main(args=None):
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
     path_tmp = tmp_create(verbose=verbose)
-    path_tmp = '/Users/julien/Dropbox/documents/processing/20160813_wang/t12/tmp.160814213032_725693/'
+    # path_tmp = '/Users/julien/Dropbox/documents/processing/20160813_wang/t12/tmp.160814213032_725693/'
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)
