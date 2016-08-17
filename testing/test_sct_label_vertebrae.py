@@ -66,15 +66,15 @@ def test(path_data='', parameters=''):
     path_output = sct.slash_at_the_end('sct_label_vertebrae_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
     param_with_path += ' -ofolder ' + path_output
 
-    # add initialization parameter contained in file: init_label_vertebrae.txt
-    if not os.path.isfile(path_data+'t2/'+file_init_label_vertebrae):
-        status = 200
-        output = 'ERROR: the file init_label_vertebrae.txt does not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-        # return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
-    else:
-        file = open(path_data+'t2/'+file_init_label_vertebrae, 'r')
-        param_with_path += ' '+file.read().replace('\n', '')
+    # # add initialization parameter contained in file: init_label_vertebrae.txt
+    # if not os.path.isfile(path_data+'t2/'+file_init_label_vertebrae):
+    #     status = 200
+    #     output = 'ERROR: the file init_label_vertebrae.txt does not exist in folder: ' + path_data
+    #     return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+    #     # return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
+    # else:
+    #     file = open(path_data+'t2/'+file_init_label_vertebrae, 'r')
+    #     param_with_path += ' '+file.read().replace('\n', '')
 
     cmd = 'sct_label_vertebrae ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
