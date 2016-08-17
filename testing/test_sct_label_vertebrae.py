@@ -56,6 +56,24 @@ def test(path_data='', parameters=''):
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
+    # Extract contrast
+    contrast_folder = ''
+    input_filename = ''
+    if dict_param['-i'][0] == '/':
+        dict_param['-i'] = dict_param['-i'][1:]
+    input_split = dict_param['-i'].split('/')
+    if len(input_split) == 2:
+        contrast_folder = input_split[0] + '/'
+        input_filename = input_split[1]
+    else:
+        input_filename = input_split[0]
+    if not contrast_folder:  # if no contrast folder, send error.
+        status = 201
+        output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param[
+            '-i'] + ' for ' + path_data
+        return status, output, DataFrame(
+            data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
+
     # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
     import time, random
     subject_folder = path_data.split('/')
@@ -93,18 +111,18 @@ def test(path_data='', parameters=''):
         # copy input data (for easier debugging)
         sct.run('cp '+dict_param_with_path['-i']+' '+path_output, verbose=0)
         # extract center of vertebral labels
-        sct.run('sct_label_utils -i '+path_output+'t2_seg_labeled.nii.gz -vert-body 0 -o '+path_output+'t2_seg_labeled_center.nii.gz', verbose=0)
+        sct.run('sct_label_utils -i '+path_output+contrast_folder+'_seg_labeled.nii.gz -vert-body 0 -o '+path_output+contrast_folder+'_seg_labeled_center.nii.gz', verbose=0)
         from sct_label_utils import ProcessLabels
         from numpy import linalg
         from math import sqrt
         # get dimension
         from msct_image import Image
-        img = Image(path_output+'t2_seg_labeled.nii.gz')
+        img = Image(path_output+contrast_folder+'_seg_labeled.nii.gz')
         nx, ny, nz, nt, px, py, pz, pt = img.dim
         # open labels
-        label_results = ProcessLabels(path_output+'t2_seg_labeled_center.nii.gz')
+        label_results = ProcessLabels(path_output+contrast_folder+'_seg_labeled_center.nii.gz')
         list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
-        label_manual = ProcessLabels(path_data+'t2/t2_labeled_center_manual.nii.gz')
+        label_manual = ProcessLabels(path_data+contrast_folder+'/'+contrast_folder+'_labeled_center_manual.nii.gz')
         list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
         mse = 0.0
         max_dist = 0.0
