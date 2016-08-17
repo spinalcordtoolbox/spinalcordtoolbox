@@ -591,7 +591,7 @@ def create_label_z(fname_seg, z, value):
     nii.data[x, y, z] = value
     # dilate label to prevent it from disappearing due to nearestneighbor interpolation
     from sct_maths import dilate
-    nii.data = dilate(nii.data, 3)
+    nii.data = dilate(nii.data, [3])
     nii.setFileName(fname_label)
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save()
