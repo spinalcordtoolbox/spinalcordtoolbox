@@ -11,10 +11,6 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-# TODO: fix horizontal bar on secondary plot
-# TODO: fix the update of secondary plot on release
-# TODO: add URL for help
-# TODO: fix numbering on slice on primary plot
 
 import sys
 from msct_parser import Parser
@@ -23,6 +19,8 @@ from bisect import bisect
 from numpy import arange, max, pad, linspace, mean, median, std, percentile
 import numpy as np
 from msct_types import *
+
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib import cm
@@ -30,8 +28,9 @@ import sct_utils as sct
 from time import time
 from copy import copy
 
+from matplotlib.widgets import Slider, Button, RadioButtons
 
-# from matplotlib.widgets import Slider, Button, RadioButtons
+import webbrowser
 
 
 class SinglePlot:
@@ -53,19 +52,19 @@ class SinglePlot:
         for i, image in enumerate(images):
             data_to_display = None
             if self.view == 1:
-                self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [0, self.image_dim[1]]],
-                                         [[0, self.image_dim[2]], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+                self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [-10000, 10000]],
+                                         [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[0]
                 data_to_display = image.data[int(self.image_dim[0] / 2), :, :]
 
             elif self.view == 2:
-                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [0, self.image_dim[2]]],
-                                         [[0, self.image_dim[0]], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
+                                         [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[1]
                 data_to_display = image.data[:, int(self.image_dim[1] / 2), :]
             elif self.view == 3:
-                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [0, self.image_dim[1]]],
-                                         [[0, self.image_dim[0]], [self.viewer.current_point.y, self.viewer.current_point.y]]]
+                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
+                                         [[-10000, 10000], [self.viewer.current_point.y, self.viewer.current_point.y]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[2]
                 data_to_display = image.data[:, :, int(self.image_dim[2] / 2)]
 
@@ -286,6 +285,10 @@ class Viewer(object):
         self.last_update = time()
         self.update_freq = 1.0/15.0  # 10 Hz
 
+        self.ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
+        button_help = Button(self.ax_help, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.help)
+
     def compute_offset(self):
         array_dim = [self.image_dim[0]*self.im_spacing[0], self.image_dim[1]*self.im_spacing[1], self.image_dim[2]*self.im_spacing[2]]
         index_max = np.argmax(array_dim)
@@ -379,6 +382,10 @@ class Viewer(object):
     def draw(self):
         for window in self.windows:
             window.fig.figure.canvas.draw()
+
+    def help(self, event):
+        if event.inaxes == self.ax_help:
+            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def start(self):
         plt.show()
@@ -506,8 +513,15 @@ class ClickViewer(Viewer):
             self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
 
         # smaller plot on the left
+        display_cross = ''
+        if self.primary_subplot == 'ax':
+            display_cross = 'v'
+        elif self.primary_subplot == 'cor':
+            display_cross = 'h'
+        elif self.primary_subplot == 'sag':
+            display_cross = 'h'
         ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot], display_cross='v', im_params=visualization_parameters))
+        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot], display_cross=display_cross, im_params=visualization_parameters))
 
         for window in self.windows:
             window.connect()
@@ -563,7 +577,7 @@ class ClickViewer(Viewer):
 
         self.windows[1].axes.set_title('Click and hold\nto move around')
         self.title = self.windows[0].axes.set_title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
-                self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
+                self.image_dim[self.orientation[self.primary_subplot]-1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
 
     def compute_offset(self):
         if self.primary_subplot == 'ax':
@@ -590,7 +604,7 @@ class ClickViewer(Viewer):
 
     def on_press(self, event, plot=None):
         # below is the subplot that refers to the label collection
-        if plot.view == self.orientation[self.primary_subplot]:
+        if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
             if self.primary_subplot == 'ax':
                 target_point = Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1])
             elif self.primary_subplot == 'cor':
@@ -608,7 +622,7 @@ class ClickViewer(Viewer):
                     self.windows[0].update_slice(self.list_slices[self.current_slice])
                     title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
                                                     str(self.list_slices[self.current_slice]) + '/' +
-                                                    str(self.image_dim[1] - 1) + ' (' +
+                                                    str(self.image_dim[self.orientation[self.primary_subplot]-1] - 1) + ' (' +
                                                     str(self.current_slice + 1) + '/' +
                                                     str(len(self.list_slices)) + ')')
                     plt.setp(title_obj, color='k')
@@ -628,6 +642,25 @@ class ClickViewer(Viewer):
                 plt.setp(title_obj, color='r')
                 plot.draw()
 
+        elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
+            is_in_axes = False
+            for window in self.windows:
+                if event.inaxes == window.axes:
+                    is_in_axes = True
+            if not is_in_axes:
+                return
+
+            self.last_update = time()
+            self.current_point = self.get_event_coordinates(event, plot)
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            for window in self.windows:
+                if window is plot:
+                    window.update_slice(point, data_update=False)
+                else:
+                    self.draw_points(window, self.current_point.x)
+                    window.update_slice(point, data_update=True)
+
+
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
             x_data, y_data = [], []
@@ -645,9 +678,9 @@ class ClickViewer(Viewer):
         :param plot:
         :return:
         """
-        if event.button == 1 and plot.view == self.orientation[self.secondary_subplot]:
+        if event.button == 1 and event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            point[self.orientation[self.secondary_subplot]-1] = self.list_slices[self.current_slice]
+            point[self.orientation[self.primary_subplot]-1] = self.list_slices[self.current_slice]
             for window in self.windows:
                 if window is plot:
                     window.update_slice(point, data_update=False)
@@ -663,7 +696,7 @@ class ClickViewer(Viewer):
         :param plot:
         :return:
         """
-        if event.button == 1 and plot.view == self.orientation[self.secondary_subplot] and time() - self.last_update > self.update_freq:
+        if event.button == 1 and event.inaxes and plot.view == self.orientation[self.secondary_subplot] and time() - self.last_update > self.update_freq:
             is_in_axes = False
             for window in self.windows:
                 if event.inaxes == window.axes:
