@@ -285,10 +285,6 @@ class Viewer(object):
         self.last_update = time()
         self.update_freq = 1.0/15.0  # 10 Hz
 
-        self.ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
-        button_help = Button(self.ax_help, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.help)
-
     def compute_offset(self):
         array_dim = [self.image_dim[0]*self.im_spacing[0], self.image_dim[1]*self.im_spacing[1], self.image_dim[2]*self.im_spacing[2]]
         index_max = np.argmax(array_dim)
@@ -382,10 +378,6 @@ class Viewer(object):
     def draw(self):
         for window in self.windows:
             window.fig.figure.canvas.draw()
-
-    def help(self, event):
-        if event.inaxes == self.ax_help:
-            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def start(self):
         plt.show()
@@ -525,6 +517,10 @@ class ClickViewer(Viewer):
 
         for window in self.windows:
             window.connect()
+
+        self.ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
+        button_help = Button(self.ax_help, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.help)
 
         # specialized for Click viewer
         self.list_points = []
@@ -720,6 +716,10 @@ class ClickViewer(Viewer):
             return self.list_points
         else:
             return None
+
+    def help(self, event):
+        if event.inaxes == self.ax_help:
+            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def start(self):
         super(ClickViewer, self).start()
