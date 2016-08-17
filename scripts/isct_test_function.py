@@ -337,6 +337,8 @@ if __name__ == "__main__":
 
         # count tests that passed
         count_passed = results_subset.status[results_subset.status == 0].count()
+        # count tests that ran
+        count_ran = results_subset.status[results_subset.status != 200].count()
 
         # results_display = results_display.set_index('subject')
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
@@ -346,7 +348,7 @@ if __name__ == "__main__":
         print 'Results for "' + function_to_test + ' ' + parameters + '":'
         print 'Dataset: ' + dataset
         print results_display.to_string()
-        print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
+        print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
 
         # display elapsed time
         elapsed_time = time() - start_time
