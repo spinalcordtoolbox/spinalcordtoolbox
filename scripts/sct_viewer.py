@@ -521,6 +521,7 @@ class ClickViewer(Viewer):
         self.ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
         button_help = Button(self.ax_help, 'Help')
         self.fig.canvas.mpl_connect('button_press_event', self.help)
+        self.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
 
         # specialized for Click viewer
         self.list_points = []
@@ -719,7 +720,7 @@ class ClickViewer(Viewer):
 
     def help(self, event):
         if event.inaxes == self.ax_help:
-            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
+            webbrowser.open(self.help_url, new=0, autoraise=True)
 
     def start(self):
         super(ClickViewer, self).start()
