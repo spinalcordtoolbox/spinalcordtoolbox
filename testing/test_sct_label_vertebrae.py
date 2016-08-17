@@ -32,7 +32,7 @@ def test(path_data='', parameters=''):
     diff_manual_result = float('NaN')
 
     if not parameters:
-        parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -c t2 -o t2_seg_labeled.nii.gz'
+        parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -c t2 -o t2_seg_labeled.nii.gz -initfile t2/init_label_vertebrae.txt'
 
     # retrieve flags
     try:
