@@ -132,15 +132,19 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
 
 def function_launcher(args):
     import importlib
-    # import traceback
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
-    # try:
-    #     output = script_to_be_run.test(*args[1:])
-    # except:
-    #     print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
-    #     output = (1, 'ERROR: Function crashed', 'No result')
-    # return output
-    return script_to_be_run.test(*args[1:])
+    try:
+        output = script_to_be_run.test(*args[1:])
+    except:
+        import traceback
+        print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
+        # output = (1, 'ERROR: Function crashed', 'No result')
+        from pandas import DataFrame
+        status_script = 1
+        output_script = 'ERROR: Function crashed.'
+        output = (status_script, output_script, DataFrame(data={'status': int(status_script), 'output': output_script}, index=['']))
+    return output
+    # return script_to_be_run.test(*args[1:])
 
 
 def init_worker():
