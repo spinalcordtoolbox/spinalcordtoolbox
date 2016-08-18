@@ -1020,6 +1020,8 @@ class Image(object):
             # plt.axis('off')
             fname_png = path_output + self.file_name + suffix + format
             plt.savefig(fname_png, bbox_inches='tight')
+            plt.close(fig)
+
         except RuntimeError, e:
             from sct_utils import printv
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
