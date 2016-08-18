@@ -73,16 +73,16 @@ def get_parser():
                       example=path_sct+'/data/atlas')
     parser.add_option(name='-l',
                       type_value='str',
-                      description='Label IDs to extract the metric from. Default = all labels. Separate labels with ",". To select a group of consecutive labels use ":". Example: 1:3 is equivalent to 1,2,3',
+                      description='Label IDs to extract the metric from. Default = all labels. Separate labels with ",". To select a group of consecutive labels use ":". Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is computed using all tracts, but only values of the selected tracts are reported.',
                       mandatory=False,
                       default_value='')
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description="""Method to extract metrics.
 ml: maximum likelihood (only use with well-defined regions and low noise)
-  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in all voxels (the algorithm doesn't normalize the atlas).
 map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.
-  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in all voxels (the algorithm doesn't normalize the atlas).
 wa: weighted average
 wath: weighted average (only consider values >0.5)
 bin: binarize mask (threshold=0.5)""",
