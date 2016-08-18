@@ -116,7 +116,13 @@ def test(path_data='', parameters=''):
         # open labels
         label_results = ProcessLabels(path_output+contrast+'_seg_labeled_center.nii.gz')
         list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
-        label_manual = ProcessLabels(path_data+contrast+'/'+contrast+'_labeled_center_manual.nii.gz')
+        try:
+            label_manual = ProcessLabels(path_data+contrast+'/'+contrast+'_labeled_center_manual.nii.gz')
+        except:
+            status = 200
+            output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
+            return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+
         list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
         mse = 0.0
         max_dist = 0.0
