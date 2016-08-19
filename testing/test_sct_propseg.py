@@ -59,7 +59,7 @@ def test(path_data='', parameters=''):
             data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
 
     # Check if ground truth files exist
-    if not os.path.isfile(path_data + contrast + '/' + contrast + '_labeled_center_manual.nii.gz'):
+    if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg.nii.gz'):
         status = 200
         output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
