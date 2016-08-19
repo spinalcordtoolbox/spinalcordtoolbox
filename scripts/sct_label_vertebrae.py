@@ -448,7 +448,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         try:
             # get z corresponding to current disc on template
             current_z_template = list_disc_z_template[current_disc]
-        except TypeError:
+        except:
             # in case reached the bottom (see issue #849)
             printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
             break
