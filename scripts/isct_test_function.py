@@ -308,7 +308,7 @@ if __name__ == "__main__":
     # Check number of CPU cores
     from multiprocessing import cpu_count
     # status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'CPU cores: Available: ' + str(cpu_count())  # + ', Used by SCT: '+output
+    print 'CPU cores: ' + str(cpu_count())  # + ', Used by SCT: '+output
 
     # check RAM
     print 'RAM:'
@@ -357,7 +357,7 @@ if __name__ == "__main__":
         # display elapsed time
         elapsed_time = time() - start_time
         print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
-        print 'Status legend: 0: Passed | 1: Crashed | 99: Failed | 200,201,202: File(s) missing'
+        print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: File(s) missing'
 
     except Exception as err:
         print err
