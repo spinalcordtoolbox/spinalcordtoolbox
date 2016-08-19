@@ -36,17 +36,17 @@ def test(path_data='', parameters=''):
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Extract contrast
-    contrast_folder = ''
+    contrast = ''
     input_filename = ''
     if dict_param['-i'][0] == '/':
         dict_param['-i'] = dict_param['-i'][1:]
     input_split = dict_param['-i'].split('/')
     if len(input_split) == 2:
-        contrast_folder = input_split[0] + '/'
+        contrast = input_split[0] + '/'
         input_filename = input_split[1]
     else:
         input_filename = input_split[0]
-    if not contrast_folder:  # if no contrast folder, send error.
+    if not contrast:  # if no contrast folder, send error.
         status = 1
         output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
@@ -87,7 +87,7 @@ def test(path_data='', parameters=''):
     # by convention, manual segmentation are called inputname_seg_manual.nii.gz where inputname is the filename
     # of the input image
     segmentation_filename = path_output + sct.add_suffix(input_filename, '_seg')
-    manual_segmentation_filename = path_data + contrast_folder + sct.add_suffix(input_filename, '_seg_manual')
+    manual_segmentation_filename = path_data + contrast + sct.add_suffix(input_filename, '_seg_manual')
 
     dice_segmentation = float('nan')
 
