@@ -35,13 +35,7 @@ def test(path_data='', parameters=''):
     dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
-    # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i'])):
-        status = 200
-        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(
-            data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
-
+    # Extract contrast
     contrast_folder = ''
     input_filename = ''
     if dict_param['-i'][0] == '/':
@@ -53,11 +47,22 @@ def test(path_data='', parameters=''):
     else:
         input_filename = input_split[0]
     if not contrast_folder:  # if no contrast folder, send error.
-        status = 201
-        output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param[
-            '-i'] + ' for ' + path_data
+        status = 1
+        output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
+        return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
+
+    # Check if input files exist
+    if not (os.path.isfile(dict_param_with_path['-i'])):
+        status = 200
+        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(
             data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
+
+    # Check if ground truth files exist
+    if not os.path.isfile(path_data + contrast + '/' + contrast + '_labeled_center_manual.nii.gz'):
+        status = 200
+        output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
     import time, random
     subject_folder = path_data.split('/')
