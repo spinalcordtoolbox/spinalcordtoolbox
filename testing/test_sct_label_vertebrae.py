@@ -119,7 +119,7 @@ def test(path_data='', parameters=''):
         try:
             label_manual = ProcessLabels(path_data+contrast+'/'+contrast+'_labeled_center_manual.nii.gz')
         except:
-            status = 200
+            status = 202
             output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
             return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
