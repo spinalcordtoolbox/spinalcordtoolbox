@@ -307,8 +307,8 @@ if __name__ == "__main__":
 
     # Check number of CPU cores
     from multiprocessing import cpu_count
-    status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
+    # status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
+    print 'CPU cores: Available: ' + str(cpu_count())  # + ', Used by SCT: '+output
 
     # check RAM
     print 'RAM:'
