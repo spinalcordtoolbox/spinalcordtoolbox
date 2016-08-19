@@ -49,13 +49,6 @@ def test(path_data='', parameters=''):
         output = err
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
-    # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and
-            os.path.isfile(dict_param_with_path['-s'])):
-        status = 200
-        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-
     # Extract contrast
     contrast = ''
     if dict_param['-i'][0] == '/':
@@ -64,9 +57,22 @@ def test(path_data='', parameters=''):
     if len(input_split) == 2:
         contrast = input_split[0]
     if not contrast:  # if no contrast folder, send error.
-        status = 201
+        status = 1
         output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
+
+    # Check if input files exist
+    if not (os.path.isfile(dict_param_with_path['-i']) and
+            os.path.isfile(dict_param_with_path['-s'])):
+        status = 200
+        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+
+    # Check if ground truth files exist
+    if not os.path.isfile(path_data + contrast + '/' + contrast + '_labeled_center_manual.nii.gz'):
+        status = 200
+        output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
     # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
     import time, random
@@ -119,8 +125,8 @@ def test(path_data='', parameters=''):
         try:
             label_manual = ProcessLabels(path_data+contrast+'/'+contrast+'_labeled_center_manual.nii.gz')
         except:
-            status = 202
-            output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
+            status = 1
+            output = 'ERROR: cannot open *_labeled_center_manual.nii.gz'
             return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
         list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
