@@ -270,11 +270,13 @@ if __name__ == "__main__":
     # create single time variable for output names
     output_time = strftime("%y%m%d%H%M%S")
 
-    # redirect to log file
-    # if create_log_file:
+    # build log file name
+    file_log = 'results_test_'+function_to_test+'_'+output_time
     orig_stdout = sys.stdout
-    fname_log = 'results_testing_'+output_time+'.log'
+    fname_log = file_log+'.log'
     handle_log = file(fname_log, 'w')
+
+    # redirect to log file
     sys.stdout = handle_log
 
     print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
@@ -324,8 +326,8 @@ if __name__ == "__main__":
         results_display = results_subset
 
         # save panda structure
-        results_subset.to_pickle('results_testing_'+output_time+'.pickle')
-        results_subset.to_csv('results_testing_'+output_time+'.csv')
+        results_subset.to_pickle(file_log+'.pickle')
+        # results_subset.to_csv(file_log+'.csv')
 
         # mean
         results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
