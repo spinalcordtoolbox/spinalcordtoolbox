@@ -42,7 +42,7 @@ def test(path_data='', parameters=''):
         dict_param['-i'] = dict_param['-i'][1:]
     input_split = dict_param['-i'].split('/')
     if len(input_split) == 2:
-        contrast = input_split[0] + '/'
+        contrast = input_split[0]
         input_filename = input_split[1]
     else:
         input_filename = input_split[0]
@@ -87,7 +87,7 @@ def test(path_data='', parameters=''):
     # by convention, manual segmentation are called inputname_seg_manual.nii.gz where inputname is the filename
     # of the input image
     segmentation_filename = path_output + sct.add_suffix(input_filename, '_seg')
-    manual_segmentation_filename = path_data + contrast + sct.add_suffix(input_filename, '_seg_manual')
+    manual_segmentation_filename = path_data + contrast + '/' + sct.add_suffix(input_filename, '_seg_manual')
 
     dice_segmentation = float('nan')
 
