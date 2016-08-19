@@ -9,6 +9,28 @@
 # Authors: Benjamin De Leener
 # Created: 2015-01-30
 #
+# Notes on how to use classes in this script.
+# If you are interested into selecting manually some points in an image, you can use the following code.
+
+# from sct_viewer import ClickViewer
+# from msct_image import Image
+#
+# im_input = Image('my_image.nii.gz')
+#
+# im_input_SAL = im_input.copy()
+# # SAL orientation is mandatory
+# im_input_SAL.change_orientation('SAL')
+# # The viewer is composed by a primary plot and a secondary plot. The primary plot is the one you will click points in.
+# # The secondary plot will help you go throughout slices in another dimensions to help manual selection.
+# viewer = ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'])
+# viewer.number_of_slices = X  # Change X appropriately.
+# viewer.gap_inter_slice = Y  # this number should reflect image spacing
+# viewer.calculate_list_slices()
+# # start the viewer that ask the user to enter a few points along the spinal cord
+# mask_points = viewer.start()
+# print mask_points
+
+#
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
