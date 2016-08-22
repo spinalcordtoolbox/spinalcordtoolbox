@@ -309,8 +309,8 @@ def main():
     sct.printv('\nSmooth segmentation...', verbose)
     # sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
     # jcohenadad: updated 2016-06-16: DO NOT smooth the seg anymore. Issue #
-    sct.run('sct_maths -i '+ftmp_seg+' -smooth 0 -o '+add_suffix(ftmp_seg, '_smooth'))
-    ftmp_seg = add_suffix(ftmp_seg, '_smooth')
+    # sct.run('sct_maths -i '+ftmp_seg+' -smooth 0 -o '+add_suffix(ftmp_seg, '_smooth'))
+    # ftmp_seg = add_suffix(ftmp_seg, '_smooth')
 
     # resample data to 1mm isotropic
     sct.printv('\nResample data to 1mm isotropic...', verbose)
@@ -340,6 +340,9 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
+    # check if straightening was already done in a previous process. If so, don't do it twice.
+    # if os.path.isfile('warp_')
+    # check if warp_curve2straight and curve_straight2curve already exist
     sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose), verbose)
     # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
     # re-define warping field using non-cropped space (to avoid issue #367)
