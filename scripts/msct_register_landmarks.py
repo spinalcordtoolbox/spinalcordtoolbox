@@ -574,9 +574,16 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
     res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_fixed, points_moving, constraints), method='Nelder-Mead', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
     # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': show})
     # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='COBYLA', tol=1e-8, options={'tol': 1e-8, 'rhobeg': 0.1, 'maxiter': 100000, 'catol': 0, 'disp': show})
-
+    # loop across constraints and update dof
+    dof = init_param
+    for i in range(len(list_constraints)):
+        dof[idof[list_constraints[i]]] = res.x[i]
+    # convert dof to more intuitive variables
+    tx, ty, tz, alpha, beta, gamma, scx, scy, scz = dof[0], dof[1], dof[2], dof[3], dof[4], dof[5], dof[6], dof[7], dof[8]
     # convert results to intuitive variables
-    tx, ty, tz, alpha, beta, gamma, scx, scy, scz = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4], res.x[5], res.x[6], res.x[7], res.x[8]
+    # tx, ty, tz, alpha, beta, gamma, scx, scy, scz = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4], res.x[5], res.x[6], res.x[7], res.x[8]
+    # build translation matrix
+    translation_array = matrix([tx, ty, tz])
     # build rotation matrix
     rotation_matrix = matrix([[cos(alpha)*cos(beta), cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma), cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
                               [sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)],
@@ -588,13 +595,13 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
     # compute center of mass from moving points (src)
     points_moving_barycenter = mean(points_moving, axis=0)
     # apply transformation to moving points (src)
-    points_moving_reg = ((rotsc_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + matrix([tx, ty, tz])
+    points_moving_reg = ((rotsc_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
 
     if show:
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
 
-        print [tx, ty, tz]
+        print translation_array
         print rotation_matrix
         print points_moving_barycenter
 
@@ -628,4 +635,4 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
     # transform numpy matrix to list structure because it is easier to handle after that
     points_moving_reg = points_moving_reg.tolist()
 
-    return rotation_matrix, [tx, ty, tz], points_moving_reg, points_moving_barycenter
+    return rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter
