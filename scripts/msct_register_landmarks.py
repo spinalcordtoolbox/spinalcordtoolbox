@@ -46,10 +46,12 @@ def register_landmarks(fname_src,
     from msct_image import Image
     # open src label
     im_src = Image(fname_src)
-    coord_src = im_src.getNonZeroCoordinates(sorting='value')  # landmarks are sorted by value
+    # coord_src = im_src.getNonZeroCoordinates(sorting='value')  # landmarks are sorted by value
+    coord_src = im_src.getCoordinatesAveragedByValue()  # landmarks are sorted by value
     # open dest labels
     im_dest = Image(fname_dest)
-    coord_dest = im_dest.getNonZeroCoordinates(sorting='value')
+    # coord_dest = im_dest.getNonZeroCoordinates(sorting='value')
+    coord_dest = im_dest.getCoordinatesAveragedByValue()
     # Reorganize landmarks
     points_fixed, points_moving = [], []
     for coord in coord_src:
@@ -65,7 +67,7 @@ def register_landmarks(fname_src,
     # TODO
     # get DOF
     # dof = 'Tx_Ty_Tz_Rx_Ry_Sz' #'translation-scaling-z'
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_moving, points_fixed, constraints=dof, show=1)
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_moving, points_fixed, constraints=dof, show=0)
     # writing rigid transformation file
     # N.B. for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
     # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
