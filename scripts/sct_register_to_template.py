@@ -364,53 +364,57 @@ def main():
     sct.run('sct_apply_transfo -i '+ftmp_label+' -o '+add_suffix(ftmp_label, '_straight')+' -d '+add_suffix(ftmp_seg, '_straight')+' -w warp_curve2straight.nii.gz -x nn')
     ftmp_label = add_suffix(ftmp_label, '_straight')
 
-    # Compute rigid transformation between straight landmarks and template landmarks
-    sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
-    # open template label
-    template_image = Image(ftmp_template_label)
-    coordinates_input = template_image.getNonZeroCoordinates(sorting='value')
-    # jcohenadad, issue #628 <<<<<
-    # landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
-    landmark_template = coordinates_input
-    # >>>>>
-    # open data label
-    label_straight_image = Image(ftmp_label)
-    coordinates_input = label_straight_image.getCoordinatesAveragedByValue()  # landmarks are sorted by value
-    # jcohenadad, issue #628 <<<<<
-    # landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
-    landmark_straight = coordinates_input
-    # >>>>>
-    # Reorganize landmarks
-    points_fixed, points_moving = [], []
-    for coord in landmark_straight:
-        point_straight = label_straight_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
-        points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
-    for coord in landmark_template:
-        point_template = template_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
-        points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+    # Compute rigid transformation straight landmarks --> template landmarks
+    sct.printv('\nComputing landmark-based transformation...', verbose)
+    from msct_register_landmarks import register_landmarks
+    register_landmarks(ftmp_label, ftmp_template_label, 'Tx_Ty_Tz_Sz', fname_affine='straight2templateAffine.txt')
 
-    import msct_register_landmarks
-    # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
-    # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
-    if verbose == 2:
-        show_transfo = True
-    else:
-        show_transfo = False
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=show_transfo)
-    # writing rigid transformation file
-    text_file = open("straight2templateAffine.txt", "w")
-    text_file.write("#Insight Transform File V1.0\n")
-    text_file.write("#Transform 0\n")
-    text_file.write("Transform: AffineTransform_double_3_3\n")
-    text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
-        rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
-        rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
-        rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
-        -translation_array[0, 0], -translation_array[0, 1], translation_array[0, 2]))
-    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
-                                                           -points_moving_barycenter[1],
-                                                           points_moving_barycenter[2]))
-    text_file.close()
+    #
+    # # open template label
+    # template_image = Image(ftmp_template_label)
+    # coordinates_input = template_image.getNonZeroCoordinates(sorting='value')
+    # # jcohenadad, issue #628 <<<<<
+    # # landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    # landmark_template = coordinates_input
+    # # >>>>>
+    # # open data label
+    # label_straight_image = Image(ftmp_label)
+    # coordinates_input = label_straight_image.getCoordinatesAveragedByValue()  # landmarks are sorted by value
+    # # jcohenadad, issue #628 <<<<<
+    # # landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    # landmark_straight = coordinates_input
+    # # >>>>>
+    # # Reorganize landmarks
+    # points_fixed, points_moving = [], []
+    # for coord in landmark_straight:
+    #     point_straight = label_straight_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+    #     points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
+    # for coord in landmark_template:
+    #     point_template = template_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+    #     points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+    #
+    # import msct_register_landmarks
+    # # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
+    # # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
+    # if verbose == 2:
+    #     show_transfo = True
+    # else:
+    #     show_transfo = False
+    # (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=show_transfo)
+    # # writing rigid transformation file
+    # text_file = open("straight2templateAffine.txt", "w")
+    # text_file.write("#Insight Transform File V1.0\n")
+    # text_file.write("#Transform 0\n")
+    # text_file.write("Transform: AffineTransform_double_3_3\n")
+    # text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
+    #     rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
+    #     rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
+    #     rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
+    #     -translation_array[0, 0], -translation_array[0, 1], translation_array[0, 2]))
+    # text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
+    #                                                        -points_moving_barycenter[1],
+    #                                                        points_moving_barycenter[2]))
+    # text_file.close()
 
     # Concatenate transformations: curve --> straight --> affine
     sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
