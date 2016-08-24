@@ -73,13 +73,21 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     text_file.write("#Insight Transform File V1.0\n")
     text_file.write("#Transform 0\n")
     text_file.write("Transform: AffineTransform_double_3_3\n")
+    # text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
+    #     rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
+    #     rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
+    #     rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
+    #     -translation_array[0, 0], -translation_array[0, 1], translation_array[0, 2]))
+    # text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
+    #                                                        -points_moving_barycenter[1],
+    #                                                        points_moving_barycenter[2]))
     text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
         rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
         rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
         rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
-        -translation_array[0, 0], -translation_array[0, 1], translation_array[0, 2]))
-    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
-                                                           -points_moving_barycenter[1],
+        translation_array[0, 0], translation_array[0, 1], translation_array[0, 2]))
+    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
+                                                           points_moving_barycenter[1],
                                                            points_moving_barycenter[2]))
     text_file.close()
 
@@ -608,7 +616,6 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
     # apply transformation to moving points (src)
     points_moving_reg = ((rotsc_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
     # display results
-    print 'Pair-wise error between landmarks: '+str(res.fun)
     print 'Translation:\n'+str(translation_array)
     print 'Rotation+Scaling:\n'+str(rotation_matrix)
 
