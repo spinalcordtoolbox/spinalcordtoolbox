@@ -50,7 +50,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='3', slicewise='0', laplacian='0'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='3', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Sz'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -63,6 +63,7 @@ class Paramreg(object):
         self.slicewise = slicewise
         self.init = init
         self.poly = poly  # slicereg only
+        self.dof = dof  # type=label only
         # self.window_length = window_length  # str
         # self.detect_outlier = detect_outlier  # str. detect outliers, for methods slicereg2d_xx
 
@@ -118,7 +119,7 @@ def main():
 
     # get default registration parameters
     # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
-    step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5', slicewise='0')  # only used to put src into dest space
+    step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5', slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Sz')  # only used to put src into dest space
     step1 = Paramreg()
     paramreg = ParamregMultiStep([step0, step1])
 
@@ -174,7 +175,8 @@ def main():
     parser.add_option(name="-param",
                       type_value=[[':'],'str'],
                       description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
-                                  "step: <int> Step number (starts at 1).\ntype: {im,seg,label} type of data used for registration.\n"
+                                  "step: <int> Step number (starts at 1, except for type=label).\n"
+                                  "type: {im,seg,label} type of data used for registration. Use type=label only at step=0.\n"
                                   "algo: Default="+paramreg.steps['1'].algo+"\n"
                                   "  translation: translation in X-Y plane (2dof)\n"
                                   "  rigid: translation + rotation in X-Y plane (4dof)\n"
@@ -197,7 +199,8 @@ def main():
                                   "  geometric: Geometric center of images\n"
                                   "  centermass: Center of mass of images\n"
                                   "  origin: Physical origin of images\n"
-                                  "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n",
+                                  "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
+                                  "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" + paramreg.steps['0'].dof + "\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -430,6 +433,7 @@ def register(src, dest, paramreg, param, i_step_str):
     sct.printv('  gradStep ....... '+paramreg.steps[i_step_str].gradStep, param.verbose)
     sct.printv('  init ........... '+paramreg.steps[i_step_str].init, param.verbose)
     sct.printv('  poly ........... '+paramreg.steps[i_step_str].poly, param.verbose)
+    sct.printv('  dof ............ '+paramreg.steps[i_step_str].dof, param.verbose)
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
@@ -610,19 +614,20 @@ def register(src, dest, paramreg, param, i_step_str):
         from msct_register_landmarks import register_landmarks
         register_landmarks(src,
                            dest,
+                           paramreg.steps[i_step_str].dof,
                            fname_affine=warp_forward_out)
 
     if not os.path.isfile(warp_forward_out):
         # no forward warping field for rigid and affine
         sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
-    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine', 'translation']:
+    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].type not in ['label']:
         # no inverse warping field for rigid and affine
         sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
-        if paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].slicewise == '0':
+        if (paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].slicewise == '0') or paramreg.steps[i_step_str].type in ['label']:
             warp_forward = 'warp_forward_'+i_step_str+'.txt'
             os.rename(warp_forward_out, warp_forward)
             warp_inverse = '-warp_forward_'+i_step_str+'.txt'
