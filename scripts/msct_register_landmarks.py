@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# msct_icp
 # This file contains an implementation of the iterative closest point algorithm.
 # This algo registers two sets of points (3D coordinates) together.
 #
@@ -34,11 +33,13 @@ initial_step = 2
 
 def register_landmarks(fname_src,
                        fname_dest,
+                       dof,
                        fname_affine='affine.txt'):
     """
     Register two NIFTI volumes containing landmarks
     :param fname_src: fname of source landmarks
     :param fname_dest: fname of destination landmarks
+    :param dof: degree of freedom. Separate with "_". Example: Tx_Ty_Tz_Rx_Ry_Sz
     :param fname_affine: output affine transformation
     :return:
     """
@@ -63,7 +64,7 @@ def register_landmarks(fname_src,
     # check if landmarks match pairwise
     # TODO
     # get DOF
-    dof = 'Tx_Ty_Tz_Rx_Ry_Sz' #'translation-scaling-z'
+    # dof = 'Tx_Ty_Tz_Rx_Ry_Sz' #'translation-scaling-z'
     (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_moving, points_fixed, constraints=dof, show=1)
     # writing rigid transformation file
     # N.B. for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
@@ -142,12 +143,12 @@ def minimize_transform(params, points_fixed, points_moving, constraints):
     # initialize dof
     dof = [0, 0, 0, 0, 0, 0, 1, 1, 1]
     # initialize dictionary to relate constraints index to dof
-    idof = {'Tx': 0, 'Ty': 1, 'Tz': 2, 'Rx': 3, 'Ry': 4, 'Rz': 5, 'Sx': 6, 'Sy': 7, 'Sz': 8}
+    dict_dof = {'Tx': 0, 'Ty': 1, 'Tz': 2, 'Rx': 3, 'Ry': 4, 'Rz': 5, 'Sx': 6, 'Sy': 7, 'Sz': 8}
     # extract constraints
     list_constraints = constraints.split('_')
     # loop across constraints and update dof
     for i in range(len(list_constraints)):
-        dof[idof[list_constraints[i]]] = params[i]
+        dof[dict_dof[list_constraints[i]]] = params[i]
     # convert dof to more intuitive variables
     tx, ty, tz, alpha, beta, gamma, scx, scy, scz = dof[0], dof[1], dof[2], dof[3], dof[4], dof[5], dof[6], dof[7], dof[8]
     # build rotation matrix
@@ -391,10 +392,20 @@ def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', m
     return rotation_matrix, translation_array
 
 
-def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='none', show=False):
-    list_constraints = [None, 'none', 'rigid', 'rigid-decomposed', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy', 'translation-scaling', 'translation-scaling-z', 'affine', 'Tx_Ty_Tz_Rx_Ry_Sz']
-    if constraints not in list_constraints:
-        raise 'ERROR: the constraints must be one of those: ' + ', '.join(list_constraints[1:])
+def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_Ty_Tz_Rx_Ry_Rz', show=False):
+    """
+    Compute affine transformation to register landmarks
+    :param points_fixed:
+    :param points_moving:
+    :param constraints:
+    :param show:
+    :return:
+    """
+    # TODO: check input constraints
+
+    # list_constraints = [None, 'none', 'rigid', 'rigid-decomposed', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy', 'translation-scaling', 'translation-scaling-z', 'affine', 'Tx_Ty_Tz_Rx_Ry_Sz']
+    # if constraints not in list_constraints:
+    #     raise 'ERROR: the constraints must be one of those: ' + ', '.join(list_constraints[1:])
 
     # points = (points_fixed, points_moving, constraints)
     points_moving_reg = points_moving
@@ -563,21 +574,21 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
     # initialize parameters for optimizer
     init_param_optimizer = []
     # initialize dictionary to relate constraints index to dof
-    idof = {'Tx': 0, 'Ty': 1, 'Tz': 2, 'Rx': 3, 'Ry': 4, 'Rz': 5, 'Sx': 6, 'Sy': 7, 'Sz': 8}
+    dict_dof = {'Tx': 0, 'Ty': 1, 'Tz': 2, 'Rx': 3, 'Ry': 4, 'Rz': 5, 'Sx': 6, 'Sy': 7, 'Sz': 8}
     # extract constraints
     list_constraints = constraints.split('_')
     # loop across constraints and build initial_parameters
     for i in range(len(list_constraints)):
-        init_param_optimizer.append(init_param[idof[list_constraints[i]]])
+        init_param_optimizer.append(init_param[dict_dof[list_constraints[i]]])
 
     # launch optimizer
-    res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_fixed, points_moving, constraints), method='Nelder-Mead', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': show})
+    # res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_fixed, points_moving, constraints), method='Nelder-Mead', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
+    res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_fixed, points_moving, constraints), method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': show})
     # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='COBYLA', tol=1e-8, options={'tol': 1e-8, 'rhobeg': 0.1, 'maxiter': 100000, 'catol': 0, 'disp': show})
     # loop across constraints and update dof
     dof = init_param
     for i in range(len(list_constraints)):
-        dof[idof[list_constraints[i]]] = res.x[i]
+        dof[dict_dof[list_constraints[i]]] = res.x[i]
     # convert dof to more intuitive variables
     tx, ty, tz, alpha, beta, gamma, scx, scy, scz = dof[0], dof[1], dof[2], dof[3], dof[4], dof[5], dof[6], dof[7], dof[8]
     # convert results to intuitive variables
@@ -612,12 +623,12 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
 
         number_points = len(points_fixed)
 
+        ax.scatter([points_fixed_matrix[i, 0] for i in range(0, number_points)],
+                   [points_fixed_matrix[i, 1] for i in range(0, number_points)],
+                   [points_fixed_matrix[i, 2] for i in range(0, number_points)], c='g', marker='+', s=500, label='dest')
         ax.scatter([points_moving_matrix[i, 0] for i in range(0, number_points)],
                    [points_moving_matrix[i, 1] for i in range(0, number_points)],
                    [points_moving_matrix[i, 2] for i in range(0, number_points)], c='r', label='src')
-        ax.scatter([points_fixed_matrix[i, 0] for i in range(0, number_points)],
-                   [points_fixed_matrix[i, 1] for i in range(0, number_points)],
-                   [points_fixed_matrix[i, 2] for i in range(0, number_points)], c='g', label='dest')
         ax.scatter([points_moving_reg[i, 0] for i in range(0, number_points)],
                    [points_moving_reg[i, 1] for i in range(0, number_points)],
                    [points_moving_reg[i, 2] for i in range(0, number_points)], c='b', label='src_reg')
@@ -630,6 +641,8 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
 
         fig2 = plt.figure()
         plt.plot(sse_results)
+        plt.grid()
+        plt.title('#Iterations: ' + str(res.nit) + ', #FuncEval: ' + str(res.nfev) + ', Error: ' + str(res.fun))
         plt.show()
 
     # transform numpy matrix to list structure because it is easier to handle after that
