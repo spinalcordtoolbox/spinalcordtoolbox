@@ -4,11 +4,15 @@
 # This file contains an implementation of the iterative closest point algorithm.
 # This algo registers two sets of points (3D coordinates) together.
 #
-# Adapted from: http://stackoverflow.com/questions/20120384/iterative-closest-point-icp-implementation-on-python
+# Adapted from:
+# http://stackoverflow.com/questions/20120384/iterative-closest-point-icp-implementation-on-python
+#
+# NOTES ON ITK Transform Files:
+# http://www.neuro.polymtl.ca/tips_and_tricks/how_to_use_ants#itk_transform_file
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener
+# Author: Benjamin De Leener, Julien Cohen-Adad
 # Created: 2015-06-10
 #
 # About the license: see the file LICENSE.TXT
@@ -54,17 +58,20 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     points_fixed, points_moving = [], []
     for coord in coord_src:
         point_straight = im_src.transfo_pix2phys([[coord.x, coord.y, coord.z]])
-        points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
+        # convert NIFTI to ITK world coordinate
+        points_moving.append([-point_straight[0][0], -point_straight[0][1], point_straight[0][2]])
+        # points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
     for coord in coord_dest:
         point_template = im_dest.transfo_pix2phys([[coord.x, coord.y, coord.z]])
-        points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+        # convert NIFTI to ITK world coordinate
+        points_fixed.append([-point_template[0][0], -point_template[0][1], point_template[0][2]])
+        # points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+
     # display
-    sct.printv('Labels src: ' + str(points_moving), 1)
-    sct.printv('Labels dest: ' + str(points_fixed), 1)
+    sct.printv('Labels src: ' + str(points_moving), verbose)
+    sct.printv('Labels dest: ' + str(points_fixed), verbose)
     # check if landmarks match pairwise
     # TODO
-    # get DOF
-    # dof = 'Tx_Ty_Tz_Rx_Ry_Sz' #'translation-scaling-z'
     (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_moving, points_fixed, constraints=dof, verbose=verbose)
     # writing rigid transformation file
     # N.B. for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
@@ -73,14 +80,6 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     text_file.write("#Insight Transform File V1.0\n")
     text_file.write("#Transform 0\n")
     text_file.write("Transform: AffineTransform_double_3_3\n")
-    # text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
-    #     rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
-    #     rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
-    #     rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
-    #     -translation_array[0, 0], -translation_array[0, 1], translation_array[0, 2]))
-    # text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
-    #                                                        -points_moving_barycenter[1],
-    #                                                        points_moving_barycenter[2]))
     text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
         rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
         rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
@@ -109,16 +108,26 @@ def getNeighbors(point, set_points, k=1):
     return [distances[x][0] for x in range(k)]
 
 
+
 def SSE(pointsA, pointsB):
+    """
+    Compute sum of squared error between pair-wise landmarks
+    :param pointsA:
+    :param pointsB:
+    :return:
+    """
     return sum(array(pointsA[:, 0:3]-pointsB[:, 0:3])**2.0)
+
+
 
 def real_optimization_parameters(param_from_optimizer, initial_param = 0, initial_step = 10):
     # The initial step for the Nelder-Mead algorithm is of (initial_param * 5e-2) which is too small when we want initial_param = 30 pix and step = 5 or 10.
     # This function allows to choose the scale of the steps after the first movement
     step_factor = float(initial_step)/float(initial_param*5e-2)
     real_param = initial_param + (param_from_optimizer - initial_param) * step_factor
-
     return real_param
+
+
 
 def Metric_Images(imageA, imageB, type=''):
 
@@ -147,7 +156,16 @@ def Metric_Images(imageA, imageB, type=''):
     return result_metric
 
 
+
 def minimize_transform(params, points_fixed, points_moving, constraints):
+    """
+    Cost function to minimize
+    :param params:
+    :param points_fixed:
+    :param points_moving:
+    :param constraints:
+    :return: sum of squared error between pair-wise landmarks
+    """
     # initialize dof
     dof = [0, 0, 0, 0, 0, 0, 1, 1, 1]
     # initialize dictionary to relate constraints index to dof
@@ -175,143 +193,7 @@ def minimize_transform(params, points_fixed, points_moving, constraints):
     sse_results.append(SSE(matrix(points_fixed), points_moving_reg))
     # return SSE
     return SSE(matrix(points_fixed), points_moving_reg)
-#
-# def minAffineTransform(params, points_fixed, points_moving):
-#     alpha, beta, gamma, tx, ty, tz, scx, scy, scz = params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8]
-#
-#     scaling_matrix = matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
-#     rotation_matrix = matrix([[cos(alpha)*cos(beta), cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma), cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
-#                               [sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)],
-#                               [-sin(beta), cos(beta)*sin(gamma), cos(beta)*cos(gamma)]])
-#     rotsc_matrix = scaling_matrix * rotation_matrix
-#
-#     points_moving_barycenter = mean(points_moving, axis=0)
-#
-#     points_moving_reg = ((rotsc_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + matrix([tx, ty, tz])
-#     sse_results.append(SSE(matrix(points_fixed), points_moving_reg))
-#
-#     return SSE(matrix(points_fixed), points_moving_reg)
-#
-#
-# def minRigidTransform(params, points_fixed, points_moving):
-#     alpha, beta, gamma, tx, ty, tz = params[0], params[1], params[2], params[3], params[4], params[5]
-#
-#     rotation_matrix = matrix([[cos(alpha)*cos(beta), cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma), cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
-#                               [sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)],
-#                               [-sin(beta), cos(beta)*sin(gamma), cos(beta)*cos(gamma)]])
-#
-#     points_moving_barycenter = mean(points_moving, axis=0)
-#
-#     points_moving_reg = ((rotation_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + matrix([tx, ty, tz])
-#     sse_results.append(SSE(matrix(points_fixed), points_moving_reg))
-#
-#     return SSE(matrix(points_fixed), points_moving_reg)
-#
-# def minTranslationScalingTransform(params, points_fixed, points_moving):
-#     scx, scy, scz, tx, ty, tz = params[0], params[1], params[2], params[3], params[4], params[5]
-#
-#     rotation_matrix = matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
-#     translation_array = matrix([tx, ty, tz])
-#
-#     points_moving_barycenter = mean(points_moving, axis=0)
-#     points_moving_reg = ((rotation_matrix * (
-#         matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
-#
-#     return SSE(matrix(points_fixed), points_moving_reg)
-#
-# def minTranslationScalingZTransform(params, points_fixed, points_moving):
-#     scz, tx, ty, tz = params[0], params[1], params[2], params[3]
-#
-#     rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, scz]])
-#     translation_array = matrix([tx, ty, tz])
-#
-#     points_moving_barycenter = mean(points_moving, axis=0)
-#     points_moving_reg = ((rotation_matrix * (
-#         matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
-#
-#     sse_results.append(SSE(matrix(points_fixed), points_moving_reg))
-#     return SSE(matrix(points_fixed), points_moving_reg)
-#
-# def minRigid_xy_Transform(params, points_fixed, points_moving):
-#     gamma, tx, ty = params[0], params[1], params[2]
-#
-#     rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
-#                               [sin(gamma), cos(gamma), 0],
-#                               [0, 0, 1]])
-#
-#     points_moving_barycenter = mean(points_moving, axis=0)
-#
-#     points_moving_reg = ((rotation_matrix * (
-#         matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + matrix([tx, ty, 0])
-#     sse_results.append(SSE(matrix(points_fixed), points_moving_reg))
-#     return SSE(matrix(points_fixed), points_moving_reg)
-#
-# def minRigid_xy_Transform_for_Images(params, image_fixed, image_moving, center_rotation = None, metric='MeanSquares'):
-#     gamma, tx, ty = params[0], params[1], params[2]
-#     name_warp = 'warping_field.nii.gz'
-#     path, file, ext = sct.extract_fname(image_moving)
-#     name_image_moving_reg = file + '_reg' + ext
-#
-#     # Apply transformation
-#     tx_real = real_optimization_parameters(tx, initial_param=ini_param_trans_x, initial_step=initial_step)
-#     ty_real = real_optimization_parameters(ty, initial_param=ini_param_trans_y, initial_step=initial_step)
-#     generate_warping_field(image_fixed, [tx_real], [ty_real], [gamma], center_rotation=center_rotation, fname=name_warp)
-#     print'\nApplying a rigid transformation of parameters: angle=' + str(gamma) + 'rad, ' + 'tx=' + str(tx_real) +'pix, ty=' + str(ty_real) + 'pix'
-#     sct.run('sct_apply_transfo -i ' + image_moving + ' -d ' + image_fixed + ' -w ' + name_warp + ' -o ' + name_image_moving_reg + ' -x nn')
-#
-#     # return metric results of the transformation image compared to the fixed image
-#     return Metric_Images(image_fixed, name_image_moving_reg, type=metric)
-#
-# def minTranslation_Transform(params, points_fixed, points_moving):
-#     return SSE(matrix(points_fixed), matrix(points_moving) + matrix([params[0], params[1], params[2]]))
-#
-#
-# def minTranslation_xy_Transform(params, points_fixed, points_moving):
-#     return SSE(matrix(points_fixed), matrix(points_moving) + matrix([params[0], params[1], 0.0]))
-#
-#
-# def minRotation_Transform(params, points_fixed, points_moving):
-#     alpha, beta, gamma = params[0], params[1], params[2]
-#
-#     rotation_matrix = matrix([[cos(alpha)*cos(beta), cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma), cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
-#                               [sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)],
-#                               [-sin(beta), cos(beta)*sin(gamma), cos(beta)*cos(gamma)]])
-#
-#     points_moving_barycenter = mean(points_moving, axis=0)
-#
-#     points_moving_reg = (rotation_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter
-#
-#     return SSE(matrix(points_fixed), points_moving_reg)
-#
-#
-# def minRotation_xy_Transform(params, points_fixed, points_moving):
-#     gamma = params[0]
-#
-#     rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
-#                               [sin(gamma), cos(gamma), 0],
-#                               [0, 0, 1]])
-#
-#     points_moving_barycenter = mean(points_moving, axis=0)
-#
-#     points_moving_reg = (rotation_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter
-#
-#     return SSE(matrix(points_fixed), points_moving_reg)
-#
-# def minRotation_xy_Transform_for_Images(params, image_fixed, image_moving, center_rotation = None, metric='MeanSquares'):
-#     gamma = params[0]
-#     name_warp = 'warping_field.nii.gz'
-#     path, file, ext = sct.extract_fname(image_moving)
-#     name_image_moving_reg = file + '_reg' + ext
-#
-#     # Apply transformation
-#     gamma_list = [gamma]
-#     generate_warping_field(image_fixed, [0], [0], gamma_list, center_rotation=center_rotation, fname=name_warp)
-#     print'\nApplying a pure rotational warping field of angle ' + str(gamma) + 'rad'
-#     sct.run('sct_apply_transfo -i ' + image_moving + ' -d ' + image_fixed + ' -w ' + name_warp + ' -o ' + name_image_moving_reg + ' -x nn')
-#
-#     # return metric results of the transformation image compared to the fixed image
-#     return Metric_Images(image_fixed, name_image_moving_reg, type=metric)
-#
+
 
 def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', metric = 'MeanSquares', center_rotation=None):
     list_constraints = [None, 'none', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy']
@@ -407,175 +289,11 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
     :param points_moving:
     :param constraints:
     :param verbose: 0, 1, 2
-    :return:
+    :return: rotsc_matrix, translation_array, points_moving_reg, points_moving_barycenter
     """
     # TODO: check input constraints
 
-    # list_constraints = [None, 'none', 'rigid', 'rigid-decomposed', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy', 'translation-scaling', 'translation-scaling-z', 'affine', 'Tx_Ty_Tz_Rx_Ry_Sz']
-    # if constraints not in list_constraints:
-    #     raise 'ERROR: the constraints must be one of those: ' + ', '.join(list_constraints[1:])
-
-    # points = (points_fixed, points_moving, constraints)
-    points_moving_reg = points_moving
-
     from scipy.optimize import minimize
-    #
-    # rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-    # translation_array = matrix([0.0, 0.0, 0.0])
-    # points_moving_barycenter = [0.0, 0.0, 0.0]
-    #
-    # if constraints == 'rigid' or constraints == 'none' or constraints is None:
-    #     initial_parameters = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    #     res = minimize(minRigidTransform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     alpha, beta, gamma, tx, ty, tz = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4], res.x[5]
-    #     rotation_matrix = matrix([[cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma),
-    #                            cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma)],
-    #                           [sin(alpha) * cos(beta), sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma),
-    #                            sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma)],
-    #                           [-sin(beta), cos(beta) * sin(gamma), cos(beta) * cos(gamma)]])
-    #     translation_array = matrix([tx, ty, tz])
-    #
-    #     points_moving_barycenter = mean(points_moving, axis=0)
-    #     points_moving_reg = ((rotation_matrix * (
-    #         matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
-    #
-    # elif constraints == 'rigid-decomposed':
-    #     initial_parameters = [0.0, 0.0, 0.0]
-    #     res = minimize(minTranslation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     translation_array = matrix([res.x[0], res.x[1], res.x[2]])
-    #     points_moving_reg_tmp = matrix(points_moving) + translation_array
-    #
-    #     points = (points_fixed, points_moving_reg_tmp)
-    #
-    #     initial_parameters = [0.0, 0.0, 0.0]
-    #     res = minimize(minRotation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     alpha, beta, gamma = res.x[0], res.x[1], res.x[2]
-    #     rotation_matrix = matrix(
-    #         [[cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma),
-    #           cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma)],
-    #          [sin(alpha) * cos(beta), sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma),
-    #           sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma)],
-    #          [-sin(beta), cos(beta) * sin(gamma), cos(beta) * cos(gamma)]])
-    #     points_moving_barycenter = mean(points_moving_reg_tmp, axis=0)
-    #     points_moving_reg = ((rotation_matrix * (
-    #         matrix(points_moving_reg_tmp) - points_moving_barycenter).T).T + points_moving_barycenter)
-    #
-    # elif constraints == 'xy':
-    #     initial_parameters = [0.0, 0.0, 0.0]
-    #     res = minimize(minRigid_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     gamma, tx, ty = res.x[0], res.x[1], res.x[2]
-    #
-    #     rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
-    #                               [sin(gamma), cos(gamma), 0],
-    #                               [0, 0, 1]])
-    #     translation_array = matrix([tx, ty, 0])
-    #
-    #     points_moving_barycenter = mean(points_moving, axis=0)
-    #     points_moving_reg = ((rotation_matrix * (
-    #         matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
-    #
-    # elif constraints == 'translation':
-    #     initial_parameters = [0.0, 0.0, 0.0]
-    #     res = minimize(minTranslation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     translation_array = matrix([res.x[0], res.x[1], res.x[2]])
-    #     points_moving_reg = matrix(points_moving) + translation_array
-    #
-    # elif constraints == 'translation-scaling':
-    #     initial_parameters = [1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
-    #     res = minimize(minTranslationScalingTransform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     scx, scy, scz, tx, ty, tz = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4], res.x[5]
-    #     rotation_matrix = matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
-    #     translation_array = matrix([tx, ty, tz])
-    #
-    #     points_moving_barycenter = mean(points_moving, axis=0)
-    #     points_moving_reg = ((rotation_matrix * (
-    #         matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
-    #
-    # elif constraints == 'translation-scaling-z':
-    #     initial_parameters = [1.0, 0.0, 0.0, 0.0]
-    #     res = minimize(minTranslationScalingZTransform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     scz, tx, ty, tz = res.x[0], res.x[1], res.x[2], res.x[3]
-    #     rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, scz]])
-    #     translation_array = matrix([tx, ty, tz])
-    #
-    #     points_moving_barycenter = mean(points_moving, axis=0)
-    #     points_moving_reg = ((rotation_matrix * (matrix(points_moving) - points_moving_barycenter).T).T +
-    #                          points_moving_barycenter) + translation_array
-    #
-    # elif constraints == 'translation-xy':
-    #     initial_parameters = [0.0, 0.0]
-    #     res = minimize(minTranslation_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     translation_array = matrix([res.x[0], res.x[1], 0.0])
-    #     points_moving_reg = matrix(points_moving) + translation_array
-    #
-    # elif constraints == 'rotation':
-    #     initial_parameters = [0.0, 0.0, 0.0]
-    #     res = minimize(minRotation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     alpha, beta, gamma = res.x[0], res.x[1], res.x[2]
-    #     rotation_matrix = matrix(
-    #         [[cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma),
-    #           cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma)],
-    #          [sin(alpha) * cos(beta), sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma),
-    #           sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma)],
-    #          [-sin(beta), cos(beta) * sin(gamma), cos(beta) * cos(gamma)]])
-    #     points_moving_barycenter = mean(points_moving, axis=0)
-    #     points_moving_reg = ((rotation_matrix * (
-    #         matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter)
-    #
-    # elif constraints == 'rotation-xy':
-    #     initial_parameters = [0.0]
-    #     res = minimize(minRotation_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
-    #                    tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #
-    #     gamma = res.x[0]
-    #
-    #     rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
-    #                               [sin(gamma), cos(gamma), 0],
-    #                               [0, 0, 1]])
-    #     points_moving_barycenter = mean(points_moving, axis=0)
-    #     points_moving_reg = ((rotation_matrix * (
-    #         matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter)
-    #
-    # elif constraints == 'affine':
-    #     initial_parameters = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0]
-    #     res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-8, options={'xatol': 1e-8, 'fatol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    #     # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': show})
-    #     # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='COBYLA', tol=1e-8, options={'tol': 1e-8, 'rhobeg': 0.1, 'maxiter': 100000, 'catol': 0, 'disp': show})
-    #
-    #     alpha, beta, gamma, tx, ty, tz, scx, scy, scz = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4], res.x[5], \
-    #                                                     res.x[6], res.x[7], res.x[8]
-    #     scaling_matrix = matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
-    #     rotation_matrix = matrix(
-    #         [[cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma),
-    #           cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma)],
-    #          [sin(alpha) * cos(beta), sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma),
-    #           sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma)],
-    #          [-sin(beta), cos(beta) * sin(gamma), cos(beta) * cos(gamma)]])
-    #     rotsc_matrix = scaling_matrix * rotation_matrix
-    #     translation_array = matrix([tx, ty, tz])
-    #
-    #     points_moving_barycenter = mean(points_moving, axis=0)
-    #     points_moving_reg = ((rotsc_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
-
-    # elif constraints == 'Tx_Ty_Tz_Rx_Ry_Sz':
 
     # initialize default parameters
     init_param = [0, 0, 0, 0, 0, 0, 1, 1, 1]
@@ -616,8 +334,9 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
     # apply transformation to moving points (src)
     points_moving_reg = ((rotsc_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
     # display results
+    print 'Matrix:\n'+str(rotation_matrix)
+    print 'Center:\n'+str(points_moving_barycenter)
     print 'Translation:\n'+str(translation_array)
-    print 'Rotation+Scaling:\n'+str(rotation_matrix)
 
     if verbose == 2:
         import matplotlib.pyplot as plt
@@ -652,7 +371,7 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
         plt.title('#Iterations: ' + str(res.nit) + ', #FuncEval: ' + str(res.nfev) + ', Error: ' + str(res.fun))
         plt.show()
 
-    # transform numpy matrix to list structure because it is easier to handle after that
+    # transform numpy matrix to list structure because it is easier to handle
     points_moving_reg = points_moving_reg.tolist()
 
-    return rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter
+    return rotsc_matrix, translation_array, points_moving_reg, points_moving_barycenter
