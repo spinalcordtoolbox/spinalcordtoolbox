@@ -367,7 +367,7 @@ def main():
     # Compute rigid transformation straight landmarks --> template landmarks
     sct.printv('\nComputing landmark-based transformation...', verbose)
     from msct_register_landmarks import register_landmarks
-    register_landmarks(ftmp_label, ftmp_template_label, 'Tx_Ty_Tz_Sz', fname_affine='straight2templateAffine.txt')
+    register_landmarks(ftmp_label, ftmp_template_label, 'Tx_Ty_Tz_Sz', fname_affine='straight2templateAffine.txt', verbose=verbose)
 
     #
     # # open template label
