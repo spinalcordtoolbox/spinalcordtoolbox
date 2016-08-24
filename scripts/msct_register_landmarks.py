@@ -17,11 +17,11 @@
 # TODO: add full affine transfo
 # TODO: normalize SSE: currently, it depends on the number of landmarks
 
-from msct_types import Point
+# from msct_types import Point
 from numpy import array, sin, cos, matrix, sum, mean, absolute
 from math import pow, sqrt
 from operator import itemgetter
-from msct_register_regularized import generate_warping_field
+# from msct_register_regularized import generate_warping_field
 import sct_utils as sct
 from nibabel import load
 
@@ -31,16 +31,14 @@ ini_param_trans_x = 270.0 #pix
 ini_param_trans_y = -150.0 #pix
 initial_step = 2
 
-def register_landmarks(fname_src,
-                       fname_dest,
-                       dof,
-                       fname_affine='affine.txt'):
+def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1):
     """
     Register two NIFTI volumes containing landmarks
     :param fname_src: fname of source landmarks
     :param fname_dest: fname of destination landmarks
     :param dof: degree of freedom. Separate with "_". Example: Tx_Ty_Tz_Rx_Ry_Sz
     :param fname_affine: output affine transformation
+    :param verbose: 0, 1, 2
     :return:
     """
     from msct_image import Image
@@ -67,7 +65,7 @@ def register_landmarks(fname_src,
     # TODO
     # get DOF
     # dof = 'Tx_Ty_Tz_Rx_Ry_Sz' #'translation-scaling-z'
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_moving, points_fixed, constraints=dof, show=0)
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_moving, points_fixed, constraints=dof, verbose=verbose)
     # writing rigid transformation file
     # N.B. for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
     # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
@@ -394,13 +392,13 @@ def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', m
     return rotation_matrix, translation_array
 
 
-def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_Ty_Tz_Rx_Ry_Rz', show=False):
+def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0):
     """
     Compute affine transformation to register landmarks
     :param points_fixed:
     :param points_moving:
     :param constraints:
-    :param show:
+    :param verbose: 0, 1, 2
     :return:
     """
     # TODO: check input constraints
@@ -585,7 +583,7 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
 
     # launch optimizer
     # res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_fixed, points_moving, constraints), method='Nelder-Mead', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_fixed, points_moving, constraints), method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': show})
+    res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_fixed, points_moving, constraints), method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': verbose})
     # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='COBYLA', tol=1e-8, options={'tol': 1e-8, 'rhobeg': 0.1, 'maxiter': 100000, 'catol': 0, 'disp': show})
     # loop across constraints and update dof
     dof = init_param
@@ -609,14 +607,14 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
     points_moving_barycenter = mean(points_moving, axis=0)
     # apply transformation to moving points (src)
     points_moving_reg = ((rotsc_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
+    # display results
+    print 'Pair-wise error between landmarks: '+str(res.fun)
+    print 'Translation:\n'+str(translation_array)
+    print 'Rotation+Scaling:\n'+str(rotation_matrix)
 
-    if show:
+    if verbose == 2:
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
-
-        print translation_array
-        print rotation_matrix
-        print points_moving_barycenter
 
         fig = plt.figure()
         ax = fig.gca(projection='3d')
