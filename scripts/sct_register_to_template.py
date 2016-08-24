@@ -547,9 +547,9 @@ def main():
             warp_inverse.reverse()
             sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d data.nii -o warp_anat2template.nii.gz', verbose)
 
-        # Apply warping fields to anat and template
-        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
-        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
+    # Apply warping fields to anat and template
+    sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
+    sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
 
     # come back to parent folder
     os.chdir('..')
