@@ -3,12 +3,10 @@
 # This script is used to compile ANTs binaries
 # Inputs: ANTs folder, must be a sct fork of original ANTs folder.
 # Outputs: binaries that are directly put into sct
-# ants_scripts = ['ANTSLandmarksBSplineTransform',
-# 				'antsApplyTransforms',
-# 				'antsRegistration',
-# 				'antsSliceRegularizedRegistration',
-# 				'ANTSUseLandmarkImagesToGetAffineTransform',
-# 				'ComposeMultiTransform']
+# ants_scripts = ['antsApplyTransforms',
+# 				  'antsRegistration',
+# 				  'antsSliceRegularizedRegistration',
+# 				  'ComposeMultiTransform']
 
 import sys
 
@@ -19,7 +17,7 @@ import getopt
 sys.path.append('../scripts')
 import sct_utils as sct
 
-url_to_ants_repository = 'https://github.com/benjamindeleener/ANTs/archive/master.zip'
+url_to_ants_repository = 'https://github.com/stnava/ANTs/archive/master.zip'
 ants_downloaded_folder = 'ANTs-master'
 ants_downloaded_file = ants_downloaded_folder + '.zip'
 listOS = ['osx', 'linux']
@@ -273,8 +271,7 @@ def usage():
 os_target = ''
 path_ants = ''
 scripts_target = ''
-ants_scripts = ['ANTSLandmarksBSplineTransform',
-                'antsApplyTransforms',
+ants_scripts = ['antsApplyTransforms',
                 'antsRegistration',
                 'antsSliceRegularizedRegistration',
                 'ComposeMultiTransform']
