@@ -132,15 +132,19 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
 
 def function_launcher(args):
     import importlib
-    # import traceback
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
-    # try:
-    #     output = script_to_be_run.test(*args[1:])
-    # except:
-    #     print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
-    #     output = (1, 'ERROR: Function crashed', 'No result')
-    # return output
-    return script_to_be_run.test(*args[1:])
+    try:
+        output = script_to_be_run.test(*args[1:])
+    except:
+        import traceback
+        print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
+        # output = (1, 'ERROR: Function crashed', 'No result')
+        from pandas import DataFrame
+        status_script = 1
+        output_script = 'ERROR: Function crashed.'
+        output = (status_script, output_script, DataFrame(data={'status': int(status_script), 'output': output_script}, index=['']))
+    return output
+    # return script_to_be_run.test(*args[1:])
 
 
 def init_worker():
@@ -266,11 +270,13 @@ if __name__ == "__main__":
     # create single time variable for output names
     output_time = strftime("%y%m%d%H%M%S")
 
-    # redirect to log file
-    # if create_log_file:
+    # build log file name
+    file_log = 'results_test_'+function_to_test+'_'+output_time
     orig_stdout = sys.stdout
-    fname_log = 'results_testing_'+output_time+'.log'
+    fname_log = file_log+'.log'
     handle_log = file(fname_log, 'w')
+
+    # redirect to log file
     sys.stdout = handle_log
 
     print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
@@ -303,8 +309,8 @@ if __name__ == "__main__":
 
     # Check number of CPU cores
     from multiprocessing import cpu_count
-    status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
+    # status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
+    print 'CPU cores: ' + str(cpu_count())  # + ', Used by SCT: '+output
 
     # check RAM
     print 'RAM:'
@@ -320,8 +326,8 @@ if __name__ == "__main__":
         results_display = results_subset
 
         # save panda structure
-        results_subset.to_pickle('results_testing_'+output_time+'.pickle')
-        results_subset.to_csv('results_testing_'+output_time+'.csv')
+        results_subset.to_pickle(file_log+'.pickle')
+        # results_subset.to_csv(file_log+'.csv')
 
         # mean
         results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
@@ -337,6 +343,8 @@ if __name__ == "__main__":
 
         # count tests that passed
         count_passed = results_subset.status[results_subset.status == 0].count()
+        # count tests that ran
+        count_ran = results_subset.status[results_subset.status != 200].count()
 
         # results_display = results_display.set_index('subject')
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
@@ -346,12 +354,12 @@ if __name__ == "__main__":
         print 'Results for "' + function_to_test + ' ' + parameters + '":'
         print 'Dataset: ' + dataset
         print results_display.to_string()
-        print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
+        print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
 
         # display elapsed time
         elapsed_time = time() - start_time
         print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
-        print 'Status legend: 0: Passed, 1: Crashed, 99: Failed, 200: File(s) missing'
+        print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: File(s) missing'
 
     except Exception as err:
         print err
