@@ -12,7 +12,7 @@
 
 import sys
 
-from numpy import concatenate, shape, newaxis
+import numpy as np
 from msct_parser import Parser
 from msct_image import Image
 from sct_utils import printv
@@ -100,13 +100,13 @@ def get_parser():
 
     parser.usage.addSection("\nMathematical morphology")
     parser.add_option(name='-dilate',
-                      type_value='int',
-                      description='Dilate binary image using specified ball radius.',
+                      type_value=[[','], 'int'],
+                      description='Dilate binary image. If only one input is given, structured element is a ball with input radius (in voxel). If comma-separated inputs are given (e.g., "2,4,5"), structured element is a box with input dimensions.',
                       mandatory=False,
                       example="")
     parser.add_option(name='-erode',
-                      type_value='int',
-                      description='Erode binary image using specified ball radius.',
+                      type_value=[[','], 'int'],
+                      description='Erode binary image. If only one input is given, structured element is a ball with input radius (in voxel). If comma-separated inputs are given (e.g., "2,4,5"), structured element is a box with input dimensions.',
                       mandatory=False,
                       example="")
 
@@ -225,15 +225,15 @@ def main(args = None):
     elif '-mean' in arguments:
         from numpy import mean
         dim = dim_list.index(arguments['-mean'])
-        if dim+1 > len(shape(data)):  # in case input volume is 3d and dim=t
-            data = data[..., newaxis]
+        if dim+1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., np.newaxis]
         data_out = mean(data, dim)
 
     elif '-std' in arguments:
         from numpy import std
         dim = dim_list.index(arguments['-std'])
-        if dim+1 > len(shape(data)):  # in case input volume is 3d and dim=t
-            data = data[..., newaxis]
+        if dim+1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., np.newaxis]
         data_out = std(data, dim)
 
     elif "-smooth" in arguments:
@@ -348,11 +348,16 @@ def dilate(data, radius):
     """
     Dilate data using ball structuring element
     :param data: 2d or 3d array
-    :param radius: radius of structuring element
+    :param radius: radius of structuring element OR comma-separated int.
     :return: data dilated
     """
     from skimage.morphology import dilation, ball
-    selem = ball(radius)
+    if len(radius) == 1:
+        # define structured element as a ball
+        selem = ball(radius[0])
+    else:
+        # define structured element as a box with input dimensions
+        selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
     return dilation(data, selem=selem, out=None)
 
 
@@ -364,7 +369,12 @@ def erode(data, radius):
     :return: data eroded
     """
     from skimage.morphology import erosion, ball
-    selem = ball(radius)
+    if len(radius) == 1:
+        # define structured element as a ball
+        selem = ball(radius[0])
+    else:
+        # define structured element as a box with input dimensions
+        selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
     return erosion(data, selem=selem, out=None)
 
 
@@ -379,8 +389,8 @@ def get_data(list_fname):
     data = nii[0].data
     # check that every images have same shape
     for i in range(1, len(nii)):
-        if not shape(nii[i].data) == shape(data0):
-            printv('\nWARNING: shape('+list_fname[i]+')='+str(shape(nii[i].data))+' incompatible with shape('+list_fname[0]+')='+str(shape(data0)), 1, 'warning')
+        if not np.shape(nii[i].data) == np.shape(data0):
+            printv('\nWARNING: shape('+list_fname[i]+')='+str(np.shape(nii[i].data))+' incompatible with shape('+list_fname[0]+')='+str(np.shape(data0)), 1, 'warning')
             printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
             data = concatenate_along_4th_dimension(data, nii[i].data)
@@ -391,7 +401,7 @@ def get_data_or_scalar(argument, data_in):
     """
     Get data from list of file names (scenario 1) or scalar (scenario 2)
     :param argument: list of file names of scalar
-    :param data_in: if argument is scalar, use data to get shape
+    :param data_in: if argument is scalar, use data to get np.shape
     :return: 3d or 4d numpy array
     """
     if argument.replace('.', '').isdigit():  # so that it recognize float as digits too
@@ -413,11 +423,11 @@ def concatenate_along_4th_dimension(data1, data2):
     :param data2: 3d or 4d array
     :return data_concat: concate(data1, data2)
     """
-    if len(shape(data1)) == 3:
-        data1 = data1[..., newaxis]
-    if len(shape(data2)) == 3:
-        data2 = data2[..., newaxis]
-    return concatenate((data1, data2), axis=3)
+    if len(np.shape(data1)) == 3:
+        data1 = data1[..., np.newaxis]
+    if len(np.shape(data2)) == 3:
+        data2 = data2[..., np.newaxis]
+    return np.concatenate((data1, data2), axis=3)
 
 
 def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
