@@ -24,7 +24,7 @@ from sct_warp_template import get_file_label
 
 def test(path_data='', parameters=''):
     verbose = 0
-    default_template = 'PAM50'
+    # default_template = 'PAM50'
     # filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'  # used to compute DICE
     dice_threshold = 0.9
 
@@ -39,7 +39,7 @@ def test(path_data='', parameters=''):
 
     parser = sct_register_to_template.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
+    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True, do_not_add_path=['-t'])
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
@@ -55,10 +55,10 @@ def test(path_data='', parameters=''):
         #     index=[path_data])
 
     # if template is not specified, use default
-    if not os.path.isdir(dict_param_with_path['-t']):
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        dict_param_with_path['-t'] = path_sct + default_template
-        param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    # if not os.path.isdir(dict_param_with_path['-t']):
+    #     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    #     dict_param_with_path['-t'] = path_sct + default_template
+    #     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # get contrast folder from -i option.
     # We suppose we can extract it as the first object when spliting with '/' delimiter.
@@ -101,7 +101,7 @@ def test(path_data='', parameters=''):
     # if command ran without error, test integrity
     if status == 0:
         # get filename_template_seg
-        fname_template_seg = get_file_label(dict_param_with_path['-t']+'template/', 'spinal cord', output='filewithpath')
+        fname_template_seg = get_file_label(sct.slash_at_the_end(dict_param_with_path['-t'], 1) + 'template/', 'spinal cord', output='filewithpath')
         # apply transformation to binary mask: template --> anat
         sct.run(
             'sct_apply_transfo -i ' + fname_template_seg +
