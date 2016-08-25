@@ -97,6 +97,53 @@ class ModelDictionary:
     def coregister_data(self):
         pass
 
+    '''
+    def register_data(self, fname_src, fname_dest, paramreg):
+        from sct_register_multimodal import Param as Param_reg_mm
+        from sct_register_multimodal import register
+
+        param_register = Param_reg_mm()
+        # loop across registration steps
+        warp_forward = []
+        warp_inverse = []
+        for i_step in range(0, len(paramreg.steps)):
+            printv('\n--\nESTIMATE TRANSFORMATION FOR STEP #' + str(i_step), self.param.verbose)
+            # identify which is the src and dest
+            if paramreg.steps[str(i_step)].type == 'im':
+                src = 'src.nii'
+                dest = 'dest_RPI.nii'
+                interp_step = 'spline'
+            elif paramreg.steps[str(i_step)].type == 'seg':
+                src = 'src_seg.nii'
+                dest = 'dest_seg_RPI.nii'
+                interp_step = 'nn'
+            else:
+                src = dest = interp_step = None
+                sct.run('ERROR: Wrong image type.', 1, 'error')
+            # if step>0, apply warp_forward_concat to the src image to be used
+            if i_step > 0:
+                sct.printv('\nApply transformation from previous step', self.param.verbose)
+                sct.run('sct_apply_transfo -i ' + src + ' -d ' + dest + ' -w ' + ','.join(
+                    warp_forward) + ' -o ' + sct.add_suffix(src, '_reg') + ' -x ' + interp_step, self.param.verbose)
+                src = sct.add_suffix(src, '_reg')
+            # register src --> dest
+            warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param_register , str(i_step))
+            warp_forward.append(warp_forward_out)
+            warp_inverse.insert(0, warp_inverse_out)
+
+        # Concatenate transformations
+        sct.printv('\nConcatenate transformations...', self.param.verbose)
+        sct.run('sct_concat_transfo -w ' + ','.join(warp_forward) + ' -d dest.nii -o warp_src2dest.nii.gz', self.param.verbose)
+        sct.run('sct_concat_transfo -w ' + ','.join(warp_inverse) + ' -d dest.nii -o warp_dest2src.nii.gz', self.param.verbose)
+
+        # Apply warping field to src data
+        sct.printv('\nApply transfo source --> dest...', self.param.verbose)
+        sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2dest.nii.gz -x ' + interp, self.param.verbose)
+        sct.printv('\nApply transfo dest --> source...', self.param.verbose)
+        sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -x ' + interp,
+                self.param.verbose)
+    '''
+
 
 
 
