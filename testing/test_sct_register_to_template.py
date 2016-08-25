@@ -24,7 +24,7 @@ from sct_warp_template import get_file_label
 
 def test(path_data='', parameters=''):
     verbose = 0
-    default_template = 'PAM50'
+    # default_template = 'PAM50'
     # filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'  # used to compute DICE
     dice_threshold = 0.9
 
@@ -55,10 +55,10 @@ def test(path_data='', parameters=''):
         #     index=[path_data])
 
     # if template is not specified, use default
-    if not os.path.isdir(dict_param_with_path['-t']):
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        dict_param_with_path['-t'] = path_sct + default_template
-        param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    # if not os.path.isdir(dict_param_with_path['-t']):
+    #     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    #     dict_param_with_path['-t'] = path_sct + default_template
+    #     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # get contrast folder from -i option.
     # We suppose we can extract it as the first object when spliting with '/' delimiter.
