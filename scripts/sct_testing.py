@@ -217,9 +217,7 @@ def write_to_log_file(fname_log, string, mode='w'):
         os.makedirs(path_logs_dir)
     """
 
-    string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
-             + fname_log \
-             + string
+    string = "{0}\n{1}{2}".format(time.strftime("%y%m%d%H%M%S"), fname_log, string)
     # open file
     try:
         f = open('../' + fname_log, mode)
