@@ -8,10 +8,32 @@
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Benjamin De Leener
 # Created: 2015-01-30
-# Modified: 2016-02-26
+#
+# Notes on how to use classes in this script.
+# If you are interested into selecting manually some points in an image, you can use the following code.
+
+# from sct_viewer import ClickViewer
+# from msct_image import Image
+#
+# im_input = Image('my_image.nii.gz')
+#
+# im_input_SAL = im_input.copy()
+# # SAL orientation is mandatory
+# im_input_SAL.change_orientation('SAL')
+# # The viewer is composed by a primary plot and a secondary plot. The primary plot is the one you will click points in.
+# # The secondary plot will help you go throughout slices in another dimensions to help manual selection.
+# viewer = ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'])
+# viewer.number_of_slices = X  # Change X appropriately.
+# viewer.gap_inter_slice = Y  # this number should reflect image spacing
+# viewer.calculate_list_slices()
+# # start the viewer that ask the user to enter a few points along the spinal cord
+# mask_points = viewer.start()
+# print mask_points
+
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
 import sys
 from msct_parser import Parser
 from msct_image import Image
@@ -19,6 +41,8 @@ from bisect import bisect
 from numpy import arange, max, pad, linspace, mean, median, std, percentile
 import numpy as np
 from msct_types import *
+
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib import cm
@@ -26,15 +50,16 @@ import sct_utils as sct
 from time import time
 from copy import copy
 
+from matplotlib.widgets import Slider, Button, RadioButtons
 
-# from matplotlib.widgets import Slider, Button, RadioButtons
+import webbrowser
 
 
 class SinglePlot:
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, images, viewer, view=2, display_cross=True, im_params=None):
+    def __init__(self, ax, images, viewer, view=2, display_cross='hv', im_params=None):
         self.axes = ax
         self.images = images  # this is a list of images
         self.viewer = viewer
@@ -49,19 +74,19 @@ class SinglePlot:
         for i, image in enumerate(images):
             data_to_display = None
             if self.view == 1:
-                self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [0, self.image_dim[1]]],
-                                         [[0, self.image_dim[2]], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+                self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [-10000, 10000]],
+                                         [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[0]
                 data_to_display = image.data[int(self.image_dim[0] / 2), :, :]
 
             elif self.view == 2:
-                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [0, self.image_dim[2]]],
-                                         [[0, self.image_dim[0]], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
+                                         [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[1]
                 data_to_display = image.data[:, int(self.image_dim[1] / 2), :]
             elif self.view == 3:
-                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [0, self.image_dim[1]]],
-                                         [[0, self.image_dim[0]], [self.viewer.current_point.y, self.viewer.current_point.y]]]
+                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
+                                         [[-10000, 10000], [self.viewer.current_point.y, self.viewer.current_point.y]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[2]
                 data_to_display = image.data[:, :, int(self.image_dim[2] / 2)]
 
@@ -83,11 +108,12 @@ class SinglePlot:
         self.axes.set_xticks([])
         self.axes.set_yticks([])
 
-        if display_cross:
-            self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
-            self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
-            self.axes.add_line(self.line_vertical)
+        self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
+        self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
+        if 'h' in display_cross:
             self.axes.add_line(self.line_horizontal)
+        if 'v' in display_cross:
+            self.axes.add_line(self.line_vertical)
 
         self.zoom_factor = 1.0
 
@@ -125,24 +151,27 @@ class SinglePlot:
                 if data_update:
                     for i, image in enumerate(self.images):
                         self.figs[i].set_data(image.data[target_slice, :, :])
-                if self.display_cross:
+                if 'v' in self.display_cross:
                     self.line_vertical.set_ydata(self.cross_to_display[0][0])
+                if 'h' in self.display_cross:
                     self.line_horizontal.set_xdata(self.cross_to_display[1][1])
         elif self.view == 2:
             if 0 <= target_slice < self.images[0].data.shape[1]:
                 if data_update:
                     for i, image in enumerate(self.images):
                         self.figs[i].set_data(image.data[:, target_slice, :])
-                if self.display_cross:
+                if 'v' in self.display_cross:
                     self.line_vertical.set_ydata(self.cross_to_display[0][0])
+                if 'h' in self.display_cross:
                     self.line_horizontal.set_xdata(self.cross_to_display[1][1])
         elif self.view == 3:
             if 0 <= target_slice < self.images[0].data.shape[2]:
                 if data_update:
                     for i, image in enumerate(self.images):
                         self.figs[i].set_data(image.data[:, :, target_slice])
-                if self.display_cross:
+                if 'v' in self.display_cross:
                     self.line_vertical.set_ydata(self.cross_to_display[0][0])
+                if 'h' in self.display_cross:
                     self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
         self.figs[0].figure.canvas.draw()
@@ -456,14 +485,19 @@ class ThreeViewer(Viewer):
 class ClickViewer(Viewer):
     """
     This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
-    Assumes AIL orientation
+    Assumes SAL orientation
+    orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
-    def __init__(self, list_images, visualization_parameters=None):
+    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag']):
+        self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         if isinstance(list_images, Image):
             list_images = [list_images]
         if not visualization_parameters:
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
         super(ClickViewer, self).__init__(list_images, visualization_parameters)
+
+        self.primary_subplot = orientation_subplot[0]
+        self.secondary_subplot = orientation_subplot[1]
 
         self.current_slice = 0
         self.number_of_slices = 0
@@ -478,17 +512,38 @@ class ClickViewer(Viewer):
         import matplotlib.gridspec as gridspec
         gs = gridspec.GridSpec(1, 3)
 
+        # main plot on the right
         ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=1, display_cross=False, im_params=visualization_parameters))
+        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.primary_subplot], display_cross='', im_params=visualization_parameters))
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
-        self.windows[0].axes.set_xlim([0, self.images[0].data.shape[1]])
-        self.windows[0].axes.set_ylim([self.images[0].data.shape[2], 0])
+        if self.primary_subplot == 'ax':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+        elif self.primary_subplot == 'cor':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[0], 0])
+        elif self.primary_subplot == 'sag':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[0]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
 
+        # smaller plot on the left
+        display_cross = ''
+        if self.primary_subplot == 'ax':
+            display_cross = 'v'
+        elif self.primary_subplot == 'cor':
+            display_cross = 'h'
+        elif self.primary_subplot == 'sag':
+            display_cross = 'h'
         ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=3, display_cross=True, im_params=visualization_parameters))
+        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot], display_cross=display_cross, im_params=visualization_parameters))
 
         for window in self.windows:
             window.connect()
+
+        self.ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
+        button_help = Button(self.ax_help, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.help)
+        self.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
 
         # specialized for Click viewer
         self.list_points = []
@@ -505,70 +560,93 @@ class ClickViewer(Viewer):
 
     def calculate_list_slices(self):
         if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
-            central_slice = int(self.image_dim[0] / 2)
+            central_slice = int(self.image_dim[self.orientation[self.primary_subplot]-1] / 2)
             first_slice = central_slice - (self.number_of_slices / 2) * self.gap_inter_slice
             last_slice = central_slice + (self.number_of_slices / 2) * self.gap_inter_slice
             if first_slice < 0:
                 first_slice = 0
-            if last_slice >= self.image_dim[0]:
-                last_slice = self.image_dim[0] - 1
+            if last_slice >= self.image_dim[self.orientation[self.primary_subplot]-1]:
+                last_slice = self.image_dim[self.orientation[self.primary_subplot]-1] - 1
             self.list_slices = [int(item) for item in
                                 linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
         elif self.number_of_slices != 0:
             self.list_slices = [int(item) for item in
-                                linspace(0, self.image_dim[0] - 1, self.number_of_slices, endpoint=True)]
-            if self.list_slices[-1] != self.image_dim[0] - 1:
-                self.list_slices.append(self.image_dim[0] - 1)
+                                linspace(0, self.image_dim[self.orientation[self.primary_subplot]-1] - 1, self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot]-1] - 1:
+                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot]-1] - 1)
         elif self.gap_inter_slice != 0:
-            self.list_slices = list(arange(0, self.image_dim[0], self.gap_inter_slice))
-            if self.list_slices[-1] != self.image_dim[0] - 1:
-                self.list_slices.append(self.image_dim[0] - 1)
+            self.list_slices = list(arange(0, self.image_dim[self.orientation[self.primary_subplot]-1], self.gap_inter_slice))
+            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot]-1] - 1:
+                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot]-1] - 1)
         else:
-            self.gap_inter_slice = int(max([round(self.image_dim[0] / 15.0), 1]))
-            self.number_of_slices = int(round(self.image_dim[0] / self.gap_inter_slice))
+            self.gap_inter_slice = int(max([round(self.image_dim[self.orientation[self.primary_subplot]-1] / 15.0), 1]))
+            self.number_of_slices = int(round(self.image_dim[self.orientation[self.primary_subplot]-1] / self.gap_inter_slice))
             self.list_slices = [int(item) for item in
-                                linspace(0, self.image_dim[0] - 1, self.number_of_slices, endpoint=True)]
-            if self.list_slices[-1] != self.image_dim[0] - 1:
-                self.list_slices.append(self.image_dim[0] - 1)
+                                linspace(0, self.image_dim[self.orientation[self.primary_subplot]-1] - 1, self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot]-1] - 1:
+                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot]-1] - 1)
 
-        self.current_point.x = self.list_slices[self.current_slice]
         point = [self.current_point.x, self.current_point.y, self.current_point.z]
+        point[self.orientation[self.primary_subplot]-1] = self.list_slices[self.current_slice]
         for window in self.windows:
-            if window.view == 3:
+            if window.view == self.orientation[self.secondary_subplot]:
                 window.update_slice(point, data_update=False)
             else:
                 window.update_slice(point, data_update=True)
 
+        self.windows[1].axes.set_title('Click and hold\nto move around')
         self.title = self.windows[0].axes.set_title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
-                self.image_dim[1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
+                self.image_dim[self.orientation[self.primary_subplot]-1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
 
     def compute_offset(self):
-        array_dim = [self.image_dim[1] * self.im_spacing[1], self.image_dim[2] * self.im_spacing[2]]
-        index_max = np.argmax(array_dim)
-        max_size = array_dim[index_max]
-        self.offset = [0,
-                       int(round((max_size - array_dim[0]) / self.im_spacing[1]) / 2),
-                       int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
+        if self.primary_subplot == 'ax':
+            array_dim = [self.image_dim[1] * self.im_spacing[1], self.image_dim[2] * self.im_spacing[2]]
+            index_max = np.argmax(array_dim)
+            max_size = array_dim[index_max]
+            self.offset = [0,
+                           int(round((max_size - array_dim[0]) / self.im_spacing[1]) / 2),
+                           int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
+        elif self.primary_subplot == 'cor':
+            array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[2] * self.im_spacing[2]]
+            index_max = np.argmax(array_dim)
+            max_size = array_dim[index_max]
+            self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
+                           0,
+                           int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
+        elif self.primary_subplot == 'sag':
+            array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[1] * self.im_spacing[1]]
+            index_max = np.argmax(array_dim)
+            max_size = array_dim[index_max]
+            self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
+                           int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
+                           0]
 
     def on_press(self, event, plot=None):
-        if plot.view == 1:
-            target_point = Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1])
+        # below is the subplot that refers to the label collection
+        if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
+            if self.primary_subplot == 'ax':
+                target_point = Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1])
+            elif self.primary_subplot == 'cor':
+                target_point = Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[2], 1])
+            elif self.primary_subplot == 'sag':
+                target_point = Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[self.current_slice]), 1])
             if self.is_point_in_image(target_point):
                 self.list_points.append(target_point)
 
                 self.current_slice += 1
                 if self.current_slice < len(self.list_slices):
-                    self.current_point.x = self.list_slices[self.current_slice]
+                    point = [self.current_point.x, self.current_point.y, self.current_point.z]
+                    point[self.orientation[self.secondary_subplot]-1] = self.list_slices[self.current_slice]
+                    self.current_point = Coordinate(point)
                     self.windows[0].update_slice(self.list_slices[self.current_slice])
                     title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
                                                     str(self.list_slices[self.current_slice]) + '/' +
-                                                    str(self.image_dim[1] - 1) + ' (' +
+                                                    str(self.image_dim[self.orientation[self.primary_subplot]-1] - 1) + ' (' +
                                                     str(self.current_slice + 1) + '/' +
                                                     str(len(self.list_slices)) + ')')
                     plt.setp(title_obj, color='k')
                     plot.draw()
 
-                    point = [self.current_point.x, self.current_point.y, self.current_point.z]
                     self.windows[1].update_slice(point, data_update=False)
                 else:
                     for coord in self.list_points:
@@ -583,8 +661,27 @@ class ClickViewer(Viewer):
                 plt.setp(title_obj, color='r')
                 plot.draw()
 
+        elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
+            is_in_axes = False
+            for window in self.windows:
+                if event.inaxes == window.axes:
+                    is_in_axes = True
+            if not is_in_axes:
+                return
+
+            self.last_update = time()
+            self.current_point = self.get_event_coordinates(event, plot)
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            for window in self.windows:
+                if window is plot:
+                    window.update_slice(point, data_update=False)
+                else:
+                    self.draw_points(window, self.current_point.x)
+                    window.update_slice(point, data_update=True)
+
+
     def draw_points(self, window, current_slice):
-        if window.view == 1:
+        if window.view == self.orientation[self.primary_subplot]:
             x_data, y_data = [], []
             for pt in self.list_points:
                 if pt.x == current_slice:
@@ -594,9 +691,15 @@ class ClickViewer(Viewer):
             self.plot_points.set_ydata(y_data)
 
     def on_release(self, event, plot=None):
-        if event.button == 1 and plot.view == 3:
-            self.current_point.x = self.list_slices[self.current_slice]
+        """
+        This subplot refers to the secondary window. It captures event "release"
+        :param event:
+        :param plot:
+        :return:
+        """
+        if event.button == 1 and event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            point[self.orientation[self.primary_subplot]-1] = self.list_slices[self.current_slice]
             for window in self.windows:
                 if window is plot:
                     window.update_slice(point, data_update=False)
@@ -606,7 +709,13 @@ class ClickViewer(Viewer):
         return
 
     def on_motion(self, event, plot=None):
-        if event.button == 1 and plot.view == 3 and time() - self.last_update > self.update_freq:
+        """
+        This subplot refers to the secondary window. It captures event "motion"
+        :param event:
+        :param plot:
+        :return:
+        """
+        if event.button == 1 and event.inaxes and plot.view == self.orientation[self.secondary_subplot] and time() - self.last_update > self.update_freq:
             is_in_axes = False
             for window in self.windows:
                 if event.inaxes == window.axes:
@@ -630,6 +739,10 @@ class ClickViewer(Viewer):
             return self.list_points
         else:
             return None
+
+    def help(self, event):
+        if event.inaxes == self.ax_help:
+            webbrowser.open(self.help_url, new=0, autoraise=True)
 
     def start(self):
         super(ClickViewer, self).start()
@@ -767,9 +880,11 @@ if __name__ == "__main__":
             visualization_parameters.addImage(param)
 
     if mode == 'viewer':
+        # 3 views
         viewer = ThreeViewer(list_images, visualization_parameters)
         viewer.start()
     elif mode == 'axial':
+        # only one axial view
         viewer = ClickViewer(list_images, visualization_parameters)
         viewer.start()
     clean()

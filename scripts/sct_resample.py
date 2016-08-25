@@ -145,7 +145,7 @@ def resample():
 
     # resample data
     if len(n) == 3:
-        data_r = resample(nii, transform=transfo, reference=nii_r, mov_voxel_coords=True, ref_voxel_coords=True, dtype=None, interp_order=interp_order)
+        data_r = resample(nii, transform=transfo, reference=nii_r, mov_voxel_coords=True, ref_voxel_coords=True, dtype='double', interp_order=interp_order, mode='nearest')
     elif len(n) == 4:
         data_r = np.zeros(n_r)
         # data_r = np.zeros(n_r[0:3])
@@ -158,7 +158,7 @@ def resample():
             arr_r3d = arr_r[:, :, :, it]
             nii_r3d = nipy.core.api.Image(arr_r3d, coordmap3d)
             # resample data
-            data3d_r = resample(nii3d, transform=transfo, reference=nii_r3d, mov_voxel_coords=True, ref_voxel_coords=True, dtype=None, interp_order=interp_order)
+            data3d_r = resample(nii3d, transform=transfo, reference=nii_r3d, mov_voxel_coords=True, ref_voxel_coords=True, dtype='double', interp_order=interp_order, mode='nearest')
             # data_r = np.concatenate((data_r, data3d_r), axis=3)
             data_r[:, :, :, it] = data3d_r.get_data()
 

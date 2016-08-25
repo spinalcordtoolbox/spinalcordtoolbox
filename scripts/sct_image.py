@@ -233,8 +233,8 @@ def main(args = None):
             fname_out = []
             for i, im in enumerate(im_out):
                 fname_out.append(add_suffix(fname_in[0], '_'+dim_list[dim].upper()+str(i).zfill(4)))
-                im_out[0].setFileName(fname_out[i])
-                im_out[0].save()
+                im.setFileName(fname_out[i])
+                im.save()
 
         printv('Created file(s):\n--> '+str(fname_out)+'\n', verbose, 'info')
         # printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
