@@ -43,7 +43,7 @@ class bcolors:
 # status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
 
-class param:
+class Param:
     def __init__(self):
         self.download = 0
         self.path_data = 'sct_testing_data/data/'
@@ -53,6 +53,7 @@ class param:
         self.verbose = 1
         self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
         self.path_tmp = ""
+param = Param()
 
 
 # START MAIN
@@ -299,6 +300,5 @@ def get_parser():
 
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
     # call main function
     main()
