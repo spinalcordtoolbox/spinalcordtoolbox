@@ -39,7 +39,7 @@ def test(path_data='', parameters=''):
 
     parser = sct_register_to_template.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
+    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True, do_not_add_path=['-t'])
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
