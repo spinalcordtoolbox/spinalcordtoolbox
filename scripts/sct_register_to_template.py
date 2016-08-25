@@ -405,9 +405,9 @@ def main():
 
         # threshold and binarize
         sct.printv('\nBinarize segmentation...', verbose)
-        sct.run('sct_maths -i '+ftmp_seg+' -thr 0.4 -o '+add_suffix(ftmp_seg, '_thr'))
-        sct.run('sct_maths -i '+add_suffix(ftmp_seg, '_thr')+' -bin -o '+add_suffix(ftmp_seg, '_thr_bin'))
-        ftmp_seg = add_suffix(ftmp_seg, '_thr_bin')
+        # sct.run('sct_maths -i '+ftmp_seg+' -thr 0.4 -o '+add_suffix(ftmp_seg, '_thr'))
+        sct.run('sct_maths -i '+ftmp_seg+' -bin 0.4 -o '+add_suffix(ftmp_seg, '_bin'))
+        ftmp_seg = add_suffix(ftmp_seg, '_bin')
 
         # find min-max of anat2template (for subsequent cropping)
         zmin_template, zmax_template = find_zmin_zmax(ftmp_seg)
