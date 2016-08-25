@@ -13,7 +13,7 @@
 ########################################################################################################################
 from msct_image import Image
 from sct_image import set_orientation
-from sct_utils import extract_fname, printv
+from sct_utils import extract_fname, printv, run, add_suffix
 import numpy as np
 import os
 import time
@@ -136,16 +136,17 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     if denoising:
         printv('\n\tDenoise ...', verbose, 'normal')
         from sct_maths import denoise_nlmeans
-        nx, ny, nz = list_im_slices[0].data.shape
-        data = np.asarray([im.data.reshape(nx, ny) for im in list_im_slices])
+        data = np.asarray([im.data for im in list_im_slices])
         data_denoised = denoise_nlmeans(data, block_radius = int(len(list_im_slices)/2))
         for i in range(len(list_im_slices)):
             list_im_slices[i].data = data_denoised[i]
 
     printv('\n\t\tMask data using the spinal cord mask ...', verbose, 'normal')
-    list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
+    list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=1)
     for i in range(len(list_im_slices)):
-        list_im_slices[i].data[list_sc_seg_slices[i] == 0] = 0
+        # list_im_slices[i].data[list_sc_seg_slices[i].data == 0] = 0
+        list_sc_seg_slices[i] = binarize(list_sc_seg_slices[i], thr_min=0.5, thr_max=1)
+        list_im_slices[i].data = list_im_slices[i].data * list_sc_seg_slices[i].data
 
     printv('\n\tSplit along rostro-caudal direction...', verbose, 'normal')
     list_slices_target = [Slice(slice_id=i, im=im_slice.data, gm_seg=[], wm_seg=[]) for i, im_slice in enumerate(list_im_slices)]
@@ -170,6 +171,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 
     os.chdir('..')
     printv('\nPre-processing done!', verbose, 'normal')
+    # TODO: Remove tmp folder
     return list_slices_target, original_info
 
 
@@ -222,6 +224,9 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
 
         # interpolate input image to reference image
         im_input_interpolate_iz = im_input.interpolate_from_image(im_ref_slice_iz, interpolation_mode=interpolation_mode, border='reflect')
+        # reshape data to 2D
+        im_input_interpolate_iz.data = im_input_interpolate_iz.data.reshape(im_input_interpolate_iz.data.shape[:-1])
+        # add slice to list
         list_interpolate_images.append(im_input_interpolate_iz)
 
     return list_interpolate_images
@@ -337,3 +342,48 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
 ########################################### End of pre-processing function #############################################
 
 
+
+########################################################################################################################
+#                               FUNCTIONS USED FOR PROCESSING DATA (data model and data to segment)
+########################################################################################################################
+def register_data(self, im_src, im_dest, param_reg):
+    # im_src and im_dest are already preprocessed (in theory: im_dest = mean_image)
+
+    # binarize images to get seg
+    # create tmp dir and go in it
+    # reshape 2D to pseudo 3D (with only 1 slice)
+    # save image and seg
+    fname_src = 'src.nii.gz'
+    fname_src_seg = 'src_seg.nii.gz'
+    fname_dest = 'dest.nii.gz'
+    fname_dest_seg = 'dest_seg.nii.gz'
+    # do registration using param_reg
+    run('sct_register_multimodal -i '+fname_src+' -d '+fname_dest+' -iseg '+fname_src_seg+' -dseg '+fname_dest_seg+' -param '+param_reg)
+    # get registration result
+    fname_src_reg = add_suffix(fname_src, '_reg')
+    im_src_reg = Image(fname_src_reg)
+    # get out of tmp dir
+    os.chdir('..')
+    # remove tmp dir
+    # return res image
+    return im_src_reg
+
+########################################### End of processing function #############################################
+
+
+
+########################################################################################################################
+#                                                   UTILS FUNCTIONS
+########################################################################################################################
+def binarize(im, thr_min=None, thr_max=None):
+    if thr_min is None and thr_max is not None:
+        thr_min = thr_max
+    if thr_max is None and thr_min is not None:
+        thr_max = thr_min
+    if thr_min is None and thr_max is None:
+        thr_min = thr_max = max(im.data)/2
+    im_bin = im.copy()
+    im_bin.data[im.data>=thr_max] = 1
+    im_bin.data[im.data < thr_min] = 0
+
+    return im_bin
