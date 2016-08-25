@@ -151,7 +151,7 @@ def get_parser():
                       type_value='multiple_choice',
                       description= 'Algorithm for curve fitting.',
                       mandatory=False,
-                      default_value='hanning',
+                      default_value='nurbs',
                       example=['hanning', 'nurbs'])
     parser.add_option(name='-no-angle',
                       type_value='multiple_choice',

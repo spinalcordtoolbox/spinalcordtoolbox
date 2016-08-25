@@ -280,7 +280,6 @@ class Preprocessing:
         im_target = Image(self.t2star)
         if self.denoising:
             from sct_maths import denoise_nlmeans
-            print im_target.data.shape
             im_target.data = denoise_nlmeans(im_target.data)
             im_target.save()
             self.t2star = im_target.file_name + im_target.ext

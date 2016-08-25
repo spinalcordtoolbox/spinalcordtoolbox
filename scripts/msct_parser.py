@@ -542,7 +542,9 @@ class Usage:
         self.set_arguments()
         self.set_usage()
         self.set_example()
-        usage = self.header + self.description + self.usage + self.arguments_string + self.example + '\n'
+        # removed example: https://github.com/neuropoly/spinalcordtoolbox/issues/957
+        # usage = self.header + self.description + self.usage + self.arguments_string + self.example + '\n'
+        usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
             sct.printv(error+'\nAborted...',type='warning')
@@ -729,7 +731,9 @@ class DocSourceForge:
         self.set_arguments()
         self.set_usage()
         self.set_example()
-        doc = self.header + self.description + self.usage + self.arguments_string + self.example
+        # removed example: https://github.com/neuropoly/spinalcordtoolbox/issues/957
+        # doc = self.header + self.description + self.usage + self.arguments_string + self.example
+        doc = self.header + self.description + self.usage + self.arguments_string
         from os.path import basename
         file_doc_sf = open('doc_sf_'+basename(self.file)[:-3]+'.txt', 'w')
         file_doc_sf.write(doc)
