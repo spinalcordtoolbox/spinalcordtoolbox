@@ -101,7 +101,7 @@ def test(path_data='', parameters=''):
     # if command ran without error, test integrity
     if status == 0:
         # get filename_template_seg
-        fname_template_seg = get_file_label(dict_param_with_path['-t']+'template/', 'spinal cord', output='filewithpath')
+        fname_template_seg = get_file_label(sct.slash_at_the_end(dict_param_with_path['-t'], 1) + 'template/', 'spinal cord', output='filewithpath')
         # apply transformation to binary mask: template --> anat
         sct.run(
             'sct_apply_transfo -i ' + fname_template_seg +
