@@ -49,6 +49,7 @@ class Param:
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
         self.shift_AP_visu = 15  # shift AP for displaying disc values
         self.smooth_factor = [9, 3, 1]  # [3, 1, 1]
+        self.fig_anat_straight = 50
 
 
 # PARSER
@@ -308,7 +309,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     :return:
     """
     # initializations
-    fig_anat_straight = 1
+    # fig_anat_straight = 1
 
     printv('\nLook for template...', verbose)
     # if path_template == '':
@@ -421,10 +422,10 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     # display init disc
     if verbose == 2:
         import matplotlib.pyplot as plt
-        plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
+        plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=param.fig_anat_straight, cmap=plt.cm.gray, origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        plt.figure(fig_anat_straight), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
+        plt.figure(param.fig_anat_straight), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
         plt.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
                  verticalalignment='center', horizontalalignment='left', color='pink', fontsize=15), plt.draw()
         plt.ion()  # enables interactive mode
@@ -459,7 +460,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
         # display new disc
         if verbose == 2:
-            plt.figure(fig_anat_straight), plt.scatter(yc+param.shift_AP_visu, current_z, c='yellow', s=50)
+            plt.figure(param.fig_anat_straight), plt.scatter(yc+param.shift_AP_visu, current_z, c='yellow', s=50)
             plt.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
 
         # append to main list
@@ -539,34 +540,12 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     # assign disc value
     list_disc_value.insert(0, upper_disc-1)
 
-    # LABEL SEGMENTATION
-    # open segmentation
-    seg = Image(fname_seg)
-    # loop across z
-    for iz in range(nz):
-        # get index of the disc right above iz
-        try:
-            ind_above_iz = max([i for i in range(len(list_disc_z)) if list_disc_z[i] > iz])
-        except ValueError:
-            # if ind_above_iz is empty, attribute value 0
-            vertebral_level = 0
-        else:
-            # assign vertebral level (add one because iz is BELOW the disk)
-            vertebral_level = list_disc_value[ind_above_iz] + 1
-            # print vertebral_level
-        # get voxels in mask
-        ind_nonzero = np.nonzero(seg.data[:, :, iz])
-        seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
-        if verbose == 2:
-            plt.figure(fig_anat_straight)
-            plt.scatter(int(round(ny/2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
-    # write file
-    seg.file_name += '_labeled'
-    seg.save()
+    # Label segmentation
+    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
     # save figure
     if verbose == 2:
-        plt.figure(fig_anat_straight), plt.savefig('../fig_anat_straight_with_labels.png')
+        plt.figure(param.fig_anat_straight), plt.savefig('../fig_anat_straight_with_labels.png')
         plt.close()
 
 
@@ -817,6 +796,43 @@ def calc_MI(x, y, bins):
     # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
     return mi
 
+
+def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
+    """
+    Label segmentation image
+    :param fname_seg: fname of the segmentation
+    :param list_disc_z: list of z that correspond to a disc
+    :param list_disc_value: list of associated disc values
+    :param verbose:
+    :return:
+    """
+    # open segmentation
+    seg = Image(fname_seg)
+    dim = seg.dim
+    ny = dim[1]
+    nz = dim[2]
+    # loop across z
+    for iz in range(nz):
+        # get index of the disc right above iz
+        try:
+            ind_above_iz = max([i for i in range(len(list_disc_z)) if list_disc_z[i] > iz])
+        except ValueError:
+            # if ind_above_iz is empty, attribute value 0
+            vertebral_level = 0
+        else:
+            # assign vertebral level (add one because iz is BELOW the disk)
+            vertebral_level = list_disc_value[ind_above_iz] + 1
+            # print vertebral_level
+        # get voxels in mask
+        ind_nonzero = np.nonzero(seg.data[:, :, iz])
+        seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
+        if verbose == 2:
+            import matplotlib.pyplot as plt
+            plt.figure(param.fig_anat_straight)
+            plt.scatter(int(round(ny/2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
+    # write file
+    seg.file_name += '_labeled'
+    seg.save()
 
 # START PROGRAM
 # ==========================================================================================
