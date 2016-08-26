@@ -67,6 +67,7 @@ def get_parser():
                       type_value='multiple_choice',
                       description='type of process to be performed:\n'
                                   '- centerline: extract centerline as binary file.\n'
+                                  '- label-vert: Transform segmentation into vertebral level using a file that contains labels with disc value (flag: -discfile)\n'
                                   '- length: compute length of the segmentation.\n'
                                   '- csa: computes cross-sectional area by counting pixels in each'
                                   '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
@@ -74,7 +75,7 @@ def get_parser():
                                   '  - a CSV text file with z (1st column) and CSA in mm^2 (2nd column),\n'
                                   '  - and if you select the options -z or -vert, a text file giving the mean CSA across the selected slices or vertebral levels.\n',
                       mandatory=True,
-                      example=['centerline', 'length', 'csa'])
+                      example=['centerline', 'label-vert', 'length', 'csa'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-o',
                       type_value='file_output',
@@ -123,6 +124,10 @@ def get_parser():
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
                       default_value='./label/template/PAM50_levels.nii.gz')
+    parser.add_option(name='-discfile',
+                      type_value='image_nifti',
+                      description='Disc labeling. Only use with -p label-vert',
+                      mandatory=False)
     parser.add_option(name='-m',
                       type_value='multiple_choice',
                       description='Method to compute CSA',
@@ -253,6 +258,13 @@ def main(args):
 
     if name_process == 'csa':
         compute_csa(fname_segmentation, output_prefix, param_default.suffix_csa_output_files, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length, angle_correction=angle_correction)
+
+    if name_process == 'label-vert':
+        if '-discfile' in arguments:
+            fname_disc_label = arguments['-discfile']
+        else:
+            sct.printv('\nERROR: Disc label file is mandatory (flag: -discfile).\n', 1, 'error')
+        label_vert(fname_segmentation, fname_disc_label)
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
@@ -681,6 +693,31 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
     if slices or vert_levels:
         sct.printv('Output result file of the mean CSA across the selected slices: '+output_prefix+output_suffixes[2]+'.txt', param.verbose, 'info')
         sct.printv('Output result file of the volume in between the selected slices: '+output_prefix+output_suffixes[3]+'.txt', param.verbose, 'info')
+
+def label_vert(fname_seg, fname_label, verbose=1):
+    """
+    Label segmentation using vertebral labeling information
+    :param fname_segmentation:
+    :param fname_label:
+    :param verbose:
+    :return:
+    """
+    # Open labels
+    im_disc = Image(fname_label)
+    # retrieve all labels
+    coord_label = im_disc.getNonZeroCoordinates()
+    # compute list_disc_z and list_disc_value
+    list_disc_z = []
+    list_disc_value = []
+    for i in range(len(coord_label)):
+        list_disc_z.insert(0, coord_label[i].z)
+        list_disc_value.insert(0, coord_label[i].value)
+    # label segmentation
+    from sct_label_vertebrae import label_segmentation
+    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    # Generate output files
+    sct.printv('--> File created: '+sct.add_suffix(fname_seg, '_labeled.nii.gz'), verbose)
+
 
 # ======================================================================================================================
 # Save CSA or volume estimation in a .txt file
