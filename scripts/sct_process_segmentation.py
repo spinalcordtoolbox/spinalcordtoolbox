@@ -52,7 +52,7 @@ class Param:
         self.suffix_csa_output_files = ['csa_volume', 'csa_per_slice', 'csa_mean', 'volume']  # [nifti file, txt file, txt file, txt file]
         self.fname_vertebral_labeling = './label/template/MNI-Poly-AMU_level.nii.gz'
 param = Param()
-
+param_default = Param()
 
 def get_parser():
     """

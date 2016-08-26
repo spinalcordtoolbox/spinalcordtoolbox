@@ -202,11 +202,12 @@ def main(args=None):
     # Initialization to defaults parameters
     fname_data = arguments['-i']
     path_label = arguments['-f']
-    labels_of_interest = ''
+    labels_user = ''
     vertebral_levels = ''
+    overwrite = 0
 
     if '-l' in arguments:
-        labels_of_interest = arguments['-l']
+        labels_user = arguments['-l']
     method = arguments['-method']
     adv_param_user = ''
     if '-param' in arguments:
@@ -217,9 +218,11 @@ def main(args=None):
     if '-vert' in arguments:
         vertebral_levels = arguments['-vert']
     average_all_labels = param.average_all_labels
-    if '-a' in arguments:
-        average_all_labels = 1
+    if '-output-type' in arguments:
+        output_type = arguments['-output-type']
     fname_output = arguments['-o']
+    if '-overwrite' in arguments:
+        overwrite = arguments['-overwrite']
     fname_normalizing_label = ''
     if '-norm-file' in arguments:
         fname_normalizing_label = arguments['-norm-file']
@@ -262,15 +265,6 @@ def main(args=None):
         del adv_param_user  # clean variable
         # TODO: check integrity of input
 
-    # Extract label info
-    label_id, label_name, label_file = read_label_file(path_label, param.file_info_label)
-    nb_labels_total = len(label_id)
-
-    # check consistency of label input parameter.
-    label_id_user, average_all_labels = check_labels(labels_of_interest, nb_labels_total, average_all_labels, method
-                                                     , parser=parser)  # If 'labels_of_interest' is empty, then
-    # 'label_id_user' contains the index of all labels in the file info_label.txt
-
     # print parameters
     print '\nChecked parameters:'
     print '  data ...................... '+fname_data
@@ -285,7 +279,7 @@ def main(args=None):
     indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label, param.file_info_label)
 
     # check syntax of labels asked by user
-    labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, labels_user)
+    labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, labels_user, parser)
 
     nb_labels = len(indiv_labels_files)
 
@@ -366,7 +360,7 @@ def main(args=None):
 
     # Extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
     # individual labels
-    indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method)
+    indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, parser=parser)
     # combined labels
     combined_labels_value = np.zeros(len(combined_labels_id_groups), dtype=float)
     combined_labels_std = np.zeros(len(combined_labels_id_groups), dtype=float)
@@ -406,7 +400,7 @@ def main(args=None):
     save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
-def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
+def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0, parser=None):
     """Extract metric in the labels specified by the file info_label.txt in the atlas folder."""
 
     # Initialization to default values
@@ -415,7 +409,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_p
     nb_labels_total = len(indiv_labels_ids)
 
     # check consistency of label input parameter (* LOI=Labels of Interest)
-    list_ids_LOI = check_labels(indiv_labels_ids, combined_labels_id_group)  # If 'labels_of_interest' is empty, then label_id_user' contains the index of all labels in the file info_label.txt
+    list_ids_LOI = check_labels(indiv_labels_ids, combined_labels_id_group, parser)  # If 'labels_of_interest' is empty, then label_id_user' contains the index of all labels in the file info_label.txt
 
     if method == 'map':
         # get clustered labels
@@ -524,7 +518,8 @@ def read_label_file(path_info_label, file_info_label):
     # Close file.txt
     f.close()
 
-    return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups
+    return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, \
+           combined_labels_names, combined_labels_id_groups
 
 
 def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
@@ -841,16 +836,9 @@ def check_method(method, fname_normalizing_label, normalization_method, parser):
         sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:'+str(normalization_method)))
 
 
-def check_labels(indiv_labels_ids, selected_labels):
+def check_labels(indiv_labels_ids, selected_labels, parser):
     """Check the consistency of the labels asked by the user."""
 
-#=======================================================================================================================
-# Check the consistency of the labels asked by the user
-#=======================================================================================================================
-def check_labels(labels_of_interest, nb_labels, average_labels, method, parser=None):
-
-    # by default, all labels are selected
-    list_label_id = range(0, nb_labels)
     # TODO: allow selection of combined labels as "36, Ventral, 7:14,22:19"
 
     # convert strings to int
