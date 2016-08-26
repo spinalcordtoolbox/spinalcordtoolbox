@@ -88,9 +88,14 @@ sct.run('cp '+fname_cord+' cord.nii.gz')
 # sct.run('sct_maths -i '+fname_cord+' -laplacian 1 -o cord.nii.gz')
 sct.run('sct_maths -i wmgm_ext.nii.gz -bin 0.5 -o wmgm_ext.nii.gz')
 # sct.run('sct_maths -i wmgm_ext.nii.gz -laplacian 1 -o wmgm_ext.nii.gz')
-# TODO: REQUIRES MORE ITERATIONS
 sct.run('sct_register_multimodal -i wmgm_ext.nii.gz -d cord.nii.gz -iseg wmgm_ext.nii.gz -dseg cord.nii.gz -param step=1,type=im,algo=bsplinesyn,iter=10,slicewise=1,metric=MeanSquares -x linear -r 0')
 sct.run('sct_apply_transfo -i wm_ext.nii.gz -d cord.nii.gz -w warp_wmgm_ext2cord.nii.gz -x linear')
+
+# crop below a certain point
+sct.run('sct_crop_image -i wm_ext_reg.nii.gz -dim 2 -start 141 -end 1099 -b 0 -o wm_ext_reg_crop.nii.gz')
+
+# rename new file
+sct.run('mv wm_ext_reg_crop.nii.gz PAM50_wm.nii.gz')
 
 # go back to previous folder
 os.chdir('../')
