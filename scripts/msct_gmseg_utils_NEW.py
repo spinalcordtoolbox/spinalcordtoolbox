@@ -13,7 +13,7 @@
 ########################################################################################################################
 from msct_image import Image
 from sct_image import set_orientation
-from sct_utils import extract_fname, printv, run, add_suffix
+from sct_utils import extract_fname, printv, run, add_suffix, tmp_create
 import numpy as np
 import os
 import time
@@ -170,8 +170,9 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm)
 
     os.chdir('..')
+    # remove tmp folder
+    shutil.rmtree(tmp_dir)
     printv('\nPre-processing done!', verbose, 'normal')
-    # TODO: Remove tmp folder
     return list_slices_target, original_info
 
 
@@ -346,17 +347,40 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
 ########################################################################################################################
 #                               FUNCTIONS USED FOR PROCESSING DATA (data model and data to segment)
 ########################################################################################################################
-def register_data(self, im_src, im_dest, param_reg):
-    # im_src and im_dest are already preprocessed (in theory: im_dest = mean_image)
+def register_data(im_src, im_dest, param_reg, path_warp=None):
+    '''
 
+    Parameters
+    ----------
+    im_src: class Image: source image
+    im_dest: class Image: destination image
+    param_reg: str: registration parameter
+    path_warp: path: path to copy the warping fields
+
+    Returns: im_src_reg: class Image: source image registered on destination image
+    -------
+
+    '''
+    # im_src and im_dest are already preprocessed (in theory: im_dest = mean_image)
     # binarize images to get seg
+    im_src_seg = binarize(im_src)
+    im_dest_seg = binarize(im_dest)
     # create tmp dir and go in it
-    # reshape 2D to pseudo 3D (with only 1 slice)
+    tmp_dir = tmp_create()
+    os.chdir(tmp_dir)
     # save image and seg
     fname_src = 'src.nii.gz'
+    im_src.setFileName(fname_src)
+    im_src.save()
     fname_src_seg = 'src_seg.nii.gz'
+    im_src_seg.setFileName(fname_src_seg)
+    im_src_seg.save()
     fname_dest = 'dest.nii.gz'
+    im_dest.setFileName(fname_dest)
+    im_dest.save()
     fname_dest_seg = 'dest_seg.nii.gz'
+    im_dest_seg.setFileName(fname_dest_seg)
+    im_dest_seg.save()
     # do registration using param_reg
     run('sct_register_multimodal -i '+fname_src+' -d '+fname_dest+' -iseg '+fname_src_seg+' -dseg '+fname_dest_seg+' -param '+param_reg)
     # get registration result
@@ -364,9 +388,44 @@ def register_data(self, im_src, im_dest, param_reg):
     im_src_reg = Image(fname_src_reg)
     # get out of tmp dir
     os.chdir('..')
+    # copy warping fields
+    if path_warp is not None and os.path.isdir(os.path.abspath(path_warp)):
+        path_warp = os.path.abspath(path_warp)
+        file_src = extract_fname(fname_src)[1]
+        file_dest = extract_fname(fname_dest)[1]
+        shutil.copy(tmp_dir+'/warp_'+file_src+'2'+file_dest+'.nii.gz', path_warp+'/')
+        shutil.copy(tmp_dir + '/warp_'+file_dest+'2'+file_src+'.nii.gz', path_warp+'/')
     # remove tmp dir
+    shutil.rmtree(tmp_dir)
     # return res image
     return im_src_reg
+
+def apply_transfo(im_src, im_dest, warp, interp='spline'):
+    # create tmp dir and go in it
+    tmp_dir = tmp_create()
+    # copy warping field to tmp dir
+    shutil.copy(warp, tmp_dir)
+    warp = ''.join(extract_fname(warp)[1:])
+    # go to tmp dir
+    os.chdir(tmp_dir)
+    # save image and seg
+    fname_src = 'src.nii.gz'
+    im_src.setFileName(fname_src)
+    im_src.save()
+    fname_dest = 'dest.nii.gz'
+    im_dest.setFileName(fname_dest)
+    im_dest.save()
+    # apply warping field
+    fname_src_reg = add_suffix(fname_src, '_reg')
+    run('sct_apply_transfo -i '+fname_src+' -d '+fname_dest+' -w '+warp+' -x '+interp)
+    im_src_reg = Image(fname_src_reg)
+    # get out of tmp dir
+    os.chdir('..')
+    # remove tmp dir
+    shutil.rmtree(tmp_dir)
+    # return res image
+    return im_src_reg
+
 
 ########################################### End of processing function #############################################
 
@@ -381,7 +440,7 @@ def binarize(im, thr_min=None, thr_max=None):
     if thr_max is None and thr_min is not None:
         thr_max = thr_min
     if thr_min is None and thr_max is None:
-        thr_min = thr_max = max(im.data)/2
+        thr_min = thr_max = np.max(im.data)/2
     im_bin = im.copy()
     im_bin.data[im.data>=thr_max] = 1
     im_bin.data[im.data < thr_min] = 0
