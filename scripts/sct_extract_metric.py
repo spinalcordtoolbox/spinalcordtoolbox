@@ -263,7 +263,7 @@ def main(args=None):
         # TODO: check integrity of input
 
     # Extract label info
-    label_id, label_name, label_file = read_label_file(path_label, param.file_info_label, method)
+    label_id, label_name, label_file = read_label_file(path_label, param.file_info_label)
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
