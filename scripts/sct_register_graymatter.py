@@ -30,7 +30,7 @@ class Param:
 
 
 class MultiLabelRegistration:
-    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template2target, param=None, fname_warp_target2template=None):
+    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template, param=None, fname_warp_target2template=None):
         if param is None:
             self.param = Param()
         else:
@@ -42,13 +42,15 @@ class MultiLabelRegistration:
         self.im_template_wm = Image(self.path_template+'template/MNI-Poly-AMU_WM.nii.gz')
 
         # Previous warping fields:
-        self.fname_warp_template2target = fname_warp_template2target
+        self.fname_warp_template = fname_warp_template
         self.fname_warp_target2template = fname_warp_target2template
 
         # new warping fields:
         self.fname_warp_template2gm = ''
         self.fname_wwarp_gm2template = ''
 
+        self.fname_gm = fname_gm
+        self.fname_wm = fname_wm
 
     def register(self):
         # accentuate separation WM/GM
@@ -69,8 +71,8 @@ class MultiLabelRegistration:
 
         path_automatic_ml, file_automatic_ml, ext_automatic_ml = sct.extract_fname(fname_automatic_ml)
         path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
-        path_gm, file_gm, ext_gm = sct.extract_fname(fname_gm)
-        path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template2target)
+        path_gm, file_gm, ext_gm = sct.extract_fname(self.fname_gm)
+        path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template)
 
         im_automatic_ml.setFileName(fname_automatic_ml)
         im_template_ml.setFileName(fname_template_ml)
@@ -79,8 +81,8 @@ class MultiLabelRegistration:
         tmp_dir = sct.tmp_create()
 
         from sct_convert import convert
-        convert(fname_gm, tmp_dir+file_gm+ext_gm)
-        convert(fname_warp_template, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
+        convert(self.fname_gm, tmp_dir+file_gm+ext_gm)
+        convert(self.fname_warp_template, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
         if self.fname_warp_target2template is not None:
             path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(self.fname_warp_target2template)
             convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template)
@@ -479,10 +481,13 @@ def get_parser():
 
     return parser
 
+def main(args=None):
+    if not args:
+        args = sys.argv[1:]
 
-if __name__ == "__main__":
+    # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     ml_param = Param()
 
     fname_gm = arguments['-gm']
@@ -520,3 +525,7 @@ if __name__ == "__main__":
     ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg)
+
+
+if __name__ == "__main__":
+    main()

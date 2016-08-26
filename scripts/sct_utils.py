@@ -77,10 +77,12 @@ def run_old(cmd, verbose=1):
 def run(cmd, verbose=1, error_exit='error', raise_exception=False):
 
     cmd_list = cmd.split()
-    if cmd_list[0].startswith("sct"):
-            # and not cmd_list[0].startswith("sct_dice") \
-            # and not cmd_list[0].startswith("sct_strai") \
-            # and not cmd_list[0].startswith("sct_crop"):
+    if cmd_list[0].startswith("sct") and not cmd_list[0].startswith("sct_dice") \
+            and not cmd_list[0].startswith("sct_strai") \
+            and not cmd_list[0].startswith("sct_lab") \
+            and not cmd_list[0].startswith("sct_process_segmentation") \
+            and not cmd_list[0].startswith("sct_propse") \
+            and not cmd_list[0].startswith("sct_crop"):
         module_str = cmd_list[0]
         sct_args = cmd_list[1:]
         import importlib
