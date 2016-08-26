@@ -55,8 +55,12 @@ def add_suffix(fname, suffix):
     """
     # get index of extension. Here, we search from the end to avoid issue with folders that have ".nii" in their name.
     ind_nii = fname.rfind('.nii')
-    # return file name with suffix
-    return fname[:ind_nii] + suffix + fname[ind_nii:]
+    # in case no extension was found (i.e. only prefix was specified by user)
+    if ind_nii == -1:
+        return fname[:len(fname)] + suffix
+    else:
+        # return file name with suffix
+        return fname[:ind_nii] + suffix + fname[ind_nii:]
 
 
 
@@ -82,6 +86,8 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
             and not cmd_list[0].startswith("sct_lab") \
             and not cmd_list[0].startswith("sct_process_segmentation") \
             and not cmd_list[0].startswith("sct_propse") \
+            and not cmd_list[0].startswith("sct_register_to_template") \
+            and not cmd_list[0].startswith("sct_compute_hausdorff") \
             and not cmd_list[0].startswith("sct_crop"):
         module_str = cmd_list[0]
         sct_args = cmd_list[1:]

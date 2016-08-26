@@ -372,6 +372,7 @@ def get_parser():
                       mandatory=False)
     return parser
 
+
 def find_mask_boundaries(fname_mask):
     """
     Find boundaries of a mask, i.e., min and max indices of non-null voxels in all dimensions.
