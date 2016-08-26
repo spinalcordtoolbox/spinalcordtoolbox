@@ -17,6 +17,7 @@ import sys
 
 from numpy import zeros, ndarray, generic
 from nibabel import AnalyzeHeader
+from scipy.ndimage import map_coordinates
 
 from msct_parser import Parser
 from sct_utils import extract_fname
@@ -28,6 +29,9 @@ class Image(object):
 
     """
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
+        from numpy import zeros, ndarray, generic
+        from sct_utils import extract_fname
+        from nibabel import AnalyzeHeader
 
         # initialization of all parameters
         self.data = None
@@ -538,6 +542,7 @@ class Image(object):
 
         Example:
         img = Image('file.nii.gz')
+        coordi_pix = [[1,1,1]]   # for points: (1,1,1). N.B. Important to write [[x,y,z]] instead of [x,y,z]
         coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
         coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
 
@@ -546,10 +551,10 @@ class Image(object):
         from numpy import zeros, array, transpose, dot, asarray
 
         m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3,0:3]
-        coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
+        m_p2f_transfo = m_p2f[0:3, 0:3]
+        coord_origin = array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if coordi != None:
+        if not coordi is None:
             coordi_pix = transpose(asarray(coordi))
             coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))
             coordi_phys_list = coordi_phys.tolist()
@@ -612,6 +617,15 @@ class Image(object):
                                range(len(coordi_pix_tmp))]
 
             return coordi_pix_list
+
+    def get_values(self, coordi=None, interpolation_mode=0):
+        """
+        This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
+        :param coordi: continuouspix
+        :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
+        :return: intensity values at continuouspix with interpolation_mode
+        """
+        return map_coordinates(self.data, coordi, order=interpolation_mode)
 
     def get_slice(self, plane='sagittal', index=None, seg=None):
         """
