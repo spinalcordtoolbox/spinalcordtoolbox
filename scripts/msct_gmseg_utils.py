@@ -333,8 +333,8 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
 
             sct.run(cmd_reg, verbose=verbose)
 
-#            sct.run('cp ' + mat_name + ' ../' + path + transfo_dir + '/'+transfo_name, verbose=verbose)
-            shutil.copy2(mat_name, '../{0}{1}/{2}'.format(path, transfo_dir, transfo_name))
+            sct.run('cp ' + mat_name + ' ../' + path + transfo_dir + '/'+transfo_name, verbose=verbose)
+            # shutil.copy2(mat_name, '../{0}{1}/{2}'.format(path, transfo_dir, transfo_name))
             if 'SyN' in transfo_type:
                 sct.run('cp ' + inverse_mat_name + ' ../' + path + transfo_dir + '/'+transfo_name + '_inversed',
                         verbose=verbose)
