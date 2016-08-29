@@ -21,6 +21,10 @@ from sct_utils import printv, slash_at_the_end
 from msct_gmseg_utils_NEW import pre_processing, register_data, apply_transfo, normalize_slice
 from msct_image import Image
 
+########################################################################################################################
+#                                                 PARAM CLASSES
+########################################################################################################################
+
 class ModelParam:
     def __init__(self):
         self.path_data = ''
@@ -30,6 +34,10 @@ class ModelParam:
         self.k_pca = 0.8
         self.n_compo_iso = 'half' #'half' or int indicating the actual number of components to keep
         self.n_neighbors_iso = 5
+        #
+        path_script = os.path.dirname(__file__)
+        path_sct = os.path.dirname(path_script)
+        self.path_model_to_load = path_sct + '/data/gm_model'
 
     def __repr__(self):
         info = 'Model Param:\n'
@@ -65,6 +73,9 @@ class Param:
     def __init__(self):
         self.verbose = 1
 
+########################################################################################################################
+#                                           CLASS MODEL
+########################################################################################################################
 class Model:
     def __init__(self, model_param=None, data_param=None, param=None):
         self.model_param = model_param if model_param is not None else ModelParam()
@@ -78,6 +89,10 @@ class Model:
         self.fitted_model = None # PCA or Isomap model
         self.fitted_data = None
 
+
+    # ------------------------------------------------------------------------------------------------------------------
+    #                                       FUNCTIONS USED TO COMPUTE THE MODEL
+    # ------------------------------------------------------------------------------------------------------------------
     def compute_model(self):
         printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
         os.mkdir(self.model_param.new_model_dir)
@@ -103,7 +118,7 @@ class Model:
         self.save_model()
         ### TODO: add compute_beta / compute tau ??
 
-
+    # ------------------------------------------------------------------------------------------------------------------
     def average_wm(self, model_space=True):
         # compute mean WM image
         list_wm = []
@@ -118,6 +133,7 @@ class Model:
         data_mean_wm = np.mean(list_wm, axis=0)
         return data_mean_wm
 
+    # ------------------------------------------------------------------------------------------------------------------
     def load_model_data(self):
         '''
         Data should be organized with one folder per subject containing:
@@ -156,6 +172,7 @@ class Model:
 
                 j += len(list_slices_sub)
 
+    # ------------------------------------------------------------------------------------------------------------------
     def coregister_model_data(self):
         # compute mean WM image
         data_mean_wm = self.average_wm(model_space=False)
@@ -200,6 +217,7 @@ class Model:
             shutil.rmtree(warp_dir)
 
 
+    # ------------------------------------------------------------------------------------------------------------------
     def normalize_model_data(self):
         # get the id of the slices by vertebral level
         id_by_level = {}
@@ -252,6 +270,7 @@ class Model:
             dic_slice.set(im_m=norm_im_M)
 
 
+    # ------------------------------------------------------------------------------------------------------------------
     def compute_reduced_space(self):
         model = None
         model_data =  np.asarray([dic_slice.im_M.flatten() for dic_slice in self.slices])
@@ -275,6 +294,7 @@ class Model:
         # save model after bing fitted to data
         self.fitted_model = model
 
+    # ------------------------------------------------------------------------------------------------------------------
     def save_model(self):
         os.chdir(self.model_param.new_model_dir)
         ## to save:
@@ -294,33 +314,29 @@ class Model:
 
         os.chdir('..')
 
+    # ----------------------------------- END OF FUNCTIONS USED TO COMPUTE THE MODEL -----------------------------------
 
+    # ------------------------------------------------------------------------------------------------------------------
+    #                                       FUNCTIONS USED TO LOAD THE MODEL
+    # ------------------------------------------------------------------------------------------------------------------
+    def save_model(self):
+        path = os.path.abspath('.')
+        os.chdir(self.model_param.path_model_to_load)
+        ##   - self.slices = dictionary
+        self.slices = pickle.load(gzip.open('slices.pklz',  'rb'))
 
-    '''
-    ## REGISTRATION WITH IMAGES FIRST, THEN APPLY TO GM/WM SEG
-    def coregister_data(self):
-        im_mean_image = Image(param=self.mean_image)
-        for dic_slice in self.slices:
-            # create a directory to get the warping fields
-            warp_dir = 'warping_fields_slice'+str(dic_slice.id)
-            os.mkdir(warp_dir)
-            # get dic image
-            im_dic_slice = Image(param=dic_slice.im)
-            # register image
-            im_reg = register_data(im_src=im_dic_slice, im_dest=im_mean_image, param_reg=self.data_param.register_param, path_warp=warp_dir)
-            # use warping fields to register gm seg
-            list_gmseg_reg = []
-            for gm_seg in dic_slice.gm_seg:
-                im_gmseg = Image(param=gm_seg)
-                im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean_image, warp=warp_dir+'/warp_src2dest.nii.gz')
-                list_gmseg_reg.append(im_gmseg_reg.data)
-            # set slie attributes with data registered into the model space
-            dic_slice.set(im_m=im_reg.data)
-            dic_slice.set(gm_seg_m=list_gmseg_reg)
-            # remove warping fields directory
-            shutil.rmtree(warp_dir)
-    '''
+        ##   - self.intensities = for normalization
+        self.intensities = pickle.load(gzip.open('intensities.pklz', 'rb'))
 
+        ##   - reduced space (pca or isomap)
+        self.fitted_model = pickle.load(gzip.open('fitted_model.pklz', 'rb'))
+
+        ##   - fitted data (=eigen vectors or embedding vectors )
+        self.fitted_data = pickle.load(gzip.open('fitted_data.pklz', 'rb'))
+
+        ##   - tau value --> still needed ?
+
+        os.chdir(path)
 
 
 
