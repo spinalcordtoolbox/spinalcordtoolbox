@@ -11,6 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+#TODO: regularize transformations across z
 
 # Import common Python libraries
 import os
@@ -91,6 +92,11 @@ sct.run('sct_maths -i wmgm_ext.nii.gz -bin 0.5 -o wmgm_ext.nii.gz')
 #sct.run('sct_register_multimodal -i wmgm_ext.nii.gz -d cord.nii.gz -iseg wmgm_ext.nii.gz -dseg cord.nii.gz -param step=1,type=im,algo=bsplinesyn,iter=10,slicewise=1,metric=MeanSquares -x linear -r 0')
 sct.run('sct_register_multimodal -i wmgm_ext.nii.gz -d cord.nii.gz -iseg wmgm_ext.nii.gz -dseg cord.nii.gz -param step=1,type=im,algo=affine,iter=100,slicewise=1,metric=MeanSquares,smooth=1:step=2,type=im,algo=bsplinesyn,iter=5,slicewise=1,metric=MeanSquares,smooth=1 -x linear -r 0')
 sct.run('sct_apply_transfo -i wm_ext.nii.gz -d cord.nii.gz -w warp_wmgm_ext2cord.nii.gz -x linear')
+
+# regularize along S-I direction
+
+# symmetrize
+
 
 # crop below a certain point
 sct.run('sct_crop_image -i wm_ext_reg.nii.gz -dim 2 -start 62 -end 1099 -b 0 -o wm_ext_reg_crop.nii.gz')
