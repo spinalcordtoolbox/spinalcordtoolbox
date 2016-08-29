@@ -295,7 +295,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
                 os.makedirs(path + transfo_dir)
             except OSError:
                 pass
-        dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S") + '_' + str(time.time())
+        dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S") + '_' + str(time.time())+'/'
         sct.run('mkdir ' + dir_name, verbose=verbose)
         os.chdir('./' + dir_name)
 
