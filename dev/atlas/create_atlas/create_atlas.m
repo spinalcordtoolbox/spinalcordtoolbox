@@ -105,7 +105,7 @@ elseif strcmp(which_template, 'PAM50')
     % NB: 238=WM, 255=CSF (added by jcohen on 2014-12-08)
     % these are the value corresponding to the slice number (z) on the template, at which the atlas will be warped. It corresponds to the levels of the intervertebral disks.
     % NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template
-    z_disks_mid = [151 185 246 301 355 409 460 509 557 601 641 682 721 757 789 823 855 891 921 945];
+    z_disks_mid = [82 151 185 246 301 355 409 460 509 557 601 641 682 721 757 789 823 855 891 921 945 993];
 end
 
 %--------------------------------------------------------------------------
@@ -788,14 +788,10 @@ for label = 1:length(label_values)
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 end
 
-%% Create global WM and GM atlases
-% Build global WM atlas
+%% Build global WM atlas
 description = {'WM'};
 global_suffix = '_wm';
 tract_global = zeros(size(tracts{1}));
-description = {'WM', 'GM'};
-global_suffix = '_cord';
-tract_global = zeros(size(tracts{1}));
 for ilabel = 1:length(struct_label)
     for idescription = 1:length(description)
         if findstr(struct_label{ilabel}.description,description{idescription})
@@ -821,13 +817,10 @@ disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(re
 cmd = [fsloutputype 'fslcpgeom ', path_template, file_template, ' ', filetractML];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
-% Build global GM atlas
+%% Build global GM atlas
 description = {'GM'};
 global_suffix = '_gm';
 tract_global = zeros(size(tracts{1}));
-description = {'WM', 'GM'};
-global_suffix = '_cord';
-tract_global = zeros(size(tracts{1}));
 for ilabel = 1:length(struct_label)
     for idescription = 1:length(description)
         if findstr(struct_label{ilabel}.description,description{idescription})
@@ -853,7 +846,7 @@ disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(re
 cmd = [fsloutputype 'fslcpgeom ', path_template, file_template, ' ', filetractML];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
-% Build global cord atlas
+%% Build global cord atlas
 description = {'WM', 'GM'};
 global_suffix = '_cord';
 tract_global = zeros(size(tracts{1}));
@@ -894,7 +887,7 @@ fprintf(fid,'# White matter atlas. Generated on: %s\n',date);
 fprintf(fid,'# ID, name, file\n');
 % loop across tracts
 for label = 1:length(struct_label)
-    numlabel = sprintf('%02d',str2num(struct_label{i}.id));
+    numlabel = sprintf('%02d',str2num(struct_label{label}.id));
     fprintf(fid,'%s, %s, %s\n',struct_label{label}.id, struct_label{label}.description, [prefix_out,'_',numlabel,ext]);
 end
 % add combined labels
@@ -907,26 +900,6 @@ fprintf(fid,'52, dorsal columns, 0:3\n');
 fprintf(fid,'53, lateral funiculi, 4:13\n');
 fprintf(fid,'54, ventral funiculi, 14:29\n');
 fclose(fid);
-
-%% Create global WM and GM atlases
-cmd = ['mkdir ',path_out,folder_final,'temp_wm'];
-disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
-cd([path_out,folder_final,'temp_wm']);
-% copy all WM files atlas
-cmd = ['cp ../*.nii.gz .'];
-disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
-% remove first one
-cmd = ['rm ',which_template,'_atlas_00.nii.gz'];
-disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
-% sum all WM tracts
-cmd = ['sct_maths -i ../PAM50_atlas_00.nii.gz -add *.nii.gz -o ',which_template,'_wm.nii.gz'];
-disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
-% copy file and delete temp folder
-cmd = ['cp ',which_template,'_wm.nii.gz ../'];
-disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
-cd('../')
-cmd = ['rm -rf temp_wm'];
-disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
 
 %% FINISHED!
