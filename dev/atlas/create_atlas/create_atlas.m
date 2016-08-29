@@ -55,7 +55,7 @@ addpath(path_fsl_matlab);
 % define SCT path
 path_sct = '/Users/julien/code/spinalcordtoolbox/';
 % define path of template
-path_template = '/Users/julien/data/PAM50/template/';
+path_template = '/Users/julien/data/sct_dev/PAM50/template/';
 % name of the WM template. Don't put extension.
 file_template = 'PAM50_wm';  % PAM50_WM
 
@@ -276,10 +276,18 @@ end
 %--------------------------------------------------------------------------
 % Initial registration of the atlas to the reference slice of the template
 
+% write initialization affine transfo (empirically found)
+fid=fopen('affine_init.txt','w');
+fprintf(fid, '#Insight Transform File V1.0\n');
+fprintf(fid, '#Transform 0\n');
+fprintf(fid, 'Transform: AffineTransform_double_2_2\n');
+fprintf(fid, 'Parameters: 2 0 0 2 10 -7\n');
+fprintf(fid, 'FixedParameters: 0 -1.5\n');
+fclose(fid);
 
 % estimate affine transformation from atlas to template
 % here, using flag -r 0 to initialize transformations based on geometrical center of images
-cmd = ['isct_antsRegistration --dimensionality 2 -m MeanSquares[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,4] -t Affine[1] --convergence 100x10 -s 0x0 -f 2x1 -r [' templateci_slice_ref_thresh ext ',' mask_nohd ext ', 0] -o [Affine,' mask_nohd '_affine' ext ']'];
+cmd = ['isct_antsRegistration --dimensionality 2 -m MeanSquares[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,4] -t Affine[1] --convergence 100x100 -s 1x1 -f 2x1 -r affine_init.txt -o [Affine,' mask_nohd '_affine' ext ']'];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
 
 % estimate diffeomorphic transformation
