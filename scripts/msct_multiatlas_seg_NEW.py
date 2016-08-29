@@ -319,7 +319,7 @@ class Model:
     # ------------------------------------------------------------------------------------------------------------------
     #                                       FUNCTIONS USED TO LOAD THE MODEL
     # ------------------------------------------------------------------------------------------------------------------
-    def save_model(self):
+    def load_model(self):
         path = os.path.abspath('.')
         os.chdir(self.model_param.path_model_to_load)
         ##   - self.slices = dictionary
