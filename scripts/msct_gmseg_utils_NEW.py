@@ -66,19 +66,19 @@ class Slice:
         if slice_id is not None:
             self.id = slice_id
         if im is not None:
-            self.im = im
+            self.im = np.asarray(im)
         if gm_seg is not None:
-            self.gm_seg = gm_seg
+            self.gm_seg = np.asarray(gm_seg)
         if wm_seg is not None:
-            self.wm_seg = wm_seg
+            self.wm_seg = np.asarray(wm_seg)
         if reg_to_m is not None:
             self.reg_to_M = reg_to_m
         if im_m is not None:
-            self.im_M = im_m
+            self.im_M = np.asarray(im_m)
         if gm_seg_m is not None:
-            self.gm_seg_M = gm_seg_m
+            self.gm_seg_M = np.asarray(gm_seg_m)
         if wm_seg_m is not None:
-            self.wm_seg_M = wm_seg_m
+            self.wm_seg_M = np.asarray(wm_seg_m)
         if level is not None:
             self.level = level
 
@@ -276,7 +276,29 @@ def load_level(list_slices_target, fname_level):
         list_type_level = []  # True or int, False for float
         for line in lines_level[1:]:
             i_slice, level = line.split(',')
-            i_slice, level = int(i_slice), float(level)
+
+            # correct level value
+            for c in [' ', '\n', '\r', '\t']:
+                level = level.replace(c, '')
+
+            try:
+                level = float(level)
+            except Exception, e:
+                # adapt if level value is not unique
+                if len(level) > 2:
+                    l1 = l2 = 0
+                    if '-' in level:
+                        l1, l2 = level.split('-')
+                    elif '/' in level:
+                        l1, l2 = level.split('/')
+                    # convention = the vertebral disk between two levels belong to the lower level (C2-C3 = C3)
+                    level = max(float(l1), float(l2))
+                else:
+                    # level unrecognized
+                    level = 0
+
+            i_slice = int(i_slice)
+
             list_type_level.append(int(level) == level)
             list_level_by_slice.append((i_slice, level))
 
@@ -347,7 +369,7 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
 ########################################################################################################################
 #                               FUNCTIONS USED FOR PROCESSING DATA (data model and data to segment)
 ########################################################################################################################
-def register_data(im_src, im_dest, param_reg, path_warp=None):
+def register_data(im_src, im_dest, param_reg, path_copy_warp=None):
     '''
 
     Parameters
@@ -355,7 +377,7 @@ def register_data(im_src, im_dest, param_reg, path_warp=None):
     im_src: class Image: source image
     im_dest: class Image: destination image
     param_reg: str: registration parameter
-    path_warp: path: path to copy the warping fields
+    path_copy_warp: path: path to copy the warping fields
 
     Returns: im_src_reg: class Image: source image registered on destination image
     -------
@@ -389,16 +411,18 @@ def register_data(im_src, im_dest, param_reg, path_warp=None):
     # get out of tmp dir
     os.chdir('..')
     # copy warping fields
-    if path_warp is not None and os.path.isdir(os.path.abspath(path_warp)):
-        path_warp = os.path.abspath(path_warp)
+    if path_copy_warp is not None and os.path.isdir(os.path.abspath(path_copy_warp)):
+        path_copy_warp = os.path.abspath(path_copy_warp)
         file_src = extract_fname(fname_src)[1]
         file_dest = extract_fname(fname_dest)[1]
-        shutil.copy(tmp_dir+'/warp_'+file_src+'2'+file_dest+'.nii.gz', path_warp+'/')
-        shutil.copy(tmp_dir + '/warp_'+file_dest+'2'+file_src+'.nii.gz', path_warp+'/')
+        fname_src2dest = 'warp_' + file_src +'2' + file_dest +'.nii.gz'
+        fname_dest2srd = 'warp_' + file_dest +'2' + file_src +'.nii.gz'
+        shutil.copy(tmp_dir +'/' + fname_src2dest, path_copy_warp + '/')
+        shutil.copy(tmp_dir + '/' + fname_dest2srd, path_copy_warp + '/')
     # remove tmp dir
     shutil.rmtree(tmp_dir)
     # return res image
-    return im_src_reg
+    return im_src_reg, fname_src2dest, fname_dest2srd
 
 def apply_transfo(im_src, im_dest, warp, interp='spline'):
     # create tmp dir and go in it
@@ -426,6 +450,47 @@ def apply_transfo(im_src, im_dest, warp, interp='spline'):
     # return res image
     return im_src_reg
 
+def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, min=None, max=None):
+    '''
+    Function to normalize the intensity of data to the GM and WM values given by val_gm and val_wm.
+    All parameters are arrays
+    Parameters
+    ----------
+    data : ndarray: data to normalized
+    data_gm : ndarray: data to get slice GM value from
+    data_wm : ndarray: data to get slice WM value from
+    val_gm : GM value to normalize data on
+    val_wm : WM value to normalize data on
+
+    Returns
+    -------
+    '''
+    assert data.shape == data_gm[0].shape, "Data to normalized and GM data do not have the same shape."
+    assert data.shape == data_wm[0].shape, "Data to normalized and WM data do not have the same shape."
+
+    # put almost zero background to zero
+    data[data < 0.0001] = 0
+
+    # get GM and WM values in slice
+    med_data_gm = np.mean([np.median(data[gm==1])for gm in data_gm])
+    med_data_wm = np.mean([np.median(data[wm==1])for wm in data_wm])
+    std_data = np.std(data)
+
+    # compute normalized data
+    # if median values are too close: use min and max to normalize data
+    if abs(med_data_gm - med_data_wm) < std_data and None not in [min, max]:
+        min_data = np.min(data.flatten())
+        max_data = np.max(data.flatten())
+        new_data = ((data - min_data) * (max - min) / (max_data - min_data)) + min
+    # else (=normal data): use median values to normalize data
+    else:
+        new_data = ((data - med_data_wm) * (val_gm - val_wm) / (med_data_gm - med_data_wm)) + val_wm
+
+    # put almost zero background to zero
+    new_data[new_data < 0.0001] = 0  # put at 0 the background
+
+    # return normalized data
+    return new_data
 
 ########################################### End of processing function #############################################
 
