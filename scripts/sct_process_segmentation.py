@@ -43,7 +43,7 @@ class Param:
         self.remove_temp_files = 1
         self.smoothing_param = 0  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
-        self.name_method = 'counting_z_plane'  # for compute_CSA
+        # self.name_method = 'counting_z_plane'  # for compute_CSA
         self.slices = ''
         self.vertebral_levels = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
@@ -135,12 +135,14 @@ def get_parser():
                       default_value='counting_z_plane',
                       deprecated_by='-method',
                       example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    '''
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description='Method to compute CSA',
                       mandatory=False,
                       default_value='counting_z_plane',
                       example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    '''
     parser.add_option(name='-r',
                       type_value='multiple_choice',
                       description= 'Removes the temporary folder and debug folder used for the algorithm at the end of execution',
@@ -191,7 +193,7 @@ def main(args):
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
     processes = ['centerline', 'csa', 'length']
     method_CSA = ['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane']
-    name_method = param.name_method
+    # name_method = param.name_method
     verbose = param.verbose
     start_time = time.time()
     remove_temp_files = param.remove_temp_files
@@ -213,8 +215,8 @@ def main(args):
         output_prefix = ''
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
-    if '-method' in arguments:
-        name_method = arguments['-method']
+    # if '-method' in arguments:
+    #     name_method = arguments['-method']
     if '-vert' in arguments:
         vert_lev = arguments['-vert']
     if '-r' in arguments:
@@ -236,12 +238,12 @@ def main(args):
             angle_correction = True
 
     # display usage if incorrect method
-    if name_process == 'csa' and (name_method not in method_CSA):
-        sct.printv(parser.usage.generate(error='ERROR: wrong method for CSA process'))
-
-    # display usage if no method provided
-    if name_process == 'csa' and method_CSA == '':
-        sct.printv(parser.usage.generate(error='ERROR: no method for CSA process'))
+    # if name_process == 'csa' and (name_method not in method_CSA):
+    #     sct.printv(parser.usage.generate(error='ERROR: wrong method for CSA process'))
+    #
+    # # display usage if no method provided
+    # if name_process == 'csa' and method_CSA == '':
+    #     sct.printv(parser.usage.generate(error='ERROR: no method for CSA process'))
 
     # update fields
     param.verbose = verbose
@@ -462,7 +464,6 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 # compute_csa
 # ==========================================================================================
 def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, angle_correction=True):
-
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
@@ -497,8 +498,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
     min_z_index, max_z_index = min(Z), max(Z)
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
-    z_centerline_scaled = [x*pz for x in z_centerline]
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose)
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -538,6 +538,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         if verbose == 2:
             import matplotlib.pyplot as plt
             plt.figure()
+            z_centerline_scaled = [x * pz for x in z_centerline]
             pltx, = plt.plot(z_centerline_scaled, csa, 'bo')
             pltx_fit, = plt.plot(z_centerline_scaled, csa_smooth, 'r', linewidth=2)
             plt.title("Cross-sectional area (CSA)")
