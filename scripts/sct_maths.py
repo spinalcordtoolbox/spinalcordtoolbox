@@ -69,7 +69,8 @@ def get_parser():
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
     parser.add_option(name="-bin",
-                      description='Use (input image>0) to binarise.',
+                      type_value='float',
+                      description='Binarize image using specified threshold. E.g. -bin 0.5',
                       mandatory=False)
 
     parser.usage.addSection("\nThresholding methods:")
@@ -188,7 +189,8 @@ def main(args = None):
         data_out = perc(data, param)
 
     elif '-bin' in arguments:
-        data_out = binarise(data)
+        bin_thr = arguments['-bin']
+        data_out = binarise(data, bin_thr=bin_thr)
 
     elif '-add' in arguments:
         from numpy import sum
@@ -340,8 +342,8 @@ def perc(data, perc_value):
     return data > perc
 
 
-def binarise(data):
-    return data > 0
+def binarise(data, bin_thr=0):
+    return data > bin_thr
 
 
 def dilate(data, radius):
