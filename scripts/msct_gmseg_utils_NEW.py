@@ -27,7 +27,7 @@ class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
-    def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
+    def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
         """
         Slice constructor
         :param slice_id: slice ID number, type: int
@@ -44,13 +44,12 @@ class Slice:
         self.im = im
         self.gm_seg = gm_seg
         self.wm_seg = wm_seg
-        self.reg_to_M = reg_to_m
         self.im_M = im_m
         self.gm_seg_M = gm_seg_m
         self.wm_seg_M = wm_seg_m
         self.level = level
 
-    def set(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
+    def set(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
         """
         Slice setter, only the specified parameters are set
         :param slice_id: slice ID number, type: int
@@ -71,8 +70,6 @@ class Slice:
             self.gm_seg = np.asarray(gm_seg)
         if wm_seg is not None:
             self.wm_seg = np.asarray(wm_seg)
-        if reg_to_m is not None:
-            self.reg_to_M = reg_to_m
         if im_m is not None:
             self.im_M = np.asarray(im_m)
         if gm_seg_m is not None:
@@ -130,7 +127,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # interpolate image to reference square image (resample and square crop centered on SC)
     printv('\n\tInterpolate data to the model space ...', verbose, 'normal')
     list_im_slices = interpolate_im_to_ref(im_target_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
-    original_info['interpolated_images'] = list_im_slices
+    original_info['interpolated_images'] = list_im_slices # not Slice() objects
 
     # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy
     if denoising:
@@ -416,13 +413,13 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None):
         file_src = extract_fname(fname_src)[1]
         file_dest = extract_fname(fname_dest)[1]
         fname_src2dest = 'warp_' + file_src +'2' + file_dest +'.nii.gz'
-        fname_dest2srd = 'warp_' + file_dest +'2' + file_src +'.nii.gz'
+        fname_dest2src = 'warp_' + file_dest +'2' + file_src +'.nii.gz'
         shutil.copy(tmp_dir +'/' + fname_src2dest, path_copy_warp + '/')
-        shutil.copy(tmp_dir + '/' + fname_dest2srd, path_copy_warp + '/')
+        shutil.copy(tmp_dir + '/' + fname_dest2src, path_copy_warp + '/')
     # remove tmp dir
     shutil.rmtree(tmp_dir)
     # return res image
-    return im_src_reg, fname_src2dest, fname_dest2srd
+    return im_src_reg, fname_src2dest, fname_dest2src
 
 def apply_transfo(im_src, im_dest, warp, interp='spline'):
     # create tmp dir and go in it
