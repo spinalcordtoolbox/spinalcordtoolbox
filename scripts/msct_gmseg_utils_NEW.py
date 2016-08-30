@@ -450,6 +450,29 @@ def apply_transfo(im_src, im_dest, warp, interp='spline'):
     # return res image
     return im_src_reg
 
+
+# ------------------------------------------------------------------------------------------------------------------
+def average_gm_wm(list_of_slices, model_space=True):
+    # compute mean GM and WM image
+    list_gm = []
+    list_wm = []
+    for dic_slice in list_of_slices:
+        if model_space:
+            for wm in dic_slice.wm_seg_M:
+                list_wm.append(wm)
+            for gm in dic_slice.gm_seg_M:
+                list_gm.append(gm)
+        else:
+            for wm in dic_slice.wm_seg:
+                list_wm.append(wm)
+            for gm in dic_slice.gm_seg:
+                list_gm.append(gm)
+
+    data_mean_gm = np.mean(list_gm, axis=0)
+    data_mean_wm = np.mean(list_wm, axis=0)
+    return data_mean_gm, data_mean_wm
+
+
 def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, min=None, max=None):
     '''
     Function to normalize the intensity of data to the GM and WM values given by val_gm and val_wm.
