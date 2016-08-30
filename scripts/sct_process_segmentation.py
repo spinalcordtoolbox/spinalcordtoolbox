@@ -462,7 +462,6 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 # compute_csa
 # ==========================================================================================
 def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, angle_correction=True):
-
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
@@ -497,8 +496,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
     min_z_index, max_z_index = min(Z), max(Z)
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
-    z_centerline_scaled = [x*pz for x in z_centerline]
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose)
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -538,6 +536,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         if verbose == 2:
             import matplotlib.pyplot as plt
             plt.figure()
+            z_centerline_scaled = [x * pz for x in z_centerline]
             pltx, = plt.plot(z_centerline_scaled, csa, 'bo')
             pltx_fit, = plt.plot(z_centerline_scaled, csa_smooth, 'r', linewidth=2)
             plt.title("Cross-sectional area (CSA)")
