@@ -56,6 +56,7 @@ class ParamData:
     def __init__(self):
         self.denoising = True
         self.axial_res = 0.3
+        self.square_size_size_mm = 22.5
         self.register_param = 'step=1,type=seg,algo=columnwise,metric=MeanSquares,smooth=5,iter=1:step=2,type=im,algo=syn,smooth=2,metric=MI,iter=4:step=3,iter=0'
         self.normalization = True
 
@@ -63,6 +64,7 @@ class ParamData:
         info = 'Data Param:\n'
         info += '\t- denoising: ' + str(self.denoising)+'\n'
         info += '\t- resampling to an axial resolution of: ' + str(self.axial_res)+'mm\n'
+        info += '\t- size of the square mask: ' + str(self.square_size_size_mm)+'mm\n'
         info += '\t- registration parameters: '+self.register_param+'\n'
         info += '\t- intensity normalization: ' + str(self.normalization)+'\n'
 
@@ -96,7 +98,7 @@ class Model:
         printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
         # create model folder
         if os.path.exists(self.param_model.new_model_dir):
-            shutil.move(self.param_model.new_model_dir, slash_at_the_end(self.param_model.new_model_dir, slash=False) + '_old')
+            shutil.move(self.param_model.new_model_dir, slash_at_the_end(self.param_model.new_model_dir, slash=0) + '_old')
         os.mkdir(self.param_model.new_model_dir)
         # write model info
         param_fic = open(self.param_model.new_model_dir + 'info.txt', 'w')
@@ -153,7 +155,7 @@ class Model:
                         fname_level = path_data+sub+'/'+file_name
 
                 # preprocess data
-                list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, denoising=self.param_data.denoising)
+                list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm,  denoising=self.param_data.denoising)
                 for slice_sub in list_slices_sub:
                     slice_sub.set(slice_id=slice_sub.id+j)
                     self.slices.append(slice_sub)
@@ -310,6 +312,7 @@ class Model:
     # ------------------------------------------------------------------------------------------------------------------
     def load_model(self):
         path = os.path.abspath('.')
+        printv('\nLoading model ...', self.param.verbose, 'normal')
         os.chdir(self.param_model.path_model_to_load)
         ##   - self.slices = dictionary
         self.slices = pickle.load(gzip.open('slices.pklz',  'rb'))
@@ -327,6 +330,29 @@ class Model:
         ##   - tau value --> still needed ?
 
         os.chdir(path)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    #                                                   UTILS FUNCTIONS
+    # ------------------------------------------------------------------------------------------------------------------
+    def get_gm_wm_by_level(self):
+        gm_seg_model = {}  # dic of mean gm seg by vertebral level
+        wm_seg_model = {}  # dic of mean wm seg by vertebral level
+        # get id of the slices by level
+        slices_by_level = {}
+        for dic_slice in self.slices:
+            level_int = int(round(dic_slice.level))
+            if level_int not in slices_by_level.keys():
+                slices_by_level[level_int] = [dic_slice]
+            else:
+                slices_by_level[level_int].append(dic_slice)
+        # get average gm and wm by level
+        for level, list_slices in slices_by_level.items():
+            data_mean_gm, data_mean_wm = average_gm_wm(list_slices)
+            gm_seg_model[level] = data_mean_gm
+            wm_seg_model[level] = data_mean_wm
+
+        return gm_seg_model, wm_seg_model
+
 
 
 
