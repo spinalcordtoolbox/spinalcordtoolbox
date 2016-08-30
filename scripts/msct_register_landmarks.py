@@ -55,6 +55,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     # coord_dest = im_dest.getNonZeroCoordinates(sorting='value')
     coord_dest = im_dest.getCoordinatesAveragedByValue()
     # Reorganize landmarks
+
     points_fixed, points_moving = [], []
     for coord in coord_src:
         point_straight = im_src.transfo_pix2phys([[coord.x, coord.y, coord.z]])
@@ -70,6 +71,10 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     # display
     sct.printv('Labels src: ' + str(points_moving), verbose)
     sct.printv('Labels dest: ' + str(points_fixed), verbose)
+
+    if len(coord_src) != len(coord_dest):
+        raise Exception('Error: number of source and destination landmarks are not the same, so landmarks cannot be paired.')
+
     # check if landmarks match pairwise
     # TODO
     (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_moving, points_fixed, constraints=dof, verbose=verbose)
