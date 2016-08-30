@@ -152,11 +152,11 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-max-area",
                       type_value="float",
-                      description="[mm^2], stop condition: maximum cross-sectional area, default is 120 mm^2",
+                      description="[mm^2], stop condition: maximum cross-sectional area, default is 120",
                       mandatory=False)
     parser.add_option(name="-max-deformation",
                       type_value="float",
-                      description="[mm], stop condition: maximum deformation per iteration, default is 2.5 mm",
+                      description="[mm], stop condition: maximum deformation per iteration, default is 2.5",
                       mandatory=False)
     parser.add_option(name="-min-contrast",
                       type_value="float",
