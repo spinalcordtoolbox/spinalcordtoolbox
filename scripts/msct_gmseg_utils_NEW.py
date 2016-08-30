@@ -97,7 +97,7 @@ class Slice:
 #                               FUNCTIONS USED FOR PRE-PROCESSING
 ########################################################################################################################
 # ----------------------------------------------------------------------------------------------------------------------
-def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1):
+def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1, rm_tmp=True):
     printv('\nPre-processing data ...', verbose, 'normal')
 
     tmp_dir = 'tmp_preprocessing_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)) + '/'
@@ -167,8 +167,9 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm)
 
     os.chdir('..')
-    # remove tmp folder
-    shutil.rmtree(tmp_dir)
+    if rm_tmp:
+        # remove tmp folder
+        shutil.rmtree(tmp_dir)
     printv('\nPre-processing done!', verbose, 'normal')
     return list_slices_target, original_info
 
@@ -366,7 +367,7 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
 ########################################################################################################################
 #                               FUNCTIONS USED FOR PROCESSING DATA (data model and data to segment)
 ########################################################################################################################
-def register_data(im_src, im_dest, param_reg, path_copy_warp=None):
+def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     '''
 
     Parameters
@@ -416,12 +417,13 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None):
         fname_dest2src = 'warp_' + file_dest +'2' + file_src +'.nii.gz'
         shutil.copy(tmp_dir +'/' + fname_src2dest, path_copy_warp + '/')
         shutil.copy(tmp_dir + '/' + fname_dest2src, path_copy_warp + '/')
-    # remove tmp dir
-    shutil.rmtree(tmp_dir)
+    if rm_tmp:
+        # remove tmp dir
+        shutil.rmtree(tmp_dir)
     # return res image
     return im_src_reg, fname_src2dest, fname_dest2src
 
-def apply_transfo(im_src, im_dest, warp, interp='spline'):
+def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     # create tmp dir and go in it
     tmp_dir = tmp_create()
     # copy warping field to tmp dir
@@ -442,8 +444,9 @@ def apply_transfo(im_src, im_dest, warp, interp='spline'):
     im_src_reg = Image(fname_src_reg)
     # get out of tmp dir
     os.chdir('..')
-    # remove tmp dir
-    shutil.rmtree(tmp_dir)
+    if rm_tmp:
+        # remove tmp dir
+        shutil.rmtree(tmp_dir)
     # return res image
     return im_src_reg
 
