@@ -18,14 +18,14 @@ import pandas as pd
 import pickle, gzip
 from sklearn import manifold, decomposition
 from sct_utils import printv, slash_at_the_end
-from msct_gmseg_utils_NEW import pre_processing, register_data, apply_transfo, normalize_slice
+from msct_gmseg_utils_NEW import pre_processing, register_data, apply_transfo, average_gm_wm, normalize_slice
 from msct_image import Image
 
 ########################################################################################################################
 #                                                 PARAM CLASSES
 ########################################################################################################################
 
-class ModelParam:
+class ParamModel:
     def __init__(self):
         self.path_data = ''
         self.todo = 'load'# 'compute' or 'load'
@@ -52,7 +52,7 @@ class ModelParam:
 
         return info
 
-class DataParam:
+class ParamData:
     def __init__(self):
         self.denoising = True
         self.axial_res = 0.3
@@ -66,7 +66,6 @@ class DataParam:
         info += '\t- registration parameters: '+self.register_param+'\n'
         info += '\t- intensity normalization: ' + str(self.normalization)+'\n'
 
-
         return info
 
 class Param:
@@ -77,9 +76,9 @@ class Param:
 #                                           CLASS MODEL
 ########################################################################################################################
 class Model:
-    def __init__(self, model_param=None, data_param=None, param=None):
-        self.model_param = model_param if model_param is not None else ModelParam()
-        self.data_param = data_param if data_param is not None else DataParam()
+    def __init__(self, param_model=None, param_data=None, param=None):
+        self.param_model = param_model if param_model is not None else ParamModel()
+        self.param_data = param_data if param_data is not None else ParamData()
         self.param = param if param is not None else Param()
 
         self.slices = [] # list of Slice() : Model dictionary
@@ -95,10 +94,14 @@ class Model:
     # ------------------------------------------------------------------------------------------------------------------
     def compute_model(self):
         printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
-        os.mkdir(self.model_param.new_model_dir)
-        param_fic = open(self.model_param.new_model_dir + 'info.txt', 'w')
-        param_fic.write(str(self.model_param))
-        param_fic.write(str(self.data_param))
+        # create model folder
+        if os.path.exists(self.param_model.new_model_dir):
+            shutil.move(self.param_model.new_model_dir, slash_at_the_end(self.param_model.new_model_dir, slash=False) + '_old')
+        os.mkdir(self.param_model.new_model_dir)
+        # write model info
+        param_fic = open(self.param_model.new_model_dir + 'info.txt', 'w')
+        param_fic.write(str(self.param_model))
+        param_fic.write(str(self.param_data))
         param_fic.close()
 
         printv('\n\tLoading data dictionary ...', self.param.verbose, 'normal')
@@ -119,21 +122,6 @@ class Model:
         ### TODO: add compute_beta / compute tau ??
 
     # ------------------------------------------------------------------------------------------------------------------
-    def average_wm(self, model_space=True):
-        # compute mean WM image
-        list_wm = []
-        for dic_slice in self.slices:
-            if model_space:
-                for wm in dic_slice.wm_seg_M:
-                    list_wm.append(wm)
-            else:
-                for wm in dic_slice.wm_seg:
-                    list_wm.append(wm)
-
-        data_mean_wm = np.mean(list_wm, axis=0)
-        return data_mean_wm
-
-    # ------------------------------------------------------------------------------------------------------------------
     def load_model_data(self):
         '''
         Data should be organized with one folder per subject containing:
@@ -142,7 +130,7 @@ class Model:
             - a/several manual segmentation(s) of GM containing 'gm' in its/their name(s)
             - a file containing vertebral level information as a nifti image or as a text file containing 'level' in its name
         '''
-        path_data = slash_at_the_end(self.model_param.path_data, slash=1)
+        path_data = slash_at_the_end(self.param_model.path_data, slash=1)
 
         # total number of slices: J
         j = 0
@@ -165,7 +153,7 @@ class Model:
                         fname_level = path_data+sub+'/'+file_name
 
                 # preprocess data
-                list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.data_param.axial_res, denoising=self.data_param.denoising)
+                list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, denoising=self.param_data.denoising)
                 for slice_sub in list_slices_sub:
                     slice_sub.set(slice_id=slice_sub.id+j)
                     self.slices.append(slice_sub)
@@ -175,20 +163,21 @@ class Model:
     # ------------------------------------------------------------------------------------------------------------------
     def coregister_model_data(self):
         # compute mean WM image
-        data_mean_wm = self.average_wm(model_space=False)
+        data_mean_gm, data_mean_wm = average_gm_wm(self.slices, model_space=False)
         im_mean_wm = Image(param=data_mean_wm)
 
         # register all slices WM on mean WM
         for dic_slice in self.slices:
             # create a directory to get the warping fields
             warp_dir = 'wf_slice'+str(dic_slice.id)
-            os.mkdir(warp_dir)
+            if not os.path.exists(warp_dir):
+                os.mkdir(warp_dir)
 
             # get slice mean WM image
             data_slice_wm = np.mean(dic_slice.wm_seg, axis=0)
             im_slice_wm = Image(data_slice_wm)
             # register slice WM on mean WM
-            im_slice_wm_reg, fname_src2dest, fname_dest2src = register_data(im_src=im_slice_wm, im_dest=im_mean_wm, param_reg=self.data_param.register_param, path_copy_warp=warp_dir)
+            im_slice_wm_reg, fname_src2dest, fname_dest2src = register_data(im_src=im_slice_wm, im_dest=im_mean_wm, param_reg=self.param_data.register_param, path_copy_warp=warp_dir)
 
             # use forward warping field to register all slice wm
             list_wmseg_reg = []
@@ -275,18 +264,18 @@ class Model:
         model = None
         model_data =  np.asarray([dic_slice.im_M.flatten() for dic_slice in self.slices])
 
-        if self.model_param.method == 'pca':
+        if self.param_model.method == 'pca':
             ## PCA
-            model = decomposition.PCA(n_components=self.model_param.k_pca)
+            model = decomposition.PCA(n_components=self.param_model.k_pca)
             self.fitted_data = model.fit_transform(model_data)
 
-        if self.model_param.method == 'isomap':
+        if self.param_model.method == 'isomap':
             ## ISOMAP
-            n_neighbors = self.model_param.n_neighbors_iso
-            if self.model_param.n_compo_iso == 'half':
+            n_neighbors = self.param_model.n_neighbors_iso
+            if self.param_model.n_compo_iso == 'half':
                 n_components = model_data.shape[0] / 2
             else:
-                n_components = self.model_param.n_compo_iso
+                n_components = self.param_model.n_compo_iso
 
             model = manifold.Isomap(n_neighbors=n_neighbors, n_components=n_components)
             self.fitted_data = model.fit_transform(model_data)
@@ -296,7 +285,7 @@ class Model:
 
     # ------------------------------------------------------------------------------------------------------------------
     def save_model(self):
-        os.chdir(self.model_param.new_model_dir)
+        os.chdir(self.param_model.new_model_dir)
         ## to save:
         ##   - self.slices = dictionary
         pickle.dump(self.slices, gzip.open('slices.pklz', 'wb'), protocol=2)
@@ -310,7 +299,7 @@ class Model:
         ##   - fitted data (=eigen vectors or embedding vectors )
         pickle.dump(self.fitted_data, gzip.open('fitted_data.pklz', 'wb'), protocol=2)
 
-        ##   - tau value --> still needed ?
+        ##  TODO: - tau value --> still needed ?
 
         os.chdir('..')
 
@@ -321,9 +310,10 @@ class Model:
     # ------------------------------------------------------------------------------------------------------------------
     def load_model(self):
         path = os.path.abspath('.')
-        os.chdir(self.model_param.path_model_to_load)
+        os.chdir(self.param_model.path_model_to_load)
         ##   - self.slices = dictionary
         self.slices = pickle.load(gzip.open('slices.pklz',  'rb'))
+        self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
         ##   - self.intensities = for normalization
         self.intensities = pickle.load(gzip.open('intensities.pklz', 'rb'))
