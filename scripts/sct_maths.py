@@ -406,10 +406,12 @@ def get_data_or_scalar(argument, data_in):
     :param data_in: if argument is scalar, use data to get np.shape
     :return: 3d or 4d numpy array
     """
-    if argument.replace('.', '').isdigit():  # so that it recognize float as digits too
+    # try to convert argument in float
+    try:
         # build data2 with same shape as data
         data_out = data_in[:, :, :] * 0 + float(argument)
-    else:
+    # if conversion fails, it should be a file
+    except:
         # parse file name and check integrity
         parser2 = Parser(__file__)
         parser2.add_option(name='-i', type_value=[[','], 'file'])

@@ -105,7 +105,7 @@ elseif strcmp(which_template, 'PAM50')
     % NB: 238=WM, 255=CSF (added by jcohen on 2014-12-08)
     % these are the value corresponding to the slice number (z) on the template, at which the atlas will be warped. It corresponds to the levels of the intervertebral disks.
     % NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template
-    z_disks_mid = [82 151 185 246 301 355 409 460 509 557 601 641 682 721 757 789 823 855 891 921 945 993];
+    z_disks_mid = [82:993]; %[82 151 185 246 301 355 409 460 509 557 601 641 682 721 757 789 823 855 891 921 945 993];
 end
 
 %--------------------------------------------------------------------------
@@ -456,7 +456,7 @@ for iz = 1:nb_slices-1
     % the version from github instead.
     cmd =['isct_antsRegistration --dimensionality 2 ',...
         '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slicenext ext ',' templatecit_slice ext ',1,4] ',... 
-        '--convergence 100x5 --shrink-factors 2x1 --smoothing-sigmas 5x5vox ',...
+        '--convergence 500x10 --shrink-factors 2x1 --smoothing-sigmas 1x0vox ',...
         '--output [' [prefix_ants num2str(zslice) 'to' num2str(zslicenext) '_'] ',' prefix_ants 'slicenext_to_slice.nii.gz]'];
 %     cmd =['isct_antsRegistration --dimensionality 2 ',...
 %         '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
@@ -906,4 +906,4 @@ fclose(fid);
 bricon = ' -b 0.5,1 '
 disp 'Done! To see results, type:'
 disp(['cd ',path_out folder_final])
-disp(['fslview ',path_template,which_template,'_t2.nii.gz -b 0,4000 ',path_template,which_template,'_wm.nii.gz',bricon,' -l Blue-Lightblue ',prefix_out,'_00.nii.gz -l Red',bricon,prefix_out,'_01.nii.gz -l Green',bricon,prefix_out,'_02.nii.gz -l Blue',bricon,prefix_out,'_03.nii.gz -l Yellow',bricon,prefix_out,'_04.nii.gz -l Pink ',bricon,prefix_out,'_30.nii.gz -l Red-Yellow ',bricon,prefix_out,'_31.nii.gz -l Copper ',bricon,' &'])
+disp(['fslview ',path_template,which_template,'_t2.nii.gz -b 0,4000 PAM50_wm.nii.gz',bricon,' -l Blue-Lightblue ',prefix_out,'_00.nii.gz -l Red',bricon,prefix_out,'_01.nii.gz -l Green',bricon,prefix_out,'_02.nii.gz -l Blue',bricon,prefix_out,'_03.nii.gz -l Yellow',bricon,prefix_out,'_04.nii.gz -l Pink ',bricon,prefix_out,'_30.nii.gz -l Red-Yellow ',bricon,prefix_out,'_31.nii.gz -l Copper ',bricon,' &'])
