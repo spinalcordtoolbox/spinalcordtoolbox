@@ -132,7 +132,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-radius",
                       type_value="float",
-                      description="approximate radius of the spinal cord, default is 4 mm",
+                      description="approximate radius (in mm) of the spinal cord, default is 4",
                       mandatory=False)
     parser.add_option(name="-detect-n",
                       type_value="int",
@@ -140,7 +140,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-detect-gap",
                       type_value="int",
-                      description="gap in Z direction for the detection process, default is 4",
+                      description="gap along Z direction (in mm) for the detection process, default is 4",
                       mandatory=False)
     parser.add_option(name="-init-validation",
                       type_value=None,
