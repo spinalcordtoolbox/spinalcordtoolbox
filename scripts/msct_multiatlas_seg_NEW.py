@@ -73,6 +73,7 @@ class ParamData:
 class Param:
     def __init__(self):
         self.verbose = 1
+        self.rm_tmp = True
 
 ########################################################################################################################
 #                                           CLASS MODEL
@@ -205,7 +206,8 @@ class Model:
             dic_slice.set(gm_seg_m=list_gmseg_reg)
 
             # remove warping fields directory
-            shutil.rmtree(warp_dir)
+            if self.param.rm_tmp:
+                shutil.rmtree(warp_dir)
 
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -316,6 +318,7 @@ class Model:
         os.chdir(self.param_model.path_model_to_load)
         ##   - self.slices = dictionary
         self.slices = pickle.load(gzip.open('slices.pklz',  'rb'))
+        printv('\n\t --> '+str(len(self.slices))+' slices in the model dataset', self.param.verbose, 'normal')
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
         ##   - self.intensities = for normalization
@@ -327,8 +330,9 @@ class Model:
         ##   - fitted data (=eigen vectors or embedding vectors )
         self.fitted_data = pickle.load(gzip.open('fitted_data.pklz', 'rb'))
 
-        ##   - tau value --> still needed ?
-
+        printv('\n\t --> model: '+self.param_model.method)
+        printv('\n\t --> '+str(self.fitted_data.shape[1])+' components kept on '+str(self.fitted_data.shape[0]), self.param.verbose, 'normal')
+        # when model == pca, self.fitted_data.shape[1] = self.fitted_model.n_components_
         os.chdir(path)
 
     # ------------------------------------------------------------------------------------------------------------------
