@@ -127,7 +127,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # interpolate image to reference square image (resample and square crop centered on SC)
     printv('\n\tInterpolate data to the model space ...', verbose, 'normal')
     list_im_slices = interpolate_im_to_ref(im_target_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
-    original_info['interpolated_images'] = list_im_slices # not Slice() objects
+    original_info['interpolated_images'] = list_im_slices # list of images (not Slice() objects)
 
     # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy
     if denoising:
