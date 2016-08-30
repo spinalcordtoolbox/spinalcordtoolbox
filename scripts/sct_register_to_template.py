@@ -379,7 +379,10 @@ def main():
         # Compute rigid transformation straight landmarks --> template landmarks
         sct.printv('\nComputing landmark-based transformation...', verbose)
         from msct_register_landmarks import register_landmarks
-        register_landmarks(ftmp_label, ftmp_template_label, 'Tx_Ty_Tz_Sz', fname_affine='straight2templateAffine.txt', verbose=verbose)
+        try:
+            register_landmarks(ftmp_label, ftmp_template_label, 'Tx_Ty_Tz_Sz', fname_affine='straight2templateAffine.txt', verbose=verbose)
+        except Exception:
+            sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
 
         # Concatenate transformations: curve --> straight --> affine
         sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
