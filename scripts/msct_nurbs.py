@@ -209,6 +209,7 @@ class NURBS():
                     self.courbe3D, self.courbe3D_deriv = self.construct3D(pointsControle_that_last_worked, self.degre, self.precision)  # generate curve with hig resolution
                 else:
                     self.courbe2D, self.courbe2D_deriv = self.construct2D(pointsControle_that_last_worked, self.degre, self.precision)
+                self.pointsControle = pointsControle_that_last_worked
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
