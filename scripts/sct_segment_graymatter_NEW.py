@@ -13,17 +13,150 @@
 ########################################################################################################################
 from msct_multiatlas_seg_NEW import Param, ParamData, ParamModel, Model
 from msct_gmseg_utils_NEW import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm
-from sct_utils import printv, tmp_create, extract_fname
+from sct_utils import printv, tmp_create, extract_fname, add_suffix
+from sct_image import set_orientation
 from msct_image import Image
+from msct_parser import *
 from math import exp
 import numpy as np
-import shutil, os
+import shutil, os, sys
+
+
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Segmentation of the white and gray matter.'
+                                 ' The segmentation is based on a multi-atlas method that uses a dictionary of pre-segmented gray matter images (already included in SCT) and finds the most similar images for identifying the gray matter using label fusion approach. The model used by this method contains: a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA reduced space to describe the variability of intensity in that template.'
+                                 ' This method was inspired from [Asman et al., Medical Image Analysis 2014] and features the following additions:\n'
+                                 '- possibility to add information from vertebral levels for improved accuracy\n'
+                                 '- intensity normalization of the image to segment (allows the segmentation of any kind of contrast)\n'
+                                 '- pre-registration based on non-linear transformations')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Image to segment",
+                      mandatory=True,
+                      example='t2star.nii.gz')
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="Spinal cord segmentation",
+                      mandatory=True,
+                      example='sc_seg.nii.gz')
+    parser.add_option(name="-vertfile",
+                      type_value="file",
+                      description='Labels of vertebral levels. This could either be an image (e.g., label/template/PAM50_levels.nii.gz) or a text file that specifies "slice,level" at each line. Example:\n'
+                      "0,3\n"
+                      "1,3\n"
+                      "2,4\n"
+                      "3,4\n"
+                      "4,4",
+                      mandatory=False,
+                      example='label/template/PAM50_levels.nii.gz')
+    parser.add_option(name="-vert",
+                      mandatory=False,
+                      deprecated_by='-vertfile')
+    parser.add_option(name="-l",
+                      mandatory=False,
+                      deprecated_by='-vertfile')
+
+    parser.usage.addSection('SEGMENTATION OPTIONS')
+    parser.add_option(name="-denoising",
+                      type_value='multiple_choice',
+                      description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
+                      mandatory=False,
+                      default_value=int(ParamData().denoising),
+                      example=['0', '1'])
+    parser.add_option(name="-normalization",
+                      type_value='multiple_choice',
+                      description="Normalization of the target image's intensity using median intensity values of the WM and the GM, recomended with MT images or other types of contrast than T2*",
+                      mandatory=False,
+                      default_value=int(ParamData().normalization),
+                      example=['0', '1'])
+    # parser.add_option(name="-medians",
+    #                   type_value=[[','], 'float'],
+    #                   description="Median intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
+    #                               "If not specified, the mean intensity values of the target WM and GM  are estimated automatically using the dictionary average segmentation by level.\n"
+    #                               "Only if the -normalize flag is used",
+    #                   mandatory=False,
+    #                   default_value=None,
+    #                   example=["450,540"])
+    parser.add_option(name="-w-levels",
+                      type_value='float',
+                      description="weight parameter on the level differences to compute the similarities",
+                      mandatory=False,
+                      default_value=ParamSeg().weight_level,
+                      example=2.0)
+    parser.add_option(name="-w-coordi",
+                      type_value='float',
+                      description="weight parameter on the euclidean distance (based on images coordinates in the reduced sapce) to compute the similarities ",
+                      mandatory=False,
+                      default_value=ParamSeg().weight_coord,
+                      example=0.005)
+    parser.add_option(name="-thr-sim",
+                      type_value='float',
+                      description="Threshold to select the dictionary slices most similar to the slice to segment (similarities are normalized to 1)",
+                      mandatory=False,
+                      default_value=ParamSeg().thr_similarity,
+                      example=0.6)
+    parser.add_option(name="-model",
+                      type_value="folder",
+                      description="Path to the computed model",
+                      mandatory=False,
+                      example='/home/jdoe/gm_seg_model/')
+    parser.usage.addSection('\nOUTPUT OTIONS')
+    parser.add_option(name="-res-type",
+                      type_value='multiple_choice',
+                      description="Type of result segmentation : binary or probabilistic",
+                      mandatory=False,
+                      default_value=ParamSeg().type_seg,
+                      example=['bin', 'prob'])
+    # parser.add_option(name="-ratio",
+    #                   type_value='multiple_choice',
+    #                   description="Compute GM/WM ratio by slice or by vertebral level (average across levels)",
+    #                   mandatory=False,
+    #                   default_value='0',
+    #                   example=['0', 'slice', 'level'])
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="Output folder",
+                      mandatory=False,
+                      default_value=ParamSeg().path_results,
+                      example='gm_segmentation_results/')
+    # parser.add_option(name="-ref",
+    #                   type_value="file",
+    #                   description="Reference segmentation of the gray matter for segmentation validation (outputs Dice coefficient and Hausdoorff's distance)",
+    #                   mandatory=False,
+    #                   example='manual_gm_seg.nii.gz')
+    parser.usage.addSection('MISC')
+    # parser.add_option(name='-qc',
+    #                   type_value='multiple_choice',
+    #                   description='Output images for quality control.',
+    #                   mandatory=False,
+    #                   example=['0', '1'],
+    #                   default_value='1')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value=str(int(Param().rm_tmp)),
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value=str(Param().verbose))
+
+    return parser
+
+
+
 
 class ParamSeg:
-    def __init__(self, fname_im=None, fname_seg=None, fname_level=None):
-        self.fname_im = fname_im
-        self.fname_seg = fname_seg
-        self.fname_level = fname_level
+    def __init__(self):
+        self.fname_im = None
+        self.fname_seg = None
+        self.fname_level = None
+        self.path_results = './'
 
         # param to compute similarities:
         self.weight_level = 2.5 # gamma
@@ -48,7 +181,7 @@ class SegmentGM:
         self.tmp_dir = tmp_create(verbose=self.param.verbose) # path to tmp directory
 
         self.target_im = None # list of slices
-        self.info_preprocessing = None # dic containing {'orientation': 'xxx', 'im_target_rpi': im, 'interpolated_images': [list of array = interpolated image data per slice]}
+        self.info_preprocessing = None # dic containing {'orientation': 'xxx', 'im_sc_seg_rpi': im, 'interpolated_images': [list of im = interpolated image data per slice]}
 
         self.projected_target = None
 
@@ -81,11 +214,22 @@ class SegmentGM:
 
         printv('\nWarping back segmentation into image space...', self.param.verbose, 'normal')
         self.warp_back_seg(path_warp)
-        self.post_processing()
-
+        im_res_gmseg, im_res_wmseg = self.post_processing()
 
         # go back to original directory
         os.chdir('..')
+        printv('\nSaving result GM and WM segmentation...', self.param.verbose, 'normal')
+        fname_res_gmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
+        fname_res_wmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
+
+        im_res_gmseg.setFileName(fname_res_gmseg)
+        im_res_wmseg.setFileName(fname_res_wmseg)
+
+        im_res_gmseg.save()
+        im_res_wmseg.save()
+
+        printv('\n--> To visualize the results, write:\n'
+               'fslview '+self.param_seg.fname_im+' '+fname_res_gmseg+' -b 0.4,1 -l Red-Yellow '+fname_res_wmseg+' -b 0.4,1 -l Blue-Lighblue ', self.param.verbose, 'info')
 
 
     def copy_data_to_tmp(self):
@@ -213,4 +357,103 @@ class SegmentGM:
             target_slice.set(gm_seg=im_src_gm_reg.data, wm_seg=im_src_wm_reg.data)
 
     def post_processing(self):
-        pass
+        ## DO INTERPOLATION BACK TO ORIGINAL IMAGE
+        # get original SC segmentation oriented in RPI
+        im_sc_seg_original_rpi = self.info_preprocessing['im_sc_seg_rpi'].copy()
+        # create res GM seg image
+        im_res_gmseg = im_sc_seg_original_rpi.copy()
+        im_res_gmseg.data = np.zeros(im_res_gmseg.data.shape)
+        # create res WM seg image
+        im_res_wmseg = im_sc_seg_original_rpi.copy()
+        im_res_wmseg.data = np.zeros(im_res_wmseg.data.shape)
+
+        for iz, im_iz_preprocessed in enumerate(self.info_preprocessing['interpolated_images']):
+            # im gmseg for slice iz
+            im_gmseg = im_iz_preprocessed.copy()
+            im_gmseg.data = np.zeros(im_gmseg.data.shape)
+            im_gmseg.data = self.target_im[iz].gm_seg
+
+            # im wmseg for slice iz
+            im_wmseg = im_iz_preprocessed.copy()
+            im_wmseg.data = np.zeros(im_wmseg.data.shape)
+            im_wmseg.data = self.target_im[iz].wm_seg
+
+            for im_res_slice, im_res_tot in [(im_gmseg, im_res_gmseg), (im_wmseg, im_res_wmseg)]:
+                # get physical coordinates of center of square
+                sq_size_pix = int(self.param_data.square_size_size_mm/self.param_data.axial_res)
+                [[x_square_center_phys, y_square_center_phys, z_square_center_phys]] = im_res_slice.transfo_pix2phys(
+                    coordi=[[int(sq_size_pix / 2), int(sq_size_pix / 2), 0]])
+                # get physicl coordinates of center of sc
+                x_seg, y_seg = (im_sc_seg_original_rpi.data[:, :, iz] > 0).nonzero()
+                x_center, y_center = np.mean(x_seg), np.mean(y_seg)
+                [[x_center_phys, y_center_phys, z_center_phys]] = im_sc_seg_original_rpi.transfo_pix2phys(
+                    coordi=[[x_center, y_center, iz]])
+                # set res slice header
+                im_res_slice.hdr.as_analyze_map()['qoffset_x'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_x'] + x_center_phys - x_square_center_phys
+                im_res_slice.hdr.as_analyze_map()['qoffset_y'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_y'] + y_center_phys - y_square_center_phys
+                im_res_slice.hdr.as_analyze_map()['qoffset_z'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_z'] + z_center_phys
+                im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
+                im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
+                # reshape data
+                im_res_slice.data = im_res_slice.data.reshape((sq_size_pix, sq_size_pix, 1))
+                # interpolate to reference image
+                interp = 0 if self.param_seg.type_seg == 'bin' else 1
+                im_res_slice_interp = im_res_slice.interpolate_from_image(im_sc_seg_original_rpi, interpolation_mode=interp, border='nearest')
+                # set correct slice of total image with this slice
+                im_res_tot.data[:, :, iz] = im_res_slice_interp.data[:, :, iz]
+
+        ## PUT RES BACK IN ORIGINAL ORIENTATION
+        im_res_gmseg.setFileName('res_gmseg.nii.gz')
+        im_res_gmseg.save()
+        im_res_gmseg = set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
+
+        im_res_wmseg.setFileName('res_wmseg.nii.gz')
+        im_res_wmseg.save()
+        im_res_wmseg = set_orientation(im_res_wmseg, self.info_preprocessing['orientation'])
+
+        return im_res_gmseg, im_res_wmseg
+
+
+########################################################################################################################
+# ------------------------------------------------------  MAIN ------------------------------------------------------- #
+########################################################################################################################
+if __name__ == "__main__":
+    # create param objects
+    param_seg = ParamSeg()
+    param_data = ParamData()
+    param_model = ParamModel()
+    param = Param()
+
+    # get parser
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    # set param arguments ad inputted by user
+    param_seg.fname_im = arguments["-i"]
+    param_seg.fname_seg = arguments["-s"]
+
+    if '-vertfile' in arguments:
+        param_seg.fname_level = arguments['-vertfile']
+    if '-denoising' in arguments:
+        param_data.denoising = arguments['-denoising']
+    if '-normalization' in arguments:
+        param_data.normalization = arguments['-normalization']
+    if '-w-levels' in arguments:
+        param_seg.weight_level = arguments['-w-levels']
+    if '-w-coordi' in arguments:
+        param_seg.weight_coord = arguments['-w-coordi']
+    if '-thr-sim' in arguments:
+        param_seg.thr_similarity = arguments['-thr-sim']
+    if '-model' in arguments:
+        param_model.path_model_to_load = arguments['-model']
+    if '-res-type' in arguments:
+        param_seg.type_seg= arguments['-res-type']
+    if '-ofolder' in arguments:
+        param_seg.path_results= arguments['-ofolder']
+    if '-r' in arguments:
+        param.rm_tmp= arguments['-r']
+    if '-v' in arguments:
+        param.verbose= arguments['-v']
+
+    seg_gm = SegmentGM()
+    seg_gm.segment()
