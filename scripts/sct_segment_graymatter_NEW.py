@@ -13,7 +13,7 @@
 ########################################################################################################################
 from msct_multiatlas_seg_NEW import Param, ParamData, ParamModel, Model
 from msct_gmseg_utils_NEW import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm
-from sct_utils import printv, tmp_create, extract_fname, add_suffix
+from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end
 from sct_image import set_orientation
 from msct_image import Image
 from msct_parser import *
@@ -161,7 +161,7 @@ class ParamSeg:
         # param to compute similarities:
         self.weight_level = 2.5 # gamma
         self.weight_coord = 0.0065 # tau --> need to be validated for specific dataset
-        self.thr_similarity = 0.8 # epsilon but on normalized to 1 similarities (by slice of dic and slice of target)
+        self.thr_similarity = 0.01 # epsilon but on normalized to 1 similarities (by slice of dic and slice of target)
         # TODO = find the best thr
 
         self.type_seg = 'prob' # 'prob' or 'bin'
@@ -229,7 +229,7 @@ class SegmentGM:
         im_res_wmseg.save()
 
         printv('\n--> To visualize the results, write:\n'
-               'fslview '+self.param_seg.fname_im+' '+fname_res_gmseg+' -b 0.4,1 -l Red-Yellow '+fname_res_wmseg+' -b 0.4,1 -l Blue-Lighblue ', self.param.verbose, 'info')
+               'fslview '+self.param_seg.fname_im+' '+fname_res_gmseg+' -b 0.4,1 -l Red-Yellow '+fname_res_wmseg+' -b 0.4,1 -l Blue-Lightblue ', self.param.verbose, 'info')
 
 
     def copy_data_to_tmp(self):
@@ -284,6 +284,8 @@ class SegmentGM:
         # for each target slice: normalize
         for target_slice in self.target_im:
             level_int = int(round(target_slice.level))
+            if level_int not in self.model.intensities.index:
+                level_int = 0
             norm_im_M = normalize_slice(target_slice.im_M, gm_seg_model[level_int], wm_seg_model[level_int], self.model.intensities['GM'][level_int], self.model.intensities['WM'][level_int],min=self.model.intensities['MIN'][level_int], max=self.model.intensities['MAX'][level_int])
             target_slice.set(im_m=norm_im_M)
 
@@ -344,7 +346,7 @@ class SegmentGM:
 
     def warp_back_seg(self, path_warp):
         for target_slice in self.target_im:
-            fname_dic_space2slice_space = path_warp+'/warp_dic2target_slice' + str(target_slice.id) + '.nii.gz'
+            fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1)+'warp_dic2target_slice' + str(target_slice.id) + '.nii.gz'
             im_dest = Image(target_slice.im)
             interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
             # warp GM
@@ -445,7 +447,7 @@ if __name__ == "__main__":
     if '-thr-sim' in arguments:
         param_seg.thr_similarity = arguments['-thr-sim']
     if '-model' in arguments:
-        param_model.path_model_to_load = arguments['-model']
+        param_model.path_model_to_load = os.path.abspath(arguments['-model'])
     if '-res-type' in arguments:
         param_seg.type_seg= arguments['-res-type']
     if '-ofolder' in arguments:
@@ -455,5 +457,5 @@ if __name__ == "__main__":
     if '-v' in arguments:
         param.verbose= arguments['-v']
 
-    seg_gm = SegmentGM()
+    seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
     seg_gm.segment()
