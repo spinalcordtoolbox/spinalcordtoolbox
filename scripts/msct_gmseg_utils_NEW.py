@@ -122,7 +122,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 
     im_target_rpi = set_orientation(im_target, 'RPI')
     im_sc_seg_rpi = set_orientation(im_sc_seg, 'RPI')
-    original_info['im_target_rpi'] = im_target_rpi  # target image in RPI will be used to post-process segmentations
+    original_info['im_sc_seg_rpi'] = im_sc_seg_rpi.copy()  # target image in RPI will be used to post-process segmentations
 
     # interpolate image to reference square image (resample and square crop centered on SC)
     printv('\n\tInterpolate data to the model space ...', verbose, 'normal')
