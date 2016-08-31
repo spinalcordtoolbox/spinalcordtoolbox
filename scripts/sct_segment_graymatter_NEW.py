@@ -231,6 +231,10 @@ class SegmentGM:
         printv('\n--> To visualize the results, write:\n'
                'fslview '+self.param_seg.fname_im+' '+fname_res_gmseg+' -b 0.4,1 -l Red-Yellow '+fname_res_wmseg+' -b 0.4,1 -l Blue-Lightblue ', self.param.verbose, 'info')
 
+        if self.param.rm_tmp:
+            # remove tmp_dir
+            shutil.rmtree(self.tmp_dir)
+
 
     def copy_data_to_tmp(self):
         # copy input image
@@ -381,21 +385,32 @@ class SegmentGM:
             im_wmseg.data = self.target_im[iz].wm_seg
 
             for im_res_slice, im_res_tot in [(im_gmseg, im_res_gmseg), (im_wmseg, im_res_wmseg)]:
-                # get physical coordinates of center of square
-                sq_size_pix = int(self.param_data.square_size_size_mm/self.param_data.axial_res)
-                [[x_square_center_phys, y_square_center_phys, z_square_center_phys]] = im_res_slice.transfo_pix2phys(
-                    coordi=[[int(sq_size_pix / 2), int(sq_size_pix / 2), 0]])
-                # get physicl coordinates of center of sc
-                x_seg, y_seg = (im_sc_seg_original_rpi.data[:, :, iz] > 0).nonzero()
-                x_center, y_center = np.mean(x_seg), np.mean(y_seg)
-                [[x_center_phys, y_center_phys, z_center_phys]] = im_sc_seg_original_rpi.transfo_pix2phys(
-                    coordi=[[x_center, y_center, iz]])
-                # set res slice header
-                im_res_slice.hdr.as_analyze_map()['qoffset_x'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_x'] + x_center_phys - x_square_center_phys
-                im_res_slice.hdr.as_analyze_map()['qoffset_y'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_y'] + y_center_phys - y_square_center_phys
-                im_res_slice.hdr.as_analyze_map()['qoffset_z'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_z'] + z_center_phys
+
+                # set im_res_slice header with im_sc_seg_original_rpi origin
+                im_res_slice.hdr.as_analyze_map()['qoffset_x'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_x']
+                im_res_slice.hdr.as_analyze_map()['qoffset_y'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_y']
+                im_res_slice.hdr.as_analyze_map()['qoffset_z'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_z']
                 im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
                 im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
+
+                # get physical coordinates of center of sc
+                x_seg, y_seg = (im_sc_seg_original_rpi.data[:, :, iz] > 0).nonzero()
+                x_center, y_center = np.mean(x_seg), np.mean(y_seg)
+                [[x_center_phys, y_center_phys, z_center_phys]] = im_sc_seg_original_rpi.transfo_pix2phys(coordi=[[x_center, y_center, iz]])
+
+                # get physical coordinates of center of square WITH im_res_slice WITH SAME ORIGIN AS im_sc_seg_original_rpi
+                sq_size_pix = int(self.param_data.square_size_size_mm / self.param_data.axial_res)
+                [[x_square_center_phys, y_square_center_phys, z_square_center_phys]] = im_res_slice.transfo_pix2phys(
+                    coordi=[[int(sq_size_pix / 2), int(sq_size_pix / 2), 0]])
+
+                # set im_res_slice header by adding center of SC and center of square (in the correct space) to origin
+                im_res_slice.hdr.as_analyze_map()['qoffset_x'] += x_center_phys - x_square_center_phys
+                im_res_slice.hdr.as_analyze_map()['qoffset_y'] += y_center_phys - y_square_center_phys
+                im_res_slice.hdr.as_analyze_map()['qoffset_z'] += z_center_phys
+                im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
+                im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
+
+
                 # reshape data
                 im_res_slice.data = im_res_slice.data.reshape((sq_size_pix, sq_size_pix, 1))
                 # interpolate to reference image
