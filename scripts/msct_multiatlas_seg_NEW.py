@@ -252,6 +252,14 @@ class Model:
             list_max_by_level.append(max(list_max))
             list_indexes.append(level)
 
+        # add level 0 for images with no level (or level not in model)
+        # average GM and WM for all slices, get min and max of all slices
+        list_gm_by_level.append(np.mean(list_gm_by_level))
+        list_wm_by_level.append(np.mean(list_wm_by_level))
+        list_min_by_level.append(min(list_min_by_level))
+        list_max_by_level.append(max(list_max_by_level))
+        list_indexes.append(0)
+
         # save average median values in a Panda data frame
         data_intensities = {'GM': pd.Series(list_gm_by_level, index=list_indexes), 'WM': pd.Series(list_wm_by_level, index=list_indexes), 'MIN': pd.Series(list_min_by_level, index=list_indexes), 'MAX': pd.Series(list_max_by_level, index=list_indexes)}
         self.intensities = pd.DataFrame(data_intensities)
@@ -259,7 +267,8 @@ class Model:
         # Normalize slices using dic values
         for dic_slice in self.slices:
             level_int = int(round(dic_slice.level))
-            norm_im_M = normalize_slice(dic_slice.im_M, dic_slice.gm_seg_M, dic_slice.wm_seg_M, self.intensities['GM'][level_int], self.intensities['WM'][level_int], min=self.intensities['MIN'][level_int], max=self.intensities['MAX'][level_int])
+            av_gm_slice, av_wm_slice = average_gm_wm([dic_slice], bin=True)
+            norm_im_M = normalize_slice(dic_slice.im_M, av_gm_slice, av_wm_slice, self.intensities['GM'][level_int], self.intensities['WM'][level_int], min=self.intensities['MIN'][level_int], max=self.intensities['MAX'][level_int])
             dic_slice.set(im_m=norm_im_M)
 
 
@@ -354,6 +363,10 @@ class Model:
             data_mean_gm, data_mean_wm = average_gm_wm(list_slices)
             gm_seg_model[level] = data_mean_gm
             wm_seg_model[level] = data_mean_wm
+        # for level=0 (no leve or level not in model) output average GM and WM seg across all model data
+        gm_seg_model[0] = np.mean(gm_seg_model.values(), axis=0)
+        wm_seg_model[0] = np.mean(wm_seg_model.values(), axis=0)
+
 
         return gm_seg_model, wm_seg_model
 

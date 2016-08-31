@@ -27,7 +27,7 @@ class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
-    def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
+    def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=0):
         """
         Slice constructor
         :param slice_id: slice ID number, type: int
@@ -452,7 +452,7 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def average_gm_wm(list_of_slices, model_space=True):
+def average_gm_wm(list_of_slices, model_space=True, bin=False):
     # compute mean GM and WM image
     list_gm = []
     list_wm = []
@@ -470,6 +470,13 @@ def average_gm_wm(list_of_slices, model_space=True):
 
     data_mean_gm = np.mean(list_gm, axis=0)
     data_mean_wm = np.mean(list_wm, axis=0)
+
+    if bin:
+        data_mean_gm[data_mean_gm < 0.5] = 0
+        data_mean_gm[data_mean_gm >= 0.5] = 1
+        data_mean_wm[data_mean_wm < 0.5] = 0
+        data_mean_wm[data_mean_wm >= 0.5] = 1
+
     return data_mean_gm, data_mean_wm
 
 
@@ -488,15 +495,18 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, min=None, max=None):
     Returns
     -------
     '''
-    assert data.shape == data_gm[0].shape, "Data to normalized and GM data do not have the same shape."
-    assert data.shape == data_wm[0].shape, "Data to normalized and WM data do not have the same shape."
+    assert data.size == data_gm.size, "Data to normalized and GM data do not have the same shape."
+    assert data.size == data_wm.size, "Data to normalized and WM data do not have the same shape."
+    # avoid shape error because of 3D-like shape for 2D (x, x, 1) instead of (x,x)
+    data_gm = data_gm.reshape(data.shape)
+    data_wm = data_wm.reshape(data.shape)
 
     # put almost zero background to zero
     data[data < 0.0001] = 0
 
     # get GM and WM values in slice
-    med_data_gm = np.mean([np.median(data[gm==1])for gm in data_gm])
-    med_data_wm = np.mean([np.median(data[wm==1])for wm in data_wm])
+    med_data_gm = np.median(data[data_gm==1])
+    med_data_wm = np.median(data[data_wm==1])
     std_data = np.std(data)
 
     # compute normalized data
