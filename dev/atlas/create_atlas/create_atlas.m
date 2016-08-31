@@ -45,7 +45,7 @@ addpath(pwd);
 %   which should be integers in range [0,255]
 
 % Absolute path of output results (add "/" at the end)
-path_out = '/Users/julien/code/spinalcordtoolbox/dev/atlas/create_atlas/results/';
+path_out = ['~/data/PAM50_atlas/', date, filesep];
 % get path of FSL
 [status, path_fsl] = unix('echo $FSLDIR');
 % get FSL matlab functions
@@ -53,17 +53,17 @@ path_fsl_matlab = strcat(path_fsl, '/etc/matlab');
 % add to path
 addpath(path_fsl_matlab);
 % define SCT path
-path_sct = '/Users/julien/code/spinalcordtoolbox/';
+%path_sct = '/Users/julien/code/spinalcordtoolbox/';
 % define path of template
-path_template = '/Users/julien/data/sct_dev/PAM50/template/';
-% name of the WM template. Don't put extension.
+path_template = [path_script,'/../raw_data/']; %/Users/julien/data/sct_dev/PAM50/template/';
+% name of the WM template to build the atlas from. Don't put extension.
 file_template = 'PAM50_wm';  % PAM50_WM
 
 %--------------------------------------------------------------------------
 % LABEL PARAMETERS
 %--------------------------------------------------------------------------
 % path to the image file that contains the drawing of the WM atlas from Grays anatomy.
-path_atlas_data = strcat(path_sct, 'dev/atlas/raw_data/');
+path_atlas_data = [path_script,'/../raw_data/']; %strcat(path_sct, 'dev/atlas/raw_data/');
 % file name of the full atlas
 file_atlas = 'atlas_grays_cerv_sym_correc_r6';
 % file name of the binary mask that helps for the registration to the MNI-Poly-AMU
@@ -105,7 +105,7 @@ elseif strcmp(which_template, 'PAM50')
     % NB: 238=WM, 255=CSF (added by jcohen on 2014-12-08)
     % these are the value corresponding to the slice number (z) on the template, at which the atlas will be warped. It corresponds to the levels of the intervertebral disks.
     % NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template
-    z_disks_mid = [82:993]; %[82 151 185 246 301 355 409 460 509 557 601 641 682 721 757 789 823 855 891 921 945 993];
+    z_disks_mid = [[82:5:993], 993]; %[82 151 185 246 301 355 409 460 509 557 601 641 682 721 757 789 823 855 891 921 945 993];
 end
 
 %--------------------------------------------------------------------------
@@ -146,7 +146,7 @@ prefix_ants_ref = ['reg_ref_'];
 affine_atlas = 'Affine0GenericAffine.mat';  %[prefix_ants_ref 'Affine.txt'];
 Warp_atlas = [prefix_ants 'Warp_init' ext];
 Warp_tmp = [prefix_ants 'Warp_init'];
-suffix_ants = '_reg';
+suffix_ants = '_warp';
 
 % if folder exists, delete it
 if exist(path_out, 'dir')
@@ -174,13 +174,10 @@ cd(folder_tracts)
 
 % Thresholding the template
 cmd = ['c3d ' path_template file_template ext ' -threshold -inf 0.001 0 1 -o ' template_mask ext];
-disp(cmd)
-[status,result] = unix(cmd);
-if(status), error(result); end
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
 cmd = ['c3d ' path_template file_template ext ' ' template_mask ext ' -multiply -o ' template_mask ext];
-disp(cmd)
-[status,result] = unix(cmd);
+disp(cmd); [status,result] = unix(cmd);
 if(status), error(result); end
 
 % Cropping the template
@@ -533,10 +530,7 @@ for iz = 1:nb_slices
             '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slice ext ',' templatecit_slice_ref ext ',1,4] ',... 
             '--convergence 200x5 --shrink-factors 2x1 --smoothing-sigmas 5x5vox ',...
             '--output [' prefix_ants, 'concat_refto', num2str(zslice) '_,' templatecit_slice_ref 'to' num2str(zslice) ext ']' ];
-        disp(cmd)
-        [status,result] = unix(cmd);
-    %     disp(result)
-        if(status),error(result);end 
+        disp(cmd); [status,result] = unix(cmd); if(status),error(result);end 
 
         % Replace the concatenated warping field with the new warping field 
          movefile([prefix_ants, 'concat_refto', num2str(zslice), '_0Warp', ext], warp_slice)
