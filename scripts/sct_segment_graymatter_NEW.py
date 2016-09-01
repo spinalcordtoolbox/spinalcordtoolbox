@@ -127,12 +127,12 @@ def get_parser():
     #                   mandatory=False,
     #                   example='manual_gm_seg.nii.gz')
     parser.usage.addSection('MISC')
-    # parser.add_option(name='-qc',
-    #                   type_value='multiple_choice',
-    #                   description='Output images for quality control.',
-    #                   mandatory=False,
-    #                   example=['0', '1'],
-    #                   default_value='1')
+    parser.add_option(name='-qc',
+                      type_value='multiple_choice',
+                      description='Output images for quality control.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(int(ParamSeg().qc)))
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
@@ -161,10 +161,12 @@ class ParamSeg:
         # param to compute similarities:
         self.weight_level = 2.5 # gamma
         self.weight_coord = 0.0065 # tau --> need to be validated for specific dataset
-        self.thr_similarity = 0.01 # epsilon but on normalized to 1 similarities (by slice of dic and slice of target)
+        self.thr_similarity = 0.0005 # epsilon but on normalized to 1 similarities (by slice of dic and slice of target)
         # TODO = find the best thr
 
         self.type_seg = 'prob' # 'prob' or 'bin'
+
+        self.qc = True
 
 
 class SegmentGM:
@@ -183,7 +185,9 @@ class SegmentGM:
         self.target_im = None # list of slices
         self.info_preprocessing = None # dic containing {'orientation': 'xxx', 'im_sc_seg_rpi': im, 'interpolated_images': [list of im = interpolated image data per slice]}
 
-        self.projected_target = None
+        self.projected_target = None # list of coordinates of the target slices in the model reduced space
+        self.im_res_gmseg = None
+        self.im_res_wmseg = None
 
 
     def segment(self):
@@ -214,7 +218,7 @@ class SegmentGM:
 
         printv('\nWarping back segmentation into image space...', self.param.verbose, 'normal')
         self.warp_back_seg(path_warp)
-        im_res_gmseg, im_res_wmseg = self.post_processing()
+        self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
 
         # go back to original directory
         os.chdir('..')
@@ -222,14 +226,30 @@ class SegmentGM:
         fname_res_gmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
         fname_res_wmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
 
-        im_res_gmseg.setFileName(fname_res_gmseg)
-        im_res_wmseg.setFileName(fname_res_wmseg)
+        self.im_res_gmseg.setFileName(fname_res_gmseg)
+        self.im_res_wmseg.setFileName(fname_res_wmseg)
 
-        im_res_gmseg.save()
-        im_res_wmseg.save()
+        self.im_res_gmseg.save()
+        self.im_res_wmseg.save()
+
+        # save quality control and print info
+        if self.param_seg.type_seg == 'bin':
+            wm_col = 'Red'
+            gm_col = 'Blue'
+            b = '0,1'
+        else:
+            wm_col = 'Blue-Lightblue'
+            gm_col = 'Red-Yellow'
+            b = '0.3,1'
+
+        if self.param_seg.qc:
+            # output QC image
+            printv('\nSaving quality control images...', self.param.verbose, 'normal')
+            im = Image(self.tmp_dir+self.param_seg.fname_im)
+            im.save_quality_control(plane='axial', n_slices=5, seg=self.im_res_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.param_seg.path_results)
 
         printv('\n--> To visualize the results, write:\n'
-               'fslview '+self.param_seg.fname_im+' '+fname_res_gmseg+' -b 0.4,1 -l Red-Yellow '+fname_res_wmseg+' -b 0.4,1 -l Blue-Lightblue ', self.param.verbose, 'info')
+               'fslview '+self.param_seg.fname_im+' '+fname_res_gmseg+' -b '+b+' -l '+gm_col+' -t 0.7 '+fname_res_wmseg+' -b '+b+' -l '+wm_col+' -t 0.7  & \n', self.param.verbose, 'info')
 
         if self.param.rm_tmp:
             # remove tmp_dir
@@ -467,8 +487,10 @@ if __name__ == "__main__":
         param_seg.type_seg= arguments['-res-type']
     if '-ofolder' in arguments:
         param_seg.path_results= arguments['-ofolder']
+    if '-qc' in arguments:
+        param_seg.qc = bool(int(arguments['-qc']))
     if '-r' in arguments:
-        param.rm_tmp= arguments['-r']
+        param.rm_tmp= bool(int(arguments['-r']))
     if '-v' in arguments:
         param.verbose= arguments['-v']
 
