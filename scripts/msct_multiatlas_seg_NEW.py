@@ -13,6 +13,7 @@
 ########################################################################################################################
 import os
 import shutil
+import sys
 import numpy as np
 import pandas as pd
 import pickle, gzip
@@ -20,10 +21,29 @@ from sklearn import manifold, decomposition
 from sct_utils import printv, slash_at_the_end
 from msct_gmseg_utils_NEW import pre_processing, register_data, apply_transfo, average_gm_wm, normalize_slice
 from msct_image import Image
+from msct_parser import *
 
 ########################################################################################################################
 #                                                 PARAM CLASSES
 ########################################################################################################################
+
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Compute the model for GM segmentation')
+    parser.add_option(name="-path-data",
+                      type_value="folder",
+                      description="path to the dataset", # TODO add description of the dataset organisation
+                      mandatory=True,
+                      example='my_data/')
+    parser.add_option(name="-model-type",
+                      type_value="multiple_choice",
+                      description="Type of reduced space (PCA or IsoMap)",  # TODO add description of the dataset organisation
+                      mandatory=False,
+                      default_value=ParamModel().method,
+                      example=['pca', 'isomap'])
+    #TODO: add other param
+    return parser
 
 class ParamModel:
     def __init__(self):
@@ -371,6 +391,25 @@ class Model:
         return gm_seg_model, wm_seg_model
 
 
+
+if __name__ == "__main__":
+    # create param objects
+    param_data = ParamData()
+    param_model = ParamModel()
+    param = Param()
+
+    # get parser
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    param_model.path_data = arguments['-path-data']
+
+    if '-model-type' in arguments:
+        param_model.method = arguments['-model-type']
+
+
+    model = Model(param_model=param_model, param_data=param_data, param=param)
+    model.compute_model()
 
 
 
