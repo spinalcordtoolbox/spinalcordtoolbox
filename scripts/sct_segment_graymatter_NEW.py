@@ -12,14 +12,14 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 from msct_multiatlas_seg_NEW import Param, ParamData, ParamModel, Model
-from msct_gmseg_utils_NEW import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm
-from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end
+from msct_gmseg_utils_NEW import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm, binarize
+from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end, run
 from sct_image import set_orientation
 from msct_image import Image
 from msct_parser import *
 from math import exp
 import numpy as np
-import shutil, os, sys
+import shutil, os, sys, time
 
 
 def get_parser():
@@ -115,17 +115,17 @@ def get_parser():
     #                   mandatory=False,
     #                   default_value='0',
     #                   example=['0', 'slice', 'level'])
+    parser.add_option(name="-ref",
+                      type_value="file",
+                      description="Reference segmentation of the gray matter for segmentation validation (outputs Dice coefficient and Hausdorff's distance)",
+                      mandatory=False,
+                      example='manual_gm_seg.nii.gz')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
                       mandatory=False,
                       default_value=ParamSeg().path_results,
                       example='gm_segmentation_results/')
-    # parser.add_option(name="-ref",
-    #                   type_value="file",
-    #                   description="Reference segmentation of the gray matter for segmentation validation (outputs Dice coefficient and Hausdoorff's distance)",
-    #                   mandatory=False,
-    #                   example='manual_gm_seg.nii.gz')
     parser.usage.addSection('MISC')
     parser.add_option(name='-qc',
                       type_value='multiple_choice',
@@ -156,6 +156,7 @@ class ParamSeg:
         self.fname_im = None
         self.fname_seg = None
         self.fname_level = None
+        self.fname_manual_gmseg = None
         self.path_results = './'
 
         # param to compute similarities:
@@ -218,7 +219,20 @@ class SegmentGM:
 
         printv('\nWarping back segmentation into image space...', self.param.verbose, 'normal')
         self.warp_back_seg(path_warp)
+
+        printv('\nPost-processing ...', self.param.verbose, 'normal')
         self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
+
+        # create output folder
+        os.chdir('..')
+        if self.param_seg.path_results is not './' and not os.path.exists(self.param_seg.path_results):
+            os.mkdir(self.param_seg.path_results)
+        os.chdir(self.tmp_dir)
+
+        if self.param_seg.fname_manual_gmseg is not None:
+            # compute validation metrics
+            printv('\nCompute validation metrics...', self.param.verbose, 'normal')
+            self.validation()
 
         # go back to original directory
         os.chdir('..')
@@ -240,7 +254,7 @@ class SegmentGM:
         else:
             wm_col = 'Blue-Lightblue'
             gm_col = 'Red-Yellow'
-            b = '0.3,1'
+            b = '0.4,1'
 
         if self.param_seg.qc:
             # output QC image
@@ -450,6 +464,81 @@ class SegmentGM:
 
         return im_res_gmseg, im_res_wmseg
 
+    def validation(self):
+        tmp_dir_val = 'tmp_validation/'
+        if not os.path.exists(tmp_dir_val):
+            os.mkdir(tmp_dir_val)
+        # copy data into tmp dir val
+        os.chdir('..')
+        shutil.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir+tmp_dir_val)
+        shutil.copy(self.param_seg.fname_seg, self.tmp_dir + tmp_dir_val)
+        os.chdir(self.tmp_dir+tmp_dir_val)
+        fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
+        fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
+
+
+        im_gmseg = self.im_res_gmseg.copy()
+        im_wmseg = self.im_res_wmseg.copy()
+
+        if self.param_seg.type_seg == 'prob':
+            im_gmseg = binarize(im_gmseg, thr_max=0.5, thr_min=0.5)
+            im_wmseg = binarize(im_wmseg, thr_max=0.5, thr_min=0.5)
+
+        fname_gmseg = 'res_gmseg.nii.gz'
+        im_gmseg.setFileName(fname_gmseg)
+        im_gmseg.save()
+
+        fname_wmseg = 'res_wmseg.nii.gz'
+        im_wmseg.setFileName(fname_wmseg)
+        im_wmseg.save()
+
+        # get manual WM seg:
+        fname_manual_wmseg = 'manual_wmseg.nii.gz'
+        run('sct_maths -i '+fname_seg+' -sub '+fname_manual_gmseg+' -o '+fname_manual_wmseg)
+
+        ## compute DC:
+        try:
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg + ' -d ' + fname_gmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+        except Exception:
+            # put ref and res in the same space if needed
+            fname_manual_gmseg_corrected = add_suffix(fname_manual_gmseg, '_reg')
+            run('sct_register_multimodal -i '+fname_manual_gmseg+' -d '+fname_gmseg+' -identity 1 ')
+            run('sct_maths -i '+fname_manual_gmseg_corrected+' -bin 0.1 -o '+fname_manual_gmseg_corrected)
+            #
+            fname_manual_wmseg_corrected = add_suffix(fname_manual_wmseg, '_reg')
+            run('sct_register_multimodal -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -identity 1 ')
+            run('sct_maths -i ' + fname_manual_wmseg_corrected + ' -bin 0.1 -o ' + fname_manual_wmseg_corrected)
+            # recompute DC
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+        # save results to a text file
+        fname_dc = 'dice_coefficient_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        file_dc = open(fname_dc, 'w')
+
+        if self.param_seg.type_seg == 'prob':
+            file_dc.write('WARNING : the probabilistic segmentations were binarized with a threshold at 0.5 to compute the dice coefficient \n')
+
+        file_dc.write('\n--------------------------------------------------------------\nDice coefficient on the Gray Matter segmentation:\n')
+        file_dc.write(output_gm)
+        file_dc.write('\n\n--------------------------------------------------------------\nDice coefficient on the White Matter segmentation:\n')
+        file_dc.write(output_wm)
+        file_dc.close()
+
+        ## compute HD and MD:
+        fname_hd = 'hausdorff_dist_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        run('sct_compute_hausdorff_distance -i ' + fname_gmseg + ' -d ' + fname_manual_gmseg + ' -thinning 1 -o ' + fname_hd + ' -v ' + str(self.param.verbose))
+
+        # get out of tmp dir to copy results to output folder
+        os.chdir('../..')
+        shutil.copy(self.tmp_dir+tmp_dir_val+'/'+fname_dc, self.param_seg.path_results)
+        shutil.copy(self.tmp_dir + tmp_dir_val + '/' + fname_hd, self.param_seg.path_results)
+
+        os.chdir(self.tmp_dir)
+
+        if self.param.rm_tmp:
+            shutil.rmtree(tmp_dir_val)
+
 
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
@@ -485,6 +574,8 @@ if __name__ == "__main__":
         param_model.path_model_to_load = os.path.abspath(arguments['-model'])
     if '-res-type' in arguments:
         param_seg.type_seg= arguments['-res-type']
+    if '-ref' in arguments:
+        param_seg.fname_manual_gmseg = arguments['-ref']
     if '-ofolder' in arguments:
         param_seg.path_results= arguments['-ofolder']
     if '-qc' in arguments:
@@ -495,4 +586,8 @@ if __name__ == "__main__":
         param.verbose= arguments['-v']
 
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
+    start = time.time()
     seg_gm.segment()
+    end = time.time()
+    t = end - start
+    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(t % 60) + ' sec', param.verbose, 'info')
