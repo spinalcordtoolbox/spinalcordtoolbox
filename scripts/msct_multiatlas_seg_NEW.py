@@ -92,6 +92,20 @@ def get_parser():
                       description="Registration parameters to co-register data together",
                       mandatory=False,
                       default_value=ParamData().register_param)
+    parser.usage.addSection('MISC')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value=str(int(Param().rm_tmp)),
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value=str(Param().verbose))
+
 
     return parser
 
@@ -472,6 +486,10 @@ if __name__ == "__main__":
         param_data.square_size_size_mm = arguments['-sq-size']
     if '-reg-param' in arguments:
         param_data.register_param = arguments['-reg-param']
+    if '-r' in arguments:
+        param.rm_tmp= bool(int(arguments['-r']))
+    if '-v' in arguments:
+        param.verbose= arguments['-v']
 
 
     model = Model(param_model=param_model, param_data=param_data, param=param)
@@ -480,7 +498,7 @@ if __name__ == "__main__":
     model.compute_model()
     end = time.time()
     t = end-start
-    printv('Model computed in '+str(int(round(t/60)))+' min, '+str(t%60)+' sec')
+    printv('Model computed in '+str(int(round(t/60)))+' min, '+str(t%60)+' sec', param.verbose, 'info')
 
 
 
