@@ -96,8 +96,8 @@ if strcmp(which_template, 'MNI-Poly-AMU')
     z_disks_mid_noC4 = [483 476 466 455 440 423 406 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
 elseif strcmp(which_template, 'PAM50')
     % PAM50 template:
-    % corresponds to mid-C4 in the template
-    z_slice_ref = 837;
+    % corresponds to mid-C4 in the template, at the maximum cervical enlargement
+    z_slice_ref = 850;
     % interpolation factor for the template in order to match the hi-res grays atlas
     interp_factor = 6;
     crop_size = '43x33x1100vox'; % size to crop the template (only along X and Y) for computational reasons
@@ -443,12 +443,18 @@ for iz = izref:nb_slices-1
     end
     % estimate transformation slice->slicenext
     cmd =['isct_antsRegistration --dimensionality 2 ',...
+        '--transform Affine[0.5] --metric MeanSquares[' templatecit_slicenext ext ',' file_moving ',1,4] ',... 
+        '--convergence 100x100 --shrink-factors 2x1 --smoothing-sigmas 1x0vox ',...
         '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slicenext ext ',' file_moving ',1,4] ',... 
         '--convergence 500x10 --shrink-factors 2x1 --smoothing-sigmas 1x0vox ',...
         '--output [' prefix_ants num2str(z_slice_ref) 'to' num2str(zslicenext) '_,' templatecit_slice_ref 'to' num2str(zslicenext) ext ']'];
+%     cmd =['isct_antsRegistration --dimensionality 2 ',...
+%         '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slicenext ext ',' file_moving ',1,4] ',... 
+%         '--convergence 500x10 --shrink-factors 2x1 --smoothing-sigmas 1x0vox ',...
+%         '--output [' prefix_ants num2str(z_slice_ref) 'to' num2str(zslicenext) '_,' templatecit_slice_ref 'to' num2str(zslicenext) ext ']'];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
     % concat ref->slice and slice->slicenext
-    cmd = ['isct_ComposeMultiTransform 2 ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), ext, ' -R ', templatecit_slice, ext, ' ', prefix_ants num2str(z_slice_ref) 'to' num2str(zslicenext) '_0Warp.nii.gz ', warp_ref2slice];
+    cmd = ['isct_ComposeMultiTransform 2 ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), ext, ' -R ', templatecit_slice, ext, ' ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), '_0GenericAffine.mat ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), '_1Warp.nii.gz ', warp_ref2slice];
     disp(cmd); [status,result] = unix(cmd);
 end
 
@@ -481,7 +487,8 @@ for iz = izref:-1:2
         '--output [' prefix_ants num2str(z_slice_ref) 'to' num2str(zslicenext) '_,' templatecit_slice_ref 'to' num2str(zslicenext) ext ']'];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
     % concat ref->slice and slice->slicenext
-    cmd = ['isct_ComposeMultiTransform 2 ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), ext, ' -R ', templatecit_slice, ext, ' ', prefix_ants num2str(z_slice_ref) 'to' num2str(zslicenext) '_0Warp.nii.gz ', warp_ref2slice];
+    cmd = ['isct_ComposeMultiTransform 2 ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), ext, ' -R ', templatecit_slice, ext, ' ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), '_0GenericAffine.mat ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), '_1Warp.nii.gz ', warp_ref2slice];
+%      cmd = ['isct_ComposeMultiTransform 2 ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), ext, ' -R ', templatecit_slice, ext, ' ', prefix_ants num2str(z_slice_ref) 'to' num2str(zslicenext) '_0Warp.nii.gz ', warp_ref2slice];
     disp(cmd); [status,result] = unix(cmd);
 end
 
