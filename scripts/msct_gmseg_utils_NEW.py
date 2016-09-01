@@ -504,6 +504,14 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, min=None, max=None):
     # put almost zero background to zero
     data[data < 0.0001] = 0
 
+    # binarize GM and WM data if needed
+    if np.min(data_gm) != 0 or np.max(data_gm) != 1:
+        data_gm[data_gm < 0.5] = 0
+        data_gm[data_gm >= 0.5] = 1
+    if np.min(data_wm) != 0 or np.max(data_wm) != 1:
+        data_wm[data_wm < 0.5] = 0
+        data_wm[data_wm >= 0.5] = 1
+
     # get GM and WM values in slice
     med_data_gm = np.median(data[data_gm==1])
     med_data_wm = np.median(data[data_wm==1])
