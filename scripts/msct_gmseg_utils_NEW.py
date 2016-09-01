@@ -110,8 +110,8 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 
     original_info = {'orientation': None, 'im_sc_seg_rpi': None, 'interpolated_images': []}
 
-    im_target = Image(fname_target)
-    im_sc_seg = Image(fname_sc_seg)
+    im_target = Image(fname_target).copy()
+    im_sc_seg = Image(fname_sc_seg).copy()
 
     # get original orientation
     printv('\n\tReorient ...', verbose, 'normal')
