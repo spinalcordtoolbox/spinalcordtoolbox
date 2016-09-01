@@ -14,6 +14,7 @@
 import os
 import shutil
 import sys
+import time
 import numpy as np
 import pandas as pd
 import pickle, gzip
@@ -30,19 +31,68 @@ from msct_parser import *
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Compute the model for GM segmentation')
+    parser.usage.set_description('Compute the model for GM segmentation.\n'
+                                 'Dataset should be organized with one folder per subject containing: \n'
+                                 '\t- A WM/GM contrasted image containing "im" in its name\n'
+                                 '\t- a segmentation of the SC containing "seg" in its name\n'
+                                 '\t- a/several manual segmentation(s) of GM containing "gm" in its/their name(s)\n'
+                                 '\t- a file containing vertebral level information as a nifti image or as a text file containing "level" in its name\n')
     parser.add_option(name="-path-data",
                       type_value="folder",
-                      description="path to the dataset", # TODO add description of the dataset organisation
+                      description="path to the dataset", 
                       mandatory=True,
                       example='my_data/')
+    parser.usage.addSection('MODEL PARAMETERS')
     parser.add_option(name="-model-type",
                       type_value="multiple_choice",
-                      description="Type of reduced space (PCA or IsoMap)",  # TODO add description of the dataset organisation
+                      description="Type of reduced space (PCA or IsoMap)",
                       mandatory=False,
                       default_value=ParamModel().method,
                       example=['pca', 'isomap'])
-    #TODO: add other param
+    parser.add_option(name="-k-pca",
+                      type_value="float",
+                      description="-ONLY WITH PCA- Percentage of variability to keep in the PCA reduced space (between 0 and 1)",
+                      mandatory=False,
+                      default_value=ParamModel().k_pca)
+    parser.add_option(name="-n-compo-iso",
+                      type_value="str",
+                      description='-ONLY WITH ISOMAP- Number of components to keep. Use an int from 0 to the number of slices in your data or "half" to keep half of the components ',
+                      mandatory=False,
+                      default_value=ParamModel().n_compo_iso)
+    parser.add_option(name="-n-neighbors-iso",
+                      type_value="int",
+                      description='-ONLY WITH ISOMAP- Number of neighbors to consider in the reduced space.',
+                      mandatory=False,
+                      default_value=ParamModel().n_neighbors_iso)
+    parser.usage.addSection('DATA PROCESSING PARAMETERS')
+    parser.add_option(name="-denoising",
+                      type_value="multiple_choice",
+                      description='Apply non-local means denoising (as implemented in dipy) on data',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=int(ParamData().denoising))
+    parser.add_option(name="-normalization",
+                      type_value='multiple_choice',
+                      description="Normalize data intensity using median intensity values of the manual WM and the GM",
+                      mandatory=False,
+                      default_value=int(ParamData().normalization),
+                      example=['0', '1'])
+    parser.add_option(name="-axial-res",
+                      type_value='float',
+                      description="Axial resolution to resample data to",
+                      mandatory=False,
+                      default_value=ParamData().axial_res)
+    parser.add_option(name="-sq-size",
+                      type_value='float',
+                      description="Size of the square centered on SC to crop data (in mm)",
+                      mandatory=False,
+                      default_value=ParamData().square_size_size_mm)
+    parser.add_option(name="-reg-param",
+                      type_value='str',
+                      description="Registration parameters to co-register data together",
+                      mandatory=False,
+                      default_value=ParamData().register_param)
+
     return parser
 
 class ParamModel:
@@ -406,10 +456,31 @@ if __name__ == "__main__":
 
     if '-model-type' in arguments:
         param_model.method = arguments['-model-type']
+    if '-k-pca' in arguments:
+        param_model.k_pca = arguments['-k-pca']
+    if '-n-compo-iso' in arguments:
+        param_model.n_compo_iso = arguments['-n-compo-iso'] if arguments['-n-compo-iso']=='half' else int(arguments['-n-compo-iso'])
+    if '-n-neighbors-iso' in arguments:
+        param_model.n_neighbors_iso = arguments['-n-neighbors-iso']
+    if '-denoising' in arguments:
+        param_data.denoising = bool(int(arguments['-denoising']))
+    if '-normalization' in arguments:
+        param_data.normalization = bool(int(arguments['-normalization']))
+    if '-axial-res' in arguments:
+        param_data.axial_res = arguments['-axial-res']
+    if '-sq-size' in arguments:
+        param_data.square_size_size_mm = arguments['-sq-size']
+    if '-reg-param' in arguments:
+        param_data.register_param = arguments['-reg-param']
 
 
     model = Model(param_model=param_model, param_data=param_data, param=param)
+
+    start = time.time()
     model.compute_model()
+    end = time.time()
+    t = end-start
+    printv('Model computed in '+str(int(round(t/60)))+' min, '+str(t%60)+' sec')
 
 
 
