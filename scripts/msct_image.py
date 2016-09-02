@@ -1033,6 +1033,10 @@ class Image(object):
         return fname_png
 
     def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', path_output='./', verbose=1):
+        ori = self.change_orientation('RPI')
+        if seg is not None:
+            ori_seg = seg.change_orientation('RPI')
+
         from sct_utils import printv
         nx, ny, nz, nt, px, py, pz, pt = self.dim
         if plane == 'sagittal':
@@ -1063,6 +1067,10 @@ class Image(object):
         except RuntimeError, e:
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
+
+        self.change_orientation(ori)
+        if seg is not None:
+            seg.change_orientation(ori_seg)
 
 
 
