@@ -101,6 +101,14 @@ def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     seg_input_data = seg_input_img.data
     seg_dest_data = seg_dest_img.data
 
+    if len(seg_input_data.shape) == 2:
+        # reshape 2D data into pseudo 3D (only one slice)
+        new_shape = list(seg_input_data.shape)
+        new_shape.append(1)
+        new_shape = tuple(new_shape)
+        seg_input_data = seg_input_data.reshape(new_shape)
+        seg_dest_data = seg_dest_data.reshape(new_shape)
+
     x_center_of_mass_input = [0] * seg_dest_data.shape[2]
     y_center_of_mass_input = [0] * seg_dest_data.shape[2]
 
@@ -194,6 +202,14 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     # display image
     data_src = im_src.data
     data_dest = im_dest.data
+
+    if len(data_src.shape) == 2:
+        # reshape 2D data into pseudo 3D (only one slice)
+        new_shape = list(data_src.shape)
+        new_shape.append(1)
+        new_shape = tuple(new_shape)
+        data_src = data_src.reshape(new_shape)
+        data_dest = data_dest.reshape(new_shape)
 
     # initialize forward warping field (defined in destination space)
     warp_x = np.zeros(data_dest.shape)
