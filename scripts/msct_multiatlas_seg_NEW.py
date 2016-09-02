@@ -141,7 +141,7 @@ class ParamData:
         self.denoising = True
         self.axial_res = 0.3
         self.square_size_size_mm = 22.5
-        self.register_param = 'step=1,type=seg,algo=columnwise,metric=MeanSquares,smooth=5,iter=1:step=2,type=im,algo=syn,smooth=2,metric=MI,iter=4:step=3,iter=0'
+        self.register_param = 'step=1,type=seg,algo=centermassrot,metric=MeanSquares,smooth=5,iter=1:step=2,type=im,algo=syn,smooth=2,metric=MI,iter=4:step=3,iter=0'
         self.normalization = True
 
     def __repr__(self):
