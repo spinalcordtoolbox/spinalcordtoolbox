@@ -224,8 +224,9 @@ class SegmentGM:
         self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
 
         # create output folder
+        printv('\nCreate output folder ...', self.param.verbose, 'normal')
         os.chdir('..')
-        if self.param_seg.path_results is not './' and not os.path.exists(self.param_seg.path_results):
+        if (self.param_seg.path_results != './') and (not os.path.exists(self.param_seg.path_results)):
             os.mkdir(self.param_seg.path_results)
         os.chdir(self.tmp_dir)
 
