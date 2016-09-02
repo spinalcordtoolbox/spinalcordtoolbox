@@ -198,7 +198,6 @@ class SegmentGM:
         # load model
         self.model.load_model()
 
-        printv('\nPre-processing target image ...', self.param.verbose, 'normal')
         self.target_im, self.info_preprocessing = pre_processing(self.param_seg.fname_im, self.param_seg.fname_seg, self.param_seg.fname_level, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm, denoising=self.param_data.denoising, verbose=self.param.verbose, rm_tmp=self.param.rm_tmp)
 
         printv('\nRegistering target image to model data ...', self.param.verbose, 'normal')
@@ -385,6 +384,7 @@ class SegmentGM:
 
     def warp_back_seg(self, path_warp):
         for target_slice in self.target_im:
+            printv('\nSlice '+str(target_slice.id)+':', self.param.verbose, 'normal')
             fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1)+'warp_dic2target_slice' + str(target_slice.id) + '.nii.gz'
             im_dest = Image(target_slice.im)
             interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
@@ -401,12 +401,17 @@ class SegmentGM:
         ## DO INTERPOLATION BACK TO ORIGINAL IMAGE
         # get original SC segmentation oriented in RPI
         im_sc_seg_original_rpi = self.info_preprocessing['im_sc_seg_rpi'].copy()
+        nx_ref, ny_ref, nz_ref, nt_ref, px_ref, py_ref, pz_ref, pt_ref = im_sc_seg_original_rpi.dim
+
         # create res GM seg image
         im_res_gmseg = im_sc_seg_original_rpi.copy()
         im_res_gmseg.data = np.zeros(im_res_gmseg.data.shape)
         # create res WM seg image
         im_res_wmseg = im_sc_seg_original_rpi.copy()
         im_res_wmseg.data = np.zeros(im_res_wmseg.data.shape)
+
+        printv('\n\tInterpolate result back into original space ...', self.param.verbose, 'normal')
+
 
         for iz, im_iz_preprocessed in enumerate(self.info_preprocessing['interpolated_images']):
             # im gmseg for slice iz
@@ -420,11 +425,23 @@ class SegmentGM:
             im_wmseg.data = self.target_im[iz].wm_seg
 
             for im_res_slice, im_res_tot in [(im_gmseg, im_res_gmseg), (im_wmseg, im_res_wmseg)]:
+                # get reference image for this slice
+                # (use only one slice to accelerate interpolation)
+                im_ref = im_sc_seg_original_rpi.copy()
+                im_ref.data = im_ref.data[:, :, iz]
+                im_ref.dim = (nx_ref, ny_ref, 1, nt_ref, px_ref, py_ref, pz_ref, pt_ref)
+                # correct reference header for this slice
+                [[x_0_ref, y_0_ref, z_0_ref]] = im_ref.transfo_pix2phys(coordi=[[0, 0, iz]])
+                im_ref.hdr.as_analyze_map()['qoffset_x'] = x_0_ref
+                im_ref.hdr.as_analyze_map()['qoffset_y'] = y_0_ref
+                im_ref.hdr.as_analyze_map()['qoffset_z'] = z_0_ref
+                im_ref.hdr.set_sform(im_ref.hdr.get_qform())
+                im_ref.hdr.set_qform(im_ref.hdr.get_qform())
 
                 # set im_res_slice header with im_sc_seg_original_rpi origin
-                im_res_slice.hdr.as_analyze_map()['qoffset_x'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_x']
-                im_res_slice.hdr.as_analyze_map()['qoffset_y'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_y']
-                im_res_slice.hdr.as_analyze_map()['qoffset_z'] = im_sc_seg_original_rpi.hdr.as_analyze_map()['qoffset_z']
+                im_res_slice.hdr.as_analyze_map()['qoffset_x'] = x_0_ref
+                im_res_slice.hdr.as_analyze_map()['qoffset_y'] = y_0_ref
+                im_res_slice.hdr.as_analyze_map()['qoffset_z'] = z_0_ref
                 im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
                 im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
 
@@ -445,14 +462,17 @@ class SegmentGM:
                 im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
                 im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
 
-
                 # reshape data
                 im_res_slice.data = im_res_slice.data.reshape((sq_size_pix, sq_size_pix, 1))
                 # interpolate to reference image
                 interp = 0 if self.param_seg.type_seg == 'bin' else 1
-                im_res_slice_interp = im_res_slice.interpolate_from_image(im_sc_seg_original_rpi, interpolation_mode=interp, border='nearest')
+                im_res_slice_interp = im_res_slice.interpolate_from_image(im_ref, interpolation_mode=interp, border='nearest')
                 # set correct slice of total image with this slice
-                im_res_tot.data[:, :, iz] = im_res_slice_interp.data[:, :, iz]
+                if len(im_res_slice_interp.data.shape) == 3:
+                    shape_x, shape_y, shape_z = im_res_slice_interp.data.shape
+                    im_res_slice_interp.data = im_res_slice_interp.data.reshape((shape_x, shape_y))
+                im_res_tot.data[:, :, iz] = im_res_slice_interp.data
+        printv('\n\tPut result into original orientation ...', self.param.verbose, 'normal')
 
         ## PUT RES BACK IN ORIGINAL ORIENTATION
         im_res_gmseg.setFileName('res_gmseg.nii.gz')
@@ -591,4 +611,4 @@ if __name__ == "__main__":
     seg_gm.segment()
     end = time.time()
     t = end - start
-    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(t % 60) + ' sec', param.verbose, 'info')
+    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
