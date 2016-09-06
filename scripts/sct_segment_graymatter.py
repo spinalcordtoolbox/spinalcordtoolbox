@@ -280,7 +280,6 @@ class Preprocessing:
         im_target = Image(self.t2star)
         if self.denoising:
             from sct_maths import denoise_nlmeans
-            print im_target.data.shape
             im_target.data = denoise_nlmeans(im_target.data)
             im_target.save()
             self.t2star = im_target.file_name + im_target.ext
@@ -565,10 +564,10 @@ class FullGmSegmentation:
 
         # Binarize results if it was probabilistic results
         if self.seg_param.res_type == 'prob':
-            sct.run('sct_maths -i '+gm_seg+' -thr 0.5 -o '+gm_seg)
-            sct.run('sct_maths -i '+wm_seg+' -thr 0.4999 -o '+wm_seg)
-            sct.run('sct_maths -i '+gm_seg+' -bin -o '+gm_seg)
-            sct.run('sct_maths -i '+wm_seg+' -bin -o '+wm_seg)
+            # sct.run('sct_maths -i '+gm_seg+' -thr 0.5 -o '+gm_seg)
+            # sct.run('sct_maths -i '+wm_seg+' -thr 0.4999 -o '+wm_seg)
+            sct.run('sct_maths -i '+gm_seg+' -bin 0.5 -o '+gm_seg)
+            sct.run('sct_maths -i '+wm_seg+' -bin 0.4999 -o '+wm_seg)
 
         # Compute Dice coefficient
         try:
@@ -577,8 +576,8 @@ class FullGmSegmentation:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_ref_gmseg = sct.extract_fname(ref_gmseg)[1]+'_in_res_space'+ext
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+gm_seg+','+ref_gmseg+',1,16] -o [reg_ref_to_res,'+corrected_ref_gmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
-            sct.run('sct_maths -i '+corrected_ref_gmseg+' -thr 0.1 -o '+corrected_ref_gmseg)
-            sct.run('sct_maths -i '+corrected_ref_gmseg+' -bin -o '+corrected_ref_gmseg)
+            # sct.run('sct_maths -i '+corrected_ref_gmseg+' -thr 0.1 -o '+corrected_ref_gmseg)
+            sct.run('sct_maths -i '+corrected_ref_gmseg+' -bin 0.1 -o '+corrected_ref_gmseg)
             status_gm, output_gm = sct.run('sct_dice_coefficient -i '+corrected_ref_gmseg+' -d '+gm_seg+'  -2d-slices 2', error_exit='warning')
 
         try:
@@ -587,8 +586,8 @@ class FullGmSegmentation:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_ref_wmseg = sct.extract_fname(ref_wmseg)[1]+'_in_res_space'+ext
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+wm_seg+','+ref_wmseg+',1,16] -o [reg_ref_to_res,'+corrected_ref_wmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
-            sct.run('sct_maths -i '+corrected_ref_wmseg+' -thr 0.1 -o '+corrected_ref_wmseg)
-            sct.run('sct_maths -i '+corrected_ref_wmseg+' -bin -o '+corrected_ref_wmseg)
+            # sct.run('sct_maths -i '+corrected_ref_wmseg+' -thr 0.1 -o '+corrected_ref_wmseg)
+            sct.run('sct_maths -i '+corrected_ref_wmseg+' -bin 0.1 -o '+corrected_ref_wmseg)
             status_wm, output_wm = sct.run('sct_dice_coefficient -i '+corrected_ref_wmseg+' -d '+wm_seg+'  -2d-slices 2', error_exit='warning')
 
         dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.seg_param.res_type + '.txt'

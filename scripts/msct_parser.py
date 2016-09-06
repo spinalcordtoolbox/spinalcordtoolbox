@@ -386,25 +386,33 @@ class Parser:
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
 
-    def add_path_to_file(self, dictionary, path_to_add, input_file=True, output_file=False):
+    def add_path_to_file(self, dictionary, path_to_add, input_file=True, output_file=False, do_not_add_path=[]):
         """
         This function add a path in front of each value in a dictionary (provided by the parser) for option that are files or folders.
         This function can affect option files that represent input and/or output with "input_file" and output_file" parameters.
         The parameter path_to_add must contain the character "/" at its end.
         Output is the same dictionary as provided but modified with added path.
+        :param dictionary:
+        :param path_to_add:
+        :param input_file:
+        :param output_file:
+        :param do_not_add_path: list of keys for which path should NOT be added.
+        :return:
         """
         for key, option in dictionary.iteritems():
             # Check if option is present in this parser
             if key in self.options:
-                # If input file is a list, we need to check what type of list it is.
-                # If it contains files, it must be updated.
-                if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
-                    if isinstance(self.options[key].type_value, list):
-                        for i, value in enumerate(option):
-                            option[i] = path_to_add + value
-                        dictionary[key] = option
-                    else:
-                        dictionary[key] = str(path_to_add) + str(option)
+                # if key is listed in the do_not_add_path variable, do nothing
+                if not key in do_not_add_path:
+                    # If input file is a list, we need to check what type of list it is.
+                    # If it contains files, it must be updated.
+                    if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
+                        if isinstance(self.options[key].type_value, list):
+                            for i, value in enumerate(option):
+                                option[i] = path_to_add + value
+                            dictionary[key] = option
+                        else:
+                            dictionary[key] = str(path_to_add) + str(option)
             else:
                 sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
 
@@ -542,7 +550,9 @@ class Usage:
         self.set_arguments()
         self.set_usage()
         self.set_example()
-        usage = self.header + self.description + self.usage + self.arguments_string + self.example + '\n'
+        # removed example: https://github.com/neuropoly/spinalcordtoolbox/issues/957
+        # usage = self.header + self.description + self.usage + self.arguments_string + self.example + '\n'
+        usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
             sct.printv(error+'\nAborted...',type='warning')
@@ -729,7 +739,9 @@ class DocSourceForge:
         self.set_arguments()
         self.set_usage()
         self.set_example()
-        doc = self.header + self.description + self.usage + self.arguments_string + self.example
+        # removed example: https://github.com/neuropoly/spinalcordtoolbox/issues/957
+        # doc = self.header + self.description + self.usage + self.arguments_string + self.example
+        doc = self.header + self.description + self.usage + self.arguments_string
         from os.path import basename
         file_doc_sf = open('doc_sf_'+basename(self.file)[:-3]+'.txt', 'w')
         file_doc_sf.write(doc)

@@ -504,7 +504,22 @@ def load_level(level_file, type='int', verbose=1):
 
             for line in lines[1:]:
                 i_slice, level = line.split(',')
-                level = int(level[:-1])
+                for c in [' ', '\n', '\r', '\t']:
+                    level = level.replace(c, '')
+                try:
+                    level = float(level)
+                except Exception, e:
+                    if len(level) > 2:
+                        l1 = l2 = 0
+                        if '-' in level:
+                            l1, l2 = level.split('-')
+                        elif '/' in level:
+                            l1, l2 = level.split('/')
+                        level = max(float(l1), float(l2))
+                        # convention = the vertebral disk between two levels belong to the lower level (C2-C3 = C3)
+                    else:
+                        # level unrecognized
+                        level = 0
                 i_slice = int(i_slice)
                 dic_level_by_i[i_slice] = level
         else:
@@ -941,8 +956,8 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         sct.run('sct_resample -i '+fname+' -mm '+str(npx)+'x'+str(npy)+'x'+str(pz)+' -o '+name_resample+' -x '+interpolation)
 
         if binary:
-            sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
-            sct.run('sct_maths -i ' + name_resample + ' -bin -o ' + name_resample)
+            # sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
+            sct.run('sct_maths -i ' + name_resample + ' -bin ' + str(thr) + ' -o ' + name_resample)
 
         if orientation != 'RPI':
             im_resample = Image(name_resample)

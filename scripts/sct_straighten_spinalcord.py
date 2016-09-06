@@ -249,6 +249,11 @@ class SpinalCordStraightener(object):
             sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
             sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
+            if np.min(image_centerline.data) < 0 or np.max(image_centerline.data) > 1:
+                image_centerline.data[image_centerline.data < 0] = 0
+                image_centerline.data[image_centerline.data > 1] = 1
+                image_centerline.save()
+
             """
             Steps: (everything is done in physical space)
             1. open input image and centreline image
