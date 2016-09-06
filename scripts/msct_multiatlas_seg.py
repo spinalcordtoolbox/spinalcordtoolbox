@@ -61,8 +61,8 @@ def get_parser():
                       mandatory=False,
                       default_value=ParamModel().k_pca)
     parser.add_option(name="-n-compo-iso",
-                      type_value="str",
-                      description='-ONLY WITH ISOMAP- Number of components to keep. Use an int from 0 to the number of slices in your data or "half" to keep half of the components ',
+                      type_value="float",
+                      description='-ONLY WITH ISOMAP- Percentage of components to keep (The total number of components is the number of slices in the model). To keep half of the components, use 0.5. ',
                       mandatory=False,
                       default_value=ParamModel().n_compo_iso)
     parser.add_option(name="-n-neighbors-iso",
@@ -98,6 +98,12 @@ def get_parser():
                       description="Registration parameters to co-register data together",
                       mandatory=False,
                       default_value=ParamData().register_param)
+    parser.usage.addSection('Leave One Out Cross Validation')
+    parser.add_option(name="-ind-rm",
+                      type_value="int",
+                      description='Index of the subject to remove to compute a model for Leave one out cross validation',
+                      mandatory=False,
+                      default_value=str(ParamModel().ind_rm))
     parser.usage.addSection('MISC')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
@@ -122,8 +128,10 @@ class ParamModel:
         self.new_model_dir = 'gmseg/'
         self.method = 'pca' # 'pca' or 'isomap'
         self.k_pca = 0.8
-        self.n_compo_iso = 'half' #'half' or int indicating the actual number of components to keep
+        self.n_compo_iso = 0.5 # float between 0 and 1 : percentage of component to keep. 0.5 = keep half of the components
         self.n_neighbors_iso = 5
+        #
+        self.ind_rm = None
         #
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
@@ -137,7 +145,7 @@ class ParamModel:
         if self.method == 'pca':
             info += '\t\t-> % of variability kept for PCA: '+str(self.k_pca)+'\n'
         if self.method == 'isomap':
-            info += '\t\t-> # components for isomap: '+str(self.n_compo_iso)+'\n'
+            info += '\t\t-> # components for isomap: '+str(self.n_compo_iso)+' (in percentage: 0.5 = keep half of the components)\n'
             info += '\t\t-> # neighbors for isomap: ' + str(self.n_neighbors_iso) + '\n'
 
         return info
@@ -190,7 +198,8 @@ class Model:
         # create model folder
         if os.path.exists(self.param_model.new_model_dir) and os.listdir(self.param_model.new_model_dir) != []:
             shutil.move(self.param_model.new_model_dir, slash_at_the_end(self.param_model.new_model_dir, slash=0) + '_old')
-        os.mkdir(self.param_model.new_model_dir)
+        if not os.path.exists(self.param_model.new_model_dir):
+            os.mkdir(self.param_model.new_model_dir)
         # write model info
         param_fic = open(self.param_model.new_model_dir + 'info.txt', 'w')
         param_fic.write(str(self.param_model))
@@ -225,33 +234,36 @@ class Model:
         '''
         path_data = slash_at_the_end(self.param_model.path_data, slash=1)
 
+        list_sub = [sub for sub in os.listdir(path_data) if os.path.isdir(os.path.join(path_data, sub))]
+        if self.param_model.ind_rm is not None and self.param_model.ind_rm < len(list_sub):
+            list_sub.pop(self.param_model.ind_rm)
+
         # total number of slices: J
         j = 0
 
-        for sub in os.listdir(path_data):
+        for sub in list_sub:
             # load images of each subject
-            if os.path.isdir(path_data+sub):
-                fname_data = ''
-                fname_sc_seg = ''
-                list_fname_gmseg = []
-                fname_level = None
-                for file_name in os.listdir(path_data+sub):
-                    if 'gm' in file_name:
-                        list_fname_gmseg.append(path_data+sub+'/'+file_name)
-                    elif 'seg' in file_name:
-                        fname_sc_seg = path_data+sub+'/'+file_name
-                    elif 'im' in file_name:
-                        fname_data = path_data+sub+'/'+file_name
-                    if 'level' in file_name:
-                        fname_level = path_data+sub+'/'+file_name
+            fname_data = ''
+            fname_sc_seg = ''
+            list_fname_gmseg = []
+            fname_level = None
+            for file_name in os.listdir(path_data+sub):
+                if 'gm' in file_name:
+                    list_fname_gmseg.append(path_data+sub+'/'+file_name)
+                elif 'seg' in file_name:
+                    fname_sc_seg = path_data+sub+'/'+file_name
+                elif 'im' in file_name:
+                    fname_data = path_data+sub+'/'+file_name
+                if 'level' in file_name:
+                    fname_level = path_data+sub+'/'+file_name
 
-                # preprocess data
-                list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm,  denoising=self.param_data.denoising)
-                for slice_sub in list_slices_sub:
-                    slice_sub.set(slice_id=slice_sub.id+j)
-                    self.slices.append(slice_sub)
+            # preprocess data
+            list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm,  denoising=self.param_data.denoising)
+            for slice_sub in list_slices_sub:
+                slice_sub.set(slice_id=slice_sub.id+j)
+                self.slices.append(slice_sub)
 
-                j += len(list_slices_sub)
+            j += len(list_slices_sub)
 
     # ------------------------------------------------------------------------------------------------------------------
     def coregister_model_data(self):
@@ -319,28 +331,29 @@ class Model:
         list_indexes = []
 
         for level, list_id_slices in id_by_level.items():
-            list_med_gm = []
-            list_med_wm = []
-            list_min = []
-            list_max = []
-            # get median GM and WM values for all slices of the same level:
-            for id_slice in list_id_slices:
-                slice = self.slices[id_slice]
-                for gm in slice.gm_seg_M:
-                    med_gm = np.median(slice.im_M[gm==1])
-                    list_med_gm.append(med_gm)
-                for wm in slice.wm_seg_M:
-                    med_wm = np.median(slice.im_M[wm == 1])
-                    list_med_wm.append(med_wm)
+            if level != 0:
+                list_med_gm = []
+                list_med_wm = []
+                list_min = []
+                list_max = []
+                # get median GM and WM values for all slices of the same level:
+                for id_slice in list_id_slices:
+                    slice = self.slices[id_slice]
+                    for gm in slice.gm_seg_M:
+                        med_gm = np.median(slice.im_M[gm==1])
+                        list_med_gm.append(med_gm)
+                    for wm in slice.wm_seg_M:
+                        med_wm = np.median(slice.im_M[wm == 1])
+                        list_med_wm.append(med_wm)
 
-                list_min.append(min(slice.im_M.flatten()))
-                list_max.append(max(slice.im_M.flatten()))
+                    list_min.append(min(slice.im_M.flatten()))
+                    list_max.append(max(slice.im_M.flatten()))
 
-            list_gm_by_level.append(np.mean(list_med_gm))
-            list_wm_by_level.append(np.mean(list_med_wm))
-            list_min_by_level.append(min(list_min))
-            list_max_by_level.append(max(list_max))
-            list_indexes.append(level)
+                list_gm_by_level.append(np.mean(list_med_gm))
+                list_wm_by_level.append(np.mean(list_med_wm))
+                list_min_by_level.append(min(list_min))
+                list_max_by_level.append(max(list_max))
+                list_indexes.append(level)
 
         # add level 0 for images with no level (or level not in model)
         # average GM and WM for all slices, get min and max of all slices
@@ -358,7 +371,7 @@ class Model:
         for dic_slice in self.slices:
             level_int = int(round(dic_slice.level))
             av_gm_slice, av_wm_slice = average_gm_wm([dic_slice], bin=True)
-            norm_im_M = normalize_slice(dic_slice.im_M, av_gm_slice, av_wm_slice, self.intensities['GM'][level_int], self.intensities['WM'][level_int], min=self.intensities['MIN'][level_int], max=self.intensities['MAX'][level_int])
+            norm_im_M = normalize_slice(dic_slice.im_M, av_gm_slice, av_wm_slice, self.intensities['GM'][level_int], self.intensities['WM'][level_int], val_min=self.intensities['MIN'][level_int], val_max=self.intensities['MAX'][level_int])
             dic_slice.set(im_m=norm_im_M)
 
 
@@ -375,10 +388,7 @@ class Model:
         if self.param_model.method == 'isomap':
             ## ISOMAP
             n_neighbors = self.param_model.n_neighbors_iso
-            if self.param_model.n_compo_iso == 'half':
-                n_components = model_data.shape[0] / 2
-            else:
-                n_components = self.param_model.n_compo_iso
+            n_components = int(model_data.shape[0] * self.param_model.n_compo_iso )
 
             model = manifold.Isomap(n_neighbors=n_neighbors, n_components=n_components)
             self.fitted_data = model.fit_transform(model_data)
@@ -483,7 +493,7 @@ if __name__ == "__main__":
     if '-k-pca' in arguments:
         param_model.k_pca = arguments['-k-pca']
     if '-n-compo-iso' in arguments:
-        param_model.n_compo_iso = arguments['-n-compo-iso'] if arguments['-n-compo-iso']=='half' else int(arguments['-n-compo-iso'])
+        param_model.n_compo_iso = arguments['-n-compo-iso']
     if '-n-neighbors-iso' in arguments:
         param_model.n_neighbors_iso = arguments['-n-neighbors-iso']
     if '-denoising' in arguments:
@@ -496,6 +506,8 @@ if __name__ == "__main__":
         param_data.square_size_size_mm = arguments['-sq-size']
     if '-reg-param' in arguments:
         param_data.register_param = arguments['-reg-param']
+    if '-ind-rm' in arguments:
+        param_model.ind_rm = arguments['-ind-rm']
     if '-r' in arguments:
         param.rm_tmp= bool(int(arguments['-r']))
     if '-v' in arguments:

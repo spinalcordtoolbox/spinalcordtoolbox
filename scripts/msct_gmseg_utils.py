@@ -479,7 +479,7 @@ def average_gm_wm(list_of_slices, model_space=True, bin=False):
     return data_mean_gm, data_mean_wm
 
 
-def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, min=None, max=None):
+def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, val_min=None, val_max=None):
     '''
     Function to normalize the intensity of data to the GM and WM values given by val_gm and val_wm.
     All parameters are arrays
@@ -501,7 +501,7 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, min=None, max=None):
     data_wm = data_wm.reshape(data.shape)
 
     # put almost zero background to zero
-    data[data < 0.0001] = 0
+    data[data < 0.01] = 0
 
     # binarize GM and WM data if needed
     if np.min(data_gm) != 0 or np.max(data_gm) != 1:
@@ -512,22 +512,25 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, min=None, max=None):
         data_wm[data_wm >= 0.5] = 1
 
     # get GM and WM values in slice
-    med_data_gm = np.median(data[data_gm==1])
-    med_data_wm = np.median(data[data_wm==1])
+    data_in_gm = data[data_gm==1]
+    data_in_wm = data[data_wm==1]
+    med_data_gm = np.median(data_in_gm)
+    med_data_wm = np.median(data_in_wm)
     std_data = np.std(data)
 
     # compute normalized data
     # if median values are too close: use min and max to normalize data
-    if abs(med_data_gm - med_data_wm) < std_data and None not in [min, max]:
-        min_data = np.min(data.flatten())
-        max_data = np.max(data.flatten())
-        new_data = ((data - min_data) * (max - min) / (max_data - min_data)) + min
+    if abs(med_data_gm - med_data_wm) < std_data and val_min is not None and val_max is not None:
+        min_data = min(np.min(data_in_gm[data_in_gm.nonzero()]), np.min(data_in_wm[data_in_wm.nonzero()]))
+        max_data = max(np.max(data_in_gm[data_in_gm.nonzero()]), np.max(data_in_wm[data_in_wm.nonzero()]))
+        new_data = ((data - min_data) * (val_max - val_min) / (max_data - min_data)) + val_min
     # else (=normal data): use median values to normalize data
     else:
         new_data = ((data - med_data_wm) * (val_gm - val_wm) / (med_data_gm - med_data_wm)) + val_wm
 
     # put almost zero background to zero
-    new_data[new_data < 0.0001] = 0  # put at 0 the background
+    new_data[data < 0.01] = 0  # put at 0 the background
+    new_data[new_data < 0.01] = 0  # put at 0 the background
 
     # return normalized data
     return new_data
