@@ -18,8 +18,7 @@ import sct_utils as sct
 from msct_image import Image, get_dimension
 from sct_image import set_orientation
 from msct_parser import Parser
-import msct_gmseg_utils as sct_gm
-
+from sct_image import get_orientation_3d
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -348,6 +347,54 @@ def bin_data(data):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='spline'):
+    """
+    Resampling function: add a padding, resample, crop the padding
+    :param fname: name of the image file to be resampled
+    :param suffix: suffix added to the original fname after resampling
+    :param binary: boolean, image is binary or not
+    :param npx: new pixel size in the x direction
+    :param npy: new pixel size in the y direction
+    :param thr: if the image is binary, it will be thresholded at thr (default=0) after the resampling
+    :param interpolation: type of interpolation used for the resampling
+    :return: file name after resampling (or original fname if it was already in the correct resolution)
+    """
+    im_in = Image(fname)
+    orientation = get_orientation_3d(im_in)
+    if orientation != 'RPI':
+        im_in = set_orientation(im_in, 'RPI')
+        im_in.save()
+        fname = im_in.absolutepath
+    nx, ny, nz, nt, px, py, pz, pt = im_in.dim
+
+    if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
+        name_resample = sct.extract_fname(fname)[1] + suffix
+        if binary:
+            interpolation = 'nn'
+
+        sct.run('sct_resample -i '+fname+' -mm '+str(npx)+'x'+str(npy)+'x'+str(pz)+' -o '+name_resample+' -x '+interpolation)
+
+        if binary:
+            # sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
+            sct.run('sct_maths -i ' + name_resample + ' -bin ' + str(thr) + ' -o ' + name_resample)
+
+        if orientation != 'RPI':
+            im_resample = Image(name_resample)
+            im_resample = set_orientation(im_resample, orientation)
+            im_resample.save()
+            name_resample = im_resample.absolutepath
+        return name_resample
+    else:
+        if orientation != 'RPI':
+            im_in = set_orientation(im_in, orientation)
+            im_in.save()
+            fname = im_in.absolutepath
+        sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
+        return fname
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 def non_zero_coord(data):
     dim = len(data.shape)
     if dim == 3:
@@ -453,9 +500,9 @@ if __name__ == "__main__":
 
         os.chdir(tmp_dir)
         # now = time.time()
-        input_im1 = Image(sct_gm.resample_image(im1_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
+        input_im1 = Image(resample_image(im1_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
         if im2_name is not None:
-            input_im2 = Image(sct_gm.resample_image(im2_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
+            input_im2 = Image(resample_image(im2_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
         else:
             input_im2 = None
 
