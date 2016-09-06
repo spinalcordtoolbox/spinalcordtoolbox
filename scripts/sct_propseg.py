@@ -132,7 +132,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-radius",
                       type_value="float",
-                      description="approximate radius of the spinal cord, default is 4 mm",
+                      description="approximate radius (in mm) of the spinal cord, default is 4",
                       mandatory=False)
     parser.add_option(name="-detect-n",
                       type_value="int",
@@ -140,7 +140,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-detect-gap",
                       type_value="int",
-                      description="gap in Z direction for the detection process, default is 4",
+                      description="gap along Z direction (in mm) for the detection process, default is 4",
                       mandatory=False)
     parser.add_option(name="-init-validation",
                       type_value=None,
@@ -152,11 +152,11 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-max-area",
                       type_value="float",
-                      description="[mm^2], stop condition: maximum cross-sectional area, default is 120 mm^2",
+                      description="[mm^2], stop condition: maximum cross-sectional area, default is 120",
                       mandatory=False)
     parser.add_option(name="-max-deformation",
                       type_value="float",
-                      description="[mm], stop condition: maximum deformation per iteration, default is 2.5 mm",
+                      description="[mm], stop condition: maximum deformation per iteration, default is 2.5",
                       mandatory=False)
     parser.add_option(name="-min-contrast",
                       type_value="float",
@@ -283,6 +283,7 @@ if __name__ == "__main__":
         from sct_viewer import ClickViewer
         image_input_reoriented = Image(folder_output + reoriented_image_filename)
         viewer = ClickViewer(image_input_reoriented)
+        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         if use_viewer == "mask":
             viewer.number_of_slices = 3
             viewer.gap_inter_slice = int(10 / pz)

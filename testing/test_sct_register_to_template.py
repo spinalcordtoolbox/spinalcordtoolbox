@@ -24,9 +24,8 @@ from sct_warp_template import get_file_label
 
 def test(path_data='', parameters=''):
     verbose = 0
-    default_template = 'PAM50'
-    # filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'  # used to compute DICE
     dice_threshold = 0.9
+    add_path_for_template = False  # if absolute path or no path to template is provided, then path to data should not be added.
 
     # initializations
     dice_template2anat = float('NaN')
@@ -36,10 +35,14 @@ def test(path_data='', parameters=''):
         parameters = '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz ' \
                      '-param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares:step=3,iter=0 ' \
                      '-t template/ -r 0'
+        add_path_for_template = True  # in this case, path to data should be added
 
     parser = sct_register_to_template.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
+    if add_path_for_template:
+        dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
+    else:
+        dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True, do_not_add_path=['-t'])
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
@@ -55,10 +58,10 @@ def test(path_data='', parameters=''):
         #     index=[path_data])
 
     # if template is not specified, use default
-    if not os.path.isdir(dict_param_with_path['-t']):
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        dict_param_with_path['-t'] = path_sct + default_template
-        param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    # if not os.path.isdir(dict_param_with_path['-t']):
+    #     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    #     dict_param_with_path['-t'] = path_sct + default_template
+    #     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # get contrast folder from -i option.
     # We suppose we can extract it as the first object when spliting with '/' delimiter.
@@ -101,7 +104,7 @@ def test(path_data='', parameters=''):
     # if command ran without error, test integrity
     if status == 0:
         # get filename_template_seg
-        fname_template_seg = get_file_label(dict_param_with_path['-t']+'template/', 'spinal cord', output='filewithpath')
+        fname_template_seg = get_file_label(sct.slash_at_the_end(dict_param_with_path['-t'], 1) + 'template/', 'spinal cord', output='filewithpath')
         # apply transformation to binary mask: template --> anat
         sct.run(
             'sct_apply_transfo -i ' + fname_template_seg +
