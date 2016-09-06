@@ -68,8 +68,8 @@ def test(path_data, parameters=''):
     if status == 0 and "-ref" in dict_param_with_path.keys()    :
         target_name = sct.extract_fname(dict_param_with_path["-i"])[1]
 
-        dice_fname = path_output+'dice_'+target_name+'_'+dict_param_with_path["-res-type"]+'.txt'
-        hausdorff_fname = path_output+'hd_'+target_name+'_'+dict_param_with_path["-res-type"]+'.txt'
+        dice_fname = path_output+'dice_coefficient_'+target_name+'.txt'
+        hausdorff_fname = path_output+'hausdorff_dist_'+target_name+'.txt'
 
         # Extracting dice results:
         dice = open(dice_fname, 'r')

@@ -222,12 +222,12 @@ class SegmentGM:
         printv('\nPost-processing ...', self.param.verbose, 'normal')
         self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
 
-        # create output folder
-        printv('\nCreate output folder ...', self.param.verbose, 'normal')
-        os.chdir('..')
-        if (self.param_seg.path_results != './') and (not os.path.exists(self.param_seg.path_results)):
+        if (self.param_seg.path_results != './') and (not os.path.exists('../'+self.param_seg.path_results)):
+            # create output folder
+            printv('\nCreate output folder ...', self.param.verbose, 'normal')
+            os.chdir('..')
             os.mkdir(self.param_seg.path_results)
-        os.chdir(self.tmp_dir)
+            os.chdir(self.tmp_dir)
 
         if self.param_seg.fname_manual_gmseg is not None:
             # compute validation metrics
@@ -290,6 +290,10 @@ class SegmentGM:
             shutil.copy(self.param_seg.fname_level, self.tmp_dir)
             self.param_seg.fname_level = ''.join(extract_fname(self.param_seg.fname_level)[1:])
 
+        if self.param_seg.fname_manual_gmseg is not None:
+            shutil.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir)
+            self.param_seg.fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
+
     def register_target(self):
         # create dir to store warping fields
         path_warping_fields = 'warp_target/'
@@ -324,7 +328,8 @@ class SegmentGM:
             level_int = int(round(target_slice.level))
             if level_int not in self.model.intensities.index:
                 level_int = 0
-            norm_im_M = normalize_slice(target_slice.im_M, gm_seg_model[level_int], wm_seg_model[level_int], self.model.intensities['GM'][level_int], self.model.intensities['WM'][level_int],min=self.model.intensities['MIN'][level_int], max=self.model.intensities['MAX'][level_int])
+            norm_im_M = normalize_slice(target_slice.im_M, gm_seg_model[level_int], wm_seg_model[level_int], self.model.intensities['GM'][level_int], self.model.intensities['WM'][level_int],
+                                        val_min=self.model.intensities['MIN'][level_int], val_max=self.model.intensities['MAX'][level_int])
             target_slice.set(im_m=norm_im_M)
 
     def project_target(self):
@@ -490,10 +495,9 @@ class SegmentGM:
         if not os.path.exists(tmp_dir_val):
             os.mkdir(tmp_dir_val)
         # copy data into tmp dir val
-        os.chdir('..')
-        shutil.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir+tmp_dir_val)
-        shutil.copy(self.param_seg.fname_seg, self.tmp_dir + tmp_dir_val)
-        os.chdir(self.tmp_dir+tmp_dir_val)
+        shutil.copy(self.param_seg.fname_manual_gmseg, tmp_dir_val)
+        shutil.copy(self.param_seg.fname_seg, tmp_dir_val)
+        os.chdir(tmp_dir_val)
         fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
         fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
 
