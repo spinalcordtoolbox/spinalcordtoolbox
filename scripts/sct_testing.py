@@ -165,6 +165,7 @@ def fill_functions():
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
     functions.append('sct_register_graymatter')
+    functions.append('sct_segment_graymatter')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
     functions.append('sct_resample')
@@ -173,8 +174,7 @@ def fill_functions():
     functions.append('sct_warp_template')
     functions.append('sct_documentation')
     functions.append('sct_dmri_create_noisemask')
-    ##DEBUG
-    # functions.append('sct_segment_graymatter')
+   
 
     return functions
 
