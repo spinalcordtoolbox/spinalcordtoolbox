@@ -792,9 +792,11 @@ int main(int argc, char *argv[])
 	{
 
 	    vector<CVector3> centerline_spinalcord = meshOutputFinal->computeCenterline();
-	    CVector3* upSlicePoint = new CVector3(image3DGrad->TransformIndexToPhysicalPoint(CVector3(0,upSlice,0)));
+	    CVector3* upSlicePoint = new CVector3(image3DGrad->TransformIndexToPhysicalPoint(CVector3(0,upSlice+1,0)));
+	    (*upSlicePoint)[2] = (*upSlicePoint)[2] - 0.45*spacingI[2];
 	    CVector3* upSliceNormal = new CVector3(0,0,1);
-	    CVector3* downSlicePoint = new CVector3(image3DGrad->TransformIndexToPhysicalPoint(CVector3(0,downSlice,0)));
+	    CVector3* downSlicePoint = new CVector3(image3DGrad->TransformIndexToPhysicalPoint(CVector3(0,downSlice-1,0)));
+	    (*downSlicePoint)[2] = (*downSlicePoint)[2] + 0.55*spacingI[2];
 	    CVector3* downSliceNormal = new CVector3(0,0,-1);
 	    image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinary,orientationFilter.getInitialImageOrientation(), false, true, upSlicePoint, upSliceNormal, downSlicePoint, downSliceNormal);
 	}
@@ -940,7 +942,7 @@ bool extractPointAndNormalFromMask(string filename, CVector3 &point, CVector3 &n
     }
     
     if (result.size() != 3) {
-        cerr << "Error: Not enough of too many points in the binary mask. Number of point needed = 3. Detected points = " << result.size() << endl;
+        cerr << "Error: Not enough or too many points in the binary mask. Number of point needed = 3. Detected points = " << result.size() << endl;
         return false;
     }
     point = result[1];

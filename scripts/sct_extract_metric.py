@@ -19,14 +19,16 @@
 
 # Import common Python libraries
 import os
-import getopt
 import sys
 import commands
+from glob import glob
 import time
+
 import nibabel as nib
 import numpy as np
-import sct_utils as sct
+
 from sct_image import get_orientation_3d, set_orientation
+import sct_utils as sct
 from msct_image import Image
 from msct_parser import Parser
 
@@ -41,7 +43,7 @@ ALMOST_ZERO = 0.000001
 class Param:
     def __init__(self):
         self.method = 'wath'
-        self.path_label = path_sct+'/data/atlas'
+        self.path_label = path_sct+'/data/PAM50/atlas/'
         self.output_type = 'txt'
         self.verbose = 1
         self.vertebral_levels = ''
@@ -49,10 +51,12 @@ class Param:
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
-        self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
-        self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
+        # self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
+        # self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
         self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
                           '10'] # STD of the assumed gaussian-distributed noise
+param = Param()
+
 
 def get_parser():
 
@@ -73,16 +77,16 @@ def get_parser():
                       example=path_sct+'/data/atlas')
     parser.add_option(name='-l',
                       type_value='str',
-                      description='Label IDs to extract the metric from. Example: 1,3 for left fasciculus cuneatus and left ventral spinocerebellar tracts. Default = all labels. You can also select labels using 1:3 to get labels 1,2,3.',
+                      description='Label IDs to extract the metric from. Default = all labels. Separate labels with ",". To select a group of consecutive labels use ":". Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is computed using all tracts, but only values of the selected tracts are reported.',
                       mandatory=False,
                       default_value='')
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description="""Method to extract metrics.
 ml: maximum likelihood (only use with well-defined regions and low noise)
-  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in all voxels (the algorithm doesn't normalize the atlas).
 map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.
-  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in all voxels (the algorithm doesn't normalize the atlas).
 wa: weighted average
 wath: weighted average (only consider values >0.5)
 bin: binarize mask (threshold=0.5)""",
@@ -109,7 +113,7 @@ bin: binarize mask (threshold=0.5)""",
                       default_value=param_default.output_type)
     parser.add_option(name='-overwrite',
                       type_value='int',
-                      description="""In the case you choose \"-output-type xls\" and you specified a pre-existing file in \"-o\", this option will allow you to overwrite this .xls file (\"-overwrite 1\") or to add the results to it (\"-overwrite 0\").""",
+                      description="""In the case you choose \"-output-type xls\" and you specified a pre-existing file in \"-o\", this option will allow you to overwrite this .xls file (\"-overwrite 1\") or to append the results to the end of the file (\"-overwrite 0\").""",
                       mandatory=False,
                       default_value=0)
     parser.add_option(name='-param',
@@ -127,7 +131,7 @@ bin: binarize mask (threshold=0.5)""",
                       deprecated_by='-param')
     parser.add_option(name='-o',
                       type_value='file_output',
-                      description='File containing the results of metrics extraction.',
+                      description='File containing the results of metrics extraction. Default: '+param_default.fname_output,
                       mandatory=False,
                       default_value=param_default.fname_output)
     parser.add_option(name='-vert',
@@ -163,7 +167,7 @@ bin: binarize mask (threshold=0.5)""",
                       mandatory=False)
 
     # read the .txt files referencing the labels
-    file_label = param_default.path_label + '/' + param_default.file_info_label
+    file_label = param_default.path_label + param_default.file_info_label
     sct.check_file_exist(file_label, 0)
     default_info_label = open(file_label, 'r')
     label_references = default_info_label.read()
@@ -194,22 +198,22 @@ def main(args=None):
 
     if args is None:
         args = sys.argv[1:]
-    param = Param()
 
     parser = get_parser()
     arguments = parser.parse(args)
 
     # Initialization to defaults parameters
-    fname_data = arguments['-i']
-    path_label = arguments['-f']
-    labels_user = ''
     vertebral_levels = ''
-    overwrite = 0
+    # output_type = param_default.output_type
 
+    fname_data = arguments['-i']
+    path_label = sct.slash_at_the_end(arguments['-f'], 1)
+    method = arguments['-method']
+    labels_user = ''
+    overwrite = 0
+    adv_param_user = ''
     if '-l' in arguments:
         labels_user = arguments['-l']
-    method = arguments['-method']
-    adv_param_user = ''
     if '-param' in arguments:
         adv_param_user = arguments['-param']
     slices_of_interest = ''
@@ -217,10 +221,9 @@ def main(args=None):
         slices_of_interest = arguments['-z']
     if '-vert' in arguments:
         vertebral_levels = arguments['-vert']
-    average_all_labels = param.average_all_labels
+    fname_output = arguments['-o']
     if '-output-type' in arguments:
         output_type = arguments['-output-type']
-    fname_output = arguments['-o']
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
     fname_normalizing_label = ''
@@ -230,29 +233,40 @@ def main(args=None):
     if '-norm-method' in arguments:
         normalization_method = arguments['-norm-method']
 
-    # Initialization to defaults parameters
-    fname_vertebral_labeling = param.fname_vertebral_labeling
+    # Initialization
+    # fname_vertebral_labeling = param.fname_vertebral_labeling
+    fname_vertebral_labeling = ''
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param.verbose
-    ml_clusters = param.ml_clusters
+    # ml_clusters = param.ml_clusters
     adv_param = param.adv_param
     normalizing_label = []
 
     # check if the atlas folder given exists and add slash at the end
-    sct.check_folder_exist(path_label)
-    path_label = sct.slash_at_the_end(path_label, 1)
+    # sct.check_folder_exist(path_label)
+    # path_label = sct.slash_at_the_end(path_label, 1)
+
+    # adjust file names and parameters for old MNI-Poly-AMU template
+    if not len(glob(path_label + 'WMtract*.*')) == 0:
+        # MNI-Poly-AMU
+        suffix_vertebral_labeling = '*_level.nii.gz'
+        ml_clusters = '0:29,30,31'  # 3-class for robust maximum likelihood estimation: WM, GM and CSF
+    else:
+        # PAM50 and later
+        suffix_vertebral_labeling = '*_levels.nii.gz'
+        ml_clusters = '0:29,30:35,36'
 
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
         if slices_of_interest:  # impossible to select BOTH specific slices and specific vertebral levels
             sct.printv(parser.usage.generate(error='ERROR: You cannot select BOTH vertebral levels AND slice numbers.'))
         else:
-            fname_vertebral_labeling_list = sct.find_file_within_folder(fname_vertebral_labeling, path_label + '..')
+            fname_vertebral_labeling_list = sct.find_file_within_folder(suffix_vertebral_labeling, path_label + '..')
             if len(fname_vertebral_labeling_list) > 1:
-                sct.printv(parser.usage.generate(error='ERROR: More than one file named "' + fname_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
+                sct.printv(parser.usage.generate(error='ERROR: More than one file named "' + suffix_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
             elif len(fname_vertebral_labeling_list) == 0:
-                sct.printv(parser.usage.generate(error='ERROR: No file named "' + fname_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
+                sct.printv(parser.usage.generate(error='ERROR: No file named "' + suffix_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
             else:
                 fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
 
@@ -474,52 +488,53 @@ def read_label_file(path_info_label, file_info_label):
     # file name of info_label.txt
     fname_label = path_info_label+file_info_label
 
-    # Check info_label.txt existence
-    sct.check_file_exist(fname_label)
-
     # Read file
-    f = open(fname_label)
+    try:
+        f = open(fname_label)
+    except IOError:
+        sct.printv('\nWARNING: Cannot open '+fname_label, 1, 'warning')
+        # raise
+    else:
+        # Extract all lines in file.txt
+        lines = [line for line in f.readlines() if line.strip()]
+        lines[-1] += ' ' # To fix an error that could occur at the last line (deletion of the last character of the .txt file)
 
-    # Extract all lines in file.txt
-    lines = [line for line in f.readlines() if line.strip()]
-    lines[-1] += ' ' # To fix an error that could occur at the last line (deletion of the last character of the .txt file)
 
+        # Check if the White matter atlas was provided by the user
+        # look at first line
+        header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
+        info_label_title = header_lines[0].split('-')[0].strip()
+        # if '# White matter atlas' not in info_label_title:
+        #     sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
+        # remove header lines (every line starting with "#")
+        section = ''
+        for line in lines:
+            # update section index
+            if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line):
+                section = line
+            # record the label according to its section
+            if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
+                parsed_line = line.split(',')
+                indiv_labels_ids.append(int(parsed_line[0]))
+                indiv_labels_names.append(parsed_line[1].strip())
+                indiv_labels_files.append(parsed_line[2].strip())
 
-    # Check if the White matter atlas was provided by the user
-    # look at first line
-    header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
-    info_label_title = header_lines[0].split('-')[0].strip()
-    # if '# White matter atlas' not in info_label_title:
-    #     sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
+            elif ('# Combined labels' in section) and (line[0] != '#'):
+                parsed_line = line.split(',')
+                combined_labels_ids.append(int(parsed_line[0]))
+                combined_labels_names.append(parsed_line[1].strip())
+                combined_labels_id_groups.append(','.join(parsed_line[2:]).strip())
 
-    # remove header lines (every line starting with "#")
-    section = ''
-    for line in lines:
-        # update section index
-        if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line):
-            section = line
-        # record the label according to its section
-        if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
-            parsed_line = line.split(',')
-            indiv_labels_ids.append(int(parsed_line[0]))
-            indiv_labels_names.append(parsed_line[1].strip())
-            indiv_labels_files.append(parsed_line[2].strip())
+        # check if all files listed are present in folder. If not, ERROR.
+        # TODO: better handle error
+        for file in indiv_labels_files:
+            sct.check_file_exist(path_info_label+file)
 
-        elif ('# Combined labels' in section) and (line[0] != '#'):
-            parsed_line = line.split(',')
-            combined_labels_ids.append(int(parsed_line[0]))
-            combined_labels_names.append(parsed_line[1].strip())
-            combined_labels_id_groups.append(','.join(parsed_line[2:]).strip())
+        # Close file.txt
+        f.close()
 
-    # check if all files listed are present in folder. If not, WARNING.
-    for file in indiv_labels_files:
-        sct.check_file_exist(path_info_label+file)
-
-    # Close file.txt
-    f.close()
-
-    return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, \
-           combined_labels_names, combined_labels_id_groups
+        return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, \
+               combined_labels_id_groups
 
 
 def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
@@ -665,13 +680,13 @@ def remove_slices(data_to_crop, slices_of_interest):
 def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
     """Save results in the output type selected by user."""
 
-    sct.printv('\nSave results in: '+fname_output+'.'+output_type+' ...')
+    sct.printv('\nSaving results in: '+fname_output+' ...')
 
     if output_type == 'txt':
         # CSV format, header lines start with "#"
 
         # Write mode of file
-        fid_metric = open(fname_output+'.'+output_type, 'w')
+        fid_metric = open(fname_output, 'w')
 
         # WRITE HEADER:
         # Write date and time
@@ -733,15 +748,15 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
     elif output_type == 'xls':
 
         # if the user asked for no overwriting but the specified output file does not exist yet
-        if (not overwrite) and (not os.path.isfile(fname_output + '.' + output_type)):
-            sct.printv('WARNING: You asked to edit the pre-existing file \"'+fname_output + '.' + output_type+'\" but this file does not exist. It will be created.', type='warning')
+        if (not overwrite) and (not os.path.isfile(fname_output)):
+            sct.printv('WARNING: You asked to edit the pre-existing file \"'+fname_output+'\" but this file does not exist. It will be created.', type='warning')
             overwrite = 1
 
         if not overwrite:
             from xlrd import open_workbook
             from xlutils.copy import copy
 
-            existing_book = open_workbook(fname_output + '.' + output_type)
+            existing_book = open_workbook(fname_output)
 
             # get index of the first empty row and leave one empty row between the two subjects
             row_index = existing_book.sheet_by_index(0).nrows
@@ -817,7 +832,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
             row_index += 1
 
-        book.save(fname_output + '.' + output_type)
+        book.save(fname_output)
 
     sct.printv('\tDone.')
 
@@ -1061,5 +1076,4 @@ def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbo
 # Start program
 # =======================================================================================================================
 if __name__ == "__main__":
-    # call main function
     main()

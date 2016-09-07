@@ -14,6 +14,7 @@
 from msct_parser import Parser
 import sys
 import sct_utils as sct
+import os
 
 
 def get_parser():
@@ -131,7 +132,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-radius",
                       type_value="float",
-                      description="approximate radius of the spinal cord, default is 4 mm",
+                      description="approximate radius (in mm) of the spinal cord, default is 4",
                       mandatory=False)
     parser.add_option(name="-detect-n",
                       type_value="int",
@@ -139,7 +140,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-detect-gap",
                       type_value="int",
-                      description="gap in Z direction for the detection process, default is 4",
+                      description="gap along Z direction (in mm) for the detection process, default is 4",
                       mandatory=False)
     parser.add_option(name="-init-validation",
                       type_value=None,
@@ -151,11 +152,11 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-max-area",
                       type_value="float",
-                      description="[mm^2], stop condition: maximum cross-sectional area, default is 120 mm^2",
+                      description="[mm^2], stop condition: maximum cross-sectional area, default is 120",
                       mandatory=False)
     parser.add_option(name="-max-deformation",
                       type_value="float",
-                      description="[mm], stop condition: maximum deformation per iteration, default is 2.5 mm",
+                      description="[mm], stop condition: maximum deformation per iteration, default is 2.5",
                       mandatory=False)
     parser.add_option(name="-min-contrast",
                       type_value="float",
@@ -191,10 +192,12 @@ def main(args=None):
     cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
 
     if "-ofolder" in arguments:
-        folder_output = arguments["-ofolder"]
+        folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
-        folder_output = '.'
+        folder_output = './'
     cmd += " -o " + folder_output
+    if not os.path.exists(folder_output):
+        os.makedirs(folder_output)
 
     if "-down" in arguments:
         cmd += " -down " + str(arguments["-down"])
@@ -275,38 +278,45 @@ def main(args=None):
 
     # if centerline or mask is asked using viewer
     if use_viewer:
-        # make sure image is in AIL orientation, as it is the orientation used by PropSeg
+        # make sure image is in SAL orientation, as it is the orientation used by PropSeg
         from sct_image import orientation
         image_input_orientation = orientation(image_input, get=True, verbose=False)
-        reoriented_image_filename = 'tmp.' + sct.add_suffix(input_filename, "_AIL")
-        sct.run('sct_image -i ' + input_filename + ' -o ' + reoriented_image_filename + ' -setorient AIL -v 0', verbose=False)
+        path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
+        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
+        sct.run('sct_image -i ' + input_filename + ' -o ' + folder_output + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
 
         from sct_viewer import ClickViewer
-        image_input_reoriented = Image(reoriented_image_filename)
+        image_input_reoriented = Image(folder_output + reoriented_image_filename)
         viewer = ClickViewer(image_input_reoriented)
+        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         if use_viewer == "mask":
             viewer.number_of_slices = 3
-            viewer.gap_inter_slice = 10
+            viewer.gap_inter_slice = int(10 / pz)
+            if viewer.gap_inter_slice == 0:
+                viewer.gap_inter_slice = 1
+            viewer.calculate_list_slices()
+        #else:
+        #    viewer.gap_inter_slice = 3
 
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
         if mask_points:
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
-            sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points + " -o " + mask_filename, verbose=False)
+            sct.run("sct_label_utils -i " + folder_output + reoriented_image_filename + " -create " + mask_points + " -o " + folder_output + mask_filename, verbose=False)
 
             # reorient the initialization mask to correspond to input image orientation
-            mask_reoriented_filename = sct.add_suffix(input_filename, "_mask_viewer")
-            sct.run('sct_image -i ' + mask_filename + ' -o ' + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
+            mask_reoriented_filename = sct.add_suffix(file_fname + ext_fname, "_mask_viewer")
+            sct.run('sct_image -i ' + folder_output + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
             # remove temporary files
-            sct.run('rm -rf tmp.*')
+            sct.run('rm -rf ' + folder_output + 'tmp.*')
 
             # add mask filename to parameters string
             if use_viewer == "centerline":
-                cmd += " -init-centerline " + mask_reoriented_filename
+                cmd += " -init-centerline " + folder_output + mask_reoriented_filename
             elif use_viewer == "mask":
-                cmd += " -init-mask " + mask_reoriented_filename
+                cmd += " -init-mask " + folder_output + mask_reoriented_filename
         else:
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
 
@@ -317,12 +327,11 @@ def main(args=None):
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname+"_seg"+ext_fname
 
-    if folder_output == ".":
+    if folder_output == "./":
         output_name = output_filename
     else:
-        output_name = folder_output+"/"+output_filename
-    sct.printv("fslview "+input_filename+" "+output_name+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
-
+        output_name = folder_output + output_filename
+    sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
 
 if __name__ == "__main__":
     main()
