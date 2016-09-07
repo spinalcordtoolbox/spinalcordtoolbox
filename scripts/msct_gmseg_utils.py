@@ -96,7 +96,7 @@ class Slice:
 #                               FUNCTIONS USED FOR PRE-PROCESSING
 ########################################################################################################################
 # ----------------------------------------------------------------------------------------------------------------------
-def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1, rm_tmp=True):
+def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1, rm_tmp=True, for_model=False):
     printv('\nPre-processing data ...', verbose, 'normal')
 
     tmp_dir = 'tmp_preprocessing_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)) + '/'
@@ -104,7 +104,9 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         os.mkdir(tmp_dir)
 
     shutil.copy(fname_target, tmp_dir)
+    fname_target = ''.join(extract_fname(fname_target)[1:])
     shutil.copy(fname_sc_seg, tmp_dir)
+    fname_sc_seg = ''.join(extract_fname(fname_sc_seg)[1:])
     os.chdir(tmp_dir)
 
     original_info = {'orientation': None, 'im_sc_seg_rpi': None, 'interpolated_images': []}
@@ -155,15 +157,14 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         shutil.copy(fname_level, tmp_dir)
         os.chdir(tmp_dir)
         # change fname level to only file name (path = tmp dir now)
-        path_level, file_level, ext_level = extract_fname(fname_level)
-        fname_level = file_level+ext_level
+        fname_level = ''.join(extract_fname(fname_level)[1:])
         # load levels
         list_slices_target = load_level(list_slices_target, fname_level)
 
     # load manual gmseg if there is one (model data)
     if fname_manual_gmseg is not None:
         printv('\n\tLoad manual GM segmentation(s) ...', verbose, 'normal')
-        list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm)
+        list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=for_model)
 
     os.chdir('..')
     if rm_tmp:
@@ -324,7 +325,7 @@ def load_level(list_slices_target, fname_level):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm):
+def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=False):
     if isinstance(list_fname_manual_gmseg, str):
         # consider fname_manual_gmseg as a list of file names to allow multiple manual GM segmentation
         list_fname_manual_gmseg = [list_fname_manual_gmseg]
@@ -351,11 +352,15 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
         list_im_gm = interpolate_im_to_ref(im_manual_gmseg, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=0)
 
         # load gm seg in list of slices
+        n_poped=0
         for im_gm, slice_im in zip(list_im_gm, list_slices_target):
-            slice_im.gm_seg.append(im_gm.data)
-
-            wm_slice = (slice_im.im > 0) - im_gm.data
-            slice_im.wm_seg.append(wm_slice)
+            if im_gm.data.max() == 0 and for_model:
+                list_slices_target.pop(slice_im.id-n_poped)
+                n_poped += 1
+            else:
+                slice_im.gm_seg.append(im_gm.data)
+                wm_slice = (slice_im.im > 0) - im_gm.data
+                slice_im.wm_seg.append(wm_slice)
 
     return list_slices_target
 
