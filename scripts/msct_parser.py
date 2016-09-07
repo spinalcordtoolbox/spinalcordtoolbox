@@ -555,8 +555,8 @@ class Usage:
         usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
-            sct.printv(error+'\nAborted...',type='warning')
-            sct.printv(usage,type='normal')
+            sct.printv(error+'\nAborted...', type='warning')
+            sct.printv(usage, type='normal')
             raise SyntaxError(error)
             exit(1)
         else:

@@ -997,7 +997,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
                                 '-x', interpolation])
         if binary:
             sct_maths.main(args=['-i', name_resample,
-                                 '-bin',
+                                 '-bin', str(thr),
                                  '-o', name_resample])
 
         if orientation != 'RPI':

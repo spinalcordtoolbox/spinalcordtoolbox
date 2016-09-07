@@ -37,6 +37,7 @@ class MultiLabelRegistration:
             self.param = param
         self.im_gm = Image(fname_gm)
         self.im_wm = Image(fname_wm)
+        self.fname_gm = fname_gm
         self.path_template = sct.slash_at_the_end(path_template, 1)
         if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir(self.path_template+'template/'):
             self.im_template_gm = Image(self.path_template+'template/MNI-Poly-AMU_GM.nii.gz')
