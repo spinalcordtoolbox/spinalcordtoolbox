@@ -65,7 +65,7 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     data_name = arguments['-d']
-     if '-v' in arguments:
+    if '-v' in arguments:
         verbose = int(arguments['-v'])
 
     # Download data
