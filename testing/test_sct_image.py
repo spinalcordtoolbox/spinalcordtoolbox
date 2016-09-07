@@ -101,7 +101,7 @@ def test(data_path):
         from numpy import sum
         threshold = 1e-3
         ref = Image(dmri_t_slices[0])
-        new = Image(file_name+'_T0000'+ext)
+        new = Image(data_path+folder_data[2]+file_name+'_T0000'+ext)
         diff = ref.data-new.data
         if sum(diff) > threshold:
             status = 99

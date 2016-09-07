@@ -12,7 +12,7 @@
 
 import sys
 
-from numpy import concatenate, shape, newaxis
+import numpy as np
 from msct_parser import Parser
 from msct_image import Image
 from sct_utils import printv
@@ -69,7 +69,8 @@ def get_parser():
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
     parser.add_option(name="-bin",
-                      description='Use (input image>0) to binarise.',
+                      type_value='float',
+                      description='Binarize image using specified threshold. E.g. -bin 0.5',
                       mandatory=False)
 
     parser.usage.addSection("\nThresholding methods:")
@@ -100,13 +101,13 @@ def get_parser():
 
     parser.usage.addSection("\nMathematical morphology")
     parser.add_option(name='-dilate',
-                      type_value='int',
-                      description='Dilate binary image using specified ball radius.',
+                      type_value=[[','], 'int'],
+                      description='Dilate binary image. If only one input is given, structured element is a ball with input radius (in voxel). If comma-separated inputs are given (e.g., "2,4,5"), structured element is a box with input dimensions.',
                       mandatory=False,
                       example="")
     parser.add_option(name='-erode',
-                      type_value='int',
-                      description='Erode binary image using specified ball radius.',
+                      type_value=[[','], 'int'],
+                      description='Erode binary image. If only one input is given, structured element is a ball with input radius (in voxel). If comma-separated inputs are given (e.g., "2,4,5"), structured element is a box with input dimensions.',
                       mandatory=False,
                       example="")
 
@@ -117,19 +118,25 @@ def get_parser():
                       mandatory=False,
                       example='0.5')
     parser.add_option(name='-laplacian',
-                      type_value='float',
+                      type_value=[[','], 'float'],
                       description='Laplacian filtering with specified standard deviations in mm for all axes (e.g.: 2).',
                       mandatory=False,
                       example='1')
     parser.add_option(name='-denoise',
                       type_value=[[','], 'str'],
-                      description='Non-local means adaptative denoising from P. Coupe et al. Separate with ",". Example: v=3,f=1,h=0.05.\n'
-                        'v:  similar patches in the non-local means are searched for locally, inside a cube of side 2*v+1 centered at each voxel of interest. Default: v=3\n'
-                        'f:  the size of the block to be used (2*f+1)x(2*f+1)x(2*f+1) in the blockwise non-local means implementation. Default: f=1\n'
-                        'h:  the standard deviation of rician noise in the input image, expressed as a ratio of the maximum intensity in the image. The higher, the more aggressive the denoising. Default: h=0.01',
+                      description='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ",". Example: p=1,b=3\n'
+                        'p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
+                        'b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
+                        '(Block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
+                        'To use default parameters, write -denoise 1',
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nMisc")
+    parser.add_option(name='-symmetrize',
+                      type_value='multiple_choice',
+                      description='Symmetrize data along the specified dimension.',
+                      mandatory=False,
+                      example=['0', '1', '2'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -182,7 +189,8 @@ def main(args=None):
         data_out = perc(data, param)
 
     elif '-bin' in arguments:
-        data_out = binarise(data)
+        bin_thr = arguments['-bin']
+        data_out = binarise(data, bin_thr=bin_thr)
 
     elif '-add' in arguments:
         from numpy import sum
@@ -191,17 +199,17 @@ def main(args=None):
         data_out = sum(data_concat, axis=3)
 
     elif '-sub' in arguments:
-        data2 = get_data_or_scalar(arguments["-sub"], data)
+        data2 = get_data_or_scalar(arguments['-sub'], data)
         data_out = data - data2
 
     elif "-laplacian" in arguments:
         sigmas = arguments["-laplacian"]
-        # if len(sigmas) == 1:
-        sigmas = [sigmas for i in range(len(data.shape))]
-        # elif len(sigmas) != len(data.shape):
-        #     printv(parser.usage.generate(error='ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
+        if len(sigmas) == 1:
+            sigmas = [sigmas for i in range(len(data.shape))]
+        elif len(sigmas) != len(data.shape):
+            printv(parser.usage.generate(error='ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
-        [sigmas[i] / dim[i+4] for i in range(3)]
+        sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
         # smooth data
         data_out = laplacian(data, sigmas)
 
@@ -219,15 +227,15 @@ def main(args=None):
     elif '-mean' in arguments:
         from numpy import mean
         dim = dim_list.index(arguments['-mean'])
-        if dim+1 > len(shape(data)):  # in case input volume is 3d and dim=t
-            data = data[..., newaxis]
+        if dim+1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., np.newaxis]
         data_out = mean(data, dim)
 
     elif '-std' in arguments:
         from numpy import std
         dim = dim_list.index(arguments['-std'])
-        if dim+1 > len(shape(data)):  # in case input volume is 3d and dim=t
-            data = data[..., newaxis]
+        if dim+1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., np.newaxis]
         data_out = std(data, dim)
 
     elif "-smooth" in arguments:
@@ -237,7 +245,7 @@ def main(args=None):
         elif len(sigmas) != len(data.shape):
             printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
-        [sigmas[i] / dim[i+4] for i in range(3)]
+        sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
         # smooth data
         data_out = smooth(data, sigmas)
 
@@ -249,16 +257,18 @@ def main(args=None):
 
     elif '-denoise' in arguments:
         # parse denoising arguments
-        v, f, h = 3, 1, 0.01  # default arguments
+        p, b = 1, 5  # default arguments
         list_denoise = arguments['-denoise']
         for i in list_denoise:
-            if 'v' in i:
-                v = int(i.split('=')[1])
-            if 'f' in i:
-                f = int(i.split('=')[1])
-            if 'h' in i:
-                h = float(i.split('=')[1])
-        data_out = denoise_ornlm(data, v, f, h)
+            if 'p' in i:
+                p = int(i.split('=')[1])
+            if 'b' in i:
+                b = int(i.split('=')[1])
+        data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
+
+    elif '-symmetrize' in arguments:
+        data_out = (data + data[range(data.shape[0]-1, -1, -1), :, :]) / float(2)
+
     # if no flag is set
     else:
         data_out = None
@@ -332,19 +342,24 @@ def perc(data, perc_value):
     return data > perc
 
 
-def binarise(data):
-    return data > 0
+def binarise(data, bin_thr=0):
+    return data > bin_thr
 
 
 def dilate(data, radius):
     """
     Dilate data using ball structuring element
     :param data: 2d or 3d array
-    :param radius: radius of structuring element
+    :param radius: radius of structuring element OR comma-separated int.
     :return: data dilated
     """
     from skimage.morphology import dilation, ball
-    selem = ball(radius)
+    if len(radius) == 1:
+        # define structured element as a ball
+        selem = ball(radius[0])
+    else:
+        # define structured element as a box with input dimensions
+        selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
     return dilation(data, selem=selem, out=None)
 
 
@@ -356,7 +371,12 @@ def erode(data, radius):
     :return: data eroded
     """
     from skimage.morphology import erosion, ball
-    selem = ball(radius)
+    if len(radius) == 1:
+        # define structured element as a ball
+        selem = ball(radius[0])
+    else:
+        # define structured element as a box with input dimensions
+        selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
     return erosion(data, selem=selem, out=None)
 
 
@@ -367,26 +387,31 @@ def get_data(list_fname):
     :return: 3D or 4D numpy array.
     """
     nii = [Image(f_in) for f_in in list_fname]
+    data0 = nii[0].data
     data = nii[0].data
     # check that every images have same shape
     for i in range(1, len(nii)):
-        if not shape(nii[i].data) == shape(data):
-            printv('ERROR: all input images must have same dimensions.', 1, 'error')
+        if not np.shape(nii[i].data) == np.shape(data0):
+            printv('\nWARNING: shape('+list_fname[i]+')='+str(np.shape(nii[i].data))+' incompatible with shape('+list_fname[0]+')='+str(np.shape(data0)), 1, 'warning')
+            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
-            concatenate_along_4th_dimension(data, nii[i].data)
+            data = concatenate_along_4th_dimension(data, nii[i].data)
     return data
+
 
 def get_data_or_scalar(argument, data_in):
     """
     Get data from list of file names (scenario 1) or scalar (scenario 2)
     :param argument: list of file names of scalar
-    :param data_in: if argument is scalar, use data to get shape
+    :param data_in: if argument is scalar, use data to get np.shape
     :return: 3d or 4d numpy array
     """
-    if argument.replace('.', '').isdigit():  # so that it recognize float as digits too
+    # try to convert argument in float
+    try:
         # build data2 with same shape as data
         data_out = data_in[:, :, :] * 0 + float(argument)
-    else:
+    # if conversion fails, it should be a file
+    except:
         # parse file name and check integrity
         parser2 = Parser(__file__)
         parser2.add_option(name='-i', type_value=[[','], 'file'])
@@ -402,24 +427,29 @@ def concatenate_along_4th_dimension(data1, data2):
     :param data2: 3d or 4d array
     :return data_concat: concate(data1, data2)
     """
-    if len(shape(data1)) == 3:
-        data1 = data1[..., newaxis]
-    if len(shape(data2)) == 3:
-        data2 = data2[..., newaxis]
-    return concatenate((data1, data2), axis=3)
+    if len(np.shape(data1)) == 3:
+        data1 = data1[..., np.newaxis]
+    if len(np.shape(data2)) == 3:
+        data2 = data2[..., np.newaxis]
+    return np.concatenate((data1, data2), axis=3)
 
 
-def denoise_ornlm(data_in, v=3, f=1, h=0.05):
-    from commands import getstatusoutput
-    from sys import path
-    # append python path for importing module
-    # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
-    status, path_sct = getstatusoutput('echo $SCT_DIR')
-    path.append(path_sct + '/external/denoise/ornlm')
-    from ornlm import ornlm
-    from numpy import array, max, float64
-    dat = data_in.astype(float64)
-    denoised = array(ornlm(dat, v, f, max(dat)*h))
+def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
+    """
+    data_in: nd_array to denoise
+    for more info about patch_radius and block radius, please refer to the dipy website: http://nipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+    """
+    from dipy.denoise.nlmeans import nlmeans
+    from dipy.denoise.noise_estimate import estimate_sigma
+    from numpy import asarray
+    data_in = asarray(data_in)
+
+    block_radius_max = min(data_in.shape)-1
+    block_radius = block_radius_max if block_radius > block_radius_max else block_radius
+
+    sigma = estimate_sigma(data_in)
+    denoised = nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
+
     return denoised
 
 

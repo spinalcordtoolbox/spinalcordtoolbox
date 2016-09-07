@@ -11,25 +11,27 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
-import sys
+# import commands
+# import sys
 import os
 from pandas import DataFrame
 import sct_segment_graymatter
-from msct_image import Image
+# from msct_image import Image
 import sct_utils as sct
 from numpy import sum, mean
-import time
+# import time
+from sct_warp_template import get_file_label
 # append path that contains scripts, to be able to load modules
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-sys.path.append(path_sct + '/scripts')
-
+# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# sys.path.append(path_sct + '/scripts')
 
 
 def test(path_data, parameters=''):
 
     if not parameters:
-        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -vertfile mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz -qc 0'
+        # get file name of vertebral labeling from template
+        file_vertfile = get_file_label(path_data+'mt/label/template', 'vertebral', output='file')
+        parameters = '-i mt/mt1.nii.gz -s mt/mt1_seg.nii.gz -vertfile mt/label/template/'+file_vertfile+' -normalize 1 -ref mt/mt1_gmseg_goldstandard.nii.gz -qc 0'
 
     parser = sct_segment_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
@@ -42,7 +44,7 @@ def test(path_data, parameters=''):
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-vertfile']) and os.path.isfile(dict_param_with_path['-ref'])):
+    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-vertfile'])): # and os.path.isfile(dict_param_with_path['-ref'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'dice_wm': float('nan'), 'hausdorff': float('nan'), 'med_dist': float('nan'), 'duration_[s]': float('nan')}, index=[path_data])
@@ -63,7 +65,7 @@ def test(path_data, parameters=''):
 
     # initialization of results: must be NaN if test fails
     result_dice_gm, result_dice_wm, result_hausdorff, result_median_dist = float('nan'), float('nan'), float('nan'), float('nan')
-    if status == 0:
+    if status == 0 and "-ref" in dict_param_with_path.keys()    :
         target_name = sct.extract_fname(dict_param_with_path["-i"])[1]
 
         dice_fname = path_output+'dice_'+target_name+'_'+dict_param_with_path["-res-type"]+'.txt'

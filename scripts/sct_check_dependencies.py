@@ -67,6 +67,7 @@ def main(args=None):
     file_log = 'sct_check_dependencies.log'
     complete_test = param.complete_test
     os_running = 'not identified'
+    dipy_version = '0.10.0dev'
     print
 
     # Check input parameters
@@ -97,42 +98,38 @@ def main(args=None):
             print output
 
     # check OS
-    print 'Check which OS is running... '
     platform_running = sys.platform
     if (platform_running.find('darwin') != -1):
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print '.. '+os_running+' ('+platform.platform()+')'
+    print 'OS: '+os_running+' ('+platform.platform()+')'
 
     # Check number of CPU cores
-    print 'Check number of CPU cores...'
     from multiprocessing import cpu_count
-    print '.. Available: ' + str(cpu_count())
     status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print '.. Used by SCT: ' + output
+    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
 
     # check RAM
-    print 'Check RAM... '
+    print 'RAM:'
     sct.checkRAM(os_running)
 
-    # check installation packages
-    print 'Check which Python is running...'
-    print '.. '+sys.executable
-
     # get path of the toolbox
-    print 'Check SCT path...'
     path_sct = os.getenv("SCT_DIR")
     if path_sct is None :
         raise EnvironmentError("SCT_DIR, which is the path to the "
                                "Spinalcordtoolbox install needs to be set")
-    print ('.. {0}'.format(path_sct))
+    print ('SCT path: {0}'.format(path_sct))
 
     # fetch version of the toolbox
-    print 'Check SCT version... '
     with open (path_sct+"/version.txt", "r") as myfile:
         version_sct = myfile.read().replace('\n', '')
-    print ".. "+version_sct
+    with open (path_sct+"/commit.txt", "r") as myfile:
+        commit_sct = myfile.read().replace('\n', '')
+    print "SCT version: "+version_sct+'-'+commit_sct
+
+    # check installation packages
+    print 'Python path: '+sys.executable
 
     # check if data folder is empty
     print_line('Check if data are installed')
@@ -192,25 +189,37 @@ def main(args=None):
             print_fail()
             install_software = 1
 
-    # CHECK EXTERNAL MODULES:
-    # Check if ornlm is installed
-    print_line('Check if ornlm is installed')
-#    sys.path.append(path_sct + '/external/denoise/ornlm')  # append to PYTHONPATH
+
+    # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
+    print_line('Check if numpy is installed')
     try:
-        importlib.import_module('ornlm')
+        importlib.import_module('numpy')
+        print_ok()
+    except ImportError:
+        print_fail()
+        install_software = 1
+    print_line('Check if scipy is installed')
+    try:
+        importlib.import_module('scipy')
         print_ok()
     except ImportError:
         print_fail()
         install_software = 1
 
+    # CHECK EXTERNAL MODULES:
+    
     # Check if dipy is installed
-    print_line('Check if dipy is installed')
-    try:
-        importlib.import_module('dipy')
-        print_ok()
-    except ImportError:
-        print_fail()
-        install_software = 1
+    # print_line('Check if dipy ('+dipy_version+') is installed')
+    # try:
+    #     module = importlib.import_module('dipy')
+    #     if module.__version__ == dipy_version:
+    #         print_ok()
+    #     else:
+    #         print_warning()
+    #         print '  Detected version: '+version+'. Required version: '+dipy_version
+    # except ImportError:
+    #     print_fail()
+    #     install_software = 1
 
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')

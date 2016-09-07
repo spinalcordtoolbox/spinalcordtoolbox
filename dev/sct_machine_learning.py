@@ -27,7 +27,7 @@ try:
 except:
    import pickle
 
-path_data = '/Users/neuropoly/data/machine_learning/spinal_cord_segmentation_data/'
+path_data = '/home/neuropoly/data/spinal_cord_segmentation_data/'
 output_path = ''
 TRAINING_SOURCE_DATA = path_data+'training/data/'
 TRAINING_LABELS_DATA = path_data+'training/labels/'
@@ -40,14 +40,14 @@ NUM_LABELS = 2
 VALIDATION_SIZE = 256  # Size of the validation set.
 SEED = None  # Set to None for random seed. or 66478
 BATCH_SIZE = 256
-NUM_EPOCHS = 10
+NUM_EPOCHS = 100
 
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', '/tmp/unet_train',
                            """Directory where to write event logs """
                            """and checkpoint.""")
 tf.app.flags.DEFINE_integer('max_steps', 100000, """Number of batches to run.""")
-tf.app.flags.DEFINE_boolean('log_device_placement', False,
+tf.app.flags.DEFINE_boolean('log_device_placement', True,
                             """Whether to log device placement.""")
 
 
@@ -375,6 +375,7 @@ def main(argv=None):  # pylint: disable=unused-argument
         summary_op = tf.merge_all_summaries()
 
         import multiprocessing as mp
+        import time
         number_of_cores = mp.cpu_count()
         with tf.Session(config=tf.ConfigProto(log_device_placement=FLAGS.log_device_placement, inter_op_parallelism_threads=number_of_cores, intra_op_parallelism_threads=number_of_cores)) as s:
             # Run all the initializers to prepare the trainable parameters.
@@ -393,6 +394,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             timer_training.start()
             # Loop through training steps.
             for i, step in enumerate(steps):
+                sct.printv('Step '+ str(i) + '/' + str(len(steps)))
                 sct.printv('Epoch ' + str(round(float(i) * BATCH_SIZE / train_size, 2)) + ' %')
                 timer_training.iterations_done(i)
                 # Compute the offset of the current minibatch in the data.
@@ -410,11 +412,13 @@ def main(argv=None):  # pylint: disable=unused-argument
 
                 assert not numpy.isnan(l), 'Model diverged with loss = NaN'
 
+                """
                 if i % 100 == 0 or (i + 1) == FLAGS.max_steps:
                     checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                     saver.save(s, checkpoint_path, global_step=i)
+                """
 
-                if i != 0 and i % 25 == 0:
+                if i != 0 and i % 50 == 0:
                     error_rate_batch_tens = error_rate_batch.assign(error_rate(predictions, batch_labels))
                     validation_data_b = extract_data(TRAINING_SOURCE_DATA, list_images=validation_data, verbose=0)
                     validation_labels_b, validation_labels_weights = extract_label(TRAINING_LABELS_DATA, segmentation_image_size, validation_labels, verbose=0)
@@ -426,10 +430,10 @@ def main(argv=None):  # pylint: disable=unused-argument
                     error_rate_batch_tens = error_rate_validation.assign(error_rate_batch.eval())
                     error_rate_validation_tens = error_rate_validation.assign(error_rate_validation.eval())
 
-                if i != 0 and i % 1 == 0:
+                if i != 0 and i % 5 == 0:
                     result = s.run([summary_op, learning_rate, error_rate_batch_tens, error_rate_validation_tens], feed_dict=feed_dict)
                     summary_str = result[0]
-                    sct.printv('Minibatch loss: %.3f, learning rate: %.6f, error batch %.6f, error validation %.6f' % (l, lr, error_rate_batch.eval(), error_rate_validation.eval()))
+                    sct.printv('Minibatch loss: %.6f, learning rate: %.6f, error batch %.3f, error validation %.3f' % (l, lr, error_rate_batch.eval(), error_rate_validation.eval()))
                     summary_writer.add_summary(summary_str, i)
 
                 del batch_data
@@ -446,7 +450,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             sct.printv('Test error: ' + str(test_error))
             timer_training.printTotalTime()
 
-            savePredictions(result_test_prediction, output_path, list_test_data, segmentation_image_size)
+            #savePredictions(result_test_prediction, output_path, list_test_data, segmentation_image_size)
 
             save_path = saver.save(s, output_path + 'model.ckpt')
             sct.printv('Model saved in file: ' + save_path)

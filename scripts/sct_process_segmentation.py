@@ -43,7 +43,7 @@ class Param:
         self.remove_temp_files = 1
         self.smoothing_param = 0  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
-        self.name_method = 'counting_z_plane'  # for compute_CSA
+        # self.name_method = 'counting_z_plane'  # for compute_CSA
         self.slices = ''
         self.vertebral_levels = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
@@ -70,6 +70,7 @@ def get_parser():
                       type_value='multiple_choice',
                       description='type of process to be performed:\n'
                                   '- centerline: extract centerline as binary file.\n'
+                                  '- label-vert: Transform segmentation into vertebral level using a file that contains labels with disc value (flag: -discfile)\n'
                                   '- length: compute length of the segmentation.\n'
                                   '- csa: computes cross-sectional area by counting pixels in each'
                                   '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
@@ -77,7 +78,7 @@ def get_parser():
                                   '  - a CSV text file with z (1st column) and CSA in mm^2 (2nd column),\n'
                                   '  - and if you select the options -z or -vert, a text file giving the mean CSA across the selected slices or vertebral levels.\n',
                       mandatory=True,
-                      example=['centerline', 'length', 'csa'])
+                      example=['centerline', 'label-vert', 'length', 'csa'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-o',
                       type_value='file_output',
@@ -120,14 +121,16 @@ def get_parser():
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
                       deprecated_by='-vertfile',
-                      default_value='label/template/MNI-Poly-AMU_level.nii.gz',
-                      example='label/template/MNI-Poly-AMU_level.nii.gz')
+                      default_value='label/template/PAM50_levels.nii.gz')
     parser.add_option(name='-vertfile',
                       type_value='image_nifti',
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
-                      default_value='./label/template/MNI-Poly-AMU_level.nii.gz',
-                      example='./label/template/MNI-Poly-AMU_level.nii.gz')
+                      default_value='./label/template/PAM50_levels.nii.gz')
+    parser.add_option(name='-discfile',
+                      type_value='image_nifti',
+                      description='Disc labeling. Only use with -p label-vert',
+                      mandatory=False)
     parser.add_option(name='-m',
                       type_value='multiple_choice',
                       description='Method to compute CSA',
@@ -135,12 +138,14 @@ def get_parser():
                       default_value='counting_z_plane',
                       deprecated_by='-method',
                       example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    '''
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description='Method to compute CSA',
                       mandatory=False,
                       default_value='counting_z_plane',
                       example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    '''
     parser.add_option(name='-r',
                       type_value='multiple_choice',
                       description= 'Removes the temporary folder and debug folder used for the algorithm at the end of execution',
@@ -156,8 +161,14 @@ def get_parser():
                       type_value='multiple_choice',
                       description= 'Algorithm for curve fitting.',
                       mandatory=False,
-                      default_value='hanning',
+                      default_value='nurbs',
                       example=['hanning', 'nurbs'])
+    parser.add_option(name='-no-angle',
+                      type_value='multiple_choice',
+                      description='0: angle correction for csa computation. 1: no angle correction.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
     parser.add_option(name='-v',
                       type_value='multiple_choice',
                       description='1: display on, 0: display off (default)',
@@ -188,7 +199,7 @@ def main(args=None):
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
     processes = ['centerline', 'csa', 'length']
     method_CSA = ['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane']
-    name_method = param.name_method
+    # name_method = param.name_method
     verbose = param.verbose
     start_time = time.time()
     remove_temp_files = param.remove_temp_files
@@ -198,6 +209,7 @@ def main(args=None):
     figure_fit = param.figure_fit
     slices = param.slices
     vert_lev = param.vertebral_levels
+    angle_correction = True
 
     fname_segmentation = arguments['-i']
     name_process = arguments['-p']
@@ -209,8 +221,8 @@ def main(args=None):
         output_prefix = ''
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
-    if '-method' in arguments:
-        name_method = arguments['-method']
+    # if '-method' in arguments:
+    #     name_method = arguments['-method']
     if '-vert' in arguments:
         vert_lev = arguments['-vert']
     if '-r' in arguments:
@@ -225,14 +237,19 @@ def main(args=None):
         slices = arguments['-z']
     if '-a' in arguments:
         param.algo_fitting = arguments['-a']
+    if '-no-angle' in arguments:
+        if arguments['-no-angle'] == '1':
+            angle_correction = False
+        elif arguments['-no-angle'] == '0':
+            angle_correction = True
 
     # display usage if incorrect method
-    if name_process == 'csa' and (name_method not in method_CSA):
-        sct.printv(parser.usage.generate(error='ERROR: wrong method for CSA process'))
-
-    # display usage if no method provided
-    if name_process == 'csa' and method_CSA == '':
-        sct.printv(parser.usage.generate(error='ERROR: no method for CSA process'))
+    # if name_process == 'csa' and (name_method not in method_CSA):
+    #     sct.printv(parser.usage.generate(error='ERROR: wrong method for CSA process'))
+    #
+    # # display usage if no method provided
+    # if name_process == 'csa' and method_CSA == '':
+    #     sct.printv(parser.usage.generate(error='ERROR: no method for CSA process'))
 
     # update fields
     param.verbose = verbose
@@ -248,7 +265,14 @@ def main(args=None):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, output_prefix, param_default.suffix_csa_output_files, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
+        compute_csa(fname_segmentation, output_prefix, param_default.suffix_csa_output_files, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length, angle_correction=angle_correction)
+
+    if name_process == 'label-vert':
+        if '-discfile' in arguments:
+            fname_disc_label = arguments['-discfile']
+        else:
+            sct.printv('\nERROR: Disc label file is mandatory (flag: -discfile).\n', 1, 'error')
+        label_vert(fname_segmentation, fname_disc_label)
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
@@ -401,8 +425,8 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
             plt.title("y and y_fit coordinates")
             plt.show()
 
-
     # Create an image with the centerline
+    min_z_index, max_z_index = int(round(min(z_centerline_fit))), int(round(max(z_centerline_fit)))
     for iz in range(min_z_index, max_z_index+1):
         data[round(x_centerline_fit[iz-min_z_index]), round(y_centerline_fit[iz-min_z_index]), iz] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
     # Write the centerline image in RPI orientation
@@ -445,8 +469,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
-
+def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, angle_correction=True):
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
@@ -481,33 +504,36 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
     min_z_index, max_z_index = min(Z), max(Z)
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
-    z_centerline_scaled = [x*pz for x in z_centerline]
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose)
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
 
     # Empty arrays in which CSA for each z slice will be stored
     csa = np.zeros(max_z_index-min_z_index+1)
+    angles = np.zeros(max_z_index - min_z_index + 1)
 
     for iz in xrange(min_z_index, max_z_index+1):
+        if angle_correction:
+            # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
+            try:
+                # compute the vector normal to the plane
+                normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
 
-        # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
-        try:
-            # compute the vector normal to the plane
-            normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
+            except IndexError:
+                sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
-        except IndexError:
-            sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
-
-        # compute the angle between the normal vector of the plane and the vector z
-        angle = np.arccos(np.dot(normal, [0, 0, 1]))
+            # compute the angle between the normal vector of the plane and the vector z
+            angle = np.arccos(np.dot(normal, [0, 0, 1]))
+        else:
+            angle = 0.0
 
         # compute the number of voxels, assuming the segmentation is coded for partial volume effect between 0 and 1.
         number_voxels = np.sum(data_seg[:, :, iz])
 
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
         csa[iz-min_z_index] = number_voxels * px * py * np.cos(angle)
+        angles[iz - min_z_index] = angle
 
     sct.printv('\nSmooth CSA across slices...', verbose)
     if smoothing_param:
@@ -518,6 +544,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         if verbose == 2:
             import matplotlib.pyplot as plt
             plt.figure()
+            z_centerline_scaled = [x * pz for x in z_centerline]
             pltx, = plt.plot(z_centerline_scaled, csa, 'bo')
             pltx_fit, = plt.plot(z_centerline_scaled, csa_smooth, 'r', linewidth=2)
             plt.title("Cross-sectional area (CSA)")
@@ -565,10 +592,34 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
     # save volume
     im_seg.save()
 
+    # output volume of csa values
+    sct.printv('\nCreate volume of angle values...', verbose)
+    data_angle = data_seg.astype(np.float32, copy=False)
+    # loop across slices
+    for iz in range(min_z_index, max_z_index + 1):
+        # retrieve seg pixels
+        x_seg, y_seg = (data_angle[:, :, iz] > 0).nonzero()
+        seg = [[x_seg[i], y_seg[i]] for i in range(0, len(x_seg))]
+        # loop across pixels in segmentation
+        for i in seg:
+            # replace value with csa value
+            data_angle[i[0], i[1], iz] = angles[iz - min_z_index]
+    # replace data
+    im_seg.data = data_angle
+    # set original orientation
+    # TODO: FIND ANOTHER WAY!!
+    # im_seg.change_orientation(orientation) --> DOES NOT WORK!
+    # set file name -- use .gz because faster to write
+    im_seg.setFileName('angle_volume_RPI.nii.gz')
+    im_seg.changeType('float32')
+    # save volume
+    im_seg.save()
+
     # get orientation of the input data
     im_seg_original = Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
     sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o csa_volume_in_initial_orientation.nii.gz')
+    sct.run('sct_image -i angle_volume_RPI.nii.gz -setorient '+orientation+' -o angle_volume_in_initial_orientation.nii.gz')
 
     # come back to parent folder
     os.chdir('..')
@@ -576,6 +627,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_prefix+output_suffixes[0]+'.nii.gz')  # extension already included in name_output
+    sct.generate_output_file(path_tmp+'angle_volume_in_initial_orientation.nii.gz', output_prefix + 'angle_volume.nii.gz')  # extension already included in name_output
     print('\n')
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
@@ -583,7 +635,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
 
         warning = ''
         if vert_levels and not fname_vertebral_labeling:
-            sct.printv('\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/MNI-Poly-AMU_level.nii.gz\". See usage.\n', 1, 'error')
+            sct.printv('\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/PAM50_levels.nii.gz\". See usage.\n', 1, 'error')
 
         elif vert_levels and fname_vertebral_labeling:
 
@@ -634,6 +686,9 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         # write result into output file
         save_results(output_prefix+output_suffixes[3], output_type, overwrite, file_data, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
+    elif (not (slices or vert_levels)) and (output_type == 'xls'):
+        sct.printv('WARNING: Excel output type for the result file is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in a .txt file.', type='warning')
+
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
@@ -645,6 +700,31 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
     if slices or vert_levels:
         sct.printv('Output result file of the mean CSA across the selected slices: '+output_prefix+output_suffixes[2]+'.txt', param.verbose, 'info')
         sct.printv('Output result file of the volume in between the selected slices: '+output_prefix+output_suffixes[3]+'.txt', param.verbose, 'info')
+
+def label_vert(fname_seg, fname_label, verbose=1):
+    """
+    Label segmentation using vertebral labeling information
+    :param fname_segmentation:
+    :param fname_label:
+    :param verbose:
+    :return:
+    """
+    # Open labels
+    im_disc = Image(fname_label)
+    # retrieve all labels
+    coord_label = im_disc.getNonZeroCoordinates()
+    # compute list_disc_z and list_disc_value
+    list_disc_z = []
+    list_disc_value = []
+    for i in range(len(coord_label)):
+        list_disc_z.insert(0, coord_label[i].z)
+        list_disc_value.insert(0, coord_label[i].value)
+    # label segmentation
+    from sct_label_vertebrae import label_segmentation
+    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    # Generate output files
+    sct.printv('--> File created: '+sct.add_suffix(fname_seg, '_labeled.nii.gz'), verbose)
+
 
 # ======================================================================================================================
 # Save CSA or volume estimation in a .txt file

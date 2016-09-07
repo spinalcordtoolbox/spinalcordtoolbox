@@ -11,12 +11,15 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: for vert-disc: make it faster! currently the module display-voxel is very long (esp. when ran on PAM50). We can find an alternative approach by sweeping through centerline voxels.
+# TODO: label_disc: for top vertebrae, make label at the center of the cord (currently it's at the tip)
 # TODO: check if use specified several processes.
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import sys
 import math
-
+import numpy as np
+from scipy import ndimage
 import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
@@ -39,7 +42,6 @@ class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
                  coordinates=None, verbose=1, vertebral_levels=None, value=None):
         self.image_input = Image(fname_label, verbose=verbose)
-
         self.image_ref = None
         if fname_ref is not None:
             self.image_ref = Image(fname_ref, verbose=verbose)
@@ -59,6 +61,14 @@ class ProcessLabels(object):
         self.value = value
 
     def process(self, type_process):
+        # for some processes, change orientation of input image to RPI
+        change_orientation = False
+        if type_process in ['vert-body', 'vert-disc', 'vert-continuous']:
+            # get orientation of input image
+            input_orientation = self.image_input.orientation
+            # change orientation
+            self.image_input.change_orientation('RPI')
+            change_orientation = True
         if type_process == 'add':
             self.output_image = self.add(self.value)
         if type_process == 'cross':
@@ -95,15 +105,23 @@ class ProcessLabels(object):
             self.fname_output = None
         if type_process == 'cubic-to-point':
             self.output_image = self.cubic_to_point()
-        if type_process == 'label-vertebrae':
+        if type_process == 'vert-body':
             self.output_image = self.label_vertebrae(self.vertebral_levels)
-        if type_process == 'label-vertebrae-from-disks':
-            self.output_image = self.label_vertebrae_from_disks(self.vertebral_levels)
+        # if type_process == 'vert-disc':
+        #     self.output_image = self.label_disc(self.vertebral_levels)
+        # if type_process == 'label-vertebrae-from-disks':
+        #     self.output_image = self.label_vertebrae_from_disks(self.vertebral_levels)
+        if type_process == 'vert-continuous':
+            self.output_image = self.continuous_vertebral_levels()
 
         # save the output image as minimized integers
         if self.fname_output is not None:
             self.output_image.setFileName(self.fname_output)
-            if type_process != 'plan_ref':
+            if change_orientation:
+                self.output_image.change_orientation(input_orientation)
+            if type_process == 'vert-continuous':
+                self.output_image.save('float32')
+            elif type_process != 'plan_ref':
                 self.output_image.save('minimize_int')
             else:
                 self.output_image.save()
@@ -252,6 +270,7 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def plan_ref(self):
         """
         Generate a plane in the reference space for each label present in the input image
@@ -281,6 +300,7 @@ class ProcessLabels(object):
             image_output.data[:, :, coord.z] = coord.value
 
         return image_output
+
 
     def cubic_to_point(self):
         """
@@ -364,7 +384,7 @@ class ProcessLabels(object):
         # get list of coordinates for each label
         list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
         # if user did not specify levels, include all:
-        if levels_user == 0:
+        if levels_user[0] == 0:
             levels_user = [int(i.value) for i in list_coordinates]
         # loop across labels and remove those that are not listed by the user
         for i_label in range(len(list_coordinates)):
@@ -372,62 +392,120 @@ class ProcessLabels(object):
             if not levels_user.count(int(list_coordinates[i_label].value)):
                 # if not, set value to zero
                 image_cubic2point.data[list_coordinates[i_label].x, list_coordinates[i_label].y, list_coordinates[i_label].z] = 0
-
         # list all labels
         return image_cubic2point
 
 
-    def label_vertebrae_from_disks(self, levels_user):
-        """
-        Find the center of mass of vertebral levels specified by the user.
-        :param levels_user:
-        :return:
-        """
-        image_cubic2point = self.cubic_to_point()
-        # get list of coordinates for each label
-        list_coordinates_disks = image_cubic2point.getNonZeroCoordinates(sorting='value')
-        image_cubic2point.data *= 0
-        # compute vertebral labels from disk labels
-        list_coordinates_vertebrae = []
-        for i_label in range(len(list_coordinates_disks)-1):
-            list_coordinates_vertebrae.append((list_coordinates_disks[i_label] + list_coordinates_disks[i_label+1]) / 2.0)
-        # loop across labels and remove those that are not listed by the user
-        for i_label in range(len(list_coordinates_vertebrae)):
-            # check if this level is NOT in levels_user
-            if levels_user.count(int(list_coordinates_vertebrae[i_label].value)):
-                image_cubic2point.data[int(list_coordinates_vertebrae[i_label].x), int(list_coordinates_vertebrae[i_label].y), int(list_coordinates_vertebrae[i_label].z)] = list_coordinates_vertebrae[i_label].value
+    # FUNCTION BELOW REMOVED BY JULIEN ON 2016-07-04 BECAUSE SEEMS NOT TO BE USED (AND DUPLICATION WITH ABOVE)
+    # def label_vertebrae_from_disks(self, levels_user):
+    #     """
+    #     Find the center of mass of vertebral levels specified by the user.
+    #     :param levels_user:
+    #     :return:
+    #     """
+    #     image_cubic2point = self.cubic_to_point()
+    #     # get list of coordinates for each label
+    #     list_coordinates_disks = image_cubic2point.getNonZeroCoordinates(sorting='value')
+    #     image_cubic2point.data *= 0
+    #     # compute vertebral labels from disk labels
+    #     list_coordinates_vertebrae = []
+    #     for i_label in range(len(list_coordinates_disks)-1):
+    #         list_coordinates_vertebrae.append((list_coordinates_disks[i_label] + list_coordinates_disks[i_label+1]) / 2.0)
+    #     # loop across labels and remove those that are not listed by the user
+    #     for i_label in range(len(list_coordinates_vertebrae)):
+    #         # check if this level is NOT in levels_user
+    #         if levels_user.count(int(list_coordinates_vertebrae[i_label].value)):
+    #             image_cubic2point.data[int(list_coordinates_vertebrae[i_label].x), int(list_coordinates_vertebrae[i_label].y), int(list_coordinates_vertebrae[i_label].z)] = list_coordinates_vertebrae[i_label].value
+    #
+    #     return image_cubic2point
 
-        return image_cubic2point
 
-
-    def symmetrizer(self, side='left'):
-        """
-        Symmetrize the input image. One side of the image will be copied on the other side. We assume a
-        RPI orientation.
-        :param side: string 'left' or 'right'. Side that will be copied on the other side.
-        :return:
-        """
-        image_output = Image(self.image_input, self.verbose)
-
-        image_output[0:]
-
-        """inspiration: (from atlas creation matlab script)
-        temp_sum = temp_g + temp_d;
-        temp_sum_flip = temp_sum(end:-1:1,:);
-        temp_sym = (temp_sum + temp_sum_flip) / 2;
-
-        temp_g(1:end / 2,:) = 0;
-        temp_g(1 + end / 2:end,:) = temp_sym(1 + end / 2:end,:);
-        temp_d(1:end / 2,:) = temp_sym(1:end / 2,:);
-        temp_d(1 + end / 2:end,:) = 0;
-
-        tractsHR
-        {label_l}(:,:, num_slice_ref) = temp_g;
-        tractsHR
-        {label_r}(:,:, num_slice_ref) = temp_d;
-        """
-
-        return image_output
+    # BELOW: UNFINISHED BUSINESS (JULIEN)
+    # def label_disc(self, levels_user=None):
+    #     """
+    #     Find the edge of vertebral labeling file and assign value corresponding to middle coordinate between two levels.
+    #     Assumes RPI orientation.
+    #     :return: image_output: Image with labels.
+    #     """
+    #     from msct_types import Coordinate
+    #     # get dim
+    #     nx, ny, nz, nt, px, py, pz, pt = self.image_input.dim
+    #     # initialize disc as a coordinate variable
+    #     disc = []
+    #     # get center of mass of each vertebral level
+    #     image_cubic2point = self.cubic_to_point()
+    #     # get list of coordinates for each label
+    #     list_centermass = image_cubic2point.getNonZeroCoordinates(sorting='value')
+    #     # if user did not specify levels, include all:
+    #     if levels_user[0] == 0:
+    #         levels_user = [int(i.value) for i in list_centermass]
+    #     # get list of all coordinates
+    #     list_coordinates = self.display_voxel()
+    #     # loop across labels and remove those that are not listed by the user
+    #     # for i_label in range(len(list_centermass)):
+    #
+    #     # TOP DISC
+    #     # get coordinates for value i_level
+    #     list_i_level = [list_coordinates[i] for i in xrange(len(list_coordinates)) if int(list_coordinates[i].value) == levels_user[0]]
+    #     # get max z-value
+    #     zmax = max([list_i_level[i].z for i in xrange(len(list_i_level))])
+    #     # get coordinates corresponding to bottom voxels
+    #     list_i_level_top = [list_i_level[i] for i in xrange(len(list_i_level)) if list_i_level[i].z == zmax]
+    #     # get center of mass of the top and bottom voxels
+    #     arr_voxels_around_disc = np.array([[list_i_level_top[i].x, list_i_level_top[i].y, list_i_level_top[i].z] for i in range(len(list_i_level_top))])
+    #     centermass = list(np.mean(arr_voxels_around_disc, 0))
+    #     centermass.append(levels_user[0]-1)
+    #     disc.append(Coordinate(centermass))
+    #     # if minimum level corresponds to z=nz, then remove it (likely corresponds to top edge of the FOV)
+    #     if disc[0].z == nz:
+    #         sct.printv('WARNING: Maximum level corresponds to z=0. Removing it (likely corresponds to edge of the FOV)', 1, 'warning')
+    #         # remove last element of the list
+    #         disc.pop()
+    #
+    #     # ALL DISCS
+    #     # loop across values
+    #     for i_level in levels_user:
+    #         # get coordinates for value i_level
+    #         list_i_level = [list_coordinates[i] for i in xrange(len(list_coordinates)) if int(list_coordinates[i].value) == i_level]
+    #         # get min z-value
+    #         zmin = min([list_i_level[i].z for i in xrange(len(list_i_level))])
+    #         # get coordinates corresponding to bottom voxels
+    #         list_i_level_bottom = [list_i_level[i] for i in xrange(len(list_i_level)) if list_i_level[i].z == zmin]
+    #         # get center of mass
+    #         # arr_i_level_bottom = np.array([[list_i_level_bottom[i].x, list_i_level_bottom[i].y] for i in range(len(list_i_level_bottom))])
+    #         # centermass_i_level = ndimage.measurements.center_of_mass()
+    #         try:
+    #             # get coordinates for value i_level+1
+    #             list_i_level_plus_one = [list_coordinates[i] for i in xrange(len(list_coordinates)) if int(list_coordinates[i].value) == i_level+1]
+    #             # get max z-value
+    #             zmax = max([list_i_level_plus_one[i].z for i in xrange(len(list_i_level_plus_one))])
+    #             # get coordinates corresponding to top voxels
+    #             list_i_level_plus_one_top = [list_i_level_plus_one[i] for i in xrange(len(list_i_level_plus_one)) if list_i_level_plus_one[i].z == zmax]
+    #         except:
+    #             # if maximum level was reached, ignore it and disc will be located at the centermass of the bottom z.
+    #             list_i_level_plus_one_top = []
+    #         # stack bottom and top voxels
+    #         list_voxels_around_disc = list_i_level_bottom + list_i_level_plus_one_top
+    #         # get center of mass of the top and bottom voxels
+    #         arr_voxels_around_disc = np.array([[list_voxels_around_disc[i].x, list_voxels_around_disc[i].y, list_voxels_around_disc[i].z] for i in range(len(list_voxels_around_disc))])
+    #         centermass = list(np.mean(arr_voxels_around_disc, 0))
+    #         centermass.append(i_level)
+    #         disc.append(Coordinate(centermass))
+    #     # if maximum level corresponds to z=0, then remove it (likely corresponds to edge of the FOV)
+    #     if disc[-1].z == 0.0:
+    #         sct.printv('WARNING: Maximum level corresponds to z=0. Removing it (likely corresponds to edge of the FOV)', 1, 'warning')
+    #         # remove last element of the list
+    #         disc.pop()
+    #
+    #     # loop across labels and assign voxels in image
+    #     image_cubic2point.data[:, :, :] = 0
+    #     for i_label in range(len(disc)):
+    #         image_cubic2point.data[int(round(disc[i_label].x)),
+    #                                int(round(disc[i_label].y)),
+    #                                int(round(disc[i_label].z))] = disc[i_label].value
+    #
+    #     # return image of labels
+    #     return image_cubic2point
 
 
     def MSE(self, threshold_mse=0):
@@ -545,8 +623,8 @@ class ProcessLabels(object):
             if useful_notation != '':
                 useful_notation = useful_notation + ':'
             useful_notation = useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-        print 'Useful notation:'
-        print useful_notation
+            print 'Useful notation:'
+            print useful_notation
         return coordinates_input
 
 
@@ -593,6 +671,67 @@ class ProcessLabels(object):
                     coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i+1) + '[' + str(
                     coordinates_input[i+1].x) + ',' + str(coordinates_input[i+1].y) + ',' + str(coordinates_input[i+1].z) + ']=' + str(
                     coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
+
+
+    def continuous_vertebral_levels(self):
+        """
+        This function transforms the vertebral levels file from the template into a continuous file.
+        Instead of having integer representing the vertebral level on each slice, a continuous value that represents
+        the position of the slice in the vertebral level coordinate system.
+        The image must be RPI
+        :return:
+        """
+        im_input = Image(self.image_input, self.verbose)
+        im_output = Image(self.image_input, self.verbose)
+        im_output.data *= 0
+
+        # 1. extract vertebral levels from input image
+        #   a. extract centerline
+        #   b. for each slice, extract corresponding level
+        nx, ny, nz, nt, px, py, pz, pt = im_input.dim
+        from sct_straighten_spinalcord import smooth_centerline
+        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_input, algo_fitting='nurbs', verbose=0)
+        value_centerline = np.array([im_input.data[x_centerline_fit[it], y_centerline_fit[it], z_centerline_fit[it]] for it in range(len(z_centerline_fit))])
+
+        # 2. compute distance for each vertebral level --> Di for i being the vertebral levels
+        vertebral_levels = {}
+        for slice_image, level in enumerate(value_centerline):
+            if level not in vertebral_levels:
+                vertebral_levels[level] = slice_image
+
+        length_levels = {}
+        for level in vertebral_levels:
+            indexes_slice = np.where(value_centerline == level)
+            length_levels[level] = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[0][index_slice + 1]] - x_centerline_fit[indexes_slice[0][index_slice]])*px)**2 +
+                                                     ((y_centerline_fit[indexes_slice[0][index_slice + 1]] - y_centerline_fit[indexes_slice[0][index_slice]])*py)**2 +
+                                                     ((z_centerline_fit[indexes_slice[0][index_slice + 1]] - z_centerline_fit[indexes_slice[0][index_slice]])*pz)**2)
+                                           for index_slice in range(len(indexes_slice[0]) - 1)])
+
+        # 2. for each slice:
+        #   a. identify corresponding vertebral level --> i
+        #   b. calculate distance of slice from upper vertebral level --> d
+        #   c. compute relative distance in the vertebral level coordinate system --> d/Di
+        continuous_values = {}
+        for it, iz in enumerate(z_centerline_fit):
+            level = value_centerline[it]
+            indexes_slice = np.where(value_centerline == level)
+            indexes_slice = indexes_slice[0][indexes_slice[0] >= it]
+            distance_from_level = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[index_slice + 1]] - x_centerline_fit[indexes_slice[index_slice]]) * px * px) ** 2 +
+                                                    ((y_centerline_fit[indexes_slice[index_slice + 1]] - y_centerline_fit[indexes_slice[index_slice]]) * py * py) ** 2 +
+                                                    ((z_centerline_fit[indexes_slice[index_slice + 1]] - z_centerline_fit[indexes_slice[index_slice]]) * pz * pz) ** 2)
+                                          for index_slice in range(len(indexes_slice) - 1)])
+            continuous_values[iz] = level + 2.0 * distance_from_level / float(length_levels[level])
+
+        # 3. saving data
+        # for each slice, get all non-zero pixels and replace with continuous values
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+        im_output.changeType('float32')
+        # for all points in input, find the value that has to be set up, depending on the vertebral level
+        for i, coord in enumerate(coordinates_input):
+            im_output.data[coord.x, coord.y, coord.z] = continuous_values[coord.z]
+
+        return im_output
+
 
 # PARSER
 # ==========================================================================================
@@ -644,10 +783,19 @@ def get_parser():
                       type_value=None,
                       description='Takes all non-zero values, sort them along the inverse z direction, and attributes the values 1, 2, 3, etc.',
                       mandatory=False)
-    parser.add_option(name='-label-vert',
+    parser.add_option(name='-vert-body',
                       type_value=[[','], 'int'],
-                      description='Create labels that are centered at the mid-vertebral levels. Separate levels with ",". To use all labels, enter "0".',
+                      description='From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired levels with ",". To get all levels, enter "0".',
                       example='3,8',
+                      mandatory=False)
+    # parser.add_option(name='-vert-disc',
+    #                   type_value=[[','], 'int'],
+    #                   description='From vertebral labeling, create points that are centered at the intervertebral discs. Separate desired levels with ",". To get all levels, enter "0".',
+    #                   example='3,8',
+    #                   mandatory=False)
+    parser.add_option(name='-vert-continuous',
+                      type_value=None,
+                      description='Convert discrete vertebral labeling to continuous vertebral labeling.',
                       mandatory=False)
     parser.add_option(name='-MSE',
                       type_value='file',
@@ -708,9 +856,14 @@ def main(args=None):
         process_type = 'display-voxel'
     elif '-increment' in arguments:
         process_type = 'increment'
-    elif '-label-vert' in arguments:
-        process_type = 'label-vertebrae'
-        vertebral_levels = arguments['-label-vert']
+    elif '-vert-body' in arguments:
+        process_type = 'vert-body'
+        vertebral_levels = arguments['-vert-body']
+    # elif '-vert-disc' in arguments:
+    #     process_type = 'vert-disc'
+    #     vertebral_levels = arguments['-vert-disc']
+    elif '-vert-continuous' in arguments:
+        process_type = 'vert-continuous'
     elif '-MSE' in arguments:
         process_type = 'MSE'
         input_fname_ref = arguments['-r']
@@ -727,7 +880,9 @@ def main(args=None):
         input_fname_output = arguments['-o']
     input_verbose = int(arguments['-v'])
 
-    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels, value=value)
+    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref
+                              , cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates
+                              , verbose=input_verbose, vertebral_levels=vertebral_levels, value=value)
     processor.process(process_type)
 
     # elif '-ref' in arguments:

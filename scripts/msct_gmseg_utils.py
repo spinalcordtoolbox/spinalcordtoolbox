@@ -295,6 +295,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
                 os.makedirs(path + transfo_dir)
             except OSError:
                 pass
+
         dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S") + '_' + str(time.time())+'/'
         sct.run('mkdir ' + dir_name, verbose=verbose)
         os.chdir('./' + dir_name)
@@ -523,7 +524,22 @@ def load_level(level_file, type='int', verbose=1):
 
             for line in lines[1:]:
                 i_slice, level = line.split(',')
-                level = int(level[:-1])
+                for c in [' ', '\n', '\r', '\t']:
+                    level = level.replace(c, '')
+                try:
+                    level = float(level)
+                except Exception, e:
+                    if len(level) > 2:
+                        l1 = l2 = 0
+                        if '-' in level:
+                            l1, l2 = level.split('-')
+                        elif '/' in level:
+                            l1, l2 = level.split('/')
+                        level = max(float(l1), float(l2))
+                        # convention = the vertebral disk between two levels belong to the lower level (C2-C3 = C3)
+                    else:
+                        # level unrecognized
+                        level = 0
                 i_slice = int(i_slice)
                 dic_level_by_i[i_slice] = level
         else:
@@ -777,6 +793,8 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
     t2star_name = sct.extract_fname(t2star)[1]
     sc_seg_name = sct.extract_fname(sc_seg)[1]
     mask_box = None
+    fname_seg_in_IRP = None
+
     try:
         ext = '.nii.gz'
         seg_in_name = t2star_name + '_seg_in'
@@ -848,10 +866,10 @@ def save_by_slice(dic_dir):
                     '''
             if path_file_levels is None and 'label' in os.listdir(subject_path):
                 '''
-                if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
-                    sct.run('sct_image -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
+                if 'PAM50_levels_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
+                    sct.run('sct_image -i ' + subject_path + '/label/template/MPAM50_levels.nii.gz -setorient IRP')
                 '''
-                path_file_levels = subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz'
+                path_file_levels = subject_path + '/label/template/PAM50_levels.nii.gz'
 
             elif path_file_levels is not None:
                 path_level, file_level, ext_level = sct.extract_fname(path_file_levels)
@@ -979,9 +997,6 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
                                 '-x', interpolation])
         if binary:
             sct_maths.main(args=['-i', name_resample,
-                                 '-thr', str(thr),
-                                 '-o', name_resample])
-            sct_maths.main(args=['-i', name_resample,
                                  '-bin',
                                  '-o', name_resample])
 
@@ -1058,9 +1073,9 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
 
 
             if denoise:
-                from sct_maths import denoise_ornlm
+                from sct_maths import denoise_nlmeans
                 t2star_im = Image(fname_t2star)
-                t2star_im.data = denoise_ornlm(t2star_im.data)
+                t2star_im.data = denoise_nlmeans(t2star_im.data)
                 t2star_im.save()
 
             mask_box, fname_seg_in_IRP = crop_t2_star(fname_t2star, fname_scseg, box_size=model_image_size)
@@ -1104,7 +1119,7 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
     # sct.run(cmd_register_multimodal)
     sct_register_multimodal.main(args=['-i', 'template2anat.nii.gz',
                                        '-d', t2star_fname ,
-                                       '-iseg', './label/template/MNI-Poly-AMU_cord.nii.gz'
+                                       '-iseg', './label/template/PAM50_levels.nii.gz'
                                        '-dseg', t2star_sc_seg_fname,
                                        '-param', ('step=1,type=seg,'
                                                   'algo=syn,metric=MeanSquares,'
@@ -1126,10 +1141,10 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
                                  '-a', '0'])
 
     # sct.run('sct_image -i ./label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
-    sct_image.main(args=['-i', './label/template/MNI-Poly-AMU_level.nii.gz',
+    sct_image.main(args=['-i', './label/template/PAM50_levels.nii.gz',
                          '-setorient', 'IRP'])
 
-    return 'MNI-Poly-AMU_level_IRP.nii.gz'
+    return 'PAM50_levels_IRP.nii.gz'
 
 
 
@@ -1138,28 +1153,30 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
 ########################################################################################################################
 
 # ------------------------------------------------------------------------------------------------------------------
-def inverse_square_crop(croped_image, square_mask):
-    if square_mask.orientation != 'IRP':
-        square_mask = set_orientation(square_mask, 'IRP')
-    nz_coord = square_mask.getNonZeroCoordinates()
+def inverse_square_crop(im_croped, im_square_mask):
+    if im_square_mask.orientation != 'IRP':
+        im_square_mask = set_orientation(im_square_mask, 'IRP')
+    assert len(im_croped.data) == len(im_square_mask.data)
 
-    assert len(nz_coord) == croped_image.data.size
-    dim = len(croped_image.data.shape)
+    im_inverse_croped = Image(np.zeros(im_square_mask.data.shape), hdr=im_square_mask.hdr)
+    for i_slice, slice_croped in enumerate(im_croped.data):
+        i_croped = 0
+        inside = False
+        for i, row in enumerate(im_square_mask.data[i_slice] == 1):
+            j_croped = 0
+            for j, in_square in enumerate(row):
+                if in_square:
+                    im_inverse_croped.data[i_slice][i][j] = slice_croped[i_croped][j_croped]
+                    j_croped += 1
+                    if not inside:
+                        # getting inside the mask
+                        inside = True
+                elif inside:  # if we are getting out of the mask:
+                    i_croped += 1
+                    inside = False
+    im_inverse_croped.setFileName(im_croped.file_name + '_original_dimension' + im_croped.ext)
 
-    inverse_croped = square_mask.copy()
-    if dim == 3:
-        done_slices = []
-        for coord in nz_coord:
-            if coord.x not in done_slices:
-                inverse_croped.data[coord.x, coord.y: coord.y + croped_image.data.shape[1], coord.z: coord.z + croped_image.data.shape[2]] = croped_image.data[coord.x]
-                done_slices.append(coord.x)
-    elif dim == 2:
-        coord = nz_coord[0]
-        inverse_croped.data[coord.x: coord.x + croped_image.data.shape[0], coord.y: coord.y + croped_image.data.shape[1]] = croped_image.data
-
-    inverse_croped.setFileName(croped_image.file_name + '_original_dimension' + croped_image.ext)
-
-    return inverse_croped
+    return im_inverse_croped
 
 
 ########################################################################################################################
@@ -1716,7 +1733,7 @@ def main(args=None):
         args = sys.argv[1:]
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     if "-crop" in arguments:
         crop_t2_star_pipeline(arguments['-crop'])

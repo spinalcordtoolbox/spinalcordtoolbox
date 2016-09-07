@@ -80,10 +80,10 @@ def main(args=None):
 
     if '-bin' in arguments:
         fname_input1_bin = sct.add_suffix(fname_input1, '_bin')
-        sct.run('sct_maths -i '+fname_input1+' -bin -o '+fname_input1_bin)
+        sct.run('sct_maths -i '+fname_input1+' -bin 0 -o '+fname_input1_bin)
         fname_input1 = fname_input1_bin
         fname_input2_bin = sct.add_suffix(fname_input2, '_bin')
-        sct.run('sct_maths -i '+fname_input2+' -bin -o '+fname_input2_bin)
+        sct.run('sct_maths -i '+fname_input2+' -bin 0 -o '+fname_input2_bin)
         fname_input2 = fname_input2_bin
 
     cmd = 'isct_dice_coefficient '+fname_input1+' '+fname_input2

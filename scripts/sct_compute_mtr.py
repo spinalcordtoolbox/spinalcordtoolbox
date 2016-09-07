@@ -14,11 +14,10 @@
 
 import sys
 import os
-import getopt
-import commands
-import sct_utils as sct
-import time
+
 from msct_parser import Parser
+import sct_utils as sct
+
 
 # DEFAULT PARAMETERS
 class Param:
@@ -45,38 +44,27 @@ def main(args=None):
     fname_mt1 = ''
     file_out = param.file_out
     # register = param.register
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
-    remove_tmp_files = param.remove_tmp_files
-    verbose = param.verbose
+    # remove_tmp_files = param.remove_tmp_files
+    # verbose = param.verbose
 
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-    # Parameters for debug mode
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_mt0 = path_sct+'/testing/data/errsm_23/mt/mt0.nii.gz'
-        fname_mt1 = path_sct+'/testing/data/errsm_23/mt/mt1.nii.gz'
-        register = 1
-        verbose = 1
-    else:
-        # Check input parameters
-        parser = get_parser()
-        arguments = parser.parse(args)
+    # Check input parameters
+    parser = get_parser()
+    arguments = parser.parse(args)
 
-        fname_mt0 = arguments['-mt0']
-        fname_mt1 = arguments['-mt1']
-        remove_tmp_files = int(arguments['-r'])
-        verbose = int(arguments['-v'])
+    fname_mt0 = arguments['-mt0']
+    fname_mt1 = arguments['-mt1']
+    remove_tmp_files = int(arguments['-r'])
+    verbose = int(arguments['-v'])
 
     # Extract path/file/extension
     path_mt0, file_mt0, ext_mt0 = sct.extract_fname(fname_mt0)
     path_out, file_out, ext_out = '', file_out, ext_mt0
 
     # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create()
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)

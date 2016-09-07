@@ -28,12 +28,28 @@ def test(path_data='', parameters=''):
     if not parameters:
         parameters = '-i t2/t2.nii.gz -c t2'
 
-    dice_threshold = 0.95
+    dice_threshold = 0.9
 
     parser = sct_propseg.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
+
+    # Extract contrast
+    contrast = ''
+    input_filename = ''
+    if dict_param['-i'][0] == '/':
+        dict_param['-i'] = dict_param['-i'][1:]
+    input_split = dict_param['-i'].split('/')
+    if len(input_split) == 2:
+        contrast = input_split[0]
+        input_filename = input_split[1]
+    else:
+        input_filename = input_split[0]
+    if not contrast:  # if no contrast folder, send error.
+        status = 1
+        output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
+        return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i'])):
@@ -42,22 +58,11 @@ def test(path_data='', parameters=''):
         return status, output, DataFrame(
             data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
 
-    contrast_folder = ''
-    input_filename = ''
-    if dict_param['-i'][0] == '/':
-        dict_param['-i'] = dict_param['-i'][1:]
-    input_split = dict_param['-i'].split('/')
-    if len(input_split) == 2:
-        contrast_folder = input_split[0] + '/'
-        input_filename = input_split[1]
-    else:
-        input_filename = input_split[0]
-    if not contrast_folder:  # if no contrast folder, send error.
-        status = 201
-        output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param[
-            '-i'] + ' for ' + path_data
-        return status, output, DataFrame(
-            data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
+    # Check if ground truth files exist
+    if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
+        status = 200
+        output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
     import time, random
     subject_folder = path_data.split('/')
@@ -82,7 +87,7 @@ def test(path_data='', parameters=''):
     # by convention, manual segmentation are called inputname_seg_manual.nii.gz where inputname is the filename
     # of the input image
     segmentation_filename = path_output + sct.add_suffix(input_filename, '_seg')
-    manual_segmentation_filename = path_data + contrast_folder + sct.add_suffix(input_filename, '_seg_manual')
+    manual_segmentation_filename = path_data + contrast + '/' + sct.add_suffix(input_filename, '_seg_manual')
 
     dice_segmentation = float('nan')
 

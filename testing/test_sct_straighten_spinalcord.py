@@ -22,9 +22,9 @@ import os.path
 def test(path_data='', parameters=''):
 
     # initializations
-    result_rmse = 'NaN'
-    result_dist_max = 'NaN'
-    result_dice = 'NaN'
+    result_rmse = float('NaN')
+    result_dist_max = float('NaN')
+    result_dice = float('NaN')
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -qc 0'
@@ -83,8 +83,8 @@ def test(path_data='', parameters=''):
         sct.run('sct_apply_transfo -i '+dict_param_with_path['-s']+' -d '+path_output+file_input+'_straight'+ext_input+' -w '+path_output+'warp_curve2straight.nii.gz -o '+path_output+'tmp_seg_straight.nii.gz -x linear', 0)
         sct.run('sct_apply_transfo -i '+path_output+'tmp_seg_straight.nii.gz -d '+dict_param_with_path['-s']+' -w '+path_output+'warp_straight2curve.nii.gz -o '+path_output+'tmp_seg_straight_curved.nii.gz -x nn', 0)
         # threshold and binarize
-        sct.run('sct_maths -i '+path_output+'tmp_seg_straight_curved.nii.gz -thr 0.5 -o '+path_output+'tmp_seg_straight_curved.nii.gz', 0)
-        sct.run('sct_maths -i '+path_output+'tmp_seg_straight_curved.nii.gz -bin -o '+path_output+'tmp_seg_straight_curved.nii.gz', 0)
+        # sct.run('sct_maths -i '+path_output+'tmp_seg_straight_curved.nii.gz -thr 0.5 -o '+path_output+'tmp_seg_straight_curved.nii.gz', 0)
+        sct.run('sct_maths -i '+path_output+'tmp_seg_straight_curved.nii.gz -bin 0.5 -o '+path_output+'tmp_seg_straight_curved.nii.gz', 0)
         # compute DICE
         cmd = 'sct_dice_coefficient -i '+path_output+'tmp_seg_straight_curved.nii.gz -d ' + dict_param_with_path['-s']
         status2, output2 = sct.run(cmd, 0)
