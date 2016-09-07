@@ -243,24 +243,37 @@ class Model:
 
         for sub in list_sub:
             # load images of each subject
-            fname_data = ''
-            fname_sc_seg = ''
+            fname_data = None
+            fname_sc_seg = None
             list_fname_gmseg = []
             fname_level = None
             for file_name in os.listdir(path_data+sub):
-                if 'gm' in file_name:
-                    list_fname_gmseg.append(path_data+sub+'/'+file_name)
-                elif 'seg' in file_name:
-                    fname_sc_seg = path_data+sub+'/'+file_name
-                elif 'im' in file_name:
-                    fname_data = path_data+sub+'/'+file_name
-                if 'level' in file_name:
-                    fname_level = path_data+sub+'/'+file_name
+                fname = path_data+sub+'/'+file_name
+                if os.path.isfile(fname):
+                    if 'gm' in file_name:
+                        list_fname_gmseg.append(fname)
+                    elif 'seg' in file_name:
+                        fname_sc_seg = fname
+                    elif 'im' in file_name:
+                        fname_data = fname
+                    if 'level' in file_name:
+                        fname_level = fname
+
+            info_data = 'Loaded files: \n'
+            info_data += 'Image: ....... '+str(fname_data)+'\n'
+            info_data += 'SC seg: ...... ' + str(fname_sc_seg)+ '\n'
+            info_data += 'GM seg: ...... ' + str(list_fname_gmseg) + '\n'
+            info_data += 'Levels: ...... ' + str(fname_level) + '\n'
+
+            if fname_data == None or fname_sc_seg == None or list_fname_gmseg == []:
+                printv(info_data, self.param.verbose, 'error')
+            else:
+                printv(info_data, self.param.verbose, 'normal')
 
             # preprocess data
-            list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm,  denoising=self.param_data.denoising)
-            for slice_sub in list_slices_sub:
-                slice_sub.set(slice_id=slice_sub.id+j)
+            list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm,  denoising=self.param_data.denoising, for_model=True)
+            for i_slice, slice_sub in enumerate(list_slices_sub):
+                slice_sub.set(slice_id=i_slice+j)
                 self.slices.append(slice_sub)
 
             j += len(list_slices_sub)
