@@ -521,7 +521,7 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, val_min=None, val_ma
     data_in_wm = data[data_wm==1]
     med_data_gm = np.median(data_in_gm)
     med_data_wm = np.median(data_in_wm)
-    std_data = np.std(data)
+    std_data = np.mean([np.std(data_in_gm), np.std(data_in_wm)])
 
     # compute normalized data
     # if median values are too close: use min and max to normalize data
