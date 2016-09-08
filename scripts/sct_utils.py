@@ -77,22 +77,23 @@ def run_old(cmd, verbose=1):
 
 def run(cmd, verbose=1, error_exit='error', raise_exception=False):
 
-    cmd_list = cmd.split()
-    if cmd_list[0].startswith("sct") and not cmd_list[0].startswith("sct_dice") \
-            and not cmd_list[0].startswith("sct_strai") \
-            and not cmd_list[0].startswith("sct_lab") \
-            and not cmd_list[0].startswith("sct_process_segmentation") \
-            and not cmd_list[0].startswith("sct_propse") \
-            and not cmd_list[0].startswith("sct_register_to_template") \
-            and not cmd_list[0].startswith("sct_compute_hausdorff") \
-            and not cmd_list[0].startswith("sct_crop"):
-        module_str = cmd_list[0]
-        sct_args = cmd_list[1:]
-        import importlib
-        sct_script = importlib.import_module(module_str)
-
-        return 0, sct_script.main(sct_args)
-    else:
+    # Hack to force run cmd to run in main
+    # cmd_list = cmd.split()
+    # if cmd_list[0].startswith("sct") and not cmd_list[0].startswith("sct_dice") \
+    #         and not cmd_list[0].startswith("sct_strai") \
+    #         and not cmd_list[0].startswith("sct_lab") \
+    #         and not cmd_list[0].startswith("sct_process_segmentation") \
+    #         and not cmd_list[0].startswith("sct_propse") \
+    #         and not cmd_list[0].startswith("sct_register_to_template") \
+    #         and not cmd_list[0].startswith("sct_compute_hausdorff") \
+    #         and not cmd_list[0].startswith("sct_crop"):
+    #     module_str = cmd_list[0]
+    #     sct_args = cmd_list[1:]
+    #     import importlib
+    #     sct_script = importlib.import_module(module_str)
+    #
+    #     return 0, sct_script.main(sct_args)
+    # else:
         if verbose==2:
             printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
         if verbose:
