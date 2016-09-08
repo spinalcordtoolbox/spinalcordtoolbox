@@ -468,13 +468,13 @@ def main():
             warp_forward.append(warp_forward_out)
             warp_inverse.append(warp_inverse_out)
 
-            # Concatenate transformations:
-            sct.printv('\nConcatenate transformations: anat --> template...', verbose)
-            sct.run('sct_concat_transfo -w warp_curve2straightAffine.nii.gz,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
-            # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
-            sct.printv('\nConcatenate transformations: template --> anat...', verbose)
-            warp_inverse.reverse()
-            sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
+        # Concatenate transformations:
+        sct.printv('\nConcatenate transformations: anat --> template...', verbose)
+        sct.run('sct_concat_transfo -w warp_curve2straightAffine.nii.gz,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+        # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+        sct.printv('\nConcatenate transformations: template --> anat...', verbose)
+        warp_inverse.reverse()
+        sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
 
     # register template->subject
     elif ref == 'subject':
@@ -541,14 +541,14 @@ def main():
             # TODO: display param for debugging
             warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
             warp_forward.append(warp_forward_out)
-            warp_inverse.append(warp_inverse_out)
+            warp_inverse.insert(0, warp_inverse_out)
 
-            # Concatenate transformations:
-            sct.printv('\nConcatenate transformations: template --> subject...', verbose)
-            sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d template.nii -o warp_template2anat.nii.gz', verbose)
-            sct.printv('\nConcatenate transformations: subject --> template...', verbose)
-            warp_inverse.reverse()
-            sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d data.nii -o warp_anat2template.nii.gz', verbose)
+        # Concatenate transformations:
+        sct.printv('\nConcatenate transformations: template --> subject...', verbose)
+        sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d data.nii -o warp_template2anat.nii.gz', verbose)
+        sct.printv('\nConcatenate transformations: subject --> template...', verbose)
+        # warp_inverse.reverse()
+        sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
 
     # Apply warping fields to anat and template
     sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
