@@ -47,7 +47,7 @@ class Param:
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
-        self.fname_output = 'metric_label.txt'
+        self.fname_output = 'metric_label'
         self.file_info_label = 'info_label.txt'
         # self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         # self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
