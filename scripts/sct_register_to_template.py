@@ -229,18 +229,18 @@ def main():
     sct.printv('  Segmentation:         '+fname_seg, verbose)
     sct.printv('  Path template:        '+path_template, verbose)
     sct.printv('  Remove temp files:    '+str(remove_temp_files), verbose)
-
-    sct.printv('\nParameters for registration:')
-    for pStep in range(0, len(paramreg.steps)):
-        sct.printv('Step #'+paramreg.steps[str(pStep)].step, verbose)
-        sct.printv('  Type .................... '+paramreg.steps[str(pStep)].type, verbose)
-        sct.printv('  Algorithm ............... '+paramreg.steps[str(pStep)].algo, verbose)
-        sct.printv('  Metric .................. '+paramreg.steps[str(pStep)].metric, verbose)
-        sct.printv('  Number of iterations .... '+paramreg.steps[str(pStep)].iter, verbose)
-        sct.printv('  Shrink factor ........... '+paramreg.steps[str(pStep)].shrink, verbose)
-        sct.printv('  Smoothing factor......... '+paramreg.steps[str(pStep)].smooth, verbose)
-        sct.printv('  Gradient step ........... '+paramreg.steps[str(pStep)].gradStep, verbose)
-        sct.printv('  Degree of polynomial .... '+paramreg.steps[str(pStep)].poly, verbose)
+    #
+    # sct.printv('\nParameters for registration:')
+    # for pStep in range(0, len(paramreg.steps)):
+    #     sct.printv('Step #'+paramreg.steps[str(pStep)].step, verbose)
+    #     sct.printv('  Type .................... '+paramreg.steps[str(pStep)].type, verbose)
+    #     sct.printv('  Algorithm ............... '+paramreg.steps[str(pStep)].algo, verbose)
+    #     sct.printv('  Metric .................. '+paramreg.steps[str(pStep)].metric, verbose)
+    #     sct.printv('  Number of iterations .... '+paramreg.steps[str(pStep)].iter, verbose)
+    #     sct.printv('  Shrink factor ........... '+paramreg.steps[str(pStep)].shrink, verbose)
+    #     sct.printv('  Smoothing factor......... '+paramreg.steps[str(pStep)].smooth, verbose)
+    #     sct.printv('  Gradient step ........... '+paramreg.steps[str(pStep)].gradStep, verbose)
+    #     sct.printv('  Degree of polynomial .... '+paramreg.steps[str(pStep)].poly, verbose)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
