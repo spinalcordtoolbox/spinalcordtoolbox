@@ -155,7 +155,6 @@ class ParamData:
         self.denoising = True
         self.axial_res = 0.3
         self.square_size_size_mm = 22.5
-        #self.register_param = 'step=1,type=seg,algo=columnwise,metric=MeanSquares,smooth=5,iter=1:step=2,type=im,algo=syn,smooth=2,metric=MI,iter=4:step=3,iter=0'
         self.register_param = 'step=1,type=seg,algo=centermassrot,metric=MeanSquares,smooth=2,iter=1:step=2,type=seg,algo=columnwise,metric=MeanSquares,smooth=3,iter=1'
         self.normalization = True
 
@@ -309,10 +308,6 @@ class Model:
                 im_gmseg = Image(param=gm_seg)
                 im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
                 list_gmseg_reg.append(im_gmseg_reg.data)
-
-            # use forward warping field to register im
-            # im_slice = Image(dic_slice.im)
-            # im_slice_reg = apply_transfo(im_src=im_slice, im_dest=im_mean_wm, warp=warp_dir+'/'+fname_src2dest)
 
             # set slice attributes with data registered into the model space
             dic_slice.set(im_m=im_slice_reg.data)
