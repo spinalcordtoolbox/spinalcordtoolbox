@@ -498,7 +498,41 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
     min_z_index, max_z_index = min(Z), max(Z)
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+
+    # transform centerline coordinates into voxel space for further use
+    coord_voxel_centerline = im_seg.transfo_phys2pix([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]] for i in range(len(z_centerline))])
+    z_centerline_fit_vox = [coord[2] for coord in coord_voxel_centerline]
+
+    # average over slices
+    P_x = np.array(x_centerline_fit)
+    P_y = np.array(y_centerline_fit)
+    P_z = np.array(z_centerline)
+    P_z_vox = np.array(z_centerline_fit_vox)
+    P_x_d = np.array(x_centerline_deriv)
+    P_y_d = np.array(y_centerline_deriv)
+    P_z_d = np.array(z_centerline_deriv)
+
+    P_z_vox = np.array([int(np.round(P_z_vox[i])) for i in range(0, len(P_z_vox))])
+    # not perfect but works (if "enough" points), in order to deal with missing z slices
+    for i in range(min(P_z_vox), max(P_z_vox) + 1, 1):
+        if i not in P_z_vox:
+            P_x_temp = np.insert(P_x, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x[np.where(P_z_vox == i - 1)[-1][-1]] + P_x[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_y_temp = np.insert(P_y, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y[np.where(P_z_vox == i - 1)[-1][-1]] + P_y[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_z_temp = np.insert(P_z, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z[np.where(P_z_vox == i - 1)[-1][-1]] + P_z[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_x_d_temp = np.insert(P_x_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_x_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_y_d_temp = np.insert(P_y_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_y_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_z_d_temp = np.insert(P_z_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_z_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
+
+    coord_mean = np.array([[np.mean(P_x[P_z_vox == i]), np.mean(P_y[P_z_vox == i]), np.mean(P_z[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
+    x_centerline_fit = coord_mean[:, :][:, 0]
+    y_centerline_fit = coord_mean[:, :][:, 1]
+    coord_mean_d = np.array([[np.mean(P_x_d[P_z_vox == i]), np.mean(P_y_d[P_z_vox == i]), np.mean(P_z_d[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
+    z_centerline = coord_mean[:, :][:, 2]
+    x_centerline_deriv = coord_mean_d[:, :][:, 0]
+    y_centerline_deriv = coord_mean_d[:, :][:, 1]
+    z_centerline_deriv = coord_mean_d[:, :][:, 2]
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -642,9 +676,15 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
             # convert the vertebral labeling file to RPI orientation
             im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
 
+            # transforming again coordinates...
+            coord_voxel_centerline = im_vertebral_labeling.transfo_phys2pix([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]] for i in range(len(z_centerline))])
+            x_centerline_fit_vox = [coord[0] for coord in coord_voxel_centerline]
+            y_centerline_fit_vox = [coord[1] for coord in coord_voxel_centerline]
+            z_centerline_fit_vox = [coord[2] for coord in coord_voxel_centerline]
+
             # get the slices corresponding to the vertebral levels
             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, x_centerline_fit, y_centerline_fit, z_centerline)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, x_centerline_fit_vox, y_centerline_fit_vox, z_centerline_fit_vox)
 
         elif not vert_levels:
             vert_levels_list = []
@@ -863,6 +903,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
     min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
     max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
+
     if vert_levels_list[0] < min_vert_level_available:
         vert_levels_list[0] = min_vert_level_available
         warning.append('WARNING: the bottom vertebral level you selected is lower to the lowest level available --> '
