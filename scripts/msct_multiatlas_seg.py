@@ -294,20 +294,22 @@ class Model:
             im_slice = Image(param=dic_slice.im)
             # register slice image on mean dic image
             im_slice_reg, fname_src2dest, fname_dest2src = register_data(im_src=im_slice, im_dest=im_mean, param_reg=self.param_data.register_param, path_copy_warp=warp_dir)
+            shape = im_slice_reg.data.shape
 
             # use forward warping field to register all slice wm
             list_wmseg_reg = []
             for wm_seg in dic_slice.wm_seg:
                 im_wmseg = Image(param=wm_seg)
                 im_wmseg_reg = apply_transfo(im_src=im_wmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
-                list_wmseg_reg.append(im_wmseg_reg.data)
+
+                list_wmseg_reg.append(im_wmseg_reg.data.reshape(shape))
 
             # use forward warping field to register gm seg
             list_gmseg_reg = []
             for gm_seg in dic_slice.gm_seg:
                 im_gmseg = Image(param=gm_seg)
                 im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
-                list_gmseg_reg.append(im_gmseg_reg.data)
+                list_gmseg_reg.append(im_gmseg_reg.data.reshape(shape))
 
             # set slice attributes with data registered into the model space
             dic_slice.set(im_m=im_slice_reg.data)
@@ -353,7 +355,7 @@ class Model:
                         med_wm = np.median(slice.im_M[wm == 1])
                         list_med_wm.append(med_wm)
 
-                    list_min.append(min(slice.im_M.flatten()))
+                    list_min.append(min(slice.im_M.flatten()[slice.im_M.flatten().nonzero()]))
                     list_max.append(max(slice.im_M.flatten()))
 
                 list_gm_by_level.append(np.mean(list_med_gm))
