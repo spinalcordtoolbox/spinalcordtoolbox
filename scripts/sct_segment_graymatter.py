@@ -71,14 +71,12 @@ def get_parser():
                       mandatory=False,
                       default_value=int(ParamData().normalization),
                       example=['0', '1'])
-    # parser.add_option(name="-medians",
-    #                   type_value=[[','], 'float'],
-    #                   description="Median intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
-    #                               "If not specified, the mean intensity values of the target WM and GM  are estimated automatically using the dictionary average segmentation by level.\n"
-    #                               "Only if the -normalize flag is used",
-    #                   mandatory=False,
-    #                   default_value=None,
-    #                   example=["450,540"])
+    parser.add_option(name="-p",
+                      type_value='str',
+                      description="Registration parameters to register the image to segment on the model data. Use the same format as for sct_register_to_template and sct_register_multimodal.",
+                      mandatory=False,
+                      default_value=ParamData().register_param,
+                      example='step=1,type=seg,algo=centermassrot,metric=MeanSquares,smooth=2,iter=1:step=2,type=seg,algo=columnwise,metric=MeanSquares,smooth=3,iter=1:step=3,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3')
     parser.add_option(name="-w-levels",
                       type_value='float',
                       description="weight parameter on the level differences to compute the similarities",
@@ -589,6 +587,8 @@ if __name__ == "__main__":
         param_data.denoising = arguments['-denoising']
     if '-normalization' in arguments:
         param_data.normalization = arguments['-normalization']
+    if '-p' in arguments:
+        param_data.register_param = arguments['-p']
     if '-w-levels' in arguments:
         param_seg.weight_level = arguments['-w-levels']
     if '-w-coordi' in arguments:
