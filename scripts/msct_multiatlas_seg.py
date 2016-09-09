@@ -211,7 +211,7 @@ class Model:
         self.load_model_data()
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
-        printv('\n\tCo-register all the data into a common groupwise space (using the white matter segmentations) ...', self.param.verbose, 'normal')
+        printv('\n\tCo-register all the data into a common groupwise space ...', self.param.verbose, 'normal')
         self.coregister_model_data()
 
         printv('\n\tNormalize data intensities against averaged median values in the dictionary ...', self.param.verbose, 'normal')
@@ -281,9 +281,8 @@ class Model:
 
     # ------------------------------------------------------------------------------------------------------------------
     def coregister_model_data(self):
-        # compute mean WM image
-        data_mean_gm, data_mean_wm = average_gm_wm(self.slices, model_space=False)
-        im_mean_wm = Image(param=data_mean_wm)
+        # get mean image
+        im_mean = Image(param=self.mean_image)
 
         # register all slices WM on mean WM
         for dic_slice in self.slices:
@@ -293,28 +292,27 @@ class Model:
                 os.mkdir(warp_dir)
 
             # get slice mean WM image
-            data_slice_wm = np.mean(dic_slice.wm_seg, axis=0)
-            im_slice_wm = Image(data_slice_wm)
-            # register slice WM on mean WM
-            im_slice_wm_reg, fname_src2dest, fname_dest2src = register_data(im_src=im_slice_wm, im_dest=im_mean_wm, param_reg=self.param_data.register_param, path_copy_warp=warp_dir)
+            im_slice = Image(param=dic_slice.im)
+            # register slice image on mean dic image
+            im_slice_reg, fname_src2dest, fname_dest2src = register_data(im_src=im_slice, im_dest=im_mean, param_reg=self.param_data.register_param, path_copy_warp=warp_dir)
 
             # use forward warping field to register all slice wm
             list_wmseg_reg = []
             for wm_seg in dic_slice.wm_seg:
                 im_wmseg = Image(param=wm_seg)
-                im_wmseg_reg = apply_transfo(im_src=im_wmseg, im_dest=im_mean_wm, warp=warp_dir+'/'+fname_src2dest, interp='nn')
+                im_wmseg_reg = apply_transfo(im_src=im_wmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
                 list_wmseg_reg.append(im_wmseg_reg.data)
 
             # use forward warping field to register gm seg
             list_gmseg_reg = []
             for gm_seg in dic_slice.gm_seg:
                 im_gmseg = Image(param=gm_seg)
-                im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean_wm, warp=warp_dir+'/'+fname_src2dest, interp='nn')
+                im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
                 list_gmseg_reg.append(im_gmseg_reg.data)
 
             # use forward warping field to register im
-            im_slice = Image(dic_slice.im)
-            im_slice_reg = apply_transfo(im_src=im_slice, im_dest=im_mean_wm, warp=warp_dir+'/'+fname_src2dest)
+            # im_slice = Image(dic_slice.im)
+            # im_slice_reg = apply_transfo(im_src=im_slice, im_dest=im_mean_wm, warp=warp_dir+'/'+fname_src2dest)
 
             # set slice attributes with data registered into the model space
             dic_slice.set(im_m=im_slice_reg.data)
