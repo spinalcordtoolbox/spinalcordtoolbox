@@ -61,7 +61,7 @@ def get_parser():
     parser.usage.addSection('SEGMENTATION OPTIONS')
     parser.add_option(name="-denoising",
                       type_value='multiple_choice',
-                      description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
+                      description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been computed with denoising too)",
                       mandatory=False,
                       default_value=int(ParamData().denoising),
                       example=['0', '1'])
@@ -79,13 +79,13 @@ def get_parser():
                       example='step=1,type=seg,algo=centermassrot,metric=MeanSquares,smooth=2,iter=1:step=2,type=seg,algo=columnwise,metric=MeanSquares,smooth=3,iter=1:step=3,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3')
     parser.add_option(name="-w-levels",
                       type_value='float',
-                      description="weight parameter on the level differences to compute the similarities",
+                      description="Weight parameter on the level differences to compute the similarities",
                       mandatory=False,
                       default_value=ParamSeg().weight_level,
                       example=2.0)
     parser.add_option(name="-w-coordi",
                       type_value='float',
-                      description="weight parameter on the euclidean distance (based on images coordinates in the reduced sapce) to compute the similarities ",
+                      description="Weight parameter on the euclidean distance (based on images coordinates in the reduced sapce) to compute the similarities ",
                       mandatory=False,
                       default_value=ParamSeg().weight_coord,
                       example=0.005)
@@ -115,7 +115,7 @@ def get_parser():
     #                   example=['0', 'slice', 'level'])
     parser.add_option(name="-ref",
                       type_value="file",
-                      description="Reference segmentation of the gray matter for segmentation validation (outputs Dice coefficient and Hausdorff's distance)",
+                      description="Reference segmentation of the gray matter for segmentation validation --> output Dice coefficient and Hausdorff's and median distances)",
                       mandatory=False,
                       example='manual_gm_seg.nii.gz')
     parser.add_option(name="-ofolder",
@@ -139,7 +139,7 @@ def get_parser():
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value=str(Param().verbose))
