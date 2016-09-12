@@ -103,7 +103,12 @@ class ParamregMultiStep:
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
+    # initialize parameters
+    param = Param()
 
     # Initialization
     fname_output = ''
@@ -232,7 +237,7 @@ def main():
                       mandatory=False,
                       default_value='1',
                       example=['0', '1', '2'])
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     # get arguments
     fname_src = arguments['-i']
@@ -647,8 +652,6 @@ def register(src, dest, paramreg, param, i_step_str):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()
 

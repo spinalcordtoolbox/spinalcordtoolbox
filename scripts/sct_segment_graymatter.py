@@ -17,6 +17,7 @@ from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_th
 from sct_image import set_orientation
 from msct_image import Image
 from msct_parser import *
+import sct_maths, sct_register_multimodal
 from math import exp
 import numpy as np
 import shutil, os, sys, time
@@ -517,7 +518,9 @@ class SegmentGM:
 
         # get manual WM seg:
         fname_manual_wmseg = 'manual_wmseg.nii.gz'
-        run('sct_maths -i '+fname_seg+' -sub '+fname_manual_gmseg+' -o '+fname_manual_wmseg)
+        sct_maths.main(args=['-i', fname_seg,
+                             '-sub', fname_manual_gmseg,
+                             '-o', fname_manual_wmseg])
 
         ## compute DC:
         try:
@@ -526,12 +529,20 @@ class SegmentGM:
         except Exception:
             # put ref and res in the same space if needed
             fname_manual_gmseg_corrected = add_suffix(fname_manual_gmseg, '_reg')
-            run('sct_register_multimodal -i '+fname_manual_gmseg+' -d '+fname_gmseg+' -identity 1 ')
-            run('sct_maths -i '+fname_manual_gmseg_corrected+' -bin 0.1 -o '+fname_manual_gmseg_corrected)
+            sct_register_multimodal.main(args=['-i', fname_manual_gmseg,
+                                               '-d', fname_gmseg,
+                                               '-identity', '1'])
+            sct_maths.main(args=['-i', fname_manual_gmseg_corrected,
+                                 '-bin', '0.1',
+                                 '-o', fname_manual_gmseg_corrected])
             #
             fname_manual_wmseg_corrected = add_suffix(fname_manual_wmseg, '_reg')
-            run('sct_register_multimodal -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -identity 1 ')
-            run('sct_maths -i ' + fname_manual_wmseg_corrected + ' -bin 0.1 -o ' + fname_manual_wmseg_corrected)
+            sct_register_multimodal.main(args=['-i', fname_manual_wmseg,
+                                               '-d', fname_wmseg,
+                                               '-identity', '1'])
+            sct_maths.main(args=['-i', fname_manual_wmseg_corrected,
+                                 '-bin', '0.1',
+                                 '-o', fname_manual_wmseg_corrected])
             # recompute DC
             status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
             status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
