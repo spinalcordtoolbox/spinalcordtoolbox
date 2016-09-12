@@ -279,15 +279,11 @@ if __name__ == "__main__":
     # redirect to log file
     sys.stdout = handle_log
 
-    print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
+    print 'Testing started on: '+strftime("%Y-%m-%d %H:%M:%S")
 
     # get path of the toolbox
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
-    # path_sct = os.getenv("SCT_DIR")
-    # if path_sct is None :
-    #     raise EnvironmentError("SCT_DIR, which is the path to the "
-    #                            "Spinalcordtoolbox install needs to be set")
 
     # fetch version of the toolbox
     with open (path_sct+"/version.txt", "r") as myfile:
@@ -350,15 +346,14 @@ if __name__ == "__main__":
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
         results_display = results_display.set_index('subject').reset_index()
 
-        # printing results
-        print 'Results for "' + function_to_test + ' ' + parameters + '":'
+        # display general results
+        print '\nResults for "' + function_to_test + ' ' + parameters + '":'
         print 'Dataset: ' + dataset
-        print results_display.to_string()
         print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
-
-        # display elapsed time
         elapsed_time = time() - start_time
-        print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
+        print 'Total duration: ' + str(int(round(elapsed_time)))+'s\n'
+        # display detailed results
+        print results_display.to_string()
         print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: File(s) missing'
 
     except Exception as err:

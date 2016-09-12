@@ -66,7 +66,7 @@ sct_propseg -i t1.nii.gz -c t1
 if [ $DISPLAY = true ]; then
   fslview t1 -b 0,800 t2_seg -l Red -t 0.5 &
 fi
-# Tips: the cord segmentation is "leaking". To obtain better segmentation, you can smooth along centerline and re-run propseg:
+# Tips: the cord segmentation is "leaking". Smoothing along centerline and re-run propseg can help getting better results:
 sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
 sct_propseg -i t1_smooth.nii.gz -c t1
 mv t1_smooth_seg.nii.gz t1_seg.nii.gz

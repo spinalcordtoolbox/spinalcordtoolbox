@@ -18,9 +18,10 @@
 # TODO: address the case when there is more than one max correlation
 
 import sys
-import commands
+# import commands
 import os
-from glob import glob
+import shutil
+# from glob import glob
 import numpy as np
 from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end, tmp_create
 from msct_parser import Parser
@@ -28,8 +29,7 @@ from msct_image import Image
 import sct_utils as sct
 from sct_warp_template import get_file_label
 
-# get path of the toolbox
-# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# get path of SCT
 path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
 
@@ -226,7 +226,17 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
+    # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
+    if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+        # if they exist, copy them into current folder
+        sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+        shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
+        shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
+        shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
+        # apply straightening
+        sct.run('sct_apply_transfo -i data.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o data_straight.nii')
+    else:
+        run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
@@ -238,7 +248,7 @@ def main(args=None):
     # N.B. Output is RPI
     printv('\nApply straightening to segmentation...', verbose)
     run('sct_apply_transfo -i segmentation.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear', verbose)
-    # Threshold segmentation to 0.5
+    # Threshold segmentation at 0.5
     run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz', verbose)
 
     if initauto:
@@ -284,6 +294,10 @@ def main(args=None):
     # Generate output files
     printv('\nGenerate output files...', verbose)
     generate_output_file(path_tmp+'segmentation_labeled.nii.gz', path_output+file_out)
+    # copy straightening files in case subsequent SCT functions need them
+    generate_output_file(path_tmp+'warp_curve2straight.nii.gz', path_output+'warp_curve2straight.nii.gz', verbose)
+    generate_output_file(path_tmp+'warp_straight2curve.nii.gz', path_output+'warp_straight2curve.nii.gz', verbose)
+    generate_output_file(path_tmp+'straight_ref.nii.gz', path_output+'straight_ref.nii.gz', verbose)
 
     # Remove temporary files
     if remove_tmp_files == 1:
