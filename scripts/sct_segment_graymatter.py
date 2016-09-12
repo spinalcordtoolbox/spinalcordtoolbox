@@ -566,7 +566,11 @@ class SegmentGM:
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
-if __name__ == "__main__":
+
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
     # create param objects
     param_seg = ParamSeg()
     param_data = ParamData()
@@ -575,7 +579,7 @@ if __name__ == "__main__":
 
     # get parser
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     # set param arguments ad inputted by user
     param_seg.fname_im = arguments["-i"]
@@ -616,3 +620,6 @@ if __name__ == "__main__":
     end = time.time()
     t = end - start
     printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
+
+if __name__ == "__main__":
+    main()
