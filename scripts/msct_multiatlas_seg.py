@@ -482,8 +482,11 @@ class Model:
         return gm_seg_model, wm_seg_model
 
 
+def main(args=None):
 
-if __name__ == "__main__":
+    if args is None:
+        args = sys.argv[1:]
+
     # create param objects
     param_data = ParamData()
     param_model = ParamModel()
@@ -491,7 +494,7 @@ if __name__ == "__main__":
 
     # get parser
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     param_model.path_data = arguments['-path-data']
 
@@ -532,5 +535,5 @@ if __name__ == "__main__":
     printv('Model computed in '+str(int(round(t/60)))+' min, '+str(t%60)+' sec', param.verbose, 'info')
 
 
-
-
+if __name__ == "__main__":
+    main()
