@@ -15,6 +15,7 @@
 
 import sys
 import os
+import shutil
 import commands
 import time
 from glob import glob
@@ -300,6 +301,10 @@ def main():
                    'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
                    str(labels_template[-1].value), verbose, 'error')
 
+    # binarize segmentation (in case it has values below 0 caused by manual editing)
+    sct.printv('\nBinarize segmentation', verbose)
+    sct.run('sct_maths -i seg.nii.gz -bin 0.5 -o seg.nii.gz')
+
     # smooth segmentation (jcohenadad, issue #613)
     # sct.printv('\nSmooth segmentation...', verbose)
     # sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
@@ -338,10 +343,17 @@ def main():
 
         # straighten segmentation
         sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-        # check if straightening was already done in a previous process. If so, don't do it twice.
-        # if os.path.isfile('warp_')
-        # check if warp_curve2straight and curve_straight2curve already exist
-        sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose), verbose)
+        # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
+        if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+            # if they exist, copy them into current folder
+            sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+            shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
+            shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
+            shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
+            # apply straightening
+            sct.run('sct_apply_transfo -i '+ftmp_seg+' -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o '+add_suffix(ftmp_seg, '_straight'))
+        else:
+            sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose), verbose)
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
@@ -542,12 +554,16 @@ def main():
     # come back to parent folder
     os.chdir('..')
 
-   # Generate output files
+    # Generate output files
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'warp_template2anat.nii.gz', path_output+'warp_template2anat.nii.gz', verbose)
     sct.generate_output_file(path_tmp+'warp_anat2template.nii.gz', path_output+'warp_anat2template.nii.gz', verbose)
     sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
     sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
+    # copy straightening files in case subsequent SCT functions need them
+    sct.generate_output_file(path_tmp+'warp_curve2straight.nii.gz', path_output+'warp_curve2straight.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'warp_straight2curve.nii.gz', path_output+'warp_straight2curve.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'straight_ref.nii.gz', path_output+'straight_ref.nii.gz', verbose)
 
     # Delete temporary files
     if remove_temp_files:
