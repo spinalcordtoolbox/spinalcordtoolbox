@@ -17,11 +17,11 @@ import sct_utils as sct
 def test(path_data):
 
     folder_data = 'mt/'
-    file_data = ['mt0.nii.gz', 'mt1.nii.gz']
-
+    file_data = ['mt0.nii.gz', 'mt1.nii.gz', 'mt0_seg.nii.gz', 'mt1_seg.nii.gz']
     output = ''
     status = 0
 
+    # check syn
     algo = 'syn'
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
           + ' -d ' + path_data + folder_data + file_data[1] \
@@ -41,7 +41,7 @@ def test(path_data):
         status += s
         output += o
 
-    # check other method
+    # check slicereg
     algo = 'slicereg'
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
           + ' -d ' + path_data + folder_data + file_data[1] \
@@ -60,6 +60,44 @@ def test(path_data):
         s, o = check_integrity(algo=algo, fname_result=sct.add_suffix(file_data[0], '_reg_'+algo), fname_goldstandard=path_data+folder_data+sct.add_suffix(file_data[0], '_reg_'+algo+'_goldstandard'))
         status += s
         output += o
+
+    # check centermass
+    algo = 'centermass'
+    cmd = 'sct_register_multimodal'  \
+          + ' -i ' + path_data + folder_data + file_data[0] \
+          + ' -d ' + path_data + folder_data + file_data[1] \
+          + ' -iseg ' + path_data + folder_data + file_data[2] \
+          + ' -dseg ' + path_data + folder_data + file_data[3] \
+          + ' -o ' + sct.add_suffix(file_data[0], '_reg_'+algo)  \
+          + ' -param step=1,type=seg,algo='+algo+',smooth=1'  \
+          + ' -x linear' \
+          + ' -r 0' \
+          + ' -v 1'
+    output += '\n====================================================================================================\n'\
+              +cmd+\
+              '\n====================================================================================================\n\n'  # copy command
+    s, o = commands.getstatusoutput(cmd)
+    status += s
+    output += o
+
+    # check centermassrot
+    algo = 'centermassrot'
+    cmd = 'sct_register_multimodal'  \
+          + ' -i ' + path_data + folder_data + file_data[0] \
+          + ' -d ' + path_data + folder_data + file_data[1] \
+          + ' -iseg ' + path_data + folder_data + file_data[2] \
+          + ' -dseg ' + path_data + folder_data + file_data[3] \
+          + ' -o ' + sct.add_suffix(file_data[0], '_reg_'+algo)  \
+          + ' -param step=1,type=seg,algo='+algo+',smooth=1'  \
+          + ' -x linear' \
+          + ' -r 0' \
+          + ' -v 1'
+    output += '\n====================================================================================================\n'\
+              +cmd+\
+              '\n====================================================================================================\n\n'  # copy command
+    s, o = commands.getstatusoutput(cmd)
+    status += s
+    output += o
 
     # check other method
     # algo = 'affine'
