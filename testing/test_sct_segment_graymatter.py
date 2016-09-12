@@ -138,7 +138,7 @@ def test(path_data, parameters=''):
         result_median_dist = mean(max_med)
 
         # Integrity check
-        hd_threshold = 1.5 # in mm
+        hd_threshold = 3 # in mm
         wm_dice_threshold = 0.8
         if result_hausdorff > hd_threshold or result_dice_wm < wm_dice_threshold:
             status = 99
