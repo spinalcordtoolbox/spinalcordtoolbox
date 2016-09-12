@@ -13,6 +13,7 @@
 # ======================================================================================================================
 # check if needed Python libraries are already installed or not
 import os
+import shutil
 import time
 import commands
 import sys
@@ -571,6 +572,9 @@ class SpinalCordStraightener(object):
         sct.printv("\nGenerate output file (in current folder)...", verbose)
         sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
         sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
+        # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
+        shutil.copy(path_tmp+'/tmp.anat_rigid_warp.nii.gz', 'straight_ref.nii.gz')
+        # move straightened input file
         if fname_output == '':
             fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
                                                       self.path_output + file_anat + "_straight" + ext_anat, verbose)
