@@ -635,7 +635,6 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
     sct.printv('\nSaving results in: '+fname_output+' ...')
 
-
     # define vertebral levels and slices fields
     if actual_vert:
         vertebral_levels_field = str(int(actual_vert[0])) + ' to ' + str(int(actual_vert[1]))
