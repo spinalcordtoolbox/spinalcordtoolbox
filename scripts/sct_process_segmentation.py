@@ -69,9 +69,10 @@ def get_parser():
                                   '- length: compute length of the segmentation.\n'
                                   '- csa: computes cross-sectional area by counting pixels in each'
                                   '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
-                                  '  - a segmentation (nifti file) where each slice\'s value is equal to the CSA (mm^2),\n'
-                                  '  - a CSV text file with z (1st column) and CSA in mm^2 (2nd column),\n'
-                                  '  - and if you select the options -z or -vert, mean CSA across the selected slices or vertebral levels is ouptut in a CSV text file, an MS Excel file and a pickle file.\n',
+                                  '  - angle_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the CSA (mm^2),\n'
+                                  '  - csa_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the angle (in rad) between the spinal cord centerline and the inferior-superior direction,\n'
+                                  '  - csa_per_slice.txt: a CSV text file with z (1st column) and CSA in mm^2 (2nd column),\n'
+                                  '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n',
                       mandatory=True,
                       example=['centerline', 'label-vert', 'length', 'csa'])
     parser.usage.addSection('Optional Arguments')
@@ -610,7 +611,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_folder+'csa_image.nii.gz')  # extension already included in name_output
-    sct.generate_output_file(path_tmp+'angle_volume_in_initial_orientation.nii.gz', output_folder+'angle_volume.nii.gz')  # extension already included in name_output
+    sct.generate_output_file(path_tmp+'angle_volume_in_initial_orientation.nii.gz', output_folder+'angle_image.nii.gz')  # extension already included in name_output
     print('\n')
 
     # Create output text file
