@@ -216,7 +216,7 @@ echo "Ended at: $(date +%x_%r)"
 echo
 echo "t2/CSA:  " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
 echo "mt/MTR:  " `grep -v '^#' mt/mtr_in_wm.txt | grep -v '^$'`
-echo "mt/CSA:  " `grep -v '^#' mt/mt_cst_dorsal_csa_mean.txt | grep -v '^$'`
+echo "mt/CSA:  " `grep -v '^#' sct_example_data/mt/mt_cst_dorsal/csa_mean.txt | grep -v '^$'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'right'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'left'`
 echo
