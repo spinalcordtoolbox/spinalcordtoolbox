@@ -71,6 +71,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     # display
     sct.printv('Labels src: ' + str(points_moving), verbose)
     sct.printv('Labels dest: ' + str(points_fixed), verbose)
+    sct.printv('Degrees of freedom (dof): ' + dof, verbose)
 
     if len(coord_src) != len(coord_dest):
         raise Exception('Error: number of source and destination landmarks are not the same, so landmarks cannot be paired.')
