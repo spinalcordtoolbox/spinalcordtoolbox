@@ -48,6 +48,9 @@ def get_parser():
 # ==========================================================================================
 def main(args=None):
 
+    if args is None:
+        args = sys.argv[1:]
+
     # initialization
     verbose = 1
     dict_url = {'sct_example_data': 'https://github.com/neuropoly/sct_example_data/archive/master.zip',
@@ -57,13 +60,9 @@ def main(args=None):
                 'gm_model': 'https://dl.dropboxusercontent.com/u/20592661/sct/20160912/gm_model.zip'}
     tmp_file = 'tmp.data.zip'
 
-    # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     data_name = arguments['-d']
     if '-v' in arguments:
         verbose = int(arguments['-v'])
