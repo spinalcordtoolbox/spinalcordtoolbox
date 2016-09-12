@@ -55,10 +55,10 @@ def register_slicewise(fname_src,
     # Calculate displacement
     if paramreg.algo == 'centermass':
         # translation of center of mass between source and destination in voxel space
-        register2d_centermass('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, verbose=verbose)
     elif paramreg.algo == 'centermassrot':
         # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, verbose=verbose)
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
         register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
@@ -76,96 +76,97 @@ def register_slicewise(fname_src,
     # go back to parent folder
     chdir('../')
 
+#
+#
+# def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=1):
+#     """Slice-by-slice registration by translation of two segmentations.
+#     For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
+#     mass in voxel unit.
+#     The segmentations can be of different sizes but the output segmentation must be smaller than the input segmentation.
+#
+#     input:
+#         seg_input: name of moving segmentation file (type: string)
+#         seg_dest: name of fixed segmentation file (type: string)
+#     input optional:
+#         fname_warp: name of output 3d forward warping field
+#         fname_warp_inv: name of output 3d inverse warping field
+#         verbose
+#     output:
+#         x_displacement: list of translation along x axis for each slice (type: list)
+#         y_displacement: list of translation along y axis for each slice (type: list)
+#
+#     """
+#     seg_input_img = Image('src.nii')
+#     seg_dest_img = Image('dest.nii')
+#     seg_input_data = seg_input_img.data
+#     seg_dest_data = seg_dest_img.data
+#
+#     x_center_of_mass_input = [0] * seg_dest_data.shape[2]
+#     y_center_of_mass_input = [0] * seg_dest_data.shape[2]
+#
+#     sct.printv('\nGet center of mass of source image...', verbose)
+#     # TODO: select only the slices corresponding to the output segmentation
+#
+#     # grab physical coordinates of destination origin
+#     coord_origin_dest = seg_dest_img.transfo_pix2phys([[0, 0, 0]])
+#
+#     # grab the voxel coordinates of the destination origin from the source image
+#     [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
+#
+#     # calculate center of mass for each slice of the input image
+#     for iz in xrange(seg_dest_data.shape[2]):
+#         # starts from z_o, which is the origin of the destination image in the source image
+#         x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(np.array(seg_input_data[:, :, z_o + iz]))
+#
+#     # initialize data
+#     x_center_of_mass_output = [0] * seg_dest_data.shape[2]
+#     y_center_of_mass_output = [0] * seg_dest_data.shape[2]
+#
+#     # calculate center of mass for each slice of the destination image
+#     sct.printv('\nGet center of mass of destination image...', verbose)
+#     for iz in xrange(seg_dest_data.shape[2]):
+#         try:
+#             x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(np.array(seg_dest_data[:, :, iz]))
+#         except Exception as e:
+#             sct.printv('WARNING: Exception error in msct_register during register_seg:', 1, 'warning')
+#             print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
+#             print e
+#
+#     # calculate displacement in voxel space
+#     x_displacement = [0] * seg_input_data.shape[2]
+#     y_displacement = [0] * seg_input_data.shape[2]
+#     sct.printv('\nGet X-Y displacement for each slice...', verbose)
+#     for iz in xrange(seg_dest_data.shape[2]):
+#         x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
+#         y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
+#
+#     # convert to array
+#     x_disp_a = np.asarray(x_displacement)
+#     y_disp_a = np.asarray(y_displacement)
+#
+#     # create theta vector (for easier code management)
+#     theta_rot_a = np.zeros(seg_dest_data.shape[2])
+#
+#     # Generate warping field
+#     generate_warping_field('dest.nii', x_disp_a, y_disp_a, theta_rot_a, fname=fname_warp)  #name_warp= 'step'+str(paramreg.step)
+#     # Inverse warping field
+#     generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
+#
 
 
-def register2d_centermass(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=1):
-    """Slice-by-slice registration by translation of two segmentations.
-    For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
-    mass in voxel unit.
-    The segmentations can be of different sizes but the output segmentation must be smaller than the input segmentation.
-
-    input:
-        seg_input: name of moving segmentation file (type: string)
-        seg_dest: name of fixed segmentation file (type: string)
-    input optional:
-        fname_warp: name of output 3d forward warping field
-        fname_warp_inv: name of output 3d inverse warping field
-        verbose
-    output:
-        x_displacement: list of translation along x axis for each slice (type: list)
-        y_displacement: list of translation along y axis for each slice (type: list)
-
+def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, verbose=0):
     """
-    seg_input_img = Image('src.nii')
-    seg_dest_img = Image('dest.nii')
-    seg_input_data = seg_input_img.data
-    seg_dest_data = seg_dest_img.data
-
-    x_center_of_mass_input = [0] * seg_dest_data.shape[2]
-    y_center_of_mass_input = [0] * seg_dest_data.shape[2]
-
-    sct.printv('\nGet center of mass of source image...', verbose)
-    # TODO: select only the slices corresponding to the output segmentation
-
-    # grab physical coordinates of destination origin
-    coord_origin_dest = seg_dest_img.transfo_pix2phys([[0, 0, 0]])
-
-    # grab the voxel coordinates of the destination origin from the source image
-    [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
-
-    # calculate center of mass for each slice of the input image
-    for iz in xrange(seg_dest_data.shape[2]):
-        # starts from z_o, which is the origin of the destination image in the source image
-        x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(np.array(seg_input_data[:, :, z_o + iz]))
-
-    # initialize data
-    x_center_of_mass_output = [0] * seg_dest_data.shape[2]
-    y_center_of_mass_output = [0] * seg_dest_data.shape[2]
-
-    # calculate center of mass for each slice of the destination image
-    sct.printv('\nGet center of mass of destination image...', verbose)
-    for iz in xrange(seg_dest_data.shape[2]):
-        try:
-            x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(np.array(seg_dest_data[:, :, iz]))
-        except Exception as e:
-            sct.printv('WARNING: Exception error in msct_register during register_seg:', 1, 'warning')
-            print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
-            print e
-
-    # calculate displacement in voxel space
-    x_displacement = [0] * seg_input_data.shape[2]
-    y_displacement = [0] * seg_input_data.shape[2]
-    sct.printv('\nGet X-Y displacement for each slice...', verbose)
-    for iz in xrange(seg_dest_data.shape[2]):
-        x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
-        y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
-
-    # convert to array
-    x_disp_a = np.asarray(x_displacement)
-    y_disp_a = np.asarray(y_displacement)
-
-    # create theta vector (for easier code management)
-    theta_rot_a = np.zeros(seg_dest_data.shape[2])
-
-    # Generate warping field
-    generate_warping_field('dest.nii', x_disp_a, y_disp_a, theta_rot_a, fname=fname_warp)  #name_warp= 'step'+str(paramreg.step)
-    # Inverse warping field
-    generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
-
-
-
-def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0):
-    """Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
+    Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
-
     This works for 2D and 3D images.  If 3D, it splits the image and performs the rotation slice-by-slice.
-
     input:
         fname_source: name of moving image (type: string)
         fname_dest: name of fixed image (type: string)
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
-        mode:
+        rot: estimate rotation with PCA (type: int)
+        regularize: regularize transformations along z (type: int)
+        verbose:
     output:
         none
     """
@@ -207,19 +208,6 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     for iz in range(0, nz):
         # initialize src/dest angle at zero if exception is raised
         angle_src_dest = 0
-
-        # iz = 0
-        import matplotlib.pyplot as plt
-        # plt.figure(figsize=(15, 4))
-        # plt.subplot(121)
-        # plt.imshow(data_src[:, :, iz], cmap=plt.cm.gray)
-        # plt.title('src')
-        # plt.subplot(122)
-        # plt.imshow(data_dest[:, :, iz], cmap=plt.cm.gray)
-        # plt.title('dest')
-        # plt.show()
-        # coord_src = array
-        # coord_dest = array
         try:
             coord_src, pca_src, centermass_src = compute_pca(data_src[:, :, iz])
             coord_dest, pca_dest, centermass_dest = compute_pca(data_dest[:, :, iz])
@@ -228,7 +216,11 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             eigenv_dest = pca_dest.components_.T[0][0], pca_dest.components_.T[1][0]  # pca_dest.components_.T[0]
             angle_src_dest = angle_between(eigenv_src, eigenv_dest)
 
-            # import numpy as np
+            # if no rotation, replace angles with value 0
+            if rot == 0:
+                angle_src_dest = 0
+
+            # build rotation matrix
             R = np.matrix( ((cos(angle_src_dest), sin(angle_src_dest)), (-sin(angle_src_dest), cos(angle_src_dest))) )
 
             # display rotations
@@ -297,43 +289,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         except ValueError:
             sct.printv('WARNING: Slice #'+str(iz)+' is empty. It will be ignored.', verbose, 'warning')
 
-        # display init and new coordinates
-        # plt.figure('iz='+str(iz)) #, figsize=(9, 4))
-        # plt.scatter([coord_init_phy[i][0] for i in xrange(coord_init_phy.shape[0])],
-        #             [coord_init_phy[i][1] for i in xrange(coord_init_phy.shape[0])],
-        #             s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
-        # plt.scatter([coord_forward_phy[i][0] for i in xrange(coord_forward_phy.shape[0])],
-        #             [coord_forward_phy[i][1] for i in xrange(coord_forward_phy.shape[0])],
-        #             s=5, marker='o', zorder=10, color='red', alpha=0.5)
-        # plt.gca().set_aspect('equal', adjustable='box')
-        # plt.show()
-        # del coord_src, coord_dest, pca_src, pca_dest
-
     # Generate forward warping field (defined in destination space)
-    data_warp = np.zeros((nx, ny, nz, 1, 3))
-    data_warp[:, :, :, 0, 0] = -warp_x  # need to invert due to ITK conventions
-    data_warp[:, :, :, 0, 1] = -warp_y
-    im_dest = load(fname_dest)
-    hdr_dest = im_dest.get_header()
-    hdr_warp = hdr_dest.copy()
-    hdr_warp.set_intent('vector', (), '')
-    hdr_warp.set_data_dtype('float32')
-    img = Nifti1Image(data_warp, None, hdr_warp)
-    save(img, fname_warp)
-    sct.printv('\nDone! Warping field generated: '+fname_warp, verbose)
-    # generate inverse warping field (defined in source space)
-    data_warp = np.zeros((nx, ny, nz, 1, 3))
-    data_warp[:, :, :, 0, 0] = -warp_inv_x  # need to invert due to ITK conventions
-    data_warp[:, :, :, 0, 1] = -warp_inv_y  # need
-    im = load(fname_src)
-    hdr = im.get_header()
-    hdr_warp = hdr.copy()
-    hdr_warp.set_intent('vector', (), '')
-    hdr_warp.set_data_dtype('float32')
-    img = Nifti1Image(data_warp, None, hdr_warp)
-    save(img, fname_warp_inv)
-    sct.printv('\nDone! Warping field generated: '+fname_warp_inv, verbose)
-
+    generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
+    generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
 
 
 def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0):
@@ -561,29 +519,34 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
-    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
-    data_warp[:, :, :, 0, 0] = -warp_x  # need to invert due to ITK conventions
-    data_warp[:, :, :, 0, 1] = -warp_y
-    im_dest = load(fname_dest)
-    hdr_dest = im_dest.get_header()
-    hdr_warp = hdr_dest.copy()
-    hdr_warp.set_intent('vector', (), '')
-    hdr_warp.set_data_dtype('float32')
-    img = Nifti1Image(data_warp, None, hdr_warp)
-    save(img, fname_warp)
-    sct.printv('\nDone! Warping field generated: '+fname_warp, verbose)
-    # generate inverse warping field (defined in source space)
-    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
-    data_warp[:, :, :, 0, 0] = -warp_inv_x  # need to invert due to ITK conventions
-    data_warp[:, :, :, 0, 1] = -warp_inv_y  # need
-    im = load(fname_src)
-    hdr = im.get_header()
-    hdr_warp = hdr.copy()
-    hdr_warp.set_intent('vector', (), '')
-    hdr_warp.set_data_dtype('float32')
-    img = Nifti1Image(data_warp, None, hdr_warp)
-    save(img, fname_warp_inv)
-    sct.printv('\nDone! Warping field generated: '+fname_warp_inv, verbose)
+    generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
+    generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
+
+    # # Generate forward warping field (defined in destination space)
+    # data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
+    # data_warp[:, :, :, 0, 0] = -warp_x  # need to invert due to ITK conventions
+    # data_warp[:, :, :, 0, 1] = -warp_y
+    # im_dest = load(fname_dest)
+    # hdr_dest = im_dest.get_header()
+    # hdr_warp = hdr_dest.copy()
+    # hdr_warp.set_intent('vector', (), '')
+    # hdr_warp.set_data_dtype('float32')
+    # img = Nifti1Image(data_warp, None, hdr_warp)
+    # save(img, fname_warp)
+    # sct.printv('\nDone! Warping field generated: '+fname_warp, verbose)
+    # # generate inverse warping field (defined in source space)
+    # data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
+    # data_warp[:, :, :, 0, 0] = -warp_inv_x  # need to invert due to ITK conventions
+    # data_warp[:, :, :, 0, 1] = -warp_inv_y  # need
+    # im = load(fname_src)
+    # hdr = im.get_header()
+    # hdr_warp = hdr.copy()
+    # hdr_warp.set_intent('vector', (), '')
+    # hdr_warp.set_data_dtype('float32')
+    # img = Nifti1Image(data_warp, None, hdr_warp)
+    # save(img, fname_warp_inv)
+    # sct.printv('\nDone! Warping field generated: '+fname_warp_inv, verbose)
+
 
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
@@ -779,76 +742,86 @@ def numerotation(nb):
 
 
 
-def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot, center_rotation=None, fname='warping_field.nii.gz', verbose=1):
-    """Generation of a warping field towards an image and given transformation parameters.
-
-    Given a destination image and transformation parameters this functions creates a NIFTI 3D warping field that can be
-    applied afterwards. The transformation parameters corresponds to a slice-by-slice registration of images, thus the
-    transformation parameters must be precised for each slice of the image.
-
-    inputs:
-        fname_dest: name of destination image (type: string). NEEDS TO BE RPI ORIENTATION!!!
-        x_trans: list of translations along x axis for each slice (type: list, length: height of fname_dest)
-        y_trans: list of translations along y axis for each slice (type: list, length: height of fname_dest)
-        theta_rot: list of rotation angles in radian (and in ITK's coordinate system) for each slice (type: list)
-    inputs (optional):
-        center_rotation: pixel coordinates in plan xOy of the wanted center of rotation (type: list, length: 2, example: [0,ny/2])
-        fname: name of output warp (type: string)
-        verbose: display parameter (type: int)
-    output:
-        creation of a warping field of name 'fname' with an header similar to the destination image.
+def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz', verbose=1):
     """
-    sct.printv('\nCreating warping field for transformations along z...', verbose)
-
-    file_dest = load(fname_dest)
-    hdr_file_dest = file_dest.get_header()
-    hdr_warp = hdr_file_dest.copy()
+    Generate an ITK warping field
+    :param fname_dest:
+    :param warp_x:
+    :param warp_y:
+    :param fname_warp:
+    :param verbose:
+    :return:
+    """
+    sct.printv('\nGenerate warping field...', verbose)
 
     # Get image dimensions
-    sct.printv('\nGet image dimensions of destination image...', verbose)
+    # sct.printv('Get destination dimension', verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
-    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+    # sct.printv('  matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    # sct.printv('  voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
-    # Center of rotation
-    if center_rotation == None:
-        x_a = int(round(nx/2))
-        y_a = int(round(ny/2))
-    else:
-        x_a = center_rotation[0]
-        y_a = center_rotation[1]
+    # initialize
+    data_warp = np.zeros((nx, ny, nz, 1, 3))
 
-    # Calculate displacement for each voxel
-    data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
-    vector_i = [[[i-x_a], [j-y_a]] for i in range(nx) for j in range(ny)]
+    # fill matrix
+    data_warp[:, :, :, 0, 0] = -warp_x  # need to invert due to ITK conventions
+    data_warp[:, :, :, 0, 1] = -warp_y  # need to invert due to ITK conventions
 
-    # if theta_rot == None:
-    #     # for translations
-    #     for k in range(nz):
-    #         matrix_rot_a = np.asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
-    #         tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
-    #         result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
-    #         for i in range(ny):
-    #             data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
-    #             data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
-
-    # else:
-        # For rigid transforms (not optimized)
-        # if theta_rot != None:
-    # TODO: this is not optimized! can do better!
-    for k in range(nz):
-        for i in range(nx):
-            for j in range(ny):
-                data_warp[i, j, k, 0, 0] = (cos(theta_rot[k]) - 1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) + x_trans[k]
-                data_warp[i, j, k, 0, 1] = - sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k]) - 1) * (j - y_a) + y_trans[k]
-                data_warp[i, j, k, 0, 2] = 0
-
-    # Generate warp file as a warping field
+    # save warping field
+    im_dest = load(fname_dest)
+    hdr_dest = im_dest.get_header()
+    hdr_warp = hdr_dest.copy()
     hdr_warp.set_intent('vector', (), '')
     hdr_warp.set_data_dtype('float32')
     img = Nifti1Image(data_warp, None, hdr_warp)
-    save(img, fname)
-    sct.printv('\nDone! Warping field generated: '+fname, verbose)
+    save(img, fname_warp)
+    sct.printv('Done! Warping field generated: '+fname_warp, verbose)
+
+    #
+    # file_dest = load(fname_dest)
+    # hdr_file_dest = file_dest.get_header()
+    # hdr_warp = hdr_file_dest.copy()
+    #
+    #
+    # # Center of rotation
+    # if center_rotation == None:
+    #     x_a = int(round(nx/2))
+    #     y_a = int(round(ny/2))
+    # else:
+    #     x_a = center_rotation[0]
+    #     y_a = center_rotation[1]
+    #
+    # # Calculate displacement for each voxel
+    # data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
+    # vector_i = [[[i-x_a], [j-y_a]] for i in range(nx) for j in range(ny)]
+    #
+    # # if theta_rot == None:
+    # #     # for translations
+    # #     for k in range(nz):
+    # #         matrix_rot_a = np.asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
+    # #         tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
+    # #         result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
+    # #         for i in range(ny):
+    # #             data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
+    # #             data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
+    #
+    # # else:
+    #     # For rigid transforms (not optimized)
+    #     # if theta_rot != None:
+    # # TODO: this is not optimized! can do better!
+    # for k in range(nz):
+    #     for i in range(nx):
+    #         for j in range(ny):
+    #             data_warp[i, j, k, 0, 0] = (cos(theta_rot[k]) - 1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) + x_trans[k]
+    #             data_warp[i, j, k, 0, 1] = - sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k]) - 1) * (j - y_a) + y_trans[k]
+    #             data_warp[i, j, k, 0, 2] = 0
+    #
+    # # Generate warp file as a warping field
+    # hdr_warp.set_intent('vector', (), '')
+    # hdr_warp.set_data_dtype('float32')
+    # img = Nifti1Image(data_warp, None, hdr_warp)
+    # save(img, fname)
+    # sct.printv('\nDone! Warping field generated: '+fname, verbose)
 
 
 
