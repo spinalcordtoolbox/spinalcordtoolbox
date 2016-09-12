@@ -13,7 +13,8 @@
 ########################################################################################################################
 from msct_image import Image
 from sct_image import set_orientation
-from sct_utils import extract_fname, printv, run, add_suffix, tmp_create
+from sct_utils import extract_fname, printv, add_suffix, tmp_create
+import sct_register_multimodal, sct_apply_transfo
 import numpy as np
 import os
 import time
@@ -406,7 +407,12 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     im_dest_seg.setFileName(fname_dest_seg)
     im_dest_seg.save()
     # do registration using param_reg
-    run('sct_register_multimodal -i '+fname_src+' -d '+fname_dest+' -iseg '+fname_src_seg+' -dseg '+fname_dest_seg+' -param '+param_reg)
+    sct_register_multimodal.main(args=['-i', fname_src,
+                                       '-d', fname_dest,
+                                       '-iseg', fname_src_seg,
+                                       '-dseg', fname_dest_seg,
+                                       '-param', param_reg])
+
     # get registration result
     fname_src_reg = add_suffix(fname_src, '_reg')
     im_src_reg = Image(fname_src_reg)
@@ -444,7 +450,11 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     im_dest.save()
     # apply warping field
     fname_src_reg = add_suffix(fname_src, '_reg')
-    run('sct_apply_transfo -i '+fname_src+' -d '+fname_dest+' -w '+warp+' -x '+interp)
+    sct_apply_transfo.main(args=['-i', fname_src,
+                                  '-d', fname_dest,
+                                  '-w', warp,
+                                  '-x', interp])
+
     im_src_reg = Image(fname_src_reg)
     # get out of tmp dir
     os.chdir('..')
