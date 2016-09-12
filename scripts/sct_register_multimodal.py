@@ -546,8 +546,8 @@ def register(src, dest, paramreg, param, i_step_str):
             status, output = sct.run(cmd, param.verbose)
             # get appropriate file name for transformation
             if paramreg.steps[i_step_str].algo in ['rigid', 'affine', 'translation']:
-                warp_forward_out = 'step'+i_step_str+'0GenericAffine.txt'
-                warp_inverse_out = '-step'+i_step_str+'0GenericAffine.txt'
+                warp_forward_out = 'step'+i_step_str+'0GenericAffine.mat'
+                warp_inverse_out = '-step'+i_step_str+'0GenericAffine.mat'
             else:
                 warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
                 warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
@@ -624,7 +624,13 @@ def register(src, dest, paramreg, param, i_step_str):
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
-        if (paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].slicewise == '0') or paramreg.steps[i_step_str].type in ['label']:
+        if (paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].slicewise == '0'):
+            # if ANTs is used with affine/rigid --> outputs .mat file
+            warp_forward = 'warp_forward_'+i_step_str+'.mat'
+            os.rename(warp_forward_out, warp_forward)
+            warp_inverse = '-warp_forward_'+i_step_str+'.mat'
+        elif paramreg.steps[i_step_str].type in ['label']:
+            # if label-based registration is used --> outputs .txt file
             warp_forward = 'warp_forward_'+i_step_str+'.txt'
             os.rename(warp_forward_out, warp_forward)
             warp_inverse = '-warp_forward_'+i_step_str+'.txt'

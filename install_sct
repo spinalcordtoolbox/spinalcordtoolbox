@@ -206,7 +206,7 @@ echo -e "\nSCT version ......... "$SCT_VERSION
 echo -e "Installation type ... "$INSTALL_TYPE
 echo -e "Operating system .... "$OS
 
-# Define bash files
+# Define sh files
 THE_BASHRC=${HOME}/.bashrc
 THE_CSHRC=${HOME}/.cshrc
 
@@ -340,6 +340,14 @@ elif [ ${OFFLINE_INSTALL} ]; then
   cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
 
   cmd="bash ${SCT_SOURCE}/offline/miniconda_${OS}.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
+  ret_code_conda=$?
+  if [[ $ret_code_conda != 0 ]]; then
+    echo -e Conda did not installed properly with return code $ret_code_conda
+    exit $ret_code_conda
+  else
+    echo -e Conda installation successful
+  fi
+
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
 
   tar -C ${TMP_DIR} -zxvf ${SCT_SOURCE}/offline/wheels_${OS}.tar.gz
@@ -358,6 +366,13 @@ else
   download  ${TMP_DIR}/miniconda.sh https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/miniconda_${OS}.sh
   # run conda installer
   cmd="bash ${TMP_DIR}/miniconda.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
+  ret_code_conda=$?
+  if [[ $ret_code_conda != 0 ]]; then
+    echo -e Conda did not installed properly with return code $ret_code_conda
+    exit $ret_code_conda
+  else
+    echo -e Conda installation successful
+  fi
 
   # activate miniconda
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
@@ -371,14 +386,14 @@ else
   if [ ${e_status} != 0 ] ; then
     echo "conda install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
-    exit 1
+    exit $e_status
   fi
   pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
   e_status=$?
   if [ ${e_status} != 0 ] ; then
     echo "pip install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
-    exit 1
+    exit $e_status
   fi
 
   # Install wheels
@@ -390,6 +405,13 @@ else
 #  ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
 #  pip install --ignore-installed ${dipy_whl} ${ornlm_whl}
 #  pip install --ignore-installed ${ornlm_whl}
+fi
+if [[ ${NO_CONDA_INSTALL} ]]; then
+   continue
+elif [[ $OS == linux ]]; then
+    # Fix Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so or libmkl_def.so.
+    # on certain linux distribution
+    conda install -fy numpy
 fi
 
 echo -e "All requirements installed!"
