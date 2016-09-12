@@ -13,6 +13,7 @@
 # ======================================================================================================================
 # check if needed Python libraries are already installed or not
 import os
+import shutil
 import time
 import commands
 import sys
@@ -248,6 +249,11 @@ class SpinalCordStraightener(object):
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
             sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
             sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+
+            if np.min(image_centerline.data) < 0 or np.max(image_centerline.data) > 1:
+                image_centerline.data[image_centerline.data < 0] = 0
+                image_centerline.data[image_centerline.data > 1] = 1
+                image_centerline.save()
 
             """
             Steps: (everything is done in physical space)
@@ -566,6 +572,9 @@ class SpinalCordStraightener(object):
         sct.printv("\nGenerate output file (in current folder)...", verbose)
         sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
         sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
+        # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
+        shutil.copy(path_tmp+'/tmp.anat_rigid_warp.nii.gz', 'straight_ref.nii.gz')
+        # move straightened input file
         if fname_output == '':
             fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
                                                       self.path_output + file_anat + "_straight" + ext_anat, verbose)
