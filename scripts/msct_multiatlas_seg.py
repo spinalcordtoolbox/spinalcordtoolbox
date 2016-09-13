@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import pickle, gzip
 from sklearn import manifold, decomposition
-from sct_utils import printv, slash_at_the_end
+from sct_utils import printv, slash_at_the_end, check_file_exist
 from msct_gmseg_utils import pre_processing, register_data, apply_transfo, average_gm_wm, normalize_slice
 from msct_image import Image
 from msct_parser import *
@@ -436,19 +436,24 @@ class Model:
         path = os.path.abspath('.')
         printv('\nLoading model ...', self.param.verbose, 'normal')
         os.chdir(self.param_model.path_model_to_load)
+
+        model_files = {'slices': 'slices.pklz', 'intensity': 'intensities.pklz', 'model': 'fitted_model.pklz', 'data': 'fitted_data.pklz'}
+        for file in model_files.values():
+            check_file_exist(file, self.param.verbose)
+
         ##   - self.slices = dictionary
-        self.slices = pickle.load(gzip.open('slices.pklz',  'rb'))
+        self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'))
         printv('\n\t --> '+str(len(self.slices))+' slices in the model dataset', self.param.verbose, 'normal')
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
         ##   - self.intensities = for normalization
-        self.intensities = pickle.load(gzip.open('intensities.pklz', 'rb'))
+        self.intensities = pickle.load(gzip.open(model_files['intensity'], 'rb'))
 
         ##   - reduced space (pca or isomap)
-        self.fitted_model = pickle.load(gzip.open('fitted_model.pklz', 'rb'))
+        self.fitted_model = pickle.load(gzip.open(model_files['model'], 'rb'))
 
         ##   - fitted data (=eigen vectors or embedding vectors )
-        self.fitted_data = pickle.load(gzip.open('fitted_data.pklz', 'rb'))
+        self.fitted_data = pickle.load(gzip.open(model_files['data'], 'rb'))
 
         printv('\n\t --> model: '+self.param_model.method)
         printv('\n\t --> '+str(self.fitted_data.shape[1])+' components kept on '+str(self.fitted_data.shape[0]), self.param.verbose, 'normal')
