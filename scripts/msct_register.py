@@ -154,8 +154,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # display
         if verbose == 2:
             import matplotlib.pyplot as plt
-            plt.plot(angle_src_dest)
-            plt.plot(angle_src_dest_regularized, 'r', linewidth=2)
+            plt.plot(180 * angle_src_dest / np.pi)
+            plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
             plt.grid()
             plt.xlabel('z')
             plt.ylabel('Angle (deg)')
