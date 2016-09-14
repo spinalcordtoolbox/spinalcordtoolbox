@@ -285,7 +285,8 @@ class SpinalCordStraightener(object):
                 number_of_points = nz
             else:
                 number_of_points = int(self.precision * (float(nz) / pz))
-                #number_of_points = int(self.precision * 1000.0)
+                if number_of_points < 100:
+                    number_of_points *= 50
 
             # 2. extract bspline fitting of the centreline, and its derivatives
             x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
