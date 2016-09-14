@@ -119,6 +119,47 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     data_src = im_src.data
     data_dest = im_dest.data
 
+    # initialize displacement and rotation
+    centermass_src = np.zeros([nz, 2])
+    centermass_dest = np.zeros([nz, 2])
+    # displacement_forward = np.zeros([nz, 2])
+    # displacement_inverse = np.zeros([nz, 2])
+    angle_src_dest = np.zeros(nz)
+    z_nonzero = []
+
+    # Loop across slices
+    for iz in range(0, nz):
+        try:
+            # compute PCA and get center or mass
+            coord_src, pca_src, centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
+            coord_dest, pca_dest, centermass_dest[iz, :] = compute_pca(data_dest[:, :, iz])
+
+            # compute (src,dest) angle for first eigenvector
+            if rot == 1:
+                eigenv_src = pca_src.components_.T[0][0], pca_src.components_.T[1][0]  # pca_src.components_.T[0]
+                eigenv_dest = pca_dest.components_.T[0][0], pca_dest.components_.T[1][0]  # pca_dest.components_.T[0]
+                angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
+            # append to list of z_nonzero
+            z_nonzero.append(iz)
+
+        # if one of the slice is empty, ignore it
+        except ValueError:
+            sct.printv('WARNING: Slice #'+str(iz)+' is empty. It will be ignored.', verbose, 'warning')
+
+    # regularize rotation
+    from msct_smooth import polynomial_fit
+    angle_src_dest_regularized = polynomial_fit(z_nonzero, angle_src_dest[z_nonzero], 5)[0]
+    # display
+    if verbose == 2:
+        import matplotlib.pyplot as plt
+        plt.plot(angle_src_dest)
+        plt.plot(angle_src_dest_regularized, 'r', linewidth=2)
+        plt.grid()
+        plt.savefig('fig_pca_z' + str(iz) + '.png')
+        plt.close()
+    # update variable
+    angle_src_dest[z_nonzero] = angle_src_dest_regularized
+
     # initialize warping fields
     # N.B. forward transfo is defined in destination space and inverse transfo is defined in the source space
     warp_x = np.zeros(data_dest.shape)
@@ -126,55 +167,33 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     warp_inv_x = np.zeros(data_src.shape)
     warp_inv_y = np.zeros(data_src.shape)
 
-    # initialize displacement and rotation
-    centermass_src_phy = np.zeros([nz, 3])
-    centermass_dest_phy = np.zeros([nz, 3])
-    angle_src_dest = np.zeros(nz)
+    # construct 3D warping matrix
+    for iz in z_nonzero:
+        # compute PCA and get center or mass
+        # TODO: GET FROM PREVIOUSLY
+        # coord_src, pca_src, centermass_src = compute_pca(data_src[:, :, iz])
+        # coord_dest, pca_dest, centermass_dest = compute_pca(data_dest[:, :, iz])
 
-    # Loop across slices
-    for iz in range(0, nz):
-        try:
-            coord_src, pca_src, centermass_src = compute_pca(data_src[:, :, iz])
-            coord_dest, pca_dest, centermass_dest = compute_pca(data_dest[:, :, iz])
-
-            if rot == 1:
-                # compute (src,dest) angle for first eigenvector
-                eigenv_src = pca_src.components_.T[0][0], pca_src.components_.T[1][0]  # pca_src.components_.T[0]
-                eigenv_dest = pca_dest.components_.T[0][0], pca_dest.components_.T[1][0]  # pca_dest.components_.T[0]
-                angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
-
-            # get indices of x and y coordinates
-            row, col = np.indices((nx, ny))
-            # build 2xn array of coordinates in pixel space
-            coord_init_pix = np.array([row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel()))*iz)]).T
-            # convert coordinates to physical space
-            coord_init_phy = np.array(im_src.transfo_pix2phys(coord_init_pix))
-            # get centermass coordinates in physical space
-            centermass_src_phy[iz, :] = im_src.transfo_pix2phys([[centermass_src.T[0], centermass_src.T[1], iz]])[0]
-            centermass_dest_phy[iz] = im_src.transfo_pix2phys([[centermass_dest.T[0], centermass_dest.T[1], iz]])[0]
-
-        # if one of the slice is empty, ignore it
-        except ValueError:
-            sct.printv('WARNING: Slice #'+str(iz)+' is empty. It will be ignored.', verbose, 'warning')
-
-    # regularize displacements and rotation
-    # import matplotlib.pyplot as plt
-    # plt.figure('not regularized', figsize=(9, 9))
-    # plt.ion()  # enables interactive mode (allows keyboard interruption)
-    # # plt.figure
-    # plt.plot(centermass_src_phy)
-    # plt.show()
-    # # plt.subplot(isub)
-    # # plt.gca().set_aspect('equal', adjustable='box')
-    # # plt.axis('equal')
-    # plt.savefig('fig_pca_z' + str(iz) + '.png')
-    # plt.close()
-
-    # calculate warping fields
-    for iz in range(0, nz):
+        # get indices of x and y coordinates
+        row, col = np.indices((nx, ny))
+        # build 2xn array of coordinates in pixel space
+        coord_init_pix = np.array([row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel())) * iz)]).T
+        # convert coordinates to physical space
+        coord_init_phy = np.array(im_src.transfo_pix2phys(coord_init_pix))
+        # get centermass coordinates in physical space
+        centermass_src_phy = im_src.transfo_pix2phys([[centermass_src[iz, :].T[0], centermass_src[iz, :].T[1], iz]])[0]
+        centermass_dest_phy = im_src.transfo_pix2phys([[centermass_dest[iz, :].T[0], centermass_dest[iz, :].T[1], iz]])[0]
 
         # build rotation matrix
-        R = np.matrix(((cos(angle_src_dest), sin(angle_src_dest)), (-sin(angle_src_dest), cos(angle_src_dest))))
+        R = np.matrix(((cos(angle_src_dest[iz]), sin(angle_src_dest[iz])), (-sin(angle_src_dest[iz]), cos(angle_src_dest[iz]))))
+
+        # build 3D rotation matrix
+        R3d = np.eye(3)
+        R3d[0:2, 0:2] = R
+        # apply forward transformation (in physical space)
+        coord_forward_phy = np.array(np.dot((coord_init_phy - np.transpose(centermass_dest_phy)), R3d) + np.transpose(centermass_src_phy))
+        # apply inverse transformation (in physical space)
+        coord_inverse_phy = np.array(np.dot((coord_init_phy - np.transpose(centermass_src_phy)), R3d.T) + np.transpose(centermass_dest_phy))
 
         # display rotations
         if verbose == 2 and not angle_src_dest == 0:
@@ -196,12 +215,14 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     pcaaxis = pca_src.components_.T
                     plt.title('src')
                 elif isub == 222:
-                    plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10, color='steelblue',
+                    plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10,
+                                color='steelblue',
                                 alpha=0.5)
                     pcaaxis = pca_dest.components_.T
                     plt.title('src_rot')
                 elif isub == 223:
-                    plt.scatter(coord_dest[:, 0], coord_dest[:, 1], s=5, marker='o', zorder=10, color='red', alpha=0.5)
+                    plt.scatter(coord_dest[:, 0], coord_dest[:, 1], s=5, marker='o', zorder=10, color='red',
+                                alpha=0.5)
                     pcaaxis = pca_dest.components_.T
                     plt.title('dest')
                 elif isub == 224:
@@ -218,26 +239,11 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             plt.savefig('fig_pca_z' + str(iz) + '.png')
             plt.close()
 
-        # build 3D rotation matrix
-        R3d = np.eye(3)
-        R3d[0:2, 0:2] = R
-        # apply forward transformation (in physical space)
-        coord_forward_phy = np.array(
-            np.dot((coord_init_phy - np.transpose(centermass_dest_phy[0])), R3d) + np.transpose(centermass_src_phy[0]))
-        # apply inverse transformation (in physical space)
-        coord_inverse_phy = np.array(
-            np.dot((coord_init_phy - np.transpose(centermass_src_phy[0])), R3d.T) + np.transpose(
-                centermass_dest_phy[0]))
-        # compute displacement per pixel in destination space (for forward warping field)
-        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape(
-            (nx, ny))
-        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape(
-            (nx, ny))
-        # compute displacement per pixel in source space (for inverse warping field)
-        warp_inv_x[:, :, iz] = np.array(
-            [coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_inv_y[:, :, iz] = np.array(
-            [coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+        # construct 3D warping matrix
+        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
+        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
+        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
