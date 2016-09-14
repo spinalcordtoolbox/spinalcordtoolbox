@@ -438,8 +438,20 @@ class Model:
         os.chdir(self.param_model.path_model_to_load)
 
         model_files = {'slices': 'slices.pklz', 'intensity': 'intensities.pklz', 'model': 'fitted_model.pklz', 'data': 'fitted_data.pklz'}
-        for file in model_files.values():
-            check_file_exist(file, self.param.verbose)
+        correct_model = True
+        for fname in model_files.values():
+            if os.path.isfile(fname):
+                printv('  OK: ' + fname, self.param.verbose, 'normal')
+            else:
+                printv('  MISSING FILE: ' + fname, self.param.verbose, 'warning')
+                correct_model = False
+        if not correct_model:
+            path_script = os.path.dirname(__file__)
+            path_sct = os.path.dirname(path_script)
+            printv('ERROR: The GM segmentation model is not compatible with this version of the code.\n'
+                   'To update the model, run the following lines:\n\n'
+                   'cd '+path_sct+'\n'
+                   './install_sct -m -b\n', self.param.verbose, 'error')
 
         ##   - self.slices = dictionary
         self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'))
