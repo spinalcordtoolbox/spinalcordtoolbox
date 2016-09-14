@@ -47,10 +47,11 @@ class Param:
         self.outSuffix  = "_reg"
         self.fname_mask = ''
         self.padding = 5
+        self.path_qc = os.path.abspath(os.curdir)+'/qc/'
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='3', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -199,7 +200,7 @@ def main():
                                   "  geometric: Geometric center of images\n"
                                   "  centermass: Center of mass of images\n"
                                   "  origin: Physical origin of images\n"
-                                  "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
+                                  "poly: <int> Polynomial degree of regularization (only for slicereg and centermassrot). Default="+paramreg.steps['1'].poly+"\n"
                                   "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" + paramreg.steps['0'].dof + "\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
@@ -300,6 +301,9 @@ def main():
         ext_out = ext_src
     else:
         path_out, file_out, ext_out = sct.extract_fname(fname_output)
+
+    # create QC folder
+    sct.create_folder(param.path_qc)
 
     # create temporary folder
     path_tmp = sct.tmp_create()
@@ -564,13 +568,14 @@ def register(src, dest, paramreg, param, i_step_str):
             warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
             warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
             register_slicewise(src,
-                                dest,
-                                paramreg=paramreg.steps[i_step_str],
-                                fname_mask=fname_mask,
-                                warp_forward_out=warp_forward_out,
-                                warp_inverse_out=warp_inverse_out,
-                                verbose=param.verbose,
-                                ants_registration_params=ants_registration_params)
+                               dest,
+                               paramreg=paramreg.steps[i_step_str],
+                               fname_mask=fname_mask,
+                               warp_forward_out=warp_forward_out,
+                               warp_inverse_out=warp_inverse_out,
+                               ants_registration_params=ants_registration_params,
+                               path_qc=param.path_qc,
+                               verbose=param.verbose)
 
     # slice-wise transfo
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
@@ -594,13 +599,14 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
         register_slicewise(src,
-                            dest,
-                            paramreg=paramreg.steps[i_step_str],
-                            fname_mask=fname_mask,
-                            warp_forward_out=warp_forward_out,
-                            warp_inverse_out=warp_inverse_out,
-                            verbose=param.verbose,
-                            ants_registration_params=ants_registration_params)
+                           dest,
+                           paramreg=paramreg.steps[i_step_str],
+                           fname_mask=fname_mask,
+                           warp_forward_out=warp_forward_out,
+                           warp_inverse_out=warp_inverse_out,
+                           ants_registration_params=ants_registration_params,
+                           path_qc=param.path_qc,
+                           verbose=param.verbose)
 
     else:
         sct.printv('\nERROR: algo '+paramreg.steps[i_step_str].algo+' does not exist. Exit program\n', 1, 'error')

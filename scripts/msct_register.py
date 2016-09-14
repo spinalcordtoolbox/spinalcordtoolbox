@@ -36,6 +36,7 @@ def register_slicewise(fname_src,
                         warp_inverse_out='step0InverseWarp.nii.gz',
                         paramreg=None,
                         ants_registration_params=None,
+                        path_qc='./',
                         verbose=0):
 
     # create temporary folder
@@ -55,10 +56,10 @@ def register_slicewise(fname_src,
     # Calculate displacement
     if paramreg.algo == 'centermass':
         # translation of center of mass between source and destination in voxel space
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, verbose=verbose)
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, poly=paramreg.poly, path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'centermassrot':
         # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, verbose=verbose)
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, poly=paramreg.poly, path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
         register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
@@ -77,7 +78,7 @@ def register_slicewise(fname_src,
     chdir('../')
 
 
-def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, verbose=0):
+def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -88,7 +89,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
         rot: estimate rotation with PCA (type: int)
-        regularize: regularize transformations along z (type: int)
+        poly: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
         verbose:
     output:
         none
@@ -147,18 +148,21 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             sct.printv('WARNING: Slice #'+str(iz)+' is empty. It will be ignored.', verbose, 'warning')
 
     # regularize rotation
-    from msct_smooth import polynomial_fit
-    angle_src_dest_regularized = polynomial_fit(z_nonzero, angle_src_dest[z_nonzero], 5)[0]
-    # display
-    if verbose == 2:
-        import matplotlib.pyplot as plt
-        plt.plot(angle_src_dest)
-        plt.plot(angle_src_dest_regularized, 'r', linewidth=2)
-        plt.grid()
-        plt.savefig('fig_pca_z' + str(iz) + '.png')
-        plt.close()
-    # update variable
-    angle_src_dest[z_nonzero] = angle_src_dest_regularized
+    if not poly == 0:
+        from msct_smooth import polynomial_fit
+        angle_src_dest_regularized = polynomial_fit(z_nonzero, angle_src_dest[z_nonzero], poly)[0]
+        # display
+        if verbose == 2:
+            import matplotlib.pyplot as plt
+            plt.plot(angle_src_dest)
+            plt.plot(angle_src_dest_regularized, 'r', linewidth=2)
+            plt.grid()
+            plt.xlabel('z')
+            plt.ylabel('Angle (deg)')
+            plt.savefig(path_qc+'fig_regularize_rotation.png')
+            plt.close()
+        # update variable
+        angle_src_dest[z_nonzero] = angle_src_dest_regularized
 
     # initialize warping fields
     # N.B. forward transfo is defined in destination space and inverse transfo is defined in the source space
@@ -236,7 +240,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 plt.axis([-3, 3, -3, 3])
                 plt.gca().set_aspect('equal', adjustable='box')
                 # plt.axis('equal')
-            plt.savefig('fig_pca_z' + str(iz) + '.png')
+            plt.savefig(path_qc+'fig_pca_z' + str(iz) + '.png')
             plt.close()
 
         # construct 3D warping matrix
