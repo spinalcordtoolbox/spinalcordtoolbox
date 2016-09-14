@@ -200,7 +200,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         coord_inverse_phy = np.array(np.dot((coord_init_phy - np.transpose(centermass_src_phy)), R3d.T) + np.transpose(centermass_dest_phy))
 
         # display rotations
-        if verbose == 2 and not angle_src_dest == 0:
+        if verbose == 2 and not angle_src_dest[iz] == 0:
             # compute new coordinates
             coord_src_rot = coord_src * R
             coord_dest_rot = coord_dest * R.T
