@@ -285,7 +285,8 @@ class SpinalCordStraightener(object):
                 number_of_points = nz
             else:
                 number_of_points = int(self.precision * (float(nz) / pz))
-                #number_of_points = int(self.precision * 1000.0)
+                if number_of_points < 100:
+                    number_of_points *= 50
 
             # 2. extract bspline fitting of the centreline, and its derivatives
             x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
@@ -299,7 +300,7 @@ class SpinalCordStraightener(object):
             from math import sqrt, atan2, sin
 
             # Computation of the safe zone.
-            # The safe zone is defined as the length of the spinal ocrd for which an axial segmentation will be complete
+            # The safe zone is defined as the length of the spinal cord for which an axial segmentation will be complete
             # The safe length (to remove) is computed using the safe radius (given as parameter) and the angle of the
             # last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
             # Calculate Ls for both edges and remove appropriate number of centerline points
@@ -406,10 +407,7 @@ class SpinalCordStraightener(object):
             sct.printv("Number of voxel = " + str(number_of_voxel))
 
             time_centerlines = time.time()
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('tmp.centerline_pad.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
-            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
-                                    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
-
+            
             from numpy import linspace
             ix_straight = [int(np.round(nx_s / 2))] * number_of_points
             iy_straight = [int(np.round(ny_s / 2))] * number_of_points
