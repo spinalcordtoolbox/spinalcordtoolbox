@@ -70,7 +70,7 @@ def get_parser():
                                   '- csa: computes cross-sectional area by counting pixels in each'
                                   '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
                                   '  - angle_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the CSA (mm^2),\n'
-                                  '  - csa_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the angle (in rad) between the spinal cord centerline and the inferior-superior direction,\n'
+                                  '  - csa_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the angle (in degrees) between the spinal cord centerline and the inferior-superior direction,\n'
                                   '  - csa_per_slice.txt: a CSV text file with z (1st column) and CSA in mm^2 (2nd column),\n'
                                   '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n',
                       mandatory=True,
@@ -432,6 +432,9 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 # compute_csa
 # ==========================================================================================
 def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True):
+
+    from math import degrees
+
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
     # path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
@@ -529,7 +532,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
         csa[iz-min_z_index] = number_voxels * px * py * np.cos(angle)
-        angles[iz - min_z_index] = angle
+        angles[iz - min_z_index] = degrees(angle)
 
     sct.printv('\nSmooth CSA across slices...', verbose)
     if smoothing_param:
@@ -617,10 +620,11 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Create output text file
     sct.printv('Display CSA per slice:', verbose)
     file_results = open(output_folder+'csa_per_slice.txt', 'w')
+    file_results.write('# Slice (z),CSA (mm^2),Angle with respect to the I-S direction (degrees)\n')
     for i in range(min_z_index, max_z_index+1):
-        file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+'\n')
+        file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+ ',' + str(angles[i-min_z_index])+'\n')
         # Display results
-        sct.printv('z='+str(i-min_z_index)+': '+str(csa[i-min_z_index])+' mm^2', type='info')
+        sct.printv('z = '+str(i-min_z_index)+', CSA = '+str(csa[i-min_z_index])+' mm^2'+', Angle = '+str(angles[i-min_z_index])+' deg', type='info')
     file_results.close()
     sct.printv('Save results in: '+output_folder+'csa_per_slice.txt\n', verbose)
 
@@ -662,21 +666,28 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         sct.printv('Average CSA across slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
 
         CSA_for_selected_slices = []
+        angles_for_selected_slices = []
         # Read the file csa_per_slice.txt and get the CSA for the selected slices
         with open(output_folder+'csa_per_slice.txt') as openfile:
             for line in openfile:
-                line_split = line.strip().split(',')
-                if int(line_split[0]) in slices_list:
-                    CSA_for_selected_slices.append(float(line_split[1]))
+                if line[0] != '#':
+                    line_split = line.strip().split(',')
+                    if int(line_split[0]) in slices_list:
+                        CSA_for_selected_slices.append(float(line_split[1]))
+                        angles_for_selected_slices.append(float(line_split[2]))
 
-        # average the CSA
+        # average the CSA and angle
         mean_CSA = np.mean(np.asarray(CSA_for_selected_slices))
         std_CSA = np.std(np.asarray(CSA_for_selected_slices))
+        mean_angle = np.mean(np.asarray(angles_for_selected_slices))
+        std_angle = np.std(np.asarray(angles_for_selected_slices))
 
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
+        sct.printv('Mean angle: '+str(mean_angle)+' +/- '+str(std_angle)+' degrees', type='info')
 
         # write result into output file
         save_results(output_folder+'csa_mean', overwrite, fname_segmentation, 'CSA', 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_folder+'angle_mean', overwrite, fname_segmentation, 'Angle with respect to the I-S direction', 'Unit z vector compared to the unit tangent vector to the centerline at each slice (in degrees)', mean_angle, std_angle, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
         sct.printv('Compute the volume in between slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
