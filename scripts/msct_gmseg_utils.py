@@ -179,12 +179,27 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22.5, interpolation_mode=3):
     nx, ny, nz, nt, px, py, pz, pt = im_input.dim
 
+    im_input_sc = im_input_sc.copy()
+    im_input= im_input.copy()
+
+    # keep only spacing and origin in qform to avoid rotation issues
+    input_qform = im_input.hdr.get_qform()
+    for i in range(4):
+        for j in range(4):
+            if i!=j and j!=3:
+                input_qform[i, j] = 0
+
+    im_input.hdr.set_qform(input_qform)
+    im_input.hdr.set_sform(input_qform)
+    im_input_sc.hdr = im_input.hdr
+
     sq_size = int(sq_size_size_mm/new_res)
     # create a reference image : square of ones
     im_ref = Image(np.ones((sq_size, sq_size, 1), dtype=np.int), dim=(sq_size, sq_size, 1, 0, new_res, new_res, pz, 0), orientation='RPI')
 
-    # copy input header to reference image
-    im_ref.hdr = im_input.hdr
+    # copy input qform matrix to reference image
+    im_ref.hdr.set_qform(im_input.hdr.get_qform())
+    im_ref.hdr.set_sform(im_input.hdr.get_sform())
 
     # set correct header to reference image
     im_ref.hdr.set_data_shape((sq_size, sq_size, 1))
@@ -224,8 +239,9 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
 
         # interpolate input image to reference image
         im_input_interpolate_iz = im_input.interpolate_from_image(im_ref_slice_iz, interpolation_mode=interpolation_mode, border='reflect')
-        # reshape data to 2D
-        im_input_interpolate_iz.data = im_input_interpolate_iz.data.reshape(im_input_interpolate_iz.data.shape[:-1])
+        # reshape data to 2D if needed
+        if len(im_input_interpolate_iz.data.shape) == 3:
+            im_input_interpolate_iz.data = im_input_interpolate_iz.data.reshape(im_input_interpolate_iz.data.shape[:-1])
         # add slice to list
         list_interpolate_images.append(im_input_interpolate_iz)
 
