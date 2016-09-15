@@ -154,6 +154,7 @@ def get_parser():
 class ParamSeg:
     def __init__(self):
         self.fname_im = None
+        self.fname_im_original = None
         self.fname_seg = None
         self.fname_level = 'label/template/PAM50_levels_continuous.nii.gz'
         self.fname_manual_gmseg = None
@@ -263,7 +264,7 @@ class SegmentGM:
             im.save_quality_control(plane='axial', n_slices=5, seg=self.im_res_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.param_seg.path_results)
 
         printv('\n--> To visualize the results, write:\n'
-               'fslview '+self.param_seg.fname_im+' '+fname_res_gmseg+' -b '+b+' -l '+gm_col+' -t 0.7 '+fname_res_wmseg+' -b '+b+' -l '+wm_col+' -t 0.7  & \n', self.param.verbose, 'info')
+               'fslview '+self.param_seg.fname_im_original+' '+fname_res_gmseg+' -b '+b+' -l '+gm_col+' -t 0.7 '+fname_res_wmseg+' -b '+b+' -l '+wm_col+' -t 0.7  & \n', self.param.verbose, 'info')
 
         if self.param.rm_tmp:
             # remove tmp_dir
@@ -328,8 +329,7 @@ class SegmentGM:
             level_int = int(round(target_slice.level))
             if level_int not in self.model.intensities.index:
                 level_int = 0
-            norm_im_M = normalize_slice(target_slice.im_M, gm_seg_model[level_int], wm_seg_model[level_int], self.model.intensities['GM'][level_int], self.model.intensities['WM'][level_int],
-                                        val_min=self.model.intensities['MIN'][level_int], val_max=self.model.intensities['MAX'][level_int])
+            norm_im_M = normalize_slice(target_slice.im_M, gm_seg_model[level_int], wm_seg_model[level_int], self.model.intensities['GM'][level_int], self.model.intensities['WM'][level_int], val_min=self.model.intensities['MIN'][level_int], val_max=self.model.intensities['MAX'][level_int])
             target_slice.set(im_m=norm_im_M)
 
     def project_target(self):
@@ -595,6 +595,7 @@ def main(args=None):
 
     # set param arguments ad inputted by user
     param_seg.fname_im = arguments["-i"]
+    param_seg.fname_im_original = arguments["-i"]
     param_seg.fname_seg = arguments["-s"]
 
     if '-vertfile' in arguments:
