@@ -43,7 +43,7 @@ def get_parser():
                       mandatory=True,
                       example='sc_seg.nii.gz')
     parser.add_option(name="-vertfile",
-                      type_value="str",
+                      type_value="file",
                       description='Labels of vertebral levels. This could either be an image (e.g., label/template/PAM50_levels.nii.gz) or a text file that specifies "slice,level" at each line. Example:\n'
                       "0,3\n"
                       "1,3\n"
