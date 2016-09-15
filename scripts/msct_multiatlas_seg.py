@@ -127,7 +127,7 @@ class ParamModel:
         self.todo = 'load'# 'compute' or 'load'
         self.new_model_dir = 'gmseg/'
         self.method = 'pca' # 'pca' or 'isomap'
-        self.k_pca = 0.8
+        self.k_pca = 0.95 # chosen after loocv optimization with the 37subjects-model
         self.n_compo_iso = 0.5 # float between 0 and 1 : percentage of component to keep. 0.5 = keep half of the components
         self.n_neighbors_iso = 5
         #
