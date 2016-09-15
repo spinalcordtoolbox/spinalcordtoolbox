@@ -427,8 +427,7 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
                                        '-d', fname_dest,
                                        '-iseg', fname_src_seg,
                                        '-dseg', fname_dest_seg,
-                                       '-param', param_reg,
-                                       '-qc', '0'])
+                                       '-param', param_reg])
 
     # get registration result
     fname_src_reg = add_suffix(fname_src, '_reg')
