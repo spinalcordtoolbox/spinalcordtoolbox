@@ -50,6 +50,7 @@ class Param:
         self.verbose = 1  # verbose
         # self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
         self.path_template = path_sct+'/data/PAM50'
+        self.path_qc = os.path.abspath(os.curdir)+'/qc/'
         # self.file_template_label = 'landmarks_center.nii.gz'
         self.zsubsample = '0.25'
         self.param_straighten = ''
