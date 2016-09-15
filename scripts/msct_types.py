@@ -140,10 +140,7 @@ class Centerline:
         self.derivatives = array(zip(deriv_x, deriv_y, deriv_z))
         self.number_of_points = len(self.points)
 
-        for i in range(0, self.number_of_points - 1):
-            self.length += sqrt((points_x[i] - points_x[i + 1]) ** 2 +
-                                (points_y[i] - points_y[i + 1]) ** 2 +
-                                (points_z[i] - points_z[i + 1]) ** 2)
+        self.compute_length(points_x, points_y, points_z)
 
         self.coordinate_system = [self.compute_coordinate_system(index) for index in range(0, self.number_of_points)]
         self.plans_parameters = [self.get_plan_parameters(index) for index in range(0, self.number_of_points)]
@@ -162,7 +159,7 @@ class Centerline:
                             (points_z[i] - points_z[i + 1]) ** 2)
             self.length += distance
             self.progressive_length.append(distance)
-        for i in range(self.number_of_points, 1, -1):
+        for i in range(self.number_of_points-1, 0, -1):
             distance = sqrt((points_x[i] - points_x[i - 1]) ** 2 +
                             (points_y[i] - points_y[i - 1]) ** 2 +
                             (points_z[i] - points_z[i - 1]) ** 2)

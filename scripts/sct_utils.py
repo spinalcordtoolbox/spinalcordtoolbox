@@ -354,16 +354,22 @@ def check_if_rpi(fname):
 #=======================================================================================================================
 # find_file_within_folder
 #=======================================================================================================================
-def find_file_within_folder(fname, directory):
+def find_file_within_folder(fname, directory, seek_type='file'):
     """Find file (or part of file, e.g. 'my_file*.txt') within folder tree recursively - fname and directory must be
-    strings"""
+    strings
+    seek_type: 'file' or 'dir' to look for either a file or a directory respectively."""
     import fnmatch
 
     all_path = []
     for root, dirs, files in os.walk(directory):
-        for file in files:
-            if fnmatch.fnmatch(file, fname):
-                all_path.append(os.path.join(root, file))
+        if seek_type == 'dir':
+            for folder in dirs:
+                if fnmatch.fnmatch(folder, fname):
+                    all_path.append(os.path.join(root, folder))
+        else:
+            for file in files:
+                if fnmatch.fnmatch(file, fname):
+                    all_path.append(os.path.join(root, file))
     return all_path
 
 #=======================================================================================================================
