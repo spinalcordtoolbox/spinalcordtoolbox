@@ -5,10 +5,6 @@ sudo: false  # To use travis container infrastructure
 
 language: python
 
-# for python-qt4
-- virtualenv:
- - system_site_packages: true
-
 notifications:
   slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
     on_success:change
