@@ -287,14 +287,15 @@ if __name__ == "__main__":
     path_sct = os.path.dirname(path_script)
 
     # fetch true commit number and branch (do not use commit.txt which is wrong)
-    path_curr = os.curdir
+    path_curr = os.path.abspath(os.curdir)
     os.chdir(path_sct)
     sct_commit = commands.getoutput('git log | sed -n 1p').strip('commit ')
-    sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
-    if not (sct_commit.isalnum() and sct_branch.isalnum()):
-        print "WARNING: Cannot retrieve SCT commit and/or branch number"
+    if not sct_commit.isalnum():
+        print 'WARNING: Cannot retrieve SCT commit'
         sct_commit = 'unknown'
         sct_branch = 'unknown'
+    else:
+        sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
     # with open (path_sct+"/version.txt", "r") as myfile:
     #     version_sct = myfile.read().replace('\n', '')
     # with open (path_sct+"/commit.txt", "r") as myfile:
@@ -339,13 +340,13 @@ if __name__ == "__main__":
         results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
         results_mean['subject'] = 'Mean'
         results_mean.set_value('status', float('NaN'))  # set status to NaN
-        results_display = results_display.append(results_mean, ignore_index=True)
+        # results_display = results_display.append(results_mean, ignore_index=True)
 
         # std
         results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
         results_std['subject'] = 'STD'
         results_std.set_value('status', float('NaN'))  # set status to NaN
-        results_display = results_display.append(results_std, ignore_index=True)
+        # results_display = results_display.append(results_std, ignore_index=True)
 
         # count tests that passed
         count_passed = results_subset.status[results_subset.status == 0].count()
@@ -356,13 +357,26 @@ if __name__ == "__main__":
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
         results_display = results_display.set_index('subject').reset_index()
 
-        # display general results
-        print '\nResults for "' + function_to_test + ' ' + parameters + '":'
+        print '\nCommand: "' + function_to_test + ' ' + parameters
         print 'Dataset: ' + dataset
-        print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
+        # display general results
+        print '\nGLOBAL RESULTS:'
         elapsed_time = time() - start_time
-        print 'Total duration: ' + str(int(round(elapsed_time)))+'s\n'
-        # display detailed results
+        print 'Duration: ' + str(int(round(elapsed_time)))+'s'
+        # display results
+        print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
+        # build mean/std entries
+        dict_mean = results_mean.to_dict()
+        dict_mean.pop('status')
+        dict_mean.pop('subject')
+        print 'Mean: ' + str(dict_mean)
+        dict_std = results_std.to_dict()
+        dict_std.pop('status')
+        dict_std.pop('subject')
+        print 'STD: ' + str(dict_std)
+
+        # print detailed results
+        print '\nDETAILED RESULTS:'
         print results_display.to_string()
         print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: File(s) missing'
 
