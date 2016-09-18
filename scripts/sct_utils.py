@@ -113,10 +113,10 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
 # check RAM usage
 # work only on Mac OSX
 #=======================================================================================================================
-def checkRAM(os,verbose=1):
+def checkRAM(os, verbose=1):
     if (os == 'linux'):
         status, output = run('grep MemTotal /proc/meminfo', 0)
-        print output
+        print 'RAM: '+output
         ram_split = output.split()
         ram_total = float(ram_split[1])
         status, output = run('free -m', 0)
@@ -125,7 +125,7 @@ def checkRAM(os,verbose=1):
 
     elif (os == 'osx'):
         status, output = run('hostinfo | grep memory', 0)
-        print output
+        print 'RAM: '+output
         ram_split = output.split(' ')
         ram_total = float(ram_split[3])
 
@@ -156,10 +156,10 @@ def checkRAM(os,verbose=1):
             vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
         
         if verbose:
-            print 'Wired Memory:\t\t%d MB' % ( vmStats["Pages wired down"]/1024/1024 )
-            print 'Active Memory:\t\t%d MB' % ( vmStats["Pages active"]/1024/1024 )
-            print 'Inactive Memory:\t%d MB' % ( vmStats["Pages inactive"]/1024/1024 )
-            print 'Free Memory:\t\t%d MB' % ( vmStats["Pages free"]/1024/1024 )
+            print '  Wired Memory:\t\t%d MB' % ( vmStats["Pages wired down"]/1024/1024 )
+            print '  Active Memory:\t%d MB' % ( vmStats["Pages active"]/1024/1024 )
+            print '  Inactive Memory:\t%d MB' % ( vmStats["Pages inactive"]/1024/1024 )
+            print '  Free Memory:\t\t%d MB' % ( vmStats["Pages free"]/1024/1024 )
             #print 'Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 )
 
         return ram_total

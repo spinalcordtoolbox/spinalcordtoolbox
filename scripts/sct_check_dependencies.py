@@ -105,8 +105,7 @@ def main():
     print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
 
     # check RAM
-    print 'RAM:'
-    sct.checkRAM(os_running)
+    sct.checkRAM(os_running, 0)
 
     # get path of the toolbox
     path_sct = os.getenv("SCT_DIR")
@@ -115,12 +114,29 @@ def main():
                                "Spinalcordtoolbox install needs to be set")
     print ('SCT path: {0}'.format(path_sct))
 
-    # fetch version of the toolbox
-    with open (path_sct+"/version.txt", "r") as myfile:
+    # fetch version
+    with open (path_sct+'/version.txt', 'r') as myfile:
         version_sct = myfile.read().replace('\n', '')
-    with open (path_sct+"/commit.txt", "r") as myfile:
-        commit_sct = myfile.read().replace('\n', '')
-    print "SCT version: "+version_sct+'-'+commit_sct
+    print 'SCT version: '+version_sct
+
+    # fetch true commit number and branch (do not use commit.txt which is wrong)
+    path_curr = os.path.abspath(os.curdir)
+    os.chdir(path_sct)
+    sct_commit = commands.getoutput('git rev-parse HEAD')
+    sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
+    if not (sct_commit.isalnum() and sct_branch.isalnum()):
+        print "WARNING: Cannot retrieve SCT commit and/or branch number"
+        sct_commit = 'unknown'
+        sct_branch = 'unknown'
+    print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
+    os.chdir(path_curr)
+
+    # # fetch version of the toolbox
+    # with open (path_sct+"/version.txt", "r") as myfile:
+    #     version_sct = myfile.read().replace('\n', '')
+    # with open (path_sct+"/commit.txt", "r") as myfile:
+    #     commit_sct = myfile.read().replace('\n', '')
+    # print "SCT version: "+version_sct+'-'+commit_sct
 
     # check installation packages
     print 'Python path: '+sys.executable
