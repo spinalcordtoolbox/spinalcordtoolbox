@@ -373,7 +373,7 @@ if __name__ == "__main__":
         dict_std = results_std.to_dict()
         dict_std.pop('status')
         dict_std.pop('subject')
-        print 'STD: ' + str(dict_std)+'\n'
+        print 'STD: ' + str(dict_std)
 
         # print detailed results
         print '\nDETAILED RESULTS:'
