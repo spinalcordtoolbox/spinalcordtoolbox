@@ -121,13 +121,15 @@ def main():
     # fetch true commit number and branch (do not use commit.txt which is wrong)
     path_curr = os.path.abspath(os.curdir)
     os.chdir(path_sct)
-    sct_commit = commands.getoutput('git rev-parse HEAD')
-    sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
-    if not (sct_commit.isalnum() and sct_branch.isalnum()):
-        print "WARNING: Cannot retrieve SCT commit and/or branch number"
-        sct_commit = 'unknown'
-        sct_branch = 'unknown'
-    print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
+    # first, make sure there is a .git folder
+    if os.path.isdir('.git'):
+        sct_commit = commands.getoutput('git rev-parse HEAD')
+        sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
+        if not (sct_commit.isalnum() and sct_branch.isalnum()):
+            print "WARNING: Cannot retrieve SCT commit and/or branch number"
+            sct_commit = 'unknown'
+            sct_branch = 'unknown'
+        print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
     os.chdir(path_curr)
 
     # # fetch version of the toolbox
