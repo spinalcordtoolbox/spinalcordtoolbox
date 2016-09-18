@@ -60,6 +60,8 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   addtopath "${SCT_DIR}/bin" PATH
 #  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
   addtopath ${SCT_DIR}/scripts PYTHONPATH
+# added by Julien Cohen-Adad on 2016-09-18 to prevent matplotlib import issue on Travis:
+  addtopath ${SCT_PYTHON}/lib/python2.7/site-packages PYTHONPATH
   export PATH
   export PYTHONPATH
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
