@@ -110,9 +110,8 @@ def main():
 
     # get path of the toolbox
     path_sct = os.getenv("SCT_DIR")
-    if path_sct is None :
-        raise EnvironmentError("SCT_DIR, which is the path to the "
-                               "Spinalcordtoolbox install needs to be set")
+    if path_sct is None:
+        raise EnvironmentError("SCT_DIR, which is the path SCT install needs to be set")
     print ('SCT path: {0}'.format(path_sct))
 
     # fetch version of the toolbox
@@ -122,8 +121,14 @@ def main():
         commit_sct = myfile.read().replace('\n', '')
     print "SCT version: "+version_sct+'-'+commit_sct
 
-    # check installation packages
-    print 'Python path: '+sys.executable
+    # check if Python path is within SCT path
+    print_line('Check Python path')
+    path_python = sys.executable
+    if path_sct in path_python:
+        print_ok()
+    else:
+        print_fail()
+        print '  Python path: '+path_python
 
     # check if data folder is empty
     print_line('Check if data are installed')
@@ -140,6 +145,8 @@ def main():
             module = 'skimage'
         elif i == 'scikit-learn':
             module = 'sklearn'
+        elif i == 'pyqt':
+            module = 'PyQt4'
         else:
             module = i
         print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
@@ -266,12 +273,22 @@ def main():
     if complete_test:
         print (status, output), '\n'
 
+    # check if figure can be opened (in case running SCT via ssh connection)
+    print_line('Check if figure can be opened')
+    try:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.close()
+        print_ok()
+    except:
+        print_fail()
+        print sys.exc_info()
+
     # close log file
     if create_log_file:
         sys.stdout = orig_stdout
         handle_log.close()
         print "File generated: "+file_log+'\n'
-
     print ''
     sys.exit(e + install_software)
     
