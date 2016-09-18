@@ -15,6 +15,7 @@
 
 import sys
 import os
+import shutil
 import commands
 import time
 from glob import glob
@@ -49,6 +50,7 @@ class Param:
         self.verbose = 1  # verbose
         # self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
         self.path_template = path_sct+'/data/PAM50'
+        self.path_qc = os.path.abspath(os.curdir)+'/qc/'
         # self.file_template_label = 'landmarks_center.nii.gz'
         self.zsubsample = '0.25'
         self.param_straighten = ''
@@ -58,8 +60,7 @@ class Param:
 # get default parameters
 # Note: step0 is used as pre-registration
 step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Sz')  # if ref=template, we only need translations and z-scaling because the cord is already straight
-# step0_refSub = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Rx_Ry_Rz_Sz')  # if ref=subject, we need to add rotations
-step1 = Paramreg(step='1', type='seg', algo='rigid', metric='MeanSquares', slicewise='1', smooth='5')
+step1 = Paramreg(step='1', type='seg', algo='centermassrot', smooth='1')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='5', smooth='1')
 step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
 paramreg = ParamregMultiStep([step0, step1, step2, step3])
@@ -300,6 +301,10 @@ def main():
                    'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
                    str(labels_template[-1].value), verbose, 'error')
 
+    # binarize segmentation (in case it has values below 0 caused by manual editing)
+    sct.printv('\nBinarize segmentation', verbose)
+    sct.run('sct_maths -i seg.nii.gz -bin 0.5 -o seg.nii.gz')
+
     # smooth segmentation (jcohenadad, issue #613)
     # sct.printv('\nSmooth segmentation...', verbose)
     # sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
@@ -338,10 +343,17 @@ def main():
 
         # straighten segmentation
         sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-        # check if straightening was already done in a previous process. If so, don't do it twice.
-        # if os.path.isfile('warp_')
-        # check if warp_curve2straight and curve_straight2curve already exist
-        sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose), verbose)
+        # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
+        if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+            # if they exist, copy them into current folder
+            sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+            shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
+            shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
+            shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
+            # apply straightening
+            sct.run('sct_apply_transfo -i '+ftmp_seg+' -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o '+add_suffix(ftmp_seg, '_straight'))
+        else:
+            sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose), verbose)
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
@@ -392,10 +404,9 @@ def main():
         ftmp_seg = add_suffix(ftmp_seg, '_black')
         """
 
-        # threshold and binarize
+        # binarize
         sct.printv('\nBinarize segmentation...', verbose)
-        # sct.run('sct_maths -i '+ftmp_seg+' -thr 0.4 -o '+add_suffix(ftmp_seg, '_thr'))
-        sct.run('sct_maths -i '+ftmp_seg+' -bin 0.4 -o '+add_suffix(ftmp_seg, '_bin'))
+        sct.run('sct_maths -i '+ftmp_seg+' -bin 0.5 -o '+add_suffix(ftmp_seg, '_bin'))
         ftmp_seg = add_suffix(ftmp_seg, '_bin')
 
         # find min-max of anat2template (for subsequent cropping)
@@ -542,12 +553,17 @@ def main():
     # come back to parent folder
     os.chdir('..')
 
-   # Generate output files
+    # Generate output files
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'warp_template2anat.nii.gz', path_output+'warp_template2anat.nii.gz', verbose)
     sct.generate_output_file(path_tmp+'warp_anat2template.nii.gz', path_output+'warp_anat2template.nii.gz', verbose)
     sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
     sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
+    if ref == 'template':
+        # copy straightening files in case subsequent SCT functions need them
+        sct.generate_output_file(path_tmp+'warp_curve2straight.nii.gz', path_output+'warp_curve2straight.nii.gz', verbose)
+        sct.generate_output_file(path_tmp+'warp_straight2curve.nii.gz', path_output+'warp_straight2curve.nii.gz', verbose)
+        sct.generate_output_file(path_tmp+'straight_ref.nii.gz', path_output+'straight_ref.nii.gz', verbose)
 
     # Delete temporary files
     if remove_temp_files:
