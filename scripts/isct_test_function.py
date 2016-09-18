@@ -34,6 +34,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 import sys
+import commands
 import platform
 import signal
 from time import time, strftime
@@ -285,12 +286,21 @@ if __name__ == "__main__":
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
 
-    # fetch version of the toolbox
-    with open (path_sct+"/version.txt", "r") as myfile:
-        version_sct = myfile.read().replace('\n', '')
-    with open (path_sct+"/commit.txt", "r") as myfile:
-        commit_sct = myfile.read().replace('\n', '')
-    print "SCT version: "+version_sct+'-'+commit_sct
+    # fetch true commit number and branch (do not use commit.txt which is wrong)
+    path_curr = os.curdir
+    os.chdir(path_sct)
+    sct_commit = commands.getoutput('git log | sed -n 1p').strip('commit ')
+    sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
+    if not (sct_commit.isalnum() and sct_branch.isalnum()):
+        print "WARNING: Cannot retrieve SCT commit and/or branch number"
+        sct_commit = 'unknown'
+        sct_branch = 'unknown'
+    # with open (path_sct+"/version.txt", "r") as myfile:
+    #     version_sct = myfile.read().replace('\n', '')
+    # with open (path_sct+"/commit.txt", "r") as myfile:
+    #     commit_sct = myfile.read().replace('\n', '')
+    print 'SCT branch/commit: '+sct_branch+'/'+sct_commit
+    os.chdir(path_curr)
 
     # check OS
     platform_running = sys.platform
