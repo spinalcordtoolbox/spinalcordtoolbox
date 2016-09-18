@@ -5,6 +5,10 @@ sudo: false  # To use travis container infrastructure
 
 language: python
 
+# for python-qt4
+- virtualenv:
+ - system_site_packages: true
+
 notifications:
   slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
     on_success:change
@@ -30,9 +34,11 @@ install:
 # update tools
 #  - ./update_bin.sh
   - yes | ./install_sct
-# run launcher in order to update PATH
+  # run launcher in order to update PATH
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
+  # install python-qt4 to prevent import matplotlib errors
+  - sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4
 
 script:
 #  - sct_check_dependencies   # test dependencies
