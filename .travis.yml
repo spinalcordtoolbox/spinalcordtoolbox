@@ -34,7 +34,7 @@ install:
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
   # add site-package to PYTHONPATH to prevent import matplotlib errors
-  - export PYTHONPATH=$HOME/build/neuropoly/spinalcordtoolbox/python/lib/python2.7/site-packages:$PYTHONPATH
+  # - export PYTHONPATH=$HOME/build/neuropoly/spinalcordtoolbox/python/lib/python2.7/site-packages:$PYTHONPATH
   #  - apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4
   - echo $PYTHONPATH
 
