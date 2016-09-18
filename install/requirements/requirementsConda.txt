@@ -1,4 +1,5 @@
 matplotlib==1.5.3
+pyqt==4.11.4
 scikit-learn==0.17.1
 scikit-image==0.12.3
 pandas==0.18.1
