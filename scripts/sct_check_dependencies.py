@@ -273,12 +273,22 @@ def main():
     if complete_test:
         print (status, output), '\n'
 
+    # check if figure can be opened (in case running SCT via ssh connection)
+    print_line('Check if figure can be opened')
+    try:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.close()
+        print_ok()
+    except:
+        print_fail()
+        print sys.exc_info()
+
     # close log file
     if create_log_file:
         sys.stdout = orig_stdout
         handle_log.close()
         print "File generated: "+file_log+'\n'
-
     print ''
     sys.exit(e + install_software)
     
