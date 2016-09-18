@@ -140,6 +140,8 @@ def main():
             module = 'skimage'
         elif i == 'scikit-learn':
             module = 'sklearn'
+        elif i == 'pyqt':
+            module = 'PyQt4'
         else:
             module = i
         print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
