@@ -434,11 +434,6 @@ def main():
         sct.run('sct_resample -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_sub')+' -f 1x1x'+zsubsample, verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_sub')
 
-        # binarize
-        sct.printv('\nBinarize segmentation...', verbose)
-        sct.run('sct_maths -i '+ftmp_seg+' -bin 0.5 -o '+add_suffix(ftmp_seg, '_bin'))
-        ftmp_seg = add_suffix(ftmp_seg, '_bin')
-
         # Registration straight spinal cord to template
         sct.printv('\nRegister straight spinal cord to template...', verbose)
 
@@ -564,10 +559,11 @@ def main():
     sct.generate_output_file(path_tmp+'warp_anat2template.nii.gz', path_output+'warp_anat2template.nii.gz', verbose)
     sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
     sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
-    # copy straightening files in case subsequent SCT functions need them
-    sct.generate_output_file(path_tmp+'warp_curve2straight.nii.gz', path_output+'warp_curve2straight.nii.gz', verbose)
-    sct.generate_output_file(path_tmp+'warp_straight2curve.nii.gz', path_output+'warp_straight2curve.nii.gz', verbose)
-    sct.generate_output_file(path_tmp+'straight_ref.nii.gz', path_output+'straight_ref.nii.gz', verbose)
+    if ref == 'template':
+        # copy straightening files in case subsequent SCT functions need them
+        sct.generate_output_file(path_tmp+'warp_curve2straight.nii.gz', path_output+'warp_curve2straight.nii.gz', verbose)
+        sct.generate_output_file(path_tmp+'warp_straight2curve.nii.gz', path_output+'warp_straight2curve.nii.gz', verbose)
+        sct.generate_output_file(path_tmp+'straight_ref.nii.gz', path_output+'straight_ref.nii.gz', verbose)
 
     # Delete temporary files
     if remove_temp_files:
