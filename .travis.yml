@@ -34,7 +34,7 @@ install:
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
   # install python-qt4 to prevent import matplotlib errors
-  - sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4
+  - apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4
 
 script:
 #  - sct_check_dependencies   # test dependencies
