@@ -110,9 +110,8 @@ def main():
 
     # get path of the toolbox
     path_sct = os.getenv("SCT_DIR")
-    if path_sct is None :
-        raise EnvironmentError("SCT_DIR, which is the path to the "
-                               "Spinalcordtoolbox install needs to be set")
+    if path_sct is None:
+        raise EnvironmentError("SCT_DIR, which is the path SCT install needs to be set")
     print ('SCT path: {0}'.format(path_sct))
 
     # fetch version of the toolbox
@@ -122,8 +121,14 @@ def main():
         commit_sct = myfile.read().replace('\n', '')
     print "SCT version: "+version_sct+'-'+commit_sct
 
-    # check installation packages
-    print 'Python path: '+sys.executable
+    # check if Python path is within SCT path
+    print_line('Check Python path')
+    path_python = sys.executable
+    if path_sct in path_python:
+        print_ok()
+    else:
+        print_fail()
+        print '  Python path: '+path_python
 
     # check if data folder is empty
     print_line('Check if data are installed')
