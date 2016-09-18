@@ -404,6 +404,11 @@ def main():
         ftmp_seg = add_suffix(ftmp_seg, '_black')
         """
 
+        # binarize
+        sct.printv('\nBinarize segmentation...', verbose)
+        sct.run('sct_maths -i '+ftmp_seg+' -bin 0.5 -o '+add_suffix(ftmp_seg, '_bin'))
+        ftmp_seg = add_suffix(ftmp_seg, '_bin')
+
         # find min-max of anat2template (for subsequent cropping)
         zmin_template, zmax_template = find_zmin_zmax(ftmp_seg)
 
@@ -429,7 +434,7 @@ def main():
         sct.run('sct_resample -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_sub')+' -f 1x1x'+zsubsample, verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_sub')
 
-        # threshold and binarize
+        # binarize
         sct.printv('\nBinarize segmentation...', verbose)
         sct.run('sct_maths -i '+ftmp_seg+' -bin 0.5 -o '+add_suffix(ftmp_seg, '_bin'))
         ftmp_seg = add_suffix(ftmp_seg, '_bin')
