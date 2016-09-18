@@ -299,7 +299,7 @@ if __name__ == "__main__":
     #     version_sct = myfile.read().replace('\n', '')
     # with open (path_sct+"/commit.txt", "r") as myfile:
     #     commit_sct = myfile.read().replace('\n', '')
-    print 'SCT branch/commit: '+sct_branch+'/'+sct_commit
+    print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
     os.chdir(path_curr)
 
     # check OS
