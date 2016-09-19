@@ -322,7 +322,6 @@ if __name__ == "__main__":
     print 'CPU cores: ' + str(cpu_count())  # + ', Used by SCT: '+output
 
     # check RAM
-    print 'RAM:'
     sct.checkRAM(os_running, 0)
 
     # test function
