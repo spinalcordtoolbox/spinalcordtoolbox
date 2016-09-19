@@ -34,6 +34,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 import sys
+import commands
 import platform
 import signal
 from time import time, strftime
@@ -132,6 +133,8 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
 
 def function_launcher(args):
     import importlib
+    # append local script to PYTHONPATH for import
+    sys.path.append(os.path.abspath(os.curdir))
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
     try:
         output = script_to_be_run.test(*args[1:])
@@ -281,22 +284,28 @@ def main(args=None):
     # redirect to log file
     sys.stdout = handle_log
 
-    print 'Testing... (started on: '+strftime("%Y-%m-%d %H:%M:%S")+')'
+    print 'Testing started on: '+strftime("%Y-%m-%d %H:%M:%S")
 
     # get path of the toolbox
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
-    # path_sct = os.getenv("SCT_DIR")
-    # if path_sct is None :
-    #     raise EnvironmentError("SCT_DIR, which is the path to the "
-    #                            "Spinalcordtoolbox install needs to be set")
 
-    # fetch version of the toolbox
-    with open (path_sct+"/version.txt", "r") as myfile:
-        version_sct = myfile.read().replace('\n', '')
-    with open (path_sct+"/commit.txt", "r") as myfile:
-        commit_sct = myfile.read().replace('\n', '')
-    print "SCT version: "+version_sct+'-'+commit_sct
+    # fetch true commit number and branch (do not use commit.txt which is wrong)
+    path_curr = os.path.abspath(os.curdir)
+    os.chdir(path_sct)
+    sct_commit = commands.getoutput('git rev-parse HEAD')
+    if not sct_commit.isalnum():
+        print 'WARNING: Cannot retrieve SCT commit'
+        sct_commit = 'unknown'
+        sct_branch = 'unknown'
+    else:
+        sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
+    # with open (path_sct+"/version.txt", "r") as myfile:
+    #     version_sct = myfile.read().replace('\n', '')
+    # with open (path_sct+"/commit.txt", "r") as myfile:
+    #     commit_sct = myfile.read().replace('\n', '')
+    print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
+    os.chdir(path_curr)
 
     # check OS
     platform_running = sys.platform
@@ -315,8 +324,7 @@ def main(args=None):
     print 'CPU cores: ' + str(cpu_count())  # + ', Used by SCT: '+output
 
     # check RAM
-    print 'RAM:'
-    sct.checkRAM(os_running)
+    sct.checkRAM(os_running, 0)
 
     # test function
     try:
@@ -335,13 +343,13 @@ def main(args=None):
         results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
         results_mean['subject'] = 'Mean'
         results_mean.set_value('status', float('NaN'))  # set status to NaN
-        results_display = results_display.append(results_mean, ignore_index=True)
+        # results_display = results_display.append(results_mean, ignore_index=True)
 
         # std
         results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
         results_std['subject'] = 'STD'
         results_std.set_value('status', float('NaN'))  # set status to NaN
-        results_display = results_display.append(results_std, ignore_index=True)
+        # results_display = results_display.append(results_std, ignore_index=True)
 
         # count tests that passed
         count_passed = results_subset.status[results_subset.status == 0].count()
@@ -352,15 +360,27 @@ def main(args=None):
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
         results_display = results_display.set_index('subject').reset_index()
 
-        # printing results
-        print 'Results for "' + function_to_test + ' ' + parameters + '":'
+        print '\nCommand: "' + function_to_test + ' ' + parameters
         print 'Dataset: ' + dataset
-        print results_display.to_string()
-        print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
-
-        # display elapsed time
+        # display general results
+        print '\nGLOBAL RESULTS:'
         elapsed_time = time() - start_time
-        print 'Total duration: ' + str(int(round(elapsed_time)))+'s'
+        print 'Duration: ' + str(int(round(elapsed_time)))+'s'
+        # display results
+        print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
+        # build mean/std entries
+        dict_mean = results_mean.to_dict()
+        dict_mean.pop('status')
+        dict_mean.pop('subject')
+        print 'Mean: ' + str(dict_mean)
+        dict_std = results_std.to_dict()
+        dict_std.pop('status')
+        dict_std.pop('subject')
+        print 'STD: ' + str(dict_std)
+
+        # print detailed results
+        print '\nDETAILED RESULTS:'
+        print results_display.to_string()
         print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: File(s) missing'
 
     except Exception as err:

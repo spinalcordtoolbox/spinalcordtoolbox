@@ -43,14 +43,11 @@ class Param:
         self.remove_temp_files = 1
         self.smoothing_param = 0  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
-        # self.name_method = 'counting_z_plane'  # for compute_CSA
         self.slices = ''
         self.vertebral_levels = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
-        self.suffix_csa_output_files = ['csa_volume', 'csa_per_slice', 'csa_mean', 'volume']  # [nifti file, txt file, txt file, txt file]
-        self.fname_vertebral_labeling = './label/template/MNI-Poly-AMU_level.nii.gz'
 param = Param()
 param_default = Param()
 
@@ -74,25 +71,22 @@ def get_parser():
                                   '- length: compute length of the segmentation.\n'
                                   '- csa: computes cross-sectional area by counting pixels in each'
                                   '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
-                                  '  - a segmentation (nifti file) where each slice\'s value is equal to the CSA (mm^2),\n'
-                                  '  - a CSV text file with z (1st column) and CSA in mm^2 (2nd column),\n'
-                                  '  - and if you select the options -z or -vert, a text file giving the mean CSA across the selected slices or vertebral levels.\n',
+                                  '  - angle_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the CSA (mm^2),\n'
+                                  '  - csa_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the angle (in degrees) between the spinal cord centerline and the inferior-superior direction,\n'
+                                  '  - csa_per_slice.txt: a CSV text file with z (1st column) and CSA in mm^2 (2nd column),\n'
+                                  '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n',
                       mandatory=True,
                       example=['centerline', 'label-vert', 'length', 'csa'])
     parser.usage.addSection('Optional Arguments')
-    parser.add_option(name='-o',
-                      type_value='file_output',
-                      description='In case you choose the option \"-p csa\", this option allows you to choose the prefix of the output result files name for CSA and volume estimations. For example, if you choose \"-o subject01\", the output files will be: subject01'+param_default.suffix_csa_output_files[0]+'.nii.gz, subject01'+param_default.suffix_csa_output_files[1]+'.txt, subject01'+param_default.suffix_csa_output_files[2]+'.txt and subject01'+param_default.suffix_csa_output_files[3]+'.txt.',
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="In case you choose the option \"-p csa\", this option allows you to specify the output folder for the result files. If this folder does not exist, it will be created, otherwise the result files will be output in the pre-existing folder.",
                       mandatory=False,
-                      default_value='')
-    parser.add_option(name='-output-type',
-                      type_value='str',
-                      description='In case you choose the option \"-p csa\", this option allows you to choose the file type for the output result files (CSA and volume estimations): choose txt for a CSV \"text\" file or \"xls\" for a Microsoft Excel file.',
-                      mandatory=False,
-                      default_value='txt')
+                      example="My_Output_Folder/",
+                      default_value="")
     parser.add_option(name='-overwrite',
                       type_value='int',
-                      description='In the case you choose \"-output-type xls\" and you specified a pre-existing file in \"-o\", this option will allow you to overwrite this .xls file (\"-overwrite 1\") or to add the results to it (\"-overwrite 0\").',
+                      description="""In the case you specified, in flag \"-ofolder\", a pre-existing folder that already includes a .xls result file (see flags \"-p csa\" and \"-z\" or \"-vert\"), this option will allow you to overwrite the .xls file (\"-overwrite 1\") or to add the results to it (\"-overwrite 0\").""",
                       mandatory=False,
                       default_value=0)
     parser.add_option(name='-s',
@@ -131,21 +125,6 @@ def get_parser():
                       type_value='image_nifti',
                       description='Disc labeling. Only use with -p label-vert',
                       mandatory=False)
-    parser.add_option(name='-m',
-                      type_value='multiple_choice',
-                      description='Method to compute CSA',
-                      mandatory=False,
-                      default_value='counting_z_plane',
-                      deprecated_by='-method',
-                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
-    '''
-    parser.add_option(name='-method',
-                      type_value='multiple_choice',
-                      description='Method to compute CSA',
-                      mandatory=False,
-                      default_value='counting_z_plane',
-                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
-    '''
     parser.add_option(name='-r',
                       type_value='multiple_choice',
                       description= 'Removes the temporary folder and debug folder used for the algorithm at the end of execution',
@@ -198,8 +177,6 @@ def main(args=None):
     path_script = os.path.dirname(__file__)
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
     processes = ['centerline', 'csa', 'length']
-    method_CSA = ['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane']
-    # name_method = param.name_method
     verbose = param.verbose
     start_time = time.time()
     remove_temp_files = param.remove_temp_files
@@ -213,16 +190,14 @@ def main(args=None):
 
     fname_segmentation = arguments['-i']
     name_process = arguments['-p']
-    output_type = arguments['-output-type']
     overwrite = 0
-    if '-o' in arguments:
-        output_prefix = arguments['-o']
+    if "-ofolder" in arguments:
+        output_folder = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
-        output_prefix = ''
+        seg_path, seg_file, seg_ext = sct.extract_fname(os.path.abspath(fname_segmentation))
+        output_folder = seg_path
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
-    # if '-method' in arguments:
-    #     name_method = arguments['-method']
     if '-vert' in arguments:
         vert_lev = arguments['-vert']
     if '-r' in arguments:
@@ -243,14 +218,6 @@ def main(args=None):
         elif arguments['-no-angle'] == '0':
             angle_correction = True
 
-    # display usage if incorrect method
-    # if name_process == 'csa' and (name_method not in method_CSA):
-    #     sct.printv(parser.usage.generate(error='ERROR: wrong method for CSA process'))
-    #
-    # # display usage if no method provided
-    # if name_process == 'csa' and method_CSA == '':
-    #     sct.printv(parser.usage.generate(error='ERROR: no method for CSA process'))
-
     # update fields
     param.verbose = verbose
 
@@ -265,7 +232,7 @@ def main(args=None):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, output_prefix, param_default.suffix_csa_output_files, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length, angle_correction=angle_correction)
+        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length, angle_correction=angle_correction)
 
     if name_process == 'label-vert':
         if '-discfile' in arguments:
@@ -469,10 +436,13 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, angle_correction=True):
+def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True):
+
+    from math import degrees
+
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
-    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+    # path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
@@ -504,7 +474,41 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
     min_z_index, max_z_index = min(Z), max(Z)
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+
+    # transform centerline coordinates into voxel space for further use
+    coord_voxel_centerline = im_seg.transfo_phys2pix([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]] for i in range(len(z_centerline))])
+    z_centerline_fit_vox = [coord[2] for coord in coord_voxel_centerline]
+
+    # average over slices
+    P_x = np.array(x_centerline_fit)
+    P_y = np.array(y_centerline_fit)
+    P_z = np.array(z_centerline)
+    P_z_vox = np.array(z_centerline_fit_vox)
+    P_x_d = np.array(x_centerline_deriv)
+    P_y_d = np.array(y_centerline_deriv)
+    P_z_d = np.array(z_centerline_deriv)
+
+    P_z_vox = np.array([int(np.round(P_z_vox[i])) for i in range(0, len(P_z_vox))])
+    # not perfect but works (if "enough" points), in order to deal with missing z slices
+    for i in range(min(P_z_vox), max(P_z_vox) + 1, 1):
+        if i not in P_z_vox:
+            P_x_temp = np.insert(P_x, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x[np.where(P_z_vox == i - 1)[-1][-1]] + P_x[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_y_temp = np.insert(P_y, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y[np.where(P_z_vox == i - 1)[-1][-1]] + P_y[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_z_temp = np.insert(P_z, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z[np.where(P_z_vox == i - 1)[-1][-1]] + P_z[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_x_d_temp = np.insert(P_x_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_x_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_y_d_temp = np.insert(P_y_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_y_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_z_d_temp = np.insert(P_z_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_z_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+            P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
+
+    coord_mean = np.array([[np.mean(P_x[P_z_vox == i]), np.mean(P_y[P_z_vox == i]), np.mean(P_z[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
+    x_centerline_fit = coord_mean[:, :][:, 0]
+    y_centerline_fit = coord_mean[:, :][:, 1]
+    coord_mean_d = np.array([[np.mean(P_x_d[P_z_vox == i]), np.mean(P_y_d[P_z_vox == i]), np.mean(P_z_d[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
+    z_centerline = coord_mean[:, :][:, 2]
+    x_centerline_deriv = coord_mean_d[:, :][:, 0]
+    y_centerline_deriv = coord_mean_d[:, :][:, 1]
+    z_centerline_deriv = coord_mean_d[:, :][:, 2]
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -533,7 +537,7 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
 
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
         csa[iz-min_z_index] = number_voxels * px * py * np.cos(angle)
-        angles[iz - min_z_index] = angle
+        angles[iz - min_z_index] = degrees(angle)
 
     sct.printv('\nSmooth CSA across slices...', verbose)
     if smoothing_param:
@@ -556,18 +560,6 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         csa = csa_smooth
     else:
         sct.printv('.. No smoothing!', verbose)
-
-
-    # Create output text file
-    sct.printv('\nCompute CSA per slice...', verbose)
-    file_results = open('../'+output_prefix+output_suffixes[1]+'.txt', 'w')
-    for i in range(min_z_index, max_z_index+1):
-        file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+'\n')
-        # Display results
-        sct.printv('z='+str(i-min_z_index)+': '+str(csa[i-min_z_index])+' mm^2', type='info')
-    file_results.close()
-    sct.printv('Save results in: '+output_prefix+output_suffixes[1]+'.txt', verbose)
-
 
     # output volume of csa values
     sct.printv('\nCreate volume of CSA values...', verbose)
@@ -626,9 +618,21 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_prefix+output_suffixes[0]+'.nii.gz')  # extension already included in name_output
-    sct.generate_output_file(path_tmp+'angle_volume_in_initial_orientation.nii.gz', output_prefix + 'angle_volume.nii.gz')  # extension already included in name_output
+    sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_folder+'csa_image.nii.gz')  # extension already included in name_output
+    sct.generate_output_file(path_tmp+'angle_volume_in_initial_orientation.nii.gz', output_folder+'angle_image.nii.gz')  # extension already included in name_output
     print('\n')
+
+    # Create output text file
+    sct.printv('Display CSA per slice:', verbose)
+    file_results = open(output_folder+'csa_per_slice.txt', 'w')
+    file_results.write('# Slice (z),CSA (mm^2),Angle with respect to the I-S direction (degrees)\n')
+    for i in range(min_z_index, max_z_index+1):
+        file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+ ',' + str(angles[i-min_z_index])+'\n')
+        # Display results
+        sct.printv('z = '+str(i-min_z_index)+', CSA = '+str(csa[i-min_z_index])+' mm^2'+', Angle = '+str(angles[i-min_z_index])+' deg', type='info')
+    file_results.close()
+    sct.printv('Save results in: '+output_folder+'csa_per_slice.txt\n', verbose)
+
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
@@ -648,9 +652,15 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
             # convert the vertebral labeling file to RPI orientation
             im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
 
+            # transforming again coordinates...
+            coord_voxel_centerline = im_vertebral_labeling.transfo_phys2pix([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]] for i in range(len(z_centerline))])
+            x_centerline_fit_vox = [coord[0] for coord in coord_voxel_centerline]
+            y_centerline_fit_vox = [coord[1] for coord in coord_voxel_centerline]
+            z_centerline_fit_vox = [coord[2] for coord in coord_voxel_centerline]
+
             # get the slices corresponding to the vertebral levels
             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, x_centerline_fit, y_centerline_fit, z_centerline)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, x_centerline_fit_vox, y_centerline_fit_vox, z_centerline_fit_vox)
 
         elif not vert_levels:
             vert_levels_list = []
@@ -661,21 +671,28 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         sct.printv('Average CSA across slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
 
         CSA_for_selected_slices = []
+        angles_for_selected_slices = []
         # Read the file csa_per_slice.txt and get the CSA for the selected slices
-        with open(output_prefix+output_suffixes[1]+'.txt') as openfile:
+        with open(output_folder+'csa_per_slice.txt') as openfile:
             for line in openfile:
-                line_split = line.strip().split(',')
-                if int(line_split[0]) in slices_list:
-                    CSA_for_selected_slices.append(float(line_split[1]))
+                if line[0] != '#':
+                    line_split = line.strip().split(',')
+                    if int(line_split[0]) in slices_list:
+                        CSA_for_selected_slices.append(float(line_split[1]))
+                        angles_for_selected_slices.append(float(line_split[2]))
 
-        # average the CSA
+        # average the CSA and angle
         mean_CSA = np.mean(np.asarray(CSA_for_selected_slices))
         std_CSA = np.std(np.asarray(CSA_for_selected_slices))
+        mean_angle = np.mean(np.asarray(angles_for_selected_slices))
+        std_angle = np.std(np.asarray(angles_for_selected_slices))
 
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
+        sct.printv('Mean angle: '+str(mean_angle)+' +/- '+str(std_angle)+' degrees', type='info')
 
         # write result into output file
-        save_results(output_prefix+output_suffixes[2], output_type, overwrite, file_data, 'CSA', 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_folder+'csa_mean', overwrite, fname_segmentation, 'CSA', 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_folder+'angle_mean', overwrite, fname_segmentation, 'Angle with respect to the I-S direction', 'Unit z vector compared to the unit tangent vector to the centerline at each slice (in degrees)', mean_angle, std_angle, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
         sct.printv('Compute the volume in between slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
@@ -684,10 +701,10 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
 
         # write result into output file
-        save_results(output_prefix+output_suffixes[3], output_type, overwrite, file_data, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(output_folder+'csa_volume', overwrite, fname_segmentation, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
-    elif (not (slices or vert_levels)) and (output_type == 'xls'):
-        sct.printv('WARNING: Excel output type for the result file is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in a .txt file.', type='warning')
+    elif (not (slices or vert_levels)) and (overwrite == 1):
+        sct.printv('WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in a .txt file only.', type='warning')
 
     # Remove temporary files
     if remove_temp_files:
@@ -695,11 +712,11 @@ def compute_csa(fname_segmentation, output_prefix, output_suffixes, output_type,
         sct.run('rm -rf '+path_tmp, error_exit='warning')
 
     # Sum up the output file names
-    sct.printv('\nOutput nifti file of CSA volume: ' + output_prefix+output_suffixes[0]+'.nii.gz', param.verbose, 'info')
-    sct.printv('Output result file of CSA per slice: ' + output_prefix+output_suffixes[1]+'.txt', param.verbose, 'info')
+    sct.printv('\nOutput a nifti file of CSA values along the segmentation: '+output_folder+'csa_image.nii.gz', param.verbose, 'info')
+    sct.printv('Output result text file of CSA per slice: '+output_folder+'csa_per_slice.txt', param.verbose, 'info')
     if slices or vert_levels:
-        sct.printv('Output result file of the mean CSA across the selected slices: '+output_prefix+output_suffixes[2]+'.txt', param.verbose, 'info')
-        sct.printv('Output result file of the volume in between the selected slices: '+output_prefix+output_suffixes[3]+'.txt', param.verbose, 'info')
+        sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t'+output_folder+'csa_mean.txt\n\t\t'+output_folder+'csa_mean.xls\n\t\t'+output_folder+'csa_mean.pickle', param.verbose, 'info')
+        sct.printv('Output result files of the volume in between the selected slices: \n\t\t'+output_folder+'csa_volume.txt\n\t\t'+output_folder+'csa_volume.xls\n\t\t'+output_folder+'csa_volume.pickle', param.verbose, 'info')
 
 def label_vert(fname_seg, fname_label, verbose=1):
     """
@@ -729,121 +746,122 @@ def label_vert(fname_seg, fname_label, verbose=1):
 # ======================================================================================================================
 # Save CSA or volume estimation in a .txt file
 # ======================================================================================================================
-def save_results(fname_output, output_type, overwrite, fname_data, metric_name, method, mean, std, slices_of_interest, actual_vert, warning_vert_levels):
+def save_results(fname_output, overwrite, fname_data, metric_name, method, mean, std, slices_of_interest, actual_vert, warning_vert_levels):
 
-    # check output-type
-    if (output_type != 'txt' and output_type != 'xls'):
-        sct.printv('ERROR: incorrect value selected for option \"-output-type\". Please select \"txt\" or \"xls\".', type='error')
-
-    sct.printv('Save results in: '+fname_output+'.'+output_type+'\n')
-
-    if output_type == 'txt':
-
-        # CSV format, header lines start with "#"
-        # Write mode of file
-        fid_metric = open(fname_output+'.txt', 'w')
-
-        # WRITE HEADER:
-        # Write date and time
-        fid_metric.write('# Date - Time: '+time.strftime('%Y/%m/%d - %H:%M:%S'))
-        # Write metric data file path
-        fid_metric.write('\n'+'# Metric: '+metric_name)
-        # Write method used for the metric estimation
-        fid_metric.write('\n'+'# Calculation method: '+method)
-
-        # Write selected vertebral levels
-        if actual_vert:
-            if warning_vert_levels:
-                for i in range(0, len(warning_vert_levels)):
-                    fid_metric.write('\n# '+str(warning_vert_levels[i]))
-            fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
-        else:
-            if slices_of_interest != '':
-                fid_metric.write('\n# Vertebral levels: nan')
-            else:
-                fid_metric.write('\n# Vertebral levels: ALL')
-
-        # Write selected slices
-        fid_metric.write('\n'+'# Slices (z): ')
+    # define vertebral levels and slices fields
+    if actual_vert:
+        vertebral_levels_field = str(int(actual_vert[0])) + ' to ' + str(int(actual_vert[1]))
+        if warning_vert_levels:
+            for i in range(0, len(warning_vert_levels)):
+                vertebral_levels_field += ' [' + str(warning_vert_levels[i]) + ']'
+    else:
         if slices_of_interest != '':
-            fid_metric.write(slices_of_interest)
+            vertebral_levels_field = str(np.nan)
         else:
-            fid_metric.write('ALL')
+            vertebral_levels_field = 'ALL'
 
-        # label headers
-        fid_metric.write('%s' % ('\n'+'# File used for calculation, MEAN across slices, STDEV across slices\n\n'))
+    if slices_of_interest != '':
+        slices_of_interest_field = slices_of_interest
+    else:
+        slices_of_interest_field = 'ALL'
 
-        # WRITE RESULTS
-        fid_metric.write('%s, %f, %f\n' % (os.path.abspath(fname_data), mean, std))
 
-        # Close file .txt
-        fid_metric.close()
+    sct.printv('Save results in: '+fname_output+'.txt\n')
 
-    elif output_type == 'xls':
+    ## Save results in a CSV text file
+    # CSV format, header lines start with "#"
+    fid_metric = open(fname_output+'.txt', 'w')
 
-        # if the user asked for no overwriting but the specified output file does not exist yet
-        if (not overwrite) and (not os.path.isfile(fname_output + '.' + output_type)):
-            sct.printv('WARNING: You asked to edit the pre-existing file \"' + fname_output + '.' + output_type + '\" but this file does not exist. It will be created.', type='warning')
-            overwrite = 1
+    # WRITE HEADER:
+    # Write date and time
+    fid_metric.write('# Date - Time: '+time.strftime('%Y/%m/%d - %H:%M:%S'))
+    # Write metric data file path
+    fid_metric.write('\n'+'# Metric: '+metric_name)
+    # Write method used for the metric estimation
+    fid_metric.write('\n'+'# Calculation method: '+method)
 
-        if not overwrite:
-            from xlrd import open_workbook
-            from xlutils.copy import copy
+    # Write selected vertebral levels
+    fid_metric.write('\n# Vertebral levels: '+vertebral_levels_field)
 
-            existing_book = open_workbook(fname_output + '.' + output_type)
+    # Write selected slices
+    fid_metric.write('\n'+'# Slices (z): '+slices_of_interest)
 
-            # get index of the first empty row and leave one empty row between the two subjects
-            row_index = existing_book.sheet_by_index(0).nrows
+    # label headers
+    fid_metric.write('%s' % ('\n'+'# File used for calculation, MEAN across slices, STDEV across slices\n\n'))
 
-            book = copy(existing_book)
-            sh = book.get_sheet(0)
+    # WRITE RESULTS
+    fid_metric.write('%s, %f, %f\n' % (os.path.abspath(fname_data), mean, std))
 
-        elif overwrite:
-            from xlwt import Workbook
+    # Close file .txt
+    fid_metric.close()
 
-            book = Workbook()
-            sh = book.add_sheet('Results', cell_overwrite_ok=True)
 
-            # write header line
-            sh.write(0, 0, 'Date - Time')
-            sh.write(0, 1, 'File used for calculation')
-            sh.write(0, 2, 'Metric')
-            sh.write(0, 3, 'Calculation method')
-            sh.write(0, 4, 'Vertebral levels')
-            sh.write(0, 5, 'Slices (z)')
-            sh.write(0, 6, 'MEAN across slices')
-            sh.write(0, 7, 'STDEV across slices')
+    ## Save results in a MS Excel file
+    # if the user asked for no overwriting but the specified output file does not exist yet
+    if (not overwrite) and (not os.path.isfile(fname_output + '.xls')):
+        sct.printv('WARNING: You asked to edit the pre-existing file \"' + fname_output + '.xls\" but this file does not exist. It will be created.', type='warning')
+        overwrite = 1
 
-            row_index = 1
+    if not overwrite:
+        from xlrd import open_workbook
+        from xlutils.copy import copy
 
-        # define vertebral levels and slices fields
-        if actual_vert:
-            vertebral_levels_field = str(int(actual_vert[0])) + ' to ' + str(int(actual_vert[1]))
-            if warning_vert_levels:
-                for i in range(0, len(warning_vert_levels)):
-                    vertebral_levels_field += ' [' + str(warning_vert_levels[i]) + ']'
-        else:
-            if slices_of_interest != '':
-                vertebral_levels_field = str(np.nan)
-            else:
-                vertebral_levels_field = 'ALL'
+        existing_book = open_workbook(fname_output+'.xls')
 
-        if slices_of_interest != '':
-            slices_of_interest_field = slices_of_interest
-        else:
-            slices_of_interest_field = 'ALL'
+        # get index of the first empty row and leave one empty row between the two subjects
+        row_index = existing_book.sheet_by_index(0).nrows
 
-        # write results
-        sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
-        sh.write(row_index, 1, os.path.abspath(fname_data))
-        sh.write(row_index, 2, metric_name)
-        sh.write(row_index, 3, method)
-        sh.write(row_index, 4, vertebral_levels_field)
-        sh.write(row_index, 5, slices_of_interest_field)
-        sh.write(row_index, 6, float(mean))
-        sh.write(row_index, 7, str(std))
+        book = copy(existing_book)
+        sh = book.get_sheet(0)
 
-        book.save(fname_output + '.' + output_type)
+    elif overwrite:
+        from xlwt import Workbook
+
+        book = Workbook()
+        sh = book.add_sheet('Results', cell_overwrite_ok=True)
+
+        # write header line
+        sh.write(0, 0, 'Date - Time')
+        sh.write(0, 1, 'File used for calculation')
+        sh.write(0, 2, 'Metric')
+        sh.write(0, 3, 'Calculation method')
+        sh.write(0, 4, 'Vertebral levels')
+        sh.write(0, 5, 'Slices (z)')
+        sh.write(0, 6, 'MEAN across slices')
+        sh.write(0, 7, 'STDEV across slices')
+
+        row_index = 1
+
+    # write results
+    sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
+    sh.write(row_index, 1, os.path.abspath(fname_data))
+    sh.write(row_index, 2, metric_name)
+    sh.write(row_index, 3, method)
+    sh.write(row_index, 4, vertebral_levels_field)
+    sh.write(row_index, 5, slices_of_interest_field)
+    sh.write(row_index, 6, float(mean))
+    sh.write(row_index, 7, str(std))
+
+    book.save(fname_output+'.xls')
+
+
+    ## Save results in a pickle file
+    # write results in a dictionary
+    output_results = {}
+    output_results['Date - Time'] = time.strftime('%Y/%m/%d - %H:%M:%S')
+    output_results['File used for calculation'] = os.path.abspath(fname_data)
+    output_results['Metric'] = metric_name
+    output_results['Calculation method'] = method
+    output_results['Vertebral levels'] = vertebral_levels_field
+    output_results['Slices (z)'] = slices_of_interest_field
+    output_results['MEAN across slices'] = float(mean)
+    output_results['STDEV across slices'] = str(std)
+
+    # save "output_results"
+    import pickle
+    output_file = open(fname_output+'.pickle', 'wb')
+    pickle.dump(output_results, output_file)
+    output_file.close()
 
 
 # ======================================================================================================================
@@ -869,6 +887,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
     min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
     max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
+
     if vert_levels_list[0] < min_vert_level_available:
         vert_levels_list[0] = min_vert_level_available
         warning.append('WARNING: the bottom vertebral level you selected is lower to the lowest level available --> '

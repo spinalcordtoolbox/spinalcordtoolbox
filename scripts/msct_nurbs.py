@@ -206,7 +206,7 @@ class NURBS():
                 pointsControle_that_last_worked = list_param_that_worked_sorted[0][1]
                 error_curve_that_last_worked = list_param_that_worked_sorted[0][2]
                 if not twodim:
-                    self.courbe3D, self.courbe3D_deriv = self.construct3D(pointsControle_that_last_worked, self.degre, self.precision)  # generate curve with hig resolution
+                    self.courbe3D, self.courbe3D_deriv = self.construct3D_uniform(pointsControle_that_last_worked, self.degre, self.precision)  # generate curve with hig resolution
                 else:
                     self.courbe2D, self.courbe2D_deriv = self.construct2D(pointsControle_that_last_worked, self.degre, self.precision)
                 self.pointsControle = pointsControle_that_last_worked
@@ -850,3 +850,130 @@ class NURBS():
         P_zb = M.I*Qz
 
         return [[P_xb[i,0],P_yb[i,0],P_zb[i,0]] for i in range(len(P_xb))]
+
+    def compute_curve_from_parametrization(self, P, k, x, Nik, Nikp, param):
+        n = len(P)  # Nombre de points de controle - 1
+        P_x, P_y, P_z = [], [], []  # coord fitees
+        P_x_d, P_y_d, P_z_d = [], [], []  # derivees
+        for i in xrange(len(param)):
+            sum_num_x, sum_num_y, sum_num_z, sum_den = 0, 0, 0, 0
+            sum_num_x_der, sum_num_y_der, sum_num_z_der, sum_den_der = 0, 0, 0, 0
+
+            for l in xrange(n - k + 1):  # utilisation que des points non nuls
+                if x[l + k - 1] <= param[i] < x[l + k]:
+                    debut = l
+            fin = debut + k - 1
+
+            for j, point in enumerate(P[debut:fin + 1]):
+                j = j + debut
+                N_temp = self.evaluateN(Nik[j], param[i], x)
+                N_temp_deriv = self.evaluateN(Nikp[j], param[i], x)
+                sum_num_x += N_temp * point[0]
+                sum_num_y += N_temp * point[1]
+                sum_num_z += N_temp * point[2]
+                sum_den += N_temp
+                sum_num_x_der += N_temp_deriv * point[0]
+                sum_num_y_der += N_temp_deriv * point[1]
+                sum_num_z_der += N_temp_deriv * point[2]
+                sum_den_der += N_temp_deriv
+
+            P_x.append(sum_num_x / sum_den)  # sum_den = 1 !
+            P_y.append(sum_num_y / sum_den)
+            P_z.append(sum_num_z / sum_den)
+            P_x_d.append(sum_num_x_der)
+            P_y_d.append(sum_num_y_der)
+            P_z_d.append(sum_num_z_der)
+
+            if sum_den <= 0.05:
+                raise Exception('WARNING: NURBS instability -> wrong reconstruction')
+
+        P_x = [P_x[i] for i in argsort(P_z)]
+        P_y = [P_y[i] for i in argsort(P_z)]
+        P_x_d = [P_x_d[i] for i in argsort(P_z)]
+        P_y_d = [P_y_d[i] for i in argsort(P_z)]
+        P_z_d = [P_z_d[i] for i in argsort(P_z)]
+        P_z = sort(P_z)
+
+        # on veut que les coordonnees fittees aient le meme z que les coordonnes de depart. on se ramene donc a des entiers et on moyenne en x et y  .
+        P_x = array(P_x)
+        P_y = array(P_y)
+        P_x_d = array(P_x_d)
+        P_y_d = array(P_y_d)
+        P_z_d = array(P_z_d)
+        return P_x, P_y, P_z, P_x_d, P_y_d, P_z_d
+
+    def construct3D_uniform(self, P, k, prec):  # P point de controles
+        global Nik_temp, Nik_temp_deriv
+        n = len(P)  # Nombre de points de controle - 1
+
+        # Calcul des xi
+        x = self.calculX3D(P, k)
+
+        # Calcul des coefficients N(i,k)
+        Nik_temp = [[-1 for j in xrange(k)] for i in xrange(n)]
+        for i in xrange(n):
+            Nik_temp[i][-1] = self.N(i, k, x)
+        Nik = []
+        for i in xrange(n):
+            Nik.append(Nik_temp[i][-1])
+
+        # Calcul des Nik,p'
+        Nik_temp_deriv = [[-1] for i in xrange(n)]
+        for i in xrange(n):
+            Nik_temp_deriv[i][-1] = self.Np(i, k, x)
+        Nikp = []
+        for i in xrange(n):
+            Nikp.append(Nik_temp_deriv[i][-1])
+
+        # Calcul de la courbe
+        # reparametrization of the curve
+        import numpy as np
+        param = np.linspace(x[0], x[-1], prec)
+        P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = self.compute_curve_from_parametrization(P, k, x, Nik, Nikp, param)
+        from msct_types import Centerline
+        centerline = Centerline(P_x, P_y, P_z, P_x_d, P_y_d, P_z_d)
+        distances_between_points = centerline.progressive_length
+        range_points = np.linspace(0.0, 1.0, prec)
+        dist_curved = np.zeros(prec)
+        for i in range(1, prec):
+            dist_curved[i] = dist_curved[i - 1] + distances_between_points[i - 1] / centerline.length
+        param = x[0] + (x[-1] - x[0]) * np.interp(range_points, dist_curved, range_points)
+        P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = self.compute_curve_from_parametrization(P, k, x, Nik, Nikp, param)
+
+        if self.all_slices:
+            P_z = array([int(round(P_z[i])) for i in range(0, len(P_z))])
+
+            # not perfect but works (if "enough" points), in order to deal with missing z slices
+            for i in range(min(P_z), max(P_z) + 1, 1):
+                if i not in P_z:
+                    # print ' Missing z slice '
+                    # print i
+                    P_z_temp = insert(P_z, where(P_z == i - 1)[-1][-1] + 1, i)
+                    P_x_temp = insert(P_x, where(P_z == i - 1)[-1][-1] + 1,
+                                      (P_x[where(P_z == i - 1)[-1][-1]] + P_x[where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_temp = insert(P_y, where(P_z == i - 1)[-1][-1] + 1,
+                                      (P_y[where(P_z == i - 1)[-1][-1]] + P_y[where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_x_d_temp = insert(P_x_d, where(P_z == i - 1)[-1][-1] + 1, (
+                    P_x_d[where(P_z == i - 1)[-1][-1]] + P_x_d[where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_d_temp = insert(P_y_d, where(P_z == i - 1)[-1][-1] + 1, (
+                    P_y_d[where(P_z == i - 1)[-1][-1]] + P_y_d[where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_z_d_temp = insert(P_z_d, where(P_z == i - 1)[-1][-1] + 1, (
+                    P_z_d[where(P_z == i - 1)[-1][-1]] + P_z_d[where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
+
+            coord_mean = array(
+                [[mean(P_x[P_z == i]), mean(P_y[P_z == i]), i] for i in range(min(P_z), max(P_z) + 1, 1)])
+
+            P_x = coord_mean[:, :][:, 0]
+            P_y = coord_mean[:, :][:, 1]
+
+            coord_mean_d = array([[mean(P_x_d[P_z == i]), mean(P_y_d[P_z == i]), mean(P_z_d[P_z == i])] for i in
+                                  range(min(P_z), max(P_z) + 1, 1)])
+
+            P_z = coord_mean[:, :][:, 2]
+
+            P_x_d = coord_mean_d[:, :][:, 0]
+            P_y_d = coord_mean_d[:, :][:, 1]
+            P_z_d = coord_mean_d[:, :][:, 2]
+
+        return [P_x, P_y, P_z], [P_x_d, P_y_d, P_z_d]

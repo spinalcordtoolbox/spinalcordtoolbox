@@ -18,6 +18,7 @@
 import os
 import sys
 import time
+import shutil
 from shutil import move
 
 import numpy as np
@@ -151,9 +152,20 @@ def main(args=None):
     fname_centerline_rpi = set_orientation('centerline.nii', 'RPI', filename=True)
     move(fname_centerline_rpi, 'centerline_rpi.nii')
 
-   # Straighten the spinal cord
-    print '\nStraighten the spinal cord...'
-    sct.run('sct_straighten_spinalcord -i anat_rpi.nii -s centerline_rpi.nii -qc 0 -x spline -v '+str(verbose))
+    # Straighten the spinal cord
+    # straighten segmentation
+    sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
+    # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
+    if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+        # if they exist, copy them into current folder
+        sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+        shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
+        shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
+        shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
+        # apply straightening
+        sct.run('sct_apply_transfo -i anat_rpi.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o anat_rpi_straight.nii -x spline', verbose)
+    else:
+        sct.run('sct_straighten_spinalcord -i anat_rpi.nii -s centerline_rpi.nii -qc 0 -x spline', verbose)
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'

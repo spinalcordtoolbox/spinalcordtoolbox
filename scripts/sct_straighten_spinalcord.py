@@ -13,6 +13,7 @@
 # ======================================================================================================================
 # check if needed Python libraries are already installed or not
 import os
+import shutil
 import time
 import commands
 import sys
@@ -284,6 +285,8 @@ class SpinalCordStraightener(object):
                 number_of_points = nz
             else:
                 number_of_points = int(self.precision * (float(nz) / pz))
+                if number_of_points < 100:
+                    number_of_points *= 50
 
             # 2. extract bspline fitting of the centreline, and its derivatives
             x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
@@ -297,7 +300,7 @@ class SpinalCordStraightener(object):
             from math import sqrt, atan2, sin
 
             # Computation of the safe zone.
-            # The safe zone is defined as the length of the spinal ocrd for which an axial segmentation will be complete
+            # The safe zone is defined as the length of the spinal cord for which an axial segmentation will be complete
             # The safe length (to remove) is computed using the safe radius (given as parameter) and the angle of the
             # last centerline point with the inferior-superior direction. Formula: Ls = Rs * sin(angle)
             # Calculate Ls for both edges and remove appropriate number of centerline points
@@ -404,10 +407,7 @@ class SpinalCordStraightener(object):
             sct.printv("Number of voxel = " + str(number_of_voxel))
 
             time_centerlines = time.time()
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('tmp.centerline_pad.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
-            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
-                                    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
-
+            
             from numpy import linspace
             ix_straight = [int(np.round(nx_s / 2))] * number_of_points
             iy_straight = [int(np.round(ny_s / 2))] * number_of_points
@@ -421,8 +421,25 @@ class SpinalCordStraightener(object):
             centerline_straight = Centerline(coord_phys_straight[:, 0], coord_phys_straight[:, 1], coord_phys_straight[:, 2],
                                              dx_straight, dy_straight, dz_straight)
 
+
             time_centerlines = time.time() - time_centerlines
             sct.printv('Time to generate centerline: ' + str(np.round(time_centerlines * 1000.0)) + ' ms', verbose)
+
+            """
+            import matplotlib.pyplot as plt
+            curved_points = centerline.progressive_length
+            straight_points = centerline_straight.progressive_length
+            range_points = linspace(0, 1, number_of_points)
+            dist_curved = np.zeros(number_of_points)
+            dist_straight = np.zeros(number_of_points)
+            for i in range(1, number_of_points):
+                dist_curved[i] = dist_curved[i - 1] + curved_points[i - 1] / centerline.length
+                dist_straight[i] = dist_straight[i - 1] + straight_points[i - 1] / centerline_straight.length
+            plt.plot(range_points, dist_curved)
+            plt.plot(range_points, dist_straight)
+            plt.grid(True)
+            plt.show()
+            """
 
             # Create volumes containing curved and straight warping fields
             time_generation_volumes = time.time()
@@ -571,6 +588,9 @@ class SpinalCordStraightener(object):
         sct.printv("\nGenerate output file (in current folder)...", verbose)
         sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
         sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
+        # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
+        shutil.copy(path_tmp+'/tmp.anat_rigid_warp.nii.gz', 'straight_ref.nii.gz')
+        # move straightened input file
         if fname_output == '':
             fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
                                                       self.path_output + file_anat + "_straight" + ext_anat, verbose)
@@ -725,6 +745,9 @@ def main(args=None):
             param_split = param.split('=')
             if param_split[0] == 'algo_fitting':
                 sc_straight.algo_fitting = param_split[1]
+                if sc_straight.algo_fitting == 'hanning':
+                    sct.printv("WARNING: hanning has been disabled in this function. The fitting algorithm has been changed to NURBS.", type='warning')
+                    sc_straight.algo_fitting = 'nurbs'
             if param_split[0] == 'precision':
                 sc_straight.precision = float(param_split[1])
             if param_split[0] == 'threshold_distance':

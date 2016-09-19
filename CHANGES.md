@@ -23,6 +23,13 @@
 - OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
 
+##3.0_beta23 (2016-09-18)
+- BUG: Fixed #984, #983, #954, #978, #987, #938, #964, #638, #969, #922, #855
+- OPT: **sct_register_to_template**: added a flag "-ref" to be able to register to anisotropic data
+
+##3.0_beta22 (2016-09-09)
+- BUG: Fixed #994, #989, #988, #976, #968
+
 ##2.2.3 (2016-02-04)
 - BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
 
