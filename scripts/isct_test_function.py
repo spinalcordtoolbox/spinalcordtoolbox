@@ -133,6 +133,8 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
 
 def function_launcher(args):
     import importlib
+    # append local script to PYTHONPATH for import
+    sys.path.append(os.path.abspath(os.curdir))
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
     try:
         output = script_to_be_run.test(*args[1:])
@@ -321,7 +323,7 @@ if __name__ == "__main__":
 
     # check RAM
     print 'RAM:'
-    sct.checkRAM(os_running)
+    sct.checkRAM(os_running, 0)
 
     # test function
     try:
