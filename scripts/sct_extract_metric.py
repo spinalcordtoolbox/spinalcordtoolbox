@@ -44,7 +44,6 @@ class Param:
     def __init__(self):
         self.method = 'wath'
         self.path_label = path_sct+'/data/PAM50/atlas/'
-        self.output_type = 'txt'
         self.verbose = 1
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
@@ -106,14 +105,10 @@ bin: binarize mask (threshold=0.5)""",
                       mandatory=False,
                       default_value=param_default.method,
                       deprecated_by='-method')
-    parser.add_option(name='-output-type',
-                      type_value='str',
-                      description="""Type of the output file collecting the metric estimation results: xls or txt.""",
-                      mandatory=False,
-                      default_value=param_default.output_type)
     parser.add_option(name='-overwrite',
                       type_value='int',
-                      description="""In the case you choose \"-output-type xls\" and you specified a pre-existing file in \"-o\", this option will allow you to overwrite this .xls file (\"-overwrite 1\") or to append the results to the end of the file (\"-overwrite 0\").""",
+                      description="""In the case you choose \".xls\" for the output file extension and you specify a pre-existing output file (see flag \"-o\"),
+                      this option will allow you to overwrite this .xls file (\"-overwrite 1\") or to append the results at the end (last line) of the file (\"-overwrite 0\").""",
                       mandatory=False,
                       default_value=0)
     parser.add_option(name='-param',
@@ -131,7 +126,8 @@ bin: binarize mask (threshold=0.5)""",
                       deprecated_by='-param')
     parser.add_option(name='-o',
                       type_value='file_output',
-                      description='File containing the results of metrics extraction. Default: '+param_default.fname_output,
+                      description="""File name (including the file extension) of the output result file collecting the metric estimation results.
+                      Three file types are available: a CSV text file (extension .txt), a MS Excel file (extension .xls) and a pickle file (extension .pickle). Default: """+param_default.fname_output,
                       mandatory=False,
                       default_value=param_default.fname_output)
     parser.add_option(name='-vert',
@@ -411,7 +407,7 @@ def main(args=None):
     #         sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
-    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
 def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0, parser=None):
@@ -677,12 +673,32 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
-def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, output_type, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
     """Save results in the output type selected by user."""
 
     sct.printv('\nSaving results in: '+fname_output+' ...')
 
-    if output_type == 'txt':
+    # define vertebral levels and slices fields
+    if actual_vert:
+        vertebral_levels_field = str(int(actual_vert[0])) + ' to ' + str(int(actual_vert[1]))
+        if warning_vert_levels:
+            for i in range(0, len(warning_vert_levels)):
+                vertebral_levels_field += ' [' + str(warning_vert_levels[i]) + ']'
+    else:
+        if slices_of_interest != '':
+            vertebral_levels_field = 'nan'
+        else:
+            vertebral_levels_field = 'ALL'
+
+    if slices_of_interest != '':
+        slices_of_interest_field = slices_of_interest
+    else:
+        slices_of_interest_field = 'ALL'
+
+    # extract file extension of "fname_output" to know what type of file to output
+    output_path, output_file, output_type = sct.extract_fname(fname_output)
+    # if the user chose to output results under a .txt file
+    if output_type == '.txt':
         # CSV format, header lines start with "#"
 
         # Write mode of file
@@ -700,23 +716,10 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         fid_metric.write('\n'+'# Extraction method: '+method)
 
         # Write selected vertebral levels
-        if actual_vert:
-            if warning_vert_levels:
-                for i in range(0, len(warning_vert_levels)):
-                    fid_metric.write('\n# '+str(warning_vert_levels[i]))
-            fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
-        else:
-            if slices_of_interest != '':
-                fid_metric.write('\n# Vertebral levels: nan')
-            else:
-                fid_metric.write('\n# Vertebral levels: ALL')
+        fid_metric.write('\n# Vertebral levels: '+vertebral_levels_field)
 
         # Write selected slices
-        fid_metric.write('\n'+'# Slices (z): ')
-        if slices_of_interest != '':
-            fid_metric.write(slices_of_interest)
-        else:
-            fid_metric.write('ALL')
+        fid_metric.write('\n'+'# Slices (z): '+slices_of_interest_field)
 
         # label headers
         fid_metric.write('%s' % ('\n'+'# ID, label name, total fractional volume of the label (in number of voxels), metric value, metric stdev within label\n\n'))
@@ -745,7 +748,8 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         # Close file .txt
         fid_metric.close()
 
-    elif output_type == 'xls':
+    # if user chose to output results under an Excel file
+    elif output_type == '.xls':
 
         # if the user asked for no overwriting but the specified output file does not exist yet
         if (not overwrite) and (not os.path.isfile(fname_output)):
@@ -786,24 +790,6 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
             row_index = 1
 
-
-        # define vertebral levels and slices fields
-        if actual_vert:
-            vertebral_levels_field = str(int(actual_vert[0]))+' to '+str(int(actual_vert[1]))
-            if warning_vert_levels:
-                for i in range(0, len(warning_vert_levels)):
-                    vertebral_levels_field += ' ['+str(warning_vert_levels[i])+']'
-        else:
-            if slices_of_interest != '':
-                vertebral_levels_field = 'nan'
-            else:
-                vertebral_levels_field = 'ALL'
-
-        if slices_of_interest != '':
-            slices_of_interest_field = slices_of_interest
-        else:
-            slices_of_interest_field = 'ALL'
-
         # iterate on user's labels
         for i_label_user in labels_id_user:
             sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
@@ -833,6 +819,56 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             row_index += 1
 
         book.save(fname_output)
+
+    # if user chose to output results under a pickle file (variables that can be loaded in a python environment)
+    elif output_type == '.pickle':
+
+        # write results in a dictionary
+        metric_extraction_results = {}
+
+        metric_extraction_results['Date - Time'] = time.strftime('%Y/%m/%d - %H:%M:%S')
+        metric_extraction_results['Metric file'] = os.path.abspath(fname_data)
+        metric_extraction_results['Extraction method'] = method
+        metric_extraction_results['Vertebral levels'] = vertebral_levels_field
+        metric_extraction_results['Slices (z)'] = slices_of_interest_field
+        if fname_normalizing_label:
+            metric_extraction_results['Label used to normalize the metric estimation slice-by-slice'] = fname_normalizing_label
+
+        # keep only the labels selected by user (flag -l)
+        ID_field = []
+        Label_names_field = []
+        Fract_vol_field = []
+        Metric_value_field = []
+        Metric_std_field = []
+        # iterate on user's labels
+        for i_label_user in labels_id_user:
+            # display result for this label
+            if i_label_user <= max(indiv_labels_ids):
+                index = indiv_labels_ids.index(i_label_user)
+                ID_field.append(indiv_labels_ids[index])
+                Label_names_field.append(indiv_labels_names[index])
+                Fract_vol_field.append(indiv_labels_fract_vol[index])
+                Metric_value_field.append(indiv_labels_value[index])
+                Metric_std_field.append(indiv_labels_std[index])
+            elif i_label_user > max(indiv_labels_ids):
+                index = combined_labels_ids.index(i_label_user)
+                ID_field.append(combined_labels_ids[index])
+                Label_names_field.append(combined_labels_names[index])
+                Fract_vol_field.append(combined_labels_fract_vol[index])
+                Metric_value_field.append(combined_labels_value[index])
+                Metric_std_field.append(combined_labels_std[index])
+
+        metric_extraction_results['ID'] = np.array(ID_field)
+        metric_extraction_results['Label name'] = np.array(Label_names_field)
+        metric_extraction_results['Total fractional volume of the label (in number of voxels)'] = np.array(Fract_vol_field)
+        metric_extraction_results['Metric value'] = np.array(Metric_value_field)
+        metric_extraction_results['Metric STDEV within label'] = np.array(Metric_std_field)
+
+        # save results into a pickle file
+        import pickle
+        output_file = open(fname_output, 'wb')
+        pickle.dump(metric_extraction_results, output_file)
+        output_file.close()
 
     sct.printv('\tDone.')
 
