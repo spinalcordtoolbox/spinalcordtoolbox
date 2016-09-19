@@ -404,7 +404,7 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     '''
     # im_src and im_dest are already preprocessed (in theory: im_dest = mean_image)
     # binarize images to get seg
-    im_src_seg = binarize(im_src)
+    im_src_seg = binarize(im_src, thr_min=1, thr_max=1)
     im_dest_seg = binarize(im_dest)
     # create tmp dir and go in it
     tmp_dir = tmp_create()
