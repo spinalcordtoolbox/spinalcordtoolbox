@@ -28,6 +28,7 @@ from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
 from sct_warp_template import get_file_label
+from scipy.ndimage.measurements import center_of_mass
 
 # get path of SCT
 path_script = os.path.dirname(__file__)
@@ -43,12 +44,12 @@ class Param:
         self.size_AP_brainstem = 15
         self.shift_IS_brainstem = 15
         self.size_IS_brainstem = 30
-        self.shift_AP = 32  # shift the centerline towards the spine (in voxel).
-        self.size_AP = 11  # window size in AP direction (=y) (in voxel)
+        self.shift_AP = 32#0#32  # shift the centerline towards the spine (in voxel).
+        self.size_AP = 11#41#11  # window size in AP direction (=y) (in voxel)
         self.size_RL = 1  # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
-        self.shift_AP_visu = 15  # shift AP for displaying disc values
-        self.smooth_factor = [9, 3, 1]  # [3, 1, 1]
+        self.shift_AP_visu = 15#0#15  # shift AP for displaying disc values
+        self.smooth_factor = [7, 1, 1]  # [3, 1, 1]
         self.fig_anat_straight = 50
 
 
@@ -98,12 +99,12 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value='file',
                       description='Initialize labeling by providing a text file which includes either -initz or -initcenter flag.',
                       mandatory=False)
-    parser.add_option(name='-o',
-                      type_value='file_output',
-                      description='Output file',
-                      mandatory=False,
-                      default_value='',
-                      example='t2_seg_labeled.nii.gz')
+    # parser.add_option(name='-o',
+    #                   type_value='file_output',
+    #                   description='Output file',
+    #                   mandatory=False,
+    #                   default_value='',
+    #                   example='t2_seg_labeled.nii.gz')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
@@ -161,10 +162,10 @@ def main(args=None):
     fname_seg = arguments['-s']
     contrast = arguments['-c']
     path_template = sct.slash_at_the_end(arguments['-t'], 1)
-    if '-o' in arguments:
-        file_out = arguments["-o"]
-    else:
-        file_out = ''
+    # if '-o' in arguments:
+    #     file_out = arguments["-o"]
+    # else:
+    #     file_out = ''
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
     else:
@@ -275,7 +276,7 @@ def main(args=None):
     # detect vertebral levels on straight spinal cord
     vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2)
 
-    # un-straighten labelled spinal cord
+    # un-straighten labeled spinal cord
     printv('\nUn-straighten labeling...', verbose)
     run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn', verbose)
 
@@ -283,17 +284,17 @@ def main(args=None):
     printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')
 
-    # Build file_out
-    if file_out == '':
-        path_seg, file_seg, ext_seg = extract_fname(fname_seg)
-        file_out = file_seg+'_labeled'+ext_seg
+    # label discs
+    label_discs('segmentation_labeled.nii.gz', verbose=verbose)
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
+    path_seg, file_seg, ext_seg = extract_fname(fname_seg)
     printv('\nGenerate output files...', verbose)
-    generate_output_file(path_tmp+'segmentation_labeled.nii.gz', path_output+file_out)
+    generate_output_file(path_tmp+'segmentation_labeled.nii.gz', path_output+file_seg+'_labeled'+ext_seg)
+    generate_output_file(path_tmp+'segmentation_labeled_disc.nii.gz', path_output+file_seg+'_labeled_discs'+ext_seg)
     # copy straightening files in case subsequent SCT functions need them
     generate_output_file(path_tmp+'warp_curve2straight.nii.gz', path_output+'warp_curve2straight.nii.gz', verbose)
     generate_output_file(path_tmp+'warp_straight2curve.nii.gz', path_output+'warp_straight2curve.nii.gz', verbose)
@@ -726,10 +727,10 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         # check if data_chunk1d contains at least one non-zero value
         # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-            # I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
+            #I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
             # data_chunk2d = np.mean(data_chunk3d, 1)
             # pattern2d = np.mean(pattern, 1)
-            I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, 32)
+            I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, nbins=16)
         else:
             allzeros = 1
             # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
@@ -796,16 +797,16 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     return z + zrange[ind_peak] - zshift
 
 
-def calc_MI(x, y, bins):
+def calc_MI(x, y, nbins=32):
     """
     Compute mutual information
     :param x:
     :param y:
-    :param bins:
+    :param nbins:
     :return:
     """
     from sklearn.metrics import mutual_info_score
-    c_xy = np.histogram2d(x, y, bins)[0]
+    c_xy = np.histogram2d(x, y, nbins)[0]
     mi = mutual_info_score(None, None, contingency=c_xy)
     # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
     return mi
@@ -825,6 +826,8 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     dim = seg.dim
     ny = dim[1]
     nz = dim[2]
+    # open labeled discs
+    im_discs = Image(fname_seg)
     # loop across z
     for iz in range(nz):
         # get index of the disc right above iz
@@ -847,6 +850,50 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     # write file
     seg.file_name += '_labeled'
     seg.save()
+
+
+def label_discs(fname_seg_labeled, verbose=1):
+    """
+    Label discs from labaled_segmentation
+    :param fname_seg_labeld: fname of the labeled segmentation
+    :param verbose:
+    :return:
+    """
+    # open labeled segmentation
+    im_seg_labeled = Image(fname_seg_labeled)
+    orientation_native = im_seg_labeled.change_orientation('RPI')
+    nx, ny, nz = im_seg_labeled.dim[0], im_seg_labeled.dim[1], im_seg_labeled.dim[2]
+    data_disc = np.zeros([nx, ny, nz])
+    vertebral_level_previous = np.max(im_seg_labeled.data)
+    # loop across z
+    for iz in range(nz):
+        # get 2d slice
+        slice = im_seg_labeled.data[:, :, iz]
+        # check if at least one voxel is non-zero
+        if np.any(slice):
+            slice_one = np.copy(slice)
+            # set all non-zero values to 1
+            slice_one[slice.nonzero()] = 1
+            # compute center of mass
+            cx, cy = np.round(center_of_mass(slice_one)).tolist()
+            # retrieve vertebral level
+            vertebral_level = slice[cx, cy]
+            # if smaller than previous level, then labeled as a disc
+            if vertebral_level < vertebral_level_previous:
+                # label disc
+                # print 'iz='+iz+', disc='+vertebral_level
+                data_disc[cx, cy, iz] = vertebral_level
+            # update variable
+            vertebral_level_previous = vertebral_level
+        else:
+            print 'skip slice'
+            # skip slice
+    # save disc labeled file
+    im_seg_labeled.file_name += '_disc'
+    im_seg_labeled.data = data_disc
+    im_seg_labeled.change_orientation(orientation_native)
+    im_seg_labeled.save()
+
 
 # START PROGRAM
 # ==========================================================================================
