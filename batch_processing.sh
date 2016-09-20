@@ -62,13 +62,13 @@ cd ..
 cd t1
 # Spinal cord segmentation
 sct_propseg -i t1.nii.gz -c t1
-# Check results:
-if [ $DISPLAY = true ]; then
-  fslview t1 -b 0,800 t2_seg -l Red -t 0.5 &
-fi
 # Tips: the cord segmentation is "leaking". Smoothing along centerline and re-run propseg can help getting better results:
 sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
 sct_propseg -i t1_smooth.nii.gz -c t1
+# Check results
+if [ $DISPLAY = true ]; then
+  fslview t1 -b 0,800 t1_seg -l Red -t 0.5 t1_smooth_seg -l Green -t 0.5 &
+fi
 mv t1_smooth_seg.nii.gz t1_seg.nii.gz
 # Vertebral labeling. Here we use the fact that the FOV is centered at C7.
 sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -c t1
@@ -134,7 +134,6 @@ sct_process_segmentation -i label/atlas/PAM50_atlas_05.nii.gz -p csa -vert 2:5 -
 # Get CSA of the dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/PAM50_atlas_00.nii.gz -add label/atlas/PAM50_atlas_01.nii.gz,label/atlas/PAM50_atlas_02.nii.gz,label/atlas/PAM50_atlas_03.nii.gz -o dorsal_column.nii.gz
 sct_process_segmentation -i dorsal_column.nii.gz -p csa -l 2:5 -ofolder mt_cst_dorsal
-# --> Mean CSA of the left dorsal column: 11.26572434 +/- 0.785786800121 mm^2
 cd ..
 
 
@@ -216,14 +215,15 @@ echo "Ended at: $(date +%x_%r)"
 echo
 echo "t2/CSA:  " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
 echo "mt/MTR:  " `grep -v '^#' mt/mtr_in_wm.txt | grep -v '^$'`
-echo "mt/CSA:  " `grep -v '^#' sct_example_data/mt/mt_cst_dorsal/csa_mean.txt | grep -v '^$'`
+echo "mt/CSA:  " `grep -v '^#' mt/mt_cst_dorsal/csa_mean.txt | grep -v '^$'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'right'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'left'`
 echo
-# results from version dev-ea5287897849623dbda1c25b069d33806a1338c3
-#t2/CSA:   /Users/julien/sct_example_data/t2/t2_seg, 76.656727, 2.366052
-#mt/MTR:   51, white matter, 397.071102, 33.834860, 0.000000
-#mt/CSA:   /Users/julien/sct_example_data/mt/dorsal_column, 17.574594, 2.156033
-#dmri/FA:  4, WM left lateral corticospinal tract, 25.650313, 0.709122, 0.000000
-#dmri/FA:  5, WM right lateral corticospinal tract, 25.646853, 0.717024, 0.000000
+# results from commit 1e6656b47d6497d540253359698344969e035328
+#t2/CSA:   /Users/julien/sct_example_data/t2/t2_seg.nii.gz, 77.278685, 1.928431
+#mt/MTR:   51, white matter, 385.668022, 33.671782, 0.000000
+#grep: mt/mt_cst_dorsal_csa_mean.txt: No such file or directory
+#mt/CSA:  /Users/julien/sct_example_data/mt/dorsal_column.nii.gz, 19.808094, 0.774075
+#dmri/FA:  4, WM left lateral corticospinal tract, 21.511193, 0.762046, 0.000000
+#dmri/FA:  5, WM right lateral corticospinal tract, 21.270867, 0.746589, 0.000000
 #fMRI results: https://dl.dropboxusercontent.com/u/20592661/sct/result_batch_processing_fmri.png
