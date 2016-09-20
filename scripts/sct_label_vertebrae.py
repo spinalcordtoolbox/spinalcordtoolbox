@@ -285,6 +285,7 @@ def main(args=None):
     clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')
 
     # label discs
+    printv('\nLabel discs...', verbose)
     label_discs('segmentation_labeled.nii.gz', verbose=verbose)
 
     # come back to parent folder
@@ -307,7 +308,7 @@ def main(args=None):
 
     # to view results
     printv('\nDone! To view results, type:', verbose)
-    printv('fslview '+fname_in+' '+path_output+file_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
+    printv('fslview '+fname_in+' '+path_output+file_seg+'_labeled'+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
 
 # Detect vertebral levels
@@ -875,7 +876,7 @@ def label_discs(fname_seg_labeled, verbose=1):
             # set all non-zero values to 1
             slice_one[slice.nonzero()] = 1
             # compute center of mass
-            cx, cy = np.round(center_of_mass(slice_one)).tolist()
+            cx, cy = [int(x) for x in np.round(center_of_mass(slice_one)).tolist()]
             # retrieve vertebral level
             vertebral_level = slice[cx, cy]
             # if smaller than previous level, then labeled as a disc
@@ -885,9 +886,6 @@ def label_discs(fname_seg_labeled, verbose=1):
                 data_disc[cx, cy, iz] = vertebral_level
             # update variable
             vertebral_level_previous = vertebral_level
-        else:
-            print 'skip slice'
-            # skip slice
     # save disc labeled file
     im_seg_labeled.file_name += '_disc'
     im_seg_labeled.data = data_disc
