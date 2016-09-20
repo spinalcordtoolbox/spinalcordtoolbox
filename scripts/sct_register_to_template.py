@@ -405,7 +405,7 @@ def main():
         ftmp_seg = add_suffix(ftmp_seg, '_black')
         """
 
-        # threshold and binarize
+        # binarize
         sct.printv('\nBinarize segmentation...', verbose)
         sct.run('sct_maths -i '+ftmp_seg+' -bin 0.5 -o '+add_suffix(ftmp_seg, '_bin'))
         ftmp_seg = add_suffix(ftmp_seg, '_bin')
