@@ -379,7 +379,7 @@ if __name__ == "__main__":
         # print detailed results
         print '\nDETAILED RESULTS:'
         print results_display.to_string()
-        print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: File(s) missing'
+        print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing'
 
     except Exception as err:
         print err
