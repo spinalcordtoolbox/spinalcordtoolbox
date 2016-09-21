@@ -363,7 +363,14 @@ else
   cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   # downloading
-  download  ${TMP_DIR}/miniconda.sh https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/miniconda_${OS}.sh
+  if [ $OS == "linux" ]; then
+    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
+  elif [ $OS == "linux_centos6" ]; then
+    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
+  elif [ $OS == "osx" ]; then
+    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-MacOSX-x86_64.sh
+  fi
+  #download  ${TMP_DIR}/miniconda.sh https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/miniconda_${OS}.sh
   # run conda installer
   cmd="bash ${TMP_DIR}/miniconda.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
   ret_code_conda=$?
