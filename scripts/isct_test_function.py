@@ -231,12 +231,12 @@ def get_parser():
                       default_value=0,
                       example='42')
 
-    # parser.add_option(name="-log",
-    #                   type_value='multiple_choice',
-    #                   description="Redirects Terminal verbose to log file.",
-    #                   mandatory=False,
-    #                   example=['0', '1'],
-    #                   default_value='0')
+    parser.add_option(name="-log",
+                      type_value='multiple_choice',
+                      description="Redirects Terminal verbose to log file.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
 
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
-    # create_log_file = arguments['-log']
+    create_log = int(arguments['-log'])
     verbose = arguments["-v"]
 
     # start timer
@@ -274,13 +274,13 @@ if __name__ == "__main__":
     output_time = strftime("%y%m%d%H%M%S")
 
     # build log file name
-    file_log = 'results_test_'+function_to_test+'_'+output_time
-    orig_stdout = sys.stdout
-    fname_log = file_log+'.log'
-    handle_log = file(fname_log, 'w')
-
-    # redirect to log file
-    sys.stdout = handle_log
+    if create_log:
+        file_log = 'results_test_'+function_to_test+'_'+output_time
+        orig_stdout = sys.stdout
+        fname_log = file_log+'.log'
+        handle_log = file(fname_log, 'w')
+        # redirect to log file
+        sys.stdout = handle_log
 
     print 'Testing started on: '+strftime("%Y-%m-%d %H:%M:%S")
 
@@ -379,15 +379,15 @@ if __name__ == "__main__":
         # print detailed results
         print '\nDETAILED RESULTS:'
         print results_display.to_string()
-        print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: File(s) missing'
+        print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing'
 
     except Exception as err:
         print err
 
     # stop file redirection
-    sys.stdout.close()
-    sys.stdout = orig_stdout
-
-    # display log file to Terminal
-    handle_log = file(fname_log, 'r')
-    print handle_log.read()
+    if create_log:
+        sys.stdout.close()
+        sys.stdout = orig_stdout
+        # display log file to Terminal
+        handle_log = file(fname_log, 'r')
+        print handle_log.read()
