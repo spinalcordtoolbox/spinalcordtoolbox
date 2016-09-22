@@ -38,8 +38,14 @@ class MultiLabelRegistration:
         self.im_gm = Image(fname_gm)
         self.im_wm = Image(fname_wm)
         self.path_template = sct.slash_at_the_end(path_template, 1)
-        self.im_template_gm = Image(self.path_template+'template/MNI-Poly-AMU_GM.nii.gz')
-        self.im_template_wm = Image(self.path_template+'template/MNI-Poly-AMU_WM.nii.gz')
+        if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir(self.path_template+'template/'):
+            self.im_template_gm = Image(self.path_template+'template/MNI-Poly-AMU_GM.nii.gz')
+            self.im_template_wm = Image(self.path_template+'template/MNI-Poly-AMU_WM.nii.gz')
+            self.template = 'MNI-Poly-AMU'
+        else:
+            self.im_template_gm = Image(self.path_template + 'template/PAM50_gm.nii.gz')
+            self.im_template_wm = Image(self.path_template + 'template/PAM50_wm.nii.gz')
+            self.template = 'PAM50'
 
         # Previous warping fields:
         self.fname_warp_template2target = fname_warp_template2target
@@ -114,14 +120,14 @@ class MultiLabelRegistration:
         path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
 
         # Register multilabel images together
-        cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -iseg '+fname_template_ml+' -dseg '+fname_automatic_ml+' -param '+self.param.param_reg
+        cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -param '+self.param.param_reg
         if 'centermass' in self.param.param_reg:
             fname_template_ml_seg = sct.add_suffix(fname_template_ml, '_bin')
-            sct.run('sct_maths -i '+fname_template_ml+' -bin -o '+fname_template_ml_seg)
+            sct.run('sct_maths -i '+fname_template_ml+' -bin 0 -o '+fname_template_ml_seg)
 
             fname_automatic_ml_seg = sct.add_suffix(fname_automatic_ml, '_bin')
-            sct.run('sct_maths -i '+fname_automatic_ml+' -thr 50 -o '+fname_automatic_ml_seg)
-            sct.run('sct_maths -i '+fname_automatic_ml_seg+' -bin -o '+fname_automatic_ml_seg)
+            # sct.run('sct_maths -i '+fname_automatic_ml+' -thr 50 -o '+fname_automatic_ml_seg)
+            sct.run('sct_maths -i '+fname_automatic_ml+' -bin 50 -o '+fname_automatic_ml_seg)
 
             cmd_reg += ' -iseg '+fname_template_ml_seg+' -dseg '+fname_automatic_ml_seg
 
@@ -138,7 +144,11 @@ class MultiLabelRegistration:
         if self.fname_warp_target2template is not None:
             path_script = os.path.dirname(__file__)
             path_sct = os.path.dirname(path_script)
-            fname_dest = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'
+            if self.template == 'MNI-Poly-AMU':
+                fname_dest = path_sct+'/data/MNI-Poly-AMU/template/MNI-Poly-AMU_T2.nii.gz'
+            elif self.template == 'PAM50':
+                fname_dest = path_sct+'/data/PAM50/template/PAM50_t2.nii.gz'
+
             self.fname_warp_gm2template = 'warp_'+file_gm+'_gm2template.nii.gz'
             sct.run('sct_concat_transfo -w '+fname_warp_multilabel_auto2template+','+file_warp_target2template+ext_warp_target2template+' -d '+fname_dest+' -o '+self.fname_warp_gm2template)
 
@@ -171,9 +181,12 @@ class MultiLabelRegistration:
         os.chdir(tmp_dir)
 
         sct.run('sct_warp_template -d '+fname_manual_gmseg+' -w '+self.fname_warp_template2gm+' -qc 0 -a 0')
-
-        im_new_template_gm = Image('label/template/MNI-Poly-AMU_GM.nii.gz')
-        im_new_template_wm = Image('label/template/MNI-Poly-AMU_WM.nii.gz')
+        if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir('label/template/'):
+            im_new_template_gm = Image('label/template/MNI-Poly-AMU_GM.nii.gz')
+            im_new_template_wm = Image('label/template/MNI-Poly-AMU_WM.nii.gz')
+        else:
+            im_new_template_gm = Image('label/template/PAM50_gm.nii.gz')
+            im_new_template_wm = Image('label/template/PAM50_wm.nii.gz')
 
         im_new_template_gm = thr_im(im_new_template_gm, self.param.thr, self.param.thr)
         im_new_template_wm = thr_im(im_new_template_wm, self.param.thr, self.param.thr)
@@ -244,8 +257,8 @@ class MultiLabelRegistration:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_manual_gmseg = file_manual_gmseg+'_in_old_template_space'+ext_manual_gmseg
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fname_old_template_gm+','+file_manual_gmseg+ext_manual_gmseg+',1,16] -o [reg_ref_to_res,'+corrected_manual_gmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
-            sct.run('sct_maths -i '+corrected_manual_gmseg+' -thr 0.1 -o '+corrected_manual_gmseg)
-            sct.run('sct_maths -i '+corrected_manual_gmseg+' -bin -o '+corrected_manual_gmseg)
+            # sct.run('sct_maths -i '+corrected_manual_gmseg+' -thr 0.1 -o '+corrected_manual_gmseg)
+            sct.run('sct_maths -i '+corrected_manual_gmseg+' -bin 0.1 -o '+corrected_manual_gmseg)
             status_old_gm, output_old_gm = sct.run('sct_dice_coefficient -i '+corrected_manual_gmseg+' -d '+fname_old_template_gm+'  -2d-slices 2', error_exit='warning')
 
         try:
@@ -255,8 +268,8 @@ class MultiLabelRegistration:
             path_manual_wmseg, file_manual_wmseg, ext_manual_wmseg = sct.extract_fname(fname_manual_wmseg)
             corrected_manual_wmseg = file_manual_wmseg+'_in_old_template_space'+ext_manual_wmseg
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fname_old_template_wm+','+fname_manual_wmseg+',1,16] -o [reg_ref_to_res,'+corrected_manual_wmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
-            sct.run('sct_maths -i '+corrected_manual_wmseg+' -thr 0.1 -o '+corrected_manual_wmseg)
-            sct.run('sct_maths -i '+corrected_manual_wmseg+' -bin -o '+corrected_manual_wmseg)
+            # sct.run('sct_maths -i '+corrected_manual_wmseg+' -thr 0.1 -o '+corrected_manual_wmseg)
+            sct.run('sct_maths -i '+corrected_manual_wmseg+' -bin 0.1 -o '+corrected_manual_wmseg)
             status_old_wm, output_old_wm = sct.run('sct_dice_coefficient -i '+corrected_manual_wmseg+' -d '+fname_old_template_wm+'  -2d-slices 2', error_exit='warning')
 
         # --- DC new template
@@ -266,8 +279,8 @@ class MultiLabelRegistration:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_manual_gmseg = file_manual_gmseg+'_in_new_template_space'+ext_manual_gmseg
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fname_new_template_gm+','+file_manual_gmseg+ext_manual_gmseg+',1,16] -o [reg_ref_to_res,'+corrected_manual_gmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
-            sct.run('sct_maths -i '+corrected_manual_gmseg+' -thr 0.1 -o '+corrected_manual_gmseg)
-            sct.run('sct_maths -i '+corrected_manual_gmseg+' -bin -o '+corrected_manual_gmseg)
+            # sct.run('sct_maths -i '+corrected_manual_gmseg+' -thr 0.1 -o '+corrected_manual_gmseg)
+            sct.run('sct_maths -i '+corrected_manual_gmseg+' -bin 0.1 -o '+corrected_manual_gmseg)
             status_new_gm, output_new_gm = sct.run('sct_dice_coefficient -i '+corrected_manual_gmseg+' -d '+fname_new_template_gm+'  -2d-slices 2', error_exit='warning')
 
         try:
@@ -277,8 +290,8 @@ class MultiLabelRegistration:
             path_manual_wmseg, file_manual_wmseg, ext_manual_wmseg = sct.extract_fname(fname_manual_wmseg)
             corrected_manual_wmseg = file_manual_wmseg+'_in_new_template_space'+ext_manual_wmseg
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fname_new_template_wm+','+fname_manual_wmseg+',1,16] -o [reg_ref_to_res,'+corrected_manual_wmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
-            sct.run('sct_maths -i '+corrected_manual_wmseg+' -thr 0.1 -o '+corrected_manual_wmseg)
-            sct.run('sct_maths -i '+corrected_manual_wmseg+' -bin -o '+corrected_manual_wmseg)
+            # sct.run('sct_maths -i '+corrected_manual_wmseg+' -thr 0.1 -o '+corrected_manual_wmseg)
+            sct.run('sct_maths -i '+corrected_manual_wmseg+' -bin 0.1 -o '+corrected_manual_wmseg)
             status_new_wm, output_new_wm = sct.run('sct_dice_coefficient -i '+corrected_manual_wmseg+' -d '+fname_new_template_wm+'  -2d-slices 2', error_exit='warning')
 
         dice_name = 'dice_multilabel_reg.txt'
@@ -369,17 +382,13 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         from numpy import zeros
         tmp_dir = sct.tmp_create()
         im_warp = Image(fname_warp)
-        #nx, ny, nz, nt, px, py, pz, pt = im_warp.dim
-
-        status, out = sct.run('fslhd '+fname_warp)
         os.chdir(tmp_dir)
 
-        dim1 = 'dim1           '
-        dim2 = 'dim2           '
-        dim3 = 'dim3           '
-        nx = int(out[out.find(dim1):][len(dim1):out[out.find(dim1):].find('\n')])
-        ny = int(out[out.find(dim2):][len(dim2):out[out.find(dim2):].find('\n')])
-        nz = int(out[out.find(dim3):][len(dim3):out[out.find(dim3):].find('\n')])
+        assert len(im_warp.data.shape) == 5, 'ERROR: Warping field does bot have 5 dimensions...'
+        nx, ny, nz, nt, ndimwarp = im_warp.data.shape
+
+        # nx, ny, nz, nt, px, py, pz, pt = im_warp.dim
+        # This does not work because dimensions of a warping field are not correctly read : it would be 1,1,1,1,1,1,1,1
 
         sq = zeros((step, step))
         sq[step-1] = 1

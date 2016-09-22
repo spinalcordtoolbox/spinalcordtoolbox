@@ -71,13 +71,8 @@ folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
 # ['TM', folder_data_marseille+'/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/TM_T057c/01_0105_t2-composing'],
 
 """
-
-
-                 """
-
 # define subject
-SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
-                 ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
+SUBJECTS_LIST = [['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
                  ['errsm_05', folder_data_errsm+'/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_05/24-SPINE_SPACE'],
                  ['errsm_09', folder_data_errsm+'/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', folder_data_errsm+'/errsm_09/33-SPINE_SPACE'],
                  ['errsm_10', folder_data_errsm+'/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_10/20-SPINE_SPACE'],
@@ -94,7 +89,7 @@ SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09
                  ['errsm_25', folder_data_errsm+'/errsm_25/25-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_25/26-SPINE_T2'],
                  ['errsm_30', folder_data_errsm+'/errsm_30/51-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_30/50-SPINE_T2'],
                  ['errsm_31', folder_data_errsm+'/errsm_31/31-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_31/32-SPINE_T2'],
-                 ['errsm_32', folder_data_errsm+'/errsm_32/16-SPINE_T1/echo_2.09 ', folder_data_errsm+'/errsm_32/19-SPINE_T2'],
+                 ['errsm_32', folder_data_errsm+'/errsm_32/16-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_32/19-SPINE_T2'],
                  ['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
                  ['sct_001', folder_data_sct+'/sct_001/17-SPINE_T1/echo_2.09', folder_data_sct+'/sct_001/16-SPINE_T2'],
                  ['sct_002', folder_data_sct+'/sct_002/12-SPINE_T1/echo_2.09', folder_data_sct+'/sct_002/18-SPINE_T2'],
@@ -129,12 +124,114 @@ SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09
                  ['PA', folder_data_marseille+'/PA/01_0034_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/PA/01_0038_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7']
                  ]
 
+['errsm_04', new_folder + '/errsm_04/T1', new_folder + '/errsm_04/T2'],
+    ['errsm_05', new_folder + '/errsm_05/T1', new_folder + '/errsm_05/T2'],
+    ['errsm_09', new_folder + '/errsm_09/T1', new_folder + '/errsm_09/T2'],
+    ['errsm_10', new_folder + '/errsm_10/T1', new_folder + '/errsm_10/T2'],
+    ['errsm_12', new_folder + '/errsm_12/T1', new_folder + '/errsm_12/T2'],
+    ['errsm_13', new_folder + '/errsm_13/T1', new_folder + '/errsm_13/T2'],
+    ['errsm_14', new_folder + '/errsm_14/T1', new_folder + '/errsm_14/T2'],
+    ['errsm_16', new_folder + '/errsm_16/T1', new_folder + '/errsm_16/T2'],
+    ['errsm_17', new_folder + '/errsm_17/T1', new_folder + '/errsm_17/T2'],
+    ['errsm_18', new_folder + '/errsm_18/T1', new_folder + '/errsm_18/T2'],
+    ['errsm_11', new_folder + '/errsm_11/T1', new_folder + '/errsm_11/T2'],
+    ['errsm_21', new_folder + '/errsm_21/T1', new_folder + '/errsm_21/T2'],
+    ['errsm_23', new_folder + '/errsm_23/T1', new_folder + '/errsm_23/T2'],
+    ['errsm_24', new_folder + '/errsm_24/T1', new_folder + '/errsm_24/T2'],
+    ['errsm_25', new_folder + '/errsm_25/T1', new_folder + '/errsm_25/T2'],
+    ['errsm_30', new_folder + '/errsm_30/T1', new_folder + '/errsm_30/T2'],
+    ['errsm_31', new_folder + '/errsm_31/T1', new_folder + '/errsm_31/T2'],
+    ['errsm_32', new_folder + '/errsm_32/T1', new_folder + '/errsm_32/T2'],
+    ['errsm_33', new_folder + '/errsm_33/T1', new_folder + '/errsm_33/T2'],
+    ['sct_001', new_folder + '/sct_001/T1', new_folder + '/sct_001/T2'],
+    ['sct_002', new_folder + '/sct_002/T1', new_folder + '/sct_002/T2'],
+    ['ED', new_folder + '/ED/T1', new_folder + '/ED/T2'],
+    ['ALT', new_folder + '/ALT/T1', new_folder + '/ALT/T2'],
+    ['JD', new_folder + '/JD/T1', new_folder + '/JD/T2'],
+    ['JW', new_folder + '/JW/T1', new_folder + '/JW/T2'],
+    ['MLL', new_folder + '/MLL/T1', new_folder + '/MLL/T2'],
+    ['MT', new_folder + '/MT/T1', new_folder + '/MT/T2'],
+    ['T045', new_folder + '/T045/T1', new_folder + '/T045/T2'],
+    ['T047', new_folder + '/T047/T1', new_folder + '/T047/T2'],
+    ['VC', new_folder + '/VC/T1', new_folder + '/VC/T2'],
+    ['VG', new_folder + '/VG/T1', new_folder + '/VG/T2'],
+    ['VP', new_folder + '/VP/T1', new_folder + '/VP/T2'],
+    ['pain_pilot_1', new_folder + '/pain_pilot_1/T1', new_folder + '/pain_pilot_1/T2'],
+    ['pain_pilot_2', new_folder + '/pain_pilot_2/T1', new_folder + '/pain_pilot_2/T2'],
+    ['pain_pilot_4', new_folder + '/pain_pilot_4/T1', new_folder + '/pain_pilot_4/T2'],
+    ['errsm_20', new_folder + '/errsm_20/T1', new_folder + '/errsm_20/T2'],
+    ['pain_pilot_3', new_folder + '/pain_pilot_3/T1', new_folder + '/pain_pilot_3/T2'],
+    ['errsm_34', new_folder + '/errsm_34/T1', new_folder + '/errsm_34/T2'],
+    ['errsm_35', new_folder + '/errsm_35/T1', new_folder + '/errsm_35/T2'],
+    ['pain_pilot_7', new_folder + '/pain_pilot_7/T1', new_folder + '/pain_pilot_7/T2'],
+    ['errsm_03', new_folder + '/errsm_03/T1', new_folder + '/errsm_03/T2'],
+    ['FR', new_folder + '/FR/T1', new_folder + '/FR/T2'],
+    ['GB', new_folder + '/GB/T1', new_folder + '/GB/T2'],
+    ['errsm_36', new_folder + '/errsm_36/T1', new_folder + '/errsm_36/T2'],
+    ['errsm_37', new_folder + '/errsm_37/T1', new_folder + '/errsm_37/T2'],
+    ['errsm_43', new_folder + '/errsm_43/T1', new_folder + '/errsm_43/T2'],
+    ['errsm_44', new_folder + '/errsm_44/T1', new_folder + '/errsm_44/T2'],
+    ['AM', new_folder + '/AM/T1', new_folder + '/AM/T2'],
+    ['HB', new_folder + '/HB/T1', new_folder + '/HB/T2'],
+    ['PA', new_folder + '/PA/T1', new_folder + '/PA/T2']
+
+                 """
+
+new_folder = "/Users/benjamindeleener/data/template_data"
+SUBJECTS_LIST = [
+    ['errsm_35', new_folder + '/errsm_35/T1', new_folder + '/errsm_35/T2'],
+    ['pain_pilot_7', new_folder + '/pain_pilot_7/T1', new_folder + '/pain_pilot_7/T2'],
+    ['errsm_03', new_folder + '/errsm_03/T1', new_folder + '/errsm_03/T2'],
+    ['FR', new_folder + '/FR/T1', new_folder + '/FR/T2'],
+    ['GB', new_folder + '/GB/T1', new_folder + '/GB/T2'],
+    ['errsm_36', new_folder + '/errsm_36/T1', new_folder + '/errsm_36/T2'],
+    ['errsm_37', new_folder + '/errsm_37/T1', new_folder + '/errsm_37/T2'],
+    ['errsm_43', new_folder + '/errsm_43/T1', new_folder + '/errsm_43/T2'],
+    ['errsm_44', new_folder + '/errsm_44/T1', new_folder + '/errsm_44/T2'],
+    ['AM', new_folder + '/AM/T1', new_folder + '/AM/T2'],
+    ['HB', new_folder + '/HB/T1', new_folder + '/HB/T2'],
+    ['PA', new_folder + '/PA/T1', new_folder + '/PA/T2']
+]
+
+propseg_parameters = {
+                        'errsm_36/T2': ' -init 0.55',
+                        'MLL/T2': ' -init 0.6',
+                        'T047/T2': ' -init 0.6',
+                        'pain_pilot_7/T2': ' -init 0.6',
+                        'VG/T2': ' -init 0.55'
+                     }
+
 #Parameters:
 height_of_template_space = 1100
-x_size_of_template_space = 200
-y_size_of_template_space = 200
+x_size_of_template_space = 201
+y_size_of_template_space = 201
+spacing = 0.5
 number_labels_for_template = 20  # vertebral levels
-straightening_parameters = '-params algo_fitting=nurbs,bspline_meshsize=5x5x15'
+straightening_parameters = '-params algo_fitting=nurbs'
+"""
+# generate template space
+from msct_image import Image
+from numpy import zeros
+template = Image('/Users/benjamindeleener/code/spinalcordtoolbox/dev/template_creation/template_landmarks-mm.nii.gz')
+template_space = Image([x_size_of_template_space, y_size_of_template_space, height_of_template_space])
+template_space.data = zeros((x_size_of_template_space, y_size_of_template_space, height_of_template_space))
+template_space.hdr = template.hdr
+template_space.hdr.set_data_dtype('float32')
+origin = [(x_size_of_template_space-1.0)/4.0, -(y_size_of_template_space-1.0)/4.0, -((height_of_template_space/4.0)-spacing)]
+template_space.hdr.structarr['dim'] = [3.0, x_size_of_template_space, y_size_of_template_space, height_of_template_space, 1.0, 1.0, 1.0, 1.0]
+template_space.hdr.structarr['pixdim'] = [-1.0, spacing, spacing, spacing, 1.0, 1.0, 1.0, 1.0]
+template_space.hdr.structarr['qoffset_x'] = origin[0]
+template_space.hdr.structarr['qoffset_y'] = origin[1]
+template_space.hdr.structarr['qoffset_z'] = origin[2]
+template_space.hdr.structarr['srow_x'][-1] = origin[0]
+template_space.hdr.structarr['srow_y'][-1] = origin[1]
+template_space.hdr.structarr['srow_z'][-1] = origin[2]
+template_space.hdr.structarr['srow_x'][0] = -spacing
+template_space.hdr.structarr['srow_y'][1] = spacing
+template_space.hdr.structarr['srow_z'][2] = spacing
+template_space.setFileName('/Users/benjamindeleener/code/spinalcordtoolbox/dev/template_creation/template_landmarks-mm.nii.gz')
+template_space.save()
+"""
 
 class TimeObject:
     def __init__(self, number_of_subjects=1):
@@ -185,45 +282,102 @@ class TimeObject:
             sct.printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
 
 timer = dict()
-timer['T1'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
-timer['T2'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
-timer['align'] = TimeObject(number_of_subjects=1)
+timer['Total'] = TimeObject(number_of_subjects=1)
+timer['T1_do_preprocessing'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['T1_create_cross'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['T1_push_into_templace_space'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['T1_average_levels'] = TimeObject(number_of_subjects=1)
+timer['T1_align'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['T2'] = TimeObject(number_of_subjects=1)
+timer['T2_do_preprocessing'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['T2_create_cross'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['T2_push_into_templace_space'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['T2_average_levels'] = TimeObject(number_of_subjects=1)
+timer['T2_align'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+
 
 def main():
-    timer['T1'].start()
+    timer['Total'].start()
+
+    """
     # Processing of T1 data for template
+    timer['T1_do_preprocessing'].start()
     #do_preprocessing('T1')
+    timer['T1_do_preprocessing'].stop()
+    timer['T1_create_cross'].start()
     #create_cross('T1')
-    #push_into_templace_space('T1')
-    #average_levels('T1')
-    timer['T1'].stop()
+    timer['T1_create_cross'].stop()
+    timer['T1_push_into_templace_space'].start()
+    push_into_templace_space('T1')
+    timer['T1_push_into_templace_space'].stop()
+    timer['T1_average_levels'].start()
+    average_levels('T1')
+    timer['T1_average_levels'].stop()"""
 
-    timer['T2'].start()
+    """
     # Processing of T2 data for template
+    timer['T2_do_preprocessing'].start()
     #do_preprocessing('T2')
+    timer['T2_do_preprocessing'].stop()
+    timer['T2_create_cross'].start()
     #create_cross('T2')
-    #push_into_templace_space('T2')
-    #average_levels('T2')
-    timer['T2'].stop()
+    timer['T2_create_cross'].stop()
+    timer['T2_push_into_templace_space'].start()
+    push_into_templace_space('T2')
+    timer['T2_push_into_templace_space'].stop()
+    timer['T2_average_levels'].start()
+    average_levels('T2')
+    timer['T2_average_levels'].stop()"""
 
-    #timer['align'].start()
+
     #average_levels('both')
+    timer['T1_align'].start()
     #align_vertebrae('T1')
-    align_vertebrae('T2')
-    timer['T2'].stop()
-    timer['align'].stop()
+    timer['T1_align'].stop()
+    timer['T2_align'].start()
+    #align_vertebrae('T2')
+    timer['T2_align'].start()
 
-    sct.printv('T1 time:')
-    timer['T2'].printTotalTime()
-    sct.printv('T2 time:')
-    timer['T2'].printTotalTime()
-    sct.printv('Align time:')
-    timer['align'].printTotalTime()
+    #qc('T1')
+    qc('T2')
+
+    timer['Total'].stop()
+
+    sct.printv('Total time:')
+    timer['Total'].printTotalTime()
+
+    """
+    sct.printv('T1_do_preprocessing time:')
+    timer['T1_do_preprocessing'].printTotalTime()
+    sct.printv('T1_create_cross time:')
+    timer['T1_create_cross'].printTotalTime()
+    sct.printv('T1_push_into_templace_space time:')
+    timer['T1_push_into_templace_space'].printTotalTime()
+    sct.printv('T1_average_levels time:')
+    timer['T1_average_levels'].printTotalTime()"""
+
+
+    #sct.printv('T1_align time:')
+    #timer['T1_align'].printTotalTime()
+
+    """
+    sct.printv('T2_do_preprocessing time:')
+    timer['T2_do_preprocessing'].printTotalTime()
+    sct.printv('T2_create_cross time:')
+    timer['T2_create_cross'].printTotalTime()
+    sct.printv('T2_push_into_templace_space time:')
+    timer['T2_push_into_templace_space'].printTotalTime()
+    sct.printv('T2_average_levels time:')
+    timer['T2_average_levels'].printTotalTime()"""
+
+
+    sct.printv('T2_align time:')
+    timer['T2_align'].printTotalTime()
+
 
 
 def do_preprocessing(contrast):
-
-   # Loop across subjects
+    # Loop across subjects
     for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
@@ -297,16 +451,21 @@ def do_preprocessing(contrast):
         for k in range(len(list_dir)):
             if list_dir[k] == 'centerline_propseg_RPI.nii.gz':
                 centerline_proseg = True
-        if centerline_proseg == True:
+        if centerline_proseg:
+            cmd = ''
             if contrast == 'T1':
-                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t1 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+                cmd = 'sct_propseg -i data_RPI_crop.nii.gz -c t1 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz'
             if contrast == 'T2':
-                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t2 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+                cmd = 'sct_propseg -i data_RPI_crop.nii.gz -c t2 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz'
+            if subject + '/' + contrast in propseg_parameters:
+                cmd += propseg_parameters[subject + '/' + contrast]
+
+            sct.run(cmd)
         else:
             if contrast == 'T1':
-                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t1')
+                sct.run('sct_propseg -i data_RPI_crop.nii.gz -c t1')
             if contrast == 'T2':
-                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t2')
+                sct.run('sct_propseg -i data_RPI_crop.nii.gz -c t2')
 
         # Erase 3 top and 3 bottom slices of the segmentation to avoid edge effects  (Done because propseg tends to diverge on edges)
         print '\nErasing 3 top and 3 bottom slices of the segmentation to avoid edge effects of propseg...'
@@ -351,14 +510,11 @@ def do_preprocessing(contrast):
         if labels_updown:
             # Creation of centerline from seg and labels for intensity normalization.
             print '\nExtracting centerline for intensity normalization...'
-            sct.run('sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz')
+            sct.run('sct_get_centerline.py -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz')
             sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz seg_and_labels.nii.gz')
         else:
-            sct.run('sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+            sct.run('sct_get_centerline.py -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
             sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz seg_and_labels.nii.gz')
-
-
-
 
         # Normalisation of intensity with centerline before straightening (pb of brainstem with bad centerline)
         print '\nNormalizing intensity...'
@@ -409,7 +565,7 @@ def do_preprocessing(contrast):
         sct.run('sct_apply_transfo -i seg_and_labels.nii.gz -d data_RPI_crop_normalized_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
         ##Calculate the extrem non zero points of the straightened centerline file to crop image one last time
-        file = nibabel.load('seg_and_labels_reg.nii.gz')
+        """file = nibabel.load('seg_and_labels_reg.nii.gz')
         data_c = file.get_data()
 
         X,Y,Z = (data_c>0).nonzero()
@@ -425,7 +581,8 @@ def do_preprocessing(contrast):
         # Crop labels_vertebral_reg.nii.gz
         print'\nCrop labels_vertebral_reg.nii.gz and use cross to push into template space...'
         sct.run('sct_crop_image -i labels_vertebral_dilated_reg_2point.nii.gz -o labels_vertebral_dilated_reg_2point_crop.nii.gz -dim 2 -start '+ str(z_min)+' -end '+ str(z_max))
-
+        """
+        timer[contrast+'_do_preprocessing'].one_subject_done()
 
 # Create cross at the first and last labels for each subject. This cross will be used to push the subject into the template space using affine transfo.
 def create_cross(contrast):
@@ -441,10 +598,10 @@ def create_cross(contrast):
 
         #Calculate distances between : (last_label and bottom)  and (first label and top)
         print '\nCalculating distances between : (last_label and bottom)  and (first label and top)...'
-        img_label = nibabel.load('labels_vertebral_dilated_reg_2point_crop.nii.gz')
+        img_label = nibabel.load('labels_vertebral_dilated_reg_2point.nii.gz')
         data_labels = img_label.get_data()
         from msct_image import Image
-        nx, ny, nz, nt, px, py, pz, pt = Image('labels_vertebral_dilated_reg_2point_crop.nii.gz').dim
+        nx, ny, nz, nt, px, py, pz, pt = Image('labels_vertebral_dilated_reg_2point.nii.gz').dim
         X, Y, Z = (data_labels > 0).nonzero()
         list_coordinates = [([X[i], Y[i], Z[i], data_labels[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
         for i in range(len(list_coordinates)):
@@ -462,7 +619,7 @@ def create_cross(contrast):
 
         # Create a cross on each subject at first and last labels
         print '\nCreating a cross at first and last labels...'
-        os.system('sct_create_cross.py -i data_RPI_crop_normalized_straight_crop.nii.gz -x ' +str(int(round(nx/2.0)))+' -y '+str(int(round(ny/2.0)))+ ' -s '+str(coordinates_last_label[2])+ ' -e '+ str(coordinates_first_label[2]))
+        os.system('sct_create_cross.py -i data_RPI_crop_normalized_straight.nii.gz -x ' +str(int(round(nx/2.0)))+' -y '+str(int(round(ny/2.0)))+ ' -s '+str(coordinates_last_label[2])+ ' -e '+ str(coordinates_first_label[2]))
 
         # Write into a txt file the list of distances
         # os.chdir('../')
@@ -472,6 +629,8 @@ def create_cross(contrast):
         # f_distance.write(str(distance_2))
         # f_distance.write('\n')
 
+        timer[contrast + '_create_cross'].one_subject_done()
+
     # Calculate mean cross height for template and create file of reference
     print '\nCalculating mean cross height for template and create file of reference'
     mean_distance_1 = int(round(sum(list_distances_1)/len(list_distances_1)))
@@ -479,7 +638,7 @@ def create_cross(contrast):
     L = height_of_template_space - 2 * mean_distance_2
     H = height_of_template_space - 2 * mean_distance_1
     os.chdir(path_sct+'/dev/template_creation')
-    os.system('sct_create_cross.py -i template_landmarks-mm.nii.gz -x ' +str(x_size_of_template_space/2)+' -y '+str(y_size_of_template_space/2)+ ' -s '+str(L)+ ' -e '+ str(H))
+    os.system('sct_create_cross.py -i template_landmarks-mm.nii.gz -x ' +str(int(x_size_of_template_space/2))+' -y '+str(int(y_size_of_template_space/2))+ ' -s '+str(L)+ ' -e '+ str(H))
 
 
 
@@ -494,22 +653,24 @@ def push_into_templace_space(contrast):
 
         # Push into template space
         print'\nPush into template space...'
-        sct.run('sct_push_into_template_space.py -i data_RPI_crop_normalized_straight_crop.nii.gz -n landmark_native.nii.gz')
-        sct.run('sct_push_into_template_space.py -i labels_vertebral_dilated_reg_2point_crop.nii.gz -n landmark_native.nii.gz -a nn')
+        sct.run('sct_push_into_template_space.py -i data_RPI_crop_normalized_straight.nii.gz -n landmark_native.nii.gz')
+        sct.run('sct_push_into_template_space.py -i labels_vertebral_dilated_reg_2point.nii.gz -n landmark_native.nii.gz -a nn')
 
         # Change image type from float64 to uint16
-        sct.run('sct_change_image_type.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -o data_RPI_crop_normalized_straight_crop_2temp.nii.gz -t uint16')
+        sct.run('sct_change_image_type.py -i data_RPI_crop_normalized_straight_2temp.nii.gz -o data_RPI_crop_normalized_straight_2temp.nii.gz -t uint16')
 
         # get center of mass of each label group
         print '\nGet center of mass of each label group due to affine transformation...'
-        sct.run('sct_label_utils -i labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -o labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -t cubic-to-point')
+        sct.run('sct_label_utils -i labels_vertebral_dilated_reg_2point_2temp.nii.gz -o labels_vertebral_dilated_reg_2point_2temp.nii.gz -t cubic-to-point')
 
         # Copy labels_vertebral_straight_in_template_space.nii.gz into a folder that will contain each subject labels_vertebral_straight_in_template_space.nii.gz file and rename them
-        print'\nCheck if forlder '+PATH_OUTPUT +'/labels_vertebral_' + contrast+ ' exists and if not creates it ...'
+        print'\nCheck if folder '+PATH_OUTPUT +'/labels_vertebral_' + contrast+ ' exists and if not creates it ...'
         # check if folder exists and if not create it
         if not os.path.isdir(PATH_OUTPUT +'/labels_vertebral_' + contrast):
             os.makedirs(PATH_OUTPUT + '/labels_vertebral_' + contrast)
-        sct.run('cp labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz '+PATH_OUTPUT +'/labels_vertebral_' + contrast + '/'+subject+'.nii.gz')
+        sct.run('cp labels_vertebral_dilated_reg_2point_2temp.nii.gz '+PATH_OUTPUT +'/labels_vertebral_' + contrast + '/'+subject+'.nii.gz')
+
+        timer[contrast + '_push_into_templace_space'].one_subject_done()
 
 # Check position of labels crop_2temp with image crop_2temp
 # if no good: check position of labels reg with image normalized_straight
@@ -550,7 +711,7 @@ def average_levels(contrast):
 
         average = array([int(round(mean([average[average[:, i] > 0, i]]))) for i in xrange(n_l)])
 
-        template_absolute_path = path_sct + '/dev/template_creation/template_shape.nii.gz'
+        template_absolute_path = path_sct + '/dev/template_creation/template_landmarks-mm.nii.gz'
         print template_absolute_path
         print '\nGet dimensions of template...'
         from msct_image import Image
@@ -564,8 +725,8 @@ def average_levels(contrast):
         data[:, :, :] = 0
         compteur = 1
         for i in average:
-            print int(round(nx / 2.0)), int(round(ny / 2.0)), int(round(i)), int(round(compteur))
-            data[int(round(nx / 2.0)), int(round(ny / 2.0)), int(round(i))] = int(round(compteur))
+            print int(nx / 2.0), int(ny / 2.0), int(round(i)), int(round(compteur))
+            data[int(nx / 2.0), int(ny / 2.0), int(round(i))] = int(round(compteur))
             compteur = compteur + 1
 
         print '\nSave volume ...'
@@ -584,7 +745,7 @@ def average_levels(contrast):
         print '\nGo to output folder '+ PATH_OUTPUT + '/labels_vertebral_' + contrast + '\n'
         os.chdir(PATH_OUTPUT +'/labels_vertebral_' + contrast)
         print'\nCalculate mean along subjects of files labels_vertebral and save it into '+PATH_OUTPUT +'/labels_vertebral_' + contrast +' as template_landmarks.nii.gz'
-        template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
+        template_shape = path_sct + '/dev/template_creation/template_landmarks-mm.nii.gz'
         # this function looks at all files inside the folder "labels_vertebral_T*" and find the average vertebral levels across subjects
         sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + ' -t '+ template_shape +' -n '+ str(number_labels_for_template))
 
@@ -599,28 +760,74 @@ def align_vertebrae(contrast):
         os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
 
         print '\nAligning vertebrae for subject '+subject+'...'
-        sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
-        os.system('sct_align_vertebrae.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
+        sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_normalized_straight_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t nurbs -w spline')
+        os.system('sct_align_vertebrae.py -i data_RPI_crop_normalized_straight_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t nurbs -w spline')
+
+        timer[contrast + '_align'].one_subject_done()
+
+
+def qc(contrast):
+    for i in range(0, len(SUBJECTS_LIST)):
+        subject = SUBJECTS_LIST[i][0]
+
+        # go to output folder
+        print '\nGo to output folder ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '\n'
+        os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
+
+        print '\nApplying transformations to segmentation to compute accuracy of preprocessing and center the spinal cord.'
+        sct.run('sct_apply_transfo -i seg_and_labels_reg.nii.gz -o seg_and_labels_reg_2temp.nii.gz -d data_RPI_crop_normalized_straight_2temp.nii.gz -w native2temp.txt -x nn')
+        sct.run('sct_apply_transfo -i seg_and_labels_reg_2temp.nii.gz -o seg_and_labels_reg_2temp_aligned.nii.gz -d data_RPI_crop_normalized_straight_2temp.nii.gz -w warp_subject2template.nii.gz -x nn')
+        from msct_image import Image
+        image_centerline_aligned = Image('seg_and_labels_reg_2temp_aligned.nii.gz')
+        nx, ny, nz, nt, px, py, pz, pt = image_centerline_aligned.dim
+        points = image_centerline_aligned.getNonZeroCoordinates()
+        center = None
+        for coord in points:
+            if not center:
+                center = coord
+            else:
+                center += coord
+        center /= float(len(points))
+        distance_from_center = [(int(round(nx / 2)) - center.x)*px, (int(round(ny / 2)) - center.y)*py]
+        print 'Position of center: ', center
+        print 'Distance from center: ', distance_from_center
+        text_file = open("centering_transformation.txt", "w")
+        text_file.write("#Insight Transform File V1.0\n")
+        text_file.write("#Transform 0\n")
+        text_file.write("Transform: AffineTransform_double_3_3\n")
+        text_file.write("Parameters: 1 0 0 0 1 0 0 0 1 %.9f %.9f %.9f\n" % (-distance_from_center[0], distance_from_center[1], 0.0))
+        text_file.write("FixedParameters: 0 0 0\n")
+        text_file.close()
+        sct.run('sct_apply_transfo -i seg_and_labels_reg_2temp_aligned.nii.gz -o ' + subject + '_centerline_centered.nii.gz -d data_RPI_crop_normalized_straight_2temp.nii.gz -w centering_transformation.txt -x nn')
+        sct.run('sct_apply_transfo -i ' + subject + '_aligned.nii.gz -o ' + subject + '_final_full.nii.gz -d data_RPI_crop_normalized_straight_2temp.nii.gz -w centering_transformation.txt -x spline')
 
         # Change image type from float64 to uint16
-        sct.run('sct_change_image_type.py -i ' + subject+'_aligned.nii.gz -o ' + subject+'_aligned.nii.gz -t uint16')
+        sct.run('sct_change_image_type.py -i ' + subject+'_final_full.nii.gz -o ' + subject+'_final_full.nii.gz -t uint16')
+
+        # Crop all subjects to final space
+        sct.run('sct_crop_image -i ' + subject + '_final_full.nii.gz -o ' + subject + '_final.nii.gz -start 30,30 -end 170,170 -dim 0,1')
+        sct.run('sct_crop_image -i ' + subject + '_centerline_centered.nii.gz -o ' + subject + '_centerline_final.nii.gz -start 30,30 -end 170,170 -dim 0,1')
+
+        # Concatenate transformations
+        sct.run('sct_concat_transfo -d ' + subject + '_final.nii.gz -w native2temp.txt,warp_subject2template.nii.gz,centering_transformation.txt -o warp_native2template.nii.gz')
+        sct.run('sct_concat_transfo -d ' + subject + '_final.nii.gz -w -centering_transformation.txt,warp_template2subject.nii.gz,-native2temp.txt -o warp_template2native.nii.gz')
 
         # Inform that results for the subject is ready
-        print'\nThe results for subject '+subject+' are ready. You can visualize them by tapping: fslview '+subject+'_aligned_normalized.nii.gz'
+        print'\nThe results for subject ' + subject + ' are ready. You can visualize them by tapping: fslview ' + subject + '_final.nii.gz'
 
         # Copy final results into final results
-        if not os.path.isdir(PATH_OUTPUT +'/Final_results'):
-            os.makedirs(PATH_OUTPUT +'/Final_results')
-        sct.run('cp '+subject+'_aligned.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_' + contrast + '.nii.gz')
+        if not os.path.isdir(PATH_OUTPUT +'/final_results'):
+            os.makedirs(PATH_OUTPUT +'/final_results')
+        sct.run('cp ' + subject + '_final.nii.gz ' + PATH_OUTPUT + '/final_results/' + subject + '_final_' + contrast + '.nii.gz')
 
-        #Save png images of the results into a different folder
-        print '\nSaving png image of the final result into ' + PATH_OUTPUT +'/Image_results...'
-        if not os.path.isdir(PATH_OUTPUT +'/Image_results'):
-            os.makedirs(PATH_OUTPUT +'/Image_results')
-        f = nibabel.load(PATH_OUTPUT +'/Final_results/'+subject+'_aligned_' + contrast + '.nii.gz')
-        data = f.get_data()
+        # Save png images of the results into a different folder
+        print '\nSaving png image of the final result into ' + PATH_OUTPUT + '/Image_results...'
+        if not os.path.isdir(PATH_OUTPUT + '/image_results'):
+            os.makedirs(PATH_OUTPUT + '/image_results')
         from msct_image import Image
-        nx, ny, nz, nt, px, py, pz, pt = Image(PATH_OUTPUT +'/Final_results/'+subject+'_aligned_' + contrast + '.nii.gz').dim
+        image_result = Image(PATH_OUTPUT + '/final_results/' + subject + '_final_' + contrast + '.nii.gz')
+        nx, ny, nz, nt, px, py, pz, pt = image_result.dim
+        data = image_result.data
         sagital_middle = nx / 2
         coronal_middle = ny / 2
         sagittal = data[sagital_middle, :, :].T
@@ -633,9 +840,9 @@ def align_vertebrae(contrast):
         for i in range(2):
             ax[i].set_axis_off()
         fig1 = plt.gcf()
-        fig1.savefig(PATH_OUTPUT +'/Image_results'+'/'+subject+'_aligned_' + contrast + '.png', format='png')
+        fig1.savefig(PATH_OUTPUT + '/image_results' + '/' + subject + '_final_' + contrast + '.png', format='png')
 
-        timer[contrast].one_subject_done()
+
 
 #=======================================================================================================================
 # Start program
