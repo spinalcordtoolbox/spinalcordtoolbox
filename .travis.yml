@@ -25,13 +25,15 @@ matrix:
 before_install:
   - echo "HOME="
   - echo $HOME
+
 install:
 # update tools
 #  - ./update_bin.sh
   - yes | ./install_sct
-# run launcher in order to update PATH
+  # run launcher in order to update PATH
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
+
 script:
 #  - sct_check_dependencies   # test dependencies
   - sct_testing -d 1  # test functions & integrity

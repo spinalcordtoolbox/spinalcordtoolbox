@@ -59,6 +59,7 @@ def main():
     file_log = 'sct_check_dependencies.log'
     complete_test = param.complete_test
     os_running = 'not identified'
+    dipy_version = '0.10.0dev'
     print
 
     # Check input parameters
@@ -104,25 +105,48 @@ def main():
     print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
 
     # check RAM
-    print 'RAM:'
-    sct.checkRAM(os_running)
+    sct.checkRAM(os_running, 0)
 
     # get path of the toolbox
     path_sct = os.getenv("SCT_DIR")
-    if path_sct is None :
-        raise EnvironmentError("SCT_DIR, which is the path to the "
-                               "Spinalcordtoolbox install needs to be set")
+    if path_sct is None:
+        raise EnvironmentError("SCT_DIR, which is the path SCT install needs to be set")
     print ('SCT path: {0}'.format(path_sct))
 
-    # fetch version of the toolbox
-    with open (path_sct+"/version.txt", "r") as myfile:
+    # fetch version
+    with open (path_sct+'/version.txt', 'r') as myfile:
         version_sct = myfile.read().replace('\n', '')
-    with open (path_sct+"/commit.txt", "r") as myfile:
-        commit_sct = myfile.read().replace('\n', '')
-    print "SCT version: "+version_sct+'-'+commit_sct
+    print 'SCT version: '+version_sct
 
-    # check installation packages
-    print 'Python path: '+sys.executable
+    # fetch true commit number and branch (do not use commit.txt which is wrong)
+    path_curr = os.path.abspath(os.curdir)
+    os.chdir(path_sct)
+    # first, make sure there is a .git folder
+    if os.path.isdir('.git'):
+        sct_commit = commands.getoutput('git rev-parse HEAD')
+        sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
+        if not (sct_commit.isalnum() and sct_branch.isalnum()):
+            print "WARNING: Cannot retrieve SCT commit and/or branch number"
+            sct_commit = 'unknown'
+            sct_branch = 'unknown'
+        print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
+    os.chdir(path_curr)
+
+    # # fetch version of the toolbox
+    # with open (path_sct+"/version.txt", "r") as myfile:
+    #     version_sct = myfile.read().replace('\n', '')
+    # with open (path_sct+"/commit.txt", "r") as myfile:
+    #     commit_sct = myfile.read().replace('\n', '')
+    # print "SCT version: "+version_sct+'-'+commit_sct
+
+    # check if Python path is within SCT path
+    print_line('Check Python path')
+    path_python = sys.executable
+    if path_sct in path_python:
+        print_ok()
+    else:
+        print_fail()
+        print '  Python path: '+path_python
 
     # check if data folder is empty
     print_line('Check if data are installed')
@@ -139,6 +163,8 @@ def main():
             module = 'skimage'
         elif i == 'scikit-learn':
             module = 'sklearn'
+        elif i == 'pyqt':
+            module = 'PyQt4'
         else:
             module = i
         print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
@@ -182,25 +208,37 @@ def main():
             print_fail()
             install_software = 1
 
-    # CHECK EXTERNAL MODULES:
-    # Check if ornlm is installed
-    print_line('Check if ornlm is installed')
-#    sys.path.append(path_sct + '/external/denoise/ornlm')  # append to PYTHONPATH
+
+    # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
+    print_line('Check if numpy is installed')
     try:
-        importlib.import_module('ornlm')
+        importlib.import_module('numpy')
+        print_ok()
+    except ImportError:
+        print_fail()
+        install_software = 1
+    print_line('Check if scipy is installed')
+    try:
+        importlib.import_module('scipy')
         print_ok()
     except ImportError:
         print_fail()
         install_software = 1
 
+    # CHECK EXTERNAL MODULES:
+    
     # Check if dipy is installed
-    print_line('Check if dipy is installed')
-    try:
-        importlib.import_module('dipy')
-        print_ok()
-    except ImportError:
-        print_fail()
-        install_software = 1
+    # print_line('Check if dipy ('+dipy_version+') is installed')
+    # try:
+    #     module = importlib.import_module('dipy')
+    #     if module.__version__ == dipy_version:
+    #         print_ok()
+    #     else:
+    #         print_warning()
+    #         print '  Detected version: '+version+'. Required version: '+dipy_version
+    # except ImportError:
+    #     print_fail()
+    #     install_software = 1
 
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
@@ -253,12 +291,22 @@ def main():
     if complete_test:
         print (status, output), '\n'
 
+    # check if figure can be opened (in case running SCT via ssh connection)
+    print_line('Check if figure can be opened')
+    try:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.close()
+        print_ok()
+    except:
+        print_fail()
+        print sys.exc_info()
+
     # close log file
     if create_log_file:
         sys.stdout = orig_stdout
         handle_log.close()
         print "File generated: "+file_log+'\n'
-
     print ''
     sys.exit(e + install_software)
     
