@@ -289,7 +289,7 @@ class ComputeDistances:
     def compute_dist_2im_3d(self):
         nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
         nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = get_dimension(self.im2)
-        assert round(pz1, 5) == round(pz2, 5) and round(py1, 5) == round(py2, 5)
+        # assert round(pz1, 5) == round(pz2, 5) and round(py1, 5) == round(py2, 5)
         assert nx1 == nx2
         self.dim_pix = py1
 

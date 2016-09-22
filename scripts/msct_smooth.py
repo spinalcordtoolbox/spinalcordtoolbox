@@ -270,19 +270,24 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
 #=======================================================================================================================
 # 3D B-Spline function, sct_nurbs
 #=======================================================================================================================
-#def b_spline_nurbs(x, y, z, control_points=0, degree=3,point_number=3000):
-
-def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1, verbose=1):
+def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1, verbose=1, all_slices=True):
 
     from math import log
     from msct_nurbs import NURBS
+
+    twodim = False
+    if z == None:
+        twodim = True
 
     """x.reverse()
     y.reverse()
     z.reverse()"""
           
     sct.printv('\nFitting centerline using B-spline approximation...', verbose)
-    data = [[x[n], y[n], z[n]] for n in range(len(x))]
+    if not twodim:
+        data = [[x[n], y[n], z[n]] for n in range(len(x))]
+    else:
+        data = [[x[n], y[n]] for n in range(len(x))]
 
     # if control_points == 0:
     #     nurbs = NURBS(degree, point_number, data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
@@ -295,16 +300,24 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
         nbControl = 30*log(centerlineSize, 10) - 42
         nbControl = round(nbControl)
 
-    nurbs = NURBS(degree, point_number, data, False, nbControl, verbose)
+    nurbs = NURBS(degree, point_number, data, False, nbControl, verbose, all_slices=all_slices, twodim=twodim)
 
-    P = nurbs.getCourbe3D()
-    x_fit=P[0]
-    y_fit=P[1]
-    z_fit=P[2]
-    Q = nurbs.getCourbe3D_deriv()
-    x_deriv=Q[0]
-    y_deriv=Q[1]
-    z_deriv=Q[2]
+    if not twodim:
+        P = nurbs.getCourbe3D()
+        x_fit=P[0]
+        y_fit=P[1]
+        z_fit=P[2]
+        Q = nurbs.getCourbe3D_deriv()
+        x_deriv=Q[0]
+        y_deriv=Q[1]
+        z_deriv=Q[2]
+    else:
+        P = nurbs.getCourbe2D()
+        x_fit=P[0]
+        y_fit=P[1]
+        Q = nurbs.getCourbe2D_deriv()
+        x_deriv=Q[0]
+        y_deriv=Q[1]
 
     """x_fit = x_fit[::-1]
     y_fit = x_fit[::-1]
@@ -313,35 +326,49 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     y_deriv = x_fit[::-1]
     z_deriv = x_fit[::-1]"""
 
-    PC = nurbs.getControle()
-    PC_x = [p[0] for p in PC]
-    PC_y = [p[1] for p in PC]
-    PC_z = [p[2] for p in PC]
-
     if verbose == 2:
+        PC = nurbs.getControle()
+        PC_x = [p[0] for p in PC]
+        PC_y = [p[1] for p in PC]
+        if not twodim:
+            PC_z = [p[2] for p in PC]
+
         import matplotlib.pyplot as plt
-        plt.figure(1)
-        #ax = plt.subplot(211)
-        plt.subplot(211)
-        plt.plot(z, x, 'r.')
-        plt.plot(z_fit, x_fit)
-        plt.plot(PC_z,PC_x,'go')
-        plt.title("X")
-        #ax.set_aspect('equal')
-        plt.xlabel('z')
-        plt.ylabel('x')
-        #ay = plt.subplot(212)
-        plt.subplot(212)
-        plt.plot(z, y, 'r.')
-        plt.plot(z_fit, y_fit)
-        plt.plot(PC_z,PC_y,'go')
-        plt.title("Y")
-        #ay.set_aspect('equal')
-        plt.xlabel('z')
-        plt.ylabel('y')
-        plt.show()
-  
-    return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv
+        if not twodim:
+            plt.figure(1)
+            #ax = plt.subplot(211)
+            plt.subplot(211)
+            plt.plot(z, x, 'r.')
+            plt.plot(z_fit, x_fit)
+            plt.plot(PC_z, PC_x, 'go')
+            plt.title("X")
+            #ax.set_aspect('equal')
+            plt.xlabel('z')
+            plt.ylabel('x')
+            #ay = plt.subplot(212)
+            plt.subplot(212)
+            plt.plot(z, y, 'r.')
+            plt.plot(z_fit, y_fit)
+            plt.plot(PC_z, PC_y, 'go')
+            plt.title("Y")
+            #ay.set_aspect('equal')
+            plt.xlabel('z')
+            plt.ylabel('y')
+            plt.show()
+        else:
+            plt.figure(1)
+            plt.plot(y, x, 'r.')
+            plt.plot(y_fit, x_fit)
+            plt.plot(PC_y, PC_x, 'go')
+            #ax.set_aspect('equal')
+            plt.xlabel('y')
+            plt.ylabel('x')
+            plt.show()
+
+    if not twodim:
+        return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv
+    else:
+        return x_fit, y_fit, x_deriv, y_deriv
 
 
 
