@@ -11,16 +11,18 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-#import sct_utils as sct
 import commands
 from time import sleep
-
+from sct_warp_template import get_file_label
 
 def test(data_path):
 
     # parameters
     folder_data = [ 'template/template/', 't2/', 'dmri/']
-    file_data = ['MNI-Poly-AMU_T2.nii.gz', 't2.nii.gz', 'warp_template2anat.nii.gz', 'dmri.nii.gz']
+    file_data = [get_file_label(data_path+'template/template/','T2-weighted'),
+                 't2.nii.gz',
+                 'warp_template2anat.nii.gz',
+                 'dmri.nii.gz']
 
     output = ''
     status = 0
@@ -33,7 +35,6 @@ def test(data_path):
     s, o = commands.getstatusoutput(cmd)
     status += s
     output += o
-    sleep(1)  # here one second, otherwise the next test will try to create a temporary folder with the same name
 
     # test with 4d input
     cmd = 'sct_apply_transfo -i ' + data_path + folder_data[2] + file_data[3] \

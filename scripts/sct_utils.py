@@ -21,12 +21,10 @@ import os
 import commands
 import subprocess
 import re
-
+from sys import stdout
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
-
-fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
 
 # define class color
@@ -40,7 +38,6 @@ class bcolors(object):
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
-
 
 
 #=======================================================================================================================
@@ -116,10 +113,10 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
 # check RAM usage
 # work only on Mac OSX
 #=======================================================================================================================
-def checkRAM(os,verbose=1):
+def checkRAM(os, verbose=1):
     if (os == 'linux'):
         status, output = run('grep MemTotal /proc/meminfo', 0)
-        print output
+        print 'RAM: '+output
         ram_split = output.split()
         ram_total = float(ram_split[1])
         status, output = run('free -m', 0)
@@ -128,7 +125,7 @@ def checkRAM(os,verbose=1):
 
     elif (os == 'osx'):
         status, output = run('hostinfo | grep memory', 0)
-        print output
+        print 'RAM: '+output
         ram_split = output.split(' ')
         ram_total = float(ram_split[3])
 
@@ -159,10 +156,10 @@ def checkRAM(os,verbose=1):
             vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
         
         if verbose:
-            print 'Wired Memory:\t\t%d MB' % ( vmStats["Pages wired down"]/1024/1024 )
-            print 'Active Memory:\t\t%d MB' % ( vmStats["Pages active"]/1024/1024 )
-            print 'Inactive Memory:\t%d MB' % ( vmStats["Pages inactive"]/1024/1024 )
-            print 'Free Memory:\t\t%d MB' % ( vmStats["Pages free"]/1024/1024 )
+            print '  Wired Memory:\t\t%d MB' % ( vmStats["Pages wired down"]/1024/1024 )
+            print '  Active Memory:\t%d MB' % ( vmStats["Pages active"]/1024/1024 )
+            print '  Inactive Memory:\t%d MB' % ( vmStats["Pages inactive"]/1024/1024 )
+            print '  Free Memory:\t\t%d MB' % ( vmStats["Pages free"]/1024/1024 )
             #print 'Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 )
 
         return ram_total
@@ -188,7 +185,8 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+        stdout.flush()
 
     def iterations_done(self, total_num_iterations_done):
         if total_num_iterations_done != 0:
@@ -199,13 +197,14 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+            stdout.flush()
 
     def stop(self):
         self.time_list.append(time.time() - self.start_timer)
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
-        printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
         self.is_started = False
 
     def printRemainingTime(self):
@@ -215,17 +214,19 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+            stdout.flush()
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
     def printTotalTime(self):
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            stdout.flush()
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
 
 #=======================================================================================================================
@@ -353,16 +354,22 @@ def check_if_rpi(fname):
 #=======================================================================================================================
 # find_file_within_folder
 #=======================================================================================================================
-def find_file_within_folder(fname, directory):
+def find_file_within_folder(fname, directory, seek_type='file'):
     """Find file (or part of file, e.g. 'my_file*.txt') within folder tree recursively - fname and directory must be
-    strings"""
+    strings
+    seek_type: 'file' or 'dir' to look for either a file or a directory respectively."""
     import fnmatch
 
     all_path = []
     for root, dirs, files in os.walk(directory):
-        for file in files:
-            if fnmatch.fnmatch(file, fname):
-                all_path.append(os.path.join(root, file))
+        if seek_type == 'dir':
+            for folder in dirs:
+                if fnmatch.fnmatch(folder, fname):
+                    all_path.append(os.path.join(root, folder))
+        else:
+            for file in files:
+                if fnmatch.fnmatch(file, fname):
+                    all_path.append(os.path.join(root, file))
     return all_path
 
 #=======================================================================================================================
@@ -514,9 +521,11 @@ def printv(string, verbose=1, type='normal'):
     # if error, exit program
     if type == 'error':
         from inspect import stack
-        frame,filename,line_number,function_name,lines,index = stack()[1]
+        frame, filename, line_number, function_name, lines, index = stack()[1]
         # print(frame,filename,line_number,function_name,lines,index)
-        print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
+        import traceback
+        print('\n'+bcolors.red+filename+traceback.format_exc()+bcolors.normal)  # print error message
+        # print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
         sys.exit(2)
 
 
@@ -542,8 +551,6 @@ def slash_at_the_end(path, slash=0):
         if not path[-1:] == '/':
             path = path+'/'
     return path
-
-
 
 
 #=======================================================================================================================
@@ -588,6 +595,22 @@ def get_interpolation(program, interp):
         interp_program = ' -n Linear'
     # return
     return interp_program
+
+
+#=======================================================================================================================
+# template file dictionary
+#=======================================================================================================================
+def template_dict(template):
+    """
+    Dictionary of file names for template
+    :param template:
+    :return: dict_template
+    """
+    if template == 'PAM50':
+        dict_template = {'t2': 'template/PAM50_t2.nii.gz',
+                         't1': 'template/PAM50_t1.nii.gz'}
+    return dict_template
+
 
 class UnsupportedOs(Exception):
     def __init__(self, value):

@@ -124,7 +124,8 @@ class ModelDictionary:
         self.slices = None
         self.J = None
         self.N = None
-        self.mean_seg = None
+        self.mean_wmseg = None
+        self.mean_gmseg = None
         self.mean_image = None
 
         # list of transformation to apply to each slice to co-register the data into the common groupwise space
@@ -164,7 +165,7 @@ class ModelDictionary:
 
         sct.printv('\nComputing the transformation to co-register all the data into a common groupwise space (using the white matter segmentations) ...', self.param.verbose, 'normal')
         # mean segmentation image of the dictionary, type: numpy array
-        self.mean_seg = self.seg_coregistration(transfo_to_apply=self.coregistration_transfos)
+        self.mean_wmseg = self.seg_coregistration(transfo_to_apply=self.coregistration_transfos)
 
         sct.printv('\nCo-registering all the data into the common groupwise space ...', self.param.verbose, 'normal')
         self.coregister_data(transfo_to_apply=self.coregistration_transfos)
@@ -397,12 +398,13 @@ class ModelDictionary:
         # dimension of the slices (flattened)
         self.N = len(self.slices[0].im_M_flat)  # type: int
 
-        self.mean_seg = compute_majority_vote_mean_seg(get_all_seg_from_dic(self.slices, type='wm_m'))
+        self.mean_wmseg = compute_majority_vote_mean_seg(get_all_seg_from_dic(self.slices, type='wm_m'))
+        self.mean_gmseg = compute_majority_vote_mean_seg(get_all_seg_from_dic(self.slices, type='gm_m'))
 
     # ------------------------------------------------------------------------------------------------------------------
     def mean_seg_by_level(self, type='binary', save=False):
-        gm_seg_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': [], '': []}
-        im_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': [], '': []}
+        gm_seg_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': [], 'T3': [], 'T4': [], 'T5': [], 'T6': [], 'T7': [], 'T8': [], 'T10': [], 'T11': [], 'T12': [], 'L1': [], 'L2': [], 'L3': [], 'L4': [], 'L5': [], '': []}
+        im_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': [], 'T3': [], 'T4': [], 'T5': [], 'T6': [], 'T7': [], 'T8': [], 'T10': [], 'T11': [], 'T12': [], 'L1': [], 'L2': [], 'L3': [], 'L4': [], 'L5': [], '': []}
         for dic_slice in self.slices:
             for gm_seg_m in dic_slice.gm_seg_M:
                 gm_seg_by_level[self.level_label[int(dic_slice.level)]].append(gm_seg_m)
@@ -415,6 +417,12 @@ class ModelDictionary:
         for level, im_data_set in im_by_level.items():
             im_averages[level] = np.mean(im_data_set, axis=0)
         im_averages[''] = np.mean([dic_slice.im_M for dic_slice in self.slices], axis=0)
+
+        for dic in [seg_averages, im_averages]:
+            for level, average in dic.items():
+                if np.asarray(average).shape == ():
+                    dic[level] = np.zeros(dic[''].shape)
+
         if save:
             for level, mean_gm_seg in seg_averages.items():
                 Image(param=mean_gm_seg, absolutepath='./mean_seg_' + level + '.nii.gz').save()
@@ -444,10 +452,10 @@ class ModelDictionary:
             im_seg_m.set_interpolation('nearest')
             im_seg_m.set_cmap('gray')
 
-            if self.mean_seg is not None:
+            if self.mean_wmseg is not None:
                 mean_seg_subplot = fig.add_subplot(2, 3, 3)
                 mean_seg_subplot.set_title('Mean seg')
-                im_mean_seg = mean_seg_subplot.imshow(np.asarray(self.mean_seg))
+                im_mean_seg = mean_seg_subplot.imshow(np.asarray(self.mean_wmseg))
                 im_mean_seg.set_interpolation('nearest')
                 im_mean_seg.set_cmap('gray')
 
@@ -714,26 +722,33 @@ class Model:
                     weights = beta[i][selected_ind_by_slice]
                     weights = [w/sum(weights) for w in weights]
                 '''
-                weights = None
+                # if slices from teh dictionary were selected:
+                if np.any(selected_ind_by_slice):
+                    weights = None
 
-                #list_selected_slices_wm = np.array(wm_segmentation_slices[selected_ind_by_slice])
-                selected_slices_wmseg = []
-                for seg_by_slice in wm_segmentation_slices[selected_ind_by_slice]:
-                    for seg in seg_by_slice:
-                        selected_slices_wmseg.append(seg)
+                    #list_selected_slices_wm = np.array(wm_segmentation_slices[selected_ind_by_slice])
+                    selected_slices_wmseg = []
+                    for seg_by_slice in wm_segmentation_slices[selected_ind_by_slice]:
+                        for seg in seg_by_slice:
+                            selected_slices_wmseg.append(seg)
 
-                wm_slice_seg = compute_majority_vote_mean_seg(selected_slices_wmseg, weights=weights, type=type, threshold=0.50001)
-                res_wm_seg_model_space.append(wm_slice_seg)
-                target[i].set(list_wm_seg_m=[wm_slice_seg])
+                    wm_slice_seg = compute_majority_vote_mean_seg(selected_slices_wmseg, weights=weights, type=type, threshold=0.50001)
+                    res_wm_seg_model_space.append(wm_slice_seg)
+                    target[i].set(list_wm_seg_m=[wm_slice_seg])
 
-                # list_selected_slices_gm = gm_segmentation_slices[selected_ind_by_slice]
-                selected_slices_gmseg = []
-                for seg_by_slice in gm_segmentation_slices[selected_ind_by_slice]:
-                    for seg in seg_by_slice:
-                        selected_slices_gmseg.append(seg)
-                gm_slice_seg = compute_majority_vote_mean_seg(selected_slices_gmseg, weights=weights, type=type)
-                res_gm_seg_model_space.append(gm_slice_seg)
-                target[i].set(list_gm_seg_m=[gm_slice_seg])
+                    # list_selected_slices_gm = gm_segmentation_slices[selected_ind_by_slice]
+                    selected_slices_gmseg = []
+                    for seg_by_slice in gm_segmentation_slices[selected_ind_by_slice]:
+                        for seg in seg_by_slice:
+                            selected_slices_gmseg.append(seg)
+                    gm_slice_seg = compute_majority_vote_mean_seg(selected_slices_gmseg, weights=weights, type=type)
+                    res_gm_seg_model_space.append(gm_slice_seg)
+                    target[i].set(list_gm_seg_m=[gm_slice_seg])
+                else:
+                    # no selected dictionary slices
+                    target[i].set(list_wm_seg_m=[self.dictionary.mean_wmseg])
+                    target[i].set(list_gm_seg_m=[self.dictionary.mean_gmseg])
+
 
         else:
             # 2D image
@@ -1052,8 +1067,8 @@ class TargetSegmentationPairwise:
                         bin = True
                     else:
                         bin = False
-                    moving_wm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_wm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1], metric=self.model.param.reg_metric)
-                    moving_gm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_gm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1], metric=self.model.param.reg_metric)
+                    moving_wm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_wmseg, moving_wm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1], metric=self.model.param.reg_metric)
+                    moving_gm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_gmseg, moving_gm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1], metric=self.model.param.reg_metric)
 
                 target_slice.set(list_wm_seg=[moving_wm_seg_slice])
                 target_slice.set(list_gm_seg=[moving_gm_seg_slice])
@@ -1260,7 +1275,7 @@ if __name__ == "__main__":
                           type_value="str",
                           description="Image containing level labels for the target or str indicating the level",
                           mandatory=False,
-                          example='MNI-Poly-AMU_level_IRP.nii.gz')
+                          example='PAM50_levels_IRP.nii.gz')
         parser.add_option(name="-reg",
                           type_value=[[','], 'str'],
                           description="list of transformations to apply to co-register the dictionary data",
