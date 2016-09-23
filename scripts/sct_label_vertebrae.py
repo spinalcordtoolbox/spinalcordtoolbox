@@ -41,12 +41,13 @@ class Param:
     def __init__(self):
         # self.path_template = path_sct+'/data/template/'
         self.shift_AP_brainstem = 25
-        self.size_AP_brainstem = 15
-        self.shift_IS_brainstem = 15
-        self.size_IS_brainstem = 30
+        self.size_AP_brainstem = 25#15
+        self.shift_IS_brainstem = 15#15
+        self.size_IS_brainstem = 40#30
+        self.size_RL_brainstem = 5#
         self.shift_AP = 32#0#32  # shift the centerline towards the spine (in voxel).
         self.size_AP = 11#41#11  # window size in AP direction (=y) (in voxel)
-        self.size_RL = 1  # window size in RL direction (=x) (in voxel)
+        self.size_RL = 1 #1 # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
         self.shift_AP_visu = 15#0#15  # shift AP for displaying disc values
         self.smooth_factor = [7, 1, 1]  # [3, 1, 1]
@@ -403,13 +404,12 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
     printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
-
     # if automatic mode, find C2/C3 disc
     if init_disc == [] and initc2 == 'auto':
         printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True)
+        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_brainstem, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True)
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
@@ -438,7 +438,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     # display init disc
     if verbose == 2:
         import matplotlib.pyplot as plt
-        plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=param.fig_anat_straight, cmap=plt.cm.gray, origin='lower')
+        plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=param.fig_anat_straight, cmap=plt.cm.gray, clim=[0, 800], origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
         plt.figure(param.fig_anat_straight), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
@@ -770,8 +770,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         # display template pattern
         plt.figure(11, figsize=(15, 7))
         plt.subplot(131)
-        plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray,
-                   interpolation='none')
+        plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
         plt.title('Template pattern')
         # display subject pattern at best z
         plt.subplot(132)
@@ -780,8 +779,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
                        x - xsize: x + xsize + 1,
                        y + yshift - ysize: y + yshift + ysize + 1,
                        z + iz - zsize: z + iz + zsize + 1]
-        plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray,
-                   interpolation='none')
+        plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, clim=[0, 800], interpolation='none')
         plt.title('Subject at iz=' + str(iz))
         # display correlation curve
         plt.subplot(133)
