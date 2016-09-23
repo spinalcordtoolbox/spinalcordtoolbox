@@ -10,7 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
+import sys, os
 from numpy import concatenate, shape, newaxis
 from msct_parser import Parser
 from msct_image import Image, get_dimension
@@ -633,6 +633,9 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
             run('isct_orientation3d -i '+im+' -orientation '+orientation+' -o '+fname_out, 0)
             im_out = fname_out
         else:
+            fname_in = im.absolutepath
+            if fname_in not in os.listdir('.'):
+                im.save()
             run('isct_orientation3d -i '+im.absolutepath+' -orientation '+orientation+' -o '+fname_out, 0)
             im_out = Image(fname_out)
     else:

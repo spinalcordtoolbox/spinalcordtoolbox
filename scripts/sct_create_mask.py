@@ -47,11 +47,16 @@ class Param:
         self.verbose = 1
         self.remove_tmp_files = 1
         self.offset = '0,0'
+param = Param()
+param_default = Param()
 
 
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     # Parameters for debug mode
     if param.debug:
@@ -67,7 +72,7 @@ def main():
     else:
         # Check input parameters
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
 
         param.fname_data = arguments['-i']
 

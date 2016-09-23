@@ -252,7 +252,7 @@ def main(args=None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     input_filename = arguments["-i"]
     fname_dest = arguments["-d"]
     warp_filename = arguments["-w"]

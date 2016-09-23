@@ -1,67 +1,37 @@
 #!/usr/bin/env python
+########################################################################################################################
 #
-# This program returns the gray matter segmentation given anatomical, spinal cord segmentation and t2star images
 #
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Sara Dupont
-# Modified: 2015-05-20
+# Gray matter segmentation - new implementation
+#
+# ----------------------------------------------------------------------------------------------------------------------
+# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Sara Dupont
+# Modified: 2016-06-14
 #
 # About the license: see the file LICENSE.TXT
-#########################################################################################
-
-'''
-INFORMATION:
-The model used in this function is compound of:
-  - a dictionary of WM/GM contrasted images with their manual segmentations
-  - a PCA representing ths dictionary (ie. eigenvectors and eigenvalues)
-  - a parameter value
-  - an information file indicating which parameters were used to construct this model
-
-A constructed model is provided in the toolbox here: $PATH_SCT/data/gm_model.
-It's made from T2* images of 37 subjects and computed with the parameters that gives the best gray matter segmentation results.
-However you can compute you own model with your own data or with other parameters and use it to segment gray matter by using  the flag -model path_new_gm_model/.
-
-To do so, you should have a folder (path_to_dataset/) containing for each subject (with a folder per subject):
-        - a WM/GM contrasted image (for ex T2*-w) containing 'im' in its name
-        - a segmentation of the spinal cord containing 'seg' in its name
-        - a manual segmentation of the gray matter containing 'gm' in its name
-        - a 'level image' containing 'level' in its name : the level image is an image containing a level label per slice indicating at wich vertebral level correspond this slice (usually obtained by registering the MNI-Poly-AMU or PAM50 template to the WM/GM contrasted image).
-
-Use the following command lines :
-# Preprocess the data
-msct_gmseg_utils -preprocess path_to_dataset/
-
-# Compute the model
-msct_multiatlas_seg -model path_to_dataset_by_slice/ -todo-model compute
-
-Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function the flag -model gm_model/
-
-'''
-
-import sct_utils as sct
-import os
-import time
-import sys
-import getopt
+########################################################################################################################
+from msct_multiatlas_seg import Param, ParamData, ParamModel, Model
+from msct_gmseg_utils import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm, binarize
+from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end, run
+from sct_image import set_orientation
+from msct_image import Image
 from msct_parser import *
-from msct_image import Image, get_dimension
-import random
-from msct_multiatlas_seg import ModelParam, Model, SegmentationParam, SupervisedSegmentationMethod
-from msct_gmseg_utils import *
-from sct_image import set_orientation, get_orientation_3d, orientation,pad_image
-import shutil
+import sct_maths, sct_register_multimodal
+from math import exp
+import numpy as np
+import shutil, os, sys, time
 
 
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Segmentation of the white and gray matter.'
-                                 ' The segmentation is based on a multi-atlas method that uses a dictionary of pre-segmented gray matter images (already included in SCT) and finds the most similar images for identifying the gray matter using label fusion approach. The model used by this method contains: a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template.'
+                                 ' The segmentation is based on a multi-atlas method that uses a dictionary of pre-segmented gray matter images (already included in SCT) and finds the most similar images for identifying the gray matter using label fusion approach. The model used by this method contains: a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA reduced space to describe the variability of intensity in that template.'
                                  ' This method was inspired from [Asman et al., Medical Image Analysis 2014] and features the following additions:\n'
                                  '- possibility to add information from vertebral levels for improved accuracy\n'
                                  '- intensity normalization of the image to segment (allows the segmentation of any kind of contrast)\n'
-                                 '- pre-registration based on affine transformation')
+                                 '- pre-registration based on non-linear transformations')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Image to segment",
@@ -81,12 +51,8 @@ def get_parser():
                       "3,4\n"
                       "4,4",
                       mandatory=False,
+                      default_value=ParamSeg().fname_level,
                       example='label/template/PAM50_levels.nii.gz')
-    parser.add_option(name="-verttype",
-                      type_value='multiple_choice',
-                      description="if float is selected, vertebral labeling is interpolated for higher accuracy. Default value = "+ModelParam().use_levels,
-                      mandatory=False,
-                      example=['int', 'float'])
     parser.add_option(name="-vert",
                       mandatory=False,
                       deprecated_by='-vertfile')
@@ -95,600 +61,581 @@ def get_parser():
                       deprecated_by='-vertfile')
 
     parser.usage.addSection('SEGMENTATION OPTIONS')
-    parser.add_option(name="-weight",
-                      type_value='float',
-                      description="weight parameter on the level differences to compute the similarities (beta)",
-                      mandatory=False,
-                      default_value=2.5,
-                      example=2.0)
-    '''
-    parser.add_option(name="-weight-similarity",
-                      type_value='multiple_choice',
-                      description="Use the modes eigenvalues as weight for the similarity beta",
-                      mandatory=False,
-                      default_value=0,
-                      example=['0', '1'])
-    parser.add_option(name="-weight-label-fusion",
-                      type_value='multiple_choice',
-                      description="Use the similarity beta as weight for the label fusion",
-                      mandatory=False,
-                      default_value=0,
-                      example=['0', '1'])
-    '''
     parser.add_option(name="-denoising",
                       type_value='multiple_choice',
-                      description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
+                      description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been computed with denoising too)",
                       mandatory=False,
-                      default_value=1,
+                      default_value=int(ParamData().denoising),
                       example=['0', '1'])
-    parser.add_option(name="-normalize",
+    parser.add_option(name="-normalization",
                       type_value='multiple_choice',
                       description="Normalization of the target image's intensity using median intensity values of the WM and the GM, recomended with MT images or other types of contrast than T2*",
                       mandatory=False,
-                      default_value=1,
+                      default_value=int(ParamData().normalization),
                       example=['0', '1'])
-    parser.add_option(name="-medians",
-                      type_value=[[','], 'float'],
-                      description="Median intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
-                                  "If not specified, the mean intensity values of the target WM and GM  are estimated automatically using the dictionary average segmentation by level.\n"
-                                  "Only if the -normalize flag is used",
+    parser.add_option(name="-p",
+                      type_value='str',
+                      description="Registration parameters to register the image to segment on the model data. Use the same format as for sct_register_to_template and sct_register_multimodal.",
                       mandatory=False,
-                      default_value=None,
-                      example=["450,540"])
-    parser.add_option(name="-k",
+                      default_value=ParamData().register_param,
+                      example='step=1,type=seg,algo=centermassrot,metric=MeanSquares,smooth=2,iter=1:step=2,type=seg,algo=columnwise,metric=MeanSquares,smooth=3,iter=1:step=3,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3')
+    parser.add_option(name="-w-levels",
                       type_value='float',
-                      description="Percentage of variability explained by the kept eigen vectors in the PCA (between 0 and 1)",
+                      description="Weight parameter on the level differences to compute the similarities",
                       mandatory=False,
-                      default_value=0.8,
+                      default_value=ParamSeg().weight_level,
+                      example=2.0)
+    parser.add_option(name="-w-coordi",
+                      type_value='float',
+                      description="Weight parameter on the euclidean distance (based on images coordinates in the reduced sapce) to compute the similarities ",
+                      mandatory=False,
+                      default_value=ParamSeg().weight_coord,
+                      example=0.005)
+    parser.add_option(name="-thr-sim",
+                      type_value='float',
+                      description="Threshold to select the dictionary slices most similar to the slice to segment (similarities are normalized to 1)",
+                      mandatory=False,
+                      default_value=ParamSeg().thr_similarity,
                       example=0.6)
     parser.add_option(name="-model",
                       type_value="folder",
-                      description="Path to the model data",
+                      description="Path to the computed model",
                       mandatory=False,
-                      example='/home/jdoe/gm_seg_model_data/')
+                      example='/home/jdoe/gm_seg_model/')
     parser.usage.addSection('\nOUTPUT OTIONS')
     parser.add_option(name="-res-type",
                       type_value='multiple_choice',
                       description="Type of result segmentation : binary or probabilistic",
                       mandatory=False,
-                      default_value='prob',
-                      example=['binary', 'prob'])
-    parser.add_option(name="-ratio",
-                      type_value='multiple_choice',
-                      description="Compute GM/WM ratio by slice or by vertebral level (average across levels)",
+                      default_value=ParamSeg().type_seg,
+                      example=['bin', 'prob'])
+    # parser.add_option(name="-ratio",
+    #                   type_value='multiple_choice',
+    #                   description="Compute GM/WM ratio by slice or by vertebral level (average across levels)",
+    #                   mandatory=False,
+    #                   default_value='0',
+    #                   example=['0', 'slice', 'level'])
+    parser.add_option(name="-ref",
+                      type_value="file",
+                      description="Reference segmentation of the gray matter for segmentation validation --> output Dice coefficient and Hausdorff's and median distances)",
                       mandatory=False,
-                      default_value='0',
-                      example=['0', 'slice', 'level'])
-    '''
-    parser.add_option(name="-ratio-level",
-                      type_value='str',
-                      description="Compute GM/WM ratio across several vertebral levels.",
-                      mandatory=False,
-                      default_value='0',
-                      example='C2:C4')
-    '''
+                      example='manual_gm_seg.nii.gz')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
                       mandatory=False,
-                      default_value='./',
+                      default_value=ParamSeg().path_results,
                       example='gm_segmentation_results/')
-    parser.add_option(name="-ref",
-                      type_value="file",
-                      description="Reference segmentation of the gray matter for segmentation validation (outputs Dice coefficient and Hausdoorff's distance)",
-                      mandatory=False,
-                      example='manual_gm_seg.nii.gz')
     parser.usage.addSection('MISC')
     parser.add_option(name='-qc',
                       type_value='multiple_choice',
                       description='Output images for quality control.',
                       mandatory=False,
                       example=['0', '1'],
-                      default_value='1')
+                      default_value=str(int(ParamSeg().qc)))
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
                       mandatory=False,
-                      default_value='1',
+                      default_value=str(int(Param().rm_tmp)),
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
                       mandatory=False,
                       example=['0', '1', '2'],
-                      default_value='1')
+                      default_value=str(Param().verbose))
 
     return parser
 
 
-class Preprocessing:
-    def __init__(self, target_fname, sc_seg_fname, tmp_dir='', level_fname=None, denoising=True, verbose=1):
-
-        # initiate de file names and copy the files into the temporary directory
-        self.original_target = 'target.nii.gz'
-        self.t2star = self.original_target
-        self.original_sc_seg = 'target_sc_seg.nii.gz'
-        self.sc_seg = self.original_sc_seg
-        self.resample_to = 0.3
-        self.verbose = verbose
-
-        self.tmp_dir = tmp_dir
-        self.denoising = denoising
-        self.high_res = False
-
-        if level_fname is not None:
-            path_level, file_level, ext_level = sct.extract_fname(level_fname)
-            if ext_level != '.txt':
-                level_fname = check_file_to_niigz(level_fname)
-            path_level, file_level, ext_level = sct.extract_fname(level_fname)
-            self.fname_level = file_level + ext_level
-            sct.run('cp ' + level_fname + ' ' + tmp_dir + '/' + self.fname_level)
-        else:
-            self.fname_level  = None
-
-        # processes:
-        self.copy_to_tmp(target_fname=target_fname, sc_seg_fname=sc_seg_fname)
-
-    def copy_to_tmp(self, target_fname, sc_seg_fname):
-        sct.run('cp ' + target_fname + ' ' + self.tmp_dir + '/' + self.original_target)
-        sct.run('cp ' + sc_seg_fname + ' ' + self.tmp_dir + '/' + self.original_sc_seg)
-
-    def process(self):
-        # preprocessing
-        os.chdir(self.tmp_dir)
-        im_target = Image(self.original_target)
-        im_sc_seg = Image(self.original_sc_seg)
-
-        assert im_target.orientation == im_sc_seg.orientation, "ERROR: the image to segment and it's SC segmentation are not in the same orientation"
-        self.original_header = im_target.hdr
-        self.original_orientation = im_target.orientation
-        index_x = self.original_orientation.find('R') if 'R' in self.original_orientation else self.original_orientation.find('L')
-        index_y = self.original_orientation.find('P') if 'P' in self.original_orientation else self.original_orientation.find('A')
-        index_z = self.original_orientation.find('I') if 'I' in self.original_orientation else self.original_orientation.find('S')
-
-        # resampling of the images
-        nx, ny, nz, nt, px, py, pz, pt = im_target.dim
-        nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = im_sc_seg.dim
-
-        assert (nx == nx_s) and (ny == ny_s) and (nz == nz_s), "ERROR: the image to segment and it's SC segmentation does not have the same size"
-
-        if self.fname_level is not None and 'nii' in sct.extract_fname(self.fname_level)[2]:
-            im_level = Image(self.fname_level)
-            assert im_target.orientation == im_level.orientation, "ERROR: the image to segment and the level image are not in the same orientation"
-            nx_l, ny_l, nz_l, nt_l, px_l, py_l, pz_l, pt_l = im_level.dim
-            assert (nx == nx_l) and (ny == ny_l) and (nz == nz_l), "ERROR: the image to segment and the level image does not have the same size"
 
 
-        pix_dim = [px, py, pz]
-        self.original_px = pix_dim[index_x]
-        self.original_py = pix_dim[index_y]
+class ParamSeg:
+    def __init__(self):
+        self.fname_im = None
+        self.fname_im_original = None
+        self.fname_seg = None
+        self.fname_level = 'label/template/PAM50_levels_continuous.nii.gz'
+        self.fname_manual_gmseg = None
+        self.path_results = './'
 
-        if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
-            if round(self.original_px, 2) < self.resample_to or round(self.original_py, 2) < self.resample_to:
-                sct.printv('\n\n-----------------------------------------------------------------------------------------'
-                '\nWARNING: the in-plane resolution of the input image is higher than the resolution of the model images (0.3x0.3mm). '
-                'The size of the result images might be different than the original image and an extra post-processing will be added.'
-                'This post-processing can be time consuming and can slow down your computer. '
-                'To avoid this, please resample your input image to an axial resolution of 0.3x0.3mm.'
-                '\n-----------------------------------------------------------------------------------------', self.verbose, 'warning')
-                self.high_res = True
+        # param to compute similarities:
+        self.weight_level = 2.5 # gamma
+        self.weight_coord = 0.0065 # tau --> need to be validated for specific dataset
+        self.thr_similarity = 0.0005 # epsilon but on normalized to 1 similarities (by slice of dic and slice of target)
+        # TODO = find the best thr
 
-            self.t2star = resample_image(self.original_target, npx=self.resample_to, npy=self.resample_to)
-            self.sc_seg = resample_image(self.original_sc_seg, binary=True, npx=self.resample_to, npy=self.resample_to)
+        self.type_seg = 'prob' # 'prob' or 'bin'
 
-        # denoising (optional)
-        im_target = Image(self.t2star)
-        if self.denoising:
-            from sct_maths import denoise_nlmeans
-            im_target.data = denoise_nlmeans(im_target.data)
-            im_target.save()
-            self.t2star = im_target.file_name + im_target.ext
-
-        box_size = int(22.5/self.resample_to)
-
-        # Pad in case the spinal cord is too close to the edges
-        pad_size = box_size/2 + 2
-        self.pad = [str(pad_size)]*3
-
-        self.pad[index_z] = str(0)
-
-        t2star_pad = sct.add_suffix(self.t2star, '_pad')
-        sc_seg_pad = sct.add_suffix(self.sc_seg, '_pad')
-        sct.run('sct_image -i '+self.t2star+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+t2star_pad)
-        sct.run('sct_image -i '+self.sc_seg+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+sc_seg_pad)
-        self.t2star = t2star_pad
-        self.sc_seg = sc_seg_pad
-
-        # put data in RPI
-        t2star_rpi = sct.add_suffix(self.t2star, '_RPI')
-        sc_seg_rpi = sct.add_suffix(self.sc_seg, '_RPI')
-        sct.run('sct_image -i '+self.t2star+' -setorient RPI -o '+t2star_rpi)
-        sct.run('sct_image -i '+self.sc_seg+' -setorient RPI -o '+sc_seg_rpi)
-        self.t2star = t2star_rpi
-        self.sc_seg = sc_seg_rpi
-
-        self.square_mask, self.processed_target = crop_t2_star(self.t2star, self.sc_seg, box_size=box_size)
-
-        if self.fname_level is not None and sct.extract_fname(self.fname_level)[2] == '.nii.gz':
-            level_orientation = get_orientation_3d(self.fname_level, filename=True)
-            if level_orientation != 'IRP':
-                self.fname_level = set_orientation(self.fname_level, 'IRP', filename=True)
-
-        os.chdir('..')
+        self.qc = True
 
 
-class FullGmSegmentation:
+class SegmentGM:
+    def __init__(self, param_seg=None, param_model=None, param_data=None, param=None):
+        self.param_seg = param_seg if param_seg is not None else ParamSeg()
+        self.param_model = param_model if param_model is not None else ParamModel()
+        self.param_data = param_data if param_data is not None else ParamData()
+        self.param = param if param is not None else Param()
 
-    def __init__(self, target_fname, sc_seg_fname, level_fname, ref_gm_seg=None, model=None, compute_ratio=False, model_param=None, seg_param=None):
-        self.model_param = model_param
-        self.seg_param = seg_param
-        self.ratio = compute_ratio
-        sct.printv('\nBuilding the appearance model...', verbose=self.seg_param.verbose, type='normal')
-        if model is None:
-            self.model = Model(model_param=self.model_param)
-        else:
-            self.model = model
-        self.target_fname = check_file_to_niigz(target_fname)
-        self.sc_seg_fname = check_file_to_niigz(sc_seg_fname)
-        if level_fname is not None:
-            level_path, level_file, level_ext = sct.extract_fname(level_fname)
-            if level_ext == '.txt':
-                self.level_fname = level_fname
-            else:
-                self.level_fname = check_file_to_niigz(level_fname)
-        else:
-            self.level_fname = level_fname
+        # create model:
+        self.model = Model(param_model=self.param_model, param_data=self.param_data, param=self.param)
 
-        self.ref_gm_seg_fname = ref_gm_seg
+        # create tmp directory
+        self.tmp_dir = tmp_create(verbose=self.param.verbose) # path to tmp directory
 
-        self.gm_seg = None
-        self.res_names = {}
-        self.dice_name = None
-        self.hausdorff_name = None
-        self.tmp_dir = 'tmp_' + sct.extract_fname(self.target_fname)[1] + '_' + time.strftime("%y%m%d%H%M%S")+ '_'+str(random.randint(1, 1000000))+'/'
+        self.target_im = None # list of slices
+        self.info_preprocessing = None # dic containing {'orientation': 'xxx', 'im_sc_seg_rpi': im, 'interpolated_images': [list of im = interpolated image data per slice]}
+
+        self.projected_target = None # list of coordinates of the target slices in the model reduced space
+        self.im_res_gmseg = None
+        self.im_res_wmseg = None
+
 
     def segment(self):
-        before = time.time()
-        sct.run('mkdir ' + self.tmp_dir)
+        self.copy_data_to_tmp()
+        # go to tmp directory
+        os.chdir(self.tmp_dir)
+        # load model
+        self.model.load_model()
 
-        self.segmentation_pipeline()
+        self.target_im, self.info_preprocessing = pre_processing(self.param_seg.fname_im, self.param_seg.fname_seg, self.param_seg.fname_level, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm, denoising=self.param_data.denoising, verbose=self.param.verbose, rm_tmp=self.param.rm_tmp)
 
-        # Generate output files:
-        for res_fname in self.res_names.values():
-            sct.generate_output_file(self.tmp_dir+res_fname, self.seg_param.output_path+res_fname)
-        if self.ref_gm_seg_fname is not None:
-            sct.generate_output_file(self.tmp_dir+self.dice_name, self.seg_param.output_path+self.dice_name)
-            sct.generate_output_file(self.tmp_dir+self.hausdorff_name, self.seg_param.output_path+self.hausdorff_name)
-        if self.ratio:
-            sct.generate_output_file(self.tmp_dir+self.ratio_name, self.seg_param.output_path+self.ratio_name)
+        printv('\nRegistering target image to model data ...', self.param.verbose, 'normal')
+        # register target image to model dictionary space
+        path_warp = self.register_target()
 
-        after = time.time()
-        sct.printv('Done! (in ' + str(after-before) + ' sec) \nTo see the result, type :')
-        if self.seg_param.res_type == 'binary':
+        printv('\nNormalizing intensity of target image ...', self.param.verbose, 'normal')
+        self.normalize_target()
+
+        printv('\nProjecting target image into the model reduced space ...', self.param.verbose, 'normal')
+        self.project_target()
+
+        printv('\nComputing similarities between target slices and model slices using model reduced space ...', self.param.verbose, 'normal')
+        list_dic_indexes_by_slice = self.compute_similarities()
+
+        printv('\nDoing label fusion of model slices most similar to target slices ...', self.param.verbose, 'normal')
+        self.label_fusion(list_dic_indexes_by_slice)
+
+        printv('\nWarping back segmentation into image space...', self.param.verbose, 'normal')
+        self.warp_back_seg(path_warp)
+
+        printv('\nPost-processing ...', self.param.verbose, 'normal')
+        self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
+
+        if (self.param_seg.path_results != './') and (not os.path.exists('../'+self.param_seg.path_results)):
+            # create output folder
+            printv('\nCreate output folder ...', self.param.verbose, 'normal')
+            os.chdir('..')
+            os.mkdir(self.param_seg.path_results)
+            os.chdir(self.tmp_dir)
+
+        if self.param_seg.fname_manual_gmseg is not None:
+            # compute validation metrics
+            printv('\nCompute validation metrics...', self.param.verbose, 'normal')
+            self.validation()
+
+        # go back to original directory
+        os.chdir('..')
+        printv('\nSaving result GM and WM segmentation...', self.param.verbose, 'normal')
+        fname_res_gmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
+        fname_res_wmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
+
+        self.im_res_gmseg.setFileName(fname_res_gmseg)
+        self.im_res_wmseg.setFileName(fname_res_wmseg)
+
+        self.im_res_gmseg.save()
+        self.im_res_wmseg.save()
+
+        # save quality control and print info
+        if self.param_seg.type_seg == 'bin':
             wm_col = 'Red'
             gm_col = 'Blue'
             b = '0,1'
         else:
             wm_col = 'Blue-Lightblue'
             gm_col = 'Red-Yellow'
-            b = '0.3,1'
-        sct.printv('fslview ' + self.target_fname + ' '+self.seg_param.output_path+self.res_names['wm_seg']+' -l '+wm_col+' -t 0.4 -b '+b+' '+self.seg_param.output_path+self.res_names['gm_seg']+' -l '+gm_col+' -t 0.4  -b '+b+' &', self.seg_param.verbose, 'info')
+            b = '0.4,1'
 
-        if self.seg_param.qc:
+        if self.param_seg.qc:
             # output QC image
-            im = Image(self.target_fname)
-            im_gmseg = Image(self.seg_param.output_path+self.res_names['gm_seg'])
-            im.save_quality_control(plane='axial', n_slices=5, seg=im_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.seg_param.output_path)
+            printv('\nSaving quality control images...', self.param.verbose, 'normal')
+            im = Image(self.tmp_dir+self.param_seg.fname_im)
+            im.save_quality_control(plane='axial', n_slices=5, seg=self.im_res_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.param_seg.path_results)
 
-        if self.seg_param.remove_tmp:
-            sct.printv('Remove temporary folder ...', self.seg_param.verbose, 'normal')
-            sct.run('rm -rf '+self.tmp_dir)
+        printv('\n--> To visualize the results, write:\n'
+               'fslview '+self.param_seg.fname_im_original+' '+fname_res_gmseg+' -b '+b+' -l '+gm_col+' -t 0.7 '+fname_res_wmseg+' -b '+b+' -l '+wm_col+' -t 0.7  & \n', self.param.verbose, 'info')
 
-    # ------------------------------------------------------------------------------------------------------------------
-    def segmentation_pipeline(self):
-        sct.printv('\nDoing target pre-processing ...', verbose=self.seg_param.verbose, type='normal')
-        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, level_fname=self.level_fname, denoising=self.seg_param.target_denoising, verbose=self.seg_param.verbose)
-        self.preprocessed.process()
+        if self.param.rm_tmp:
+            # remove tmp_dir
+            shutil.rmtree(self.tmp_dir)
+
+
+    def copy_data_to_tmp(self):
+        # copy input image
+        if self.param_seg.fname_im is not None:
+            shutil.copy(self.param_seg.fname_im, self.tmp_dir)
+            self.param_seg.fname_im = ''.join(extract_fname(self.param_seg.fname_im)[1:])
+        else:
+            printv('ERROR: No input image', self.param.verbose, 'error')
+
+        # copy sc seg image
+        if self.param_seg.fname_seg is not None:
+            shutil.copy(self.param_seg.fname_seg, self.tmp_dir)
+            self.param_seg.fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
+        else:
+            printv('ERROR: No SC segmentation image', self.param.verbose, 'error')
+
+        # copy level file
+        if self.param_seg.fname_level is not None:
+            shutil.copy(self.param_seg.fname_level, self.tmp_dir)
+            self.param_seg.fname_level = ''.join(extract_fname(self.param_seg.fname_level)[1:])
+
+        if self.param_seg.fname_manual_gmseg is not None:
+            shutil.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir)
+            self.param_seg.fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
+
+    def register_target(self):
+        # create dir to store warping fields
+        path_warping_fields = 'warp_target/'
+        if not os.path.exists(path_warping_fields):
+            os.mkdir(path_warping_fields)
+
+        # get destination image
+        im_dest = Image(self.model.mean_image)
+
+        for target_slice in self.target_im:
+            im_src = Image(target_slice.im)
+            # register slice image to mean dictionary image
+            im_src_reg, fname_src2dest, fname_dest2src = register_data(im_src, im_dest, param_reg=self.param_data.register_param, path_copy_warp=path_warping_fields, rm_tmp=self.param.rm_tmp)
+
+            # rename warping fields
+            fname_src2dest_slice = 'warp_target_slice'+str(target_slice.id)+'2dic.nii.gz'
+            fname_dest2src_slice = 'warp_dic2target_slice' + str(target_slice.id) + '.nii.gz'
+            shutil.move(path_warping_fields+fname_src2dest, path_warping_fields+fname_src2dest_slice)
+            shutil.move(path_warping_fields+fname_dest2src, path_warping_fields+fname_dest2src_slice)
+
+            # set moved image
+            target_slice.set(im_m=im_src_reg.data)
+
+        return path_warping_fields
+
+    def normalize_target(self):
+        # get gm seg from model by level
+        gm_seg_model, wm_seg_model = self.model.get_gm_wm_by_level()
+
+        # for each target slice: normalize
+        for target_slice in self.target_im:
+            level_int = int(round(target_slice.level))
+            if level_int not in self.model.intensities.index:
+                level_int = 0
+            norm_im_M = normalize_slice(target_slice.im_M, gm_seg_model[level_int], wm_seg_model[level_int], self.model.intensities['GM'][level_int], self.model.intensities['WM'][level_int], val_min=self.model.intensities['MIN'][level_int], val_max=self.model.intensities['MAX'][level_int])
+            target_slice.set(im_m=norm_im_M)
+
+    def project_target(self):
+        projected_target_slices = []
+        for target_slice in self.target_im:
+            # get slice data in the good shape
+            slice_data = target_slice.im_M.flatten()
+            slice_data = slice_data.reshape(1, -1) # data with single sample
+            # project slice data into the model
+            slice_data_projected = self.model.fitted_model.transform(slice_data)
+            projected_target_slices.append(slice_data_projected)
+        # store projected target slices
+        self.projected_target = projected_target_slices
+
+    def compute_similarities(self):
+        list_dic_indexes_by_slice = []
+        for i, target_coord in enumerate(self.projected_target):
+            list_dic_similarities = []
+            for j, dic_coord in enumerate(self.model.fitted_data):
+                # compute square norm using coordinates in the model space
+                square_norm = np.linalg.norm((target_coord - dic_coord), 2)
+                # compute similarity with or without levels
+                if self.param_seg.fname_level is not None:
+                    # EQUATION WITH LEVELS
+                    similarity = exp(-self.param_seg.weight_level * abs(self.target_im[i].level - self.model.slices[j].level)) * exp(-self.param_seg.weight_coord * square_norm)
+                else:
+                    # EQUATION WITHOUT LEVELS
+                    similarity = exp(-self.param_seg.weight_coord * square_norm)
+                # add similarity to list
+                list_dic_similarities.append(similarity)
+            list_norm_similarities =  [float(s)/sum(list_dic_similarities) for s in list_dic_similarities]
+            # select indexes of most similar slices
+            list_dic_indexes = []
+            for j, norm_sim in enumerate(list_norm_similarities):
+                if norm_sim >= self.param_seg.thr_similarity:
+                    list_dic_indexes.append(j)
+            # save list of indexes into list by slice
+            list_dic_indexes_by_slice.append(list_dic_indexes)
+
+        return list_dic_indexes_by_slice
+
+    def label_fusion(self, list_dic_indexes_by_slice):
+        for target_slice in self.target_im:
+            # get list of slices corresponding to the indexes
+            list_dic_slices = [self.model.slices[j] for j in list_dic_indexes_by_slice[target_slice.id]]
+            # average slices GM and WM
+            data_mean_gm, data_mean_wm = average_gm_wm(list_dic_slices)
+            if self.param_seg.type_seg == 'bin':
+                # binarize GM seg
+                data_mean_gm[data_mean_gm >= 0.5] = 1
+                data_mean_gm[data_mean_gm < 0.5] = 0
+                # binarize WM seg
+                data_mean_wm[data_mean_wm >= 0.5] = 1
+                data_mean_wm[data_mean_wm < 0.5] = 0
+            # store segmentation into target_im
+            target_slice.set(gm_seg_m=data_mean_gm, wm_seg_m=data_mean_wm)
+
+    def warp_back_seg(self, path_warp):
+        for target_slice in self.target_im:
+            printv('\nSlice '+str(target_slice.id)+':', self.param.verbose, 'normal')
+            fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1)+'warp_dic2target_slice' + str(target_slice.id) + '.nii.gz'
+            im_dest = Image(target_slice.im)
+            interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
+            # warp GM
+            im_src_gm = Image(target_slice.gm_seg_M)
+            im_src_gm_reg = apply_transfo(im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
+            # warp WM
+            im_src_wm = Image(target_slice.wm_seg_M)
+            im_src_wm_reg = apply_transfo(im_src_wm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
+            # set slice attributes
+            target_slice.set(gm_seg=im_src_gm_reg.data, wm_seg=im_src_wm_reg.data)
+
+    def post_processing(self):
+        ## DO INTERPOLATION BACK TO ORIGINAL IMAGE
+        # get original SC segmentation oriented in RPI
+        im_sc_seg_original_rpi = self.info_preprocessing['im_sc_seg_rpi'].copy()
+        nx_ref, ny_ref, nz_ref, nt_ref, px_ref, py_ref, pz_ref, pt_ref = im_sc_seg_original_rpi.dim
+
+        # create res GM seg image
+        im_res_gmseg = im_sc_seg_original_rpi.copy()
+        im_res_gmseg.data = np.zeros(im_res_gmseg.data.shape)
+        # create res WM seg image
+        im_res_wmseg = im_sc_seg_original_rpi.copy()
+        im_res_wmseg.data = np.zeros(im_res_wmseg.data.shape)
+
+        printv('\n\tInterpolate result back into original space ...', self.param.verbose, 'normal')
+
+
+        for iz, im_iz_preprocessed in enumerate(self.info_preprocessing['interpolated_images']):
+            # im gmseg for slice iz
+            im_gmseg = im_iz_preprocessed.copy()
+            im_gmseg.data = np.zeros(im_gmseg.data.shape)
+            im_gmseg.data = self.target_im[iz].gm_seg
+
+            # im wmseg for slice iz
+            im_wmseg = im_iz_preprocessed.copy()
+            im_wmseg.data = np.zeros(im_wmseg.data.shape)
+            im_wmseg.data = self.target_im[iz].wm_seg
+
+            for im_res_slice, im_res_tot in [(im_gmseg, im_res_gmseg), (im_wmseg, im_res_wmseg)]:
+                # get reference image for this slice
+                # (use only one slice to accelerate interpolation)
+                im_ref = im_sc_seg_original_rpi.copy()
+                im_ref.data = im_ref.data[:, :, iz]
+                im_ref.dim = (nx_ref, ny_ref, 1, nt_ref, px_ref, py_ref, pz_ref, pt_ref)
+                # correct reference header for this slice
+                [[x_0_ref, y_0_ref, z_0_ref]] = im_ref.transfo_pix2phys(coordi=[[0, 0, iz]])
+                im_ref.hdr.as_analyze_map()['qoffset_x'] = x_0_ref
+                im_ref.hdr.as_analyze_map()['qoffset_y'] = y_0_ref
+                im_ref.hdr.as_analyze_map()['qoffset_z'] = z_0_ref
+                im_ref.hdr.set_sform(im_ref.hdr.get_qform())
+                im_ref.hdr.set_qform(im_ref.hdr.get_qform())
+
+                # set im_res_slice header with im_sc_seg_original_rpi origin
+                im_res_slice.hdr.as_analyze_map()['qoffset_x'] = x_0_ref
+                im_res_slice.hdr.as_analyze_map()['qoffset_y'] = y_0_ref
+                im_res_slice.hdr.as_analyze_map()['qoffset_z'] = z_0_ref
+                im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
+                im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
+
+                # get physical coordinates of center of sc
+                x_seg, y_seg = (im_sc_seg_original_rpi.data[:, :, iz] > 0).nonzero()
+                x_center, y_center = np.mean(x_seg), np.mean(y_seg)
+                [[x_center_phys, y_center_phys, z_center_phys]] = im_sc_seg_original_rpi.transfo_pix2phys(coordi=[[x_center, y_center, iz]])
+
+                # get physical coordinates of center of square WITH im_res_slice WITH SAME ORIGIN AS im_sc_seg_original_rpi
+                sq_size_pix = int(self.param_data.square_size_size_mm / self.param_data.axial_res)
+                [[x_square_center_phys, y_square_center_phys, z_square_center_phys]] = im_res_slice.transfo_pix2phys(
+                    coordi=[[int(sq_size_pix / 2), int(sq_size_pix / 2), 0]])
+
+                # set im_res_slice header by adding center of SC and center of square (in the correct space) to origin
+                im_res_slice.hdr.as_analyze_map()['qoffset_x'] += x_center_phys - x_square_center_phys
+                im_res_slice.hdr.as_analyze_map()['qoffset_y'] += y_center_phys - y_square_center_phys
+                im_res_slice.hdr.as_analyze_map()['qoffset_z'] += z_center_phys
+                im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
+                im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
+
+                # reshape data
+                im_res_slice.data = im_res_slice.data.reshape((sq_size_pix, sq_size_pix, 1))
+                # interpolate to reference image
+                interp = 0 if self.param_seg.type_seg == 'bin' else 1
+                im_res_slice_interp = im_res_slice.interpolate_from_image(im_ref, interpolation_mode=interp, border='nearest')
+                # set correct slice of total image with this slice
+                if len(im_res_slice_interp.data.shape) == 3:
+                    shape_x, shape_y, shape_z = im_res_slice_interp.data.shape
+                    im_res_slice_interp.data = im_res_slice_interp.data.reshape((shape_x, shape_y))
+                im_res_tot.data[:, :, iz] = im_res_slice_interp.data
+        printv('\n\tPut result into original orientation ...', self.param.verbose, 'normal')
+
+        ## PUT RES BACK IN ORIGINAL ORIENTATION
+        im_res_gmseg.setFileName('res_gmseg.nii.gz')
+        im_res_gmseg.save()
+        im_res_gmseg = set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
+
+        im_res_wmseg.setFileName('res_wmseg.nii.gz')
+        im_res_wmseg.save()
+        im_res_wmseg = set_orientation(im_res_wmseg, self.info_preprocessing['orientation'])
+
+        return im_res_gmseg, im_res_wmseg
+
+    def validation(self):
+        tmp_dir_val = 'tmp_validation/'
+        if not os.path.exists(tmp_dir_val):
+            os.mkdir(tmp_dir_val)
+        # copy data into tmp dir val
+        shutil.copy(self.param_seg.fname_manual_gmseg, tmp_dir_val)
+        shutil.copy(self.param_seg.fname_seg, tmp_dir_val)
+        os.chdir(tmp_dir_val)
+        fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
+        fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
+
+
+        im_gmseg = self.im_res_gmseg.copy()
+        im_wmseg = self.im_res_wmseg.copy()
+
+        if self.param_seg.type_seg == 'prob':
+            im_gmseg = binarize(im_gmseg, thr_max=0.5, thr_min=0.5)
+            im_wmseg = binarize(im_wmseg, thr_max=0.5, thr_min=0.5)
+
+        fname_gmseg = 'res_gmseg.nii.gz'
+        im_gmseg.setFileName(fname_gmseg)
+        im_gmseg.save()
+
+        fname_wmseg = 'res_wmseg.nii.gz'
+        im_wmseg.setFileName(fname_wmseg)
+        im_wmseg.save()
+
+        # get manual WM seg:
+        fname_manual_wmseg = 'manual_wmseg.nii.gz'
+        sct_maths.main(args=['-i', fname_seg,
+                             '-sub', fname_manual_gmseg,
+                             '-o', fname_manual_wmseg])
+
+        ## compute DC:
+        try:
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg + ' -d ' + fname_gmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+        except Exception:
+            # put ref and res in the same space if needed
+            fname_manual_gmseg_corrected = add_suffix(fname_manual_gmseg, '_reg')
+            sct_register_multimodal.main(args=['-i', fname_manual_gmseg,
+                                               '-d', fname_gmseg,
+                                               '-identity', '1'])
+            sct_maths.main(args=['-i', fname_manual_gmseg_corrected,
+                                 '-bin', '0.1',
+                                 '-o', fname_manual_gmseg_corrected])
+            #
+            fname_manual_wmseg_corrected = add_suffix(fname_manual_wmseg, '_reg')
+            sct_register_multimodal.main(args=['-i', fname_manual_wmseg,
+                                               '-d', fname_wmseg,
+                                               '-identity', '1'])
+            sct_maths.main(args=['-i', fname_manual_wmseg_corrected,
+                                 '-bin', '0.1',
+                                 '-o', fname_manual_wmseg_corrected])
+            # recompute DC
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+        # save results to a text file
+        fname_dc = 'dice_coefficient_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        file_dc = open(fname_dc, 'w')
+
+        if self.param_seg.type_seg == 'prob':
+            file_dc.write('WARNING : the probabilistic segmentations were binarized with a threshold at 0.5 to compute the dice coefficient \n')
+
+        file_dc.write('\n--------------------------------------------------------------\nDice coefficient on the Gray Matter segmentation:\n')
+        file_dc.write(output_gm)
+        file_dc.write('\n\n--------------------------------------------------------------\nDice coefficient on the White Matter segmentation:\n')
+        file_dc.write(output_wm)
+        file_dc.close()
+
+        ## compute HD and MD:
+        fname_hd = 'hausdorff_dist_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        run('sct_compute_hausdorff_distance -i ' + fname_gmseg + ' -d ' + fname_manual_gmseg + ' -thinning 1 -o ' + fname_hd + ' -v ' + str(self.param.verbose))
+
+        # get out of tmp dir to copy results to output folder
+        os.chdir('../..')
+        shutil.copy(self.tmp_dir+tmp_dir_val+'/'+fname_dc, self.param_seg.path_results)
+        shutil.copy(self.tmp_dir + tmp_dir_val + '/' + fname_hd, self.param_seg.path_results)
 
         os.chdir(self.tmp_dir)
 
-        if self.preprocessed.fname_level is not None:
-            self.level_to_use = self.preprocessed.fname_level
-        else:
-            self.level_to_use = None
-
-        sct.printv('\nDoing target gray matter segmentation ...', verbose=self.seg_param.verbose, type='normal')
-        self.gm_seg = SupervisedSegmentationMethod(self.preprocessed.processed_target, self.level_to_use, self.model, gm_seg_param=self.seg_param)
-
-        sct.printv('\nDoing result post-processing ...', verbose=self.seg_param.verbose, type='normal')
-        self.post_processing()
-
-        if self.ref_gm_seg_fname is not None:
-            os.chdir('..')
-            ref_gmseg = 'ref_gmseg.nii.gz'
-            sct.run('cp ' + self.ref_gm_seg_fname + ' ' + self.tmp_dir + '/' + ref_gmseg)
-            os.chdir(self.tmp_dir)
-            sct.printv('Computing Dice coefficient and Hausdorff distance ...', verbose=self.seg_param.verbose, type='normal')
-            self.dice_name, self.hausdorff_name = self.validation(ref_gmseg)
-
-        if self.ratio:
-            sct.printv('\nComputing ratio GM/WM ...', verbose=self.seg_param.verbose, type='normal')
-            self.ratio_name = self.compute_ratio(type=self.ratio)
-
-        os.chdir('..')
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def post_processing(self):
-        square_mask = Image(self.preprocessed.square_mask)
-        tmp_res_names = []
-        for res_im in [self.gm_seg.res_wm_seg, self.gm_seg.res_gm_seg]:
-            res_im_original_space = inverse_square_crop(res_im, square_mask)
-            res_im_original_space.save()
-            res_im_original_space = set_orientation(res_im_original_space, self.preprocessed.original_orientation)
-            res_im_original_space.save()
-            res_fname_original_space = res_im_original_space.file_name
-            ext = res_im_original_space.ext
-
-            # crop from the same pad size
-            output_crop = res_fname_original_space+'_crop'
-            sct.run('sct_crop_image -i '+res_fname_original_space+ext+' -dim 0,1,2 -start '+self.preprocessed.pad[0]+','+self.preprocessed.pad[1]+','+self.preprocessed.pad[2]+' -end -'+self.preprocessed.pad[0]+',-'+self.preprocessed.pad[1]+',-'+self.preprocessed.pad[2]+' -o '+output_crop+ext)
-            res_fname_original_space = output_crop
-
-            target_path, target_name, target_ext = sct.extract_fname(self.target_fname)
-            res_name = target_name + res_im.file_name[len(sct.extract_fname(self.preprocessed.processed_target)[1]):] + '.nii.gz'
-
-            if self.seg_param.res_type == 'binary':
-                bin = True
-            else:
-                bin = False
-
-            old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
-            if self.preprocessed.high_res:
-                old_res_name_correct_space = sct.extract_fname(old_res_name)[1]+'_correct_spacing'+ext
-                os.chdir('..')
-                target_fname = sct.extract_fname(self.target_fname)[1]+sct.extract_fname(self.target_fname)[2]
-                sct.run('cp '+self.target_fname+' '+self.tmp_dir+'/'+target_fname)
-
-                os.chdir(self.tmp_dir)
-                sct.run('sct_register_multimodal -i '+old_res_name+' -d '+target_fname+' -identity 1 -o '+old_res_name_correct_space)
-                old_res_name = old_res_name_correct_space
-
-            if self.seg_param.res_type == 'prob':
-                # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
-                sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
-
-            sct.run('cp ' + old_res_name + ' '+res_name)
-
-            tmp_res_names.append(res_name)
-        self.res_names['wm_seg'] = tmp_res_names[0]
-        self.res_names['gm_seg'] = tmp_res_names[1]
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def compute_ratio(self, type='slice'):
-        from numpy import mean, nonzero
-        from math import isnan
-        ratio_dir =  'ratio/'
-        sct.run('mkdir '+ratio_dir)
-        if type is not 'slice':
-            assert self.preprocessed.fname_level is not None, 'No vertebral level information, you cannot compute GM/WM ratio per vertebral level.'
-            levels = [int(round(mean(dat[nonzero(dat)]), 0)) if not isnan(mean(dat[nonzero(dat)])) else 0 for dat in Image(self.preprocessed.fname_level).data]
-            csa_gm_wm_by_level = {}
-            for l in levels:
-                csa_gm_wm_by_level[l] = []
-        gm_seg = 'res_gmseg.nii.gz'
-        wm_seg = 'res_wmseg.nii.gz'
-        sct.run('cp '+self.res_names['gm_seg']+' '+ratio_dir+gm_seg)
-        sct.run('cp '+self.res_names['wm_seg']+' '+ratio_dir+wm_seg)
-
-        # go to ratio folder
-        os.chdir(ratio_dir)
-
-        sct.run('sct_process_segmentation -i '+gm_seg+' -p csa -o gm_ ', error_exit='warning')
-        # sct.run('mv csa.txt gm_csa.txt')
-
-        sct.run('sct_process_segmentation -i '+wm_seg+' -p csa -o wm_ ', error_exit='warning')
-        # sct.run('mv csa.txt wm_csa.txt')
-
-        gm_csa = open('gm_csa_per_slice.txt', 'r')
-        wm_csa = open('wm_csa_per_slice.txt', 'r')
-
-        ratio_fname = 'ratio.txt'
-        ratio = open('../'+ratio_fname, 'w')
-
-        gm_lines = gm_csa.readlines()
-        wm_lines = wm_csa.readlines()
-
-        gm_csa.close()
-        wm_csa.close()
-
-        ratio.write(type+' , ratio GM/WM \n')
-        for gm_line, wm_line in zip(gm_lines, wm_lines):
-            i, gm_area = gm_line.split(',')
-            j, wm_area = wm_line.split(',')
-            assert i == j
-            if type is not 'slice':
-                csa_gm_wm_by_level[levels[int(i)]].append((float(gm_area), float(wm_area)))
-            else:
-                ratio.write(i+','+str(float(gm_area)/float(wm_area))+'\n')
-        if type == 'level':
-            for l, gm_wm_list in sorted(csa_gm_wm_by_level.items()):
-                csa_gm_list = []
-                csa_wm_list = []
-                for gm, wm in gm_wm_list:
-                    csa_gm_list.append(gm)
-                    csa_wm_list.append(wm)
-                csa_gm = mean(csa_gm_list)
-                csa_wm = mean(csa_wm_list)
-                ratio.write(str(l)+','+str(csa_gm/csa_wm)+'\n')
-        elif type is not 'slice':
-            li, lf = type.split(':')
-            level_str_to_int = {'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7, 'T1': 8, 'T2': 9}
-            li = level_str_to_int[li]
-            lf = level_str_to_int[lf]
-            csa_gm_list = []
-            csa_wm_list = []
-            for l in range(li, lf+1):
-                gm_wm_list = csa_gm_wm_by_level[l]
-                for gm, wm in gm_wm_list:
-                    csa_gm_list.append(gm)
-                    csa_wm_list.append(wm)
-            csa_gm = mean(csa_gm_list)
-            csa_wm = mean(csa_wm_list)
-            ratio.write(type+','+str(csa_gm/csa_wm)+'\n')
-
-        ratio.close()
-        os.chdir('..')
-        return ratio_fname
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def validation(self, ref_gmseg):
-        ext = '.nii.gz'
-        validation_dir = 'validation/'
-        sct.run('mkdir ' + validation_dir)
-
-        gm_seg = 'res_gmseg.nii.gz'
-        wm_seg = 'res_wmseg.nii.gz'
-
-        # Copy images to the validation folder
-        sct.run('cp '+ref_gmseg+' '+validation_dir+ref_gmseg)
-        sct.run('cp '+self.preprocessed.original_sc_seg+' '+validation_dir+self.preprocessed.original_sc_seg)
-        sct.run('cp '+self.res_names['gm_seg']+' '+validation_dir+gm_seg)
-        sct.run('cp '+self.res_names['wm_seg']+' '+validation_dir+wm_seg)
-
-        # go to validation folder
-        os.chdir(validation_dir)
-
-        # get reference WM segmentation from SC segmentation and reference GM segmentation
-        ref_wmseg = 'ref_wmseg.nii.gz'
-        sct.run('sct_maths -i '+self.preprocessed.original_sc_seg+' -sub '+ref_gmseg+' -o '+ref_wmseg)
-
-        # Binarize results if it was probabilistic results
-        if self.seg_param.res_type == 'prob':
-            # sct.run('sct_maths -i '+gm_seg+' -thr 0.5 -o '+gm_seg)
-            # sct.run('sct_maths -i '+wm_seg+' -thr 0.4999 -o '+wm_seg)
-            sct.run('sct_maths -i '+gm_seg+' -bin 0.5 -o '+gm_seg)
-            sct.run('sct_maths -i '+wm_seg+' -bin 0.4999 -o '+wm_seg)
-
-        # Compute Dice coefficient
-        try:
-            status_gm, output_gm = sct.run('sct_dice_coefficient -i '+ref_gmseg+' -d '+gm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
-        except Exception:
-            # put the result and the reference in the same space using a registration with ANTs with no iteration:
-            corrected_ref_gmseg = sct.extract_fname(ref_gmseg)[1]+'_in_res_space'+ext
-            sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+gm_seg+','+ref_gmseg+',1,16] -o [reg_ref_to_res,'+corrected_ref_gmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
-            # sct.run('sct_maths -i '+corrected_ref_gmseg+' -thr 0.1 -o '+corrected_ref_gmseg)
-            sct.run('sct_maths -i '+corrected_ref_gmseg+' -bin 0.1 -o '+corrected_ref_gmseg)
-            status_gm, output_gm = sct.run('sct_dice_coefficient -i '+corrected_ref_gmseg+' -d '+gm_seg+'  -2d-slices 2', error_exit='warning')
-
-        try:
-            status_wm, output_wm = sct.run('sct_dice_coefficient -i '+ref_wmseg+' -d '+wm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
-        except Exception:
-            # put the result and the reference in the same space using a registration with ANTs with no iteration:
-            corrected_ref_wmseg = sct.extract_fname(ref_wmseg)[1]+'_in_res_space'+ext
-            sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+wm_seg+','+ref_wmseg+',1,16] -o [reg_ref_to_res,'+corrected_ref_wmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
-            # sct.run('sct_maths -i '+corrected_ref_wmseg+' -thr 0.1 -o '+corrected_ref_wmseg)
-            sct.run('sct_maths -i '+corrected_ref_wmseg+' -bin 0.1 -o '+corrected_ref_wmseg)
-            status_wm, output_wm = sct.run('sct_dice_coefficient -i '+corrected_ref_wmseg+' -d '+wm_seg+'  -2d-slices 2', error_exit='warning')
-
-        dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.seg_param.res_type + '.txt'
-        dice_fic = open('../'+dice_name, 'w')
-        if self.seg_param.res_type == 'prob':
-            dice_fic.write('WARNING : the probabilistic segmentations were binarized with a threshold at 0.5 to compute the dice coefficient \n')
-        dice_fic.write('\n--------------------------------------------------------------\n'
-                       'Dice coefficient on the Gray Matter segmentation:\n')
-        dice_fic.write(output_gm)
-        dice_fic.write('\n\n--------------------------------------------------------------\n'
-                       'Dice coefficient on the White Matter segmentation:\n')
-        dice_fic.write(output_wm)
-        dice_fic.close()
-
-        # Compute Hausdorff distance
-        hd_name = 'hd_' + sct.extract_fname(self.target_fname)[1] + '_' + self.seg_param.res_type + '.txt'
-        sct.run('sct_compute_hausdorff_distance -i '+gm_seg+' -d '+ref_gmseg+' -thinning 1 -o '+hd_name+' -v '+str(self.seg_param.verbose))
-        sct.run('mv ./' + hd_name + ' ../')
-
-        os.chdir('..')
-        return dice_name, hd_name
+        if self.param.rm_tmp:
+            shutil.rmtree(tmp_dir_val)
 
 
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
+
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
+    # create param objects
+    param_seg = ParamSeg()
+    param_data = ParamData()
+    param_model = ParamModel()
+    param = Param()
+
+    # get parser
+    parser = get_parser()
+    arguments = parser.parse(args)
+
+    # set param arguments ad inputted by user
+    param_seg.fname_im = arguments["-i"]
+    param_seg.fname_im_original = arguments["-i"]
+    param_seg.fname_seg = arguments["-s"]
+
+    if '-vertfile' in arguments:
+        param_seg.fname_level = arguments['-vertfile']
+    if '-denoising' in arguments:
+        param_data.denoising = arguments['-denoising']
+    if '-normalization' in arguments:
+        param_data.normalization = arguments['-normalization']
+    if '-p' in arguments:
+        param_data.register_param = arguments['-p']
+    if '-w-levels' in arguments:
+        param_seg.weight_level = arguments['-w-levels']
+    if '-w-coordi' in arguments:
+        param_seg.weight_coord = arguments['-w-coordi']
+    if '-thr-sim' in arguments:
+        param_seg.thr_similarity = arguments['-thr-sim']
+    if '-model' in arguments:
+        param_model.path_model_to_load = os.path.abspath(arguments['-model'])
+    if '-res-type' in arguments:
+        param_seg.type_seg= arguments['-res-type']
+    if '-ref' in arguments:
+        param_seg.fname_manual_gmseg = arguments['-ref']
+    if '-ofolder' in arguments:
+        param_seg.path_results= arguments['-ofolder']
+    if '-qc' in arguments:
+        param_seg.qc = bool(int(arguments['-qc']))
+    if '-r' in arguments:
+        param.rm_tmp= bool(int(arguments['-r']))
+    if '-v' in arguments:
+        param.verbose= arguments['-v']
+
+    if not os.path.isfile(param_seg.fname_level):
+        param_seg.fname_level = None
+
+    seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
+    start = time.time()
+    seg_gm.segment()
+    end = time.time()
+    t = end - start
+    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
+
 if __name__ == "__main__":
-    model_param = ModelParam()
-    seg_param = SegmentationParam()
-    input_target_fname = None
-    input_sc_seg_fname = None
-    input_level_fname = None
-    input_ref_gm_seg = None
-    compute_ratio = False
-    if seg_param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_input = model_param.path_model + "/errsm_34.nii.gz"
-        fname_input = model_param.path_model + "/errsm_34_seg_in.nii.gz"
-    else:
-        parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
-        input_target_fname = arguments["-i"]
-        input_sc_seg_fname = arguments["-s"]
-        if "-model" in arguments:
-            model_param.path_model = arguments["-model"]
-        model_param.todo_model = 'load'
-        seg_param.output_path = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
-
-        if "-vertfile" in arguments:
-            input_level_fname = arguments["-vertfile"]
-        if "-verttype" in arguments:
-            if input_level_fname is None:
-                sct.printv('WARNING: no input vertebral level file. -verttype can not be use and will be ignored.',1, 'warning')
-            else:
-                model_param.use_levels = arguments["-verttype"]
-
-        if "-weight" in arguments:
-            model_param.weight_gamma = arguments["-weight"]
-        if "-weight-similarity" in arguments:
-            model_param.mode_weight_similarity = bool(int(arguments["-weight-similarity"]))
-        if "-weight-label-fusion" in arguments:
-            model_param.weight_label_fusion = bool(int(arguments["-weight-label-fusion"]))
-        if "-denoising" in arguments:
-            seg_param.target_denoising = bool(int(arguments["-denoising"]))
-        if "-normalize" in arguments:
-            seg_param.target_normalization = bool(int(arguments["-normalize"]))
-        if "-means" in arguments:
-            seg_param.target_means = arguments["-means"]
-        if "-k" in arguments:
-            model_param.k = arguments["-k"]
-        if "-ratio" in arguments:
-            if arguments["-ratio"] == '0':
-                compute_ratio = False
-            else:
-                compute_ratio = arguments["-ratio"]
-        '''
-        if "-ratio-level" in arguments:
-            if arguments["-ratio-level"] == '0':
-                compute_ratio = False
-            else:
-                if ':' in arguments["-ratio-level"]:
-                    compute_ratio = arguments["-ratio-level"]
-                else:
-                    sct.printv('WARNING: -ratio-level function should be used with a range of vertebral levels (for ex: "C2:C5"). Ignoring option.', 1, 'warning')
-        '''
-        if "-res-type" in arguments:
-            seg_param.res_type = arguments["-res-type"]
-        if "-ref" in arguments:
-            input_ref_gm_seg = arguments["-ref"]
-        seg_param.verbose = int(arguments["-v"])
-        model_param.verbose = int(arguments["-v"])
-        seg_param.qc = int(arguments["-qc"])
-        seg_param.remove_tmp = int(arguments["-r"])
-
-        '''
-        if not sct.check_file_exist(input_level_fname):
-                sct.printv(parser.usage.generate(error='ERROR: the file '+input_level_fname+' does not exist. Please specify a file with flag -vertfile or if you don\'t want to use vertebral level information, use flag -use-levels 0' ))
-        '''
-        if input_level_fname is None:
-            model_param.use_levels = '0'
-            model_param.weight_gamma = 0
-
-    gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_level_fname, ref_gm_seg=input_ref_gm_seg, compute_ratio=compute_ratio, model_param=model_param, seg_param=seg_param)
-    gmsegfull.segment()
+    main()
