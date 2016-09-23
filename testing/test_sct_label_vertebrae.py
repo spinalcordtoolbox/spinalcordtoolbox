@@ -11,7 +11,12 @@
 #########################################################################################
 
 import sct_utils as sct
-import sys
+from sct_testing import write_to_log_file
+from sct_label_utils import ProcessLabels
+from numpy import linalg
+from math import sqrt
+# import sys
+# import shutil
 # from msct_parser import Parser
 import sct_label_vertebrae
 from pandas import DataFrame
@@ -26,6 +31,7 @@ from copy import deepcopy
 def test(path_data='', parameters=''):
 
     # initializations
+    output = ''
     file_init_label_vertebrae = 'init_label_vertebrae.txt'
     rmse = float('NaN')
     max_dist = float('NaN')
@@ -49,6 +55,19 @@ def test(path_data='', parameters=''):
         output = err
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
+    # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
+    import time, random
+    subject_folder = path_data.split('/')
+    if subject_folder[-1] == '' and len(subject_folder) > 1:
+        subject_folder = subject_folder[-2]
+    else:
+        subject_folder = subject_folder[-1]
+    path_output = sct.slash_at_the_end('sct_label_vertebrae_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
+    os.mkdir(path_output)
+    param_with_path += ' -ofolder ' + path_output
+    # log file
+    fname_log = path_output + 'output.log'
+
     # Extract contrast
     contrast = ''
     if dict_param['-i'][0] == '/':
@@ -58,31 +77,16 @@ def test(path_data='', parameters=''):
         contrast = input_split[0]
     if not contrast:  # if no contrast folder, send error.
         status = 1
-        output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
+        output += '\nERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
+        write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
-
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i']) and
             os.path.isfile(dict_param_with_path['-s'])):
         status = 200
-        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
+        output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
+        write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-
-    # Check if ground truth files exist
-    if not os.path.isfile(path_data + contrast + '/' + contrast + '_labeled_center_manual.nii.gz'):
-        status = 200
-        output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-
-    # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
-    import time, random
-    subject_folder = path_data.split('/')
-    if subject_folder[-1] == '' and len(subject_folder) > 1:
-        subject_folder = subject_folder[-2]
-    else:
-        subject_folder = subject_folder[-1]
-    path_output = sct.slash_at_the_end('sct_label_vertebrae_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
-    param_with_path += ' -ofolder ' + path_output
 
     # # add initialization parameter contained in file: init_label_vertebrae.txt
     # if not os.path.isfile(path_data+'t2/'+file_init_label_vertebrae):
@@ -100,7 +104,7 @@ def test(path_data='', parameters=''):
     try:
         status, o = sct.run(cmd, 0)
     except:
-        status, o = 1, 'ERROR: Function crashed!'
+        status, o = 1, '\nERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
 
@@ -111,25 +115,30 @@ def test(path_data='', parameters=''):
         # copy input data (for easier debugging)
         sct.run('cp '+dict_param_with_path['-i']+' '+path_output, verbose=0)
         # extract center of vertebral labels
-        sct.run('sct_label_utils -i '+path_output+contrast+'_seg_labeled.nii.gz -vert-body 0 -o '+path_output+contrast+'_seg_labeled_center.nii.gz', verbose=0)
-        from sct_label_utils import ProcessLabels
-        from numpy import linalg
-        from math import sqrt
-        # get dimension
-        from msct_image import Image
-        img = Image(path_output+contrast+'_seg_labeled.nii.gz')
-        nx, ny, nz, nt, px, py, pz, pt = img.dim
-        # open labels
-        label_results = ProcessLabels(path_output+contrast+'_seg_labeled_center.nii.gz')
-        list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
         try:
-            label_manual = ProcessLabels(path_data+contrast+'/'+contrast+'_labeled_center_manual.nii.gz')
+            sct.run('sct_label_utils -i '+path_output+contrast+'_seg_labeled.nii.gz -vert-body 0 -o '+path_output+contrast+'_seg_labeled_center.nii.gz', verbose=0)
+            label_results = ProcessLabels(path_output + contrast + '_seg_labeled_center.nii.gz')
+            list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
+            # get dimension
+            # from msct_image import Image
+            # img = Image(path_output+contrast+'_seg_labeled.nii.gz')
+            nx, ny, nz, nt, px, py, pz, pt = label_results.image_input.dim
         except:
             status = 1
-            output = 'ERROR: cannot open *_labeled_center_manual.nii.gz'
+            output += '\nERROR: cannot open file: ' + path_output+contrast+'_seg_labeled.nii.gz'
+            write_to_log_file(fname_log, output, 'w')
+            return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+        # open ground truth
+        fname_labels_manual = path_data+contrast+'/'+contrast+'_labeled_center_manual.nii.gz'
+        try:
+            label_manual = ProcessLabels(fname_labels_manual)
+            list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
+        except:
+            status = 201
+            output += '\nERROR: cannot file: '+fname_labels_manual
+            write_to_log_file(fname_log, output, 'w')
             return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
-        list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
         mse = 0.0
         max_dist = 0.0
         for coord_manual in list_label_manual:
@@ -169,8 +178,6 @@ def test(path_data='', parameters=''):
     results = DataFrame(data={'status': int(status), 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result, 'duration [s]': duration}, index=[path_data])
 
     # write log file
-    fname_log = path_output + "output.log"
-    from sct_testing import write_to_log_file
     write_to_log_file(fname_log, output, 'w')
 
     return status, output, results
