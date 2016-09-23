@@ -14,6 +14,7 @@
 from msct_multiatlas_seg import Param, ParamData, ParamModel, Model
 from msct_gmseg_utils import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm, binarize
 from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end, run
+import sct_image
 from sct_image import set_orientation
 from msct_image import Image
 from msct_parser import *
@@ -198,6 +199,10 @@ class SegmentGM:
         os.chdir(self.tmp_dir)
         # load model
         self.model.load_model()
+
+        # pad images to avoid bug with centermassrot if SC is too close to the edges
+        sct_image.main(['-i', self.param_seg.fname_im, '-pad-asym', '25,25,25,25,0,0', '-o', self.param_seg.fname_im])
+        sct_image.main(['-i', self.param_seg.fname_seg, '-pad-asym', '25,25,25,25,0,0', '-o', self.param_seg.fname_seg])
 
         self.target_im, self.info_preprocessing = pre_processing(self.param_seg.fname_im, self.param_seg.fname_seg, self.param_seg.fname_level, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm, denoising=self.param_data.denoising, verbose=self.param.verbose, rm_tmp=self.param.rm_tmp)
 
