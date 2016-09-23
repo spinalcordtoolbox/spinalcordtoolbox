@@ -200,7 +200,7 @@ class Image(object):
     """
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
         from sct_utils import extract_fname
-        from nibabel import AnalyzeHeader
+        from nibabel import Nifti1Header
 
         # initialization of all parameters
         self.im_file = None
@@ -213,7 +213,7 @@ class Image(object):
         self.dim = None
 
         if hdr is None:
-            hdr = self.hdr = AnalyzeHeader()  # an empty header
+            hdr = self.hdr = Nifti1Header()  # an empty header
         else:
             self.hdr = hdr
 
@@ -796,14 +796,14 @@ class Image(object):
 
             return coordi_pix_list
 
-    def get_values(self, coordi=None, interpolation_mode=0):
+    def get_values(self, coordi=None, interpolation_mode=0, border='constant'):
         """
         This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
         :param coordi: continuouspix
         :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
         :return: intensity values at continuouspix with interpolation_mode
         """
-        return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode)
+        return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode, mode=border)
 
     def get_transform(self, im_ref, mode='affine'):
         aff_im_self = self.im_file.affine
@@ -861,7 +861,7 @@ class Image(object):
 
         return transform
 
-    def interpolate_from_image(self, im_ref, fname_output, interpolation_mode=1):
+    def interpolate_from_image(self, im_ref, fname_output=None, interpolation_mode=1, border='constant'):
         """
         This function interpolates an image by following the grid of a reference image.
         Example of use:
@@ -872,6 +872,8 @@ class Image(object):
         im_input.interpolate_from_image(im_ref, fname_output, interpolation_mode=1)
 
         :param im_ref: reference Image that contains the grid on which interpolate.
+        :param border: Points outside the boundaries of the input are filled according
+        to the given mode ('constant', 'nearest', 'reflect' or 'wrap')
         :return: a new image that has the same dimensions/grid of the reference image but the data of self image.
         """
         nx, ny, nz, nt, px, py, pz, pt = im_ref.dim
@@ -885,7 +887,7 @@ class Image(object):
         # 2. apply transformation on coordinates
 
         coord_im = np.array(self.transfo_phys2continuouspix(physical_coordinates_ref))
-        interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode)
+        interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode, border=border)
 
         im_output = Image(im_ref)
         if interpolation_mode == 0:
@@ -893,8 +895,10 @@ class Image(object):
         else:
             im_output.changeType('float32')
         im_output.data = np.reshape(interpolated_values, (nx, ny, nz))
-        im_output.setFileName(fname_output)
-        im_output.save()
+        if fname_output is not None:
+            im_output.setFileName(fname_output)
+            im_output.save()
+        return im_output
 
     def get_slice(self, plane='sagittal', index=None, seg=None):
         """
@@ -1029,6 +1033,10 @@ class Image(object):
         return fname_png
 
     def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', path_output='./', verbose=1):
+        ori = self.change_orientation('RPI')
+        if seg is not None:
+            ori_seg = seg.change_orientation('RPI')
+
         from sct_utils import printv
         nx, ny, nz, nt, px, py, pz, pt = self.dim
         if plane == 'sagittal':
@@ -1059,6 +1067,10 @@ class Image(object):
         except RuntimeError, e:
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
+
+        self.change_orientation(ori)
+        if seg is not None:
+            seg.change_orientation(ori_seg)
 
 
 
