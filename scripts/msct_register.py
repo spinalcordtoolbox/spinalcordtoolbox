@@ -120,6 +120,14 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     data_src = im_src.data
     data_dest = im_dest.data
 
+    if len(data_src.shape) == 2:
+        # reshape 2D data into pseudo 3D (only one slice)
+        new_shape = list(data_src.shape)
+        new_shape.append(1)
+        new_shape = tuple(new_shape)
+        data_src = data_src.reshape(new_shape)
+        data_dest = data_dest.reshape(new_shape)
+
     # initialize displacement and rotation
     centermass_src = np.zeros([nz, 2])
     centermass_dest = np.zeros([nz, 2])
@@ -301,6 +309,14 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     # open image
     data_src = im_src.data
     data_dest = im_dest.data
+
+    if len(data_src.shape) == 2:
+        # reshape 2D data into pseudo 3D (only one slice)
+        new_shape = list(data_src.shape)
+        new_shape.append(1)
+        new_shape = tuple(new_shape)
+        data_src = data_src.reshape(new_shape)
+        data_dest = data_dest.reshape(new_shape)
 
     # initialize forward warping field (defined in destination space)
     warp_x = np.zeros(data_dest.shape)
