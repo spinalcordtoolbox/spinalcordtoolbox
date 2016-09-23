@@ -40,17 +40,17 @@ class Param:
     ## The constructor
     def __init__(self):
         # self.path_template = path_sct+'/data/template/'
-        self.shift_AP_brainstem = 25
-        self.size_AP_brainstem = 25#15
+        self.shift_AP_brainstem = 30
+        self.size_AP_brainstem = 11#15
         self.shift_IS_brainstem = 15#15
-        self.size_IS_brainstem = 40#30
-        self.size_RL_brainstem = 5#
+        self.size_IS_brainstem = 30#30
+        self.size_RL_brainstem = 1#
         self.shift_AP = 32#0#32  # shift the centerline towards the spine (in voxel).
         self.size_AP = 11#41#11  # window size in AP direction (=y) (in voxel)
         self.size_RL = 1 #1 # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
         self.shift_AP_visu = 15#0#15  # shift AP for displaying disc values
-        self.smooth_factor = [7, 1, 1]  # [3, 1, 1]
+        self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
         self.fig_anat_straight = 50
 
 
@@ -437,6 +437,8 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
     # display init disc
     if verbose == 2:
+        import matplotlib
+        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=param.fig_anat_straight, cmap=plt.cm.gray, clim=[0, 800], origin='lower')
         plt.title('Anatomical image')
@@ -444,7 +446,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         plt.figure(param.fig_anat_straight), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
         plt.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
                  verticalalignment='center', horizontalalignment='left', color='pink', fontsize=15), plt.draw()
-        plt.ion()  # enables interactive mode
+        # plt.ion()  # enables interactive mode
 
     # FIND DISCS
     # ===========================================================================
@@ -562,7 +564,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     # save figure
     if verbose == 2:
         plt.figure(param.fig_anat_straight), plt.savefig('../fig_anat_straight_with_labels.png')
-        plt.close()
+        # plt.close()
 
 
 # Create label
@@ -766,6 +768,8 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
 
     # display patterns and correlation
     if verbose == 2:
+        import matplotlib
+        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         # display template pattern
         plt.figure(11, figsize=(15, 7))
@@ -843,6 +847,8 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
         if verbose == 2:
+            import matplotlib
+            matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             plt.figure(param.fig_anat_straight)
             plt.scatter(int(round(ny/2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
