@@ -43,6 +43,8 @@ class Param:
         self.file_suffix = '_resampled'  # output suffix
         self.verbose = 1
 
+# initialize parameters
+param = Param()
 
 # resample
 # ======================================================================================================================
@@ -309,13 +311,10 @@ def get_parser():
                       example=['0', '1', '2'])
     return parser
 
-# ======================================================================================================================
-# Start program
-# ======================================================================================================================
-if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_debug = Param()
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     # Parameters for debug mode
     if param.debug:
@@ -328,7 +327,7 @@ if __name__ == "__main__":
         param.verbose = 1
     else:
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
         param.fname_data = arguments["-i"]
         arg = 0
         if "-f" in arguments:
@@ -361,3 +360,6 @@ if __name__ == "__main__":
 
     # call main function
     resample()
+
+if __name__ == "__main__":
+    main()
