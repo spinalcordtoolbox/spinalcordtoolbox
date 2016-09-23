@@ -55,8 +55,7 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export SCT_DIR=${SCT_DIR%/bin}
   export SCT_PYTHON=${SCT_DIR}/python
   export SCT_VERSION=$(cat $SCT_DIR/version.txt)
-  export SCT_COMMIT=$(cat $SCT_DIR/commit.txt)
-
+  
   addtopath "${SCT_DIR}/bin" PATH
 #  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
   addtopath ${SCT_DIR}/scripts PYTHONPATH
@@ -70,10 +69,19 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   fi
   # Will quietely fail if a virtualenv or conda is not used
   . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
-    echo "--"
-    echo "Spinal Cord Toolbox (version $SCT_VERSION-$SCT_COMMIT)"
-#    echo SCT installed in ${SCT_DIR}
-#    echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
+  # display SCT version
+  echo "--"
+  if [ -e ${SCT_DIR}/.git ]; then
+    # retrieve commit
+    SCT_COMMIT=`git --git-dir=/Users/julien/code/spinalcordtoolbox/.git rev-parse HEAD`
+    # retrieve branch
+    SCT_BRANCH=`git --git-dir=/Users/julien/code/spinalcordtoolbox/.git branch | grep \* | awk '{print $2}'`
+    echo "Spinal Cord Toolbox ($SCT_BRANCH/$SCT_COMMIT)"
+  else
+    echo "Spinal Cord Toolbox (version: $SCT_VERSION)"
+  fi
+#  echo SCT installed in ${SCT_DIR}
+#  echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
 
 fi
 if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
