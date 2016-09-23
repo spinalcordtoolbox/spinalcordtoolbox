@@ -64,9 +64,11 @@ def test(path_data='', parameters=''):
         subject_folder = subject_folder[-1]
     path_output = sct.slash_at_the_end('sct_label_vertebrae_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
     os.mkdir(path_output)
-    param_with_path += ' -ofolder ' + path_output
+    path_current = os.path.abspath(os.path.curdir)
+    os.chdir(path_output)
+    # param_with_path += ' -ofolder ' + path_output
     # log file
-    fname_log = path_output + 'output.log'
+    fname_log = 'output.log'
 
     # Extract contrast
     contrast = ''
@@ -113,11 +115,11 @@ def test(path_data='', parameters=''):
 
     if status == 0:
         # copy input data (for easier debugging)
-        sct.run('cp '+dict_param_with_path['-i']+' '+path_output, verbose=0)
+        sct.run('cp '+dict_param_with_path['-i']+' .', verbose=0)
         # extract center of vertebral labels
         try:
-            sct.run('sct_label_utils -i '+path_output+contrast+'_seg_labeled.nii.gz -vert-body 0 -o '+path_output+contrast+'_seg_labeled_center.nii.gz', verbose=0)
-            label_results = ProcessLabels(path_output + contrast + '_seg_labeled_center.nii.gz')
+            sct.run('sct_label_utils -i '+contrast+'_seg_labeled.nii.gz -vert-body 0 -o '+contrast+'_seg_labeled_center.nii.gz', verbose=0)
+            label_results = ProcessLabels(contrast + '_seg_labeled_center.nii.gz')
             list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
             # get dimension
             # from msct_image import Image
@@ -125,7 +127,7 @@ def test(path_data='', parameters=''):
             nx, ny, nz, nt, px, py, pz, pt = label_results.image_input.dim
         except:
             status = 1
-            output += '\nERROR: cannot open file: ' + path_output+contrast+'_seg_labeled.nii.gz'
+            output += '\nERROR: cannot open file: ' + contrast+'_seg_labeled.nii.gz'
             write_to_log_file(fname_log, output, 'w')
             return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
         # open ground truth
@@ -179,6 +181,8 @@ def test(path_data='', parameters=''):
 
     # write log file
     write_to_log_file(fname_log, output, 'w')
+
+    os.chdir(path_current)
 
     return status, output, results
 
