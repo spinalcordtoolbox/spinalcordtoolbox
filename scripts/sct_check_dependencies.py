@@ -108,28 +108,33 @@ def main():
     sct.checkRAM(os_running, 0)
 
     # get path of the toolbox
-    path_sct = os.getenv("SCT_DIR")
+    path_sct = os.path.dirname(os.path.dirname(commands.getoutput('which sct_env')))
+    # sys.path.append(path_sct + '/scripts')
+    # path_sct = os.getenv("SCT_DIR")
     if path_sct is None:
         raise EnvironmentError("SCT_DIR, which is the path SCT install needs to be set")
     print ('SCT path: {0}'.format(path_sct))
-
-    # fetch version
-    with open (path_sct+'/version.txt', 'r') as myfile:
-        version_sct = myfile.read().replace('\n', '')
-    print 'SCT version: '+version_sct
 
     # fetch true commit number and branch (do not use commit.txt which is wrong)
     path_curr = os.path.abspath(os.curdir)
     os.chdir(path_sct)
     # first, make sure there is a .git folder
     if os.path.isdir('.git'):
+        print 'Installation type: git'
         sct_commit = commands.getoutput('git rev-parse HEAD')
-        sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
-        if not (sct_commit.isalnum() and sct_branch.isalnum()):
-            print "WARNING: Cannot retrieve SCT commit and/or branch number"
+        sct_branch = commands.getoutput('git branch | grep \*').strip('* ')
+        if not (sct_commit.isalnum()):
             sct_commit = 'unknown'
             sct_branch = 'unknown'
-        print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
+        print '  commit: '+sct_commit
+        print '  branch: '+sct_branch
+    else:
+        print 'Installation type: package'
+        # fetch version
+        with open(path_sct + '/version.txt', 'r') as myfile:
+            version_sct = myfile.read().replace('\n', '')
+        print '  version: '+version_sct
+
     os.chdir(path_curr)
 
     # # fetch version of the toolbox
