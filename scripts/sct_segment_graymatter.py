@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-########################################################################################################################
+#######################################################################################################################
 #
 #
 # Gray matter segmentation - new implementation
@@ -11,6 +11,35 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
+'''
+INFORMATION:
+The model used in this function is compound of:
+  - a dictionary: a list of slices of WM/GM contrasted images with their manual segmentations [slices.pklz]
+  - a model representing this dictionary in a reduced space (a PCA or an isomap model as implemented in sk-learn) [fitted_model.pklz]
+  - the dictionary data fitted to this model (i.e. in the model space) [fitted_data.pklz]
+  - the averaged median intensity in the white and gray matter in the model [intensities.pklz]
+  - an information file indicating which parameters were used to construct this model, and te date of computation [info.txt]
+
+A constructed model is provided in the toolbox here: $PATH_SCT/data/gm_model.
+It's made from T2* images of 80 subjects and computed with the parameters that gives the best gray matter segmentation results.
+However you can compute you own model with your own data or with other parameters and use it to segment gray matter by using  the flag -model path_new_gm_model/.
+
+To do so, you should have a folder (path_to_dataset/) containing for each subject (with a folder per subject):
+        - a WM/GM contrasted image (for ex T2*-w) containing 'im' in its name
+        - a segmentation of the spinal cord containing 'seg' in its name
+        - a (or several) manual segmentation(s) of the gray matter containing 'gm' in its(their) name(s)
+        - a level file containing 'level' in its name : it can be an image containing a level label per slice indicating at wich vertebral level correspond this slice (usually obtained by registering the PAM50 template to the WM/GM contrasted image) or a text file indicating the level of each slice.
+
+For more information on the parameters available to compute the model, type:
+msct_multiatlas_seg -h
+
+to compute the model, use the following command line :
+msct_multiatlas_seg -path-data path_to_dataset/
+
+Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function the flag -model gm_model/
+
+'''
+
 from msct_multiatlas_seg import Param, ParamData, ParamModel, Model
 from msct_gmseg_utils import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm, binarize
 from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end, run
