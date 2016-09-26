@@ -200,12 +200,6 @@ class SegmentGM:
         # load model
         self.model.load_model()
 
-        # pad images to avoid bug with centermassrot if SC is too close to the edges
-        sct_image.main(['-i', self.param_seg.fname_im, '-pad-asym', '25,25,25,25,0,0', '-o', self.param_seg.fname_im])
-        sct_image.main(['-i', self.param_seg.fname_seg, '-pad-asym', '25,25,25,25,0,0', '-o', self.param_seg.fname_seg])
-        if self.param_seg.fname_manual_gmseg is not None:
-            sct_image.main(['-i', self.param_seg.fname_manual_gmseg, '-pad-asym', '25,25,25,25,0,0', '-o', self.param_seg.fname_manual_gmseg])
-
         self.target_im, self.info_preprocessing = pre_processing(self.param_seg.fname_im, self.param_seg.fname_seg, self.param_seg.fname_level, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm, denoising=self.param_data.denoising, verbose=self.param.verbose, rm_tmp=self.param.rm_tmp)
 
         printv('\nRegistering target image to model data ...', self.param.verbose, 'normal')
