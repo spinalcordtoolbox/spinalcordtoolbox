@@ -631,7 +631,7 @@ def main(args=None):
     if '-vertfile' in arguments:
         param_seg.fname_level = arguments['-vertfile']
     if '-denoising' in arguments:
-        param_data.denoising = arguments['-denoising']
+        param_data.denoising = bool(int(arguments['-denoising']))
     if '-normalization' in arguments:
         param_data.normalization = arguments['-normalization']
     if '-p' in arguments:
