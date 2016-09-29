@@ -48,22 +48,21 @@ def get_parser():
 # ==========================================================================================
 def main(args=None):
 
+    if args is None:
+        args = sys.argv[1:]
+
     # initialization
     verbose = 1
     dict_url = {'sct_example_data': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta23/sct_example_data.zip',
                 'sct_testing_data': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta23/sct_testing_data.zip',
                 'PAM50': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta21/PAM50.zip',
                 'MNI-Poly-AMU': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/MNI-Poly-AMU.zip',
-                'gm_model': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/gm_model.zip'}
+                'gm_model': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta23/gm_model.zip'}
     tmp_file = 'tmp.data.zip'
-
-    # check user arguments
-    if not args:
-        args = sys.argv[1:]
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     data_name = arguments['-d']
     if '-v' in arguments:
         verbose = int(arguments['-v'])

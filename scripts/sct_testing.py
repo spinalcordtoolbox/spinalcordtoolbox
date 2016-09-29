@@ -57,10 +57,13 @@ class param:
 
 # START MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
 
+    # get parser
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     if '-d' in arguments:
         param.download = int(arguments['-d'])
@@ -128,7 +131,9 @@ def main():
 
 def downloaddata():
     sct.printv('\nDownloading testing data...', param.verbose)
-    sct.run('sct_download_data -d sct_testing_data')
+    import sct_download_data
+    sct_download_data.main(['-d', 'sct_testing_data'])
+    # sct.run('sct_download_data -d sct_testing_data')
 
 
 # list of all functions to test

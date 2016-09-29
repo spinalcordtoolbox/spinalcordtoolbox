@@ -23,6 +23,10 @@
 - OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
 
+##3.0_beta24 (2016-09-28)
+- BUG: Fixed #870, #898, #859, #871, #1005, #750, #444, #878, #1000
+- INST: Fixed issue with matplotlib version 1.5.3
+
 ##3.0_beta23 (2016-09-18)
 - BUG: Fixed #984, #983, #954, #978, #987, #938, #964, #638, #969, #922, #855
 - OPT: **sct_register_to_template**: added a flag "-ref" to be able to register to anisotropic data
