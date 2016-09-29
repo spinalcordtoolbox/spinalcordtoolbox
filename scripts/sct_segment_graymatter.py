@@ -325,28 +325,38 @@ class SegmentGM:
             shutil.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir)
             self.param_seg.fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
 
+    def get_im_from_list(self, data):
+        im = Image(data)
+        # set pix dimension
+        im.hdr.structarr['pixdim'][1] = self.param_data.axial_res
+        im.hdr.structarr['pixdim'][2] = self.param_data.axial_res
+        # set the correct orientation
+        im.setFileName('im_to_orient.nii.gz')
+        im.save()
+        im = set_orientation(im, 'IRP')
+        im = set_orientation(im, 'PIL', data_inversion=True)
+
+        return im
+
     def register_target(self):
         # create dir to store warping fields
         path_warping_fields = 'warp_target/'
         if not os.path.exists(path_warping_fields):
             os.mkdir(path_warping_fields)
-
-        # get destination image
-        im_dest = Image(self.model.mean_image)
-
-        for target_slice in self.target_im:
-            im_src = Image(target_slice.im)
-            # register slice image to mean dictionary image
-            im_src_reg, fname_src2dest, fname_dest2src = register_data(im_src, im_dest, param_reg=self.param_data.register_param, path_copy_warp=path_warping_fields, rm_tmp=self.param.rm_tmp)
-
-            # rename warping fields
-            fname_src2dest_slice = 'warp_target_slice'+str(target_slice.id)+'2dic.nii.gz'
-            fname_dest2src_slice = 'warp_dic2target_slice' + str(target_slice.id) + '.nii.gz'
-            shutil.move(path_warping_fields+fname_src2dest, path_warping_fields+fname_src2dest_slice)
-            shutil.move(path_warping_fields+fname_dest2src, path_warping_fields+fname_dest2src_slice)
-
-            # set moved image
-            target_slice.set(im_m=im_src_reg.data)
+        # get 3D images from list of slices
+        im_dest = self.get_im_from_list(np.array([self.model.mean_image for target_slice in self.target_im]))
+        im_src = self.get_im_from_list(np.array([target_slice.im for target_slice in self.target_im]))
+        # register list of target slices on list of model mean image
+        im_src_reg, fname_src2dest, fname_dest2src = register_data(im_src, im_dest, param_reg=self.param_data.register_param, path_copy_warp=path_warping_fields, rm_tmp=self.param.rm_tmp)
+        # rename warping fields
+        fname_src2dest_save = 'warp_target2dic.nii.gz'
+        fname_dest2src_save = 'warp_dic2target.nii.gz'
+        shutil.move(path_warping_fields+fname_src2dest, path_warping_fields+fname_src2dest_save)
+        shutil.move(path_warping_fields+fname_dest2src, path_warping_fields+fname_dest2src_save)
+        #
+        for i, target_slice in enumerate(self.target_im):
+            # set moved image for each slice
+            target_slice.set(im_m=im_src_reg.data[i])
 
         return path_warping_fields
 
@@ -418,19 +428,20 @@ class SegmentGM:
             target_slice.set(gm_seg_m=data_mean_gm, wm_seg_m=data_mean_wm)
 
     def warp_back_seg(self, path_warp):
-        for target_slice in self.target_im:
-            printv('\nSlice '+str(target_slice.id)+':', self.param.verbose, 'normal')
-            fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1)+'warp_dic2target_slice' + str(target_slice.id) + '.nii.gz'
-            im_dest = Image(target_slice.im)
-            interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
-            # warp GM
-            im_src_gm = Image(target_slice.gm_seg_M)
-            im_src_gm_reg = apply_transfo(im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
-            # warp WM
-            im_src_wm = Image(target_slice.wm_seg_M)
-            im_src_wm_reg = apply_transfo(im_src_wm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
-            # set slice attributes
-            target_slice.set(gm_seg=im_src_gm_reg.data, wm_seg=im_src_wm_reg.data)
+        # get 3D images from list of slices
+        im_dest = self.get_im_from_list(np.array([target_slice.im for target_slice in self.target_im]))
+        im_src_gm = self.get_im_from_list(np.array([target_slice.gm_seg_M for target_slice in self.target_im]))
+        im_src_wm = self.get_im_from_list(np.array([target_slice.wm_seg_M for target_slice in self.target_im]))
+        #
+        fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1)+'warp_dic2target.nii.gz'
+        interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
+        # warp GM
+        im_src_gm_reg = apply_transfo(im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
+        # warp WM
+        im_src_wm_reg = apply_transfo(im_src_wm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
+        for i, target_slice in enumerate(self.target_im):
+            # set GM and WM for each slice
+            target_slice.set(gm_seg=im_src_gm_reg.data[i], wm_seg=im_src_wm_reg.data[i])
 
     def post_processing(self):
         ## DO INTERPOLATION BACK TO ORIGINAL IMAGE
