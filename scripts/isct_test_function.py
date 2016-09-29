@@ -44,6 +44,7 @@ import os
 import copy_reg
 import types
 import pandas as pd
+import json
 
 
 # get path of the toolbox
@@ -93,7 +94,7 @@ def _unpickle_method(func_name, obj, cls):
 copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
 
 
-def generate_data_list(folder_dataset, verbose=1):
+def generate_data_list(folder_dataset, json_requirements=None, verbose=1):
     """
     Construction of the data list from the data set
     This function return a list of directory (in folder_dataset) in which the contrast is present.
@@ -104,8 +105,9 @@ def generate_data_list(folder_dataset, verbose=1):
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
         if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
-            data_subjects.append(folder_dataset + subject_dir + '/')
-            subjects_dir.append(subject_dir)
+            if read_json(folder_dataset + subject_dir, json_requirements=json_requirements):
+                data_subjects.append(folder_dataset + subject_dir + '/')
+                subjects_dir.append(subject_dir)
 
     if not data_subjects:
         sct.printv('ERROR: No subject data were found in ' + folder_dataset + '. '
@@ -113,6 +115,34 @@ def generate_data_list(folder_dataset, verbose=1):
                    verbose=verbose, type='error')
 
     return data_subjects, subjects_dir
+
+def read_json(path_dir, json_requirements=None, fname_json='dataset_description.json'):
+    path_dir = sct.slash_at_the_end(path_dir, slash=1)
+    if fname_json not in os.listdir(path_dir) and json_requirements is not None:
+        accept_subject = False
+    elif json_requirements is None:
+        accept_subject = True
+    else:
+        json_file = open(path_dir+fname_json)
+        dic_info = json.load(json_file)
+        json_file.close()
+        # pass keys and items to lower case
+        dic_info = dict((k.lower(), v.lower()) for k, v in dic_info.iteritems())
+        # if no condition is not verified, accept subject
+        accept_subject = True
+        # read requirements:
+        list_conditions = json_requirements.split(',')
+        for condition in list_conditions:
+            key, val = condition.split('=')
+            key, val = key.lower(), val.lower()
+            # if key do not exist, do not accept subject
+            if key not in dic_info.keys():
+                accept_subject = False
+            # if value for this key is not the one required, do not accept subject
+            elif dic_info[key] != val:
+                accept_subject = False
+
+    return accept_subject
 
 
 def process_results(results, subjects_name, function, folder_dataset, parameters):
@@ -133,6 +163,8 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
 
 def function_launcher(args):
     import importlib
+    # append local script to PYTHONPATH for import
+    sys.path.append(os.path.abspath(os.curdir))
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
     try:
         output = script_to_be_run.test(*args[1:])
@@ -152,7 +184,7 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=1):
+def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_requirements=None, verbose=1):
     """
     Run a test function on the dataset using multiprocessing and save the results
     :return: results
@@ -160,7 +192,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
     """
 
     # generate data list from folder containing
-    data_subjects, subjects_name = generate_data_list(folder_dataset)
+    data_subjects, subjects_name = generate_data_list(folder_dataset, json_requirements=json_requirements)
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -221,6 +253,12 @@ def get_parser():
                                   "Image paths must be contains in the arguments list.",
                       mandatory=False)
 
+    parser.add_option(name="-json",
+                      type_value="str",
+                      description="Requirements on center, study, ... that must be satisfied by the json file of each tested subjects\n"
+                                  "Syntax:  center=unf,study=errsm,gm_model=0",
+                      mandatory=False)
+
     parser.add_option(name="-cpu-nb",
                       type_value="int",
                       description="Number of CPU used for testing. 0: no multiprocessing. If not provided, "
@@ -229,12 +267,12 @@ def get_parser():
                       default_value=0,
                       example='42')
 
-    # parser.add_option(name="-log",
-    #                   type_value='multiple_choice',
-    #                   description="Redirects Terminal verbose to log file.",
-    #                   mandatory=False,
-    #                   example=['0', '1'],
-    #                   default_value='0')
+    parser.add_option(name="-log",
+                      type_value='multiple_choice',
+                      description="Redirects Terminal verbose to log file.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
 
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -260,10 +298,13 @@ if __name__ == "__main__":
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
+    json_requirements = None
+    if "-json" in arguments:
+        json_requirements = arguments["-json"]
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
-    # create_log_file = arguments['-log']
+    create_log = int(arguments['-log'])
     verbose = arguments["-v"]
 
     # start timer
@@ -272,13 +313,13 @@ if __name__ == "__main__":
     output_time = strftime("%y%m%d%H%M%S")
 
     # build log file name
-    file_log = 'results_test_'+function_to_test+'_'+output_time
-    orig_stdout = sys.stdout
-    fname_log = file_log+'.log'
-    handle_log = file(fname_log, 'w')
-
-    # redirect to log file
-    sys.stdout = handle_log
+    if create_log:
+        file_log = 'results_test_'+function_to_test+'_'+output_time
+        orig_stdout = sys.stdout
+        fname_log = file_log+'.log'
+        handle_log = file(fname_log, 'w')
+        # redirect to log file
+        sys.stdout = handle_log
 
     print 'Testing started on: '+strftime("%Y-%m-%d %H:%M:%S")
 
@@ -320,12 +361,11 @@ if __name__ == "__main__":
     print 'CPU cores: ' + str(cpu_count())  # + ', Used by SCT: '+output
 
     # check RAM
-    print 'RAM:'
-    sct.checkRAM(os_running)
+    sct.checkRAM(os_running, 0)
 
     # test function
     try:
-        results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
+        results = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
         pd.set_option('display.max_rows', 500)
         pd.set_option('display.max_columns', 500)
         pd.set_option('display.width', 1000)
@@ -378,15 +418,15 @@ if __name__ == "__main__":
         # print detailed results
         print '\nDETAILED RESULTS:'
         print results_display.to_string()
-        print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: File(s) missing'
+        print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing'
 
     except Exception as err:
         print err
 
     # stop file redirection
-    sys.stdout.close()
-    sys.stdout = orig_stdout
-
-    # display log file to Terminal
-    handle_log = file(fname_log, 'r')
-    print handle_log.read()
+    if create_log:
+        sys.stdout.close()
+        sys.stdout = orig_stdout
+        # display log file to Terminal
+        handle_log = file(fname_log, 'r')
+        print handle_log.read()
