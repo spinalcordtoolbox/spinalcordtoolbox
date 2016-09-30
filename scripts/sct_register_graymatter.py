@@ -475,12 +475,12 @@ def get_parser():
 
 
     parser.usage.addSection('\nMISC')
-    parser.add_option(name="-apply-warp",
-                      type_value='multiple_choice',
-                      description="Application of the warping field (option '-w') on the template (option '-t'). 0: do not apply it. 1: apply it.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='0')
+    # parser.add_option(name="-apply-warp",
+    #                   type_value='multiple_choice',
+    #                   description="Application of the warping field (option '-w') on the template (option '-t'). 0: do not apply it. 1: apply it.",
+    #                   mandatory=False,
+    #                   example=['0', '1'],
+    #                   default_value='0')
     parser.add_option(name='-qc',
                       type_value='multiple_choice',
                       description='Output images for quality control.',
