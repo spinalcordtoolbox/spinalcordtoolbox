@@ -259,11 +259,10 @@ done
 # Create directory
 mkdir ${INSTALL_DIR}
 # check if directory was created
-if [ ! "${INSTALL_DIR}" ]; then
+if [ ! -d "${INSTALL_DIR}" ]; then
   echo "ERROR: ${INSTALL_DIR} does not exist. Check permissions and make sure you entered absolute path."
   exit 1
 fi
-
 SCT_DIR=${INSTALL_DIR}
 
 # Clean old install setup in bin/
