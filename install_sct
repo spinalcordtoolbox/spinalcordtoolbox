@@ -440,9 +440,12 @@ else
   cmd="python ../scripts/sct_download_data.py -d gm_model"; echo ">> "$cmd; $cmd
 fi
 
-# update PATH environment
+# Make sure sct scripts are executable
+find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 2 -type f -exec chmod 755 {} \;
+
+# if sudo=0
 if [[ $UID != 0 ]]; then
-  # if sudo=0
+  # update PATH environment
   while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
     echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? yes/no: "
     read add_to_path
@@ -460,18 +463,7 @@ if [[ $UID != 0 ]]; then
      echo Not adding ${INSTALL_DIR} to \$PATH
      echo You can always add it later or call SCT functions with full path ${SCT_DIR}/${BIN_DIR}/sct_function
   fi
-else
-  # if sudo=1
-  echo -e "\nWARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to the appropriate file (e.g., .bashrc):"
-  echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH"
-  echo -e "Then, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed.\n"
-fi
-
-# Make sure sct scripts are executable
-find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 2 -type f -exec chmod 755 {} \;
-
-# Run check dependencies
-if [[ $UID != 0 ]]; then
+  # run sct_check_dependencies
   echo -e "\nRun sct_check_dependencies..."
   # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
   # it creates is cleaned properly
@@ -484,4 +476,9 @@ if [[ $UID != 0 ]]; then
     echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
     echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
   fi
+else
+  # if sudo=1
+  echo -e "\nWARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to the appropriate file (e.g., .bashrc):"
+  echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH"
+  echo -e "Then, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed.\n"
 fi
