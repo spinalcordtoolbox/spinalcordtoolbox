@@ -232,10 +232,10 @@ while  true ; do
   # user enters new path
   read new_install
 
-   # Expand ~/
-   new_install=${new_install/#\~\//$HOME\/}
-   # Remove trailing /
-   new_install=${new_install%/}
+  # Expand ~/
+  new_install=${new_install/#\~\//$HOME\/}
+  # Remove trailing /
+  new_install=${new_install%/}
 
   # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
   if [ "${new_install}" == "/" ] || [ "${HOME}" == "${new_install%/}" ] ; then
@@ -259,14 +259,20 @@ done
 # Create directory
 mkdir ${INSTALL_DIR}
 # check if directory was created
-if [ ! -d "${INSTALL_DIR}" ]; then
-  echo "ERROR: ${INSTALL_DIR} does not exist. Check permissions and make sure you entered absolute path."
+if [ -d "${INSTALL_DIR}" ]; then
+  # check write permission
+  if [ ! -w "${INSTALL_DIR}" ]; then
+    echo "ERROR: ${INSTALL_DIR} exists but does not have write permission."
+    exit 1
+  fi
+else
+  echo "ERROR: ${INSTALL_DIR} cannot be created. Make sure you have write permission."
   exit 1
 fi
 SCT_DIR=${INSTALL_DIR}
 
 # Clean old install setup in bin/
-echo "Removing sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
+echo -e "\nRemoving sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
 find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
 find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
 
