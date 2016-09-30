@@ -256,9 +256,8 @@ while  true ; do
   fi
 done
 
-# If directory does not exist. Creating it.
-# Stay quiet if dir already exist
-mkdir ${INSTALL_DIR} 2> /dev/null && echo -e "Directory does not exist. Creating it..."
+# Create directory
+mkdir ${INSTALL_DIR}
 # check if directory was created
 if [ ! "${INSTALL_DIR}" ]; then
   echo "ERROR: ${INSTALL_DIR} does not exist. Check permissions and make sure you entered absolute path."
