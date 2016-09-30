@@ -108,9 +108,7 @@ def main():
     sct.checkRAM(os_running, 0)
 
     # get path of the toolbox
-    path_sct = os.path.dirname(os.path.dirname(commands.getoutput('which sct_env')))
-    # sys.path.append(path_sct + '/scripts')
-    # path_sct = os.getenv("SCT_DIR")
+    path_sct = os.path.dirname(os.path.dirname(__file__))
     if path_sct is None:
         raise EnvironmentError("SCT_DIR, which is the path SCT install needs to be set")
     print ('SCT path: {0}'.format(path_sct))
