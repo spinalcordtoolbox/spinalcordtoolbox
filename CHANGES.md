@@ -23,7 +23,7 @@
 - OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
 
-##3.0_beta25 (TBD)
+##3.0_beta25 (2016-09-30)
 - BUG: Fixed #875, #1007, #1009
 
 ##3.0_beta24 (2016-09-28)
