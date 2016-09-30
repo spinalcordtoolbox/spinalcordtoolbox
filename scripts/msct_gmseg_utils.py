@@ -238,7 +238,7 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
         im_ref_slice_iz.hdr.set_qform(im_ref_slice_iz.hdr.get_qform())
 
         # interpolate input image to reference image
-        im_input_interpolate_iz = im_input.interpolate_from_image(im_ref_slice_iz, interpolation_mode=interpolation_mode, border='reflect')
+        im_input_interpolate_iz = im_input.interpolate_from_image(im_ref_slice_iz, interpolation_mode=interpolation_mode, border='nearest')
         # reshape data to 2D if needed
         if len(im_input_interpolate_iz.data.shape) == 3:
             im_input_interpolate_iz.data = im_input_interpolate_iz.data.reshape(im_input_interpolate_iz.data.shape[:-1])
