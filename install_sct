@@ -166,7 +166,7 @@ while getopts ":dmhbo" opt; do
   esac
 done
 
-
+# Catch SCT version
 if [ -e "version.txt" ]; then
   SCT_VERSION=`cat version.txt`
 else
@@ -205,6 +205,12 @@ fi
 echo -e "\nSCT version ......... "$SCT_VERSION
 echo -e "Installation type ... "$INSTALL_TYPE
 echo -e "Operating system .... "$OS
+# Check if sudo
+if [[ $UID == 0 ]]; then
+  echo -e "sudo mode ........... 1"
+else
+  echo -e "sudo mode ........... 0"
+fi
 
 # Define sh files
 THE_BASHRC=${HOME}/.bashrc
@@ -330,7 +336,6 @@ else
   cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${TMP_DIR}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
 fi
 
-
 # INSTALL PYTHON
 if [ ${NO_CONDA_INSTALL} ]; then
   echo "python/ will not be (re)-install"
@@ -406,16 +411,6 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
-
-  # Install wheels
-#  echo -e "\nInstalling external Python dependencies..."
-#  download  ${TMP_DIR}/wheels.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/wheel/${OS}/wheels.tar.gz
-#  tar -C ${TMP_DIR} -zxvf ${TMP_DIR}/wheels.tar.gz
-  # get file names
-#  dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
-#  ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
-#  pip install --ignore-installed ${dipy_whl} ${ornlm_whl}
-#  pip install --ignore-installed ${ornlm_whl}
 fi
 if [[ ${NO_CONDA_INSTALL} ]]; then
    continue
@@ -424,9 +419,7 @@ elif [[ $OS == linux ]]; then
     # on certain linux distribution
     conda install -fy numpy
 fi
-
 echo -e "All requirements installed!"
-
 
 # INSTALL DATA
 if [ ${NO_DATA_INSTALL} ]; then
@@ -447,9 +440,9 @@ else
   cmd="python ../scripts/sct_download_data.py -d gm_model"; echo ">> "$cmd; $cmd
 fi
 
-
 # update PATH environment
 if [[ $UID != 0 ]]; then
+  # if sudo=0
   while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
     echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? yes/no: "
     read add_to_path
@@ -467,6 +460,11 @@ if [[ $UID != 0 ]]; then
      echo Not adding ${INSTALL_DIR} to \$PATH
      echo You can always add it later or call SCT functions with full path ${SCT_DIR}/${BIN_DIR}/sct_function
   fi
+else
+  # if sudo=1
+  echo -e "WARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to the appropriate file (e.g., .bashrc):"
+  echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH\n"
+  echo -e "\nThen, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed."
 fi
 
 # Make sure sct scripts are executable
@@ -477,16 +475,13 @@ echo -e "\nRun sct_check_dependencies..."
 # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
 # it creates is cleaned properly
 cd ${TMP_DIR}
-if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies ; then
-   echo -e "INSTALLATION DONE!\n"
-  if [[ $UID == 0 ]]; then
-    echo -e "WARNING: sudo mode: Profile files was not edited. To access SCT functions, please add the following line to the appropriate file (e.g., .bashrc):"
-    echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH\n"
-  else
+if [[ $UID != 0 ]]; then
+  if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies ; then
+    echo -e "INSTALLATION DONE!\n"
     echo -e "Open a new Terminal window to load environment variables, or run:\n source ~/.bashrc\n"
   fi
 else
-   echo -e "INSTALLATION ERROR!"
-   echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
-   echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
+  echo -e "INSTALLATION ERROR!"
+  echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
+  echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
 fi
