@@ -462,26 +462,26 @@ if [[ $UID != 0 ]]; then
   fi
 else
   # if sudo=1
-  echo -e "WARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to the appropriate file (e.g., .bashrc):"
-  echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH\n"
-  echo -e "\nThen, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed."
+  echo -e "\nWARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to the appropriate file (e.g., .bashrc):"
+  echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH"
+  echo -e "Then, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed.\n"
 fi
 
 # Make sure sct scripts are executable
 find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 2 -type f -exec chmod 755 {} \;
 
 # Run check dependencies
-echo -e "\nRun sct_check_dependencies..."
-# We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
-# it creates is cleaned properly
-cd ${TMP_DIR}
 if [[ $UID != 0 ]]; then
+  echo -e "\nRun sct_check_dependencies..."
+  # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
+  # it creates is cleaned properly
+  cd ${TMP_DIR}
   if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies ; then
     echo -e "INSTALLATION DONE!\n"
     echo -e "Open a new Terminal window to load environment variables, or run:\n source ~/.bashrc\n"
+  else
+    echo -e "INSTALLATION ERROR!"
+    echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
+    echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
   fi
-else
-  echo -e "INSTALLATION ERROR!"
-  echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
-  echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
 fi
