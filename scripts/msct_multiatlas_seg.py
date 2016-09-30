@@ -125,7 +125,7 @@ class ParamModel:
     def __init__(self):
         self.path_data = ''
         self.todo = 'load'# 'compute' or 'load'
-        self.new_model_dir = 'gmseg/'
+        self.new_model_dir = 'gm_model/'
         self.method = 'pca' # 'pca' or 'isomap'
         self.k_pca = 0.95 # chosen after loocv optimization with the 37subjects-model
         self.n_compo_iso = 0.5 # float between 0 and 1 : percentage of component to keep. 0.5 = keep half of the components
@@ -202,6 +202,7 @@ class Model:
             os.mkdir(self.param_model.new_model_dir)
         # write model info
         param_fic = open(self.param_model.new_model_dir + 'info.txt', 'w')
+        param_fic.write('Model computed on '+'-'.join(str(t) for t in time.localtime()[:3])+'\n')
         param_fic.write(str(self.param_model))
         param_fic.write(str(self.param_data))
         param_fic.close()
@@ -221,7 +222,6 @@ class Model:
 
         printv('\nSaving model elements ...', self.param.verbose, 'normal')
         self.save_model()
-        ### TODO: add compute_beta / compute tau ??
 
     # ------------------------------------------------------------------------------------------------------------------
     def load_model_data(self):

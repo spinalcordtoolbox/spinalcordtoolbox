@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-########################################################################################################################
+#######################################################################################################################
 #
 #
 # Gray matter segmentation - new implementation
@@ -11,6 +11,35 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
+'''
+INFORMATION:
+The model used in this function is compound of:
+  - a dictionary: a list of slices of WM/GM contrasted images with their manual segmentations [slices.pklz]
+  - a model representing this dictionary in a reduced space (a PCA or an isomap model as implemented in sk-learn) [fitted_model.pklz]
+  - the dictionary data fitted to this model (i.e. in the model space) [fitted_data.pklz]
+  - the averaged median intensity in the white and gray matter in the model [intensities.pklz]
+  - an information file indicating which parameters were used to construct this model, and te date of computation [info.txt]
+
+A constructed model is provided in the toolbox here: $PATH_SCT/data/gm_model.
+It's made from T2* images of 80 subjects and computed with the parameters that gives the best gray matter segmentation results.
+However you can compute you own model with your own data or with other parameters and use it to segment gray matter by using  the flag -model path_new_gm_model/.
+
+To do so, you should have a folder (path_to_dataset/) containing for each subject (with a folder per subject):
+        - a WM/GM contrasted image (for ex T2*-w) containing 'im' in its name
+        - a segmentation of the spinal cord containing 'seg' in its name
+        - a (or several) manual segmentation(s) of the gray matter containing 'gm' in its(their) name(s)
+        - a level file containing 'level' in its name : it can be an image containing a level label per slice indicating at wich vertebral level correspond this slice (usually obtained by registering the PAM50 template to the WM/GM contrasted image) or a text file indicating the level of each slice.
+
+For more information on the parameters available to compute the model, type:
+msct_multiatlas_seg -h
+
+to compute the model, use the following command line :
+msct_multiatlas_seg -path-data path_to_dataset/
+
+Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function the flag -model gm_model/
+
+'''
+
 from msct_multiatlas_seg import Param, ParamData, ParamModel, Model
 from msct_gmseg_utils import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm, binarize
 from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end, run
@@ -200,10 +229,6 @@ class SegmentGM:
         # load model
         self.model.load_model()
 
-        # pad images to avoid bug with centermassrot if SC is too close to the edges
-        sct_image.main(['-i', self.param_seg.fname_im, '-pad-asym', '25,25,25,25,0,0', '-o', self.param_seg.fname_im])
-        sct_image.main(['-i', self.param_seg.fname_seg, '-pad-asym', '25,25,25,25,0,0', '-o', self.param_seg.fname_seg])
-
         self.target_im, self.info_preprocessing = pre_processing(self.param_seg.fname_im, self.param_seg.fname_seg, self.param_seg.fname_level, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm, denoising=self.param_data.denoising, verbose=self.param.verbose, rm_tmp=self.param.rm_tmp)
 
         printv('\nRegistering target image to model data ...', self.param.verbose, 'normal')
@@ -300,28 +325,38 @@ class SegmentGM:
             shutil.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir)
             self.param_seg.fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
 
+    def get_im_from_list(self, data):
+        im = Image(data)
+        # set pix dimension
+        im.hdr.structarr['pixdim'][1] = self.param_data.axial_res
+        im.hdr.structarr['pixdim'][2] = self.param_data.axial_res
+        # set the correct orientation
+        im.setFileName('im_to_orient.nii.gz')
+        im.save()
+        im = set_orientation(im, 'IRP')
+        im = set_orientation(im, 'PIL', data_inversion=True)
+
+        return im
+
     def register_target(self):
         # create dir to store warping fields
         path_warping_fields = 'warp_target/'
         if not os.path.exists(path_warping_fields):
             os.mkdir(path_warping_fields)
-
-        # get destination image
-        im_dest = Image(self.model.mean_image)
-
-        for target_slice in self.target_im:
-            im_src = Image(target_slice.im)
-            # register slice image to mean dictionary image
-            im_src_reg, fname_src2dest, fname_dest2src = register_data(im_src, im_dest, param_reg=self.param_data.register_param, path_copy_warp=path_warping_fields, rm_tmp=self.param.rm_tmp)
-
-            # rename warping fields
-            fname_src2dest_slice = 'warp_target_slice'+str(target_slice.id)+'2dic.nii.gz'
-            fname_dest2src_slice = 'warp_dic2target_slice' + str(target_slice.id) + '.nii.gz'
-            shutil.move(path_warping_fields+fname_src2dest, path_warping_fields+fname_src2dest_slice)
-            shutil.move(path_warping_fields+fname_dest2src, path_warping_fields+fname_dest2src_slice)
-
-            # set moved image
-            target_slice.set(im_m=im_src_reg.data)
+        # get 3D images from list of slices
+        im_dest = self.get_im_from_list(np.array([self.model.mean_image for target_slice in self.target_im]))
+        im_src = self.get_im_from_list(np.array([target_slice.im for target_slice in self.target_im]))
+        # register list of target slices on list of model mean image
+        im_src_reg, fname_src2dest, fname_dest2src = register_data(im_src, im_dest, param_reg=self.param_data.register_param, path_copy_warp=path_warping_fields, rm_tmp=self.param.rm_tmp)
+        # rename warping fields
+        fname_src2dest_save = 'warp_target2dic.nii.gz'
+        fname_dest2src_save = 'warp_dic2target.nii.gz'
+        shutil.move(path_warping_fields+fname_src2dest, path_warping_fields+fname_src2dest_save)
+        shutil.move(path_warping_fields+fname_dest2src, path_warping_fields+fname_dest2src_save)
+        #
+        for i, target_slice in enumerate(self.target_im):
+            # set moved image for each slice
+            target_slice.set(im_m=im_src_reg.data[i])
 
         return path_warping_fields
 
@@ -393,19 +428,20 @@ class SegmentGM:
             target_slice.set(gm_seg_m=data_mean_gm, wm_seg_m=data_mean_wm)
 
     def warp_back_seg(self, path_warp):
-        for target_slice in self.target_im:
-            printv('\nSlice '+str(target_slice.id)+':', self.param.verbose, 'normal')
-            fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1)+'warp_dic2target_slice' + str(target_slice.id) + '.nii.gz'
-            im_dest = Image(target_slice.im)
-            interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
-            # warp GM
-            im_src_gm = Image(target_slice.gm_seg_M)
-            im_src_gm_reg = apply_transfo(im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
-            # warp WM
-            im_src_wm = Image(target_slice.wm_seg_M)
-            im_src_wm_reg = apply_transfo(im_src_wm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
-            # set slice attributes
-            target_slice.set(gm_seg=im_src_gm_reg.data, wm_seg=im_src_wm_reg.data)
+        # get 3D images from list of slices
+        im_dest = self.get_im_from_list(np.array([target_slice.im for target_slice in self.target_im]))
+        im_src_gm = self.get_im_from_list(np.array([target_slice.gm_seg_M for target_slice in self.target_im]))
+        im_src_wm = self.get_im_from_list(np.array([target_slice.wm_seg_M for target_slice in self.target_im]))
+        #
+        fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1)+'warp_dic2target.nii.gz'
+        interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
+        # warp GM
+        im_src_gm_reg = apply_transfo(im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
+        # warp WM
+        im_src_wm_reg = apply_transfo(im_src_wm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
+        for i, target_slice in enumerate(self.target_im):
+            # set GM and WM for each slice
+            target_slice.set(gm_seg=im_src_gm_reg.data[i], wm_seg=im_src_wm_reg.data[i])
 
     def post_processing(self):
         ## DO INTERPOLATION BACK TO ORIGINAL IMAGE
@@ -606,7 +642,7 @@ def main(args=None):
     if '-vertfile' in arguments:
         param_seg.fname_level = arguments['-vertfile']
     if '-denoising' in arguments:
-        param_data.denoising = arguments['-denoising']
+        param_data.denoising = bool(int(arguments['-denoising']))
     if '-normalization' in arguments:
         param_data.normalization = arguments['-normalization']
     if '-p' in arguments:
