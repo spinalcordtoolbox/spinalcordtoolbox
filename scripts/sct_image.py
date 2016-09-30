@@ -251,6 +251,10 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
     nx, ny, nz, nt, px, py, pz, pt = im.dim
     pad_x_i, pad_x_f, pad_y_i, pad_y_f, pad_z_i, pad_z_f = int(pad_x_i), int(pad_x_f), int(pad_y_i), int(pad_y_f), int(pad_z_i), int(pad_z_f)
 
+    if len(im.data.shape) == 2:
+        new_shape = list(im.data.shape)
+        new_shape.append(1)
+        im.data = im.data.reshape(new_shape)
     padded_data = zeros((nx+pad_x_i+pad_x_f, ny+pad_y_i+pad_y_f, nz+pad_z_i+pad_z_f))
 
     if pad_x_f == 0:
