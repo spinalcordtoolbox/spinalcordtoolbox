@@ -38,6 +38,141 @@ import sct_utils as sct
 from msct_parser import Parser
 
 
+def get_parser(paramreg=None):
+    # Initialize the parser
+
+    if paramreg is None:
+        step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
+                         slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
+        step1 = Paramreg()
+        paramreg = ParamregMultiStep([step0, step1])
+
+    parser = Parser(__file__)
+    parser.usage.set_description('This program co-registers two 3D volumes. The deformation is non-rigid and is '
+                                 'constrained along Z direction (i.e., axial plane). Hence, this function assumes '
+                                 'that orientation of the destination image is axial (RPI). If you need to register '
+                                 'two volumes with large deformations and/or different contrasts, it is recommended to '
+                                 'input spinal cord segmentations (binary mask) in order to achieve maximum robustness.'
+                                 ' The program outputs a warping field that can be used to register other images to the'
+                                 ' destination image. To apply the warping field to another image, use '
+                                 'sct_apply_transfo')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Image source.",
+                      mandatory=True,
+                      example="src.nii.gz")
+    parser.add_option(name="-d",
+                      type_value="file",
+                      description="Image destination.",
+                      mandatory=True,
+                      example="dest.nii.gz")
+    parser.add_option(name="-iseg",
+                      type_value="file",
+                      description="Segmentation source.",
+                      mandatory=False,
+                      example="src_seg.nii.gz")
+    parser.add_option(name="-dseg",
+                      type_value="file",
+                      description="Segmentation destination.",
+                      mandatory=False,
+                      example="dest_seg.nii.gz")
+    parser.add_option(name="-ilabel",
+                      type_value="file",
+                      description="Labels source.",
+                      mandatory=False)
+    parser.add_option(name="-dlabel",
+                      type_value="file",
+                      description="Labels destination.",
+                      mandatory=False)
+    parser.add_option(name="-m",
+                      type_value="file",
+                      description="Mask that can be created with sct_create_mask to improve accuracy over region of interest. "
+                                  "This mask will be used on the destination image.",
+                      mandatory=False,
+                      example="mask.nii.gz")
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="Name of output file.",
+                      mandatory=False,
+                      example="src_reg.nii.gz")
+    parser.add_option(name="-param",
+                      type_value=[[':'], 'str'],
+                      description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
+                                  "step: <int> Step number (starts at 1, except for type=label).\n"
+                                  "type: {im,seg,label} type of data used for registration. Use type=label only at step=0.\n"
+                                  "algo: Default=" + paramreg.steps['1'].algo + "\n"
+                                                                                "  translation: translation in X-Y plane (2dof)\n"
+                                                                                "  rigid: translation + rotation in X-Y plane (4dof)\n"
+                                                                                "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
+                                                                                "  syn: non-linear symmetric normalization\n"
+                                                                                "  bsplinesyn: syn regularized with b-splines\n"
+                                                                                "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
+                                                                                "  centermass: slicewise center of mass alignment (seg only).\n"
+                                                                                "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
+                                                                                "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
+                                  # "  landmark: Landmark-based affine registration (Tx,Ty,Tz,Rx,Ry,Sz). Requires at least two landmarks per image.\n"
+                                                                                "slicewise: <int> Slice-by-slice 2d transformation. Default=" +
+                                  paramreg.steps['1'].slicewise + "\n"
+                                                                  "metric: {CC,MI,MeanSquares}. Default=" +
+                                  paramreg.steps['1'].metric + "\n"
+                                                               "iter: <int> Number of iterations. Default=" +
+                                  paramreg.steps['1'].iter + "\n"
+                                                             "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default=" +
+                                  paramreg.steps['1'].shrink + "\n"
+                                                               "smooth: <int> Smooth factor. Default=" + paramreg.steps[
+                                      '1'].smooth + "\n"
+                                                    "laplacian: <int> Laplacian filter. Default=" + paramreg.steps[
+                                      '1'].laplacian + "\n"
+                                                       "gradStep: <float> Gradient step. Default=" + paramreg.steps[
+                                      '1'].gradStep + "\n"
+                                                      "init: <int> Initial translation alignment based on:\n"
+                                                      "  geometric: Geometric center of images\n"
+                                                      "  centermass: Center of mass of images\n"
+                                                      "  origin: Physical origin of images\n"
+                                                      "poly: <int> Polynomial degree of regularization (only for slicereg and centermassrot). Default=" +
+                                  paramreg.steps['1'].poly + "\n"
+                                                             "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
+                                  paramreg.steps['0'].dof + "\n",
+                      mandatory=False,
+                      example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
+    parser.add_option(name="-identity",
+                      type_value="multiple_choice",
+                      description="just put source into destination (no optimization).",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
+    parser.add_option(name="-z",
+                      type_value="int",
+                      description="""size of z-padding to enable deformation at edges when using SyN.""",
+                      mandatory=False,
+                      default_value=Param().padding)
+    parser.add_option(name="-x",
+                      type_value="multiple_choice",
+                      description="""Final interpolation.""",
+                      mandatory=False,
+                      default_value='linear',
+                      example=['nn', 'linear', 'spline'])
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="Output folder",
+                      mandatory=False,
+                      example='reg_results/')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="""Remove temporary files.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1', '2'])
+
+    return parser
+
+
 # DEFAULT PARAMETERS
 
 class Param:
@@ -113,6 +248,7 @@ def main(args=None):
 
     # Initialization
     fname_output = ''
+    path_out = ''
     fname_mask = param.fname_mask
     fname_src_seg = ''
     fname_dest_seg = ''
@@ -129,115 +265,8 @@ def main(args=None):
     step1 = Paramreg()
     paramreg = ParamregMultiStep([step0, step1])
 
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('This program co-registers two 3D volumes. The deformation is non-rigid and is '
-                                 'constrained along Z direction (i.e., axial plane). Hence, this function assumes '
-                                 'that orientation of the destination image is axial (RPI). If you need to register '
-                                 'two volumes with large deformations and/or different contrasts, it is recommended to '
-                                 'input spinal cord segmentations (binary mask) in order to achieve maximum robustness.'
-                                 ' The program outputs a warping field that can be used to register other images to the'
-                                 ' destination image. To apply the warping field to another image, use '
-                                 'sct_apply_transfo')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Image source.",
-                      mandatory=True,
-                      example="src.nii.gz")
-    parser.add_option(name="-d",
-                      type_value="file",
-                      description="Image destination.",
-                      mandatory=True,
-                      example="dest.nii.gz")
-    parser.add_option(name="-iseg",
-                      type_value="file",
-                      description="Segmentation source.",
-                      mandatory=False,
-                      example="src_seg.nii.gz")
-    parser.add_option(name="-dseg",
-                      type_value="file",
-                      description="Segmentation destination.",
-                      mandatory=False,
-                      example="dest_seg.nii.gz")
-    parser.add_option(name="-ilabel",
-                      type_value="file",
-                      description="Labels source.",
-                      mandatory=False)
-    parser.add_option(name="-dlabel",
-                      type_value="file",
-                      description="Labels destination.",
-                      mandatory=False)
-    parser.add_option(name="-m",
-                      type_value="file",
-                      description="Mask that can be created with sct_create_mask to improve accuracy over region of interest. "
-                                  "This mask will be used on the destination image.",
-                      mandatory=False,
-                      example="mask.nii.gz")
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="Name of output file.",
-                      mandatory=False,
-                      example="src_reg.nii.gz")
-    parser.add_option(name="-param",
-                      type_value=[[':'],'str'],
-                      description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
-                                  "step: <int> Step number (starts at 1, except for type=label).\n"
-                                  "type: {im,seg,label} type of data used for registration. Use type=label only at step=0.\n"
-                                  "algo: Default="+paramreg.steps['1'].algo+"\n"
-                                  "  translation: translation in X-Y plane (2dof)\n"
-                                  "  rigid: translation + rotation in X-Y plane (4dof)\n"
-                                  "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
-                                  "  syn: non-linear symmetric normalization\n"
-                                  "  bsplinesyn: syn regularized with b-splines\n"
-                                  "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
-                                  "  centermass: slicewise center of mass alignment (seg only).\n"
-                                  "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
-                                  "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
-                                  # "  landmark: Landmark-based affine registration (Tx,Ty,Tz,Rx,Ry,Sz). Requires at least two landmarks per image.\n"
-                                  "slicewise: <int> Slice-by-slice 2d transformation. Default="+paramreg.steps['1'].slicewise+"\n"
-                                  "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
-                                  "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
-                                  "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default="+paramreg.steps['1'].shrink+"\n"
-                                  "smooth: <int> Smooth factor. Default="+paramreg.steps['1'].smooth+"\n"
-                                  "laplacian: <int> Laplacian filter. Default="+paramreg.steps['1'].laplacian+"\n"
-                                  "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
-                                  "init: <int> Initial translation alignment based on:\n"
-                                  "  geometric: Geometric center of images\n"
-                                  "  centermass: Center of mass of images\n"
-                                  "  origin: Physical origin of images\n"
-                                  "poly: <int> Polynomial degree of regularization (only for slicereg and centermassrot). Default="+paramreg.steps['1'].poly+"\n"
-                                  "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" + paramreg.steps['0'].dof + "\n",
-                      mandatory=False,
-                      example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
-    parser.add_option(name="-identity",
-                      type_value="multiple_choice",
-                      description="just put source into destination (no optimization).",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1'])
-    parser.add_option(name="-z",
-                      type_value="int",
-                      description="""size of z-padding to enable deformation at edges when using SyN.""",
-                      mandatory=False,
-                      default_value=param.padding)
-    parser.add_option(name="-x",
-                      type_value="multiple_choice",
-                      description="""Final interpolation.""",
-                      mandatory=False,
-                      default_value='linear',
-                      example=['nn', 'linear', 'spline'])
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="""Remove temporary files.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1', '2'])
+    parser = get_parser(paramreg=paramreg)
+
     arguments = parser.parse(args)
 
     # get arguments
@@ -253,6 +282,8 @@ def main(args=None):
         fname_dest_label = arguments['-dlabel']
     if '-o' in arguments:
         fname_output = arguments['-o']
+    if '-ofolder' in arguments:
+        path_out = arguments['-ofolder']
     if "-m" in arguments:
         fname_mask = arguments['-m']
     padding = arguments['-z']
@@ -301,11 +332,12 @@ def main(args=None):
 
     # define output folder and file name
     if fname_output == '':
-        path_out = ''  # output in user's current directory
+        path_out = '' if not path_out else path_out  # output in user's current directory
         file_out = file_src+"_reg"
         ext_out = ext_src
     else:
-        path_out, file_out, ext_out = sct.extract_fname(fname_output)
+        path, file_out, ext_out = sct.extract_fname(fname_output)
+        path_out = path if not path_out else path_out
 
     # create QC folder
     sct.create_folder(param.path_qc)
