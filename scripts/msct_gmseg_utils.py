@@ -552,9 +552,13 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, val_min=None, val_ma
     # compute normalized data
     # if median values are too close: use min and max to normalize data
     if abs(med_data_gm - med_data_wm) < std_data and val_min is not None and val_max is not None:
-        min_data = min(np.min(data_in_gm[data_in_gm.nonzero()]), np.min(data_in_wm[data_in_wm.nonzero()]))
-        max_data = max(np.max(data_in_gm[data_in_gm.nonzero()]), np.max(data_in_wm[data_in_wm.nonzero()]))
-        new_data = ((data - min_data) * (val_max - val_min) / (max_data - min_data)) + val_min
+        try:
+            min_data = min(np.min(data_in_gm[data_in_gm.nonzero()]), np.min(data_in_wm[data_in_wm.nonzero()]))
+            max_data = max(np.max(data_in_gm[data_in_gm.nonzero()]), np.max(data_in_wm[data_in_wm.nonzero()]))
+            new_data = ((data - min_data) * (val_max - val_min) / (max_data - min_data)) + val_min
+        except ValueError:
+            printv('WARNING: an incomplete slice will not be normalized',1,'warning')
+            return data
     # else (=normal data): use median values to normalize data
     else:
         new_data = ((data - med_data_wm) * (val_gm - val_wm) / (med_data_gm - med_data_wm)) + val_wm
