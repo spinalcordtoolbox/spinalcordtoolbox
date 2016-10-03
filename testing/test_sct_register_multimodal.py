@@ -165,7 +165,7 @@ def test(path_data='', parameters=''):
         else:
             subject_folder = subject_folder[-1]
         path_output = sct.slash_at_the_end(
-            'sct_register_to_template_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(
+            'sct_register_multimodal_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(
                 random.randint(1, 1000000)), slash=1)
         param_with_path += ' -ofolder ' + path_output
 
