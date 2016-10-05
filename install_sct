@@ -44,7 +44,7 @@ finish ()
   # Get back to starting point
   cd ${SCT_SOURCE}
   # remove installation tmp files
-  rm -Rf ${TMP_DIR}
+#  rm -Rf ${TMP_DIR}
 }
 trap finish EXIT
 
@@ -83,6 +83,14 @@ install_refresh ()
   echo "" >> ${THE_BASHRC}
   echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
   echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${THE_BASHRC}
+  echo "" >> ${THE_BASHRC}
+
+  # (t)csh for good measure
+  echo "" >> ${THE_CSHRC}
+  echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
+  echo "setenv PATH \"\$PATH:${SCT_DIR}/${BIN_DIR}\"" >> ${THE_CSHRC}
+  echo "" >> ${THE_CSHRC}
+
 }
 
 
@@ -111,11 +119,15 @@ download ()
   fi
   set +x
 
-  if [ ${e_status} != 0 ]; then
+  ls ${1}
+  file_exist=$?
+
+  if [[ ${e_status} != 0  || ${file_exist} != 0 ]]; then
      echo "The download of $2 failed"
      echo "Please check your internet connection before relaunching the installer"
      exit 1
   fi
+
 }
 
 
@@ -332,6 +344,7 @@ else
   fi
   # force disk buffer to refresh
   ls ${TMP_DIR} > /dev/null
+
   # unzip binaries
   cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${TMP_DIR}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
 fi
@@ -413,7 +426,7 @@ else
   fi
 fi
 if [[ ${NO_CONDA_INSTALL} ]]; then
-   continue
+   echo not installing conda
 elif [[ $OS == linux ]]; then
     # Fix Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so or libmkl_def.so.
     # on certain linux distribution
@@ -443,7 +456,7 @@ fi
 # Make sure sct scripts are executable
 find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 1 -type f -exec chmod 755 {} \;
 # make sure there is no buffer/cache issue for the ${BIN_DIR} directory
-ls  ${SCT_DIR}/${BIN_DIR}/ > /dev/null 2>1;
+ls -l ${SCT_DIR}/${BIN_DIR}/ ;
 
 # if sudo=0
 if [[ $UID != 0 ]]; then
@@ -454,13 +467,7 @@ if [[ $UID != 0 ]]; then
   done
   echo ""
   if [[ ${add_to_path} =~ ^[Yy] ]]; then
-    # assuming bash
     install_refresh
-    # (t)csh for good measure
-    if ! grep SPINALCORDTOOLBOX ${THE_CSHRC} > /dev/null 2>&1 ; then
-        echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
-        echo "setenv PATH \"\$PATH:${SCT_DIR}/${BIN_DIR}\"" >> ${THE_CSHRC}
-    fi
   else
      echo Not adding ${INSTALL_DIR} to \$PATH
      echo You can always add it later or call SCT functions with full path ${SCT_DIR}/${BIN_DIR}/sct_function
