@@ -79,18 +79,20 @@ fi"
 # Installation text to insert in .bashrc
 install_refresh ()
 {
-  echo
-  echo "" >> ${THE_BASHRC}
-  echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
-  echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${THE_BASHRC}
-  echo "" >> ${THE_BASHRC}
 
-  # (t)csh for good measure
-  echo "" >> ${THE_CSHRC}
-  echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
-  echo "setenv PATH \"\$PATH:${SCT_DIR}/${BIN_DIR}\"" >> ${THE_CSHRC}
-  echo "" >> ${THE_CSHRC}
-
+  if ${THE_BASHRC}  ; then
+    echo
+    echo "" >> ${THE_BASHRC}
+    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
+    echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${THE_BASHRC}
+    echo "" >> ${THE_BASHRC}
+  else
+    # (t)csh for good measure
+    echo "" >> ${THE_CSHRC}
+    echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
+    echo "setenv PATH \"\$PATH:${SCT_DIR}/${BIN_DIR}\"" >> ${THE_CSHRC}
+    echo "" >> ${THE_CSHRC}
+  fi
 }
 
 
@@ -228,15 +230,13 @@ else
 fi
 
 # Define sh files
-
-
 if echo $(ps -o comm= $PPID) | grep csh ;then
-  THE_RC=${HOME}/.cshrc
+  THE_CSHRC=${HOME}/.cshrc
+  THE_RC=${THE_CSHRC}
 else
-  THE_RC=${HOME}/.bashrc
+  THE_RC=${THE_BASHRC}
+  THE_BASHRC=${HOME}/.bashrc
 fi
-THE_BASHRC=${HOME}/.bashrc
-THE_CSHRC=${HOME}/.cshrc
 
 # if installing from git folder, then becomes default installation folder
 if [[ $INSTALL_TYPE == "git" ]]; then
@@ -434,16 +434,15 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
-fi
-
-# reinstall numpy at the end to prevent a conda bug
-if [[ ${NO_CONDA_INSTALL} ]]; then
-   echo ''
-elif [[ $OS == linux ]]; then
+  # reinstall numpy at the end to prevent a conda bug
+  if [[ $OS == linux ]]; then
     # Fix Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so or libmkl_def.so.
     # on certain linux distribution
     conda install -fy numpy
+  fi
+
 fi
+
 echo -e "All requirements installed!"
 
 
@@ -454,6 +453,9 @@ elif [ ${OFFLINE_INSTALL} ]; then
   echo "Offline install"
   cmd="tar -C ${SCT_DIR} -zxvf ${SCT_SOURCE}/offline/data.tar.gz"; echo ">> "$cmd; $cmd
 else
+  # forcing activation if python is not reinstalled
+  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+
   # Download data
   echo -e "\nInstalling data..."
   cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
