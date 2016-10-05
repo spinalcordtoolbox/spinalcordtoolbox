@@ -192,6 +192,9 @@ elif uname -a | grep -i  linux > /dev/null 2>&1; then
   if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
     # CentOS 6.X
     OS=linux_centos6
+  elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
+    # RedHat 6.X
+    OS=linux_centos6
   else
     # Other Linux
     OS=linux
