@@ -73,9 +73,9 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   echo "--"
   if [ -e ${SCT_DIR}/.git ]; then
     # retrieve commit
-    SCT_COMMIT=`git --git-dir=/Users/julien/code/spinalcordtoolbox/.git rev-parse HEAD`
+    SCT_COMMIT=`git --git-dir=${SCT_DIR}/.git rev-parse HEAD`
     # retrieve branch
-    SCT_BRANCH=`git --git-dir=/Users/julien/code/spinalcordtoolbox/.git branch | grep \* | awk '{print $2}'`
+    SCT_BRANCH=`git --git-dir=${SCT_DIR}/.git branch | grep \* | awk '{print $2}'`
     echo "Spinal Cord Toolbox ($SCT_BRANCH/$SCT_COMMIT)"
   else
     echo "Spinal Cord Toolbox (version: $SCT_VERSION)"
