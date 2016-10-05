@@ -24,7 +24,7 @@
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
 
 ##3.0_beta26 (2016-10-05)
-- INST: Fixed #1008, #1012
+- INST: Fixed #992, #1004, #1008, #1012
 
 ##3.0_beta25 (2016-09-30)
 - OPT: Fixed #875
