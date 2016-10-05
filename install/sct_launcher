@@ -56,9 +56,6 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export SCT_PYTHON=${SCT_DIR}/python
   export SCT_VERSION=$(cat $SCT_DIR/version.txt)
   
-  addtopath "${SCT_DIR}/bin" PATH
-#  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
-  addtopath ${SCT_DIR}/scripts PYTHONPATH
   export PATH
   export PYTHONPATH
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
@@ -67,8 +64,19 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   # Overwrite parameter with local config
     . ${HOME}/.sctrc
   fi
-  # Will quietely fail if a virtualenv or conda is not used
-  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
+
+  # Will use system python if conda or virtual env are not used
+  echo ""
+  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}
+  actication=$?
+  if [[ ${actication} != 0 ]]; then
+    echo [WARNING] using  system python, ${SCT_PYTHON}/bin/activate not found
+  fi
+
+  addtopath "${SCT_DIR}/bin" PATH
+  addtopath ${SCT_DIR}/scripts PYTHONPATH
+
+
   # display SCT version
   echo "--"
   if [ -e ${SCT_DIR}/.git ]; then
