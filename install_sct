@@ -44,7 +44,7 @@ finish ()
   # Get back to starting point
   cd ${SCT_SOURCE}
   # remove installation tmp files
-  rm -Rf ${TMP_DIR}
+#  rm -Rf ${TMP_DIR}
 }
 trap finish EXIT
 
@@ -79,10 +79,20 @@ fi"
 # Installation text to insert in .bashrc
 install_refresh ()
 {
-  echo
-  echo "" >> ${THE_BASHRC}
-  echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
-  echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${THE_BASHRC}
+
+  if [[ -z ${THE_CSHRC} ]]  ; then
+    echo
+    echo "" >> ${THE_BASHRC}
+    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
+    echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${THE_BASHRC}
+    echo "" >> ${THE_BASHRC}
+  else
+    # (t)csh for good measure
+    echo "" >> ${THE_CSHRC}
+    echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
+    echo "setenv PATH \"\${PATH}:${SCT_DIR}/${BIN_DIR}\"" >> ${THE_CSHRC}
+    echo "" >> ${THE_CSHRC}
+  fi
 }
 
 
@@ -111,11 +121,15 @@ download ()
   fi
   set +x
 
-  if [ ${e_status} != 0 ]; then
+  ls ${1}
+  file_exist=$?
+
+  if [[ ${e_status} != 0  || ${file_exist} != 0 ]]; then
      echo "The download of $2 failed"
      echo "Please check your internet connection before relaunching the installer"
      exit 1
   fi
+
 }
 
 
@@ -192,6 +206,9 @@ elif uname -a | grep -i  linux > /dev/null 2>&1; then
   if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
     # CentOS 6.X
     OS=linux_centos6
+  elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
+    # RedHat 6.X
+    OS=linux_centos6
   else
     # Other Linux
     OS=linux
@@ -213,8 +230,13 @@ else
 fi
 
 # Define sh files
-THE_BASHRC=${HOME}/.bashrc
-THE_CSHRC=${HOME}/.cshrc
+if echo $(ps -o comm= $PPID) | grep csh ;then
+  THE_CSHRC=${HOME}/.cshrc
+  THE_RC=${THE_CSHRC}
+else
+  THE_BASHRC=${HOME}/.bashrc
+  THE_RC=${THE_BASHRC}
+fi
 
 # if installing from git folder, then becomes default installation folder
 if [[ $INSTALL_TYPE == "git" ]]; then
@@ -332,6 +354,7 @@ else
   fi
   # force disk buffer to refresh
   ls ${TMP_DIR} > /dev/null
+
   # unzip binaries
   cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${TMP_DIR}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
 fi
@@ -411,15 +434,17 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
-fi
-if [[ ${NO_CONDA_INSTALL} ]]; then
-   continue
-elif [[ $OS == linux ]]; then
+  # reinstall numpy at the end to prevent a conda bug
+  if [[ $OS == linux ]]; then
     # Fix Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so or libmkl_def.so.
     # on certain linux distribution
     conda install -fy numpy
+  fi
+
 fi
+
 echo -e "All requirements installed!"
+
 
 # INSTALL DATA
 if [ ${NO_DATA_INSTALL} ]; then
@@ -428,6 +453,9 @@ elif [ ${OFFLINE_INSTALL} ]; then
   echo "Offline install"
   cmd="tar -C ${SCT_DIR} -zxvf ${SCT_SOURCE}/offline/data.tar.gz"; echo ">> "$cmd; $cmd
 else
+  # forcing activation if python is not reinstalled
+  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+
   # Download data
   echo -e "\nInstalling data..."
   cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
@@ -440,48 +468,44 @@ else
   cmd="python ../scripts/sct_download_data.py -d gm_model"; echo ">> "$cmd; $cmd
 fi
 
-# update PATH environment
+# Make sure sct scripts are executable
+find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 1 -type f -exec chmod 755 {} \;
+# make sure there is no buffer/cache issue for the ${BIN_DIR} directory
+ls -l ${SCT_DIR}/${BIN_DIR}/ > /dev/null 2>&1;
+
+# Deactivating conda
+. ${SCT_DIR}/${PYTHON_DIR}/bin/deactivate > /dev/null 2>&1
+
+# if sudo=0
 if [[ $UID != 0 ]]; then
-  # if sudo=0
+  # update PATH environment
   while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
     echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? yes/no: "
     read add_to_path
   done
   echo ""
   if [[ ${add_to_path} =~ ^[Yy] ]]; then
-    # assuming bash
     install_refresh
-    # (t)csh for good measure
-    if ! grep SPINALCORDTOOLBOX ${THE_CSHRC} > /dev/null 2>&1 ; then
-        echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
-        echo "setenv PATH \"\$PATH:${SCT_DIR}/${BIN_DIR}\"" >> ${THE_CSHRC}
-    fi
   else
      echo Not adding ${INSTALL_DIR} to \$PATH
      echo You can always add it later or call SCT functions with full path ${SCT_DIR}/${BIN_DIR}/sct_function
   fi
-else
-  # if sudo=1
-  echo -e "\nWARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to the appropriate file (e.g., .bashrc):"
-  echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH"
-  echo -e "Then, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed.\n"
-fi
-
-# Make sure sct scripts are executable
-find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 2 -type f -exec chmod 755 {} \;
-
-# Run check dependencies
-if [[ $UID != 0 ]]; then
+  # run sct_check_dependencies
   echo -e "\nRun sct_check_dependencies..."
   # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
   # it creates is cleaned properly
   cd ${TMP_DIR}
   if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies ; then
     echo -e "INSTALLATION DONE!\n"
-    echo -e "Open a new Terminal window to load environment variables, or run:\n source ~/.bashrc\n"
+    echo -e "Open a new Terminal window to load environment variables, or run:\n source ${THE_RC}\n"
   else
     echo -e "INSTALLATION ERROR!"
     echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
     echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
   fi
+else
+  # if sudo=1
+  echo -e "\nWARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to the appropriate file (e.g., .bashrc):"
+  echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH"
+  echo -e "Then, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed.\n"
 fi
