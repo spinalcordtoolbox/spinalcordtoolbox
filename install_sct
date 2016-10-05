@@ -441,7 +441,9 @@ else
 fi
 
 # Make sure sct scripts are executable
-find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 2 -type f -exec chmod 755 {} \;
+find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 1 -type f -exec chmod 755 {} \;
+# make sure there is no buffer/cache issue for the ${BIN_DIR} directory
+ls  ${SCT_DIR}/${BIN_DIR}/ > /dev/null 2>1;
 
 # if sudo=0
 if [[ $UID != 0 ]]; then
