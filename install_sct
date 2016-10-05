@@ -234,8 +234,8 @@ if echo $(ps -o comm= $PPID) | grep csh ;then
   THE_CSHRC=${HOME}/.cshrc
   THE_RC=${THE_CSHRC}
 else
-  THE_RC=${THE_BASHRC}
   THE_BASHRC=${HOME}/.bashrc
+  THE_RC=${THE_BASHRC}
 fi
 
 # if installing from git folder, then becomes default installation folder
