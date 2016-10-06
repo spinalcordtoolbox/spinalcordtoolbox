@@ -175,6 +175,10 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
+    parser.add_option(name="-qc",
+                      type_value="int",
+                      description="Create the patches and generate the report",
+                      mandatory=False)
     return parser
 
 
@@ -226,6 +230,8 @@ if __name__ == "__main__":
         cmd += " -detect-nii"
     if "-detect-png" in arguments:
         cmd += " -detect-png"
+    if "-qc" in arguments:
+        cmd += " -qc"
 
     # Helping options
     use_viewer = None
@@ -333,6 +339,11 @@ if __name__ == "__main__":
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
+
+    if "-qc" in arguments:
+        mymsct_qc = msct_qc.QcPatch(input_filename,output_filename,contrast_type)
+        #msct_qc.QcPatch.savePatches()
+        mymsct_qc.savePatches()
 
     if folder_output == "./":
         output_name = output_filename
