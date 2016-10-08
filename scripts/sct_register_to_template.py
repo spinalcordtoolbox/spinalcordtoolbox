@@ -104,7 +104,7 @@ def get_parser():
                       description='Contrast to use for registration.',
                       mandatory=False,
                       default_value='t2',
-                      example=['t1', 't2'])
+                      example=['t1', 't2', 't2s'])
     parser.add_option(name='-ref',
                       type_value='multiple_choice',
                       description='Reference for registration: template: subject->template, subject: template->subject.',
