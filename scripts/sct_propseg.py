@@ -341,9 +341,7 @@ if __name__ == "__main__":
     output_filename = file_fname + "_seg" + ext_fname
 
     if "-qc" in arguments:
-        mymsct_qc = msct_qc.QcPatch(input_filename,output_filename,contrast_type)
-        #msct_qc.QcPatch.savePatches()
-        mymsct_qc.savePatches()
+        msct_qc.axial().save(input_filename, output_filename, nbcolum=10, size=10)
 
     if folder_output == "./":
         output_name = output_filename
