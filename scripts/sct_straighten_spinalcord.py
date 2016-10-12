@@ -187,6 +187,8 @@ class SpinalCordStraightener(object):
         # 'hamming', 'bartlett', 'blackman'
         self.window_length = window_length
         self.path_output = ""
+        self.use_straight_reference = False
+        self.centerline_reference_filename = ""
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
@@ -233,6 +235,9 @@ class SpinalCordStraightener(object):
         sct.printv('\nCopy files to tmp folder...', verbose)
         sct.run('sct_convert -i '+fname_anat+' -o '+path_tmp+'data.nii')
         sct.run('sct_convert -i '+fname_centerline+' -o '+path_tmp+'centerline.nii.gz')
+
+        if self.use_straight_reference:
+            sct.run('sct_convert -i ' + self.centerline_reference_filename + ' -o ' + path_tmp + 'centerline_ref.nii.gz')
 
         # go to tmp folder
         os.chdir(path_tmp)
@@ -348,82 +353,99 @@ class SpinalCordStraightener(object):
 
             # Create straight NIFTI volumes
             # ==========================================================================================
-            sct.printv('\nPad input volume to account for spinal cord length...', verbose)
-            from numpy import ceil
-            start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
-            end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
+            if self.use_straight_reference:
+                image_centerline_pad = Image('centerline_rpi.nii.gz')
+                nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
 
-            padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz))
-            sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,'+str(padding_z))
-            image_centerline_pad = Image('centerline_rpi.nii.gz')
-            nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
-            hdr_warp = image_centerline_pad.hdr.copy()
-            start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
-            end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
+                sct.run('sct_image -i centerline_ref.nii.gz -setorient RPI -o centerline_ref_rpi.nii.gz')
+                fname_ref = 'centerline_ref_rpi.nii.gz'
+                image_centerline_straight = Image('centerline_ref_rpi.nii.gz')
+                nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
+                x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_ref_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
+                centerline_straight = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
-            straight_size_x = int(35 / px)
-            straight_size_y = int(35 / py)
-            warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
-            warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
-            if warp_space_x[0] < 0:
-                warp_space_x[1] += warp_space_x[0] - 2
-                warp_space_x[0] = 0
-            if warp_space_y[0] < 0:
-                warp_space_y[1] += warp_space_y[0] - 2
-                warp_space_y[0] = 0
+                hdr_warp = image_centerline_pad.hdr.copy()
+                hdr_warp_s = image_centerline_straight.hdr.copy()
+                hdr_warp_s.set_data_dtype('float32')
 
-            sct.run('sct_crop_image -i tmp.centerline_pad.nii.gz -o tmp.centerline_pad_crop.nii.gz -dim 0,1,2 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0 -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord[2] - start_point_coord[2]))
-            image_centerline_straight = Image('tmp.centerline_pad_crop.nii.gz')
-            nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
-            hdr_warp_s = image_centerline_straight.hdr.copy()
-            hdr_warp_s.set_data_dtype('float32')
-            #origin = [(nx_s * px_s)/2.0, -(ny_s * py_s)/2.0, -(nz_s * pz_s)/2.0]
-            #hdr_warp_s.structarr['qoffset_x'] = origin[0]
-            #hdr_warp_s.structarr['qoffset_y'] = origin[1]
-            #hdr_warp_s.structarr['qoffset_z'] = origin[2]
-            #hdr_warp_s.structarr['srow_x'][-1] = origin[0]
-            #hdr_warp_s.structarr['srow_y'][-1] = origin[1]
-            #hdr_warp_s.structarr['srow_z'][-1] = origin[2]
-            hdr_warp_s.structarr['quatern_b'] = 0.0
-            hdr_warp_s.structarr['quatern_c'] = 1.0
-            hdr_warp_s.structarr['quatern_d'] = 0.0
-            hdr_warp_s.structarr['srow_x'][0] = -px_s
-            hdr_warp_s.structarr['srow_x'][1] = 0.0
-            hdr_warp_s.structarr['srow_x'][2] = 0.0
-            hdr_warp_s.structarr['srow_y'][0] = 0.0
-            hdr_warp_s.structarr['srow_y'][1] = py_s
-            hdr_warp_s.structarr['srow_y'][2] = 0.0
-            hdr_warp_s.structarr['srow_z'][0] = 0.0
-            hdr_warp_s.structarr['srow_z'][1] = 0.0
-            hdr_warp_s.structarr['srow_z'][2] = pz_s
-            image_centerline_straight.hdr = hdr_warp_s
-            image_centerline_straight.compute_transform_matrix()
-            image_centerline_straight.save()
+            else:
+                sct.printv('\nPad input volume to account for spinal cord length...', verbose)
+                from numpy import ceil
+                start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
+                end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
 
-            start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
-            end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
+                padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz))
+                sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,'+str(padding_z))
+                image_centerline_pad = Image('centerline_rpi.nii.gz')
+                nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
+                hdr_warp = image_centerline_pad.hdr.copy()
+                start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
+                end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
-            number_of_voxel = nx * ny * nz
-            sct.printv("Number of voxel = " + str(number_of_voxel))
+                straight_size_x = int(35 / px)
+                straight_size_y = int(35 / py)
+                warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
+                warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
+                if warp_space_x[0] < 0:
+                    warp_space_x[1] += warp_space_x[0] - 2
+                    warp_space_x[0] = 0
+                if warp_space_y[0] < 0:
+                    warp_space_y[1] += warp_space_y[0] - 2
+                    warp_space_y[0] = 0
 
-            time_centerlines = time.time()
-            
-            from numpy import linspace
-            ix_straight = [int(np.round(nx_s / 2))] * number_of_points
-            iy_straight = [int(np.round(ny_s / 2))] * number_of_points
-            iz_straight = linspace(0, end_point_coord[2] - start_point_coord[2], number_of_points)
-            dx_straight = [0.0] * number_of_points
-            dy_straight = [0.0] * number_of_points
-            dz_straight = [1.0] * number_of_points
-            coord_straight = np.array(zip(ix_straight, iy_straight, iz_straight))
-            coord_phys_straight = np.asarray(image_centerline_straight.transfo_pix2phys(coord_straight))
+                sct.run('sct_crop_image -i tmp.centerline_pad.nii.gz -o tmp.centerline_pad_crop.nii.gz -dim 0,1,2 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0 -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord[2] - start_point_coord[2]))
+                fname_ref = 'tmp.centerline_pad_crop.nii.gz'
+                image_centerline_straight = Image('tmp.centerline_pad_crop.nii.gz')
+                nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
+                hdr_warp_s = image_centerline_straight.hdr.copy()
+                hdr_warp_s.set_data_dtype('float32')
+                #origin = [(nx_s * px_s)/2.0, -(ny_s * py_s)/2.0, -(nz_s * pz_s)/2.0]
+                #hdr_warp_s.structarr['qoffset_x'] = origin[0]
+                #hdr_warp_s.structarr['qoffset_y'] = origin[1]
+                #hdr_warp_s.structarr['qoffset_z'] = origin[2]
+                #hdr_warp_s.structarr['srow_x'][-1] = origin[0]
+                #hdr_warp_s.structarr['srow_y'][-1] = origin[1]
+                #hdr_warp_s.structarr['srow_z'][-1] = origin[2]
+                hdr_warp_s.structarr['quatern_b'] = 0.0
+                hdr_warp_s.structarr['quatern_c'] = 1.0
+                hdr_warp_s.structarr['quatern_d'] = 0.0
+                hdr_warp_s.structarr['srow_x'][0] = -px_s
+                hdr_warp_s.structarr['srow_x'][1] = 0.0
+                hdr_warp_s.structarr['srow_x'][2] = 0.0
+                hdr_warp_s.structarr['srow_y'][0] = 0.0
+                hdr_warp_s.structarr['srow_y'][1] = py_s
+                hdr_warp_s.structarr['srow_y'][2] = 0.0
+                hdr_warp_s.structarr['srow_z'][0] = 0.0
+                hdr_warp_s.structarr['srow_z'][1] = 0.0
+                hdr_warp_s.structarr['srow_z'][2] = pz_s
+                image_centerline_straight.hdr = hdr_warp_s
+                image_centerline_straight.compute_transform_matrix()
+                image_centerline_straight.save()
 
-            centerline_straight = Centerline(coord_phys_straight[:, 0], coord_phys_straight[:, 1], coord_phys_straight[:, 2],
-                                             dx_straight, dy_straight, dz_straight)
+                start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
+                end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
+
+                number_of_voxel = nx * ny * nz
+                sct.printv("Number of voxel = " + str(number_of_voxel))
+
+                time_centerlines = time.time()
+
+                from numpy import linspace
+                ix_straight = [int(np.round(nx_s / 2))] * number_of_points
+                iy_straight = [int(np.round(ny_s / 2))] * number_of_points
+                iz_straight = linspace(0, end_point_coord[2] - start_point_coord[2], number_of_points)
+                dx_straight = [0.0] * number_of_points
+                dy_straight = [0.0] * number_of_points
+                dz_straight = [1.0] * number_of_points
+                coord_straight = np.array(zip(ix_straight, iy_straight, iz_straight))
+                coord_phys_straight = np.asarray(image_centerline_straight.transfo_pix2phys(coord_straight))
+
+                centerline_straight = Centerline(coord_phys_straight[:, 0], coord_phys_straight[:, 1], coord_phys_straight[:, 2],
+                                                 dx_straight, dy_straight, dz_straight)
 
 
-            time_centerlines = time.time() - time_centerlines
-            sct.printv('Time to generate centerline: ' + str(np.round(time_centerlines * 1000.0)) + ' ms', verbose)
+                time_centerlines = time.time() - time_centerlines
+                sct.printv('Time to generate centerline: ' + str(np.round(time_centerlines * 1000.0)) + ' ms', verbose)
 
             """
             import matplotlib.pyplot as plt
@@ -541,13 +563,13 @@ class SpinalCordStraightener(object):
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
-            sct.run('sct_apply_transfo -i data.nii -d tmp.centerline_pad_crop.nii.gz -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x '+interpolation_warp, verbose)
+            sct.run('sct_apply_transfo -i data.nii -d ' + fname_ref + ' -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x '+interpolation_warp, verbose)
 
             # compute the error between the straightened centerline/segmentation and the central vertical line.
             # Ideally, the error should be zero.
             # Apply deformation to input image
             sct.printv('\nApply transformation to centerline image...', verbose)
-            Transform(input_filename='centerline.nii.gz', fname_dest="tmp.centerline_pad_crop.nii.gz",
+            Transform(input_filename='centerline.nii.gz', fname_dest=fname_ref,
                       output_filename="tmp.centerline_straight.nii.gz", interp="nn",
                       warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
             from msct_image import Image
@@ -645,6 +667,11 @@ def get_parser():
                       description="centerline or segmentation.",
                       mandatory=False,
                       deprecated_by='-s')
+    parser.add_option(name="-ref",
+                      type_value="image_nifti",
+                      description="reference centerline (or segmentation) on which to register the input image, using the same philosophy as straightening procedure..",
+                      mandatory=False,
+                      example="centerline.nii.gz")
     parser.add_option(name="-p",
                       type_value=None,
                       description="amount of padding for generating labels.",
@@ -716,6 +743,10 @@ if __name__ == "__main__":
     centerline_file = arguments["-s"]
 
     sc_straight = SpinalCordStraightener(input_filename, centerline_file)
+
+    if "-ref" in arguments:
+        sc_straight.use_straight_reference = True
+        sc_straight.centerline_reference_filename = str(arguments["-ref"])
 
     # Handling optional arguments
     if "-r" in arguments:
