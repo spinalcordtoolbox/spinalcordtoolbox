@@ -230,8 +230,6 @@ if __name__ == "__main__":
         cmd += " -detect-nii"
     if "-detect-png" in arguments:
         cmd += " -detect-png"
-    if "-qc" in arguments:
-        cmd += " -qc"
 
     # Helping options
     use_viewer = None
@@ -333,7 +331,7 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    sct.run(cmd, verbose)
+    # sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
@@ -341,13 +339,12 @@ if __name__ == "__main__":
     output_filename = file_fname + "_seg" + ext_fname
 
     if "-qc" in arguments:
-        msct_qc.axial().save(input_filename, output_filename, nbcolum=10, size=10)
+        msct_qc.axial().save("PropSeg_{}".format(contrast_type), input_filename, output_filename,10, 10)
 
     if folder_output == "./":
         output_name = output_filename
     else:
         output_name = folder_output + output_filename
     sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
-
 
 

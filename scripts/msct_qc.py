@@ -13,34 +13,40 @@
 #########################################################################################
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 import matplotlib.cm as cm
 from msct_image import Image
 from scipy import ndimage
 import abc
 
+
 class Qc(object):
-    def __init__(self,name,interpolation='none', alpha = 0.8 ):
-        self.name = name
+    """
+    Create a .png file from a 2d image.
+    """
+
+    def __init__(self, alpha, dpi=600, interpolation='none'):
         self.interpolation = interpolation
         self.alpha = alpha
+        self.dpi = dpi
 
-    def __call__(self, f):
-        def wrapped_f(*args):
-            img, mask= f(*args)
-            fig = plt.imshow(img, cmap='gray', interpolation = self.interpolation)
-            fig.axes.get_xaxis().set_visible(False)
-            fig.axes.get_yaxis().set_visible(False)
-            plt.savefig('{}_gray.png'.format(self.name), format='png', bbox_inches='tight', pad_inches=0)
-            my_cmap = cm.hsv
-            my_cmap.set_under('k', alpha=0)  # how the color map deals with clipping values
-            #  you can change your threshold in clim values
-            plt.imshow(mask, cmap=my_cmap, interpolation= self.interpolation, clim=[0.9, 1], alpha= self.alpha)
-            plt.savefig('{}.png'.format(self.name), format='png', bbox_inches='tight', pad_inches=0)
+    def show(self,name, img, mask):
+        assert isinstance(img, np.ndarray)
+        assert isinstance(mask, np.ndarray)
+        fig = plt.imshow(img, cmap='gray', interpolation = self.interpolation)
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
+        self.save('{}_gray'.format(name))
+        mask = np.ma.masked_where(mask < 1, mask)
+        plt.imshow(img, cmap='gray', interpolation=self.interpolation)
+        plt.imshow(mask, cmap=cm.hsv, interpolation= self.interpolation, alpha=self.alpha,)
+        self.save(name)
 
-            plt.close()
+        plt.close()
 
-        return wrapped_f
+    def save(self, name, format='png', bbox_inches='tight', pad_inches=0):
+        plt.savefig('{}.png'.format(name), format=format, bbox_inches=bbox_inches,
+                    pad_inches=pad_inches, dpi=self.dpi)
+
 
 
 class slices(object):
@@ -48,121 +54,116 @@ class slices(object):
     __metaclass__ = abc.ABCMeta
 
     @staticmethod
-    def crop(matrix, centerX, centerY, ray):
-        startRow = centerX - ray
-        endRow = centerX + ray
-        startCol = centerY - ray
-        endCol = centerY + ray
-        return matrix[startRow:endRow,startCol:endCol]
-
-    @staticmethod
-    def addSlice(matrix, i, colum, size, patch):
-        startCol = (i % colum) * size * 2
+    def add_slice(matrix, i, column, size, patch):
+        startCol = (i % column) * size * 2
         endCol = startCol + patch.shape[1]
-        startRow = i / colum * size * 2
+        startRow = i / column * size * 2
         endRow = startRow + patch.shape[0]
         matrix[startRow:endRow, startCol:endCol] = patch
         return matrix
 
-    @abc.abstractproperty
-    def name(self):
-        return "default"
-
     @abc.abstractmethod
     def getSlice(self,data, i):
         """
-        Make a slice from a 3d image data array.
-        ----------
-        data : A 3d matrix.
-        i : Index.
-        Returns
-        -------
-        2d image data array.
+        Abstract method to obtain a slice of a 3d matrix.
+        :param data: 3d numpy.ndarray
+        :param i: int
+        :return: 2d numpy.ndarray
         """
         return
 
     @abc.abstractmethod
     def getDim(self, image):
-        """method"""
+        """
+        Abstract method to obtain the depth of the 3d matrix.
+        :param image: 3d numpy.ndarray
+        :return: int
+        """
         return
 
-    @abc.abstractmethod
-    def getCenter(self, image):
-        """method"""
-        return
+    def mosaic(self, imageName, segImageName, nb_column, size):
+        image = Image(imageName)
+        image_seg = Image(segImageName)
+        dim = self.getDim(image)
+        matrix0 = np.zeros((size * 2 * int((dim / nb_column) + 1), size * 2 * nb_column))
+        matrix1 = np.zeros((size * 2 * int((dim / nb_column) + 1), size * 2 * nb_column))
+        for i in range(dim):
+            seg_img = self.getSlice(image_seg.data,i)
+            if seg_img.sum() > 0:
+                img = self.getSlice(image.data,i)
+                center = ndimage.measurements.center_of_mass(seg_img)
+                x = int(round(center[0]))
+                y = int(round(center[1]))
+                matrix0 = slices.add_slice(matrix0, i, nb_column, size, crop(img, x, y, size))
+                matrix1 = slices.add_slice(matrix1, i, nb_column, size, crop(seg_img, x, y, size))
+        return matrix0, matrix1
 
-    def matrix(self,imageName,segImageName,nbcolum, size):
+    def single(self,imageName,segImageName):
         image = Image(imageName)
         imageSeg = Image(segImageName)
         dim = self.getDim(image)
-        matrix0 = np.zeros((size * 2 * int((dim / nbcolum)+1), size * 2 * nbcolum))
-        matrix1 = np.empty((size * 2 * int((dim / nbcolum)+1), size * 2 * nbcolum))
+        index = 0
+        sum = 0
+
         for i in range(dim):
-            img = self.getSlice(image.data,i)
-            segImg = self.getSlice(imageSeg.data,i)
-            center = self.getCenter(segImg)
-            x = int(round(center[0]))
-            y = int(round(center[1]))
-            matrix0 = slices.addSlice(matrix0, i, nbcolum, size,slices.crop(img, x, y, size))
-            matrix1 = slices.addSlice(matrix1, i, nbcolum, size,slices.crop(segImg, x, y, size))
+            seg_img = self.getSlice(imageSeg.data,i)
+            tmp = seg_img.sum()
+            if tmp > sum:
+                sum = tmp
+                index = i
+        matrix0 = self.getSlice(image.data, index)
+        matrix1 = self.getSlice(imageSeg.data, index)
 
         return  matrix0, matrix1
+
+    def save(self, name, imageName, segImageName, nb_column=1, size=10):
+        if nb_column > 1:
+            img, mask = self.mosaic(imageName, segImageName, nb_column, size)
+        else:
+            img, mask = self.single(imageName, segImageName)
+
+        Qc(1).show(name, img, mask)
+
+
+def crop(matrix, centerX, centerY, ray):
+    start_row = centerX - ray
+    end_row = centerX + ray
+    start_col = centerY - ray
+    end_col = centerY + ray
+
+    if matrix.shape < (end_row,end_col):
+        return matrix
+
+    return matrix[start_row:end_row,start_col:end_col]
 
 
 class axial(slices):
 
-    _name = "axial"
-    @property
-    def name(self):
-        return self.name
-    @name.setter
-    def name(self,newName):
-        return
-
-    def getSlice(self,data, i):
+    def getSlice(self, data, i):
         return data[:, i, :]
 
     def getDim(self, image):
         nx, ny, nz, nt, px, py, pz, pt = image.dim
         return ny
 
-    def getCenter(self, image):
-        if(image.sum() != 0):
-            return ndimage.measurements.center_of_mass(image)
-        else:
-            return image.shape[0]/2, image.shape[1]/2
-
-
-    @Qc(_name)
-    def save(self, nbcolum, size, imageName, segImageName):
-        return self.matrix(imageName,segImageName, nbcolum, size)
 
 class sagital(slices):
 
-    _name = "sagital"
-    @property
-    def name(self):
-        return self.name
-    @name.setter
-    def name(self,newName):
-        return
-
-    def getSlice(self,data, i):
+    def getSlice(self, data, i):
         return data[:, :, i]
 
     def getDim(self, image):
         nx, ny, nz, nt, px, py, pz, pt = image.dim
         return nz
 
-    def getCenter(self, image):
-        return image.shape[0]/2, image.shape[1]/2
+class coronal(slices):
 
+    def getSlice(self, data, i):
+        return data[i, :, :]
 
-    @Qc(_name)
-    def save(self, nbcolum, size, imageName, segImageName):
-        return self.matrix(imageName, segImageName, nbcolum, size)
-
-
+    def getDim(self, image):
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return nx
 
 
 
