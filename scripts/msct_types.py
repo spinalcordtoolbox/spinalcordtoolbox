@@ -16,7 +16,7 @@
 
 from __future__ import division
 from math import sqrt
-from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis
+from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
 
 class Point(object):
@@ -173,7 +173,7 @@ class Centerline:
         :param coord: must be a numpy array [x, y, z]
         :return: index
         """
-        if not self.points:
+        if len(self.points) == 0:
             return None
 
         dist, result_index = self.tree_points.query(coord)
@@ -314,3 +314,76 @@ class Centerline:
 
     def get_inverse_plans_coordinates(self, coordinates, indexes):
         return einsum('mnr,nr->mr', rollaxis(self.matrices[indexes], 0, 3), coordinates.transpose()).transpose() + self.points[indexes]
+
+    def compute_vertebral_distribution(self, disks_levels):
+        """
+
+        Parameters
+        ----------
+        vertebral_levels: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]
+        the value correspond to the vertebral (disk) level label
+
+        Returns
+        -------
+
+        """
+        labels_regions = {'PONS': 50, 'MO': 51,
+                          'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
+                          'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16, 'T10': 17, 'T11': 18, 'T12': 19,
+                          'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
+                          'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
+                          'Co': 30}
+        regions_labels = {'50': 'PONS', '51': 'MO',
+                          '1': 'C1', '2': 'C2', '3': 'C3', '4': 'C4', '5': 'C5', '6': 'C6', '7': 'C7',
+                          '8': 'T1', '9': 'T2', '10': 'T3', '11': 'T4', '12': 'T5', '13': 'T6', '14': 'T7', '15': 'T8', '16': 'T9', '17': 'T10', '18': 'T11', '19': 'T12',
+                          '20': 'L1', '21': 'L2', '22': 'L3', '23': 'L4', '24': 'L5',
+                          '25': 'S1', '26': 'S2', '27': 'S3', '28': 'S4', '29': 'S5',
+                          '30': 'Co'}
+
+        labels_points = [0] * self.number_of_points
+        l_points = [0] * self.number_of_points
+        index_disk, index_disk_inv = {}, []
+        for level in disks_levels:
+            coord_level = [level[0], level[1], level[2]]
+            disk = regions_labels[str(level[3])]
+            nearest_index = self.find_nearest_index(coord_level)
+            labels_points[nearest_index] = disk + '-0.0'
+            index_disk[disk] = nearest_index
+            index_disk_inv.append([nearest_index, disk])
+
+        from operator import itemgetter
+        index_disk_inv.append([0, 'top'])
+        index_disk_inv = sorted(index_disk_inv, key=itemgetter(0))
+
+        progress_length = zeros(self.number_of_points)
+        for i in range(self.number_of_points - 1):
+            progress_length[i+1] = progress_length[i] + self.progressive_length[i]
+
+        distance_from_C1label = {}
+        for disk in index_disk:
+            distance_from_C1label[disk] = progress_length[index_disk['C1']] - progress_length[index_disk[disk]]
+
+        print distance_from_C1label
+
+        for i in range(len(index_disk_inv) - 1):
+            for j in range(index_disk_inv[i][0], index_disk_inv[i + 1][0]):
+                l_points[j] = index_disk_inv[i][1]
+        for j in range(index_disk_inv[-1][0], len(l_points)):
+            l_points[j] = index_disk_inv[-1][1]
+        print l_points
+
+
+
+
+def average_centerline(list_centerline, number_of_points):
+    """
+    We assume A and B are Centerlines and have the same number of points
+    Parameters
+    ----------
+    other
+
+    Returns
+    -------
+
+    """
+    pass

@@ -735,6 +735,31 @@ def get_parser():
 
 
 if __name__ == "__main__":
+
+    from msct_image import Image
+
+    im = Image('/Users/benjamindeleener/data/test_straightening/errsm_21_test/labels_vertebral_crop.nii.gz')
+    coord = im.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+    coord_physical = []
+    for c in coord:
+        c_p = im.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+        c_p.append(c.value)
+        coord_physical.append(c_p)
+
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+        '/Users/benjamindeleener/data/test_straightening/errsm_21_test/generated_centerline.nii.gz', algo_fitting='nurbs',
+        verbose=1, nurbs_pts_number=3000, all_slices=False, phys_coordinates=True, remove_outliers=True)
+    from msct_types import Centerline
+    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv,
+                            z_centerline_deriv)
+
+    centerline.compute_vertebral_distribution(coord_physical)
+    sys.exit()
+
+
+
+
+
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
