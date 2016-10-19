@@ -189,6 +189,8 @@ class SpinalCordStraightener(object):
         self.path_output = ""
         self.use_straight_reference = False
         self.centerline_reference_filename = ""
+        self.disks_input_filename = ""
+        self.disks_ref_filename = ""
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
@@ -368,6 +370,25 @@ class SpinalCordStraightener(object):
                 hdr_warp_s = image_centerline_straight.hdr.copy()
                 hdr_warp_s.set_data_dtype('float32')
 
+                if self.disks_input_filename != "" and self.disks_ref_filename != "":
+                    disks_input_image = Image(self.disks_input_filename)
+                    coord = disks_input_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+                    coord_physical = []
+                    for c in coord:
+                        c_p = disks_input_image.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+                        c_p.append(c.value)
+                        coord_physical.append(c_p)
+                    centerline.compute_vertebral_distribution(coord_physical)
+
+                    disks_ref_image = Image(self.disks_ref_filename)
+                    coord = disks_input_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+                    coord_physical = []
+                    for c in coord:
+                        c_p = disks_ref_image.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+                        c_p.append(c.value)
+                        coord_physical.append(c_p)
+                    centerline_straight.compute_vertebral_distribution(coord_physical)
+
             else:
                 sct.printv('\nPad input volume to account for spinal cord length...', verbose)
                 from numpy import ceil
@@ -514,7 +535,22 @@ class SpinalCordStraightener(object):
             # 6. generate warping fields for each transformations
             # compute coordinate in straight space based on position on plane
             time_displacements = time.time()
-            coord_curved2straight = centerline_straight.points[nearest_indexes_curved]
+
+            lookup_curved2straight = range(centerline.number_of_points)
+            if self.disks_input_filename != "":
+                # create look-up table curved to straight
+                for index in range(centerline.number_of_points):
+                    disk_label = centerline.l_points[index]
+                    relative_position = centerline.dist_points_rel[index]
+                    idx_closest = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)
+                    if idx_closest is not None:
+                        lookup_curved2straight[index] = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)[0]
+            #print lookup_curved2straight
+            lookup_curved2straight = np.array(lookup_curved2straight)
+            #print lookup_curved2straight
+
+
+            coord_curved2straight = centerline_straight.points[lookup_curved2straight[nearest_indexes_curved]]
             coord_curved2straight[:, 0:2] += coord_in_planes_curved[:, 0:2]
             coord_curved2straight[:, 2] += distances_curved
 
@@ -524,7 +560,17 @@ class SpinalCordStraightener(object):
             displacements_curved[:, 2] = -displacements_curved[:, 2]
             displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
-            coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, nearest_indexes_straight)
+            lookup_straight2curved = range(centerline_straight.number_of_points)
+            if self.disks_input_filename != "":
+                for index in range(centerline_straight.number_of_points):
+                    disk_label = centerline_straight.l_points[index]
+                    relative_position = centerline_straight.dist_points_rel[index]
+                    idx_closest = centerline.get_closest_to_relative_position(disk_label, relative_position)
+                    if idx_closest is not None:
+                        lookup_straight2curved[index] = centerline.get_closest_to_relative_position(disk_label, relative_position)[0]
+            lookup_straight2curved = np.array(lookup_straight2curved)
+
+            coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup_straight2curved[nearest_indexes_straight])
             displacements_straight = coord_straight2curved - physical_coordinates_straight
             # for some reason, displacement in Z is inverted. Probably due to left/right-handed definition of referential.
             #displacements_straight[:, 0] = -displacements_straight[:, 0]
@@ -672,6 +718,16 @@ def get_parser():
                       description="reference centerline (or segmentation) on which to register the input image, using the same philosophy as straightening procedure..",
                       mandatory=False,
                       example="centerline.nii.gz")
+    parser.add_option(name="-disks-input",
+                      type_value="image_nifti",
+                      description="",
+                      mandatory=False,
+                      example="disks.nii.gz")
+    parser.add_option(name="-disks-ref",
+                      type_value="image_nifti",
+                      description="",
+                      mandatory=False,
+                      example="disks_ref.nii.gz")
     parser.add_option(name="-p",
                       type_value=None,
                       description="amount of padding for generating labels.",
@@ -735,31 +791,6 @@ def get_parser():
 
 
 if __name__ == "__main__":
-
-    from msct_image import Image
-
-    im = Image('/Users/benjamindeleener/data/test_straightening/errsm_21_test/labels_vertebral_crop.nii.gz')
-    coord = im.getNonZeroCoordinates(sorting='z', reverse_coord=True)
-    coord_physical = []
-    for c in coord:
-        c_p = im.transfo_pix2phys([[c.x, c.y, c.z]])[0]
-        c_p.append(c.value)
-        coord_physical.append(c_p)
-
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-        '/Users/benjamindeleener/data/test_straightening/errsm_21_test/generated_centerline.nii.gz', algo_fitting='nurbs',
-        verbose=1, nurbs_pts_number=3000, all_slices=False, phys_coordinates=True, remove_outliers=True)
-    from msct_types import Centerline
-    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv,
-                            z_centerline_deriv)
-
-    centerline.compute_vertebral_distribution(coord_physical)
-    sys.exit()
-
-
-
-
-
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
@@ -772,6 +803,17 @@ if __name__ == "__main__":
     if "-ref" in arguments:
         sc_straight.use_straight_reference = True
         sc_straight.centerline_reference_filename = str(arguments["-ref"])
+
+    if "-disks-input" in arguments:
+        if not sc_straight.use_straight_reference:
+            sct.printv('Warning: disks position are not yet taken into account if reference is not provided.')
+        else:
+            sc_straight.disks_input_filename = str(arguments["-disks-input"])
+    if "-disks-ref" in arguments:
+        if not sc_straight.use_straight_reference:
+            sct.printv('Warning: disks position are not yet taken into account if reference is not provided.')
+        else:
+            sc_straight.disks_ref_filename = str(arguments["-disks-ref"])
 
     # Handling optional arguments
     if "-r" in arguments:
