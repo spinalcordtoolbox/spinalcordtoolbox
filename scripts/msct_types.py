@@ -339,51 +339,78 @@ class Centerline:
                           '20': 'L1', '21': 'L2', '22': 'L3', '23': 'L4', '24': 'L5',
                           '25': 'S1', '26': 'S2', '27': 'S3', '28': 'S4', '29': 'S5',
                           '30': 'Co'}
+        list_labels = [50, 51, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+
+        average_vert_length = {'T8': 24.137548673859101, 'T9': 24.791416310898683, 'T6': 23.57871316317943,
+                               'T7': 24.390732464985319, 'T4': 21.88296642371796, 'T5': 22.894373460721738,
+                               'T2': 20.605686554924716, 'T3': 20.941237157709139, 'T1': 19.512706875626321,
+                               'T10': 26.730082218762107, 'T11': 29.065554485468454, 'T12': 29.785793712133625,
+                               'C3': 17.279530661087819, 'C2': 60.263721005912174, 'C1': 27.820552850602741,
+                               'C7': 16.803365329979044, 'C6': 15.773148081455446, 'C5': 16.234540144242303,
+                               'C4': 16.13505684278411, 'L1': 30, 'L2': 30, 'L3': 30, 'PONS': 50, 'MO': 30}
 
         labels_points = [0] * self.number_of_points
-        l_points = [0] * self.number_of_points
-        index_disk, index_disk_inv = {}, []
+        self.l_points = [0] * self.number_of_points
+        self.dist_points = [0] * self.number_of_points
+        self.dist_points_rel = [0] * self.number_of_points
+        self.index_disk, index_disk_inv = {}, []
         for level in disks_levels:
             coord_level = [level[0], level[1], level[2]]
             disk = regions_labels[str(level[3])]
             nearest_index = self.find_nearest_index(coord_level)
             labels_points[nearest_index] = disk + '-0.0'
-            index_disk[disk] = nearest_index
+            self.index_disk[disk] = nearest_index
             index_disk_inv.append([nearest_index, disk])
 
         from operator import itemgetter
-        index_disk_inv.append([0, 'top'])
+        index_disk_inv.append([0, 'bottom'])
         index_disk_inv = sorted(index_disk_inv, key=itemgetter(0))
 
         progress_length = zeros(self.number_of_points)
         for i in range(self.number_of_points - 1):
             progress_length[i+1] = progress_length[i] + self.progressive_length[i]
 
-        distance_from_C1label = {}
-        for disk in index_disk:
-            distance_from_C1label[disk] = progress_length[index_disk['C1']] - progress_length[index_disk[disk]]
+        self.distance_from_C1label = {}
+        for disk in self.index_disk:
+            self.distance_from_C1label[disk] = progress_length[self.index_disk['C1']] - progress_length[self.index_disk[disk]]
 
-        print distance_from_C1label
+        for i in range(1, len(index_disk_inv)):
+            for j in range(index_disk_inv[i - 1][0], index_disk_inv[i][0]):
+                self.l_points[j] = index_disk_inv[i][1]
 
-        for i in range(len(index_disk_inv) - 1):
-            for j in range(index_disk_inv[i][0], index_disk_inv[i + 1][0]):
-                l_points[j] = index_disk_inv[i][1]
-        for j in range(index_disk_inv[-1][0], len(l_points)):
-            l_points[j] = index_disk_inv[-1][1]
-        print l_points
+        for i in range(self.number_of_points):
+            self.dist_points[i] = progress_length[self.index_disk['C1']] - progress_length[i]
+        for i in range(self.number_of_points):
+            current_label = self.l_points[i]
+            if current_label == 'bottom' or current_label == 0:
+                continue
+            elif current_label in ['MO', 'PONS']:
+                next_label = regions_labels[str(list_labels[list_labels.index(labels_regions[self.l_points[i]]) + 1])]
+                if next_label in self.index_disk:
+                    self.dist_points_rel[i] = - (self.dist_points[self.index_disk[next_label]] - self.dist_points[i]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
+                else:
+                    self.dist_points_rel[i] = - (self.dist_points[self.index_disk[next_label]] - self.dist_points[i]) / average_vert_length[current_label]
+            else:
+                next_label = regions_labels[str(list_labels[list_labels.index(labels_regions[self.l_points[i]]) + 1])]
+                if next_label in self.index_disk:
+                    self.dist_points_rel[i] = (self.dist_points[i] - self.dist_points[self.index_disk[current_label]]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
+                else:
+                    self.dist_points_rel[i] = (self.dist_points[i] - self.dist_points[self.index_disk[current_label]]) / average_vert_length[current_label]
 
+        """
+        for i in range(self.number_of_points):
+            print l_points[i], dist_points_rel[i]
+        """
 
+    def get_closest_to_relative_position(self, vertebral_level, relative_position):
+        import numpy as np
+        indexes_vert = np.argwhere(np.array(self.l_points) == vertebral_level)
+        if len(indexes_vert) == 0:
+            return None
 
+        # find closest
+        arr_dist_rel = np.array(self.dist_points_rel)
+        idx = np.argmin(np.abs(arr_dist_rel[indexes_vert] - relative_position))
 
-def average_centerline(list_centerline, number_of_points):
-    """
-    We assume A and B are Centerlines and have the same number of points
-    Parameters
-    ----------
-    other
+        return indexes_vert[idx]
 
-    Returns
-    -------
-
-    """
-    pass
