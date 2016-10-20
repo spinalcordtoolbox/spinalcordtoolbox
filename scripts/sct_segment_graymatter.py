@@ -79,10 +79,9 @@ def get_parser():
                       "1,3\n"
                       "2,4\n"
                       "3,4\n"
-                      "4,4",
+                      "4,4\n",
                       mandatory=False,
-                      default_value=ParamSeg().fname_level,
-                      example='label/template/PAM50_levels.nii.gz')
+                      default_value=ParamSeg().fname_level)
     parser.add_option(name="-vert",
                       mandatory=False,
                       deprecated_by='-vertfile')
