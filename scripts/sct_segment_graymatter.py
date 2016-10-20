@@ -185,7 +185,7 @@ class ParamSeg:
         self.fname_im = None
         self.fname_im_original = None
         self.fname_seg = None
-        self.fname_level = 'label/template/PAM50_levels_continuous.nii.gz'
+        self.fname_level = 'label/template/PAM50_levels.nii.gz'
         self.fname_manual_gmseg = None
         self.path_results = './'
 
