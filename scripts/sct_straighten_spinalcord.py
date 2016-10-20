@@ -545,20 +545,9 @@ class SpinalCordStraightener(object):
                     idx_closest = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)
                     if idx_closest is not None:
                         lookup_curved2straight[index] = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)[0]
-            #print lookup_curved2straight
+                    else:
+                        indexes_out_distance_straight = np.concatenate((indexes_out_distance_straight, nearest_indexes_straight[nearest_indexes_straight == index]))
             lookup_curved2straight = np.array(lookup_curved2straight)
-            #print lookup_curved2straight
-
-
-            coord_curved2straight = centerline_straight.points[lookup_curved2straight[nearest_indexes_curved]]
-            coord_curved2straight[:, 0:2] += coord_in_planes_curved[:, 0:2]
-            coord_curved2straight[:, 2] += distances_curved
-
-            displacements_curved = coord_curved2straight - physical_coordinates
-            # for some reason, displacement in Z is inverted. Probably due to left/right-hended definition of referential.
-            #displacements_curved[:, 0] = -displacements_curved[:, 0]
-            displacements_curved[:, 2] = -displacements_curved[:, 2]
-            displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
             lookup_straight2curved = range(centerline_straight.number_of_points)
             if self.disks_input_filename != "":
@@ -568,9 +557,37 @@ class SpinalCordStraightener(object):
                     idx_closest = centerline.get_closest_to_relative_position(disk_label, relative_position)
                     if idx_closest is not None:
                         lookup_straight2curved[index] = centerline.get_closest_to_relative_position(disk_label, relative_position)[0]
+                    else:
+                        indexes_out_distance_curved = np.concatenate((indexes_out_distance_curved, nearest_indexes_curved[nearest_indexes_curved == index]))
             lookup_straight2curved = np.array(lookup_straight2curved)
 
-            coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup_straight2curved[nearest_indexes_straight])
+            print len(centerline.l_points)
+            print centerline.l_points[1000], centerline.dist_points_rel[1000], centerline.points[1000]
+            print centerline_straight.l_points[lookup_curved2straight[1000]], centerline_straight.dist_points_rel[lookup_curved2straight[1000]], centerline.points[lookup_curved2straight[1000]]
+
+            """
+            for i in range(len(lookup_curved2straight)):
+                print '\n'
+                print i
+                print centerline.l_points[i]
+                print centerline.dist_points_rel[i]
+                print centerline_straight.l_points[lookup_curved2straight[i]]
+                print centerline_straight.dist_points_rel[lookup_curved2straight[i]]
+            """
+
+            coord_curved2straight = centerline_straight.points[lookup_straight2curved[nearest_indexes_curved]]
+            coord_curved2straight[:, 0:2] += coord_in_planes_curved[:, 0:2]
+            coord_curved2straight[:, 2] += distances_curved
+
+            displacements_curved = coord_curved2straight - physical_coordinates
+            # for some reason, displacement in Z is inverted. Probably due to left/right-hended definition of referential.
+            #displacements_curved[:, 0] = -displacements_curved[:, 0]
+            displacements_curved[:, 2] = -displacements_curved[:, 2]
+            displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
+
+
+
+            coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup_curved2straight[nearest_indexes_straight])
             displacements_straight = coord_straight2curved - physical_coordinates_straight
             # for some reason, displacement in Z is inverted. Probably due to left/right-handed definition of referential.
             #displacements_straight[:, 0] = -displacements_straight[:, 0]
@@ -809,11 +826,13 @@ if __name__ == "__main__":
             sct.printv('Warning: disks position are not yet taken into account if reference is not provided.')
         else:
             sc_straight.disks_input_filename = str(arguments["-disks-input"])
+            sc_straight.precision = 4.0
     if "-disks-ref" in arguments:
         if not sc_straight.use_straight_reference:
             sct.printv('Warning: disks position are not yet taken into account if reference is not provided.')
         else:
             sc_straight.disks_ref_filename = str(arguments["-disks-ref"])
+            sc_straight.precision = 4.0
 
     # Handling optional arguments
     if "-r" in arguments:
