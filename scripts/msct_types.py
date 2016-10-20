@@ -370,16 +370,25 @@ class Centerline:
         for i in range(self.number_of_points - 1):
             progress_length[i+1] = progress_length[i] + self.progressive_length[i]
 
+        label_reference = 'C1'
+        if 'C1' not in self.index_disk:
+            upper = 31
+            label_reference = ''
+            for l in self.index_disk:
+                if labels_regions[l] < upper:
+                    label_reference = l
+                    upper = labels_regions[l]
+
         self.distance_from_C1label = {}
         for disk in self.index_disk:
-            self.distance_from_C1label[disk] = progress_length[self.index_disk['C1']] - progress_length[self.index_disk[disk]]
+                self.distance_from_C1label[disk] = progress_length[self.index_disk[label_reference]] - progress_length[self.index_disk[disk]]
 
         for i in range(1, len(index_disk_inv)):
             for j in range(index_disk_inv[i - 1][0], index_disk_inv[i][0]):
                 self.l_points[j] = index_disk_inv[i][1]
 
         for i in range(self.number_of_points):
-            self.dist_points[i] = progress_length[self.index_disk['C1']] - progress_length[i]
+            self.dist_points[i] = progress_length[self.index_disk[label_reference]] - progress_length[i]
         for i in range(self.number_of_points):
             current_label = self.l_points[i]
             if current_label == 'bottom' or current_label == 0:
