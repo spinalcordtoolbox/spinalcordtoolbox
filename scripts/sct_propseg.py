@@ -331,7 +331,7 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    sct.run(cmd, verbose)
+    # sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
@@ -339,7 +339,7 @@ if __name__ == "__main__":
     output_filename = file_fname + "_seg" + ext_fname
 
     if "-qc" in arguments:
-        msct_qc.axial().save("PropSeg_{}".format(contrast_type), input_filename, output_filename, 10,10)
+        msct_qc.axial("PropSeg_{}".format(contrast_type)).save( input_filename, output_filename, 10, 15)
 
     if folder_output == "./":
         output_name = output_filename

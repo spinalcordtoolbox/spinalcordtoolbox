@@ -25,31 +25,46 @@ class Qc(object):
     Create a .png file from a 2d image.
     """
 
-    def __init__(self, alpha, dpi=600, interpolation='none'):
+    def __init__(self, alpha, dpi=300, interpolation='none'):
         self.interpolation = interpolation
         self.alpha = alpha
         self.dpi = dpi
 
-    def show(self, name, img, mask):
-        assert isinstance(img, np.ndarray)
-        assert isinstance(mask, np.ndarray)
-        fig = plt.imshow(img, cmap='gray', interpolation=self.interpolation)
-        fig.axes.get_xaxis().set_visible(False)
-        fig.axes.get_yaxis().set_visible(False)
-        self.save('{}_gray'.format(name))
-        mask = np.ma.masked_where(mask < 1, mask)
-        plt.imshow(img, cmap='gray', interpolation=self.interpolation)
-        plt.imshow(mask, cmap=cm.hsv, interpolation=self.interpolation, alpha=self.alpha, )
-        self.save(name)
+    def __call__(self, f):
+        def wrapped_f(slice,*args, **kargs):
+            name = slice.name
+            self.mkdir()
+            img, mask = f(slice,*args, **kargs)
+            assert isinstance(img, np.ndarray)
+            assert isinstance(mask, np.ndarray)
+            fig = plt.imshow(img, cmap='gray', interpolation=self.interpolation)
+            fig.axes.get_xaxis().set_visible(False)
+            fig.axes.get_yaxis().set_visible(False)
+            self.save('{}_gray'.format(name))
+            mask = np.ma.masked_where(mask < 1, mask)
+            plt.imshow(img, cmap='gray', interpolation=self.interpolation)
+            plt.imshow(mask, cmap=cm.hsv, interpolation=self.interpolation, alpha=self.alpha, )
+            self.save(name)
 
-        plt.close()
+            plt.close()
+
+        return wrapped_f
 
     def save(self, name, format='png', bbox_inches='tight', pad_inches=0):
         plt.savefig('{}.png'.format(name), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=self.dpi)
 
+    def mkdir(self):
+        # TODO : implement function
+        # make a new.or update Qc directory
+        return  0
+
 
 class slices(object):
+
+    def __init__(self,name):
+        self.name = name
+
     __metaclass__ = abc.ABCMeta
 
     @staticmethod
@@ -58,11 +73,19 @@ class slices(object):
         end_row = center_x + ray_x
         start_col = center_y - ray_y
         end_col = center_y + ray_y
-        # The image could be smaller tha the patch, so we try recursively with a smaller radius
-        if matrix.shape[ 0 ] < end_row or start_row < 0:
-            return slices.crop(matrix, center_x, center_y, ray_x - 1, ray_y)
-        if matrix.shape[ 1 ] < end_col or start_col < 0:
-            return slices.crop(matrix, center_x, center_y, ray_x, ray_y - 1)
+
+        if matrix.shape[ 0 ] < end_row:
+            if matrix.shape[ 0 ] < (end_row - start_row):# TODO: throw/raise an exception
+                raise OverflowError
+            return slices.crop(matrix, center_x - 1, center_y, ray_x, ray_y)
+        if matrix.shape[ 1 ] < end_col:
+            if matrix.shape[ 1 ] < (end_col - start_col):# TODO: throw/raise an exception
+                raise OverflowError
+            return slices.crop(matrix, center_x, center_y - 1, ray_x, ray_y)
+        if start_row < 0:
+            return slices.crop(matrix, center_x + 1 , center_y, ray_x , ray_y)
+        if start_col < 0:
+            return slices.crop(matrix, center_x, center_y + 1, ray_x, ray_y )
 
         return matrix[ start_row:end_row, start_col:end_col ]
 
@@ -109,6 +132,7 @@ class slices(object):
         return image, image_seg, self.getDim(image)
 
     def mosaic(self, imageName, segImageName, nb_column, size):
+        print segImageName
         image, image_seg, dim = self.getImage(imageName, segImageName)
         matrix0 = np.ones((size * 2 * int((dim / nb_column) + 1), size * 2 * nb_column))
         matrix1 = np.empty((size * 2 * int((dim / nb_column) + 1), size * 2 * nb_column))
@@ -148,13 +172,13 @@ class slices(object):
 
         return matrix0, matrix1
 
-    def save(self, name, imageName, segImageName, nb_column=0, size=10):
+    @Qc(1)
+    def save(self, imageName, segImageName, nb_column=0, size=10):
         if nb_column > 0:
-            img, mask = self.mosaic(imageName, segImageName, nb_column, size)
+            return self.mosaic(imageName, segImageName, nb_column, size)
         else:
-            img, mask = self.single(imageName, segImageName)
+            return self.single(imageName, segImageName)
 
-        Qc(1).show(name, img, mask)
 
 
 class axial(slices):
