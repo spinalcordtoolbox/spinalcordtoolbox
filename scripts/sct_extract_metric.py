@@ -886,7 +886,6 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     :labels: nlabel tuple of (nx,ny,nz) array
     """
 
-
     nb_labels = len(labels)  # number of labels
 
     # if user asks for binary regions, binarize atlas
@@ -899,6 +898,11 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     if method == 'wath':
         for i in range(0, nb_labels):
             labels[i][labels[i] < 0.5] = 0
+
+    # if method=max, transforms each label slice to a single voxel which index corresponds to the maximum value of the metric. This is used for computing CSA from CSA images.
+    # if method == 'max':
+    #     for i in range(0, nb_labels):
+    #         labels[i][labels[i] < 0.5] = 0
 
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
