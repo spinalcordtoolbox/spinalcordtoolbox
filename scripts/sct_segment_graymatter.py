@@ -79,10 +79,9 @@ def get_parser():
                       "1,3\n"
                       "2,4\n"
                       "3,4\n"
-                      "4,4",
+                      "4,4\n",
                       mandatory=False,
-                      default_value=ParamSeg().fname_level,
-                      example='label/template/PAM50_levels.nii.gz')
+                      default_value=ParamSeg().fname_level)
     parser.add_option(name="-vert",
                       mandatory=False,
                       deprecated_by='-vertfile')
@@ -139,12 +138,12 @@ def get_parser():
                       mandatory=False,
                       default_value=ParamSeg().type_seg,
                       example=['bin', 'prob'])
-    # parser.add_option(name="-ratio",
-    #                   type_value='multiple_choice',
-    #                   description="Compute GM/WM ratio by slice or by vertebral level (average across levels)",
-    #                   mandatory=False,
-    #                   default_value='0',
-    #                   example=['0', 'slice', 'level'])
+    parser.add_option(name="-ratio",
+                      type_value='multiple_choice',
+                      description="Compute GM/WM CSA ratio by slice or by vertebral level (average across levels)",
+                      mandatory=False,
+                      default_value=ParamSeg().ratio,
+                      example=['0', 'slice', 'level'])
     parser.add_option(name="-ref",
                       type_value="file",
                       description="Reference segmentation of the gray matter for segmentation validation --> output Dice coefficient and Hausdorff's and median distances)",
@@ -186,7 +185,7 @@ class ParamSeg:
         self.fname_im = None
         self.fname_im_original = None
         self.fname_seg = None
-        self.fname_level = 'label/template/PAM50_levels_continuous.nii.gz'
+        self.fname_level = 'label/template/PAM50_levels.nii.gz'
         self.fname_manual_gmseg = None
         self.path_results = './'
 
@@ -197,6 +196,7 @@ class ParamSeg:
         # TODO = find the best thr
 
         self.type_seg = 'prob' # 'prob' or 'bin'
+        self.ratio = '0' # '0', 'slice' or 'level'
 
         self.qc = True
 
@@ -231,26 +231,26 @@ class SegmentGM:
 
         self.target_im, self.info_preprocessing = pre_processing(self.param_seg.fname_im, self.param_seg.fname_seg, self.param_seg.fname_level, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm, denoising=self.param_data.denoising, verbose=self.param.verbose, rm_tmp=self.param.rm_tmp)
 
-        printv('\nRegistering target image to model data ...', self.param.verbose, 'normal')
+        printv('\nRegister target image to model data...', self.param.verbose, 'normal')
         # register target image to model dictionary space
         path_warp = self.register_target()
 
-        printv('\nNormalizing intensity of target image ...', self.param.verbose, 'normal')
+        printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
         self.normalize_target()
 
-        printv('\nProjecting target image into the model reduced space ...', self.param.verbose, 'normal')
+        printv('\nProject target image into the model reduced space...', self.param.verbose, 'normal')
         self.project_target()
 
-        printv('\nComputing similarities between target slices and model slices using model reduced space ...', self.param.verbose, 'normal')
+        printv('\nCompute similarities between target slices and model slices using model reduced space...', self.param.verbose, 'normal')
         list_dic_indexes_by_slice = self.compute_similarities()
 
-        printv('\nDoing label fusion of model slices most similar to target slices ...', self.param.verbose, 'normal')
+        printv('\nLabel fusion of model slices most similar to target slices...', self.param.verbose, 'normal')
         self.label_fusion(list_dic_indexes_by_slice)
 
-        printv('\nWarping back segmentation into image space...', self.param.verbose, 'normal')
+        printv('\nWarp back segmentation into image space...', self.param.verbose, 'normal')
         self.warp_back_seg(path_warp)
 
-        printv('\nPost-processing ...', self.param.verbose, 'normal')
+        printv('\nPost-processing...', self.param.verbose, 'normal')
         self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
 
         if (self.param_seg.path_results != './') and (not os.path.exists('../'+self.param_seg.path_results)):
@@ -265,9 +265,13 @@ class SegmentGM:
             printv('\nCompute validation metrics...', self.param.verbose, 'normal')
             self.validation()
 
+        if self.param_seg.ratio is not '0':
+            printv('\nCompute GM/WM CSA ratio...', self.param.verbose, 'normal')
+            self.compute_ratio()
+
         # go back to original directory
         os.chdir('..')
-        printv('\nSaving result GM and WM segmentation...', self.param.verbose, 'normal')
+        printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
         fname_res_gmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
         fname_res_wmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
 
@@ -289,12 +293,12 @@ class SegmentGM:
 
         if self.param_seg.qc:
             # output QC image
-            printv('\nSaving quality control images...', self.param.verbose, 'normal')
+            printv('\nSave quality control images...', self.param.verbose, 'normal')
             im = Image(self.tmp_dir+self.param_seg.fname_im)
             im.save_quality_control(plane='axial', n_slices=5, seg=self.im_res_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.param_seg.path_results)
 
-        printv('\n--> To visualize the results, write:\n'
-               'fslview '+self.param_seg.fname_im_original+' '+fname_res_gmseg+' -b '+b+' -l '+gm_col+' -t 0.7 '+fname_res_wmseg+' -b '+b+' -l '+wm_col+' -t 0.7  & \n', self.param.verbose, 'info')
+        printv('\nDone! To view results, type:', self.param.verbose)
+        printv('fslview '+self.param_seg.fname_im_original+' '+fname_res_gmseg+' -b '+b+' -l '+gm_col+' -t 0.7 '+fname_res_wmseg+' -b '+b+' -l '+wm_col+' -t 0.7  & \n', self.param.verbose, 'info')
 
         if self.param.rm_tmp:
             # remove tmp_dir
@@ -456,7 +460,7 @@ class SegmentGM:
         im_res_wmseg = im_sc_seg_original_rpi.copy()
         im_res_wmseg.data = np.zeros(im_res_wmseg.data.shape)
 
-        printv('\n\tInterpolate result back into original space ...', self.param.verbose, 'normal')
+        printv('  Interpolate result back into original space...', self.param.verbose, 'normal')
 
 
         for iz, im_iz_preprocessed in enumerate(self.info_preprocessing['interpolated_images']):
@@ -518,7 +522,7 @@ class SegmentGM:
                     shape_x, shape_y, shape_z = im_res_slice_interp.data.shape
                     im_res_slice_interp.data = im_res_slice_interp.data.reshape((shape_x, shape_y))
                 im_res_tot.data[:, :, iz] = im_res_slice_interp.data
-        printv('\n\tPut result into original orientation ...', self.param.verbose, 'normal')
+        printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
 
         ## PUT RES BACK IN ORIGINAL ORIENTATION
         im_res_gmseg.setFileName('res_gmseg.nii.gz')
@@ -615,6 +619,71 @@ class SegmentGM:
         if self.param.rm_tmp:
             shutil.rmtree(tmp_dir_val)
 
+    def compute_ratio(self):
+        type_ratio = self.param_seg.ratio
+
+        tmp_dir_ratio = 'tmp_ratio/'
+        os.mkdir(tmp_dir_ratio)
+        os.chdir(tmp_dir_ratio)
+
+        fname_gmseg = self.im_res_gmseg.absolutepath
+        fname_wmseg = self.im_res_wmseg.absolutepath
+
+        self.im_res_gmseg.save()
+        self.im_res_wmseg.save()
+
+        if self.im_res_gmseg.orientation is not 'RPI':
+            im_res_gmseg = set_orientation(self.im_res_gmseg, 'RPI')
+            im_res_wmseg = set_orientation(self.im_res_wmseg, 'RPI')
+            fname_gmseg = im_res_gmseg.absolutepath
+            fname_wmseg = im_res_wmseg.absolutepath
+
+        #sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa'])
+        run('sct_process_segmentation -i ' + fname_gmseg + ' -p csa -ofolder gm_csa')
+        #sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa'])
+        run('sct_process_segmentation -i ' + fname_wmseg + ' -p csa -ofolder wm_csa')
+
+        gm_csa = open('gm_csa/csa_per_slice.txt', 'r')
+        wm_csa = open('wm_csa/csa_per_slice.txt', 'r')
+        gm_csa_lines = gm_csa.readlines()
+        wm_csa_lines = wm_csa.readlines()
+        gm_csa.close()
+        wm_csa.close()
+
+        fname_ratio = 'ratio_by_'+type_ratio+'.txt'
+        file_ratio = open(fname_ratio, 'w')
+
+        file_ratio.write(type_ratio + ', ratio GM/WM CSA\n')
+        csa_gm_wm_by_level = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: [], 11: [], 12: [], 13: [], 14: [], 15: [], 16: [], 17: [], 18: [], 19: [], 20: [], 21: [], 22: [], 23: [], 24: []}
+        for gm_line, wm_line in zip(gm_csa_lines[1:], wm_csa_lines[1:]):
+            i, gm_area, gm_angle = gm_line.split(',')
+            j, wm_area, wm_angle = wm_line.split(',')
+            assert i == j
+            if type_ratio == 'level':
+                level_slice = int(self.target_im[int(i)].level)
+                csa_gm_wm_by_level[level_slice].append((float(gm_area), float(wm_area)))
+            else:
+                file_ratio.write(i + ', ' + str(float(gm_area) / float(wm_area)) + '\n')
+
+        if type_ratio == 'level':
+            for l, gm_wm_list in sorted(csa_gm_wm_by_level.items()):
+                if str(gm_wm_list) != '[]':
+                    csa_gm_list = []
+                    csa_wm_list = []
+                    for gm, wm in gm_wm_list:
+                        csa_gm_list.append(gm)
+                        csa_wm_list.append(wm)
+                    csa_gm = np.mean(csa_gm_list)
+                    csa_wm = np.mean(csa_wm_list)
+                    file_ratio.write(str(l) + ', ' + str(csa_gm / csa_wm) + '\n')
+
+        file_ratio.close()
+        shutil.copy(fname_ratio, '../../'+self.param_seg.path_results+'/'+fname_ratio)
+
+        os.chdir('..')
+
+
+
 
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
@@ -657,6 +726,8 @@ def main(args=None):
         param_model.path_model_to_load = os.path.abspath(arguments['-model'])
     if '-res-type' in arguments:
         param_seg.type_seg= arguments['-res-type']
+    if '-ratio' in arguments:
+        param_seg.ratio = arguments['-ratio']
     if '-ref' in arguments:
         param_seg.fname_manual_gmseg = arguments['-ref']
     if '-ofolder' in arguments:

@@ -20,8 +20,12 @@
 - OPT: **sct_check_dependencies**: Made test more sentitive to OS incompatibilities (issue #771)
 - OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #350, #404, #414, #499, #650, #735, #737, #749, #807, #818
 - OPT: **sct_register_to_template**: now uses slicewise rigid transfo at first step (instead of slicereg), which improves accuracy (issue #666)
+- OPT: **sct_register_to_template**: added contrast for registration: t2s
 - OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
+
+##3.0_beta27 (2016-10-23)
+- NEW: **sct_extract_metric**: method "max" to extract CSA value form interpolated volume (e.g. PAM50 space) without partial volume bias
 
 ##3.0_beta26 (2016-10-05)
 - INST: Fixed #992, #1004, #1008, #1012
