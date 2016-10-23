@@ -177,11 +177,11 @@ SUBJECTS_LIST = [['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/ech
     ['HB', new_folder + '/HB/T1', new_folder + '/HB/T2'],
     ['PA', new_folder + '/PA/T1', new_folder + '/PA/T2']
 
-                 """
 
-new_folder = "/Users/benjamindeleener/data/template_data"
-SUBJECTS_LIST = [
-     ['errsm_35', new_folder + '/errsm_35/T1', new_folder + '/errsm_35/T2'],
+
+
+
+    ['errsm_35', new_folder + '/errsm_35/T1', new_folder + '/errsm_35/T2'],
      ['pain_pilot_7', new_folder + '/pain_pilot_7/T1', new_folder + '/pain_pilot_7/T2'],
      ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
      ['errsm_05', folder_data_errsm+'/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_05/24-SPINE_SPACE'],
@@ -192,6 +192,12 @@ SUBJECTS_LIST = [
      ['errsm_14', folder_data_errsm+'/errsm_14/5002-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_14/5003-SPINE_T2'],
      ['errsm_16', folder_data_errsm+'/errsm_16/23-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_16/39-SPINE_T2'],
      ['errsm_17', folder_data_errsm+'/errsm_17/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_17/42-SPINE_T2'],
+
+                 """
+
+new_folder = "/Users/benjamindeleener/data/template_data"
+SUBJECTS_LIST = [
+
      ['errsm_18', folder_data_errsm+'/errsm_18/36-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_18/33-SPINE_T2'],
      ['errsm_11', folder_data_errsm+'/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_11/09-SPINE_T2']
 ]
@@ -206,8 +212,8 @@ propseg_parameters = {
 
 #Parameters:
 height_of_template_space = 1100
-x_size_of_template_space = 201
-y_size_of_template_space = 201
+x_size_of_template_space = 301
+y_size_of_template_space = 301
 spacing = 0.5
 number_labels_for_template = 20  # vertebral levels
 straightening_parameters = '-params algo_fitting=nurbs'
@@ -416,6 +422,7 @@ def average_centerline(contrast):
     list_dist_disks = []
     list_centerline = []
     from sct_straighten_spinalcord import smooth_centerline
+    from msct_image import Image
 
     for i in range(0, len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
@@ -468,7 +475,9 @@ def average_centerline(contrast):
     number_of_points_between_levels = 100
     disk_average_coordinates = {}
     points_average_centerline = []
+    label_points = []
     average_positions_from_C1 = {}
+    disk_position_in_centerline = {}
     for i in range(len(average_distances)):
         disk_label = average_distances[i][0]
         average_positions_from_C1[disk_label] = average_distances[i][1]
@@ -485,8 +494,10 @@ def average_centerline(contrast):
             average_coord = np.mean(list_coordinates, axis=0)
             # add it to averaged centerline list of points
             points_average_centerline.append(average_coord)
+            label_points.append(disk_label)
             if j == 0:
                 disk_average_coordinates[disk_label] = average_coord
+                disk_position_in_centerline[disk_label] = i*number_of_points_between_levels
 
     # compute average vertebral level length
     length_vertebral_levels = {}
@@ -521,6 +532,109 @@ def average_centerline(contrast):
     plt.show()
 
 
+
+    # create final template space
+    coord_C1 = disk_average_coordinates['C1']
+    position_template_disks = {}
+    for disk in length_vertebral_levels:
+        if disk in ['MO', 'PONS', 'C1']:
+            position_template_disks[disk] = disk_average_coordinates[disk]
+        else:
+            coord_disk = coord_C1.copy()
+            coord_disk[2] -= average_positions_from_C1[disk]
+            position_template_disks[disk] = coord_disk
+
+    # change centerline to be straight below C1
+    index_C1 = disk_position_in_centerline['C1']
+    print points_average_centerline[0:index_C1]
+    for i in range(index_C1, len(points_average_centerline)):
+        current_label = label_points[i]
+        if current_label in length_vertebral_levels:
+            length_current_label = length_vertebral_levels[current_label]
+            relative_position_from_disk = float(i - disk_position_in_centerline[current_label]) / float(number_of_points_between_levels)
+            #print i, coord_C1[2], average_positions_from_C1[current_label], length_current_label
+            points_average_centerline[i][0] = coord_C1[0]
+            points_average_centerline[i][1] = coord_C1[1]
+            points_average_centerline[i][2] = coord_C1[2] - average_positions_from_C1[current_label] - relative_position_from_disk * length_current_label
+        else:
+            points_average_centerline[i] = None
+    print points_average_centerline[0:index_C1]
+    points_average_centerline = [x for x in points_average_centerline if x is not None]
+
+    # generate averaged centerline
+    plt.figure(1)
+    # ax = plt.subplot(211)
+    plt.subplot(211)
+    for k, centerline in enumerate(list_centerline):
+        plt.plot([coord[2] for coord in centerline.points], [coord[0] for coord in centerline.points], 'r')
+    plt.plot([coord[2] for coord in points_average_centerline], [coord[0] for coord in points_average_centerline])
+    plt.title("X")
+    # ax.set_aspect('equal')
+    plt.xlabel('z')
+    plt.ylabel('x')
+    # ay = plt.subplot(212)
+    plt.subplot(212)
+    for k, centerline in enumerate(list_centerline):
+        plt.plot([coord[2] for coord in centerline.points], [coord[1] for coord in centerline.points], 'r')
+    plt.plot([coord[2] for coord in points_average_centerline], [coord[1] for coord in points_average_centerline])
+    plt.title("Y")
+    # ay.set_aspect('equal')
+    plt.xlabel('z')
+    plt.ylabel('y')
+    plt.show()
+
+
+
+    # creating template space
+    size_template_z = int(abs(points_average_centerline[0][2] - points_average_centerline[-1][2]) / spacing) + 200
+
+    print coord_C1
+    print points_average_centerline[-1]
+
+    # saving template centerline and levels
+    # generate template space
+    from msct_image import Image
+    from numpy import zeros
+    template = Image('/Users/benjamindeleener/code/sct/dev/template_creation/template_landmarks-mm.nii.gz')
+    template_space = Image([x_size_of_template_space, y_size_of_template_space, size_template_z])
+    template_space.data = zeros((x_size_of_template_space, y_size_of_template_space, size_template_z))
+    template_space.hdr = template.hdr
+    template_space.hdr.set_data_dtype('float32')
+    #origin = [(x_size_of_template_space - 1.0) / 4.0, -(y_size_of_template_space - 1.0) / 4.0, -((size_template_z / 4.0) - spacing)]
+    origin = [points_average_centerline[-1][0] - x_size_of_template_space * spacing / 2.0, points_average_centerline[-1][1] - y_size_of_template_space * spacing / 2.0, (points_average_centerline[-1][2] - spacing - 50.0)]
+    template_space.hdr.structarr['dim'] = [3.0, x_size_of_template_space, y_size_of_template_space, size_template_z, 1.0, 1.0, 1.0, 1.0]
+    template_space.hdr.structarr['pixdim'] = [-1.0, spacing, spacing, spacing, 1.0, 1.0, 1.0, 1.0]
+    template_space.hdr.structarr['qoffset_x'] = origin[0]
+    template_space.hdr.structarr['qoffset_y'] = origin[1]
+    template_space.hdr.structarr['qoffset_z'] = origin[2]
+    template_space.hdr.structarr['srow_x'][-1] = origin[0]
+    template_space.hdr.structarr['srow_y'][-1] = origin[1]
+    template_space.hdr.structarr['srow_z'][-1] = origin[2]
+    template_space.hdr.structarr['srow_x'][0] = -spacing
+    template_space.hdr.structarr['srow_y'][1] = spacing
+    template_space.hdr.structarr['srow_z'][2] = spacing
+    template_space.setFileName('/Users/benjamindeleener/code/sct/dev/template_creation/template_space.nii.gz')
+    template_space.save()
+
+    # generate template centerline
+    image_centerline = template_space.copy()
+    for coord in points_average_centerline:
+        coord_pix = image_centerline.transfo_phys2pix([coord])[0]
+        if 0 <= coord_pix[0] < image_centerline.data.shape[0] and 0 <= coord_pix[1] < image_centerline.data.shape[1] and 0 <= coord_pix[2] < image_centerline.data.shape[2]:
+            image_centerline.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = 1
+    image_centerline.setFileName('/Users/benjamindeleener/code/sct/dev/template_creation/template_centerline.nii.gz')
+    image_centerline.save(type='uint8')
+
+    # generate template disks position
+    image_disks = template_space.copy()
+    for disk in position_template_disks:
+        label = labels_regions[disk]
+        coord = position_template_disks[disk]
+        coord_pix = image_disks.transfo_phys2pix([coord])[0]
+        if 0 <= coord_pix[0] < image_disks.data.shape[0] and 0 <= coord_pix[1] < image_disks.data.shape[1] and 0 <= coord_pix[2] < image_disks.data.shape[2]:
+            image_disks.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = label
+    image_disks.setFileName('/Users/benjamindeleener/code/sct/dev/template_creation/template_disks.nii.gz')
+    image_disks.save(type='uint8')
 
 
 def do_preprocessing(contrast):
