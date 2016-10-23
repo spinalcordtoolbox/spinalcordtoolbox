@@ -18,6 +18,7 @@ from __future__ import division
 from math import sqrt
 from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
+import numpy as np
 
 class Point(object):
     def __init__(self):
@@ -396,9 +397,9 @@ class Centerline:
             elif current_label in ['MO', 'PONS']:
                 next_label = regions_labels[str(list_labels[list_labels.index(labels_regions[self.l_points[i]]) + 1])]
                 if next_label in self.index_disk:
-                    self.dist_points_rel[i] = - (self.dist_points[self.index_disk[next_label]] - self.dist_points[i]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
+                    self.dist_points_rel[i] = - (self.dist_points[i] - self.dist_points[self.index_disk[next_label]]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
                 else:
-                    self.dist_points_rel[i] = - (self.dist_points[self.index_disk[next_label]] - self.dist_points[i]) / average_vert_length[current_label]
+                    self.dist_points_rel[i] = - (self.dist_points[i] - self.dist_points[self.index_disk[next_label]]) / average_vert_length[current_label]
             else:
                 next_label = regions_labels[str(list_labels[list_labels.index(labels_regions[self.l_points[i]]) + 1])]
                 if next_label in self.index_disk:
@@ -412,7 +413,6 @@ class Centerline:
         """
 
     def get_closest_to_relative_position(self, vertebral_level, relative_position):
-        import numpy as np
         indexes_vert = np.argwhere(np.array(self.l_points) == vertebral_level)
         if len(indexes_vert) == 0:
             return None
@@ -422,4 +422,29 @@ class Centerline:
         idx = np.argmin(np.abs(arr_dist_rel[indexes_vert] - relative_position))
 
         return indexes_vert[idx]
+
+    def save_centerline(self, image, fname_output):
+        labels_regions = {'PONS': 50, 'MO': 51,
+                          'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
+                          'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16,
+                          'T10': 17, 'T11': 18, 'T12': 19,
+                          'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
+                          'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
+                          'Co': 30}
+        image_output = image.copy()
+        image_output.data = image_output.data.astype(np.float32)
+        image_output.data *= 0.0
+
+        for i in range(self.number_of_points):
+            current_label = self.l_points[i]
+            current_coord = self.points[i]
+            current_dist_rel = self.dist_points_rel[i]
+            if current_label in labels_regions:
+                coord_pix = image.transfo_phys2pix([current_coord])[0]
+                image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(labels_regions[current_label]) + current_dist_rel
+
+        image_output.setFileName(fname_output)
+        image_output.save(type='float32')
+
+
 

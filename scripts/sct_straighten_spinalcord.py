@@ -379,15 +379,17 @@ class SpinalCordStraightener(object):
                         c_p.append(c.value)
                         coord_physical.append(c_p)
                     centerline.compute_vertebral_distribution(coord_physical)
+                    centerline.save_centerline(image=disks_input_image, fname_output='disks_input_image.nii.gz')
 
                     disks_ref_image = Image(self.disks_ref_filename)
-                    coord = disks_input_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+                    coord = disks_ref_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
                     coord_physical = []
                     for c in coord:
                         c_p = disks_ref_image.transfo_pix2phys([[c.x, c.y, c.z]])[0]
                         c_p.append(c.value)
                         coord_physical.append(c_p)
                     centerline_straight.compute_vertebral_distribution(coord_physical)
+                    centerline_straight.save_centerline(image=disks_ref_image, fname_output='disks_ref_image.nii.gz')
 
             else:
                 sct.printv('\nPad input volume to account for spinal cord length...', verbose)
@@ -545,8 +547,8 @@ class SpinalCordStraightener(object):
                     idx_closest = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)
                     if idx_closest is not None:
                         lookup_curved2straight[index] = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)[0]
-                    else:
-                        indexes_out_distance_straight = np.concatenate((indexes_out_distance_straight, nearest_indexes_straight[nearest_indexes_straight == index]))
+                    #else:
+                    #    indexes_out_distance_straight = np.concatenate((indexes_out_distance_straight, nearest_indexes_straight[nearest_indexes_straight == index]))
             lookup_curved2straight = np.array(lookup_curved2straight)
 
             lookup_straight2curved = range(centerline_straight.number_of_points)
@@ -557,25 +559,11 @@ class SpinalCordStraightener(object):
                     idx_closest = centerline.get_closest_to_relative_position(disk_label, relative_position)
                     if idx_closest is not None:
                         lookup_straight2curved[index] = centerline.get_closest_to_relative_position(disk_label, relative_position)[0]
-                    else:
-                        indexes_out_distance_curved = np.concatenate((indexes_out_distance_curved, nearest_indexes_curved[nearest_indexes_curved == index]))
+                    #else:
+                    #    indexes_out_distance_curved = np.concatenate((indexes_out_distance_curved, nearest_indexes_curved[nearest_indexes_curved == index]))
             lookup_straight2curved = np.array(lookup_straight2curved)
 
-            print len(centerline.l_points)
-            print centerline.l_points[1000], centerline.dist_points_rel[1000], centerline.points[1000]
-            print centerline_straight.l_points[lookup_curved2straight[1000]], centerline_straight.dist_points_rel[lookup_curved2straight[1000]], centerline.points[lookup_curved2straight[1000]]
-
-            """
-            for i in range(len(lookup_curved2straight)):
-                print '\n'
-                print i
-                print centerline.l_points[i]
-                print centerline.dist_points_rel[i]
-                print centerline_straight.l_points[lookup_curved2straight[i]]
-                print centerline_straight.dist_points_rel[lookup_curved2straight[i]]
-            """
-
-            coord_curved2straight = centerline_straight.points[lookup_straight2curved[nearest_indexes_curved]]
+            coord_curved2straight = centerline_straight.points[lookup_curved2straight[nearest_indexes_curved]]
             coord_curved2straight[:, 0:2] += coord_in_planes_curved[:, 0:2]
             coord_curved2straight[:, 2] += distances_curved
 
@@ -587,7 +575,7 @@ class SpinalCordStraightener(object):
 
 
 
-            coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup_curved2straight[nearest_indexes_straight])
+            coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup_straight2curved[nearest_indexes_straight])
             displacements_straight = coord_straight2curved - physical_coordinates_straight
             # for some reason, displacement in Z is inverted. Probably due to left/right-handed definition of referential.
             #displacements_straight[:, 0] = -displacements_straight[:, 0]
