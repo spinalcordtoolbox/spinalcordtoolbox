@@ -373,8 +373,8 @@ if __name__ == "__main__":
         results_display = results_subset
 
         # save panda structure
-        results_subset.to_pickle(file_log+'.pickle')
-        # results_subset.to_csv(file_log+'.csv')
+        if create_log:
+            results_subset.to_pickle(file_log+'.pickle')
 
         # mean
         results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
