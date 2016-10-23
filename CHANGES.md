@@ -24,6 +24,9 @@
 - OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
 
+##3.0_beta27 (2016-10-23)
+- NEW: **sct_extract_metric**: method "max" to extract CSA value form interpolated volume (e.g. PAM50 space) without partial volume bias
+
 ##3.0_beta26 (2016-10-05)
 - INST: Fixed #992, #1004, #1008, #1012
 
