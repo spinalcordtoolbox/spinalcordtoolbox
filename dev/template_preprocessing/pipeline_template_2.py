@@ -601,7 +601,8 @@ def average_centerline(contrast):
     template_space.hdr = template.hdr
     template_space.hdr.set_data_dtype('float32')
     #origin = [(x_size_of_template_space - 1.0) / 4.0, -(y_size_of_template_space - 1.0) / 4.0, -((size_template_z / 4.0) - spacing)]
-    origin = [points_average_centerline[-1][0] - x_size_of_template_space * spacing / 2.0, points_average_centerline[-1][1] - y_size_of_template_space * spacing / 2.0, (points_average_centerline[-1][2] - spacing - 50.0)]
+    origin = [points_average_centerline[-1][0] + x_size_of_template_space * spacing / 2.0, points_average_centerline[-1][1] - y_size_of_template_space * spacing / 2.0, (points_average_centerline[-1][2] - spacing - 50.0)]
+    print origin
     template_space.hdr.structarr['dim'] = [3.0, x_size_of_template_space, y_size_of_template_space, size_template_z, 1.0, 1.0, 1.0, 1.0]
     template_space.hdr.structarr['pixdim'] = [-1.0, spacing, spacing, spacing, 1.0, 1.0, 1.0, 1.0]
     template_space.hdr.structarr['qoffset_x'] = origin[0]
