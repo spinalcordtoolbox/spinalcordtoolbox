@@ -558,7 +558,6 @@ def average_centerline(contrast):
             points_average_centerline[i][2] = coord_C1[2] - average_positions_from_C1[current_label] - relative_position_from_disk * length_current_label
         else:
             points_average_centerline[i] = None
-    print points_average_centerline[0:index_C1]
     points_average_centerline = [x for x in points_average_centerline if x is not None]
 
     # generate averaged centerline
@@ -601,7 +600,7 @@ def average_centerline(contrast):
     template_space.hdr = template.hdr
     template_space.hdr.set_data_dtype('float32')
     #origin = [(x_size_of_template_space - 1.0) / 4.0, -(y_size_of_template_space - 1.0) / 4.0, -((size_template_z / 4.0) - spacing)]
-    origin = [points_average_centerline[-1][0] + x_size_of_template_space * spacing / 2.0, points_average_centerline[-1][1] - y_size_of_template_space * spacing / 2.0, (points_average_centerline[-1][2] - spacing - 50.0)]
+    origin = [points_average_centerline[-1][0] + x_size_of_template_space * spacing / 2.0, points_average_centerline[-1][1] - y_size_of_template_space * spacing / 2.0, (points_average_centerline[-1][2] - spacing - 100.0)]
     print origin
     template_space.hdr.structarr['dim'] = [3.0, x_size_of_template_space, y_size_of_template_space, size_template_z, 1.0, 1.0, 1.0, 1.0]
     template_space.hdr.structarr['pixdim'] = [-1.0, spacing, spacing, spacing, 1.0, 1.0, 1.0, 1.0]
@@ -820,7 +819,7 @@ def do_preprocessing(contrast):
         # Select center of mass of labels volume due to past dilatation
         # REMOVE IF NOT REQUIRED
         print '\nSelecting center of mass of labels volume due to past dilatation...'
-        sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg_2point.nii.gz -t cubic-to-point')
+        sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg_2point.nii.gz -cubic-to-point')
 
         # Apply straightening to seg_and_labels.nii.gz
         print'\nApplying transfo to seg_and_labels.nii.gz ...'
