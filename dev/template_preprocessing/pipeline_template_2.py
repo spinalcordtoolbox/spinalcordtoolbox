@@ -181,25 +181,27 @@ SUBJECTS_LIST = [['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/ech
 
 
 
-    ['errsm_35', new_folder + '/errsm_35/T1', new_folder + '/errsm_35/T2'],
-     ['pain_pilot_7', new_folder + '/pain_pilot_7/T1', new_folder + '/pain_pilot_7/T2'],
-     ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
-     ['errsm_05', folder_data_errsm+'/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_05/24-SPINE_SPACE'],
-     ['errsm_09', folder_data_errsm+'/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', folder_data_errsm+'/errsm_09/33-SPINE_SPACE'],
-     ['errsm_10', folder_data_errsm+'/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_10/20-SPINE_SPACE'],
-     ['errsm_12', folder_data_errsm+'/errsm_12/19-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_12/18-SPINE_T2'],
-     ['errsm_13', folder_data_errsm+'/errsm_13/33-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_13/34-SPINE_T2'],
-     ['errsm_14', folder_data_errsm+'/errsm_14/5002-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_14/5003-SPINE_T2'],
-     ['errsm_16', folder_data_errsm+'/errsm_16/23-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_16/39-SPINE_T2'],
-     ['errsm_17', folder_data_errsm+'/errsm_17/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_17/42-SPINE_T2'],
+
+
 
                  """
 
 new_folder = "/Users/benjamindeleener/data/template_data"
 SUBJECTS_LIST = [
+    ['errsm_11', folder_data_errsm + '/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_11/09-SPINE_T2'],
+    ['errsm_18', folder_data_errsm + '/errsm_18/36-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_18/33-SPINE_T2'],
+    ['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
+    ['MLL', folder_data_marseille+'/MLL_1016/01_0008_sc-mprage-1mm-2palliers-fov384-comp-sp-7', folder_data_marseille+'/MLL_1016/01_0100_t2-compo'],
+    ['errsm_03', folder_data_errsm+'/errsm_03/32-SPINE_all/echo_2.09', folder_data_errsm+'/errsm_03/38-SPINE_all_space'],
+    ['errsm_14', folder_data_errsm+'/errsm_14/5002-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_14/5003-SPINE_T2'],
+    ['errsm_25', folder_data_errsm+'/errsm_25/25-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_25/26-SPINE_T2'],
+    ['errsm_37', folder_data_errsm+'/errsm_37/19-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_37/20-SPINE_T2'],
+    ['errsm_11', folder_data_errsm+'/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_11/09-SPINE_T2'],
+    ['sct_001', folder_data_sct+'/sct_001/17-SPINE_T1/echo_2.09', folder_data_sct+'/sct_001/16-SPINE_T2'],
+    ['AM', folder_data_marseille+'/AM/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/AM/01_0100_compo-t2-spine'],
+    ['MT', folder_data_marseille+'/MT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/MT/01_0100_t2composing'],
+    ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space']
 
-     ['errsm_18', folder_data_errsm+'/errsm_18/36-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_18/33-SPINE_T2'],
-     ['errsm_11', folder_data_errsm+'/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_11/09-SPINE_T2']
 ]
 
 propseg_parameters = {
@@ -452,6 +454,8 @@ def average_centerline(contrast):
         list_dist_disks.append(centerline.distance_from_C1label)
         list_centerline.append(centerline)
 
+
+
     distances_disks_from_C1 = {}
     for dist_disks in list_dist_disks:
         for disk_label in dist_disks:
@@ -478,20 +482,26 @@ def average_centerline(contrast):
     label_points = []
     average_positions_from_C1 = {}
     disk_position_in_centerline = {}
+
     for i in range(len(average_distances)):
         disk_label = average_distances[i][0]
         average_positions_from_C1[disk_label] = average_distances[i][1]
 
         for j in range(number_of_points_between_levels):
             relative_position = float(j) / float(number_of_points_between_levels)
+            if disk_label in ['PONS', 'MO']:
+                relative_position = 1.0 - relative_position
             list_coordinates = [[]] * len(list_centerline)
             for k, centerline in enumerate(list_centerline):
                 idx_closest = centerline.get_closest_to_relative_position(disk_label, relative_position)
-                coordinate_closest = centerline.get_point_from_index(idx_closest[0])
-                list_coordinates[k] = coordinate_closest.tolist()
+                if idx_closest is not None:
+                    coordinate_closest = centerline.get_point_from_index(idx_closest[0])
+                    list_coordinates[k] = coordinate_closest.tolist()
+                else:
+                    list_coordinates[k] = [np.nan, np.nan, np.nan]
 
             # average all coordinates
-            average_coord = np.mean(list_coordinates, axis=0)
+            average_coord = np.nanmean(list_coordinates, axis=0)
             # add it to averaged centerline list of points
             points_average_centerline.append(average_coord)
             label_points.append(disk_label)
@@ -509,6 +519,7 @@ def average_centerline(contrast):
             length_vertebral_levels[label_vert] = average_positions_from_C1[label_vert_next] - average_positions_from_C1[label_vert]
     print length_vertebral_levels
 
+
     # generate averaged centerline
     plt.figure(1)
     # ax = plt.subplot(211)
@@ -516,6 +527,11 @@ def average_centerline(contrast):
     for k, centerline in enumerate(list_centerline):
         plt.plot([coord[2] for coord in centerline.points], [coord[0] for coord in centerline.points], 'r')
     plt.plot([coord[2] for coord in points_average_centerline], [coord[0] for coord in points_average_centerline])
+    MO_array = [[points_average_centerline[i][0], points_average_centerline[i][1], points_average_centerline[i][2]] for i in range(len(points_average_centerline)) if label_points[i] == 'MO']
+    PONS_array = [[points_average_centerline[i][0], points_average_centerline[i][1], points_average_centerline[i][2]] for i in range(len(points_average_centerline)) if label_points[i] == 'PONS']
+    #plt.plot([coord[2] for coord in MO_array], [coord[0] for coord in MO_array], 'mo')
+    #plt.plot([coord[2] for coord in PONS_array], [coord[0] for coord in PONS_array], 'ko')
+
     plt.title("X")
     # ax.set_aspect('equal')
     plt.xlabel('z')
@@ -525,13 +541,13 @@ def average_centerline(contrast):
     for k, centerline in enumerate(list_centerline):
         plt.plot([coord[2] for coord in centerline.points], [coord[1] for coord in centerline.points], 'r')
     plt.plot([coord[2] for coord in points_average_centerline], [coord[1] for coord in points_average_centerline])
+    #plt.plot([coord[2] for coord in MO_array], [coord[1] for coord in MO_array], 'mo')
+    #plt.plot([coord[2] for coord in PONS_array], [coord[1] for coord in PONS_array], 'ko')
     plt.title("Y")
     # ay.set_aspect('equal')
     plt.xlabel('z')
     plt.ylabel('y')
     plt.show()
-
-
 
     # create final template space
     coord_C1 = disk_average_coordinates['C1']
@@ -546,7 +562,6 @@ def average_centerline(contrast):
 
     # change centerline to be straight below C1
     index_C1 = disk_position_in_centerline['C1']
-    print points_average_centerline[0:index_C1]
     for i in range(index_C1, len(points_average_centerline)):
         current_label = label_points[i]
         if current_label in length_vertebral_levels:
@@ -582,13 +597,8 @@ def average_centerline(contrast):
     plt.ylabel('y')
     plt.show()
 
-
-
     # creating template space
     size_template_z = int(abs(points_average_centerline[0][2] - points_average_centerline[-1][2]) / spacing) + 200
-
-    print coord_C1
-    print points_average_centerline[-1]
 
     # saving template centerline and levels
     # generate template space
@@ -635,6 +645,18 @@ def average_centerline(contrast):
             image_disks.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = label
     image_disks.setFileName('/Users/benjamindeleener/code/sct/dev/template_creation/template_disks.nii.gz')
     image_disks.save(type='uint8')
+
+
+    # straightening of each subject on the new template
+    for i in range(0, len(SUBJECTS_LIST)):
+        subject = SUBJECTS_LIST[i][0]
+
+        # go to output folder
+        print '\nGo to output folder ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast
+        os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
+        sct.run('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -s generated_centerline.nii.gz -disks-input labels_vertebral_crop.nii.gz '
+                '-ref /Users/benjamindeleener/code/sct/dev/template_creation/template_centerline.nii.gz'
+                ' -disks-ref /Users/benjamindeleener/code/sct/dev/template_creation/template_disks.nii.gz', verbose=1)
 
 
 def do_preprocessing(contrast):
@@ -791,7 +813,7 @@ def do_preprocessing(contrast):
         print '\nStraightening image using centerline...'
         cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -s ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -o data_RPI_crop_normalized_straight.nii.gz '+straightening_parameters)
         #sct.printv(cmd_straighten)
-        sct.run(cmd_straighten)
+        #sct.run(cmd_straighten)
 
         # # # normalize intensity
         # print '\nNormalizing intensity of the straightened image...'
@@ -814,16 +836,16 @@ def do_preprocessing(contrast):
         # output:
         # - labels_vertebral_dilated_reg.nii.gz
         print '\nApplying straightening to labels_vertebral_dilated.nii.gz...'
-        sct.run('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_normalized_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
+        #sct.run('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_normalized_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
         # Select center of mass of labels volume due to past dilatation
         # REMOVE IF NOT REQUIRED
         print '\nSelecting center of mass of labels volume due to past dilatation...'
-        sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg_2point.nii.gz -cubic-to-point')
+        #sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg_2point.nii.gz -cubic-to-point')
 
         # Apply straightening to seg_and_labels.nii.gz
         print'\nApplying transfo to seg_and_labels.nii.gz ...'
-        sct.run('sct_apply_transfo -i seg_and_labels.nii.gz -d data_RPI_crop_normalized_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
+        #sct.run('sct_apply_transfo -i seg_and_labels.nii.gz -d data_RPI_crop_normalized_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
         ##Calculate the extrem non zero points of the straightened centerline file to crop image one last time
         """file = nibabel.load('seg_and_labels_reg.nii.gz')

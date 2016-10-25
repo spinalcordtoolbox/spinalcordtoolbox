@@ -543,6 +543,7 @@ class SpinalCordStraightener(object):
 
                     data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0, :] = -displacements_straight
 
+            self.straight2curved = False
             if self.straight2curved:
                 for u in range(nz):
                     print u + 1, '/', nz
