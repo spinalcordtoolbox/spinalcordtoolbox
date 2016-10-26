@@ -119,7 +119,7 @@ def get_parser(paramreg=None):
                                   paramreg.steps['1'].iter + "\n"
                                                              "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default=" +
                                   paramreg.steps['1'].shrink + "\n"
-                                                               "smooth: <int> Smooth factor. Default=" + paramreg.steps[
+                                                               "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" + paramreg.steps[
                                       '1'].smooth + "\n"
                                                     "laplacian: <int> Laplacian filter. Default=" + paramreg.steps[
                                       '1'].laplacian + "\n"
