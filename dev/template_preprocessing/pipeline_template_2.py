@@ -182,16 +182,7 @@ SUBJECTS_LIST = [['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/ech
 
 # DONE
 
-
-
-
-
-
-                 """
-
-new_folder = "/Users/benjamindeleener/data/template_data"
-SUBJECTS_LIST = [
-    ['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
+['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
     ['errsm_11', folder_data_errsm + '/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_11/09-SPINE_T2'],
     ['errsm_18', folder_data_errsm + '/errsm_18/36-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_18/33-SPINE_T2'],
     ['MLL', folder_data_marseille+'/MLL_1016/01_0008_sc-mprage-1mm-2palliers-fov384-comp-sp-7', folder_data_marseille+'/MLL_1016/01_0100_t2-compo'],
@@ -199,7 +190,6 @@ SUBJECTS_LIST = [
     ['errsm_14', folder_data_errsm+'/errsm_14/5002-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_14/5003-SPINE_T2'],
     ['errsm_25', folder_data_errsm+'/errsm_25/25-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_25/26-SPINE_T2'],
     ['errsm_37', folder_data_errsm+'/errsm_37/19-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_37/20-SPINE_T2'],
-    ['errsm_11', folder_data_errsm+'/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_11/09-SPINE_T2'],
     ['sct_001', folder_data_sct+'/sct_001/17-SPINE_T1/echo_2.09', folder_data_sct+'/sct_001/16-SPINE_T2'],
     ['AM', folder_data_marseille+'/AM/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/AM/01_0100_compo-t2-spine'],
     ['MT', folder_data_marseille+'/MT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/MT/01_0100_t2composing'],
@@ -233,6 +223,15 @@ SUBJECTS_LIST = [
     ['VP', folder_data_marseille+'/VP/01_0011_sc-mprage-1mm-2palliers-fov384-comp-sp-25', folder_data_marseille+'/VP/01_0100_space-compo'],
     ['errsm_10', folder_data_errsm+'/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_10/20-SPINE_SPACE'],
     ['errsm_20', folder_data_errsm+'/errsm_20/12-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_20/34-SPINE_T2'],
+    
+
+
+
+
+                 """
+
+new_folder = "/Users/benjamindeleener/data/template_data"
+SUBJECTS_LIST = [
     ['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
     ['errsm_21', folder_data_errsm+'/errsm_21/27-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_21/30-SPINE_T2'],
     ['errsm_34', folder_data_errsm+'/errsm_34/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_34/40-SPINE_T2'],
@@ -356,7 +355,10 @@ def main():
     #do_preprocessing('T1')
     timer['T1_do_preprocessing'].stop()
 
-    average_centerline('T1')
+    #average_centerline('T1')
+    #correct_transform('T1')
+    #create_mask_template()
+    convert_nii2mnc('T1')
 
     timer['T1_create_cross'].start()
     #create_cross('T1')
@@ -428,6 +430,13 @@ def main():
 
     #sct.printv('T2_align time:')
     #timer['T2_align'].printTotalTime()
+
+
+def create_mask_template():
+    template = Image('/Users/benjamindeleener/code/sct/dev/template_creation/template_space.nii.gz')
+    template.data += 1.0
+    template.setFileName('/Users/benjamindeleener/code/sct/dev/template_creation/template_mask.nii.gz')
+    template.save()
 
 
 def average_centerline(contrast):
@@ -709,6 +718,35 @@ def average_centerline(contrast):
 
         sct.run('cp data_RPI_crop_normalized_straight.nii.gz ' + PATH_OUTPUT + '/final_results_2016/' + subject + '_final_' + contrast + '.nii.gz')
 
+
+def convert_nii2mnc(contrast):
+    for i in range(0, len(SUBJECTS_LIST)):
+        subject = SUBJECTS_LIST[i][0]
+
+        sct.run('nii2mnc ' + PATH_OUTPUT + '/final_results_2016/' + subject + '_final_' + contrast + '.nii.gz ' + PATH_OUTPUT + '/final_results_mnc_2016/' + subject + '_final_' + contrast + '.mnc')
+
+
+def correct_transform(contrast):
+    import numpy as np
+    for i in range(0, len(SUBJECTS_LIST)):
+        subject = SUBJECTS_LIST[i][0]
+
+        # go to output folder
+        print '\nGo to output folder ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast
+        os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
+
+        warp_curved2straight = Image('warp_curve2straight.nii.gz')
+        print warp_curved2straight.data.shape
+        indexes = np.argwhere(warp_curved2straight.data[:, :, :] == [0.0, 0.0, 0.0])
+        warp_curved2straight.data[indexes] = [100000.0, 100000.0, 100000.0]
+        warp_curved2straight.setFileName('warp_curve2straight_corrected.nii.gz')
+        warp_curved2straight.save()
+
+        sct.run('sct_apply_transfo -i data_RPI_crop_normalized.nii.gz '
+                '-d /Users/benjamindeleener/code/sct/dev/template_creation/template_centerline.nii.gz '
+                '-w warp_curve2straight_corrected.nii.gz')
+
+        sct.run('cp data_RPI_crop_normalized_straight.nii.gz ' + PATH_OUTPUT + '/final_results_2016/' + subject + '_final_' + contrast + '_corrected.nii.gz')
 
 def do_preprocessing(contrast):
     # Loop across subjects
