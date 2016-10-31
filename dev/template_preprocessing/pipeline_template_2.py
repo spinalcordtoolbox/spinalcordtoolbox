@@ -177,12 +177,16 @@ SUBJECTS_LIST = [['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/ech
     ['HB', new_folder + '/HB/T1', new_folder + '/HB/T2'],
     ['PA', new_folder + '/PA/T1', new_folder + '/PA/T2']
 
+    
 
 
 
-# DONE
 
-['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
+                 """
+
+new_folder = "/Users/benjamindeleener/data/template_data"
+SUBJECTS_LIST = [
+    ['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
     ['errsm_11', folder_data_errsm + '/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_11/09-SPINE_T2'],
     ['errsm_18', folder_data_errsm + '/errsm_18/36-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_18/33-SPINE_T2'],
     ['MLL', folder_data_marseille+'/MLL_1016/01_0008_sc-mprage-1mm-2palliers-fov384-comp-sp-7', folder_data_marseille+'/MLL_1016/01_0100_t2-compo'],
@@ -223,15 +227,6 @@ SUBJECTS_LIST = [['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/ech
     ['VP', folder_data_marseille+'/VP/01_0011_sc-mprage-1mm-2palliers-fov384-comp-sp-25', folder_data_marseille+'/VP/01_0100_space-compo'],
     ['errsm_10', folder_data_errsm+'/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_10/20-SPINE_SPACE'],
     ['errsm_20', folder_data_errsm+'/errsm_20/12-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_20/34-SPINE_T2'],
-    
-
-
-
-
-                 """
-
-new_folder = "/Users/benjamindeleener/data/template_data"
-SUBJECTS_LIST = [
     ['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
     ['errsm_21', folder_data_errsm+'/errsm_21/27-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_21/30-SPINE_T2'],
     ['errsm_34', folder_data_errsm+'/errsm_34/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_34/40-SPINE_T2'],
@@ -356,9 +351,14 @@ def main():
     timer['T1_do_preprocessing'].stop()
 
     #average_centerline('T1')
-    #correct_transform('T1')
     #create_mask_template()
-    convert_nii2mnc('T1')
+
+    #convert_nii2mnc('T1')
+    do_preprocessing('T2')
+    straighten_all_subjects('T2')
+    # convert_nii2mnc('T2')
+
+    straighten_all_subjects('T1')
 
     timer['T1_create_cross'].start()
     #create_cross('T1')
@@ -503,8 +503,42 @@ def average_centerline(contrast):
         list_dist_disks.append(centerline.distance_from_C1label)
         list_centerline.append(centerline)
 
+    import numpy as np
 
+    length_vertebral_levels = {}
+    for dist_disks in list_dist_disks:
+        for disk_label in dist_disks:
+            if disk_label == 'C1':
+                length = 0.0
+            elif disk_label == 'PONS':
+                length = abs(dist_disks[disk_label] - dist_disks['MO'])
+            elif disk_label == 'MO':
+                length = abs(dist_disks[disk_label] - dist_disks['C1'])
+            else:
+                index_current_label = list_labels.index(labels_regions[disk_label])
+                previous_label = regions_labels[str(list_labels[index_current_label - 1])]
+                length = dist_disks[disk_label] - dist_disks[previous_label]
 
+            if disk_label in length_vertebral_levels:
+                length_vertebral_levels[disk_label].append(length)
+            else:
+                length_vertebral_levels[disk_label] = [length]
+    #print length_vertebral_levels_p
+
+    average_length = {}
+    for disk_label in length_vertebral_levels:
+        mean = np.mean(length_vertebral_levels[disk_label])
+        std = np.std(length_vertebral_levels[disk_label])
+        average_length[disk_label] = [disk_label, mean, std]
+    print average_length
+
+    distances_disks_from_C1 = {'C1': 0.0, 'MO': -average_length['MO'][1], 'PONS': -average_length['MO'][1] - average_length['PONS'][1]}
+    for disk_number in list_labels:
+        if disk_number not in [50, 51, 1] and regions_labels[str(disk_number)] in average_length:
+            distances_disks_from_C1[regions_labels[str(disk_number)]] = distances_disks_from_C1[regions_labels[str(disk_number - 1)]] + average_length[regions_labels[str(disk_number)]][1]
+    print '\n', distances_disks_from_C1
+
+    """
     distances_disks_from_C1 = {}
     for dist_disks in list_dist_disks:
         for disk_label in dist_disks:
@@ -512,8 +546,7 @@ def average_centerline(contrast):
                 distances_disks_from_C1[disk_label].append(dist_disks[disk_label])
             else:
                 distances_disks_from_C1[disk_label] = [dist_disks[disk_label]]
-
-    import numpy as np
+    """
 
     average_distances = []
     for disk_label in distances_disks_from_C1:
@@ -528,6 +561,8 @@ def average_centerline(contrast):
     import bz2
     with bz2.BZ2File(PATH_OUTPUT + '/final_results_2016/' + 'template_distances_from_C1_'+contrast+'.pbz2', 'w') as f:
         pickle.dump(average_distances, f)
+
+    print '\nAverage distance\n', average_distances
 
     number_of_points_between_levels = 100
     disk_average_coordinates = {}
@@ -562,6 +597,7 @@ def average_centerline(contrast):
                 disk_average_coordinates[disk_label] = average_coord
                 disk_position_in_centerline[disk_label] = i*number_of_points_between_levels
 
+    """
     # compute average vertebral level length
     length_vertebral_levels = {}
     for i in range(len(list_labels) - 1):
@@ -571,6 +607,7 @@ def average_centerline(contrast):
         if label_vert in average_positions_from_C1 and label_vert_next in average_positions_from_C1:
             length_vertebral_levels[label_vert] = average_positions_from_C1[label_vert_next] - average_positions_from_C1[label_vert]
     print length_vertebral_levels
+    """
     with bz2.BZ2File(PATH_OUTPUT + '/final_results_2016/' + 'template_vertebral_length_'+contrast+'.pbz2', 'w') as f:
         pickle.dump(length_vertebral_levels, f)
 
@@ -607,7 +644,7 @@ def average_centerline(contrast):
     # create final template space
     coord_C1 = disk_average_coordinates['C1']
     position_template_disks = {}
-    for disk in length_vertebral_levels:
+    for disk in average_length:
         if disk in ['MO', 'PONS', 'C1']:
             position_template_disks[disk] = disk_average_coordinates[disk]
         else:
@@ -619,14 +656,16 @@ def average_centerline(contrast):
     index_C1 = disk_position_in_centerline['C1']
     for i in range(0, len(points_average_centerline)):
         current_label = label_points[i]
-        if current_label in length_vertebral_levels:
-            length_current_label = length_vertebral_levels[current_label]
+        if current_label in average_length:
+            length_current_label = average_length[current_label][1]
             relative_position_from_disk = float(i - disk_position_in_centerline[current_label]) / float(number_of_points_between_levels)
             #print i, coord_C1[2], average_positions_from_C1[current_label], length_current_label
             points_average_centerline[i][0] = coord_C1[0]
             if i >= index_C1:
                 points_average_centerline[i][1] = coord_C1[1]
                 points_average_centerline[i][2] = coord_C1[2] - average_positions_from_C1[current_label] - relative_position_from_disk * length_current_label
+            else:
+                points_average_centerline[i][1] = coord_C1[1] + (points_average_centerline[i][1] - coord_C1[1]) * 2.0
         else:
             points_average_centerline[i] = None
     points_average_centerline = [x for x in points_average_centerline if x is not None]
@@ -705,6 +744,7 @@ def average_centerline(contrast):
     image_disks.save(type='uint8')
 
 
+def straighten_all_subjects(contrast):
     # straightening of each subject on the new template
     for i in range(0, len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
@@ -724,29 +764,6 @@ def convert_nii2mnc(contrast):
         subject = SUBJECTS_LIST[i][0]
 
         sct.run('nii2mnc ' + PATH_OUTPUT + '/final_results_2016/' + subject + '_final_' + contrast + '.nii.gz ' + PATH_OUTPUT + '/final_results_mnc_2016/' + subject + '_final_' + contrast + '.mnc')
-
-
-def correct_transform(contrast):
-    import numpy as np
-    for i in range(0, len(SUBJECTS_LIST)):
-        subject = SUBJECTS_LIST[i][0]
-
-        # go to output folder
-        print '\nGo to output folder ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast
-        os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
-
-        warp_curved2straight = Image('warp_curve2straight.nii.gz')
-        print warp_curved2straight.data.shape
-        indexes = np.argwhere(warp_curved2straight.data[:, :, :] == [0.0, 0.0, 0.0])
-        warp_curved2straight.data[indexes] = [100000.0, 100000.0, 100000.0]
-        warp_curved2straight.setFileName('warp_curve2straight_corrected.nii.gz')
-        warp_curved2straight.save()
-
-        sct.run('sct_apply_transfo -i data_RPI_crop_normalized.nii.gz '
-                '-d /Users/benjamindeleener/code/sct/dev/template_creation/template_centerline.nii.gz '
-                '-w warp_curve2straight_corrected.nii.gz')
-
-        sct.run('cp data_RPI_crop_normalized_straight.nii.gz ' + PATH_OUTPUT + '/final_results_2016/' + subject + '_final_' + contrast + '_corrected.nii.gz')
 
 def do_preprocessing(contrast):
     # Loop across subjects
@@ -955,188 +972,6 @@ def do_preprocessing(contrast):
         sct.run('sct_crop_image -i labels_vertebral_dilated_reg_2point.nii.gz -o labels_vertebral_dilated_reg_2point_crop.nii.gz -dim 2 -start '+ str(z_min)+' -end '+ str(z_max))
         """
         timer[contrast+'_do_preprocessing'].one_subject_done()
-
-# Create cross at the first and last labels for each subject. This cross will be used to push the subject into the template space using affine transfo.
-def create_cross(contrast):
-    # Define list to gather all distances
-    list_distances_1 = []
-    list_distances_2 = []
-    for i in range(0,len(SUBJECTS_LIST)):
-        subject = SUBJECTS_LIST[i][0]
-
-        # go to output folder
-        print '\nGo to output folder '+ PATH_OUTPUT + '/subjects/'+ subject+ '/' + contrast
-        os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast )
-
-        #Calculate distances between : (last_label and bottom)  and (first label and top)
-        print '\nCalculating distances between : (last_label and bottom)  and (first label and top)...'
-        img_label = nibabel.load('labels_vertebral_dilated_reg_2point.nii.gz')
-        data_labels = img_label.get_data()
-        from msct_image import Image
-        nx, ny, nz, nt, px, py, pz, pt = Image('labels_vertebral_dilated_reg_2point.nii.gz').dim
-        X, Y, Z = (data_labels > 0).nonzero()
-        list_coordinates = [([X[i], Y[i], Z[i], data_labels[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-        for i in range(len(list_coordinates)):
-            if list_coordinates[i][3] == 1:
-                coordinates_first_label = list_coordinates[i]
-            if list_coordinates[i][3] == 20:
-                coordinates_last_label = list_coordinates[i]
-        # Distance 1st label top
-        distance_1 = nz - 1 - coordinates_first_label[2]
-        distance_2 = nz - 1 - coordinates_last_label[2]
-
-        # Complete list to gather all distances
-        list_distances_1.append(distance_1)
-        list_distances_2.append(distance_2)
-
-        # Create a cross on each subject at first and last labels
-        print '\nCreating a cross at first and last labels...'
-        os.system('sct_create_cross.py -i data_RPI_crop_normalized_straight.nii.gz -x ' +str(int(round(nx/2.0)))+' -y '+str(int(round(ny/2.0)))+ ' -s '+str(coordinates_last_label[2])+ ' -e '+ str(coordinates_first_label[2]))
-
-        # Write into a txt file the list of distances
-        # os.chdir('../')
-        # f_distance = open('list_distances.txt', 'w')
-        # f_distance.write(str(distance_1))
-        # f_distance.write(' ')
-        # f_distance.write(str(distance_2))
-        # f_distance.write('\n')
-
-        timer[contrast + '_create_cross'].one_subject_done()
-
-    # Calculate mean cross height for template and create file of reference
-    print '\nCalculating mean cross height for template and create file of reference'
-    mean_distance_1 = int(round(sum(list_distances_1)/len(list_distances_1)))
-    mean_distance_2 = int(round(sum(list_distances_2)/len(list_distances_2)))
-    L = height_of_template_space - 2 * mean_distance_2
-    H = height_of_template_space - 2 * mean_distance_1
-    os.chdir(path_sct+'/dev/template_creation')
-    os.system('sct_create_cross.py -i template_landmarks-mm.nii.gz -x ' +str(int(x_size_of_template_space/2))+' -y '+str(int(y_size_of_template_space/2))+ ' -s '+str(L)+ ' -e '+ str(H))
-
-
-
-# push into template space
-def push_into_templace_space(contrast):
-    for i in range(0,len(SUBJECTS_LIST)):
-        subject = SUBJECTS_LIST[i][0]
-
-        # go to output folder
-        print '\nGo to output folder '+ PATH_OUTPUT + '/subjects/' + subject + '/' + contrast
-        os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast )
-
-        # Push into template space
-        print'\nPush into template space...'
-        sct.run('sct_push_into_template_space.py -i data_RPI_crop_normalized_straight.nii.gz -n landmark_native.nii.gz')
-        sct.run('sct_push_into_template_space.py -i labels_vertebral_dilated_reg_2point.nii.gz -n landmark_native.nii.gz -a nn')
-
-        # Change image type from float64 to uint16
-        sct.run('sct_change_image_type.py -i data_RPI_crop_normalized_straight_2temp.nii.gz -o data_RPI_crop_normalized_straight_2temp.nii.gz -t uint16')
-
-        # get center of mass of each label group
-        print '\nGet center of mass of each label group due to affine transformation...'
-        sct.run('sct_label_utils -i labels_vertebral_dilated_reg_2point_2temp.nii.gz -o labels_vertebral_dilated_reg_2point_2temp.nii.gz -t cubic-to-point')
-
-        # Copy labels_vertebral_straight_in_template_space.nii.gz into a folder that will contain each subject labels_vertebral_straight_in_template_space.nii.gz file and rename them
-        print'\nCheck if folder '+PATH_OUTPUT +'/labels_vertebral_' + contrast+ ' exists and if not creates it ...'
-        # check if folder exists and if not create it
-        if not os.path.isdir(PATH_OUTPUT +'/labels_vertebral_' + contrast):
-            os.makedirs(PATH_OUTPUT + '/labels_vertebral_' + contrast)
-        sct.run('cp labels_vertebral_dilated_reg_2point_2temp.nii.gz '+PATH_OUTPUT +'/labels_vertebral_' + contrast + '/'+subject+'.nii.gz')
-
-        timer[contrast + '_push_into_templace_space'].one_subject_done()
-
-# Check position of labels crop_2temp with image crop_2temp
-# if no good: check position of labels reg with image normalized_straight
-# if no good: check position of labels dilated with image crop
-
-
-# Calculate mean labels and save it into folder "labels_vertebral"
-def average_levels(contrast):
-    if contrast == 'both':
-        print 'Averaging levels from T1 and T2 contrasts...'
-
-        from numpy import mean, zeros, array
-        n_i, n_l = 2, number_labels_for_template
-        average = zeros((n_i, n_l))
-        compteur = 0
-
-        img_T1 = nibabel.load(PATH_OUTPUT + '/labels_vertebral_T1/template_landmarks.nii.gz')
-        data_T1 = img_T1.get_data()
-        X, Y, Z = (data_T1 > 0).nonzero()
-        Z = [Z[i] for i in Z.argsort()]
-        Z.reverse()
-
-        for i in xrange(n_l):
-            if i < len(Z):
-                average[compteur][i] = Z[i]
-
-        compteur = compteur + 1
-
-        img_T2 = nibabel.load(PATH_OUTPUT + '/labels_vertebral_T2/template_landmarks.nii.gz')
-        data_T2 = img_T2.get_data()
-        X, Y, Z = (data_T1 > 0).nonzero()
-        Z = [Z[i] for i in Z.argsort()]
-        Z.reverse()
-
-        for i in xrange(n_l):
-            if i < len(Z):
-                average[compteur][i] = Z[i]
-
-        average = array([int(round(mean([average[average[:, i] > 0, i]]))) for i in xrange(n_l)])
-
-        template_absolute_path = path_sct + '/dev/template_creation/template_landmarks-mm.nii.gz'
-        print template_absolute_path
-        print '\nGet dimensions of template...'
-        from msct_image import Image
-        nx, ny, nz, nt, px, py, pz, pt = Image(template_absolute_path).dim
-        print '.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)
-        print '.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm'
-
-        img = nibabel.load(template_absolute_path)
-        data = img.get_data()
-        hdr = img.get_header()
-        data[:, :, :] = 0
-        compteur = 1
-        for i in average:
-            print int(nx / 2.0), int(ny / 2.0), int(round(i)), int(round(compteur))
-            data[int(nx / 2.0), int(ny / 2.0), int(round(i))] = int(round(compteur))
-            compteur = compteur + 1
-
-        print '\nSave volume ...'
-        # hdr.set_data_dtype('float32') # set imagetype to uint8
-        # save volume
-        # data = data.astype(float32, copy =False)
-        img = nibabel.Nifti1Image(data, None, hdr)
-        file_name = PATH_OUTPUT + '/labels_vertebral_T1/template_landmarks.nii.gz'
-        nibabel.save(img, file_name)
-        print '\nFile created : ' + file_name
-        file_name = PATH_OUTPUT + '/labels_vertebral_T2/template_landmarks.nii.gz'
-        nibabel.save(img, file_name)
-        print '\nFile created : ' + file_name
-
-    else:
-        print '\nGo to output folder '+ PATH_OUTPUT + '/labels_vertebral_' + contrast + '\n'
-        os.chdir(PATH_OUTPUT +'/labels_vertebral_' + contrast)
-        print'\nCalculate mean along subjects of files labels_vertebral and save it into '+PATH_OUTPUT +'/labels_vertebral_' + contrast +' as template_landmarks.nii.gz'
-        template_shape = path_sct + '/dev/template_creation/template_landmarks-mm.nii.gz'
-        # this function looks at all files inside the folder "labels_vertebral_T*" and find the average vertebral levels across subjects
-        sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + ' -t '+ template_shape +' -n '+ str(number_labels_for_template))
-
-
-# Aligning vertebrae for all subjects and copy results into "Final_results". Plus: save png images of all subject into a folder named Image_results.
-def align_vertebrae(contrast):
-    for i in range(0,len(SUBJECTS_LIST)):
-        subject = SUBJECTS_LIST[i][0]
-
-        # go to output folder
-        print '\nGo to output folder '+ PATH_OUTPUT + '/subjects/'+subject+ '/' + contrast + '\n'
-        os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
-
-        print '\nAligning vertebrae for subject '+subject+'...'
-        sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_normalized_straight_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t nurbs -w spline')
-        os.system('sct_align_vertebrae.py -i data_RPI_crop_normalized_straight_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t nurbs -w spline')
-
-        timer[contrast + '_align'].one_subject_done()
-
 
 def qc(contrast):
     for i in range(0, len(SUBJECTS_LIST)):
