@@ -195,6 +195,10 @@ class SpinalCordStraightener(object):
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
 
+        self.curved2straight = True
+        self.straight2curved = True
+
+
     def straighten(self):
         # Initialization
         fname_anat = self.input_filename
@@ -519,9 +523,8 @@ class SpinalCordStraightener(object):
             # 5. compute transformations
             # Curved and straight images and the same dimensions, so we compute both warping fields at the same time.
             # b. determine which plane of spinal cord centreline it is included
-            print nx * ny * nz, nx_s * ny_s * nz_s
+            #print nx * ny * nz, nx_s * ny_s * nz_s
 
-            self.curved2straight = True
             if self.curved2straight:
                 for u in range(nz_s):
                     print u+1, '/', nz_s
@@ -543,7 +546,6 @@ class SpinalCordStraightener(object):
 
                     data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0, :] = -displacements_straight
 
-            self.straight2curved = False
             if self.straight2curved:
                 for u in range(nz):
                     print u + 1, '/', nz
@@ -567,80 +569,6 @@ class SpinalCordStraightener(object):
                     displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
                     data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
-
-            """
-            x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
-            indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
-            x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, 0:nz_s]
-            indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
-            time_generation_volumes = time.time() - time_generation_volumes
-            sct.printv('Time to generate volumes and indices: ' + str(np.round(time_generation_volumes * 1000.0)) + ' ms', verbose)
-
-            time_find_nearest_indexes = time.time()
-            physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
-            physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
-            nearest_indexes_curved = centerline.find_nearest_indexes(physical_coordinates)
-            nearest_indexes_straight = centerline_straight.find_nearest_indexes(physical_coordinates_straight)
-            time_find_nearest_indexes = time.time() - time_find_nearest_indexes
-            sct.printv('Time to find nearest centerline points: ' + str(np.round(time_find_nearest_indexes * 1000.0)) + ' ms', verbose)
-
-            # compute the distance from voxels to corresponding plans.
-            # This distance is used to blackout voxels that are not in the modified image.
-            time_get_distances_from_planes = time.time()
-            distances_curved = centerline.get_distances_from_planes(physical_coordinates, nearest_indexes_curved)
-            distances_straight = centerline_straight.get_distances_from_planes(physical_coordinates_straight, nearest_indexes_straight)
-            indexes_out_distance_curved = np.logical_or(distances_curved > self.threshold_distance, distances_curved < -self.threshold_distance)
-            indexes_out_distance_straight = np.logical_or(distances_straight > self.threshold_distance, distances_straight < -self.threshold_distance)
-            time_get_distances_from_planes = time.time() - time_get_distances_from_planes
-            sct.printv('Time to compute distance between voxels and nearest planes: ' + str(np.round(time_get_distances_from_planes * 1000.0)) + ' ms', verbose)
-
-            # c. compute the position of the voxel in the plane coordinate system
-            # (X and Y distance from centreline, along the plane)
-            time_get_projected_coordinates_on_planes = time.time()
-            projected_points_curved = centerline.get_projected_coordinates_on_planes(physical_coordinates, nearest_indexes_curved)
-            projected_points_straight = centerline_straight.get_projected_coordinates_on_planes(physical_coordinates_straight, nearest_indexes_straight)
-            time_get_projected_coordinates_on_planes = time.time() - time_get_projected_coordinates_on_planes
-            sct.printv('Time to get projected voxels on planes: ' + str(np.round(time_get_projected_coordinates_on_planes * 1000.0)) + ' ms', verbose)
-
-            # e. find the correspondance of the voxel in the corresponding plane
-            time_get_in_plans_coordinates = time.time()
-            coord_in_planes_curved = centerline.get_in_plans_coordinates(projected_points_curved, nearest_indexes_curved)
-            coord_in_planes_straight = centerline_straight.get_in_plans_coordinates(projected_points_straight, nearest_indexes_straight)
-            time_get_in_plans_coordinates = time.time() - time_get_in_plans_coordinates
-            sct.printv('Time to get in-plane coordinates: ' + str(np.round(time_get_in_plans_coordinates * 1000.0)) + ' ms', verbose)
-
-            # 6. generate warping fields for each transformations
-            # compute coordinate in straight space based on position on plane
-            time_displacements = time.time()
-
-
-
-            coord_curved2straight = centerline_straight.points[lookup_curved2straight[nearest_indexes_curved]]
-            coord_curved2straight[:, 0:2] += coord_in_planes_curved[:, 0:2]
-            coord_curved2straight[:, 2] += distances_curved
-
-            displacements_curved = coord_curved2straight - physical_coordinates
-            # for some reason, displacement in Z is inverted. Probably due to left/right-hended definition of referential.
-            #displacements_curved[:, 0] = -displacements_curved[:, 0]
-            displacements_curved[:, 2] = -displacements_curved[:, 2]
-            displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
-
-
-
-            coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup_straight2curved[nearest_indexes_straight])
-            displacements_straight = coord_straight2curved - physical_coordinates_straight
-            # for some reason, displacement in Z is inverted. Probably due to left/right-handed definition of referential.
-            #displacements_straight[:, 0] = -displacements_straight[:, 0]
-            displacements_straight[:, 2] = -displacements_straight[:, 2]
-            displacements_straight[indexes_out_distance_straight] = [100000.0, 100000.0, 100000.0]
-
-            # For error-free interpolation purpose, warping fields are inverted in the definition of ITK.
-            data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0, :] = -displacements_straight
-            data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
-
-            time_displacements = time.time() - time_displacements
-            sct.printv('Time to compute physical displacements: ' + str(np.round(time_displacements * 1000.0)) + ' ms', verbose)
-            """
 
             # Creation of the safe zone based on pre-calculated safe boundaries
             coord_bound_curved_inf, coord_bound_curved_sup = image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[0]]]), image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[1]]])
@@ -791,6 +719,14 @@ def get_parser():
                       description="amount of padding for generating labels.",
                       mandatory=False,
                       deprecated_by='-pad')
+    parser.add_option(name="-disable-straight2curved",
+                      type_value=None,
+                      description="Disable straight to curved transformation computation.",
+                      mandatory=False)
+    parser.add_option(name="-disable-curved2straight",
+                      type_value=None,
+                      description="Disable curved to straight transformation computation.",
+                      mandatory=False)
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="straightened file",
@@ -892,6 +828,11 @@ if __name__ == "__main__":
     #     sc_straight.cpu_number = int(arguments["-cpu-nb"])
     if '-qc' in arguments:
         sc_straight.qc = int(arguments['-qc'])
+
+    if '-disable-straight2curved' in arguments:
+        sc_straight.straight2curved = False
+    if '-disable-curved2straight' in arguments:
+        sc_straight.curved2straight = False
 
     if "-param" in arguments:
         params_user = arguments['-param']
