@@ -754,7 +754,8 @@ def straighten_all_subjects(contrast):
         os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
         sct.run('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -s generated_centerline.nii.gz -disks-input labels_vertebral_crop.nii.gz '
                 '-ref /Users/benjamindeleener/code/sct/dev/template_creation/template_centerline.nii.gz'
-                ' -disks-ref /Users/benjamindeleener/code/sct/dev/template_creation/template_disks.nii.gz', verbose=1)
+                ' -disks-ref /Users/benjamindeleener/code/sct/dev/template_creation/template_disks.nii.gz'
+                ' -disable-straight2curved', verbose=1)
 
         sct.run('cp data_RPI_crop_normalized_straight.nii.gz ' + PATH_OUTPUT + '/final_results_2016/' + subject + '_final_' + contrast + '.nii.gz')
 
