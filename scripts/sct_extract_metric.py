@@ -84,8 +84,9 @@ map: maximum a posteriori. Mean priors are estimated by maximum likelihood withi
   N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in all voxels (the algorithm doesn't normalize the atlas).
 wa: weighted average
 wath: weighted average (only consider values >0.5)
-bin: binarize mask (threshold=0.5)""",
-                      example=['ml', 'map', 'wa', 'wath', 'bin'],
+bin: binarize mask (threshold=0.5)
+max: for each z-slice of the input data, extract the max value for each slice of the input data. This mode is useful to extract CSA from an interpolated image (ignore partial volume effect).""",
+                      example=['ml', 'map', 'wa', 'wath', 'bin', 'max'],
                       mandatory=False,
                       default_value=param_default.method)
     parser.add_option(name='-m',
@@ -283,7 +284,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         # Load image
         sct.printv('\nLoad metric image...', verbose)
         data = nib.load(fname_data).get_data()
-        sct.printv('\tDone.', verbose)
+        sct.printv('  OK!', verbose)
         # Load labels
         sct.printv('\nLoad labels...', verbose)
         labels = np.empty([nb_labels], dtype=object)
@@ -294,7 +295,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
         if vertebral_levels:  # if vertebral levels were selected,
             data_vertebral_labeling = nib.load(fname_vertebral_labeling).get_data()
-        sct.printv('\tDone.', verbose)
+        sct.printv('  OK!', verbose)
 
 
     # Change metric data type into floats for future manipulations (normalization)
@@ -833,8 +834,9 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 def check_method(method, fname_normalizing_label, normalization_method):
     """Check the consistency of the methods asked by the user."""
 
-    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'map'):
-        sct.printv(parser.usage.generate(error='ERROR: Method "' + method + '" is not correct. See help. Exit program.\n'))
+    # THIS BELOW IS ALREADY CHECKED BY THE PARSER SO I COMMENTED IT. jcohenadad 2016-10-23
+    # if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'map'):
+    #     sct.printv(parser.usage.generate(error='ERROR: Method "' + method + '" is not correct. See help. Exit program.\n'))
 
     if normalization_method and not fname_normalizing_label:
         sct.printv(parser.usage.generate(error='ERROR: You selected a normalization method ('+ str(normalization_method)+ ') but you didn\'t selected any label to be used for the normalization.'))
@@ -886,7 +888,6 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     :labels: nlabel tuple of (nx,ny,nz) array
     """
 
-
     nb_labels = len(labels)  # number of labels
 
     # if user asks for binary regions, binarize atlas
@@ -899,6 +900,19 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     if method == 'wath':
         for i in range(0, nb_labels):
             labels[i][labels[i] < 0.5] = 0
+
+    # if method=max, transforms each label slice to a single voxel which index corresponds to the maximum value of the metric. This is used for computing CSA from CSA images.
+    if method == 'max':
+        ind_max = np.zeros((data.shape[2], 2))
+        # for each z-slice of data, find indices corresponding to max values
+        for iz in range(data.shape[2]):
+            a, b = np.where(data[:, :, iz] == np.max(data[:, :, iz]))
+            ind_max[iz] = [a[0], b[0]]
+        # loop across labels and set a single pixel to one and the others to zero
+        for i in range(0, nb_labels):
+            for iz in range(labels[i].shape[2]):
+                labels[i][:, :, iz] = 0
+                labels[i][ind_max[iz, 0], ind_max[iz, 1], iz] = 1
 
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
@@ -950,7 +964,7 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     del data, labels
 
     # Estimation with weighted average (also works for binary)
-    if method == 'wa' or method == 'bin' or method == 'wath':
+    if method == 'wa' or method == 'bin' or method == 'wath' or method == 'max':
         for i_label in range(0, nb_labels):
             # check if all labels are equal to zero
             if sum(labels2d[i_label, :]) == 0:
