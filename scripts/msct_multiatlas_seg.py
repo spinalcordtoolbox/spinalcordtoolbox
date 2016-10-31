@@ -434,7 +434,7 @@ class Model:
     # ------------------------------------------------------------------------------------------------------------------
     def load_model(self):
         path = os.path.abspath('.')
-        printv('\nLoading model ...', self.param.verbose, 'normal')
+        printv('\nLoading model...', self.param.verbose, 'normal')
         os.chdir(self.param_model.path_model_to_load)
 
         model_files = {'slices': 'slices.pklz', 'intensity': 'intensities.pklz', 'model': 'fitted_model.pklz', 'data': 'fitted_data.pklz'}
@@ -455,7 +455,7 @@ class Model:
 
         ##   - self.slices = dictionary
         self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'))
-        printv('\n\t --> '+str(len(self.slices))+' slices in the model dataset', self.param.verbose, 'normal')
+        printv('  '+str(len(self.slices))+' slices in the model dataset', self.param.verbose, 'normal')
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
         ##   - self.intensities = for normalization
@@ -467,8 +467,8 @@ class Model:
         ##   - fitted data (=eigen vectors or embedding vectors )
         self.fitted_data = pickle.load(gzip.open(model_files['data'], 'rb'))
 
-        printv('\n\t --> model: '+self.param_model.method)
-        printv('\n\t --> '+str(self.fitted_data.shape[1])+' components kept on '+str(self.fitted_data.shape[0]), self.param.verbose, 'normal')
+        printv('  model: '+self.param_model.method)
+        printv('  '+str(self.fitted_data.shape[1])+' components kept on '+str(self.fitted_data.shape[0]), self.param.verbose, 'normal')
         # when model == pca, self.fitted_data.shape[1] = self.fitted_model.n_components_
         os.chdir(path)
 
