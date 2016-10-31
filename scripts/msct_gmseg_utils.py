@@ -98,7 +98,7 @@ class Slice:
 ########################################################################################################################
 # ----------------------------------------------------------------------------------------------------------------------
 def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1, rm_tmp=True, for_model=False):
-    printv('\nPre-processing data ...', verbose, 'normal')
+    printv('\nPre-process data...', verbose, 'normal')
 
     tmp_dir = 'tmp_preprocessing_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)) + '/'
     if not os.path.exists(tmp_dir):
@@ -116,7 +116,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     im_sc_seg = Image(fname_sc_seg).copy()
 
     # get original orientation
-    printv('\n\tReorient ...', verbose, 'normal')
+    printv('  Reorient...', verbose, 'normal')
     original_info['orientation'] = im_target.orientation
 
     # assert images are in the same orientation
@@ -127,32 +127,32 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     original_info['im_sc_seg_rpi'] = im_sc_seg_rpi.copy()  # target image in RPI will be used to post-process segmentations
 
     # interpolate image to reference square image (resample and square crop centered on SC)
-    printv('\n\tInterpolate data to the model space ...', verbose, 'normal')
+    printv('  Interpolate data to the model space...', verbose, 'normal')
     list_im_slices = interpolate_im_to_ref(im_target_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
     original_info['interpolated_images'] = list_im_slices # list of images (not Slice() objects)
 
     # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy
     if denoising:
-        printv('\n\tDenoise ...', verbose, 'normal')
+        printv('  Denoise...', verbose, 'normal')
         from sct_maths import denoise_nlmeans
         data = np.asarray([im.data for im in list_im_slices])
         data_denoised = denoise_nlmeans(data, block_radius = int(len(list_im_slices)/2))
         for i in range(len(list_im_slices)):
             list_im_slices[i].data = data_denoised[i]
 
-    printv('\n\t\tMask data using the spinal cord mask ...', verbose, 'normal')
+    printv('  Mask data using the spinal cord segmentation...', verbose, 'normal')
     list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=1)
     for i in range(len(list_im_slices)):
         # list_im_slices[i].data[list_sc_seg_slices[i].data == 0] = 0
         list_sc_seg_slices[i] = binarize(list_sc_seg_slices[i], thr_min=0.5, thr_max=1)
         list_im_slices[i].data = list_im_slices[i].data * list_sc_seg_slices[i].data
 
-    printv('\n\tSplit along rostro-caudal direction...', verbose, 'normal')
+    printv('  Split along rostro-caudal direction...', verbose, 'normal')
     list_slices_target = [Slice(slice_id=i, im=im_slice.data, gm_seg=[], wm_seg=[]) for i, im_slice in enumerate(list_im_slices)]
 
     # load vertebral levels
     if fname_level is not None:
-        printv('\n\tLoad vertebral levels ...', verbose, 'normal')
+        printv('  Load vertebral levels...', verbose, 'normal')
         # copy level file to tmp dir
         os.chdir('..')
         shutil.copy(fname_level, tmp_dir)
@@ -171,7 +171,6 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     if rm_tmp:
         # remove tmp folder
         shutil.rmtree(tmp_dir)
-    printv('\nPre-processing done!', verbose, 'normal')
     return list_slices_target, original_info
 
 
