@@ -134,11 +134,11 @@ class slices(object):
     def mosaic(self, imageName, segImageName, nb_column, size):
         print segImageName
         image, image_seg, dim = self.getImage(imageName, segImageName)
-        matrix0 = np.ones((size * 2 * int((dim / nb_column) + 1), size * 2 * nb_column))
+        matrix0 = np.ones((size * 2 * int((dim / nb_column) + 1),size * 2 * nb_column))
         matrix1 = np.empty((size * 2 * int((dim / nb_column) + 1), size * 2 * nb_column))
         centers_x = np.zeros(dim)
         centers_y = np.zeros(dim)
-        for i in range(dim):
+        for i in xrange(dim):
             centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(self.getSlice(image_seg.data, i))
         try:
             slices.nan_fill(centers_x)
@@ -192,7 +192,7 @@ class axial(slices):
 
 class sagital(slices):
     def getSlice(self, data, i):
-        return data[ i, :, : ]
+        return np.rot90(data[ i, :, : ])
 
     def getDim(self, image):
         nx, ny, nz, nt, px, py, pz, pt = image.dim
@@ -201,7 +201,7 @@ class sagital(slices):
 
 class coronal(slices):
     def getSlice(self, data, i):
-        return data[ :, i, : ]
+        return  np.rot90(data[ :, i, : ],3)
 
     def getDim(self, image):
         nx, ny, nz, nt, px, py, pz, pt = image.dim
