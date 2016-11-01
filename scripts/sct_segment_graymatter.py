@@ -79,10 +79,9 @@ def get_parser():
                       "1,3\n"
                       "2,4\n"
                       "3,4\n"
-                      "4,4",
+                      "4,4\n",
                       mandatory=False,
-                      default_value=ParamSeg().fname_level,
-                      example='label/template/PAM50_levels.nii.gz')
+                      default_value=ParamSeg().fname_level)
     parser.add_option(name="-vert",
                       mandatory=False,
                       deprecated_by='-vertfile')
@@ -186,7 +185,7 @@ class ParamSeg:
         self.fname_im = None
         self.fname_im_original = None
         self.fname_seg = None
-        self.fname_level = 'label/template/PAM50_levels_continuous.nii.gz'
+        self.fname_level = 'label/template/PAM50_levels.nii.gz'
         self.fname_manual_gmseg = None
         self.path_results = './'
 
@@ -232,26 +231,26 @@ class SegmentGM:
 
         self.target_im, self.info_preprocessing = pre_processing(self.param_seg.fname_im, self.param_seg.fname_seg, self.param_seg.fname_level, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm, denoising=self.param_data.denoising, verbose=self.param.verbose, rm_tmp=self.param.rm_tmp)
 
-        printv('\nRegistering target image to model data ...', self.param.verbose, 'normal')
+        printv('\nRegister target image to model data...', self.param.verbose, 'normal')
         # register target image to model dictionary space
         path_warp = self.register_target()
 
-        printv('\nNormalizing intensity of target image ...', self.param.verbose, 'normal')
+        printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
         self.normalize_target()
 
-        printv('\nProjecting target image into the model reduced space ...', self.param.verbose, 'normal')
+        printv('\nProject target image into the model reduced space...', self.param.verbose, 'normal')
         self.project_target()
 
-        printv('\nComputing similarities between target slices and model slices using model reduced space ...', self.param.verbose, 'normal')
+        printv('\nCompute similarities between target slices and model slices using model reduced space...', self.param.verbose, 'normal')
         list_dic_indexes_by_slice = self.compute_similarities()
 
-        printv('\nDoing label fusion of model slices most similar to target slices ...', self.param.verbose, 'normal')
+        printv('\nLabel fusion of model slices most similar to target slices...', self.param.verbose, 'normal')
         self.label_fusion(list_dic_indexes_by_slice)
 
-        printv('\nWarping back segmentation into image space...', self.param.verbose, 'normal')
+        printv('\nWarp back segmentation into image space...', self.param.verbose, 'normal')
         self.warp_back_seg(path_warp)
 
-        printv('\nPost-processing ...', self.param.verbose, 'normal')
+        printv('\nPost-processing...', self.param.verbose, 'normal')
         self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
 
         if (self.param_seg.path_results != './') and (not os.path.exists('../'+self.param_seg.path_results)):
@@ -272,7 +271,7 @@ class SegmentGM:
 
         # go back to original directory
         os.chdir('..')
-        printv('\nSaving result GM and WM segmentation...', self.param.verbose, 'normal')
+        printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
         fname_res_gmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
         fname_res_wmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
 
@@ -294,12 +293,12 @@ class SegmentGM:
 
         if self.param_seg.qc:
             # output QC image
-            printv('\nSaving quality control images...', self.param.verbose, 'normal')
+            printv('\nSave quality control images...', self.param.verbose, 'normal')
             im = Image(self.tmp_dir+self.param_seg.fname_im)
             im.save_quality_control(plane='axial', n_slices=5, seg=self.im_res_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.param_seg.path_results)
 
-        printv('\n--> To visualize the results, write:\n'
-               'fslview '+self.param_seg.fname_im_original+' '+fname_res_gmseg+' -b '+b+' -l '+gm_col+' -t 0.7 '+fname_res_wmseg+' -b '+b+' -l '+wm_col+' -t 0.7  & \n', self.param.verbose, 'info')
+        printv('\nDone! To view results, type:', self.param.verbose)
+        printv('fslview '+self.param_seg.fname_im_original+' '+fname_res_gmseg+' -b '+b+' -l '+gm_col+' -t 0.7 '+fname_res_wmseg+' -b '+b+' -l '+wm_col+' -t 0.7  & \n', self.param.verbose, 'info')
 
         if self.param.rm_tmp:
             # remove tmp_dir
@@ -461,7 +460,7 @@ class SegmentGM:
         im_res_wmseg = im_sc_seg_original_rpi.copy()
         im_res_wmseg.data = np.zeros(im_res_wmseg.data.shape)
 
-        printv('\n\tInterpolate result back into original space ...', self.param.verbose, 'normal')
+        printv('  Interpolate result back into original space...', self.param.verbose, 'normal')
 
 
         for iz, im_iz_preprocessed in enumerate(self.info_preprocessing['interpolated_images']):
@@ -523,7 +522,7 @@ class SegmentGM:
                     shape_x, shape_y, shape_z = im_res_slice_interp.data.shape
                     im_res_slice_interp.data = im_res_slice_interp.data.reshape((shape_x, shape_y))
                 im_res_tot.data[:, :, iz] = im_res_slice_interp.data
-        printv('\n\tPut result into original orientation ...', self.param.verbose, 'normal')
+        printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
 
         ## PUT RES BACK IN ORIGINAL ORIENTATION
         im_res_gmseg.setFileName('res_gmseg.nii.gz')
