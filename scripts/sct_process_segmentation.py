@@ -660,27 +660,36 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         elif not vert_levels:
             vert_levels_list = []
 
-        # parse the selected slices
-        slices_lim = slices.strip().split(':')
-        slices_list = range(int(slices_lim[0]), int(slices_lim[-1])+1)
-        sct.printv('Average CSA across slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
+        if slices is None:
+            mean_CSA = 0.0
+            std_CSA = 0.0
+            mean_angle = 0.0
+            std_angle = 0.0
+            slices = '0'
+            vert_levels_list = []
 
-        CSA_for_selected_slices = []
-        angles_for_selected_slices = []
-        # Read the file csa_per_slice.txt and get the CSA for the selected slices
-        with open(output_folder+'csa_per_slice.txt') as openfile:
-            for line in openfile:
-                if line[0] != '#':
-                    line_split = line.strip().split(',')
-                    if int(line_split[0]) in slices_list:
-                        CSA_for_selected_slices.append(float(line_split[1]))
-                        angles_for_selected_slices.append(float(line_split[2]))
+        else:
+            # parse the selected slices
+            slices_lim = slices.strip().split(':')
+            slices_list = range(int(slices_lim[0]), int(slices_lim[-1])+1)
+            sct.printv('Average CSA across slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
 
-        # average the CSA and angle
-        mean_CSA = np.mean(np.asarray(CSA_for_selected_slices))
-        std_CSA = np.std(np.asarray(CSA_for_selected_slices))
-        mean_angle = np.mean(np.asarray(angles_for_selected_slices))
-        std_angle = np.std(np.asarray(angles_for_selected_slices))
+            CSA_for_selected_slices = []
+            angles_for_selected_slices = []
+            # Read the file csa_per_slice.txt and get the CSA for the selected slices
+            with open(output_folder+'csa_per_slice.txt') as openfile:
+                for line in openfile:
+                    if line[0] != '#':
+                        line_split = line.strip().split(',')
+                        if int(line_split[0]) in slices_list:
+                            CSA_for_selected_slices.append(float(line_split[1]))
+                            angles_for_selected_slices.append(float(line_split[2]))
+
+            # average the CSA and angle
+            mean_CSA = np.mean(np.asarray(CSA_for_selected_slices))
+            std_CSA = np.std(np.asarray(CSA_for_selected_slices))
+            mean_angle = np.mean(np.asarray(angles_for_selected_slices))
+            std_angle = np.std(np.asarray(angles_for_selected_slices))
 
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
         sct.printv('Mean angle: '+str(mean_angle)+' +/- '+str(std_angle)+' degrees', type='info')
@@ -690,9 +699,12 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         save_results(output_folder+'angle_mean', overwrite, fname_segmentation, 'Angle with respect to the I-S direction', 'Unit z vector compared to the unit tangent vector to the centerline at each slice (in degrees)', mean_angle, std_angle, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
-        sct.printv('Compute the volume in between slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
-        nb_vox = np.sum(data_seg[:, :, slices_list])
-        volume = nb_vox*px*py*pz
+        if slices == '0':
+            volume = 0.0
+        else:
+            sct.printv('Compute the volume in between slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
+            nb_vox = np.sum(data_seg[:, :, slices_list])
+            volume = nb_vox*px*py*pz
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
 
         # write result into output file
@@ -932,12 +944,17 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     matching_slices_centerline_vert_labeling = []
     for i_z in range(0, nz):
         # if the centerline is in the vertebral levels asked by the user, record the slice number
-        if vertebral_labeling_data[np.round(x_centerline_fit[i_z]), np.round(y_centerline_fit[i_z]), z_centerline[i_z]] in range(vert_levels_list[0], vert_levels_list[1]+1):
+        if vertebral_labeling_data[np.round(x_centerline_fit[i_z]), np.round(y_centerline_fit[i_z]), z_centerline[i_z]] in range(int(vert_levels_list[0]), int(vert_levels_list[1]+1.0)):
             matching_slices_centerline_vert_labeling.append(z_centerline[i_z])
 
     # now, find the min and max slices that are included in the vertebral levels
-    slices = str(min(matching_slices_centerline_vert_labeling))+':'+str(max(matching_slices_centerline_vert_labeling))
-    sct.printv('\t'+slices)
+    if len(matching_slices_centerline_vert_labeling) == 0:
+        slices = None
+        vert_levels_list = None
+        warning.append('\tError: no slices with corresponding vertebral levels were found.')
+    else:
+        slices = str(min(matching_slices_centerline_vert_labeling))+':'+str(max(matching_slices_centerline_vert_labeling))
+        sct.printv('\t'+slices)
 
     return slices, vert_levels_list, warning
 
