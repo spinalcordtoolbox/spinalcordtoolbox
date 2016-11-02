@@ -892,8 +892,14 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
 
     # Check if the vertebral levels selected are available
     warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
-    min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
-    max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
+    if len(vertebral_levels_available) == 0:
+        slices = None
+        vert_levels_list = None
+        warning.append('\tError: no slices with corresponding vertebral levels were found.')
+        return slices, vert_levels_list, warning
+    else:
+        min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
+        max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
 
     if vert_levels_list[0] < min_vert_level_available:
         vert_levels_list[0] = min_vert_level_available
