@@ -15,8 +15,10 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.colors as col
 from msct_image import Image
 from scipy import ndimage
+from scipy.interpolate import UnivariateSpline
 import abc
 
 
@@ -25,13 +27,14 @@ class Qc(object):
     Create a .png file from a 2d image.
     """
 
-    def __init__(self, alpha, dpi=300, interpolation='none'):
+    def __init__(self, alpha, color_map,  dpi=300, interpolation='none'):
         self.interpolation = interpolation
         self.alpha = alpha
         self.dpi = dpi
+        self.color_map = color_map
 
     def __call__(self, f):
-        def wrapped_f(slice,*args, **kargs):
+        def wrapped_f(slice, *args, **kargs):
             name = slice.name
             self.mkdir()
             img, mask = f(slice,*args, **kargs)
@@ -43,7 +46,7 @@ class Qc(object):
             self.save('{}_gray'.format(name))
             mask = np.ma.masked_where(mask < 1, mask)
             plt.imshow(img, cmap='gray', interpolation=self.interpolation)
-            plt.imshow(mask, cmap=cm.hsv, interpolation=self.interpolation, alpha=self.alpha, )
+            plt.imshow(mask, cmap= self.color_map, interpolation=self.interpolation, alpha=self.alpha, )
             self.save(name)
 
             plt.close()
@@ -61,9 +64,27 @@ class Qc(object):
 
 
 class slices(object):
-
-    def __init__(self,name):
+    _discrete_color = col.ListedColormap([ '#f00000', '#ff0000', '#fff000','#ffff00', '#fffff0', '#ffffff',
+                                           '#0f0000', '#0ff000', '#0fff00','#0ffff0', '#0fffff', '#f0f0f0',
+                                           '#00f000', '#00ff00', '#00fff0','#00ffff', '#f0ffff', '#0f0f0f',
+                                           '#000f00', '#000ff0', '#000fff','#f00fff', '#ff0fff', '#123456',
+                                           '#0000f0', '#0000ff', '#f000ff','#ff00ff', '#fff0ff', '#654321',
+                                           '#00000f', '#f0000f', '#ff000f','#fff00f', '#ffff0f', '#999999'
+                                            ], 'indexed')
+    def __init__(self, name, imageName, segImageName ):
         self.name = name
+        self.image = Image(imageName)
+        self.image_seg = Image(segImageName)
+        self.image.change_orientation('RPI')  # reorient to RPI
+        self.image_seg.change_orientation('RPI')  # reorient to RPI
+        self.dim = self.getDim(self.image)
+        self.abels_regions = {'PONS': 50, 'MO': 51,
+                 'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
+                 'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16, 'T10': 17, 'T11': 18, 'T12': 19,
+                 'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
+                 'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
+                 'Co': 30}
+
 
     __metaclass__ = abc.ABCMeta
 
@@ -105,6 +126,7 @@ class slices(object):
                                              , array[ -np.isnan(array) ])
         return array
 
+
     @abc.abstractmethod
     def getSlice(self, data, i):
         """
@@ -123,66 +145,60 @@ class slices(object):
         :return: int
         """
         return
-
-    def getImage(self, imageName, segImageName):
-        image = Image(imageName)
-        image_seg = Image(segImageName)
-        image.change_orientation('RPI')  # reorient to RPI
-        image_seg.change_orientation('RPI')  # reorient to RPI
-        return image, image_seg, self.getDim(image)
-
-    def mosaic(self, imageName, segImageName, nb_column, size):
-        print segImageName
-        image, image_seg, dim = self.getImage(imageName, segImageName)
-        matrix0 = np.ones((size * 2 * int((dim / nb_column) + 1),size * 2 * nb_column))
-        matrix1 = np.empty((size * 2 * int((dim / nb_column) + 1), size * 2 * nb_column))
-        centers_x = np.zeros(dim)
-        centers_y = np.zeros(dim)
-        for i in xrange(dim):
-            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(self.getSlice(image_seg.data, i))
+    @Qc(1, cm.hsv)
+    def mosaic(self, nb_column, size):
+        matrix0 = np.ones((size * 2 * int((self.dim / nb_column) + 1),size * 2 * nb_column))
+        matrix1 = np.empty((size * 2 * int((self.dim / nb_column) + 1), size * 2 * nb_column))
+        centers_x = np.zeros(self.dim)
+        centers_y = np.zeros(self.dim)
+        for i in xrange(self.dim):
+            centers_x[ i ], centers_y[ i ] = ndimage.measurements.center_of_mass(self.getSlice(self.image_seg.data, i))
         try:
             slices.nan_fill(centers_x)
             slices.nan_fill(centers_y)
         except ValueError:
-            print "Oops! There are no trace of that spinal cord." # TODO : raise error
+            print "Oops! There are no trace of that spinal cord."  # TODO : raise error
             raise
-
-        for i in range(dim):
+        for i in range(self.dim):
             x = int(round(centers_x[ i ]))
             y = int(round(centers_y[ i ]))
             matrix0 = slices.add_slice(matrix0, i, nb_column, size,
-                                       slices.crop(self.getSlice(image.data, i), x, y, size, size))
+                                       slices.crop(self.getSlice(self.image.data, i), x, y, size, size))
             matrix1 = slices.add_slice(matrix1, i, nb_column, size,
-                                       slices.crop(self.getSlice(image_seg.data, i), x, y, size, size))
+                                       slices.crop(self.getSlice(self.image_seg.data, i), x, y, size, size))
+
+        return matrix0, matrix1
+    @Qc(1, _discrete_color)
+    def single(self):
+        matrix0 = self.getSlice(self.image.data, self.dim/2)
+        matrix1 = self.getSlice(self.image_seg.data,self.dim/2 )
+        david = matrix0.shape[0]
+        sum = np.zeros(david)
+        index = np.ones(david)*self.dim/2
+
+        for i in range(self.dim):
+            seg_img = self.getSlice(self.image_seg.data, i)
+            for j in range(david):
+                tmp = seg_img[j].sum()
+                if tmp > sum[j]:
+                    sum[j] = tmp
+                    index[j] = i
+        index = np.rint(UnivariateSpline(np.arange(david),index)(np.arange(david)))
+        for j in range(david):
+            matrix0[j] = self.getSlice(self.image.data, int(index[j]))[j]
+            matrix1[j] = self.getSlice(self.image_seg.data, int(index[j]))[j]
 
         return matrix0, matrix1
 
-    def single(self, imageName, segImageName):
-        image, image_seg, dim = self.getImage(imageName, segImageName)
-        index = 0
-        sum = 0
-        for i in range(dim):
-            seg_img = self.getSlice(image_seg.data, i)
-            tmp = seg_img.sum()
-            if tmp > sum:
-                sum = tmp
-                index = i
-        matrix0 = self.getSlice(image.data, index)
-        matrix1 = self.getSlice(image_seg.data, index)
-
-        return matrix0, matrix1
-
-    @Qc(1)
-    def save(self, imageName, segImageName, nb_column=0, size=10):
+    def save(self, nb_column=0, size=10):
         if nb_column > 0:
-            return self.mosaic(imageName, segImageName, nb_column, size)
+            return self.mosaic(nb_column, size)
         else:
-            return self.single(imageName, segImageName)
-
+            return self.single()
 
 
 class axial(slices):
-    def getSlice(self, data, i):
+    def sagital_slice(self, data, i):
         return data[ :, :, i ]
 
     def getDim(self, image):
