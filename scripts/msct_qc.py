@@ -75,8 +75,8 @@ class slices(object):
         self.name = name
         self.image = Image(imageName)
         self.image_seg = Image(segImageName)
-        self.image.change_orientation('RPI')  # reorient to RPI
-        self.image_seg.change_orientation('RPI')  # reorient to RPI
+        self.image.change_orientation('SAL')  # reorient to SAL
+        self.image_seg.change_orientation('SAL')  # reorient to SAL
         self.dim = self.getDim(self.image)
         self.abels_regions = {'PONS': 50, 'MO': 51,
                  'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
@@ -87,6 +87,33 @@ class slices(object):
 
 
     __metaclass__ = abc.ABCMeta
+
+    @staticmethod
+    def axial_slice(data, i):
+        return data[ i, :, : ]
+
+    @staticmethod
+    def axial_dim(image):
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return nx
+
+    @staticmethod
+    def sagital_slice(data, i):
+        return data[ :, :, i ]
+
+    @staticmethod
+    def sagital_dim(image):
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return nz
+
+    @staticmethod
+    def coronal_slice(data, i):
+        return data[ :, i, : ]
+
+    @staticmethod
+    def coronal_dim(image):
+        nx, ny, nz, nt, px, py, pz, pt = image.dim
+        return ny
 
     @staticmethod
     def crop(matrix, center_x, center_y, ray_x, ray_y):
@@ -145,20 +172,27 @@ class slices(object):
         :return: int
         """
         return
-    @Qc(1, cm.hsv)
-    def mosaic(self, nb_column, size):
-        matrix0 = np.ones((size * 2 * int((self.dim / nb_column) + 1),size * 2 * nb_column))
-        matrix1 = np.empty((size * 2 * int((self.dim / nb_column) + 1), size * 2 * nb_column))
-        centers_x = np.zeros(self.dim)
-        centers_y = np.zeros(self.dim)
-        for i in xrange(self.dim):
-            centers_x[ i ], centers_y[ i ] = ndimage.measurements.center_of_mass(self.getSlice(self.image_seg.data, i))
+
+    def _center(self):
+        axial_dim = self.axial_dim(self.image_seg)
+        centers_x = np.zeros(axial_dim)
+        centers_y = np.zeros(axial_dim)
+        for i in xrange(axial_dim):
+            centers_x[ i ], centers_y[ i ] \
+                = ndimage.measurements.center_of_mass(self.axial_slice(self.image_seg.data, i))
         try:
             slices.nan_fill(centers_x)
             slices.nan_fill(centers_y)
         except ValueError:
             print "Oops! There are no trace of that spinal cord."  # TODO : raise error
             raise
+        return centers_x, centers_y
+
+    @Qc(1, cm.hsv)
+    def mosaic(self, nb_column, size):
+        matrix0 = np.ones((size * 2 * int((self.dim / nb_column) + 1),size * 2 * nb_column))
+        matrix1 = np.empty((size * 2 * int((self.dim / nb_column) + 1), size * 2 * nb_column))
+        centers_x, centers_y = self.center()
         for i in range(self.dim):
             x = int(round(centers_x[ i ]))
             y = int(round(centers_y[ i ]))
@@ -173,20 +207,10 @@ class slices(object):
         matrix0 = self.getSlice(self.image.data, self.dim/2)
         matrix1 = self.getSlice(self.image_seg.data,self.dim/2 )
         david = matrix0.shape[0]
-        sum = np.zeros(david)
-        index = np.ones(david)*self.dim/2
-
-        for i in range(self.dim):
-            seg_img = self.getSlice(self.image_seg.data, i)
-            for j in range(david):
-                tmp = seg_img[j].sum()
-                if tmp > sum[j]:
-                    sum[j] = tmp
-                    index[j] = i
-        index = np.rint(UnivariateSpline(np.arange(david),index)(np.arange(david)))
+        index = self.get_center_spit(self.image_seg)
         for j in range(david):
-            matrix0[j] = self.getSlice(self.image.data, int(index[j]))[j]
-            matrix1[j] = self.getSlice(self.image_seg.data, int(index[j]))[j]
+            matrix0[j] = self.getSlice(self.image.data, int(round(index[j])))[j]
+            matrix1[j] = self.getSlice(self.image_seg.data, int(round(index[j])))[j]
 
         return matrix0, matrix1
 
@@ -198,27 +222,35 @@ class slices(object):
 
 
 class axial(slices):
-    def sagital_slice(self, data, i):
-        return data[ :, :, i ]
+    def getSlice(self, data, i):
+        return self.axial_slice(data, i)
 
     def getDim(self, image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return nz
+        return self.axial_dim(image)
+
+    def get_center_spit(self, image):
+        return self.axial_dim(image)/2
 
 
 class sagital(slices):
     def getSlice(self, data, i):
-        return np.rot90(data[ i, :, : ])
+        return self.sagital_slice(data, i)
 
     def getDim(self, image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return nx
+        return self.sagital_dim(image)
+
+    def get_center_spit(self, image):
+        x , y = self._center()
+        return y
 
 
 class coronal(slices):
     def getSlice(self, data, i):
-        return  np.rot90(data[ :, i, : ],3)
+        return  self.coronal_slice(data, i)
 
     def getDim(self, image):
-        nx, ny, nz, nt, px, py, pz, pt = image.dim
-        return ny
+        return self.coronal_dim(image)
+
+    def get_center_spit(self, image):
+        x, y = self._center()
+        return x
