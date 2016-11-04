@@ -35,7 +35,7 @@ ini_param_trans_x = 270.0 #pix
 ini_param_trans_y = -150.0 #pix
 initial_step = 2
 
-def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1):
+def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1, path_qc='./'):
     """
     Register two NIFTI volumes containing landmarks
     :param fname_src: fname of source landmarks
@@ -78,7 +78,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
 
     # check if landmarks match pairwise
     # TODO
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_moving, points_fixed, constraints=dof, verbose=verbose)
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_moving, points_fixed, constraints=dof, verbose=verbose, path_qc=path_qc)
     # writing rigid transformation file
     # N.B. for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
     # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
@@ -288,7 +288,7 @@ def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', m
     return rotation_matrix, translation_array
 
 
-def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0):
+def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0, path_qc='./'):
     """
     Compute affine transformation to register landmarks
     :param points_fixed:
@@ -345,6 +345,9 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
     print 'Translation:\n'+str(translation_array)
 
     if verbose == 2:
+        import matplotlib
+        # use Agg to prevent display
+        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
 
@@ -370,12 +373,14 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
         ax.set_aspect('auto')
         plt.legend()
         plt.show()
+        plt.savefig(path_qc + 'getRigidTransformFromLandmarks_plot.png')
 
         fig2 = plt.figure()
         plt.plot(sse_results)
         plt.grid()
         plt.title('#Iterations: ' + str(res.nit) + ', #FuncEval: ' + str(res.nfev) + ', Error: ' + str(res.fun))
         plt.show()
+        plt.savefig(path_qc + 'getRigidTransformFromLandmarks_iterations.png')
 
     # transform numpy matrix to list structure because it is easier to handle
     points_moving_reg = points_moving_reg.tolist()
