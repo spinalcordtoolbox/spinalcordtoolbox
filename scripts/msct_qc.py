@@ -16,9 +16,9 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as col
+import matplotlib
 from msct_image import Image
 from scipy import ndimage
-from scipy.interpolate import UnivariateSpline
 import abc
 
 
@@ -26,12 +26,22 @@ class Qc(object):
     """
     Create a .png file from a 2d image.
     """
-
-    def __init__(self, alpha, color_map,  dpi=300, interpolation='none'):
+    _labels_regions = {'PONS': 50, 'MO': 51,
+                 'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
+                 'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16, 'T10': 17, 'T11': 18, 'T12': 19,
+                 'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
+                 'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
+                 'Co': 30}
+    _labels_color = [ '#ff0000', '#0000ff', '#00ff00',
+                        '#ff0000', '#0000ff', '#00ff00',
+                        '#ff0000', '#0000ff', '#00ff00',
+                        '#ff0000', '#0000ff', '#00ff00',
+                        '#ff0000', '#0000ff', '#00ff00'  ]
+    def __init__(self, label = 'false', dpi=300, interpolation='none'):
         self.interpolation = interpolation
-        self.alpha = alpha
         self.dpi = dpi
-        self.color_map = color_map
+        self.label = label
+
 
     def __call__(self, f):
         def wrapped_f(slice, *args, **kargs):
@@ -44,14 +54,38 @@ class Qc(object):
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
             self.save('{}_gray'.format(name))
-            mask = np.ma.masked_where(mask < 1, mask)
+            plt.figure()
+            ax = plt.subplot()
+            mask = np.rint(np.ma.masked_where(mask < 1, mask))
             plt.imshow(img, cmap='gray', interpolation=self.interpolation)
-            plt.imshow(mask, cmap= self.color_map, interpolation=self.interpolation, alpha=self.alpha, )
-            self.save(name)
 
+            if self.label:
+                self.label_vertebrae(mask, ax)
+            else:
+                self._labels_color = {'#ff0000'}
+            plt.imshow(mask, cmap= col.ListedColormap(self._labels_color),norm =
+                matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation, alpha=1)
+            plt.colorbar()
+            if self.label:
+                self.label_vertebrae(mask, ax)
+            plt.show()
+            # self.save(name)
             plt.close()
 
         return wrapped_f
+
+    def label_vertebrae(self, data, ax):
+        a = [0.0]
+        for index, val in np.ndenumerate(data):
+            if val not in a:
+                a.append(val)
+                index = int(val)
+                color = self._labels_color[index]
+                x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
+                label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
+                ax.annotate(label, xy=(y,x), xytext=(y + 25, x),color= color,
+                    arrowprops=dict(facecolor= color, shrink=0.01),fontsize=10)
+
 
     def save(self, name, format='png', bbox_inches='tight', pad_inches=0):
         plt.savefig('{}.png'.format(name), format=format, bbox_inches=bbox_inches,
@@ -64,13 +98,7 @@ class Qc(object):
 
 
 class slices(object):
-    _discrete_color = col.ListedColormap([ '#f00000', '#ff0000', '#fff000','#ffff00', '#fffff0', '#ffffff',
-                                           '#0f0000', '#0ff000', '#0fff00','#0ffff0', '#0fffff', '#f0f0f0',
-                                           '#00f000', '#00ff00', '#00fff0','#00ffff', '#f0ffff', '#0f0f0f',
-                                           '#000f00', '#000ff0', '#000fff','#f00fff', '#ff0fff', '#123456',
-                                           '#0000f0', '#0000ff', '#f000ff','#ff00ff', '#fff0ff', '#654321',
-                                           '#00000f', '#f0000f', '#ff000f','#fff00f', '#ffff0f', '#999999'
-                                            ], 'indexed')
+
     def __init__(self, name, imageName, segImageName ):
         self.name = name
         self.image = Image(imageName)
@@ -78,12 +106,6 @@ class slices(object):
         self.image.change_orientation('SAL')  # reorient to SAL
         self.image_seg.change_orientation('SAL')  # reorient to SAL
         self.dim = self.getDim(self.image)
-        self.abels_regions = {'PONS': 50, 'MO': 51,
-                 'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
-                 'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16, 'T10': 17, 'T11': 18, 'T12': 19,
-                 'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
-                 'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
-                 'Co': 30}
 
 
     __metaclass__ = abc.ABCMeta
@@ -188,7 +210,7 @@ class slices(object):
             raise
         return centers_x, centers_y
 
-    @Qc(1, cm.hsv)
+    @Qc()
     def mosaic(self, nb_column, size):
         matrix0 = np.ones((size * 2 * int((self.dim / nb_column) + 1),size * 2 * nb_column))
         matrix1 = np.empty((size * 2 * int((self.dim / nb_column) + 1), size * 2 * nb_column))
@@ -202,7 +224,7 @@ class slices(object):
                                        slices.crop(self.getSlice(self.image_seg.data, i), x, y, size, size))
 
         return matrix0, matrix1
-    @Qc(1, _discrete_color)
+    @Qc(label= 'true')
     def single(self):
         matrix0 = self.getSlice(self.image.data, self.dim/2)
         matrix1 = self.getSlice(self.image_seg.data,self.dim/2 )
@@ -210,7 +232,7 @@ class slices(object):
         index = self.get_center_spit(self.image_seg)
         for j in range(david):
             matrix0[j] = self.getSlice(self.image.data, int(round(index[j])))[j]
-            matrix1[j] = self.getSlice(self.image_seg.data, int(round(index[j])))[j]
+            matrix1[j] = np.rint(self.getSlice(self.image_seg.data, int(round(index[j])))[j])
 
         return matrix0, matrix1
 
