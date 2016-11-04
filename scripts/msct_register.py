@@ -289,13 +289,15 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # for display stuff
     if verbose == 2:
+        import matplotlib
+        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
-    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+    sct.printv('  matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('  voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
@@ -359,10 +361,6 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
         # display image
         if verbose == 2:
-            import matplotlib
-            matplotlib.use('Agg')
-            import matplotlib.pyplot as plt
-            # use Agg to prevent display
             plt.figure(figsize=(15, 4))
             plt.subplot(121)
             plt.imshow(np.flipud(src2d.T), cmap=plt.cm.gray, interpolation='none')
@@ -370,7 +368,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             plt.subplot(122)
             plt.imshow(np.flipud(dest2d.T), cmap=plt.cm.gray, interpolation='none')
             plt.title('dest')
-            plt.show()
+            # plt.show()
             plt.savefig(path_qc + 'register2d_columnwise_images_z' + str(iz) + '.png')
             plt.close()
 
@@ -425,7 +423,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         coord_init_pix_scaleXinv[:, 0] = (coord_init_pix[:, 0] - mean_dest ) / float(Sx) + mean_src
 
         # ============================================================
-        # COLUMN-WISE REGISTRATION
+        # COLUMN-WISE REGISTRATION (Y dimension for each Xi)
         # ============================================================
         coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
         coord_init_pix_scaleYinv = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
@@ -488,7 +486,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 plt.title(list_title[i])
                 plt.xlabel('x')
                 plt.ylabel('y')
-            plt.show()
+            # plt.show()
             plt.savefig(path_qc + 'register2d_columnwise_result_z' + str(iz) + '.png')
             plt.close()
 
@@ -510,6 +508,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
+    # Generate inverse warping field (defined in source space)
     generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
 
 
