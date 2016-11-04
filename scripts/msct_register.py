@@ -368,7 +368,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             plt.imshow(np.flipud(dest2d.T), cmap=plt.cm.gray, interpolation='none')
             plt.title('dest')
             plt.show()
-            plt.savefig(path_qc + 'register2d_columnwise.png')
+            plt.savefig(path_qc + 'register2d_columnwise_images_z' + str(iz) + '.png')
             plt.close()
 
         # SCALING R-L (X dimension)
@@ -486,7 +486,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 plt.xlabel('x')
                 plt.ylabel('y')
             plt.show()
-            plt.savefig(path_qc + 'register2d_columnwise_result.png')
+            plt.savefig(path_qc + 'register2d_columnwise_result_z' + str(iz) + '.png')
             plt.close()
 
         # ============================================================
