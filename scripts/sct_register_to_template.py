@@ -231,6 +231,10 @@ def main():
     sct.printv('  Segmentation:         '+fname_seg, verbose)
     sct.printv('  Path template:        '+path_template, verbose)
     sct.printv('  Remove temp files:    '+str(remove_temp_files), verbose)
+
+    # create QC folder
+    sct.create_folder(param.path_qc)
+
     #
     # sct.printv('\nParameters for registration:')
     # for pStep in range(0, len(paramreg.steps)):
@@ -514,7 +518,7 @@ def main():
         warp_forward = ['template2subjectAffine.txt']
         warp_inverse = ['-template2subjectAffine.txt']
         try:
-            register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose)
+            register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, path_qc=param.path_qc)
         except Exception:
             sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
 
