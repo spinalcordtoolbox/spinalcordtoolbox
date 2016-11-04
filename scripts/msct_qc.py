@@ -37,7 +37,7 @@ class Qc(object):
                         '#ff0000', '#0000ff', '#00ff00',
                         '#ff0000', '#0000ff', '#00ff00',
                         '#ff0000', '#0000ff', '#00ff00'  ]
-    def __init__(self, label = 'false', dpi=300, interpolation='none'):
+    def __init__(self, label = False, dpi=600, interpolation='none'):
         self.interpolation = interpolation
         self.dpi = dpi
         self.label = label
@@ -54,22 +54,18 @@ class Qc(object):
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
             self.save('{}_gray'.format(name))
-            plt.figure()
             ax = plt.subplot()
             mask = np.rint(np.ma.masked_where(mask < 1, mask))
             plt.imshow(img, cmap='gray', interpolation=self.interpolation)
-
             if self.label:
                 self.label_vertebrae(mask, ax)
             else:
                 self._labels_color = {'#ff0000'}
             plt.imshow(mask, cmap= col.ListedColormap(self._labels_color),norm =
                 matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation, alpha=1)
-            plt.colorbar()
             if self.label:
                 self.label_vertebrae(mask, ax)
-            plt.show()
-            # self.save(name)
+            self.save(name)
             plt.close()
 
         return wrapped_f
@@ -84,7 +80,7 @@ class Qc(object):
                 x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
                 label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
                 ax.annotate(label, xy=(y,x), xytext=(y + 25, x),color= color,
-                    arrowprops=dict(facecolor= color, shrink=0.01),fontsize=10)
+                    arrowprops=dict(facecolor= color,shrink=0.05))
 
 
     def save(self, name, format='png', bbox_inches='tight', pad_inches=0):
@@ -195,7 +191,7 @@ class slices(object):
         """
         return
 
-    def _center(self):
+    def _axial_center(self):
         axial_dim = self.axial_dim(self.image_seg)
         centers_x = np.zeros(axial_dim)
         centers_y = np.zeros(axial_dim)
@@ -214,7 +210,7 @@ class slices(object):
     def mosaic(self, nb_column, size):
         matrix0 = np.ones((size * 2 * int((self.dim / nb_column) + 1),size * 2 * nb_column))
         matrix1 = np.empty((size * 2 * int((self.dim / nb_column) + 1), size * 2 * nb_column))
-        centers_x, centers_y = self.center()
+        centers_x, centers_y = self.get_center()
         for i in range(self.dim):
             x = int(round(centers_x[ i ]))
             y = int(round(centers_y[ i ]))
@@ -224,15 +220,14 @@ class slices(object):
                                        slices.crop(self.getSlice(self.image_seg.data, i), x, y, size, size))
 
         return matrix0, matrix1
-    @Qc(label= 'true')
+    @Qc(label= True,interpolation='nearest')
     def single(self):
         matrix0 = self.getSlice(self.image.data, self.dim/2)
         matrix1 = self.getSlice(self.image_seg.data,self.dim/2 )
-        david = matrix0.shape[0]
         index = self.get_center_spit(self.image_seg)
-        for j in range(david):
+        for j in range(len(index)):
             matrix0[j] = self.getSlice(self.image.data, int(round(index[j])))[j]
-            matrix1[j] = np.rint(self.getSlice(self.image_seg.data, int(round(index[j])))[j])
+            matrix1[j] = self.getSlice(self.image_seg.data, int(round(index[j])))[j]
 
         return matrix0, matrix1
 
@@ -250,8 +245,12 @@ class axial(slices):
     def getDim(self, image):
         return self.axial_dim(image)
 
-    def get_center_spit(self, image):
-        return self.axial_dim(image)/2
+    def get_center_spit(self):
+        size = self.axial_dim(self.image_seg)
+        return np.ones(size)*size/2
+
+    def get_center(self):
+        return self._axial_center()
 
 
 class sagital(slices):
@@ -261,9 +260,14 @@ class sagital(slices):
     def getDim(self, image):
         return self.sagital_dim(image)
 
-    def get_center_spit(self, image):
-        x , y = self._center()
+    def get_center_spit(self):
+        x, y = self._axial_center()
         return y
+
+    def get_center(self):
+        size_y = self.axial_dim(self.image_seg)
+        size_x = self.coronal_dim(self.image_seg)
+        return np.ones(self.dim)*size_x/2, np.ones(self.dim)*size_y/2
 
 
 class coronal(slices):
@@ -273,6 +277,11 @@ class coronal(slices):
     def getDim(self, image):
         return self.coronal_dim(image)
 
-    def get_center_spit(self, image):
-        x, y = self._center()
+    def get_center_spit(self):
+        x, y = self._axial_center()
         return x
+
+    def get_center(self):
+        size_y = self.axial_dim(self.image_seg)
+        size_x = self.sagital_dim(self.image_seg)
+        return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
