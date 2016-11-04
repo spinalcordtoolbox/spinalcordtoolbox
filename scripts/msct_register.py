@@ -62,7 +62,7 @@ def register_slicewise(fname_src,
         register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
-        register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose)
+        register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, path_qc=path_qc)
     else:
         # convert SCT flags into ANTs-compatible flags
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
@@ -213,9 +213,12 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             coord_src_rot = coord_src * R
             coord_dest_rot = coord_dest * R.T
             # generate figure
+            import matplotlib
+            matplotlib.use('Agg')
             import matplotlib.pyplot as plt
+            # use Agg to prevent display
             plt.figure('iz=' + str(iz) + ', angle_src_dest=' + str(angle_src_dest), figsize=(9, 9))
-            plt.ion()  # enables interactive mode (allows keyboard interruption)
+            # plt.ion()  # enables interactive mode (allows keyboard interruption)
             # plt.title('iz='+str(iz))
             for isub in [221, 222, 223, 224]:
                 # plt.figure
@@ -248,7 +251,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 plt.axis([-3, 3, -3, 3])
                 plt.gca().set_aspect('equal', adjustable='box')
                 # plt.axis('equal')
-            plt.savefig(path_qc+'fig_pca_z' + str(iz) + '.png')
+            plt.savefig(path_qc+'register2d_centermassrot_pca_z' + str(iz) + '.png')
             plt.close()
 
         # construct 3D warping matrix
@@ -262,7 +265,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
 
 
-def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0):
+def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='./'):
     """
     Column-wise non-linear registration of segmentations. Based on an idea from Allan Martin.
     - Assumes src/dest are segmentations (not necessarily binary), and already registered by center of mass
@@ -353,6 +356,10 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
         # display image
         if verbose == 2:
+            import matplotlib
+            matplotlib.use('Agg')
+            import matplotlib.pyplot as plt
+            # use Agg to prevent display
             plt.figure(figsize=(15, 4))
             plt.subplot(121)
             plt.imshow(np.flipud(src2d.T), cmap=plt.cm.gray, interpolation='none')
@@ -361,6 +368,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             plt.imshow(np.flipud(dest2d.T), cmap=plt.cm.gray, interpolation='none')
             plt.title('dest')
             plt.show()
+            plt.savefig(path_qc + 'register2d_columnwise.png')
+            plt.close()
 
         # SCALING R-L (X dimension)
         # ============================================================
@@ -477,6 +486,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 plt.xlabel('x')
                 plt.ylabel('y')
             plt.show()
+            plt.savefig(path_qc + 'register2d_columnwise_result.png')
+            plt.close()
 
         # ============================================================
         # CALCULATE TRANSFORMATIONS
