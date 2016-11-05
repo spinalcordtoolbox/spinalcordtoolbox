@@ -351,10 +351,18 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # get 2d data from the selected slice
         src2d = data_src[:, :, iz]
         dest2d = data_dest[:, :, iz]
+        # julien 20161105
+        #<<<
+        # threshold at 0.5
+        src2d[src2d < th_nonzero] = 0
+        dest2d[dest2d < th_nonzero] = 0
         # get non-zero coordinates, and transpose to obtain nx2 dimensions
+        coord_src2d = np.array(np.where(src2d > 0)).T
+        coord_dest2d = np.array(np.where(dest2d > 0)).T
         # here we use 0.5 as threshold for non-zero value
-        coord_src2d = np.array(np.where(src2d > th_nonzero)).T
-        coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
+        # coord_src2d = np.array(np.where(src2d > th_nonzero)).T
+        # coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
+        #>>>
 
         # SCALING R-L (X dimension)
         # ============================================================
@@ -362,15 +370,18 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         src1d = np.sum(src2d, 1)
         dest1d = np.sum(dest2d, 1)
         # retrieve min/max of non-zeros elements (edge of the segmentation)
-        for i in xrange(len(src1d)):
-            if src1d[i] > 0.5:
-                # found index above 0.5, exit loop
-                break
-        ind_before = i - 1
-        ind_after = i
+        # julien 20161105
+        # <<<
+        src1d_min, src1d_max = min(np.where(src1d != 0)[0]), max(np.where(src1d != 0)[0])
+        dest1d_min, dest1d_max = min(np.where(dest1d != 0)[0]), max(np.where(dest1d != 0)[0])
+        # for i in xrange(len(src1d)):
+        #     if src1d[i] > 0.5:
+        #         found index above 0.5, exit loop
+                # break
         # get indices (in continuous space) at half-maximum of upward and downward slope
-        src1d_min, src1d_max = find_index_halfmax(src1d)
-        dest1d_min, dest1d_max = find_index_halfmax(dest1d)
+        # src1d_min, src1d_max = find_index_halfmax(src1d)
+        # dest1d_min, dest1d_max = find_index_halfmax(dest1d)
+        # >>>
         # 1D matching between src_y and dest_y
         mean_dest_x = (dest1d_max + dest1d_min) / 2
         mean_src_x = (src1d_max + src1d_min) / 2
@@ -875,9 +886,10 @@ def find_index_halfmax(data1d):
     # compute center of mass to get coordinate at 0.5
     xmax = i - 1 + (0.5 - data1d[i-1]) / float(data1d[i] - data1d[i-1])
     # display
+    # import matplotlib.pyplot as plt
     # plt.figure()
     # plt.plot(src1d)
     # plt.plot(xmin, 0.5, 'o')
     # plt.plot(xmax, 0.5, 'o')
-    # plt.show()
+    # plt.savefig('./normalize1d.png')
     return xmin, xmax
