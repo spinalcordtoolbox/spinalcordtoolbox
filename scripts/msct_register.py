@@ -40,7 +40,6 @@ def register_slicewise(fname_src,
                         verbose=0):
 
     # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
     path_tmp = sct.tmp_create(verbose)
 
     # copy data to temp folder
@@ -98,8 +97,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
-    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+    sct.printv('  matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('  voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
@@ -346,7 +345,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # ordering of indices is as follows:
         # coord_init_pix[:, 0] = 0, 0, 0, ..., 1, 1, 1..., nx, nx, nx
         # coord_init_pix[:, 1] = 0, 1, 2, ..., 0, 1, 2..., 0, 1, 2
-        coord_init_pix = np.array([row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel()))*iz)]).T
+        coord_init_pix = np.array([row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel())) * iz)]).T
         # convert coordinates to physical space
         coord_init_phy = np.array(im_src.transfo_pix2phys(coord_init_pix))
         # get 2d data from the selected slice
@@ -356,21 +355,6 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # here we use 0.5 as threshold for non-zero value
         coord_src2d = np.array(np.where(src2d > th_nonzero)).T
         coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
-        # coord_src2d = np.array(src2d.nonzero()).T
-        # coord_dest2d = np.array(dest2d.nonzero()).T
-
-        # display image
-        if verbose == 2:
-            plt.figure(figsize=(15, 4))
-            plt.subplot(121)
-            plt.imshow(np.flipud(src2d.T), cmap=plt.cm.gray, interpolation='none')
-            plt.title('src')
-            plt.subplot(122)
-            plt.imshow(np.flipud(dest2d.T), cmap=plt.cm.gray, interpolation='none')
-            plt.title('dest')
-            # plt.show()
-            plt.savefig(path_qc + 'register2d_columnwise_images_z' + str(iz) + '.png')
-            plt.close()
 
         # SCALING R-L (X dimension)
         # ============================================================
@@ -382,45 +366,27 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             if src1d[i] > 0.5:
                 # found index above 0.5, exit loop
                 break
-        ind_before = i-1
+        ind_before = i - 1
         ind_after = i
         # get indices (in continuous space) at half-maximum of upward and downward slope
         src1d_min, src1d_max = find_index_halfmax(src1d)
         dest1d_min, dest1d_max = find_index_halfmax(dest1d)
         # 1D matching between src_y and dest_y
-        mean_dest = (dest1d_max + dest1d_min)/2
-        mean_src = (src1d_max + src1d_min)/2
-        # Tx = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
+        mean_dest = (dest1d_max + dest1d_min) / 2
+        mean_src = (src1d_max + src1d_min) / 2
+        # compute x-scaling factor
         Sx = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
-        # apply translation and scaling to src (interpolate)
-        # display
-        # if verbose == 2:
-        #     matrix = [[1/Sx, 0], [0, 1]]
-        #     src2d_scaleX = ndimage.affine_transform(src2d, matrix, offset=[-Tx-nx, 0]) #Ty+ny/2, nx/2])
-        #     plt.figure(figsize=(15, 4))
-        #     plt.subplot(131)
-        #     plt.imshow(np.swapaxes(src2d, 1, 0), cmap=plt.cm.gray, interpolation='none')
-        #     plt.title('src')
-        #     plt.xlabel('x')
-        #     plt.ylabel('y')
-        #     plt.subplot(132)
-        #     plt.imshow(np.swapaxes(src2d_scaleX, 1, 0), cmap=plt.cm.gray, interpolation='none')
-        #     plt.title('src_scaleX')
-        #     plt.xlabel('x')
-        #     plt.ylabel('y')
-        #     plt.subplot(133)
-        #     plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.gray, interpolation='none')
-        #     plt.title('dest')
-        #     plt.show()
-
-        # apply forward transformation (in pixel space)
-        # below: only for debugging purpose
+        # apply transformation to coordinates
         coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
         coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
         coord_init_pix_scaleX = np.copy(coord_init_pix)
-        coord_init_pix_scaleX[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
+        coord_init_pix_scaleX[:, 0] = (coord_init_pix[:, 0] - mean_src) * Sx + mean_dest
         coord_init_pix_scaleXinv = np.copy(coord_init_pix)
-        coord_init_pix_scaleXinv[:, 0] = (coord_init_pix[:, 0] - mean_dest ) / float(Sx) + mean_src
+        coord_init_pix_scaleXinv[:, 0] = (coord_init_pix[:, 0] - mean_dest) / float(Sx) + mean_src
+        # apply transformation to image
+        from skimage.transform import warp
+        row_scaleXinv = np.reshape(coord_init_pix_scaleXinv[:, 0], [nx, ny])
+        src2d_scaleX = warp(src2d, np.array([row_scaleXinv, col]), order=1)
 
         # ============================================================
         # COLUMN-WISE REGISTRATION (Y dimension for each Xi)
@@ -431,7 +397,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # loop across columns (X dimension)
         for ix in xrange(nx):
             # retrieve 1D signal along Y
-            src1d = src2d[ix, :]
+            src1d = src2d_scaleX[ix, :]
             dest1d = dest2d[ix, :]
             # make sure there are non-zero data in src or dest
             if np.any(src1d) and np.any(dest1d):
@@ -448,8 +414,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 # src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
                 # dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
                 # 1D matching between src_y and dest_y
-                mean_dest = (dest1d_max + dest1d_min)/2
-                mean_src = (src1d_max + src1d_min)/2
+                mean_dest = (dest1d_max + dest1d_min) / 2
+                mean_src = (src1d_max + src1d_min) / 2
                 # Tx = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
                 Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
                 # apply forward transformation (in pixel space)
@@ -458,10 +424,45 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 # coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
                 # coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
                 # coord_init_pix_scaleY[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
-                coord_init_pix_scaleY[ix*nx:ny+ix*nx, 1] = (coord_init_pix[ix*nx:ny+ix*nx, 1] - mean_src) * Sy + mean_dest
-                coord_init_pix_scaleYinv[ix*nx:ny+ix*nx, 1] = (coord_init_pix[ix*nx:ny+ix*nx, 1] - mean_dest) / float(Sy) + mean_src
+                coord_init_pix_scaleY[ix * nx:ny + ix * nx, 1] = (coord_init_pix[ix * nx:ny + ix * nx,
+                                                                  1] - mean_src) * Sy + mean_dest
+                coord_init_pix_scaleYinv[ix * nx:ny + ix * nx, 1] = (coord_init_pix[ix * nx:ny + ix * nx,
+                                                                     1] - mean_dest) / float(Sy) + mean_src
+        # apply transformation to image
+        col_scaleYinv = np.reshape(coord_init_pix_scaleYinv[:, 1], [nx, ny])
+        src2d_scaleXY = warp(src2d, np.array([row_scaleXinv, col_scaleYinv]), order=1)
         # display
         if verbose == 2:
+            # FIG 1
+            plt.figure(figsize=(11, 4))
+            # plot #1
+            plt.subplot(131)
+            plt.imshow(np.swapaxes(src2d, 1, 0), cmap=plt.cm.gray, interpolation='none')
+            plt.hold(True)  # add other layer
+            plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
+            plt.title('src')
+            plt.xlabel('x')
+            plt.ylabel('y')
+            # plot #2
+            plt.subplot(132)
+            plt.imshow(np.swapaxes(src2d_scaleX, 1, 0), cmap=plt.cm.gray, interpolation='none')
+            plt.hold(True)  # add other layer
+            plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
+            plt.title('src_scaleX')
+            plt.xlabel('x')
+            plt.ylabel('y')
+            # plot #3
+            plt.subplot(133)
+            plt.imshow(np.swapaxes(src2d_scaleXY, 1, 0), cmap=plt.cm.gray, interpolation='none')
+            plt.hold(True)  # add other layer
+            plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
+            plt.title('src_scaleXY')
+            plt.xlabel('x')
+            plt.ylabel('y')
+            plt.savefig(path_qc + 'register2d_columnwise_image_z' + str(iz) + '.png')
+            plt.close()
+
+            # FIG2
             plt.figure(figsize=(15, 4))
             list_data = [coord_init_pix, coord_init_pix_scaleX, coord_init_pix_scaleY]
             list_subplot = [131, 132, 133]
@@ -486,7 +487,6 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 plt.title(list_title[i])
                 plt.xlabel('x')
                 plt.ylabel('y')
-            # plt.show()
             plt.savefig(path_qc + 'register2d_columnwise_result_z' + str(iz) + '.png')
             plt.close()
 
