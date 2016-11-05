@@ -123,6 +123,7 @@ def get_parser(paramreg=None):
                                   "  origin: Physical origin of images\n"
                                   "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" +paramreg.steps['1'].poly + "\n"
                                   "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +paramreg.steps['1'].smoothWarpXY + "\n"
+                                  "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" +paramreg.steps['1'].pca_eigenratio_th + "\n"
                                   "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" + paramreg.steps['0'].dof + "\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
@@ -177,7 +178,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -192,6 +193,7 @@ class Paramreg(object):
         self.poly = poly  # only for algo=slicereg
         self.dof = dof  # only for type=label
         self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
+        self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
