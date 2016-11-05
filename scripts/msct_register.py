@@ -372,17 +372,17 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         src1d_min, src1d_max = find_index_halfmax(src1d)
         dest1d_min, dest1d_max = find_index_halfmax(dest1d)
         # 1D matching between src_y and dest_y
-        mean_dest = (dest1d_max + dest1d_min) / 2
-        mean_src = (src1d_max + src1d_min) / 2
+        mean_dest_x = (dest1d_max + dest1d_min) / 2
+        mean_src_x = (src1d_max + src1d_min) / 2
         # compute x-scaling factor
         Sx = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
         # apply transformation to coordinates
         coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
-        coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
+        coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src_x) * Sx + mean_dest_x
         coord_init_pix_scaleX = np.copy(coord_init_pix)
-        coord_init_pix_scaleX[:, 0] = (coord_init_pix[:, 0] - mean_src) * Sx + mean_dest
+        coord_init_pix_scaleX[:, 0] = (coord_init_pix[:, 0] - mean_src_x) * Sx + mean_dest_x
         coord_init_pix_scaleXinv = np.copy(coord_init_pix)
-        coord_init_pix_scaleXinv[:, 0] = (coord_init_pix[:, 0] - mean_dest) / float(Sx) + mean_src
+        coord_init_pix_scaleXinv[:, 0] = (coord_init_pix[:, 0] - mean_dest_x) / float(Sx) + mean_src_x
         # apply transformation to image
         from skimage.transform import warp
         row_scaleXinv = np.reshape(coord_init_pix_scaleXinv[:, 0], [nx, ny])
@@ -414,8 +414,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 # src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
                 # dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
                 # 1D matching between src_y and dest_y
-                mean_dest = (dest1d_max + dest1d_min) / 2
-                mean_src = (src1d_max + src1d_min) / 2
+                mean_dest_y = (dest1d_max + dest1d_min) / 2
+                mean_src_y = (src1d_max + src1d_min) / 2
                 # Tx = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
                 Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
                 # apply forward transformation (in pixel space)
@@ -425,9 +425,9 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 # coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
                 # coord_init_pix_scaleY[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
                 coord_init_pix_scaleY[ix * nx:ny + ix * nx, 1] = (coord_init_pix[ix * nx:ny + ix * nx,
-                                                                  1] - mean_src) * Sy + mean_dest
+                                                                  1] - mean_src_y) * Sy + mean_dest_y
                 coord_init_pix_scaleYinv[ix * nx:ny + ix * nx, 1] = (coord_init_pix[ix * nx:ny + ix * nx,
-                                                                     1] - mean_dest) / float(Sy) + mean_src
+                                                                     1] - mean_dest_y) / float(Sy) + mean_src_y
         # apply transformation to image
         col_scaleYinv = np.reshape(coord_init_pix_scaleYinv[:, 1], [nx, ny])
         src2d_scaleXY = warp(src2d, np.array([row_scaleXinv, col_scaleYinv]), order=1)
@@ -436,59 +436,68 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             # FIG 1
             plt.figure(figsize=(11, 4))
             # plot #1
-            plt.subplot(131)
+            ax = plt.subplot(131)
             plt.imshow(np.swapaxes(src2d, 1, 0), cmap=plt.cm.gray, interpolation='none')
             plt.hold(True)  # add other layer
             plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
             plt.title('src')
             plt.xlabel('x')
             plt.ylabel('y')
+            plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
+            plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
+            ax.grid(True, color='w')
             # plot #2
-            plt.subplot(132)
+            ax = plt.subplot(132)
             plt.imshow(np.swapaxes(src2d_scaleX, 1, 0), cmap=plt.cm.gray, interpolation='none')
             plt.hold(True)  # add other layer
             plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
             plt.title('src_scaleX')
             plt.xlabel('x')
             plt.ylabel('y')
+            plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
+            plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
+            ax.grid(True, color='w')
             # plot #3
-            plt.subplot(133)
+            ax = plt.subplot(133)
             plt.imshow(np.swapaxes(src2d_scaleXY, 1, 0), cmap=plt.cm.gray, interpolation='none')
             plt.hold(True)  # add other layer
             plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
             plt.title('src_scaleXY')
             plt.xlabel('x')
             plt.ylabel('y')
+            plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
+            plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
+            ax.grid(True, color='w')
             plt.savefig(path_qc + 'register2d_columnwise_image_z' + str(iz) + '.png')
             plt.close()
-
-            # FIG2
-            plt.figure(figsize=(15, 4))
-            list_data = [coord_init_pix, coord_init_pix_scaleX, coord_init_pix_scaleY]
-            list_subplot = [131, 132, 133]
-            list_title = ['src', 'src_scaleX', 'src_scaleY']
-            for i in xrange(len(list_subplot)):
-                plt.subplot(list_subplot[i])
-                plt.scatter([list_data[i][ipix][0] for ipix in xrange(list_data[i].shape[0])],
-                            [list_data[i][ipix][1] for ipix in xrange(list_data[i].shape[0])],
-                            s=15, marker='+', zorder=1, color='black', alpha=1)
-                plt.scatter([coord_dest2d[ipix][0] for ipix in xrange(coord_dest2d.shape[0])],
-                            [coord_dest2d[ipix][1] for ipix in xrange(coord_dest2d.shape[0])],
-                            s=15, marker='x', zorder=2, color='red', alpha=1)
-                plt.scatter([coord_src2d[ipix][0] for ipix in xrange(coord_src2d.shape[0])],
-                            [coord_src2d[ipix][1] for ipix in xrange(coord_src2d.shape[0])],
-                            s=5, marker='o', zorder=2, color='blue', alpha=1)
-                plt.scatter([coord_src2d_scaleX[ipix][0] for ipix in xrange(coord_src2d_scaleX.shape[0])],
-                            [coord_src2d_scaleX[ipix][1] for ipix in xrange(coord_src2d_scaleX.shape[0])],
-                            s=5, marker='o', zorder=2, color='green', alpha=1)
-                plt.xlim(0, nx-1)
-                plt.ylim(0, ny-1)
-                plt.grid()
-                plt.title(list_title[i])
-                plt.xlabel('x')
-                plt.ylabel('y')
-            plt.savefig(path_qc + 'register2d_columnwise_result_z' + str(iz) + '.png')
-            plt.close()
+            #
+            # # FIG2
+            # plt.figure(figsize=(15, 4))
+            # list_data = [coord_init_pix, coord_init_pix_scaleX, coord_init_pix_scaleY]
+            # list_subplot = [131, 132, 133]
+            # list_title = ['src', 'src_scaleX', 'src_scaleY']
+            # for i in xrange(len(list_subplot)):
+            #     plt.subplot(list_subplot[i])
+            #     plt.scatter([list_data[i][ipix][0] for ipix in xrange(list_data[i].shape[0])],
+            #                 [list_data[i][ipix][1] for ipix in xrange(list_data[i].shape[0])],
+            #                 s=15, marker='+', zorder=1, color='black', alpha=1)
+            #     plt.scatter([coord_dest2d[ipix][0] for ipix in xrange(coord_dest2d.shape[0])],
+            #                 [coord_dest2d[ipix][1] for ipix in xrange(coord_dest2d.shape[0])],
+            #                 s=15, marker='x', zorder=2, color='red', alpha=1)
+            #     plt.scatter([coord_src2d[ipix][0] for ipix in xrange(coord_src2d.shape[0])],
+            #                 [coord_src2d[ipix][1] for ipix in xrange(coord_src2d.shape[0])],
+            #                 s=5, marker='o', zorder=2, color='blue', alpha=1)
+            #     plt.scatter([coord_src2d_scaleX[ipix][0] for ipix in xrange(coord_src2d_scaleX.shape[0])],
+            #                 [coord_src2d_scaleX[ipix][1] for ipix in xrange(coord_src2d_scaleX.shape[0])],
+            #                 s=5, marker='o', zorder=2, color='green', alpha=1)
+            #     plt.xlim(0, nx-1)
+            #     plt.ylim(0, ny-1)
+            #     plt.grid()
+            #     plt.title(list_title[i])
+            #     plt.xlabel('x')
+            #     plt.ylabel('y')
+            # plt.savefig(path_qc + 'register2d_columnwise_result_z' + str(iz) + '.png')
+            # plt.close()
 
         # ============================================================
         # CALCULATE TRANSFORMATIONS
