@@ -101,38 +101,29 @@ def get_parser(paramreg=None):
                                   "step: <int> Step number (starts at 1, except for type=label).\n"
                                   "type: {im,seg,label} type of data used for registration. Use type=label only at step=0.\n"
                                   "algo: Default=" + paramreg.steps['1'].algo + "\n"
-                                                                                "  translation: translation in X-Y plane (2dof)\n"
-                                                                                "  rigid: translation + rotation in X-Y plane (4dof)\n"
-                                                                                "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
-                                                                                "  syn: non-linear symmetric normalization\n"
-                                                                                "  bsplinesyn: syn regularized with b-splines\n"
-                                                                                "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
-                                                                                "  centermass: slicewise center of mass alignment (seg only).\n"
-                                                                                "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
-                                                                                "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
-                                  # "  landmark: Landmark-based affine registration (Tx,Ty,Tz,Rx,Ry,Sz). Requires at least two landmarks per image.\n"
-                                                                                "slicewise: <int> Slice-by-slice 2d transformation. Default=" +
-                                  paramreg.steps['1'].slicewise + "\n"
-                                                                  "metric: {CC,MI,MeanSquares}. Default=" +
-                                  paramreg.steps['1'].metric + "\n"
-                                                               "iter: <int> Number of iterations. Default=" +
-                                  paramreg.steps['1'].iter + "\n"
-                                                             "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default=" +
-                                  paramreg.steps['1'].shrink + "\n"
-                                                               "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" + paramreg.steps[
-                                      '1'].smooth + "\n"
-                                                    "laplacian: <int> Laplacian filter. Default=" + paramreg.steps[
-                                      '1'].laplacian + "\n"
-                                                       "gradStep: <float> Gradient step. Default=" + paramreg.steps[
-                                      '1'].gradStep + "\n"
-                                                      "init: <int> Initial translation alignment based on:\n"
-                                                      "  geometric: Geometric center of images\n"
-                                                      "  centermass: Center of mass of images\n"
-                                                      "  origin: Physical origin of images\n"
-                                                      "poly: <int> Polynomial degree of regularization (only for slicereg and centermassrot). Default=" +
-                                  paramreg.steps['1'].poly + "\n"
-                                                             "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
-                                  paramreg.steps['0'].dof + "\n",
+                                  "  translation: translation in X-Y plane (2dof)\n"
+                                  "  rigid: translation + rotation in X-Y plane (4dof)\n"
+                                  "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
+                                  "  syn: non-linear symmetric normalization\n"
+                                  "  bsplinesyn: syn regularized with b-splines\n"
+                                  "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
+                                  "  centermass: slicewise center of mass alignment (seg only).\n"
+                                  "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
+                                  "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
+                                  "slicewise: <int> Slice-by-slice 2d transformation. Default=" + paramreg.steps['1'].slicewise + "\n"
+                                  "metric: {CC,MI,MeanSquares}. Default=" + paramreg.steps['1'].metric + "\n"
+                                  "iter: <int> Number of iterations. Default=" + paramreg.steps['1'].iter + "\n"
+                                  "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default=" + paramreg.steps['1'].shrink + "\n"
+                                  "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" + paramreg.steps['1'].smooth + "\n"
+                                  "laplacian: <int> Laplacian filter. Default=" + paramreg.steps['1'].laplacian + "\n"
+                                  "gradStep: <float> Gradient step. Default=" + paramreg.steps['1'].gradStep + "\n"
+                                  "init: <int> Initial translation alignment based on:\n"
+                                  "  geometric: Geometric center of images\n"
+                                  "  centermass: Center of mass of images\n"
+                                  "  origin: Physical origin of images\n"
+                                  "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" +paramreg.steps['1'].poly + "\n"
+                                  "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +paramreg.steps['1'].smoothWarpXY + "\n"
+                                  "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" + paramreg.steps['0'].dof + "\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -186,7 +177,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -198,10 +189,9 @@ class Paramreg(object):
         self.gradStep = gradStep
         self.slicewise = slicewise
         self.init = init
-        self.poly = poly  # slicereg only
-        self.dof = dof  # type=label only
-        # self.window_length = window_length  # str
-        # self.detect_outlier = detect_outlier  # str. detect outliers, for methods slicereg2d_xx
+        self.poly = poly  # only for algo=slicereg
+        self.dof = dof  # only for type=label
+        self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -475,6 +465,7 @@ def register(src, dest, paramreg, param, i_step_str):
     sct.printv('  init ........... '+paramreg.steps[i_step_str].init, param.verbose)
     sct.printv('  poly ........... '+paramreg.steps[i_step_str].poly, param.verbose)
     sct.printv('  dof ............ '+paramreg.steps[i_step_str].dof, param.verbose)
+    sct.printv('  smoothWarpXY ... '+paramreg.steps[i_step_str].smoothWarpXY, param.verbose)
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
