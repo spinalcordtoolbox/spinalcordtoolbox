@@ -61,7 +61,7 @@ def register_slicewise(fname_src,
         register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
-        register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, path_qc=path_qc)
+        register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, path_qc=path_qc, smoothWarpXY=paramreg.smoothWarpXY)
     else:
         # convert SCT flags into ANTs-compatible flags
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
@@ -267,7 +267,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
 
 
-def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='./'):
+def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='./', smoothWarpXY=1):
     """
     Column-wise non-linear registration of segmentations. Based on an idea from Allan Martin.
     - Assumes src/dest are segmentations (not necessarily binary), and already registered by center of mass
@@ -336,6 +336,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     # Loop across slices
     sct.printv('\nEstimate columnwise transformation...', verbose)
     for iz in range(0, nz):
+        print str(iz)+'/'+str(nz)+'..',
 
         # PREPARE COORDINATES
         # ============================================================
@@ -386,7 +387,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         mean_dest_x = (dest1d_max + dest1d_min) / 2
         mean_src_x = (src1d_max + src1d_min) / 2
         # compute x-scaling factor
-        Sx = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
+        Sx = (dest1d_max - dest1d_min + 1) / float(src1d_max - src1d_min + 1)
         # apply transformation to coordinates
         coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
         coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src_x) * Sx + mean_dest_x
@@ -411,7 +412,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             src1d = src2d_scaleX[ix, :]
             dest1d = dest2d[ix, :]
             # make sure there are non-zero data in src or dest
-            if np.any(src1d) and np.any(dest1d):
+            if np.any(src1d>th_nonzero) and np.any(dest1d>th_nonzero):
                 # retrieve min/max of non-zeros elements (edge of the segmentation)
                 # src1d_min, src1d_max = min(np.nonzero(src1d)[0]), max(np.nonzero(src1d)[0])
                 # dest1d_min, dest1d_max = min(np.nonzero(dest1d)[0]), max(np.nonzero(dest1d)[0])
@@ -420,34 +421,43 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 # Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
                 # apply translation and scaling to coordinates in column
                 # get indices (in continuous space) at half-maximum of upward and downward slope
-                src1d_min, src1d_max = find_index_halfmax(src1d)
-                dest1d_min, dest1d_max = find_index_halfmax(dest1d)
-                # src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
-                # dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
+                # src1d_min, src1d_max = find_index_halfmax(src1d)
+                # dest1d_min, dest1d_max = find_index_halfmax(dest1d)
+                src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
+                dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
                 # 1D matching between src_y and dest_y
                 mean_dest_y = (dest1d_max + dest1d_min) / 2
                 mean_src_y = (src1d_max + src1d_min) / 2
                 # Tx = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
-                Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
+                Sy = (dest1d_max - dest1d_min + 1) / float(src1d_max - src1d_min + 1)
                 # apply forward transformation (in pixel space)
                 # below: only for debugging purpose
                 # coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
                 # coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
                 # coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
                 # coord_init_pix_scaleY[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
-                coord_init_pix_scaleY[ix * nx:ny + ix * nx, 1] = (coord_init_pix[ix * nx:ny + ix * nx,
-                                                                  1] - mean_src_y) * Sy + mean_dest_y
-                coord_init_pix_scaleYinv[ix * nx:ny + ix * nx, 1] = (coord_init_pix[ix * nx:ny + ix * nx,
-                                                                     1] - mean_dest_y) / float(Sy) + mean_src_y
+                range_x = range(ix * ny, ix * ny + nx)
+                coord_init_pix_scaleY[range_x, 1] = (coord_init_pix[range_x, 1] - mean_src_y) * Sy + mean_dest_y
+                coord_init_pix_scaleYinv[range_x, 1] = (coord_init_pix[range_x, 1] - mean_dest_y) / float(Sy) + mean_src_y
         # apply transformation to image
         col_scaleYinv = np.reshape(coord_init_pix_scaleYinv[:, 1], [nx, ny])
         src2d_scaleXY = warp(src2d, np.array([row_scaleXinv, col_scaleYinv]), order=1)
+        # regularize Y warping fields
+        from skimage.filters import gaussian
+        col_scaleY = np.reshape(coord_init_pix_scaleY[:, 1], [nx, ny])
+        col_scaleYsmooth = gaussian(col_scaleY, smoothWarpXY)
+        col_scaleYinvsmooth = gaussian(col_scaleYinv, smoothWarpXY)
+        # apply smoothed transformation to image
+        src2d_scaleXYsmooth = warp(src2d, np.array([row_scaleXinv, col_scaleYinvsmooth]), order=1)
+        # reshape warping field as 1d
+        coord_init_pix_scaleY[:, 1] = col_scaleYsmooth.ravel()
+        coord_init_pix_scaleYinv[:, 1] = col_scaleYinvsmooth.ravel()
         # display
         if verbose == 2:
             # FIG 1
-            plt.figure(figsize=(11, 4))
+            plt.figure(figsize=(15, 3))
             # plot #1
-            ax = plt.subplot(131)
+            ax = plt.subplot(141)
             plt.imshow(np.swapaxes(src2d, 1, 0), cmap=plt.cm.gray, interpolation='none')
             plt.hold(True)  # add other layer
             plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
@@ -458,7 +468,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
             ax.grid(True, color='w')
             # plot #2
-            ax = plt.subplot(132)
+            ax = plt.subplot(142)
             plt.imshow(np.swapaxes(src2d_scaleX, 1, 0), cmap=plt.cm.gray, interpolation='none')
             plt.hold(True)  # add other layer
             plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
@@ -469,7 +479,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
             ax.grid(True, color='w')
             # plot #3
-            ax = plt.subplot(133)
+            ax = plt.subplot(143)
             plt.imshow(np.swapaxes(src2d_scaleXY, 1, 0), cmap=plt.cm.gray, interpolation='none')
             plt.hold(True)  # add other layer
             plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
@@ -479,6 +489,18 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
             plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
             ax.grid(True, color='w')
+            # plot #4
+            ax = plt.subplot(144)
+            plt.imshow(np.swapaxes(src2d_scaleXYsmooth, 1, 0), cmap=plt.cm.gray, interpolation='none')
+            plt.hold(True)  # add other layer
+            plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
+            plt.title('src_scaleXYsmooth (s='+str(smoothWarpXY)+')')
+            plt.xlabel('x')
+            plt.ylabel('y')
+            plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
+            plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
+            ax.grid(True, color='w')
+            # save figure
             plt.savefig(path_qc + 'register2d_columnwise_image_z' + str(iz) + '.png')
             plt.close()
             #
@@ -759,7 +781,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     hdr_warp.set_data_dtype('float32')
     img = Nifti1Image(data_warp, None, hdr_warp)
     save(img, fname_warp)
-    sct.printv('Done! Warping field generated: '+fname_warp, verbose)
+    sct.printv(' --> '+fname_warp, verbose)
 
     #
     # file_dest = load(fname_dest)
