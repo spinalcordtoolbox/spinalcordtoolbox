@@ -374,183 +374,157 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # sum data across Y to obtain 1D signal: src_y and dest_y
         src1d = np.sum(src2d, 1)
         dest1d = np.sum(dest2d, 1)
-        # retrieve min/max of non-zeros elements (edge of the segmentation)
-        # julien 20161105
-        # <<<
-        src1d_min, src1d_max = min(np.where(src1d != 0)[0]), max(np.where(src1d != 0)[0])
-        dest1d_min, dest1d_max = min(np.where(dest1d != 0)[0]), max(np.where(dest1d != 0)[0])
-        # for i in xrange(len(src1d)):
-        #     if src1d[i] > 0.5:
-        #         found index above 0.5, exit loop
-                # break
-        # get indices (in continuous space) at half-maximum of upward and downward slope
-        # src1d_min, src1d_max = find_index_halfmax(src1d)
-        # dest1d_min, dest1d_max = find_index_halfmax(dest1d)
-        # >>>
-        # 1D matching between src_y and dest_y
-        mean_dest_x = (dest1d_max + dest1d_min) / 2
-        mean_src_x = (src1d_max + src1d_min) / 2
-        # compute x-scaling factor
-        Sx = (dest1d_max - dest1d_min + 1) / float(src1d_max - src1d_min + 1)
-        # apply transformation to coordinates
-        coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
-        coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src_x) * Sx + mean_dest_x
-        coord_init_pix_scaleX = np.copy(coord_init_pix)
-        coord_init_pix_scaleX[:, 0] = (coord_init_pix[:, 0] - mean_src_x) * Sx + mean_dest_x
-        coord_init_pix_scaleXinv = np.copy(coord_init_pix)
-        coord_init_pix_scaleXinv[:, 0] = (coord_init_pix[:, 0] - mean_dest_x) / float(Sx) + mean_src_x
-        # apply transformation to image
-        from skimage.transform import warp
-        row_scaleXinv = np.reshape(coord_init_pix_scaleXinv[:, 0], [nx, ny])
-        src2d_scaleX = warp(src2d, np.array([row_scaleXinv, col]), order=1)
+        # make sure there are non-zero data in src or dest
+        if np.any(src1d > th_nonzero) and np.any(dest1d > th_nonzero):
+            # retrieve min/max of non-zeros elements (edge of the segmentation)
+            # julien 20161105
+            # <<<
+            src1d_min, src1d_max = min(np.where(src1d != 0)[0]), max(np.where(src1d != 0)[0])
+            dest1d_min, dest1d_max = min(np.where(dest1d != 0)[0]), max(np.where(dest1d != 0)[0])
+            # for i in xrange(len(src1d)):
+            #     if src1d[i] > 0.5:
+            #         found index above 0.5, exit loop
+                    # break
+            # get indices (in continuous space) at half-maximum of upward and downward slope
+            # src1d_min, src1d_max = find_index_halfmax(src1d)
+            # dest1d_min, dest1d_max = find_index_halfmax(dest1d)
+            # >>>
+            # 1D matching between src_y and dest_y
+            mean_dest_x = (dest1d_max + dest1d_min) / 2
+            mean_src_x = (src1d_max + src1d_min) / 2
+            # compute x-scaling factor
+            Sx = (dest1d_max - dest1d_min + 1) / float(src1d_max - src1d_min + 1)
+            # apply transformation to coordinates
+            coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
+            coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src_x) * Sx + mean_dest_x
+            coord_init_pix_scaleX = np.copy(coord_init_pix)
+            coord_init_pix_scaleX[:, 0] = (coord_init_pix[:, 0] - mean_src_x) * Sx + mean_dest_x
+            coord_init_pix_scaleXinv = np.copy(coord_init_pix)
+            coord_init_pix_scaleXinv[:, 0] = (coord_init_pix[:, 0] - mean_dest_x) / float(Sx) + mean_src_x
+            # apply transformation to image
+            from skimage.transform import warp
+            row_scaleXinv = np.reshape(coord_init_pix_scaleXinv[:, 0], [nx, ny])
+            src2d_scaleX = warp(src2d, np.array([row_scaleXinv, col]), order=1)
 
-        # ============================================================
-        # COLUMN-WISE REGISTRATION (Y dimension for each Xi)
-        # ============================================================
-        coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
-        coord_init_pix_scaleYinv = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
-        # coord_src2d_scaleXY = np.copy(coord_src2d_scaleX)  # need to use np.copy to avoid copying pointer
-        # loop across columns (X dimension)
-        for ix in xrange(nx):
-            # retrieve 1D signal along Y
-            src1d = src2d_scaleX[ix, :]
-            dest1d = dest2d[ix, :]
-            # make sure there are non-zero data in src or dest
-            if np.any(src1d>th_nonzero) and np.any(dest1d>th_nonzero):
-                # retrieve min/max of non-zeros elements (edge of the segmentation)
-                # src1d_min, src1d_max = min(np.nonzero(src1d)[0]), max(np.nonzero(src1d)[0])
-                # dest1d_min, dest1d_max = min(np.nonzero(dest1d)[0]), max(np.nonzero(dest1d)[0])
-                # 1D matching between src_y and dest_y
-                # Ty = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
-                # Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
-                # apply translation and scaling to coordinates in column
-                # get indices (in continuous space) at half-maximum of upward and downward slope
-                # src1d_min, src1d_max = find_index_halfmax(src1d)
-                # dest1d_min, dest1d_max = find_index_halfmax(dest1d)
-                src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
-                dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
-                # 1D matching between src_y and dest_y
-                mean_dest_y = (dest1d_max + dest1d_min) / 2
-                mean_src_y = (src1d_max + src1d_min) / 2
-                # Tx = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
-                Sy = (dest1d_max - dest1d_min + 1) / float(src1d_max - src1d_min + 1)
-                # apply forward transformation (in pixel space)
-                # below: only for debugging purpose
-                # coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
-                # coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
-                # coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
-                # coord_init_pix_scaleY[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
-                range_x = range(ix * ny, ix * ny + nx)
-                coord_init_pix_scaleY[range_x, 1] = (coord_init_pix[range_x, 1] - mean_src_y) * Sy + mean_dest_y
-                coord_init_pix_scaleYinv[range_x, 1] = (coord_init_pix[range_x, 1] - mean_dest_y) / float(Sy) + mean_src_y
-        # apply transformation to image
-        col_scaleYinv = np.reshape(coord_init_pix_scaleYinv[:, 1], [nx, ny])
-        src2d_scaleXY = warp(src2d, np.array([row_scaleXinv, col_scaleYinv]), order=1)
-        # regularize Y warping fields
-        from skimage.filters import gaussian
-        col_scaleY = np.reshape(coord_init_pix_scaleY[:, 1], [nx, ny])
-        col_scaleYsmooth = gaussian(col_scaleY, smoothWarpXY)
-        col_scaleYinvsmooth = gaussian(col_scaleYinv, smoothWarpXY)
-        # apply smoothed transformation to image
-        src2d_scaleXYsmooth = warp(src2d, np.array([row_scaleXinv, col_scaleYinvsmooth]), order=1)
-        # reshape warping field as 1d
-        coord_init_pix_scaleY[:, 1] = col_scaleYsmooth.ravel()
-        coord_init_pix_scaleYinv[:, 1] = col_scaleYinvsmooth.ravel()
-        # display
-        if verbose == 2:
-            # FIG 1
-            plt.figure(figsize=(15, 3))
-            # plot #1
-            ax = plt.subplot(141)
-            plt.imshow(np.swapaxes(src2d, 1, 0), cmap=plt.cm.gray, interpolation='none')
-            plt.hold(True)  # add other layer
-            plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
-            plt.title('src')
-            plt.xlabel('x')
-            plt.ylabel('y')
-            plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
-            plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
-            ax.grid(True, color='w')
-            # plot #2
-            ax = plt.subplot(142)
-            plt.imshow(np.swapaxes(src2d_scaleX, 1, 0), cmap=plt.cm.gray, interpolation='none')
-            plt.hold(True)  # add other layer
-            plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
-            plt.title('src_scaleX')
-            plt.xlabel('x')
-            plt.ylabel('y')
-            plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
-            plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
-            ax.grid(True, color='w')
-            # plot #3
-            ax = plt.subplot(143)
-            plt.imshow(np.swapaxes(src2d_scaleXY, 1, 0), cmap=plt.cm.gray, interpolation='none')
-            plt.hold(True)  # add other layer
-            plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
-            plt.title('src_scaleXY')
-            plt.xlabel('x')
-            plt.ylabel('y')
-            plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
-            plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
-            ax.grid(True, color='w')
-            # plot #4
-            ax = plt.subplot(144)
-            plt.imshow(np.swapaxes(src2d_scaleXYsmooth, 1, 0), cmap=plt.cm.gray, interpolation='none')
-            plt.hold(True)  # add other layer
-            plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
-            plt.title('src_scaleXYsmooth (s='+str(smoothWarpXY)+')')
-            plt.xlabel('x')
-            plt.ylabel('y')
-            plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
-            plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
-            ax.grid(True, color='w')
-            # save figure
-            plt.savefig(path_qc + 'register2d_columnwise_image_z' + str(iz) + '.png')
-            plt.close()
-            #
-            # # FIG2
-            # plt.figure(figsize=(15, 4))
-            # list_data = [coord_init_pix, coord_init_pix_scaleX, coord_init_pix_scaleY]
-            # list_subplot = [131, 132, 133]
-            # list_title = ['src', 'src_scaleX', 'src_scaleY']
-            # for i in xrange(len(list_subplot)):
-            #     plt.subplot(list_subplot[i])
-            #     plt.scatter([list_data[i][ipix][0] for ipix in xrange(list_data[i].shape[0])],
-            #                 [list_data[i][ipix][1] for ipix in xrange(list_data[i].shape[0])],
-            #                 s=15, marker='+', zorder=1, color='black', alpha=1)
-            #     plt.scatter([coord_dest2d[ipix][0] for ipix in xrange(coord_dest2d.shape[0])],
-            #                 [coord_dest2d[ipix][1] for ipix in xrange(coord_dest2d.shape[0])],
-            #                 s=15, marker='x', zorder=2, color='red', alpha=1)
-            #     plt.scatter([coord_src2d[ipix][0] for ipix in xrange(coord_src2d.shape[0])],
-            #                 [coord_src2d[ipix][1] for ipix in xrange(coord_src2d.shape[0])],
-            #                 s=5, marker='o', zorder=2, color='blue', alpha=1)
-            #     plt.scatter([coord_src2d_scaleX[ipix][0] for ipix in xrange(coord_src2d_scaleX.shape[0])],
-            #                 [coord_src2d_scaleX[ipix][1] for ipix in xrange(coord_src2d_scaleX.shape[0])],
-            #                 s=5, marker='o', zorder=2, color='green', alpha=1)
-            #     plt.xlim(0, nx-1)
-            #     plt.ylim(0, ny-1)
-            #     plt.grid()
-            #     plt.title(list_title[i])
-            #     plt.xlabel('x')
-            #     plt.ylabel('y')
-            # plt.savefig(path_qc + 'register2d_columnwise_result_z' + str(iz) + '.png')
-            # plt.close()
+            # ============================================================
+            # COLUMN-WISE REGISTRATION (Y dimension for each Xi)
+            # ============================================================
+            coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
+            coord_init_pix_scaleYinv = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
+            # coord_src2d_scaleXY = np.copy(coord_src2d_scaleX)  # need to use np.copy to avoid copying pointer
+            # loop across columns (X dimension)
+            for ix in xrange(nx):
+                # retrieve 1D signal along Y
+                src1d = src2d_scaleX[ix, :]
+                dest1d = dest2d[ix, :]
+                # make sure there are non-zero data in src or dest
+                if np.any(src1d>th_nonzero) and np.any(dest1d>th_nonzero):
+                    # retrieve min/max of non-zeros elements (edge of the segmentation)
+                    # src1d_min, src1d_max = min(np.nonzero(src1d)[0]), max(np.nonzero(src1d)[0])
+                    # dest1d_min, dest1d_max = min(np.nonzero(dest1d)[0]), max(np.nonzero(dest1d)[0])
+                    # 1D matching between src_y and dest_y
+                    # Ty = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
+                    # Sy = (dest1d_max - dest1d_min) / float(src1d_max - src1d_min)
+                    # apply translation and scaling to coordinates in column
+                    # get indices (in continuous space) at half-maximum of upward and downward slope
+                    # src1d_min, src1d_max = find_index_halfmax(src1d)
+                    # dest1d_min, dest1d_max = find_index_halfmax(dest1d)
+                    src1d_min, src1d_max = np.min(np.where(src1d > th_nonzero)), np.max(np.where(src1d > th_nonzero))
+                    dest1d_min, dest1d_max = np.min(np.where(dest1d > th_nonzero)), np.max(np.where(dest1d > th_nonzero))
+                    # 1D matching between src_y and dest_y
+                    mean_dest_y = (dest1d_max + dest1d_min) / 2
+                    mean_src_y = (src1d_max + src1d_min) / 2
+                    # Tx = (dest1d_max + dest1d_min)/2 - (src1d_max + src1d_min)/2
+                    Sy = (dest1d_max - dest1d_min + 1) / float(src1d_max - src1d_min + 1)
+                    # apply forward transformation (in pixel space)
+                    # below: only for debugging purpose
+                    # coord_src2d_scaleX = np.copy(coord_src2d)  # need to use np.copy to avoid copying pointer
+                    # coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
+                    # coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
+                    # coord_init_pix_scaleY[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
+                    range_x = range(ix * ny, ix * ny + nx)
+                    coord_init_pix_scaleY[range_x, 1] = (coord_init_pix[range_x, 1] - mean_src_y) * Sy + mean_dest_y
+                    coord_init_pix_scaleYinv[range_x, 1] = (coord_init_pix[range_x, 1] - mean_dest_y) / float(Sy) + mean_src_y
+            # apply transformation to image
+            col_scaleYinv = np.reshape(coord_init_pix_scaleYinv[:, 1], [nx, ny])
+            src2d_scaleXY = warp(src2d, np.array([row_scaleXinv, col_scaleYinv]), order=1)
+            # regularize Y warping fields
+            from skimage.filters import gaussian
+            col_scaleY = np.reshape(coord_init_pix_scaleY[:, 1], [nx, ny])
+            col_scaleYsmooth = gaussian(col_scaleY, smoothWarpXY)
+            col_scaleYinvsmooth = gaussian(col_scaleYinv, smoothWarpXY)
+            # apply smoothed transformation to image
+            src2d_scaleXYsmooth = warp(src2d, np.array([row_scaleXinv, col_scaleYinvsmooth]), order=1)
+            # reshape warping field as 1d
+            coord_init_pix_scaleY[:, 1] = col_scaleYsmooth.ravel()
+            coord_init_pix_scaleYinv[:, 1] = col_scaleYinvsmooth.ravel()
+            # display
+            if verbose == 2:
+                # FIG 1
+                plt.figure(figsize=(15, 3))
+                # plot #1
+                ax = plt.subplot(141)
+                plt.imshow(np.swapaxes(src2d, 1, 0), cmap=plt.cm.gray, interpolation='none')
+                plt.hold(True)  # add other layer
+                plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
+                plt.title('src')
+                plt.xlabel('x')
+                plt.ylabel('y')
+                plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
+                plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
+                ax.grid(True, color='w')
+                # plot #2
+                ax = plt.subplot(142)
+                plt.imshow(np.swapaxes(src2d_scaleX, 1, 0), cmap=plt.cm.gray, interpolation='none')
+                plt.hold(True)  # add other layer
+                plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
+                plt.title('src_scaleX')
+                plt.xlabel('x')
+                plt.ylabel('y')
+                plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
+                plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
+                ax.grid(True, color='w')
+                # plot #3
+                ax = plt.subplot(143)
+                plt.imshow(np.swapaxes(src2d_scaleXY, 1, 0), cmap=plt.cm.gray, interpolation='none')
+                plt.hold(True)  # add other layer
+                plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
+                plt.title('src_scaleXY')
+                plt.xlabel('x')
+                plt.ylabel('y')
+                plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
+                plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
+                ax.grid(True, color='w')
+                # plot #4
+                ax = plt.subplot(144)
+                plt.imshow(np.swapaxes(src2d_scaleXYsmooth, 1, 0), cmap=plt.cm.gray, interpolation='none')
+                plt.hold(True)  # add other layer
+                plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
+                plt.title('src_scaleXYsmooth (s='+str(smoothWarpXY)+')')
+                plt.xlabel('x')
+                plt.ylabel('y')
+                plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
+                plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
+                ax.grid(True, color='w')
+                # save figure
+                plt.savefig(path_qc + 'register2d_columnwise_image_z' + str(iz) + '.png')
+                plt.close()
 
-        # ============================================================
-        # CALCULATE TRANSFORMATIONS
-        # ============================================================
-        # calculate forward transformation (in physical space)
-        coord_init_phy_scaleX = np.array(im_dest.transfo_pix2phys(coord_init_pix_scaleX))
-        coord_init_phy_scaleY = np.array(im_dest.transfo_pix2phys(coord_init_pix_scaleY))
-        # calculate inverse transformation (in physical space)
-        coord_init_phy_scaleXinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleXinv))
-        coord_init_phy_scaleYinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleYinv))
-        # compute displacement per pixel in destination space (for forward warping field)
-        warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-        warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
-        # compute displacement per pixel in source space (for inverse warping field)
-        warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-        warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+            # ============================================================
+            # CALCULATE TRANSFORMATIONS
+            # ============================================================
+            # calculate forward transformation (in physical space)
+            coord_init_phy_scaleX = np.array(im_dest.transfo_pix2phys(coord_init_pix_scaleX))
+            coord_init_phy_scaleY = np.array(im_dest.transfo_pix2phys(coord_init_pix_scaleY))
+            # calculate inverse transformation (in physical space)
+            coord_init_phy_scaleXinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleXinv))
+            coord_init_phy_scaleYinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleYinv))
+            # compute displacement per pixel in destination space (for forward warping field)
+            warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+            warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+            # compute displacement per pixel in source space (for inverse warping field)
+            warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
+            warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
