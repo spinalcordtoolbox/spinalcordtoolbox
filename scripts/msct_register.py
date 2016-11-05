@@ -58,7 +58,7 @@ def register_slicewise(fname_src,
         register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'centermassrot':
         # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose, angle_threshold=int(paramreg.angle_threshold))
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=int(paramreg.pca_eigenratio_th))
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
         register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, path_qc=path_qc, smoothWarpXY=int(paramreg.smoothWarpXY))
@@ -77,7 +77,7 @@ def register_slicewise(fname_src,
     chdir('../')
 
 
-def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0, angle_threshold=45):
+def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -154,8 +154,11 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
                 eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
                 angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
-                # if 180 * angle_src_dest[iz] / np.pi > angle_threshold:
-                #     angle_src_dest[iz] = 0
+                # check if ratio between the two eigenvectors is high enough to prevent poor robustness
+                if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
+                    angle_src_dest[iz] = 0
+                if pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
+                    angle_src_dest[iz] = 0
             # append to list of z_nonzero
             z_nonzero.append(iz)
         # if one of the slice is empty, ignore it
@@ -187,11 +190,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        # compute PCA and get center or mass
-        # TODO: GET FROM PREVIOUSLY (no need to do it twice!)
-        # coord_src, pca_src, centermass_src = compute_pca(data_src[:, :, iz])
-        # coord_dest, pca_dest, centermass_dest = compute_pca(data_dest[:, :, iz])
-
+        print str(iz)+'/'+str(nz)+'..',
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -201,10 +200,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # get centermass coordinates in physical space
         centermass_src_phy = im_src.transfo_pix2phys([[centermass_src[iz, :].T[0], centermass_src[iz, :].T[1], iz]])[0]
         centermass_dest_phy = im_src.transfo_pix2phys([[centermass_dest[iz, :].T[0], centermass_dest[iz, :].T[1], iz]])[0]
-
         # build rotation matrix
         R = np.matrix(((cos(angle_src_dest[iz]), sin(angle_src_dest[iz])), (-sin(angle_src_dest[iz]), cos(angle_src_dest[iz]))))
-
         # build 3D rotation matrix
         R3d = np.eye(3)
         R3d[0:2, 0:2] = R
@@ -212,17 +209,12 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         coord_forward_phy = np.array(np.dot((coord_init_phy - np.transpose(centermass_dest_phy)), R3d) + np.transpose(centermass_src_phy))
         # apply inverse transformation (in physical space)
         coord_inverse_phy = np.array(np.dot((coord_init_phy - np.transpose(centermass_src_phy)), R3d.T) + np.transpose(centermass_dest_phy))
-
         # display rotations
         if verbose == 2 and not angle_src_dest[iz] == 0:
             # compute new coordinates
             coord_src_rot = coord_src[iz] * R
             coord_dest_rot = coord_dest[iz] * R.T
             # generate figure
-            import matplotlib
-            matplotlib.use('Agg')
-            import matplotlib.pyplot as plt
-            # use Agg to prevent display
             plt.figure('iz=' + str(iz) + ', angle_src_dest=' + str(angle_src_dest[iz]), figsize=(9, 9))
             # plt.ion()  # enables interactive mode (allows keyboard interruption)
             # plt.title('iz='+str(iz))
@@ -234,24 +226,31 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     plt.scatter(coord_src[iz][:, 0], coord_src[iz][:, 1], s=5, marker='o', zorder=10, color='steelblue',
                                 alpha=0.5)
                     pcaaxis = pca_src[iz].components_.T
+                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
                     plt.title('src')
                 elif isub == 222:
                     plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10,
                                 color='steelblue',
                                 alpha=0.5)
                     pcaaxis = pca_dest[iz].components_.T
+                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
                     plt.title('src_rot')
                 elif isub == 223:
                     plt.scatter(coord_dest[iz][:, 0], coord_dest[iz][:, 1], s=5, marker='o', zorder=10, color='red',
                                 alpha=0.5)
                     pcaaxis = pca_dest[iz].components_.T
+                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
                     plt.title('dest')
                 elif isub == 224:
                     plt.scatter(coord_dest_rot[:, 0], coord_dest_rot[:, 1], s=5, marker='o', zorder=10, color='red',
                                 alpha=0.5)
                     pcaaxis = pca_src[iz].components_.T
+                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
                     plt.title('dest_rot')
-                plt.text(-2.5, -2.5, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, -2, 'eigenvectors:', horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, -2.8, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, 2.5, 'eigenval_ratio:', horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, 2, str(pca_eigenratio), horizontalalignment='left', verticalalignment='bottom')
                 plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
                 plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
                 plt.axis([-3, 3, -3, 3])
