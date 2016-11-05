@@ -58,7 +58,7 @@ def register_slicewise(fname_src,
         register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'centermassrot':
         # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose, angle_threshold=int(paramreg.angle_threshold))
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
         register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, path_qc=path_qc, smoothWarpXY=int(paramreg.smoothWarpXY))
@@ -154,8 +154,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
                 eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
                 angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
-                if 180 * angle_src_dest[iz] / np.pi > angle_threshold:
-                    angle_src_dest[iz] = 0
+                # if 180 * angle_src_dest[iz] / np.pi > angle_threshold:
+                #     angle_src_dest[iz] = 0
             # append to list of z_nonzero
             z_nonzero.append(iz)
         # if one of the slice is empty, ignore it
