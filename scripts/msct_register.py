@@ -77,7 +77,7 @@ def register_slicewise(fname_src,
     chdir('../')
 
 
-def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0):
+def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0, angle_threshold=45):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -93,6 +93,11 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     output:
         none
     """
+
+    if verbose == 2:
+        import matplotlib
+        matplotlib.use('Agg')  # prevent display figure
+        import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
@@ -146,11 +151,11 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest[:, :, iz])
             # compute (src,dest) angle for first eigenvector
             if rot == 1:
-                eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][
-                    0]  # pca_src.components_.T[0]
-                eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][
-                    0]  # pca_dest.components_.T[0]
+                eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
+                eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
                 angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
+                if 180 * angle_src_dest[iz] / np.pi > angle_threshold:
+                    angle_src_dest[iz] = 0
             # append to list of z_nonzero
             z_nonzero.append(iz)
         # if one of the slice is empty, ignore it
@@ -163,13 +168,12 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         angle_src_dest_regularized = polynomial_fit(z_nonzero, angle_src_dest[z_nonzero], poly)[0]
         # display
         if verbose == 2:
-            import matplotlib.pyplot as plt
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi)
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
             plt.grid()
             plt.xlabel('z')
             plt.ylabel('Angle (deg)')
-            plt.savefig(path_qc+'fig_regularize_rotation.png')
+            plt.savefig(path_qc+'register2d_centermassrot_regularize_rotation.png')
             plt.close()
         # update variable
         angle_src_dest[z_nonzero] = angle_src_dest_regularized
