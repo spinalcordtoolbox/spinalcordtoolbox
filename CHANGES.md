@@ -10,6 +10,8 @@
 - NEW: **sct_dmri_create_noisemask**: Identification and estimation of noise in the diffusion signal, implemented by the Dipy software project (http://nipy.org/dipy/), based on the PIESNO method
 - NEW: **sct_register_graymatter**: Multi-label registration that accounts for gray matter shape.
 - NEW: **sct_register_multimodal**: features two new transformations: centermassrot and columnwise.
+- NEW: **sct_register_multimodal**: flag smoothWarpXY: regularization of warping field (only for algo=columnwize)
+- NEW: **sct_register_multimodal**: flag pca_eigenratio_th: Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot).
 - BUG: **sct_straighten_spinalcord**: Fixed #917, #924
 - BUG: Fixed issues #715, #719
 - BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
