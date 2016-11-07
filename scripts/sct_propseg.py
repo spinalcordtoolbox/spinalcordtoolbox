@@ -338,8 +338,9 @@ if __name__ == "__main__":
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
 
+    # Creating the QC report
     if "-qc" in arguments:
-        msct_qc.coronal("PropSeg_{}".format(contrast_type),input_filename, output_filename).save()
+        msct_qc.coronal("PropSeg", contrast_type, input_filename, output_filename).save()
 
     if folder_output == "./":
         output_name = output_filename

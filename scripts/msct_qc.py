@@ -26,6 +26,7 @@ class Qc(object):
     """
     Creates a .png file from a 2d image produced by the class "slices"
     """
+    # 'NameOfVertebrae':index
     _labels_regions = {'PONS': 50, 'MO': 51,
                  'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
                  'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16, 'T10': 17, 'T11': 18, 'T12': 19,
@@ -37,6 +38,7 @@ class Qc(object):
                         '#ff0000', '#0000ff', '#00ff00',
                         '#ff0000', '#0000ff', '#00ff00',
                         '#ff0000', '#0000ff', '#00ff00'  ]
+
     def __init__(self, label = False, dpi=600, interpolation='none'):
         self.interpolation = interpolation
         self.dpi = dpi
@@ -44,12 +46,16 @@ class Qc(object):
 
 
     def __call__(self, f):
+        # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
         def wrapped_f(slice, *args, **kargs):
             name = slice.name
-            self.mkdir()
+
+            leafNodeDirPath = self.mkdir(slice)
             img, mask = f(slice,*args, **kargs)
+       
             assert isinstance(img, np.ndarray)
             assert isinstance(mask, np.ndarray)
+       
             fig = plt.imshow(img, cmap='gray', interpolation=self.interpolation)
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
@@ -57,14 +63,17 @@ class Qc(object):
             ax = plt.subplot()
             mask = np.rint(np.ma.masked_where(mask < 1, mask))
             plt.imshow(img, cmap='gray', interpolation=self.interpolation)
+           
             if self.label:
                 self.label_vertebrae(mask, ax)
             else:
                 self._labels_color = {'#ff0000'}
             plt.imshow(mask, cmap= col.ListedColormap(self._labels_color),norm =
                 matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation, alpha=1)
+          
             if self.label:
                 self.label_vertebrae(mask, ax)
+         
             self.save(name)
             plt.close()
 
@@ -87,10 +96,43 @@ class Qc(object):
         plt.savefig('{}.png'.format(name), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=self.dpi)
 
-    def mkdir(self):
-        # TODO : implement function
+    def mkdir(self, slice):
+        """
+        Creates the whole directory to contain the QC report.
+
+        Folder structure:
+        -----------------
+        .(report)
+        +-- _img
+        |   +-- _contrast01
+        |      +-- _toolProcess01
+        |          +-- contrast01_tool01_timestamp.png
+        |   +-- _contrast02
+        |      +-- _toolProcess01
+        |          +-- contrast02_tool01_timestamp.png
+        ...
+        |
+        +-- index.html
+
+        :return: return the furthest folder path to store the image
+        """
         # make a new or update Qc directory
-        return  0
+        newReportFolder = os.path.join(os.getcwd(), "report")
+        newImgFolder = os.path.join(newReportFolder, "img")
+        newContrastFolder = os.path.join(newImgFolder, slice.contrast_type)
+        newToolProcessFolder = os.path.join(newContrastFolder, slice.tool_name)
+
+        # Only create folder when it doesn't exist and it is always done in the current terminal
+        if not os.path.exists(newReportFolder):
+            os.mkdir(newReportFolder)
+        if not os.path.exists(newImgFolder):
+            os.mkdir(newImgFolder)
+        if not os.path.exists(newContrastFolder):
+            os.mkdir(newContrastFolder)
+        if not os.path.exists(newToolProcessFolder):
+            os.mkdir(newToolProcessFolder)
+            
+        return newToolProcessFolder
 
 
 class slices(object):
@@ -99,13 +141,16 @@ class slices(object):
     
     Parameters of the constructor
     ----------
-    name:           Output base name for the .png images of the slices.   
+    toolName:       Name of the sct_tool being used.  
+    contrastType:   Contrast parameter used for the tool. 
     imageName:      Input 3D MRI to be separated into slices.
     segImageName:   Output name for the 3D MRI to be produced.
     """
  
-    def __init__(self, name, imageName, segImageName ):
-        self.name = name
+    def __init__(self, toolName, contrastType, imageName, segImageName ):
+        self.name = "{0}_{1}".format(toolName, contrastType) #Output base name for the .png images of the slices.
+        self.tool_name = toolName # used to create folder
+        self.contrast_type = contrastType # used to create Folder
         self.image = Image(imageName)
         self.image_seg = Image(segImageName)
         self.image.change_orientation('SAL')  # reorient to SAL
@@ -145,24 +190,28 @@ class slices(object):
         return ny
 
     @staticmethod
-    def crop(matrix, center_x, center_y, ray_x, ray_y):
-        start_row = center_x - ray_x
-        end_row = center_x + ray_x
-        start_col = center_y - ray_y
-        end_col = center_y + ray_y
+    def crop(matrix, center_x, center_y, radius_x, radius_y):
+        """
+        This method crops the unnecessary parts of the image to keep only the essential image of the slice
+        """ 
+        # Radius is actually the size of the square. It is not the same radius for a circle
+        start_row = center_x - radius_x
+        end_row = center_x + radius_x
+        start_col = center_y - radius_y
+        end_col = center_y + radius_y
 
         if matrix.shape[ 0 ] < end_row:
-            if matrix.shape[ 0 ] < (end_row - start_row):# TODO: throw/raise an exception
+            if matrix.shape[ 0 ] < (end_row - start_row):# TODO: throw/raise an exception that the matrix is smaller than the crop section
                 raise OverflowError
-            return slices.crop(matrix, center_x - 1, center_y, ray_x, ray_y)
+            return slices.crop(matrix, center_x - 1, center_y, radius_x, radius_y)
         if matrix.shape[ 1 ] < end_col:
-            if matrix.shape[ 1 ] < (end_col - start_col):# TODO: throw/raise an exception
+            if matrix.shape[ 1 ] < (end_col - start_col):# TODO: throw/raise an exception that the matrix is smaller than the crop section
                 raise OverflowError
-            return slices.crop(matrix, center_x, center_y - 1, ray_x, ray_y)
+            return slices.crop(matrix, center_x, center_y - 1, radius_x, radius_y)
         if start_row < 0:
-            return slices.crop(matrix, center_x + 1 , center_y, ray_x , ray_y)
+            return slices.crop(matrix, center_x + 1 , center_y, radius_x , radius_y)
         if start_col < 0:
-            return slices.crop(matrix, center_x, center_y + 1, ray_x, ray_y )
+            return slices.crop(matrix, center_x, center_y + 1, radius_x, radius_y)
 
         return matrix[ start_row:end_row, start_col:end_col ]
 
@@ -206,6 +255,10 @@ class slices(object):
         return
 
     def _axial_center(self):
+        """
+        Method to get the center of mass in the axial plan.
+        :return: centers of mass in the x and y axis. 
+        """
         axial_dim = self.axial_dim(self.image_seg)
         centers_x = np.zeros(axial_dim)
         centers_y = np.zeros(axial_dim)
