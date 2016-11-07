@@ -24,7 +24,7 @@ import abc
 
 class Qc(object):
     """
-    Create a .png file from a 2d image.
+    Creates a .png file from a 2d image produced by the class "slices"
     """
     _labels_regions = {'PONS': 50, 'MO': 51,
                  'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
@@ -89,12 +89,21 @@ class Qc(object):
 
     def mkdir(self):
         # TODO : implement function
-        # make a new.or update Qc directory
+        # make a new or update Qc directory
         return  0
 
 
 class slices(object):
-
+    """
+    This class represents the slice objet that will be transformed in 2D image file.
+    
+    Parameters of the constructor
+    ----------
+    name:           Output base name for the .png images of the slices.   
+    imageName:      Input 3D MRI to be separated into slices.
+    segImageName:   Output name for the 3D MRI to be produced.
+    """
+ 
     def __init__(self, name, imageName, segImageName ):
         self.name = name
         self.image = Image(imageName)
@@ -106,6 +115,8 @@ class slices(object):
 
     __metaclass__ = abc.ABCMeta
 
+    # ..._slice:    Gets a slice cut in the desired axis at the "i" position of the data of the 3D image.
+    # ..._dim:      Gets the size of the desired dimension of the 3D image.
     @staticmethod
     def axial_slice(data, i):
         return data[ i, :, : ]
@@ -157,6 +168,9 @@ class slices(object):
 
     @staticmethod
     def add_slice(matrix, i, column, size, patch):
+        """
+        This method adds a slice to the Matrix containing all the slices
+        """
         startCol = (i % column) * size * 2
         endCol = startCol + patch.shape[ 1 ]
         startRow = int(math.ceil(i / column)) * size * 2
@@ -208,6 +222,15 @@ class slices(object):
 
     @Qc()
     def mosaic(self, nb_column, size):
+        """
+        Method to obtain matrices of the mosaics 
+       
+        :return matrix0: matrix of the input 3D RMI containing the mosaics of slices' "pixels"
+        :return matrix1: matrix of the transformed 3D RMI to output containing the mosaics of slices' "pixels"
+        """
+
+        # Calculates how many squares will fit in a row based on the column and the size
+        # Multiply by 2 because the sides are of size*2. Central point is size +/-.
         matrix0 = np.ones((size * 2 * int((self.dim / nb_column) + 1),size * 2 * nb_column))
         matrix1 = np.empty((size * 2 * int((self.dim / nb_column) + 1), size * 2 * nb_column))
         centers_x, centers_y = self.get_center()
@@ -220,8 +243,15 @@ class slices(object):
                                        slices.crop(self.getSlice(self.image_seg.data, i), x, y, size, size))
 
         return matrix0, matrix1
+
     @Qc(label= True,interpolation='nearest')
     def single(self):
+        """
+        Method to obtain matrices of the single slices
+       
+        :return matrix0: matrix of the input 3D RMI containing the slices
+        :return matrix1: matrix of the transformed 3D RMI to output containing the slices
+        """
         matrix0 = self.getSlice(self.image.data, self.dim/2)
         matrix1 = self.getSlice(self.image_seg.data,self.dim/2 )
         index = self.get_center_spit(self.image_seg)
@@ -232,11 +262,17 @@ class slices(object):
         return matrix0, matrix1
 
     def save(self, nb_column=0, size=10):
+        """
+        Saves the image in a mosaic if a number of columns is specified else it saves each slices as individual images 
+        :param size: Define the size of the side of the square containing the image of the slice. 
+        """
         if nb_column > 0:
             return self.mosaic(nb_column, size)
         else:
             return self.single()
 
+
+# The following classes (axial, sagital, coronal) inherits from the class "slices" and represents a cut in an axis
 
 class axial(slices):
     def getSlice(self, data, i):
