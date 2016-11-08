@@ -11,6 +11,7 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+import os
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -59,7 +60,7 @@ class Qc(object):
             fig = plt.imshow(img, cmap='gray', interpolation=self.interpolation)
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
-            self.save('{}_gray'.format(name))
+            self.save(leafNodeDirPath, '{}_gray'.format(name))
             ax = plt.subplot()
             mask = np.rint(np.ma.masked_where(mask < 1, mask))
             plt.imshow(img, cmap='gray', interpolation=self.interpolation)
@@ -74,7 +75,7 @@ class Qc(object):
             if self.label:
                 self.label_vertebrae(mask, ax)
          
-            self.save(name)
+            self.save(leafNodeDirPath, name)
             plt.close()
 
         return wrapped_f
@@ -92,8 +93,8 @@ class Qc(object):
                     arrowprops=dict(facecolor= color,shrink=0.05))
 
 
-    def save(self, name, format='png', bbox_inches='tight', pad_inches=0):
-        plt.savefig('{}.png'.format(name), format=format, bbox_inches=bbox_inches,
+    def save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0):
+        plt.savefig('{0}/{1}.png'.format(dirPath, name), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=self.dpi)
 
     def mkdir(self, slice):
