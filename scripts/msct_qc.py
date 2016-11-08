@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 import os
+import time
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -51,6 +52,7 @@ class Qc(object):
         def wrapped_f(slice, *args, **kargs):
             name = slice.name
 
+            # Create the directory for the 
             leafNodeDirPath = self.mkdir(slice)
             img, mask = f(slice,*args, **kargs)
        
@@ -94,7 +96,8 @@ class Qc(object):
 
 
     def save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0):
-        plt.savefig('{0}/{1}.png'.format(dirPath, name), format=format, bbox_inches=bbox_inches,
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        plt.savefig('{0}/{1}_{2}.png'.format(dirPath, name, timestamp), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=self.dpi)
 
     def mkdir(self, slice):
