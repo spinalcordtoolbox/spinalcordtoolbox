@@ -293,7 +293,7 @@ def dmri_moco(param):
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
     im_dw_list = []
     for iGroup in range(nb_groups):
-        im_dw_list.append(Image(file_dwi_mean[iGroup] + ext_data))
+        im_dw_list.append(file_dwi_mean[iGroup] + ext_data)
     im_dw_out = concat_data(im_dw_list, 3)
     im_dw_out.setFileName(file_dwi_group + ext_data)
     im_dw_out.save()
