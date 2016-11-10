@@ -297,10 +297,13 @@ def main():
     # check if figure can be opened (in case running SCT via ssh connection)
     print_line('Check if figure can be opened')
     try:
-        import matplotlib.pyplot as plt
-        plt.figure()
-        plt.close()
-        print_ok()
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            import matplotlib.pyplot as plt
+            plt.figure()
+            plt.close()
+            print_ok()
     except:
         print_fail()
         print sys.exc_info()
