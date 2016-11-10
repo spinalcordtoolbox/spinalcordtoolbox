@@ -1,6 +1,8 @@
 
 # Spinal Cord Toolbox [![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox) [![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox)
 
+![Spinal Cord Toolbox overview](abstract.png "Spinal Cord Toolbox overview")
+
 Comprehensive and open-source library of analysis tools for MRI of the spinal cord.
 
 - [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
@@ -11,7 +13,7 @@ Comprehensive and open-source library of analysis tools for MRI of the spinal co
 ## References
 
 #### Spinal Cord Toolbox
-- [Cohen-Adad et al. Spinal Cord Toolbox: an open-source framework for processing spinal cord MRI data. Proceedings of the 20th Annual Meeting of OHBM, Hamburg, Germany 2014:3633](https://www.dropbox.com/s/n75ucsnlc2debnc/cohenadad_ohbm14_spinalcordtoolbox_v2.pdf?dl=0)
+- [De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V, Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source software for processing spinal cord MRI data. Neuroimage 2016.](https://www.dropbox.com/s/mrv4uid659vp1qn/DeLeener16_SCT.pdf?dl=0)
 - [De Leener et al. Template-based analysis of multi-parametric MRI data with the Spinal Cord Toolbox. Proc. ISMRM, Toronto, Canada 2015](https://www.dropbox.com/s/1gv81xg17lgcxfn/5798_submitted_radC862D.pdf)
 
 #### Segmentation (PropSeg)
