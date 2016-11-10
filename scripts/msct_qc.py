@@ -311,7 +311,7 @@ class slices(object):
         """
         matrix0 = self.getSlice(self.image.data, self.dim/2)
         matrix1 = self.getSlice(self.image_seg.data,self.dim/2 )
-        index = self.get_center_spit(self.image_seg)
+        index = self.get_center_spit()
         for j in range(len(index)):
             matrix0[j] = self.getSlice(self.image.data, int(round(index[j])))[j]
             matrix1[j] = self.getSlice(self.image_seg.data, int(round(index[j])))[j]

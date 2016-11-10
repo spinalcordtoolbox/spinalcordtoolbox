@@ -340,7 +340,7 @@ if __name__ == "__main__":
 
     # Creating the QC report
     if "-qc" in arguments:
-        msct_qc.coronal("PropSeg", contrast_type, input_filename, output_filename).save()
+        msct_qc.axial("PropSeg", contrast_type, input_filename, output_filename).save(10, 15)
 
     if folder_output == "./":
         output_name = output_filename
