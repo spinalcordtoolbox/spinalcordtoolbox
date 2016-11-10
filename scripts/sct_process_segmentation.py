@@ -655,7 +655,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
             # get the slices corresponding to the vertebral levels
             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, x_centerline_fit_vox, y_centerline_fit_vox, z_centerline_fit_vox)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline_fit_vox)
 
         elif not vert_levels:
             vert_levels_list = []
@@ -862,7 +862,7 @@ def save_results(fname_output, overwrite, fname_data, metric_name, method, mean,
 # ======================================================================================================================
 # Find min and max slices corresponding to vertebral levels based on the fitted centerline coordinates
 # ======================================================================================================================
-def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels, vertebral_labeling_data, x_centerline_fit, y_centerline_fit, z_centerline):
+def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels, vertebral_labeling_data, z_centerline):
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
@@ -931,8 +931,9 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     nz = len(z_centerline)
     matching_slices_centerline_vert_labeling = []
     for i_z in range(0, nz):
-        # if the centerline is in the vertebral levels asked by the user, record the slice number
-        if vertebral_labeling_data[np.round(x_centerline_fit[i_z]), np.round(y_centerline_fit[i_z]), z_centerline[i_z]] in range(vert_levels_list[0], vert_levels_list[1]+1):
+        # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
+        vertebral_labeling_slice_iz = vertebral_labeling_data[:, :, z_centerline[i_z]]
+        if np.asarray(np.nonzero(vertebral_labeling_slice_iz)).shape != (2,0) and int(np.median(vertebral_labeling_slice_iz[np.nonzero(vertebral_labeling_slice_iz)])) in range(vert_levels_list[0], vert_levels_list[1]+1):
             matching_slices_centerline_vert_labeling.append(z_centerline[i_z])
 
     # now, find the min and max slices that are included in the vertebral levels
