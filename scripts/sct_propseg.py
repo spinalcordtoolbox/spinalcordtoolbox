@@ -339,7 +339,7 @@ if __name__ == "__main__":
 
     # Creating the QC report
     if "-qc" in arguments:
-        # msct_qc.axial("PropSeg", contrast_type, input_filename, output_filename).save(10, 15)
+        msct_qc.axial("PropSeg", contrast_type, input_filename, output_filename).save(10, 15)
         msct_qc.Qc().createDescriptionFile("sct_propseg", sys.argv[1:], parser.usage.description, None)
 
     if folder_output == "./":
