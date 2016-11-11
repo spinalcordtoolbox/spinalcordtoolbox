@@ -1,0 +1,12 @@
+cython
+numpy
+nipy
+nibabel
+dipy
+matplotlib
+scikit-learn
+scikit-image
+pandas
+xlwt
+xlrd
+xlutils
