@@ -71,7 +71,8 @@ def get_parser():
                                   '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
                                   '  - angle_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the CSA (mm^2),\n'
                                   '  - csa_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the angle (in degrees) between the spinal cord centerline and the inferior-superior direction,\n'
-                                  '  - csa_per_slice.txt: a CSV text file with z (1st column) and CSA in mm^2 (2nd column),\n'
+                                  '  - csa_per_slice.txt: a CSV text file with z (1st column), CSA in mm^2 (2nd column) and angle with respect to the I-S direction in degrees (3rd column),\n'
+                                  '  - csa_per_slice.pickle: a pickle file with the same results as \"csa_per_slice.txt\" recorded in a DataFrame (panda structure) that can be reloaded afterwrds,\n'
                                   '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n',
                       mandatory=True,
                       example=['centerline', 'label-vert', 'length', 'csa'])
@@ -434,6 +435,8 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True):
 
     from math import degrees
+    import pandas as pd
+    import pickle
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -628,6 +631,19 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     file_results.close()
     sct.printv('Save results in: '+output_folder+'csa_per_slice.txt\n', verbose)
 
+    # Create output pickle file
+    # data frame format
+    results_df = pd.DataFrame({'Slice (z)': range(min_z_index, max_z_index+1),
+                               'CSA (mm^2)': csa,
+                               'Angle with respect to the I-S direction (degrees)': angles})
+    # # dictionary format
+    # results_df = {'Slice (z)': range(min_z_index, max_z_index+1),
+    #                            'CSA (mm^2)': csa,
+    #                            'Angle with respect to the I-S direction (degrees)': angles}
+    output_file = open(output_folder + 'csa_per_slice.pickle', 'wb')
+    pickle.dump(results_df, output_file)
+    output_file.close()
+    sct.printv('Save results in: ' + output_folder + 'csa_per_slice.pickle\n', verbose)
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
@@ -699,7 +715,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         save_results(output_folder+'csa_volume', overwrite, fname_segmentation, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
     elif (not (slices or vert_levels)) and (overwrite == 1):
-        sct.printv('WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in a .txt file only.', type='warning')
+        sct.printv('WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in .txt and .pickle files only.', type='warning')
 
     # Remove temporary files
     if remove_temp_files:
@@ -853,7 +869,6 @@ def save_results(fname_output, overwrite, fname_data, metric_name, method, mean,
     output_results['STDEV across slices'] = str(std)
 
     # save "output_results"
-    import pickle
     output_file = open(fname_output+'.pickle', 'wb')
     pickle.dump(output_results, output_file)
     output_file.close()
