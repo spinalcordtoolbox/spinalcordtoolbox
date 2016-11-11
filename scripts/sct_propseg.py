@@ -184,8 +184,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
 
 if __name__ == "__main__":
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
+    arguments = parser.parse(sys.argv[1:])     
     input_filename = arguments["-i"]
     contrast_type = arguments["-c"]
 
@@ -340,12 +339,15 @@ if __name__ == "__main__":
 
     # Creating the QC report
     if "-qc" in arguments:
-        msct_qc.axial("PropSeg", contrast_type, input_filename, output_filename).save(10, 15)
+        # msct_qc.axial("PropSeg", contrast_type, input_filename, output_filename).save(10, 15)
+        msct_qc.Qc().createDescriptionFile("sct_propseg", sys.argv[1:], parser.usage.description, None)
 
     if folder_output == "./":
         output_name = output_filename
     else:
         output_name = folder_output + output_filename
     sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+
+	
 
 

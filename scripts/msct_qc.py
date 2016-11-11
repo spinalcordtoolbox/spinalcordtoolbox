@@ -6,12 +6,13 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Frederic Cloutier
-# Modified: 2016-10-03
+# Authors: Frederic Cloutier Samson Lam Erwan Marchand Thierno Ib Barry Nguyen Kenny
+# Modified: 2016-11-10
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 import os
+import json
 import time
 import numpy as np
 import math
@@ -22,7 +23,7 @@ import matplotlib
 from msct_image import Image
 from scipy import ndimage
 import abc
-
+import subprocess
 
 class Qc(object):
     """
@@ -138,6 +139,26 @@ class Qc(object):
             
         return newToolProcessFolder
 
+    def createDescriptionFile(self, tool, unparsed_args, description, commit_version):
+        """
+        Creates the description file with a JSON struct
+
+        Description file structure:
+        -----------------
+        command: 	cmd used by user
+	description:	quick description of current usage
+	commit_version:	version of last commit retrieved from util
+        """
+	if not isinstance(commit_version, basestring):
+	    commit_version = subprocess.check_output(["git", "describe"])
+        cmd = ""
+        for arg in unparsed_args:
+            cmd += arg + " "
+        cmd = tool + " " + str(cmd)
+	with open("description", "w") as outfile:
+	    json.dump({"command": cmd, "description": description, "commit_version": commit_version}, outfile, indent = 4)
+
+  	outfile.close
 
 class slices(object):
     """
