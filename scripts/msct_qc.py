@@ -145,19 +145,23 @@ class Qc(object):
 
         Description file structure:
         -----------------
-	commit_version:	version of last commit retrieved from util
-        command: 	cmd used by user
-	description:	quick description of current usage
+    	commit_version:	version of last commit retrieved from util
+            command: 	cmd used by user
+    	description:	quick description of current usage
         """
-	if not isinstance(commit_version, basestring):
-	    commit_version = subprocess.check_output(["git", "describe"])
-        cmd = ""
-        for arg in unparsed_args:
-            cmd += arg + " "
-        cmd = tool + " " + str(cmd)
-	with open("description", "w") as outfile:
-	    json.dump({"command": cmd, "description": description, "commit_version": commit_version}, outfile, indent = 4)
-  	outfile.close
+        if not isinstance(commit_version, basestring):
+            pathToProject = os.path.dirname(os.path.realpath(__file__))
+            currentDir = os.getcwd()
+            os.chdir(pathToProject)
+            commit_version = subprocess.check_output(["git", "describe"])
+            os.chdir(currentDir)
+            cmd = ""
+            for arg in unparsed_args:
+                cmd += arg + " "
+            cmd = tool + " " + str(cmd)
+        with open("description", "w") as outfile:
+            json.dump({"command": cmd, "description": description, "commit_version": commit_version}, outfile, indent = 4)
+        outfile.close
 
 class slices(object):
     """
