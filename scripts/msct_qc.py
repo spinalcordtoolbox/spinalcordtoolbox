@@ -127,13 +127,13 @@ class Qc(object):
         :return: return the furthest folder path to store the image
         """
         # make a new or update Qc directory
-        newReportFolder = os.path.join(os.getcwd(), "report")
+        newReportFolder = os.path.join(slice.report_root_folder, "report")
         newImgFolder = os.path.join(newReportFolder, "img")
         newContrastFolder = os.path.join(newImgFolder, slice.contrast_type)
         newToolProcessFolder = os.path.join(newContrastFolder, "{0}_{1}".format(slice.tool_name, timestamp))
 
-        print("\n\n{}\n\n".format(newToolProcessFolder))
         # Only create folder when it doesn't exist and it is always done in the current terminal
+        # TODO: print the created directory
         if not os.path.exists(newReportFolder):
             os.mkdir(newReportFolder)
         if not os.path.exists(newImgFolder):
@@ -181,16 +181,27 @@ class slices(object):
     segImageName:   Output name for the 3D MRI to be produced.
     """
  
-    def __init__(self, toolName, contrastType, imageName, segImageName ):
+    def __init__(self, toolName, contrastType, imageName, segImageName, reportRootFolder=None ):
         self.name = "{0}_{1}".format(toolName, contrastType) #Output base name for the .png images of the slices.
-        self.tool_name = toolName # used to create folder
-        self.contrast_type = contrastType # used to create Folder
-        self.image = Image(imageName)
-        self.image_seg = Image(segImageName)
-        self.image.change_orientation('SAL')  # reorient to SAL
-        self.image_seg.change_orientation('SAL')  # reorient to SAL
+        self.tool_name = toolName                   # used to create folder
+        self.contrast_type = contrastType           # used to create Folder
+        self.image = Image(imageName)               # the original input
+        self.image_seg = Image(segImageName)        # transformed input the one segmented
+        self.image.change_orientation('SAL')        # reorient to SAL
+        self.image_seg.change_orientation('SAL')    # reorient to SAL
         self.dim = self.getDim(self.image)
-
+        
+        # By default, the root folder will be one folder back, because we assume
+        # that user will usually run from data structure like sct_example_data
+        if reportRootFolder==None:
+            reportRootPath = os.path.join(os.getcwd(), "..")
+            if os.path.exists(reportRootPath):
+                self.report_root_folder = reportRootPath
+            # if the folder before doesn't exist, it will create in the current directory 
+            else:
+                self.report_root_folder = os.getcwd()
+        else:
+            self.report_root_folder = reportRootFolder
 
     __metaclass__ = abc.ABCMeta
 
