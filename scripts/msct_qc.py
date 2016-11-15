@@ -51,10 +51,13 @@ class Qc(object):
     def __call__(self, f):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
         def wrapped_f(slice, *args, **kargs):
-            name = slice.name
+            
+            # Get timestamp, will be used for folder structure and name of files
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            baseFilename = '{0}_{1}'.format(slice.name, timestamp)
 
             # Create the directory for the 
-            leafNodeDirPath = self.mkdir(slice)
+            leafNodeDirPath = self.mkdir(slice, timestamp)
             img, mask = f(slice,*args, **kargs)
        
             assert isinstance(img, np.ndarray)
@@ -63,7 +66,10 @@ class Qc(object):
             fig = plt.imshow(img, cmap='gray', interpolation=self.interpolation)
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
-            self.save(leafNodeDirPath, '{}_gray'.format(name))
+           
+            # saves the original color without contrast
+            self.save(leafNodeDirPath, '{}_original'.format(baseFilename))
+            
             ax = plt.subplot()
             mask = np.rint(np.ma.masked_where(mask < 1, mask))
             plt.imshow(img, cmap='gray', interpolation=self.interpolation)
@@ -78,7 +84,7 @@ class Qc(object):
             if self.label:
                 self.label_vertebrae(mask, ax)
          
-            self.save(leafNodeDirPath, name)
+            self.save(leafNodeDirPath, baseFilename)
             plt.close()
 
         return wrapped_f
@@ -97,11 +103,10 @@ class Qc(object):
 
 
     def save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0):
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        plt.savefig('{0}/{1}_{2}.png'.format(dirPath, name, timestamp), format=format, bbox_inches=bbox_inches,
+        plt.savefig('{0}/{1}.{2}'.format(dirPath, name, format), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=self.dpi)
 
-    def mkdir(self, slice):
+    def mkdir(self, slice, timestamp):
         """
         Creates the whole directory to contain the QC report.
 
@@ -110,10 +115,10 @@ class Qc(object):
         .(report)
         +-- _img
         |   +-- _contrast01
-        |      +-- _toolProcess01
+        |      +-- _toolProcess01_timestamp
         |          +-- contrast01_tool01_timestamp.png
         |   +-- _contrast02
-        |      +-- _toolProcess01
+        |      +-- _toolProcess01_timestamp
         |          +-- contrast02_tool01_timestamp.png
         ...
         |
@@ -125,8 +130,9 @@ class Qc(object):
         newReportFolder = os.path.join(os.getcwd(), "report")
         newImgFolder = os.path.join(newReportFolder, "img")
         newContrastFolder = os.path.join(newImgFolder, slice.contrast_type)
-        newToolProcessFolder = os.path.join(newContrastFolder, slice.tool_name)
+        newToolProcessFolder = os.path.join(newContrastFolder, "{0}_{1}".format(slice.tool_name, timestamp))
 
+        print("\n\n{}\n\n".format(newToolProcessFolder))
         # Only create folder when it doesn't exist and it is always done in the current terminal
         if not os.path.exists(newReportFolder):
             os.mkdir(newReportFolder)
