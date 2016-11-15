@@ -330,7 +330,7 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    #sct.run(cmd, verbose)
+    sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
@@ -340,9 +340,6 @@ if __name__ == "__main__":
     # Creating the QC report
     if "-qc" in arguments:
         msct_qc.axial("propseg", contrast_type, input_filename, output_filename).save(10, 15)
-        #msct_qc.Qc().createDescriptionFile("sct_propseg", sys.argv[1:], parser.usage.description, None)
-        #syntax = '{} {}'.format(contrast_type, "propseg")
-        #isct_generate_report.generate_report("description.txt",syntax,"report")
 
     if folder_output == "./":
         output_name = output_filename
