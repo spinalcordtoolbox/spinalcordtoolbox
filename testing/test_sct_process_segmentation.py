@@ -59,6 +59,8 @@ def test(path_data='', parameters=''):
     # status, o = sct.run(cmd, 0)
     # output += o
 
+    status_output = 0
+
     # CSA with integrity testing on various angles of segmentation
     import numpy as np
     import nibabel as nib
@@ -79,9 +81,9 @@ def test(path_data='', parameters=''):
     # create nifti with rotated header
     # build rotation matrix
     from numpy import matrix, cos, sin
-    alpha = 0.7854  # corresponds to 45deg angle
-    beta = 0.7854  # corresponds to 45deg angle
-    gamma = 0.7854  # corresponds to 45deg angle
+    alpha = 0.175  # corresponds to 10 deg angle
+    beta = 0.175  # corresponds to 10 deg angle
+    gamma = 0.175  # corresponds to 10 deg angle
     rotation_matrix = matrix([[cos(alpha)*cos(beta), cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma), cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
                               [sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)],
                               [-sin(beta), cos(beta)*sin(gamma), cos(beta)*cos(gamma)]])
@@ -108,7 +110,8 @@ def test(path_data='', parameters=''):
     csa = pickle.load(open('csa/csa_mean.pickle', 'rb'))
     csa_error = np.abs(csa['MEAN across slices'] - csa_truevalue)
     if csa_error > th_csa_error:
-        status = 99
+        if status_output != 99:
+            status_output = 99
         output += '\nWARNING: CSA_ERROR = ' + str(csa_error) + ' < ' + str(th_csa_error)
 
     # compute CSA on rotated image
@@ -126,7 +129,8 @@ def test(path_data='', parameters=''):
     csa = pickle.load(open('csa_rot/csa_mean.pickle', 'rb'))
     csa_error = np.abs(csa['MEAN across slices'] - csa_truevalue)
     if csa_error > th_csa_error:
-        status = 99
+        if status_output != 99:
+            status_output = 99
         output += '\nWARNING: CSA_ERROR = ' + str(csa_error) + ' < ' + str(th_csa_error)
 
     # compute CSA on rotated header
@@ -144,13 +148,14 @@ def test(path_data='', parameters=''):
     csa = pickle.load(open('csa_rothd/csa_mean.pickle', 'rb'))
     csa_error = np.abs(csa['MEAN across slices'] - csa_truevalue)
     if csa_error > th_csa_error:
-        status = 99
+        if status_output != 99:
+            status_output = 99
         output += '\nWARNING: CSA_ERROR = ' + str(csa_error) + ' < ' + str(th_csa_error)
 
     # transform results into Pandas structure
     duration = time.time() - time_start
-    results = DataFrame(data={'status': int(status), 'output': output, 'csa_error': csa_error, 'duration': duration}, index=[path_data])
-    return status, output, results
+    results = DataFrame(data={'status': int(status_output), 'output': output, 'csa_error': csa_error, 'duration': duration}, index=[path_data])
+    return status_output, output, results
 
 
 if __name__ == "__main__":
