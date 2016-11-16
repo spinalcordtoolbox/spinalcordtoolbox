@@ -182,6 +182,17 @@ SUBJECTS_LIST = [['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/ech
 
 
 
+
+
+
+
+
+
+
+
+
+
+
                  """
 
 new_folder = "/Users/benjamindeleener/data/template_data"
@@ -228,11 +239,11 @@ SUBJECTS_LIST = [
     ['errsm_10', folder_data_errsm+'/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_10/20-SPINE_SPACE'],
     ['errsm_20', folder_data_errsm+'/errsm_20/12-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_20/34-SPINE_T2'],
     ['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
-    ['errsm_21', folder_data_errsm+'/errsm_21/27-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_21/30-SPINE_T2'],
-    ['errsm_34', folder_data_errsm+'/errsm_34/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_34/40-SPINE_T2'],
-    ['errsm_12', folder_data_errsm+'/errsm_12/19-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_12/18-SPINE_T2'],
-    ['errsm_23', folder_data_errsm+'/errsm_23/29-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_23/28-SPINE_T2'],
-    ['errsm_35', folder_data_errsm+'/errsm_35/37-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_35/38-SPINE_T2'],
+    ['errsm_21', folder_data_errsm + '/errsm_21/27-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_21/30-SPINE_T2'],
+    ['errsm_34', folder_data_errsm + '/errsm_34/41-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_34/40-SPINE_T2'],
+    ['errsm_12', folder_data_errsm + '/errsm_12/19-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_12/18-SPINE_T2'],
+    ['errsm_23', folder_data_errsm + '/errsm_23/29-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_23/28-SPINE_T2'],
+    ['errsm_35', folder_data_errsm + '/errsm_35/37-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_35/38-SPINE_T2'],
     ['errsm_13', folder_data_errsm + '/errsm_13/33-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_13/34-SPINE_T2'],
     ['errsm_24', folder_data_errsm + '/errsm_24/20-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_24/24-SPINE_T2'],
     ['errsm_36', folder_data_errsm + '/errsm_36/30-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_36/31-SPINE_T2']
@@ -350,15 +361,15 @@ def main():
     #do_preprocessing('T1')
     timer['T1_do_preprocessing'].stop()
 
-    #average_centerline('T1')
+    average_centerline('T1')
     #create_mask_template()
 
     #convert_nii2mnc('T1')
-    do_preprocessing('T2')
-    straighten_all_subjects('T2')
+    #do_preprocessing('T2')
+    #straighten_all_subjects('T2')
     # convert_nii2mnc('T2')
 
-    straighten_all_subjects('T1')
+    #straighten_all_subjects('T1')
 
     timer['T1_create_cross'].start()
     #create_cross('T1')
@@ -437,6 +448,19 @@ def create_mask_template():
     template.data += 1.0
     template.setFileName('/Users/benjamindeleener/code/sct/dev/template_creation/template_mask.nii.gz')
     template.save()
+
+
+import matplotlib.cm as cmx
+import matplotlib.colors as colors
+
+def get_cmap(N):
+    '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
+    RGB color.'''
+    color_norm  = colors.Normalize(vmin=0, vmax=N-1)
+    scalar_map = cmx.ScalarMappable(norm=color_norm, cmap='hsv')
+    def map_index_to_rgb_color(index):
+        return scalar_map.to_rgba(index)
+    return map_index_to_rgb_color
 
 
 def average_centerline(contrast):
@@ -612,17 +636,38 @@ def average_centerline(contrast):
         pickle.dump(length_vertebral_levels, f)
 
 
+    cmap = get_cmap(len(list_centerline))
+    from matplotlib.pyplot import cm
+    color = iter(cm.rainbow(np.linspace(0, 1, len(list_centerline))))
+
     # generate averaged centerline
     plt.figure(1)
     # ax = plt.subplot(211)
     plt.subplot(211)
     for k, centerline in enumerate(list_centerline):
-        plt.plot([coord[2] for coord in centerline.points], [coord[0] for coord in centerline.points], 'r')
-    plt.plot([coord[2] for coord in points_average_centerline], [coord[0] for coord in points_average_centerline])
+        col = cmap(k)
+        col = next(color)
+        position_C1 = centerline.points[centerline.index_disk['C1']]
+        plt.plot([coord[2] - position_C1[2] for coord in centerline.points], [coord[0] - position_C1[0] for coord in centerline.points], color=col)
+        for label_disk in labels_regions:
+            if label_disk in centerline.index_disk:
+                point = centerline.points[centerline.index_disk[label_disk]]
+                plt.scatter(point[2] - position_C1[2], point[0] - position_C1[0], color=col, s=5)
+
+    position_C1 = disk_average_coordinates['C1']
+    plt.plot([coord[2] - position_C1[2] for coord in points_average_centerline], [coord[0] - position_C1[0] for coord in points_average_centerline], color='g', linewidth=3)
+    for label_disk in labels_regions:
+        if label_disk in disk_average_coordinates:
+            point = disk_average_coordinates[label_disk]
+            plt.scatter(point[2] - position_C1[2], point[0] - position_C1[0], marker='*', color='green', s=25)
+
+    plt.grid()
     MO_array = [[points_average_centerline[i][0], points_average_centerline[i][1], points_average_centerline[i][2]] for i in range(len(points_average_centerline)) if label_points[i] == 'MO']
     PONS_array = [[points_average_centerline[i][0], points_average_centerline[i][1], points_average_centerline[i][2]] for i in range(len(points_average_centerline)) if label_points[i] == 'PONS']
     #plt.plot([coord[2] for coord in MO_array], [coord[0] for coord in MO_array], 'mo')
     #plt.plot([coord[2] for coord in PONS_array], [coord[0] for coord in PONS_array], 'ko')
+
+    color = iter(cm.rainbow(np.linspace(0, 1, len(list_centerline))))
 
     plt.title("X")
     # ax.set_aspect('equal')
@@ -631,8 +676,23 @@ def average_centerline(contrast):
     # ay = plt.subplot(212)
     plt.subplot(212)
     for k, centerline in enumerate(list_centerline):
-        plt.plot([coord[2] for coord in centerline.points], [coord[1] for coord in centerline.points], 'r')
-    plt.plot([coord[2] for coord in points_average_centerline], [coord[1] for coord in points_average_centerline])
+        col = cmap(k)
+        col = next(color)
+        position_C1 = centerline.points[centerline.index_disk['C1']]
+        plt.plot([coord[2] - position_C1[2] for coord in centerline.points], [coord[1] - position_C1[1] for coord in centerline.points], color=col)
+        for label_disk in labels_regions:
+            if label_disk in centerline.index_disk:
+                point = centerline.points[centerline.index_disk[label_disk]]
+                plt.scatter(point[2] - position_C1[2], point[1] - position_C1[1], color=col, s=5)
+
+    position_C1 = disk_average_coordinates['C1']
+    plt.plot([coord[2] - position_C1[2] for coord in points_average_centerline], [coord[1] - position_C1[1] for coord in points_average_centerline], color='g', linewidth=3)
+    for label_disk in labels_regions:
+        if label_disk in disk_average_coordinates:
+            point = disk_average_coordinates[label_disk]
+            plt.scatter(point[2] - position_C1[2], point[1] - position_C1[1], marker='*', color='green', s=25)
+
+    plt.grid()
     #plt.plot([coord[2] for coord in MO_array], [coord[1] for coord in MO_array], 'mo')
     #plt.plot([coord[2] for coord in PONS_array], [coord[1] for coord in PONS_array], 'ko')
     plt.title("Y")
