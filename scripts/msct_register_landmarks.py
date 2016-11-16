@@ -35,7 +35,7 @@ ini_param_trans_x = 270.0 #pix
 ini_param_trans_y = -150.0 #pix
 initial_step = 2
 
-def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1, path_qc='./'):
+def register_landmarks(fname_dest, fname_src, dof, fname_affine='affine.txt', verbose=1, path_qc='./'):
     """
     Register two NIFTI volumes containing landmarks
     :param fname_src: fname of source landmarks
@@ -298,7 +298,6 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
     :return: rotsc_matrix, translation_array, points_moving_reg, points_moving_barycenter
     """
     # TODO: check input constraints
-
     from scipy.optimize import minimize
 
     # initialize default parameters
@@ -372,7 +371,7 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='Tx_
         ax.set_zlabel('z')
         ax.set_aspect('auto')
         plt.legend()
-        plt.show()
+        # plt.show()
         plt.savefig(path_qc + 'getRigidTransformFromLandmarks_plot.png')
 
         fig2 = plt.figure()
