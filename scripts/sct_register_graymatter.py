@@ -9,7 +9,11 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import sys, os, time
+import sys
+import os
+import time
+import re
+
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
@@ -299,12 +303,15 @@ class MultiLabelRegistration:
                      'Diff = metric_corrected_reg - metric_regular_reg\n')
         dice_fic.write('#Slice, WM DC, WM diff, GM DC, GM diff\n')
 
-        init_dc = '2D Dice coefficient by slice:\n'
+        # TODO, not forget to refrator that when we stop callin sct.run('sct_dice_coefficient' ... !
+        regex_str = '2D Dice coefficient by slice:*\n((\d+ \d+(\.\d+)?\n)+)'
+        def extract_from_std_out(input_str):
+            return re.search(regex_str, input_str).groups()[0].strip('\n').split('\n')
 
-        old_gm_dc = output_old_gm[output_old_gm.find(init_dc)+len(init_dc):].split('\n')
-        old_wm_dc = output_old_wm[output_old_wm.find(init_dc)+len(init_dc):].split('\n')
-        new_gm_dc = output_new_gm[output_new_gm.find(init_dc)+len(init_dc):].split('\n')
-        new_wm_dc = output_new_wm[output_new_wm.find(init_dc)+len(init_dc):].split('\n')
+        old_gm_dc = extract_from_std_out(output_old_gm)
+        old_wm_dc = extract_from_std_out(output_old_wm)
+        new_gm_dc = extract_from_std_out(output_new_gm)
+        new_wm_dc = extract_from_std_out(output_new_wm)
 
         for i in range(len(old_gm_dc)):
             if i not in no_ref_slices:
