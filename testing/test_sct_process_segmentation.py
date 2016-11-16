@@ -12,7 +12,6 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-# TODO: add test with rotated header
 # TODO: make it compatible with isct_test_function
 # TODO: add log file
 
