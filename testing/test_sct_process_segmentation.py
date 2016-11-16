@@ -13,6 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 # TODO: make it compatible with isct_test_function
+# TODO: add log file
 
 import sct_utils as sct
 from pandas import DataFrame
