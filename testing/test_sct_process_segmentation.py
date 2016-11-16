@@ -12,6 +12,7 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+# TODO: add test with rotated header
 # TODO: make it compatible with isct_test_function
 # TODO: add log file
 
@@ -50,14 +51,14 @@ def test(path_data='', parameters=''):
     output += o
 
     # define command
-    cmd = 'sct_process_segmentation -i ' + path_data + folder_data + file_data \
-          + ' -p csa' \
-          + ' -size 1'\
-          + ' -r 0'\
-          + ' -v 1'
-    output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
-    status, o = sct.run(cmd, 0)
-    output += o
+    # cmd = 'sct_process_segmentation -i ' + path_data + folder_data + file_data \
+    #       + ' -p csa' \
+    #       + ' -size 1'\
+    #       + ' -r 0'\
+    #       + ' -v 1'
+    # output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    # status, o = sct.run(cmd, 0)
+    # output += o
 
     # CSA with integrity testing on various angles of segmentation
     import numpy as np
@@ -76,6 +77,19 @@ def test(path_data='', parameters=''):
     # save as nifti
     img = nib.Nifti1Image(data_seg, np.eye(4))
     nib.save(img, 'data_seg.nii.gz')
+    # create nifti with rotated header
+    # build rotation matrix
+    from numpy import matrix, cos, sin
+    alpha = 0.7854  # corresponds to 45deg angle
+    beta = 0.7854  # corresponds to 45deg angle
+    gamma = 0.7854  # corresponds to 45deg angle
+    rotation_matrix = matrix([[cos(alpha)*cos(beta), cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma), cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
+                              [sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)],
+                              [-sin(beta), cos(beta)*sin(gamma), cos(beta)*cos(gamma)]])
+    affine_matrix = np.eye(4)
+    affine_matrix[0:3, 0:3] = rotation_matrix
+    img_rothd = nib.Nifti1Image(data_seg, affine_matrix)
+    nib.save(img_rothd, 'data_seg_rothd.nii.gz')
     # rotate src image
     sct.run('sct_label_utils -i data_seg.nii.gz -create 13,13,0,3:13,13,15,2:13,16,15,4:13,13,30,1 -o data_rot_src.nii.gz', 0)
     sct.run('sct_label_utils -i data_seg.nii.gz -create 4,13,6,3:13,13,15,2:13,16,15,4:22,13,26,1 -o data_rot_dest.nii.gz', 0)
@@ -111,6 +125,24 @@ def test(path_data='', parameters=''):
     output += o
     # check integrity
     csa = pickle.load(open('csa_rot/csa_mean.pickle', 'rb'))
+    csa_error = np.abs(csa['MEAN across slices'] - csa_truevalue)
+    if csa_error > th_csa_error:
+        status = 99
+        output += '\nWARNING: CSA_ERROR = ' + str(csa_error) + ' < ' + str(th_csa_error)
+
+    # compute CSA on rotated header
+    cmd = 'sct_process_segmentation -i data_seg_rothd.nii.gz' \
+          + ' -p csa' \
+          + ' -size 0' \
+          + ' -r 0' \
+          + ' -v 1' \
+          + ' -z 5:23' \
+          + ' -ofolder csa_rothd'
+    output = '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
+    status, o = sct.run(cmd, 0)
+    output += o
+    # check integrity
+    csa = pickle.load(open('csa_rothd/csa_mean.pickle', 'rb'))
     csa_error = np.abs(csa['MEAN across slices'] - csa_truevalue)
     if csa_error > th_csa_error:
         status = 99
