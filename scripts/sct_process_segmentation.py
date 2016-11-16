@@ -515,6 +515,11 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     csa = np.zeros(max_z_index-min_z_index+1)
     angles = np.zeros(max_z_index - min_z_index + 1)
 
+    direction_matrix = im_seg.im_file.affine
+    z_axis_image = np.dot(direction_matrix,np.array([0.0, 0.0, 1.0, 1.0]))
+    z_axis_image = z_axis_image[0:3]
+    z_axis_image /= np.linalg.norm(z_axis_image)
+
     for iz in xrange(min_z_index, max_z_index+1):
         if angle_correction:
             # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
@@ -526,7 +531,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
                 sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.dot(normal, [0, 0, 1]))
+            angle = np.arccos(np.dot(normal, z_axis_image))
         else:
             angle = 0.0
 
