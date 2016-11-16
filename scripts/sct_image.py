@@ -10,8 +10,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import re
 import sys
+
 from numpy import concatenate, shape, newaxis
+
 from msct_parser import Parser
 from msct_image import Image, get_dimension
 from sct_utils import printv, add_suffix, extract_fname, run, tmp_create
@@ -597,7 +600,7 @@ def get_orientation_3d(im, filename=False):
     :return:
     """
     from sct_utils import run
-    string_out = 'Input image orientation : '
+    regex_str = 'Input image orientation : ([A-Z]{3})\n?'
     # get orientation
     if filename:
         status, output = run('isct_orientation3d -i '+im+' -get ', 0)
@@ -606,7 +609,7 @@ def get_orientation_3d(im, filename=False):
     # check status
     if status != 0:
         printv('ERROR in get_orientation.', 1, 'error')
-    orientation = output[output.index(string_out)+len(string_out):]
+    orientation = re.search(regex_str,output).groups()[0]
     # orientation = output[26:]
     return orientation
 
