@@ -304,7 +304,7 @@ class MultiLabelRegistration:
         dice_fic.write('#Slice, WM DC, WM diff, GM DC, GM diff\n')
 
         # TODO, not forget to refrator that when we stop callin sct.run('sct_dice_coefficient' ... !
-        regex_str = '2D Dice coefficient by slice:*\n((\d+ \d+(\.\d+)?\n)+)'
+        regex_str = '2D Dice coefficient by slice:*\n((\d+ \d+(\.\d+)?\n?)+)'
         def extract_from_std_out(input_str):
             return re.search(regex_str, input_str).groups()[0].strip('\n').split('\n')
 
