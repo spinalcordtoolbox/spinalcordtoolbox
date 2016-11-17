@@ -60,16 +60,22 @@ class Qc(object):
 
                         ]
 
-    def __init__(self, label = False, dpi=600, interpolation='none'):
+    def __init__(self, outil, arg, description, label = False, dpi=600, interpolation='none', ):
         self.interpolation = interpolation
         self.dpi = dpi
         self.label = label
         self.folder_name = None
+        self.outil = outil
+        self.arg = arg
+        self.description = description
+        self.name = "{0}_{1}".format(toolName, contrastType) #Output base name for the .png images of the slices.
+        self.tool_name = toolName                   # used to create folder
+        self.contrast_type = contrastType           # used to create Folder
 
 
     def __call__(self, f):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
-        def wrapped_f(slice, *args, **kargs):
+        def wrapped_f(*args, **kargs):
             
             # Get timestamp, will be used for folder structure and name of files
             timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -107,7 +113,7 @@ class Qc(object):
 
             plt.close()
 
-            #msct_qc.Qc().createDescriptionFile("sct_propseg", sys.argv[1:], parser.usage.description, None)
+            self.createDescriptionFile(self.outil, self.arg, self.description, None)
             syntax = '{} {}'.format(slice.contrast_type, os.path.basename(leafNodeFullPath)) 
             isct_generate_report.generate_report("description.txt",syntax, rootFolderPath)
 
@@ -206,9 +212,6 @@ class slices(object):
     """
  
     def __init__(self, toolName, contrastType, imageName, segImageName, reportRootFolder=None ):
-        self.name = "{0}_{1}".format(toolName, contrastType) #Output base name for the .png images of the slices.
-        self.tool_name = toolName                   # used to create folder
-        self.contrast_type = contrastType           # used to create Folder
         self.image = Image(imageName)               # the original input
         self.image_seg = Image(segImageName)        # transformed input the one segmented
         self.image.change_orientation('SAL')        # reorient to SAL
@@ -342,7 +345,7 @@ class slices(object):
             raise
         return centers_x, centers_y
 
-    @Qc()
+
     def mosaic(self, nb_column, size):
         """
         Method to obtain matrices of the mosaics 
@@ -366,7 +369,7 @@ class slices(object):
 
         return matrix0, matrix1
 
-    @Qc(label= True,interpolation='nearest')
+    #@Qc(label= True,interpolation='nearest')
     def single(self):
         """
         Method to obtain matrices of the single slices
@@ -383,15 +386,6 @@ class slices(object):
 
         return matrix0, matrix1
 
-    def save(self, nb_column=0, size=10):
-        """
-        Saves the image in a mosaic if a number of columns is specified else it saves each slices as individual images 
-        :param size: Define the size of the side of the square containing the image of the slice. 
-        """
-        if nb_column > 0:
-            return self.mosaic(nb_column, size)
-        else:
-            return self.single()
 
 
 # The following classes (axial, sagital, coronal) inherits from the class "slices" and represents a cut in an axis

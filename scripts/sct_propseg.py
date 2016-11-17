@@ -344,12 +344,23 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    sct.run(cmd, verbose)
+    #sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
+
+
+    @msct_qc.Qc(outil="sct_propseg", arg=sys.argv[ 1: ], description=parser.usage.description)
+    def propseg_qc(contrast_type, input_filename, output_filename, nbrcolumns):
+        """
+             Saves the image in a mosaic if a number of columns is specified else it saves each slices as individual images
+             :param size: Define the size of the side of the square containing the image of the slice.
+             """
+
+
+        msct_qc.axial("propseg", contrast_type, input_filename, output_filename).mosaic(nbrcolumns, 15)
 
     # Creating the QC report
     if "-qc" in arguments:
@@ -358,7 +369,7 @@ if __name__ == "__main__":
             obj = paramStep.split('=')
             if obj[0]=="nbrcol":
                 nbrcolumns=int(obj[1])
-        msct_qc.axial("propseg", contrast_type, input_filename, output_filename).save(nbrcolumns, 15)
+        propseg_qc(contrast_type, input_filename, output_filename, nbrcolumns)
 
     if folder_output == "./":
         output_name = output_filename
