@@ -1,10 +1,25 @@
+
 //#region Global Variable
 //Global variable
 var speed = 1000;
 var x = 0;
-var images = [];
-var continueSwapping = false;
+var continueSwapping = true;
 
+var images = [];
+
+function getImages(){
+	var tables = $('table');
+	console.log(tables)
+	tables.map(function(item){
+	     var src = $(this).find("img").attr("src");
+		images.push(src); 
+		console.log("the image is",$(this).find("img").attr("src"))
+	})
+}
+
+getImages();
+
+changeImage();
 //For test_case
 var FadeOut_btn, Change_Image, ToggleToolTip, PlayStop_Btn, StopText, PlayText;
 //endregion Global Variable
@@ -81,18 +96,24 @@ function requestChangeImage()
 	}
 }
 
-function changeImage()
-{
-	var d = new Date();
-	$("#"+Change_Image).attr('src', images[x] +"?"+d.getTime());
-	x++;
-	if(x >= images.length)
-	{
-		x = 0;
-	} 
-	continueSwapping = setTimeout("changeImage()", speed);
+function changeImage(){
+			console.log("swap")
+	if(continueSwapping){
+		var d = new Date();
+		$("#Change_Image").attr('src', images[x] +"?"+d.getTime());
+		x++;
+		if(x >= images.length)
+		{
+			x = 0;
+		} 
+		setTimeout("changeImage()", speed);
+	}
 }
-
+$("#Change_Image").click(function(e){
+	continueSwapping = !continueSwapping;
+	console.log("cahnge swap",continueSwapping)
+	changeImage();
+})
 
 function changePlayStopButtonState() 
 {

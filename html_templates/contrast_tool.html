@@ -16,7 +16,7 @@
     </div>
     <section id="results">
             {% for img in images %}
-            <table>
+            <table  class="hidden">
                 <tr class="col">
                     <td class="image-result"><a href="{{img.src}}"><img src="{{img.src}}" alt="Image not found" style="width:100%"></a></td>
                 </tr>
@@ -25,6 +25,7 @@
                 </tr>
             </table><br/>
             {% endfor %}
+             <div><img id="Change_Image" alt="Image not found" style="width:95%;margin:0 auto;"/></div>
     </section>
 </div>
     <a href="" data-toggle="tooltip" data-placement="left" title="Go Top" class="go-top"
@@ -32,3 +33,5 @@
 			<span class="glyphicon glyphicon glyphicon-triangle-top" aria-hidden="true" ></span>
     </a>
 </div>
+<script src="assets/js/jquery-3.1.0.min.js"></script>
+<script src="assets/js/animation.js"></script>

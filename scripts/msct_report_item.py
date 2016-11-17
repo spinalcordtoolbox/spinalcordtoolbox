@@ -15,6 +15,9 @@ class ReportItem:
         self.htmlFileName = '{}-{}.html'.format(self.contrastName, self.toolName)
         return
 
+    def generateGif():
+        return self.genGif > -1 
+
     def addImageLink(self, link):
         """
         add image link  to a list of images link
