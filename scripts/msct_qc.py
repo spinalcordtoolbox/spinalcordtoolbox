@@ -26,6 +26,90 @@ import abc
 import subprocess
 import isct_generate_report
 
+
+class Qc_Report(object):
+    def __init__(self, tool_name, contrast_type, descr_args, description, param_qc):
+        # used to create folder
+        self.tool_name = tool_name                   
+        self.contrast_type = contrast_type 
+        self.report_root_folder = None
+
+        # used to create description file
+        self.descr_args = descr_args
+        self.description = description
+
+        # qc args
+        self.nb_columns = 10
+        self.output_folder = None
+
+        self.timestamp = time.strftime("%Y%m%d_%H%M%S")
+
+        # parse the qc args
+        for paramStep in param_qc:
+            obj = paramStep.split('=')
+            if obj[0]=="nbrcol":
+                nb_column=int(obj[1])
+            if obj[0]=="ofolder":
+                output_folder=str(obj[1])
+
+        # By default, the root folder will be one folder back, because we assume
+        # that user will usually run from data structure like sct_example_data
+        report_root_folder = None
+        if report_root_folder==None:
+            report_root_folder = os.path.join(os.getcwd(), "..")
+            if os.path.exists(report_root_folder):
+                self.report_root_folder = report_root_folder
+            # if the folder before doesn't exist, it will create in the current directory 
+            else:
+                self.report_root_folder = os.getcwd()
+        else:
+            self.report_root_folder = report_root_folder
+
+        
+
+    def mkdir(self):
+        """
+        Creates the whole directory to contain the QC report.
+
+        Folder structure:
+        -----------------
+        .(report)
+        +-- _img
+        |   +-- _contrast01
+        |      +-- _toolProcess01_timestamp
+        |          +-- contrast01_tool01_timestamp.png
+        |   +-- _contrast02
+        |      +-- _toolProcess01_timestamp
+        |          +-- contrast02_tool01_timestamp.png
+        ...
+        |
+        +-- index.html
+
+        :return: return "root folder of the report" and the "furthest folder path" containing the images
+        """
+        # make a new or update Qc directory
+        newReportFolder = os.path.join(self.report_root_folder, "report")
+        newImgFolder = os.path.join(newReportFolder, "img")
+        newContrastFolder = os.path.join(newImgFolder, self.contrast_type)
+        newToolProcessFolder = os.path.join(newContrastFolder, "{0}_{1}".format(self.tool_name, self.timestamp))
+
+        # Only create folder when it doesn't exist and it is always done in the current terminal
+        # TODO: print the created directory
+        if not os.path.exists(newReportFolder):
+            os.mkdir(newReportFolder)
+        if not os.path.exists(newImgFolder):
+            os.mkdir(newImgFolder)
+        if not os.path.exists(newContrastFolder):
+            os.mkdir(newContrastFolder)
+        if not os.path.exists(newToolProcessFolder):
+            os.mkdir(newToolProcessFolder)
+            
+        return newReportFolder, newToolProcessFolder
+
+    def split_qc_args():
+        return 0
+
+
 class Qc(object):
     """
     Creates a .png file from a 2d image produced by the class "slices"
@@ -60,32 +144,13 @@ class Qc(object):
 
                         ]
 
-    def __init__(self, tool_name, contrast_type, descr_args, description, report_root_folder=None, label = False, dpi=600, interpolation='none'):
-        # used to create folder
-        self.tool_name = tool_name                   
-        self.contrast_type = contrast_type 
-        self.report_root_folder = report_root_folder
+    def __init__(qc_report, label = False, dpi=600, interpolation='none'):
+        self.qc_report = qc_report
 
-        # used to create description file
-        self.descr_args = descr_args
-        self.description = description
-        
         # used to save the image file
         self.label = label
         self.dpi = dpi
         self.interpolation = interpolation
-
-        # By default, the root folder will be one folder back, because we assume
-        # that user will usually run from data structure like sct_example_data
-        if report_root_folder==None:
-            report_root_folder = os.path.join(os.getcwd(), "..")
-            if os.path.exists(report_root_folder):
-                self.report_root_folder = report_root_folder
-            # if the folder before doesn't exist, it will create in the current directory 
-            else:
-                self.report_root_folder = os.getcwd()
-        else:
-            self.report_root_folder = report_root_folder
 
 
     def __call__(self, f):
@@ -93,11 +158,11 @@ class Qc(object):
         def wrapped_f(slice, *args, **kargs):
             
             # Get timestamp, will be used for folder structure and name of files
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            baseFilename = '{0}_{1}_{1}'.format(self.tool_name, self.contrast_type, timestamp)
+            
+            baseFilename = '{0}_{1}_{1}'.format(self.qc_report.tool_name, self.qc_report.contrast_type, timestamp)
 
             # Create the directory for the 
-            rootFolderPath, leafNodeFullPath = self.mkdir(timestamp)
+            rootFolderPath, leafNodeFullPath = self.qc_report.mkdir()
             img, mask = f(slice, *args, **kargs)
        
             assert isinstance(img, np.ndarray)
@@ -128,8 +193,8 @@ class Qc(object):
 
             plt.close()
 
-            self.createDescriptionFile(self.tool_name, self.descr_args, self.description, None)
-            syntax = '{} {}'.format(self.contrast_type, os.path.basename(leafNodeFullPath)) 
+            self.createDescriptionFile(self.qc_report.tool_name, self.qc_report.descr_args, self.qc_report.description, None)
+            syntax = '{} {}'.format(self.qc_report.contrast_type, os.path.basename(leafNodeFullPath)) 
             isct_generate_report.generate_report("description.txt",syntax, rootFolderPath)
 
         return wrapped_f
@@ -151,44 +216,6 @@ class Qc(object):
         plt.savefig('{0}/{1}.{2}'.format(dirPath, name, format), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=self.dpi)
 
-    def mkdir(self, timestamp):
-        """
-        Creates the whole directory to contain the QC report.
-
-        Folder structure:
-        -----------------
-        .(report)
-        +-- _img
-        |   +-- _contrast01
-        |      +-- _toolProcess01_timestamp
-        |          +-- contrast01_tool01_timestamp.png
-        |   +-- _contrast02
-        |      +-- _toolProcess01_timestamp
-        |          +-- contrast02_tool01_timestamp.png
-        ...
-        |
-        +-- index.html
-
-        :return: return "root folder of the report" and the "furthest folder path" containing the images
-        """
-        # make a new or update Qc directory
-        newReportFolder = os.path.join(self.report_root_folder, "report")
-        newImgFolder = os.path.join(newReportFolder, "img")
-        newContrastFolder = os.path.join(newImgFolder, self.contrast_type)
-        newToolProcessFolder = os.path.join(newContrastFolder, "{0}_{1}".format(self.tool_name, timestamp))
-
-        # Only create folder when it doesn't exist and it is always done in the current terminal
-        # TODO: print the created directory
-        if not os.path.exists(newReportFolder):
-            os.mkdir(newReportFolder)
-        if not os.path.exists(newImgFolder):
-            os.mkdir(newImgFolder)
-        if not os.path.exists(newContrastFolder):
-            os.mkdir(newContrastFolder)
-        if not os.path.exists(newToolProcessFolder):
-            os.mkdir(newToolProcessFolder)
-            
-        return newReportFolder, newToolProcessFolder
 
     def createDescriptionFile(self, tool, unparsed_args, description, commit_version):
         """

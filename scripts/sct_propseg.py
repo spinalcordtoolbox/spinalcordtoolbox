@@ -270,18 +270,7 @@ if __name__ == "__main__":
     if "-alpha" in arguments:
         cmd += " -alpha " + str(arguments["-alpha"])
 
-
-    if "-qc" in arguments:
-        param_qc = arguments['-qc']
-        #sct.printv('parameters of qc :')
-        #paramqc=None
-        #params_qc = obj = param_qc[0].split(',')
-        #for paramStep in param_qc:
-        #    obj = paramStep.split('=')
-        #    sct.printv('param :')
-        #    sct.printv(obj[0])
-        #    sct.printv('with value :')
-        #    sct.printv(obj[1])
+        
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
@@ -352,22 +341,30 @@ if __name__ == "__main__":
     output_filename = file_fname + "_seg" + ext_fname
 
 
-    @msct_qc.Qc(tool_name="sct_propseg", contrast_type=contrast_type, descr_args=sys.argv[ 1: ], description=parser.usage.description)
-    def propseg_qc(input_filename, output_filename, nbrcolumns):
-        """
-        Saves the image in a mosaic if a number of columns is specified else it saves each slices as individual images
-        :param size: Define the size of the side of the square containing the image of the slice.
-        """
-        msct_qc.axial(input_filename, output_filename).mosaic(nbrcolumns, 15)
+    
 
     # Creating the QC report
     if "-qc" in arguments:
-        nbrcolumns = 10
-        for paramStep in param_qc:
-            obj = paramStep.split('=')
-            if obj[0]=="nbrcol":
-                nbrcolumns=int(obj[1])
-        propseg_qc(input_filename, output_filename, nbrcolumns)
+        #sct.printv('parameters of qc :')
+        #paramqc=None
+        #params_qc = obj = param_qc[0].split(',')
+        #for paramStep in param_qc:
+        #    obj = paramStep.split('=')
+        #    sct.printv('param :')
+        #    sct.printv(obj[0])
+        #    sct.printv('with value :')
+        #    sct.printv(obj[1])
+        qcReport = msct_qc.Qc_Report("sct_propseg", contrast_type, sys.argv[ 1: ], parser.usage.description, arguments['-qc'])
+
+        @msct_qc.Qc(qcReport)
+        def propseg_qc(input_filename, output_filename, nbrcolumns):
+            """
+            Saves the image in a mosaic if a number of columns is specified else it saves each slices as individual images
+            :param size: Define the size of the side of the square containing the image of the slice.
+            """
+            msct_qc.axial(input_filename, output_filename).mosaic(nbrcolumns, 15)
+
+        propseg_qc(input_filename, output_filename, qcReport.nb_columns)
 
     if folder_output == "./":
         output_name = output_filename
