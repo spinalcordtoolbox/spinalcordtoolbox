@@ -60,30 +60,45 @@ class Qc(object):
 
                         ]
 
-    def __init__(self, outil, arg, description, label = False, dpi=600, interpolation='none', ):
-        self.interpolation = interpolation
-        self.dpi = dpi
-        self.label = label
-        self.folder_name = None
-        self.outil = outil
-        self.arg = arg
+    def __init__(self, tool_name, contrast_type, descr_args, description, report_root_folder=None, label = False, dpi=600, interpolation='none'):
+        # used to create folder
+        self.tool_name = tool_name                   
+        self.contrast_type = contrast_type 
+        self.report_root_folder = report_root_folder
+
+        # used to create description file
+        self.descr_args = descr_args
         self.description = description
-        self.name = "{0}_{1}".format(toolName, contrastType) #Output base name for the .png images of the slices.
-        self.tool_name = toolName                   # used to create folder
-        self.contrast_type = contrastType           # used to create Folder
+        
+        # used to save the image file
+        self.label = label
+        self.dpi = dpi
+        self.interpolation = interpolation
+
+        # By default, the root folder will be one folder back, because we assume
+        # that user will usually run from data structure like sct_example_data
+        if report_root_folder==None:
+            report_root_folder = os.path.join(os.getcwd(), "..")
+            if os.path.exists(report_root_folder):
+                self.report_root_folder = report_root_folder
+            # if the folder before doesn't exist, it will create in the current directory 
+            else:
+                self.report_root_folder = os.getcwd()
+        else:
+            self.report_root_folder = report_root_folder
 
 
     def __call__(self, f):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
-        def wrapped_f(*args, **kargs):
+        def wrapped_f(slice, *args, **kargs):
             
             # Get timestamp, will be used for folder structure and name of files
             timestamp = time.strftime("%Y%m%d_%H%M%S")
-            baseFilename = '{0}_{1}'.format(slice.name, timestamp)
+            baseFilename = '{0}_{1}_{1}'.format(self.tool_name, self.contrast_type, timestamp)
 
             # Create the directory for the 
-            rootFolderPath, leafNodeFullPath = self.mkdir(slice, timestamp)
-            img, mask = f(slice,*args, **kargs)
+            rootFolderPath, leafNodeFullPath = self.mkdir(timestamp)
+            img, mask = f(slice, *args, **kargs)
        
             assert isinstance(img, np.ndarray)
             assert isinstance(mask, np.ndarray)
@@ -113,8 +128,8 @@ class Qc(object):
 
             plt.close()
 
-            self.createDescriptionFile(self.outil, self.arg, self.description, None)
-            syntax = '{} {}'.format(slice.contrast_type, os.path.basename(leafNodeFullPath)) 
+            self.createDescriptionFile(self.tool_name, self.descr_args, self.description, None)
+            syntax = '{} {}'.format(self.contrast_type, os.path.basename(leafNodeFullPath)) 
             isct_generate_report.generate_report("description.txt",syntax, rootFolderPath)
 
         return wrapped_f
@@ -136,7 +151,7 @@ class Qc(object):
         plt.savefig('{0}/{1}.{2}'.format(dirPath, name, format), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=self.dpi)
 
-    def mkdir(self, slice, timestamp):
+    def mkdir(self, timestamp):
         """
         Creates the whole directory to contain the QC report.
 
@@ -157,10 +172,10 @@ class Qc(object):
         :return: return "root folder of the report" and the "furthest folder path" containing the images
         """
         # make a new or update Qc directory
-        newReportFolder = os.path.join(slice.report_root_folder, "report")
+        newReportFolder = os.path.join(self.report_root_folder, "report")
         newImgFolder = os.path.join(newReportFolder, "img")
-        newContrastFolder = os.path.join(newImgFolder, slice.contrast_type)
-        newToolProcessFolder = os.path.join(newContrastFolder, "{0}_{1}".format(slice.tool_name, timestamp))
+        newContrastFolder = os.path.join(newImgFolder, self.contrast_type)
+        newToolProcessFolder = os.path.join(newContrastFolder, "{0}_{1}".format(self.tool_name, timestamp))
 
         # Only create folder when it doesn't exist and it is always done in the current terminal
         # TODO: print the created directory
@@ -205,30 +220,16 @@ class slices(object):
     
     Parameters of the constructor
     ----------
-    toolName:       Name of the sct_tool being used.  
-    contrastType:   Contrast parameter used for the tool. 
     imageName:      Input 3D MRI to be separated into slices.
     segImageName:   Output name for the 3D MRI to be produced.
     """
  
-    def __init__(self, toolName, contrastType, imageName, segImageName, reportRootFolder=None ):
+    def __init__(self, imageName, segImageName):
         self.image = Image(imageName)               # the original input
         self.image_seg = Image(segImageName)        # transformed input the one segmented
         self.image.change_orientation('SAL')        # reorient to SAL
         self.image_seg.change_orientation('SAL')    # reorient to SAL
         self.dim = self.getDim(self.image)
-        
-        # By default, the root folder will be one folder back, because we assume
-        # that user will usually run from data structure like sct_example_data
-        if reportRootFolder==None:
-            reportRootPath = os.path.join(os.getcwd(), "..")
-            if os.path.exists(reportRootPath):
-                self.report_root_folder = reportRootPath
-            # if the folder before doesn't exist, it will create in the current directory 
-            else:
-                self.report_root_folder = os.getcwd()
-        else:
-            self.report_root_folder = reportRootFolder
 
     __metaclass__ = abc.ABCMeta
 

@@ -352,15 +352,13 @@ if __name__ == "__main__":
     output_filename = file_fname + "_seg" + ext_fname
 
 
-    @msct_qc.Qc(outil="sct_propseg", arg=sys.argv[ 1: ], description=parser.usage.description)
-    def propseg_qc(contrast_type, input_filename, output_filename, nbrcolumns):
+    @msct_qc.Qc(tool_name="sct_propseg", contrast_type=contrast_type, descr_args=sys.argv[ 1: ], description=parser.usage.description)
+    def propseg_qc(input_filename, output_filename, nbrcolumns):
         """
-             Saves the image in a mosaic if a number of columns is specified else it saves each slices as individual images
-             :param size: Define the size of the side of the square containing the image of the slice.
-             """
-
-
-        msct_qc.axial("propseg", contrast_type, input_filename, output_filename).mosaic(nbrcolumns, 15)
+        Saves the image in a mosaic if a number of columns is specified else it saves each slices as individual images
+        :param size: Define the size of the side of the square containing the image of the slice.
+        """
+        msct_qc.axial(input_filename, output_filename).mosaic(nbrcolumns, 15)
 
     # Creating the QC report
     if "-qc" in arguments:
@@ -369,7 +367,7 @@ if __name__ == "__main__":
             obj = paramStep.split('=')
             if obj[0]=="nbrcol":
                 nbrcolumns=int(obj[1])
-        propseg_qc(contrast_type, input_filename, output_filename, nbrcolumns)
+        propseg_qc(input_filename, output_filename, nbrcolumns)
 
     if folder_output == "./":
         output_name = output_filename
