@@ -109,7 +109,7 @@ class Qc(object):
 
             #msct_qc.Qc().createDescriptionFile("sct_propseg", sys.argv[1:], parser.usage.description, None)
             syntax = '{} {}'.format(slice.contrast_type, os.path.basename(leafNodeFullPath)) 
-            isct_generate_report.generate_report("description.txt",syntax, rootFolderPath)
+            isct_generate_report.generate_report("description",syntax, rootFolderPath)
 
         return wrapped_f
 

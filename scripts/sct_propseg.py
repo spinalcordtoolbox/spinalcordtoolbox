@@ -353,6 +353,7 @@ if __name__ == "__main__":
 
     # Creating the QC report
     if "-qc" in arguments:
+        msct_qc.Qc().createDescriptionFile("sct_propseg", sys.argv[1:], parser.usage.description, None)
         nbrcolumns = 10
         for paramStep in param_qc:
             obj = paramStep.split('=')
