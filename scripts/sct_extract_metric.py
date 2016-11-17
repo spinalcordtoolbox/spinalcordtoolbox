@@ -144,6 +144,11 @@ bin: binarize mask (threshold=0.5)""",
                       description='Slice range to estimate the metric from. First slice is 0. Example: 5:23\nYou can also select specific slices using commas. Example: 0,2,3,5,12',
                       mandatory=False,
                       default_value=param_default.slices_of_interest)
+    parser.add_option(name='-fix',
+                      type_value=[[','], 'str'],
+                      description='If you do not want to estimate the metric in one label and fix its value, specify <label_ID>.<metric_value. Example to fix the value in the CSf: -fix 31,0.',
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name='-norm-file',
                       type_value='image_nifti',
                       description='Filename of the label by which the user wants to normalize',
@@ -184,7 +189,7 @@ To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using bi
     return parser
 
 
-def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, adv_param_user):
+def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user):
     """Main."""
 
     # Initialization
@@ -297,7 +302,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             data_vertebral_labeling = nib.load(fname_vertebral_labeling).get_data()
         sct.printv('  OK!', verbose)
 
-
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
     data[np.isneginf(data)] = 0.0
@@ -326,15 +330,23 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         if fname_normalizing_label:  # if the "normalization" option was selected,
             normalizing_label[0] = remove_slices(normalizing_label[0], slices_of_interest)
 
+    # parse clusters used for a priori (map method)
+    clusters_all_labels = parse_label_ID_groups(ml_clusters)
+    combined_labels_groups_all_IDs = parse_label_ID_groups(combined_labels_id_groups)
+
+    # If specified, remove the label to fix its value
+    if label_to_fix:
+        data, labels, indiv_labels_ids, ml_clusters, combined_labels_groups_all_IDs = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, clusters_all_labels, combined_labels_groups_all_IDs)
+
     # Extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
     # individual labels
-    indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method)
+    indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = extract_metric(method, data, labels, indiv_labels_ids, clusters_all_labels, adv_param, normalizing_label, normalization_method)
     # combined labels
-    combined_labels_value = np.zeros(len(combined_labels_id_groups), dtype=float)
-    combined_labels_std = np.zeros(len(combined_labels_id_groups), dtype=float)
-    combined_labels_fract_vol = np.zeros(len(combined_labels_id_groups), dtype=float)
-    for i_combined_labels in range(0, len(combined_labels_id_groups)):
-        combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels], combined_labels_fract_vol[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, combined_labels_id_groups[i_combined_labels])
+    combined_labels_value = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
+    combined_labels_std = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
+    combined_labels_fract_vol = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
+    for i_combined_labels in range(0, len(combined_labels_groups_all_IDs)):
+        combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels], combined_labels_fract_vol[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, combined_labels_groups_all_IDs[i_combined_labels])
 
     # display results
     sct.printv('\nResults:\nID, label name [total fractional volume of the label in number of voxels]:    metric value +/- metric STDEV within label', 1)
@@ -368,7 +380,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
 
-def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
+def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
     """Extract metric in the labels specified by the file info_label.txt in the atlas folder."""
 
     # Initialization to default values
@@ -381,7 +393,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_p
 
     if method == 'map':
         # get clustered labels
-        clustered_labels, matching_cluster_labels = get_clustered_labels(ml_clusters, labels, list_ids_LOI, combined_labels_id_group, verbose)
+        clustered_labels, matching_cluster_labels = get_clustered_labels(clusters_labels, labels, list_ids_LOI, combined_labels_id_group, verbose)
 
     # if user wants to get unique value across labels, then combine all labels together
     if combined_labels_id_group:
@@ -828,6 +840,9 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         pickle.dump(metric_extraction_results, output_file)
         output_file.close()
 
+    else:
+        sct.printv('WARNING: The file extension for the output result file that was specified was not recognized. No result file will be created.', type='warning')
+
     sct.printv('\tDone.')
 
 
@@ -854,29 +869,30 @@ def check_labels(indiv_labels_ids, selected_labels):
     list_ids_of_labels_of_interest = map(int, indiv_labels_ids)
 
 
+    # if selected_labels:
+    #     # Check if label chosen is in the right format
+    #     for char in selected_labels:
+    #         if not char in '0123456789,:':
+    #             sct.printv(parser.usage.generate(error='\nERROR: ' + selected_labels + ' is not the correct format to select combined labels.\n Exit program.\n'))
+    #
+    #     if ':' in selected_labels:
+    #         label_ids_range = [int(x) for x in selected_labels.split(':')]
+    #         if len(label_ids_range) > 2:
+    #             sct.printv(parser.usage.generate(error='\nERROR: Combined labels ID selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n'))
+    #         else:
+    #             label_ids_range.sort()
+    #             list_ids_of_labels_of_interest = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
+    #
+    #     else:
+    #         list_ids_of_labels_of_interest = [int(x) for x in selected_labels.split(',')]
+
     if selected_labels:
-        # Check if label chosen is in the right format
-        for char in selected_labels:
-            if not char in '0123456789,:':
-                sct.printv(parser.usage.generate(error='\nERROR: ' + selected_labels + ' is not the correct format to select combined labels.\n Exit program.\n'))
+        # Remove redundant values
+        list_ids_of_labels_of_interest = [i_label for n, i_label in enumerate(selected_labels) if i_label not in selected_labels[:n]]
 
-        if ':' in selected_labels:
-            label_ids_range = [int(x) for x in selected_labels.split(':')]
-            if len(label_ids_range) > 2:
-                sct.printv(parser.usage.generate(error='\nERROR: Combined labels ID selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n'))
-            else:
-                label_ids_range.sort()
-                list_ids_of_labels_of_interest = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
-
-        else:
-            list_ids_of_labels_of_interest = [int(x) for x in selected_labels.split(',')]
-
-    # Remove redundant values
-    list_ids_of_labels_of_interest = [i_label for n, i_label in enumerate(list_ids_of_labels_of_interest) if i_label not in list_ids_of_labels_of_interest[:n]]
-
-    # Check if the selected labels are in the available labels ids
-    if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
-        sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available according to the label list from the text file in the atlas folder. Exit program.\n\n', type='error')
+        # Check if the selected labels are in the available labels ids
+        if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
+            sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available according to the label list from the text file in the atlas folder. Exit program.\n\n', type='error')
 
 
     return list_ids_of_labels_of_interest
@@ -1021,7 +1037,7 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     return metric_mean, metric_std
 
 
-def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbose):
+def get_clustered_labels(clusters_all_labels, labels, labels_user, averaging_flag, verbose):
     """
     Cluster labels according to selected options (labels and averaging).
     :ml_clusters: clusters in form: '0:29,30,31'
@@ -1031,13 +1047,7 @@ def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbo
     :return: clustered_labels: labels summed by clustered
     """
 
-    # get the label IDs included in each cluster
-    clusters_list = ml_clusters.split(',')
-    nb_clusters = len(clusters_list)
-    clusters_all_labels = []
-    for cluster in clusters_list:
-        limits = cluster.split(':')
-        clusters_all_labels.append(range(int(limits[0]), int(limits[-1])+1))
+    nb_clusters = len(clusters_all_labels)
 
     # find matching between labels and clusters in the label id list selected by the user
     matching_cluster_label_id_user = np.zeros(len(labels_user), dtype=int)
@@ -1076,6 +1086,88 @@ def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbo
 
     return clustered_labels, matching_cluster_label_id
 
+def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, ml_clusters, combined_labels_id_groups):
+
+    label_to_fix_ID = int(label_to_fix[0])
+    label_to_fix_value = float(label_to_fix[1])
+
+    # remove the value from the data
+    label_to_fix_index = indiv_labels_ids.index(label_to_fix_ID)
+    label_to_fix_fract_vol = labels[label_to_fix_index]
+    data = data - label_to_fix_fract_vol*label_to_fix_value
+
+    # remove the label to fix from the labels lists
+    labels = np.delete(labels, label_to_fix_index, 0)
+    del indiv_labels_ids[label_to_fix_index]
+
+    # redefine the clusters
+    ml_clusters = remove_label_from_group(ml_clusters, label_to_fix_ID)
+
+    # redefine the combined labels groups
+    combined_labels_id_groups = remove_label_from_group(combined_labels_id_groups, label_to_fix_ID)
+
+    # # !!! DO NOT TAKE INTO ACCOUNT THE CASE WHERE THE LABEL TO FIX IS IN-BETWEEN SEMI-COLONS (e.g. "0:30")
+    # ml_clusters_split = ml_clusters.split(',')
+    # if str(label_to_fix_ID) in ml_clusters_split:
+    #     ml_clusters_split.remove(str(label_to_fix_ID))
+    # ml_clusters = ','.join(ml_clusters_split)
+    # # check if the label to fix is within a cluster defined by semi-colon (e.g. "0:30")
+    # ml_clusters_all_IDs = get_range_from_semi_colon(ml_clusters)
+    # for i_cluster in range(len(ml_clusters_all_IDs)):
+    #     if label_to_fix_ID in ml_clusters_all_IDs(i_cluster):
+    #         sct.printv('ERROR: You asked to fix the value of label '+str(label_to_fix_ID)+' to '+str(label_to_fix_value)
+    #                    +' but you asked to estimate the a priori by Maximum Likelihood within the cluster '
+    #                    +ml_clusters[i_cluster]+'. Please change the definition of your clusters.', type='error')
+    #
+    # # redefine the combined labels
+    # for i_combined_labels_group in range(len(combined_labels_id_groups)):
+    #     combined_labels_id_group_i_split = combined_labels_id_groups[i_combined_labels_group].split(',')
+    #     if str(label_to_fix_ID) in combined_labels_id_group_i_split:
+    #         combined_labels_id_group_i_split.remove(str(label_to_fix_ID))
+    #         combined_labels_id_groups[i_combined_labels_group] = ','.join(combined_labels_id_group_i_split)
+    #         # check if the label to fix is within a group of combined labels defined by semi-colon (e.g. "0:30")
+    #         combined_labels_id_group_i = get_range_from_semi_colon(combined_labels_id_groups[i_combined_labels_group])
+    #         for i_ in range(len(ml_clusters_all_IDs)):
+    #             if label_to_fix_ID in ml_clusters_all_IDs(i_cluster):
+    #                 sct.printv('ERROR: You asked to fix the value of label ' + str(label_to_fix_ID) + ' to ' + str(
+    #                     label_to_fix_value)
+    #                            + ' but you asked to estimate the a priori by Maximum Likelihood within the cluster '
+    #                            + ml_clusters[i_cluster] + '. Please change the definition of your clusters.',
+    #                            type='error')
+
+    return data, labels, indiv_labels_ids, ml_clusters, combined_labels_id_groups
+
+
+def parse_label_ID_groups(list_ID):
+
+    list_split = list_ID.split(',')
+    list_all_label_IDs = []
+    for i_group in range(len(list_split)):
+        if ':' in list_split[i_group]:
+            group_split = list_split[i_group].split(':')
+            group = sorted(range(int(group_split[0]), int(group_split[1])+1))
+        elif ',' in list_split[i_group]:
+            group = [int(x) for x in list_split[i_group].split(',')]
+        else:
+            group = [int(list_split[i_group])]
+
+        # Remove redundant values
+        group_new = [i_label for n, i_label in enumerate(group) if i_label not in group[:n]]
+
+        list_all_label_IDs.append(group_new)
+
+    return list_all_label_IDs
+
+
+
+def remove_label_from_group(list_label_groups, label_ID):
+    """Redefine groups of labels after removing one specific label."""
+
+    for i_group in range(len(list_label_groups)):
+        if label_ID in list_label_groups[i_group]:
+            list_label_groups[i_group].remove(label_ID)
+
+    return list_label_groups
 
 
 # =======================================================================================================================
@@ -1088,25 +1180,30 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
-    # Initialization to defaults parameters
-    vertebral_levels = ''
-
+    # mandatory arguments
     fname_data = arguments['-i']
     path_label = sct.slash_at_the_end(arguments['-f'], 1)
     method = arguments['-method']
-    labels_user = ''
+    fname_output = arguments['-o']
+
+    # optional arguments
     overwrite = 0
-    adv_param_user = ''
     if '-l' in arguments:
         labels_user = arguments['-l']
+    else:
+        labels_user = ''
     if '-param' in arguments:
         adv_param_user = arguments['-param']
-    slices_of_interest = ''
+    else:
+        adv_param_user = ''
     if '-z' in arguments:
         slices_of_interest = arguments['-z']
+    else:
+        slices_of_interest = ''
     if '-vert' in arguments:
         vertebral_levels = arguments['-vert']
-    fname_output = arguments['-o']
+    else:
+        vertebral_levels = ''
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
     fname_normalizing_label = ''
@@ -1115,6 +1212,10 @@ if __name__ == "__main__":
     normalization_method = ''
     if '-norm-method' in arguments:
         normalization_method = arguments['-norm-method']
+    if '-fix' in arguments:
+        label_to_fix = arguments['-fix']
+    else:
+        label_to_fix = ''
 
     # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, adv_param_user)
+    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user)
