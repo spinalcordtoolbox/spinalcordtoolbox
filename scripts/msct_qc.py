@@ -25,6 +25,7 @@ from scipy import ndimage
 import abc
 import subprocess
 import isct_generate_report
+import commands
 
 class Qc(object):
     """
@@ -169,7 +170,7 @@ class Qc(object):
             
         return newReportFolder, newToolProcessFolder
 
-    def createDescriptionFile(self, tool, unparsed_args, description, commit_version):
+    def createDescriptionFile(self, tool, unparsed_args, description, sct_commit):
         """
         Creates the description file with a JSON struct
 
@@ -179,18 +180,33 @@ class Qc(object):
             command: 	cmd used by user
     	description:	quick description of current usage
         """
-        if not isinstance(commit_version, basestring):
-            pathToProject = os.path.dirname(os.path.realpath(__file__))
-            currentDir = os.getcwd()
-            os.chdir(pathToProject)
-            commit_version = subprocess.check_output(["git", "describe"])
-            os.chdir(currentDir)
+        if not isinstance(sct_commit, basestring):
+             # get path of the toolbox
+            path_script = os.path.dirname(__file__)
+            path_sct = os.path.dirname(path_script)
+
+            # fetch true commit number and branch (do not use commit.txt which is wrong)
+            path_curr = os.path.abspath(os.curdir)
+            os.chdir(path_sct)
+            sct_commit = commands.getoutput('git rev-parse HEAD')
+            if not sct_commit.isalnum():
+                print 'WARNING: Cannot retrieve SCT commit'
+                sct_commit = 'unknown'
+                sct_branch = 'unknown'
+            else:
+                sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
+            # with open (path_sct+"/version.txt", "r") as myfile:
+            #     version_sct = myfile.read().replace('\n', '')
+            # with open (path_sct+"/commit.txt", "r") as myfile:
+            #     commit_sct = myfile.read().replace('\n', '')
+            print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
+            os.chdir(path_curr)
             cmd = ""
             for arg in unparsed_args:
                 cmd += arg + " "
             cmd = tool + " " + str(cmd)
         with open("description", "w") as outfile:
-            json.dump({"command": cmd, "description": description, "commit_version": commit_version}, outfile, indent = 4)
+            json.dump({"command": cmd, "description": description, "commit_version": sct_commit}, outfile, indent = 4)
         outfile.close
 
 class slices(object):
