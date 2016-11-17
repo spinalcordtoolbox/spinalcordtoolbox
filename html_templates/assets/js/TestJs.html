@@ -1,0 +1,37 @@
+<head runat="server">
+		<script src="bootstrap-3.3.7-dist/js/jquery-3.1.0.min.js"></script>
+		<script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap-theme.min.css">
+		<script src="animation.js"></script>
+		<script>
+			var list = ["1a.png", "1b.png"];
+			//updateImageListWithList(list);
+			InitializeVariable(list);
+		</script>
+	
+    <title>Home Page</title>
+	<html>
+		<body>
+			<form id="form1" runat="server">
+				<div>
+					<h1>Welcome GG</h1>
+					<br />
+					<br />
+				</div>
+				<div class="container">
+					<h1>Controls</h1>
+					<button type="button" id="PlayStop_Btn" class="btn btn-info active" onClick = "changePlayStopButtonState()">Play</button>
+					<button type="button" id="speed_50" class="btn btn-info active" OnClick = "changeSpeed(this.textContent)">50</button>
+					<button type="button" id="speed_1000" class="btn btn-info active" OnClick = "changeSpeed(this.textContent)">1000</button>
+					<input id="Input_Speed" data-toggle="tooltip" title="Input your personal speed" size=5 />
+					<button type="button" id="confirmSpeed_Btn" class="btn btn-info active" OnClick = 'confirmSpeed("Input_Speed")'>Confirm</button>			
+					<button type="button" id="FadeOut_btn" class="btn btn-info active" OnClick = 'fadeImg(100,true)'>fade</button>
+				</div>
+				<div><img id="Change_Image"/></div>
+			</form>
+		</body>
+	</html>
+</head>
