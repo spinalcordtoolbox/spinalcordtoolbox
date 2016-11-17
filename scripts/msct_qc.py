@@ -24,6 +24,7 @@ from msct_image import Image
 from scipy import ndimage
 import abc
 import subprocess
+import isct_generate_report
 
 class Qc(object):
     """
@@ -63,6 +64,7 @@ class Qc(object):
         self.interpolation = interpolation
         self.dpi = dpi
         self.label = label
+        self.folder_name = None
 
 
     def __call__(self, f):
@@ -70,11 +72,11 @@ class Qc(object):
         def wrapped_f(slice, *args, **kargs):
             
             # Get timestamp, will be used for folder structure and name of files
-            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
             baseFilename = '{0}_{1}'.format(slice.name, timestamp)
 
             # Create the directory for the 
-            leafNodeDirPath = self.mkdir(slice, timestamp)
+            rootFolderPath, leafNodeFullPath = self.mkdir(slice, timestamp)
             img, mask = f(slice,*args, **kargs)
        
             assert isinstance(img, np.ndarray)
@@ -85,7 +87,7 @@ class Qc(object):
             fig.axes.get_yaxis().set_visible(False)
            
             # saves the original color without contrast
-            self.save(leafNodeDirPath, '{}_original'.format(baseFilename))
+            self.save(leafNodeFullPath, '{}_original'.format(baseFilename))
             
             ax = plt.subplot()
             mask = np.rint(np.ma.masked_where(mask < 1, mask))
@@ -101,8 +103,13 @@ class Qc(object):
             if self.label:
                 self.label_vertebrae(mask, ax)
          
-            self.save(leafNodeDirPath, baseFilename)
+            self.save(leafNodeFullPath, baseFilename)
+
             plt.close()
+
+            #msct_qc.Qc().createDescriptionFile("sct_propseg", sys.argv[1:], parser.usage.description, None)
+            syntax = '{} {}'.format(slice.contrast_type, os.path.basename(leafNodeFullPath)) 
+            isct_generate_report.generate_report("description.txt",syntax, rootFolderPath)
 
         return wrapped_f
 
@@ -141,7 +148,7 @@ class Qc(object):
         |
         +-- index.html
 
-        :return: return the furthest folder path to store the image
+        :return: return "root folder of the report" and the "furthest folder path" containing the images
         """
         # make a new or update Qc directory
         newReportFolder = os.path.join(slice.report_root_folder, "report")
@@ -160,7 +167,7 @@ class Qc(object):
         if not os.path.exists(newToolProcessFolder):
             os.mkdir(newToolProcessFolder)
             
-        return newToolProcessFolder
+        return newReportFolder, newToolProcessFolder
 
     def createDescriptionFile(self, tool, unparsed_args, description, commit_version):
         """
