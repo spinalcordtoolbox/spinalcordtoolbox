@@ -176,10 +176,11 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
     parser.add_option(name="-qc",
-                      type_value="int",
+                      type_value=[[','], 'str'],
                       description="Create the patches and generate the report",
                       mandatory=False)
     return parser
+
 
 
 if __name__ == "__main__":
@@ -269,6 +270,19 @@ if __name__ == "__main__":
     if "-alpha" in arguments:
         cmd += " -alpha " + str(arguments["-alpha"])
 
+
+    if "-qc" in arguments:
+        param_qc = arguments['-qc']
+        #sct.printv('parameters of qc :')
+        #paramqc=None
+        #params_qc = obj = param_qc[0].split(',')
+        #for paramStep in param_qc:
+        #    obj = paramStep.split('=')
+        #    sct.printv('param :')
+        #    sct.printv(obj[0])
+        #    sct.printv('with value :')
+        #    sct.printv(obj[1])
+
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
 
@@ -339,7 +353,12 @@ if __name__ == "__main__":
 
     # Creating the QC report
     if "-qc" in arguments:
-        msct_qc.axial("propseg", contrast_type, input_filename, output_filename).save(10, 15)
+        nbrcolumns = 10
+        for paramStep in param_qc:
+            obj = paramStep.split('=')
+            if obj[0]=="nbrcol":
+                nbrcolumns=int(obj[1])
+        msct_qc.axial("propseg", contrast_type, input_filename, output_filename).save(nbrcolumns, 15)
 
     if folder_output == "./":
         output_name = output_filename
