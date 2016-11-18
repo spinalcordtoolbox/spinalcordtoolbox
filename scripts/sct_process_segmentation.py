@@ -472,41 +472,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     min_z_index, max_z_index = min(Z), max(Z)
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
-
-    # transform centerline coordinates into voxel space for further use
-    coord_voxel_centerline = im_seg.transfo_phys2pix([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]] for i in range(len(z_centerline))])
-    z_centerline_fit_vox = [coord[2] for coord in coord_voxel_centerline]
-
-    # average over slices
-    P_x = np.array(x_centerline_fit)
-    P_y = np.array(y_centerline_fit)
-    P_z = np.array(z_centerline)
-    P_z_vox = np.array(z_centerline_fit_vox)
-    P_x_d = np.array(x_centerline_deriv)
-    P_y_d = np.array(y_centerline_deriv)
-    P_z_d = np.array(z_centerline_deriv)
-
-    P_z_vox = np.array([int(np.round(P_z_vox[i])) for i in range(0, len(P_z_vox))])
-    # not perfect but works (if "enough" points), in order to deal with missing z slices
-    for i in range(min(P_z_vox), max(P_z_vox) + 1, 1):
-        if i not in P_z_vox:
-            P_x_temp = np.insert(P_x, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x[np.where(P_z_vox == i - 1)[-1][-1]] + P_x[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_y_temp = np.insert(P_y, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y[np.where(P_z_vox == i - 1)[-1][-1]] + P_y[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_z_temp = np.insert(P_z, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z[np.where(P_z_vox == i - 1)[-1][-1]] + P_z[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_x_d_temp = np.insert(P_x_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_x_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_y_d_temp = np.insert(P_y_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_y_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_z_d_temp = np.insert(P_z_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_z_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
-
-    coord_mean = np.array([[np.mean(P_x[P_z_vox == i]), np.mean(P_y[P_z_vox == i]), np.mean(P_z[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
-    x_centerline_fit = coord_mean[:, :][:, 0]
-    y_centerline_fit = coord_mean[:, :][:, 1]
-    coord_mean_d = np.array([[np.mean(P_x_d[P_z_vox == i]), np.mean(P_y_d[P_z_vox == i]), np.mean(P_z_d[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
-    z_centerline = coord_mean[:, :][:, 2]
-    x_centerline_deriv = coord_mean_d[:, :][:, 0]
-    y_centerline_deriv = coord_mean_d[:, :][:, 1]
-    z_centerline_deriv = coord_mean_d[:, :][:, 2]
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -514,11 +480,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Empty arrays in which CSA for each z slice will be stored
     csa = np.zeros(max_z_index-min_z_index+1)
     angles = np.zeros(max_z_index - min_z_index + 1)
-
-    direction_matrix = im_seg.im_file.affine
-    z_axis_image = np.dot(direction_matrix,np.array([0.0, 0.0, 1.0, 1.0]))
-    z_axis_image = z_axis_image[0:3]
-    z_axis_image /= np.linalg.norm(z_axis_image)
+    spacing = [im_seg.dim[4], im_seg.dim[5], im_seg.dim[6]]
 
     for iz in xrange(min_z_index, max_z_index+1):
         if angle_correction:
@@ -527,11 +489,16 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
                 # compute the vector normal to the plane
                 normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
 
+                # adjusting for spacing, assuming RPI orientation
+                normal[0] *= spacing[0]
+                normal[1] *= spacing[1]
+                normal[2] *= spacing[2]
+
             except IndexError:
                 sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.dot(normal, z_axis_image))
+            angle = np.arccos(np.dot(normal, [0.0, 0.0, 1.0]))
         else:
             angle = 0.0
 
