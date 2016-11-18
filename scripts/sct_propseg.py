@@ -340,31 +340,31 @@ if __name__ == "__main__":
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
 
+    nb_column = 10
 
-    
+    for paramStep in arguments['-qc']:
+        obj = paramStep.split('=')
+        if obj[ 0 ] == "nbrcol":
+            nb_column = int(obj[ 1 ])
+        if obj[ 0 ] == "ofolder":
+            output_folder = str(obj[ 1 ])
 
-    # Creating the QC report
-    if "-qc" in arguments:
-        #sct.printv('parameters of qc :')
-        #paramqc=None
-        #params_qc = obj = param_qc[0].split(',')
-        #for paramStep in param_qc:
-        #    obj = paramStep.split('=')
-        #    sct.printv('param :')
-        #    sct.printv(obj[0])
-        #    sct.printv('with value :')
-        #    sct.printv(obj[1])
-        qcReport = msct_qc.Qc_Report("sct_propseg", contrast_type, sys.argv[ 1: ], parser.usage.description, arguments['-qc'])
+    qcReport = msct_qc.Qc_Report("sct_propseg",contrast_type)
 
-        @msct_qc.Qc(qcReport)
-        def propseg_qc(input_filename, output_filename, nbrcolumns):
-            """
-            Saves the image in a mosaic if a number of columns is specified else it saves each slices as individual images
-            :param size: Define the size of the side of the square containing the image of the slice.
-            """
-            msct_qc.axial(input_filename, output_filename).mosaic(nbrcolumns, 15)
+    @msct_qc.Qc(qcReport)
+    def propseg_qc(input_filename, output_filename,nb_column):
+        """
 
-        propseg_qc(input_filename, output_filename, qcReport.nb_columns)
+        :param input_filename:
+        :param output_filename:
+        :param nb_column: 
+        :return:
+        """
+        return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
+
+    propseg_qc(input_filename,output_filename)
+    qcReport.createDescriptionFile("sct_propseg", sys.argv[ 1: ], parser.usage.description)
+
 
     if folder_output == "./":
         output_name = output_filename
@@ -372,6 +372,6 @@ if __name__ == "__main__":
         output_name = folder_output + output_filename
     sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
 
-	
+
 
 

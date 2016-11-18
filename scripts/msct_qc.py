@@ -25,45 +25,27 @@ from scipy import ndimage
 import abc
 import subprocess
 import isct_generate_report
+import commands
 
 
 class Qc_Report(object):
-    def __init__(self, tool_name, contrast_type, descr_args, description, param_qc):
+
+    def __init__(self, tool_name, contrast_type, report_root_folder = os.path.join(os.getcwd(), "..")):
         # used to create folder
         self.tool_name = tool_name                   
         self.contrast_type = contrast_type 
-        self.report_root_folder = None
+        self.report_root_folder = report_root_folder
 
-        # used to create description file
-        self.descr_args = descr_args
-        self.description = description
+        # Get timestamp, will be used for folder structure and name of files
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        self.timestamp = timestamp
+        self.baseFilename = '{0}_{1}_{1}'.format(tool_name, contrast_type, timestamp)
 
-        # qc args
-        self.nb_columns = 10
-        self.output_folder = None
-
-        self.timestamp = time.strftime("%Y%m%d_%H%M%S")
-
-        # parse the qc args
-        for paramStep in param_qc:
-            obj = paramStep.split('=')
-            if obj[0]=="nbrcol":
-                nb_column=int(obj[1])
-            if obj[0]=="ofolder":
-                output_folder=str(obj[1])
 
         # By default, the root folder will be one folder back, because we assume
         # that user will usually run from data structure like sct_example_data
-        report_root_folder = None
-        if report_root_folder==None:
-            report_root_folder = os.path.join(os.getcwd(), "..")
-            if os.path.exists(report_root_folder):
-                self.report_root_folder = report_root_folder
-            # if the folder before doesn't exist, it will create in the current directory 
-            else:
-                self.report_root_folder = os.getcwd()
-        else:
-            self.report_root_folder = report_root_folder
+        if not os.path.exists(report_root_folder):
+            self.report_root_folder = os.getcwd()
 
         
 
@@ -106,8 +88,45 @@ class Qc_Report(object):
             
         return newReportFolder, newToolProcessFolder
 
-    def split_qc_args():
-        return 0
+    def createDescriptionFile(self, unparsed_args, description, sct_commit=None):
+        """
+        Creates the description file with a JSON struct
+        Description file structure:
+        -----------------
+        commit_version:	version of last commit retrieved from util
+            command: 	cmd used by user
+        description:	quick description of current usage
+        """
+        cmd = ""
+        if not isinstance(sct_commit, basestring):
+            # get path of the toolbox
+            path_script = os.path.dirname(__file__)
+            path_sct = os.path.dirname(path_script)
+
+            # fetch true commit number and branch (do not use commit.txt which is wrong)
+            path_curr = os.path.abspath(os.curdir)
+            os.chdir(path_sct)
+            sct_commit = commands.getoutput('git rev-parse HEAD')
+            if not sct_commit.isalnum():
+                print 'WARNING: Cannot retrieve SCT commit'
+                sct_commit = 'unknown'
+                sct_branch = 'unknown'
+            else:
+                sct_branch = commands.getoutput('git branch --contains ' + sct_commit).strip('* ')
+            # with open (path_sct+"/version.txt", "r") as myfile:
+            #     version_sct = myfile.read().replace('\n', '')
+            # with open (path_sct+"/commit.txt", "r") as myfile:
+            #     commit_sct = myfile.read().replace('\n', '')
+            print 'SCT commit/branch: ' + sct_commit + '/' + sct_branch
+            os.chdir(path_curr)
+            cmd = ""
+            for arg in unparsed_args:
+                cmd += arg + " "
+            cmd = self.tool_name + " " + str(cmd)
+        with open("description", "w") as outfile:
+            json.dump({"command": cmd, "description": description, "commit_version": sct_commit}, outfile, indent=4)
+
+        outfile.close
 
 
 class Qc(object):
@@ -121,14 +140,14 @@ class Qc(object):
                  'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
                  'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
                  'Co': 30}
-    _labels_color = [   "#49ad2e","#e7363c","#c34603",
-                        "#ed1339","#f88ae4","#44673e",
+    _labels_color = [   "#ff0000","#04663c","#50ff30",
+                        "#ed1339","#ffffff","#44673e",
                         "#ffee00","#00c7ff","#199f26",
                         "#563691","#848545","#ce2fe1",
                         "#2142a6","#3edd76","#c4c253",
                         "#e8618a","#3128a3","#1a41db",
                         "#939e41","#3bec02","#1c2c79",
-                        "#727c16","#18584e","#b49992",
+                        "#18584e","#b49992","#e9e73a",
                         "#3b0e6e","#6e856f","#637394",
                         "#36e05b","#530a1f","#8179c4",
                         "#e1320c","#52a4df","#000ab5",
@@ -139,31 +158,29 @@ class Qc(object):
                         "#e900c3","#a21360","#58a601",
                         "#811c90","#235acf","#49395d",
                         "#9f89b0","#e08e08","#3d2b54",
-                        "#7d0434","#fb1849","#e9e73a",
+                        "#7d0434","#fb1849","#14aab4",
                         "#a22abd","#d58240","#ac2aff"
 
                         ]
 
-    def __init__(qc_report, label = False, dpi=600, interpolation='none'):
+    def __init__(self, qc_report, dpi=600, interpolation='none', action_list = [] ):
         self.qc_report = qc_report
-
         # used to save the image file
-        self.label = label
         self.dpi = dpi
         self.interpolation = interpolation
+        self.action_list = action_list
+        self.subplot = None
+        self.img = None
+        self.mask = None
 
 
     def __call__(self, f):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
-        def wrapped_f(slice, *args, **kargs):
-            
-            # Get timestamp, will be used for folder structure and name of files
-            
-            baseFilename = '{0}_{1}_{1}'.format(self.qc_report.tool_name, self.qc_report.contrast_type, timestamp)
+        def wrapped_f(*args):
 
             # Create the directory for the 
             rootFolderPath, leafNodeFullPath = self.qc_report.mkdir()
-            img, mask = f(slice, *args, **kargs)
+            img, mask = f(*args)
        
             assert isinstance(img, np.ndarray)
             assert isinstance(mask, np.ndarray)
@@ -173,34 +190,34 @@ class Qc(object):
             fig.axes.get_yaxis().set_visible(False)
            
             # saves the original color without contrast
-            self.save(leafNodeFullPath, '{}_original'.format(baseFilename))
-            
-            ax = plt.subplot()
+            self.__save(leafNodeFullPath, '{}_original'.format( self.qc_report.baseFilename))
+
+            self.subplot = plt.subplot()
+            self.img = img
+            self.mask = mask
+
             mask = np.rint(np.ma.masked_where(mask < 1, mask))
             plt.imshow(img, cmap='gray', interpolation=self.interpolation)
-           
-            if self.label:
-                self.label_vertebrae(mask, ax)
-            else:
-                self._labels_color = {'#ff0000'}
+
+            for action in self.action_list:
+               action(self)
+
             plt.imshow(mask, cmap= col.ListedColormap(self._labels_color),norm =
                 matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation, alpha=1)
-          
-            if self.label:
-                self.label_vertebrae(mask, ax)
-         
-            self.save(leafNodeFullPath, baseFilename)
-
+            self.__save(leafNodeFullPath,  self.qc_report.baseFilename)
             plt.close()
 
-            self.createDescriptionFile(self.qc_report.tool_name, self.qc_report.descr_args, self.qc_report.description, None)
-            syntax = '{} {}'.format(self.qc_report.contrast_type, os.path.basename(leafNodeFullPath)) 
+            syntax = '{} {}'.format(self.qc_report.contrast_type, os.path.basename(leafNodeFullPath))
             isct_generate_report.generate_report("description.txt",syntax, rootFolderPath)
 
         return wrapped_f
 
-    def label_vertebrae(self, data, ax):
+
+
+    @staticmethod
+    def label_vertebrae(self):
         a = [0.0]
+        data = self.mask;
         for index, val in np.ndenumerate(data):
             if val not in a:
                 a.append(val)
@@ -208,38 +225,15 @@ class Qc(object):
                 color = self._labels_color[index]
                 x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
                 label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
-                ax.annotate(label, xy=(y,x), xytext=(y + 25, x),color= color,
+                self.subplot.annotate(label, xy=(y,x), xytext=(y + 25, x),color= color,
                     arrowprops=dict(facecolor= color,shrink=0.05))
 
 
-    def save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0):
+    def __save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0):
         plt.savefig('{0}/{1}.{2}'.format(dirPath, name, format), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=self.dpi)
 
 
-    def createDescriptionFile(self, tool, unparsed_args, description, commit_version):
-        """
-        Creates the description file with a JSON struct
-
-        Description file structure:
-        -----------------
-    	commit_version:	version of last commit retrieved from util
-            command: 	cmd used by user
-    	description:	quick description of current usage
-        """
-        if not isinstance(commit_version, basestring):
-            pathToProject = os.path.dirname(os.path.realpath(__file__))
-            currentDir = os.getcwd()
-            os.chdir(pathToProject)
-            commit_version = subprocess.check_output(["git", "describe"])
-            os.chdir(currentDir)
-            cmd = ""
-            for arg in unparsed_args:
-                cmd += arg + " "
-            cmd = tool + " " + str(cmd)
-        with open("description", "w") as outfile:
-            json.dump({"command": cmd, "description": description, "commit_version": commit_version}, outfile, indent = 4)
-        outfile.close
 
 class slices(object):
     """
@@ -252,6 +246,7 @@ class slices(object):
     """
  
     def __init__(self, imageName, segImageName):
+        # type: (object, object) -> object
         self.image = Image(imageName)               # the original input
         self.image_seg = Image(segImageName)        # transformed input the one segmented
         self.image.change_orientation('SAL')        # reorient to SAL
@@ -374,7 +369,7 @@ class slices(object):
         return centers_x, centers_y
 
 
-    def mosaic(self, nb_column, size):
+    def mosaic(self, nb_column = 10, size = 15):
         """
         Method to obtain matrices of the mosaics 
        
