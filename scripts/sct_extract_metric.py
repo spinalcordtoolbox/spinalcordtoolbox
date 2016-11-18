@@ -193,18 +193,12 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     """Main."""
 
     # Initialization
-    # fname_vertebral_labeling = param.fname_vertebral_labeling
     fname_vertebral_labeling = ''
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param.verbose
-    # ml_clusters = param.ml_clusters
     adv_param = param.adv_param
     normalizing_label = []
-
-    # check if the atlas folder given exists and add slash at the end
-    # sct.check_folder_exist(path_label)
-    # path_label = sct.slash_at_the_end(path_label, 1)
 
     # adjust file names and parameters for old MNI-Poly-AMU template
     if not len(glob(path_label + 'WMtract*.*')) == 0:
@@ -336,7 +330,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # If specified, remove the label to fix its value
     if label_to_fix:
-        data, labels, indiv_labels_ids, clusters_all_labels, combined_labels_groups_all_IDs = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, clusters_all_labels, combined_labels_groups_all_IDs)
+        data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user, label_to_fix_name = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user)
 
     # Extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
     # individual labels
@@ -346,7 +340,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     combined_labels_std = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
     combined_labels_fract_vol = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
     for i_combined_labels in range(0, len(combined_labels_groups_all_IDs)):
-        combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels], combined_labels_fract_vol[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, combined_labels_groups_all_IDs[i_combined_labels])
+        combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels], combined_labels_fract_vol[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, clusters_all_labels, adv_param, normalizing_label, normalization_method, combined_labels_groups_all_IDs[i_combined_labels])
 
     # display results
     sct.printv('\nResults:\nID, label name [total fractional volume of the label in number of voxels]:    metric value +/- metric STDEV within label', 1)
@@ -357,6 +351,9 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         elif i_label_user > max(indiv_labels_ids):
             index = combined_labels_ids.index(i_label_user)
             sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ' ['+str(round(combined_labels_fract_vol[index], 2))+']:    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
+    if label_to_fix:
+        sct.printv(label_to_fix[0] + ', ' + label_to_fix_name + ': ' + label_to_fix[1] + ' (value fixed by user)', 1, 'info')
+
     # section = ''
     # if labels_id_user[0] <= max(indiv_labels_ids):
     #     section = '\nWhite matter atlas:'
@@ -393,7 +390,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
 
     if method == 'map':
         # get clustered labels
-        clustered_labels, matching_cluster_labels = get_clustered_labels(clusters_labels, labels, list_ids_LOI, combined_labels_id_group, verbose)
+        clustered_labels, matching_cluster_labels = get_clustered_labels(clusters_labels, labels, indiv_labels_ids, list_ids_LOI, combined_labels_id_group, verbose)
 
     # if user wants to get unique value across labels, then combine all labels together
     if combined_labels_id_group:
@@ -477,7 +474,7 @@ def read_label_file(path_info_label, file_info_label):
         section = ''
         for line in lines:
             # update section index
-            if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line) or ('# Clusters used as a priori for the MAP estimator' in line):
+            if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line) or ('# Clusters used as a priori for the MAP estimation' in line):
                 section = line
             # record the label according to its section
             if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
@@ -492,7 +489,7 @@ def read_label_file(path_info_label, file_info_label):
                 combined_labels_names.append(parsed_line[1].strip())
                 combined_labels_id_groups.append(','.join(parsed_line[2:]).strip())
 
-            elif ('# Clusters used as a priori for the MAP estimator' in section) and (line[0] != '#'):
+            elif ('# Clusters used as a priori for the MAP estimation' in section) and (line[0] != '#'):
                 parsed_line = line.split(', ')
                 clusters_apriori.append(parsed_line[-1].strip())
 
@@ -1041,7 +1038,7 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     return metric_mean, metric_std
 
 
-def get_clustered_labels(clusters_all_labels, labels, labels_user, averaging_flag, verbose):
+def get_clustered_labels(clusters_all_labels, labels, indiv_labels_ids, labels_user, averaging_flag, verbose):
     """
     Cluster labels according to selected options (labels and averaging).
     :ml_clusters: clusters in form: '0:29,30,31'
@@ -1075,7 +1072,8 @@ def get_clustered_labels(clusters_all_labels, labels, labels_user, averaging_fla
     # sum labels within each cluster
     clustered_labels = np.empty([nb_clusters], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_cluster in range(0, nb_clusters):
-        clustered_labels[i_cluster] = np.sum(labels[clusters_all_labels[i_cluster]])
+        indexes_labels_cluster_i = [indiv_labels_ids.index(label_ID) for label_ID in clusters_all_labels[i_cluster]]
+        clustered_labels[i_cluster] = np.sum(labels[indexes_labels_cluster_i])
 
     # find matching between labels and clusters in the whole label id list
     matching_cluster_label_id = np.zeros(len(labels), dtype=int)
@@ -1090,7 +1088,7 @@ def get_clustered_labels(clusters_all_labels, labels, labels_user, averaging_fla
 
     return clustered_labels, matching_cluster_label_id
 
-def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, ml_clusters, combined_labels_id_groups):
+def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user):
 
     label_to_fix_ID = int(label_to_fix[0])
     label_to_fix_value = float(label_to_fix[1])
@@ -1103,6 +1101,12 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, ml_clusters, c
     # remove the label to fix from the labels lists
     labels = np.delete(labels, label_to_fix_index, 0)
     del indiv_labels_ids[label_to_fix_index]
+    label_to_fix_name = indiv_labels_names[label_to_fix_index]
+    del indiv_labels_names[label_to_fix_index]
+
+    # remove the label to fix from the label list specified by user
+    if label_to_fix_ID in labels_id_user:
+        labels_id_user.remove(label_to_fix_ID)
 
     # redefine the clusters
     ml_clusters = remove_label_from_group(ml_clusters, label_to_fix_ID)
@@ -1111,7 +1115,7 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, ml_clusters, c
     combined_labels_id_groups = remove_label_from_group(combined_labels_id_groups, label_to_fix_ID)
 
 
-    return data, labels, indiv_labels_ids, ml_clusters, combined_labels_id_groups
+    return data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user, label_to_fix_name
 
 
 def parse_label_ID_groups(list_ID):
