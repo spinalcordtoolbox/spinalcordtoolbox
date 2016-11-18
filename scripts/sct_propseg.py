@@ -362,7 +362,7 @@ if __name__ == "__main__":
         """
         return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
 
-    propseg_qc(input_filename,output_filename)
+    propseg_qc(input_filename, output_filename, nb_column)
     qcReport.createDescriptionFile("sct_propseg", sys.argv[ 1: ], parser.usage.description)
 
 
