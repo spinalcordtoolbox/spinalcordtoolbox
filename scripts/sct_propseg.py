@@ -340,6 +340,7 @@ if __name__ == "__main__":
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
 
+    # Decode the parameters of qc
     nb_column = 10
 
     for paramStep in arguments['-qc']:
@@ -349,22 +350,23 @@ if __name__ == "__main__":
         if obj[ 0 ] == "ofolder":
             output_folder = str(obj[ 1 ])
 
-    qcReport = msct_qc.Qc_Report("sct_propseg",contrast_type)
+    # Qc_Report generates and contains the useful infos for qc generation
+    qcReport = msct_qc.Qc_Report("propseg",contrast_type)
 
+    # Create the Qc object that creates the images files to provide to the HTML
     @msct_qc.Qc(qcReport)
     def propseg_qc(input_filename, output_filename,nb_column):
         """
-
         :param input_filename:
         :param output_filename:
         :param nb_column: 
         :return:
         """
+        # Chosen axe to generate image
         return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
 
     propseg_qc(input_filename, output_filename, nb_column)
-    qcReport.createDescriptionFile("sct_propseg", sys.argv[ 1: ], parser.usage.description)
-
+    qcReport.createDescriptionFile(sys.argv[1:], parser.usage.description, None)
 
     if folder_output == "./":
         output_name = output_filename

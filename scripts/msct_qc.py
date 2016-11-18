@@ -27,7 +27,6 @@ import subprocess
 import isct_generate_report
 import commands
 
-
 class Qc_Report(object):
 
     def __init__(self, tool_name, contrast_type, report_root_folder = os.path.join(os.getcwd(), "..")):
@@ -39,14 +38,17 @@ class Qc_Report(object):
         # Get timestamp, will be used for folder structure and name of files
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.timestamp = timestamp
-        self.baseFilename = '{0}_{1}_{1}'.format(tool_name, contrast_type, timestamp)
+        self.img_base_name = '{0}_{1}_{2}'.format(tool_name, contrast_type, timestamp)
 
+        # can be used instead of the return value of the function mkdir, 
+        # workaround for mkdir to save description file and to use it
+        self.report_leaf_folder = None
+        self.description_base_name = "description_{}".format(self.timestamp)
 
         # By default, the root folder will be one folder back, because we assume
         # that user will usually run from data structure like sct_example_data
         if not os.path.exists(report_root_folder):
             self.report_root_folder = os.getcwd()
-
         
 
     def mkdir(self):
@@ -85,21 +87,24 @@ class Qc_Report(object):
             os.mkdir(newContrastFolder)
         if not os.path.exists(newToolProcessFolder):
             os.mkdir(newToolProcessFolder)
-            
+        
+        # save the leaf folder name for Description file    
+        self.report_leaf_folder = newToolProcessFolder
+
         return newReportFolder, newToolProcessFolder
 
-    def createDescriptionFile(self, unparsed_args, description, sct_commit=None):
+    def createDescriptionFile(self, unparsed_args, description, sct_commit):
         """
         Creates the description file with a JSON struct
+
         Description file structure:
         -----------------
-        commit_version:	version of last commit retrieved from util
-            command: 	cmd used by user
-        description:	quick description of current usage
+        commit_version: version of last commit retrieved from util
+            command:    cmd used by user
+        description:    quick description of current usage
         """
-        cmd = ""
         if not isinstance(sct_commit, basestring):
-            # get path of the toolbox
+             # get path of the toolbox
             path_script = os.path.dirname(__file__)
             path_sct = os.path.dirname(path_script)
 
@@ -112,22 +117,20 @@ class Qc_Report(object):
                 sct_commit = 'unknown'
                 sct_branch = 'unknown'
             else:
-                sct_branch = commands.getoutput('git branch --contains ' + sct_commit).strip('* ')
+                sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
             # with open (path_sct+"/version.txt", "r") as myfile:
             #     version_sct = myfile.read().replace('\n', '')
             # with open (path_sct+"/commit.txt", "r") as myfile:
             #     commit_sct = myfile.read().replace('\n', '')
-            print 'SCT commit/branch: ' + sct_commit + '/' + sct_branch
+            print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
             os.chdir(path_curr)
             cmd = ""
             for arg in unparsed_args:
                 cmd += arg + " "
-            cmd = self.tool_name + " " + str(cmd)
-        with open("description", "w") as outfile:
-            json.dump({"command": cmd, "description": description, "commit_version": sct_commit}, outfile, indent=4)
-
+            cmd = "sct_{}".format(self.tool_name) + " " + str(cmd)
+        with open(os.path.join(self.report_leaf_folder, "{}.txt".format(self.description_base_name)), "w") as outfile:
+            json.dump({"command": cmd, "description": description, "commit_version": sct_commit}, outfile, indent = 4)
         outfile.close
-
 
 class Qc(object):
     """
@@ -190,7 +193,7 @@ class Qc(object):
             fig.axes.get_yaxis().set_visible(False)
            
             # saves the original color without contrast
-            self.__save(leafNodeFullPath, '{}_original'.format( self.qc_report.baseFilename))
+            self.__save(leafNodeFullPath, '{}_original'.format( self.qc_report.img_base_name))
 
             self.subplot = plt.subplot()
             self.img = img
@@ -204,11 +207,11 @@ class Qc(object):
 
             plt.imshow(mask, cmap= col.ListedColormap(self._labels_color),norm =
                 matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation, alpha=1)
-            self.__save(leafNodeFullPath,  self.qc_report.baseFilename)
+            self.__save(leafNodeFullPath,  self.qc_report.img_base_name)
             plt.close()
 
             syntax = '{} {}'.format(self.qc_report.contrast_type, os.path.basename(leafNodeFullPath))
-            isct_generate_report.generate_report("description.txt",syntax, rootFolderPath)
+            isct_generate_report.generate_report("{}.txt".format(self.qc_report.description_base_name),syntax, rootFolderPath)
 
         return wrapped_f
 
@@ -232,8 +235,6 @@ class Qc(object):
     def __save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0):
         plt.savefig('{0}/{1}.{2}'.format(dirPath, name, format), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=self.dpi)
-
-
 
 class slices(object):
     """
