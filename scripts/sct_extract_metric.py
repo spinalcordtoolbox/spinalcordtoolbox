@@ -210,11 +210,11 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     if not len(glob(path_label + 'WMtract*.*')) == 0:
         # MNI-Poly-AMU
         suffix_vertebral_labeling = '*_level.nii.gz'
-        ml_clusters = '0:29,30,31'  # 3-class for robust maximum likelihood estimation: WM, GM and CSF
+        # ml_clusters = '0:29,30,31'  # 3-class for robust maximum likelihood estimation: WM, GM and CSF
     else:
         # PAM50 and later
         suffix_vertebral_labeling = '*_levels.nii.gz'
-        ml_clusters = '0:29,30:35,36'
+        # ml_clusters = '0:29,30:35,36'
 
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
@@ -249,7 +249,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     print '  advanced parameters ....... '+str(adv_param)+'\n'
 
     # parse labels according to the file info_label.txt
-    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label, param.file_info_label)
+    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param.file_info_label)
 
     # check syntax of labels asked by user
     labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, labels_user)
@@ -336,7 +336,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # If specified, remove the label to fix its value
     if label_to_fix:
-        data, labels, indiv_labels_ids, ml_clusters, combined_labels_groups_all_IDs = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, clusters_all_labels, combined_labels_groups_all_IDs)
+        data, labels, indiv_labels_ids, clusters_all_labels, combined_labels_groups_all_IDs = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, clusters_all_labels, combined_labels_groups_all_IDs)
 
     # Extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
     # individual labels
@@ -449,7 +449,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
 def read_label_file(path_info_label, file_info_label):
     """Read label.txt file which is located inside label folder."""
 
-    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups = [], [], [], [], [], []
+    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = [], [], [], [], [], [], []
 
     # file name of info_label.txt
     fname_label = path_info_label+file_info_label
@@ -477,20 +477,24 @@ def read_label_file(path_info_label, file_info_label):
         section = ''
         for line in lines:
             # update section index
-            if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line):
+            if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line) or ('# Clusters used as a priori for the MAP estimator' in line):
                 section = line
             # record the label according to its section
             if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
-                parsed_line = line.split(',')
+                parsed_line = line.split(', ')
                 indiv_labels_ids.append(int(parsed_line[0]))
                 indiv_labels_names.append(parsed_line[1].strip())
                 indiv_labels_files.append(parsed_line[2].strip())
 
             elif ('# Combined labels' in section) and (line[0] != '#'):
-                parsed_line = line.split(',')
+                parsed_line = line.split(', ')
                 combined_labels_ids.append(int(parsed_line[0]))
                 combined_labels_names.append(parsed_line[1].strip())
                 combined_labels_id_groups.append(','.join(parsed_line[2:]).strip())
+
+            elif ('# Clusters used as a priori for the MAP estimator' in section) and (line[0] != '#'):
+                parsed_line = line.split(', ')
+                clusters_apriori.append(parsed_line[-1].strip())
 
         # check if all files listed are present in folder. If not, ERROR.
         # TODO: better handle error
@@ -500,7 +504,7 @@ def read_label_file(path_info_label, file_info_label):
         # Close file.txt
         f.close()
 
-        return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups
+        return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori
 
 
 def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
@@ -1106,50 +1110,23 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, ml_clusters, c
     # redefine the combined labels groups
     combined_labels_id_groups = remove_label_from_group(combined_labels_id_groups, label_to_fix_ID)
 
-    # # !!! DO NOT TAKE INTO ACCOUNT THE CASE WHERE THE LABEL TO FIX IS IN-BETWEEN SEMI-COLONS (e.g. "0:30")
-    # ml_clusters_split = ml_clusters.split(',')
-    # if str(label_to_fix_ID) in ml_clusters_split:
-    #     ml_clusters_split.remove(str(label_to_fix_ID))
-    # ml_clusters = ','.join(ml_clusters_split)
-    # # check if the label to fix is within a cluster defined by semi-colon (e.g. "0:30")
-    # ml_clusters_all_IDs = get_range_from_semi_colon(ml_clusters)
-    # for i_cluster in range(len(ml_clusters_all_IDs)):
-    #     if label_to_fix_ID in ml_clusters_all_IDs(i_cluster):
-    #         sct.printv('ERROR: You asked to fix the value of label '+str(label_to_fix_ID)+' to '+str(label_to_fix_value)
-    #                    +' but you asked to estimate the a priori by Maximum Likelihood within the cluster '
-    #                    +ml_clusters[i_cluster]+'. Please change the definition of your clusters.', type='error')
-    #
-    # # redefine the combined labels
-    # for i_combined_labels_group in range(len(combined_labels_id_groups)):
-    #     combined_labels_id_group_i_split = combined_labels_id_groups[i_combined_labels_group].split(',')
-    #     if str(label_to_fix_ID) in combined_labels_id_group_i_split:
-    #         combined_labels_id_group_i_split.remove(str(label_to_fix_ID))
-    #         combined_labels_id_groups[i_combined_labels_group] = ','.join(combined_labels_id_group_i_split)
-    #         # check if the label to fix is within a group of combined labels defined by semi-colon (e.g. "0:30")
-    #         combined_labels_id_group_i = get_range_from_semi_colon(combined_labels_id_groups[i_combined_labels_group])
-    #         for i_ in range(len(ml_clusters_all_IDs)):
-    #             if label_to_fix_ID in ml_clusters_all_IDs(i_cluster):
-    #                 sct.printv('ERROR: You asked to fix the value of label ' + str(label_to_fix_ID) + ' to ' + str(
-    #                     label_to_fix_value)
-    #                            + ' but you asked to estimate the a priori by Maximum Likelihood within the cluster '
-    #                            + ml_clusters[i_cluster] + '. Please change the definition of your clusters.',
-    #                            type='error')
 
     return data, labels, indiv_labels_ids, ml_clusters, combined_labels_id_groups
 
 
 def parse_label_ID_groups(list_ID):
+    """From a list of unparsed labels string, returns a list of list enumarating the label IDs combinations as integers.
+    Example: ['0:5','8,10','12'] ==> [[0,1,2,3,4,5],[8,10],[12]]"""
 
-    list_split = list_ID.split(',')
     list_all_label_IDs = []
-    for i_group in range(len(list_split)):
-        if ':' in list_split[i_group]:
-            group_split = list_split[i_group].split(':')
+    for i_group in range(len(list_ID)):
+        if ':' in list_ID[i_group]:
+            group_split = list_ID[i_group].split(':')
             group = sorted(range(int(group_split[0]), int(group_split[1])+1))
-        elif ',' in list_split[i_group]:
-            group = [int(x) for x in list_split[i_group].split(',')]
+        elif ',' in list_ID[i_group]:
+            group = [int(x) for x in list_ID[i_group].split(',')]
         else:
-            group = [int(list_split[i_group])]
+            group = [int(list_ID[i_group])]
 
         # Remove redundant values
         group_new = [i_label for n, i_label in enumerate(group) if i_label not in group[:n]]
@@ -1166,6 +1143,8 @@ def remove_label_from_group(list_label_groups, label_ID):
     for i_group in range(len(list_label_groups)):
         if label_ID in list_label_groups[i_group]:
             list_label_groups[i_group].remove(label_ID)
+
+    list_label_groups = filter(None, list_label_groups)
 
     return list_label_groups
 
