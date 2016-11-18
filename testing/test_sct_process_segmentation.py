@@ -79,9 +79,9 @@ def test(path_data='', parameters=''):
     # create nifti with rotated header
     # build rotation matrix
     from numpy import matrix, cos, sin
-    alpha = 0.7854  # corresponds to 45deg angle
-    beta = 0.7854  # corresponds to 45deg angle
-    gamma = 0.7854  # corresponds to 45deg angle
+    alpha = 0.175  # =10deg 0.7854  # corresponds to 45deg angle
+    beta = 0.175  # 0.7854  # corresponds to 45deg angle
+    gamma = 0.175 # 0.7854  # corresponds to 45deg angle
     rotation_matrix = matrix([[cos(alpha)*cos(beta), cos(alpha)*sin(beta)*sin(gamma)-sin(alpha)*cos(gamma), cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma)],
                               [sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)],
                               [-sin(beta), cos(beta)*sin(gamma), cos(beta)*cos(gamma)]])
