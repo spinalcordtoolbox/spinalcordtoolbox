@@ -146,7 +146,7 @@ bin: binarize mask (threshold=0.5)""",
                       default_value=param_default.slices_of_interest)
     parser.add_option(name='-fix',
                       type_value=[[','], 'str'],
-                      description='If you do not want to estimate the metric in one label and fix its value, specify <label_ID>.<metric_value. Example to fix the value in the CSf: -fix 31,0.',
+                      description='If you do not want to estimate the metric in one label and fix its value, specify <label_ID>,<metric_value. Example to fix the CSF value to 0: -fix 31,0.',
                       mandatory=False,
                       default_value='')
     parser.add_option(name='-norm-file',
@@ -199,6 +199,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     verbose = param.verbose
     adv_param = param.adv_param
     normalizing_label = []
+    fixed_label = []
 
     # adjust file names and parameters for old MNI-Poly-AMU template
     if not len(glob(path_label + 'WMtract*.*')) == 0:
@@ -352,7 +353,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             index = combined_labels_ids.index(i_label_user)
             sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ' ['+str(round(combined_labels_fract_vol[index], 2))+']:    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
     if label_to_fix:
-        sct.printv(label_to_fix[0] + ', ' + label_to_fix_name + ': ' + label_to_fix[1] + ' (value fixed by user)', 1, 'info')
+        fixed_label = [label_to_fix[0], label_to_fix_name, label_to_fix[1]]
+        sct.printv('\n*'+fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
 
     # section = ''
     # if labels_id_user[0] <= max(indiv_labels_ids):
@@ -374,7 +376,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     #         sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
-    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels, fixed_label)
 
 
 def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
@@ -644,7 +646,7 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
-def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None, fixed_label=None):
     """Save results in the output type selected by user."""
 
     sct.printv('\nSaving results in: '+fname_output+' ...')
@@ -715,6 +717,9 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             elif section == '\n# Combined labels\n':
                 index = combined_labels_ids.index(i_label_user)
                 fid_metric.write('%i, %s, %f, %f, %f\n' % (combined_labels_ids[index], combined_labels_names[index], combined_labels_fract_vol[index], combined_labels_value[index], combined_labels_std[index]))
+
+        if fixed_label:
+            fid_metric.write('\n*'+fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)')
 
         # Close file .txt
         fid_metric.close()
@@ -789,6 +794,21 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
             row_index += 1
 
+        if fixed_label:
+            sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
+            sh.write(row_index, 1, os.path.abspath(fname_data))
+            sh.write(row_index, 2, method)
+            sh.write(row_index, 3, vertebral_levels_field)
+            sh.write(row_index, 4, slices_of_interest_field)
+            if fname_normalizing_label:
+                sh.write(row_index, 10, fname_normalizing_label)
+
+            sh.write(row_index, 5, int(fixed_label[0]))
+            sh.write(row_index, 6, fixed_label[1])
+            sh.write(row_index, 7, 'nan')
+            sh.write(row_index, 8, '*' + fixed_label[2] + ' (value fixed by user)')
+            sh.write(row_index, 9, 'nan')
+
         book.save(fname_output)
 
     # if user chose to output results under a pickle file (variables that can be loaded in a python environment)
@@ -834,6 +854,8 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         metric_extraction_results['Total fractional volume of the label (in number of voxels)'] = np.array(Fract_vol_field)
         metric_extraction_results['Metric value'] = np.array(Metric_value_field)
         metric_extraction_results['Metric STDEV within label'] = np.array(Metric_std_field)
+        if fixed_label:
+            metric_extraction_results['Fixed label'] = 'Label ID = ' + fixed_label[0] + ', Label name = ' + fixed_label[1] + ', Value (set by user) = ' + fixed_label[2]
 
         # save results into a pickle file
         import pickle
