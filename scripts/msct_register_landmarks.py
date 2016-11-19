@@ -76,8 +76,8 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     if len(coord_src) != len(coord_dest):
         raise Exception('Error: number of source and destination landmarks are not the same, so landmarks cannot be paired.')
 
-    # check if landmarks match pairwise
-    # TODO
+    # estimate transformation
+    # N.B. points_src and points_dest are inverted below, because ITK uses inverted transformation matrices, i.e., src->dest is defined in dest instead of src.
     (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest, points_src, constraints=dof, verbose=verbose, path_qc=path_qc)
     # writing rigid transformation file
     # N.B. for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
