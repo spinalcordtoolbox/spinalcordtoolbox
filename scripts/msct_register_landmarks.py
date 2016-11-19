@@ -60,13 +60,13 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     for coord in coord_src:
         point_src = im_src.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         # convert NIFTI to ITK world coordinate
-        points_src.append([-point_src[0][0], -point_src[0][1], point_src[0][2]])
-        # points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
+        points_src.append([point_src[0][0], point_src[0][1], point_src[0][2]])
+        # points_src.append([-point_src[0][0], -point_src[0][1], point_src[0][2]])
     for coord in coord_dest:
         point_dest = im_dest.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         # convert NIFTI to ITK world coordinate
-        points_dest.append([-point_dest[0][0], -point_dest[0][1], point_dest[0][2]])
-        # points_dest.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+        points_dest.append([point_dest[0][0], point_dest[0][1], point_dest[0][2]])
+        # points_dest.append([-point_dest[0][0], -point_dest[0][1], point_dest[0][2]])
 
     # display
     sct.printv('Labels src: ' + str(points_src), verbose)
@@ -78,7 +78,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
 
     # check if landmarks match pairwise
     # TODO
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_src, points_dest, constraints=dof, verbose=verbose, path_qc=path_qc)
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest, points_src, constraints=dof, verbose=verbose, path_qc=path_qc)
     # writing rigid transformation file
     # N.B. for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
     # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
