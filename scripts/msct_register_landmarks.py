@@ -80,8 +80,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     # N.B. points_src and points_dest are inverted below, because ITK uses inverted transformation matrices, i.e., src->dest is defined in dest instead of src.
     (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest, points_src, constraints=dof, verbose=verbose, path_qc=path_qc)
     # writing rigid transformation file
-    # N.B. for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
-    # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
+    # N.B. x and y dimensions have a negative sign to ensure compatibility between Python and ITK transfo
     text_file = open(fname_affine, 'w')
     text_file.write("#Insight Transform File V1.0\n")
     text_file.write("#Transform 0\n")
@@ -91,8 +90,8 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
         rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
         rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
         translation_array[0, 0], translation_array[0, 1], translation_array[0, 2]))
-    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
-                                                           points_moving_barycenter[1],
+    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
+                                                           -points_moving_barycenter[1],
                                                            points_moving_barycenter[2]))
     text_file.close()
 
