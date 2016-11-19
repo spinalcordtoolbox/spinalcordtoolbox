@@ -66,7 +66,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
         point_dest = im_dest.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         # convert NIFTI to ITK world coordinate
         points_dest.append([-point_dest[0][0], -point_dest[0][1], point_dest[0][2]])
-        # points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+        # points_dest.append([point_template[0][0], point_template[0][1], point_template[0][2]])
 
     # display
     sct.printv('Labels src: ' + str(points_src), verbose)
@@ -163,12 +163,12 @@ def Metric_Images(imageA, imageB, type=''):
 
 
 
-def minimize_transform(params, points_fixed, points_moving, constraints):
+def minimize_transform(params, points_src, points_dest, constraints):
     """
     Cost function to minimize
     :param params:
-    :param points_fixed:
-    :param points_moving:
+    :param points_dest:
+    :param points_src:
     :param constraints:
     :return: sum of squared error between pair-wise landmarks
     """
@@ -192,13 +192,13 @@ def minimize_transform(params, points_fixed, points_moving, constraints):
     # compute rotation+scaling matrix
     rotsc_matrix = scaling_matrix * rotation_matrix
     # compute center of mass from moving points (src)
-    points_moving_barycenter = mean(points_moving, axis=0)
+    points_src_barycenter = mean(points_src, axis=0)
     # apply transformation to moving points (src)
-    points_moving_reg = ((rotsc_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + matrix([tx, ty, tz])
+    points_src_reg = ((rotsc_matrix * (matrix(points_src) - points_src_barycenter).T).T + points_src_barycenter) + matrix([tx, ty, tz])
     # record SSE for later display
-    sse_results.append(SSE(matrix(points_fixed), points_moving_reg))
+    sse_results.append(SSE(matrix(points_dest), points_src_reg))
     # return SSE
-    return SSE(matrix(points_fixed), points_moving_reg)
+    return SSE(matrix(points_dest), points_src_reg)
 
 
 def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', metric = 'MeanSquares', center_rotation=None):
@@ -313,8 +313,8 @@ def getRigidTransformFromLandmarks(points_src, points_dest, constraints='Tx_Ty_T
         init_param_optimizer.append(init_param[dict_dof[list_constraints[i]]])
 
     # launch optimizer
-    # res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_fixed, points_src, constraints), method='Nelder-Mead', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_dest, points_src, constraints), method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': verbose})
+    # res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_src, points_dest, constraints), method='Nelder-Mead', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
+    res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_src, points_dest, constraints), method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': verbose})
     # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='COBYLA', tol=1e-8, options={'tol': 1e-8, 'rhobeg': 0.1, 'maxiter': 100000, 'catol': 0, 'disp': show})
     # loop across constraints and update dof
     dof = init_param
