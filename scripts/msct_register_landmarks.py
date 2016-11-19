@@ -201,7 +201,7 @@ def minimize_transform(params, points_src, points_dest, constraints):
     return SSE(matrix(points_dest), points_src_reg)
 
 
-def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', metric = 'MeanSquares', center_rotation=None):
+def getRigidTransformFromImages(img_src, img_dest, constraints='none', metric = 'MeanSquares', center_rotation=None):
     list_constraints = [None, 'none', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy']
     list_center_rotation = [None, 'BarycenterImage']
     if constraints not in list_constraints:
@@ -221,8 +221,8 @@ def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', m
         from nibabel import load
         from numpy import amax, cross, dot
         from math import acos, pi
-        data_moving = load(image_moving).get_data()
-        data_fixed = load(image_fixed).get_data()
+        data_moving = load(img_src).get_data()
+        data_fixed = load(img_dest).get_data()
         data_moving_10percent = data_moving > amax(data_moving) * 0.1
         data_fixed_10percent = data_fixed > amax(data_fixed) * 0.1
         # Calculating position of barycenters
@@ -264,7 +264,7 @@ def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', m
 
     if constraints == 'rotation-xy':
         initial_parameters = [ini_param_rotation]
-        res = minimize(minRotation_xy_Transform_for_Images, x0=initial_parameters, args=(image_fixed, image_moving, metric), method='Nelder-Mead', tol=1e-2,
+        res = minimize(minRotation_xy_Transform_for_Images, x0=initial_parameters, args=(img_dest, img_src, metric), method='Nelder-Mead', tol=1e-2,
                        options={'maxiter': 1000, 'disp': True})
 
         gamma = res.x[0]
@@ -274,7 +274,7 @@ def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', m
 
     elif constraints == 'xy':
         initial_parameters = [ini_param_rotation_real, ini_param_trans_x_real, ini_param_trans_y_real]
-        res = minimize(minRigid_xy_Transform_for_Images, x0=initial_parameters, args=(image_fixed, image_moving, coord_center_rotation, metric), method='Nelder-Mead', tol=1e-2,
+        res = minimize(minRigid_xy_Transform_for_Images, x0=initial_parameters, args=(img_dest, img_src, coord_center_rotation, metric), method='Nelder-Mead', tol=1e-2,
                        options={'maxiter': 1000, 'disp': True})
 
         # change result if input parameters are changed
