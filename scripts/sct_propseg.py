@@ -354,7 +354,7 @@ if __name__ == "__main__":
     qcReport = msct_qc.Qc_Report("propseg",contrast_type)
 
     # Create the Qc object that creates the images files to provide to the HTML
-    @msct_qc.Qc(qcReport)
+    @msct_qc.Qc(qcReport,action_list = [msct_qc.Qc.aplr])
     def propseg_qc(input_filename, output_filename,nb_column):
         """
         :param input_filename:

@@ -215,12 +215,11 @@ class Qc(object):
 
         return wrapped_f
 
-
-
     @staticmethod
     def label_vertebrae(self):
         a = [0.0]
         data = self.mask;
+        ax = self.subplot
         for index, val in np.ndenumerate(data):
             if val not in a:
                 a.append(val)
@@ -228,8 +227,25 @@ class Qc(object):
                 color = self._labels_color[index]
                 x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
                 label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
-                self.subplot.annotate(label, xy=(y,x), xytext=(y + 25, x),color= color,
+                ax.annotate(label, xy=(y,x), xytext=(y + 25, x),color= color,
                     arrowprops=dict(facecolor= color,shrink=0.05))
+
+    @staticmethod
+    def aplr(self):
+        ax =  self.subplot
+        size = 5
+        x = 8
+        y = 8
+        fontsize = 2
+        ax.text(x,y+size,r'A',fontsize=fontsize, fontweight='bold',color = '#efbd1a')
+        ax.text(x,y-size,r'P',fontsize=fontsize, fontweight='bold',color = '#efbd1a')
+        ax.text(x+size,y,r'L',fontsize=fontsize, fontweight='bold',color = '#efbd1a')
+        ax.text(x-size,y,r'R',fontsize=fontsize, fontweight='bold',color = '#efbd1a')
+        ax.arrow(x,y,0,size,head_width=1.8,head_length=1.5,fc='b',ec='b')
+        ax.arrow(x,y,size,0,head_width=1.8,head_length=1.5,fc='b',ec='b')
+        ax.arrow(x,y,-size,0,head_width=1.8,head_length=1.5,fc='b',ec='b')
+        ax.arrow(x,y,0,-size,head_width=1.8,head_length=1.5,fc='b',ec='b')
+
 
 
     def __save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0):
