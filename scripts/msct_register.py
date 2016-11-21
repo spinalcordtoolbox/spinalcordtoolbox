@@ -166,7 +166,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
     # regularize rotation
-    if not poly == 0:
+    if not poly == 0 and rot == 1:
         from msct_smooth import polynomial_fit
         angle_src_dest_regularized = polynomial_fit(z_nonzero, angle_src_dest[z_nonzero], poly)[0]
         # display
@@ -684,9 +684,9 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         y_disp_a = np.asarray(y_displacement)
         theta_rot_a = np.asarray(theta_rotation)
         # Generate warping field
-        generate_warping_field('dest.nii', x_disp_a, y_disp_a, theta_rot_a, fname=fname_warp)  #name_warp= 'step'+str(paramreg.step)
+        generate_warping_field('dest.nii', x_disp_a, y_disp_a, fname_warp=fname_warp)  #name_warp= 'step'+str(paramreg.step)
         # Inverse warping field
-        generate_warping_field('src.nii', -x_disp_a, -y_disp_a, theta_rot_a, fname=fname_warp_inv)
+        generate_warping_field('src.nii', -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
 
     if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
         from sct_image import concat_warp2d

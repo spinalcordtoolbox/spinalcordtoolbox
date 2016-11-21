@@ -472,41 +472,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     min_z_index, max_z_index = min(Z), max(Z)
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
-
-    # transform centerline coordinates into voxel space for further use
-    coord_voxel_centerline = im_seg.transfo_phys2pix([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]] for i in range(len(z_centerline))])
-    z_centerline_fit_vox = [coord[2] for coord in coord_voxel_centerline]
-
-    # average over slices
-    P_x = np.array(x_centerline_fit)
-    P_y = np.array(y_centerline_fit)
-    P_z = np.array(z_centerline)
-    P_z_vox = np.array(z_centerline_fit_vox)
-    P_x_d = np.array(x_centerline_deriv)
-    P_y_d = np.array(y_centerline_deriv)
-    P_z_d = np.array(z_centerline_deriv)
-
-    P_z_vox = np.array([int(np.round(P_z_vox[i])) for i in range(0, len(P_z_vox))])
-    # not perfect but works (if "enough" points), in order to deal with missing z slices
-    for i in range(min(P_z_vox), max(P_z_vox) + 1, 1):
-        if i not in P_z_vox:
-            P_x_temp = np.insert(P_x, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x[np.where(P_z_vox == i - 1)[-1][-1]] + P_x[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_y_temp = np.insert(P_y, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y[np.where(P_z_vox == i - 1)[-1][-1]] + P_y[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_z_temp = np.insert(P_z, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z[np.where(P_z_vox == i - 1)[-1][-1]] + P_z[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_x_d_temp = np.insert(P_x_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_x_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_y_d_temp = np.insert(P_y_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_y_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_z_d_temp = np.insert(P_z_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_z_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-            P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
-
-    coord_mean = np.array([[np.mean(P_x[P_z_vox == i]), np.mean(P_y[P_z_vox == i]), np.mean(P_z[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
-    x_centerline_fit = coord_mean[:, :][:, 0]
-    y_centerline_fit = coord_mean[:, :][:, 1]
-    coord_mean_d = np.array([[np.mean(P_x_d[P_z_vox == i]), np.mean(P_y_d[P_z_vox == i]), np.mean(P_z_d[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
-    z_centerline = coord_mean[:, :][:, 2]
-    x_centerline_deriv = coord_mean_d[:, :][:, 0]
-    y_centerline_deriv = coord_mean_d[:, :][:, 1]
-    z_centerline_deriv = coord_mean_d[:, :][:, 2]
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -514,6 +480,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Empty arrays in which CSA for each z slice will be stored
     csa = np.zeros(max_z_index-min_z_index+1)
     angles = np.zeros(max_z_index - min_z_index + 1)
+    spacing = [im_seg.dim[4], im_seg.dim[5], im_seg.dim[6]]
 
     for iz in xrange(min_z_index, max_z_index+1):
         if angle_correction:
@@ -522,11 +489,16 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
                 # compute the vector normal to the plane
                 normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
 
+                # adjusting for spacing, assuming RPI orientation
+                normal[0] *= spacing[0]
+                normal[1] *= spacing[1]
+                normal[2] *= spacing[2]
+
             except IndexError:
                 sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.dot(normal, [0, 0, 1]))
+            angle = np.arccos(np.dot(normal, [0.0, 0.0, 1.0]))
         else:
             angle = 0.0
 
@@ -676,27 +648,36 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         elif not vert_levels:
             vert_levels_list = []
 
-        # parse the selected slices
-        slices_lim = slices.strip().split(':')
-        slices_list = range(int(slices_lim[0]), int(slices_lim[-1])+1)
-        sct.printv('Average CSA across slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
+        if slices is None:
+            mean_CSA = 0.0
+            std_CSA = 0.0
+            mean_angle = 0.0
+            std_angle = 0.0
+            slices = '0'
+            vert_levels_list = []
 
-        CSA_for_selected_slices = []
-        angles_for_selected_slices = []
-        # Read the file csa_per_slice.txt and get the CSA for the selected slices
-        with open(output_folder+'csa_per_slice.txt') as openfile:
-            for line in openfile:
-                if line[0] != '#':
-                    line_split = line.strip().split(',')
-                    if int(line_split[0]) in slices_list:
-                        CSA_for_selected_slices.append(float(line_split[1]))
-                        angles_for_selected_slices.append(float(line_split[2]))
+        else:
+            # parse the selected slices
+            slices_lim = slices.strip().split(':')
+            slices_list = range(int(slices_lim[0]), int(slices_lim[-1])+1)
+            sct.printv('Average CSA across slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
 
-        # average the CSA and angle
-        mean_CSA = np.mean(np.asarray(CSA_for_selected_slices))
-        std_CSA = np.std(np.asarray(CSA_for_selected_slices))
-        mean_angle = np.mean(np.asarray(angles_for_selected_slices))
-        std_angle = np.std(np.asarray(angles_for_selected_slices))
+            CSA_for_selected_slices = []
+            angles_for_selected_slices = []
+            # Read the file csa_per_slice.txt and get the CSA for the selected slices
+            with open(output_folder+'csa_per_slice.txt') as openfile:
+                for line in openfile:
+                    if line[0] != '#':
+                        line_split = line.strip().split(',')
+                        if int(line_split[0]) in slices_list:
+                            CSA_for_selected_slices.append(float(line_split[1]))
+                            angles_for_selected_slices.append(float(line_split[2]))
+
+            # average the CSA and angle
+            mean_CSA = np.mean(np.asarray(CSA_for_selected_slices))
+            std_CSA = np.std(np.asarray(CSA_for_selected_slices))
+            mean_angle = np.mean(np.asarray(angles_for_selected_slices))
+            std_angle = np.std(np.asarray(angles_for_selected_slices))
 
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
         sct.printv('Mean angle: '+str(mean_angle)+' +/- '+str(std_angle)+' degrees', type='info')
@@ -706,9 +687,12 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         save_results(output_folder+'angle_mean', overwrite, fname_segmentation, 'Angle with respect to the I-S direction', 'Unit z vector compared to the unit tangent vector to the centerline at each slice (in degrees)', mean_angle, std_angle, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
-        sct.printv('Compute the volume in between slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
-        nb_vox = np.sum(data_seg[:, :, slices_list])
-        volume = nb_vox*px*py*pz
+        if slices == '0':
+            volume = 0.0
+        else:
+            sct.printv('Compute the volume in between slices '+str(slices_lim[0])+' to '+str(slices_lim[-1])+'...', type='info')
+            nb_vox = np.sum(data_seg[:, :, slices_list])
+            volume = nb_vox*px*py*pz
         sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
 
         # write result into output file
@@ -869,6 +853,7 @@ def save_results(fname_output, overwrite, fname_data, metric_name, method, mean,
     output_results['STDEV across slices'] = str(std)
 
     # save "output_results"
+    import pickle
     output_file = open(fname_output+'.pickle', 'wb')
     pickle.dump(output_results, output_file)
     output_file.close()
@@ -895,8 +880,14 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
 
     # Check if the vertebral levels selected are available
     warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
-    min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
-    max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
+    if len(vertebral_levels_available) == 0:
+        slices = None
+        vert_levels_list = None
+        warning.append('\tError: no slices with corresponding vertebral levels were found.')
+        return slices, vert_levels_list, warning
+    else:
+        min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
+        max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
 
     if vert_levels_list[0] < min_vert_level_available:
         vert_levels_list[0] = min_vert_level_available
@@ -952,8 +943,13 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
             matching_slices_centerline_vert_labeling.append(z_centerline[i_z])
 
     # now, find the min and max slices that are included in the vertebral levels
-    slices = str(min(matching_slices_centerline_vert_labeling))+':'+str(max(matching_slices_centerline_vert_labeling))
-    sct.printv('\t'+slices)
+    if len(matching_slices_centerline_vert_labeling) == 0:
+        slices = None
+        vert_levels_list = None
+        warning.append('\tError: no slices with corresponding vertebral levels were found.')
+    else:
+        slices = str(min(matching_slices_centerline_vert_labeling))+':'+str(max(matching_slices_centerline_vert_labeling))
+        sct.printv('\t'+slices)
 
     return slices, vert_levels_list, warning
 
