@@ -21,7 +21,7 @@ from time import strftime, time
 import sct_utils as sct
 from numpy import mgrid, zeros, exp, unravel_index, argmax, poly1d, polyval, linalg, max, polyfit, sqrt, abs, savetxt
 import glob
-from sct_utils import fsloutput
+#from sct_utils import fsloutput
 from sct_image import get_orientation_3d, set_orientation
 from sct_convert import convert
 from msct_image import Image
