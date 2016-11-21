@@ -30,6 +30,7 @@ def test(path_data='', parameters=''):
     # initializations
     dice_template2anat = float('NaN')
     dice_anat2template = float('NaN')
+    output = ''
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz ' \
@@ -92,7 +93,7 @@ def test(path_data='', parameters=''):
     param_with_path += ' -ofolder ' + path_output
 
     cmd = 'sct_register_to_template ' + param_with_path
-    output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
         status, o = sct.run(cmd, verbose)
