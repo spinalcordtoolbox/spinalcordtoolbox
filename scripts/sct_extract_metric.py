@@ -457,7 +457,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
 
 
 def read_label_file(path_info_label, file_info_label):
-    """Read label.txt file which is located inside label folder."""
+    """Reads file_info_label (located inside label folder) and returns the information needed."""
 
     indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = [], [], [], [], [], [], []
 
@@ -487,27 +487,28 @@ def read_label_file(path_info_label, file_info_label):
         section = ''
         for line in lines:
             # update section index
-            if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line) or ('# Clusters used as a priori for the MAP estimation' in line):
-                section = line
+            # if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line) or ('# Clusters used as a priori for the MAP estimation' in line):
+            if '# Keyword=' in line:
+                section = line.split('Keyword=')[1].split(' ')[0]
             # record the label according to its section
-            if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
+            # if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
+            if (section == 'IndivLabels') and (line[0] != '#'):
                 parsed_line = line.split(', ')
                 indiv_labels_ids.append(int(parsed_line[0]))
                 indiv_labels_names.append(parsed_line[1].strip())
                 indiv_labels_files.append(parsed_line[2].strip())
 
-            elif ('# Combined labels' in section) and (line[0] != '#'):
+            elif (section == 'CombinedLabels') and (line[0] != '#'):
                 parsed_line = line.split(', ')
                 combined_labels_ids.append(int(parsed_line[0]))
                 combined_labels_names.append(parsed_line[1].strip())
                 combined_labels_id_groups.append(','.join(parsed_line[2:]).strip())
 
-            elif ('# Clusters used as a priori for the MAP estimation' in section) and (line[0] != '#'):
+            elif (section == 'MAPLabels') and (line[0] != '#'):
                 parsed_line = line.split(', ')
                 clusters_apriori.append(parsed_line[-1].strip())
 
         # check if all files listed are present in folder. If not, ERROR.
-        # TODO: better handle error
         for file in indiv_labels_files:
             sct.check_file_exist(path_info_label+file)
 
