@@ -1,49 +1,40 @@
 import os
 import msct_report_util
-import msct_report_config
-import  webbrowser
+import webbrowser
 import msct_report as report
-import msct_report_item as reportItem
+import msct_report_item as report_item
 
 
-def generate_report(description, syntax, reportDir):
+def generate_report(description, syntax, report_dir):
     """
     :param description:
-    :param syntaxt:
-    :param qcImages:
-    :param reportDir:
+    :param syntax:
+    :param report_dir:
     :return:
     """
-    print "start generation du rapport html \n !"
-
-    print os.path.dirname(os.path.realpath(__file__));
     # create new  or get instance of  the report object
-    sct_report = report.Report(reportExits(reportDir), reportDir)
+    sct_report = report.Report(report_exists(report_dir), report_dir)
 
-    #create sct_report_item
-    sct_report_item = reportItem.ReportItem(reportDir,syntax, msct_report_util.getTxtContent(description))
+    # create sct_report_item
+    sct_report_item = report_item.ReportItem(report_dir, syntax,description)
 
     # append  item to a new or existing report
-    sct_report.appendItem(sct_report_item)
+    sct_report.append_item(sct_report_item)
 
     # update index file and menu links
-    sct_report.refreshIndexFile()
+    sct_report.refresh_index_file()
 
-    print "end generation du rapport ! \n"
+    print " \n The qc report has been generated in {}! \n".format(os.path.realpath(report_dir))
 
-    #display report in the default web browser
-
-    url = 'file://{}'.format(os.path.realpath(os.path.join(reportDir, "index.html")))
+    # display report in the default web browser
+    url = 'file://{}'.format(os.path.realpath(os.path.join(report_dir, "index.html")))
     webbrowser.open(url)
 
-    return
 
-
-def reportExits(reportDir):
+def report_exists(report_dir):
     """
     check if a report folder already exists and assets is copied inside the folder
-    :param reportDir:
-    :return:
+    :param report_dir:
+    :return:true or false
     """
-    return os.path.isdir(os.path.join(reportDir, msct_report_config.assetsDirName))
-
+    return os.path.isdir(os.path.join(report_dir, "assets"))

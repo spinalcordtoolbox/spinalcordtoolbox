@@ -1,45 +1,46 @@
 import os
-import shutil
-import msct_report_config
 import msct_report_util
 
 
 class ReportItem:
-    def __init__(self,reportDir, syntax, description):
-        self.reportDir = reportDir
+    def __init__(self, report_dir, syntax, description):
+        self.report_dir = report_dir
         self.syntax = syntax
-        self.contrastName, self.toolName = syntax.split(' ')
-        self.description = description
-        self.imagesDir = os.path.join("img", self.contrastName,self.toolName)
-        self.imagesLink = []
-        self.htmlFileName = '{}-{}.html'.format(self.contrastName, self.toolName)
-        return
+        self.contrast_name, self.tool_name = syntax.split(' ')
+        self.images_dir = os.path.join("img", self.contrast_name, self.tool_name)
+        self.description = msct_report_util.getTxtContent(os.path.join(self.report_dir, self.images_dir, description))
+        self.images_link = []
+        self.html_file_name = '{}-{}.html'.format(self.contrast_name, self.tool_name)
 
-    def generateGif():
-        return self.genGif > -1 
-
-    def addImageLink(self, link):
+    def add_image_link(self, link):
         """
         add image link  to a list of images link
         :param link:
         :return:
         """
-        self.imagesLink.append(link)
+        self.images_link.append(link)
 
-    def generateHtmlFromTemplate(self, templateDir, templateName):
+    def generate_html_from_template(self, template_dir, template_name):
         """
         create new hmtl file  in report dir  based on contraste_tool template
-        :param reportDir:
-        :param templateDir:
-        :param templateName:
+        :param template_dir:
+        :param template_name:
         :return:
         """
-        fileLink = os.path.join(self.reportDir, self.htmlFileName)
+        file_link = os.path.join(self.report_dir, self.html_file_name)
         tags = {
             'description': self.description,
             'syntax': self.syntax,
-            'images': self.imagesLink
+            'images': self.images_link
         }
-        msct_report_util.createHtmlFile(templateDir, templateName, fileLink, tags)
+        msct_report_util.createHtmlFile(template_dir, template_name, file_link, tags)
 
-        return
+
+class Image:
+    """
+    image class to represent img content in the html file
+    """
+
+    def __init__(self, name, src):
+        self.name = name
+        self.src = src

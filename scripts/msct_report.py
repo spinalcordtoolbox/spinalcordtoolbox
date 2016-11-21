@@ -2,95 +2,89 @@ import os
 import shutil
 import glob
 from collections import OrderedDict
-import msct_report_config
 import msct_report_util
-import msct_report_image
+import msct_report_item as report_item
 
 
 class Report:
-    def __init__(self, exists, reportDir):
-        self.dir = os.path.dirname(os.path.realpath(__file__));
-        self.reportFolder = reportDir
+    def __init__(self, exists, report_dir):
+        # constants
+        self.templates_dir_name = "qc_templates"
+        self.assets_dir_name = "assets"
+        self.contrast_tool_file_name = "contrast_tool.html"
+        self.index_file_name = "index.html"
 
-        # TODO:the template link could  change in production
-        self.templatesDirLink = os.path.join(self.dir,'..', msct_report_config.templatesDirName)
+        self.dir = os.path.dirname(os.path.realpath(__file__))
+        self.report_folder = report_dir
+        self.templates_dir_link = os.path.join(self.dir, '..', "data", self.templates_dir_name)
 
         #  copy all the assets file inside the new folder 
         if not exists:
-            self.__createNew()
+            self._create_new()
 
-    def __createMenuLink(self, contraste, tool, id=None):
+    @staticmethod
+    def __create_menu_link(contrast, tool, id=None):
         item = {
             'name': tool,
-            'link': '{}-{}'.format(contraste, tool)
+            'link': '{}-{}'.format(contrast, tool)
         }
         return item
 
-    def __getMenuLinks(self):
+    def __get_menu_links(self):
         """
         this function parse the current report folder and return the correspondind links by parsing html file names
-
         :return:
         """
-        htmls = glob.glob1(self.reportFolder, "*.html")
-        links =OrderedDict()
-        if htmls:
-            for item in htmls:
-                rmvHtml = item.split('.')
-                tmp = rmvHtml[0].split('-')
+        html_files = glob.glob1(self.report_folder, "*.html")
+        links = OrderedDict()
+        if html_files:
+            for item in html_files:
+                rmv_html = item.split('.')
+                tmp = rmv_html[0].split('-')
                 if tmp.__len__() > 1:
                     if not tmp[0] in links:
-                        links[tmp[0]] = [self.__createMenuLink(tmp[0], tmp[1])]
+                        links[tmp[0]] = [self.__create_menu_link(tmp[0], tmp[1])]
                     else:
-                        links[tmp[0]].append(self.__createMenuLink(tmp[0], tmp[1]))
+                        links[tmp[0]].append(self.__create_menu_link(tmp[0], tmp[1]))
         return links
 
-    def __createNew(self):
+    def _create_new(self):
         """
         create a new report folder in the given directory
         :return:e
         """
         # copy assets  into sct_report dir
-        shutil.copytree(os.path.join(self.templatesDirLink, msct_report_config.assetsDirName),
-                        os.path.join(self.reportFolder, msct_report_config.assetsDirName))
+        shutil.copytree(os.path.join(self.templates_dir_link, self.assets_dir_name),
+                        os.path.join(self.report_folder, self.assets_dir_name))
 
-        # copy the .config.json (TODO:its config really necessary)
-        msct_report_util.copy(os.path.join(self.templatesDirLink, msct_report_config.reportConfigFileName), self.reportFolder,
-                              msct_report_config.reportConfigFileName)
-
-    def appendItem(self, item):
+    def append_item(self, item):
         """
         :param item:
         :return:
         """
         # get images link from qc images
-        qcImagesItemLink = os.path.join(self.reportFolder,'img', item.contrastName, item.toolName)
-        print "qcImagesItem",qcImagesItemLink
-        if os.path.exists(qcImagesItemLink):
-            #TODO:Marche pas bien =>take all png or jpeg
-            imagesLink = glob.glob1(qcImagesItemLink, msct_report_config.imagesExt)
-            if imagesLink:
-                for img in imagesLink:
-                    item.addImageLink(msct_report_image.Image(img, os.path.join(item.imagesDir, img)))
+        qc_images_item_link = os.path.join(self.report_folder, 'img', item.contrast_name, item.tool_name)
+        if os.path.exists(qc_images_item_link):
+            # TODO:Marche pas bien =>take all png or jpeg
+            images_link = glob.glob1(qc_images_item_link, "*.png")
+            if images_link:
+                for img in images_link:
+                    item.add_image_link(report_item.Image(img, os.path.join(item.images_dir, img)))
             else:
                 print "no qc images in the current directory"
         else:
             raise Exception("qc images not founded")
 
         # generate html file for the item
-        item.generateHtmlFromTemplate(self.templatesDirLink, msct_report_config.constrasteToolTemplate)
+        item.generate_html_from_template(self.templates_dir_link, self.contrast_tool_file_name)
 
-        return
-
-    def refreshIndexFile(self):
-
+    def refresh_index_file(self):
         """
-
+         update index file to add generated item
         :return:
         """
-        fileLink = os.path.join(self.reportFolder, msct_report_config.indexTemplate)
+        file_link = os.path.join(self.report_folder, self.index_file_name)
         tags = {
-            'links': self.__getMenuLinks()
+            'links': self.__get_menu_links()
         }
-        msct_report_util.createHtmlFile(self.templatesDirLink, msct_report_config.indexTemplate, fileLink, tags)
-        return
+        msct_report_util.createHtmlFile(self.templates_dir_link, self.index_file_name, file_link, tags)

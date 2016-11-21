@@ -18,6 +18,7 @@ import sct_utils as sct
 from msct_parser import Parser
 import isct_generate_report
 
+
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
@@ -175,17 +176,16 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
-    parser.add_option(name="-qc",
+    parser.add_option(name="-param-qc",
                       type_value=[[','], 'str'],
                       description="Create the patches and generate the report",
                       mandatory=False)
     return parser
 
 
-
 if __name__ == "__main__":
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])     
+    arguments = parser.parse(sys.argv[1:])
     input_filename = arguments["-i"]
     contrast_type = arguments["-c"]
 
@@ -270,8 +270,6 @@ if __name__ == "__main__":
     if "-alpha" in arguments:
         cmd += " -alpha " + str(arguments["-alpha"])
 
-        
-
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
 
@@ -333,29 +331,30 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    #sct.run(cmd, verbose)
+    # sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
 
-    # Decode the parameters of qc
     nb_column = 10
-
-    for paramStep in arguments['-qc']:
-        obj = paramStep.split('=')
-        if obj[ 0 ] == "nbrcol":
-            nb_column = int(obj[ 1 ])
-        if obj[ 0 ] == "ofolder":
-            output_folder = str(obj[ 1 ])
-
+    qc_folder_output= None
+    # Decode the parameters of -pararm-qc
+    if '-param-qc' in arguments:
+        for paramStep in arguments['-param-qc']:
+            params = paramStep.split('=')
+            if len(params) > 1 :
+                if params[0] == "ofolder":
+                    qc_folder_output = params[1]
+                if params[0] == 'ncol':
+                    nb_column = int(params[1])
     # Qc_Report generates and contains the useful infos for qc generation
-    qcReport = msct_qc.Qc_Report("propseg",contrast_type)
+    qcReport = msct_qc.Qc_Report("propseg", contrast_type, qc_folder_output,sys.argv[1:], parser.usage.description)
 
     # Create the Qc object that creates the images files to provide to the HTML
-    @msct_qc.Qc(qcReport,action_list = [msct_qc.Qc.aplr])
-    def propseg_qc(input_filename, output_filename,nb_column):
+    @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.aplr])
+    def propseg_qc(input_filename, output_filename, nb_column):
         """
         :param input_filename:
         :param output_filename:
@@ -365,15 +364,11 @@ if __name__ == "__main__":
         # Chosen axe to generate image
         return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
 
+
     propseg_qc(input_filename, output_filename, nb_column)
-    qcReport.createDescriptionFile(sys.argv[1:], parser.usage.description, None)
 
     if folder_output == "./":
         output_name = output_filename
     else:
         output_name = folder_output + output_filename
     sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
-
-
-
-
