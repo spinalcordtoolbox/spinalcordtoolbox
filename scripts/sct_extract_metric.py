@@ -13,6 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add section: ADVANCED USER
 # TODO: find another method to update label in case average_all_labels == 1. E.g., recreate tmp label file.
 # TODO: add documentation for new features
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
