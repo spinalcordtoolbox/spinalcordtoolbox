@@ -1120,7 +1120,21 @@ def get_clustered_labels(clusters_all_labels, labels, indiv_labels_ids, labels_u
 
     return clustered_labels, matching_cluster_label_id
 
+
 def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user):
+    """
+    This function updates the data and list of labels as explained in:
+    https://github.com/neuropoly/spinalcordtoolbox/issues/958
+    :param label_to_fix:
+    :param data:
+    :param labels:
+    :param indiv_labels_ids:
+    :param indiv_labels_names:
+    :param ml_clusters:
+    :param combined_labels_id_groups:
+    :param labels_id_user:
+    :return:
+    """
 
     label_to_fix_ID = int(label_to_fix[0])
     label_to_fix_value = float(label_to_fix[1])
@@ -1146,8 +1160,8 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_n
     # redefine the combined labels groups
     combined_labels_id_groups = remove_label_from_group(combined_labels_id_groups, label_to_fix_ID)
 
-
     return data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user, label_to_fix_name, label_to_fix_fract_vol
+
 
 
 def parse_label_ID_groups(list_ID):
