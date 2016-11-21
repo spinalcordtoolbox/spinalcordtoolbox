@@ -270,18 +270,7 @@ if __name__ == "__main__":
     if "-alpha" in arguments:
         cmd += " -alpha " + str(arguments["-alpha"])
 
-
-    if "-qc" in arguments:
-        param_qc = arguments['-qc']
-        #sct.printv('parameters of qc :')
-        #paramqc=None
-        #params_qc = obj = param_qc[0].split(',')
-        #for paramStep in param_qc:
-        #    obj = paramStep.split('=')
-        #    sct.printv('param :')
-        #    sct.printv(obj[0])
-        #    sct.printv('with value :')
-        #    sct.printv(obj[1])
+        
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
@@ -351,15 +340,33 @@ if __name__ == "__main__":
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
 
-    # Creating the QC report
-    if "-qc" in arguments:
-        msct_qc.Qc().createDescriptionFile("sct_propseg", sys.argv[1:], parser.usage.description, None)
-        nbrcolumns = 10
-        for paramStep in param_qc:
-            obj = paramStep.split('=')
-            if obj[0]=="nbrcol":
-                nbrcolumns=int(obj[1])
-        msct_qc.axial("propseg", contrast_type, input_filename, output_filename).save(nbrcolumns, 15)
+    # Decode the parameters of qc
+    nb_column = 10
+
+    for paramStep in arguments['-qc']:
+        obj = paramStep.split('=')
+        if obj[ 0 ] == "nbrcol":
+            nb_column = int(obj[ 1 ])
+        if obj[ 0 ] == "ofolder":
+            output_folder = str(obj[ 1 ])
+
+    # Qc_Report generates and contains the useful infos for qc generation
+    qcReport = msct_qc.Qc_Report("propseg",contrast_type)
+
+    # Create the Qc object that creates the images files to provide to the HTML
+    @msct_qc.Qc(qcReport,action_list = [msct_qc.Qc.aplr])
+    def propseg_qc(input_filename, output_filename,nb_column):
+        """
+        :param input_filename:
+        :param output_filename:
+        :param nb_column: 
+        :return:
+        """
+        # Chosen axe to generate image
+        return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
+
+    propseg_qc(input_filename, output_filename, nb_column)
+    qcReport.createDescriptionFile(sys.argv[1:], parser.usage.description, None)
 
     if folder_output == "./":
         output_name = output_filename
@@ -367,6 +374,6 @@ if __name__ == "__main__":
         output_name = folder_output + output_filename
     sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
 
-	
+
 
 
