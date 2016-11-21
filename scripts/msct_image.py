@@ -730,10 +730,29 @@ class Image(object):
         m_p2f_transfo = m_p2f[0:3, 0:3]
         coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if not coordi is None:
-            coordi_pix = np.transpose(np.asarray(coordi))
+        if coordi is not None:
+            coordi = np.asarray(coordi)
+            number_of_coordinates = coordi.shape[0]
+            num_c = 100000
+            result_temp = np.empty(shape=(0, 3))
+
+            for i in range(int(number_of_coordinates / num_c)):
+                coordi_temp = coordi[num_c * i:(i + 1) * num_c, :]
+                coordi_pix = np.transpose(coordi_temp)
+                dot_result = np.dot(m_p2f_transfo, coordi_pix)
+                coordi_phys = np.transpose(coord_origin + dot_result)
+                result_temp = np.concatenate((result_temp, coordi_phys), axis=0)
+
+            if int(number_of_coordinates / num_c) == 0:
+                coordi_temp = coordi
+            else:
+                coordi_temp = coordi[int(number_of_coordinates / num_c) * num_c:, :]
+            coordi_pix = np.transpose(coordi_temp)
             coordi_phys = np.transpose(coord_origin + np.dot(m_p2f_transfo, coordi_pix))
+
+            coordi_phys = np.concatenate((result_temp, coordi_phys), axis=0)
             coordi_phys_list = coordi_phys.tolist()
+            #print coordi_phys.shape
 
             return coordi_phys_list
         """
