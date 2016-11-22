@@ -486,8 +486,8 @@ def read_label_file(path_info_label, file_info_label):
 
         # Check if the White matter atlas was provided by the user
         # look at first line
-        header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
-        info_label_title = header_lines[0].split('-')[0].strip()
+        # header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
+        # info_label_title = header_lines[0].split('-')[0].strip()
         # if '# White matter atlas' not in info_label_title:
         #     sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
 
