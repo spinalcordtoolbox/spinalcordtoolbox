@@ -1012,8 +1012,6 @@ def ellipse_dim(a):
 #=======================================================================================================================
 def edge_detection(f):
 
-    import Image
-    
     #sigma = 1.0
     img = Image.open(f) #grayscale
     imgdata = np.array(img, dtype = float)
