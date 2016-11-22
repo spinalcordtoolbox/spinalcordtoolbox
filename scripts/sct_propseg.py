@@ -331,7 +331,7 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    # sct.run(cmd, verbose)
+    sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
