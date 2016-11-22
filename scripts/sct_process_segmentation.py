@@ -633,17 +633,12 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
             sct.check_file_exist(fname_vertebral_labeling)
 
             # convert the vertebral labeling file to RPI orientation
-            im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
-
-            # transforming again coordinates...
-            coord_voxel_centerline = im_vertebral_labeling.transfo_phys2pix([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]] for i in range(len(z_centerline))])
-            x_centerline_fit_vox = [coord[0] for coord in coord_voxel_centerline]
-            y_centerline_fit_vox = [coord[1] for coord in coord_voxel_centerline]
-            z_centerline_fit_vox = [coord[2] for coord in coord_voxel_centerline]
+            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling.change_orientation(orientation='RPI')
 
             # get the slices corresponding to the vertebral levels
             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline_fit_vox)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline)
 
         elif not vert_levels:
             vert_levels_list = []
@@ -879,7 +874,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     vertebral_levels_available = np.array(list(set(vertebral_labeling_data[vertebral_labeling_data > 0])))
 
     # Check if the vertebral levels selected are available
-    warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
+    warning = []  # list of strings gathering the potential following warning(s) to be written in the output .txt file
     if len(vertebral_levels_available) == 0:
         slices = None
         vert_levels_list = None
@@ -936,11 +931,11 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
     nz = len(z_centerline)
     matching_slices_centerline_vert_labeling = []
-    for i_z in range(0, nz):
+    for zz in z_centerline:
         # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
-        vertebral_labeling_slice_iz = vertebral_labeling_data[:, :, z_centerline[i_z]]
-        if np.asarray(np.nonzero(vertebral_labeling_slice_iz)).shape != (2,0) and int(np.median(vertebral_labeling_slice_iz[np.nonzero(vertebral_labeling_slice_iz)])) in range(vert_levels_list[0], vert_levels_list[1]+1):
-            matching_slices_centerline_vert_labeling.append(z_centerline[i_z])
+        vertebral_labeling_slice_zz = vertebral_labeling_data[:, :, int(zz)]
+        if np.asarray(np.nonzero(vertebral_labeling_slice_zz)).shape != (2, 0) and int(np.median(vertebral_labeling_slice_zz[np.nonzero(vertebral_labeling_slice_zz)])) in range(vert_levels_list[0], vert_levels_list[1]+1):
+            matching_slices_centerline_vert_labeling.append(int(zz))
 
     # now, find the min and max slices that are included in the vertebral levels
     if len(matching_slices_centerline_vert_labeling) == 0:
