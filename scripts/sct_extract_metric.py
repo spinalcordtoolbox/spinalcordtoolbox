@@ -13,8 +13,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: find another method to update label in case average_all_labels == 1. E.g., recreate tmp label file.
-# TODO: add documentation for new features
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
 
 # Import common Python libraries
@@ -49,9 +47,9 @@ class Param:
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         # self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
-        # self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
         self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
                           '10'] # STD of the assumed gaussian-distributed noise
+
 
 def get_parser():
 
@@ -108,25 +106,16 @@ bin: binarize mask (threshold=0.5)""",
                       this option will allow you to overwrite this .xls file (\"-overwrite 1\") or to append the results at the end (last line) of the file (\"-overwrite 0\").""",
                       mandatory=False,
                       default_value=0)
-    parser.add_option(name='-param',
-                      type_value='str',
-                      description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
-#1: standard deviation of metrics across labels
-#2: standard deviation of the noise (assumed Gaussian)""",
-                      mandatory=False)
-    parser.add_option(name='-p',
-                      type_value=None,
-                      description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
-#1: standard deviation of metrics across labels
-#2: standard deviation of the noise (assumed Gaussian)""",
-                      mandatory=False,
-                      deprecated_by='-param')
     parser.add_option(name='-o',
                       type_value='file_output',
-                      description="""File name (including the file extension) of the output result file collecting the metric estimation results.
-                      Three file types are available: a CSV text file (extension .txt), a MS Excel file (extension .xls) and a pickle file (extension .pickle). Default: """+param_default.fname_output,
+                      description="""File name (including the file extension) of the output result file collecting the metric estimation results. \nThree file types are available: a CSV text file (extension .txt), a MS Excel file (extension .xls) and a pickle file (extension .pickle). Default: """+param_default.fname_output,
                       mandatory=False,
                       default_value=param_default.fname_output)
+    parser.add_option(name='-output-map',
+                      type_value='file_output',
+                      description="""File name for an image consisting of the atlas labels multiplied by the estimated metric values yielding the metric value map, useful to assess the metric estimation and especially partial volume effects.""",
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name='-vert',
                       type_value='str',
                       description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
@@ -144,6 +133,25 @@ bin: binarize mask (threshold=0.5)""",
                       description='Slice range to estimate the metric from. First slice is 0. Example: 5:23\nYou can also select specific slices using commas. Example: 0,2,3,5,12',
                       mandatory=False,
                       default_value=param_default.slices_of_interest)
+    parser.usage.addSection("\nFOR ADVANCED USERS")
+    parser.add_option(name='-param',
+                      type_value='str',
+                      description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
+    #1: standard deviation of metrics across labels
+    #2: standard deviation of the noise (assumed Gaussian)""",
+                      mandatory=False)
+    parser.add_option(name='-p',
+                      type_value=None,
+                      description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
+    #1: standard deviation of metrics across labels
+    #2: standard deviation of the noise (assumed Gaussian)""",
+                      mandatory=False,
+                      deprecated_by='-param')
+    parser.add_option(name='-fix-label',
+                      type_value=[[','], 'str'],
+                      description='If you do not want to estimate the metric in one label and fix its value, specify <label_ID>,<metric_value. Example to fix the CSF value to 0: -fix 31,0.',
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name='-norm-file',
                       type_value='image_nifti',
                       description='Filename of the label by which the user wants to normalize',
@@ -157,6 +165,11 @@ bin: binarize mask (threshold=0.5)""",
                       type_value='multiple_choice',
                       description='Method to use for normalization:\n- sbs: normalization slice-by-slice\n- whole: normalization by the metric value in the whole label for all slices.',
                       example=['sbs', 'whole'],
+                      mandatory=False)
+    parser.add_option(name='-mask-weighted',
+                      type_value='image_nifti',
+                      description='Nifti mask to weight each voxel during ML or MAP estimation.',
+                      example='PAM50_wm.nii.gz',
                       mandatory=False)
 
     # read the .txt files referencing the labels
@@ -175,41 +188,36 @@ To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using bi
     if label_references != '':
         str_section += """
 \nList of labels in """ + file_label + """:
-==========
+--------------------------------------------------------------------------------------
 """ + label_references + """
-=========="""
+--------------------------------------------------------------------------------------
+"""
 
     parser.usage.addSection(str_section)
 
     return parser
 
 
-def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, adv_param_user):
+def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight):
     """Main."""
 
     # Initialization
-    # fname_vertebral_labeling = param.fname_vertebral_labeling
     fname_vertebral_labeling = ''
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
-    verbose = param.verbose
-    # ml_clusters = param.ml_clusters
-    adv_param = param.adv_param
+    verbose = param_default.verbose
+    adv_param = param_default.adv_param
     normalizing_label = []
-
-    # check if the atlas folder given exists and add slash at the end
-    # sct.check_folder_exist(path_label)
-    # path_label = sct.slash_at_the_end(path_label, 1)
+    fixed_label = []
+    label_to_fix_fract_vol = None
 
     # adjust file names and parameters for old MNI-Poly-AMU template
     if not len(glob(path_label + 'WMtract*.*')) == 0:
         # MNI-Poly-AMU
         suffix_vertebral_labeling = '*_level.nii.gz'
-        ml_clusters = '0:29,30,31'  # 3-class for robust maximum likelihood estimation: WM, GM and CSF
     else:
         # PAM50 and later
         suffix_vertebral_labeling = '*_levels.nii.gz'
-        ml_clusters = '0:29,30:35,36'
 
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
@@ -244,7 +252,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     print '  advanced parameters ....... '+str(adv_param)+'\n'
 
     # parse labels according to the file info_label.txt
-    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label, param.file_info_label)
+    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
 
     # check syntax of labels asked by user
     labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, labels_user)
@@ -253,50 +261,54 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # Load data
     # Check if the orientation of the data is RPI
+    sct.printv('\nLoad metric image...', verbose)
     input_im = Image(fname_data)
-    orientation_data = get_orientation_3d(input_im)
+    orientation_data = input_im.orientation
 
     if orientation_data != 'RPI':
         # If orientation is not RPI, change to RPI and load data
-        sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
-        path_tmp = sct.tmp_create()
         # metric
-        sct.printv('\nChange metric image orientation and load it...', verbose)
-        im_orient = set_orientation(input_im, 'RPI', fname_out=path_tmp+'metric_RPI.nii')
-        data = im_orient.data
+        sct.printv('\nChange metric image orientation into RPI and load it...', verbose)
+        input_im.change_orientation(orientation='RPI')
         # labels
-        sct.printv('\nChange labels orientation and load them...', verbose)
+        sct.printv('\nChange labels orientation into RPI and load them...', verbose)
         labels = np.empty([nb_labels], dtype=object)
-        for i_label in range(0, nb_labels):
-            im_label = set_orientation(Image(path_label+indiv_labels_files[i_label]), 'RPI', fname_out=path_tmp+'label_'+str(i_label)+'_RPI.nii')
+        for i_label in range(nb_labels):
+            im_label = Image(path_label+indiv_labels_files[i_label])
+            im_label.change_orientation(orientation='RPI')
             labels[i_label] = im_label.data
-        if fname_normalizing_label:  # if the "normalization" option is wanted,
+        # if the "normalization" option is wanted,
+        if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-            im_normalizing_label = set_orientation(Image(fname_normalizing_label), 'RPI', fname_out=path_tmp+'normalizing_label_RPI.nii')
+            im_normalizing_label = Image(fname_normalizing_label)
+            im_normalizing_label.change_orientation(orientation='RPI')
             normalizing_label[0] = im_normalizing_label.data
-        if vertebral_levels:  # if vertebral levels were selected,
-            im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
+        # if vertebral levels were selected,
+        if vertebral_levels:
+            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling.change_orientation(orientation='RPI')
             data_vertebral_labeling = im_vertebral_labeling.data
-        # Remove the temporary folder used to change the NIFTI files orientation into RPI
-        sct.printv('\nRemove the temporary folder...', verbose)
-        status, output = commands.getstatusoutput('rm -rf ' + path_tmp)
+        # if flag "-mask-weighted" is specified
+        if fname_mask_weight:
+            im_weight = Image(fname_mask_weight)
+            im_weight.change_orientation(orientation='RPI')
     else:
-        # Load image
-        sct.printv('\nLoad metric image...', verbose)
-        data = nib.load(fname_data).get_data()
-        sct.printv('  OK!', verbose)
         # Load labels
         sct.printv('\nLoad labels...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(0, nb_labels):
-            labels[i_label] = nib.load(path_label+indiv_labels_files[i_label]).get_data()
-        if fname_normalizing_label:  # if the "normalization" option is wanted,
+            labels[i_label] = Image(path_label+indiv_labels_files[i_label]).data
+        # if the "normalization" option is wanted,
+        if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-            normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
-        if vertebral_levels:  # if vertebral levels were selected,
-            data_vertebral_labeling = nib.load(fname_vertebral_labeling).get_data()
-        sct.printv('  OK!', verbose)
-
+            normalizing_label[0] = Image(fname_normalizing_label).data  # load the data of the normalizing label
+        # if vertebral levels were selected,
+        if vertebral_levels:
+            data_vertebral_labeling = Image(fname_vertebral_labeling).data
+        if fname_mask_weight:
+            im_weight = Image(fname_mask_weight)
+    data = input_im.data
+    sct.printv('  OK!', verbose)
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
@@ -320,21 +332,31 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # select slice of interest by cropping data and labels
     if slices_of_interest:
-        data = remove_slices(data, slices_of_interest)
+        data, slices_list = remove_slices(data, slices_of_interest)
         for i_label in range(0, nb_labels):
-            labels[i_label] = remove_slices(labels[i_label], slices_of_interest)
+            labels[i_label], slices_list = remove_slices(labels[i_label], slices_of_interest)
         if fname_normalizing_label:  # if the "normalization" option was selected,
-            normalizing_label[0] = remove_slices(normalizing_label[0], slices_of_interest)
+            normalizing_label[0], slices_list = remove_slices(normalizing_label[0], slices_of_interest)
+        if fname_mask_weight:  # if the flag -mask-weighted was specified,
+            im_weight.data, slices_list = remove_slices(im_weight.data, slices_of_interest)
+
+    # parse clusters used for a priori (map method)
+    clusters_all_labels = parse_label_ID_groups(ml_clusters)
+    combined_labels_groups_all_IDs = parse_label_ID_groups(combined_labels_id_groups)
+
+    # If specified, remove the label to fix its value
+    if label_to_fix:
+        data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user, label_to_fix_name, label_to_fix_fract_vol = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user)
 
     # Extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
     # individual labels
-    indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method)
+    indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = extract_metric(method, data, labels, indiv_labels_ids, clusters_all_labels, adv_param, normalizing_label, normalization_method, im_weight=im_weight)
     # combined labels
-    combined_labels_value = np.zeros(len(combined_labels_id_groups), dtype=float)
-    combined_labels_std = np.zeros(len(combined_labels_id_groups), dtype=float)
-    combined_labels_fract_vol = np.zeros(len(combined_labels_id_groups), dtype=float)
-    for i_combined_labels in range(0, len(combined_labels_id_groups)):
-        combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels], combined_labels_fract_vol[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, ml_clusters, adv_param, normalizing_label, normalization_method, combined_labels_id_groups[i_combined_labels])
+    combined_labels_value = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
+    combined_labels_std = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
+    combined_labels_fract_vol = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
+    for i_combined_labels in range(0, len(combined_labels_groups_all_IDs)):
+        combined_labels_value[i_combined_labels], combined_labels_std[i_combined_labels], combined_labels_fract_vol[i_combined_labels] = extract_metric(method, data, labels, indiv_labels_ids, clusters_all_labels, adv_param, normalizing_label, normalization_method, im_weight=im_weight, combined_labels_id_group=combined_labels_groups_all_IDs[i_combined_labels])
 
     # display results
     sct.printv('\nResults:\nID, label name [total fractional volume of the label in number of voxels]:    metric value +/- metric STDEV within label', 1)
@@ -345,6 +367,10 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         elif i_label_user > max(indiv_labels_ids):
             index = combined_labels_ids.index(i_label_user)
             sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ' ['+str(round(combined_labels_fract_vol[index], 2))+']:    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
+    if label_to_fix:
+        fixed_label = [label_to_fix[0], label_to_fix_name, label_to_fix[1]]
+        sct.printv('\n*'+fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
+
     # section = ''
     # if labels_id_user[0] <= max(indiv_labels_ids):
     #     section = '\nWhite matter atlas:'
@@ -365,10 +391,14 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     #         sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
-    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels, fixed_label)
+
+    # output a metric value map
+    if fname_output_metric_map:
+        data_metric_map = generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_labels_value, slices_list, label_to_fix, label_to_fix_fract_vol)
 
 
-def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_param='', normalizing_label=[], normalization_method='', combined_labels_id_group='', verbose=0):
+def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', adv_param='', normalizing_label=[], normalization_method='', im_weight='', combined_labels_id_group='', verbose=0):
     """Extract metric in the labels specified by the file info_label.txt in the atlas folder."""
 
     # Initialization to default values
@@ -381,7 +411,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_p
 
     if method == 'map':
         # get clustered labels
-        clustered_labels, matching_cluster_labels = get_clustered_labels(ml_clusters, labels, list_ids_LOI, combined_labels_id_group, verbose)
+        clustered_labels, matching_cluster_labels = get_clustered_labels(clusters_labels, labels, indiv_labels_ids, list_ids_LOI, combined_labels_id_group, verbose)
 
     # if user wants to get unique value across labels, then combine all labels together
     if combined_labels_id_group:
@@ -413,11 +443,11 @@ def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_p
                     data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
 
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
-            metric_norm_label, metric_std_norm_label = estimate_metric_within_tract(data, normalizing_label, method, param.verbose)  # mean and std are lists
+            metric_norm_label, metric_std_norm_label = estimate_metric_within_tract(data, normalizing_label, method, param_default.verbose)  # mean and std are lists
 
     # extract metrics within labels
     sct.printv('\nEstimate metric within labels...', verbose)
-    metric_in_labels, metric_std_in_labels = estimate_metric_within_tract(data, labels, method, verbose, clustered_labels, matching_cluster_labels, adv_param)  # mean and std are lists
+    metric_in_labels, metric_std_in_labels = estimate_metric_within_tract(data, labels, method, verbose, clustered_labels, matching_cluster_labels, adv_param, im_weight)  # mean and std are lists
 
     if normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
         metric_in_labels, metric_std_in_labels = np.divide(metric_in_labels, metric_norm_label), np.divide(metric_std_in_labels, metric_std_norm_label)
@@ -435,9 +465,9 @@ def extract_metric(method, data, labels, indiv_labels_ids, ml_clusters='', adv_p
 
 
 def read_label_file(path_info_label, file_info_label):
-    """Read label.txt file which is located inside label folder."""
+    """Reads file_info_label (located inside label folder) and returns the information needed."""
 
-    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups = [], [], [], [], [], []
+    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = [], [], [], [], [], [], []
 
     # file name of info_label.txt
     fname_label = path_info_label+file_info_label
@@ -456,8 +486,8 @@ def read_label_file(path_info_label, file_info_label):
 
         # Check if the White matter atlas was provided by the user
         # look at first line
-        header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
-        info_label_title = header_lines[0].split('-')[0].strip()
+        # header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
+        # info_label_title = header_lines[0].split('-')[0].strip()
         # if '# White matter atlas' not in info_label_title:
         #     sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
 
@@ -465,30 +495,33 @@ def read_label_file(path_info_label, file_info_label):
         section = ''
         for line in lines:
             # update section index
-            if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line):
-                section = line
+            if '# Keyword=' in line:
+                section = line.split('Keyword=')[1].split(' ')[0]
             # record the label according to its section
-            if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
-                parsed_line = line.split(',')
+            if (section == 'IndivLabels') and (line[0] != '#'):
+                parsed_line = line.split(', ')
                 indiv_labels_ids.append(int(parsed_line[0]))
                 indiv_labels_names.append(parsed_line[1].strip())
                 indiv_labels_files.append(parsed_line[2].strip())
 
-            elif ('# Combined labels' in section) and (line[0] != '#'):
-                parsed_line = line.split(',')
+            elif (section == 'CombinedLabels') and (line[0] != '#'):
+                parsed_line = line.split(', ')
                 combined_labels_ids.append(int(parsed_line[0]))
                 combined_labels_names.append(parsed_line[1].strip())
                 combined_labels_id_groups.append(','.join(parsed_line[2:]).strip())
 
+            elif (section == 'MAPLabels') and (line[0] != '#'):
+                parsed_line = line.split(', ')
+                clusters_apriori.append(parsed_line[-1].strip())
+
         # check if all files listed are present in folder. If not, ERROR.
-        # TODO: better handle error
         for file in indiv_labels_files:
             sct.check_file_exist(path_info_label+file)
 
         # Close file.txt
         f.close()
 
-        return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups
+        return indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori
 
 
 def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
@@ -628,10 +661,10 @@ def remove_slices(data_to_crop, slices_of_interest):
     # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
     data_cropped = data_to_crop[..., slices_list]
 
-    return data_cropped
+    return data_cropped, slices_list
 
 
-def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None, fixed_label=None):
     """Save results in the output type selected by user."""
 
     sct.printv('\nSaving results in: '+fname_output+' ...')
@@ -702,6 +735,9 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             elif section == '\n# Combined labels\n':
                 index = combined_labels_ids.index(i_label_user)
                 fid_metric.write('%i, %s, %f, %f, %f\n' % (combined_labels_ids[index], combined_labels_names[index], combined_labels_fract_vol[index], combined_labels_value[index], combined_labels_std[index]))
+
+        if fixed_label:
+            fid_metric.write('\n*'+fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)')
 
         # Close file .txt
         fid_metric.close()
@@ -776,6 +812,21 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
             row_index += 1
 
+        if fixed_label:
+            sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
+            sh.write(row_index, 1, os.path.abspath(fname_data))
+            sh.write(row_index, 2, method)
+            sh.write(row_index, 3, vertebral_levels_field)
+            sh.write(row_index, 4, slices_of_interest_field)
+            if fname_normalizing_label:
+                sh.write(row_index, 10, fname_normalizing_label)
+
+            sh.write(row_index, 5, int(fixed_label[0]))
+            sh.write(row_index, 6, fixed_label[1])
+            sh.write(row_index, 7, 'nan')
+            sh.write(row_index, 8, '*' + fixed_label[2] + ' (value fixed by user)')
+            sh.write(row_index, 9, 'nan')
+
         book.save(fname_output)
 
     # if user chose to output results under a pickle file (variables that can be loaded in a python environment)
@@ -821,12 +872,17 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         metric_extraction_results['Total fractional volume of the label (in number of voxels)'] = np.array(Fract_vol_field)
         metric_extraction_results['Metric value'] = np.array(Metric_value_field)
         metric_extraction_results['Metric STDEV within label'] = np.array(Metric_std_field)
+        if fixed_label:
+            metric_extraction_results['Fixed label'] = 'Label ID = ' + fixed_label[0] + ', Label name = ' + fixed_label[1] + ', Value (set by user) = ' + fixed_label[2]
 
         # save results into a pickle file
         import pickle
         output_file = open(fname_output, 'wb')
         pickle.dump(metric_extraction_results, output_file)
         output_file.close()
+
+    else:
+        sct.printv('WARNING: The file extension for the output result file that was specified was not recognized. No result file will be created.', type='warning')
 
     sct.printv('\tDone.')
 
@@ -854,35 +910,36 @@ def check_labels(indiv_labels_ids, selected_labels):
     list_ids_of_labels_of_interest = map(int, indiv_labels_ids)
 
 
+    # if selected_labels:
+    #     # Check if label chosen is in the right format
+    #     for char in selected_labels:
+    #         if not char in '0123456789,:':
+    #             sct.printv(parser.usage.generate(error='\nERROR: ' + selected_labels + ' is not the correct format to select combined labels.\n Exit program.\n'))
+    #
+    #     if ':' in selected_labels:
+    #         label_ids_range = [int(x) for x in selected_labels.split(':')]
+    #         if len(label_ids_range) > 2:
+    #             sct.printv(parser.usage.generate(error='\nERROR: Combined labels ID selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n'))
+    #         else:
+    #             label_ids_range.sort()
+    #             list_ids_of_labels_of_interest = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
+    #
+    #     else:
+    #         list_ids_of_labels_of_interest = [int(x) for x in selected_labels.split(',')]
+
     if selected_labels:
-        # Check if label chosen is in the right format
-        for char in selected_labels:
-            if not char in '0123456789,:':
-                sct.printv(parser.usage.generate(error='\nERROR: ' + selected_labels + ' is not the correct format to select combined labels.\n Exit program.\n'))
+        # Remove redundant values
+        list_ids_of_labels_of_interest = [i_label for n, i_label in enumerate(selected_labels) if i_label not in selected_labels[:n]]
 
-        if ':' in selected_labels:
-            label_ids_range = [int(x) for x in selected_labels.split(':')]
-            if len(label_ids_range) > 2:
-                sct.printv(parser.usage.generate(error='\nERROR: Combined labels ID selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n'))
-            else:
-                label_ids_range.sort()
-                list_ids_of_labels_of_interest = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
-
-        else:
-            list_ids_of_labels_of_interest = [int(x) for x in selected_labels.split(',')]
-
-    # Remove redundant values
-    list_ids_of_labels_of_interest = [i_label for n, i_label in enumerate(list_ids_of_labels_of_interest) if i_label not in list_ids_of_labels_of_interest[:n]]
-
-    # Check if the selected labels are in the available labels ids
-    if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
-        sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available according to the label list from the text file in the atlas folder. Exit program.\n\n', type='error')
+        # Check if the selected labels are in the available labels ids
+        if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
+            sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available according to the label list from the text file in the atlas folder. Exit program.\n\n', type='error')
 
 
     return list_ids_of_labels_of_interest
 
 
-def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels=[], matching_cluster_labels=[], adv_param=[]):
+def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels=[], matching_cluster_labels=[], adv_param=[], im_weight=None):
     """Extract metric within labels.
     :data: (nx,ny,nz) numpy array
     :labels: nlabel tuple of (nx,ny,nz) array
@@ -901,19 +958,6 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
         for i in range(0, nb_labels):
             labels[i][labels[i] < 0.5] = 0
 
-    # if method=max, transforms each label slice to a single voxel which index corresponds to the maximum value of the metric. This is used for computing CSA from CSA images.
-    if method == 'max':
-        ind_max = np.zeros((data.shape[2], 2))
-        # for each z-slice of data, find indices corresponding to max values
-        for iz in range(data.shape[2]):
-            a, b = np.where(data[:, :, iz] == np.max(data[:, :, iz]))
-            ind_max[iz] = [a[0], b[0]]
-        # loop across labels and set a single pixel to one and the others to zero
-        for i in range(0, nb_labels):
-            for iz in range(labels[i].shape[2]):
-                labels[i][:, :, iz] = 0
-                labels[i][ind_max[iz, 0], ind_max[iz, 1], iz] = 1
-
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
     ind_positive_labels = labels_sum > ALMOST_ZERO  # labels_sum > ALMOST_ZERO
@@ -924,13 +968,12 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     labels2d = np.empty([nb_labels, nb_vox], dtype=float)
     for i in range(0, nb_labels):
         labels2d[i] = labels[i][ind_positive]
-
-    # # display labels
-    # import matplotlib.pyplot as plt
-    # plt.imshow(labels_sum[:,:,3])
-    # plt.show()
-    # plt.imshow(data[:,:,3])
-    # plt.show()
+    # if specified (flag -mask-weighted), define a matrix to weight voxels. If not, this matrix is set to identity.
+    if im_weight:
+        data_weight_1d = im_weight.data[ind_positive]
+    else:
+        data_weight_1d = np.ones(nb_vox)
+    W = np.diag(data_weight_1d)  # weight matrix
 
     # Display number of non-zero values
     sct.printv('  Number of non-null voxels: '+str(nb_vox), verbose=verbose)
@@ -939,9 +982,13 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     metric_mean = np.empty([nb_labels], dtype=object)
     metric_std = np.empty([nb_labels], dtype=object)
 
-    # Estimation with 3-class maximum likelihood
+    # Estimation with maximum a posteriori (map)
     if method == 'map':
-        sct.printv('Estimation maximum likelihood within clustered labels...', verbose=verbose)
+
+        # ML estimation in the defined clusters to get a priori
+        # -----------------------------------------------------
+
+        sct.printv('Maximum likelihood estimation within the selected clusters to get a priori for the MAP estimation...', verbose=verbose)
 
         nb_clusters = len(clustered_labels)
 
@@ -949,38 +996,62 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
         clustered_labels_sum = np.sum(clustered_labels)
         ind_positive_clustered_labels = clustered_labels_sum > ALMOST_ZERO  # labels_sum > ALMOST_ZERO
 
-        y = data[ind_positive_clustered_labels]  # [nb_vox x 1]
+        # define the problem to apply the maximum likelihood to clustered labels
+        y_apriori = data[ind_positive_clustered_labels]  # [nb_vox x 1]
+
         # create matrix X to use ML and estimate beta_0
-        x = np.zeros([len(y), nb_clusters])
-        for i_cluster in range(0, nb_clusters):
-            x[:, i_cluster] = clustered_labels[i_cluster][ind_positive_clustered_labels]
+        x_apriori = np.zeros([len(y_apriori), nb_clusters])
+        for i_cluster in range(nb_clusters):
+            x_apriori[:, i_cluster] = clustered_labels[i_cluster][ind_positive_clustered_labels]
+
+        # remove unused voxels from the weighting matrix W
+        if im_weight:
+            data_weight_1d_apriori = im_weight.data[ind_positive_clustered_labels]
+        else:
+            data_weight_1d_apriori = np.ones(np.sum(ind_positive_clustered_labels))
+        W_apriori = np.diag(data_weight_1d_apriori)  # weight matrix
+
+        # apply the weighting matrix
+        y_apriori = np.dot(W_apriori, y_apriori)
+        x_apriori = np.dot(W_apriori, x_apriori)
 
         # estimate values using ML for each cluster
-        beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
+        beta = np.dot(np.linalg.pinv(np.dot(x_apriori.T, x_apriori)), np.dot(x_apriori.T, y_apriori))  # beta = (Xt . X)-1 . Xt . y
         # display results
-        sct.printv('  Estimated beta per cluster: '+str(beta), verbose=verbose)
+        sct.printv('  Estimated beta0 per cluster: ' + str(beta), verbose=verbose)
+
+        # MAP estimations within the selected labels
+        # ------------------------------------------
+
+        # perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+        var_label = int(adv_param[0]) ^ 2  # variance within label
+        var_noise = int(adv_param[1]) ^ 2  # variance of the noise (assumed Gaussian)
+
+        # define the problem: y is the measurements vector (to which weights are applied, to each voxel) and x is the linear relation between the measurements y and the true metric value to be estimated beta
+        y = np.dot(W, data1d)  # [nb_vox x 1]
+        x = np.dot(W, labels2d.T)  # [nb_vox x nb_labels]
+        # construct beta0
+        beta0 = np.zeros(nb_labels)
+        for i_cluster in range(nb_clusters):
+            beta0[np.where(np.asarray(matching_cluster_labels) == i_cluster)[0]] = beta[i_cluster]
+        # construct covariance matrix (variance between tracts). For simplicity, we set it to be the identity.
+        Rlabel = np.diag(np.ones(nb_labels))
+        A = np.linalg.pinv(np.dot(x.T, x) + np.linalg.pinv(Rlabel) * var_noise / var_label)
+        B = x.T
+        C = y - np.dot(x, beta0)
+        beta = beta0 + np.dot(A, np.dot(B, C))
+        for i_label in range(0, nb_labels):
+            metric_mean[i_label] = beta[i_label]
+            metric_std[i_label] = 0  # need to assign a value for writing output file
 
     # clear memory
     del data, labels
 
-    # Estimation with weighted average (also works for binary)
-    if method == 'wa' or method == 'bin' or method == 'wath' or method == 'max':
-        for i_label in range(0, nb_labels):
-            # check if all labels are equal to zero
-            if sum(labels2d[i_label, :]) == 0:
-                print 'WARNING: labels #'+str(i_label)+' contains only null voxels. Mean and std are set to 0.'
-                metric_mean[i_label] = 0
-                metric_std[i_label] = 0
-            else:
-                # estimate the weighted average
-                metric_mean[i_label] = sum(data1d * labels2d[i_label, :]) / sum(labels2d[i_label, :])
-                # estimate the biased weighted standard deviation
-                metric_std[i_label] = np.sqrt(sum(labels2d[i_label, :] * (data1d - metric_mean[i_label])**2 ) / sum(labels2d[i_label, :]))
-
     # Estimation with maximum likelihood
     if method == 'ml':
-        y = data1d  # [nb_vox x 1]
-        x = labels2d.T  # [nb_vox x nb_labels]
+        # define the problem: y is the measurements vector (to which weights are applied, to each voxel) and x is the linear relation between the measurements y and the true metric value to be estimated beta
+        y = np.dot(W, data1d)  # [nb_vox x 1]
+        x = np.dot(W, labels2d.T)  # [nb_vox x nb_labels]
         beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
         #beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
         #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
@@ -989,39 +1060,25 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
             metric_mean[i_label] = beta[i_label]
             metric_std[i_label] = 0  # need to assign a value for writing output file
 
-    # Estimation with maximum a posteriori (map)
-    if method == 'map':
-        # perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-        var_label = int(adv_param[0]) ^ 2  # variance within label
-        var_noise = int(adv_param[1]) ^ 2  # variance of the noise (assumed Gaussian)
-
-        y = data1d  # [nb_vox x 1]
-        x = labels2d.T  # [nb_vox x nb_labels]
-        # construct beta0
-        beta0 = np.zeros(nb_labels)
-        for i_cluster in range(nb_clusters):
-            beta0[np.where(np.asarray(matching_cluster_labels) == i_cluster)[0]] = beta[i_cluster]
-        # construct covariance matrix (variance between tracts). For simplicity, we set it to be the identity.
-        Rlabel = np.diag(np.ones(nb_labels))
-        # Vlabel =  np.diag(np.ones(nb_labels) * var_label)
-        # Vlabel =  np.diag(beta0 * perc_var_label * 0.01)  # [nb_labels x nb_labels]
-        # construct noise matrix
-        # Vnoise = np.diag(np.ones(nb_labels) * var_noise)
-        # beta = beta0 + (Xt . X + var_noise/Var_label * Rlabel^-1)^-1 . Xt . ( y - X . beta0 )
-        # beta = beta0 +                      A                        . B  .         C
-        # A = np.linalg.pinv(np.dot(x.T, x) + np.dot(Vnoise, np.linalg.pinv(Vlabel)))
-        A = np.linalg.pinv(np.dot(x.T, x) + np.linalg.pinv(Rlabel) * var_noise/var_label)
-        B = x.T
-        C = y - np.dot(x, beta0)
-        beta = beta0 + np.dot(A, np.dot(B, C))
+    # Estimation with weighted average (also works for binary)
+    if method == 'wa' or method == 'bin' or method == 'wath' or method == 'max':
         for i_label in range(0, nb_labels):
-            metric_mean[i_label] = beta[i_label]
-            metric_std[i_label] = 0  # need to assign a value for writing output file
+            # check if all labels are equal to zero
+            if sum(labels2d[i_label, :]) == 0:
+                print 'WARNING: labels #' + str(i_label) + ' contains only null voxels. Mean and std are set to 0.'
+                metric_mean[i_label] = 0
+                metric_std[i_label] = 0
+            else:
+                # estimate the weighted average
+                metric_mean[i_label] = sum(data1d * labels2d[i_label, :]) / sum(labels2d[i_label, :])
+                # estimate the biased weighted standard deviation
+                metric_std[i_label] = np.sqrt(
+                    sum(labels2d[i_label, :] * (data1d - metric_mean[i_label]) ** 2) / sum(labels2d[i_label, :]))
 
     return metric_mean, metric_std
 
 
-def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbose):
+def get_clustered_labels(clusters_all_labels, labels, indiv_labels_ids, labels_user, averaging_flag, verbose):
     """
     Cluster labels according to selected options (labels and averaging).
     :ml_clusters: clusters in form: '0:29,30,31'
@@ -1031,13 +1088,7 @@ def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbo
     :return: clustered_labels: labels summed by clustered
     """
 
-    # get the label IDs included in each cluster
-    clusters_list = ml_clusters.split(',')
-    nb_clusters = len(clusters_list)
-    clusters_all_labels = []
-    for cluster in clusters_list:
-        limits = cluster.split(':')
-        clusters_all_labels.append(range(int(limits[0]), int(limits[-1])+1))
+    nb_clusters = len(clusters_all_labels)
 
     # find matching between labels and clusters in the label id list selected by the user
     matching_cluster_label_id_user = np.zeros(len(labels_user), dtype=int)
@@ -1061,7 +1112,8 @@ def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbo
     # sum labels within each cluster
     clustered_labels = np.empty([nb_clusters], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_cluster in range(0, nb_clusters):
-        clustered_labels[i_cluster] = np.sum(labels[clusters_all_labels[i_cluster]])
+        indexes_labels_cluster_i = [indiv_labels_ids.index(label_ID) for label_ID in clusters_all_labels[i_cluster]]
+        clustered_labels[i_cluster] = np.sum(labels[indexes_labels_cluster_i])
 
     # find matching between labels and clusters in the whole label id list
     matching_cluster_label_id = np.zeros(len(labels), dtype=int)
@@ -1077,36 +1129,142 @@ def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbo
     return clustered_labels, matching_cluster_label_id
 
 
+def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user):
+    """
+    This function updates the data and list of labels as explained in:
+    https://github.com/neuropoly/spinalcordtoolbox/issues/958
+    :param label_to_fix:
+    :param data:
+    :param labels:
+    :param indiv_labels_ids:
+    :param indiv_labels_names:
+    :param ml_clusters:
+    :param combined_labels_id_groups:
+    :param labels_id_user:
+    :return:
+    """
+
+    label_to_fix_ID = int(label_to_fix[0])
+    label_to_fix_value = float(label_to_fix[1])
+
+    # remove the value from the data
+    label_to_fix_index = indiv_labels_ids.index(label_to_fix_ID)
+    label_to_fix_fract_vol = labels[label_to_fix_index]
+    data = data - label_to_fix_fract_vol*label_to_fix_value
+
+    # remove the label to fix from the labels lists
+    labels = np.delete(labels, label_to_fix_index, 0)
+    del indiv_labels_ids[label_to_fix_index]
+    label_to_fix_name = indiv_labels_names[label_to_fix_index]
+    del indiv_labels_names[label_to_fix_index]
+
+    # remove the label to fix from the label list specified by user
+    if label_to_fix_ID in labels_id_user:
+        labels_id_user.remove(label_to_fix_ID)
+
+    # redefine the clusters
+    ml_clusters = remove_label_from_group(ml_clusters, label_to_fix_ID)
+
+    # redefine the combined labels groups
+    combined_labels_id_groups = remove_label_from_group(combined_labels_id_groups, label_to_fix_ID)
+
+    return data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user, label_to_fix_name, label_to_fix_fract_vol
+
+
+
+def parse_label_ID_groups(list_ID):
+    """From a list of unparsed labels string, returns a list of list enumarating the label IDs combinations as integers.
+    Example: ['0:5','8,10','12'] ==> [[0,1,2,3,4,5],[8,10],[12]]"""
+
+    list_all_label_IDs = []
+    for i_group in range(len(list_ID)):
+        if ':' in list_ID[i_group]:
+            group_split = list_ID[i_group].split(':')
+            group = sorted(range(int(group_split[0]), int(group_split[1])+1))
+        elif ',' in list_ID[i_group]:
+            group = [int(x) for x in list_ID[i_group].split(',')]
+        else:
+            group = [int(list_ID[i_group])]
+
+        # Remove redundant values
+        group_new = [i_label for n, i_label in enumerate(group) if i_label not in group[:n]]
+
+        list_all_label_IDs.append(group_new)
+
+    return list_all_label_IDs
+
+
+
+def remove_label_from_group(list_label_groups, label_ID):
+    """Redefine groups of labels after removing one specific label."""
+
+    for i_group in range(len(list_label_groups)):
+        if label_ID in list_label_groups[i_group]:
+            list_label_groups[i_group].remove(label_ID)
+
+    list_label_groups = filter(None, list_label_groups)
+
+    return list_label_groups
+
+
+def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_labels_value, slices_list, label_to_fix, label_to_fix_fract_vol):
+    """Produces a map where each label is assigned the metric value estimated previously based on their fractional volumes."""
+
+
+    sct.printv('\nGenerate metric value map based on each label fractional volumes: ' + fname_output_metric_map + '...')
+
+    # initialize metric value map with zeros
+    metric_map = input_im
+    metric_map.data = np.zeros(input_im.data.shape)
+
+    # assign to each label the corresponding estimated metric value
+    for i_label in range(len(labels)):
+        metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + labels[i_label]*indiv_labels_value[i_label]
+
+    if label_to_fix:
+        metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + label_to_fix_fract_vol*float(label_to_fix[1])
+
+    # save metric value map
+    metric_map.setFileName(fname_output_metric_map)
+    metric_map.save()
+
+    sct.printv('\tDone.')
+
 
 # =======================================================================================================================
 # Start program
 # =======================================================================================================================
 if __name__ == "__main__":
+
     param_default = Param()
-    param = Param()
 
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
-    # Initialization to defaults parameters
-    vertebral_levels = ''
-
+    # mandatory arguments
     fname_data = arguments['-i']
     path_label = sct.slash_at_the_end(arguments['-f'], 1)
     method = arguments['-method']
-    labels_user = ''
+    fname_output = arguments['-o']
+
+    # optional arguments
     overwrite = 0
-    adv_param_user = ''
     if '-l' in arguments:
         labels_user = arguments['-l']
+    else:
+        labels_user = ''
     if '-param' in arguments:
         adv_param_user = arguments['-param']
-    slices_of_interest = ''
+    else:
+        adv_param_user = ''
     if '-z' in arguments:
         slices_of_interest = arguments['-z']
+    else:
+        slices_of_interest = ''
     if '-vert' in arguments:
         vertebral_levels = arguments['-vert']
-    fname_output = arguments['-o']
+    else:
+        vertebral_levels = ''
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
     fname_normalizing_label = ''
@@ -1115,6 +1273,18 @@ if __name__ == "__main__":
     normalization_method = ''
     if '-norm-method' in arguments:
         normalization_method = arguments['-norm-method']
+    if '-fix-label' in arguments:
+        label_to_fix = arguments['-fix-label']
+    else:
+        label_to_fix = ''
+    if '-output-map' in arguments:
+        fname_output_metric_map = arguments['-output-map']
+    else:
+        fname_output_metric_map = ''
+    if '-mask-weighted' in arguments:
+        fname_mask_weight = arguments['-mask-weighted']
+    else:
+        fname_mask_weight = ''
 
     # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, adv_param_user)
+    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)
