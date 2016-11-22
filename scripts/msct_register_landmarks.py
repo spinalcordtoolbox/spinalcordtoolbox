@@ -18,6 +18,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: homogeneize input parameters: (src=src, dest=dest), instead of (dest, src).
 # TODO: add full affine transfo
 # TODO: normalize SSE: currently, it depends on the number of landmarks
 
@@ -60,13 +61,13 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     for coord in coord_src:
         point_src = im_src.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         # convert NIFTI to ITK world coordinate
-        points_src.append([point_src[0][0], point_src[0][1], point_src[0][2]])
-        # points_src.append([-point_src[0][0], -point_src[0][1], point_src[0][2]])
+        # points_src.append([point_src[0][0], point_src[0][1], point_src[0][2]])
+        points_src.append([-point_src[0][0], -point_src[0][1], point_src[0][2]])
     for coord in coord_dest:
         point_dest = im_dest.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         # convert NIFTI to ITK world coordinate
-        points_dest.append([point_dest[0][0], point_dest[0][1], point_dest[0][2]])
-        # points_dest.append([-point_dest[0][0], -point_dest[0][1], point_dest[0][2]])
+        # points_dest.append([point_dest[0][0], point_dest[0][1], point_dest[0][2]])
+        points_dest.append([-point_dest[0][0], -point_dest[0][1], point_dest[0][2]])
 
     # display
     sct.printv('Labels src: ' + str(points_src), verbose)
@@ -78,7 +79,8 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
 
     # estimate transformation
     # N.B. points_src and points_dest are inverted below, because ITK uses inverted transformation matrices, i.e., src->dest is defined in dest instead of src.
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest, points_src, constraints=dof, verbose=verbose, path_qc=path_qc)
+    # (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest, points_src, constraints=dof, verbose=verbose, path_qc=path_qc)
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_src, points_dest, constraints=dof, verbose=verbose, path_qc=path_qc)
     # writing rigid transformation file
     # N.B. x and y dimensions have a negative sign to ensure compatibility between Python and ITK transfo
     text_file = open(fname_affine, 'w')
@@ -90,8 +92,8 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
         rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
         rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
         translation_array[0, 0], translation_array[0, 1], translation_array[0, 2]))
-    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
-                                                           -points_moving_barycenter[1],
+    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
+                                                           points_moving_barycenter[1],
                                                            points_moving_barycenter[2]))
     text_file.close()
 
@@ -162,7 +164,7 @@ def Metric_Images(imageA, imageB, type=''):
 
 
 
-def minimize_transform(params, points_src, points_dest, constraints):
+def minimize_transform(params, points_dest, points_src, constraints):
     """
     Cost function to minimize
     :param params:
@@ -200,7 +202,7 @@ def minimize_transform(params, points_src, points_dest, constraints):
     return SSE(matrix(points_dest), points_src_reg)
 
 
-def getRigidTransformFromImages(img_src, img_dest, constraints='none', metric = 'MeanSquares', center_rotation=None):
+def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 'MeanSquares', center_rotation=None):
     list_constraints = [None, 'none', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy']
     list_center_rotation = [None, 'BarycenterImage']
     if constraints not in list_constraints:
@@ -287,7 +289,7 @@ def getRigidTransformFromImages(img_src, img_dest, constraints='none', metric = 
     return rotation_matrix, translation_array
 
 
-def getRigidTransformFromLandmarks(points_src, points_dest, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0, path_qc='./'):
+def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0, path_qc='./'):
     """
     Compute affine transformation to register landmarks
     :param points_src:
@@ -313,7 +315,7 @@ def getRigidTransformFromLandmarks(points_src, points_dest, constraints='Tx_Ty_T
 
     # launch optimizer
     # res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_src, points_dest, constraints), method='Nelder-Mead', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_src, points_dest, constraints), method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': verbose})
+    res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_dest, points_src, constraints), method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': verbose})
     # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='COBYLA', tol=1e-8, options={'tol': 1e-8, 'rhobeg': 0.1, 'maxiter': 100000, 'catol': 0, 'disp': show})
     # loop across constraints and update dof
     dof = init_param

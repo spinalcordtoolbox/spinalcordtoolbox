@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: if user specified -param, then ignore the default paramreg
 # TODO: check syn with shrink=4
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
 # TODO: testing script for all cases
@@ -284,6 +285,7 @@ def main(args=None):
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
+
     identity = int(arguments['-identity'])
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
