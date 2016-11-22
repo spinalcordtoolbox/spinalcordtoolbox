@@ -10,10 +10,10 @@ import sys
 import re
 import os
 from string import Template
-from jinja2 import  Environment,FileSystemLoader
+from jinja2 import Environment, FileSystemLoader
 
-__author__initial= "Mathieu Desrosiers"
-__contributor__="Thierno Barry"
+__author__initial = "Mathieu Desrosiers"
+__contributor__ = "Thierno Barry"
 __copyright__ = "Copyright (C) 2014, TOAD et SCT_TOOL"
 __credits__ = ["Mathieu Desrosiers"]
 
@@ -42,7 +42,7 @@ def symlink(source, targetDir, targetName=None):
     if targetName is None:
         targetName = os.path.basename(source)
 
-    target = os.path.join(targetDir, targetName) # Create full path to target
+    target = os.path.join(targetDir, targetName)  # Create full path to target
 
     if os.path.exists(target):  # Delete target if exist
         os.remove(target)
@@ -54,13 +54,13 @@ def symlink(source, targetDir, targetName=None):
     commonPath = os.path.sep + os.path.join(*os.path.commonprefix((sourceSplit, targetSplit))) + os.path.sep
 
     source = source.replace(commonPath, '')  # Get ride of the commonPath
-    target = target.replace(os.getcwd() + os.path.sep, '') # Get ride of the commonPath
+    target = target.replace(os.getcwd() + os.path.sep, '')  # Get ride of the commonPath
 
     deep = target.count(os.path.sep) + 1  # Number of sub_folders
 
-    substring = '..'+os.path.sep  # Substring ../
+    substring = '..' + os.path.sep  # Substring ../
 
-    source = substring*deep + source  # Relative link
+    source = substring * deep + source  # Relative link
 
     os.symlink(source, target)
     return source
@@ -92,7 +92,7 @@ def gunzip(source):
     """
     cmd = "gunzip {}".format(source)
     launchCommand(cmd)
-    return source.replace(".gz","")
+    return source.replace(".gz", "")
 
 
 def gzip(source):
@@ -144,7 +144,7 @@ def launchCommand(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=N
                 os.waitpid(-1, os.WNOHANG)
                 return None, "Error, a timeout for this process occurred"
     output = list(process.communicate())
-    output.insert(0,cmd)
+    output.insert(0, cmd)
     return tuple(output)
 
 
@@ -167,7 +167,7 @@ def createScript(source, text):
     return True
 
 
-def __arrayOf(source, type = 'String'):
+def __arrayOf(source, type='String'):
     """Convert a comma separated  string to a list of built-in elements
 
     Args:
@@ -180,7 +180,7 @@ def __arrayOf(source, type = 'String'):
     """
     list = source.replace(';', ',').split(',')
     if type in "Boolean":
-        array=[]
+        array = []
         for i in list:
             array.append(i.lower().strip() == 'true')
         return array
@@ -264,13 +264,13 @@ def getImages(config, dir, prefix, postfix=None, extension="nii.gz", subdir=None
             dir = os.path.join(dir, subdir)
 
     if extension.find('.') == 0:
-        extension=extension.replace(".", "", 1)
+        extension = extension.replace(".", "", 1)
 
     if config.has_option('extension', extension):
         extension = config.get('extension', extension)
 
     if extension.find('.') == 0:
-        extension=extension.replace(".", "", 1)
+        extension = extension.replace(".", "", 1)
 
     if postfix is None:
         images = glob.glob("{}/{}*.{}".format(dir, config.get('prefix', prefix), extension))
@@ -287,10 +287,10 @@ def getImages(config, dir, prefix, postfix=None, extension="nii.gz", subdir=None
                     pfixs = pfixs + config.get('postfix', element)
                 else:
                     pfixs = pfixs + "_{}".format(element)
-        criterias = "{}/{}*{}.{}".format(dir, config.get('prefix',prefix), pfixs, extension)
+        criterias = "{}/{}*{}.{}".format(dir, config.get('prefix', prefix), pfixs, extension)
         images = glob.glob(criterias)
 
-    if len(images) > 0: # Found at least one image
+    if len(images) > 0:  # Found at least one image
         return images
 
     return False
@@ -338,7 +338,7 @@ def buildName(config, target, source, postfix=None, extension=None, absolute=Tru
     """
 
     parts = []
-    #determine target name
+    # determine target name
     if config.has_option('prefix', source):
         targetName = config.get('prefix', source)
     else:
@@ -349,7 +349,7 @@ def buildName(config, target, source, postfix=None, extension=None, absolute=Tru
             if any(parts[0] in s for s in ['left', 'right']):
                 targetName += ".{}".format(parts[0])
 
-    #add postfix to target name
+    # add postfix to target name
     if (postfix is not None) and postfix != "":
         if type(postfix) is list:
             for item in postfix:
@@ -369,7 +369,7 @@ def buildName(config, target, source, postfix=None, extension=None, absolute=Tru
             extension += ".{}".format(part)
     else:
         if extension.find('.') == 0:
-            extension=extension.replace(".", "", 1)
+            extension = extension.replace(".", "", 1)
 
         if config.has_option('extension', extension):
             extension = config.get('extension', extension)
@@ -405,6 +405,7 @@ def which(source):
     Returns:
          The path for the executable that would be run if that command is actually been invoked.
     """
+
     def isExecutable(sourcePath):
         return os.path.isfile(sourcePath) and os.access(sourcePath, os.X_OK)
 
@@ -437,7 +438,7 @@ def parseTemplate(dict, template):
         return Template(f.read()).safe_substitute(dict)
 
 
-def displayYesNoMessage(msg, question = "Continue? (y or n)", default = None):
+def displayYesNoMessage(msg, question="Continue? (y or n)", default=None):
     """Utility function that display a convenient message, ask a question, and record the answer
 
     this function will loop until character y or n is press
@@ -449,7 +450,7 @@ def displayYesNoMessage(msg, question = "Continue? (y or n)", default = None):
        A boolean True if the user press y, False otherwise
     """
     print msg
-    #make sure the buffer is not clear
+    # make sure the buffer is not clear
     while True:
         choice = raw_input(question)
         if choice.strip() == "" and default is not None:
@@ -484,6 +485,7 @@ def displayContinueQuitRemoveMessage(msg):
         elif choice.lower() == 'r':
             return "r"
 
+
 def slugify(s):
     """stolen code from Dolph Mathews """
     s = s.lower()
@@ -510,38 +512,41 @@ def rawInput(message):
     termios.tcflush(sys.stdin, termios.TCIOFLUSH)
     return raw_input(message)
 
+
 def merge_dicts(*dict_args):
-        '''
+    '''
         Given any number of dicts, shallow copy and merge into a new dict,
         precedence goes to key value pairs in latter dicts.
         '''
-        result = {}
-        for dictionary in dict_args:
-            result.update(dictionary)
-        return result
+    result = {}
+    for dictionary in dict_args:
+        result.update(dictionary)
+    return result
 
-#own functions
-#TODO:separate toad utils and sct_report utils
 
-def getTxtContent(txt):
+# own functions
+# TODO:separate toad utils and sct_report utils
+
+def get_description_content(txt):
     """
-     read txt file and return content as string .
-     PS: if the file is empty or doesn't exist , an empty string will be returned
+     read txt file and return content as string.
+     PS : if the file is empty or doesn't exist , an empty string will be returned
     :param txt: .txt file name
     :return: .txt content as string
     """
-    str = None
+    str_content = None
     try:
         file = open(txt, 'r')
-        str = file.read()
+        str_content = file.read()
         file.close()
     except IOError:
-        print "Missing file.The description will be empty "
+        print "Missing file. The description will be empty "
+    if str_content:
+        str_content = str_content.replace("{", "").replace("}","")
+    return str_content
 
-    return str
 
-
-def createHtmlFile(templateDir,templateName, fileLink, tags):
+def createHtmlFile(templateDir, templateName, fileLink, tags):
     """
     TODO:perform more errors check and send feedback
     :param templateFileLink:

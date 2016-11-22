@@ -6,7 +6,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Frederic Cloutier Samson Lam Erwan Marchand Thierno Ib Barry Nguyen Kenny
+# Authors: Frederic Cloutier Samson Lam Erwan Marchand Thierno  Barry Nguyen Kenny
 # Modified: 2016-11-10
 #
 # About the license: see the file LICENSE.TXT
@@ -17,13 +17,11 @@ import time
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 import matplotlib.colors as col
 import matplotlib
 from msct_image import Image
 from scipy import ndimage
 import abc
-import subprocess
 import isct_generate_report
 import commands
 

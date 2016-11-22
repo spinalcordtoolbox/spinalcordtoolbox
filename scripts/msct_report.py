@@ -49,7 +49,6 @@ class Report:
         :return:
         """
         html_files = Report.sorted_ls_by_ctime(self.report_folder)
-        print html_files
         links = {}
         for item in html_files:
             tmp = item.split('.')[0].split('-')
@@ -111,5 +110,4 @@ class Report:
         tags = {
             'links': self.__get_menu_links__()
         }
-        print "last created are", self.__get_last_created__()
         msct_report_util.createHtmlFile(self.templates_dir_link, self.index_file_name, file_link, tags)

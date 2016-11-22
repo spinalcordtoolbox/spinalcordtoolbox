@@ -1,5 +1,15 @@
+#!/usr/bin/env python
+#########################################################################################
+#
+#  qc report  generation function implementation
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: Thierno Barry
+# Modified: 2016-11-10
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
 import os
-import msct_report_util
 import webbrowser
 import msct_report as report
 import msct_report_item as report_item
@@ -16,7 +26,7 @@ def generate_report(description, syntax, report_dir):
     sct_report = report.Report(report_exists(report_dir), report_dir)
 
     # create sct_report_item
-    sct_report_item = report_item.ReportItem(report_dir, syntax,description)
+    sct_report_item = report_item.ReportItem(report_dir, syntax, description)
 
     # append  item to a new or existing report
     sct_report.append_item(sct_report_item)
