@@ -34,7 +34,7 @@ def generate_report(description, syntax, report_dir):
     # update index file and menu links
     sct_report.refresh_index_file()
 
-    print " \n The qc report has been generated in {}! \n".format(os.path.realpath(report_dir))
+    print " \n The qc report has been generated in {} \n".format(os.path.realpath(report_dir))
 
     # display report in the default web browser
     url = 'file://{}'.format(os.path.realpath(os.path.join(report_dir, "index.html")))

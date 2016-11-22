@@ -43,3 +43,7 @@ white-space: pre-wrap;       /* css-3 */
  white-space: -o-pre-wrap;    /* Opera 7 */
  word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
+.text-justify {
+  text-align: justify;
+  text-justify:inter-word;
+}

@@ -1,10 +1,9 @@
 "use strict";
-
+$("#description").fadeToggle( "fast");
 //hide or show description
 $("#toggleDescription").click(function() {
-    console.log("hello toggle description!");
     var new_content = $("#toggleDescription").text() == "Hide description" ? "Show description" : "Hide description";
-	$("#description").fadeToggle( "slow");
+	$("#description").fadeToggle( "fast");
 	$("#toggleDescription").text(new_content);
 })
 //Global variable
