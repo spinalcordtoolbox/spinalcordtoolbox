@@ -263,53 +263,54 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # Load data
     # Check if the orientation of the data is RPI
+    sct.printv('\nLoad metric image...', verbose)
     input_im = Image(fname_data)
-    orientation_data = get_orientation_3d(input_im)
+    orientation_data = input_im.orientation
 
     if orientation_data != 'RPI':
         # If orientation is not RPI, change to RPI and load data
-        sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
-        path_tmp = sct.tmp_create()
         # metric
-        sct.printv('\nChange metric image orientation and load it...', verbose)
-        input_im = set_orientation(input_im, 'RPI', fname_out=path_tmp+'metric_RPI.nii')
-        data = input_im.data
+        sct.printv('\nChange metric image orientation into RPI and load it...', verbose)
+        input_im.change_orientation(orientation='RPI')
         # labels
-        sct.printv('\nChange labels orientation and load them...', verbose)
+        sct.printv('\nChange labels orientation into RPI and load them...', verbose)
         labels = np.empty([nb_labels], dtype=object)
-        for i_label in range(0, nb_labels):
-            im_label = set_orientation(Image(path_label+indiv_labels_files[i_label]), 'RPI', fname_out=path_tmp+'label_'+str(i_label)+'_RPI.nii')
+        for i_label in range(nb_labels):
+            im_label = Image(path_label+indiv_labels_files[i_label])
+            im_label.change_orientation(orientation='RPI')
             labels[i_label] = im_label.data
-        if fname_normalizing_label:  # if the "normalization" option is wanted,
+        # if the "normalization" option is wanted,
+        if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-            im_normalizing_label = set_orientation(Image(fname_normalizing_label), 'RPI', fname_out=path_tmp+'normalizing_label_RPI.nii')
+            im_normalizing_label = Image(fname_normalizing_label)
+            im_normalizing_label.change_orientation(orientation='RPI')
             normalizing_label[0] = im_normalizing_label.data
-        if vertebral_levels:  # if vertebral levels were selected,
-            im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
+        # if vertebral levels were selected,
+        if vertebral_levels:
+            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling.change_orientation(orientation='RPI')
             data_vertebral_labeling = im_vertebral_labeling.data
+        # if flag "-mask-weighted" is specified
         if fname_mask_weight:
-            im_weight = set_orientation(Image(fname_mask_weight), 'RPI', fname_out=path_tmp + 'label_' + str(i_label) + '_RPI.nii')
-        # Remove the temporary folder used to change the NIFTI files orientation into RPI
-        sct.printv('\nRemove the temporary folder...', verbose)
-        status, output = commands.getstatusoutput('rm -rf ' + path_tmp)
+            im_weight = Image(fname_mask_weight)
+            im_weight.change_orientation(orientation='RPI')
     else:
-        # Load image
-        sct.printv('\nLoad metric image...', verbose)
-        data = input_im.data
-        sct.printv('  OK!', verbose)
         # Load labels
         sct.printv('\nLoad labels...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(0, nb_labels):
-            labels[i_label] = nib.load(path_label+indiv_labels_files[i_label]).get_data()
-        if fname_normalizing_label:  # if the "normalization" option is wanted,
+            labels[i_label] = Image(path_label+indiv_labels_files[i_label]).data
+        # if the "normalization" option is wanted,
+        if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-            normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
-        if vertebral_levels:  # if vertebral levels were selected,
-            data_vertebral_labeling = nib.load(fname_vertebral_labeling).get_data()
+            normalizing_label[0] = Image(fname_normalizing_label).data  # load the data of the normalizing label
+        # if vertebral levels were selected,
+        if vertebral_levels:
+            data_vertebral_labeling = Image(fname_vertebral_labeling).data
         if fname_mask_weight:
             im_weight = Image(fname_mask_weight)
-        sct.printv('  OK!', verbose)
+    data = input_im.data
+    sct.printv('  OK!', verbose)
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
@@ -496,11 +497,9 @@ def read_label_file(path_info_label, file_info_label):
         section = ''
         for line in lines:
             # update section index
-            # if ('# White matter atlas' in line) or ('# Combined labels' in line) or ('# Template labels' in line) or ('# Spinal levels labels' in line) or ('# Clusters used as a priori for the MAP estimation' in line):
             if '# Keyword=' in line:
                 section = line.split('Keyword=')[1].split(' ')[0]
             # record the label according to its section
-            # if (('# White matter atlas' in section) or ('# Template labels' in section) or ('# Spinal levels labels' in section)) and (line[0] != '#'):
             if (section == 'IndivLabels') and (line[0] != '#'):
                 parsed_line = line.split(', ')
                 indiv_labels_ids.append(int(parsed_line[0]))
