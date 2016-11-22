@@ -4,7 +4,6 @@
 $("#toggleDescription").click(function() {
     console.log("hello toggle description!");
     $("#description-content").hide(function(){
-        console.log("hide done");
     });
 })
 //Global variable
