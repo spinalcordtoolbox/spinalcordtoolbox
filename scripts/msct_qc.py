@@ -132,7 +132,8 @@ class Qc_Report(object):
                 cmd += arg + " "
             cmd = "sct_{}".format(self.tool_name) + " " + str(cmd)
         with open(os.path.join(self.report_leaf_folder, "{}.txt".format(self.description_base_name)), "w") as outfile:
-            json.dump({"command": cmd, "description": description, "commit_version": sct_commit}, outfile, indent=4)
+            json.dump({"command": cmd, "commit_version": sct_commit}, outfile, indent=4)
+	    outfile.write(description + '\n')
         outfile.close
 
 
