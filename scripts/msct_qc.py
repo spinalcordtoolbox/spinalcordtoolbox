@@ -172,12 +172,15 @@ class Qc(object):
                      "#a22abd", "#d58240", "#ac2aff"
 
                      ]
-    def listed_seg(self,mask):
+    def listed_seg(self):
+        mask = self.mask
+        mask = np.rint(np.ma.masked_where(mask < 1,mask))
         plt.imshow(mask,cmap=col.ListedColormap(self._labels_color),norm=
         matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation,alpha=1)
-    def sequential_seg(self,mask):
-        cax = plt.imshow(mask,cmap=cm.autumn, norm= matplotlib.colors.Normalize(vmin=0.0,vmax=1.0),
-                         interpolation=self.interpolation)
+    def sequential_seg(self):
+        mask = self.mask
+        mask = np.rint(np.ma.masked_where(mask < 0.00001,mask*100))
+        cax = plt.imshow(mask,cmap=cm.autumn, interpolation=self.interpolation)
         plt.colorbar(cax)
 
     def __init__(self, qc_report, dpi=600, interpolation='none', action_list=[], action_seg=listed_seg):
@@ -209,18 +212,20 @@ class Qc(object):
             fig.axes.get_yaxis().set_visible(False)
             self.ax = plt.gca()
 
+            # saves the original color without contrast
+            self.__save(leafNodeFullPath,'{}_original'.format(self.qc_report.img_base_name))
+
             # Make segmented plot
             self.ax_seg = plt.subplot()
             self.img = img
             self.mask = mask
 
-            mask = np.rint(np.ma.masked_where(mask < 0.0001, mask))
             plt.imshow(img, cmap='gray', interpolation=self.interpolation)
 
             for action in self.action_list:
                 action(self)
 
-            self.action_seg(self,mask)
+            self.action_seg(self)
 
             self.__save(leafNodeFullPath, self.qc_report.img_base_name)
             plt.close()
