@@ -1,0 +1,47 @@
+	<head>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" type="text/css" href="assets/css/style.css">
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="assets/css/bootstrap-theme.min.css">
+		<title>SCT Report</title>
+	</head>
+    <body>
+  <div  id="head" class="container-fluid body">
+    <!-- Generate this title depending on the html of the contraste (Goes with the result section) -->
+    <div class="text-center text-primary"><strong> {{syntax}} </strong></div>
+    <pre class ="text-center" id="description" >
+        <!--<a id="toggleDescription" class="pull-right">Hide</a>-->
+        {{description}}
+    </pre>
+    <ul id="results" class="list-group">
+        {% if not hasGif %}
+                {% for img in images %}
+                <li class="list-group-item">
+                    <a href="{{img.src}}" target="_blank"><img src="{{img.src}}" alt="Image not found" style="width:100%"></a>
+                    <h5 class="text-center text-primary">{{img.name}}</h5>
+                </li>
+                {% endfor %}
+        {% else %}
+            <span id="togif" class=""  class="hidden">
+                {% for img in images %}
+                    <span data-src="{{img.src}}" data-name="{{img.name}}" />
+                 {% endfor %}
+            </span>
+             <li class="list-group-item">
+                 <img id="gif_image" alt="Image not found" style="width:100%"/>
+                 <h5  id="gif_image_names" class="text-primary text-center"></h5>
+             </li>
+        {% endif %}
+    </ul>
+</div>
+    <a href="" data-toggle="tooltip" data-placement="left" title="Go Top" class="go-top"
+       onclick="$('html,body').animate({scrollTop:0},'slow');return false;">
+			<span class="glyphicon glyphicon glyphicon-triangle-top" aria-hidden="true" ></span>
+    </a>
+</div>
+   <script src="assets/js/jquery-3.1.0.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/animation.js"></script>
+</body>

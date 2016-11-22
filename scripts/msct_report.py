@@ -26,7 +26,7 @@ class Report:
 
         self.dir = os.path.dirname(os.path.realpath(__file__))
         self.report_folder = report_dir
-        self.templates_dir_link = os.path.join(self.dir, '..', "data", self.templates_dir_name)
+        self.templates_dir_link = os.path.join(self.dir, '..', self.templates_dir_name)
 
         #  copy all the assets file inside the new folder 
         if not exists:

@@ -24,6 +24,12 @@ class ReportItem:
         self.images_link = []
         self.html_file_name = '{}-{}.html'.format(self.contrast_name, self.tool_name)
 
+    def has_gif(self):
+        #TODO:use array instead
+        if self.tool_name.find("propseg") > - 1:
+            return True
+        return False
+
     def add_image_link(self, link):
         """
         add image link  to a list of images link
@@ -43,7 +49,8 @@ class ReportItem:
         tags = {
             'description': self.description,
             'syntax': self.syntax,
-            'images': self.images_link
+            'images': self.images_link,
+            "hasGif": self.has_gif()
         }
         msct_report_util.createHtmlFile(template_dir, template_name, file_link, tags)
 

@@ -1,0 +1,45 @@
+.header{
+	background: linear-gradient(to bottom, #606060, #D0D0D0);
+	color: white;
+}
+
+.footer{
+	background: linear-gradient(to top, #606060, #D0D0D0);
+	color: white;
+}
+
+.result-body{
+	background: #EAEAEA;
+}
+
+.image-result{
+	margin: 0 auto;
+}
+
+.go-top{
+	position: fixed;
+	bottom: 0px;
+	right: 32px;
+	width: 10px;
+}
+
+.glyphicon-triangle-top{
+	font-size: 32px;
+}
+
+
+#subject_index{
+	float: right;
+}
+
+iframe{
+    border:none;
+}
+
+pre{
+white-space: pre-wrap;       /* css-3 */
+ white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+ white-space: -pre-wrap;      /* Opera 4-6 */
+ white-space: -o-pre-wrap;    /* Opera 7 */
+ word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
