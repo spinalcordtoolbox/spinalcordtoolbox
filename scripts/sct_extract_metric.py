@@ -215,11 +215,9 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     if not len(glob(path_label + 'WMtract*.*')) == 0:
         # MNI-Poly-AMU
         suffix_vertebral_labeling = '*_level.nii.gz'
-        # ml_clusters = '0:29,30,31'  # 3-class for robust maximum likelihood estimation: WM, GM and CSF
     else:
         # PAM50 and later
         suffix_vertebral_labeling = '*_levels.nii.gz'
-        # ml_clusters = '0:29,30:35,36'
 
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
@@ -488,8 +486,8 @@ def read_label_file(path_info_label, file_info_label):
 
         # Check if the White matter atlas was provided by the user
         # look at first line
-        header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
-        info_label_title = header_lines[0].split('-')[0].strip()
+        # header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
+        # info_label_title = header_lines[0].split('-')[0].strip()
         # if '# White matter atlas' not in info_label_title:
         #     sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
 
