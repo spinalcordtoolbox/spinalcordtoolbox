@@ -3,10 +3,9 @@
 //hide or show description
 $("#toggleDescription").click(function() {
     console.log("hello toggle description!");
-    $("#description").toggle(function(){
-       var new_content = $("#toggleDescription").text() == "Hide description" ? "Show description" : "Hide description";
+    var new_content = $("#toggleDescription").text() == "Hide description" ? "Show description" : "Hide description";
+	$("#description").fadeToggle( "slow");
 	$("#toggleDescription").text(new_content);
-    });
 })
 //Global variable
 var speed = 1000;
