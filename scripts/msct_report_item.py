@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+#########################################################################################
+#
+# Report Item  class implementation
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: Thierno Barry
+# Modified: 2016-11-10
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
 import os
 import msct_report_util
 
@@ -8,7 +19,8 @@ class ReportItem:
         self.syntax = syntax
         self.contrast_name, self.tool_name = syntax.split(' ')
         self.images_dir = os.path.join("img", self.contrast_name, self.tool_name)
-        self.description = msct_report_util.getTxtContent(os.path.join(self.report_dir, self.images_dir, description))
+        self.description = msct_report_util.get_description_content(os.path.join(self.report_dir, self.images_dir,
+                                                                                 description))
         self.images_link = []
         self.html_file_name = '{}-{}.html'.format(self.contrast_name, self.tool_name)
 

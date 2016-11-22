@@ -1,7 +1,17 @@
+#!/usr/bin/env python
+#########################################################################################
+#
+# qc report  function implementation
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: Thierno Barry
+# Modified: 2016-11-10
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
 import os
 import shutil
 import glob
-from collections import OrderedDict
 import msct_report_util
 import msct_report_item as report_item
 
@@ -30,23 +40,37 @@ class Report:
         }
         return item
 
-    def __get_menu_links(self):
+    def __get_last_created__(self):
+        return Report.sorted_ls_by_ctime(self.report_folder)[-1]
+
+    def __get_menu_links__(self):
         """
         this function parse the current report folder and return the correspondind links by parsing html file names
         :return:
         """
-        html_files = glob.glob1(self.report_folder, "*.html")
-        links = OrderedDict()
-        if html_files:
-            for item in html_files:
-                rmv_html = item.split('.')
-                tmp = rmv_html[0].split('-')
-                if tmp.__len__() > 1:
-                    if not tmp[0] in links:
-                        links[tmp[0]] = [self.__create_menu_link(tmp[0], tmp[1])]
-                    else:
-                        links[tmp[0]].append(self.__create_menu_link(tmp[0], tmp[1]))
+        html_files = Report.sorted_ls_by_ctime(self.report_folder)
+        print html_files
+        links = {}
+        for item in html_files:
+            tmp = item.split('.')[0].split('-')
+            if len(tmp) > 1:
+                if not tmp[0] in links:
+                    links[tmp[0]] = [self.__create_menu_link(tmp[0], tmp[1])]
+                else:
+                    links[tmp[0]].append(self.__create_menu_link(tmp[0], tmp[1]))
         return links
+
+    @staticmethod
+    def sorted_ls_by_ctime(path):
+        """
+        sort a directory by files creation time
+        :param path:
+        :return:
+        """
+        mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
+        files = list(glob.glob1(path, "*.html"))
+        if "index.html" in files : files.remove("index.html")
+        return list(sorted(files, key=mtime))
 
     def _create_new(self):
         """
@@ -85,6 +109,7 @@ class Report:
         """
         file_link = os.path.join(self.report_folder, self.index_file_name)
         tags = {
-            'links': self.__get_menu_links()
+            'links': self.__get_menu_links__()
         }
+        print "last created are", self.__get_last_created__()
         msct_report_util.createHtmlFile(self.templates_dir_link, self.index_file_name, file_link, tags)
