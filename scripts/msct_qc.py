@@ -172,16 +172,26 @@ class Qc(object):
                      "#a22abd", "#d58240", "#ac2aff"
 
                      ]
+    def listed_seg(self,mask):
+        plt.imshow(mask,cmap=col.ListedColormap(self._labels_color),norm=
+        matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation,alpha=1)
+    def sequential_seg(self,mask):
+        cax = plt.imshow(mask,cmap=cm.autumn, norm= matplotlib.colors.Normalize(vmin=0.0,vmax=1.0),
+                         interpolation=self.interpolation)
+        plt.colorbar(cax)
 
-    def __init__(self, qc_report, dpi=600, interpolation='none', action_list=[]):
+    def __init__(self, qc_report, dpi=600, interpolation='none', action_list=[], action_seg=listed_seg):
         self.qc_report = qc_report
         # used to save the image file
         self.dpi = dpi
         self.interpolation = interpolation
         self.action_list = action_list
-        self.subplot = None
+        self.action_seg = action_seg
+        self.ax_seg = None
+        self.ax = None
         self.img = None
         self.mask = None
+
 
     def __call__(self, f):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
@@ -193,26 +203,25 @@ class Qc(object):
             assert isinstance(img, np.ndarray)
             assert isinstance(mask, np.ndarray)
 
+            # Make original plot
             fig = plt.imshow(img, cmap='gray', interpolation=self.interpolation)
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
+            self.ax = plt.gca()
 
-            # saves the original color without contrast
-            self.__save(leafNodeFullPath, '{}_original'.format(self.qc_report.img_base_name))
-
-            self.subplot = plt.subplot()
+            # Make segmented plot
+            self.ax_seg = plt.subplot()
             self.img = img
             self.mask = mask
 
-            mask = np.rint(np.ma.masked_where(mask < 1, mask))
+            mask = np.rint(np.ma.masked_where(mask < 0.0001, mask))
             plt.imshow(img, cmap='gray', interpolation=self.interpolation)
 
             for action in self.action_list:
                 action(self)
 
-            plt.imshow(mask, cmap=col.ListedColormap(self._labels_color), norm=
-            matplotlib.colors.Normalize(vmin=0, vmax=len(self._labels_color)), interpolation=self.interpolation,
-                       alpha=1)
+            self.action_seg(self,mask)
+
             self.__save(leafNodeFullPath, self.qc_report.img_base_name)
             plt.close()
 
@@ -228,8 +237,8 @@ class Qc(object):
     @staticmethod
     def label_vertebrae(self):
         a = [0.0]
-        data = self.mask;
-        ax = self.subplot
+        data = self.mask
+        ax = self.ax_seg
         for index, val in np.ndenumerate(data):
             if val not in a:
                 a.append(val)
@@ -242,7 +251,7 @@ class Qc(object):
 
     @staticmethod
     def aplr(self):
-        ax = self.subplot
+        ax = self.ax_seg
         size = 5
         x = 8
         y = 8
