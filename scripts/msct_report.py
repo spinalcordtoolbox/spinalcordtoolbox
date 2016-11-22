@@ -41,7 +41,7 @@ class Report:
         return item
 
     def __get_last_created__(self):
-        return Report.sorted_ls_by_ctime(self.report_folder)[-1]
+        return Report.sorted_ls_by_ctime(self.report_folder)[-1].split('.')[0]
 
     def __get_menu_links__(self):
         """
@@ -108,6 +108,7 @@ class Report:
         """
         file_link = os.path.join(self.report_folder, self.index_file_name)
         tags = {
-            'links': self.__get_menu_links__()
+            'links': self.__get_menu_links__(),
+            'idToPreload': self.__get_last_created__()
         }
         msct_report_util.createHtmlFile(self.templates_dir_link, self.index_file_name, file_link, tags)

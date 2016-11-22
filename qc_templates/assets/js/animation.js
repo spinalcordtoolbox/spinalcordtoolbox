@@ -1,5 +1,5 @@
-
 "use strict";
+
 //hide or show description
 $("#toggleDescription").click(function() {
     console.log("hello toggle description!");
@@ -24,15 +24,6 @@ function getImages(){
 		 images.push(src);
 	})
 }
-
-getImages();
-
-changeImage();
-
-function getCurrentDate(){
-	var d = new Date();
-	d.getTime();
-}
 //change image each second to simulate gif view
 function changeImage(){
 	if(continueSwapping){
@@ -42,13 +33,21 @@ function changeImage(){
 		x++;
 		if(x >= images.length){
 		    x = 0;
-		} 
+		}
 		setTimeout("changeImage()", speed);
 	}
 }
+getImages();
+
+changeImage();
+
+function getCurrentDate(){
+	var d = new Date();
+	d.getTime();
+}
+
 //make pause
 $("#gif_image").click(function(e){
 	continueSwapping = !continueSwapping;
 	changeImage();
 })
-
