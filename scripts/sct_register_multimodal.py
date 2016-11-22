@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: if user specified -param, then ignore the default paramreg
 # TODO: check syn with shrink=4
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
 # TODO: testing script for all cases
@@ -284,6 +285,7 @@ def main(args=None):
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
+
     identity = int(arguments['-identity'])
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
@@ -648,7 +650,12 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_forward_out = 'step' + i_step_str + '0GenericAffine.txt'
         warp_inverse_out = '-step' + i_step_str + '0GenericAffine.txt'
         from msct_register_landmarks import register_landmarks
-        register_landmarks(src, dest, paramreg.steps[i_step_str].dof, fname_affine=warp_forward_out, verbose=param.verbose)
+        register_landmarks(src,
+                           dest,
+                           paramreg.steps[i_step_str].dof,
+                           fname_affine=warp_forward_out,
+                           verbose=param.verbose,
+                           path_qc=param.path_qc)
 
     if not os.path.isfile(warp_forward_out):
         # no forward warping field for rigid and affine
