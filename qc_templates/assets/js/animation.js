@@ -3,7 +3,9 @@
 //hide or show description
 $("#toggleDescription").click(function() {
     console.log("hello toggle description!");
-    $("#description-content").toggle(function(){
+    $("#description").toggle(function(){
+       var new_content = $("#toggleDescription").text() == "Hide description" ? "Show description" : "Hide description";
+	$("#toggleDescription").text(new_content);
     });
 })
 //Global variable
