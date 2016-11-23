@@ -178,7 +178,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-param-qc",
                       type_value=[[','], 'str'],
-                      description="Create the patches and generate the report",
+                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent. ncol is number of slice per line, default is 10",
                       mandatory=False)
     return parser
 
@@ -345,8 +345,10 @@ if __name__ == "__main__":
         for paramStep in arguments['-param-qc']:
             params = paramStep.split('=')
             if len(params) > 1 :
+				# Parameter where the report should be created/updated
                 if params[0] == "ofolder":
                     qc_folder_output = params[1]
+				# Parameter defining how many columns should be created in the picture
                 if params[0] == 'ncol':
                     nb_column = int(params[1])
     # Qc_Report generates and contains the useful infos for qc generation
