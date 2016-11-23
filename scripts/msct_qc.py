@@ -174,24 +174,26 @@ class Qc(object):
                      "#a22abd", "#d58240", "#ac2aff"
 
                      ]
+    _seg_colormap = cm.autumn
 
-    def listed_seg(self):
-        mask = self.mask
+    def listed_seg(self,mask):
+        mask = mask
         img = np.rint(np.ma.masked_where(mask < 1,mask))
         plt.imshow(img,cmap=col.ListedColormap(self._labels_color),norm=
         matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation,alpha=1)
         return self.qc_report.img_base_name
 
-    def sequential_seg(self):
-        mask = self.mask
-        mask = np.ma.masked_where(mask <= 0.05,mask)
-        plt.imshow(mask,cmap=cm.autumn, interpolation=self.interpolation)
+    def sequential_seg(self,mask):
+        seg = mask
+        seg = np.ma.masked_where(seg == 0,seg)
+        plt.imshow(seg,cmap=self._seg_colormap, interpolation=self.interpolation)
         return self.qc_report.img_base_name
 
-    def label_vertebrae(self):
+    def label_vertebrae(self,mask):
+        #self.listed_seg(mask)
         ax = plt.gca()
         a = [0.0]
-        data = self.mask
+        data = mask
         for index, val in np.ndenumerate(data):
             if val not in a:
                 a.append(val)
@@ -204,17 +206,19 @@ class Qc(object):
                                 arrowprops=dict(facecolor=color, shrink=0.05))
         return '{}_label'.format(self.qc_report.img_base_name)
 
-    def colorbar(self):
-        plt.colorbar()
+    def colorbar(self,mask):
+        fig = plt.figure(figsize=(9,1.5))
+        ax = fig.add_axes([0.05,0.80,0.9,0.15])
+        cb = matplotlib.colorbar.ColorbarBase(ax,cmap=self._seg_colormap,orientation='horizontal')
+        #cb.set_label('Some Units')
         return '{}_colorbar'.format(self.qc_report.img_base_name)
 
-    def __init__(self, qc_report,interpolation='none', action_list=[listed_seg]):
+
+    def __init__(self, qc_report,interpolation='none', action_list=[sequential_seg,colorbar]):
         self.qc_report = qc_report
         # used to save the image file
         self.interpolation = interpolation
         self.action_list = action_list
-        self.img = None
-        self.mask = None
 
     def __call__(self, f):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
@@ -225,21 +229,18 @@ class Qc(object):
             assert isinstance(mask, np.ndarray)
 
             # Make original plot
+            plt.figure(1)
             fig = plt.imshow(img, cmap=cm.gray, interpolation=self.interpolation)
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
 
             # saves the original color without contrast
-
             self.__save(leafNodeFullPath,'{}_original'.format(self.qc_report.img_base_name))
 
             # Make params for segmented plot and others decorations
-            self.img = img
-            self.mask = mask
-
             # Save each action in order to build up an animation
             for action in self.action_list:
-                self.__save(leafNodeFullPath,action(self))
+                self.__save(leafNodeFullPath,action(self,mask))
 
             plt.close()
 
@@ -252,9 +253,9 @@ class Qc(object):
 
         return wrapped_f
 
-    def __save(self,dirPath,name,format='png',bbox_inches='tight',pad_inches=0):
+    def __save(self,dirPath,name,format='png',bbox_inches='tight',pad_inches=0.05):
         plt.savefig('{0}/{1}.{2}'.format(dirPath,name,format),format=format,bbox_inches=bbox_inches,
-                    pad_inches=pad_inches)
+                    pad_inches=pad_inches, dpi=600)
 
 class slices(object):
     """
