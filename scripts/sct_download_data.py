@@ -54,8 +54,8 @@ def main(args=None):
     # initialization
     verbose = 1
     dict_url = {'sct_example_data': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta23/sct_example_data.zip',
-                'sct_testing_data': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta23/sct_testing_data.zip',
-                'PAM50': 'https://dl.dropboxusercontent.com/u/20592661/sct/20161008/PAM50.zip',
+                'sct_testing_data': 'https://dl.dropboxusercontent.com/u/20592661/sct/sct_testing_data.zip',
+                'PAM50': 'https://dl.dropboxusercontent.com/u/20592661/sct/PAM50_20161121.zip',
                 'MNI-Poly-AMU': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/MNI-Poly-AMU.zip',
                 'gm_model': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta23/gm_model.zip'}
     tmp_file = 'tmp.data.zip'
