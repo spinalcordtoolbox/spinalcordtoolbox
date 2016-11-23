@@ -69,7 +69,7 @@ sct_propseg -i t1_smooth.nii.gz -c t1
 if [ $DISPLAY = true ]; then
   fslview t1 -b 0,800 t1_seg -l Red -t 0.5 t1_smooth_seg -l Green -t 0.5 &
 fi
-mv t1_smooth_seg.nii.gz t1_seg.nii.gz
+cp t1_smooth_seg.nii.gz t1_seg.nii.gz
 # Vertebral labeling. Here we use the fact that the FOV is centered at C7.
 sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -c t1
 if [ $DISPLAY = true ]; then
@@ -219,11 +219,10 @@ echo "mt/CSA:  " `grep -v '^#' mt/mt_cst_dorsal/csa_mean.txt | grep -v '^$'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'right'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'left'`
 echo
-# results from commit 1e6656b47d6497d540253359698344969e035328
-#t2/CSA:   /Users/julien/sct_example_data/t2/t2_seg.nii.gz, 77.278685, 1.928431
-#mt/MTR:   51, white matter, 385.668022, 33.671782, 0.000000
-#grep: mt/mt_cst_dorsal_csa_mean.txt: No such file or directory
-#mt/CSA:  /Users/julien/sct_example_data/mt/dorsal_column.nii.gz, 19.808094, 0.774075
-#dmri/FA:  4, WM left lateral corticospinal tract, 21.511193, 0.762046, 0.000000
-#dmri/FA:  5, WM right lateral corticospinal tract, 21.270867, 0.746589, 0.000000
+# results from commit 28bdeaecd89795621e3fb75002067c9fa096c290
+# t2/CSA:   t2_seg.nii.gz, 76.753884, 2.049822
+# mt/MTR:   51, white matter, 387.801068, 33.744919, 0.000000
+# mt/CSA:   dorsal_column.nii.gz, 20.052757, 1.286250
+# dmri/FA:  4, WM left lateral corticospinal tract, 22.799808, 0.734177, 0.000000
+# dmri/FA:  5, WM right lateral corticospinal tract, 20.828494, 0.790546, 0.000000
 #fMRI results: https://dl.dropboxusercontent.com/u/20592661/sct/result_batch_processing_fmri.png

@@ -471,8 +471,11 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
-    # extract centerline and smooth it
+    # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+
+    # correct centerline fitted coordinates according to the data resolution
+    x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -480,25 +483,19 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Empty arrays in which CSA for each z slice will be stored
     csa = np.zeros(max_z_index-min_z_index+1)
     angles = np.zeros(max_z_index - min_z_index + 1)
-    spacing = [im_seg.dim[4], im_seg.dim[5], im_seg.dim[6]]
 
     for iz in xrange(min_z_index, max_z_index+1):
         if angle_correction:
             # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
             try:
-                # compute the vector normal to the plane
-                normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
-
-                # adjusting for spacing, assuming RPI orientation
-                normal[0] *= spacing[0]
-                normal[1] *= spacing[1]
-                normal[2] *= spacing[2]
+                # normalize the tangent vector to the centerline (i.e. its derivative)
+                tangent_vect = normalize(np.array([x_centerline_deriv_rescorr[iz-min_z_index], y_centerline_deriv_rescorr[iz-min_z_index], z_centerline_deriv_rescorr[iz-min_z_index]]))
 
             except IndexError:
                 sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.dot(normal, [0.0, 0.0, 1.0]))
+            angle = np.arccos(np.vdot(tangent_vect, [0.0, 0.0, 1.0]))
         else:
             angle = 0.0
 
