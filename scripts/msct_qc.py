@@ -18,6 +18,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
+import matplotlib.cm as cm
 import matplotlib
 from msct_image import Image
 from scipy import ndimage
@@ -92,9 +93,11 @@ class Qc_Report(object):
             os.mkdir(newToolProcessFolder)
 
         # save the leaf folder name for Description file    
-        self.report_leaf_folder = newToolProcessFolder
+            # save the leaf folder name for Description file
+            self.report_leaf_folder = newToolProcessFolder
 
-        return newReportFolder, newToolProcessFolder
+        return newReportFolder,newToolProcessFolder
+
 
     def create_description_file(self, unparsed_args, description, sct_commit):
         """
@@ -171,108 +174,87 @@ class Qc(object):
                      "#a22abd", "#d58240", "#ac2aff"
 
                      ]
+
     def listed_seg(self):
         mask = self.mask
-        mask = np.rint(np.ma.masked_where(mask < 1,mask))
-        plt.imshow(mask,cmap=col.ListedColormap(self._labels_color),norm=
+        img = np.rint(np.ma.masked_where(mask < 1,mask))
+        plt.imshow(img,cmap=col.ListedColormap(self._labels_color),norm=
         matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation,alpha=1)
+        return self.qc_report.img_base_name
+
     def sequential_seg(self):
         mask = self.mask
-        mask = np.rint(np.ma.masked_where(mask < 0.00001,mask*100))
-        cax = plt.imshow(mask,cmap=cm.autumn, interpolation=self.interpolation)
-        plt.colorbar(cax)
+        mask = np.ma.masked_where(mask <= 0.05,mask)
+        plt.imshow(mask,cmap=cm.autumn, interpolation=self.interpolation)
+        return self.qc_report.img_base_name
 
-    def __init__(self, qc_report, dpi=600, interpolation='none', action_list=[], action_seg=listed_seg):
-        self.qc_report = qc_report
-        # used to save the image file
-        self.dpi = dpi
-        self.interpolation = interpolation
-        self.action_list = action_list
-        self.action_seg = action_seg
-        self.ax_seg = None
-        self.ax = None
-        self.img = None
-        self.mask = None
-
-
-    def __call__(self, f):
-        # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
-        def wrapped_f(*args):
-            # Create the directory for the
-            rootFolderPath, leafNodeFullPath = self.qc_report.mkdir()
-            img, mask = f(*args)
-
-            assert isinstance(img, np.ndarray)
-            assert isinstance(mask, np.ndarray)
-
-            # Make original plot
-            fig = plt.imshow(img, cmap='gray', interpolation=self.interpolation)
-            fig.axes.get_xaxis().set_visible(False)
-            fig.axes.get_yaxis().set_visible(False)
-            self.ax = plt.gca()
-
-            # saves the original color without contrast
-            self.__save(leafNodeFullPath,'{}_original'.format(self.qc_report.img_base_name))
-
-            # Make segmented plot
-            self.ax_seg = plt.subplot()
-            self.img = img
-            self.mask = mask
-
-            plt.imshow(img, cmap='gray', interpolation=self.interpolation)
-
-            for action in self.action_list:
-                action(self)
-
-            self.action_seg(self)
-
-            self.__save(leafNodeFullPath, self.qc_report.img_base_name)
-            plt.close()
-
-            #create description
-            self.qc_report.create_description_file(self.qc_report.cmd_args, self.qc_report.usage, None)
-            #create htmls
-            syntax = '{} {}'.format(self.qc_report.contrast_type, os.path.basename(leafNodeFullPath))
-            isct_generate_report.generate_report("{}.txt".format(self.qc_report.description_base_name), syntax,
-                                                 rootFolderPath)
-
-        return wrapped_f
-
-    @staticmethod
     def label_vertebrae(self):
+        ax = plt.gca()
         a = [0.0]
         data = self.mask
-        ax = self.ax_seg
         for index, val in np.ndenumerate(data):
             if val not in a:
                 a.append(val)
                 index = int(val)
-                color = self._labels_color[index]
-                x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
-                label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
-                ax.annotate(label, xy=(y, x), xytext=(y + 25, x), color=color,
-                            arrowprops=dict(facecolor=color, shrink=0.05))
+                if index in self._labels_regions.values():
+                    color = self._labels_color[index]
+                    x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
+                    label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
+                    ax.annotate(label, xy=(y, x), xytext=(y + 25, x), color=color,
+                                arrowprops=dict(facecolor=color, shrink=0.05))
+        return '{}_label'.format(self.qc_report.img_base_name)
 
-    @staticmethod
-    def aplr(self):
-        ax = self.ax_seg
-        size = 5
-        x = 8
-        y = 8
-        fontsize = 2
-        ax.text(x, y + size, r'A', fontsize=fontsize, fontweight='bold', color='#efbd1a')
-        ax.text(x, y - size, r'P', fontsize=fontsize, fontweight='bold', color='#efbd1a')
-        ax.text(x + size, y, r'L', fontsize=fontsize, fontweight='bold', color='#efbd1a')
-        ax.text(x - size, y, r'R', fontsize=fontsize, fontweight='bold', color='#efbd1a')
-        ax.arrow(x, y, 0, size, head_width=1.8, head_length=1.5, fc='b', ec='b')
-        ax.arrow(x, y, size, 0, head_width=1.8, head_length=1.5, fc='b', ec='b')
-        ax.arrow(x, y, -size, 0, head_width=1.8, head_length=1.5, fc='b', ec='b')
-        ax.arrow(x, y, 0, -size, head_width=1.8, head_length=1.5, fc='b', ec='b')
+    def colorbar(self):
+        plt.colorbar()
+        return '{}_colorbar'.format(self.qc_report.img_base_name)
 
-    def __save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0):
-        plt.savefig('{0}/{1}.{2}'.format(dirPath, name, format), format=format, bbox_inches=bbox_inches,
-                    pad_inches=pad_inches, dpi=self.dpi)
+    def __init__(self, qc_report,interpolation='none', action_list=[listed_seg]):
+        self.qc_report = qc_report
+        # used to save the image file
+        self.interpolation = interpolation
+        self.action_list = action_list
+        self.img = None
+        self.mask = None
 
+    def __call__(self, f):
+        # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
+        def wrapped_f(*args):
+            img, mask = f(*args)
+            rootFolderPath,leafNodeFullPath = self.qc_report.mkdir()
+            assert isinstance(img, np.ndarray)
+            assert isinstance(mask, np.ndarray)
+
+            # Make original plot
+            fig = plt.imshow(img, cmap=cm.gray, interpolation=self.interpolation)
+            fig.axes.get_xaxis().set_visible(False)
+            fig.axes.get_yaxis().set_visible(False)
+
+            # saves the original color without contrast
+
+            self.__save(leafNodeFullPath,'{}_original'.format(self.qc_report.img_base_name))
+
+            # Make params for segmented plot and others decorations
+            self.img = img
+            self.mask = mask
+
+            # Save each action in order to build up an animation
+            for action in self.action_list:
+                self.__save(leafNodeFullPath,action(self))
+
+            plt.close()
+
+            # create description
+            self.qc_report.create_description_file(self.qc_report.cmd_args,self.qc_report.usage,None)
+            # create htmls
+            syntax = '{} {}'.format(self.qc_report.contrast_type,os.path.basename(leafNodeFullPath))
+            isct_generate_report.generate_report("{}.txt".format(self.qc_report.description_base_name),syntax,
+                                                 rootFolderPath)
+
+        return wrapped_f
+
+    def __save(self,dirPath,name,format='png',bbox_inches='tight',pad_inches=0):
+        plt.savefig('{0}/{1}.{2}'.format(dirPath,name,format),format=format,bbox_inches=bbox_inches,
+                    pad_inches=pad_inches)
 
 class slices(object):
     """
@@ -418,10 +400,13 @@ class slices(object):
 
         # Calculates how many squares will fit in a row based on the column and the size
         # Multiply by 2 because the sides are of size*2. Central point is size +/-.
-        matrix0 = np.ones((size * 2 * int((self.dim / nb_column) + 1), size * 2 * nb_column))
-        matrix1 = np.empty((size * 2 * int((self.dim / nb_column) + 1), size * 2 * nb_column))
+        dim = self.dim;
+        nb_column = int(np.clip(dim,1,nb_column))
+        nb_row = -(-dim//nb_column) #upside-down floor division
+        matrix0 = np.ones(( size * 2 * nb_row, size * 2 * nb_column))
+        matrix1 = np.zeros(( size * 2 * nb_row, size * 2 * nb_column))
         centers_x, centers_y = self.get_center()
-        for i in range(self.dim):
+        for i in range(dim):
             x = int(round(centers_x[i]))
             y = int(round(centers_y[i]))
             matrix0 = slices.add_slice(matrix0, i, nb_column, size,
