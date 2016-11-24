@@ -471,8 +471,11 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
-    # extract centerline and smooth it
+    # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+
+    # correct centerline fitted coordinates according to the data resolution
+    x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -480,25 +483,19 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Empty arrays in which CSA for each z slice will be stored
     csa = np.zeros(max_z_index-min_z_index+1)
     angles = np.zeros(max_z_index - min_z_index + 1)
-    spacing = [im_seg.dim[4], im_seg.dim[5], im_seg.dim[6]]
 
     for iz in xrange(min_z_index, max_z_index+1):
         if angle_correction:
             # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
             try:
-                # compute the vector normal to the plane
-                normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
-
-                # adjusting for spacing, assuming RPI orientation
-                normal[0] *= spacing[0]
-                normal[1] *= spacing[1]
-                normal[2] *= spacing[2]
+                # normalize the tangent vector to the centerline (i.e. its derivative)
+                tangent_vect = normalize(np.array([x_centerline_deriv_rescorr[iz-min_z_index], y_centerline_deriv_rescorr[iz-min_z_index], z_centerline_deriv_rescorr[iz-min_z_index]]))
 
             except IndexError:
                 sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.dot(normal, [0.0, 0.0, 1.0]))
+            angle = np.arccos(np.vdot(tangent_vect, [0.0, 0.0, 1.0]))
         else:
             angle = 0.0
 
@@ -633,17 +630,12 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
             sct.check_file_exist(fname_vertebral_labeling)
 
             # convert the vertebral labeling file to RPI orientation
-            im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
-
-            # transforming again coordinates...
-            coord_voxel_centerline = im_vertebral_labeling.transfo_phys2pix([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]] for i in range(len(z_centerline))])
-            x_centerline_fit_vox = [coord[0] for coord in coord_voxel_centerline]
-            y_centerline_fit_vox = [coord[1] for coord in coord_voxel_centerline]
-            z_centerline_fit_vox = [coord[2] for coord in coord_voxel_centerline]
+            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling.change_orientation(orientation='RPI')
 
             # get the slices corresponding to the vertebral levels
             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline_fit_vox)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline)
 
         elif not vert_levels:
             vert_levels_list = []
@@ -879,7 +871,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     vertebral_levels_available = np.array(list(set(vertebral_labeling_data[vertebral_labeling_data > 0])))
 
     # Check if the vertebral levels selected are available
-    warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
+    warning = []  # list of strings gathering the potential following warning(s) to be written in the output .txt file
     if len(vertebral_levels_available) == 0:
         slices = None
         vert_levels_list = None
@@ -936,11 +928,11 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
     nz = len(z_centerline)
     matching_slices_centerline_vert_labeling = []
-    for i_z in range(0, nz):
+    for zz in z_centerline:
         # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
-        vertebral_labeling_slice_iz = vertebral_labeling_data[:, :, z_centerline[i_z]]
-        if np.asarray(np.nonzero(vertebral_labeling_slice_iz)).shape != (2,0) and int(np.median(vertebral_labeling_slice_iz[np.nonzero(vertebral_labeling_slice_iz)])) in range(vert_levels_list[0], vert_levels_list[1]+1):
-            matching_slices_centerline_vert_labeling.append(z_centerline[i_z])
+        vertebral_labeling_slice_zz = vertebral_labeling_data[:, :, int(zz)]
+        if np.asarray(np.nonzero(vertebral_labeling_slice_zz)).shape != (2, 0) and int(np.median(vertebral_labeling_slice_zz[np.nonzero(vertebral_labeling_slice_zz)])) in range(vert_levels_list[0], vert_levels_list[1]+1):
+            matching_slices_centerline_vert_labeling.append(int(zz))
 
     # now, find the min and max slices that are included in the vertebral levels
     if len(matching_slices_centerline_vert_labeling) == 0:
@@ -1017,8 +1009,6 @@ def ellipse_dim(a):
 #=======================================================================================================================
 def edge_detection(f):
 
-    import Image
-    
     #sigma = 1.0
     img = Image.open(f) #grayscale
     imgdata = np.array(img, dtype = float)
