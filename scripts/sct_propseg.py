@@ -351,8 +351,8 @@ if __name__ == "__main__":
 				# Parameter defining how many columns should be created in the picture
                 if params[0] == 'ncol':
                     nb_column = int(params[1])
-    # os.path.relpath to get the current directory to use in the naming instead of using the contrast_type
-    qcReport = msct_qc.Qc_Report("propseg", os.path.relpath(".", ".."), qc_folder_output,sys.argv[1:], parser.usage.description)
+    # Qc_Report generates and contains the useful infos for qc generation
+    qcReport = msct_qc.Qc_Report("propseg", qc_folder_output,sys.argv[1:], parser.usage.description)
 
     # Create the Qc object that creates the images files to provide to the HTML
     @msct_qc.Qc(qcReport)

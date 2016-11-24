@@ -28,12 +28,15 @@ import commands
 
 
 class Qc_Report(object):
-    def __init__(self, tool_name, contrast_type, report_root_folder, cmd_args, usage):
+    def __init__(self, tool_name, report_root_folder, cmd_args, usage):
         if not report_root_folder:
             report_root_folder = os.path.join(os.getcwd(), "..")
         # used to create folder
         self.tool_name = tool_name
-        self.contrast_type = contrast_type
+        # os.path.relpath to get the current directory to use in the naming instead of using the contrast_type
+        # if desired, contrast_type can be an input parameter to give more freedom to the user to specify a name
+        # requires to change a bit the code
+        self.contrast_type = os.path.relpath(".", "..")
         self.report_root_folder = report_root_folder
 
         #used for description
@@ -43,7 +46,7 @@ class Qc_Report(object):
         # Get timestamp, will be used for folder structure and name of files
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.timestamp = timestamp
-        self.img_base_name = '{0}_{1}_{2}'.format(tool_name, contrast_type, timestamp)
+        self.img_base_name = '{0}_{1}_{2}'.format(tool_name, self.contrast_type, timestamp)
 
         # can be used instead of the return value of the function mkdir, 
         # workaround for mkdir to save description file and to use it
@@ -214,7 +217,7 @@ class Qc(object):
         return '{}_colorbar'.format(self.qc_report.img_base_name)
 
 
-    def __init__(self, qc_report,interpolation='none', action_list=[sequential_seg,colorbar]):
+    def __init__(self, qc_report,interpolation='none', action_list=[listed_seg]):
         self.qc_report = qc_report
         # used to save the image file
         self.interpolation = interpolation
