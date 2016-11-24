@@ -1184,6 +1184,8 @@ def parse_label_ID_groups(list_ID):
             group = sorted(range(int(group_split[0]), int(group_split[1])+1))
         elif ',' in list_ID[i_group]:
             group = [int(x) for x in list_ID[i_group].split(',')]
+        elif not list_ID[i_group]:
+            group = []
         else:
             group = [int(list_ID[i_group])]
 
