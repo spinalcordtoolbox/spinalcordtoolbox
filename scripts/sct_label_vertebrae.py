@@ -21,6 +21,7 @@ import sys
 # import commands
 import os
 import shutil
+import msct_qc
 # from glob import glob
 import numpy as np
 from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end, tmp_create
@@ -311,6 +312,29 @@ def main(args=None):
     printv('\nDone! To view results, type:', verbose)
     printv('fslview '+fname_in+' '+path_output+file_seg+'_labeled'+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
+    # parse parameters
+    qc_folder_output= None
+    # Decode the parameters of -pararm-qc
+    if '-param-qc' in arguments:
+        for paramStep in arguments['-param-qc']:
+            params = paramStep.split('=')
+            if len(params) > 1 :
+        # Parameter where the report should be created/updated
+                if params[0] == "ofolder":
+                    qc_folder_output = params[1]
+
+    # There are no way to get the name easily this is why this is hard coded...
+    # TODO: find a way to get the name
+    output_filename = fname_seg.split(".")[0]+"_labeled.nii.gz"
+    # generate report
+    qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qc_folder_output, sys.argv[1:], parser.usage.description)
+
+    @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.listed_seg, msct_qc.Qc.label_vertebrae])
+    def propseg_qc(fname_in, output_filename):
+      return msct_qc.sagital(fname_in, output_filename).single()
+
+    
+    propseg_qc(fname_in, output_filename)
 
 # Detect vertebral levels
 # ==========================================================================================
@@ -855,7 +879,6 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     # write file
     seg.file_name += '_labeled'
     seg.save()
-
 
 def label_discs(fname_seg_labeled, verbose=1):
     """

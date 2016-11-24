@@ -33,6 +33,7 @@ class Qc_Report(object):
             report_root_folder = os.path.join(os.getcwd(), "..")
         # used to create folder
         self.tool_name = tool_name
+        
         # os.path.relpath to get the current directory to use in the naming instead of using the contrast_type
         # if desired, contrast_type can be an input parameter to give more freedom to the user to specify a name
         # requires to change a bit the code

@@ -16,7 +16,6 @@ import sys
 import msct_qc
 import sct_utils as sct
 from msct_parser import Parser
-import isct_generate_report
 
 
 def get_parser():
@@ -352,7 +351,7 @@ if __name__ == "__main__":
                 if params[0] == 'ncol':
                     nb_column = int(params[1])
     # Qc_Report generates and contains the useful infos for qc generation
-    qcReport = msct_qc.Qc_Report("propseg", qc_folder_output,sys.argv[1:], parser.usage.description)
+    qcReport = msct_qc.Qc_Report("propseg", qc_folder_output, sys.argv[1:], parser.usage.description)
 
     # Create the Qc object that creates the images files to provide to the HTML
     @msct_qc.Qc(qcReport)
@@ -365,7 +364,6 @@ if __name__ == "__main__":
         """
         # Chosen axe to generate image
         return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
-
 
     propseg_qc(input_filename, output_filename, nb_column)
 
