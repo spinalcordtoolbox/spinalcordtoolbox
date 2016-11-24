@@ -26,7 +26,7 @@ class ReportItem:
 
     def has_gif(self):
         #TODO:use array instead
-        if self.tool_name.find("propseg") > - 1:
+        if self.tool_name.find("propseg") > - 1 or self.tool_name.find("label_vertebrae") > - 1:
             return True
         return False
 

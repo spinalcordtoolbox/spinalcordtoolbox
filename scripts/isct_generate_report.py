@@ -15,7 +15,7 @@ import msct_report as report
 import msct_report_item as report_item
 
 
-def generate_report(description, syntax, report_dir):
+def generate_report(description, syntax, report_dir, show_report):
     """
     :param description:
     :param syntax:
@@ -36,10 +36,10 @@ def generate_report(description, syntax, report_dir):
 
     print " \n The qc report has been generated in {} \n".format(os.path.realpath(report_dir))
 
-    # display report in the default web browser
-    url = 'file://{}'.format(os.path.realpath(os.path.join(report_dir, "index.html")))
-    webbrowser.open(url)
-
+    if show_report:
+        # display report in the default web browser
+        url = 'file://{}'.format(os.path.realpath(os.path.join(report_dir, "index.html")))
+        webbrowser.open(url)
 
 def report_exists(report_dir):
     """

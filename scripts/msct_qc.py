@@ -28,12 +28,12 @@ import commands
 
 
 class Qc_Report(object):
-    def __init__(self, tool_name, report_root_folder, cmd_args, usage):
+    def __init__(self, tool_name, report_root_folder, cmd_args, usage, showReport = False):
         if not report_root_folder:
             report_root_folder = os.path.join(os.getcwd(), "..")
         # used to create folder
         self.tool_name = tool_name
-        
+        self.show_report = showReport
         # os.path.relpath to get the current directory to use in the naming instead of using the contrast_type
         # if desired, contrast_type can be an input parameter to give more freedom to the user to specify a name
         # requires to change a bit the code
@@ -253,11 +253,11 @@ class Qc(object):
             # create htmls
             syntax = '{} {}'.format(self.qc_report.contrast_type,os.path.basename(leafNodeFullPath))
             isct_generate_report.generate_report("{}.txt".format(self.qc_report.description_base_name),syntax,
-                                                 rootFolderPath)
+                                                 rootFolderPath, self.qc_report.show_report)
 
         return wrapped_f
 
-    def __save(self,dirPath,name,format='png',bbox_inches='tight',pad_inches=0.05):
+    def __save(self,dirPath,name,format='png',bbox_inches='tight',pad_inches=0.00):
         plt.savefig('{0}/{1}.{2}'.format(dirPath,name,format),format=format,bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=600)
 

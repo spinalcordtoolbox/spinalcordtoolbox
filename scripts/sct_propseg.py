@@ -339,6 +339,7 @@ if __name__ == "__main__":
 
     nb_column = 10
     qc_folder_output= None
+    open_html = False
     # Decode the parameters of -pararm-qc
     if '-param-qc' in arguments:
         for paramStep in arguments['-param-qc']:
@@ -350,8 +351,10 @@ if __name__ == "__main__":
 				# Parameter defining how many columns should be created in the picture
                 if params[0] == 'ncol':
                     nb_column = int(params[1])
+            elif len(params) == 1 and params[0] == "openhtml":
+                open_html = True
     # Qc_Report generates and contains the useful infos for qc generation
-    qcReport = msct_qc.Qc_Report("propseg", qc_folder_output, sys.argv[1:], parser.usage.description)
+    qcReport = msct_qc.Qc_Report("propseg", qc_folder_output, sys.argv[1:], parser.usage.description, open_html)
 
     # Create the Qc object that creates the images files to provide to the HTML
     @msct_qc.Qc(qcReport)

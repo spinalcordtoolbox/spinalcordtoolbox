@@ -140,6 +140,10 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value=None,
                       description="display this help",
                       mandatory=False)
+    parser.add_option(name="-param-qc",
+                      type_value=[[','], 'str'],
+                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent.",
+                      mandatory=False)
     return parser
 
 
@@ -314,7 +318,9 @@ def main(args=None):
 
     # parse parameters
     qc_folder_output= None
+    open_html = False
     # Decode the parameters of -pararm-qc
+    # TODO refactor
     if '-param-qc' in arguments:
         for paramStep in arguments['-param-qc']:
             params = paramStep.split('=')
@@ -322,12 +328,14 @@ def main(args=None):
         # Parameter where the report should be created/updated
                 if params[0] == "ofolder":
                     qc_folder_output = params[1]
+            elif len(params) == 1 and params[0] == "openhtml":
+                open_html = True
 
     # There are no way to get the name easily this is why this is hard coded...
     # TODO: find a way to get the name
     output_filename = fname_seg.split(".")[0]+"_labeled.nii.gz"
     # generate report
-    qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qc_folder_output, sys.argv[1:], parser.usage.description)
+    qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qc_folder_output, sys.argv[1:], parser.usage.description, open_html)
 
     @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.listed_seg, msct_qc.Qc.label_vertebrae])
     def propseg_qc(fname_in, output_filename):
