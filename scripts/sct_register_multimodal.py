@@ -179,7 +179,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
+    def __init__(self, step='1', type='', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -228,6 +228,9 @@ class ParamregMultiStep:
                 self.steps[param_reg.step] = param_reg
         else:
             sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
+        if param_reg.type not in ['im', 'seg']:
+            sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
+
 
 
 # MAIN
