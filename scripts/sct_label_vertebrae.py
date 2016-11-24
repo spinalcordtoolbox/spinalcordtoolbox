@@ -328,8 +328,8 @@ def main(args=None):
         # Parameter where the report should be created/updated
                 if params[0] == "ofolder":
                     qc_folder_output = params[1]
-            elif len(params) == 1 and params[0] == "openhtml":
-                open_html = True
+            	if params[0] == "autoview" and int(params[1]) == 1:
+                    open_html = True
 
     # There are no way to get the name easily this is why this is hard coded...
     # TODO: find a way to get the name

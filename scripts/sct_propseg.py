@@ -351,8 +351,8 @@ if __name__ == "__main__":
 				# Parameter defining how many columns should be created in the picture
                 if params[0] == 'ncol':
                     nb_column = int(params[1])
-            elif len(params) == 1 and params[0] == "openhtml":
-                open_html = True
+                if params[0] == "autoview" and int(params[1]) == 1:
+                    open_html = True
     # Qc_Report generates and contains the useful infos for qc generation
     qcReport = msct_qc.Qc_Report("propseg", qc_folder_output, sys.argv[1:], parser.usage.description, open_html)
 
