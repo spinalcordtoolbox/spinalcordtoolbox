@@ -104,6 +104,10 @@ def get_parser(paramreg=None):
                       description="Name of output file.",
                       mandatory=False,
                       example="src_reg.nii.gz")
+    parser.add_option(name='-owarp',
+                      type_value="file_output",
+                      description="Name of output forward warping field.",
+                      mandatory=False)
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
@@ -287,6 +291,10 @@ def main(args=None):
         fname_output = arguments['-o']
     if '-ofolder' in arguments:
         path_out = arguments['-ofolder']
+    if '-owarp' in arguments:
+        fname_output_warp = arguments['-owarp']
+    else:
+        fname_output_warp = ''
     if '-initwarp' in arguments:
         fname_initwarp = os.path.abspath(arguments['-initwarp'])
     else:
@@ -463,10 +471,16 @@ def main(args=None):
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
+    # src_reg
     fname_src2dest = sct.generate_output_file(path_tmp+'src_reg.nii', path_out+file_out+ext_out, verbose)
-    sct.generate_output_file(path_tmp+'warp_src2dest.nii.gz', path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz', verbose)
+    # warp
+    if fname_output_warp == '':
+        fname_output_warp = path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz'
+    sct.generate_output_file(path_tmp+'warp_src2dest.nii.gz', fname_output_warp, verbose)
     if generate_warpinv:
+        # dest_reg
         fname_dest2src = sct.generate_output_file(path_tmp+'dest_reg.nii', path_out+file_dest+'_reg'+ext_dest, verbose)
+        # warpinv
         sct.generate_output_file(path_tmp+'warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
     # sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_dest2src.nii.gz')
 
