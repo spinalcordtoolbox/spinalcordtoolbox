@@ -350,7 +350,7 @@ else
   elif [ $OS == "linux_centos6" ]; then
     download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta20/sct_binaries_${OS}.tar.gz
   elif [ $OS == "osx" ]; then
-    download ${TMP_DIR}/sct_binaries.tar.gz https://dl.dropboxusercontent.com/u/20592661/sct/20161123/20161123_sct_binaries_osx.tar.gz
+    download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta28/sct_binaries_osx_20161123.tar.gz
   fi
   # force disk buffer to refresh
   ls ${TMP_DIR} > /dev/null
