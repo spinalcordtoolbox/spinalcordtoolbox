@@ -316,31 +316,20 @@ def main(args=None):
     printv('\nDone! To view results, type:', verbose)
     printv('fslview '+fname_in+' '+path_output+file_seg+'_labeled'+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
-    # parse parameters
-    qc_folder_output= None
-    open_html = False
-    # Decode the parameters of -pararm-qc
-    # TODO refactor
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
     if '-param-qc' in arguments:
-        for paramStep in arguments['-param-qc']:
-            params = paramStep.split('=')
-            if len(params) > 1 :
-        # Parameter where the report should be created/updated
-                if params[0] == "ofolder":
-                    qc_folder_output = params[1]
-            	if params[0] == "autoview" and int(params[1]) == 1:
-                    open_html = True
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
     # There are no way to get the name easily this is why this is hard coded...
     # TODO: find a way to get the name
     output_filename = fname_seg.split(".")[0]+"_labeled.nii.gz"
     # generate report
-    qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qc_folder_output, sys.argv[1:], parser.usage.description, open_html)
+    qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description)
 
     @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.listed_seg, msct_qc.Qc.label_vertebrae])
     def propseg_qc(fname_in, output_filename):
       return msct_qc.sagital(fname_in, output_filename).single()
-
     
     propseg_qc(fname_in, output_filename)
 

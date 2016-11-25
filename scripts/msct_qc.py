@@ -27,20 +27,59 @@ import isct_generate_report
 import commands
 
 
+class Qc_Params(object):
+    def __init__(self, params_qc=None):
+        # list of parameters that can be provided by the args
+        # by default, root folder is in the previous folder
+        self.report_root_folder = os.path.join(os.getcwd(), "..")
+        self.nb_column = 10
+        self.show_report = False
+
+        # settings up the parameters
+        if params_qc is not None or params_qc == "":
+            self.parse_params(params_qc)
+
+        # must be done after parsing the params
+        self.validate_root_folder()
+
+    def parse_params(self, params_qc):
+        # converts the parameters, verification of arg -param-qc outside because this class is for params only
+        # TODO: Print when argument has not been found
+        for paramStep in params_qc:
+            params = paramStep.split('=')
+            if len(params) > 1:
+                # Parameter where the report should be created/updated
+                if params[0] == "ofolder":
+                    self.report_root_folder = params[1]
+                # Parameter defining how many columns should be created in the picture
+                if params[0] == 'ncol':
+                    self.nb_column = int(params[1])
+                if params[0] == "autoview" and int(params[1]) == 1:
+                    self.show_report = True
+
+    def validate_root_folder(self):
+        # By default, the root folder will be one folder back, because we assume
+        # that user will usually run from data structure like sct_example_data
+        if not os.path.exists(self.report_root_folder):
+            self.report_root_folder = os.getcwd()
+
+
 class Qc_Report(object):
-    def __init__(self, tool_name, report_root_folder, cmd_args, usage, showReport = False):
-        if not report_root_folder:
-            report_root_folder = os.path.join(os.getcwd(), "..")
+    def __init__(self, tool_name, qc_params, cmd_args, usage):
+        # the class Qc_Params verification done here to prevent from having to be sure it's not none outside
+        if qc_params is None:
+            qc_params = Qc_Params()
+        self.qc_params = qc_params
+
         # used to create folder
         self.tool_name = tool_name
-        self.show_report = showReport
+
         # os.path.relpath to get the current directory to use in the naming instead of using the contrast_type
         # if desired, contrast_type can be an input parameter to give more freedom to the user to specify a name
         # requires to change a bit the code
         self.contrast_type = os.path.relpath(".", "..")
-        self.report_root_folder = report_root_folder
 
-        #used for description
+        # used for description
         self.cmd_args = cmd_args
         self.usage = usage
 
@@ -53,11 +92,6 @@ class Qc_Report(object):
         # workaround for mkdir to save description file and to use it
         self.report_leaf_folder = None
         self.description_base_name = "description_{}".format(self.timestamp)
-
-        # By default, the root folder will be one folder back, because we assume
-        # that user will usually run from data structure like sct_example_data
-        if not os.path.exists(report_root_folder):
-            self.report_root_folder = os.getcwd()
 
     def mkdir(self):
         """
@@ -80,7 +114,7 @@ class Qc_Report(object):
         :return: return "root folder of the report" and the "furthest folder path" containing the images
         """
         # make a new or update Qc directory
-        newReportFolder = os.path.join(self.report_root_folder, "qc")
+        newReportFolder = os.path.join(self.qc_params.report_root_folder, "qc")
         newImgFolder = os.path.join(newReportFolder, "img")
         newContrastFolder = os.path.join(newImgFolder, self.contrast_type)
         newToolProcessFolder = os.path.join(newContrastFolder, "{0}_{1}".format(self.tool_name, self.timestamp))
@@ -100,7 +134,7 @@ class Qc_Report(object):
             # save the leaf folder name for Description file
             self.report_leaf_folder = newToolProcessFolder
 
-        return newReportFolder,newToolProcessFolder
+        return newReportFolder, newToolProcessFolder
 
 
     def create_description_file(self, unparsed_args, description, sct_commit):
@@ -140,7 +174,7 @@ class Qc_Report(object):
             cmd = "sct_{}".format(self.tool_name) + " " + str(cmd)
         with open(os.path.join(self.report_leaf_folder, "{}.txt".format(self.description_base_name)), "w") as outfile:
             json.dump({"command": cmd, "commit_version": sct_commit}, outfile, indent=4)
-	    outfile.write(description + '\n')
+            outfile.write(description + '\n')
         outfile.close
 
 
@@ -194,7 +228,7 @@ class Qc(object):
         return self.qc_report.img_base_name
 
     def label_vertebrae(self,mask):
-        #self.listed_seg(mask)
+        # self.listed_seg(mask)
         ax = plt.gca()
         a = [0.0]
         data = mask
@@ -210,15 +244,14 @@ class Qc(object):
                                 arrowprops=dict(facecolor=color, shrink=0.05))
         return '{}_label'.format(self.qc_report.img_base_name)
 
-    def colorbar(self,mask):
+    def colorbar(self, mask):
         fig = plt.figure(figsize=(9,1.5))
         ax = fig.add_axes([0.05,0.80,0.9,0.15])
         cb = matplotlib.colorbar.ColorbarBase(ax,cmap=self._seg_colormap,orientation='horizontal')
-        #cb.set_label('Some Units')
+        # cb.set_label('Some Units')
         return '{}_colorbar'.format(self.qc_report.img_base_name)
 
-
-    def __init__(self, qc_report,interpolation='none', action_list=[listed_seg]):
+    def __init__(self, qc_report, interpolation='none', action_list=[listed_seg]):
         self.qc_report = qc_report
         # used to save the image file
         self.interpolation = interpolation
@@ -228,7 +261,7 @@ class Qc(object):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
         def wrapped_f(*args):
             img, mask = f(*args)
-            rootFolderPath,leafNodeFullPath = self.qc_report.mkdir()
+            rootFolderPath, leafNodeFullPath = self.qc_report.mkdir()
             assert isinstance(img, np.ndarray)
             assert isinstance(mask, np.ndarray)
 
@@ -239,26 +272,26 @@ class Qc(object):
             fig.axes.get_yaxis().set_visible(False)
 
             # saves the original color without contrast
-            self.__save(leafNodeFullPath,'{}_original'.format(self.qc_report.img_base_name))
+            self.__save(leafNodeFullPath, '{}_original'.format(self.qc_report.img_base_name))
 
             # Make params for segmented plot and others decorations
             # Save each action in order to build up an animation
             for action in self.action_list:
-                self.__save(leafNodeFullPath,action(self,mask))
+                self.__save(leafNodeFullPath, action(self, mask))
 
             plt.close()
 
             # create description
-            self.qc_report.create_description_file(self.qc_report.cmd_args,self.qc_report.usage,None)
+            self.qc_report.create_description_file(self.qc_report.cmd_args, self.qc_report.usage, None)
             # create htmls
-            syntax = '{} {}'.format(self.qc_report.contrast_type,os.path.basename(leafNodeFullPath))
-            isct_generate_report.generate_report("{}.txt".format(self.qc_report.description_base_name),syntax,
-                                                 rootFolderPath, self.qc_report.show_report)
+            syntax = '{} {}'.format(self.qc_report.contrast_type, os.path.basename(leafNodeFullPath))
+            isct_generate_report.generate_report("{}.txt".format(self.qc_report.description_base_name), syntax,
+                                                 rootFolderPath, self.qc_report.qc_params.show_report)
 
         return wrapped_f
 
-    def __save(self,dirPath,name,format='png',bbox_inches='tight',pad_inches=0.00):
-        plt.savefig('{0}/{1}.{2}'.format(dirPath,name,format),format=format,bbox_inches=bbox_inches,
+    def __save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0.00):
+        plt.savefig('{0}/{1}.{2}'.format(dirPath, name, format), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=600)
 
 class slices(object):
