@@ -16,8 +16,9 @@
 
 from __future__ import division
 from math import sqrt
-from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis
+from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
+import numpy as np
 
 class Point(object):
     def __init__(self):
@@ -173,7 +174,7 @@ class Centerline:
         :param coord: must be a numpy array [x, y, z]
         :return: index
         """
-        if not self.points:
+        if len(self.points) == 0:
             return None
 
         dist, result_index = self.tree_points.query(coord)
@@ -314,3 +315,146 @@ class Centerline:
 
     def get_inverse_plans_coordinates(self, coordinates, indexes):
         return einsum('mnr,nr->mr', rollaxis(self.matrices[indexes], 0, 3), coordinates.transpose()).transpose() + self.points[indexes]
+
+    def compute_vertebral_distribution(self, disks_levels):
+        """
+
+        Parameters
+        ----------
+        vertebral_levels: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]
+        the value correspond to the vertebral (disk) level label
+
+        Returns
+        -------
+
+        """
+        labels_regions = {'PONS': 50, 'MO': 51,
+                          'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
+                          'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16, 'T10': 17, 'T11': 18, 'T12': 19,
+                          'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
+                          'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
+                          'Co': 30}
+        regions_labels = {'50': 'PONS', '51': 'MO',
+                          '1': 'C1', '2': 'C2', '3': 'C3', '4': 'C4', '5': 'C5', '6': 'C6', '7': 'C7',
+                          '8': 'T1', '9': 'T2', '10': 'T3', '11': 'T4', '12': 'T5', '13': 'T6', '14': 'T7', '15': 'T8', '16': 'T9', '17': 'T10', '18': 'T11', '19': 'T12',
+                          '20': 'L1', '21': 'L2', '22': 'L3', '23': 'L4', '24': 'L5',
+                          '25': 'S1', '26': 'S2', '27': 'S3', '28': 'S4', '29': 'S5',
+                          '30': 'Co'}
+        list_labels = [50, 51, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+
+        average_vert_length = {'PONS': 26.78160586519175, 'MO': 25.263815809096656, 'C1': 0.0,
+                               'C2': 20.176514191661337, 'C3': 17.022090519403065, 'C4': 17.842111671016056,
+                               'C5': 16.800356992319429, 'C6': 16.019212889311383, 'C7': 15.715854192723905,
+                               'T1': 16.84466163681078, 'T2': 19.865049296865475, 'T3': 21.550165130933905,
+                               'T4': 21.761237991438083, 'T5': 22.633281372803687, 'T6': 23.801974227738132,
+                               'T7': 24.358357813758332, 'T8': 25.200266294477885, 'T9': 25.315272064638506,
+                               'T10': 25.501856729317133, 'T11': 27.619238824308123, 'T12': 29.465119270009946,
+                               'L1': 31.89272719870084, 'L2': 33.511890474486449, 'L3': 35.721413718617441}
+
+        average_vert_dist = {'PONS': -52.045421674288406, 'MO': -25.263815809096656, 'C1': 0.0,
+                             'C2': 20.176514191661337, 'C3': 37.198604711064405, 'C4': 55.040716382080461,
+                             'C5': 71.841073374399883, 'C6': 87.860286263711259, 'C7': 103.57614045643517,
+                             'T1': 120.42080209324595, 'T2': 140.28585139011142, 'T3': 161.83601652104534,
+                             'T4': 183.59725451248343, 'T5': 206.23053588528711, 'T6': 230.03251011302524,
+                             'T7': 254.39086792678359, 'T8': 279.59113422126148, 'T9': 304.9064062859,
+                             'T10': 330.40826301521713, 'T11': 358.02750183952526, 'T12': 387.49262110953521,
+                             'L1': 419.38534830823608, 'L2': 452.89723878272252, 'L3': 488.61865250133997}
+
+        labels_points = [0] * self.number_of_points
+        self.l_points = [0] * self.number_of_points
+        self.dist_points = [0] * self.number_of_points
+        self.dist_points_rel = [0] * self.number_of_points
+        self.index_disk, index_disk_inv = {}, []
+        for level in disks_levels:
+            coord_level = [level[0], level[1], level[2]]
+            disk = regions_labels[str(level[3])]
+            nearest_index = self.find_nearest_index(coord_level)
+            labels_points[nearest_index] = disk + '-0.0'
+            self.index_disk[disk] = nearest_index
+            index_disk_inv.append([nearest_index, disk])
+
+        from operator import itemgetter
+        index_disk_inv.append([0, 'bottom'])
+        index_disk_inv = sorted(index_disk_inv, key=itemgetter(0))
+
+        progress_length = zeros(self.number_of_points)
+        for i in range(self.number_of_points - 1):
+            progress_length[i+1] = progress_length[i] + self.progressive_length[i]
+
+        label_reference = 'C1'
+        if 'C1' not in self.index_disk:
+            upper = 31
+            label_reference = ''
+            for l in self.index_disk:
+                if labels_regions[l] < upper:
+                    label_reference = l
+                    upper = labels_regions[l]
+
+        self.distance_from_C1label = {}
+        for disk in self.index_disk:
+                self.distance_from_C1label[disk] = progress_length[self.index_disk[label_reference]] - progress_length[self.index_disk[disk]]
+
+        for i in range(1, len(index_disk_inv)):
+            for j in range(index_disk_inv[i - 1][0], index_disk_inv[i][0]):
+                self.l_points[j] = index_disk_inv[i][1]
+
+        for i in range(self.number_of_points):
+            self.dist_points[i] = progress_length[self.index_disk[label_reference]] - progress_length[i]
+        for i in range(self.number_of_points):
+            current_label = self.l_points[i]
+            if current_label == 'bottom' or current_label == 0:
+                continue
+            elif current_label in ['MO', 'PONS']:
+                next_label = regions_labels[str(list_labels[list_labels.index(labels_regions[self.l_points[i]]) + 1])]
+                if next_label in self.index_disk:
+                    self.dist_points_rel[i] = - (self.dist_points[i] - self.dist_points[self.index_disk[next_label]]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
+                else:
+                    self.dist_points_rel[i] = - (self.dist_points[i] - self.dist_points[self.index_disk[next_label]]) / average_vert_length[current_label]
+            else:
+                next_label = regions_labels[str(list_labels[list_labels.index(labels_regions[self.l_points[i]]) + 1])]
+                if next_label in self.index_disk:
+                    self.dist_points_rel[i] = (self.dist_points[i] - self.dist_points[self.index_disk[current_label]]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
+                else:
+                    self.dist_points_rel[i] = (self.dist_points[i] - self.dist_points[self.index_disk[current_label]]) / average_vert_length[current_label]
+
+        """
+        for i in range(self.number_of_points):
+            print l_points[i], dist_points_rel[i]
+        """
+
+    def get_closest_to_relative_position(self, vertebral_level, relative_position):
+        indexes_vert = np.argwhere(np.array(self.l_points) == vertebral_level)
+        if len(indexes_vert) == 0:
+            return None
+
+        # find closest
+        arr_dist_rel = np.array(self.dist_points_rel)
+        idx = np.argmin(np.abs(arr_dist_rel[indexes_vert] - relative_position))
+
+        return indexes_vert[idx]
+
+    def save_centerline(self, image, fname_output):
+        labels_regions = {'PONS': 50, 'MO': 51,
+                          'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
+                          'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16,
+                          'T10': 17, 'T11': 18, 'T12': 19,
+                          'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
+                          'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
+                          'Co': 30}
+        image_output = image.copy()
+        image_output.data = image_output.data.astype(np.float32)
+        image_output.data *= 0.0
+
+        for i in range(self.number_of_points):
+            current_label = self.l_points[i]
+            current_coord = self.points[i]
+            current_dist_rel = self.dist_points_rel[i]
+            if current_label in labels_regions:
+                coord_pix = image.transfo_phys2pix([current_coord])[0]
+                image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(labels_regions[current_label]) + current_dist_rel
+
+        image_output.setFileName(fname_output)
+        image_output.save(type='float32')
+
+
+

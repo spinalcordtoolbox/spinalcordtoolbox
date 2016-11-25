@@ -493,39 +493,29 @@ def check_if_same_space(fname_1, fname_2):
     return all(around(q1, dec) == around(q2, dec))
 
 
-#=======================================================================================================================
-# printv: enables to print or not, depending on verbose status
-#   type: handles color: normal (default), warning (orange), error (red)
-#=======================================================================================================================
 def printv(string, verbose=1, type='normal'):
-    # select color based on type of message
-    if type == 'normal':
-        color = bcolors.normal
-    if type == 'info':
-        color = bcolors.green
-    elif type == 'warning':
-        color = bcolors.yellow
-    elif type == 'error':
-        color = bcolors.red
-    elif type == 'code':
-        color = bcolors.blue
-    elif type == 'bold':
-        color = bcolors.bold
-    elif type == 'process':
-        color = bcolors.magenta
+    """enables to print color coded messages, depending on verbose status """
 
-    # print message
+    colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
+              'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
+
     if verbose:
-        print(color+string+bcolors.normal)
+        # Print color only if the output is the terminal
+        if sys.stdout.isatty():
+            color = colors.get(type, bcolors.normal)
+            print(color + string + bcolors.normal)
+        else:
+            print(string)
 
-    # if error, exit program
     if type == 'error':
         from inspect import stack
-        frame, filename, line_number, function_name, lines, index = stack()[1]
-        # print(frame,filename,line_number,function_name,lines,index)
         import traceback
-        print('\n'+bcolors.red+filename+traceback.format_exc()+bcolors.normal)  # print error message
-        # print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
+
+        frame, filename, line_number, function_name, lines, index = stack()[1]
+        if sys.stdout.isatty():
+            print('\n' + bcolors.red + filename + traceback.format_exc() + bcolors.normal)
+        else:
+            print('\n' + filename + traceback.format_exc())
         sys.exit(2)
 
 

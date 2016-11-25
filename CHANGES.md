@@ -10,6 +10,8 @@
 - NEW: **sct_dmri_create_noisemask**: Identification and estimation of noise in the diffusion signal, implemented by the Dipy software project (http://nipy.org/dipy/), based on the PIESNO method
 - NEW: **sct_register_graymatter**: Multi-label registration that accounts for gray matter shape.
 - NEW: **sct_register_multimodal**: features two new transformations: centermassrot and columnwise.
+- NEW: **sct_register_multimodal**: flag smoothWarpXY: regularization of warping field (only for algo=columnwize)
+- NEW: **sct_register_multimodal**: flag pca_eigenratio_th: Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot).
 - BUG: **sct_straighten_spinalcord**: Fixed #917, #924
 - BUG: Fixed issues #715, #719
 - BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
@@ -23,6 +25,14 @@
 - OPT: **sct_register_to_template**: added contrast for registration: t2s
 - OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
+
+##3.0_beta28 (2016-11-25)
+- BUG: **sct_process_segmentation**: Fixed issue related to calculation of CSA (#1022)
+- BUG: **sct_label_vertebrae**: Fixed Vertebral labeling removes first vertebrae in the labelled segmentation (#700)
+- OPT: **sct_register_multimodal**: Now possible to input initial warping field (#1049)
+- OPT: **sct_register_multimodal**: Added feature to be able to input two pairs of label image for estimating affine/rigid/nonrigid transformation (#661)
+- OPT: **sct_extract_metric**: Added weighted-Maximum a posteriori extraction method
+- OPT: Remove color tags on log entries (#1035)
 
 ##3.0_beta27 (2016-10-23)
 - NEW: **sct_extract_metric**: method "max" to extract CSA value form interpolated volume (e.g. PAM50 space) without partial volume bias

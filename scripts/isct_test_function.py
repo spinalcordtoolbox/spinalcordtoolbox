@@ -311,6 +311,7 @@ if __name__ == "__main__":
     start_time = time()
     # create single time variable for output names
     output_time = strftime("%y%m%d%H%M%S")
+    print 'Testing started on: '+strftime("%Y-%m-%d %H:%M:%S")
 
     # build log file name
     if create_log:
@@ -320,8 +321,7 @@ if __name__ == "__main__":
         handle_log = file(fname_log, 'w')
         # redirect to log file
         sys.stdout = handle_log
-
-    print 'Testing started on: '+strftime("%Y-%m-%d %H:%M:%S")
+        print 'Testing started on: '+strftime("%Y-%m-%d %H:%M:%S")
 
     # get path of the toolbox
     path_script = os.path.dirname(__file__)
@@ -390,6 +390,7 @@ if __name__ == "__main__":
 
         # count tests that passed
         count_passed = results_subset.status[results_subset.status == 0].count()
+        count_crashed = results_subset.status[results_subset.status == 1].count()
         # count tests that ran
         count_ran = results_subset.status[results_subset.status != 200].count()
 
@@ -405,6 +406,7 @@ if __name__ == "__main__":
         print 'Duration: ' + str(int(round(elapsed_time)))+'s'
         # display results
         print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
+        print 'Crashed: ' + str(count_crashed) + '/' + str(count_ran)
         # build mean/std entries
         dict_mean = results_mean.to_dict()
         dict_mean.pop('status')
