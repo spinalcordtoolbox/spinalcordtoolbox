@@ -68,6 +68,7 @@ sct_propseg -i t1_smooth.nii.gz -c t1
 # Check results
 if [ $DISPLAY = true ]; then
   fslview t1 -b 0,800 t1_seg -l Red -t 0.5 t1_smooth_seg -l Green -t 0.5 &
+  sleep 5  # pause so that FSL has time to load before renaming file
 fi
 cp t1_smooth_seg.nii.gz t1_seg.nii.gz
 # Vertebral labeling. Here we use the fact that the FOV is centered at C7.
