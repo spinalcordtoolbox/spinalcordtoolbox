@@ -85,6 +85,14 @@ def get_parser(paramreg=None):
                       type_value="file",
                       description="Labels destination.",
                       mandatory=False)
+    parser.add_option(name='-initwarp',
+                      type_value='file',
+                      description='Initial warping field to apply to the source image.',
+                      mandatory=False)
+    parser.add_option(name='-initwarpinv',
+                      type_value='file',
+                      description='Initial inverse warping field to apply to the destination image (only use if you wish to generate the dest->src warping field).',
+                      mandatory=False)
     parser.add_option(name="-m",
                       type_value="file",
                       description="Mask that can be created with sct_create_mask to improve accuracy over region of interest. "
@@ -173,7 +181,6 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.outSuffix  = "_reg"
-        self.fname_mask = ''
         self.padding = 5
         self.path_qc = os.path.abspath(os.curdir)+'/qc/'
 
@@ -245,11 +252,11 @@ def main(args=None):
     # Initialization
     fname_output = ''
     path_out = ''
-    fname_mask = param.fname_mask
     fname_src_seg = ''
     fname_dest_seg = ''
     fname_src_label = ''
     fname_dest_label = ''
+    generate_warpinv = 1
 
     start_time = time.time()
     # get path of the toolbox
@@ -280,8 +287,18 @@ def main(args=None):
         fname_output = arguments['-o']
     if '-ofolder' in arguments:
         path_out = arguments['-ofolder']
-    if "-m" in arguments:
+    if '-initwarp' in arguments:
+        fname_initwarp = os.path.abspath(arguments['-initwarp'])
+    else:
+        fname_initwarp = ''
+    if '-initwarpinv' in arguments:
+        fname_initwarpinv = os.path.abspath(arguments['-initwarpinv'])
+    else:
+        fname_initwarpinv = ''
+    if '-m' in arguments:
         fname_mask = arguments['-m']
+    else:
+        fname_mask = ''
     padding = arguments['-z']
     if "-param" in arguments:
         paramreg_user = arguments['-param']
@@ -298,6 +315,7 @@ def main(args=None):
     print '\nInput parameters:'
     print '  Source .............. '+fname_src
     print '  Destination ......... '+fname_dest
+    print '  Init transfo ........ '+fname_initwarp
     print '  Mask ................ '+fname_mask
     print '  Output name ......... '+fname_output
     # print '  Algorithm ........... '+paramreg.algo
@@ -381,10 +399,27 @@ def main(args=None):
     # sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
     # if segmentation, also do it for seg
 
-    # loop across registration steps
+    # initialize list of warping fields
     warp_forward = []
     warp_inverse = []
-    for i_step in range(0, len(paramreg.steps)):
+
+    # initial warping is specified, update list of warping fields and skip step=0
+    if fname_initwarp:
+        sct.printv('\nSkip step=0 and replace with initial transformations: ', param.verbose)
+        sct.printv('  '+fname_initwarp, param.verbose)
+        # sct.run('cp '+fname_initwarp+' warp_forward_0.nii.gz', verbose)
+        warp_forward = [fname_initwarp]
+        start_step = 1
+        if fname_initwarpinv:
+            warp_inverse = [fname_initwarpinv]
+        else:
+            sct.printv('\nWARNING: No initial inverse warping field was specified, therefore the inverse warping field will NOT be generated.', param.verbose, 'warning')
+            generate_warpinv = 0
+    else:
+        start_step = 0
+
+    # loop across registration steps
+    for i_step in range(start_step, len(paramreg.steps)):
         sct.printv('\n--\nESTIMATE TRANSFORMATION FOR STEP #'+str(i_step), param.verbose)
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
@@ -430,8 +465,9 @@ def main(args=None):
     sct.printv('\nGenerate output files...', verbose)
     fname_src2dest = sct.generate_output_file(path_tmp+'src_reg.nii', path_out+file_out+ext_out, verbose)
     sct.generate_output_file(path_tmp+'warp_src2dest.nii.gz', path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz', verbose)
-    fname_dest2src = sct.generate_output_file(path_tmp+'dest_reg.nii', path_out+file_dest+'_reg'+ext_dest, verbose)
-    sct.generate_output_file(path_tmp+'warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
+    if generate_warpinv:
+        fname_dest2src = sct.generate_output_file(path_tmp+'dest_reg.nii', path_out+file_dest+'_reg'+ext_dest, verbose)
+        sct.generate_output_file(path_tmp+'warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
     # sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_dest2src.nii.gz')
 
     # Delete temporary files
@@ -444,7 +480,8 @@ def main(args=None):
     sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
     sct.printv('\nTo view results, type:', verbose)
     sct.printv('fslview '+fname_dest+' '+fname_src2dest+' &', verbose, 'info')
-    sct.printv('fslview '+fname_src+' '+fname_dest2src+' &\n', verbose, 'info')
+    if generate_warpinv:
+        sct.printv('fslview '+fname_src+' '+fname_dest2src+' &\n', verbose, 'info')
 
 
 
