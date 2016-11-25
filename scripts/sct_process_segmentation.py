@@ -762,26 +762,24 @@ def save_results(fname_output, overwrite, fname_data, metric_name, method, mean,
     # WRITE HEADER:
     # Write date and time
     fid_metric.write('# Date - Time: '+time.strftime('%Y/%m/%d - %H:%M:%S'))
-    # Write metric data file path
+    # Write file with absolute path
+    fid_metric.write('\n'+'# File: '+os.path.abspath(fname_data))
+    # Write metric
     fid_metric.write('\n'+'# Metric: '+metric_name)
     # Write method used for the metric estimation
     fid_metric.write('\n'+'# Calculation method: '+method)
-
     # Write selected vertebral levels
     fid_metric.write('\n# Vertebral levels: '+vertebral_levels_field)
-
     # Write selected slices
     fid_metric.write('\n'+'# Slices (z): '+slices_of_interest)
-
     # label headers
-    fid_metric.write('%s' % ('\n'+'# File used for calculation, MEAN across slices, STDEV across slices\n\n'))
+    fid_metric.write('%s' % ('\n'+'# MEAN, STDEV\n'))
 
     # WRITE RESULTS
-    fid_metric.write('%s, %f, %f\n' % (os.path.abspath(fname_data), mean, std))
+    fid_metric.write('%f, %f\n' % (mean, std))
 
     # Close file .txt
     fid_metric.close()
-
 
     ## Save results in a MS Excel file
     # if the user asked for no overwriting but the specified output file does not exist yet
