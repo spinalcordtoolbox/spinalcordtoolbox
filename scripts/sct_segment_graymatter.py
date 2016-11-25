@@ -51,6 +51,7 @@ import sct_maths, sct_register_multimodal
 from math import exp
 import numpy as np
 import shutil, os, sys, time
+import msct_qc
 
 
 def get_parser():
@@ -174,7 +175,10 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value=str(Param().verbose))
-
+    parser.add_option(name="-param-qc",
+                      type_value=[[','], 'str'],
+                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent.",
+                      mandatory=False)
     return parser
 
 
@@ -748,6 +752,39 @@ def main(args=None):
     end = time.time()
     t = end - start
     printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
+
+    # parse parameters
+    qc_folder_output= None
+    open_html = False
+    # TODO refactor
+    fname_in = param_seg.fname_im_original
+    fname_seg = param_seg.fname_seg
+
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
+    if '-param-qc' in arguments:
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
+    # There are no way to get the name easily this is why this is hard coded...
+    # TODO: find a way to get the name
+    output_filename = fname_seg.split(".")[0]+"_graymatter.nii.gz"
+
+    # Qc_Report generates and contains the useful infos for qc generation
+    qcReport = msct_qc.Qc_Report("propseg", qcParams, sys.argv[1:], parser.usage.description)
+
+    @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
+    def grayseg_qc(input_filename, output_filename, nb_column):
+        """
+        :param input_filename:
+        :param output_filename:
+        :param nb_column: 
+        :return:
+        """
+        # Chosen axe to generate image
+        return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
+
+    # the wrapped function
+    grayseg_qc(fname_in, output_filename, qcReport.qc_params.nb_column)
 
 if __name__ == "__main__":
     main()
