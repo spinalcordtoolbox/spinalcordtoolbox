@@ -69,7 +69,7 @@ def get_parser():
                       default_value='./label/atlas',
                       example=path_sct+'/data/atlas')
     parser.add_option(name='-l',
-                      type_value=[[','], 'str'],
+                      type_value='str',
                       description='Label IDs to extract the metric from. Default = all labels. Separate labels with ",". To select a group of consecutive labels use ":". Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is computed using all tracts, but only values of the selected tracts are reported.',
                       mandatory=False,
                       default_value='')
@@ -149,7 +149,7 @@ bin: binarize mask (threshold=0.5)""",
                       deprecated_by='-param')
     parser.add_option(name='-fix-label',
                       type_value=[[','], 'str'],
-                      description='If you do not want to estimate the metric in one label and fix its value, specify <label_ID>,<metric_value. Example to fix the CSF value to 0: -fix 31,0.',
+                      description='When using ML or MAP estimations, if you do not want to estimate the metric in one label and fix its value to avoid effects on other labels, specify <label_ID>,<metric_value. Example to fix the CSF value to 0: -fix-label 36,0.',
                       mandatory=False,
                       default_value='')
     parser.add_option(name='-norm-file',
@@ -256,7 +256,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
 
     # check syntax of labels asked by user
-    labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, map(int, labels_user))
+    labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0])
 
     nb_labels = len(indiv_labels_files)
 
@@ -1184,6 +1184,8 @@ def parse_label_ID_groups(list_ID):
             group = sorted(range(int(group_split[0]), int(group_split[1])+1))
         elif ',' in list_ID[i_group]:
             group = [int(x) for x in list_ID[i_group].split(',')]
+        elif not list_ID[i_group]:
+            group = []
         else:
             group = [int(list_ID[i_group])]
 
