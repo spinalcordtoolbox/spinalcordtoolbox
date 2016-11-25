@@ -35,7 +35,7 @@ def test(path_data='', parameters=''):
         cmd = '-i '  + folder_data + file_data[0] \
               + ' -d ' +  folder_data + file_data[1] \
               + ' -o ' + sct.add_suffix(file_data[0], '_reg_'+algo)  \
-              + ' -param step=1,algo='+algo+',iter=1,smooth=1,shrink=2,metric=MI'  \
+              + ' -param step=1,algo='+algo+',type=im,iter=1,smooth=1,shrink=2,metric=MI'  \
               + ' -x linear' \
               + ' -r 0' \
               + ' -v 1'
@@ -59,7 +59,7 @@ def test(path_data='', parameters=''):
         cmd = '-i ' +  folder_data + file_data[0] \
               + ' -d ' +  folder_data + file_data[1] \
               + ' -o ' + sct.add_suffix(file_data[0], '_reg_'+algo)  \
-              + ' -param step=1,algo='+algo+',iter=5,smooth=0,metric=MeanSquares'  \
+              + ' -param step=1,algo='+algo+',type=im,iter=5,smooth=0,metric=MeanSquares'  \
               + ' -x linear' \
               + ' -r 0' \
               + ' -v 1'
