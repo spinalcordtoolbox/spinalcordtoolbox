@@ -26,6 +26,14 @@
 - OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
 
+##3.0_beta28 (2016-11-25)
+- BUG: **sct_process_segmentation**: Fixed issue related to calculation of CSA (#1022)
+- BUG: **sct_label_vertebrae**: Fixed Vertebral labeling removes first vertebrae in the labelled segmentation (#700)
+- OPT: **sct_register_multimodal**: Now possible to input initial warping field (#1049)
+- OPT: **sct_register_multimodal**: Added feature to be able to input two pairs of label image for estimating affine/rigid/nonrigid transformation (#661)
+- OPT: **sct_extract_metric**: Added weighted-Maximum a posteriori extraction method
+- OPT: Remove color tags on log entries (#1035)
+
 ##3.0_beta27 (2016-10-23)
 - NEW: **sct_extract_metric**: method "max" to extract CSA value form interpolated volume (e.g. PAM50 space) without partial volume bias
 
