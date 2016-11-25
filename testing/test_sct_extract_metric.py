@@ -22,6 +22,7 @@ def test(path_data):
     # parameters
     folder_data = ['mt/', 'label/atlas']
     file_data = ['mtr.nii.gz']
+    file_output = ['quantif_mtr.txt']
 
     # define command
     cmd = 'sct_extract_metric' \
@@ -29,7 +30,7 @@ def test(path_data):
         ' -f '+path_data+folder_data[0]+folder_data[1]+ \
         ' -method wath '+ \
         ' -vert 1:3'+ \
-        ' -o quantif_'+file_data[0]+ \
+        ' -o '+file_output[0]+ \
         ' -v 1'
 
     # return
