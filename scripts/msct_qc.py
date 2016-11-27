@@ -239,7 +239,7 @@ class Qc(object):
                 if index in self._labels_regions.values():
                     color = self._labels_color[index]
                     x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
-                    label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]q
+                    label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
                     ax.text(y,x,label, color='black',weight = 'heavy', clip_on=True)
                     ax.text(y,x,label,color=color,clip_on=True)
         return '{}_label'.format(self.qc_report.img_base_name)
@@ -251,7 +251,7 @@ class Qc(object):
         # cb.set_label('Some Units')
         return '{}_colorbar'.format(self.qc_report.img_base_name)
 
-    def __init__(self, qc_report, interpolation='none', action_list=[listed_seg]):
+    def __init__(self, qc_report, interpolation='none', action_list=[label_vertebrae]):
         self.qc_report = qc_report
         # used to save the image file
         self.interpolation = interpolation

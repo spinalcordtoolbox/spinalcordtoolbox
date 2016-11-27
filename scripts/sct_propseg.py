@@ -330,7 +330,7 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    sct.run(cmd, verbose)
+    # sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
@@ -355,7 +355,7 @@ if __name__ == "__main__":
         :return:
         """
         # Chosen axe to generate image
-        return msct_qc.template(input_filename, output_filename).mosaic()
+        return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
 
     propseg_qc(input_filename, output_filename, qcReport.qc_params.nb_column)
 

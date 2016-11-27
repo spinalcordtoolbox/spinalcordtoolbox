@@ -328,11 +328,12 @@ def main(args=None):
     qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description)
 
     @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
-    def propseg_qc(fname_in, output_filename):
+    def label_vertebrae_qc(fname_in, output_filename):
+        img, mask = msct_qc.sagital(fname_in, output_filename).single()
+        img = np.clip(img,np.percentile(img,10),np.percentile(img,90))
+        return img, mask
 
-      return msct_qc.sagital(fname_in, output_filename).single()
-    
-    propseg_qc(fname_in, output_filename)
+    label_vertebrae_qc(fname_in, output_filename)
 
 # Detect vertebral levels
 # ==========================================================================================
