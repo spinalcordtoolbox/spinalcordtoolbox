@@ -330,31 +330,20 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    # sct.run(cmd, verbose)
+    sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
 
-    nb_column = 10
-    qc_folder_output= None
-    open_html = False
-    # Decode the parameters of -pararm-qc
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
     if '-param-qc' in arguments:
-        for paramStep in arguments['-param-qc']:
-            params = paramStep.split('=')
-            if len(params) > 1 :
-				# Parameter where the report should be created/updated
-                if params[0] == "ofolder":
-                    qc_folder_output = params[1]
-				# Parameter defining how many columns should be created in the picture
-                if params[0] == 'ncol':
-                    nb_column = int(params[1])
-                if params[0] == "autoview" and int(params[1]) == 1:
-                    open_html = True
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
     # Qc_Report generates and contains the useful infos for qc generation
-    qcReport = msct_qc.Qc_Report("propseg", qc_folder_output, sys.argv[1:], parser.usage.description, open_html)
+    qcReport = msct_qc.Qc_Report("propseg", qcParams, sys.argv[1:], parser.usage.description)
 
     # Create the Qc object that creates the images files to provide to the HTML
     @msct_qc.Qc(qcReport)
@@ -368,8 +357,8 @@ if __name__ == "__main__":
         # Chosen axe to generate image
         return msct_qc.template(input_filename, output_filename).mosaic()
 
-    propseg_qc(input_filename, output_filename, nb_column)
-    # propseg_qc(output_filename,input_filename,nb_column)
+    propseg_qc(input_filename, output_filename, qcReport.qc_params.nb_column)
+
 
     if folder_output == "./":
         output_name = output_filename

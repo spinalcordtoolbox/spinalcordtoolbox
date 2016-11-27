@@ -15,7 +15,6 @@ import glob
 import msct_report_util
 import msct_report_item as report_item
 
-
 class Report:
     def __init__(self, exists, report_dir):
         # constants
