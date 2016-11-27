@@ -177,7 +177,7 @@ def get_parser():
                       default_value=str(Param().verbose))
     parser.add_option(name="-param-qc",
                       type_value=[[','], 'str'],
-                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent.",
+                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent. Use autoview=1 to show the report.",
                       mandatory=False)
     return parser
 
@@ -767,10 +767,12 @@ def main(args=None):
 
     # There are no way to get the name easily this is why this is hard coded...
     # TODO: find a way to get the name
-    output_filename = fname_seg.split(".")[0]+"_graymatter.nii.gz"
+    output_filename = param_seg.fname_im_original.split(".")[0]+"_gmseg.nii.gz"
+
+    #mt1_gmseg.nii.gz
 
     # Qc_Report generates and contains the useful infos for qc generation
-    qcReport = msct_qc.Qc_Report("propseg", qcParams, sys.argv[1:], parser.usage.description)
+    qcReport = msct_qc.Qc_Report("gmseg", qcParams, sys.argv[1:], parser.usage.description)
 
     @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
     def grayseg_qc(input_filename, output_filename, nb_column):
