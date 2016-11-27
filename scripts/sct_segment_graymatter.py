@@ -754,11 +754,8 @@ def main(args=None):
     printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
 
     # parse parameters
-    qc_folder_output= None
-    open_html = False
     # TODO refactor
     fname_in = param_seg.fname_im_original
-    fname_seg = param_seg.fname_seg
 
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None

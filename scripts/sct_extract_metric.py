@@ -27,6 +27,7 @@ import sct_utils as sct
 from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from msct_parser import Parser
+import msct_qc
 
 # get path of the script and the toolbox
 path_script = os.path.dirname(__file__)
@@ -170,6 +171,10 @@ bin: binarize mask (threshold=0.5)""",
                       type_value='image_nifti',
                       description='Nifti mask to weight each voxel during ML or MAP estimation.',
                       example='PAM50_wm.nii.gz',
+                      mandatory=False)
+    parser.add_option(name="-param-qc",
+                      type_value=[[','], 'str'],
+                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent. Use autoview=1 to show the report.",
                       mandatory=False)
 
     # read the .txt files referencing the labels
@@ -1286,6 +1291,22 @@ if __name__ == "__main__":
         fname_mask_weight = arguments['-mask-weighted']
     else:
         fname_mask_weight = ''
+
+    # parse parameters
+    # TODO refactor
+    fname_in = fname_data
+
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
+    if '-param-qc' in arguments:
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
+    # There are no way to get the name easily this is why this is hard coded...
+    # TODO: find a way to get the name
+    output_filename = fname_output
+
+    # Qc_Report generates and contains the useful infos for qc generation
+    qcReport = msct_qc.Qc_Report("extract_metrict", qcParams, sys.argv[1:], parser.usage.description, True)
 
     # call main function
     main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)
