@@ -157,7 +157,7 @@ class Qc(object):
                        'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
                        'Co': 30}
     _labels_color = ["#04663c", "#ff0000", "#50ff30",
-                     "#ed1339", "#ffffff", "#44673e",
+                     "#ed1339", "#ffffff", "#e002e8",
                      "#ffee00", "#00c7ff", "#199f26",
                      "#563691", "#848545", "#ce2fe1",
                      "#2142a6", "#3edd76", "#c4c253",
@@ -194,7 +194,7 @@ class Qc(object):
         return self.qc_report.img_base_name
 
     def label_vertebrae(self,mask):
-        #self.listed_seg(mask)
+        self.listed_seg(mask)
         ax = plt.gca()
         a = [0.0]
         data = mask
@@ -206,8 +206,10 @@ class Qc(object):
                     color = self._labels_color[index]
                     x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
                     label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
-                    ax.annotate(label, xy=(y, x), xytext=(y + 25, x), color=color,
-                                arrowprops=dict(facecolor=color, shrink=0.05))
+                    # ax.annotate(label, xy=(y, x), xytext=(y + 25, x), color=color,
+                    #             arrowprops=dict(facecolor=color, shrink=0.05))
+                    ax.text(y,x,label, color='black',weight = 'heavy', clip_on=True)
+                    ax.text(y,x,label,color=color,clip_on=True)
         return '{}_label'.format(self.qc_report.img_base_name)
 
     def colorbar(self,mask):
@@ -277,7 +279,6 @@ class slices(object):
         self.image_seg = Image(segImageName)  # transformed input the one segmented
         self.image.change_orientation('SAL')  # reorient to SAL
         self.image_seg.change_orientation('SAL')  # reorient to SAL
-        self.dim = self.getDim(self.image)
 
     __metaclass__ = abc.ABCMeta
 
@@ -405,7 +406,7 @@ class slices(object):
 
         # Calculates how many squares will fit in a row based on the column and the size
         # Multiply by 2 because the sides are of size*2. Central point is size +/-.
-        dim = self.dim;
+        dim = self.getDim(self.image)
         nb_column = int(np.clip(dim,1,nb_column))
         nb_row = -(-dim//nb_column) #upside-down floor division
         matrix0 = np.ones(( size * 2 * nb_row, size * 2 * nb_column))
@@ -414,10 +415,10 @@ class slices(object):
         for i in range(dim):
             x = int(round(centers_x[i]))
             y = int(round(centers_y[i]))
-            matrix0 = slices.add_slice(matrix0, i, nb_column, size,
-                                       slices.crop(self.getSlice(self.image.data, i), x, y, size, size))
-            matrix1 = slices.add_slice(matrix1, i, nb_column, size,
-                                       slices.crop(self.getSlice(self.image_seg.data, i), x, y, size, size))
+            matrix0 = self.add_slice(matrix0, i, nb_column, size,
+                                       self.crop(self.getSlice(self.image.data, i), x, y, size, size))
+            matrix1 = self.add_slice(matrix1, i, nb_column, size,
+                                       self.crop(self.getSlice(self.image_seg.data, i), x, y, size, size))
 
         return matrix0, matrix1
 
@@ -429,8 +430,9 @@ class slices(object):
         :return matrix0: matrix of the input 3D RMI containing the slices
         :return matrix1: matrix of the transformed 3D RMI to output containing the slices
         """
-        matrix0 = self.getSlice(self.image.data, self.dim / 2)
-        matrix1 = self.getSlice(self.image_seg.data, self.dim / 2)
+        dim = self.getDim(self.image)
+        matrix0 = self.getSlice(self.image.data, dim / 2)
+        matrix1 = self.getSlice(self.image_seg.data, dim / 2)
         index = self.get_center_spit()
         for j in range(len(index)):
             matrix0[j] = self.getSlice(self.image.data, int(round(index[j])))[j]
@@ -488,3 +490,32 @@ class coronal(slices):
         size_y = self.axial_dim(self.image_seg)
         size_x = self.sagital_dim(self.image_seg)
         return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
+
+class template(slices):
+    def __init__(self,imageName,segImageName):
+        super(template,self).__init__(imageName,segImageName)
+        self.image.data = np.resize(self.image.data,  self.image_seg.data.shape)
+        print  self.image.data.shape
+
+    def getSlice(self,data,i):
+        return self.axial_slice(data,i)
+
+    def getDim(self, image):
+        return self.axial_dim(image)
+
+    def get_center_spit(self):
+        size = self.axial_dim(self.image_seg)
+        return np.ones(size) * size / 2
+
+    def get_center(self):
+        return self._axial_center()
+
+    # @staticmethod
+    # def crop(matrix,center_x,center_y,radius_x,radius_y):
+    #     return matrix
+    #
+    #
+    #
+    # @staticmethod
+    # def add_slice(matrix,i,column,size,patch):
+    #     return  patch

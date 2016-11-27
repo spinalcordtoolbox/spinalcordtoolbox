@@ -337,8 +337,9 @@ def main(args=None):
     # generate report
     qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qc_folder_output, sys.argv[1:], parser.usage.description, open_html)
 
-    @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.listed_seg, msct_qc.Qc.label_vertebrae])
+    @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
     def propseg_qc(fname_in, output_filename):
+
       return msct_qc.sagital(fname_in, output_filename).single()
 
     
