@@ -231,6 +231,10 @@ class Qc(object):
         matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation,alpha=1)
         return self.qc_report.img_base_name
 
+    def no_seg_seg(self,mask):
+        plt.imshow(mask,cmap=cm.gray,interpolation=self.interpolation)
+        return self.qc_report.img_base_name
+
     def sequential_seg(self,mask):
         seg = mask
         seg = np.ma.masked_where(seg == 0,seg)
@@ -261,7 +265,7 @@ class Qc(object):
         # cb.set_label('Some Units')
         return '{}_colorbar'.format(self.qc_report.img_base_name)
 
-    def __init__(self, qc_report, interpolation='none', action_list=[label_vertebrae]):
+    def __init__(self, qc_report, interpolation='none', action_list=[no_seg_seg]):
         self.qc_report = qc_report
         # used to save the image file
         self.interpolation = interpolation
@@ -471,6 +475,8 @@ class slices(object):
         :return matrix0: matrix of the input 3D RMI containing the slices
         :return matrix1: matrix of the transformed 3D RMI to output containing the slices
         """
+        assert  self.image.data.shape == self.image_seg.data
+
         dim = self.getDim(self.image)
         matrix0 = self.getSlice(self.image.data, dim / 2)
         matrix1 = self.getSlice(self.image_seg.data, dim / 2)
@@ -532,31 +538,23 @@ class coronal(slices):
         size_x = self.sagital_dim(self.image_seg)
         return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
 
-class template(slices):
-    def __init__(self,imageName,segImageName):
-        super(template,self).__init__(imageName,segImageName)
-        self.image.data = np.resize(self.image.data,  self.image_seg.data.shape)
-        print  self.image.data.shape
+class anat2template_axial(axial):
+    def getDim(self,image):
+        return min([self.axial_dim(image), self.axial_dim(self.image_seg)])
 
-    def getSlice(self,data,i):
-        return self.axial_slice(data,i)
-
-    def getDim(self, image):
-        return self.axial_dim(image)
-
-    def get_center_spit(self):
-        size = self.axial_dim(self.image_seg)
-        return np.ones(size) * size / 2
+    def get_size(self,image):
+        return min(image.data.shape + self.image_seg.data.shape)//2
 
     def get_center(self):
-        return self._axial_center()
+        size = self.get_size(self.image)
+        dim = self.getDim(self.image)
+        return np.ones(dim) * size, np.ones(dim) * size
 
-    # @staticmethod
-    # def crop(matrix,center_x,center_y,radius_x,radius_y):
-    #     return matrix
-    #
-    #
-    #
-    # @staticmethod
-    # def add_slice(matrix,i,column,size,patch):
-    #     return  patch
+    def mosaic(self,nb_column=10):
+        return super(anat2template_axial,self).mosaic(size=self.get_size(self.image),nb_column=nb_column)
+
+
+
+# template_axial('template2anat.nii.gz','t1.nii.gz','../../data/PAM50/template/PAM50_t1.nii.gz').mosaic()
+
+
