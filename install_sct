@@ -344,13 +344,12 @@ elif [ ${OFFLINE_INSTALL} ]; then
   cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
 else
   echo -e "\nInstalling binaries..."
-  # here we need to make several cases because the version of the GitHub repository is OS-specific
   if [ $OS == "linux" ]; then
-    download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/sct_binaries_${OS}.tar.gz
+    download ${TMP_DIR}/sct_binaries.tar.gz https://osf.io/2pztn/?action=download
   elif [ $OS == "linux_centos6" ]; then
-    download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta20/sct_binaries_${OS}.tar.gz
+    download ${TMP_DIR}/sct_binaries.tar.gz https://osf.io/4wbgt/?action=download
   elif [ $OS == "osx" ]; then
-    download ${TMP_DIR}/sct_binaries.tar.gz https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta28/sct_binaries_osx_20161123.tar.gz
+    download ${TMP_DIR}/sct_binaries.tar.gz https://osf.io/ceg8p/?action=download
   fi
   # force disk buffer to refresh
   ls ${TMP_DIR} > /dev/null
@@ -402,7 +401,7 @@ else
   elif [ $OS == "osx" ]; then
     download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-MacOSX-x86_64.sh
   fi
-  #download  ${TMP_DIR}/miniconda.sh https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/miniconda_${OS}.sh
+
   # run conda installer
   cmd="bash ${TMP_DIR}/miniconda.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
   ret_code_conda=$?
