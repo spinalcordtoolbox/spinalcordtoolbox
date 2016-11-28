@@ -34,7 +34,7 @@ def test(path_data='', parameters=''):
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz ' \
-                     '-param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares:step=3,iter=0 ' \
+                     '-param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares ' \
                      '-t template/ -r 0'
         add_path_for_template = True  # in this case, path to data should be added
 

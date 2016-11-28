@@ -20,7 +20,7 @@ class Param:
         self.gap = (100, 200)
         self.smooth = 0.8
 
-        self.param_reg = 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=syn,metric=MeanSquares,iter=10,smooth=0,shrink=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=0'
+        self.param_reg = 'step=1,type=im,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MeanSquares,iter=10,smooth=0,shrink=2:step=3,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=0'
         # Previous default param (less efficient): 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
 
         self.output_folder = './'
