@@ -229,14 +229,14 @@ class Qc(object):
     _seg_colormap = cm.autumn
 
     def listed_seg(self,mask):
-        mask = mask
         img = np.rint(np.ma.masked_where(mask < 1,mask))
         plt.imshow(img,cmap=col.ListedColormap(self._labels_color),norm=
         matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation,alpha=1)
         return self.qc_report.img_base_name
 
     def no_seg_seg(self,mask):
-        plt.imshow(mask,cmap=cm.gray,interpolation=self.interpolation)
+        img = np.rint(np.ma.masked_where(mask == 0,mask))
+        plt.imshow(img,cmap=cm.gray,interpolation=self.interpolation)
         return self.qc_report.img_base_name
 
     def sequential_seg(self,mask):
@@ -269,7 +269,7 @@ class Qc(object):
         # cb.set_label('Some Units')
         return '{}_colorbar'.format(self.qc_report.img_base_name)
 
-    def __init__(self, qc_report, interpolation='none', action_list=[no_seg_seg]):
+    def __init__(self, qc_report, interpolation='none', action_list=[listed_seg]):
         self.qc_report = qc_report
         # used to save the image file
         self.interpolation = interpolation
@@ -426,17 +426,17 @@ class slices(object):
         """
         return
 
-    def _axial_center(self):
+    def _axial_center(self,image):
         """
         Method to get the center of mass in the axial plan.
         :return: centers of mass in the x and y axis. 
         """
-        axial_dim = self.axial_dim(self.image_seg)
+        axial_dim = self.axial_dim(image)
         centers_x = np.zeros(axial_dim)
         centers_y = np.zeros(axial_dim)
         for i in xrange(axial_dim):
             centers_x[i], centers_y[i] \
-                = ndimage.measurements.center_of_mass(self.axial_slice(self.image_seg.data, i))
+                = ndimage.measurements.center_of_mass(self.axial_slice(image.data, i))
         try:
             slices.nan_fill(centers_x)
             slices.nan_fill(centers_y)
@@ -479,7 +479,7 @@ class slices(object):
         :return matrix0: matrix of the input 3D RMI containing the slices
         :return matrix1: matrix of the transformed 3D RMI to output containing the slices
         """
-        assert  self.image.data.shape == self.image_seg.data
+        assert  self.image.data.shape == self.image_seg.data.shape
 
         dim = self.getDim(self.image)
         matrix0 = self.getSlice(self.image.data, dim / 2)
@@ -506,8 +506,7 @@ class axial(slices):
         return np.ones(size) * size / 2
 
     def get_center(self):
-        return self._axial_center()
-
+        return self._axial_center(self.image_seg)
 
 class sagital(slices):
     def getSlice(self, data, i):
@@ -517,7 +516,7 @@ class sagital(slices):
         return self.sagital_dim(image)
 
     def get_center_spit(self):
-        x, y = self._axial_center()
+        x, y = self._axial_center(self.image_seg)
         return y
 
     def get_center(self):
@@ -534,7 +533,7 @@ class coronal(slices):
         return self.coronal_dim(image)
 
     def get_center_spit(self):
-        x, y = self._axial_center()
+        x, y = self._axial_center(self.image_seg)
         return x
 
     def get_center(self):
@@ -542,7 +541,7 @@ class coronal(slices):
         size_x = self.sagital_dim(self.image_seg)
         return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
 
-class anat2template_axial(axial):
+class template_axial(axial):
     def getDim(self,image):
         return min([self.axial_dim(image), self.axial_dim(self.image_seg)])
 
@@ -555,10 +554,54 @@ class anat2template_axial(axial):
         return np.ones(dim) * size, np.ones(dim) * size
 
     def mosaic(self,nb_column=10):
-        return super(anat2template_axial,self).mosaic(size=self.get_size(self.image),nb_column=nb_column)
+        return super(template_axial,self).mosaic(size=self.get_size(self.image),nb_column=nb_column)
 
+    def single(self):
+        dim = self.getDim(self.image)
+        matrix0 = self.getSlice(self.image.data,dim / 2)
+        matrix1 = self.getSlice(self.image_seg.data,dim / 2)
 
+        return matrix0,matrix1
 
-# template_axial('template2anat.nii.gz','t1.nii.gz','../../data/PAM50/template/PAM50_t1.nii.gz').mosaic()
+class template2anat_axial(template_axial):
+    def __init__(self,imageName,template2anatName,segImageName):
+        super(template2anat_axial,self).__init__(imageName,template2anatName)
+        self.image_seg2 = Image(segImageName)  # transformed input the one segmented
+        self.image_seg2.change_orientation('SAL')  # reorient to SAL
+
+    def get_center(self):
+        return self._axial_center(self.image_seg2)
+
+class template_sagital(sagital):
+    def getDim(self,image):
+        return min([self.sagital_dim(image),self.sagital_dim(self.image_seg)])
+
+    def get_size(self,image):
+        return min(image.data.shape + self.image_seg.data.shape) // 2
+
+    def get_center(self):
+        size = self.get_size(self.image)
+        dim = self.getDim(self.image)
+        return np.ones(dim) * size,np.ones(dim) * size
+
+    def mosaic(self,nb_column=10):
+        return super(template_sagital,self).mosaic(size=self.get_size(self.image),nb_column=nb_column)
+
+    def single(self):
+        dim = self.getDim(self.image)
+        matrix0 = self.getSlice(self.image.data,dim / 2)
+        matrix1 = self.getSlice(self.image_seg.data,dim / 2)
+
+        return matrix0,matrix1
+
+class template2anat_sagital(sagital):
+    def __init__(self,imageName,template2anatName,segImageName):
+        super(template2anat_sagital,self).__init__(imageName,template2anatName)
+        self.image_seg2 = Image(segImageName)  # transformed input the one segmented
+        self.image_seg2.change_orientation('SAL')  # reorient to SAL
+
+    def get_center(self):
+        return self._axial_center(self.image_seg2)
+
 
 
