@@ -1306,7 +1306,9 @@ if __name__ == "__main__":
     output_filename = fname_output
 
     # Qc_Report generates and contains the useful infos for qc generation
-    qcReport = msct_qc.Qc_Report("extract_metrict", qcParams, sys.argv[1:], parser.usage.description, True)
+    print "Preparing QC Report"
+    qcReport = msct_qc.Qc_Report("extract_metrict", qcParams, sys.argv[1:], parser.usage.description)
+    msct_qc.Qc_Report.generateReport(qcReport)
 
     # call main function
     main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)

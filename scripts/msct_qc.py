@@ -65,7 +65,7 @@ class Qc_Params(object):
 
 
 class Qc_Report(object):
-    def __init__(self, tool_name, qc_params, cmd_args, usage, generate_report_now = False):
+    def __init__(self, tool_name, qc_params, cmd_args, usage):
         # the class Qc_Params verification done here to prevent from having to be sure it's not none outside
         if qc_params is None:
             qc_params = Qc_Params()
@@ -92,16 +92,20 @@ class Qc_Report(object):
         # workaround for mkdir to save description file and to use it
         self.report_leaf_folder = None
         self.description_base_name = "description_{}".format(self.timestamp)
-        print 'test before generating reprot'
-        if generate_report_now == True:
-            rootFolderPath, leafNodeFullPath = self.mkdir()
-            # create description
-            self.create_description_file(self.cmd_args, self.usage, None)
-            # create htmls
-            syntax = '{} {}'.format(self.contrast_type, os.path.basename(leafNodeFullPath))
-            isct_generate_report.generate_report("{}.txt".format(self.description_base_name), syntax,
-                                                 rootFolderPath, self.qc_params.show_report)
-            print 'Generating report done'
+
+    def generateReport(self):
+        """
+        Generate report. Class object must already be instanced before executing this method.
+        This method is mostly used when no action list is required (eg extract_metric).
+        """
+
+        rootFolderPath, leafNodeFullPath = self.mkdir()
+        # create description
+        self.create_description_file(self.cmd_args, self.usage, None)
+        # create htmls
+        syntax = '{} {}'.format(self.contrast_type, os.path.basename(leafNodeFullPath))
+        isct_generate_report.generate_report("{}.txt".format(self.description_base_name), syntax,
+                                             rootFolderPath, self.qc_params.show_report)
 
     def mkdir(self):
         """

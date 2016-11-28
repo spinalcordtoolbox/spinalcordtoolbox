@@ -766,9 +766,8 @@ def main(args=None):
     # TODO: find a way to get the name
     output_filename = param_seg.fname_im_original.split(".")[0]+"_gmseg.nii.gz"
 
-    #mt1_gmseg.nii.gz
-
     # Qc_Report generates and contains the useful infos for qc generation
+    print "Preparing QC Report"
     qcReport = msct_qc.Qc_Report("gmseg", qcParams, sys.argv[1:], parser.usage.description)
 
     @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
