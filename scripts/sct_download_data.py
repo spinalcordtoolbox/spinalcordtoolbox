@@ -53,11 +53,11 @@ def main(args=None):
 
     # initialization
     verbose = 1
-    dict_url = {'sct_example_data': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta23/sct_example_data.zip',
-                'sct_testing_data': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta28/sct_testing_data_20161125.zip',
-                'PAM50': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta28/PAM50_20161121.zip',
-                'MNI-Poly-AMU': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta16/MNI-Poly-AMU.zip',
-                'gm_model': 'https://github.com/neuropoly/spinalcordtoolbox/releases/download/v3.0_beta23/gm_model.zip'}
+    dict_url = {'sct_example_data': 'https://osf.io/feuef/?action=download',
+                'sct_testing_data': 'https://osf.io/uqcz5/?action=download',
+                'PAM50': 'https://osf.io/st8k4/?action=download',
+                'MNI-Poly-AMU': 'https://osf.io/b26vh/?action=download',
+                'gm_model': 'https://osf.io/ugscu/?action=download'}
     tmp_file = 'tmp.data.zip'
 
     # Get parser info
