@@ -527,7 +527,7 @@ def merge_dicts(*dict_args):
 # own functions
 # TODO:separate toad utils and sct_report utils
 
-def get_description_content(txt):
+def get_txt_content(txt):
     """
      read txt file and return content as string.
      PS : if the file is empty or doesn't exist , an empty string will be returned

@@ -15,6 +15,7 @@ import glob
 import msct_report_util
 import msct_report_item as report_item
 
+
 class Report:
     def __init__(self, exists, report_dir):
         # constants
@@ -67,7 +68,7 @@ class Report:
         """
         mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
         files = list(glob.glob1(path, "*.html"))
-        if "index.html" in files : files.remove("index.html")
+        if "index.html" in files: files.remove("index.html")
         return list(sorted(files, key=mtime))
 
     def _create_new(self):
@@ -87,15 +88,19 @@ class Report:
         # get images link from qc images
         qc_images_item_link = os.path.join(self.report_folder, 'img', item.contrast_name, item.tool_name)
         if os.path.exists(qc_images_item_link):
-            # TODO:Marche pas bien =>take all png or jpeg
-            images_link = glob.glob1(qc_images_item_link, "*.png")
-            if images_link:
-                for img in images_link:
-                    item.add_image_link(report_item.Image(img, os.path.join(item.images_dir, img)))
+            # TODO:Marche pas bien =>take all png
+            elements = glob.glob1(qc_images_item_link, "*")
+            print elements,"As ACT"
+            if elements:
+                for el in elements:
+                    if el.find(".png") > -1:
+                        item.add_image_link(report_item.Image(el, os.path.join(item.images_dir, el)))
+                    elif el.find(".txt") > -1 and el.find("description") == -1:
+                        item.add_txt_content(report_item.Txt(el, os.path.join(item.report_dir, item.images_dir, el)))
             else:
                 print "no qc images in the current directory"
         else:
-            raise Exception("qc images not founded")
+            raise Exception("qc images or texts not founded")
 
         # generate html file for the item
         item.generate_html_from_template(self.templates_dir_link, self.contrast_tool_file_name)

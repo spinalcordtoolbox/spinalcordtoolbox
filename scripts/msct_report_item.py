@@ -19,16 +19,16 @@ class ReportItem:
         self.syntax = syntax
         self.contrast_name, self.tool_name = syntax.split(' ')
         self.images_dir = os.path.join("img", self.contrast_name, self.tool_name)
-        self.description = msct_report_util.get_description_content(os.path.join(self.report_dir, self.images_dir,
-                                                                                 description))
+        self.description = msct_report_util.get_txt_content(os.path.join(self.report_dir, self.images_dir,
+                                                                         description))
         self.images_link = []
+        self.txt_contents = []
         self.html_file_name = '{}-{}.html'.format(self.contrast_name, self.tool_name)
 
     def has_gif(self):
-        #TODO:use array instead
-        if self.tool_name.find("propseg") > - 1 or self.tool_name.find("label_vertebrae") > - 1:
-            return True
-        return False
+        # TODO:use blacklist array for prevent gif switch on the view
+        # to prevent gif on propseg do : self.tool_name.find("propseg") > - 1 === true return False
+        return True
 
     def add_image_link(self, link):
         """
@@ -37,6 +37,14 @@ class ReportItem:
         :return:
         """
         self.images_link.append(link)
+
+    def add_txt_content(self, txt):
+        """
+        add txt file to the arrays of txt
+        :param txt:
+        :return:
+        """
+        self.txt_contents.append(txt)
 
     def generate_html_from_template(self, template_dir, template_name):
         """
@@ -50,8 +58,11 @@ class ReportItem:
             'description': self.description,
             'syntax': self.syntax,
             'images': self.images_link,
+            'texts': self.txt_contents,
             "hasGif": self.has_gif()
         }
+        for item in self.images_link:
+                print item ,"As ;lnl"
         msct_report_util.createHtmlFile(template_dir, template_name, file_link, tags)
 
 
@@ -63,3 +74,13 @@ class Image:
     def __init__(self, name, src):
         self.name = name
         self.src = src
+
+
+class Txt:
+    """
+    txt class to represent file txt name and his description in the html file
+    """
+
+    def __init__(self, name, path):
+        self.name = name
+        self.content = msct_report_util.get_txt_content(path)

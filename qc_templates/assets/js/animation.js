@@ -16,11 +16,14 @@ var images = [];
 
 function getImages(){
 	var spans = $('#togif').find("span");
+	console.log("spans",spans)
 	spans.map(function(item){
-	     var src = $(this).attr("data-src");
-	     var name =$(this).attr("data-name");
-	     names.push(name)
-		 images.push(src);
+	if( $(this).attr("data-src")){
+             var src = $(this).attr("data-src");
+             var name =$(this).attr("data-name");
+             names.push(name)
+             images.push(src);
+		 }
 	})
 }
 //change image each second to simulate gif view
@@ -28,7 +31,6 @@ function changeImage(){
 	if(continueSwapping){
 		var d = new Date();
 		$("#gif_image").attr('src', images[x] +"?"+d.getTime());
-		$("#gif_image_names").text(names.join(' & '));
 		x++;
 		if(x >= images.length){
 		    x = 0;
