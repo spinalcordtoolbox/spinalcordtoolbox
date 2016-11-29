@@ -312,20 +312,16 @@ def main(args=None):
         printv('\nRemove temporary files...', verbose)
         run('rm -rf '+path_tmp)
 
-    # to view results
-    printv('\nDone! To view results, type:', verbose)
-    printv('fslview '+fname_in+' '+path_output+file_seg+'_labeled'+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
-
+    printv("\nPreparing QC Report...")
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None
     if '-param-qc' in arguments:
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
     # There are no way to get the name easily this is why this is hard coded...
-    # TODO: find a way to get the name
+    # TODO: find a better way to get the name
     output_filename = fname_seg.split(".")[0]+"_labeled.nii.gz"
     # generate report
-    printv("\nPreparing QC Report...")
     qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description)
 
     @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
@@ -335,6 +331,10 @@ def main(args=None):
         return img, mask
 
     label_vertebrae_qc(fname_in, output_filename)
+
+    # to view results
+    printv('\nDone! To view results, type:', verbose)
+    printv('fslview '+fname_in+' '+path_output+file_seg+'_labeled'+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
 # Detect vertebral levels
 # ==========================================================================================

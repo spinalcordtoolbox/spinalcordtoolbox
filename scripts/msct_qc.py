@@ -25,6 +25,7 @@ from scipy import ndimage
 import abc
 import isct_generate_report
 import commands
+import sct_utils as sct
 
 
 class Qc_Params(object):
@@ -35,6 +36,9 @@ class Qc_Params(object):
     Other variables not provided by the Terminal are in another class.
     """
     def __init__(self, params_qc=None):
+        """
+        :param params_qc: arguments provided to the -param-qc parameter in the Terminal
+        """
         # list of parameters that can be provided by the args
         # by default, root folder is in the previous folder
         self.report_root_folder = os.path.join(os.getcwd(), "..")
@@ -49,19 +53,27 @@ class Qc_Params(object):
         self.validate_root_folder()
 
     def parse_params(self, params_qc):
-        # converts the parameters, verification of arg -param-qc outside because this class is for params only
-        # TODO: Print when argument has not been found
+        """
+        Converts the parameters, verification of arg -param-qc outside because this class is for params only
+        :param params_qc: list of the arguments following the -param-qc paramter in the terminal
+        :return:
+        """
+        # iterates through the list to parse each pairs of {parameter="value"}
         for paramStep in params_qc:
+            # params[0] is left side of the '=' and params[1] is right side of the '='
             params = paramStep.split('=')
             if len(params) > 1:
                 # Parameter where the report should be created/updated
                 if params[0] == "ofolder":
                     self.report_root_folder = params[1]
                 # Parameter defining how many columns should be created in the picture
-                if params[0] == 'ncol':
+                elif params[0] == 'ncol':
                     self.nb_column = int(params[1])
-                if params[0] == "autoview" and int(params[1]) == 1:
+                elif params[0] == "autoview" and int(params[1]) == 1:
                     self.show_report = True
+                else:
+                    sct.printv("  Parameter '{}' is not valid...".format(params[0]), 1, type='warning')
+                print("\n")
 
     def validate_root_folder(self):
         # By default, the root folder will be one folder back, because we assume
@@ -159,9 +171,8 @@ class Qc_Report(object):
         if not os.path.exists(newToolProcessFolder):
             os.mkdir(newToolProcessFolder)
 
-        # save the leaf folder name for Description file    
-            # save the leaf folder name for Description file
-            self.report_leaf_folder = newToolProcessFolder
+        # save the leaf folder name for Description file
+        self.report_leaf_folder = newToolProcessFolder
 
         return newReportFolder, newToolProcessFolder
 
@@ -207,7 +218,7 @@ class Qc_Report(object):
 
 class Qc(object):
     """
-    Creates a .png file from a 2d image produced by the class "slices"
+    Class used to create a .png file from a 2d image produced by the class "slices"
     """
     # 'NameOfVertebrae':index
     _labels_regions = {'PONS': 50, 'MO': 51,
@@ -241,10 +252,15 @@ class Qc(object):
     _seg_colormap = cm.autumn
 
     # start of action_list
+    """
+    action_list contain the list of images that has to be generated.
+    It can be seen as "figures" of matplotlib to be shown
+    Ex: if 'colorbar' is in the list, the msct_qc process will generate a color bar in the "img" folder
+    """
     def listed_seg(self, mask):
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         plt.imshow(img, cmap=col.ListedColormap(self._labels_color), norm=
-        matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)), interpolation=self.interpolation, alpha=1)
+        matplotlib.colors.Normalize(vmin=0, vmax=len(self._labels_color)), interpolation=self.interpolation, alpha=1)
         return self.qc_report.img_base_name
 
     def no_seg_seg(self, mask):
@@ -284,6 +300,11 @@ class Qc(object):
     # end of action_list
 
     def __init__(self, qc_report, interpolation='none', action_list=[listed_seg]):
+        """
+        :param qc_report:       object containing the info necessary for the qc report generation
+        :param interpolation:   type of interpolation to be used in matplotlib
+        :param action_list:     list of methods that generates a specific type of images.
+        """
         self.qc_report = qc_report
         # used to save the image file
         self.interpolation = interpolation
@@ -323,6 +344,15 @@ class Qc(object):
         return wrapped_f
 
     def __save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0.00):
+        """
+        Saves the image
+        :param dirPath:     path of the folder where the image is saved
+        :param name:        name of the image file
+        :param format:      file extension name of the image
+        :param bbox_inches:
+        :param pad_inches:
+        :return:
+        """
         plt.savefig('{0}/{1}.{2}'.format(dirPath, name, format), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=600)
 
@@ -467,7 +497,6 @@ class slices(object):
         :return matrix0: matrix of the input 3D RMI containing the mosaics of slices' "pixels"
         :return matrix1: matrix of the transformed 3D RMI to output containing the mosaics of slices' "pixels"
         """
-
         # Calculates how many squares will fit in a row based on the column and the size
         # Multiply by 2 because the sides are of size*2. Central point is size +/-.
         dim = self.getDim(self.image)
@@ -507,7 +536,9 @@ class slices(object):
         return matrix0, matrix1
 
 
-# The following classes (axial, sagital, coronal) inherits from the class "slices" and represents a cut in an axis
+"""
+The following classes (axial, sagital, coronal) inherits from the class "slices" and represents a cut in an axis
+"""
 class axial(slices):
     def getSlice(self, data, i):
         return self.axial_slice(data, i)

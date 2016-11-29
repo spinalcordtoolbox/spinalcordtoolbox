@@ -332,18 +332,17 @@ if __name__ == "__main__":
 
     sct.run(cmd, verbose)
 
-    sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
 
+    sct.printv("\nPreparing QC Report...")
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None
     if '-param-qc' in arguments:
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
     # Qc_Report generates and contains the useful infos for qc generation
-    sct.printv("\nPreparing QC Report...")
     qcReport = msct_qc.Qc_Report("propseg", qcParams, sys.argv[1:], parser.usage.description)
 
     # Create the Qc object that creates the images files to provide to the HTML
@@ -359,6 +358,8 @@ if __name__ == "__main__":
         return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
 
     propseg_qc(input_filename, output_filename, qcReport.qc_params.nb_column)
+
+    sct.printv('\nDone! To view results, type:', verbose)
 
     if folder_output == "./":
         output_name = output_filename
