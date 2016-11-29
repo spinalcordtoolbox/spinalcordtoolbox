@@ -343,7 +343,7 @@ if __name__ == "__main__":
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
     # Qc_Report generates and contains the useful infos for qc generation
-    print "Preparing QC Report"
+    sct.printv("\nPreparing QC Report...")
     qcReport = msct_qc.Qc_Report("propseg", qcParams, sys.argv[1:], parser.usage.description)
 
     # Create the Qc object that creates the images files to provide to the HTML

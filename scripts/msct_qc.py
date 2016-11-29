@@ -28,6 +28,12 @@ import commands
 
 
 class Qc_Params(object):
+    """
+    Parses and stores the variables that can be provides as arguments in the Terminal
+    These variables are used as parameters to define how some images should be generated
+    and how the report should be generated.
+    Other variables not provided by the Terminal are in another class.
+    """
     def __init__(self, params_qc=None):
         # list of parameters that can be provided by the args
         # by default, root folder is in the previous folder
@@ -65,7 +71,17 @@ class Qc_Params(object):
 
 
 class Qc_Report(object):
+    """
+    This class contains all the necessary methods and variables to tell how the report should be generated.
+    It will also setup the folder structure so the report generator only needs to fetch the appropriate files.
+    """
     def __init__(self, tool_name, qc_params, cmd_args, usage):
+        """
+        :param tool_name: name of the sct tool being used. Is used to name the image file.
+        :param qc_params: arguments of the "-param-qc" option in Terminal
+        :param cmd_args:  the commands of the process being used to generate the images
+        :param usage:     description of the process
+        """
         # the class Qc_Params verification done here to prevent from having to be sure it's not none outside
         if qc_params is None:
             qc_params = Qc_Params()
@@ -98,11 +114,10 @@ class Qc_Report(object):
         Generate report. Class object must already be instanced before executing this method.
         This method is mostly used when no action list is required (eg extract_metric).
         """
-
         rootFolderPath, leafNodeFullPath = self.mkdir()
         # create description
         self.create_description_file(self.cmd_args, self.usage, None)
-        # create htmls
+        # create HTML files
         syntax = '{} {}'.format(self.contrast_type, os.path.basename(leafNodeFullPath))
         isct_generate_report.generate_report("{}.txt".format(self.description_base_name), syntax,
                                              rootFolderPath, self.qc_params.show_report)
@@ -150,16 +165,14 @@ class Qc_Report(object):
 
         return newReportFolder, newToolProcessFolder
 
-
     def create_description_file(self, unparsed_args, description, sct_commit):
         """
         Creates the description file with a JSON struct
 
-        Description file structure:
-        -----------------
-        commit_version: version of last commit retrieved from util
-            command:    cmd used by user
-        description:    quick description of current usage
+        :param unparsed_args: the commands used in the Terminal of the process
+        :param description:   quick description of current usage of the process
+        :param sct_commit:    commit version of the code being currently used to generate the images
+        :return:
         """
         if not isinstance(sct_commit, basestring):
             # get path of the toolbox
@@ -224,28 +237,28 @@ class Qc(object):
                      "#9f89b0", "#e08e08", "#3d2b54",
                      "#7d0434", "#fb1849", "#14aab4",
                      "#a22abd", "#d58240", "#ac2aff"
-
                      ]
     _seg_colormap = cm.autumn
 
-    def listed_seg(self,mask):
-        img = np.rint(np.ma.masked_where(mask < 1,mask))
-        plt.imshow(img,cmap=col.ListedColormap(self._labels_color),norm=
-        matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)),interpolation=self.interpolation,alpha=1)
+    # start of action_list
+    def listed_seg(self, mask):
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        plt.imshow(img, cmap=col.ListedColormap(self._labels_color), norm=
+        matplotlib.colors.Normalize(vmin=0,vmax=len(self._labels_color)), interpolation=self.interpolation, alpha=1)
         return self.qc_report.img_base_name
 
-    def no_seg_seg(self,mask):
-        img = np.rint(np.ma.masked_where(mask == 0,mask))
-        plt.imshow(img,cmap=cm.gray,interpolation=self.interpolation)
+    def no_seg_seg(self, mask):
+        img = np.rint(np.ma.masked_where(mask == 0, mask))
+        plt.imshow(img, cmap=cm.gray, interpolation=self.interpolation)
         return self.qc_report.img_base_name
 
-    def sequential_seg(self,mask):
+    def sequential_seg(self, mask):
         seg = mask
-        seg = np.ma.masked_where(seg == 0,seg)
-        plt.imshow(seg,cmap=self._seg_colormap, interpolation=self.interpolation)
+        seg = np.ma.masked_where(seg == 0, seg)
+        plt.imshow(seg, cmap=self._seg_colormap, interpolation=self.interpolation)
         return self.qc_report.img_base_name
 
-    def label_vertebrae(self,mask):
+    def label_vertebrae(self, mask):
         self.listed_seg(mask)
         ax = plt.gca()
         a = [0.0]
@@ -258,16 +271,17 @@ class Qc(object):
                     color = self._labels_color[index]
                     x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
                     label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
-                    ax.text(y,x,label, color='black',weight = 'heavy', clip_on=True)
-                    ax.text(y,x,label,color=color,clip_on=True)
+                    ax.text(y, x, label, color='black', weight='heavy', clip_on=True)
+                    ax.text(y, x, label, color=color, clip_on=True)
         return '{}_label'.format(self.qc_report.img_base_name)
 
     def colorbar(self, mask):
-        fig = plt.figure(figsize=(9,1.5))
-        ax = fig.add_axes([0.05,0.80,0.9,0.15])
-        cb = matplotlib.colorbar.ColorbarBase(ax,cmap=self._seg_colormap,orientation='horizontal')
+        fig = plt.figure(figsize=(9, 1.5))
+        ax = fig.add_axes([0.05, 0.80, 0.9, 0.15])
+        cb = matplotlib.colorbar.ColorbarBase(ax, cmap=self._seg_colormap, orientation='horizontal')
         # cb.set_label('Some Units')
         return '{}_colorbar'.format(self.qc_report.img_base_name)
+    # end of action_list
 
     def __init__(self, qc_report, interpolation='none', action_list=[listed_seg]):
         self.qc_report = qc_report
@@ -311,6 +325,7 @@ class Qc(object):
     def __save(self, dirPath, name, format='png', bbox_inches='tight', pad_inches=0.00):
         plt.savefig('{0}/{1}.{2}'.format(dirPath, name, format), format=format, bbox_inches=bbox_inches,
                     pad_inches=pad_inches, dpi=600)
+
 
 class slices(object):
     """
@@ -456,8 +471,8 @@ class slices(object):
         # Calculates how many squares will fit in a row based on the column and the size
         # Multiply by 2 because the sides are of size*2. Central point is size +/-.
         dim = self.getDim(self.image)
-        nb_column = int(np.clip(dim,1,nb_column))
-        nb_row = -(-dim//nb_column) #upside-down floor division
+        nb_column = int(np.clip(dim, 1, nb_column))
+        nb_row = -(-dim//nb_column) # upside-down floor division
         matrix0 = np.ones(( size * 2 * nb_row, size * 2 * nb_column))
         matrix1 = np.zeros(( size * 2 * nb_row, size * 2 * nb_column))
         centers_x, centers_y = self.get_center()
@@ -493,7 +508,6 @@ class slices(object):
 
 
 # The following classes (axial, sagital, coronal) inherits from the class "slices" and represents a cut in an axis
-
 class axial(slices):
     def getSlice(self, data, i):
         return self.axial_slice(data, i)
@@ -507,6 +521,7 @@ class axial(slices):
 
     def get_center(self):
         return self._axial_center(self.image_seg)
+
 
 class sagital(slices):
     def getSlice(self, data, i):
@@ -541,11 +556,12 @@ class coronal(slices):
         size_x = self.sagital_dim(self.image_seg)
         return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
 
+
 class template_axial(axial):
-    def getDim(self,image):
+    def getDim(self, image):
         return min([self.axial_dim(image), self.axial_dim(self.image_seg)])
 
-    def get_size(self,image):
+    def get_size(self, image):
         return min(image.data.shape + self.image_seg.data.shape)//2
 
     def get_center(self):
@@ -553,28 +569,30 @@ class template_axial(axial):
         dim = self.getDim(self.image)
         return np.ones(dim) * size, np.ones(dim) * size
 
-    def mosaic(self,nb_column=10):
-        return super(template_axial,self).mosaic(size=self.get_size(self.image),nb_column=nb_column)
+    def mosaic(self, nb_column=10):
+        return super(template_axial, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
 
     def single(self):
         dim = self.getDim(self.image)
-        matrix0 = self.getSlice(self.image.data,dim / 2)
-        matrix1 = self.getSlice(self.image_seg.data,dim / 2)
+        matrix0 = self.getSlice(self.image.data, dim / 2)
+        matrix1 = self.getSlice(self.image_seg.data, dim / 2)
 
-        return matrix0,matrix1
+        return matrix0, matrix1
+
 
 class template2anat_axial(template_axial):
     def __init__(self, imageName, template2anatName, segImageName):
-        super(template2anat_axial,self).__init__(imageName, template2anatName)
+        super(template2anat_axial, self).__init__(imageName, template2anatName)
         self.image_seg2 = Image(segImageName)  # transformed input the one segmented
         self.image_seg2.change_orientation('SAL')  # reorient to SAL
 
     def get_center(self):
         return self._axial_center(self.image_seg2)
 
+
 class template_sagital(sagital):
-    def getDim(self,image):
-        return min([self.sagital_dim(image),self.sagital_dim(self.image_seg)])
+    def getDim(self, image):
+        return min([self.sagital_dim(image), self.sagital_dim(self.image_seg)])
 
     def get_size(self, image):
         return min(image.data.shape + self.image_seg.data.shape) // 2
@@ -582,21 +600,22 @@ class template_sagital(sagital):
     def get_center(self):
         size = self.get_size(self.image)
         dim = self.getDim(self.image)
-        return np.ones(dim) * size,np.ones(dim) * size
+        return np.ones(dim) * size, np.ones(dim) * size
 
-    def mosaic(self,nb_column=10):
-        return super(template_sagital,self).mosaic(size=self.get_size(self.image),nb_column=nb_column)
+    def mosaic(self, nb_column=10):
+        return super(template_sagital, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
 
     def single(self):
         dim = self.getDim(self.image)
-        matrix0 = self.getSlice(self.image.data,dim / 2)
-        matrix1 = self.getSlice(self.image_seg.data,dim / 2)
+        matrix0 = self.getSlice(self.image.data, dim / 2)
+        matrix1 = self.getSlice(self.image_seg.data, dim / 2)
 
-        return matrix0,matrix1
+        return matrix0, matrix1
+
 
 class template2anat_sagital(sagital):
     def __init__(self, imageName, template2anatName, segImageName):
-        super(template2anat_sagital,self).__init__(imageName,template2anatName)
+        super(template2anat_sagital, self).__init__(imageName, template2anatName)
         self.image_seg2 = Image(segImageName)  # transformed input the one segmented
         self.image_seg2.change_orientation('SAL')  # reorient to SAL
 
