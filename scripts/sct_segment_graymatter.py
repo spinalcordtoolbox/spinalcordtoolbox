@@ -746,13 +746,6 @@ def main(args=None):
     if not os.path.isfile(param_seg.fname_level):
         param_seg.fname_level = None
 
-    seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
-    start = time.time()
-    seg_gm.segment()
-    end = time.time()
-    t = end - start
-    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
-
     # parse parameters
     # TODO refactor
     fname_in = param_seg.fname_im_original
@@ -767,7 +760,7 @@ def main(args=None):
     output_filename = param_seg.fname_im_original.split(".")[0]+"_gmseg.nii.gz"
 
     # Qc_Report generates and contains the useful infos for qc generation
-    print "Preparing QC Report"
+    print "\nPreparing QC Report..."
     qcReport = msct_qc.Qc_Report("gmseg", qcParams, sys.argv[1:], parser.usage.description)
 
     @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
@@ -775,7 +768,7 @@ def main(args=None):
         """
         :param input_filename:
         :param output_filename:
-        :param nb_column: 
+        :param nb_column:
         :return:
         """
         # Chosen axe to generate image
@@ -783,6 +776,14 @@ def main(args=None):
 
     # the wrapped function
     grayseg_qc(fname_in, output_filename, qcReport.qc_params.nb_column)
+
+    seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
+    start = time.time()
+    seg_gm.segment()
+    end = time.time()
+    t = end - start
+    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
+
 
 if __name__ == "__main__":
     main()
