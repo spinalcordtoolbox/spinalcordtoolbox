@@ -1303,12 +1303,8 @@ if __name__ == "__main__":
     if '-param-qc' in arguments:
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
-    # There are no way to get the name easily this is why this is hard coded...
-    # TODO: find a way to get the name
-    output_filename = fname_output
-
     # Qc_Report generates and contains the useful infos for qc generation
-    print "Preparing QC Report"
+    print "\nPreparing QC Report..."
     qcReport = msct_qc.Qc_Report("extract_metrict", qcParams, sys.argv[1:], parser.usage.description)
     msct_qc.Qc_Report.generateReport(qcReport)
 
