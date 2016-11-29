@@ -360,7 +360,6 @@ if __name__ == "__main__":
 
     propseg_qc(input_filename, output_filename, qcReport.qc_params.nb_column)
 
-
     if folder_output == "./":
         output_name = output_filename
     else:

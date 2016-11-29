@@ -564,8 +564,8 @@ class template_axial(axial):
         return matrix0,matrix1
 
 class template2anat_axial(template_axial):
-    def __init__(self,imageName,template2anatName,segImageName):
-        super(template2anat_axial,self).__init__(imageName,template2anatName)
+    def __init__(self, imageName, template2anatName, segImageName):
+        super(template2anat_axial,self).__init__(imageName, template2anatName)
         self.image_seg2 = Image(segImageName)  # transformed input the one segmented
         self.image_seg2.change_orientation('SAL')  # reorient to SAL
 
@@ -576,7 +576,7 @@ class template_sagital(sagital):
     def getDim(self,image):
         return min([self.sagital_dim(image),self.sagital_dim(self.image_seg)])
 
-    def get_size(self,image):
+    def get_size(self, image):
         return min(image.data.shape + self.image_seg.data.shape) // 2
 
     def get_center(self):
@@ -595,7 +595,7 @@ class template_sagital(sagital):
         return matrix0,matrix1
 
 class template2anat_sagital(sagital):
-    def __init__(self,imageName,template2anatName,segImageName):
+    def __init__(self, imageName, template2anatName, segImageName):
         super(template2anat_sagital,self).__init__(imageName,template2anatName)
         self.image_seg2 = Image(segImageName)  # transformed input the one segmented
         self.image_seg2.change_orientation('SAL')  # reorient to SAL

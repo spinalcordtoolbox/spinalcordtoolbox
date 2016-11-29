@@ -19,6 +19,7 @@ import shutil
 import commands
 import time
 from glob import glob
+import msct_qc
 import sct_utils as sct
 from sct_utils import add_suffix
 from sct_image import set_orientation
@@ -565,6 +566,37 @@ def main():
     sct.printv('\nTo view results, type:', verbose)
     sct.printv('fslview '+fname_data+' '+path_output+'template2anat -b 0,4000 &', verbose, 'info')
     sct.printv('fslview '+fname_template+' -b 0,5000 '+path_output+'anat2template &\n', verbose, 'info')
+
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
+    if '-param-qc' in arguments:
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
+    # Qc_Report generates and contains the useful infos for qc generation
+    print "Preparing QC Report"
+    qcReport = msct_qc.Qc_Report("template_2_anat", qcParams, sys.argv[1:], parser.usage.description)
+    qcReport2 = msct_qc.Qc_Report("anat_2_template", qcParams, sys.argv[1:], parser.usage.description) #TODO: Description
+
+    # Create the Qc object that creates the images files to provide to the HTML
+    @msct_qc.Qc(qcReport)
+    def template_2_anat_qc(input_filename, template2anat_name, seg_image_name):
+        # Chosen axe to generate image
+        return msct_qc.template2anat_sagital(input_filename, template2anat_name, seg_image_name).single()
+
+    @msct_qc.Qc(qcReport2)
+    def anat_2_template_qc(pam50_template_filename, anat2template_name, nb_column):
+        # Chosen axe to generate image
+        return msct_qc.template_axial(pam50_template_filename, anat2template_name).mosaic(nb_column=nb_column)
+
+    output_filename_t2a = 'template2anat'+ext_data
+    output_filename_a2t = 'anat2template'+ext_data
+
+    print("\n\n\n\n\nfile_template:  {}\n\n\n\n\n".format(file_template))
+    print("\n\n\n\n\nfname_template: {}\n\n\n\n\n".format(fname_template))
+    print("\n\n\n\n\nfname_data:     {}\n\n\n\n\n".format(fname_data))
+
+    template_2_anat_qc(fname_data, output_filename_t2a, fname_seg)
+    anat_2_template_qc(fname_template, output_filename_a2t, qcReport2.qc_params.nb_column)
 
 
 # Resample labels
