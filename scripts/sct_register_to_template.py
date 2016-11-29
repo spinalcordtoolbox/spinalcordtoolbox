@@ -567,13 +567,13 @@ def main():
     sct.printv('fslview '+fname_data+' '+path_output+'template2anat -b 0,4000 &', verbose, 'info')
     sct.printv('fslview '+fname_template+' -b 0,5000 '+path_output+'anat2template &\n', verbose, 'info')
 
+    sct.printv("\nPreparing QC Report...")
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None
     if '-param-qc' in arguments:
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
     # Qc_Report generates and contains the useful infos for qc generation
-    sct.printv("\nPreparing QC Report...")
     qcReport = msct_qc.Qc_Report("template_2_anat", qcParams, sys.argv[1:], parser.usage.description)
     qcReport2 = msct_qc.Qc_Report("anat_2_template", qcParams, sys.argv[1:], parser.usage.description) #TODO: Description
 
