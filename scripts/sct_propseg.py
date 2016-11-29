@@ -11,11 +11,12 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from msct_parser import Parser
-import sys
-import sct_utils as sct
 import os
-
+import sys
+import msct_qc
+import sct_utils as sct
+from msct_parser import Parser
+import isct_generate_report
 
 def get_parser():
     # Initialize the parser
@@ -43,12 +44,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False,
                       deprecated=1,
                       deprecated_by="-c",
-                      example=['t1','t2'])
+                      example=['t1', 't2'])
     parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
-                      example=['t1','t2'])
+                      example=['t1', 't2'])
     parser.usage.addSection("General options")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -174,12 +175,17 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
+    parser.add_option(name="-qc",
+                      type_value=[[','], 'str'],
+                      description="Create the patches and generate the report",
+                      mandatory=False)
     return parser
+
+
 
 if __name__ == "__main__":
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
+    arguments = parser.parse(sys.argv[1:])     
     input_filename = arguments["-i"]
     contrast_type = arguments["-c"]
 
@@ -264,8 +270,22 @@ if __name__ == "__main__":
     if "-alpha" in arguments:
         cmd += " -alpha " + str(arguments["-alpha"])
 
+
+    if "-qc" in arguments:
+        param_qc = arguments['-qc']
+        #sct.printv('parameters of qc :')
+        #paramqc=None
+        #params_qc = obj = param_qc[0].split(',')
+        #for paramStep in param_qc:
+        #    obj = paramStep.split('=')
+        #    sct.printv('param :')
+        #    sct.printv(obj[0])
+        #    sct.printv('with value :')
+        #    sct.printv(obj[1])
+
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
+
     image_input = Image(input_filename)
     nx, ny, nz, nt, px, py, pz, pt = image_input.dim
     if nt > 1:
@@ -275,12 +295,16 @@ if __name__ == "__main__":
     if use_viewer:
         # make sure image is in SAL orientation, as it is the orientation used by PropSeg
         from sct_image import orientation
+
         image_input_orientation = orientation(image_input, get=True, verbose=False)
         path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
-        sct.run('sct_image -i ' + input_filename + ' -o ' + folder_output + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
+        sct.run(
+            'sct_image -i ' + input_filename + ' -o ' + folder_output + reoriented_image_filename + ' -setorient SAL -v 0',
+            verbose=False)
 
         from sct_viewer import ClickViewer
+
         image_input_reoriented = Image(folder_output + reoriented_image_filename)
         viewer = ClickViewer(image_input_reoriented)
         viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
@@ -290,7 +314,7 @@ if __name__ == "__main__":
             if viewer.gap_inter_slice == 0:
                 viewer.gap_inter_slice = 1
             viewer.calculate_list_slices()
-        #else:
+        # else:
         #    viewer.gap_inter_slice = 3
 
         # start the viewer that ask the user to enter a few points along the spinal cord
@@ -298,11 +322,15 @@ if __name__ == "__main__":
         if mask_points:
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
-            sct.run("sct_label_utils -i " + folder_output + reoriented_image_filename + " -create " + mask_points + " -o " + folder_output + mask_filename, verbose=False)
+            sct.run(
+                "sct_label_utils -i " + folder_output + reoriented_image_filename + " -create " + mask_points + " -o " + folder_output + mask_filename,
+                verbose=False)
 
             # reorient the initialization mask to correspond to input image orientation
             mask_reoriented_filename = sct.add_suffix(file_fname + ext_fname, "_mask_viewer")
-            sct.run('sct_image -i ' + folder_output + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
+            sct.run(
+                'sct_image -i ' + folder_output + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0',
+                verbose=False)
 
             # remove temporary files
             sct.run('rm -rf ' + folder_output + 'tmp.*')
@@ -313,17 +341,40 @@ if __name__ == "__main__":
             elif use_viewer == "mask":
                 cmd += " -init-mask " + folder_output + mask_reoriented_filename
         else:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
+            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
+                       verbose, type='error')
 
-    sct.run(cmd, verbose)
+    #sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
-    output_filename = file_fname+"_seg"+ext_fname
+    output_filename = file_fname + "_seg" + ext_fname
+
+
+    @msct_qc.Qc(tool_name="sct_propseg", contrast_type=contrast_type, descr_args=sys.argv[ 1: ], description=parser.usage.description)
+    def propseg_qc(input_filename, output_filename, nbrcolumns):
+        """
+        Saves the image in a mosaic if a number of columns is specified else it saves each slices as individual images
+        :param size: Define the size of the side of the square containing the image of the slice.
+        """
+        msct_qc.axial(input_filename, output_filename).mosaic(nbrcolumns, 15)
+
+    # Creating the QC report
+    if "-qc" in arguments:
+        nbrcolumns = 10
+        for paramStep in param_qc:
+            obj = paramStep.split('=')
+            if obj[0]=="nbrcol":
+                nbrcolumns=int(obj[1])
+        propseg_qc(input_filename, output_filename, nbrcolumns)
 
     if folder_output == "./":
         output_name = output_filename
     else:
         output_name = folder_output + output_filename
-    sct.printv("fslview "+input_filename+" "+output_name+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+    sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+
+	
+
+
