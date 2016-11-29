@@ -56,9 +56,12 @@ def main():
     vertebral_level_image = vertebral_level_file.get_data()
     vertebral_cord_image = vertebral_cord_file.get_data()
     
-    hdr_vertebral_level=vertebral_level_file.get_header()
+    hdr_vertebral_level = vertebral_level_file.get_header()
     hdr_vertebral_cord = vertebral_cord_file.get_header()
-    
+
+    # get dimensions
+    px, py, pz = hdr_vertebral_level.get_zooms()
+
     # z_size_vertebral_level = hdr_vertebral_level['pixdim'][3]
     # z_size_vertebral_cord = hdr_vertebral_cord['pixdim'][3]
     
@@ -93,7 +96,7 @@ def main():
     # here the hard-coded range(5) and "+2" in the index corresponds to the known values from the graph: i=2 to i=7
     spinal_vertebral_dist = np.zeros(5)
     for i in range(5):
-        spinal_vertebral_dist[i] = (vertebral_Mu[i+2] - spinal_Mu[i+2])
+        spinal_vertebral_dist[i] = vertebral_Mu[i+2] - spinal_Mu[i+2]
     
     # Linear fit of the distances between Vertebral and Spinal centers
     popt_spinal_vertebral = np.polyfit(np.arange(3, 8), spinal_vertebral_dist, 1)
@@ -140,9 +143,10 @@ def main():
     # spinal_Mu[12] = vertebral_Mu[12] - P_fit_spinal_vertebral_dist(13)
 
     # Compute spinal distance from each vertebral level using fitted distance
+    # Note: distance is divided by pz to account for voxel size (because variance in Cadotte et al. is given in mm).
     spinal_levels = np.zeros(nb_vert)
     for i in range(0, nb_vert):
-        spinal_levels[i] = vertebral_levels[i] - P_fit_spinal_vertebral_dist(i)
+        spinal_levels[i] = vertebral_levels[i] + P_fit_spinal_vertebral_dist(i) / pz
     #
     # # Linear Fit of the known Vertebral variances to find the unkown variances
     # popt_vertebral_sigma = np.polyfit(np.arange(3,8), vertebral_Sigma[2:7],1)
@@ -163,8 +167,9 @@ def main():
     plt.savefig('fig_spinalVariance.png')
 
     # Compute spinal variance using fitted variance
+    # Note: variance is divided by pz to account for voxel size (because variance in Cadotte et al. is given in mm).
     for i in range(0, nb_vert):
-        spinal_Sigma[i] = P_fit_spinal_sigma(i)
+        spinal_Sigma[i] = P_fit_spinal_sigma(i) / pz
 
     # vertebral_Sigma[1] = P_fit_vertebral_sigma(0)
     # vertebral_Sigma[0] = P_fit_vertebral_sigma(1)
@@ -235,6 +240,7 @@ def main():
     fid_infolabel = open(folder_out + file_infolabel, 'w')
     # Write date and time
     fid_infolabel.write('# Spinal levels labels - generated on ' + time.strftime('%Y-%m-%d') + '\n')
+    fid_infolabel.write('# Keyword=IndivLabels (Please DO NOT change this line)\n')
     fid_infolabel.write('# ID, name, file\n')
     for i in range(nb_vert):
         fid_infolabel.write('%i, %s, %s\n' % (i, 'Spinal level ' + name_level[i], file_name[i]))
