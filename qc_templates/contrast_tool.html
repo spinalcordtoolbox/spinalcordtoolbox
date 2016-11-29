@@ -32,17 +32,22 @@
             <div id="gif_image_names">
                 {% for img in images %}
                 <a href="{{img.src}}" target="_blank" class="text-center text-primary">{{img.name}} </a>
-                 ,
+                ,
                 {% endfor %}
             </div>
         </li>
         {% endif %}
+
         {% for txt in texts %}
         <pre class="text-justify">
                 <span>{{txt.content}}</span>
                 </pre>
         <h5 class="text-center text-primary">{{txt.name}}</h5>
         {% endfor %}
+        {% if color_bar %}
+        <img src="{{color_bar.src}}" alt="Image not found" style="width:100%">
+        {% endif %}
+
     </ul>
 </div>
 <a href="" data-toggle="tooltip" data-placement="left" title="Go Top" class="go-top"

@@ -90,11 +90,14 @@ class Report:
         if os.path.exists(qc_images_item_link):
             # TODO:Marche pas bien =>take all png
             elements = glob.glob1(qc_images_item_link, "*")
-            print elements,"As ACT"
+            print elements, "As ACT"
             if elements:
                 for el in elements:
                     if el.find(".png") > -1:
-                        item.add_image_link(report_item.Image(el, os.path.join(item.images_dir, el)))
+                        if el.find('colorbar') > -1:
+                            item.set_color_bar(report_item.Image(el, os.path.join(item.images_dir, el)))
+                        else:
+                            item.add_image_link(report_item.Image(el, os.path.join(item.images_dir, el)))
                     elif el.find(".txt") > -1 and el.find("description") == -1:
                         item.add_txt_content(report_item.Txt(el, os.path.join(item.report_dir, item.images_dir, el)))
             else:

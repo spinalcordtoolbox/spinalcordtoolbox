@@ -750,6 +750,8 @@ def main(args=None):
     # TODO refactor
     fname_in = param_seg.fname_im_original
 
+    seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
+
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None
     if '-param-qc' in arguments:
@@ -777,7 +779,6 @@ def main(args=None):
     # the wrapped function
     grayseg_qc(fname_in, output_filename, qcReport.qc_params.nb_column)
 
-    seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
     start = time.time()
     seg_gm.segment()
     end = time.time()

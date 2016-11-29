@@ -16,6 +16,8 @@ import msct_report_util
 class ReportItem:
     def __init__(self, report_dir, syntax, description):
         self.report_dir = report_dir
+        self.color_bar = None
+        self.aplr = None
         self.syntax = syntax
         self.contrast_name, self.tool_name = syntax.split(' ')
         self.images_dir = os.path.join("img", self.contrast_name, self.tool_name)
@@ -29,6 +31,14 @@ class ReportItem:
         # TODO:use blacklist array for prevent gif switch on the view
         # to prevent gif on propseg do : self.tool_name.find("propseg") > - 1 === true return False
         return True
+
+    def set_color_bar(self, bar):
+        """
+
+        :param color:
+        :return:
+        """
+        self.color_bar = bar
 
     def add_image_link(self, link):
         """
@@ -59,10 +69,11 @@ class ReportItem:
             'syntax': self.syntax,
             'images': self.images_link,
             'texts': self.txt_contents,
-            "hasGif": self.has_gif()
+            "hasGif": self.has_gif(),
+            'color_bar': self.color_bar
         }
         for item in self.images_link:
-                print item ,"As ;lnl"
+            print item, "As ;lnl"
         msct_report_util.createHtmlFile(template_dir, template_name, file_link, tags)
 
 
