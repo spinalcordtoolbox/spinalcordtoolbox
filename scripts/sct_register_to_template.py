@@ -574,8 +574,7 @@ def main():
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
     # Qc_Report generates and contains the useful infos for qc generation
-    qcReport = msct_qc.Qc_Report("template_2_anat", qcParams, sys.argv[1:], parser.usage.description)
-    qcReport2 = msct_qc.Qc_Report("anat_2_template", qcParams, sys.argv[1:], parser.usage.description) #TODO: Description
+    qcReport = msct_qc.Qc_Report("sct_register_to_template", qcParams, sys.argv[1:], parser.usage.description)
 
     # Create the Qc object that creates the images files to provide to the HTML
     @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.no_seg_seg])
@@ -583,16 +582,9 @@ def main():
         # Chosen axe to generate image
         return msct_qc.template2anat_sagital(input_filename, template2anat_name, seg_image_name).single()
 
-    @msct_qc.Qc(qcReport2, action_list=[msct_qc.Qc.no_seg_seg])
-    def anat_2_template_qc(pam50_template_filename, anat2template_name, nb_column):
-        # Chosen axe to generate image
-        return msct_qc.template_axial(pam50_template_filename, anat2template_name).mosaic(nb_column=nb_column)
-
     output_filename_t2a = 'template2anat'+ext_data
-    output_filename_a2t = 'anat2template'+ext_data
 
     template_2_anat_qc(fname_data, output_filename_t2a, fname_seg)
-    anat_2_template_qc(fname_template, output_filename_a2t, qcReport2.qc_params.nb_column)
 
 
 # Resample labels

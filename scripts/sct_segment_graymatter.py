@@ -751,6 +751,10 @@ def main(args=None):
     fname_in = param_seg.fname_im_original
 
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
+    start = time.time()
+    seg_gm.segment()
+    end = time.time()
+    t = end - start
 
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None
@@ -763,7 +767,7 @@ def main(args=None):
 
     # Qc_Report generates and contains the useful infos for qc generation
     print "\nPreparing QC Report..."
-    qcReport = msct_qc.Qc_Report("gmseg", qcParams, sys.argv[1:], parser.usage.description)
+    qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description)
 
     @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
     def grayseg_qc(input_filename, output_filename, nb_column):
@@ -779,10 +783,6 @@ def main(args=None):
     # the wrapped function
     grayseg_qc(fname_in, output_filename, qcReport.qc_params.nb_column)
 
-    start = time.time()
-    seg_gm.segment()
-    end = time.time()
-    t = end - start
     printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
 
 
