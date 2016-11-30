@@ -330,7 +330,7 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    sct.run(cmd, verbose)
+    # sct.run(cmd, verbose)
 
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
@@ -345,21 +345,20 @@ if __name__ == "__main__":
     if qcParams is None or qcParams.generate_report is True:
         sct.printv("\nPreparing QC Report...\n")
         # Qc_Report generates and contains the useful infos for qc generation
-        qcReport = msct_qc.Qc_Report("sct_propseg", qcParams, sys.argv[1:], parser.usage.description, "axial")
+        qcReport = msct_qc.Qc_Report("sct_propseg", qcParams, sys.argv[1:], parser.usage.description)
 
         # Create the Qc object that creates the images files to provide to the HTML
         @msct_qc.Qc(qcReport)
-        def propseg_qc(input_filename, output_filename, nb_column):
+        def propseg_qc(steak, nb_column):
             """
-            :param input_filename:
-            :param output_filename:
+            :param slice:
             :param nb_column: git
             :return:
             """
             # Chosen axe to generate image
-            return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
+            return steak.mosaic(nb_column=nb_column)
 
-        propseg_qc(input_filename, output_filename, qcReport.qc_params.nb_column)
+        propseg_qc(msct_qc.axial(input_filename, output_filename), qcReport.qc_params.nb_column)
 
     sct.printv('\nDone! To view results, type:', verbose)
 

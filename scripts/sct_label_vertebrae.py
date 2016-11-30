@@ -324,15 +324,20 @@ def main(args=None):
         # TODO: find a better way to get the name
         output_filename = fname_seg.split(".")[0]+"_labeled.nii.gz"
         # generate report
-        qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description,"sagital")
+        qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description)
 
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
-        def label_vertebrae_qc(fname_in, output_filename):
-            img, mask = msct_qc.sagital(fname_in, output_filename).single()
+        def label_vertebrae_qc(steak):
+            """
+
+            :param slice:
+            :return:
+            """
+            img, mask = steak.single()
             img = np.clip(img,np.percentile(img,10),np.percentile(img,90))
             return img, mask
 
-        label_vertebrae_qc(fname_in, output_filename)
+        label_vertebrae_qc(msct_qc.sagital(fname_in, output_filename))
 
     # to view results
     printv('\nDone! To view results, type:', verbose)

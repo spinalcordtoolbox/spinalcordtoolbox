@@ -772,18 +772,17 @@ def main(args=None):
         qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description,"axial")
 
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
-        def grayseg_qc(input_filename, output_filename, nb_column):
+        def grayseg_qc(slice, nb_column):
             """
-            :param input_filename:
-            :param output_filename:
+            :param slice:
             :param nb_column:
             :return:
             """
             # Chosen axe to generate image
-            return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
+            return slice.mosaic(nb_column=nb_column)
 
         # the wrapped function
-        grayseg_qc(fname_in, output_filename, qcReport.qc_params.nb_column)
+        grayseg_qc( msct_qc.axial(fname_in, output_filename),qcReport.qc_params.nb_column)
 
     printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
 
