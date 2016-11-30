@@ -337,7 +337,7 @@ def main(args=None):
             img = np.clip(img,np.percentile(img,10),np.percentile(img,90))
             return img, mask
 
-        label_vertebrae_qc(msct_qc.sagital(fname_in, output_filename))
+        label_vertebrae_qc(msct_qc.sagittal(fname_in, output_filename))
 
     # to view results
     printv('\nDone! To view results, type:', verbose)

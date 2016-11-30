@@ -322,7 +322,7 @@ class Qc(object):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "Steak"
         def wrapped_f(steak, *args):
             assert isinstance(steak,Steak)
-            print steak.get_name()# TODO: aplr name of the view (axial/sagital/...)
+            print steak.get_name()# TODO: aplr name of the view (axial/sagittal/...)
 
             rootFolderPath, leafNodeFullPath = self.qc_report.mkdir()
             img, mask = f(steak, *args)
@@ -399,11 +399,11 @@ class Steak(object):
         return nx
 
     @staticmethod
-    def sagital_slice(data, i):
+    def sagittal_slice(data, i):
         return data[:, :, i]
 
     @staticmethod
-    def sagital_dim(image):
+    def sagittal_dim(image):
         nx, ny, nz, nt, px, py, pz, pt = image.dim
         return nz
 
@@ -552,7 +552,7 @@ class Steak(object):
 
 
 """
-The following classes (axial, sagital, coronal) inherits from the class "Steak" and represents a cut in an axis
+The following classes (axial, sagittal, coronal) inherits from the class "Steak" and represents a cut in an axis
 """
 class axial(Steak):
     def get_name(self):
@@ -572,16 +572,16 @@ class axial(Steak):
         return self._axial_center(self.image_seg)
 
 
-class sagital(Steak):
+class sagittal(Steak):
 
     def get_name(self):
-        return sagital.__name__
+        return sagittal.__name__
 
     def getSlice(self, data, i):
-        return self.sagital_slice(data, i)
+        return self.sagittal_slice(data, i)
 
     def getDim(self, image):
-        return self.sagital_dim(image)
+        return self.sagittal_dim(image)
 
     def get_center_spit(self):
         x, y = self._axial_center(self.image_seg)
@@ -610,7 +610,7 @@ class coronal(Steak):
 
     def get_center(self):
         size_y = self.axial_dim(self.image_seg)
-        size_x = self.sagital_dim(self.image_seg)
+        size_x = self.sagittal_dim(self.image_seg)
         return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
 
 
@@ -647,9 +647,9 @@ class template2anat_axial(template_axial):
         return self._axial_center(self.image_seg2)
 
 
-class template_sagital(sagital):
+class template_sagittal(sagittal):
     def getDim(self, image):
-        return min([self.sagital_dim(image), self.sagital_dim(self.image_seg)])
+        return min([self.sagittal_dim(image), self.sagittal_dim(self.image_seg)])
 
     def get_size(self, image):
         return min(image.data.shape + self.image_seg.data.shape) // 2
@@ -660,7 +660,7 @@ class template_sagital(sagital):
         return np.ones(dim) * size, np.ones(dim) * size
 
     def mosaic(self, nb_column=10):
-        return super(template_sagital, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
+        return super(template_sagittal, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
 
     def single(self):
         dim = self.getDim(self.image)
@@ -670,9 +670,9 @@ class template_sagital(sagital):
         return matrix0, matrix1
 
 
-class template2anat_sagital(sagital):
+class template2anat_sagittal(sagittal):
     def __init__(self, imageName, template2anatName, segImageName):
-        super(template2anat_sagital, self).__init__(imageName, template2anatName)
+        super(template2anat_sagittal, self).__init__(imageName, template2anatName)
         self.image_seg2 = Image(segImageName)  # transformed input the one segmented
         self.image_seg2.change_orientation('SAL')  # reorient to SAL
 
