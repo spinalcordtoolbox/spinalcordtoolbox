@@ -311,7 +311,8 @@ class SpinalCordStraightener(object):
             from msct_types import Centerline
             centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
-            number_of_points = centerline.number_of_points
+            if centerline.number_of_points != number_of_points:
+                number_of_points = centerline.number_of_points
 
             # ==========================================================================================
             sct.printv("\nCreate the straight space and the safe zone...", verbose)
