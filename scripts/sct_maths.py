@@ -138,13 +138,11 @@ def get_parser():
                       description='Compute the mutual information (MI) between both input files (-i and -mi).',
                       mandatory=False,
                       example="")
-    '''
     parser.add_option(name='-corr',
                       type_value='file',
                       description='Compute the cross correlation (CC) between both input files (-i and -cc).',
                       mandatory=False,
                       example="")
-    '''
 
     parser.usage.addSection("\nMisc")
     parser.add_option(name='-symmetrize',
@@ -288,7 +286,15 @@ def main(args = None):
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
         im_2 = Image(arguments['-mi'])
-        mutual_information(im.data, im_2.data, fname_out)
+        compute_similarity(im.data, im_2.data, fname_out, metric='mi')
+
+        data_out=None
+
+    elif '-corr' in arguments:
+        # input 1 = from flag -i --> im
+        # input 2 = from flag -mi
+        im_2 = Image(arguments['-corr'])
+        compute_similarity(im.data, im_2.data, fname_out, metric='corr')
 
         data_out=None
 
@@ -500,30 +506,35 @@ def laplacian(data, sigmas):
     # from scipy.ndimage.filters import laplace
     # return laplace(data.astype(float))
 
-def mutual_information(data1, data2, fname_out='', verbose=1):
+def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
     assert data1.size == data2.size, "ERROR: the data don't have the same size"
     data1_1d = data1.ravel()
     data2_1d = data2.ravel()
 
-    mi = calc_MI(data1_1d, data2_1d, normalized=True)
+    if metric == 'mi':
+        res = calc_MI(data1_1d, data2_1d, normalized=True)
+        metric_full = 'Mutual information'
+    if metric == 'corr':
+        res = calc_corr(data1_1d, data2_1d)
+        metric_full = 'Pearson correlation coefficient'
+
+    printv('\n'+ metric_full +': ' + str(res), verbose, 'info')
 
     path_out, filename_out, ext_out = extract_fname(fname_out)
-    printv('\nMutual information: '+str(mi), verbose, 'info')
-
     if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
         printv('ERROR: the output file should a text file or a pickle file. Received extension: '+ext_out, 1, 'error')
 
     elif ext_out == '.txt':
         file_out = open(fname_out, 'w')
-        file_out.write('Mutual Information: \n'+str(mi))
+        file_out.write(metric_full+': \n'+str(res))
         file_out.close()
 
     else:
         import pickle, gzip
         if ext_out == '.pklz':
-            pickle.dump(mi, gzip.open(fname_out, 'wb'), protocol=2)
+            pickle.dump(res, gzip.open(fname_out, 'wb'), protocol=2)
         else:
-            pickle.dump(mi, open(fname_out, 'w'), protocol=2)
+            pickle.dump(res, open(fname_out, 'w'), protocol=2)
 
 def calc_MI(x, y, nbins=32, normalized=False):
     """
@@ -542,6 +553,18 @@ def calc_MI(x, y, nbins=32, normalized=False):
     # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
     return mi
 
+def calc_corr(x, y):
+    """
+    Compute pearson correlation coeff
+    :param x:
+    :param y:
+    :return:
+    """
+    from scipy.stats import pearsonr
+
+    corr = pearsonr(x, y)[0]
+
+    return corr
 
 
 # def check_shape(data):
