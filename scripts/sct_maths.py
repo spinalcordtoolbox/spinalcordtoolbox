@@ -505,7 +505,7 @@ def mutual_information(data1, data2, fname_out='', verbose=1):
     data1_1d = data1.ravel()
     data2_1d = data2.ravel()
 
-    mi = calc_MI(data1_1d, data2_1d)
+    mi = calc_MI(data1_1d, data2_1d, normalized=True)
 
     path_out, filename_out, ext_out = extract_fname(fname_out)
     printv('\nMutual information: '+str(mi), verbose, 'info')
