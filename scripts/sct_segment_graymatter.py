@@ -761,27 +761,29 @@ def main(args=None):
     if '-param-qc' in arguments:
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
-    # There are no way to get the name easily this is why this is hard coded...
-    # TODO: find a way to get the name
-    output_filename = param_seg.fname_im_original.split(".")[0]+"_gmseg.nii.gz"
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        printv("\nPreparing QC Report...\n")
+        # There are no way to get the name easily this is why this is hard coded...
+        # TODO: find a way to get the name
+        output_filename = param_seg.fname_im_original.split(".")[0]+"_gmseg.nii.gz"
 
-    # Qc_Report generates and contains the useful infos for qc generation
-    print "\nPreparing QC Report..."
-    qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description)
+        # Qc_Report generates and contains the useful infos for qc generation
+        qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description)
 
-    @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
-    def grayseg_qc(input_filename, output_filename, nb_column):
-        """
-        :param input_filename:
-        :param output_filename:
-        :param nb_column:
-        :return:
-        """
-        # Chosen axe to generate image
-        return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
+        @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
+        def grayseg_qc(input_filename, output_filename, nb_column):
+            """
+            :param input_filename:
+            :param output_filename:
+            :param nb_column:
+            :return:
+            """
+            # Chosen axe to generate image
+            return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
 
-    # the wrapped function
-    grayseg_qc(fname_in, output_filename, qcReport.qc_params.nb_column)
+        # the wrapped function
+        grayseg_qc(fname_in, output_filename, qcReport.qc_params.nb_column)
 
     printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
 

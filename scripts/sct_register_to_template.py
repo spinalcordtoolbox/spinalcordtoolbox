@@ -133,6 +133,10 @@ def get_parser():
                       mandatory=False,
                       default_value=param.verbose,
                       example=['0', '1', '2'])
+    parser.add_option(name="-param-qc",
+                  type_value=[[','], 'str'],
+                  description="Create the patches and generate the report, ofolder is folder where report is created, default is parent. Use autoview=1 to show the report.",
+                  mandatory=False)
 
     return parser
 
@@ -558,6 +562,27 @@ def main():
         sct.printv('\nDelete temporary files...', verbose)
         sct.run('rm -rf '+path_tmp)
 
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
+    if '-param-qc' in arguments:
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        sct.printv("\nPreparing QC Report...\n")
+        # Qc_Report generates and contains the useful infos for qc generation
+        qcReport = msct_qc.Qc_Report("sct_register_to_template", qcParams, sys.argv[1:], parser.usage.description)
+
+        # Create the Qc object that creates the images files to provide to the HTML
+        @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.no_seg_seg])
+        def template_2_anat_qc(input_filename, template2anat_name, seg_image_name):
+            # Chosen axe to generate image
+            return msct_qc.template2anat_sagital(input_filename, template2anat_name, seg_image_name).single()
+
+        output_filename_t2a = 'template2anat'+ext_data
+
+        template_2_anat_qc(fname_data, output_filename_t2a, fname_seg)
+
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
@@ -566,25 +591,6 @@ def main():
     sct.printv('\nTo view results, type:', verbose)
     sct.printv('fslview '+fname_data+' '+path_output+'template2anat -b 0,4000 &', verbose, 'info')
     sct.printv('fslview '+fname_template+' -b 0,5000 '+path_output+'anat2template &\n', verbose, 'info')
-
-    sct.printv("\nPreparing QC Report...")
-    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
-    qcParams = None
-    if '-param-qc' in arguments:
-        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
-
-    # Qc_Report generates and contains the useful infos for qc generation
-    qcReport = msct_qc.Qc_Report("sct_register_to_template", qcParams, sys.argv[1:], parser.usage.description)
-
-    # Create the Qc object that creates the images files to provide to the HTML
-    @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.no_seg_seg])
-    def template_2_anat_qc(input_filename, template2anat_name, seg_image_name):
-        # Chosen axe to generate image
-        return msct_qc.template2anat_sagital(input_filename, template2anat_name, seg_image_name).single()
-
-    output_filename_t2a = 'template2anat'+ext_data
-
-    template_2_anat_qc(fname_data, output_filename_t2a, fname_seg)
 
 
 # Resample labels

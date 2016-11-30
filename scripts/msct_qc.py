@@ -45,6 +45,11 @@ class Qc_Params(object):
         self.nb_column = 10
         self.show_report = False
 
+        # having the generate_report forces to make make the following condition verification
+        # "if qcParams is None or qcParams.generate_report is True:"
+        # it must be done after parsing arguments.
+        self.generate_report = True
+
         # settings up the parameters
         if params_qc is not None or params_qc == "":
             self.parse_params(params_qc)
@@ -69,11 +74,14 @@ class Qc_Params(object):
                 # Parameter defining how many columns should be created in the picture
                 elif params[0] == 'ncol':
                     self.nb_column = int(params[1])
+                # We assume default parameters will not be provided for the conditions containing 'and'
+                # If default value is provided it will appear as warning.
                 elif params[0] == "autoview" and int(params[1]) == 1:
                     self.show_report = True
+                elif params[0] == "generate" and int(params[1]) == 0:
+                    self.generate_report = False
                 else:
-                    sct.printv("  Parameter '{}' is not valid...".format(params[0]), 1, type='warning')
-                print("\n")
+                    sct.printv("-param-qc parameter '{}' is not valid...".format(params[0]), 1, type='warning')
 
     def validate_root_folder(self):
         # By default, the root folder will be one folder back, because we assume

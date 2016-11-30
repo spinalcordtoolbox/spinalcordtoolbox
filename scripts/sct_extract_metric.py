@@ -1294,8 +1294,6 @@ if __name__ == "__main__":
     else:
         fname_mask_weight = ''
 
-    # parse parameters
-    # TODO refactor
     fname_in = fname_data
 
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
@@ -1303,10 +1301,12 @@ if __name__ == "__main__":
     if '-param-qc' in arguments:
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
-    # Qc_Report generates and contains the useful infos for qc generation
-    print "\nPreparing QC Report..."
-    qcReport = msct_qc.Qc_Report("extract_metrict", qcParams, sys.argv[1:], parser.usage.description)
-    msct_qc.Qc_Report.generateReport(qcReport)
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        sct.printv("\nPreparing QC Report...\n")
+        # Qc_Report generates and contains the useful infos for qc generation
+        qcReport = msct_qc.Qc_Report("sct_extract_metrict", qcParams, sys.argv[1:], parser.usage.description)
+        msct_qc.Qc_Report.generateReport(qcReport)
 
     # call main function
     main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)

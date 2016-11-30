@@ -147,7 +147,6 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
     return parser
 
 
-
 # MAIN
 # ==========================================================================================
 def main(args=None):
@@ -312,25 +311,28 @@ def main(args=None):
         printv('\nRemove temporary files...', verbose)
         run('rm -rf '+path_tmp)
 
-    printv("\nPreparing QC Report...")
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None
     if '-param-qc' in arguments:
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
-    # There are no way to get the name easily this is why this is hard coded...
-    # TODO: find a better way to get the name
-    output_filename = fname_seg.split(".")[0]+"_labeled.nii.gz"
-    # generate report
-    qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description)
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        printv("\nPreparing QC Report...\n")
 
-    @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
-    def label_vertebrae_qc(fname_in, output_filename):
-        img, mask = msct_qc.sagital(fname_in, output_filename).single()
-        img = np.clip(img,np.percentile(img,10),np.percentile(img,90))
-        return img, mask
+        # There are no way to get the name easily this is why this is hard coded...
+        # TODO: find a better way to get the name
+        output_filename = fname_seg.split(".")[0]+"_labeled.nii.gz"
+        # generate report
+        qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description)
 
-    label_vertebrae_qc(fname_in, output_filename)
+        @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
+        def label_vertebrae_qc(fname_in, output_filename):
+            img, mask = msct_qc.sagital(fname_in, output_filename).single()
+            img = np.clip(img,np.percentile(img,10),np.percentile(img,90))
+            return img, mask
+
+        label_vertebrae_qc(fname_in, output_filename)
 
     # to view results
     printv('\nDone! To view results, type:', verbose)

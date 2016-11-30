@@ -336,28 +336,30 @@ if __name__ == "__main__":
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
 
-    sct.printv("\nPreparing QC Report...")
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None
     if '-param-qc' in arguments:
         qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
 
-    # Qc_Report generates and contains the useful infos for qc generation
-    qcReport = msct_qc.Qc_Report("sct_propseg", qcParams, sys.argv[1:], parser.usage.description)
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        sct.printv("\nPreparing QC Report...\n")
+        # Qc_Report generates and contains the useful infos for qc generation
+        qcReport = msct_qc.Qc_Report("sct_propseg", qcParams, sys.argv[1:], parser.usage.description)
 
-    # Create the Qc object that creates the images files to provide to the HTML
-    @msct_qc.Qc(qcReport)
-    def propseg_qc(input_filename, output_filename, nb_column):
-        """
-        :param input_filename:
-        :param output_filename:
-        :param nb_column: git
-        :return:
-        """
-        # Chosen axe to generate image
-        return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
+        # Create the Qc object that creates the images files to provide to the HTML
+        @msct_qc.Qc(qcReport)
+        def propseg_qc(input_filename, output_filename, nb_column):
+            """
+            :param input_filename:
+            :param output_filename:
+            :param nb_column: git
+            :return:
+            """
+            # Chosen axe to generate image
+            return msct_qc.axial(input_filename, output_filename).mosaic(nb_column=nb_column)
 
-    propseg_qc(input_filename, output_filename, qcReport.qc_params.nb_column)
+        propseg_qc(input_filename, output_filename, qcReport.qc_params.nb_column)
 
     sct.printv('\nDone! To view results, type:', verbose)
 
