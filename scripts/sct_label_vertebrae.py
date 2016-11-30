@@ -324,7 +324,7 @@ def main(args=None):
         # TODO: find a better way to get the name
         output_filename = fname_seg.split(".")[0]+"_labeled.nii.gz"
         # generate report
-        qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description)
+        qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description,"sagital")
 
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
         def label_vertebrae_qc(fname_in, output_filename):

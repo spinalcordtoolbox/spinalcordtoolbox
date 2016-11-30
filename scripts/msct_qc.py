@@ -95,12 +95,13 @@ class Qc_Report(object):
     This class contains all the necessary methods and variables to tell how the report should be generated.
     It will also setup the folder structure so the report generator only needs to fetch the appropriate files.
     """
-    def __init__(self, tool_name, qc_params, cmd_args, usage):
+    def __init__(self, tool_name, qc_params, cmd_args, usage, view_type):
         """
         :param tool_name: name of the sct tool being used. Is used to name the image file.
         :param qc_params: arguments of the "-param-qc" option in Terminal
         :param cmd_args:  the commands of the process being used to generate the images
         :param usage:     description of the process
+        :param viewType:  name of the view (axial/sagital/...) "none" if there is no view (text for example)
         """
         # the class Qc_Params verification done here to prevent from having to be sure it's not none outside
         if qc_params is None:
@@ -128,6 +129,8 @@ class Qc_Report(object):
         # workaround for mkdir to save description file and to use it
         self.report_leaf_folder = None
         self.description_base_name = "description_{}".format(self.timestamp)
+
+        self.view_type=view_type
 
     def generateReport(self):
         """

@@ -571,7 +571,7 @@ def main():
     if qcParams is None or qcParams.generate_report is True:
         sct.printv("\nPreparing QC Report...\n")
         # Qc_Report generates and contains the useful infos for qc generation
-        qcReport = msct_qc.Qc_Report("sct_register_to_template", qcParams, sys.argv[1:], parser.usage.description)
+        qcReport = msct_qc.Qc_Report("sct_register_to_template", qcParams, sys.argv[1:], parser.usage.description,"sagital")
 
         # Create the Qc object that creates the images files to provide to the HTML
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.no_seg_seg])

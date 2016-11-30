@@ -769,7 +769,7 @@ def main(args=None):
         output_filename = param_seg.fname_im_original.split(".")[0]+"_gmseg.nii.gz"
 
         # Qc_Report generates and contains the useful infos for qc generation
-        qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description)
+        qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description,"axial")
 
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
         def grayseg_qc(input_filename, output_filename, nb_column):
