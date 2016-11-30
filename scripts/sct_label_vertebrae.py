@@ -142,7 +142,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       mandatory=False)
     parser.add_option(name="-param-qc",
                       type_value=[[','], 'str'],
-                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent.",
+                      description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate"]),
                       mandatory=False)
     return parser
 
@@ -337,7 +337,7 @@ def main(args=None):
             img = np.clip(img,np.percentile(img,10),np.percentile(img,90))
             return img, mask
 
-        label_vertebrae_qc(msct_qc.sagital(fname_in, output_filename))
+        label_vertebrae_qc(msct_qc.sagittal(fname_in, output_filename))
 
     # to view results
     printv('\nDone! To view results, type:', verbose)

@@ -14,6 +14,8 @@
 import os
 import json
 import time
+from __builtin__ import staticmethod
+
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -72,7 +74,7 @@ class Qc_Params(object):
                 if params[0] == "ofolder":
                     self.report_root_folder = params[1]
                 # Parameter defining how many columns should be created in the picture
-                elif params[0] == 'ncol':
+                elif params[0] == "ncol":
                     self.nb_column = int(params[1])
                 # We assume default parameters will not be provided for the conditions containing 'and'
                 # If default value is provided it will appear as warning.
@@ -88,6 +90,32 @@ class Qc_Params(object):
         # that user will usually run from data structure like sct_example_data
         if not os.path.exists(self.report_root_folder):
             self.report_root_folder = os.getcwd()
+
+    @staticmethod
+    def get_qc_params_description(list_params):
+        """
+        Generates the help description for -param-qc
+
+        :param self:
+        :param list_params: string of the available parameters of the param-qc arg.
+        :return: the description text to show
+        """
+        param_description = "Specify conditions under which the Qc report should be generated."
+
+        for param in list_params:
+            if param == "ofolder":
+                param_description += "\n:ofolder={path to create 'qc' folder, default: '../'.}"
+            elif param == "ncol":
+                param_description += "\n:ncol={number of slices per row, default: 10.}"
+            elif param == "autoview":
+                param_description += "\n:autoview={open report after generation (yes=1, no=0), default: 0.}"
+            elif param == "generate":
+                param_description += "\n:generate={generate report (yes=1, no=0), default: 1.}"
+            else:
+                param_description += ""
+
+        param_description += "\nExample of use: '-param-qc ofolder=../../,ncol=8,autoview=1'."
+        return param_description
 
 
 class Qc_Report(object):
@@ -322,7 +350,7 @@ class Qc(object):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "Steak"
         def wrapped_f(steak, *args):
             assert isinstance(steak,Steak)
-            print steak.get_name()# TODO: aplr name of the view (axial/sagital/...)
+            print steak.get_name()# TODO: aplr name of the view (axial/sagittal/...)
 
             rootFolderPath, leafNodeFullPath = self.qc_report.mkdir()
             img, mask = f(steak, *args)
@@ -399,11 +427,11 @@ class Steak(object):
         return nx
 
     @staticmethod
-    def sagital_slice(data, i):
+    def sagittal_slice(data, i):
         return data[:, :, i]
 
     @staticmethod
-    def sagital_dim(image):
+    def sagittal_dim(image):
         nx, ny, nz, nt, px, py, pz, pt = image.dim
         return nz
 
@@ -552,7 +580,7 @@ class Steak(object):
 
 
 """
-The following classes (axial, sagital, coronal) inherits from the class "Steak" and represents a cut in an axis
+The following classes (axial, sagittal, coronal) inherits from the class "Steak" and represents a cut in an axis
 """
 class axial(Steak):
     def get_name(self):
@@ -572,16 +600,16 @@ class axial(Steak):
         return self._axial_center(self.image_seg)
 
 
-class sagital(Steak):
+class sagittal(Steak):
 
     def get_name(self):
-        return sagital.__name__
+        return sagittal.__name__
 
     def getSlice(self, data, i):
-        return self.sagital_slice(data, i)
+        return self.sagittal_slice(data, i)
 
     def getDim(self, image):
-        return self.sagital_dim(image)
+        return self.sagittal_dim(image)
 
     def get_center_spit(self):
         x, y = self._axial_center(self.image_seg)
@@ -610,7 +638,7 @@ class coronal(Steak):
 
     def get_center(self):
         size_y = self.axial_dim(self.image_seg)
-        size_x = self.sagital_dim(self.image_seg)
+        size_x = self.sagittal_dim(self.image_seg)
         return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
 
 
@@ -647,9 +675,9 @@ class template2anat_axial(template_axial):
         return self._axial_center(self.image_seg2)
 
 
-class template_sagital(sagital):
+class template_sagittal(sagittal):
     def getDim(self, image):
-        return min([self.sagital_dim(image), self.sagital_dim(self.image_seg)])
+        return min([self.sagittal_dim(image), self.sagittal_dim(self.image_seg)])
 
     def get_size(self, image):
         return min(image.data.shape + self.image_seg.data.shape) // 2
@@ -660,7 +688,7 @@ class template_sagital(sagital):
         return np.ones(dim) * size, np.ones(dim) * size
 
     def mosaic(self, nb_column=10):
-        return super(template_sagital, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
+        return super(template_sagittal, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
 
     def single(self):
         dim = self.getDim(self.image)
@@ -670,9 +698,9 @@ class template_sagital(sagital):
         return matrix0, matrix1
 
 
-class template2anat_sagital(sagital):
+class template2anat_sagittal(sagittal):
     def __init__(self, imageName, template2anatName, segImageName):
-        super(template2anat_sagital, self).__init__(imageName, template2anatName)
+        super(template2anat_sagittal, self).__init__(imageName, template2anatName)
         self.image_seg2 = Image(segImageName)  # transformed input the one segmented
         self.image_seg2.change_orientation('SAL')  # reorient to SAL
 
