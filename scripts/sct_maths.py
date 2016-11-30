@@ -15,7 +15,7 @@ import sys
 import numpy as np
 from msct_parser import Parser
 from msct_image import Image
-from sct_utils import printv
+from sct_utils import printv, extract_fname
 
 
 class Param:
@@ -131,6 +131,21 @@ def get_parser():
                         'To use default parameters, write -denoise 1',
                       mandatory=False,
                       example="")
+
+    parser.usage.addSection("\nSimilarity metric")
+    parser.add_option(name='-mi',
+                      type_value='file',
+                      description='Compute the mutual information (MI) between both input files (-i and -mi).',
+                      mandatory=False,
+                      example="")
+    '''
+    parser.add_option(name='-corr',
+                      type_value='file',
+                      description='Compute the cross correlation (CC) between both input files (-i and -cc).',
+                      mandatory=False,
+                      example="")
+    '''
+
     parser.usage.addSection("\nMisc")
     parser.add_option(name='-symmetrize',
                       type_value='multiple_choice',
@@ -269,16 +284,26 @@ def main(args = None):
     elif '-symmetrize' in arguments:
         data_out = (data + data[range(data.shape[0]-1, -1, -1), :, :]) / float(2)
 
+    elif '-mi' in arguments:
+        # input 1 = from flag -i --> im
+        # input 2 = from flag -mi
+        im_2 = Image(arguments['-mi'])
+        mutual_information(im.data, im_2.data, fname_out)
+
+        data_out=None
+
+
     # if no flag is set
     else:
         data_out = None
         printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
-    # Write output
-    nii_out = Image(fname_in)  # use header of input file
-    nii_out.data = data_out
-    nii_out.setFileName(fname_out)
-    nii_out.save()
+    if data_out is not None:
+        # Write output
+        nii_out = Image(fname_in)  # use header of input file
+        nii_out.data = data_out
+        nii_out.setFileName(fname_out)
+        nii_out.save()
     # TODO: case of multiple outputs
     # assert len(data_out) == n_out
     # if n_in == n_out:
@@ -306,8 +331,11 @@ def main(args = None):
     #     printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
     # display message
-    printv('\nDone! To view results, type:', verbose)
-    printv('fslview '+fname_out+' &\n', verbose, 'info')
+    if data_out is not None:
+        printv('\nDone! To view results, type:', verbose)
+        printv('fslview '+fname_out+' &\n', verbose, 'info')
+    else:
+        printv('\nDone! File created: '+fname_out, verbose, 'info')
 
 def otsu(data, nbins):
     from skimage.filters import threshold_otsu
@@ -472,6 +500,47 @@ def laplacian(data, sigmas):
     # from scipy.ndimage.filters import laplace
     # return laplace(data.astype(float))
 
+def mutual_information(data1, data2, fname_out='', verbose=1):
+    assert data1.size == data2.size, "ERROR: the data don't have the same size"
+    data1_1d = data1.ravel()
+    data2_1d = data2.ravel()
+
+    mi = calc_MI(data1_1d, data2_1d)
+
+    path_out, filename_out, ext_out = extract_fname(fname_out)
+    printv('\nMutual information: '+str(mi), verbose, 'info')
+
+    if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
+        printv('ERROR: the output file should a text file or a pickle file. Received extension: '+ext_out, 1, 'error')
+
+    elif ext_out == '.txt':
+        file_out = open(fname_out, 'w')
+        file_out.write('Mutual Information: \n'+str(mi))
+        file_out.close()
+
+    else:
+        import pickle, gzip
+        if ext_out == '.pklz':
+            pickle.dump(mi, gzip.open(fname_out, 'wb'), protocol=2)
+        else:
+            pickle.dump(mi, open(fname_out, 'w'), protocol=2)
+
+def calc_MI(x, y, nbins=32, normalized=False):
+    """
+    Compute mutual information
+    :param x:
+    :param y:
+    :param nbins:
+    :return:
+    """
+    from sklearn.metrics import normalized_mutual_info_score, mutual_info_score
+    if normalized:
+        mi = normalized_mutual_info_score(x, y)
+    else:
+        c_xy = np.histogram2d(x, y, nbins)[0]
+        mi = mutual_info_score(None, None, contingency=c_xy)
+    # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
+    return mi
 
 
 
