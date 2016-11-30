@@ -123,13 +123,12 @@ class Qc_Report(object):
     This class contains all the necessary methods and variables to tell how the report should be generated.
     It will also setup the folder structure so the report generator only needs to fetch the appropriate files.
     """
-    def __init__(self, tool_name, qc_params, cmd_args, usage, view_type):
+    def __init__(self, tool_name, qc_params, cmd_args, usage):
         """
         :param tool_name: name of the sct tool being used. Is used to name the image file.
         :param qc_params: arguments of the "-param-qc" option in Terminal
         :param cmd_args:  the commands of the process being used to generate the images
         :param usage:     description of the process
-        :param viewType:  name of the view (axial/sagital/...) "none" if there is no view (text for example)
         """
         # the class Qc_Params verification done here to prevent from having to be sure it's not none outside
         if qc_params is None:
@@ -157,8 +156,6 @@ class Qc_Report(object):
         # workaround for mkdir to save description file and to use it
         self.report_leaf_folder = None
         self.description_base_name = "description_{}".format(self.timestamp)
-
-        self.view_type=view_type
 
     def generateReport(self):
         """
@@ -257,7 +254,7 @@ class Qc_Report(object):
 
 class Qc(object):
     """
-    Class used to create a .png file from a 2d image produced by the class "slices"
+    Class used to create a .png file from a 2d image produced by the class "Steak"
     """
     # 'NameOfVertebrae':index
     _labels_regions = {'PONS': 50, 'MO': 51,
@@ -350,10 +347,13 @@ class Qc(object):
         self.action_list = action_list
 
     def __call__(self, f):
-        # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "slices"
-        def wrapped_f(*args):
-            img, mask = f(*args)
+        # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "Steak"
+        def wrapped_f(steak, *args):
+            assert isinstance(steak,Steak)
+            print steak.get_name()# TODO: aplr name of the view (axial/sagittal/...)
+
             rootFolderPath, leafNodeFullPath = self.qc_report.mkdir()
+            img, mask = f(steak, *args)
             assert isinstance(img, np.ndarray)
             assert isinstance(mask, np.ndarray)
 
@@ -396,7 +396,7 @@ class Qc(object):
                     pad_inches=pad_inches, dpi=600)
 
 
-class slices(object):
+class Steak(object):
     """
     This class represents the slice objet that will be transformed in 2D image file.
     
@@ -427,11 +427,11 @@ class slices(object):
         return nx
 
     @staticmethod
-    def sagital_slice(data, i):
+    def sagittal_slice(data, i):
         return data[:, :, i]
 
     @staticmethod
-    def sagital_dim(image):
+    def sagittal_dim(image):
         nx, ny, nz, nt, px, py, pz, pt = image.dim
         return nz
 
@@ -459,16 +459,16 @@ class slices(object):
             if matrix.shape[0] < (
                 end_row - start_row):  # TODO: throw/raise an exception that the matrix is smaller than the crop section
                 raise OverflowError
-            return slices.crop(matrix, center_x - 1, center_y, radius_x, radius_y)
+            return Steak.crop(matrix, center_x - 1, center_y, radius_x, radius_y)
         if matrix.shape[1] < end_col:
             if matrix.shape[1] < (
                 end_col - start_col):  # TODO: throw/raise an exception that the matrix is smaller than the crop section
                 raise OverflowError
-            return slices.crop(matrix, center_x, center_y - 1, radius_x, radius_y)
+            return Steak.crop(matrix, center_x, center_y - 1, radius_x, radius_y)
         if start_row < 0:
-            return slices.crop(matrix, center_x + 1, center_y, radius_x, radius_y)
+            return Steak.crop(matrix, center_x + 1, center_y, radius_x, radius_y)
         if start_col < 0:
-            return slices.crop(matrix, center_x, center_y + 1, radius_x, radius_y)
+            return Steak.crop(matrix, center_x, center_y + 1, radius_x, radius_y)
 
         return matrix[start_row:end_row, start_col:end_col]
 
@@ -490,6 +490,10 @@ class slices(object):
                                            , (-np.isnan(array)).ravel().nonzero()[0]
                                            , array[-np.isnan(array)])
         return array
+
+    @abc.abstractmethod
+    def get_name(self):
+        return
 
     @abc.abstractmethod
     def getSlice(self, data, i):
@@ -522,8 +526,8 @@ class slices(object):
             centers_x[i], centers_y[i] \
                 = ndimage.measurements.center_of_mass(self.axial_slice(image.data, i))
         try:
-            slices.nan_fill(centers_x)
-            slices.nan_fill(centers_y)
+            Steak.nan_fill(centers_x)
+            Steak.nan_fill(centers_y)
         except ValueError:
             print "Oops! There are no trace of that spinal cord."  # TODO : raise error
             raise
@@ -576,9 +580,12 @@ class slices(object):
 
 
 """
-The following classes (axial, sagital, coronal) inherits from the class "slices" and represents a cut in an axis
+The following classes (axial, sagittal, coronal) inherits from the class "Steak" and represents a cut in an axis
 """
-class axial(slices):
+class axial(Steak):
+    def get_name(self):
+        return axial.__name__
+
     def getSlice(self, data, i):
         return self.axial_slice(data, i)
 
@@ -593,12 +600,16 @@ class axial(slices):
         return self._axial_center(self.image_seg)
 
 
-class sagital(slices):
+class sagittal(Steak):
+
+    def get_name(self):
+        return sagittal.__name__
+
     def getSlice(self, data, i):
-        return self.sagital_slice(data, i)
+        return self.sagittal_slice(data, i)
 
     def getDim(self, image):
-        return self.sagital_dim(image)
+        return self.sagittal_dim(image)
 
     def get_center_spit(self):
         x, y = self._axial_center(self.image_seg)
@@ -610,7 +621,11 @@ class sagital(slices):
         return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
 
 
-class coronal(slices):
+class coronal(Steak):
+
+    def get_name(self):
+        return coronal.__name__
+
     def getSlice(self, data, i):
         return self.coronal_slice(data, i)
 
@@ -623,7 +638,7 @@ class coronal(slices):
 
     def get_center(self):
         size_y = self.axial_dim(self.image_seg)
-        size_x = self.sagital_dim(self.image_seg)
+        size_x = self.sagittal_dim(self.image_seg)
         return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
 
 
@@ -660,9 +675,9 @@ class template2anat_axial(template_axial):
         return self._axial_center(self.image_seg2)
 
 
-class template_sagital(sagital):
+class template_sagittal(sagittal):
     def getDim(self, image):
-        return min([self.sagital_dim(image), self.sagital_dim(self.image_seg)])
+        return min([self.sagittal_dim(image), self.sagittal_dim(self.image_seg)])
 
     def get_size(self, image):
         return min(image.data.shape + self.image_seg.data.shape) // 2
@@ -673,7 +688,7 @@ class template_sagital(sagital):
         return np.ones(dim) * size, np.ones(dim) * size
 
     def mosaic(self, nb_column=10):
-        return super(template_sagital, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
+        return super(template_sagittal, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
 
     def single(self):
         dim = self.getDim(self.image)
@@ -683,9 +698,9 @@ class template_sagital(sagital):
         return matrix0, matrix1
 
 
-class template2anat_sagital(sagital):
+class template2anat_sagittal(sagittal):
     def __init__(self, imageName, template2anatName, segImageName):
-        super(template2anat_sagital, self).__init__(imageName, template2anatName)
+        super(template2anat_sagittal, self).__init__(imageName, template2anatName)
         self.image_seg2 = Image(segImageName)  # transformed input the one segmented
         self.image_seg2.change_orientation('SAL')  # reorient to SAL
 

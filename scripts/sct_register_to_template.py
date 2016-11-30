@@ -575,13 +575,13 @@ def main():
 
         # Create the Qc object that creates the images files to provide to the HTML
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.no_seg_seg])
-        def template_2_anat_qc(input_filename, template2anat_name, seg_image_name):
+        def template_2_anat_qc(steak):
             # Chosen axe to generate image
-            return msct_qc.template2anat_sagital(input_filename, template2anat_name, seg_image_name).single()
+            return msct_qc.steak.single()
 
         output_filename_t2a = 'template2anat'+ext_data
 
-        template_2_anat_qc(fname_data, output_filename_t2a, fname_seg)
+    template_2_anat_qc(msct_qc.template2anat_sagital(fname_data, output_filename_t2a, fname_seg))
 
     # display elapsed time
     elapsed_time = time.time() - start_time
