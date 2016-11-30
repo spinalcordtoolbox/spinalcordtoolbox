@@ -177,7 +177,7 @@ def get_parser():
                       default_value=str(Param().verbose))
     parser.add_option(name="-param-qc",
                       type_value=[[','], 'str'],
-                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent. Use autoview=1 to show the report.",
+                      description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate", "ncol"]),
                       mandatory=False)
     return parser
 
@@ -772,14 +772,14 @@ def main(args=None):
         qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description,"axial")
 
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
-        def grayseg_qc(slice, nb_column):
+        def grayseg_qc(steak, nb_column):
             """
-            :param slice:
+            :param steak:
             :param nb_column:
             :return:
             """
             # Chosen axe to generate image
-            return slice.mosaic(nb_column=nb_column)
+            return steak.mosaic(nb_column=nb_column)
 
         # the wrapped function
         grayseg_qc( msct_qc.axial(fname_in, output_filename),qcReport.qc_params.nb_column)
