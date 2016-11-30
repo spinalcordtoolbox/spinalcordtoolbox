@@ -286,7 +286,7 @@ def main(args = None):
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
         im_2 = Image(arguments['-mi'])
-        compute_similarity(im.data, im_2.data, fname_out, metric='mi')
+        compute_similarity(im.data, im_2.data, fname_out, metric='mi', verbose=verbose)
 
         data_out=None
 
@@ -294,7 +294,7 @@ def main(args = None):
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
         im_2 = Image(arguments['-corr'])
-        compute_similarity(im.data, im_2.data, fname_out, metric='corr')
+        compute_similarity(im.data, im_2.data, fname_out, metric='corr', verbose=verbose)
 
         data_out=None
 
