@@ -330,7 +330,7 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    # sct.run(cmd, verbose)
+    sct.run(cmd, verbose)
 
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
@@ -351,7 +351,7 @@ if __name__ == "__main__":
         @msct_qc.Qc(qcReport)
         def propseg_qc(steak, nb_column):
             """
-            :param slice:
+            :param steak:
             :param nb_column: git
             :return:
             """
