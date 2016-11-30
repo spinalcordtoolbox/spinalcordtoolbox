@@ -177,7 +177,7 @@ def get_parser():
                       default_value=str(Param().verbose))
     parser.add_option(name="-param-qc",
                       type_value=[[','], 'str'],
-                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent. Use autoview=1 to show the report.",
+                      description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate", "ncol"]),
                       mandatory=False)
     return parser
 

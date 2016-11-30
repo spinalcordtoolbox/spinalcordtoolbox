@@ -177,7 +177,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     parser.add_option(name="-param-qc",
                       type_value=[[','], 'str'],
-                      description="Create the patches and generate the report, ofolder is folder where report is created, default is parent. ncol is number of slice per line, default is 10",
+                      description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate", "ncol"]),
                       mandatory=False)
     return parser
 
