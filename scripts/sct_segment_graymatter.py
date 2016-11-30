@@ -772,14 +772,14 @@ def main(args=None):
         qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description,"axial")
 
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
-        def grayseg_qc(slice, nb_column):
+        def grayseg_qc(steak, nb_column):
             """
-            :param slice:
+            :param steak:
             :param nb_column:
             :return:
             """
             # Chosen axe to generate image
-            return slice.mosaic(nb_column=nb_column)
+            return steak.mosaic(nb_column=nb_column)
 
         # the wrapped function
         grayseg_qc( msct_qc.axial(fname_in, output_filename),qcReport.qc_params.nb_column)
