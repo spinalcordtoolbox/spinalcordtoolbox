@@ -24,6 +24,7 @@ import shutil
 # from glob import glob
 import numpy as np
 from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end, tmp_create
+from sct_maths import calc_MI
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
@@ -798,21 +799,6 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
 
     # return z-origin (z) + z-displacement minus zshift (to account for non-centered disc)
     return z + zrange[ind_peak] - zshift
-
-
-def calc_MI(x, y, nbins=32):
-    """
-    Compute mutual information
-    :param x:
-    :param y:
-    :param nbins:
-    :return:
-    """
-    from sklearn.metrics import mutual_info_score
-    c_xy = np.histogram2d(x, y, nbins)[0]
-    mi = mutual_info_score(None, None, contingency=c_xy)
-    # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
-    return mi
 
 
 def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
