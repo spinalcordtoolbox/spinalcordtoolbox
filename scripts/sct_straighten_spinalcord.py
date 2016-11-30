@@ -70,6 +70,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     distances = []
 
     if nz_nonz <= 5 and algo_fitting == 'nurbs':
+        sct.printv('WARNING: switching to hanning smoothing due to low number of slices.', verbose=verbose, type='warning')
         algo_fitting = 'hanning'
 
     # get center of mass of the centerline/segmentation and remove outliers
@@ -302,11 +303,16 @@ class SpinalCordStraightener(object):
                 number_of_points = int(self.precision * (float(nz) / pz))
                 if number_of_points < 100:
                     number_of_points *= 50
+                if number_of_points == 0:
+                    number_of_points = 50
 
             # 2. extract bspline fitting of the centreline, and its derivatives
             x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
             from msct_types import Centerline
             centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+            if centerline.number_of_points != number_of_points:
+                number_of_points = centerline.number_of_points
 
             # ==========================================================================================
             sct.printv("\nCreate the straight space and the safe zone...", verbose)
@@ -514,6 +520,7 @@ class SpinalCordStraightener(object):
                     if idx_closest is not None:
                         lookup_straight2curved[index] = centerline.get_closest_to_relative_position(disk_label, relative_position)[0]
             lookup_straight2curved = np.array(lookup_straight2curved)
+            print np.min(lookup_straight2curved), np.max(lookup_straight2curved)
 
             # Create volumes containing curved and straight warping fields
             time_generation_volumes = time.time()
@@ -620,7 +627,11 @@ class SpinalCordStraightener(object):
             x0 = file_centerline_straight.data.shape[0]/2.0
             y0 = file_centerline_straight.data.shape[1]/2.0
             count_mean = 0
-            for coord_z in mean_coord[2:-2]:  # we don't include the four extrema because there are usually messy.
+            if number_of_points >= 10:
+                mean_c = mean_coord[2:-2]  # we don't include the four extrema because there are usually messy.
+            else:
+                mean_c = mean_coord
+            for coord_z in mean_c:
                 if not np.isnan(np.sum(coord_z)):
                     dist = ((x0-coord_z[0])*px)**2 + ((y0-coord_z[1])*py)**2
                     self.mse_straightening += dist
