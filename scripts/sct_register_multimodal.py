@@ -46,7 +46,7 @@ def get_parser(paramreg=None):
     if paramreg is None:
         step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
                          slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
-        step1 = Paramreg()
+        step1 = Paramreg(step='1', type='im')
         paramreg = ParamregMultiStep([step0, step1])
 
     parser = Parser(__file__)
@@ -191,7 +191,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
+    def __init__(self, step='', type='', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -270,7 +270,7 @@ def main(args=None):
     # get default registration parameters
     # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
     step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5', slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
-    step1 = Paramreg()
+    step1 = Paramreg(step='1', type='im')
     paramreg = ParamregMultiStep([step0, step1])
 
     parser = get_parser(paramreg=paramreg)
