@@ -17,7 +17,7 @@
         {% if images and  not hasGif %}
         {% for img in images %}
         <li class="list-group-item">
-            <img src="{{img.src}}" alt="Image not found" style="width:100%">
+            <img src="{{img.src}}"  class="{{cross}}"  alt="Image not found" style="width:100%">
             <a href="{{img.src}}" target="_blank"><h5 class="text-center text-primary">{{img.name}}</h5></a>
         </li>
         {% endfor %}
@@ -29,28 +29,27 @@
         </div>
         <li class="list-group-item">
             <!--TODO-->
-            <img id="gif_image" alt="Image not found" style="width:100%"/>
+            <img id="gif_image" class="{{cross}}" alt="Image not found " style="width:100%"/>
             {%if cross%}
-            <img id="cross" src="assets/aplr/{{cross}}.png">
+            <img id="cross" class="cross_{{cross}}" src="assets/aplr/{{cross}}.png">
             {% endif %}
-            <div id="gif_image_names">
-                {% for img in images %}
-                <a href="{{img.src}}" target="_blank" class="text-center text-primary">{{img.name}} </a>
-                ,
-                {% endfor %}
-            </div>
         </li>
         {% endif %}
-
+        {% if color_bar %}
+        <img src="{{color_bar.src}}" alt="Image not found" style="width:100%">
+        {% endif %}
+        <div id="gif_image_names">
+            {% for img in images %}
+            <a href="{{img.src}}" target="_blank" class="text-center text-primary">{{img.name}} </a>
+            ,
+            {% endfor %}
+        </div>
         {% for txt in texts %}
         <pre class="text-justify">
         <span>{{txt.content}}</span>
         </pre>
         <h5 class="text-center text-primary">{{txt.name}}</h5>
         {% endfor %}
-        {% if color_bar %}
-        <img src="{{color_bar.src}}" alt="Image not found" style="width:100%">
-        {% endif %}
 
     </ul>
 </div>

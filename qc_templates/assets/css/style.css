@@ -51,21 +51,37 @@ white-space: pre-wrap;       /* css-3 */
     position: absolute;
     top: 10px;
     z-index: 999999;
-    width: 160px;
+    width: 140px;
     left: 10;
 }
+
+.cross_sagittal{
+    left:38% !important;
+}
+
 @media only screen
   and (min-device-width >= 768px)
   and (max-device-width <= 1024px)
   and (-webkit-min-device-pixel-ratio: 1) {
-      width: 120px !important;
+  #cross{
+      width: 90px !important;
+      }
 }
 @media only screen
   and (min-device-width >= 320px)
   and (max-device-width < 500px)
   and (-webkit-min-device-pixel-ratio: 1) {
-      width: 60px !important;
+      #cross{
+        width: 60px !important;
+      }
 }
 #logo{
   margin-right:"15px !important",
 }
+
+.sagittal{
+display:block;
+width:30% !important;
+margin :0 auto !important;
+}
+

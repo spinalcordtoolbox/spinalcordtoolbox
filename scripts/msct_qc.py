@@ -109,15 +109,15 @@ class Qc_Params(object):
 
         for param in list_params:
             if param == "ofolder":
-                param_description += "\n:ofolder={path to create 'qc' folder, default: '../'.}"
+                param_description += "\nofolder={path to create 'qc' folder, default: '../'.}"
             elif param == "ncol":
-                param_description += "\n:ncol={number of slices per row, default: 10.}"
+                param_description += "\nncol={number of slices per row, default: 10.}"
             elif param == "autoview":
-                param_description += "\n:autoview={open report after generation (yes=1, no=0), default: 0.}"
+                param_description += "\nautoview={open report after generation (yes=1, no=0), default: 0.}"
             elif param == "generate":
-                param_description += "\n:generate={generate report (yes=1, no=0), default: 1.}"
+                param_description += "\ngenerate={generate report (yes=1, no=0), default: 1.}"
             elif param == "thresh":
-                param_description += "\n:thresh={threshold of the colorbar (0.0 to 1.0), default: 0.5.}"
+                param_description += "\nthresh={threshold of the colorbar (0.0 to 1.0), default: 0.5.}"
             else:
                 param_description += ""
 
