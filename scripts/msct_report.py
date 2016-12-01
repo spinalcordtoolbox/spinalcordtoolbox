@@ -88,9 +88,7 @@ class Report:
         # get images link from qc images
         qc_images_item_link = os.path.join(self.report_folder, 'img', item.contrast_name, item.tool_name)
         if os.path.exists(qc_images_item_link):
-            # TODO:Marche pas bien =>take all png
             elements = glob.glob1(qc_images_item_link, "*")
-            print elements, "As ACT"
             if elements:
                 for el in elements:
                     if el.find(".png") > -1:

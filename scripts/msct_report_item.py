@@ -72,8 +72,6 @@ class ReportItem:
             "hasGif": self.has_gif(),
             'color_bar': self.color_bar
         }
-        for item in self.images_link:
-            print item, "As ;lnl"
         msct_report_util.createHtmlFile(template_dir, template_name, file_link, tags)
 
 
