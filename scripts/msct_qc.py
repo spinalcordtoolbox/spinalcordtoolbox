@@ -28,6 +28,7 @@ import abc
 import isct_generate_report
 import commands
 import sct_utils as sct
+import glob
 import shutil
 
 
@@ -159,15 +160,21 @@ class Qc_Report(object):
         self.report_leaf_folder = None
         self.description_base_name = "description_{}".format(self.timestamp)
 
-    def generateReportForText(self, file_output):
+    def generate_report_for_text(self, file_output = None):
         """
         Generate report. Class object must already be instanced before executing this method.
         This method is mostly used when no action list is required (eg extract_metric).
         """
         rootFolderPath, leafNodeFullPath = self.mkdir()
-        srcFile = os.path.join(os.getcwd(),file_output)
-        dest = self.report_leaf_folder
-        shutil.copy(srcFile, dest)
+        if file_output:
+            shutil.copy(os.path.join(".",file_output), self.report_leaf_folder)
+        else:
+            txts= glob.glob1(".", "*.txt")
+            pickles=glob.glob1(".", "*.pickle")
+            elements=txts + pickles
+            for i in elements:
+                 shutil.copy(i, self.report_leaf_folder)
+
         # create description
         self.create_description_file(self.cmd_args, self.usage, None)
         # create HTML files
