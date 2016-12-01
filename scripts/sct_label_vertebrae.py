@@ -24,7 +24,7 @@ import shutil
 # from glob import glob
 import numpy as np
 from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end, tmp_create
-from sct_maths import calc_MI
+from sct_maths import mutual_information
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
@@ -734,7 +734,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
             #I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
             # data_chunk2d = np.mean(data_chunk3d, 1)
             # pattern2d = np.mean(pattern, 1)
-            I_corr[ind_I] = calc_MI(data_chunk1d, pattern1d, nbins=16)
+            I_corr[ind_I] = mutual_information(data_chunk1d, pattern1d, nbins=16)
         else:
             allzeros = 1
             # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
