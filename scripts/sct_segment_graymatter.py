@@ -785,7 +785,7 @@ def main(args=None):
             return img, seg
 
         # the wrapped function
-        grayseg_qc( msct_qc.axial(fname_in, output_filename),qcReport.qc_params.nb_column)
+        grayseg_qc( msct_qc.axial(fname_in, output_filename),qcReport.qc_params.nb_column, qcReport.qc_params.threshold)
 
     printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
 

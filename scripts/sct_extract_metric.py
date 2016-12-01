@@ -1296,6 +1296,9 @@ if __name__ == "__main__":
 
     fname_in = fname_data
 
+    # call main function
+    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)
+
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None
     if '-param-qc' in arguments:
@@ -1307,6 +1310,3 @@ if __name__ == "__main__":
         # Qc_Report generates and contains the useful infos for qc generation
         qcReport = msct_qc.Qc_Report("sct_extract_metrict", qcParams, sys.argv[1:], parser.usage.description)
         msct_qc.Qc_Report.generate_report_for_text(qcReport, fname_output)
-
-    # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)
