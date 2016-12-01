@@ -512,10 +512,10 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
     data2_1d = data2.ravel()
 
     if metric == 'mi':
-        res = calc_MI(data1_1d, data2_1d, normalized=True)
+        res = mutual_information(data1_1d, data2_1d, normalized=True)
         metric_full = 'Mutual information'
     if metric == 'corr':
-        res = calc_corr(data1_1d, data2_1d)
+        res = correlation(data1_1d, data2_1d)
         metric_full = 'Pearson correlation coefficient'
 
     printv('\n'+ metric_full +': ' + str(res), verbose, 'info')
@@ -536,7 +536,7 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
         else:
             pickle.dump(res, open(fname_out, 'w'), protocol=2)
 
-def calc_MI(x, y, nbins=32, normalized=False):
+def mutual_information(x, y, nbins=32, normalized=False):
     """
     Compute mutual information
     :param x:
@@ -553,16 +553,20 @@ def calc_MI(x, y, nbins=32, normalized=False):
     # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
     return mi
 
-def calc_corr(x, y):
+def correlation(x, y, type='pearson'):
     """
-    Compute pearson correlation coeff
+    Compute pearson or spearman correlation coeff
+    Pearson's R is parametric whereas Spearman's R is non parametric (less sensitive)
     :param x:
     :param y:
     :return:
     """
-    from scipy.stats import pearsonr
+    from scipy.stats import pearsonr, spearmanr
 
-    corr = pearsonr(x, y)[0]
+    if type == 'pearson':
+        corr = pearsonr(x, y)[0]
+    if type == 'spearman':
+        corr = spearmanr(x, y)[0]
 
     return corr
 
