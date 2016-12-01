@@ -10,7 +10,7 @@
 # License: see the file LICENSE.TXT
 #########################################################################################
 
-# internal stuff or stuff under development that should not be linked
+# internal stuff or stuff under development that should be accessible in bin/
 FILES_TO_REMOVE="msct_nurbs sct_utils sct_dmri_eddy_correct sct_change_image_type sct_invert_image msct_moco msct_parser msct_smooth sct_denoising_onlm sct_get_centerline"
 
 read  -d '' boiler_plate << EOF

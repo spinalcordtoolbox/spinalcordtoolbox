@@ -55,11 +55,7 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export SCT_DIR=${SCT_DIR%/bin}
   export SCT_PYTHON=${SCT_DIR}/python
   export SCT_VERSION=$(cat $SCT_DIR/version.txt)
-  export SCT_COMMIT=$(cat $SCT_DIR/commit.txt)
-
-  addtopath "${SCT_DIR}/bin" PATH
-#  addtopath "${SCT_DIR}/bin/${SCT_OS}" PATH
-  addtopath ${SCT_DIR}/scripts PYTHONPATH
+  
   export PATH
   export PYTHONPATH
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
@@ -68,17 +64,37 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   # Overwrite parameter with local config
     . ${HOME}/.sctrc
   fi
-  # Will quietely fail if a virtualenv or conda is not used
-  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}  > /dev/null 2>&1
-    echo "--"
-    echo "Spinal Cord Toolbox (version $SCT_VERSION-$SCT_COMMIT)"
-#    echo SCT installed in ${SCT_DIR}
-#    echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
+
+  # Will use system python if conda or virtual env are not used
+  echo ""
+  . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}
+  actication=$?
+  if [[ ${actication} != 0 ]]; then
+    echo [WARNING] using  system python, ${SCT_PYTHON}/bin/activate not found
+  fi
+
+  addtopath "${SCT_DIR}/bin" PATH
+  addtopath ${SCT_DIR}/scripts PYTHONPATH
+
+
+  # display SCT version
+  echo "--"
+  if [ -e ${SCT_DIR}/.git ]; then
+    # retrieve commit
+    SCT_COMMIT=`git --git-dir=${SCT_DIR}/.git rev-parse HEAD`
+    # retrieve branch
+    SCT_BRANCH=`git --git-dir=${SCT_DIR}/.git branch | grep \* | awk '{print $2}'`
+    echo "Spinal Cord Toolbox ($SCT_BRANCH/$SCT_COMMIT)"
+  else
+    echo "Spinal Cord Toolbox (version: $SCT_VERSION)"
+  fi
+#  echo SCT installed in ${SCT_DIR}
+#  echo PYTHON $(which python) $SCT_PYTHON $SCT_DIR
 
 fi
 if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
-  echo "${SCT_DIR}/scripts/${@}"
-  python ${SCT_DIR}/scripts/${@}
+  echo "Running ${SCT_DIR}/scripts/${@}"
+   python ${SCT_DIR}/scripts/${@}
 else
   echo Sourcing sct_laucher in your environement ${SCT_DIR}
 fi

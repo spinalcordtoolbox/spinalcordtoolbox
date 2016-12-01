@@ -12,6 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add flag -owarpinv
+# TODO: if user specified -param, then ignore the default paramreg
 # TODO: check syn with shrink=4
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
 # TODO: testing script for all cases
@@ -38,101 +40,15 @@ import sct_utils as sct
 from msct_parser import Parser
 
 
-# DEFAULT PARAMETERS
-
-class Param:
-    ## The constructor
-    def __init__(self):
-        self.debug = 0
-        self.outSuffix  = "_reg"
-        self.fname_mask = ''
-        self.padding = 5
-        self.path_qc = os.path.abspath(os.curdir)+'/qc/'
-
-# Parameters for registration
-class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz'):
-        self.step = step
-        self.type = type
-        self.algo = algo
-        self.metric = metric
-        self.iter = iter
-        self.shrink = shrink
-        self.smooth = smooth
-        self.laplacian = laplacian
-        self.gradStep = gradStep
-        self.slicewise = slicewise
-        self.init = init
-        self.poly = poly  # slicereg only
-        self.dof = dof  # type=label only
-        # self.window_length = window_length  # str
-        # self.detect_outlier = detect_outlier  # str. detect outliers, for methods slicereg2d_xx
-
-    # update constructor with user's parameters
-    def update(self, paramreg_user):
-        list_objects = paramreg_user.split(',')
-        for object in list_objects:
-            if len(object) < 2:
-                sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
-            obj = object.split('=')
-            setattr(self, obj[0], obj[1])
-
-class ParamregMultiStep:
-    '''
-    This class contains a dictionary with the params of multiple steps
-    '''
-    def __init__(self, listParam=None):
-        if listParam is None:
-            listParam = []
-        self.steps = dict()
-        for stepParam in listParam:
-            if isinstance(stepParam, Paramreg):
-                self.steps[stepParam.step] = stepParam
-            else:
-                self.addStep(stepParam)
-
-    def addStep(self, stepParam):
-        # this function checks if the step is already present. If it is present, it must update it. If it is not, it must add it.
-        param_reg = Paramreg()
-        param_reg.update(stepParam)
-        if param_reg.step != 0:
-            if param_reg.step in self.steps:
-                self.steps[param_reg.step].update(stepParam)
-            else:
-                self.steps[param_reg.step] = param_reg
-        else:
-            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
-
-
-# MAIN
-# ==========================================================================================
-def main(args=None):
-
-    # initialize parameters
-    param = Param()
-
-    if args is None:
-        args = sys.argv[1:]
-
-    # Initialization
-    fname_output = ''
-    fname_mask = param.fname_mask
-    fname_src_seg = ''
-    fname_dest_seg = ''
-    fname_src_label = ''
-    fname_dest_label = ''
-
-    start_time = time.time()
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-
-    # get default registration parameters
-    # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
-    step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5', slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
-    step1 = Paramreg()
-    paramreg = ParamregMultiStep([step0, step1])
-
+def get_parser(paramreg=None):
     # Initialize the parser
+
+    if paramreg is None:
+        step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
+                         slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
+        step1 = Paramreg()
+        paramreg = ParamregMultiStep([step0, step1])
+
     parser = Parser(__file__)
     parser.usage.set_description('This program co-registers two 3D volumes. The deformation is non-rigid and is '
                                  'constrained along Z direction (i.e., axial plane). Hence, this function assumes '
@@ -170,6 +86,14 @@ def main(args=None):
                       type_value="file",
                       description="Labels destination.",
                       mandatory=False)
+    parser.add_option(name='-initwarp',
+                      type_value='file',
+                      description='Initial warping field to apply to the source image.',
+                      mandatory=False)
+    parser.add_option(name='-initwarpinv',
+                      type_value='file',
+                      description='Initial inverse warping field to apply to the destination image (only use if you wish to generate the dest->src warping field).',
+                      mandatory=False)
     parser.add_option(name="-m",
                       type_value="file",
                       description="Mask that can be created with sct_create_mask to improve accuracy over region of interest. "
@@ -181,12 +105,16 @@ def main(args=None):
                       description="Name of output file.",
                       mandatory=False,
                       example="src_reg.nii.gz")
+    parser.add_option(name='-owarp',
+                      type_value="file_output",
+                      description="Name of output forward warping field.",
+                      mandatory=False)
     parser.add_option(name="-param",
-                      type_value=[[':'],'str'],
+                      type_value=[[':'], 'str'],
                       description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
                                   "step: <int> Step number (starts at 1, except for type=label).\n"
                                   "type: {im,seg,label} type of data used for registration. Use type=label only at step=0.\n"
-                                  "algo: Default="+paramreg.steps['1'].algo+"\n"
+                                  "algo: Default=" + paramreg.steps['1'].algo + "\n"
                                   "  translation: translation in X-Y plane (2dof)\n"
                                   "  rigid: translation + rotation in X-Y plane (4dof)\n"
                                   "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
@@ -196,19 +124,20 @@ def main(args=None):
                                   "  centermass: slicewise center of mass alignment (seg only).\n"
                                   "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
                                   "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
-                                  # "  landmark: Landmark-based affine registration (Tx,Ty,Tz,Rx,Ry,Sz). Requires at least two landmarks per image.\n"
-                                  "slicewise: <int> Slice-by-slice 2d transformation. Default="+paramreg.steps['1'].slicewise+"\n"
-                                  "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
-                                  "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
-                                  "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default="+paramreg.steps['1'].shrink+"\n"
-                                  "smooth: <int> Smooth factor. Default="+paramreg.steps['1'].smooth+"\n"
-                                  "laplacian: <int> Laplacian filter. Default="+paramreg.steps['1'].laplacian+"\n"
-                                  "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
+                                  "slicewise: <int> Slice-by-slice 2d transformation. Default=" + paramreg.steps['1'].slicewise + "\n"
+                                  "metric: {CC,MI,MeanSquares}. Default=" + paramreg.steps['1'].metric + "\n"
+                                  "iter: <int> Number of iterations. Default=" + paramreg.steps['1'].iter + "\n"
+                                  "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default=" + paramreg.steps['1'].shrink + "\n"
+                                  "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" + paramreg.steps['1'].smooth + "\n"
+                                  "laplacian: <int> Laplacian filter. Default=" + paramreg.steps['1'].laplacian + "\n"
+                                  "gradStep: <float> Gradient step. Default=" + paramreg.steps['1'].gradStep + "\n"
                                   "init: <int> Initial translation alignment based on:\n"
                                   "  geometric: Geometric center of images\n"
                                   "  centermass: Center of mass of images\n"
                                   "  origin: Physical origin of images\n"
-                                  "poly: <int> Polynomial degree of regularization (only for slicereg and centermassrot). Default="+paramreg.steps['1'].poly+"\n"
+                                  "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" +paramreg.steps['1'].poly + "\n"
+                                  "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +paramreg.steps['1'].smoothWarpXY + "\n"
+                                  "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" +paramreg.steps['1'].pca_eigenratio_th + "\n"
                                   "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" + paramreg.steps['0'].dof + "\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
@@ -222,13 +151,18 @@ def main(args=None):
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
                       mandatory=False,
-                      default_value=param.padding)
+                      default_value=Param().padding)
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="""Final interpolation.""",
                       mandatory=False,
                       default_value='linear',
                       example=['nn', 'linear', 'spline'])
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="Output folder",
+                      mandatory=False,
+                      example='reg_results/')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -241,6 +175,106 @@ def main(args=None):
                       mandatory=False,
                       default_value='1',
                       example=['0', '1', '2'])
+
+    return parser
+
+
+# DEFAULT PARAMETERS
+
+class Param:
+    ## The constructor
+    def __init__(self):
+        self.debug = 0
+        self.outSuffix  = "_reg"
+        self.padding = 5
+        self.path_qc = os.path.abspath(os.curdir)+'/qc/'
+
+# Parameters for registration
+class Paramreg(object):
+    def __init__(self, step='1', type='', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
+        self.step = step
+        self.type = type
+        self.algo = algo
+        self.metric = metric
+        self.iter = iter
+        self.shrink = shrink
+        self.smooth = smooth
+        self.laplacian = laplacian
+        self.gradStep = gradStep
+        self.slicewise = slicewise
+        self.init = init
+        self.poly = poly  # only for algo=slicereg
+        self.dof = dof  # only for type=label
+        self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
+        self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
+
+    # update constructor with user's parameters
+    def update(self, paramreg_user):
+        list_objects = paramreg_user.split(',')
+        for object in list_objects:
+            if len(object) < 2:
+                sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], obj[1])
+
+class ParamregMultiStep:
+    '''
+    This class contains a dictionary with the params of multiple steps
+    '''
+    def __init__(self, listParam=[]):
+        self.steps = dict()
+        for stepParam in listParam:
+            if isinstance(stepParam, Paramreg):
+                self.steps[stepParam.step] = stepParam
+            else:
+                self.addStep(stepParam)
+
+    def addStep(self, stepParam):
+        # this function checks if the step is already present. If it is present, it must update it. If it is not, it must add it.
+        param_reg = Paramreg()
+        param_reg.update(stepParam)
+        if param_reg.step != 0:
+            if param_reg.step in self.steps:
+                self.steps[param_reg.step].update(stepParam)
+            else:
+                self.steps[param_reg.step] = param_reg
+        else:
+            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
+        if int(param_reg.step) != 0 and param_reg.type not in ['im', 'seg']:
+            sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
+
+
+
+# MAIN
+# ==========================================================================================
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
+    # initialize parameters
+    param = Param()
+
+    # Initialization
+    fname_output = ''
+    path_out = ''
+    fname_src_seg = ''
+    fname_dest_seg = ''
+    fname_src_label = ''
+    fname_dest_label = ''
+    generate_warpinv = 1
+
+    start_time = time.time()
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+
+    # get default registration parameters
+    # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
+    step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5', slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
+    step1 = Paramreg()
+    paramreg = ParamregMultiStep([step0, step1])
+
+    parser = get_parser(paramreg=paramreg)
+
     arguments = parser.parse(args)
 
     # get arguments
@@ -256,14 +290,31 @@ def main(args=None):
         fname_dest_label = arguments['-dlabel']
     if '-o' in arguments:
         fname_output = arguments['-o']
-    if "-m" in arguments:
+    if '-ofolder' in arguments:
+        path_out = arguments['-ofolder']
+    if '-owarp' in arguments:
+        fname_output_warp = arguments['-owarp']
+    else:
+        fname_output_warp = ''
+    if '-initwarp' in arguments:
+        fname_initwarp = os.path.abspath(arguments['-initwarp'])
+    else:
+        fname_initwarp = ''
+    if '-initwarpinv' in arguments:
+        fname_initwarpinv = os.path.abspath(arguments['-initwarpinv'])
+    else:
+        fname_initwarpinv = ''
+    if '-m' in arguments:
         fname_mask = arguments['-m']
+    else:
+        fname_mask = ''
     padding = arguments['-z']
     if "-param" in arguments:
         paramreg_user = arguments['-param']
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
+
     identity = int(arguments['-identity'])
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
@@ -273,6 +324,7 @@ def main(args=None):
     print '\nInput parameters:'
     print '  Source .............. '+fname_src
     print '  Destination ......... '+fname_dest
+    print '  Init transfo ........ '+fname_initwarp
     print '  Mask ................ '+fname_mask
     print '  Output name ......... '+fname_output
     # print '  Algorithm ........... '+paramreg.algo
@@ -304,11 +356,12 @@ def main(args=None):
 
     # define output folder and file name
     if fname_output == '':
-        path_out = ''  # output in user's current directory
+        path_out = '' if not path_out else path_out  # output in user's current directory
         file_out = file_src+"_reg"
         ext_out = ext_src
     else:
-        path_out, file_out, ext_out = sct.extract_fname(fname_output)
+        path, file_out, ext_out = sct.extract_fname(fname_output)
+        path_out = path if not path_out else path_out
 
     # create QC folder
     sct.create_folder(param.path_qc)
@@ -355,10 +408,27 @@ def main(args=None):
     # sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
     # if segmentation, also do it for seg
 
-    # loop across registration steps
+    # initialize list of warping fields
     warp_forward = []
     warp_inverse = []
-    for i_step in range(0, len(paramreg.steps)):
+
+    # initial warping is specified, update list of warping fields and skip step=0
+    if fname_initwarp:
+        sct.printv('\nSkip step=0 and replace with initial transformations: ', param.verbose)
+        sct.printv('  '+fname_initwarp, param.verbose)
+        # sct.run('cp '+fname_initwarp+' warp_forward_0.nii.gz', verbose)
+        warp_forward = [fname_initwarp]
+        start_step = 1
+        if fname_initwarpinv:
+            warp_inverse = [fname_initwarpinv]
+        else:
+            sct.printv('\nWARNING: No initial inverse warping field was specified, therefore the inverse warping field will NOT be generated.', param.verbose, 'warning')
+            generate_warpinv = 0
+    else:
+        start_step = 0
+
+    # loop across registration steps
+    for i_step in range(start_step, len(paramreg.steps)):
         sct.printv('\n--\nESTIMATE TRANSFORMATION FOR STEP #'+str(i_step), param.verbose)
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
@@ -402,11 +472,17 @@ def main(args=None):
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
+    # generate: src_reg
     fname_src2dest = sct.generate_output_file(path_tmp+'src_reg.nii', path_out+file_out+ext_out, verbose)
-    sct.generate_output_file(path_tmp+'warp_src2dest.nii.gz', path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz', verbose)
-    fname_dest2src = sct.generate_output_file(path_tmp+'dest_reg.nii', path_out+file_dest+'_reg'+ext_dest, verbose)
-    sct.generate_output_file(path_tmp+'warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
-    # sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_dest2src.nii.gz')
+    # generate: forward warping field
+    if fname_output_warp == '':
+        fname_output_warp = path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz'
+    sct.generate_output_file(path_tmp+'warp_src2dest.nii.gz', fname_output_warp, verbose)
+    if generate_warpinv:
+        # generate: dest_reg
+        fname_dest2src = sct.generate_output_file(path_tmp+'dest_reg.nii', path_out+file_dest+'_reg'+ext_dest, verbose)
+        # generate: inverse warping field
+        sct.generate_output_file(path_tmp+'warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
 
     # Delete temporary files
     if remove_temp_files:
@@ -418,7 +494,8 @@ def main(args=None):
     sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
     sct.printv('\nTo view results, type:', verbose)
     sct.printv('fslview '+fname_dest+' '+fname_src2dest+' &', verbose, 'info')
-    sct.printv('fslview '+fname_src+' '+fname_dest2src+' &\n', verbose, 'info')
+    if generate_warpinv:
+        sct.printv('fslview '+fname_src+' '+fname_dest2src+' &\n', verbose, 'info')
 
 
 
@@ -446,6 +523,7 @@ def register(src, dest, paramreg, param, i_step_str):
     sct.printv('  init ........... '+paramreg.steps[i_step_str].init, param.verbose)
     sct.printv('  poly ........... '+paramreg.steps[i_step_str].poly, param.verbose)
     sct.printv('  dof ............ '+paramreg.steps[i_step_str].dof, param.verbose)
+    sct.printv('  smoothWarpXY ... '+paramreg.steps[i_step_str].smoothWarpXY, param.verbose)
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
@@ -626,7 +704,12 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_forward_out = 'step' + i_step_str + '0GenericAffine.txt'
         warp_inverse_out = '-step' + i_step_str + '0GenericAffine.txt'
         from msct_register_landmarks import register_landmarks
-        register_landmarks(src, dest, paramreg.steps[i_step_str].dof, fname_affine=warp_forward_out, verbose=param.verbose)
+        register_landmarks(src,
+                           dest,
+                           paramreg.steps[i_step_str].dof,
+                           fname_affine=warp_forward_out,
+                           verbose=param.verbose,
+                           path_qc=param.path_qc)
 
     if not os.path.isfile(warp_forward_out):
         # no forward warping field for rigid and affine

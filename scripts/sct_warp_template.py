@@ -135,9 +135,9 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     # read label file and check if file exists
     sct.printv('\nRead label file...', param.verbose)
     try:
-        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label + folder_label, file_label)
-    except:
-        sct.printv('\nWARNING: Cannot warp label: '+folder_label, 1, 'warning')
+        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = read_label_file(path_label + folder_label, file_label)
+    except Exception as error:
+        sct.printv('\nWARNING: Cannot warp label '+folder_label+': '+str(error), 1, 'warning')
         # raise
     # try:
     #     template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label+folder_label, file_label)

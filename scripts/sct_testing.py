@@ -43,7 +43,7 @@ class bcolors:
 # status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.download = 0
         self.path_data = 'sct_testing_data/'
@@ -53,17 +53,17 @@ class Param:
         self.verbose = 1
         # self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
         self.path_tmp = ""
-param = Param()
 
 
 # START MAIN
 # ==========================================================================================
 def main(args=None):
-
     if args is None:
         args = sys.argv[1:]
 
-    parser = get_parser()
+    param = Param()
+    # get parser
+    parser = get_parser(param)
     arguments = parser.parse(args)
 
     if '-d' in arguments:
@@ -91,7 +91,7 @@ def main(args=None):
 
     # check existence of testing data folder
     if not os.path.isdir(param.path_data) or param.download:
-        downloaddata()
+        downloaddata(param)
 
     # display path to data
     sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
@@ -107,10 +107,10 @@ def main(args=None):
 
     # loop across all functions and test them
     status = []
-    [status.append(test_function(f)) for f in functions if function_to_test == f]
+    [status.append(test_function(f, param)) for f in functions if function_to_test == f]
     if not status:
         for f in functions:
-            status.append(test_function(f))
+            status.append(test_function(f, param))
     print 'status: '+str(status)
 
     # display elapsed time
@@ -130,9 +130,11 @@ def main(args=None):
     sys.exit(e)
 
 
-def downloaddata():
+def downloaddata(param):
     sct.printv('\nDownloading testing data...', param.verbose)
-    sct.run('sct_download_data -d sct_testing_data')
+    import sct_download_data
+    sct_download_data.main(['-d', 'sct_testing_data'])
+    # sct.run('sct_download_data -d sct_testing_data')
 
 
 # list of all functions to test
@@ -166,10 +168,10 @@ def fill_functions():
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
     functions.append('sct_register_graymatter')
-    functions.append('sct_segment_graymatter')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
     functions.append('sct_resample')
+    functions.append('sct_segment_graymatter')
     functions.append('sct_smooth_spinalcord')
     functions.append('sct_straighten_spinalcord')
     functions.append('sct_warp_template')
@@ -217,7 +219,9 @@ def write_to_log_file(fname_log, string, mode='w'):
         os.makedirs(path_logs_dir)
     """
 
-    string = "{0}\n{1}{2}".format(time.strftime("%y%m%d%H%M%S"), fname_log, string)
+    string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
+             + fname_log \
+             + string
     # open file
     try:
         f = open(fname_log, mode)
@@ -229,7 +233,7 @@ def write_to_log_file(fname_log, string, mode='w'):
 
 # test function
 # ==========================================================================================
-def test_function(script_name):
+def test_function(script_name, param):
     # if script_name == 'test_debug':
     #     return test_debug()  # JULIEN
     # else:
@@ -268,7 +272,7 @@ def test_function(script_name):
     # return
     return status
 
-def get_parser():
+def get_parser(param):
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
@@ -298,6 +302,4 @@ def get_parser():
 
 
 if __name__ == "__main__":
-    # initialize parameters
-    # call main function
     main()
