@@ -339,7 +339,6 @@ def usage():
         '  -i <anat>                   straight anatomic (generated with sct_straighted_spinalcord).\n' \
         '  -l <anat_labels>         anatomical landmarks.\n' \
         '  -m <anat_seg>         anatomical landmarks.\n' \
-
         '  -t <template>               template.\n' \
         '  -f <landmarks_template>     template landmarks (should match the anatomical landmarks).\n' \
         '\n'\

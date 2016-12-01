@@ -3,36 +3,16 @@ include *.sh
 include *.txt
 include LICENSE
 include install_sct
-recursive-include dev *.1
-recursive-include dev *.cpp
-recursive-include dev *.css
-recursive-include dev *.cxx
-recursive-include dev *.gz
-recursive-include dev *.h
-recursive-include dev *.html
-recursive-include dev *.hxx
-recursive-include dev *.iml
-recursive-include dev *.js
-recursive-include dev *.key
-recursive-include dev *.m
-recursive-include dev *.mat
-recursive-include dev *.md
-recursive-include dev *.name
-recursive-include dev *.png
+recursive-include bin isct_*
 recursive-include dev *.py
 recursive-include dev *.pyx
 recursive-include dev *.rtf
 recursive-include dev *.sh
 recursive-include dev *.txt
 recursive-include dev *.xml
-recursive-include documentation *.key
-recursive-include documentation *.png
-recursive-include flirtsch *.md
-recursive-include flirtsch *.sch
 recursive-include install *.py
 recursive-include install *.sh
 recursive-include install *.txt
-recursive-include issues *.sh
 recursive-include scripts *.py
 recursive-include scripts *.sh
 recursive-include testing *.py
