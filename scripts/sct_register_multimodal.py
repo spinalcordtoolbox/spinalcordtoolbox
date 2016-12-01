@@ -233,13 +233,17 @@ class ParamregMultiStep:
         # this function checks if the step is already present. If it is present, it must update it. If it is not, it must add it.
         param_reg = Paramreg()
         param_reg.update(stepParam)
-        if param_reg.step != 0:
+        # step is mandatory
+        if param_reg.step == '':
+            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
+        elif param_reg.step != 0:
             if param_reg.step in self.steps:
                 self.steps[param_reg.step].update(stepParam)
             else:
                 self.steps[param_reg.step] = param_reg
         else:
             sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
+        # type is mandatory
         if int(param_reg.step) != 0 and param_reg.type not in ['im', 'seg']:
             sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
 
