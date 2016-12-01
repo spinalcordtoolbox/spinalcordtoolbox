@@ -296,18 +296,19 @@ class Qc(object):
     def listed_seg(self, mask):
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         plt.imshow(img, cmap=col.ListedColormap(self._labels_color), norm=
-        matplotlib.colors.Normalize(vmin=0, vmax=len(self._labels_color)), interpolation=self.interpolation, alpha=1)
+        matplotlib.colors.Normalize(vmin=0, vmax=len(self._labels_color)),
+                   interpolation=self.interpolation, alpha=1, aspect=float(self.aspect_mask))
         return self.qc_report.img_base_name
 
     def no_seg_seg(self, mask):
         img = np.rint(np.ma.masked_where(mask == 0, mask))
-        plt.imshow(img, cmap=cm.gray, interpolation=self.interpolation)
+        plt.imshow(img, cmap=cm.gray, interpolation=self.interpolation, aspect=self.aspect_mask)
         return self.qc_report.img_base_name
 
     def sequential_seg(self, mask):
         seg = mask
         seg = np.ma.masked_where(seg == 0, seg)
-        plt.imshow(seg, cmap=self._seg_colormap, interpolation=self.interpolation)
+        plt.imshow(seg, cmap=self._seg_colormap, interpolation=self.interpolation, aspect=self.aspect_mask)
         return self.qc_report.img_base_name
 
     def label_vertebrae(self, mask):
@@ -352,6 +353,8 @@ class Qc(object):
             assert isinstance(steak,Steak)
             print steak.get_name()# TODO: aplr name of the view (axial/sagittal/...)
 
+            aspect_img,  self.aspect_mask = steak.aspect()
+
             rootFolderPath, leafNodeFullPath = self.qc_report.mkdir()
             img, mask = f(steak, *args)
             assert isinstance(img, np.ndarray)
@@ -359,7 +362,7 @@ class Qc(object):
 
             # Make original plot
             plt.figure(1)
-            fig = plt.imshow(img, cmap=cm.gray, interpolation=self.interpolation)
+            fig = plt.imshow(img, cmap=cm.gray, interpolation=self.interpolation, aspect= float(aspect_img))
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
 
@@ -408,10 +411,12 @@ class Steak(object):
 
     def __init__(self, imageName, segImageName):
         # type: (object, object) -> object
-        self.image = Image(imageName)  # the original input
-        self.image_seg = Image(segImageName)  # transformed input the one segmented
-        self.image.change_orientation('SAL')  # reorient to SAL
-        self.image_seg.change_orientation('SAL')  # reorient to SAL
+        image = Image(imageName)  # the original input
+        image_seg = Image(segImageName)  # transformed input the one segmented
+        image.change_orientation('SAL')  # reorient to SAL
+        image_seg.change_orientation('SAL')  # reorient to SAL
+        self.image = image
+        self.image_seg = image_seg
 
     __metaclass__ = abc.ABCMeta
 
@@ -427,6 +432,11 @@ class Steak(object):
         return nx
 
     @staticmethod
+    def axial_aspect(image):
+        nx,ny,nz,nt,px,py,pz,pt = image.dim
+        return py/pz
+
+    @staticmethod
     def sagittal_slice(data, i):
         return data[:, :, i]
 
@@ -436,6 +446,11 @@ class Steak(object):
         return nz
 
     @staticmethod
+    def sagittal_aspect(image):
+        nx,ny,nz,nt,px,py,pz,pt = image.dim
+        return px / py
+
+    @staticmethod
     def coronal_slice(data, i):
         return data[:, i, :]
 
@@ -443,6 +458,15 @@ class Steak(object):
     def coronal_dim(image):
         nx, ny, nz, nt, px, py, pz, pt = image.dim
         return ny
+
+    @staticmethod
+    def coronal_aspect(image):
+        nx,ny,nz,nt,px,py,pz,pt = image.dim
+        return px / pz
+
+    @abc.abstractmethod
+    def get_aspect(self, image):
+        return
 
     @staticmethod
     def crop(matrix, center_x, center_y, radius_x, radius_y):
@@ -558,7 +582,6 @@ class Steak(object):
 
         return matrix0, matrix1
 
-    # @Qc(label= True,interpolation='nearest')
     def single(self):
         """
         Method to obtain matrices of the single slices
@@ -578,6 +601,9 @@ class Steak(object):
 
         return matrix0, matrix1
 
+    def aspect(self):
+        return self.get_aspect(self.image),self.get_aspect(self.image_seg)
+
 
 """
 The following classes (axial, sagittal, coronal) inherits from the class "Steak" and represents a cut in an axis
@@ -585,6 +611,9 @@ The following classes (axial, sagittal, coronal) inherits from the class "Steak"
 class axial(Steak):
     def get_name(self):
         return axial.__name__
+
+    def get_aspect(self, image):
+        return Steak.axial_aspect(image)
 
     def getSlice(self, data, i):
         return self.axial_slice(data, i)
@@ -605,6 +634,9 @@ class sagittal(Steak):
     def get_name(self):
         return sagittal.__name__
 
+    def get_aspect(self, image):
+        return Steak.sagittal_aspect(image)
+
     def getSlice(self, data, i):
         return self.sagittal_slice(data, i)
 
@@ -616,15 +648,19 @@ class sagittal(Steak):
         return y
 
     def get_center(self):
+        dim = self.getDim(self.image_seg)
         size_y = self.axial_dim(self.image_seg)
         size_x = self.coronal_dim(self.image_seg)
-        return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
+        return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
 
 
 class coronal(Steak):
 
     def get_name(self):
         return coronal.__name__
+
+    def get_aspect(self, image):
+        return Steak.coronal_aspect(image)
 
     def getSlice(self, data, i):
         return self.coronal_slice(data, i)
@@ -637,9 +673,10 @@ class coronal(Steak):
         return x
 
     def get_center(self):
+        dim = self.getDim(self.image_seg)
         size_y = self.axial_dim(self.image_seg)
         size_x = self.sagittal_dim(self.image_seg)
-        return np.ones(self.dim) * size_x / 2, np.ones(self.dim) * size_y / 2
+        return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
 
 
 class template_axial(axial):
