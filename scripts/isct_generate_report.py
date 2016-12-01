@@ -26,10 +26,10 @@ def generate_report(description, syntax, report_dir, show_report, subject_name=N
     :return:
     """
     # create new  or get instance of  the report object
-    sct_report = report.Report(report_exists(report_dir), report_dir)
+    sct_report = report.Report(report_exists(report_dir), report_dir, subject_name)
 
     # create sct_report_item
-    sct_report_item = report_item.ReportItem(report_dir, syntax, description, subject_name, cross)
+    sct_report_item = report_item.ReportItem(report_dir, syntax, description, cross)
 
     # append  item to a new or existing report
     sct_report.append_item(sct_report_item)

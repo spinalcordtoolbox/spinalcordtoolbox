@@ -8,7 +8,7 @@
 <body>
 <div id="head" class="container-fluid body">
     <!-- Generate this title depending on the html of the contraste (Goes with the result section) -->
-    <div class="text-center text-primary"><strong> {{syntax}} </strong></div>
+    <div class="text-center text-primary"><small> {{syntax}} </small></div>
     <a id="toggleDescription" class=" btn btn-default btn-sm">Show description</a>
     <pre class="text-justify" id="description">
         <span id="description-content">{{description}}</span>
@@ -30,6 +30,9 @@
         <li class="list-group-item">
             <!--TODO-->
             <img id="gif_image" alt="Image not found" style="width:100%"/>
+            {%if cross%}
+            <img id="cross" src="assets/aplr/{{cross}}.png">
+            {% endif %}
             <div id="gif_image_names">
                 {% for img in images %}
                 <a href="{{img.src}}" target="_blank" class="text-center text-primary">{{img.name}} </a>
@@ -41,8 +44,8 @@
 
         {% for txt in texts %}
         <pre class="text-justify">
-                <span>{{txt.content}}</span>
-                </pre>
+        <span>{{txt.content}}</span>
+        </pre>
         <h5 class="text-center text-primary">{{txt.name}}</h5>
         {% endfor %}
         {% if color_bar %}

@@ -17,13 +17,13 @@ import msct_report_item as report_item
 
 
 class Report:
-    def __init__(self, exists, report_dir):
+    def __init__(self, exists, report_dir, subject_name):
         # constants
         self.templates_dir_name = "qc_templates"
         self.assets_dir_name = "assets"
         self.contrast_tool_file_name = "contrast_tool.html"
         self.index_file_name = "index.html"
-
+        self.subject_name = subject_name
         self.dir = os.path.dirname(os.path.realpath(__file__))
         self.report_folder = report_dir
         self.templates_dir_link = os.path.join(self.dir, '..', self.templates_dir_name)
@@ -114,6 +114,7 @@ class Report:
         file_link = os.path.join(self.report_folder, self.index_file_name)
         tags = {
             'links': self.__get_menu_links__(),
-            'idToPreload': self.__get_last_created__()
+            'idToPreload': self.__get_last_created__(),
+            'subject_name': self.subject_name
         }
         msct_report_util.createHtmlFile(self.templates_dir_link, self.index_file_name, file_link, tags)
