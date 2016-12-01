@@ -177,7 +177,7 @@ def get_parser():
                       default_value=str(Param().verbose))
     parser.add_option(name="-param-qc",
                       type_value=[[','], 'str'],
-                      description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate", "ncol"]),
+                      description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate", "ncol", "thresh"]),
                       mandatory=False)
     return parser
 
