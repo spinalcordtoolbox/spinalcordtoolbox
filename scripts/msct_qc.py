@@ -105,7 +105,7 @@ class Qc_Params(object):
         :param list_params: string of the available parameters of the param-qc arg.
         :return: the description text to show
         """
-        param_description = "Specify conditions under which the Qc report should be generated."
+        param_description = "Specify conditions under which the Qc report should be generated. Parameters are separated by ','."
 
         for param in list_params:
             if param == "ofolder":
