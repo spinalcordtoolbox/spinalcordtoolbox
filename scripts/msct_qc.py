@@ -32,7 +32,6 @@ import glob
 import shutil
 
 
-
 class Qc_Params(object):
     """
     Parses and stores the variables that can be provides as arguments in the Terminal
@@ -54,6 +53,7 @@ class Qc_Params(object):
         # "if qcParams is None or qcParams.generate_report is True:"
         # it must be done after parsing arguments.
         self.generate_report = True
+        self.threshold = 0.5
 
         # settings up the parameters
         if params_qc is not None or params_qc == "":
@@ -85,6 +85,8 @@ class Qc_Params(object):
                     self.show_report = True
                 elif params[0] == "generate" and int(params[1]) == 0:
                     self.generate_report = False
+                elif params[0] == "thresh":
+                    self.threshold = float(params[1])
                 else:
                     sct.printv("-param-qc parameter '{}' is not valid...".format(params[0]), 1, type='warning')
 
@@ -114,6 +116,8 @@ class Qc_Params(object):
                 param_description += "\n:autoview={open report after generation (yes=1, no=0), default: 0.}"
             elif param == "generate":
                 param_description += "\n:generate={generate report (yes=1, no=0), default: 1.}"
+            elif param == "thresh":
+                param_description += "\n:thresh={threshold of the colorbar (0.0 to 1.0), default: 0.5.}"
             else:
                 param_description += ""
 
