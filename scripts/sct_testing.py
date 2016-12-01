@@ -43,7 +43,7 @@ class bcolors:
 # status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
 
-class param:
+class Param:
     def __init__(self):
         self.download = 0
         self.path_data = 'sct_testing_data/'
@@ -61,8 +61,9 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
+    param = Param()
     # get parser
-    parser = get_parser()
+    parser = get_parser(param)
     arguments = parser.parse(args)
 
     if '-d' in arguments:
@@ -102,14 +103,14 @@ def main(args=None):
     os.chdir(param.path_tmp)
 
     # get list of all scripts to test
-    functions = fill_functions()
+    functions = fill_functions()[:1]
 
     # loop across all functions and test them
     status = []
-    [status.append(test_function(f)) for f in functions if function_to_test == f]
+    [status.append(test_function(f, param)) for f in functions if function_to_test == f]
     if not status:
         for f in functions:
-            status.append(test_function(f))
+            status.append(test_function(f, param))
     print 'status: '+str(status)
 
     # display elapsed time
@@ -133,47 +134,42 @@ def downloaddata():
     sct.printv('\nDownloading testing data...', param.verbose)
     import sct_download_data
     sct_download_data.main(['-d', 'sct_testing_data'])
-    # sct.run('sct_download_data -d sct_testing_data')
 
 
-# list of all functions to test
-# ==========================================================================================
 def fill_functions():
-    functions = []
-    functions.append('sct_apply_transfo')
-    # functions.append('sct_check_atlas_integrity')
-    functions.append('sct_compute_mtr')
-    functions.append('sct_concat_transfo')
-    functions.append('sct_convert')
-    #functions.append('sct_convert_binary_to_trilinear')  # not useful
-    functions.append('sct_create_mask')
-    functions.append('sct_crop_image')
-    functions.append('sct_dmri_compute_dti')
-    functions.append('sct_dmri_create_noisemask')
-    functions.append('sct_dmri_get_bvalue')
-    functions.append('sct_dmri_transpose_bvecs')
-    functions.append('sct_dmri_moco')
-    functions.append('sct_dmri_separate_b0_and_dwi')
-    functions.append('sct_documentation')
-    functions.append('sct_extract_metric')
-    # functions.append('sct_flatten_sagittal')
-    functions.append('sct_fmri_compute_tsnr')
-    functions.append('sct_fmri_moco')
-    # functions.append('sct_get_centerline')
-    functions.append('sct_image')
-    functions.append('sct_label_utils')
-    functions.append('sct_label_vertebrae')
-    functions.append('sct_maths')
-    functions.append('sct_process_segmentation')
-    functions.append('sct_propseg')
-    functions.append('sct_register_graymatter')
-    functions.append('sct_register_multimodal')
-    functions.append('sct_register_to_template')
-    functions.append('sct_resample')
-    functions.append('sct_segment_graymatter')
-    functions.append('sct_smooth_spinalcord')
-    functions.append('sct_straighten_spinalcord')
-    functions.append('sct_warp_template')
+    """Return the list commands to test"""
+    functions = [
+        'sct_apply_transfo',
+        'sct_compute_mtr',
+        'sct_concat_transfo',
+        'sct_convert',
+        'sct_create_mask',
+        'sct_crop_image',
+        'sct_dmri_compute_dti',
+        'sct_dmri_create_noisemask',
+        'sct_dmri_get_bvalue',
+        'sct_dmri_transpose_bvecs',
+        'sct_dmri_moco',
+        'sct_dmri_separate_b0_and_dwi',
+        'sct_documentation',
+        'sct_extract_metric',
+        'sct_fmri_compute_tsnr',
+        'sct_fmri_moco',
+        'sct_image',
+        'sct_label_utils',
+        'sct_label_vertebrae',
+        'sct_maths',
+        'sct_process_segmentation',
+        'sct_propseg',
+        'sct_register_graymatter',
+        'sct_register_multimodal',
+        'sct_register_to_template',
+        'sct_resample',
+        'sct_segment_graymatter',
+        'sct_smooth_spinalcord',
+        'sct_straighten_spinalcord',
+        'sct_warp_template',
+    ]
     return functions
 
 
@@ -232,7 +228,7 @@ def write_to_log_file(fname_log, string, mode='w'):
 
 # test function
 # ==========================================================================================
-def test_function(script_name):
+def test_function(script_name, param):
     # if script_name == 'test_debug':
     #     return test_debug()  # JULIEN
     # else:
@@ -271,7 +267,7 @@ def test_function(script_name):
     # return
     return status
 
-def get_parser():
+def get_parser(param):
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
@@ -301,7 +297,4 @@ def get_parser():
 
 
 if __name__ == "__main__":
-    # initialize parameters
-    param = param()
-    # call main function
     main()
