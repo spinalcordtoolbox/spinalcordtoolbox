@@ -329,12 +329,11 @@ def main(args=None):
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
         def label_vertebrae_qc(steak):
             """
-
-            :param slice:
+            :param steak:
             :return:
             """
             img, mask = steak.single()
-            img = np.clip(img,np.percentile(img,10),np.percentile(img,90))
+            img = np.clip(img, np.percentile(img, 10), np.percentile(img, 90))
             return img, mask
 
         label_vertebrae_qc(msct_qc.sagittal(fname_in, output_filename))
