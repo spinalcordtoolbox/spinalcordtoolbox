@@ -507,6 +507,14 @@ def laplacian(data, sigmas):
     # return laplace(data.astype(float))
 
 def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
+    '''
+    Compute a similarity metric between two images data
+    :param data1: numpy.array 3D data
+    :param data2: numpy.array 3D data
+    :param fname_out: file name of the output file. Output file should be either a text file ('.txt') or a pickle file ('.pkl', '.pklz' or '.pickle')
+    :param metric: 'mi' for mutual information or 'corr' for pearson correlation coefficient
+    :return: None
+    '''
     assert data1.size == data2.size, "\n\nERROR: the data don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
     data1_1d = data1.ravel()
     data2_1d = data2.ravel()
@@ -539,10 +547,10 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
 def mutual_information(x, y, nbins=32, normalized=False):
     """
     Compute mutual information
-    :param x:
-    :param y:
-    :param nbins:
-    :return:
+    :param x: 1D numpy.array : flatten data from an image
+    :param y: 1D numpy.array : flatten data from an image
+    :param nbins: number of bins to compute the contingency matrix (only used if normalized=False)
+    :return: float non negative value : mutual information
     """
     from sklearn.metrics import normalized_mutual_info_score, mutual_info_score
     if normalized:
@@ -557,9 +565,10 @@ def correlation(x, y, type='pearson'):
     """
     Compute pearson or spearman correlation coeff
     Pearson's R is parametric whereas Spearman's R is non parametric (less sensitive)
-    :param x:
-    :param y:
-    :return:
+    :param x: 1D numpy.array : flatten data from an image
+    :param y: 1D numpy.array : flatten data from an image
+    :param type: str:  'pearson' or 'spearman': type of R correlation coeff to compute
+    :return: float value : correlation coefficient (between -1 and 1)
     """
     from scipy.stats import pearsonr, spearmanr
 
