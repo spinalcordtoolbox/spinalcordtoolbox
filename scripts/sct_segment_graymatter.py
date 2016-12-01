@@ -772,15 +772,15 @@ def main(args=None):
         qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description)
 
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
-        def grayseg_qc(steak, nb_column, thr = 0.5):
+        def grayseg_qc(sct_slice, nb_column, thr = 0.5):
             """
-            :param steak:
+            :param sct_slice:
             :param nb_column:
             :param thr: threshold to apply to the segmentation
             :return:
             """
             # Chosen axe to generate image
-            img, seg = steak.mosaic(nb_column=nb_column)
+            img, seg = sct_slice.mosaic(nb_column=nb_column)
             seg[seg < thr] = 0
             return img, seg
 

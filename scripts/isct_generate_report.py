@@ -25,7 +25,6 @@ def generate_report(description, syntax, report_dir, show_report, subject_name=N
     :param cross: cross file name(sagital or axial)
     :return:
     """
-    print subject_name,cross ,"TESTTSTEETETTET"
     # create new  or get instance of  the report object
     sct_report = report.Report(report_exists(report_dir), report_dir)
 

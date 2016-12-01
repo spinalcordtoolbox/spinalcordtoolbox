@@ -349,14 +349,14 @@ if __name__ == "__main__":
 
         # Create the Qc object that creates the images files to provide to the HTML
         @msct_qc.Qc(qcReport)
-        def propseg_qc(steak, nb_column):
+        def propseg_qc(sct_slice, nb_column):
             """
-            :param steak:
+            :param sct_slice:
             :param nb_column: git
             :return:
             """
             # Chosen axe to generate image
-            return steak.mosaic(nb_column=nb_column)
+            return sct_slice.mosaic(nb_column=nb_column)
 
         propseg_qc(msct_qc.axial(input_filename, output_filename), qcReport.qc_params.nb_column)
 

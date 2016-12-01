@@ -327,12 +327,12 @@ def main(args=None):
         qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description)
 
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
-        def label_vertebrae_qc(steak):
+        def label_vertebrae_qc(sct_slice):
             """
-            :param steak:
+            :param sct_slice:
             :return:
             """
-            img, mask = steak.single()
+            img, mask = sct_slice.single()
             img = np.clip(img, np.percentile(img, 10), np.percentile(img, 90))
             return img, mask
 

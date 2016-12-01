@@ -575,9 +575,9 @@ def main():
 
         # Create the Qc object that creates the images files to provide to the HTML
         @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.no_seg_seg])
-        def template_2_anat_qc(steak):
+        def template_2_anat_qc(sct_slice):
             # Chosen axe to generate image
-            return steak.single()
+            return sct_slice.single()
 
         output_filename_t2a = 'template2anat'+ext_data
 
