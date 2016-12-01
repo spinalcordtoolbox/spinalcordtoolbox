@@ -172,17 +172,17 @@ class Qc_Report(object):
     def set_used_slice_name(self, name):
         self.slice_name = name
 
-    def generate_report_for_text(self, file_output=None):
+    def generate_report_for_text(self, output_folder=".", file_output=None):
         """
         Generate report. Class object must already be instanced before executing this method.
         This method is mostly used when no action list is required (eg extract_metric).
         """
         rootFolderPath, leafNodeFullPath = self.mkdir()
         if file_output:
-            shutil.copy(os.path.join(".",file_output), self.report_leaf_folder)
+            shutil.copy(os.path.join(output_folder,file_output), self.report_leaf_folder)
         else:
-            txts= glob.glob1(".", "*.txt")
-            pickles = glob.glob1(".", "*.pickle")
+            txts= glob.glob1(output_folder, "*.txt")
+            pickles = glob.glob1(output_folder, "*.pickle")
             elements=txts + pickles
             for i in elements:
                  shutil.copy(i, self.report_leaf_folder)

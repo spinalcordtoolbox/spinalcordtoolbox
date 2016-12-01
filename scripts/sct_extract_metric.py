@@ -1309,4 +1309,4 @@ if __name__ == "__main__":
         sct.printv("\nPreparing QC Report...\n")
         # Qc_Report generates and contains the useful infos for qc generation
         qcReport = msct_qc.Qc_Report("sct_extract_metrict", qcParams, sys.argv[1:], parser.usage.description)
-        msct_qc.Qc_Report.generate_report_for_text(qcReport, fname_output)
+        msct_qc.Qc_Report.generate_report_for_text(qcReport, ".", fname_output)
