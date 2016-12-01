@@ -143,6 +143,8 @@ class Qc_Report(object):
         # os.path.relpath to get the current directory to use in the naming instead of using the contrast_type
         # if desired, contrast_type can be an input parameter to give more freedom to the user to specify a name
         # requires to change a bit the code
+        head, tail = os.path.split(os.path.relpath(".", "../.."))
+        self.subject_name = head  # assume subject always two folder back, find better way to do it
         self.contrast_type = os.path.relpath(".", "..")
 
         # used for description
@@ -387,7 +389,7 @@ class Qc(object):
             # create htmls
             syntax = '{} {}'.format(self.qc_report.contrast_type, os.path.basename(leafNodeFullPath))
             isct_generate_report.generate_report("{}.txt".format(self.qc_report.description_base_name), syntax,
-                                                 rootFolderPath, self.qc_report.qc_params.show_report)
+                                                 rootFolderPath, self.qc_report.qc_params.show_report, self.qc_report.subject_name)
 
         return wrapped_f
 
