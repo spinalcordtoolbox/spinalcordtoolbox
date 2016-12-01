@@ -14,20 +14,21 @@
         <span id="description-content">{{description}}</span>
     </pre>
     <ul id="results" class="list-group">
-        {% if not hasGif %}
+        {% if images and  not hasGif %}
         {% for img in images %}
         <li class="list-group-item">
             <img src="{{img.src}}" alt="Image not found" style="width:100%">
             <a href="{{img.src}}" target="_blank"><h5 class="text-center text-primary">{{img.name}}</h5></a>
         </li>
         {% endfor %}
-        {% else %}
+        {% elif images and  hasGif %}
         <div id="togif" class="" class="hidden">
             {% for img in images %}
             <span data-src="{{img.src}}" data-name="{{img.name}}"/>
             {% endfor %}
         </div>
         <li class="list-group-item">
+            <!--TODO-->
             <img id="gif_image" alt="Image not found" style="width:100%"/>
             <div id="gif_image_names">
                 {% for img in images %}
