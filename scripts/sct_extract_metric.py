@@ -1306,7 +1306,7 @@ if __name__ == "__main__":
         sct.printv("\nPreparing QC Report...\n")
         # Qc_Report generates and contains the useful infos for qc generation
         qcReport = msct_qc.Qc_Report("sct_extract_metrict", qcParams, sys.argv[1:], parser.usage.description)
-        msct_qc.Qc_Report.generateReport(qcReport)
+        msct_qc.Qc_Report.generateReportForText(qcReport, fname_output)
 
     # call main function
     main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)
