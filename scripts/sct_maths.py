@@ -507,7 +507,7 @@ def laplacian(data, sigmas):
     # return laplace(data.astype(float))
 
 def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
-    assert data1.size == data2.size, "ERROR: the data don't have the same size"
+    assert data1.size == data2.size, "\n\nERROR: the data don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
     data1_1d = data1.ravel()
     data2_1d = data2.ravel()
 
