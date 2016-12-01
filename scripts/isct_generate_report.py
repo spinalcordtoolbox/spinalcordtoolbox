@@ -15,7 +15,7 @@ import msct_report as report
 import msct_report_item as report_item
 
 
-def generate_report(description, syntax, report_dir, show_report):
+def generate_report(description, syntax, report_dir, show_report, subject_name=None):
     """
     :param description:
     :param syntax:
