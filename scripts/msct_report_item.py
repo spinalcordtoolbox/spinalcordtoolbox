@@ -14,11 +14,12 @@ import msct_report_util
 
 
 class ReportItem:
-    def __init__(self, report_dir, syntax, description):
+    def __init__(self, report_dir, syntax, description, subject_name,cross):
         self.report_dir = report_dir
         self.color_bar = None
-        self.aplr = None
         self.syntax = syntax
+        self.subject_name = subject_name
+        self.cross = cross
         self.contrast_name, self.tool_name = syntax.split(' ')
         self.images_dir = os.path.join("img", self.contrast_name, self.tool_name)
         self.description = msct_report_util.get_txt_content(os.path.join(self.report_dir, self.images_dir,
@@ -70,7 +71,9 @@ class ReportItem:
             'images': self.images_link,
             'texts': self.txt_contents,
             "hasGif": self.has_gif(),
-            'color_bar': self.color_bar
+            'subject_name':self.subject_name,
+            'color_bar': self.color_bar,
+            'cross': self.cross
         }
         msct_report_util.createHtmlFile(template_dir, template_name, file_link, tags)
 

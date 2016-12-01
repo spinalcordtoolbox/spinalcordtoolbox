@@ -15,18 +15,22 @@ import msct_report as report
 import msct_report_item as report_item
 
 
-def generate_report(description, syntax, report_dir, show_report, subject_name=None):
+def generate_report(description, syntax, report_dir, show_report, subject_name=None, cross=None):
     """
-    :param description:
-    :param syntax:
-    :param report_dir:
+    :param description: tool description
+    :param syntax:  syntax typed by the user
+    :param report_dir:  name of the report dir
+    :param show_report:  view report in html or not
+    :param subject_name:  subject name
+    :param cross: cross file name(sagital or axial)
     :return:
     """
+    print subject_name,cross ,"TESTTSTEETETTET"
     # create new  or get instance of  the report object
     sct_report = report.Report(report_exists(report_dir), report_dir)
 
     # create sct_report_item
-    sct_report_item = report_item.ReportItem(report_dir, syntax, description)
+    sct_report_item = report_item.ReportItem(report_dir, syntax, description, subject_name, cross)
 
     # append  item to a new or existing report
     sct_report.append_item(sct_report_item)
@@ -40,6 +44,7 @@ def generate_report(description, syntax, report_dir, show_report, subject_name=N
         # display report in the default web browser
         url = 'file://{}'.format(os.path.realpath(os.path.join(report_dir, "index.html")))
         webbrowser.open(url)
+
 
 def report_exists(report_dir):
     """

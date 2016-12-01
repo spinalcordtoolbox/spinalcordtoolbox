@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# qc report  function implementation
+# qc report  class  implementation
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Thierno Barry

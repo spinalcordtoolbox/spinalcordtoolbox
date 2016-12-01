@@ -162,7 +162,13 @@ class Qc_Report(object):
         self.report_leaf_folder = None
         self.description_base_name = "description_{}".format(self.timestamp)
 
-    def generate_report_for_text(self, file_output = None):
+        #slice name axial or sagital
+        self.slice_name = None
+
+    def set_used_slice_name(self, name):
+        self.slice_name = name
+
+    def generate_report_for_text(self, file_output=None):
         """
         Generate report. Class object must already be instanced before executing this method.
         This method is mostly used when no action list is required (eg extract_metric).
@@ -172,7 +178,7 @@ class Qc_Report(object):
             shutil.copy(os.path.join(".",file_output), self.report_leaf_folder)
         else:
             txts= glob.glob1(".", "*.txt")
-            pickles=glob.glob1(".", "*.pickle")
+            pickles = glob.glob1(".", "*.pickle")
             elements=txts + pickles
             for i in elements:
                  shutil.copy(i, self.report_leaf_folder)
@@ -274,7 +280,7 @@ class Qc_Report(object):
          # create htmls
         syntax = '{} {}'.format(self.contrast_type, os.path.basename(leaf_node_full_path))
         isct_generate_report.generate_report("{}.txt".format(self.description_base_name), syntax,
-                                             report_dir, self.qc_params.show_report, self.subject_name)
+                                             report_dir, self.qc_params.show_report, self.subject_name,self.slice_name)
 
 
 
@@ -378,8 +384,7 @@ class Qc(object):
         # wrapped function (f). In this case, it is the "mosaic" or "single" methods of the class "Slice"
         def wrapped_f(sct_slice, *args):
             assert isinstance(sct_slice,Slice)
-            print sct_slice.get_name()# TODO: aplr name of the view (axial/sagittal/...)
-
+            self.qc_report.set_used_slice_name(sct_slice.get_name())
             aspect_img,  self.aspect_mask = sct_slice.aspect()
 
             rootFolderPath, leafNodeFullPath = self.qc_report.mkdir()
