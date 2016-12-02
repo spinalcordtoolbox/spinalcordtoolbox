@@ -27,7 +27,10 @@ class param:
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
-if __name__ == "__main__":
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
     # initialize parameters
     param = param()
     # call main function
@@ -47,7 +50,7 @@ if __name__ == "__main__":
                       mandatory=False,
                       example="output_image.nii.gz",
                       default_value="inverted_image.nii.gz")
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     input_filename = arguments["-i"]
     image_input = Image(input_filename)
@@ -55,3 +58,7 @@ if __name__ == "__main__":
     if "-o" in arguments:
         image_output.setFileName(arguments["-o"])
     image_output.save(type='minimize')
+
+
+if __name__ == "__main__":
+    main()

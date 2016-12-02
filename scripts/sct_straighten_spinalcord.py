@@ -793,10 +793,13 @@ def get_parser():
 
     return parser
 
+def main(args=None):
 
-if __name__ == "__main__":
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     # assigning variables to arguments
     input_filename = arguments["-i"]
@@ -860,3 +863,7 @@ if __name__ == "__main__":
                 sc_straight.threshold_distance = float(param_split[1])
 
     sc_straight.straighten()
+
+
+if __name__ == "__main__":
+    main()

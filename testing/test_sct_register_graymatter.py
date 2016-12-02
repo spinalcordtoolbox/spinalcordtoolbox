@@ -145,7 +145,6 @@ def test(path_data, parameters=''):
 
     return status, output, results
 
-
 if __name__ == "__main__":
     # call main function
     test(path_sct+'/data')

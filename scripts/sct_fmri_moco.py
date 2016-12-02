@@ -52,7 +52,27 @@ class Param:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main(path_out, param_user):
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
+    param = Param()
+
+    parser = get_parser()
+    arguments = parser.parse(args)
+
+    param.fname_data = arguments['-i']
+    if '-m' in arguments:
+        param.fname_mask = arguments['-m']
+    param.group_size = arguments['-g']
+    path_out = arguments['-ofolder']
+    param_user = ''
+    if '-param' in arguments:
+        param_user = arguments['-param']
+    param.interp = arguments['-x']
+    param.remove_tmp_files = arguments['-r']
+    param.verbose = arguments['-v']
 
     # initialization
     start_time = time.time()
@@ -285,7 +305,7 @@ def get_parser():
                       type_value='int',
                       description='Group nvols successive fMRI volumes for more robustness.',
                       mandatory=False,
-                      default_value=param.group_size)
+                      default_value=param_default.group_size)
     parser.add_option(name='-m',
                       type_value='image_nifti',
                       description='Binary mask to limit voxels considered by the registration metric.',
@@ -349,22 +369,5 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = Param()
-    param_default = Param()
 
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
-    param.fname_data = arguments['-i']
-    if '-m' in arguments:
-        param.fname_mask = arguments['-m']
-    param.group_size = arguments['-g']
-    path_out = arguments['-ofolder']
-    param_user = ''
-    if '-param' in arguments:
-        param_user = arguments['-param']
-    param.interp = arguments['-x']
-    param.remove_tmp_files = arguments['-r']
-    param.verbose = arguments['-v']
-
-    main(path_out, param_user)
+    main()

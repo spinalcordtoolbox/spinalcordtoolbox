@@ -23,15 +23,7 @@ class Param:
 
 # PARSER
 # ==========================================================================================
-def get_parser():
-    param = Param()
-
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # # initialize parameters
-    # param = Param()
-    # param_default = Param()
+def get_parser(param):
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -80,6 +72,9 @@ def get_parser():
 # ==========================================================================================
 def main(args = None):
 
+    # initialize parameters
+    param = Param()
+
     if not args:
         args = sys.argv[1:]
 
@@ -87,8 +82,8 @@ def main(args = None):
     file_mask = ''
 
     # Get parser info
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    parser = get_parser(param)
+    arguments = parser.parse(args)
     fname_in = arguments['-i']
     fname_bvals = arguments['-bval']
     fname_bvecs = arguments['-bvec']
@@ -99,13 +94,13 @@ def main(args = None):
     param.verbose = int(arguments['-v'])
 
     # compute DTI
-    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
+    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, param):
         printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
 # ==========================================================================================
-def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
+def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, param):
     """
     Compute DTI.
     :param fname_in: input 4d file.
@@ -202,7 +197,5 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()

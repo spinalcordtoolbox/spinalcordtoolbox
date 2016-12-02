@@ -39,24 +39,31 @@ class Param:
         self.fname_seg = ''
         self.fname_GM = ''
 
+
 # constants
 ALMOST_ZERO = 0.0000001
 
 
 # main
 #=======================================================================================================================
-def main():
-    
+def main(args=None):
+
+    # initialize parameters
+    param = Param()
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+
     # Initialization
     path_atlas = ''
-    
+
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
     else:
         # Check input parameters
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
 
         path_atlas = arguments['-i']
 
@@ -70,7 +77,6 @@ def main():
             param.threshold_GM = arguments['-thrgm']
         if '-v' in arguments:
             param.verbose = int(arguments['-v'])
-
 
     # Extract atlas info
     atlas_id, atlas_name, atlas_file = read_label_file(path_atlas)
@@ -176,7 +182,6 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
             tracts_are_present = False
     if tracts_are_present: sct.printv('All the tracts are present.',param.verbose)
 
-
     # Does any tract gets out the spinal cord?
     if param.fname_seg != '':
         # Loading spinal cord segmentation
@@ -212,7 +217,6 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
             total_percentage_out = float(total_outside/total_sum_tracts)
             sct.printv('\nTotal percentage of present tracts outside the spinal cord: ' + str(round(total_percentage_out*100, 2)) + '%', param.verbose)
 
-
     # Does any tract overlaps the spinal cord gray matter?
     if param.fname_GM != '':
         # Loading spinal cord gray matter
@@ -225,7 +229,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
         if (nx_gm, ny_gm, nz_gm) != (nx_atlas, ny_atlas, nz_atlas):
             print '\nERROR: Gray matter image and the atlas DO NOT HAVE SAME DIMENSIONS.'
             sys.exit(2)
-    
+
         tracts_overlap_GM = False
         total_overlaps = 0
         total_sum_tracts = 0
@@ -308,8 +312,5 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main()

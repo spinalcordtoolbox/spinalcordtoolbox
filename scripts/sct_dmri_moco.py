@@ -81,7 +81,12 @@ class Param:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    param = Param()
+    param_default = Param()
+    if args is None:
+        args = sys.argv[1:]
 
     # initialization
     start_time = time.time()
@@ -94,8 +99,8 @@ def main():
     # get path of the toolbox
     status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    parser = get_parser(param_default)
+    arguments = parser.parse(args)
 
     param.fname_data = arguments['-i']
     param.fname_bvecs = arguments['-bvec']
@@ -251,12 +256,12 @@ def dmri_moco(param):
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi/param.group_size))
-    
+
     # Generate groups indexes
     group_indexes = []
     for iGroup in range(nb_groups):
         group_indexes.append(index_dwi[(iGroup*param.group_size):((iGroup+1)*param.group_size)])
-    
+
     # add the remaining images to the last DWI group
     nb_remaining = nb_dwi%param.group_size  # number of remaining images
     if nb_remaining > 0:
@@ -414,14 +419,7 @@ def dmri_moco(param):
     sct.run(cmd, param.verbose)
 
 
-def get_parser():
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-
+def get_parser(param_default):
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('  Motion correction of dMRI data. Some robust features include:\n'
@@ -541,6 +539,4 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = Param()
-    param_default = Param()
     main()

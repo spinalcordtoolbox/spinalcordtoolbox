@@ -364,7 +364,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     im_mask_concat.setFileName('tmp.mask_orient_fit.nii')
     im_mask_concat.save()
 
-    # im_point_list = [Image(fname) for fname in 	glob.glob('tmp.point_orient_fit_z*.nii')]
+    # im_point_list = [Image(fname) for fname in    glob.glob('tmp.point_orient_fit_z*.nii')]
     fname_point_list = glob.glob('tmp.point_orient_fit_z*.nii')
     im_point_concat = concat_data(fname_point_list, 2)
     im_point_concat.setFileName('tmp.point_orient_fit.nii')
@@ -1084,7 +1084,7 @@ def get_parser():
                       description="Approximate radius of spinal cord to help the algorithm",
                       mandatory=False,
                       default_value="4",
-                      example="4")    
+                      example="4")
     parser.add_option(name="-smooth_vesselness",
                       type_value="multiple_choice",
                       description="Smoothing of the vesselness image",
@@ -1114,7 +1114,7 @@ def get_parser():
                       description="Gap between slices for registration. Higher is faster but less robust.",
                       mandatory=False,
                       default_value=4,
-                      example="4")    
+                      example="4")
     parser.add_option(name='-k',
                       type_value='int',
                       description='Kernel size for gaussian mask. Higher is more robust but less accurate.',
@@ -1132,8 +1132,11 @@ def get_parser():
     return parser
 
 
-if __name__ == '__main__':
+def main(args=None):
+
     param = Param()
+    if args is None:
+        args = sys.argv[1:]
     param_default = Param()
 
     # init default params
@@ -1143,7 +1146,7 @@ if __name__ == '__main__':
 
     # get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     method = arguments['-p']
     fname_in = arguments['-i']
     if '-o' in arguments:
@@ -1195,6 +1198,5 @@ if __name__ == '__main__':
         scad.execute()
 
 
-
-
-
+if __name__ == '__main__':
+    main()
