@@ -208,6 +208,9 @@ class Paramreg(object):
         self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
         self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
 
+        # list of possible values for self.type
+        self.type_list = ['im', 'seg', 'label']
+
     # update constructor with user's parameters
     def update(self, paramreg_user):
         list_objects = paramreg_user.split(',')
@@ -233,7 +236,7 @@ class ParamregMultiStep:
         # this function checks if the step is already present. If it is present, it must update it. If it is not, it must add it.
         param_reg = Paramreg()
         param_reg.update(stepParam)
-        # step is mandatory
+        # parameters must contain 'step'
         if param_reg.step == '':
             sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
         elif param_reg.step != 0:
@@ -243,8 +246,8 @@ class ParamregMultiStep:
                 self.steps[param_reg.step] = param_reg
         else:
             sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
-        # type is mandatory
-        if int(param_reg.step) != 0 and param_reg.type not in ['im', 'seg']:
+        # parameters must contain 'type'
+        if int(param_reg.step) != 0 and param_reg.type not in param_reg.type_list:
             sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
 
 
