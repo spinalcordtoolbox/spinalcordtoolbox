@@ -14,11 +14,10 @@
 
 import sys
 import os
-import getopt
-import commands
-import sct_utils as sct
-import time
+
 from msct_parser import Parser
+import sct_utils as sct
+
 
 # DEFAULT PARAMETERS
 class Param:
@@ -33,7 +32,13 @@ class Param:
 
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    # initialize parameters
+    param = Param()
+
+    if args is None:
+        args = sys.argv[1:]
 
     # Initialization
     fname_mt0 = ''
@@ -48,7 +53,7 @@ def main():
 
     # Check input parameters
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
@@ -147,8 +152,5 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    # param_default = Param()
     # call main function
     main()

@@ -26,12 +26,16 @@ from msct_parser import Parser
 
 
 # PARAMETERS
-debugging           = 0 # automatic file names for debugging
+debugging = 0  # automatic file names for debugging
 
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
 
     # Initialization
     fname_src = ''
@@ -48,7 +52,7 @@ def main():
         zmask = '445'
     else:
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
 
         fname_src = arguments['-i']
         fname_mask = arguments['-m']
