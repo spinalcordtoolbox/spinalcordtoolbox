@@ -239,7 +239,7 @@ class ParamregMultiStep:
         # parameters must contain 'step'
         if param_reg.step is None:
             sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
-        elif param_reg.step != 0:
+        elif int(param_reg.step) != 0:
             if param_reg.step in self.steps:
                 self.steps[param_reg.step].update(stepParam)
             else:
