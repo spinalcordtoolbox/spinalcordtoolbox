@@ -31,7 +31,13 @@ class Param:
 
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    # initialize parameters
+    param = Param()
+
+    if args is None:
+        args = sys.argv[1:]
 
     # Initialization
     fname_warp_list = ''  # list of warping fields
@@ -49,7 +55,7 @@ def main():
     else:
         # Check input parameters
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
 
         fname_dest = arguments['-d']
         fname_warp_list = arguments['-w']
@@ -138,7 +144,5 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()

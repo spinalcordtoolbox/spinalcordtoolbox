@@ -74,7 +74,7 @@ def main(args=None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     fname_in = arguments['-bvec']
     if '-o' in arguments:
         fname_out = arguments['-o']
