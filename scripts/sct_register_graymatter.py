@@ -9,7 +9,11 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import sys, os, time
+import sys
+import os
+import time
+import re
+
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
@@ -30,13 +34,14 @@ class Param:
 
 
 class MultiLabelRegistration:
-    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template2target, param=None, fname_warp_target2template=None, apply_warp_template=0):
+    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template, param=None, fname_warp_target2template=None, apply_warp_template=0):
         if param is None:
             self.param = Param()
         else:
             self.param = param
         self.im_gm = Image(fname_gm)
         self.im_wm = Image(fname_wm)
+        self.fname_gm = fname_gm
         self.path_template = sct.slash_at_the_end(path_template, 1)
         if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir(self.path_template+'template/'):
             self.im_template_gm = Image(self.path_template+'template/MNI-Poly-AMU_GM.nii.gz')
@@ -48,14 +53,12 @@ class MultiLabelRegistration:
             self.template = 'PAM50'
 
         # Previous warping fields:
-        self.fname_warp_template2target = fname_warp_template2target
+        self.fname_warp_template = fname_warp_template
         self.fname_warp_target2template = fname_warp_target2template
 
         # new warping fields:
         self.fname_warp_template2gm = ''
         self.fname_wwarp_gm2template = ''
-        
-        # temporary fix - related to issue #871
         self.apply_warp_template = apply_warp_template
 
     def register(self):
@@ -77,8 +80,8 @@ class MultiLabelRegistration:
 
         path_automatic_ml, file_automatic_ml, ext_automatic_ml = sct.extract_fname(fname_automatic_ml)
         path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
-        path_gm, file_gm, ext_gm = sct.extract_fname(fname_gm)
-        path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template2target)
+        path_gm, file_gm, ext_gm = sct.extract_fname(self.fname_gm)
+        path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template)
 
         im_automatic_ml.setFileName(fname_automatic_ml)
         im_template_ml.setFileName(fname_template_ml)
@@ -87,8 +90,8 @@ class MultiLabelRegistration:
         tmp_dir = sct.tmp_create()
 
         from sct_convert import convert
-        convert(fname_gm, tmp_dir+file_gm+ext_gm)
-        convert(fname_warp_template, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
+        convert(self.fname_gm, tmp_dir+file_gm+ext_gm)
+        convert(self.fname_warp_template, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
         if self.fname_warp_target2template is not None:
             path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(self.fname_warp_target2template)
             convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template)
@@ -300,12 +303,15 @@ class MultiLabelRegistration:
                      'Diff = metric_corrected_reg - metric_regular_reg\n')
         dice_fic.write('#Slice, WM DC, WM diff, GM DC, GM diff\n')
 
-        init_dc = '2D Dice coefficient by slice:\n'
+        # TODO, not forget to refrator that when we stop callin sct.run('sct_dice_coefficient' ... !
+        regex_str = '2D Dice coefficient by slice:*\n((\d+ \d+(\.\d+)?\n?)+)'
+        def extract_from_std_out(input_str):
+            return re.search(regex_str, input_str).groups()[0].strip('\n').split('\n')
 
-        old_gm_dc = output_old_gm[output_old_gm.find(init_dc)+len(init_dc):].split('\n')
-        old_wm_dc = output_old_wm[output_old_wm.find(init_dc)+len(init_dc):].split('\n')
-        new_gm_dc = output_new_gm[output_new_gm.find(init_dc)+len(init_dc):].split('\n')
-        new_wm_dc = output_new_wm[output_new_wm.find(init_dc)+len(init_dc):].split('\n')
+        old_gm_dc = extract_from_std_out(output_old_gm)
+        old_wm_dc = extract_from_std_out(output_old_wm)
+        new_gm_dc = extract_from_std_out(output_new_gm)
+        new_wm_dc = extract_from_std_out(output_new_wm)
 
         for i in range(len(old_gm_dc)):
             if i not in no_ref_slices:
@@ -502,10 +508,13 @@ def get_parser():
 
     return parser
 
+def main(args=None):
+    if not args:
+        args = sys.argv[1:]
 
-if __name__ == "__main__":
+    # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     ml_param = Param()
 
     fname_gm = arguments['-gm']
@@ -540,10 +549,17 @@ if __name__ == "__main__":
     if '-apply-warp' in arguments:
         apply_warp = int(arguments['-apply-warp'])
 
-    if (fname_manual_gmseg is not None and fname_sc_seg is None) or (fname_manual_gmseg is None and fname_sc_seg is not None):
+    if (fname_manual_gmseg is not None and fname_sc_seg is None) \
+            or (fname_manual_gmseg is None and fname_sc_seg is not None):
         sct.printv(parser.usage.generate(error='ERROR: you need to specify both arguments : -manual-gm and -sc.'))
 
-    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, param=ml_param, fname_warp_target2template=fname_warp_target2template, apply_warp_template=apply_warp)
+    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template
+                                    , param=ml_param, fname_warp_target2template=fname_warp_target2template
+                                    , apply_warp_template=apply_warp)
     ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg)
+
+
+if __name__ == "__main__":
+    main()

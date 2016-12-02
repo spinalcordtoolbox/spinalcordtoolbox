@@ -15,20 +15,17 @@
 # TODO: maybe no need to convert RPI at the beginning because strainghten spinal cord already does it!
 
 
-import getopt
 import os
 import sys
 import time
-import sct_utils as sct
-from sct_image import set_orientation
-from shutil import move
-# from numpy import append, insert, nonzero, transpose, array
-# from nibabel import load, Nifti1Image, save
-# from scipy import ndimage
-# from copy import copy
-import numpy as np
 import shutil
+from shutil import move
+
+import numpy as np
+
 from sct_convert import convert
+from sct_image import set_orientation
+import sct_utils as sct
 from msct_parser import Parser
 
 
@@ -77,10 +74,13 @@ def get_parser():
                       default_value='1')
     return parser
 
-
-# MAIN
-# ==========================================================================================
+#=======================================================================================================================
+# main
+#=======================================================================================================================
 def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     # Initialization
     # fname_anat = ''
@@ -91,7 +91,7 @@ def main(args=None):
     start_time = time.time()
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     fname_anat = arguments['-i']
     fname_centerline = arguments['-s']
@@ -210,87 +210,4 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    # param = Param()
-    # call main function
     main()
-
-
-# OLD CODE
-
-# ## new
-#
-# ### Make sure that centerline file does not have halls
-# file_c = load('centerline_rpi.nii')
-# data_c = file_c.get_data()
-# hdr_c = file_c.get_header()
-#
-# data_temp = copy(data_c)
-# data_temp *= 0
-# data_output = copy(data_c)
-# data_output *= 0
-# nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('centerline_rpi.nii')
-#
-# ## Change seg to centerline if it is a segmentation
-# sct.printv('\nChange segmentation to centerline if it is a centerline...\n')
-# z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
-# nz_nonz = len(z_centerline)
-# if nz_nonz==0 :
-#     print '\nERROR: Centerline is empty'
-#     sys.exit()
-# x_centerline = [0 for iz in range(0, nz_nonz, 1)]
-# y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-# #print("z_centerline", z_centerline,nz_nonz,len(x_centerline))
-# print '\nGet center of mass of the centerline ...'
-# for iz in xrange(len(z_centerline)):
-#     x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data_c[:,:,z_centerline[iz]]))
-#     data_temp[x_centerline[iz], y_centerline[iz], z_centerline[iz]] = 1
-#
-# ## Complete centerline
-# sct.printv('\nComplete the halls of the centerline if there are any...\n')
-# X,Y,Z = data_temp.nonzero()
-#
-# x_centerline_extended = [0 for i in range(0, nz, 1)]
-# y_centerline_extended = [0 for i in range(0, nz, 1)]
-# for iz in range(len(Z)):
-#     x_centerline_extended[Z[iz]] = X[iz]
-#     y_centerline_extended[Z[iz]] = Y[iz]
-#
-# X_centerline_extended = nonzero(x_centerline_extended)
-# X_centerline_extended = transpose(X_centerline_extended)
-# Y_centerline_extended = nonzero(y_centerline_extended)
-# Y_centerline_extended = transpose(Y_centerline_extended)
-#
-# # initialization: we set the extrem values to avoid edge effects
-# x_centerline_extended[0] = x_centerline_extended[X_centerline_extended[0]]
-# x_centerline_extended[-1] = x_centerline_extended[X_centerline_extended[-1]]
-# y_centerline_extended[0] = y_centerline_extended[Y_centerline_extended[0]]
-# y_centerline_extended[-1] = y_centerline_extended[Y_centerline_extended[-1]]
-#
-# # Add two rows to the vector X_means_smooth_extended:
-# # one before as means_smooth_extended[0] is now diff from 0
-# # one after as means_smooth_extended[-1] is now diff from 0
-# X_centerline_extended = append(X_centerline_extended, len(x_centerline_extended)-1)
-# X_centerline_extended = insert(X_centerline_extended, 0, 0)
-# Y_centerline_extended = append(Y_centerline_extended, len(y_centerline_extended)-1)
-# Y_centerline_extended = insert(Y_centerline_extended, 0, 0)
-#
-# #recurrence
-# count_zeros_x=0
-# count_zeros_y=0
-# for i in range(1,nz-1):
-#     if x_centerline_extended[i]==0:
-#        x_centerline_extended[i] = 0.5*(x_centerline_extended[X_centerline_extended[i-1-count_zeros_x]] + x_centerline_extended[X_centerline_extended[i-count_zeros_x]])
-#        count_zeros_x += 1
-#     if y_centerline_extended[i]==0:
-#        y_centerline_extended[i] = 0.5*(y_centerline_extended[Y_centerline_extended[i-1-count_zeros_y]] + y_centerline_extended[Y_centerline_extended[i-count_zeros_y]])
-#        count_zeros_y += 1
-#
-# # Save image centerline completed to be used after
-# sct.printv('\nSave image completed: centerline_rpi_completed.nii...\n')
-# for i in range(nz):
-#     data_output[x_centerline_extended[i],y_centerline_extended[i],i] = 1
-# img = Nifti1Image(data_output, None, hdr_c)
-# save(img, 'centerline_rpi_completed.nii')
-#
-# #end new

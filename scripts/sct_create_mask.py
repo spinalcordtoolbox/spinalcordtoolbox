@@ -17,17 +17,18 @@
 import sys
 import os
 import commands
-import time
 
 import numpy
 import nibabel
 from scipy import ndimage
 
 import sct_utils as sct
-from sct_image import get_orientation_3d
+import sct_image
+from sct_image import copy_header, concat_data, get_orientation_3d
+import sct_label_utils
+import sct_maths
 from sct_convert import convert
 from msct_image import Image
-from sct_image import copy_header, concat_data
 from msct_parser import Parser
 
 
@@ -141,11 +142,12 @@ def create_mask():
     # reorient to RPI
     sct.printv('\nReorient to RPI...', param.verbose)
     # if not orientation_input == 'RPI':
-    sct.run('sct_image -i data.nii -o data_RPI.nii -setorient RPI -v 0', verbose=False)
+    sct_image.main("-i data.nii -o data_RPI.nii -setorient RPI -v 0".split())
     if method_type == 'centerline':
-        sct.run('sct_image -i centerline.nii.gz -o centerline_RPI.nii.gz -setorient RPI -v 0', verbose=False)
+        sct_image.main('-i centerline.nii.gz -o centerline_RPI.nii.gz -setorient RPI -v 0'.split())
     if method_type == 'point':
-        sct.run('sct_image -i point.nii.gz -o point_RPI.nii.gz -setorient RPI -v 0', verbose=False)
+        sct_image.main('-i point.nii.gz -o point_RPI.nii.gz -setorient RPI -v 0'.split())
+
     #
     # if method_type == 'centerline':
     #     orientation_centerline = get_orientation_3d(method_val, filename=True)
@@ -249,7 +251,9 @@ def create_mask():
 
     # reorient if necessary
     # if not orientation_input == 'RPI':
-    sct.run('sct_image -i mask_RPI.nii.gz -o mask.nii.gz -setorient ' + orientation_input, param.verbose)
+    sct_image.main(['-i', 'mask_RPI.nii.gz',
+                    '-o', 'mask.nii.gz',
+                    '-setorient', str(orientation_input)])
 
     # copy header input --> mask
     im_dat = Image('data.nii')
@@ -283,16 +287,18 @@ def create_line(fname, coord, nz):
     sct.run('cp '+fname+' line.nii', param.verbose)
 
     # set all voxels to zero
-    sct.run('sct_maths -i line.nii -mul 0 -o line.nii', param.verbose)
+    sct_maths.main(['-i', 'line.nii',
+                    '-mul', '0',
+                    '-o', 'line.nii'])
 
-    cmd = 'sct_label_utils -i line.nii -o line.nii -create-add '
+    cmd = '-i line.nii -o line.nii -create-add '
     for iz in range(nz):
         if iz == nz-1:
             cmd += str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1'
         else:
             cmd += str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1:'
 
-    sct.run(cmd, param.verbose)
+    sct_label_utils.main(cmd.split())
 
     return 'line.nii'
 
@@ -323,7 +329,7 @@ def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
         radius = ceil((int(size) - 1) / 2.0)
 
     if shape == 'box':
-        mask2d[xc - radius:xc + radius + 1, yc - radius:yc + radius + 1] = 1
+        mask2d[int(xc - radius):int(xc + radius + 1), int(yc - radius):int(yc + radius + 1)] = 1
 
     elif shape == 'cylinder':
         mask2d = ((xx+offset[0]-xc)**2 + (yy+offset[1]-yc)**2 <= radius**2)*1
@@ -408,6 +414,4 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = Param()
-    param_default = Param()
     main()

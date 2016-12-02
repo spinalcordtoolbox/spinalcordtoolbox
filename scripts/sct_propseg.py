@@ -176,9 +176,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     return parser
 
-if __name__ == "__main__":
+def main(args=None):
+
+    if not args:
+        args = sys.argv[1:]
+
+    # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     input_filename = arguments["-i"]
     contrast_type = arguments["-c"]
@@ -326,4 +331,7 @@ if __name__ == "__main__":
         output_name = output_filename
     else:
         output_name = folder_output + output_filename
-    sct.printv("fslview "+input_filename+" "+output_name+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+    sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+
+if __name__ == "__main__":
+    main()

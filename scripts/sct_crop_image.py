@@ -393,10 +393,14 @@ def find_mask_boundaries(fname_mask):
     return ind_start, ind_end
 
 
-if __name__ == "__main__":
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
     # Fetching script arguments
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     # assigning variables to arguments
     input_filename = arguments["-i"]
@@ -443,3 +447,6 @@ if __name__ == "__main__":
             cropper.mesh = arguments["-mesh"]
 
         cropper.crop()
+
+if __name__ == "__main__":
+    main()

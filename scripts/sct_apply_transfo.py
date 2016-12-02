@@ -29,7 +29,6 @@ class Param:
         self.verbose = '1'
         self.remove_tmp_files = '1'
 
-
 # PARSER
 # ==========================================================================================
 def get_parser():
@@ -276,7 +275,5 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # # initialize parameters
-    param = Param()
     # call main function
     main()
