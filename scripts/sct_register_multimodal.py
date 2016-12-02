@@ -239,13 +239,11 @@ class ParamregMultiStep:
         # parameters must contain 'step'
         if param_reg.step is None:
             sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
-        elif int(param_reg.step) != 0:
+        else:
             if param_reg.step in self.steps:
                 self.steps[param_reg.step].update(stepParam)
             else:
                 self.steps[param_reg.step] = param_reg
-        else:
-            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
         # parameters must contain 'type'
         if int(param_reg.step) != 0 and param_reg.type not in param_reg.type_list:
             sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
