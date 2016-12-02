@@ -43,7 +43,7 @@ class bcolors:
 # status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.download = 0
         self.path_data = 'sct_testing_data/'
@@ -91,7 +91,7 @@ def main(args=None):
 
     # check existence of testing data folder
     if not os.path.isdir(param.path_data) or param.download:
-        downloaddata()
+        downloaddata(param)
 
     # display path to data
     sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
@@ -103,7 +103,7 @@ def main(args=None):
     os.chdir(param.path_tmp)
 
     # get list of all scripts to test
-    functions = fill_functions()[:1]
+    functions = fill_functions()
 
     # loop across all functions and test them
     status = []
@@ -130,7 +130,7 @@ def main(args=None):
     sys.exit(e)
 
 
-def downloaddata():
+def downloaddata(param):
     sct.printv('\nDownloading testing data...', param.verbose)
     import sct_download_data
     sct_download_data.main(['-d', 'sct_testing_data'])

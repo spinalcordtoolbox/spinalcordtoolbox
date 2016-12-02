@@ -37,12 +37,10 @@
 import sys
 from msct_parser import Parser
 from msct_image import Image
-from bisect import bisect
-from numpy import arange, max, pad, linspace, mean, median, std, percentile
+from numpy import arange, max, pad, linspace, percentile
 import numpy as np
 from msct_types import *
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib import cm
@@ -50,7 +48,7 @@ import sct_utils as sct
 from time import time
 from copy import copy
 
-from matplotlib.widgets import Slider, Button, RadioButtons
+from matplotlib.widgets import Button
 
 import webbrowser
 
@@ -488,7 +486,7 @@ class ClickViewer(Viewer):
     Assumes SAL orientation
     orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
-    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag']):
+    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=('ax', 'sag')):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         if isinstance(list_images, Image):
             list_images = [list_images]
@@ -861,10 +859,15 @@ def clean():
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
-if __name__ == "__main__":
+
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
 
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     fname_images, orientation_images = prepare(arguments["-i"])
     list_images = [Image(fname) for fname in fname_images]
@@ -888,3 +891,6 @@ if __name__ == "__main__":
         viewer = ClickViewer(list_images, visualization_parameters)
         viewer.start()
     clean()
+
+if __name__ == '__main__':
+    main()

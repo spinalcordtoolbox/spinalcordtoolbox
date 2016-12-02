@@ -27,7 +27,10 @@ import sct_utils as sct
 
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     # Initialization
     size_data = 61
@@ -39,7 +42,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hv:')
+        opts, args = getopt.getopt(args, 'hv:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -200,4 +203,3 @@ def usage():
 if __name__ == "__main__":
     # call main function
     main()
-

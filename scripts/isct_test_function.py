@@ -287,11 +287,13 @@ def get_parser():
 # ====================================================================================================
 # Start program
 # ====================================================================================================
-if __name__ == "__main__":
+def main(args=None):
 
-    # get parameters
+    if args is None:
+        args = sys.argv[1:]
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
+
     function_to_test = arguments["-f"]
     dataset = arguments["-d"]
     dataset = sct.slash_at_the_end(dataset, slash=1)
@@ -432,3 +434,6 @@ if __name__ == "__main__":
         # display log file to Terminal
         handle_log = file(fname_log, 'r')
         print handle_log.read()
+
+if __name__ == '__main__':
+    main()

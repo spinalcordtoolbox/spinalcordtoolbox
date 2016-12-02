@@ -47,7 +47,15 @@ class bcolors:
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+    param = Param()
+
+    if not args:
+        args = sys.argv[1:]
+
+    # Get parser info
+    parser = get_parser()
+    arguments = parser.parse(args)
 
     # initialization
     fsl_is_working = 1
@@ -63,8 +71,6 @@ def main():
     print
 
     # Check input parameters
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
     if '-c' in arguments:
         complete_test = 1
     if '-log' in arguments:
@@ -423,7 +429,5 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()

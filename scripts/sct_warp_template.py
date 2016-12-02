@@ -24,18 +24,15 @@ import sct_utils as sct
 from sct_extract_metric import read_label_file
 
 
-# get path of the script and the toolbox
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
-
-
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
     def __init__(self):
+        # get path of the script and the toolbox
+        path_script = os.path.dirname(os.path.dirname(__file__))
         self.debug = 0
         self.folder_out = 'label/'  # name of output folder
-        self.path_template = path_sct+'/data/PAM50/'
+        self.path_template = path_script + '/data/PAM50/'
         self.folder_template = 'template/'
         self.folder_atlas = 'atlas/'
         self.folder_spinal_levels = 'spinal_levels/'
@@ -44,14 +41,12 @@ class Param:
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
-        self.verbose = 1  # verbose
+        self.verbose = 1
         self.qc = 1
 
 
-# MAIN
-# ==========================================================================================
 class WarpTemplate:
-    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc):
+    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc, param):
 
         # Initialization
         self.fname_src = fname_src
@@ -90,17 +85,17 @@ class WarpTemplate:
 
         # Warp template objects
         sct.printv('\nWARP TEMPLATE:', self.verbose)
-        warp_label(self.path_template, self.folder_template, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+        warp_label(self.path_template, self.folder_template, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out, param)
 
         # Warp atlas
         if self.warp_atlas == 1:
             sct.printv('\nWARP ATLAS OF WHITE MATTER TRACTS:', self.verbose)
-            warp_label(self.path_template, self.folder_atlas, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+            warp_label(self.path_template, self.folder_atlas, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out, param)
 
         # Warp spinal levels
         if self.warp_spinal_levels == 1:
             sct.printv('\nWARP SPINAL LEVELS:', self.verbose)
-            warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+            warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out, param)
 
         # to view results
         sct.printv('\nDone! To view results, type:', self.verbose)
@@ -120,7 +115,7 @@ class WarpTemplate:
 
 # Warp labels
 # ==========================================================================================
-def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
+def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out, param):
     """
     Warp label files according to info_label.txt file
     :param path_label:
@@ -137,12 +132,6 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = read_label_file(path_label + folder_label, file_label)
     except Exception as error:
         sct.printv('\nWARNING: Cannot warp label '+folder_label+': '+str(error), 1, 'warning')
-        # raise
-    # try:
-    #     template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label+folder_label, file_label)
-    # except Exception:
-    #     import traceback
-    #     sct.printv('\nERROR: ' + traceback.format_exc(), 1, 'error')
     else:
         # create output folder
         sct.run('mkdir '+path_out+folder_label, param.verbose)
@@ -152,7 +141,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
             # check if file exists
             # sct.check_file_exist(fname_label)
             # apply transfo
-            sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] +' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i]), param.verbose)
+            sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] +' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i], param), param.verbose)
         # Copy list.txt
         sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
 
@@ -203,7 +192,7 @@ def get_file_label(path_label='', label='', output='file'):
 
 # Get interpolation method
 # ==========================================================================================
-def get_interp(file_label):
+def get_interp(file_label, param):
     # default interp
     interp = 'linear'
     # NN interp
@@ -215,7 +204,7 @@ def get_interp(file_label):
 
 # PARSER
 # ==========================================================================================
-def get_parser():
+def get_parser(param_default):
 
     # Initialize parser
     parser = Parser(__file__)
@@ -275,14 +264,14 @@ def get_parser():
     return parser
 
 
-# MAIN
-# ==========================================================================================
 def main(args=None):
-
-    parser = get_parser()
     param = Param()
 
-    arguments = parser.parse(sys.argv[1:])
+    if args is None:
+        args = sys.argv[1:]
+
+    parser = get_parser(param)
+    arguments = parser.parse(args)
 
     fname_src = arguments["-d"]
     fname_transfo = arguments["-w"]
@@ -294,14 +283,8 @@ def main(args=None):
     qc = int(arguments['-qc'])
 
     # call main function
-    WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc)
+    WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc, param)
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-    # call main function
     main()
