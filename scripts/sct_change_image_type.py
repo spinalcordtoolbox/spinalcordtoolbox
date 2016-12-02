@@ -25,18 +25,22 @@ import math
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    #  The constructor
     def __init__(self):
         self.debug = 0
         self.fname_label_output = 'labels.nii.gz'
         self.labels = []
         self.verbose = 1
 
-
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+    param = Param()
+
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
 
     # Initialization
     fname_in = ''
@@ -57,7 +61,7 @@ def main():
     else:
         # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:o:c:r:t:l:dx:')
+            opts, args = getopt.getopt(args, 'hi:o:c:r:t:l:dx:')
         except getopt.GetoptError as err:
             print str(err)
             usage()
@@ -157,8 +161,5 @@ OPTIONAL ARGUMENTS
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main()

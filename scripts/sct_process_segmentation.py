@@ -49,6 +49,7 @@ class Param:
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
 
+
 def get_parser():
     """
     :return: Returns the parser with the command line documentation contained in it.
@@ -164,7 +165,12 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args):
+def main(args=None):
+
+    param = Param()
+    param_default = Param()
+    if args is None:
+        args = sys.argv[1:]
 
     parser = get_parser()
     arguments = parser.parse(args)
@@ -266,7 +272,7 @@ def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
     os.chdir(path_tmp)
 
     # Change orientation of the input centerline into RPI
-    sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
+    sct.printv('\nOrient centerline to RPI orientation...', verbose)
     im_seg = Image(file_data+ext_data)
     fname_segmentation_orient = 'segmentation_rpi' + ext_data
     im_seg_orient = set_orientation(im_seg, 'RPI')
@@ -274,10 +280,10 @@ def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
     im_seg_orient.save()
 
     # Get dimension
-    sct.printv('\nGet dimensions...', param.verbose)
+    sct.printv('\nGet dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_seg_orient.dim
-    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), param.verbose)
-    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
+    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # smooth segmentation/centerline
     #x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
@@ -699,11 +705,11 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         sct.run('rm -rf '+path_tmp, error_exit='warning')
 
     # Sum up the output file names
-    sct.printv('\nOutput a nifti file of CSA values along the segmentation: '+output_folder+'csa_image.nii.gz', param.verbose, 'info')
-    sct.printv('Output result text file of CSA per slice: '+output_folder+'csa_per_slice.txt', param.verbose, 'info')
+    sct.printv('\nOutput a nifti file of CSA values along the segmentation: '+output_folder+'csa_image.nii.gz', verbose, 'info')
+    sct.printv('Output result text file of CSA per slice: '+output_folder+'csa_per_slice.txt', verbose, 'info')
     if slices or vert_levels:
-        sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t'+output_folder+'csa_mean.txt\n\t\t'+output_folder+'csa_mean.xls\n\t\t'+output_folder+'csa_mean.pickle', param.verbose, 'info')
-        sct.printv('Output result files of the volume in between the selected slices: \n\t\t'+output_folder+'csa_volume.txt\n\t\t'+output_folder+'csa_volume.xls\n\t\t'+output_folder+'csa_volume.pickle', param.verbose, 'info')
+        sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t'+output_folder+'csa_mean.txt\n\t\t'+output_folder+'csa_mean.xls\n\t\t'+output_folder+'csa_mean.pickle', verbose, 'info')
+        sct.printv('Output result files of the volume in between the selected slices: \n\t\t'+output_folder+'csa_volume.txt\n\t\t'+output_folder+'csa_volume.xls\n\t\t'+output_folder+'csa_volume.pickle', verbose, 'info')
 
 def label_vert(fname_seg, fname_label, verbose=1):
     """
@@ -1049,7 +1055,5 @@ def edge_detection(f):
 # =========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
-    main(sys.argv[1:])
+    main()

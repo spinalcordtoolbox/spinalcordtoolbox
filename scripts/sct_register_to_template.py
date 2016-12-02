@@ -138,11 +138,15 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
     param = Param()
 
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     # get arguments
     fname_data = arguments['-i']

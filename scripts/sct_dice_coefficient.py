@@ -67,9 +67,13 @@ def get_parser():
 
     return parser
 
-if __name__ == "__main__":
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     fname_input1 = arguments['-i']
     fname_input2 = arguments['-d']
@@ -102,3 +106,6 @@ if __name__ == "__main__":
 
     status, output = sct.run(cmd, verbose)
     sct.printv(output, verbose)
+
+if __name__ == "__main__":
+    main()
