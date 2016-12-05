@@ -1,0 +1,44 @@
+#QC_REPORT
+
+This user guidelines may guide the user on how to modify or use the QC_REPORT project developped with the collaboration between Ecole Polytechnique de Montreal and Neuropoly.
+
+#WHEN & WHO
+This project is developped in the semester au fall 2016 by:
+Barry Thierno
+Cloutier Frederic
+Lam Ba Samson
+Marchand Erwan
+Nguyen Kenny
+
+#WHAT
+The qc_report is used to generate a HTML report based on a template (tpl). The html contains all the description, images or texts and any miscallanenous informations regarding the project and Neuropoly. 
+
+#WHERE
+The qc_report is developped in ./scripts/msct_qc.py file.
+The report HTML and its asset are found within the ./qc_templates
+
+#HOW TO USE
+----#msct_qc in a tool
+1) add -param-qc in parser
+2) check if -param-qc exists in argments
+3) create qc object and qc_report object
+4) use decorator with actions list (if required) to alter functions if required
+5) call function in step 5) if required
+
+#HOW TO UPDATE
+----#tpl (html)
+1) see assets/animation.js or main.js
+2) any jquery functions are in both functions
+3) tpl are within index.html and contrast_tool.html (see jinja2 librairy
+
+----#msct_qc
+1)
+
+#TODO
+1) Change qc_templates path 
+2) See todo 
+3) Use a file configuration such as XML for easier maintenance regarding qc, sct or anything related
+4) Use or create package regarding tools, similars methods, repeatitive procedures, etc
+5) Create an global main page (indexglobal.html) where resides all the other indexes (for multi-subject)
+6) for comparing many tools or contrasts, add feature to select in html js
+7) how to handle deletion of html files and update the index
