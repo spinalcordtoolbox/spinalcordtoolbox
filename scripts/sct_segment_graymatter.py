@@ -80,8 +80,8 @@ def get_parser():
                       "2,4\n"
                       "3,4\n"
                       "4,4\n",
-                      mandatory=False,
-                      default_value=ParamSeg().fname_level)
+                      mandatory=False)#,
+                      #default_value=ParamSeg().fname_level)
     parser.add_option(name="-vert",
                       mandatory=False,
                       deprecated_by='-vertfile')
