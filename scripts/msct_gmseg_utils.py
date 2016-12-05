@@ -136,7 +136,8 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         printv('  Denoise...', verbose, 'normal')
         from sct_maths import denoise_nlmeans
         data = np.asarray([im.data for im in list_im_slices])
-        data_denoised = denoise_nlmeans(data, block_radius = int(len(list_im_slices)/2))
+        block_radius = int(len(list_im_slices)/2) if len(list_im_slices)<10 else 5
+        data_denoised = denoise_nlmeans(data, block_radius = block_radius)
         for i in range(len(list_im_slices)):
             list_im_slices[i].data = data_denoised[i]
 
