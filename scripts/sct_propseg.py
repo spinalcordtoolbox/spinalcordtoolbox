@@ -335,6 +335,11 @@ if __name__ == "__main__":
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
+    
+    if folder_output == "./":
+        output_name = output_filename
+    else:
+        output_name = folder_output + output_filename
 
     # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
     qcParams = None
@@ -358,12 +363,8 @@ if __name__ == "__main__":
             # Chosen axe to generate image
             return sct_slice.mosaic(nb_column=nb_column)
 
-        propseg_qc(msct_qc.axial(input_filename, output_filename), qcReport.qc_params.nb_column)
+        propseg_qc(msct_qc.axial(input_filename, output_name), qcReport.qc_params.nb_column)
 
     sct.printv('\nDone! To view results, type:', verbose)
 
-    if folder_output == "./":
-        output_name = output_filename
-    else:
-        output_name = folder_output + output_filename
     sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
