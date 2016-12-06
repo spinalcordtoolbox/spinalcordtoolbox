@@ -29,6 +29,7 @@ from msct_nurbs import NURBS
 from sct_image import get_orientation_3d, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
+import msct_qc
 from shutil import move, copyfile
 from msct_parser import Parser
 
@@ -157,6 +158,10 @@ def get_parser():
                       type_value=None,
                       description='display this help',
                       mandatory=False)
+    parser.add_option(name="-param-qc",
+                  type_value=[[','], 'str'],
+                  description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate"]),
+                  mandatory=False)
 
     return parser
 
@@ -240,6 +245,18 @@ def main(args):
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
         sct.printv('\nLength of the segmentation = '+str(round(result_length,2))+' mm\n', verbose, 'info')
+
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
+    if '-param-qc' in arguments:
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        sct.printv("\nPreparing QC Report...\n")
+        # Qc_Report generates and contains the useful infos for qc generation
+        qcReport = msct_qc.Qc_Report("sct_process_segmentation", qcParams, args, parser.usage.description)
+        msct_qc.Qc_Report.generate_report_for_text(qcReport, output_folder)
 
     # End of Main
 
@@ -1053,3 +1070,5 @@ if __name__ == "__main__":
     param_default = Param()
     # call main function
     main(sys.argv[1:])
+
+

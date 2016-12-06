@@ -1,0 +1,87 @@
+.header{
+	background: linear-gradient(to bottom, #606060, #D0D0D0);
+	color: white;
+}
+
+.footer{
+	background: linear-gradient(to top, #606060, #D0D0D0);
+	color: white;
+}
+
+.result-body{
+	background: #EAEAEA;
+}
+
+.image-result{
+	margin: 0 auto;
+}
+
+.go-top{
+	position: fixed;
+	bottom: 0px;
+	right: 32px;
+	width: 10px;
+}
+
+.glyphicon-triangle-top{
+	font-size: 32px;
+}
+
+
+#subject_index{
+	float: right;
+}
+
+iframe{
+    border:none;
+}
+
+pre{
+white-space: pre-wrap;       /* css-3 */
+ white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+ white-space: -pre-wrap;      /* Opera 4-6 */
+ white-space: -o-pre-wrap;    /* Opera 7 */
+ word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+.text-justify {
+  text-align: justify;
+  text-justify:inter-word;
+}
+#cross {
+    position: absolute;
+    top: 10px;
+    z-index: 999999;
+    width: 140px;
+    left: 10;
+}
+
+.cross_sagittal{
+    left:38% !important;
+}
+
+@media only screen
+  and (min-device-width >= 768px)
+  and (max-device-width <= 1024px)
+  and (-webkit-min-device-pixel-ratio: 1) {
+  #cross{
+      width: 90px !important;
+      }
+}
+@media only screen
+  and (min-device-width >= 320px)
+  and (max-device-width < 500px)
+  and (-webkit-min-device-pixel-ratio: 1) {
+      #cross{
+        width: 60px !important;
+      }
+}
+#logo{
+  margin-right:"15px !important",
+}
+
+.sagittal{
+display:block;
+width:30% !important;
+margin :0 auto !important;
+}
+

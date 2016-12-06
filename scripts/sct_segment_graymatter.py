@@ -51,6 +51,7 @@ import sct_maths, sct_register_multimodal
 from math import exp
 import numpy as np
 import shutil, os, sys, time
+import msct_qc
 
 
 def get_parser():
@@ -174,7 +175,10 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value=str(Param().verbose))
-
+    parser.add_option(name="-param-qc",
+                      type_value=[[','], 'str'],
+                      description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate", "ncol", "thresh"]),
+                      mandatory=False)
     return parser
 
 
@@ -747,12 +751,49 @@ def main(args=None):
     if not os.path.isfile(param_seg.fname_level):
         param_seg.fname_level = None
 
+    # parse parameters
+    # TODO refactor
+    fname_in = param_seg.fname_im_original
+
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
     start = time.time()
     seg_gm.segment()
     end = time.time()
     t = end - start
+
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
+    if '-param-qc' in arguments:
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        printv("\nPreparing QC Report...\n")
+        # There are no way to get the name easily this is why this is hard coded...
+        # TODO: find a way to get the name
+        output_filename = param_seg.fname_im_original.split(".")[0]+"_gmseg.nii.gz"
+
+        # Qc_Report generates and contains the useful infos for qc generation
+        qcReport = msct_qc.Qc_Report("sct_segment_graymatter", qcParams, sys.argv[1:], parser.usage.description)
+
+        @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.sequential_seg, msct_qc.Qc.colorbar])
+        def grayseg_qc(sct_slice, nb_column, thr = 0.5):
+            """
+            :param sct_slice:
+            :param nb_column:
+            :param thr: threshold to apply to the segmentation
+            :return:
+            """
+            # Chosen axe to generate image
+            img, seg = sct_slice.mosaic(nb_column=nb_column)
+            seg[seg < thr] = 0
+            return img, seg
+
+        # the wrapped function
+        grayseg_qc( msct_qc.axial(fname_in, output_filename),qcReport.qc_params.nb_column, qcReport.qc_params.threshold)
+
     printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
+
 
 if __name__ == "__main__":
     main()

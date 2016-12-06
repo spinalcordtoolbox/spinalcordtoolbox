@@ -19,6 +19,7 @@ import shutil
 import commands
 import time
 from glob import glob
+import msct_qc
 import sct_utils as sct
 from sct_utils import add_suffix
 from sct_image import set_orientation
@@ -132,6 +133,10 @@ def get_parser():
                       mandatory=False,
                       default_value=param.verbose,
                       example=['0', '1', '2'])
+    parser.add_option(name="-param-qc",
+                  type_value=[[','], 'str'],
+                  description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate"]),
+                  mandatory=False)
 
     return parser
 
@@ -556,6 +561,27 @@ def main():
     if remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
         sct.run('rm -rf '+path_tmp)
+
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
+    if '-param-qc' in arguments:
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        sct.printv("\nPreparing QC Report...\n")
+        # Qc_Report generates and contains the useful infos for qc generation
+        qcReport = msct_qc.Qc_Report("sct_register_to_template", qcParams, sys.argv[1:], parser.usage.description)
+
+        # Create the Qc object that creates the images files to provide to the HTML
+        @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.no_seg_seg])
+        def template_2_anat_qc(sct_slice):
+            # Chosen axe to generate image
+            return sct_slice.single()
+
+        output_filename_t2a = 'template2anat'+ext_data
+
+    template_2_anat_qc(msct_qc.template2anat_sagittal(fname_data, output_filename_t2a, fname_seg))
 
     # display elapsed time
     elapsed_time = time.time() - start_time
