@@ -40,6 +40,8 @@ def test(path_data, parameters=''):
     #if -model is used : do not add the path before.
     if '-model' in dict_param_with_path.keys():
         dict_param_with_path['-model'] = dict_param_with_path['-model'][len(path_data):]
+    if '-vertfile' in dict_param_with_path.keys():
+        dict_param_with_path['-vertfile'] = sct.slash_at_the_end(path_data, slash=1)+dict_param_with_path['-vertfile']
 
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
