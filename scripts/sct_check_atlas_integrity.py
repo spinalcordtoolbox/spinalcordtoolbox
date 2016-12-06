@@ -39,14 +39,21 @@ class Param:
         self.fname_seg = ''
         self.fname_GM = ''
 
+# initialize parameters
+param = Param()
+
 # constants
 ALMOST_ZERO = 0.0000001
 
 
 # main
 #=======================================================================================================================
-def main():
-    
+def main(args=None):
+
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+
     # Initialization
     path_atlas = ''
     
@@ -56,7 +63,7 @@ def main():
     else:
         # Check input parameters
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
 
         path_atlas = arguments['-i']
 
@@ -308,8 +315,5 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main()

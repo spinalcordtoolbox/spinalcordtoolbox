@@ -46,7 +46,8 @@ class Param:
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
         self.qc = 1
-
+param = Param()
+param_default = Param()
 
 # MAIN
 # ==========================================================================================
@@ -279,10 +280,13 @@ def get_parser():
 # ==========================================================================================
 def main(args=None):
 
-    parser = get_parser()
-    param = Param()
+    if args is None:
+        args = sys.argv[1:]
+    # initialize parameters
 
-    arguments = parser.parse(sys.argv[1:])
+    parser = get_parser()
+
+    arguments = parser.parse(args)
 
     fname_src = arguments["-d"]
     fname_transfo = arguments["-w"]
@@ -297,11 +301,5 @@ def main(args=None):
     WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc)
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-    # call main function
     main()

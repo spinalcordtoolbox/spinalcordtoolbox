@@ -90,7 +90,20 @@ def make_raw(mincfile, rawfile):
     raw.write( 
         subprocess.check_output(["minctoraw","-byte","-unsigned","-normalize",mincfile]))
         
-def main(filename, fname_out=''): 
+def main(args=None,**kwargs):
+
+    if args is None :
+        args = sys.argv[1:]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filename", help="absolute path of input image")
+    parser.add_argument("-o", "--fname_out", action="store", default="",
+                        help="absolute path of output image (without image format)")
+    arguments = parser.parse(args)
+
+    filename = args.filename
+    fname_out = args.fname_out
+
     if not os.path.isfile(filename):
         console_log("File {} does not exist.".format(filename))
 
@@ -112,9 +125,5 @@ def main(filename, fname_out=''):
     make_raw(filename, rawname)
 
 if __name__ == '__main__': 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("filename", help="absolute path of input image")
-    parser.add_argument("-o", "--fname_out", action="store", default="", help="absolute path of output image (without image format)")
-    args = parser.parse_args()
 
-    main(args.filename,args.fname_out)
+    main()

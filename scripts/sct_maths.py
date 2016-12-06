@@ -161,7 +161,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args = None):
+def main(args=None):
 
     dim_list = ['x', 'y', 'z', 't']
 
@@ -662,7 +662,5 @@ def correlation(x, y, type='pearson'):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # # initialize parameters
-    param = Param()
     # call main function
     main()

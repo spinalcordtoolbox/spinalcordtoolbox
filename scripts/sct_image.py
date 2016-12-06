@@ -10,8 +10,12 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, os
+import os
+import re
+import sys
+
 from numpy import concatenate, shape, newaxis
+
 from msct_parser import Parser
 from msct_image import Image, get_dimension
 from sct_utils import printv, add_suffix, extract_fname, run, tmp_create
@@ -20,11 +24,13 @@ from sct_utils import printv, add_suffix, extract_fname, run, tmp_create
 class Param:
     def __init__(self):
         self.verbose = '1'
+# # initialize parameters
+param = Param()
+
 
 # PARSER
 # ==========================================================================================
 def get_parser():
-    param = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -112,7 +118,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args = None):
+def main(args=None):
     dim_list = ['x', 'y', 'z', 't']
 
     if not args:
@@ -240,10 +246,12 @@ def main(args = None):
         # printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
         print(orient)
+        return orient
     elif '-display-warp' in arguments:
         printv('Warping grid generated.\n', verbose, 'info')
     else:
         printv('An error occurred in sct_image...', verbose, "error")
+
 
 
 def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
@@ -597,7 +605,7 @@ def get_orientation_3d(im, filename=False):
     :return:
     """
     from sct_utils import run
-    string_out = 'Input image orientation : '
+    regex_str = 'Input image orientation : ([A-Z]{3})\n?'
     # get orientation
     if filename:
         status, output = run('isct_orientation3d -i '+im+' -get ', 0)
@@ -606,7 +614,7 @@ def get_orientation_3d(im, filename=False):
     # check status
     if status != 0:
         printv('ERROR in get_orientation.', 1, 'error')
-    orientation = output[output.index(string_out)+len(string_out):]
+    orientation = re.search(regex_str,output).groups()[0]
     # orientation = output[26:]
     return orientation
 
@@ -692,7 +700,5 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # # initialize parameters
-    param = Param()
     # call main function
     main()

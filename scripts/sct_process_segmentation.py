@@ -48,6 +48,8 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
+param = Param()
+param_default = Param()
 
 def get_parser():
     """
@@ -164,7 +166,10 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args):
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
 
     parser = get_parser()
     arguments = parser.parse(args)
@@ -1049,7 +1054,5 @@ def edge_detection(f):
 # =========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
-    main(sys.argv[1:])
+    main()

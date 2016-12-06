@@ -35,6 +35,8 @@ class Param:
         self.cross_size = 5  # cross size in mm
         self.verbose = '1'
 
+param = Param()
+
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
@@ -137,7 +139,6 @@ class ProcessLabels(object):
             image_output.data[coord.x, coord.y, coord.z] = image_output.data[coord.x, coord.y, coord.z] + float(value)
         return image_output
 
-
     def create_label(self, add=False):
         """
         Create an image with labels listed by the user.
@@ -163,7 +164,6 @@ class ProcessLabels(object):
 
         return image_output
 
-
     def cross(self):
         """
         create a cross.
@@ -180,23 +180,24 @@ class ProcessLabels(object):
         # clean output_image
         output_image.data *= 0
 
-        cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate)
+        cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate,
+                                                         verbose=self.verbose)
 
         for coord in cross_coordinates:
             output_image.data[round(coord.x), round(coord.y), round(coord.z)] = coord.value
 
         return output_image
 
-
     @staticmethod
-    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
+    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False, verbose=0):
         from msct_types import Coordinate
 
         # if reference image is provided (segmentation), we draw the cross perpendicular to the centerline
         if image_ref is not None:
             # smooth centerline
             from sct_straighten_spinalcord import smooth_centerline
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_ref, verbose=self.verbose)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, \
+            z_centerline_deriv = smooth_centerline(image_ref, verbose=verbose)
 
         # compute crosses
         cross_coordinates = []
@@ -827,7 +828,7 @@ def main(args=None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     input_filename = arguments['-i']
     input_fname_output = None
     input_fname_ref = None
@@ -879,7 +880,9 @@ def main(args=None):
         input_fname_output = arguments['-o']
     input_verbose = int(arguments['-v'])
 
-    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels, value=value)
+    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref
+                              , cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates
+                              , verbose=input_verbose, vertebral_levels=vertebral_levels, value=value)
     processor.process(process_type)
 
     # elif '-ref' in arguments:
@@ -899,8 +902,4 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # # initialize parameters
-    param = Param()
-    # param_default = Param()
-    # call main function
     main()

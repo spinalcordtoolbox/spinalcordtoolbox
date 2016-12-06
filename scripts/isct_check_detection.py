@@ -22,13 +22,16 @@ import numpy as np
 class Param:
     ## The constructor
     def __init__(self):
-        self.debug               = 0
-
+        self.debug = 0
+param = Param()
 
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
+
+    if not args:
+        args = sys.argv[1:]
 
     # Initialization
     fname_input = ''
@@ -42,7 +45,7 @@ def main():
     else:
     # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:t:')
+            opts, args = getopt.getopt(args,'hi:t:')
         except getopt.GetoptError as err:
             print str(err)
             usage()
@@ -109,7 +112,5 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()

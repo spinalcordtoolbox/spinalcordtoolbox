@@ -33,10 +33,43 @@ class Param:
         self.verbose = 1
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
 
+# initialize parameters
+param = Param()
+param_default = Param()
+
 
 # MAIN
 # ==========================================================================================
-def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files):
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
+    # call main function
+    parser = get_parser()
+    arguments = parser.parse(args)
+
+    fname_data = arguments['-i']
+    fname_bvecs = arguments['-bvec']
+
+    fname_bvals = ''
+    path_out = ''
+    average = param.average
+    verbose = param.verbose
+    remove_tmp_files = param.remove_tmp_files
+
+    if '-bval' in arguments:
+        fname_bvals = arguments['-bval']
+    if '-bvalmin' in arguments:
+        param.bval_min = arguments['-bvalmin']
+    if '-a' in arguments:
+        average = arguments['-a']
+    if '-ofolder' in arguments:
+        path_out = arguments['-ofolder']
+    if '-v' in arguments:
+        verbose = int(arguments['-v'])
+    if '-r' in arguments:
+        remove_tmp_files = int(arguments['-r'])
 
     # Initialization
     start_time = time.time()
@@ -275,7 +308,6 @@ EXAMPLE
 
 def get_parser():
     # Initialize parser
-    param_default = Param()
     parser = Parser(__file__)
 
     # Mandatory arguments
@@ -347,33 +379,4 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-    # call main function
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
-    fname_data = arguments['-i']
-    fname_bvecs = arguments['-bvec']
-
-    fname_bvals = ''
-    path_out = ''
-    average = param.average
-    verbose = param.verbose
-    remove_tmp_files = param.remove_tmp_files
-
-    if '-bval' in arguments:
-        fname_bvals = arguments['-bval']
-    if '-bvalmin' in arguments:
-        param.bval_min = arguments['-bvalmin']
-    if '-a' in arguments:
-        average = arguments['-a']
-    if '-ofolder' in arguments:
-        path_out = arguments['-ofolder']
-    if '-v' in arguments:
-        verbose = int(arguments['-v'])
-    if '-r' in arguments:
-        remove_tmp_files = int(arguments['-r'])
-
-    main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files)
+    main()

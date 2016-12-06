@@ -45,6 +45,7 @@ class Param:
         self.gaussian_kernel = 4  # gaussian kernel for creating gaussian mask from center point.
         self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
         self.remove_tmp_files = 1  # remove temporary files
+param = Param()
 
 
 def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4, remove_tmp_files=1):
@@ -1132,8 +1133,10 @@ def get_parser():
     return parser
 
 
-if __name__ == '__main__':
-    param = Param()
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
     param_default = Param()
 
     # init default params
@@ -1143,7 +1146,7 @@ if __name__ == '__main__':
 
     # get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     method = arguments['-p']
     fname_in = arguments['-i']
     if '-o' in arguments:
@@ -1195,6 +1198,5 @@ if __name__ == '__main__':
         scad.execute()
 
 
-
-
-
+if __name__ == '__main__':
+    main()

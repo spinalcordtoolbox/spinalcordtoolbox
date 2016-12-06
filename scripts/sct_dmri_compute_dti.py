@@ -20,18 +20,13 @@ class Param:
     def __init__(self):
         self.verbose = 1
 
+# initialize parameters
+param = Param()
+
 
 # PARSER
 # ==========================================================================================
 def get_parser():
-    param = Param()
-
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # # initialize parameters
-    # param = Param()
-    # param_default = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -88,7 +83,7 @@ def main(args = None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     fname_in = arguments['-i']
     fname_bvals = arguments['-bval']
     fname_bvecs = arguments['-bvec']
@@ -202,7 +197,5 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()
