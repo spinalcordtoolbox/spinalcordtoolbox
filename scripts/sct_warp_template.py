@@ -171,7 +171,7 @@ def get_file_label(path_label='', label='', output='file'):
     # init
     file_info_label = 'info_label.txt'
     file_label = ''
-    # make sure there is a slach at the end
+    # make sure there is a slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
     # Open file
     fname_label = path_label+file_info_label
