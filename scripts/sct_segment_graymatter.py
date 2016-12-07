@@ -709,7 +709,7 @@ def main(args=None):
     param_seg.fname_seg = arguments["-s"]
 
     if '-vertfile' in arguments:
-        if arguments['-vertfile'].lower() == "none":
+        if sct.extract_fname(arguments['-vertfile'])[1].lower() == "none":
             param_seg.fname_level = None
         elif os.path.isfile(arguments['-vertfile']):
             param_seg.fname_level = arguments['-vertfile']
@@ -743,9 +743,6 @@ def main(args=None):
         param.rm_tmp= bool(int(arguments['-r']))
     if '-v' in arguments:
         param.verbose= arguments['-v']
-
-    if not os.path.isfile(param_seg.fname_level):
-        param_seg.fname_level = None
 
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
     start = time.time()
