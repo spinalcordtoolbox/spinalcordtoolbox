@@ -46,7 +46,7 @@ def get_parser(paramreg=None):
     if paramreg is None:
         step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
                          slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
-        step1 = Paramreg()
+        step1 = Paramreg(step='1', type='im')
         paramreg = ParamregMultiStep([step0, step1])
 
     parser = Parser(__file__)
@@ -191,7 +191,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
+    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -207,6 +207,9 @@ class Paramreg(object):
         self.dof = dof  # only for type=label
         self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
         self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
+
+        # list of possible values for self.type
+        self.type_list = ['im', 'seg', 'label']
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -233,14 +236,16 @@ class ParamregMultiStep:
         # this function checks if the step is already present. If it is present, it must update it. If it is not, it must add it.
         param_reg = Paramreg()
         param_reg.update(stepParam)
-        if param_reg.step != 0:
+        # parameters must contain 'step'
+        if param_reg.step is None:
+            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
+        else:
             if param_reg.step in self.steps:
                 self.steps[param_reg.step].update(stepParam)
             else:
                 self.steps[param_reg.step] = param_reg
-        else:
-            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
-        if int(param_reg.step) != 0 and param_reg.type not in ['im', 'seg']:
+        # parameters must contain 'type'
+        if int(param_reg.step) != 0 and param_reg.type not in param_reg.type_list:
             sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
 
 
@@ -270,7 +275,7 @@ def main(args=None):
     # get default registration parameters
     # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
     step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5', slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
-    step1 = Paramreg()
+    step1 = Paramreg(step='1', type='im')
     paramreg = ParamregMultiStep([step0, step1])
 
     parser = get_parser(paramreg=paramreg)
