@@ -51,7 +51,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     # Get full path
     fname_data = os.path.abspath(fname_data)
     fname_bvecs = os.path.abspath(fname_bvecs)
-    if not fname_bvals == '':
+    if fname_bvals:
         fname_bvals = os.path.abspath(fname_bvals)
 
     # Extract path, file and extension
@@ -168,7 +168,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     index_dwi = []
 
     # if bval is not provided
-    if fname_bvals == '':
+    if not fname_bvals:
         # Open bvecs file
         #sct.printv('\nOpen bvecs file...', verbose)
         bvecs = []
