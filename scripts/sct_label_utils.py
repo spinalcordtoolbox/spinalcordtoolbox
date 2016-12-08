@@ -619,7 +619,7 @@ class ProcessLabels(object):
         useful_notation = ''
         for coord in coordinates_input:
             print 'Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value)
-            if useful_notation != '':
+            if useful_notation:
                 useful_notation = useful_notation + ':'
             useful_notation = useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         print 'All labels (useful syntax):'
