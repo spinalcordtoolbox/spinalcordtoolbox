@@ -86,7 +86,7 @@ class ImageCropper(object):
                 sct.printv('WARNING: Mask was specified for cropping. Arguments -start and -end will be ignored', 1, 'warning')
             self.start, self.end = find_mask_boundaries(self.mask)
             # overwrite dim to specify 3 dimensions
-            self.dim = [0, 1, 2]
+            self.dim = range(len(Image(self.mask).data.shape))
 
         if self.start is not None:
             self.cmd += " -start " + ','.join(map(str, self.start))
@@ -384,8 +384,8 @@ def find_mask_boundaries(fname_mask):
     data = Image(fname_mask).data
     data_nonzero = nonzero(data)
     # find min and max boundaries of the mask
-    ind_start = [min(data_nonzero[i]) for i in range(3)]
-    ind_end = [max(data_nonzero[i]) for i in range(3)]
+    ind_start = [min(data_nonzero[i]) for i in range(len(data_nonzero))]
+    ind_end = [max(data_nonzero[i]) for i in range(len(data_nonzero))]
     # create string indices
     # ind_start = ','.join(str(i) for i in xyzmin)
     # ind_end = ','.join(str(i) for i in xyzmax)
