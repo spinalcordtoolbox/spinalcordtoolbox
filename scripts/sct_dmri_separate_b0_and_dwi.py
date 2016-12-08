@@ -41,22 +41,6 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     # Initialization
     start_time = time.time()
 
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-
-    # Parameters for debug mode
-    if param.debug:
-        fname_data = path_sct+'/testing/data/errsm_23/dmri/dmri.nii.gz'
-        fname_bvecs = path_sct+'/testing/data/errsm_23/dmri/bvecs.txt'
-        average = 1
-        verbose = 1
-
-    # check existence of input files
-    # sct.check_file_exist(fname_data, verbose)
-    # sct.check_file_exist(fname_bvecs, verbose)
-    # if not fname_bvals == '':
-    #     sct.check_file_exist(fname_bvals, verbose)
-
     # print arguments
     sct.printv('\nInput parameters:', verbose)
     sct.printv('  input file ............'+fname_data, verbose)
@@ -67,6 +51,8 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     # Get full path
     fname_data = os.path.abspath(fname_data)
     fname_bvecs = os.path.abspath(fname_bvecs)
+    if fname_bvals:
+        fname_bvals = os.path.abspath(fname_bvals)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
@@ -182,7 +168,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     index_dwi = []
 
     # if bval is not provided
-    if fname_bvals == '':
+    if not fname_bvals:
         # Open bvecs file
         #sct.printv('\nOpen bvecs file...', verbose)
         bvecs = []
