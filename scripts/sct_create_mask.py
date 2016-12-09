@@ -24,7 +24,7 @@ import nibabel
 from scipy import ndimage
 
 import sct_utils as sct
-from sct_image import get_orientation_3d
+from sct_image import get_orientation
 from sct_convert import convert
 from msct_image import Image
 from sct_image import copy_header, concat_data
@@ -124,7 +124,7 @@ def create_mask():
     # sct.run('mkdir '+path_tmp, param.verbose)
 
     sct.printv('\nCheck orientation...', param.verbose)
-    orientation_input = get_orientation_3d(param.fname_data, filename=True)
+    orientation_input = get_orientation(Image(param.fname_data))
     sct.printv('.. '+orientation_input, param.verbose)
     reorient_coordinates = False
 
