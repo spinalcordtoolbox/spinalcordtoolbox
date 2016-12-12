@@ -94,11 +94,21 @@ class MultiLabelRegistration:
             convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template, squeeze_data=0)
 
         os.chdir(tmp_dir)
-        # TODO assert RPI, if not, change orientation
         # save images
         im_automatic_ml.save()
         im_template_ml.save()
-        
+
+        # assert data is in RPI, if not change it to RPI
+        if im_automatic_ml.orientation != 'RPI':
+            fname_automatic_ml_rpi = sct.add_suffix(fname_automatic_ml, '_rpi')
+            sct.run('sct_image -i '+fname_automatic_ml+' -setorient RPI -o '+fname_automatic_ml_rpi)
+            fname_automatic_ml = fname_automatic_ml_rpi
+
+        if im_template_ml.orientation != 'RPI':
+            fname_template_ml_rpi = sct.add_suffix(fname_template_ml, '_rpi')
+            sct.run('sct_image -i ' + fname_template_ml + ' -setorient RPI -o ' + fname_template_ml_rpi)
+            fname_template_ml = fname_template_ml_rpi
+
         # apply template2image warping field
         if self.apply_warp_template == 1:
             fname_template_ml_new = sct.add_suffix(fname_template_ml, '_r')
