@@ -91,7 +91,7 @@ class MultiLabelRegistration:
         convert(fname_warp_template, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
         if self.fname_warp_target2template is not None:
             path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(self.fname_warp_target2template)
-            convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template)
+            convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template, squeeze_data=0)
 
         os.chdir(tmp_dir)
         # TODO assert RPI, if not, change orientation
