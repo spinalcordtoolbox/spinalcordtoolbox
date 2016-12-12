@@ -447,6 +447,7 @@ def get_parser():
                       type_value="str",
                       description="Parameters for the multimodal registration between multilabel images",
                       mandatory=False,
+                      default_value=Param().param_reg,
                       example='step=1,algo=slicereg,metric=MeanSquares,step=2,algo=syn,metric=MeanSquares,iter=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1')
 
     parser.usage.addSection('\nOUTPUT OTIONS')
