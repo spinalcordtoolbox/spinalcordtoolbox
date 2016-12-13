@@ -12,6 +12,7 @@
 import sys, os, time
 from msct_parser import Parser
 from msct_image import Image
+from sct_convert import convert
 import sct_utils as sct
 
 class Param:
@@ -65,39 +66,38 @@ class MultiLabelRegistration:
         self.im_template_gm = thr_im(self.im_template_gm, 0.01, self.param.thr)
         self.im_template_wm = thr_im(self.im_template_wm, 0.01, self.param.thr)
 
-        # create multilabel images
+        ## create multilabel images:
+        # copy GM images to keep header information
         im_automatic_ml = self.im_gm.copy()
         im_template_ml = self.im_template_gm.copy()
 
+        # create multi-label segmentation with GM*200 + WM*100 (100 and 200 encoded in self.param.gap)
         im_automatic_ml.data = self.param.gap[1]*self.im_gm.data + self.param.gap[0]*self.im_wm.data
         im_template_ml.data = self.param.gap[1]*self.im_template_gm.data + self.param.gap[0]*self.im_template_wm.data
 
+        # set new names
         fname_automatic_ml = 'multilabel_automatic_seg.nii.gz'
         fname_template_ml = 'multilabel_template_seg.nii.gz'
-
-        path_automatic_ml, file_automatic_ml, ext_automatic_ml = sct.extract_fname(fname_automatic_ml)
-        path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
-        path_gm, file_gm, ext_gm = sct.extract_fname(fname_gm)
-        path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template2target)
-
         im_automatic_ml.setFileName(fname_automatic_ml)
         im_template_ml.setFileName(fname_template_ml)
 
         # Create temporary folder and put files in it
         tmp_dir = sct.tmp_create()
 
-        from sct_convert import convert
+        path_gm, file_gm, ext_gm = sct.extract_fname(fname_gm)
+        path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template2target)
+
         convert(fname_gm, tmp_dir+file_gm+ext_gm)
         convert(fname_warp_template, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
         if self.fname_warp_target2template is not None:
             path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(self.fname_warp_target2template)
-            convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template)
+            convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template, squeeze_data=0)
 
         os.chdir(tmp_dir)
-        # TODO assert RPI, if not, change orientation
+        # save images
         im_automatic_ml.save()
         im_template_ml.save()
-        
+
         # apply template2image warping field
         if self.apply_warp_template == 1:
             fname_template_ml_new = sct.add_suffix(fname_template_ml, '_r')
@@ -447,6 +447,7 @@ def get_parser():
                       type_value="str",
                       description="Parameters for the multimodal registration between multilabel images",
                       mandatory=False,
+                      default_value=Param().param_reg,
                       example='step=1,algo=slicereg,metric=MeanSquares,step=2,algo=syn,metric=MeanSquares,iter=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1')
 
     parser.usage.addSection('\nOUTPUT OTIONS')
