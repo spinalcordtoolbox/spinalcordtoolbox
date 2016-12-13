@@ -40,11 +40,13 @@ def test(path_data, parameters=''):
     #if -model is used : do not add the path before.
     if '-model' in dict_param_with_path.keys():
         dict_param_with_path['-model'] = dict_param_with_path['-model'][len(path_data):]
+    if '-vertfile' in dict_param_with_path.keys():
+        dict_param_with_path['-vertfile'] = sct.slash_at_the_end(path_data, slash=1)+dict_param_with_path['-vertfile']
 
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-vertfile'])): # and os.path.isfile(dict_param_with_path['-ref'])):
+    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s'])): 
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'dice_wm': float('nan'), 'hausdorff': float('nan'), 'med_dist': float('nan'), 'duration_[s]': float('nan')}, index=[path_data])
