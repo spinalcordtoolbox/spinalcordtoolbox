@@ -1,0 +1,4 @@
+nipy==0.4.0
+nibabel==2.1.0
+dipy==0.11.0
+jinja2==2.8

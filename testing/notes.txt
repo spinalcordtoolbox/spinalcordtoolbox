@@ -1,0 +1,17 @@
+Missing test files:
+    sct_get_centerline
+        t2_centerline_init.nii.gz
+    sct_process_segmentation & sct_smooth_spinalcord
+        t2_segmentation_PropSeg.nii.gz
+    sct_propseg
+        t2_segmentation_PropSeg.nii.gz
+        t2_manual_segmentation.nii.gz
+    sct_register_multimodal
+        segmentation_binary -> contrast mt
+    sct_register_to_template
+        landmarks_center.nii.gz
+        PAS BESOIN DE DWMSMPL LES MNI_POLY??????
+    sct_straighten_spinalcord
+        t2_centerline.nii.gz
+    sct_warp_template
+        warp_template2mtmtr.nii.gz

@@ -1,0 +1,57 @@
+#QC_REPORT
+
+This user guidelines may guide the user on how to modify or use the QC_REPORT project developped with the collaboration between Ecole Polytechnique de Montreal and Neuropoly.
+
+#WHEN & WHO
+This project is developped in the semester au fall 2016 by:
+Barry Thierno
+Cloutier Frederic
+Lam Ba Samson
+Marchand Erwan
+Nguyen Kenny
+
+#WHAT
+The qc_report is used to generate a HTML report based on a template (tpl). The html contains all the description, images or texts and any miscallanenous informations regarding the project and Neuropoly. 
+
+#WHERE
+The qc_report is developped in ./scripts/msct_qc.py file.
+The report HTML and its asset are found within the ./qc_templates
+
+#HOW TO USE
+----#msct_qc in a tool
+1) add -param-qc in parser
+2) check if -param-qc exists in argments
+3) create qc object and qc_report object
+4) use decorator with actions list (if required) to alter functions if required
+5) call function in step 5) if required
+
+#HOW TO UPDATE
+----#tpl (html)
+1) see assets/animation.js or main.js
+2) any jquery functions are in both functions
+3) tpl are within index.html and contrast_tool.html (see jinja2 library)
+
+----#msct_qc
+Description:
+msct_qc is a .py file containing all the classes necessary to generate the files and images to put in the HTML report. It also calls the report generation tool itself. There are four main classes used in the generation which are: Slice, Qc, Qc_Report and Qc_Params. "Slice" is the class that will create the spinal cord slices object that will be passed on to the call of the "Qc" object. The "Qc" will be instantiated first by providing it the "Qc_Report" object which contains the "Qc_Params" object. After being instantiated, it can finally be called and save the 2D images in the appropriate folder structure and generate the HTML files. To make any changes, when there is an assumption made about a name, or some sort of convention, there are chances that another class will rely on these same assumption so make sure to update in the other classes the same kind of dependency.
+
+#TODO
+1) Change qc_templates path 
+2) See todo 
+3) Use a file configuration such as XML for easier maintenance regarding qc, sct or anything related
+4) Use or create package regarding tools, similars methods, repeatitive procedures, etc
+5) Create an global main page (indexglobal.html) where resides all the other indexes (for multi-subject)
+6) for comparing many tools or contrasts, add feature to select in html js
+7) how to handle deletion of html files and update the index
+
+#Suggestions
+1) Follow the DRY, SOLID principles;
+2) In our codes, there are hard coded variables that could be static constants instead so it can be used in many classes to prevent having to make the changes everywhere.
+3) To regenerate report when deleteing some image files, it might be possible to use the isct_generate_report.generate_report() method and loop throughout the qc root folder and send in the required parameters to generate properly. Since some variables that were once useful to generate the report are only found when the process is being run, creating an .xml or .json file containing all the values of the Qc_Report and Qc_Params object will be useful as the user will not need to call again the process. The new method will only need to iterate through the folder, open the .json/.xml file to get the useful parameters and call the generation tool again.
+4) For multiple subjects report generation, one possible solution requires to create a new template and redefine how images will be disposed. Once this is done, and knowing that the folders follow a defined convention, the code will have to iterate through the folder and provide the correct path so that the HTML knows where too look up the images.
+5) To verify validity of the parameters, it would be possible to move the "if '-param-qc'" statement before the process being run so it shows the warning message sooner. 
+6) For the process in general, it would be useful to have a class containing all the naming convention (or description strings) of static values to make it easier to reuse and change them.
+7) Have a class to manage the parsing option that is repeated throughout every single processes so it doesn't have to be changed eveywhere.
+
+
+
