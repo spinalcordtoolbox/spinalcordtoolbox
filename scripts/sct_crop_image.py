@@ -84,9 +84,7 @@ class ImageCropper(object):
             # if user already specified -start or -end arguments, let him know they will be ignored
             if self.start is not None or self.end is not None:
                 sct.printv('WARNING: Mask was specified for cropping. Arguments -start and -end will be ignored', 1, 'warning')
-            self.start, self.end = find_mask_boundaries(self.mask)
-            # overwrite dim to specify 3 dimensions
-            self.dim = [0, 1, 2]
+            self.start, self.end, self.dim = find_mask_boundaries(self.mask)
 
         if self.start is not None:
             self.cmd += " -start " + ','.join(map(str, self.start))
@@ -384,13 +382,14 @@ def find_mask_boundaries(fname_mask):
     data = Image(fname_mask).data
     data_nonzero = nonzero(data)
     # find min and max boundaries of the mask
-    ind_start = [min(data_nonzero[i]) for i in range(3)]
-    ind_end = [max(data_nonzero[i]) for i in range(3)]
+    dim = len(data_nonzero)
+    ind_start = [min(data_nonzero[i]) for i in range(dim)]
+    ind_end = [max(data_nonzero[i]) for i in range(dim)]
     # create string indices
     # ind_start = ','.join(str(i) for i in xyzmin)
     # ind_end = ','.join(str(i) for i in xyzmax)
     # return values
-    return ind_start, ind_end
+    return ind_start, ind_end, range(dim)
 
 
 def main(args=None):
