@@ -1,6 +1,6 @@
 # CHANGES TO RELEASE
 
-##3.0 (TBD)
+##3.0_beta29 (2016-12-13)
 - NEW: PAM50 template now used as the default template
 - NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
 - NEW: **sct_propseg**: now accepts a correction solution for sct_propseg in case of missing CSF/SC contrast and/or artefacts (see issue #664 for details)
@@ -12,18 +12,22 @@
 - NEW: **sct_register_multimodal**: features two new transformations: centermassrot and columnwise.
 - NEW: **sct_register_multimodal**: flag smoothWarpXY: regularization of warping field (only for algo=columnwize)
 - NEW: **sct_register_multimodal**: flag pca_eigenratio_th: Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot).
-- BUG: **sct_straighten_spinalcord**: Fixed #917, #924
+- NEW: **sct_create_mask**: now compatible with 2D data (#1066)
+- NEW: **sct_maths**: computes mutual information and cross-correlation between images (#1054)
+- BUG: **sct_straighten_spinalcord**: Fixed #917, #924, #1063
 - BUG: Fixed issues #715, #719
 - BUG: **sct_propseg**: fixed issues #147, #242, #309, #376, #501, #544, #674, #680
 - BUG: **sct_segment_graymatter**: fixed issues #782, #813, #815
+- BUG: **sct_register_graymatter**: fixed issue #1068
 - BUG: Fixed incompatibility with CENTOS 6.X (issue #776)
 - BUG: Binaries now hosted on Gihub for accessibility from China (#927)
 - BUG: **sct_resample**: Fixed slight image shift caused by resampling (#612)
 - OPT: **sct_check_dependencies**: Made test more sentitive to OS incompatibilities (issue #771)
-- OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #350, #404, #414, #499, #650, #735, #737, #749, #807, #818
+- OPT: **sct_register_multimodal**: major changes. Simplified flags. Fixed issues #350, #404, #414, #499, #650, #735, #737, #749, #807, #818, #1033, #1034
 - OPT: **sct_register_to_template**: now uses slicewise rigid transfo at first step (instead of slicereg), which improves accuracy (issue #666)
 - OPT: **sct_register_to_template**: added contrast for registration: t2s
 - OPT: **sct_label_vertebrae**: now fully automatic (although unstable-- work in progress).
+- OPT: **sct_testing**: added integrity testing for CSA computation (#1031)
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
 
 ##3.0_beta28 (2016-11-25)
@@ -31,7 +35,7 @@
 - BUG: **sct_label_vertebrae**: Fixed Vertebral labeling removes first vertebrae in the labelled segmentation (#700)
 - OPT: **sct_register_multimodal**: Now possible to input initial warping field (#1049)
 - OPT: **sct_register_multimodal**: Added feature to be able to input two pairs of label image for estimating affine/rigid/nonrigid transformation (#661)
-- OPT: **sct_extract_metric**: Added weighted-Maximum a posteriori extraction method
+- OPT: **sct_extract_metric**: Added weighted-Maximum a posteriori extraction method (#1018)
 - OPT: Remove color tags on log entries (#1035)
 
 ##3.0_beta27 (2016-10-23)
