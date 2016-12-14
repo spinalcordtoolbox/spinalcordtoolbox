@@ -17,18 +17,17 @@
 import sys
 import os
 import commands
+import time
 
 import numpy
 import nibabel
 from scipy import ndimage
 
 import sct_utils as sct
-import sct_image
-from sct_image import copy_header, concat_data, get_orientation_3d
-import sct_label_utils
-import sct_maths
+from sct_image import get_orientation
 from sct_convert import convert
 from msct_image import Image
+from sct_image import copy_header, concat_data
 from msct_parser import Parser
 
 
@@ -125,7 +124,7 @@ def create_mask():
     # sct.run('mkdir '+path_tmp, param.verbose)
 
     sct.printv('\nCheck orientation...', param.verbose)
-    orientation_input = get_orientation_3d(param.fname_data, filename=True)
+    orientation_input = get_orientation(Image(param.fname_data))
     sct.printv('.. '+orientation_input, param.verbose)
     reorient_coordinates = False
 
@@ -329,7 +328,7 @@ def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
         radius = ceil((int(size) - 1) / 2.0)
 
     if shape == 'box':
-        mask2d[int(xc - radius):int(xc + radius + 1), int(yc - radius):int(yc + radius + 1)] = 1
+        mask2d[xc - radius:xc + radius + 1, yc - radius:yc + radius + 1] = 1
 
     elif shape == 'cylinder':
         mask2d = ((xx+offset[0]-xc)**2 + (yy+offset[1]-yc)**2 <= radius**2)*1
@@ -337,10 +336,6 @@ def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
     elif shape == 'gaussian':
         sigma = float(radius)
         mask2d = numpy.exp(-(((xx+offset[0]-xc)**2)/(2*(sigma**2)) + ((yy+offset[1]-yc)**2)/(2*(sigma**2))))
-
-    # import matplotlib.pyplot as plt
-    # plt.imshow(mask2d)
-    # plt.show()
 
     return mask2d
 
