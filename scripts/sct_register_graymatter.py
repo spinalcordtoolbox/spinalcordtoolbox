@@ -40,6 +40,7 @@ class MultiLabelRegistration:
             self.param = Param()
         else:
             self.param = param
+        self.fname_gm = fname_gm
         self.im_gm = Image(fname_gm)
         self.im_wm = Image(fname_wm)
         self.path_template = sct.slash_at_the_end(path_template, 1)
@@ -86,11 +87,11 @@ class MultiLabelRegistration:
         # Create temporary folder and put files in it
         tmp_dir = sct.tmp_create()
 
-        path_gm, file_gm, ext_gm = sct.extract_fname(fname_gm)
+        path_gm, file_gm, ext_gm = sct.extract_fname(self.fname_gm)
         path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template2target)
 
-        convert(fname_gm, tmp_dir+file_gm+ext_gm)
-        convert(fname_warp_template, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
+        convert(self.fname_gm, tmp_dir+file_gm+ext_gm)
+        convert(self.fname_warp_template2target, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
         if self.fname_warp_target2template is not None:
             path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(self.fname_warp_target2template)
             convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template, squeeze_data=0)
@@ -541,7 +542,7 @@ def main(args=None):
         ml_param.remove_tmp = int(arguments['-r'])
     if '-v' in arguments:
         ml_param.verbose = int(arguments['-v'])
-    
+
     apply_warp = 0
     if '-apply-warp' in arguments:
         apply_warp = int(arguments['-apply-warp'])
