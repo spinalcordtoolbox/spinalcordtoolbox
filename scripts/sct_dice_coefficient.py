@@ -19,10 +19,13 @@ def get_parser():
     parser = Parser(__file__)
     parser.usage.set_description(
         'Compute the Dice Coefficient. Note: indexing (in both time and space) starts with 0 not 1! '
-        'Inputting -1 for a size will set it to the full image extent for that dimension.'
-    )
+        'Inputting -1 for a size will set it to the full image extent for that dimension.')
     parser.add_option(
-        name='-i' m=, type_value='image_nifti', description='First input image.', mandatory=True, example='t2_seg.nii.gz')
+        name='-i',
+        type_value='image_nifti',
+        description='First input image.',
+        mandatory=True,
+        example='t2_seg.nii.gz')
     parser.add_option(
         name='-d',
         type_value='image_nifti',
