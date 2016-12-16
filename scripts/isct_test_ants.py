@@ -11,6 +11,7 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
 import getopt
 import os
 import shutil
@@ -23,8 +24,6 @@ import sct_utils as sct
 import sct_dice_coefficient
 
 
-# main
-#=======================================================================================================================
 def main():
 
     # Initialization
@@ -118,7 +117,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         printv('\nDelete temporary files...', verbose)
-        shutil.rmtree(path_tmp)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # output result for parent function
     if test_passed:
@@ -129,17 +128,11 @@ def main():
         sys.exit(1)
 
 
-
-# printv: enables to print or not, depending on verbose status
-#=======================================================================================================================
 def printv(string,verbose):
     if verbose:
         print(string)
 
 
-
-# Print usage
-# ==========================================================================================
 def usage():
     print '\n' \
         ''+os.path.basename(__file__)+'\n' \
@@ -163,10 +156,5 @@ def usage():
     sys.exit(2)
 
 
-
-# Start program
-#=======================================================================================================================
 if __name__ == "__main__":
-    # call main function
     main()
-
