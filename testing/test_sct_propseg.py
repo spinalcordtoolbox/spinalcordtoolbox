@@ -24,6 +24,14 @@ from copy import deepcopy
 def test(path_data='', parameters=''):
     verbose = 0
 
+    # check if isct_propseg compatibility
+    status_isct_propseg, output_isct_propseg = commands.getstatusoutput('isct_propseg')
+    isct_propseg_version = output_isct_propseg.split('\n')[0]
+    if isct_propseg_version != 'sct_propseg - Version 1.1 (2015-03-24)':
+        status = 99
+        output = 'ERROR: isct_propseg does not seem to be compatible with your system or is no up-to-date... Please contact SCT administrators.'
+        return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
+
     # parameters
     if not parameters:
         parameters = '-i t2/t2.nii.gz -c t2'
