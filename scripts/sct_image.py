@@ -336,11 +336,12 @@ def split_data(im_in, dim):
     return im_out_list
 
 
-def concat_data(fname_in_list, dim):
+def concat_data(fname_in_list, dim, pixdim=None):
     """
     Concatenate data
     :param im_in_list: list of images.
     :param dim: dimension: 0, 1, 2, 3.
+    :param pixdim: pixel resolution to join to image header
     :return im_out: concatenated image
     """
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
@@ -384,6 +385,9 @@ def concat_data(fname_in_list, dim):
     im_out = Image(fname_in_list[0]).copy()
     im_out.data = data_concat
     im_out.setFileName(im_out.file_name+'_concat'+im_out.ext)
+
+    if pixdim is not None:
+        im_out.hdr['pixdim'] = pixdim
 
     return im_out
 
