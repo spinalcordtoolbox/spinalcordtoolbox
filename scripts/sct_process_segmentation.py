@@ -18,6 +18,7 @@
 import sys
 import getopt
 import os
+import shutil
 import commands
 from random import randint
 import time
@@ -238,8 +239,7 @@ def main(args):
         label_vert(fname_segmentation, fname_disc_label)
 
     if name_process == 'length':
-        result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
-        sct.printv('\nLength of the segmentation = '+str(round(result_length,2))+' mm\n', verbose, 'info')
+        result_length = compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_lev, fname_vertebral_labeling, verbose=verbose)
 
     # End of Main
 
@@ -247,7 +247,7 @@ def main(args):
 
 # compute the length of the spinal cord
 # ==========================================================================================
-def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
+def compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_levels, fname_vertebral_labeling='', verbose = 0):
     from math import sqrt
 
     # Extract path, file and extension
@@ -260,7 +260,16 @@ def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
     sct.run('mkdir '+path_tmp, verbose)
 
     # copy files into tmp folder
-    sct.run('cp '+fname_segmentation+' '+path_tmp)
+    sct.printv('cp '+fname_segmentation+' '+path_tmp)
+    shutil.copy(fname_segmentation, path_tmp)
+
+    if slices or vert_levels:
+        # check if vertebral labeling file exists
+        sct.check_file_exist(fname_vertebral_labeling)
+        path_vert, file_vert, ext_vert = sct.extract_fname(fname_vertebral_labeling)
+        sct.printv('cp ' + fname_vertebral_labeling + ' ' + path_tmp)
+        shutil.copy(fname_vertebral_labeling, path_tmp)
+        fname_vertebral_labeling = file_vert + ext_vert
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -280,14 +289,75 @@ def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
 
     # smooth segmentation/centerline
-    #x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, type_window='hanning', window_length=80, algo_fitting='hanning', verbose = verbose)
-    # compute length of centerline
-    result_length = 0.0
-    for i in range(len(x_centerline_fit)-1):
-        result_length += sqrt(((x_centerline_fit[i+1]-x_centerline_fit[i])*px)**2+((y_centerline_fit[i+1]-y_centerline_fit[i])*py)**2+((z_centerline[i+1]-z_centerline[i])*pz)**2)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+        fname_segmentation_orient, nurbs_pts_number=3000, phys_coordinates=False, all_slices=True, algo_fitting='nurbs', verbose=verbose)
 
-    return result_length
+    # average csa across vertebral levels or slices if asked (flag -z or -l)
+    if slices or vert_levels:
+        warning = ''
+        if vert_levels and not fname_vertebral_labeling:
+            sct.printv(
+                '\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/PAM50_levels.nii.gz\". See usage.\n',
+                1, 'error')
+
+        elif vert_levels and fname_vertebral_labeling:
+
+            # from sct_extract_metric import get_slices_matching_with_vertebral_levels
+            sct.printv('Selected vertebral levels... ' + vert_levels)
+
+            # convert the vertebral labeling file to RPI orientation
+            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling.change_orientation(orientation='RPI')
+
+            # get the slices corresponding to the vertebral levels
+            # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline)
+
+        elif not vert_levels:
+            vert_levels_list = []
+
+        if slices is None:
+            length = np.nan
+            slices = '0'
+            vert_levels_list = []
+
+        else:
+            # parse the selected slices
+            slices_lim = slices.strip().split(':')
+            slices_list = range(int(slices_lim[0]), int(slices_lim[-1]) + 1)
+            sct.printv('Spinal cord length slices ' + str(slices_lim[0]) + ' to ' + str(slices_lim[-1]) + '...',
+                       type='info')
+
+            length = 0.0
+            for i in range(len(x_centerline_fit)-1):
+                if z_centerline[i] in slices_list:
+                    length += sqrt(((x_centerline_fit[i+1]-x_centerline_fit[i])*px)**2+((y_centerline_fit[i+1]-y_centerline_fit[i])*py)**2+((z_centerline[i+1]-z_centerline[i])*pz)**2)
+
+        sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
+
+        # write result into output file
+        save_results(output_folder + 'length', overwrite, fname_segmentation, 'length',
+                     '(in mm)', length, np.nan, slices, actual_vert=vert_levels_list,
+                     warning_vert_levels=warning)
+
+    elif (not (slices or vert_levels)) and (overwrite == 1):
+        sct.printv(
+            'WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in .txt and .pickle files only.',
+            type='warning')
+        length = np.nan
+
+    else:
+        # compute length of full centerline
+        length = 0.0
+        for i in range(len(x_centerline_fit)-1):
+            length += sqrt(((x_centerline_fit[i+1]-x_centerline_fit[i])*px)**2+((y_centerline_fit[i+1]-y_centerline_fit[i])*py)**2+((z_centerline[i+1]-z_centerline[i])*pz)**2)
+
+    # Remove temporary files
+    if remove_temp_files:
+        sct.printv('\nRemove temporary files...', verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
+
+    return length
 
 
 
