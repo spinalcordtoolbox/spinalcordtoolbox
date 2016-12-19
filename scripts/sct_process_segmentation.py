@@ -355,7 +355,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf ' + path_tmp, verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     return length
 
