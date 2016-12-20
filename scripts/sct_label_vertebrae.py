@@ -17,136 +17,132 @@
 # TODO: go inferior, then superior, to have better distance adjustment for C1
 # TODO: address the case when there is more than one max correlation
 
-import sys
 import os
 import shutil
+import sys
 
-import scipy.ndimage
 import numpy as np
+import scipy.ndimage
 
-from sct_maths import mutual_information
-from msct_parser import Parser
-from msct_image import Image
+import sct_apply_transfo
+import sct_convert
+import sct_label_utils
+import sct_maths
+import sct_resample
+import sct_straighten_spinalcord
 import sct_utils as sct
+from msct_image import Image
+from msct_parser import Parser
+from sct_maths import mutual_information
 from sct_warp_template import get_file_label
 
-# get path of SCT
 path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
 
 
-# PARAMETERS
 class Param:
-    ## The constructor
-        # self.path_template = path_sct+'/data/template/'
-        shift_AP_brainstem = 30
-        size_AP_brainstem = 11#15
-        shift_IS_brainstem = 15#15
-        size_IS_brainstem = 30#30
-        size_RL_brainstem = 1#
-        shift_AP = 32#0#32  # shift the centerline towards the spine (in voxel).
-        size_AP = 11#41#11  # window size in AP direction (=y) (in voxel)
-        size_RL = 1 #1 # window size in RL direction (=x) (in voxel)
-        size_IS = 19  # window size in IS direction (=z) (in voxel)
-        shift_AP_visu = 15#0#15  # shift AP for displaying disc values
-        smooth_factor = [3, 1, 1]  # [3, 1, 1]
-        fig_anat_straight = 50
+    shift_AP_brainstem = 30
+    size_AP_brainstem = 11  # 15
+    shift_IS_brainstem = 15  # 15
+    size_IS_brainstem = 30  # 30
+    size_RL_brainstem = 1  #
+    shift_AP = 32  # shift the centerline towards the spine (in voxel).
+    size_AP = 11  # window size in AP direction (=y) (in voxel)
+    size_RL = 1  # window size in RL direction (=x) (in voxel)
+    size_IS = 19  # window size in IS direction (=z) (in voxel)
+    shift_AP_visu = 15  # shift AP for displaying disc values
+    smooth_factor = [3, 1, 1]
+    fig_anat_straight = 50
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
-    # parser initialisation
     parser = Parser(__file__)
-    parser.usage.set_description('''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then performs a disc search in the superior, then inferior direction, using template disc matching based on mutual information score.
+    parser.usage.set_description(
+        '''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord
+segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then
+performs a disc search in the superior, then inferior direction, using template disc matching based on mutual
+information score.
 Tips: To run the function with init txt file that includes flags -initz/-initcenter:
 sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_vertebrae.txt)"
 ''')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="input image.",
-                      mandatory=True,
-                      example="t2.nii.gz")
-    parser.add_option(name="-s",
-                      type_value="file",
-                      description="Segmentation or centerline of the spinal cord.",
-                      mandatory=True,
-                      example="t2_seg.nii.gz")
-    parser.add_option(name="-c",
-                      type_value="multiple_choice",
-                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
-                      mandatory=True,
-                      example=['t1', 't2'])
-    parser.add_option(name="-t",
-                      type_value="folder",
-                      description="Path to template.",
-                      mandatory=False,
-                      default_value=path_sct+'/data/PAM50/')
-    parser.add_option(name="-initz",
-                      type_value=[[','], 'int'],
-                      description='Initialize using slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
-                      mandatory=False,
-                      example=['125,3'])
-    parser.add_option(name="-initcenter",
-                      type_value='int',
-                      description='Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
-                      mandatory=False)
-    parser.add_option(name="-initc2",
-                      type_value=None,
-                      description='Initialize by clicking on C2-C3 disc using interactive window.',
-                      mandatory=False)
-    parser.add_option(name="-initfile",
-                      type_value='file',
-                      description='Initialize labeling by providing a text file which includes either -initz or -initcenter flag.',
-                      mandatory=False)
-    # parser.add_option(name='-o',
-    #                   type_value='file_output',
-    #                   description='Output file',
-    #                   mandatory=False,
-    #                   default_value='',
-    #                   example='t2_seg_labeled.nii.gz')
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="Output folder.",
-                      mandatory=False,
-                      default_value='')
-    parser.add_option(name="-denoise",
-                      type_value="multiple_choice",
-                      description="Apply denoising filter to the data. Sometimes denoising is too aggressive, so use with care.",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1'])
-    parser.add_option(name="-laplacian",
-                      type_value="multiple_choice",
-                      description="Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy.",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1'])
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="Remove temporary files.",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1', '2'])
-    parser.add_option(name="-h",
-                      type_value=None,
-                      description="display this help",
-                      mandatory=False)
+    parser.add_option(name="-i", type_value="file", description="input image.", mandatory=True, example="t2.nii.gz")
+    parser.add_option(
+        name="-s",
+        type_value="file",
+        description="Segmentation or centerline of the spinal cord.",
+        mandatory=True,
+        example="t2_seg.nii.gz")
+    parser.add_option(
+        name="-c",
+        type_value="multiple_choice",
+        description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
+        mandatory=True,
+        example=['t1', 't2'])
+    parser.add_option(
+        name="-t",
+        type_value="folder",
+        description="Path to template.",
+        mandatory=False,
+        default_value=path_sct + '/data/PAM50/')
+    parser.add_option(
+        name="-initz",
+        type_value=[[','], 'int'],
+        description='Initialize using slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). '
+        'WARNING: Slice number should correspond to superior-inferior direction '
+        '(e.g. Z in RPI orientation, but Y in LIP orientation).',
+        mandatory=False,
+        example=['125,3'])
+    parser.add_option(
+        name="-initcenter",
+        type_value='int',
+        description='Initialize using disc value centered in the rostro-caudal direction. '
+        'If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
+        mandatory=False)
+    parser.add_option(
+        name="-initc2",
+        type_value=None,
+        description='Initialize by clicking on C2-C3 disc using interactive window.',
+        mandatory=False)
+    parser.add_option(
+        name="-initfile",
+        type_value='file',
+        description='Initialize labeling by providing a text file which includes either -initz or -initcenter flag.',
+        mandatory=False)
+    parser.add_option(
+        name="-ofolder", type_value="folder_creation", description="Output folder.", mandatory=False, default_value='')
+    parser.add_option(
+        name="-denoise",
+        type_value="multiple_choice",
+        description="Apply denoising filter to the data. Sometimes denoising is too aggressive, so use with care.",
+        mandatory=False,
+        default_value='0',
+        example=['0', '1'])
+    parser.add_option(
+        name="-laplacian",
+        type_value="multiple_choice",
+        description="Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy.",
+        mandatory=False,
+        default_value='0',
+        example=['0', '1'])
+    parser.add_option(
+        name="-r",
+        type_value="multiple_choice",
+        description="Remove temporary files.",
+        mandatory=False,
+        default_value='1',
+        example=['0', '1'])
+    parser.add_option(
+        name="-v",
+        type_value="multiple_choice",
+        description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
+        mandatory=False,
+        default_value='1',
+        example=['0', '1', '2'])
+    parser.add_option(name="-h", type_value=None, description="display this help", mandatory=False)
     return parser
 
 
-
-# MAIN
-# ==========================================================================================
 def main(args=None):
-
-    # initializations
     initz = ''
     initcenter = ''
     initc2 = 'auto'
@@ -162,10 +158,6 @@ def main(args=None):
     fname_seg = arguments['-s']
     contrast = arguments['-c']
     path_template = sct.slash_at_the_end(arguments['-t'], 1)
-    # if '-o' in arguments:
-    #     file_out = arguments["-o"]
-    # else:
-    #     file_out = ''
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
     else:
@@ -178,13 +170,13 @@ def main(args=None):
     if '-initfile' in arguments:
         # open file
         file = open(arguments['-initfile'], 'r')
-        initfile = ' '+file.read().replace('\n', '')
+        initfile = ' ' + file.read().replace('\n', '')
         arg_initfile = initfile.split(' ')
         for i in xrange(len(arg_initfile)):
             if arg_initfile[i] == '-initz':
-                initz = [int(x) for x in arg_initfile[i+1].split(',')]
+                initz = [int(x) for x in arg_initfile[i + 1].split(',')]
             if arg_initfile[i] == '-initcenter':
-                initcenter = int(arg_initfile[i+1])
+                initcenter = int(arg_initfile[i + 1])
     if '-initc2' in arguments:
         initc2 = 'manual'
     verbose = int(arguments['-v'])
@@ -192,19 +184,14 @@ def main(args=None):
     denoise = int(arguments['-denoise'])
     laplacian = int(arguments['-laplacian'])
 
-    # if verbose, import matplotlib
-    # if verbose == 2:
-        # import matplotlib.pyplot as plt
-
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
     path_tmp = sct.tmp_create(verbose=verbose)
-    # path_tmp = '/Users/julien/Dropbox/documents/processing/20160813_wang/t12/tmp.160814213032_725693/'
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)
-    sct.run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
-    sct.run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
+    sct_convert.main(['-i', fname_in, '-o', path_tmp + 'data.nii'])
+    sct_convert.main(['-i', fname_seg, '-o', path_tmp + 'segmentation.nii.gz'])
 
     # Go go temp folder
     os.chdir(path_tmp)
@@ -219,64 +206,76 @@ def main(args=None):
         nii = Image('segmentation.nii.gz')
         nii.change_orientation('RPI')  # reorient to RPI
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-        z_center = int(round(nz/2))  # get z_center
+        z_center = int(round(nz / 2))  # get z_center
         create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
     else:
         initauto = True
-        # sct.printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
 
     # Straighten spinal cord
     sct.printv('\nStraighten spinal cord...', verbose)
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-    if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+    if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile(
+            '../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
         # if they exist, copy them into current folder
         sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
         shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
         shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
         shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
         # apply straightening
-        sct.run('sct_apply_transfo -i data.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o data_straight.nii')
+        sct_apply_transfo.main(
+            '-i data.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o data_straight.nii'.split())
     else:
-        sct.run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
+        sct_straighten_spinalcord.main('-i data.nii -s segmentation.nii.gz -r 0 -qc 0'.split())
 
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
-    sct.run('sct_resample -i data_straight.nii -mm 0.5x0.5x0.5 -x linear -o data_straightr.nii', verbose)
+    sct_resample.main('-i data_straight.nii -mm 0.5x0.5x0.5 -x linear -o data_straightr.nii'.split())
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
     sct.printv('\nApply straightening to segmentation...', verbose)
-    sct.run('sct_apply_transfo -i segmentation.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear', verbose)
+    cmd = '-i segmentation.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear'
+    sct_apply_transfo.main(cmd.split())
     # Threshold segmentation at 0.5
-    sct.run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz', verbose)
+    sct_maths.main('-i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz'.split())
 
     if initauto:
         init_disc = []
     else:
         # Apply straightening to z-label
         sct.printv('\nDilate z-label and apply straightening...', verbose)
-        sct.run('sct_apply_transfo -i labelz.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn', verbose)
+        sct_apply_transfo.main(
+            '-i labelz.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn'.
+            split())
         # get z value and disk value to initialize labeling
         sct.printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
-        sct.printv('.. '+str(init_disc), verbose)
+        sct.printv('.. ' + str(init_disc), verbose)
 
     # denoise data
     if denoise:
         sct.printv('\nDenoise data...', verbose)
-        sct.run('sct_maths -i data_straightr.nii -denoise h=0.05 -o data_straightr.nii', verbose)
+        sct_maths.main('-i data_straightr.nii -denoise h=0.05 -o data_straightr.nii'.split())
 
     # apply laplacian filtering
     if laplacian:
         sct.printv('\nApply Laplacian filter...', verbose)
-        sct.run('sct_maths -i data_straightr.nii -laplacian 1 -o data_straightr.nii', verbose)
+        sct_maths.main('-i data_straightr.nii -laplacian 1 -o data_straightr.nii'.split())
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2)
+    vertebral_detection(
+        'data_straightr.nii',
+        'segmentation_straight.nii.gz',
+        contrast,
+        init_disc=init_disc,
+        verbose=verbose,
+        path_template=path_template,
+        initc2=initc2)
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
-    sct.run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn', verbose)
+    cmd = '-i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn'
+    sct_apply_transfo.main(cmd.split())
 
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
@@ -287,99 +286,49 @@ def main(args=None):
     label_discs('segmentation_labeled.nii.gz', verbose=verbose)
 
     # come back to parent folder
-    os.chdir('..')
+    os.chdir(os.pardir)
 
     # Generate output files
-    path_seg, file_seg, ext_seg = sct.slash_at_the_end(fname_seg)
+    path_seg, file_seg, ext_seg = sct.extract_fname(fname_seg)
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'segmentation_labeled.nii.gz', path_output+file_seg+'_labeled'+ext_seg)
-    sct.generate_output_file(path_tmp+'segmentation_labeled_disc.nii.gz', path_output+file_seg+'_labeled_discs'+ext_seg)
+    sct.generate_output_file(path_tmp + 'segmentation_labeled.nii.gz', path_output + file_seg + '_labeled' + ext_seg)
+    sct.generate_output_file(path_tmp + 'segmentation_labeled_disc.nii.gz',
+                             path_output + file_seg + '_labeled_discs' + ext_seg)
     # copy straightening files in case subsequent SCT functions need them
-    sct.generate_output_file(path_tmp+'warp_curve2straight.nii.gz', path_output+'warp_curve2straight.nii.gz', verbose)
-    sct.generate_output_file(path_tmp+'warp_straight2curve.nii.gz', path_output+'warp_straight2curve.nii.gz', verbose)
-    sct.generate_output_file(path_tmp+'straight_ref.nii.gz', path_output+'straight_ref.nii.gz', verbose)
+    sct.generate_output_file(path_tmp + 'warp_curve2straight.nii.gz', path_output + 'warp_curve2straight.nii.gz',
+                             verbose)
+    sct.generate_output_file(path_tmp + 'warp_straight2curve.nii.gz', path_output + 'warp_straight2curve.nii.gz',
+                             verbose)
+    sct.generate_output_file(path_tmp + 'straight_ref.nii.gz', path_output + 'straight_ref.nii.gz', verbose)
 
     # Remove temporary files
     if remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf '+path_tmp)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview '+fname_in+' '+path_output+file_seg+'_labeled'+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
+    sct.printv('fslview ' + fname_in + ' ' + path_output + file_seg + '_labeled' + ' -l Random-Rainbow -t 0.5 &\n',
+               verbose, 'info')
 
 
-# Detect vertebral levels
-# ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, path_template='', initc2='auto',
-                        brainstem=None, smooth_factor=None, positioning=None):
-    """
-    Find intervertebral discs in straightened image using template matching
+def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, path_template='', initc2='auto'):
+    """Find intervertebral discs in straightened image using template matching
     :param fname:
     :param fname_seg:
     :param contrast:
     :param init_disc:
     :param verbose:
     :param path_template:
-    :param initc2:
-    :param brainstem:
-    :param smooth_factor: Gaussian Filter parameters
     :return:
     """
-    # initializations
-    # fig_anat_straight = 1
 
     sct.printv('\nLook for template...', verbose)
-    # if path_template == '':
-    #     # get path of SCT
-    #     from os import path
-    #     path_script = path.dirname(__file__)
-    #     path_sct = slash_at_the_end(path.dirname(path_script), 1)
-    #     folder_template = 'data/template/'
-    #     path_template = path_sct+folder_template
-    sct.printv('Path template: '+path_template, verbose)
+    sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
-    fname_level = get_file_label(path_template+'template/', 'vertebral', output='filewithpath')
-    fname_template = get_file_label(path_template+'template/', contrast.upper()+'-weighted', output='filewithpath')
-
-    # if not len(glob(path_template+'MNI-Poly-AMU*.*')) == 0:
-    #     contrast = contrast.upper()
-    #     file_level = '*_level.nii.gz'
-    # else:
-    #     file_level = '*_levels.nii.gz'
-    #
-    # # retrieve file_template based on contrast
-    # try:
-    #     fname_template_list = glob(path_template + '*' + contrast + '.nii.gz')
-    #     fname_template = fname_template_list[0]
-    # except IndexError:
-    #     sct.printv('\nERROR: No template found. Please check the provided path.', 1, 'error')
-    # retrieve disc level from template
-    # try:
-    #     fname_level_list = glob(path_template+file_level)
-    #     fname_level = fname_level_list[0]
-    # except IndexError:
-    #     sct.printv('\nERROR: File *_levels.nii.gz not found.', 1, 'error')
-
-    # Open template and vertebral levels
-
-    # Setup default parameters
-    if smooth_factor is None:
-        smooth_factor = Param.smooth_factor
-
-    if brainstem is None:
-        brainstem = {}
-        brainstem['size_RL'] = Param.size_RL_brainstem
-        brainstem['shift_AP'] = Param.shift_AP_brainstem
-        brainstem['size_AP'] = Param.size_AP_brainstem
-        brainstem['shift_IS'] = Param.shift_IS_brainstem
-        brainstem['size_IS'] = Param.size_IS_brainstem
-
-    if positioning is None:
-        positioning['size_RL'] = Param.size_RL
-        positioning['fig_anat_straight'] = Param.fig_anat_straight
-        positioning['shift_AP_visu'] = Param.shift_AP_visu
+    fname_level = get_file_label(path_template + 'template/', 'vertebral', output='filewithpath')
+    fname_template = get_file_label(path_template + 'template/', contrast.upper() + '-weighted', output='filewithpath')
 
     sct.printv('\nOpen template and vertebral levels...', verbose)
     data_template = Image(fname_template).data
@@ -391,18 +340,18 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
     # smooth data
     gf = scipy.ndimage.filters.gaussian_filter
-    data = gf(data, smooth_factor, output=None, mode="reflect")
+    data = gf(data, Param.smooth_factor, output=None, mode="reflect")
 
     # get dimension of src
     nx, ny, nz = data.shape
     # define xc and yc (centered in the field of view)
-    xc = int(round(nx/2))  # direction RL
-    yc = int(round(ny/2))  # direction AP
+    xc = int(round(nx / 2))  # direction RL
+    yc = int(round(ny / 2))  # direction AP
     # get dimension of template
     nxt, nyt, nzt = data_template.shape
     # define xc and yc (centered in the field of view)
-    xct = int(round(nxt/2))  # direction RL
-    yct = int(round(nyt/2))  # direction AP
+    xct = int(round(nxt / 2))  # direction RL
+    yct = int(round(nyt / 2))  # direction AP
 
     # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
     centerline_level = data_disc_template[xct, yct, :]
@@ -419,8 +368,8 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
     list_disc_z_template = diff_centerline_level.nonzero()[0].tolist()
     list_disc_z_template.reverse()
     sct.printv('Z-values for each disc: ' + str(list_disc_z_template), verbose)
-    list_distance_template = (
-        np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
+    list_distance_template = (np.diff(list_disc_z_template) *
+                              (-1)).tolist()  # multiplies by -1 to get positive distances
     sct.printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # if automatic mode, find C2/C3 disc
@@ -428,11 +377,25 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         sct.printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=brainstem['size_RL'], y=yc,
-                                 yshift=brainstem['shift_AP'], ysize=brainstem['size_AP'], z=0,
-                                 zshift=brainstem['shift_IS'], zsize=brainstem['size_IS'], xtarget=xct,
-                                 ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose,
-                                 save_suffix='_initC2', gaussian_weighting=True)
+        z_peak = compute_corr_3d(
+            src=data,
+            target=data_template,
+            x=xc,
+            xshift=0,
+            xsize=Param.size_RL_brainstem,
+            y=yc,
+            yshift=Param.shift_AP_brainstem,
+            ysize=Param.size_AP_brainstem,
+            z=0,
+            zshift=Param.shift_IS_brainstem,
+            zsize=Param.size_IS_brainstem,
+            xtarget=xct,
+            ytarget=yct,
+            ztarget=list_disc_z_template[ind_c2],
+            zrange=zrange,
+            verbose=verbose,
+            save_suffix='_initC2',
+            gaussian_weighting=True)
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
@@ -452,42 +415,54 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         if mask_points:
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(fname, "_mask_viewer")
-            sct.run("sct_label_utils -i " + fname + " -create " + mask_points + " -o " + mask_filename, verbose=False)
+            sct_label_utils.main(['-i', fname, '-create', mask_points, '-o', mask_filename])
         else:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
+            sct.printv(
+                '\nERROR: the viewer has been closed before entering all manual points. Please try again.',
+                verbose,
+                type='error')
         # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
-        init_disc = [nz-int(mask_points.split(',')[0]), 2]
+        init_disc = [nz - int(mask_points.split(',')[0]), 2]
 
     # display init disc
     if verbose == 2:
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-        plt.matshow(np.mean(data[xc - positioning['size_RL']:xc + positioning['size_RL'], :, :], axis=0).transpose(),
-                    fignum=positioning['fig_anat_straight'], cmap=plt.cm.gray, clim=[0, 800], origin='lower')
+        plt.matshow(
+            np.mean(
+                data[xc - Param.size_RL:xc + Param.size_RL, :, :], axis=0).transpose(),
+            fignum=Param.fig_anat_straight,
+            cmap=plt.cm.gray,
+            clim=[0, 800],
+            origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        plt.figure(positioning['fig_anat_straight']), plt.scatter(yc + positioning['shift_AP_visu'], init_disc[0], c='yellow', s=50)
-        plt.text(yc + positioning['shift_AP_visu'] + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
-                 verticalalignment='center', horizontalalignment='left', color='pink', fontsize=15), plt.draw()
+        plt.figure(Param.fig_anat_straight)
+        plt.scatter(yc + Param.shift_AP_visu, init_disc[0], c='yellow', s=50)
+        plt.text(
+            yc + Param.shift_AP_visu + 4,
+            init_disc[0],
+            str(init_disc[1]) + '/' + str(init_disc[1] + 1),
+            verticalalignment='center',
+            horizontalalignment='left',
+            color='pink',
+            fontsize=15), plt.draw()
         # plt.ion()  # enables interactive mode
 
     # FIND DISCS
-    # ===========================================================================
     sct.printv('\nDetect intervertebral discs...', verbose)
     # assign initial z and disc
     current_z = init_disc[0]
     current_disc = init_disc[1]
-    # mean_distance = mean_distance * pz
-    # mean_distance_real = np.zeros(len(mean_distance))
-    # create list for z and disc
     list_disc_z = []
     list_disc_value = []
     zrange = range(-10, 10)
     direction = 'superior'
     search_next_disc = True
     while search_next_disc:
-        sct.printv('Current disc: '+str(current_disc)+' (z='+str(current_z)+'). Direction: '+direction, verbose)
+        sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction,
+                   verbose)
         try:
             # get z corresponding to current disc on template
             current_z_template = list_disc_z_template[current_disc]
@@ -497,19 +472,39 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             break
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
-        if not current_disc in [1]:
-            current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0,
-                                        xsize=positioning['size_RL'], y=yc, yshift=positioning['shift_AP'],
-                                        ysize=positioning['size_AP'], z=current_z, zshift=0,
-                                        zsize=positioning['size_IS'], xtarget=xct,
-                                        ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose,
-                                        save_suffix='_disc'+str(current_disc), gaussian_weighting=False)
+        if not current_disc == 1:
+            current_z = compute_corr_3d(
+                src=data,
+                target=data_template,
+                x=xc,
+                xshift=0,
+                xsize=Param.size_RL,
+                y=yc,
+                yshift=Param.shift_AP,
+                ysize=Param.size_AP,
+                z=current_z,
+                zshift=0,
+                zsize=Param.size_IS,
+                xtarget=xct,
+                ytarget=yct,
+                ztarget=current_z_template,
+                zrange=zrange,
+                verbose=verbose,
+                save_suffix='_disc' + str(current_disc),
+                gaussian_weighting=False)
 
         # display new disc
         if verbose == 2:
-            plt.figure(positioning['fig_anat_straight']), plt.scatter(yc + positioning['shift_AP_visu'], current_z, c='yellow', s=50)
-            plt.text(yc + positioning['shift_AP_visu'] + 4, current_z, str(current_disc)+'/'+str(current_disc+1),
-                     verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
+            plt.figure(Param.fig_anat_straight)
+            plt.scatter(yc + Param.shift_AP_visu, current_z, c='yellow', s=50)
+            plt.text(
+                yc + Param.shift_AP_visu + 4,
+                current_z,
+                str(current_disc) + '/' + str(current_disc + 1),
+                verticalalignment='center',
+                horizontalalignment='left',
+                color='yellow',
+                fontsize=15), plt.draw()
 
         # append to main list
         if direction == 'superior':
@@ -529,23 +524,27 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             index_disc_identified = [i for i, j in enumerate(list_disc_value_template) if j in list_disc_value[:-1]]
             list_distance_template_identified = [list_distance_template[i] for i in index_disc_identified]
             # divide subject and template distances for the identified discs
-            list_subject_to_template_distance = [float(list_distance_current[i]) / list_distance_template_identified[i] for i in range(len(list_distance_current))]
+            list_subject_to_template_distance = [
+                float(list_distance_current[i]) / list_distance_template_identified[i]
+                for i in range(len(list_distance_current))
+            ]
             # average across identified discs to obtain an average correcting factor
             correcting_factor = np.mean(list_subject_to_template_distance)
-            sct.printv('.. correcting factor: '+str(correcting_factor), verbose)
+            sct.printv('.. correcting factor: ' + str(correcting_factor), verbose)
         else:
             correcting_factor = 1
         # update list_distance specific for the subject
-        list_distance = [int(round(list_distance_template[i] * correcting_factor)) for i in range(len(list_distance_template))]
-        # updated average_disc_distance (in case it is needed)
-        # average_disc_distance = int(round(np.mean(list_distance)))
+        list_distance = [
+            int(round(list_distance_template[i] * correcting_factor)) for i in range(len(list_distance_template))
+        ]
 
         # assign new current_z and disc value
         if direction == 'superior':
             try:
-                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc-1)]
+                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc - 1)]
             except ValueError:
-                sct.printv('WARNING: Disc value not included in template. Using previously-calculated distance: '+str(approx_distance_to_next_disc))
+                sct.printv('WARNING: Disc value not included in template. Using previously-calculated distance: ' + str(
+                    approx_distance_to_next_disc))
             # assign new current_z and disc value
             current_z = current_z + approx_distance_to_next_disc
             current_disc = current_disc - 1
@@ -553,7 +552,8 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
             except:
-                sct.printv('WARNING: Disc value not included in template. Using previously-calculated distance: '+str(approx_distance_to_next_disc))
+                sct.printv('WARNING: Disc value not included in template. Using previously-calculated distance: ' + str(
+                    approx_distance_to_next_disc))
             # assign new current_z and disc value
             current_z = current_z - approx_distance_to_next_disc
             current_disc = current_disc + 1
@@ -568,37 +568,29 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         if current_z <= 0:
             search_next_disc = False
 
-        # if verbose == 2:
-        #     # close figures
-        #     plt.figure(fig_corr), plt.close()
-        #     plt.figure(fig_pattern), plt.close()
-
-    # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
     upper_disc = min(list_disc_value)
     # if not upper_disc == 1:
-    sct.printv('Adding top disc based on adjusted template distance: #'+str(upper_disc-1), verbose)
-    approx_distance_to_next_disc = list_distance[list_disc_value_template.index(upper_disc-1)]
+    sct.printv('Adding top disc based on adjusted template distance: #' + str(upper_disc - 1), verbose)
+    approx_distance_to_next_disc = list_distance[list_disc_value_template.index(upper_disc - 1)]
     next_z = max(list_disc_z) + approx_distance_to_next_disc
-    sct.printv('.. approximate distance: '+str(approx_distance_to_next_disc), verbose)
+    sct.printv('.. approximate distance: ' + str(approx_distance_to_next_disc), verbose)
     # make sure next disc does not go beyond FOV in superior direction
     if next_z > nz:
         list_disc_z.insert(0, nz)
     else:
         list_disc_z.insert(0, next_z)
     # assign disc value
-    list_disc_value.insert(0, upper_disc-1)
+    list_disc_value.insert(0, upper_disc - 1)
 
     # Label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
     # save figure
     if verbose == 2:
-        plt.figure(positioning['fig_anat_straight']), plt.savefig('../fig_anat_straight_with_labels.png')
-        # plt.close()
+        plt.figure(Param.fig_anat_straight)
+        plt.savefig('../fig_anat_straight_with_labels.png')
 
 
-# Create label
-# ==========================================================================================
 def create_label_z(fname_seg, z, value):
     """
     Create a label at coordinates x_center, y_center, z
@@ -625,8 +617,6 @@ def create_label_z(fname_seg, z, value):
     return fname_label
 
 
-# Get z and label value
-# ==========================================================================================
 def get_z_and_disc_values_from_label(fname_label):
     """
     Find z-value and label-value based on labeled image
@@ -642,8 +632,6 @@ def get_z_and_disc_values_from_label(fname_label):
     return [z_label, value_label]
 
 
-# Clean labeled segmentation
-# ==========================================================================================
 def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
     """
     Clean labeled segmentation by:
@@ -655,11 +643,12 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     :return: none
     """
     # remove voxels in segmentation_labeled that are not in segmentation
-    sct.run('sct_maths -i '+fname_labeled_seg+' -mul '+fname_seg+' -o segmentation_labeled_mul.nii.gz')
+    sct_maths.main(['-i', fname_labeled_seg, '-mul', fname_seg, '-o', 'segmentation_labeled_mul.nii.gz'])
     # add voxels in segmentation that are not in segmentation_labeled
-    sct.run('sct_maths -i '+fname_labeled_seg+' -dilate 2 -o segmentation_labeled_dilate.nii.gz')  # dilate labeled segmentation
+    sct_maths.main(['-i', fname_labeled_seg, '-dilate', '2', '-o', 'segmentation_labeled_dilate.nii.gz'])
+    # dilate labeled segmentation
     data_label_dilate = Image('segmentation_labeled_dilate.nii.gz').data
-    sct.run('sct_maths -i segmentation_labeled_mul.nii.gz -bin 0 -o segmentation_labeled_mul_bin.nii.gz')
+    sct_maths.main('-i segmentation_labeled_mul.nii.gz -bin 0 -o segmentation_labeled_mul_bin.nii.gz'.split())
     data_label_bin = Image('segmentation_labeled_mul_bin.nii.gz').data
     data_seg = Image(fname_seg).data
     data_diff = data_seg - data_label_bin
@@ -674,7 +663,24 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     im_label.save()
 
 
-def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, z=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, zrange=[], verbose=1, save_suffix='', gaussian_weighting=True):
+def compute_corr_3d(src=[],
+                    target=[],
+                    x=0,
+                    xshift=0,
+                    xsize=0,
+                    y=0,
+                    yshift=0,
+                    ysize=0,
+                    z=0,
+                    zshift=0,
+                    zsize=0,
+                    xtarget=0,
+                    ytarget=0,
+                    ztarget=0,
+                    zrange=[],
+                    verbose=1,
+                    save_suffix='',
+                    gaussian_weighting=True):
     """
     Find z that maximizes correlation between src and target 3d data.
     :param src: 3d source data
@@ -701,10 +707,8 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     # get dimensions from src
     nx, ny, nz = src.shape
     # Get pattern from template
-    pattern = target[
-              xtarget - xsize: xtarget + xsize + 1,
-              ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
-              ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
+    pattern = target[xtarget - xsize:xtarget + xsize + 1, ytarget + yshift - ysize:ytarget + yshift + ysize + 1, ztarget
+                     + zshift - zsize:ztarget + zshift + zsize + 1]
     pattern1d = pattern.ravel()
     # initializations
     I_corr = np.zeros(len(zrange))
@@ -717,57 +721,28 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         if z + iz + zsize + 1 > nz:
             # print 'iz='+str(iz)+': padding on top'
             padding_size = z + iz + zsize + 1 - nz
-            data_chunk3d = src[
-                           x - xsize: x + xsize + 1,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize: z + iz + zsize + 1 - padding_size]
-            data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
-                                  constant_values=0)
+            data_chunk3d = src[x - xsize:x + xsize + 1, y + yshift - ysize:y + yshift + ysize + 1, z + iz - zsize:z + iz
+                               + zsize + 1 - padding_size]
+            data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif z + iz - zsize < 0:
             # print 'iz='+str(iz)+': padding at bottom'
             padding_size = abs(iz - zsize)
-            data_chunk3d = src[
-                           x - xsize: x + xsize + 1,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize + padding_size: z + iz + zsize + 1]
-            data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
-                                  constant_values=0)
+            data_chunk3d = src[x - xsize:x + xsize + 1, y + yshift - ysize:y + yshift + ysize + 1, z + iz - zsize +
+                               padding_size:z + iz + zsize + 1]
+            data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
         else:
             # print 'iz='+str(iz)+': no padding'
-            data_chunk3d = src[
-                           x - xsize: x + xsize + 1,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize: z+ iz + zsize + 1]
-        # if verbose == 2 and iz in range(0, nz, 10):
-        #     # display template and subject patterns
-        #     plt.figure(11)
-        #     plt.subplot(131)
-        #     plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper',
-        #                cmap=plt.cm.gray,
-        #                interpolation='none')
-        #     plt.title('Template pattern')
-        #     plt.subplot(132)
-        #     plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper',
-        #                cmap=plt.cm.gray,
-        #                interpolation='none')
-        #     plt.title('Subject pattern at iz=0')
-        #     # save figure
-        #     plt.figure(11), plt.savefig('../fig_pattern'+save_suffix+'_z'+str(iz)+'.png'), plt.close()
+            data_chunk3d = src[x - xsize:x + xsize + 1, y + yshift - ysize:y + yshift + ysize + 1, z + iz - zsize:z + iz
+                               + zsize + 1]
         # convert subject pattern to 1d
         data_chunk1d = data_chunk3d.ravel()
         # check if data_chunk1d contains at least one non-zero value
-        # if np.any(data_chunk1d): --> old code which created issue #794 (jcohenadad 2016-04-05)
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-            #I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
-            # data_chunk2d = np.mean(data_chunk3d, 1)
-            # pattern2d = np.mean(pattern, 1)
             I_corr[ind_I] = mutual_information(data_chunk1d, pattern1d, nbins=16)
         else:
             allzeros = 1
-            # sct.printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
         ind_I = ind_I + 1
-    # ind_y = ind_y + 1
     if allzeros:
         sct.printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
 
@@ -779,17 +754,15 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         I_corr = np.multiply(I_corr, gaussian_window[0:len(I_corr)])
 
     # Find global maximum
-    # ind_peak = ind_peak[np.argmax(I_corr[ind_peak])]
     if np.any(I_corr):
         # if I_corr contains at least a non-zero value
         ind_peak = [i for i in range(len(I_corr)) if I_corr[i] == max(I_corr)][0]  # index of max along z
-        # ind_peak[1] = np.where(I_corr == I_corr.max())[1]  # index of max along y
-        sct.printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr[ind_peak]) + ')', verbose)
+        sct.printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr[ind_peak]) + ')',
+                   verbose)
         # check if correlation is high enough
         if I_corr[ind_peak] < thr_corr:
             sct.printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
             ind_peak = zrange.index(0)  # approx_distance_to_next_disc
-            # ind_peak[1] = int(round(len(length_y_corr)/2))
     else:
         # if I_corr contains only zeros
         sct.printv('.. WARNING: Correlation vector only contains zeros. Using adjusted template distance.', verbose)
@@ -803,16 +776,25 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         # display template pattern
         plt.figure(11, figsize=(15, 7))
         plt.subplot(131)
-        plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, interpolation='none')
+        plt.imshow(
+            np.flipud(np.mean(
+                pattern[:, :, :], axis=0).transpose()),
+            origin='upper',
+            cmap=plt.cm.gray,
+            interpolation='none')
         plt.title('Template pattern')
         # display subject pattern at best z
         plt.subplot(132)
         iz = zrange[ind_peak]
-        data_chunk3d = src[
-                       x - xsize: x + xsize + 1,
-                       y + yshift - ysize: y + yshift + ysize + 1,
-                       z + iz - zsize: z + iz + zsize + 1]
-        plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray, clim=[0, 800], interpolation='none')
+        data_chunk3d = src[x - xsize:x + xsize + 1, y + yshift - ysize:y + yshift + ysize + 1, z + iz - zsize:z + iz +
+                           zsize + 1]
+        plt.imshow(
+            np.flipud(np.mean(
+                data_chunk3d[:, :, :], axis=0).transpose()),
+            origin='upper',
+            cmap=plt.cm.gray,
+            clim=[0, 800],
+            interpolation='none')
         plt.title('Subject at iz=' + str(iz))
         # display correlation curve
         plt.subplot(133)
@@ -823,13 +805,12 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         plt.grid()
         # save figure
-        plt.figure(11), plt.savefig('../fig_pattern'+save_suffix+'.png'), plt.close()
+        plt.figure(11), plt.savefig('../fig_pattern' + save_suffix + '.png'), plt.close()
 
-    # return z-origin (z) + z-displacement minus zshift (to account for non-centered disc)
     return z + zrange[ind_peak] - zshift
 
 
-def label_segmentation(fname_seg, list_disc_z, list_disc_value, fig_anat_straight = None, verbose=1):
+def label_segmentation(fname_seg, list_disc_z, list_disc_value, fig_anat_straight=None, verbose=1):
     """
     Label segmentation image
     :param fname_seg: fname of the segmentation
@@ -839,7 +820,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, fig_anat_straigh
     :return:
     """
 
-    if fig_anat_straight is None :
+    if fig_anat_straight is None:
         fig_anat_straight = Param.fig_anat_straight
 
     # open segmentation
@@ -860,7 +841,6 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, fig_anat_straigh
         else:
             # assign vertebral level (add one because iz is BELOW the disk)
             vertebral_level = list_disc_value[ind_above_iz] + 1
-            # print vertebral_level
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
@@ -869,7 +849,15 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, fig_anat_straigh
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             plt.figure(fig_anat_straight)
-            plt.scatter(int(round(ny/2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
+            plt.scatter(
+                int(round(ny / 2)),
+                iz,
+                c=vertebral_level,
+                vmin=min(list_disc_value),
+                vmax=max(list_disc_value),
+                cmap='prism',
+                marker='_',
+                s=200)
     # write file
     seg.file_name += '_labeled'
     seg.save()
@@ -915,8 +903,5 @@ def label_discs(fname_seg_labeled, verbose=1):
     im_seg_labeled.save()
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     main()
-
