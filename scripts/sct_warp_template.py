@@ -10,23 +10,16 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-
-
-#import re
+import shutil
 import sys
-# import commands
-# import getopt
 import os
-import time
 
 from msct_parser import Parser
 import sct_utils as sct
 from sct_extract_metric import read_label_file
 
 
-# DEFAULT PARAMETERS
 class Param:
-    ## The constructor
     def __init__(self):
         # get path of the script and the toolbox
         path_script = os.path.dirname(os.path.dirname(__file__))
@@ -37,7 +30,6 @@ class Param:
         self.folder_atlas = 'atlas/'
         self.folder_spinal_levels = 'spinal_levels/'
         self.file_info_label = 'info_label.txt'
-        # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
@@ -60,14 +52,6 @@ class WarpTemplate:
         self.folder_spinal_levels = param.folder_spinal_levels
         self.verbose = verbose
         self.qc = qc
-        start_time = time.time()
-
-        # add slash at the end of folder name (in case there is no slash)
-        # self.path_template = sct.slash_at_the_end(self.path_template, 1)
-        # self.folder_out = sct.slash_at_the_end(self.folder_out, 1)
-        # self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
-        # self.folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
-        # self.folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
 
         # print arguments
         print '\nCheck parameters:'
@@ -138,12 +122,10 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         # Warp label
         for i in xrange(0, len(template_label_file)):
             fname_label = path_label+folder_label+template_label_file[i]
-            # check if file exists
-            # sct.check_file_exist(fname_label)
-            # apply transfo
             sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] +' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i], param), param.verbose)
         # Copy list.txt
-        sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
+        shutil.copyfile(os.path.join(path_label, folder_label, param.file_info_label),
+                        os.path.join(path_out, folder_label))
 
 
 # Get file label

@@ -409,7 +409,7 @@ class Image(object):
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
-        fname_out = self.path + self.file_name + self.ext
+        fname_out = self.absolutepath
         if path.isfile(fname_out):
             printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
             remove(fname_out)

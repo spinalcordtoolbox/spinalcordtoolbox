@@ -153,6 +153,7 @@ def create_mask(param):
     if method_type == 'point':
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
+        import pdb; pdb.set_trace()
         status, output = sct_label_utils.main(['-i', 'point_RPI.nii.gz', '-display'])
         coord = output[output.find('Position=') + 10:-17].split(',')
 

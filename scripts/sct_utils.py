@@ -244,25 +244,16 @@ class Timer:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
 
-#=======================================================================================================================
-# extract_fname
-#=======================================================================================================================
-# Extract path, file and extension
 def extract_fname(fname):
-    # extract path
-    path_fname = os.path.dirname(fname)+'/'
-    # check if only single file was entered (without path)
-    if path_fname == '/':
-        path_fname = ''
-    # extract file and extension
-    file_fname = fname
-    file_fname = file_fname.replace(path_fname,'')
-    file_fname, ext_fname = os.path.splitext(file_fname)
-    # check if .nii.gz file
-    if ext_fname == '.gz':
-        file_fname = file_fname[0:len(file_fname)-4]
-        ext_fname = ".nii.gz"
-    return path_fname, file_fname, ext_fname
+    """Return the path, base file name and extension"""
+    abspath = os.path.abspath(fname)
+    path, filename = os.path.split(abspath)
+    basename, extension = os.path.splitext(filename)
+    if extension == '.gz':
+        basename, extension = os.path.splitext(basename)
+        extension += '.gz'
+
+    return path, basename, extension
 
 
 #=======================================================================================================================
@@ -286,11 +277,11 @@ def check_file_exist(fname, verbose=1):
         fname_to_test = fname
     if os.path.isfile(fname_to_test):
         if verbose:
-            printv('  OK: '+fname, verbose, 'normal')
+            printv('  OK: '+fname_to_test, verbose, 'normal')
         return True
         pass
     else:
-        printv('\nERROR: The file ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        printv('\nERROR: The file ' + os.path.abspath(os.curdir) + fname_to_test + ' does not exist. Exit program.\n', 1, 'error')
         return False
 
 
