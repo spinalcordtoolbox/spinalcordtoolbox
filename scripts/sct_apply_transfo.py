@@ -193,6 +193,7 @@ class Transform:
             sct.printv('\nSplit along T dimension...', verbose)
             from sct_image import split_data
             im_dat = Image('data.nii')
+            im_header = im_dat.hdr
             data_split_list = split_data(im_dat, 3)
             for im in data_split_list:
                 im.save()
@@ -212,7 +213,7 @@ class Transform:
             # im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]
             # concat_data use to take a list of image in input, now takes a list of file names to open the files one by one (see issue #715)
             fname_list = glob.glob('data_reg_T*.nii')
-            im_out = concat_data(fname_list, 3)
+            im_out = concat_data(fname_list, 3, im_header['pixdim'])
             im_out.setFileName(name_out+ext_out)
             im_out.save()
             os.chdir('..')

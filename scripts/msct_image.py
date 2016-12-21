@@ -1120,6 +1120,7 @@ def get_dimension(im_file, verbose=1):
     else:
         header = None
         sct.printv('WARNING: the provided image file isn\'t a nibabel.nifti1.Nifti1Image instance nor a msct_image.Image instance', verbose, 'warning')
+
     nb_dims = len(header.get_data_shape())
     if nb_dims == 2:
         nx, ny = header.get_data_shape()
