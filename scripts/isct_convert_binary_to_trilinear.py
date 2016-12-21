@@ -13,7 +13,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
 import getopt
 import os
 import shutil
@@ -57,7 +56,7 @@ def main(args=None):
     start_time = time.time()
 
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    path_sct = os.environ.get('SCT_DIR')
 
     # Parameters for debug mode
     if param.debug:
@@ -89,20 +88,20 @@ def main(args=None):
         usage()
 
     # print arguments
-    print '\nCheck parameters:'
-    print '  segmentation ........... ' + fname_data
-    print '  interp factor .......... ' + str(interp_factor)
-    print '  smoothing sigma ........ ' + str(smoothing_sigma)
+    sct.printv('\nCheck parameters:')
+    sct.printv('  segmentation ........... ' + fname_data)
+    sct.printv('  interp factor .......... ' + str(interp_factor))
+    sct.printv('  smoothing sigma ........ ' + str(smoothing_sigma))
 
     # check existence of input files
-    print('\nCheck existence of input files...')
+    sct.printv('\nCheck existence of input files...')
     sct.check_file_exist(fname_data, verbose)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # create temporary folder
-    print('\nCreate temporary folder...')
+    sct.printv('\nCreate temporary folder...')
     path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
     if os.path.exists(path_tmp):
         os.makedirs(path_tmp)
@@ -143,8 +142,8 @@ def main(args=None):
     os.chdir('..')
 
     # Generate output files
-    print('\nGenerate output files...')
-    fname_out = sct.generate_output_file(path_tmp + '/data_up_smooth_down.nii', '' + file_data + suffix + ext_data)
+    sct.printv('\nGenerate output files...')
+    sct.generate_output_file(path_tmp + '/data_up_smooth_down.nii', '' + file_data + suffix + ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:
@@ -153,11 +152,11 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's'
+    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's')
 
     # to view results
-    print '\nTo view results, type:'
-    print 'fslview ' + file_data + ' ' + file_data + suffix + ' &\n'
+    sct.printv('\nTo view results, type:')
+    sct.printv('fslview ' + file_data + ' ' + file_data + suffix + ' &\n')
 
 
 def usage():
