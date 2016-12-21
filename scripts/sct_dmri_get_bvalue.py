@@ -15,24 +15,16 @@
 
 
 import sys
-import os
-import getopt
 import math
 from msct_parser import Parser
 
 
-# main
-#=======================================================================================================================
 def main(args=None):
-
     if args is None:
         args = sys.argv[1:]
 
     # Initialization
-    GYRO = float(42.576 * 10 ** 6) # gyromagnetic ratio (in Hz.T^-1)
-    gradamp = []
-    bigdelta = []
-    smalldelta = []
+    GYRO = float(42.576 * 10 ** 6)  # gyromagnetic ratio (in Hz.T^-1)
 
     parser = get_parser()
     arguments = parser.parse(args)
@@ -42,16 +34,17 @@ def main(args=None):
 
     # print arguments
     print '\nCheck parameters:'
-    print '  gradient amplitude ..... '+str(gradamp*1000)+' mT/m'
-    print '  big delta .............. '+str(bigdelta*1000)+' ms'
-    print '  small delta ............ '+str(smalldelta*1000)+' ms'
-    print '  gyromagnetic ratio ..... '+str(GYRO)+' Hz/T'
+    print '  gradient amplitude ..... ' + str(gradamp * 1000) + ' mT/m'
+    print '  big delta .............. ' + str(bigdelta * 1000) + ' ms'
+    print '  small delta ............ ' + str(smalldelta * 1000) + ' ms'
+    print '  gyromagnetic ratio ..... ' + str(GYRO) + ' Hz/T'
     print ''
 
-    bvalue = ( 2 * math.pi * GYRO * gradamp * smalldelta ) ** 2 * (bigdelta - smalldelta/3)
+    bvalue = (2 * math.pi * GYRO * gradamp * smalldelta) ** 2 * (bigdelta - smalldelta / 3)
 
-    print 'b-value = '+str(bvalue / 10**6)+' mm^2/s\n'
+    print 'b-value = ' + str(bvalue / 10 ** 6) + ' mm^2/s\n'
     return bvalue
+
 
 def get_parser():
     # Initialize the parser
@@ -76,9 +69,5 @@ def get_parser():
     return parser
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
 if __name__ == "__main__":
-    # call main function
     main()

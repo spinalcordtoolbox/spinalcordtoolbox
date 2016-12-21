@@ -14,13 +14,11 @@
 #########################################################################################
 
 
-#import sct_utils as sct
 import commands
 
 
 def test(path_data):
 
-    # parameters
     folder_data = ['mt/', 'template/']
     file_data = ['mt1.nii.gz', 'warp_template2mt.nii.gz']
 
@@ -30,13 +28,11 @@ def test(path_data):
         ' -w '+path_data+folder_data[0]+file_data[1]+ \
         ' -a 0 '+ \
         ' -s 0 '+ \
-        ' -ofolder label'+ \
+        ' -ofolder ' + path_data + 'label' \
         ' -t '+path_data+folder_data[1]+ \
         ' -qc 0'+ \
         ' -v 1'
 
-    # return
-    #return sct.run(cmd, 0)
     return commands.getstatusoutput(cmd)
 
 
