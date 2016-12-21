@@ -120,8 +120,6 @@ class Transform:
         sct.printv('\nParse list of warping fields...', verbose)
         use_inverse = []
         fname_warp_list_invert = []
-        # fname_warp_list = fname_warp_list.replace(' ', '')  # remove spaces
-        # fname_warp_list = fname_warp_list.split(",")  # parse with comma
         for i in range(len(fname_warp_list)):
             # Check if inverse matrix is specified with '-' at the beginning of file name
             if fname_warp_list[i].find('-') == 0:

@@ -462,7 +462,7 @@ def main(args=None):
         warp_inverse.insert(0, warp_inverse_out)
 
     # Concatenate transformations
-    sct.printv('\nConcatenate transformations...', verbose)
+    sct.printv('\nConcatenate transformations...' + os.path.abspath(os.path.curdir), verbose)
     sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d dest.nii -o warp_src2dest.nii.gz', verbose)
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d dest.nii -o warp_dest2src.nii.gz', verbose)
 

@@ -2,32 +2,30 @@
 #
 # multi-label registration of spinal cord internal structure
 #
-# ---------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Sara Dupont
 # Modified: 2015-05-20
 #
 # About the license: see the file LICENSE.TXT
-#########################################################################################
-import sys
+###############################################################################
 import os
-import time
-import re
+import shutil
+import sys
 
-from msct_parser import Parser
-from msct_image import Image
 from sct_convert import convert
+import sct_image
 import sct_utils as sct
+from msct_image import Image
+from msct_parser import Parser
+
 
 class Param:
     def __init__(self):
         self.thr = 0.5
         self.gap = (100, 200)
         self.smooth = 0.8
-
         self.param_reg = 'step=1,type=im,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MeanSquares,iter=10,smooth=0,shrink=2:step=3,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=0'
-        # Previous default param (less efficient): 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
-
         self.output_folder = './'
         self.verbose = 1
         self.remove_tmp = 1
@@ -40,6 +38,7 @@ class MultiLabelRegistration:
             self.param = Param()
         else:
             self.param = param
+        self.fname_gm = fname_gm
         self.im_gm = Image(fname_gm)
         self.im_wm = Image(fname_wm)
         self.path_template = sct.slash_at_the_end(path_template, 1)
@@ -86,12 +85,12 @@ class MultiLabelRegistration:
         # Create temporary folder and put files in it
         tmp_dir = sct.tmp_create()
 
-        path_gm, file_gm, ext_gm = sct.extract_fname(fname_gm)
+        path_gm, file_gm, ext_gm = sct.extract_fname(self.fname_gm)
         path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template2target)
 
-        convert(fname_gm, tmp_dir+file_gm+ext_gm)
-        convert(fname_warp_template, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
-        if self.fname_warp_target2template is not None:
+        convert(self.fname_gm, tmp_dir+file_gm+ext_gm)
+        convert(self.fname_warp_template2target, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
+        if self.fname_warp_target2template:
             path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(self.fname_warp_target2template)
             convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template, squeeze_data=0)
 
@@ -114,10 +113,6 @@ class MultiLabelRegistration:
         fname_automatic_ml, xi, xf, yi, yf, zi, zf = crop_im(fname_automatic_ml, fname_mask)
         fname_template_ml, xi, xf, yi, yf, zi, zf = crop_im(fname_template_ml, fname_mask)
 
-#        fname_automatic_ml_smooth = sct.add_suffix(fname_automatic_ml, '_smooth')
-#        sct.run('sct_maths -i '+fname_automatic_ml+' -smooth '+str(self.param.smooth)+','+str(self.param.smooth)+',0 -o '+fname_automatic_ml_smooth)
-#        fname_automatic_ml = fname_automatic_ml_smooth
-
         path_automatic_ml, file_automatic_ml, ext_automatic_ml = sct.extract_fname(fname_automatic_ml)
         path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
 
@@ -126,11 +121,8 @@ class MultiLabelRegistration:
         if 'centermass' in self.param.param_reg:
             fname_template_ml_seg = sct.add_suffix(fname_template_ml, '_bin')
             sct.run('sct_maths -i '+fname_template_ml+' -bin 0 -o '+fname_template_ml_seg)
-
             fname_automatic_ml_seg = sct.add_suffix(fname_automatic_ml, '_bin')
-            # sct.run('sct_maths -i '+fname_automatic_ml+' -thr 50 -o '+fname_automatic_ml_seg)
             sct.run('sct_maths -i '+fname_automatic_ml+' -bin 50 -o '+fname_automatic_ml_seg)
-
             cmd_reg += ' -iseg '+fname_template_ml_seg+' -dseg '+fname_automatic_ml_seg
 
         sct.run(cmd_reg)
@@ -138,8 +130,6 @@ class MultiLabelRegistration:
         fname_warp_multilabel_auto2template = 'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz'
 
         self.fname_warp_template2gm = 'warp_template2'+file_gm+'.nii.gz'
-        # fname_warp_multilabel_template2auto = pad_im(fname_warp_multilabel_template2auto, nx, ny, nz, xi, xf, yi, yf, zi, zf)
-        # fname_warp_multilabel_auto2template = pad_im(fname_warp_multilabel_auto2template, nx, ny, nz, xi, xf, yi, yf, zi, zf)
 
         sct.run('sct_concat_transfo -w '+file_warp_template2target+ext_warp_template2target+','+fname_warp_multilabel_template2auto+' -d '+file_gm+ext_gm+' -o '+self.fname_warp_template2gm)
 
@@ -156,9 +146,6 @@ class MultiLabelRegistration:
 
         os.chdir('..')
 
-        # sct.generate_output_file(tmp_dir+fname_warp_multilabel_template2auto, self.param.output_folder+'warp_template_multilabel2automatic_seg_multilabel.nii.gz')
-        # sct.generate_output_file(tmp_dir+fname_warp_multilabel_auto2template, self.param.output_folder+'warp_automatic_seg_multilabel2template_multilabel.nii.gz')
-
         sct.generate_output_file(tmp_dir+self.fname_warp_template2gm, self.param.output_folder+self.fname_warp_template2gm)
         if self.fname_warp_target2template is not None:
             sct.generate_output_file(tmp_dir+self.fname_warp_gm2template, self.param.output_folder+self.fname_warp_gm2template)
@@ -169,7 +156,7 @@ class MultiLabelRegistration:
             sct.generate_output_file(fname_grid_warped, self.param.output_folder+file_grid_warped+ext_grid_warped)
 
         if self.param.remove_tmp:
-            sct.run('rm -rf '+tmp_dir, error_exit='warning')
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
     def validation(self, fname_manual_gmseg, fname_sc_seg):
         path_manual_gmseg, file_manual_gmseg, ext_manual_gmseg = sct.extract_fname(fname_manual_gmseg)
@@ -177,9 +164,10 @@ class MultiLabelRegistration:
 
         # Create tmp folder and copy files in it
         tmp_dir = sct.tmp_create()
-        sct.run('cp '+fname_manual_gmseg+' '+tmp_dir+file_manual_gmseg+ext_manual_gmseg)
-        sct.run('cp '+fname_sc_seg+' '+tmp_dir+file_sc_seg+ext_sc_seg)
-        sct.run('cp '+self.param.output_folder+self.fname_warp_template2gm+' '+tmp_dir+self.fname_warp_template2gm)
+        shutil.copyfile(fname_manual_gmseg, os.path.join(tmp_dir, file_manual_gmseg, ext_manual_gmseg))
+        shutil.copyfile(fname_sc_seg, os.path.join(tmp_dir, file_sc_seg, ext_sc_seg))
+        shutil.copyfile(os.path.join(self.param.output_folder, self.fname_warp_template2gm),
+                        os.path.join(tmp_dir, self.fname_warp_template2gm))
         os.chdir(tmp_dir)
 
         sct.run('sct_warp_template -d '+fname_manual_gmseg+' -w '+self.fname_warp_template2gm+' -qc 0 -a 0')
@@ -328,7 +316,7 @@ class MultiLabelRegistration:
         sct.generate_output_file(tmp_dir+dice_name, self.param.output_folder+dice_name)
 
         if self.param.remove_tmp:
-            sct.run('rm -rf '+tmp_dir, error_exit='warning')
+            shutil.rmtree(tmp_dir)
 
 
 def thr_im(im, low_thr, high_thr):
@@ -362,7 +350,7 @@ def pad_im(fname_im, nx_full, ny_full, nz_full,  xi, xf, yi, yf, zi, zf):
     pad_zf = str(nz_full-(zf+1))
     pad = ','.join([pad_xi, pad_xf, pad_yi, pad_yf, pad_zi, pad_zf])
     if len(Image(fname_im).data.shape) == 5:
-        status, output = sct.run('sct_image -i '+fname_im+' -mcs')
+        status, output = sct_image.main(['-i', fname_im, '-mcs'])
         s = 'Created file(s):\n-->'
         output_fnames = output[output.find(s)+len(s):].split('\n')[0].split("'")
         fname_comp_list = [output_fnames[i] for i in range(1, len(output_fnames), 2)]
@@ -415,7 +403,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     grid_warped = path_warp+'grid_warped_gm'+ext_warp
     sct.run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
     if rm_tmp:
-        sct.run('rm -rf '+tmp_dir, error_exit='warning')
+        shutil.rmtree(tmp_dir)
     return grid_warped
 
 
@@ -476,14 +464,7 @@ def get_parser():
                       mandatory=False,
                       example='t2star_seg.nii.gz')
 
-
     parser.usage.addSection('\nMISC')
-    # parser.add_option(name="-apply-warp",
-    #                   type_value='multiple_choice',
-    #                   description="Application of the warping field (option '-w') on the template (option '-t'). 0: do not apply it. 1: apply it.",
-    #                   mandatory=False,
-    #                   example=['0', '1'],
-    #                   default_value='0')
     parser.add_option(name='-qc',
                       type_value='multiple_choice',
                       description='Output images for quality control.',
@@ -504,6 +485,7 @@ def get_parser():
                       default_value='1')
 
     return parser
+
 
 def main(args=None):
     if not args:
@@ -541,7 +523,7 @@ def main(args=None):
         ml_param.remove_tmp = int(arguments['-r'])
     if '-v' in arguments:
         ml_param.verbose = int(arguments['-v'])
-    
+
     apply_warp = 0
     if '-apply-warp' in arguments:
         apply_warp = int(arguments['-apply-warp'])
@@ -550,9 +532,10 @@ def main(args=None):
             or (fname_manual_gmseg is None and fname_sc_seg is not None):
         sct.printv(parser.usage.generate(error='ERROR: you need to specify both arguments : -manual-gm and -sc.'))
 
-    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template
-                                    , param=ml_param, fname_warp_target2template=fname_warp_target2template
-                                    , apply_warp_template=apply_warp)
+    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template,
+                                    fname_warp_template, param=ml_param,
+                                    fname_warp_target2template=fname_warp_target2template,
+                                    apply_warp_template=apply_warp)
     ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg)

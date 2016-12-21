@@ -253,7 +253,7 @@ def test_function(script_name, param):
     # write log file
     write_to_log_file(fname_log, output, 'w')
     # manage status
-    if status == 0:
+    if (status & 255) == 0:
         print_ok()
     else:
         if status == 99:
@@ -291,7 +291,7 @@ def get_parser(param):
                       type_value="multiple_choice",
                       description='Remove temporary files.',
                       mandatory=False,
-                      default_value='1',
+                      default_value='0',
                       example=['0', '1'])
     return parser
 
