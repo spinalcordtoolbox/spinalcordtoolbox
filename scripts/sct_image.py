@@ -14,11 +14,11 @@ import os
 import re
 import sys
 
-from numpy import concatenate, shape, newaxis
+from numpy import concatenate, newaxis, shape
 
-from msct_parser import Parser
 from msct_image import Image, get_dimension
-from sct_utils import printv, add_suffix, extract_fname, run, tmp_create
+from msct_parser import Parser
+from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
 
 
 class Param:
@@ -26,8 +26,6 @@ class Param:
         self.verbose = '1'
 
 
-# PARSER
-# ==========================================================================================
 def get_parser(param):
 
     # Initialize the parser
@@ -114,8 +112,6 @@ def get_parser(param):
     return parser
 
 
-# MAIN
-# ==========================================================================================
 def main(args=None):
 
     param = Param()
@@ -139,10 +135,6 @@ def main(args=None):
     else:
         fname_out = None
 
-    # Open file(s)
-    # im_in_list = [Image(fn) for fn in fname_in]
-
-    # run command
     if "-pad" in arguments:
         # TODO: check input is 3d
         im_in = Image(fname_in[0])
@@ -156,7 +148,7 @@ def main(args=None):
         padxi, padxf, padyi, padyf, padzi, padzf = arguments["-pad-asym"].split(',')
         padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
         im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
-        
+
     elif "-copy-header" in arguments:
         im_in = Image(fname_in[0])
         im_dest = Image(arguments["-copy-header"])
@@ -251,7 +243,6 @@ def main(args=None):
         printv('Warping grid generated.\n', verbose, 'info')
     else:
         printv('An error occurred in sct_image...', verbose, "error")
-
 
 
 def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
@@ -600,8 +591,6 @@ def get_orientation(im):
     return ori
 
 
-# get_orientation
-# ==========================================================================================
 def get_orientation_3d(im, filename=False):
     """
     Get orientation from 3D data
@@ -623,8 +612,6 @@ def get_orientation_3d(im, filename=False):
     return orientation
 
 
-# set_orientation
-# ==========================================================================================
 def set_orientation(im, orientation, data_inversion=False, filename=False, fname_out=''):
     """
     Set orientation on image
@@ -701,8 +688,5 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         run('rm -rf '+tmp_dir, error_exit='warning')
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
-    # call main function
     main()
