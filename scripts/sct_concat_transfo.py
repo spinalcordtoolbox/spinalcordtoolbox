@@ -95,17 +95,17 @@ def main(args=None):
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
     fname_warp_list_invert.reverse()
-    cmd = 'isct_ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
+    cmd = 'isct_ComposeMultiTransform 3 warp_final' + ext_out + ' -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
     sct.printv('>> '+cmd, verbose)
     status, output = getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
 
     # check if output was generated
-    if not os.path.isfile('warp_final.nii.gz'):
+    if not os.path.isfile('warp_final' + ext_out):
         sct.printv('ERROR: Warping field was not generated.\n'+output, 1, 'error')
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final.nii.gz', path_out+file_out+ext_out)
+    sct.generate_output_file('warp_final' + ext_out, path_out+file_out+ext_out)
 
     print ''
 
