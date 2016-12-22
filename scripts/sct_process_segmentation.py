@@ -75,7 +75,7 @@ def get_parser():
                                   '  - csa_per_slice.pickle: a pickle file with the same results as \"csa_per_slice.txt\" recorded in a DataFrame (panda structure) that can be reloaded afterwrds,\n'
                                   '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n',
                       mandatory=True,
-                      example=['centerline', 'label-vert', 'length', 'csa'])
+                      example=['centerline', 'label-vert', 'length', 'csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -172,7 +172,7 @@ def main(args):
     # Initialization
     path_script = os.path.dirname(__file__)
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
-    processes = ['centerline', 'csa', 'length']
+    processes = ['centerline', 'csa', 'length', 'shape']
     verbose = param.verbose
     start_time = time.time()
     remove_temp_files = param.remove_temp_files
@@ -241,8 +241,62 @@ def main(args):
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
         sct.printv('\nLength of the segmentation = '+str(round(result_length,2))+' mm\n', verbose, 'info')
 
-    # End of Main
+    if name_process == 'shape':
+        compute_shape(fname_segmentation, verbose=verbose)
 
+        # End of Main
+
+
+# characterize the shape of the spinal cord, based on the segmentation
+def compute_shape(fname_segmentation, verbose=0):
+    # Extract path, file and extension
+    fname_segmentation = os.path.abspath(fname_segmentation)
+    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+
+    # create temporary folder
+    sct.printv('\nCreate temporary folder...', verbose)
+    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(randint(1, 1000000)), 1)
+    sct.run('mkdir ' + path_tmp, verbose)
+
+    # copy files into tmp folder
+    sct.run('cp ' + fname_segmentation + ' ' + path_tmp)
+
+    # go to tmp folder
+    os.chdir(path_tmp)
+
+    # Change orientation of the input centerline into RPI
+    sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
+    im_seg = Image(file_data + ext_data)
+    fname_segmentation_orient = 'segmentation_rpi' + ext_data
+    im_seg_orient = set_orientation(im_seg, 'RPI')
+    im_seg_orient.setFileName(fname_segmentation_orient)
+    im_seg_orient.save()
+
+    # Get dimension
+    sct.printv('\nGet dimensions...', param.verbose)
+    nx, ny, nz, nt, px, py, pz, pt = im_seg_orient.dim
+    sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
+    sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', param.verbose)
+
+    #x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_segmentation_orient, type_window='hanning', window_length=80, algo_fitting='hanning', verbose=verbose)
+
+    import msct_shape
+    #msct_shape.surface(volume=im_seg_orient.data, threshold=0.5, verbose=2)
+
+    """
+    for i in range(0, nz, 1):
+        slice = im_seg_orient.data[:, :, i]
+
+        # Find contours at a constant value of 0.5
+        sc_properties = msct_shape.properties2d(slice)
+        print 'area', sc_properties['area']
+        print 'perimeter', sc_properties['perimeter']
+        print 'equivalent_diameter', sc_properties['equivalent_diameter']
+        print 'major_axis_length', sc_properties['major_axis_length']
+        print 'orientation', sc_properties['orientation']
+    """
+
+    msct_shape.z_property(volume=im_seg_orient.data, property_list=['area', 'ratio_major_minor', 'solidity', 'eccentricity'], verbose=2)
 
 
 # compute the length of the spinal cord
