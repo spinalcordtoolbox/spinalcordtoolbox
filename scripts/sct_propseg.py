@@ -15,6 +15,58 @@ from msct_parser import Parser
 import sys
 import sct_utils as sct
 import os
+from scipy import ndimage as ndi
+import numpy as np
+from sct_image import orientation
+
+
+def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5.0, verbose=0):
+    # convert segmentation image to RPI
+    im_input = Image(fname_segmentation)
+    image_input_orientation = orientation(im_input, get=True, verbose=False)
+    sct.run('sct_image -i ' + fname_segmentation + ' -setorient RPI -o tmp.segmentation_RPI.nii.gz', verbose)
+    sct.run('sct_image -i ' + fname_centerline + ' -setorient RPI -o tmp.centerline_RPI.nii.gz', verbose)
+
+    # go through segmentation image, and compare with centerline from propseg
+    im_seg = Image('tmp.segmentation_RPI.nii.gz')
+    im_centerline = Image('tmp.centerline_RPI.nii.gz')
+
+    # Get size of data
+    sct.printv('\nGet data dimensions...', verbose)
+    nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+
+    centerline, key_centerline = {}, []
+    for i in range(nz):
+        slice = im_centerline.data[:, :, i]
+        if np.any(slice):
+            x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
+            centerline[str(i)] = [x_centerline, y_centerline]
+            key_centerline.append(i)
+
+    for i in range(nz):
+        slice = im_seg.data[:, :, i]
+        to_remove = False
+        label_objects, nb_labels = ndi.label(slice)
+        if nb_labels > 1:
+            to_remove = True
+        elif nb_labels == 1:
+            x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
+            slice_nearest_coord = min(key_centerline, key=lambda x:abs(x-i))
+            coord_nearest_coord = centerline[str(slice_nearest_coord)]
+            distance = np.sqrt(((x_centerline - coord_nearest_coord[0]) * px) ** 2 +
+                               ((y_centerline - coord_nearest_coord[1]) * py) ** 2 +
+                               ((i - slice_nearest_coord) * pz) ** 2)
+
+            if distance >= threshold_distance:
+                to_remove = True
+
+        if to_remove:
+            im_seg.data[:, :, i] *= 0
+
+    im_seg.setFileName('tmp.segmentation_RPI_c.nii.gz')
+    im_seg.save()
+
+    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_segmentation, verbose)
 
 
 def get_parser():
@@ -271,12 +323,12 @@ if __name__ == "__main__":
     if nt > 1:
         sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
+    path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
+
     # if centerline or mask is asked using viewer
     if use_viewer:
         # make sure image is in SAL orientation, as it is the orientation used by PropSeg
-        from sct_image import orientation
         image_input_orientation = orientation(image_input, get=True, verbose=False)
-        path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
         sct.run('sct_image -i ' + input_filename + ' -o ' + folder_output + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
 
@@ -304,9 +356,6 @@ if __name__ == "__main__":
             mask_reoriented_filename = sct.add_suffix(file_fname + ext_fname, "_mask_viewer")
             sct.run('sct_image -i ' + folder_output + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
-            # remove temporary files
-            sct.run('rm -rf ' + folder_output + 'tmp.*')
-
             # add mask filename to parameters string
             if use_viewer == "centerline":
                 cmd += " -init-centerline " + folder_output + mask_reoriented_filename
@@ -315,15 +364,22 @@ if __name__ == "__main__":
         else:
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
 
+    cmd += ' -centerline-binary'
     sct.run(cmd, verbose)
 
-    sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
-    output_filename = file_fname+"_seg"+ext_fname
+    output_filename = file_fname + "_seg" + ext_fname
+
+    fname_centerline = file_fname + '_centerline' + ext_fname
+    check_and_correct(output_filename, fname_centerline)
+
+    # remove temporary files
+    sct.run('rm -rf ' + folder_output + 'tmp.*')
 
     if folder_output == "./":
         output_name = output_filename
     else:
         output_name = folder_output + output_filename
+    sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview "+input_filename+" "+output_name+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
