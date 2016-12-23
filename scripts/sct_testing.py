@@ -4,30 +4,24 @@
 #
 # Authors: Julien Cohen-Adad, Benjamin De Leener, Augustin Roux
 # Updated: 2014-10-06
-
 # TODO: list functions to test in help (do a search in testing folder)
 
-
+import importlib
+import os
+import shutil
 import sys
 import time
 
-import os
+import sct_download_data
+import sct_utils as sct
 from msct_parser import Parser
 
 # get path of the toolbox
-# TODO: put it back below when working again (julien 2016-04-04)
-# <<<
-# OLD
-# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# NEW
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
-# >>>
-# append path that contains scripts, to be able to load modules
+path_sct = os.environ.get('SCT_DIR')
+# TODO FIXIT Remove once the setuptools is setup properlly
 sys.path.append(path_sct + '/scripts')
 sys.path.append(path_sct + '/testing')
-import sct_utils as sct
-import importlib
+
 
 # define nice colors
 class bcolors:
@@ -37,10 +31,6 @@ class bcolors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
-
-# JULIEN: NOW THAT THE USER WILL HAVE ACCESS TO TEST_ALL, WE SHOULD NOT USE $SCT_TESTING_DATA_DIR ANYMORE.
-# get path of testing data
-# status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
 
 class Param(object):
@@ -55,8 +45,6 @@ class Param(object):
         self.path_tmp = ""
 
 
-# START MAIN
-# ==========================================================================================
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
@@ -82,10 +70,6 @@ def main(args=None):
 
     start_time = time.time()
 
-    # # download data
-    # if param.download:
-    #     downloaddata()
-    #
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
@@ -94,7 +78,7 @@ def main(args=None):
         downloaddata(param)
 
     # display path to data
-    sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
+    sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.tmp_create()
@@ -107,20 +91,23 @@ def main(args=None):
 
     # loop across all functions and test them
     status = []
-    [status.append(test_function(f, param)) for f in functions if function_to_test == f]
+    [
+        status.append(test_function(f, param)) for f in functions
+        if function_to_test == f
+    ]
     if not status:
         for f in functions:
             status.append(test_function(f, param))
-    print 'status: '+str(status)
+    print 'status: ' + str(status)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
+    print 'Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n'
 
     # remove temp files
     if param.remove_tmp_file:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf '+param.path_tmp, param.verbose)
+        shutil.rmtree(param.path_tmp, ignore_errors=True)
 
     e = 0
     if sum(status) != 0:
@@ -132,7 +119,6 @@ def main(args=None):
 
 def downloaddata(param):
     sct.printv('\nDownloading testing data...', param.verbose)
-    import sct_download_data
     sct_download_data.main(['-d', 'sct_testing_data'])
 
 
@@ -176,7 +162,6 @@ def fill_functions():
 # print without carriage return
 # ==========================================================================================
 def print_line(string):
-    import sys
     sys.stdout.write(string + make_dot_lines(string))
     sys.stdout.flush()
 
@@ -185,7 +170,7 @@ def print_line(string):
 # ==========================================================================================
 def make_dot_lines(string):
     if len(string) < 52:
-        dot_lines = '.'*(52 - len(string))
+        dot_lines = '.' * (52 - len(string))
         return dot_lines
     else:
         return ''
@@ -196,8 +181,10 @@ def make_dot_lines(string):
 def print_ok():
     print "[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]"
 
+
 def print_warning():
     print "[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]"
+
 
 def print_fail():
     print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
@@ -222,27 +209,23 @@ def write_to_log_file(fname_log, string, mode='w'):
         f = open(fname_log, mode)
     except Exception as ex:
         raise Exception('WARNING: Cannot open log file.')
-    f.write(string+'\n')
+    f.write(string + '\n')
     f.close()
 
 
 # test function
 # ==========================================================================================
 def test_function(script_name, param):
-    # if script_name == 'test_debug':
-    #     return test_debug()  # JULIEN
-    # else:
-    # build script name
     fname_log = '../' + script_name + ".log"
     tmp_script_name = script_name
-    result_folder = "results_"+script_name
-    script_name = "test_"+script_name
+    result_folder = "results_" + script_name
+    script_name = "test_" + script_name
 
     sct.create_folder(result_folder)
     os.chdir(result_folder)
 
     # display script name
-    print_line('Checking '+script_name)
+    print_line('Checking ' + script_name)
     # import function as a module
     script_tested = importlib.import_module(script_name)
     # test function
@@ -262,37 +245,42 @@ def test_function(script_name, param):
             print_fail()
         print output
     # go back to parent folder
-    os.chdir('..')
+    os.chdir(os.pardir)
 
-    # return
     return status
 
+
 def get_parser(param):
-    # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
-    parser.add_option(name="-f",
-                      type_value="str",
-                      description="Test this specific script (do not add extension).",
-                      mandatory=False,
-                      example='sct_propseg')
-    parser.add_option(name="-d",
-                      type_value="multiple_choice",
-                      description="Download testing data.",
-                      mandatory=False,
-                      default_value=param.download,
-                      example=['0', '1'])
-    parser.add_option(name="-p",
-                      type_value="folder",
-                      description='Path to testing data. NB: no need to set if using "-d 1"',
-                      mandatory=False,
-                      default_value=param.path_data)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
+    parser.usage.set_description(
+        'Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.'
+    )
+    parser.add_option(
+        name="-f",
+        type_value="str",
+        description="Test this specific script (do not add extension).",
+        mandatory=False,
+        example='sct_propseg')
+    parser.add_option(
+        name="-d",
+        type_value="multiple_choice",
+        description="Download testing data.",
+        mandatory=False,
+        default_value=param.download,
+        example=['0', '1'])
+    parser.add_option(
+        name="-p",
+        type_value="folder",
+        description='Path to testing data. NB: no need to set if using "-d 1"',
+        mandatory=False,
+        default_value=param.path_data)
+    parser.add_option(
+        name="-r",
+        type_value="multiple_choice",
+        description='Remove temporary files.',
+        mandatory=False,
+        default_value='1',
+        example=['0', '1'])
     return parser
 
 
