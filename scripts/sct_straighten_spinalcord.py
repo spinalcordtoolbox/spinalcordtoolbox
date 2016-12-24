@@ -746,9 +746,9 @@ def get_parser():
                       type_value='float',
                       description='Isotropic resolution of the straightening output, in millimeters.\n'
                                   'Resampling to lower resolution decreases computational time while decreasing straightening accuracy.\n'
-                                  'To keep native resolution, set this option to 0.0mm.\n',
+                                  'To keep native resolution, set this option to 0.\n',
                       mandatory=False,
-                      default_value=1.0)
+                      default_value=1)
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="straightened file",
