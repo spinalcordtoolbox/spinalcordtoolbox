@@ -200,6 +200,7 @@ class SpinalCordStraightener(object):
         self.straight2curved = True
 
         self.resample_factor = 0.0
+        self.accuracy_results = 1.0
 
 
     def straighten(self):
@@ -608,42 +609,43 @@ class SpinalCordStraightener(object):
             sct.printv('\nApply transformation to input image...', verbose)
             sct.run('sct_apply_transfo -i data.nii -d ' + fname_ref + ' -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x '+interpolation_warp, verbose)
 
-            # compute the error between the straightened centerline/segmentation and the central vertical line.
-            # Ideally, the error should be zero.
-            # Apply deformation to input image
-            sct.printv('\nApply transformation to centerline image...', verbose)
-            Transform(input_filename='centerline.nii.gz', fname_dest=fname_ref,
-                      output_filename="tmp.centerline_straight.nii.gz", interp="nn",
-                      warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
-            from msct_image import Image
-            file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
-            coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
-            mean_coord = []
-            for z in range(coordinates_centerline[0].z, coordinates_centerline[-1].z):
-                temp_mean = [coord.value for coord in coordinates_centerline if coord.z == z]
-                if temp_mean:
-                    mean_value = np.mean(temp_mean)
-                    mean_coord.append(np.mean([[coord.x * coord.value / mean_value, coord.y * coord.value / mean_value]
-                                                for coord in coordinates_centerline if coord.z == z], axis=0))
+            if self.accuracy_results:
+                # compute the error between the straightened centerline/segmentation and the central vertical line.
+                # Ideally, the error should be zero.
+                # Apply deformation to input image
+                sct.printv('\nApply transformation to centerline image...', verbose)
+                Transform(input_filename='centerline.nii.gz', fname_dest=fname_ref,
+                          output_filename="tmp.centerline_straight.nii.gz", interp="nn",
+                          warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
+                from msct_image import Image
+                file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
+                coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
+                mean_coord = []
+                for z in range(coordinates_centerline[0].z, coordinates_centerline[-1].z):
+                    temp_mean = [coord.value for coord in coordinates_centerline if coord.z == z]
+                    if temp_mean:
+                        mean_value = np.mean(temp_mean)
+                        mean_coord.append(np.mean([[coord.x * coord.value / mean_value, coord.y * coord.value / mean_value]
+                                                    for coord in coordinates_centerline if coord.z == z], axis=0))
 
-            # compute error between the straightened centerline and the straight line.
-            from math import sqrt
-            x0 = file_centerline_straight.data.shape[0]/2.0
-            y0 = file_centerline_straight.data.shape[1]/2.0
-            count_mean = 0
-            if number_of_points >= 10:
-                mean_c = mean_coord[2:-2]  # we don't include the four extrema because there are usually messy.
-            else:
-                mean_c = mean_coord
-            for coord_z in mean_c:
-                if not np.isnan(np.sum(coord_z)):
-                    dist = ((x0-coord_z[0])*px)**2 + ((y0-coord_z[1])*py)**2
-                    self.mse_straightening += dist
-                    dist = sqrt(dist)
-                    if dist > self.max_distance_straightening:
-                        self.max_distance_straightening = dist
-                    count_mean += 1
-            self.mse_straightening = sqrt(self.mse_straightening/float(count_mean))
+                # compute error between the straightened centerline and the straight line.
+                from math import sqrt
+                x0 = file_centerline_straight.data.shape[0]/2.0
+                y0 = file_centerline_straight.data.shape[1]/2.0
+                count_mean = 0
+                if number_of_points >= 10:
+                    mean_c = mean_coord[2:-2]  # we don't include the four extrema because there are usually messy.
+                else:
+                    mean_c = mean_coord
+                for coord_z in mean_c:
+                    if not np.isnan(np.sum(coord_z)):
+                        dist = ((x0-coord_z[0])*px)**2 + ((y0-coord_z[1])*py)**2
+                        self.mse_straightening += dist
+                        dist = sqrt(dist)
+                        if dist > self.max_distance_straightening:
+                            self.max_distance_straightening = dist
+                        count_mean += 1
+                self.mse_straightening = sqrt(self.mse_straightening/float(count_mean))
 
         except Exception as e:
             sct.printv('WARNING: Exception during Straightening:', 1, 'warning')
@@ -674,9 +676,10 @@ class SpinalCordStraightener(object):
 
         sct.printv('\nDone!\n', verbose)
 
-        sct.printv("Maximum x-y error = " + str(np.round(self.max_distance_straightening, 2)) + " mm", verbose, "bold")
-        sct.printv("Accuracy of straightening (MSE) = " + str(np.round(self.mse_straightening, 2)) +
-                   " mm", verbose, "bold")
+        if self.accuracy_results:
+            sct.printv("Maximum x-y error = " + str(np.round(self.max_distance_straightening, 2)) + " mm", verbose, "bold")
+            sct.printv("Accuracy of straightening (MSE) = " + str(np.round(self.mse_straightening, 2)) +
+                       " mm", verbose, "bold")
 
         # display elapsed time
         elapsed_time = time.time() - start_time
@@ -784,7 +787,8 @@ def get_parser():
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
                                   "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
-                                  "\nthreshold_distance: [0.0,inf[. Threshold for which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=1.0",
+                                  "\nthreshold_distance: [0.0,inf[. Threshold for which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=1.0"
+                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=1",
                       mandatory=False,
                       example="algo_fitting=nurbs")
     parser.add_option(name="-params",
@@ -873,5 +877,7 @@ if __name__ == "__main__":
                 sc_straight.precision = float(param_split[1])
             if param_split[0] == 'threshold_distance':
                 sc_straight.threshold_distance = float(param_split[1])
+            if param_split[0] == 'accuracy_results':
+                sc_straight.accuracy_results = int(param_split[1])
 
     sc_straight.straighten()
