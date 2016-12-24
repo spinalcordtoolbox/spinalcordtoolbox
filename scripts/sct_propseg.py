@@ -380,7 +380,7 @@ if __name__ == "__main__":
     output_filename = file_fname + "_seg" + ext_fname
 
     fname_centerline = file_fname + '_centerline' + ext_fname
-    check_and_correct(output_filename, fname_centerline)
+    check_and_correct(folder_output + output_filename, folder_output + fname_centerline)
 
     # remove temporary files
     sct.run('rm -rf ' + folder_output + 'tmp.*')
