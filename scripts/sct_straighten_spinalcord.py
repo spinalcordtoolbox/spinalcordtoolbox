@@ -199,6 +199,8 @@ class SpinalCordStraightener(object):
         self.curved2straight = True
         self.straight2curved = True
 
+        self.resample_factor = 0.0
+
 
     def straighten(self):
         # Initialization
@@ -265,6 +267,9 @@ class SpinalCordStraightener(object):
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
             sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
             sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+
+            if self.resample_factor != 0.0:
+                sct.run('sct_resample -i centerline_rpi.nii.gz -mm ' + str(self.resample_factor) + 'x' + str(self.resample_factor) + 'x' + str(self.resample_factor) + ' -o centerline_rpi.nii.gz')
 
             if np.min(image_centerline.data) < 0 or np.max(image_centerline.data) > 1:
                 image_centerline.data[image_centerline.data < 0] = 0
@@ -737,6 +742,13 @@ def get_parser():
                       type_value=None,
                       description="Disable curved to straight transformation computation.",
                       mandatory=False)
+    parser.add_option(name="-resample",
+                      type_value='float',
+                      description='Isotropic resolution of the straightening output, in millimeters.\n'
+                                  'Resampling to lower resolution decreases computational time while decreasing straightening accuracy.\n'
+                                  'To keep native resolution, set this option to 0.0mm.\n',
+                      mandatory=False,
+                      default_value=1.0)
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="straightened file",
@@ -843,6 +855,9 @@ if __name__ == "__main__":
         sc_straight.straight2curved = False
     if '-disable-curved2straight' in arguments:
         sc_straight.curved2straight = False
+
+    if '-resample' in arguments:
+        sc_straight.resample_factor = arguments['-resample']
 
     if "-param" in arguments:
         params_user = arguments['-param']
