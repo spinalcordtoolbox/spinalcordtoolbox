@@ -35,6 +35,8 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
     sct.printv('\nGet data dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
 
+    # extraction of centerline provided by isct_propseg and computation of center of mass for each slice
+    # the centerline is defined as the center of the tubular mesh outputed by propseg.
     centerline, key_centerline = {}, []
     for i in range(nz):
         slice = im_centerline.data[:, :, i]
@@ -43,13 +45,16 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
             centerline[str(i)] = [x_centerline, y_centerline]
             key_centerline.append(i)
 
+    # for each slice of the segmentation, check if only one object is present. If not, remove the slice from segmentation.
+    # If only one object (the spinal cord) is present in the slice, check if its center of mass is close to the centerline of isct_propseg.
     for i in range(nz):
+        # extraction of slice
         slice = im_seg.data[:, :, i]
-        to_remove = False
-        label_objects, nb_labels = ndi.label(slice)
-        if nb_labels > 1:
+        to_remove = False  # flag that decides if the slice must be removed
+        label_objects, nb_labels = ndi.label(slice)  # count binary objects in the slice
+        if nb_labels > 1:  # if there is more that one object in the slice, the slice is removed from the segmentation
             to_remove = True
-        elif nb_labels == 1:
+        elif nb_labels == 1:  # check if the centerline is coherent with the one from isct_propseg
             x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
             slice_nearest_coord = min(key_centerline, key=lambda x:abs(x-i))
             coord_nearest_coord = centerline[str(slice_nearest_coord)]
@@ -57,15 +62,18 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
                                ((y_centerline - coord_nearest_coord[1]) * py) ** 2 +
                                ((i - slice_nearest_coord) * pz) ** 2)
 
-            if distance >= threshold_distance:
+            if distance >= threshold_distance:  # threshold must be adjusted, default is 5 mm
                 to_remove = True
 
+        # remove the slice
         if to_remove:
             im_seg.data[:, :, i] *= 0
 
+    # saving the image
     im_seg.setFileName('tmp.segmentation_RPI_c.nii.gz')
     im_seg.save()
 
+    # replacing old segmentation with the corrected one
     sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_segmentation, verbose)
 
 
