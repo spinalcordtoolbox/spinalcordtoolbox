@@ -4,7 +4,7 @@
 
 ![Spinal Cord Toolbox overview](abstract.png "Spinal Cord Toolbox overview")
 
-Comprehensive and open-source library of analysis tools for MRI of the spinal cord.
+SCT is a comprehensive and open-source library of analysis tools for MRI of the spinal cord. SCT features standard templates & atlases of the spinal cord, gray matter and white matter tracts as well as state-of-the-art segmentation, registration and atlas-based analysis methods. SCT is open-source, includes extensive testing framework, documentation and ongoing support via active forum. SCT allows robust and reproducible multi-center studies and analysis of large datasets.
 
 - [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
