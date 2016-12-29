@@ -41,11 +41,11 @@ class Param:
     ## The constructor
     def __init__(self):
         # self.path_template = path_sct+'/data/template/'
-        self.shift_AP_brainstem = 30
-        self.size_AP_brainstem = 11#15
-        self.shift_IS_brainstem = 15#15
-        self.size_IS_brainstem = 30#30
-        self.size_RL_brainstem = 1#
+        self.shift_AP_initc2 = 30
+        self.size_AP_initc2 = 11#15
+        self.shift_IS_initc2 = 15#15
+        self.size_IS_initc2 = 30#30
+        self.size_RL_initc2 = 1#
         self.shift_AP = 32#0#32  # shift the centerline towards the spine (in voxel).
         self.size_AP = 11#41#11  # window size in AP direction (=y) (in voxel)
         self.size_RL = 1 #1 # window size in RL direction (=x) (in voxel)
@@ -53,6 +53,15 @@ class Param:
         self.shift_AP_visu = 15#0#15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
         self.fig_anat_straight = 50
+
+    # update constructor with user's parameters
+    def update(self, param_user):
+        list_objects = param_user.split(',')
+        for object in list_objects:
+            if len(object) < 2:
+                sct.printv('ERROR: Wrong usage.', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], int(obj[1]))
 
 
 # PARSER
@@ -124,6 +133,19 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       mandatory=False,
                       default_value='0',
                       example=['0', '1'])
+    parser.add_option(name="-param",
+                      type_value=[[','], 'str'],
+                      description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+                                  "shift_AP_initc2 [mm]: AP shift for finding C2 disc. Default="+str(param.shift_AP_initc2)+".\n"
+                                  "size_AP_initc2 [mm]: AP window size finding C2 disc. Default="+str(param.size_AP_initc2)+".\n"
+                                  "shift_IS_initc2 [mm]: IS shift for finding C2 disc. Default=" + str(param.shift_IS_initc2) + ".\n"
+                                  "size_IS_initc2 [mm]: IS window size finding C2 disc. Default=" + str(param.size_IS_initc2) + ".\n"
+                                  "size_RL_initc2 [mm]: RL shift for size finding C2 disc. Default=" + str(param.size_RL_initc2) + ".\n"
+                                  "shift_AP [mm]: AP shift of centerline for disc search. Default=" + str(param.shift_AP) + ".\n"
+                                  "size_AP [mm]: AP window size for disc search. Default=" + str(param.size_AP) + ".\n"
+                                  "size_RL [mm]: RL window size for disc search. Default=" + str(param.size_RL) + ".\n"
+                                  "size_IS [mm]: IS window size for disc search. Default=" + str(param.size_IS) + ".\n",
+                      mandatory = False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
@@ -189,6 +211,8 @@ def main(args=None):
                 initcenter = int(arg_initfile[i+1])
     if '-initc2' in arguments:
         initc2 = 'manual'
+    if '-param' in arguments:
+        param.update(arguments['-param'][0])
     verbose = int(arguments['-v'])
     remove_tmp_files = int(arguments['-r'])
     denoise = int(arguments['-denoise'])
@@ -410,7 +434,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_brainstem, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True)
+        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_initc2, y=yc, yshift=param.shift_AP_initc2, ysize=param.size_AP_initc2, z=0, zshift=param.shift_IS_initc2, zsize=param.size_IS_initc2, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True)
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
