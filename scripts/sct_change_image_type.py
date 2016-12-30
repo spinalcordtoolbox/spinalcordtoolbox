@@ -13,14 +13,14 @@
 
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
-import os, sys
 import getopt
-import commands
+import os
 import sys
-import sct_utils as sct
+
 import nibabel
 import numpy as np
-import math
+
+import sct_utils as sct
 
 
 # DEFAULT PARAMETERS
@@ -32,9 +32,7 @@ class Param:
         self.labels = []
         self.verbose = 1
 
-#=======================================================================================================================
-# main
-#=======================================================================================================================
+
 def main(args=None):
     param = Param()
 
@@ -46,18 +44,11 @@ def main(args=None):
     fname_in = ''
     fname_out = ''
     type_output = 'int32'
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_label = path_sct_data+'/mt/mt1.nii.gz'
         param.labels = '5,5,2,1:5,7,2,3'
-        type_process = 'create'
-        cross_radius = 5
-        dilate = True
     else:
         # Check input param
         try:
@@ -79,11 +70,13 @@ def main(args=None):
 
     # display usage if a mandatory argument is not provided
     if fname_in == '' or fname_out == '':
-        sct.printv('\nERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
+        sct.printv(
+            '\nERROR: All mandatory arguments are not provided. See usage (add -h).\n',
+            1, 'error')
 
     # check existence of input files
     sct.check_file_exist(fname_in)
-    
+
     # read nifti input file
     img = nibabel.load(fname_in)
     # 3d array for each x y z voxel values for the input nifti image
@@ -110,29 +103,27 @@ def main(args=None):
     elif type_output == 'uint64':
         hdr.set_data_dtype(np.uint64)
     elif type_output == 'float16':
-        sct.printv('Error: voxel type (float16) not supported by nibabel (although it is supported by numpy)... See usage.', 1, 'error')
-        #hdr.set_data_dtype(np.float16)
+        sct.printv(
+            'Error: voxel type (float16) not supported by nibabel (although it is supported by numpy)... See usage.',
+            1, 'error')
     elif type_output == 'float32':
         hdr.set_data_dtype(np.float32)
     elif type_output == 'float64':
         hdr.set_data_dtype(np.float64)
     else:
-        sct.printv('Error: voxel type not supported... See usage.',1,'error')
+        sct.printv('Error: voxel type not supported... See usage.', 1, 'error')
 
-    hdr.set_data_dtype(type_output) # set imagetype to uint8, previous: int32.
-    print '\nWrite NIFTI volumes...'
-    #data.astype('int')
+    # set imagetype to uint8, previous: int32.
+    hdr.set_data_dtype(type_output)
     img = nibabel.Nifti1Image(data, None, hdr)
-    nibabel.save(img, 'tmp.'+file_output+'.nii.gz')
-    sct.generate_output_file('tmp.'+file_output+'.nii.gz', file_output+ext_output)
+    nibabel.save(img, 'tmp.' + file_output + '.nii.gz')
+    sct.generate_output_file('tmp.' + file_output + '.nii.gz',
+                             file_output + ext_output)
 
 
-#=======================================================================================================================
-# usage
-#=======================================================================================================================
 def usage():
     print """
-"""+os.path.basename(__file__)+"""
+""" + os.path.basename(__file__) + """
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
@@ -140,7 +131,7 @@ DESCRIPTION
   Change the type of voxel in the image
 
 USAGE
-  """+os.path.basename(__file__)+""" -i <data> -o <outputname> -t <type>
+  """ + os.path.basename(__file__) + """ -i <data> -o <outputname> -t <type>
 
 MANDATORY ARGUMENTS
   -i <data>         input image name
@@ -152,14 +143,8 @@ OPTIONAL ARGUMENTS
                                 uint8, uint16, uint32, uint64,
                                 float16, float32, float64
 """
-
-    # exit program
     sys.exit(2)
 
-    
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
+
 if __name__ == "__main__":
-    # call main function
     main()

@@ -13,7 +13,6 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 
-import commands
 import errno
 import os
 import re
@@ -21,6 +20,7 @@ import subprocess
 import sys
 import time
 from sys import stdout
+
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -378,14 +378,6 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     return path_out + file_out + ext_out
 
 
-def check_if_installed(cmd, name_software):
-    """check if dependant software is installed"""
-    status, output = commands.getstatusoutput(cmd)
-    if status != 0:
-        print('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
-        sys.exit(2)
-
-
 def check_if_same_space(fname_1, fname_2):
     """check if two images are in the same space and same orientation"""
     from msct_image import Image
@@ -551,7 +543,7 @@ class Os(object):
             raise UnsupportedOs("We do not support this OS.")
 
 
-class ___Version(object):
+class Version(object):
     def __init__(self, version_sct):
         self.version_sct = version_sct
 
