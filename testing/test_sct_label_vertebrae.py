@@ -82,11 +82,23 @@ def test(path_data='', parameters=''):
         output += '\nERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
         write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
+
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i']) and
             os.path.isfile(dict_param_with_path['-s'])):
         status = 200
         output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
+        write_to_log_file(fname_log, output, 'w')
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+
+    # open ground truth
+    fname_labels_manual = path_data + contrast + '/' + contrast + '_labeled_center_manual.nii.gz'
+    try:
+        label_manual = ProcessLabels(fname_labels_manual)
+        list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
+    except:
+        status = 201
+        output += '\nERROR: cannot file: ' + fname_labels_manual
         write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
@@ -117,8 +129,9 @@ def test(path_data='', parameters=''):
         # copy input data (for easier debugging)
         sct.run('cp '+dict_param_with_path['-i']+' .', verbose=0)
         # extract center of vertebral labels
+        path_seg, file_seg, ext_seg = sct.extract_fname(dict_param['-s'])
         try:
-            sct.run('sct_label_utils -i '+contrast+'_seg_labeled.nii.gz -vert-body 0 -o '+contrast+'_seg_labeled_center.nii.gz', verbose=0)
+            sct.run('sct_label_utils -i '+file_seg+'_labeled.nii.gz -vert-body 0 -o '+contrast+'_seg_labeled_center.nii.gz', verbose=0)
             label_results = ProcessLabels(contrast + '_seg_labeled_center.nii.gz')
             list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
             # get dimension
@@ -128,16 +141,6 @@ def test(path_data='', parameters=''):
         except:
             status = 1
             output += '\nERROR: cannot open file: ' + contrast+'_seg_labeled.nii.gz'
-            write_to_log_file(fname_log, output, 'w')
-            return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-        # open ground truth
-        fname_labels_manual = path_data+contrast+'/'+contrast+'_labeled_center_manual.nii.gz'
-        try:
-            label_manual = ProcessLabels(fname_labels_manual)
-            list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
-        except:
-            status = 201
-            output += '\nERROR: cannot file: '+fname_labels_manual
             write_to_log_file(fname_log, output, 'w')
             return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
