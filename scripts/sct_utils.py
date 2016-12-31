@@ -372,17 +372,22 @@ def find_file_within_folder(fname, directory, seek_type='file'):
                     all_path.append(os.path.join(root, file))
     return all_path
 
+
+
 #=======================================================================================================================
 # create temporary folder and return path of tmp dir
 #=======================================================================================================================
-
 def tmp_create(verbose=1):
-    # path_tmp = tmp_create()
     printv('\nCreate temporary folder...', verbose)
     import time
     import random
     path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S")+'_'+str(random.randint(1, 1000000)), 1)
-    run('mkdir '+path_tmp, verbose)
+    # create directory
+    try:
+        os.makedirs(path_tmp)
+    except OSError:
+        if not os.path.isdir(path_tmp):
+            raise
     return path_tmp
 
 
