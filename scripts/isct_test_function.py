@@ -302,6 +302,7 @@ if __name__ == "__main__":
     dataset = arguments["-d"]
     dataset = sct.slash_at_the_end(dataset, slash=1)
     parameters = ''
+    message = ''  # terminal printout and email message
     if "-p" in arguments:
         parameters = arguments["-p"]
     json_requirements = None
@@ -441,8 +442,11 @@ if __name__ == "__main__":
         sys.stdout = orig_stdout
         # display log file to Terminal
         handle_log = file(fname_log, 'r')
-        print handle_log.read()
+        message = handle_log.read()
+        print message
 
     # send email
     if email:
-        sct.send_email(email, subject=file_log, filename=file_log+'.log')
+        print 'Sending email...'
+        sct.send_email(email, subject=file_log, message=message, filename=file_log+'.log')
+        print 'done!'
