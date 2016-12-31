@@ -270,7 +270,11 @@ class SpinalCordStraightener(object):
             sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
             if self.resample_factor != 0.0:
-                sct.run('sct_resample -i centerline_rpi.nii.gz -mm ' + str(self.resample_factor) + 'x' + str(self.resample_factor) + 'x' + str(self.resample_factor) + ' -o centerline_rpi.nii.gz')
+                os.rename('centerline_rpi.nii.gz', 'centerline_rpi_native.nii.gz')
+                pz_native = pz
+                sct.run('sct_resample -i centerline_rpi_native.nii.gz -mm ' + str(self.resample_factor) + 'x' + str(self.resample_factor) + 'x' + str(self.resample_factor) + ' -o centerline_rpi.nii.gz')
+                image_centerline = Image('centerline_rpi.nii.gz')
+                nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
 
             if np.min(image_centerline.data) < 0 or np.max(image_centerline.data) > 1:
                 image_centerline.data[image_centerline.data < 0] = 0
@@ -416,6 +420,37 @@ class SpinalCordStraightener(object):
                 start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
                 end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
 
+                xy_space = 35  # in mm
+                offset_z = 0
+
+                # if the destination image is resampled, we still create the straight reference space with the native resolution
+                if self.resample_factor != 0.0:
+                    padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz_native))
+                    sct.run('sct_image -i centerline_rpi_native.nii.gz -o tmp.centerline_pad_native.nii.gz -pad 0,0,' + str(padding_z))
+                    image_centerline_pad = Image('centerline_rpi_native.nii.gz')
+                    nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
+                    start_point_coord_native = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
+                    end_point_coord_native = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
+                    straight_size_x = int(xy_space / px)
+                    straight_size_y = int(xy_space / py)
+                    warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
+                    warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
+                    if warp_space_x[0] < 0:
+                        warp_space_x[1] += warp_space_x[0] - 2
+                        warp_space_x[0] = 0
+                    if warp_space_y[0] < 0:
+                        warp_space_y[1] += warp_space_y[0] - 2
+                        warp_space_y[0] = 0
+                    if self.resample_factor != 0.0:
+                        sct.run('sct_crop_image -i tmp.centerline_pad_native.nii.gz -o tmp.centerline_pad_crop_native.nii.gz -dim 0,1,2 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0 -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord_native[2] - start_point_coord_native[2]))
+
+                    fname_ref = 'tmp.centerline_pad_crop_native.nii.gz'
+                    xy_space = 40
+                    offset_z = 4
+                else:
+                    fname_ref = 'tmp.centerline_pad_crop.nii.gz'
+
+                nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
                 padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz))
                 sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,'+str(padding_z))
                 image_centerline_pad = Image('centerline_rpi.nii.gz')
@@ -424,8 +459,8 @@ class SpinalCordStraightener(object):
                 start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
                 end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
-                straight_size_x = int(35 / px)
-                straight_size_y = int(35 / py)
+                straight_size_x = int(xy_space / px)
+                straight_size_y = int(xy_space / py)
                 warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
                 warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
                 if warp_space_x[0] < 0:
@@ -435,8 +470,8 @@ class SpinalCordStraightener(object):
                     warp_space_y[1] += warp_space_y[0] - 2
                     warp_space_y[0] = 0
 
-                sct.run('sct_crop_image -i tmp.centerline_pad.nii.gz -o tmp.centerline_pad_crop.nii.gz -dim 0,1,2 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0 -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord[2] - start_point_coord[2]))
-                fname_ref = 'tmp.centerline_pad_crop.nii.gz'
+                sct.run('sct_crop_image -i tmp.centerline_pad.nii.gz -o tmp.centerline_pad_crop.nii.gz -dim 0,1,2 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0 -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord[2] - start_point_coord[2] + offset_z))
+
                 image_centerline_straight = Image('tmp.centerline_pad_crop.nii.gz')
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
                 hdr_warp_s = image_centerline_straight.hdr.copy()
