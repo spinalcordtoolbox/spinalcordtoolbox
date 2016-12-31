@@ -57,8 +57,6 @@ def test(path_data='', parameters=''):
         subject_folder = subject_folder[-1]
     path_output = sct.slash_at_the_end('sct_label_vertebrae_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
     os.mkdir(path_output)
-    # path_current = os.path.abspath(os.path.curdir)
-    # os.chdir(path_output)
     param_with_path += ' -ofolder ' + path_output
     # log file
     fname_log = path_output + 'output.log'
@@ -94,16 +92,6 @@ def test(path_data='', parameters=''):
         output += '\nERROR: cannot file: ' + fname_labels_manual
         write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-
-    # # add initialization parameter contained in file: init_label_vertebrae.txt
-    # if not os.path.isfile(path_data+'t2/'+file_init_label_vertebrae):
-    #     status = 200
-    #     output = 'ERROR: the file init_label_vertebrae.txt does not exist in folder: ' + path_data
-    #     return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-    #     # return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
-    # else:
-    #     file = open(path_data+'t2/'+file_init_label_vertebrae, 'r')
-    #     param_with_path += ' '+file.read().replace('\n', '')
 
     cmd = 'sct_label_vertebrae ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
@@ -153,11 +141,6 @@ def test(path_data='', parameters=''):
         # calculate number of label mismatch
         diff_manual_result = len(list_label_manual) - len(list_label_results)
 
-        # # display results
-        # sct.printv('RMSE = ' + str(rmse) + ' mm')
-        # sct.printv('Max distance = ' + str(max_dist) + ' mm')
-        # sct.printv('Diff manual-test = ' + str(diff_manual_result))
-
         # check if MSE is superior to threshold
         th_rmse = 2
         if rmse > th_rmse:
@@ -177,8 +160,6 @@ def test(path_data='', parameters=''):
 
     # write log file
     write_to_log_file(fname_log, output, 'w')
-
-    # os.chdir(path_current)
 
     return status, output, results
 
