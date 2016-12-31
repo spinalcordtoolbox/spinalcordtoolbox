@@ -274,6 +274,12 @@ def get_parser():
                       example=['0', '1'],
                       default_value='1')
 
+    parser.add_option(name='-email',
+                      type_value='str',
+                      description='Email address to send results to.',
+                      mandatory=False,
+                      default_value='')
+
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="Verbose. 0: nothing, 1: basic, 2: extended.",
@@ -305,6 +311,10 @@ if __name__ == "__main__":
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
     create_log = int(arguments['-log'])
+    if '-email' in arguments:
+        email = arguments['-email']
+    else:
+        email = ''
     verbose = arguments["-v"]
 
     # start timer
@@ -432,3 +442,7 @@ if __name__ == "__main__":
         # display log file to Terminal
         handle_log = file(fname_log, 'r')
         print handle_log.read()
+
+    # send email
+    if email:
+        sct.send_email(email, subject=file_log, filename=file_log+'.log')
