@@ -451,7 +451,7 @@ class SpinalCordStraightener(object):
                     fname_ref = 'tmp.centerline_pad_crop.nii.gz'
 
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
-                padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz))
+                padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz)) + offset_z
                 sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,'+str(padding_z))
                 image_centerline_pad = Image('centerline_rpi.nii.gz')
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
@@ -469,6 +469,8 @@ class SpinalCordStraightener(object):
                 if warp_space_y[0] < 0:
                     warp_space_y[1] += warp_space_y[0] - 2
                     warp_space_y[0] = 0
+
+                print warp_space_x, warp_space_y, end_point_coord[2] - start_point_coord[2] + offset_z
 
                 sct.run('sct_crop_image -i tmp.centerline_pad.nii.gz -o tmp.centerline_pad_crop.nii.gz -dim 0,1,2 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0 -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord[2] - start_point_coord[2] + offset_z))
 
