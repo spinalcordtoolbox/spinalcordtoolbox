@@ -79,7 +79,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
-        printv(cmd, 1, 'process')
+        printv(cmd, 1, 'code')
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
