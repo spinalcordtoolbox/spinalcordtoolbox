@@ -276,7 +276,7 @@ def get_parser():
 
     parser.add_option(name='-email',
                       type_value='str',
-                      description='Email address to send results to.',
+                      description='Email address to send results followed by SMTP passwd (separate with comma).',
                       mandatory=False,
                       default_value='')
 
@@ -313,7 +313,7 @@ if __name__ == "__main__":
         nb_cpu = arguments["-cpu-nb"]
     create_log = int(arguments['-log'])
     if '-email' in arguments:
-        email = arguments['-email']
+        email, passwd = arguments['-email'].split(',')
     else:
         email = ''
     verbose = arguments["-v"]
@@ -448,5 +448,5 @@ if __name__ == "__main__":
     # send email
     if email:
         print 'Sending email...'
-        sct.send_email(email, subject=file_log, message=message, filename=file_log+'.log')
+        sct.send_email(email, passwd_from=passwd, subject=file_log, message=message, filename=file_log+'.log')
         print 'done!'
