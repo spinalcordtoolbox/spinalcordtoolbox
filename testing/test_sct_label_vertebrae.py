@@ -15,18 +15,11 @@ from sct_testing import write_to_log_file
 from sct_label_utils import ProcessLabels
 from numpy import linalg
 from math import sqrt
-# import sys
-# import shutil
-# from msct_parser import Parser
 import sct_label_vertebrae
 from pandas import DataFrame
 import os.path
 from copy import deepcopy
 
-# import commands
-# # append path that contains scripts, to be able to load modules
-# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# sys.path.append(path_sct + '/scripts')
 
 def test(path_data='', parameters=''):
 
@@ -64,11 +57,9 @@ def test(path_data='', parameters=''):
         subject_folder = subject_folder[-1]
     path_output = sct.slash_at_the_end('sct_label_vertebrae_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
     os.mkdir(path_output)
-    path_current = os.path.abspath(os.path.curdir)
-    os.chdir(path_output)
-    # param_with_path += ' -ofolder ' + path_output
+    param_with_path += ' -ofolder ' + path_output
     # log file
-    fname_log = 'output.log'
+    fname_log = path_output + 'output.log'
 
     # Extract contrast
     contrast = ''
@@ -102,16 +93,6 @@ def test(path_data='', parameters=''):
         write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
-    # # add initialization parameter contained in file: init_label_vertebrae.txt
-    # if not os.path.isfile(path_data+'t2/'+file_init_label_vertebrae):
-    #     status = 200
-    #     output = 'ERROR: the file init_label_vertebrae.txt does not exist in folder: ' + path_data
-    #     return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-    #     # return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
-    # else:
-    #     file = open(path_data+'t2/'+file_init_label_vertebrae, 'r')
-    #     param_with_path += ' '+file.read().replace('\n', '')
-
     cmd = 'sct_label_vertebrae ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
@@ -127,12 +108,12 @@ def test(path_data='', parameters=''):
 
     if status == 0:
         # copy input data (for easier debugging)
-        sct.run('cp '+dict_param_with_path['-i']+' .', verbose=0)
+        sct.run('cp '+dict_param_with_path['-i']+' '+path_output, verbose=0)
         # extract center of vertebral labels
         path_seg, file_seg, ext_seg = sct.extract_fname(dict_param['-s'])
         try:
-            sct.run('sct_label_utils -i '+file_seg+'_labeled.nii.gz -vert-body 0 -o '+contrast+'_seg_labeled_center.nii.gz', verbose=0)
-            label_results = ProcessLabels(contrast + '_seg_labeled_center.nii.gz')
+            sct.run('sct_label_utils -i '+path_output+file_seg+'_labeled.nii.gz -vert-body 0 -o '+path_output+contrast+'_seg_labeled_center.nii.gz', verbose=0)
+            label_results = ProcessLabels(path_output + contrast + '_seg_labeled_center.nii.gz')
             list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
             # get dimension
             # from msct_image import Image
@@ -140,7 +121,7 @@ def test(path_data='', parameters=''):
             nx, ny, nz, nt, px, py, pz, pt = label_results.image_input.dim
         except:
             status = 1
-            output += '\nERROR: cannot open file: ' + contrast+'_seg_labeled.nii.gz'
+            output += '\nERROR: cannot open file: ' + path_output + contrast + '_seg_labeled.nii.gz'
             write_to_log_file(fname_log, output, 'w')
             return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
@@ -159,11 +140,6 @@ def test(path_data='', parameters=''):
         rmse = sqrt(mse / len(list_label_manual))
         # calculate number of label mismatch
         diff_manual_result = len(list_label_manual) - len(list_label_results)
-
-        # # display results
-        # sct.printv('RMSE = ' + str(rmse) + ' mm')
-        # sct.printv('Max distance = ' + str(max_dist) + ' mm')
-        # sct.printv('Diff manual-test = ' + str(diff_manual_result))
 
         # check if MSE is superior to threshold
         th_rmse = 2
@@ -184,8 +160,6 @@ def test(path_data='', parameters=''):
 
     # write log file
     write_to_log_file(fname_log, output, 'w')
-
-    os.chdir(path_current)
 
     return status, output, results
 
