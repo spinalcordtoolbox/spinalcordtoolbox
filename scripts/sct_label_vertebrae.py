@@ -52,7 +52,6 @@ class Param:
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
         self.shift_AP_visu = 15  #0#15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
-        self.fig_anat_straight = 50
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -354,9 +353,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     :param path_template:
     :return:
     """
-    # initializations
-    # fig_anat_straight = 1
-
     printv('\nLook for template...', verbose)
     # if path_template == '':
     #     # get path of SCT
@@ -472,7 +468,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=param.fig_anat_straight, cmap=plt.cm.gray, clim=[0, 800], origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        plt.figure(param.fig_anat_straight), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
+        plt.figure(50), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
         plt.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
                  verticalalignment='center', horizontalalignment='left', color='pink', fontsize=15), plt.draw()
         # plt.ion()  # enables interactive mode
@@ -507,7 +503,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
 
         # display new disc
         if verbose == 2:
-            plt.figure(param.fig_anat_straight), plt.scatter(yc+param.shift_AP_visu, current_z, c='yellow', s=50)
+            plt.figure(50), plt.scatter(yc+param.shift_AP_visu, current_z, c='yellow', s=50)
             plt.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
 
         # append to main list
@@ -592,7 +588,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
 
     # save figure
     if verbose == 2:
-        plt.figure(param.fig_anat_straight), plt.savefig('../fig_anat_straight_with_labels.png')
+        plt.figure(50), plt.savefig('../fig_anat_straight_with_labels.png')
         # plt.close()
 
 
@@ -864,7 +860,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
             import matplotlib
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
-            plt.figure(param.fig_anat_straight)
+            plt.figure(50)
             plt.scatter(int(round(ny/2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
     # write file
     seg.file_name += '_labeled'
