@@ -528,7 +528,7 @@ def printv(string, verbose=1, type='normal'):
 #=======================================================================================================================
 # send email
 #=======================================================================================================================
-def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', subject='', message='', filename=None):
+def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None):
     import smtplib
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMEText import MIMEText
@@ -555,7 +555,7 @@ def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', subject='', mes
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login('spinalcordtoolbox@gmail.com', 'Awesome2014')
+    server.login(addr_from, passwd_from)
     text = msg.as_string()
     server.sendmail(addr_from, addr_to, text)
     server.quit()
