@@ -21,6 +21,7 @@ import sys
 # import commands
 import os
 import shutil
+import msct_qc
 # from glob import glob
 import numpy as np
 from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end, tmp_create
@@ -163,8 +164,11 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value=None,
                       description="display this help",
                       mandatory=False)
+    parser.add_option(name="-param-qc",
+                      type_value=[[','], 'str'],
+                      description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate"]),
+                      mandatory=False)
     return parser
-
 
 
 # MAIN
@@ -334,10 +338,36 @@ def main(args=None):
         printv('\nRemove temporary files...', verbose)
         run('rm -rf '+path_tmp)
 
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
+    if '-param-qc' in arguments:
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        printv("\nPreparing QC Report...\n")
+
+        # There are no way to get the name easily this is why this is hard coded...
+        # TODO: find a better way to get the name
+        output_filename = fname_seg.split(".")[0]+"_labeled.nii.gz"
+        # generate report
+        qcReport = msct_qc.Qc_Report("sct_label_vertebrae", qcParams, sys.argv[1:], parser. usage.description)
+
+        @msct_qc.Qc(qcReport, action_list=[msct_qc.Qc.label_vertebrae])
+        def label_vertebrae_qc(sct_slice):
+            """
+            :param sct_slice:
+            :return:
+            """
+            img, mask = sct_slice.single()
+            img = np.clip(img, np.percentile(img, 10), np.percentile(img, 90))
+            return img, mask
+
+        label_vertebrae_qc(msct_qc.sagittal(fname_in, output_filename))
+
     # to view results
     printv('\nDone! To view results, type:', verbose)
     printv('fslview '+fname_in+' '+path_output+file_seg+'_labeled'+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
-
 
 # Detect vertebral levels
 # ==========================================================================================
@@ -865,7 +895,6 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     # write file
     seg.file_name += '_labeled'
     seg.save()
-
 
 def label_discs(fname_seg_labeled, verbose=1):
     """

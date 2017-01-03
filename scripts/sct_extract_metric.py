@@ -27,6 +27,7 @@ import sct_utils as sct
 from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from msct_parser import Parser
+import msct_qc
 
 # get path of the script and the toolbox
 path_script = os.path.dirname(__file__)
@@ -170,6 +171,10 @@ bin: binarize mask (threshold=0.5)""",
                       type_value='image_nifti',
                       description='Nifti mask to weight each voxel during ML or MAP estimation.',
                       example='PAM50_wm.nii.gz',
+                      mandatory=False)
+    parser.add_option(name="-param-qc",
+                      type_value=[[','], 'str'],
+                      description=msct_qc.Qc_Params.get_qc_params_description(["ofolder", "autoview", "generate"]),
                       mandatory=False)
 
     # read the .txt files referencing the labels
@@ -1289,5 +1294,19 @@ if __name__ == "__main__":
     else:
         fname_mask_weight = ''
 
+    fname_in = fname_data
+
     # call main function
     main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)
+
+    # Decode the parameters of -param-qc, verification done here because if name of param-qc changes, easier to change here
+    qcParams = None
+    if '-param-qc' in arguments:
+        qcParams = msct_qc.Qc_Params(arguments['-param-qc'])
+
+    # Need to verify in the case that "generate" arg is provided and means false else we will generate qc
+    if qcParams is None or qcParams.generate_report is True:
+        sct.printv("\nPreparing QC Report...\n")
+        # Qc_Report generates and contains the useful infos for qc generation
+        qcReport = msct_qc.Qc_Report("sct_extract_metrict", qcParams, sys.argv[1:], parser.usage.description)
+        msct_qc.Qc_Report.generate_report_for_text(qcReport, ".", fname_output)
