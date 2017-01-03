@@ -57,10 +57,8 @@ def add_suffix(fname, suffix):
 
 
 def run(cmd, verbose=1, error_exit='error', raise_exception=False):
-    if verbose == 2:
-        printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
-        print(bcolors.blue + cmd + bcolors.normal)
+        printv(cmd, 1, 'process')
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
@@ -315,12 +313,15 @@ def find_file_within_folder(fname, directory, seek_type='file'):
 
 
 def tmp_create(verbose=1):
-    # path_tmp = tmp_create()
     printv('\nCreate temporary folder...', verbose)
     import time
     import random
-    path_tmp = slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), 1)
-    run('mkdir ' + path_tmp, verbose)
+    path_tmp = ('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)))
+    try:
+        os.makedirs(path_tmp)
+    except OSError:
+        if not os.path.isdir(path_tmp):
+            raise
     return path_tmp
 
 
@@ -426,6 +427,39 @@ def printv(string, verbose=1, type='normal'):
         else:
             print('\n' + filename + traceback.format_exc())
         sys.exit(2)
+
+
+def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None):
+    import smtplib
+    from email.MIMEMultipart import MIMEMultipart
+    from email.MIMEText import MIMEText
+    from email.MIMEBase import MIMEBase
+    from email import encoders
+
+    msg = MIMEMultipart()
+
+    msg['From'] = addr_from
+    msg['To'] = addr_to
+    msg['Subject'] = subject  # "SUBJECT OF THE EMAIL"
+    body = message  # "TEXT YOU WANT TO SEND"
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    # filename = "NAME OF THE FILE WITH ITS EXTENSION"
+    if filename:
+        attachment = open(filename, "rb")
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload((attachment).read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+        msg.attach(part)
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(addr_from, passwd_from)
+    text = msg.as_string()
+    server.sendmail(addr_from, addr_to, text)
+    server.quit()
 
 
 def sign(x):
