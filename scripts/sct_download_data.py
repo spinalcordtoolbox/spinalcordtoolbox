@@ -10,19 +10,18 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
-from os import remove, rename, path
-import urllib2
 import httplib
+import shutil
+import sys
 import time
-# from urllib import urlretrieve
+import urllib2
 import zipfile
-from sct_utils import run, printv, check_folder_exist
+from os import path, remove, rename
+
 from msct_parser import Parser
+from sct_utils import printv
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
     # parser initialisation
     parser = Parser(__file__)
@@ -44,8 +43,6 @@ def get_parser():
     return parser
 
 
-# MAIN
-# ==========================================================================================
 def main(args=None):
 
     if args is None:
@@ -87,7 +84,7 @@ def main(args=None):
     printv('Check if folder already exists...', verbose)
     if path.isdir(data_name):
         printv('.. WARNING: Folder '+data_name+' already exists. Removing it...', 1, 'warning')
-        run('rm -rf '+data_name, 0)
+        shutil.rmtree(data_name, ignore_errors=True)
 
     # unzip
     printv('Unzip dataset...', verbose)

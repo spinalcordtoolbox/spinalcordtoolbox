@@ -316,7 +316,7 @@ def tmp_create(verbose=1):
     printv('\nCreate temporary folder...', verbose)
     import time
     import random
-    path_tmp = ('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)))
+    path_tmp = slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), 1)
     try:
         os.makedirs(path_tmp)
     except OSError:

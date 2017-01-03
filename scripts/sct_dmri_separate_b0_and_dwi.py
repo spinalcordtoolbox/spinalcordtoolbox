@@ -12,17 +12,16 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
-import sys
 import math
+import os
+import shutil
+import sys
 import time
 
-import os
-import commands
 import sct_utils as sct
 from msct_image import Image
-from sct_image import split_data
 from msct_parser import Parser
+from sct_image import split_data
 
 
 class Param:
@@ -34,8 +33,6 @@ class Param:
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
 
 
-# MAIN
-# ==========================================================================================
 def main(args=None):
 
     # initialize parameters
@@ -96,8 +93,7 @@ def main(args=None):
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose)
 
     # copy files into tmp folder and convert to nifti
     sct.printv('\nCopy files into temporary folder...', verbose)
@@ -111,7 +107,7 @@ def main(args=None):
     from sct_convert import convert
     if not convert(fname_data, path_tmp+dmri_name+ext):
         sct.printv('ERROR in convert.', 1, 'error')
-    sct.run('cp '+fname_bvecs+' '+path_tmp+'bvecs', verbose)
+    shutil.copy(fname_bvecs, os.path.join(path_tmp, 'bvecs'))
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -158,12 +154,9 @@ def main(args=None):
     if average:
         sct.printv('\nAverage DWI...', verbose)
         sct.run('sct_maths -i '+dwi_name+ext+' -o '+dwi_mean_name+ext+' -mean t', verbose)
-        # if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
-        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
-        # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
 
     # come back to parent folder
-    os.chdir('..')
+    os.chdir(os.pardir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
@@ -176,7 +169,7 @@ def main(args=None):
     # Remove temporary files
     if remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf '+path_tmp, verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # display elapsed time
     elapsed_time = time.time() - start_time

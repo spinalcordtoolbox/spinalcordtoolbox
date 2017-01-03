@@ -34,23 +34,23 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
 import sys
-from msct_parser import Parser
-from msct_image import Image
-from numpy import arange, max, pad, linspace, percentile
-import numpy as np
-from msct_types import *
+import webbrowser
+from copy import copy
+from glob import glob
+from time import time
 
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 from matplotlib import cm
-import sct_utils as sct
-from time import time
-from copy import copy
-
+from matplotlib.lines import Line2D
 from matplotlib.widgets import Button
+from numpy import arange, linspace, max, pad, percentile
 
-import webbrowser
+import sct_utils as sct
+from msct_image import Image
+from msct_parser import Parser
+from msct_types import *
 
 
 class SinglePlot:
@@ -841,6 +841,7 @@ class ParamMultiImageVisualization(object):
         else:
             sct.printv("ERROR: parameters must contain 'id'", 1, 'error')
 
+
 def prepare(list_images):
     fname_images, orientation_images = [], []
     for fname_im in list_images:
@@ -852,13 +853,6 @@ def prepare(list_images):
         fname_images.append(reoriented_image_filename)
     return fname_images, orientation_images
 
-
-def clean():
-    sct.run('rm -rf ' + 'tmp.*', verbose=False)
-
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
 
 def main(args=None):
 
@@ -890,7 +884,9 @@ def main(args=None):
         # only one axial view
         viewer = ClickViewer(list_images, visualization_parameters)
         viewer.start()
-    clean()
+    for tmp_file in glob('tmp*'):
+        os.remove(tmp_file)
+
 
 if __name__ == '__main__':
     main()
