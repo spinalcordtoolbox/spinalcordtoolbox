@@ -41,11 +41,11 @@ path_sct = os.path.dirname(path_script)
 
 
 class Param:
-    shift_AP_brainstem = 30
-    size_AP_brainstem = 11  # 15
-    shift_IS_brainstem = 15  # 15
-    size_IS_brainstem = 30  # 30
-    size_RL_brainstem = 1  #
+    shift_AP_initc2 = 35
+    size_AP_initc2 = 9  # 15
+    shift_IS_initc2 = 15  # 15
+    size_IS_initc2 = 30  # 30
+    size_RL_initc2 = 1  #
     shift_AP = 32  # shift the centerline towards the spine (in voxel).
     size_AP = 11  # window size in AP direction (=y) (in voxel)
     size_RL = 1  # window size in RL direction (=x) (in voxel)
@@ -54,8 +54,18 @@ class Param:
     smooth_factor = [3, 1, 1]
     fig_anat_straight = 50
 
+    # update constructor with user's parameters
+    def update(self, param_user):
+        list_objects = param_user.split(',')
+        for object in list_objects:
+            if len(object) < 2:
+                sct.printv('ERROR: Wrong usage.', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], int(obj[1]))
+
 
 def get_parser():
+    param_default = Param()
     parser = Parser(__file__)
     parser.usage.set_description(
         '''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord
@@ -124,6 +134,19 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
         mandatory=False,
         default_value='0',
         example=['0', '1'])
+    parser.add_option(name="-param",
+                      type_value=[[','], 'str'],
+                      description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+                                  "shift_AP_initc2 [mm]: AP shift for finding C2 disc. Default="+str(param_default.shift_AP_initc2)+".\n"
+                                  "size_AP_initc2 [mm]: AP window size finding C2 disc. Default="+str(param_default.size_AP_initc2)+".\n"
+                                  "shift_IS_initc2 [mm]: IS shift for finding C2 disc. Default=" + str(param_default.shift_IS_initc2) + ".\n"
+                                  "size_IS_initc2 [mm]: IS window size finding C2 disc. Default=" + str(param_default.size_IS_initc2) + ".\n"
+                                  "size_RL_initc2 [mm]: RL shift for size finding C2 disc. Default=" + str(param_default.size_RL_initc2) + ".\n"
+                                  "shift_AP [mm]: AP shift of centerline for disc search. Default=" + str(param_default.shift_AP) + ".\n"
+                                  "size_AP [mm]: AP window size for disc search. Default=" + str(param_default.size_AP) + ".\n"
+                                  "size_RL [mm]: RL window size for disc search. Default=" + str(param_default.size_RL) + ".\n"
+                                  "size_IS [mm]: IS window size for disc search. Default=" + str(param_default.size_IS) + ".\n",
+                      mandatory = False)
     parser.add_option(
         name="-r",
         type_value="multiple_choice",
@@ -146,6 +169,7 @@ def main(args=None):
     initz = ''
     initcenter = ''
     initc2 = 'auto'
+    param = Param()
 
     # check user arguments
     if not args:
@@ -179,6 +203,8 @@ def main(args=None):
                 initcenter = int(arg_initfile[i + 1])
     if '-initc2' in arguments:
         initc2 = 'manual'
+    if '-param' in arguments:
+        param.update(arguments['-param'][0])
     verbose = int(arguments['-v'])
     remove_tmp_files = int(arguments['-r'])
     denoise = int(arguments['-denoise'])
@@ -267,6 +293,7 @@ def main(args=None):
         'data_straightr.nii',
         'segmentation_straight.nii.gz',
         contrast,
+        param,
         init_disc=init_disc,
         verbose=verbose,
         path_template=path_template,
@@ -312,11 +339,12 @@ def main(args=None):
                verbose, 'info')
 
 
-def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, path_template='', initc2='auto'):
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', initc2='auto'):
     """Find intervertebral discs in straightened image using template matching
     :param fname:
     :param fname_seg:
     :param contrast:
+    :param param:  advanced parameters
     :param init_disc:
     :param verbose:
     :param path_template:
@@ -382,13 +410,13 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             target=data_template,
             x=xc,
             xshift=0,
-            xsize=Param.size_RL_brainstem,
+            xsize=Param.size_RL_initc2,
             y=yc,
-            yshift=Param.shift_AP_brainstem,
-            ysize=Param.size_AP_brainstem,
+            yshift=Param.shift_AP_initc2,
+            ysize=Param.size_AP_initc2,
             z=0,
-            zshift=Param.shift_IS_brainstem,
-            zsize=Param.size_IS_brainstem,
+            zshift=Param.shift_IS_initc2,
+            zsize=Param.size_IS_initc2,
             xtarget=xct,
             ytarget=yct,
             ztarget=list_disc_z_template[ind_c2],
@@ -438,7 +466,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
             origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        plt.figure(Param.fig_anat_straight)
+        plt.figure(50)
         plt.scatter(yc + Param.shift_AP_visu, init_disc[0], c='yellow', s=50)
         plt.text(
             yc + Param.shift_AP_visu + 4,
@@ -495,7 +523,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
         # display new disc
         if verbose == 2:
-            plt.figure(Param.fig_anat_straight)
+            plt.figure(50)
             plt.scatter(yc + Param.shift_AP_visu, current_z, c='yellow', s=50)
             plt.text(
                 yc + Param.shift_AP_visu + 4,
@@ -587,7 +615,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
     # save figure
     if verbose == 2:
-        plt.figure(Param.fig_anat_straight)
+        plt.figure(50)
         plt.savefig('../fig_anat_straight_with_labels.png')
 
 
@@ -848,7 +876,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, fig_anat_straigh
             import matplotlib
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
-            plt.figure(fig_anat_straight)
+            plt.figure(50)
             plt.scatter(
                 int(round(ny / 2)),
                 iz,
