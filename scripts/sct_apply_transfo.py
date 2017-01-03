@@ -14,11 +14,12 @@
 # TODO: display message at the end
 # TODO: interpolation methods
 
-import sys
 import os
-import time
-from msct_parser import Parser
+import shutil
+import sys
+
 import sct_utils as sct
+from msct_parser import Parser
 from sct_crop_image import ImageCropper
 
 
@@ -195,10 +196,7 @@ class Transform:
         else:
             # create temporary folder
             sct.printv('\nCreate temporary folder...', verbose)
-            path_tmp = sct.slash_at_the_end(
-                'tmp.' + time.strftime("%y%m%d%H%M%S"), 1)
-            # sct.run('mkdir '+path_tmp, verbose)
-            sct.run('mkdir ' + path_tmp, verbose)
+            path_tmp = sct.tmp_create(verbose)
 
             # convert to nifti into temp folder
             sct.printv(
@@ -206,12 +204,11 @@ class Transform:
                 verbose)
             from sct_convert import convert
             convert(fname_src, path_tmp + 'data.nii')
-            sct.run('cp ' + fname_dest + ' ' + path_tmp + file_dest + ext_dest)
+            shutil.copy(fname_dest, path_tmp + file_dest + ext_dest)
             fname_warp_list_tmp = []
             for fname_warp in fname_warp_list:
                 path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
-                sct.run('cp ' + fname_warp + ' ' + path_tmp + file_warp +
-                        ext_warp)
+                shutil.copy(fname_warp, path_tmp + file_warp + ext_warp)
                 fname_warp_list_tmp.append(file_warp + ext_warp)
             fname_warp_list_invert_tmp = fname_warp_list_tmp[::-1]
 
@@ -252,7 +249,7 @@ class Transform:
             # Delete temporary folder if specified
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)
-                sct.run('rm -rf ' + path_tmp, verbose, error_exit='warning')
+                shutil.rmtree(path_tmp, ignore_errors=True)
 
         # 2. crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]

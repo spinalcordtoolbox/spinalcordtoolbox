@@ -343,13 +343,13 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     file_point_split_fit = ['tmp.point_orient_fit_z' + str(z).zfill(4) for z in range(0, nz, 1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
-        sct.run(fsloutput + 'flirt -in ' + file_anat_split[iz] + ' -ref ' + file_anat_split[iz] + ' -applyxfm -init ' +
+        sct.run(sct.fsloutput + 'flirt -in ' + file_anat_split[iz] + ' -ref ' + file_anat_split[iz] + ' -applyxfm -init ' +
                 file_mat_cumul_fit[iz] + ' -out ' + file_anat_split_fit[iz])
         # inverse cumulative transformation to mask
-        sct.run(fsloutput + 'flirt -in ' + file_mask_split[z_init] + ' -ref ' + file_mask_split[z_init] +
+        sct.run(sct.fsloutput + 'flirt -in ' + file_mask_split[z_init] + ' -ref ' + file_mask_split[z_init] +
                 ' -applyxfm -init ' + file_mat_inv_cumul_fit[iz] + ' -out ' + file_mask_split_fit[iz])
         # inverse cumulative transformation to point
-        sct.run(fsloutput + 'flirt -in ' + file_point_split[z_init] + ' -ref ' + file_point_split[
+        sct.run(sct.fsloutput + 'flirt -in ' + file_point_split[z_init] + ' -ref ' + file_point_split[
             z_init] + ' -applyxfm -init ' + file_mat_inv_cumul_fit[iz] + ' -out ' + file_point_split_fit[iz] +
                 ' -interp nearestneighbour')
 
@@ -396,7 +396,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     # Delete temporary files
     if remove_tmp_files == 1:
         print '\nRemove temporary files...'
-        sct.run('rm -rf ' + path_tmp, error_exit='warning')
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # print number of warnings
     print '\nNumber of warnings: ' + str(
@@ -474,19 +474,15 @@ def get_centerline_from_labels(fname_in,
 
     # Process for a binary file as output:
     shutil.copy(output_file_name, os.pardir)
-    sct.run('cp ' + output_file_name + ' ../')
 
     # Process for a text file as output:
-    sct.run('cp ' + file_binary + '.txt' + ' ../')
+    shutil.copy(file_binary + '.txt', os.pardir)
 
     os.chdir(os.pardir)
     # Remove temporary files
     if remove_temp_files:
         print('\nRemove temporary files...')
-        sct.run('rm -rf ' + path_tmp, error_exit='warning')
-
-    # Display results
-    # The concatenate centerline and its fitted curve are displayed whithin extract_centerline
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
 
 def smooth_minimal_path(img, nb_pixels=1):
@@ -824,10 +820,6 @@ class SCAD(Algorithm):
 
         :return:
         """
-        import time
-        from sct_utils import slash_at_the_end
-        path_tmp = slash_at_the_end('scad_output_' + time.strftime('%y%m%d%H%M%S'), 1)
-        sct.run('mkdir ' + path_tmp, self.verbose)
         # getting input image header
         img = self.input_image.copy()
 
@@ -878,8 +870,6 @@ class SCAD(Algorithm):
         :return: None
         """
         if self.verbose == 2:
-            current_folder = os.getcwd()
-            #os.chdir(self.path_tmp)
             try:
                 img = Image(img)
                 img.data = data
@@ -888,7 +878,6 @@ class SCAD(Algorithm):
                 img.save()
             except Exception, e:
                 print e
-            #os.chdir(current_folder)
 
     def setup_debug_folder(self):
         """
@@ -897,19 +886,14 @@ class SCAD(Algorithm):
         :return: None
         """
         if self.produce_output:
-            import time
-            from sct_utils import slash_at_the_end
-            folder = slash_at_the_end('scad_output_' + time.strftime('%y%m%d%H%M%S'), 1)
-            sct.run('mkdir ' + folder, self.verbose)
+            folder = sct.slash_at_the_end('scad_output_' + time.strftime('%y%m%d%H%M%S'), 1)
+            try:
+                os.makedirs(folder)
+            except OSError:
+                if not os.path.isdir(folder):
+                    raise
             self.debug_folder = os.path.abspath(folder)
-            conv.convert(str(self.input_image.absolutepath), str(self.debug_folder) + '/raw.nii.gz')
-
-    def create_temporary_path(self):
-        import time
-        from sct_utils import slash_at_the_end
-        path_tmp = slash_at_the_end('tmp.' + time.strftime('%y%m%d%H%M%S'), 1)
-        sct.run('mkdir ' + path_tmp, self.verbose)
-        return path_tmp
+            conv.convert(self.input_image.absolutepath, os.path.join(self.debug_folder, 'raw.nii.gz'))
 
     def execute(self):
         print 'Execution of the SCAD algorithm in ' + str(os.getcwd())
@@ -918,17 +902,15 @@ class SCAD(Algorithm):
         vesselness_file_name = 'imageVesselNessFilter.nii.gz'
         raw_file_name = 'raw.nii'
 
-        # self.setup_debug_folder()
-
         if self.debug:
             import matplotlib.pyplot as plt  # import for debug purposes
 
         # create tmp and copy input
-        self.path_tmp = self.create_temporary_path()
+        self.path_tmp = sct.tmp_create(self.verbose)
         conv.convert(self.input_image.absolutepath, self.path_tmp + raw_file_name)
 
         if self.vesselness_provided:
-            sct.run('cp ' + vesselness_file_name + ' ' + self.path_tmp + vesselness_file_name)
+            shutil.copy(vesselness_file_name, self.path_tmp + vesselness_file_name)
         os.chdir(self.path_tmp)
 
         # get input image information

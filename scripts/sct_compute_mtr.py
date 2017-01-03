@@ -11,17 +11,15 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
-import sys
 import os
+import shutil
+import sys
 
-from msct_parser import Parser
 import sct_utils as sct
+from msct_parser import Parser
 
 
-# DEFAULT PARAMETERS
 class Param:
-    ## The constructor
     def __init__(self):
         self.debug = 0
         # self.register = 1
@@ -30,8 +28,6 @@ class Param:
         self.remove_tmp_files = 1
 
 
-# main
-#=======================================================================================================================
 def main(args=None):
 
     # initialize parameters
@@ -44,12 +40,6 @@ def main(args=None):
     fname_mt0 = ''
     fname_mt1 = ''
     file_out = param.file_out
-    # register = param.register
-    # remove_tmp_files = param.remove_tmp_files
-    # verbose = param.verbose
-
-    # get path of the toolbox
-    # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Check input parameters
     parser = get_parser()
@@ -91,7 +81,7 @@ def main(args=None):
     # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
 
     # come back to parent folder
-    os.chdir('..')
+    os.chdir(os.pardir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
@@ -100,14 +90,13 @@ def main(args=None):
     # Remove temporary files
     if remove_tmp_files == 1:
         print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv('fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &\n', verbose, 'info')
 
 
-# ==========================================================================================
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
@@ -148,9 +137,5 @@ def get_parser():
     return parser
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
 if __name__ == "__main__":
-    # call main function
     main()
