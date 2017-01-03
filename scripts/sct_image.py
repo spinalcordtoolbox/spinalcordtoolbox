@@ -12,9 +12,10 @@
 
 import os
 import re
+import shutil
 import sys
 
-from numpy import concatenate, newaxis, shape
+from numpy import newaxis, shape
 
 from msct_image import Image, get_dimension
 from msct_parser import Parser
@@ -540,8 +541,8 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             printv('\nGet orientation...', verbose)
             im_out=None
             ori = get_orientation(im_split_list[0])
-            chdir('..')
-            run('rm -rf '+tmp_folder, error_exit='warning')
+            chdir(os.pardir)
+            shutil.rmtree(tmp_folder, ignore_errors=True)
             return ori
         elif set:
             # set orientation
@@ -562,13 +563,13 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             im_out = None
 
         # Go back to previous directory:
-        chdir('..')
-        run('rm -rf '+tmp_folder, error_exit='warning')
+        chdir(os.pardir)
+        shutil.rmtree(tmp_folder, ignore_errors=True)
 
     if fname_out:
         im_out.setFileName(fname_out)
         if fname_out != im.file_name+'_'+ori+im.ext:
-            run('rm -f ' + im.file_name + '_' + ori + im.ext)
+            os.remove(im.file_name + '_' + ori + im.ext)
     else:
         im_out.setFileName(im.file_name + '_' + ori + im.ext)
     return im_out
@@ -685,7 +686,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     grid_warped = path_warp+extract_fname(fname_grid)[1]+'_'+file_warp+ext_warp
     run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
     if rm_tmp:
-        run('rm -rf '+tmp_dir, error_exit='warning')
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":

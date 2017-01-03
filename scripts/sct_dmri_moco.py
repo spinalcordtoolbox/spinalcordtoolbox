@@ -29,23 +29,23 @@
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 # TODO (no priority): for sinc interp, use ANTs instead of flirt
 
-import sys
-import os
 import commands
-import getopt
-import time
-import glob
-import math
-import numpy as np
-from sct_dmri_eddy_correct import eddy_correct
-import sct_utils as sct
-import msct_moco as moco
-from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
-from sct_convert import convert
+import math
+import os
+import shutil
+import sys
+import time
+
+import numpy as np
+
+import msct_moco as moco
+import sct_utils as sct
 from msct_image import Image
-from sct_image import copy_header, split_data, concat_data
 from msct_parser import Parser
+from sct_convert import convert
+from sct_dmri_separate_b0_and_dwi import identify_b0
+from sct_image import concat_data, copy_header, split_data
 
 
 class Param:
@@ -375,13 +375,15 @@ def dmri_moco(param):
     sct.printv('\nCopy b=0 registration matrices...', param.verbose)
 
     for it in range(nb_b0):
-        sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+ext_mat, param.verbose)
+        shutil.copy('mat_b0groups/' + 'mat.T' + str(it) + ext_mat,
+                    mat_final + 'mat.T' + str(index_b0[it]) + ext_mat)
 
     # Copy DWI registration matrices
     sct.printv('\nCopy DWI registration matrices...', param.verbose)
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
-            sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+ext_mat, param.verbose)
+            shutil.copy('mat_dwigroups/' + 'mat.T' + str(iGroup) + ext_mat,
+                        mat_final + 'mat.T' + str(group_indexes[iGroup][dwi]) + ext_mat)
 
     # Spline Regularization along T
     if param.spline_fitting:

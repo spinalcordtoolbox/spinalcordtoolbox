@@ -9,15 +9,15 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import sys
-import os
-import time
-import re
 
-from msct_parser import Parser
-from msct_image import Image
-from sct_convert import convert
+import os
+import shutil
+import sys
+
 import sct_utils as sct
+from msct_image import Image
+from msct_parser import Parser
+from sct_convert import convert
 
 
 class Param:
@@ -185,7 +185,7 @@ class MultiLabelRegistration:
             sct.generate_output_file(fname_grid_warped, self.param.output_folder + file_grid_warped + ext_grid_warped)
 
         if self.param.remove_tmp:
-            sct.run('rm -rf ' + tmp_dir, error_exit='warning')
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
     def validation(self, fname_manual_gmseg, fname_sc_seg):
         path_manual_gmseg, file_manual_gmseg, ext_manual_gmseg = sct.extract_fname(fname_manual_gmseg)
@@ -193,10 +193,10 @@ class MultiLabelRegistration:
 
         # Create tmp folder and copy files in it
         tmp_dir = sct.tmp_create()
-        sct.run('cp ' + fname_manual_gmseg + ' ' + tmp_dir + file_manual_gmseg + ext_manual_gmseg)
-        sct.run('cp ' + fname_sc_seg + ' ' + tmp_dir + file_sc_seg + ext_sc_seg)
-        sct.run('cp ' + self.param.output_folder + self.fname_warp_template2gm + ' ' + tmp_dir +
-                self.fname_warp_template2gm)
+        shutil.copy(fname_manual_gmseg, tmp_dir + file_manual_gmseg + ext_manual_gmseg)
+        shutil.copy(fname_sc_seg, tmp_dir + file_sc_seg + ext_sc_seg)
+        shutil.copy( self.param.output_folder + self.fname_warp_template2gm,
+                     tmp_dir + self.fname_warp_template2gm)
         os.chdir(tmp_dir)
 
         sct.run('sct_warp_template -d ' + fname_manual_gmseg + ' -w ' + self.fname_warp_template2gm + ' -qc 0 -a 0')
@@ -383,7 +383,7 @@ class MultiLabelRegistration:
         sct.generate_output_file(tmp_dir + dice_name, self.param.output_folder + dice_name)
 
         if self.param.remove_tmp:
-            sct.run('rm -rf ' + tmp_dir, error_exit='warning')
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 def thr_im(im, low_thr, high_thr):
@@ -470,7 +470,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     grid_warped = path_warp + 'grid_warped_gm' + ext_warp
     sct.run('sct_apply_transfo -i ' + fname_grid + ' -d ' + fname_grid + ' -w ' + fname_warp + ' -o ' + grid_warped)
     if rm_tmp:
-        sct.run('rm -rf ' + tmp_dir, error_exit='warning')
+        shutil.rmtree(tmp_dir, ignore_errors=True)
     return grid_warped
 
 

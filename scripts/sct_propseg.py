@@ -11,10 +11,12 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from msct_parser import Parser
-import sys
-import sct_utils as sct
 import os
+import sys
+from glob import glob
+
+import sct_utils as sct
+from msct_parser import Parser
 
 
 def get_parser():
@@ -310,7 +312,8 @@ def main(args=None):
             sct.run('sct_image -i ' + folder_output + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
             # remove temporary files
-            sct.run('rm -rf ' + folder_output + 'tmp.*')
+            for tmp_file in glob(folder_output + 'tmp.*'):
+                os.remove(tmp_file)
 
             # add mask filename to parameters string
             if use_viewer == "centerline":

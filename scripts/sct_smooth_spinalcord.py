@@ -10,29 +10,23 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-
-
 # TODO: maybe no need to convert RPI at the beginning because strainghten spinal cord already does it!
 
-
 import os
+import shutil
 import sys
 import time
-import shutil
 from shutil import move
 
 import numpy as np
 
-from sct_convert import convert
-from sct_image import set_orientation
 import sct_utils as sct
 from msct_parser import Parser
+from sct_convert import convert
+from sct_image import set_orientation
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
-    # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Smooth the spinal cord along its centerline. Steps are:\n'
                                  '1) Spinal cord is straightened (using centerline),\n'
@@ -74,9 +68,7 @@ def get_parser():
                       default_value='1')
     return parser
 
-#=======================================================================================================================
-# main
-#=======================================================================================================================
+
 def main(args=None):
 
     if args is None:
@@ -128,13 +120,12 @@ def main(args=None):
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('cp '+fname_anat+' '+path_tmp+'anat'+ext_anat, verbose)
-    sct.run('cp '+fname_centerline+' '+path_tmp+'centerline'+ext_centerline, verbose)
+    shutil.copy(fname_anat, path_tmp + 'anat' + ext_anat)
+    shutil.copy(fname_centerline, path_tmp + 'centerline' + ext_centerline)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -196,7 +187,7 @@ def main(args=None):
     # Remove temporary files
     if remove_temp_files == 1:
         print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # Display elapsed time
     elapsed_time = time.time() - start_time
@@ -207,7 +198,5 @@ def main(args=None):
     sct.printv('fslview '+file_anat+' '+file_anat+'_smooth &\n', verbose, 'info')
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     main()
