@@ -69,6 +69,7 @@ def test(path_data='', parameters=''):
         output_split = output.split('Maximum x-y error = ')[1].split(' mm')
         result_dist_max = float(output_split[0])
         result_rmse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
+        duration_accuracy_results = float(output.split('\nincluding ')[1].split(' s')[0])
         # integrity testing
         th_result_dist_max = 2.0
         if result_dist_max > th_result_dist_max:
@@ -96,7 +97,7 @@ def test(path_data='', parameters=''):
             output += '\nWARNING: DICE = '+str(result_dice)+' < '+str(th_dice)
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': int(status), 'output': output, 'rmse': result_rmse, 'dist_max': result_dist_max, 'dice': result_dice, 'duration': duration}, index=[path_data])
+    results = DataFrame(data={'status': int(status), 'output': output, 'rmse': result_rmse, 'dist_max': result_dist_max, 'dice': result_dice, 'duration': duration, 'duration_accuracy_results': duration_accuracy_results}, index=[path_data])
 
     return status, output, results
 
