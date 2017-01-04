@@ -16,18 +16,21 @@ import os
 import shutil
 import sys
 import time
-from shutil import move
 
 import numpy as np
 
+import msct_parser
+import msct_image
+import sct_apply_transfo
+import sct_convert
+import sct_image
+import sct_maths
+import sct_straighten_spinalcord
 import sct_utils as sct
-from msct_parser import Parser
-from sct_convert import convert
-from sct_image import set_orientation
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Smooth the spinal cord along its centerline. Steps are:\n'
                                  '1) Spinal cord is straightened (using centerline),\n'
                                  '2) a Gaussian kernel is applied in the superior-inferior direction,\n'
@@ -74,12 +77,8 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    # Initialization
-    # fname_anat = ''
-    # fname_centerline = ''
     sigma = 3 # default value of the standard deviation for the Gaussian smoothing (in terms of number of voxels)
-    # remove_temp_files = param.remove_temp_files
-    # verbose = param.verbose
+
     start_time = time.time()
 
     parser = get_parser()
@@ -102,8 +101,7 @@ def main(args=None):
     print '  Verbose ........................... '+str(verbose)
 
     # Check that input is 3D:
-    from msct_image import Image
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_anat).dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_anat).dim
     dim = 4  # by default, will be adjusted later
     if nt == 1:
         dim = 3
@@ -131,46 +129,49 @@ def main(args=None):
     os.chdir(path_tmp)
 
     # convert to nii format
-    convert('anat'+ext_anat, 'anat.nii')
-    convert('centerline'+ext_centerline, 'centerline.nii')
+    sct_convert.convert('anat'+ext_anat, 'anat.nii')
+    sct_convert.convert('centerline'+ext_centerline, 'centerline.nii')
 
     # Change orientation of the input image into RPI
     print '\nOrient input volume to RPI orientation...'
-    fname_anat_rpi = set_orientation('anat.nii', 'RPI', filename=True)
-    move(fname_anat_rpi, 'anat_rpi.nii')
+    fname_anat_rpi = sct_image.set_orientation('anat.nii', 'RPI', filename=True)
+    shutil.move(fname_anat_rpi, 'anat_rpi.nii')
     # Change orientation of the input image into RPI
     print '\nOrient centerline to RPI orientation...'
-    fname_centerline_rpi = set_orientation('centerline.nii', 'RPI', filename=True)
-    move(fname_centerline_rpi, 'centerline_rpi.nii')
+    fname_centerline_rpi = sct_image.set_orientation('centerline.nii', 'RPI', filename=True)
+    shutil.move(fname_centerline_rpi, 'centerline_rpi.nii')
 
     # Straighten the spinal cord
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-    if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+    if os.path.isfile('../warp_curve2straight.nii.gz') and \
+            os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
         # if they exist, copy them into current folder
         sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
         shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
         shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
         shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
-        # apply straightening
-        sct.run('sct_apply_transfo -i anat_rpi.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o anat_rpi_straight.nii -x spline', verbose)
+        sct_apply_transfo.main(["-i", "anat_rpi.nii", "-w", "warp_curve2straight.nii.gz",
+                               "-d", "straight_ref.nii.gz", "-o", "anat_rpi_straight.nii", "-x", "spline"])
     else:
-        sct.run('sct_straighten_spinalcord -i anat_rpi.nii -s centerline_rpi.nii -qc 0 -x spline', verbose)
+        sct_straighten_spinalcord.main(["-i", "anat_rpi.nii", "-s", "centerline_rpi.nii", "-qc", "0", "-x", "spline"])
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
-    sct.run('sct_maths -i anat_rpi_straight.nii -smooth 0,0,'+str(sigma)+' -o anat_rpi_straight_smooth.nii', verbose)
+    sct_maths.main(["-i", "anat_rpi_straight.nii", "-smooth", "0,0,{}".format(sigma),
+                    "-o", "anat_rpi_straight_smooth.nii"])
 
     # Apply the reversed warping field to get back the curved spinal cord
     print '\nApply the reversed warping field to get back the curved spinal cord...'
-    sct.run('sct_apply_transfo -i anat_rpi_straight_smooth.nii -o anat_rpi_straight_smooth_curved.nii -d anat.nii -w warp_straight2curve.nii.gz -x spline', verbose)
+    sct_apply_transfo.main(['-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii',
+                            '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'])
 
     # replace zeroed voxels by original image (issue #937)
     sct.printv('\nReplace zeroed voxels by original image...', verbose)
-    nii_smooth = Image('anat_rpi_straight_smooth_curved.nii')
+    nii_smooth = msct_image.Image('anat_rpi_straight_smooth_curved.nii')
     data_smooth = nii_smooth.data
-    data_input = Image('anat.nii').data
+    data_input = msct_image.Image('anat.nii').data
     indzero = np.where(data_smooth == 0)
     data_smooth[indzero] = data_input[indzero]
     nii_smooth.data = data_smooth
