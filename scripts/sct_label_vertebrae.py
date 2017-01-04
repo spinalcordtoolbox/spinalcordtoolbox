@@ -41,18 +41,19 @@ path_sct = os.path.dirname(path_script)
 
 
 class Param:
-    shift_AP_initc2 = 35
-    size_AP_initc2 = 9  # 15
-    shift_IS_initc2 = 15  # 15
-    size_IS_initc2 = 30  # 30
-    size_RL_initc2 = 1  #
-    shift_AP = 32  # shift the centerline towards the spine (in voxel).
-    size_AP = 11  # window size in AP direction (=y) (in voxel)
-    size_RL = 1  # window size in RL direction (=x) (in voxel)
-    size_IS = 19  # window size in IS direction (=z) (in voxel)
-    shift_AP_visu = 15  # shift AP for displaying disc values
-    smooth_factor = [3, 1, 1]
-    fig_anat_straight = 50
+    def __init__(self):
+        self.shift_AP_initc2 = 35
+        self.size_AP_initc2 = 9  # 15
+        self.shift_IS_initc2 = 15  # 15
+        self.size_IS_initc2 = 30  # 30
+        self.size_RL_initc2 = 1  #
+        self.shift_AP = 32  # shift the centerline towards the spine (in voxel).
+        self.size_AP = 11  # window size in AP direction (=y) (in voxel)
+        self.size_RL = 1  # window size in RL direction (=x) (in voxel)
+        self.size_IS = 19  # window size in IS direction (=z) (in voxel)
+        self.shift_AP_visu = 15  # shift AP for displaying disc values
+        self.smooth_factor = [3, 1, 1]
+        self.fig_anat_straight = 50
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -64,8 +65,7 @@ class Param:
             setattr(self, obj[0], int(obj[1]))
 
 
-def get_parser():
-    param_default = Param()
+def get_parser(param_default):
     parser = Parser(__file__)
     parser.usage.set_description(
         '''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord
@@ -176,7 +176,7 @@ def main(args=None):
         args = sys.argv[1:]
 
     # Get parser info
-    parser = get_parser()
+    parser = get_parser(param)
     arguments = parser.parse(args)
     fname_in = arguments["-i"]
     fname_seg = arguments['-s']
@@ -368,7 +368,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
 
     # smooth data
     gf = scipy.ndimage.filters.gaussian_filter
-    data = gf(data, Param.smooth_factor, output=None, mode="reflect")
+    data = gf(data, param().smooth_factor, output=None, mode="reflect")
 
     # get dimension of src
     nx, ny, nz = data.shape
@@ -410,13 +410,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
             target=data_template,
             x=xc,
             xshift=0,
-            xsize=Param.size_RL_initc2,
+            xsize=param().size_RL_initc2,
             y=yc,
-            yshift=Param.shift_AP_initc2,
-            ysize=Param.size_AP_initc2,
+            yshift=param.shift_AP_initc2,
+            ysize=param.size_AP_initc2,
             z=0,
-            zshift=Param.shift_IS_initc2,
-            zsize=Param.size_IS_initc2,
+            zshift=param.shift_IS_initc2,
+            zsize=param.size_IS_initc2,
             xtarget=xct,
             ytarget=yct,
             ztarget=list_disc_z_template[ind_c2],
@@ -459,17 +459,17 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         import matplotlib.pyplot as plt
         plt.matshow(
             np.mean(
-                data[xc - Param.size_RL:xc + Param.size_RL, :, :], axis=0).transpose(),
-            fignum=Param.fig_anat_straight,
+                data[xc - param.size_RL:xc + param.size_RL, :, :], axis=0).transpose(),
+            fignum=param.fig_anat_straight,
             cmap=plt.cm.gray,
             clim=[0, 800],
             origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
         plt.figure(50)
-        plt.scatter(yc + Param.shift_AP_visu, init_disc[0], c='yellow', s=50)
+        plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
         plt.text(
-            yc + Param.shift_AP_visu + 4,
+            yc + param.shift_AP_visu + 4,
             init_disc[0],
             str(init_disc[1]) + '/' + str(init_disc[1] + 1),
             verticalalignment='center',
@@ -506,13 +506,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
                 target=data_template,
                 x=xc,
                 xshift=0,
-                xsize=Param.size_RL,
+                xsize=param.size_RL,
                 y=yc,
-                yshift=Param.shift_AP,
-                ysize=Param.size_AP,
+                yshift=param.shift_AP,
+                ysize=param.size_AP,
                 z=current_z,
                 zshift=0,
-                zsize=Param.size_IS,
+                zsize=param.size_IS,
                 xtarget=xct,
                 ytarget=yct,
                 ztarget=current_z_template,
@@ -524,9 +524,9 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         # display new disc
         if verbose == 2:
             plt.figure(50)
-            plt.scatter(yc + Param.shift_AP_visu, current_z, c='yellow', s=50)
+            plt.scatter(yc + param.shift_AP_visu, current_z, c='yellow', s=50)
             plt.text(
-                yc + Param.shift_AP_visu + 4,
+                yc + param.shift_AP_visu + 4,
                 current_z,
                 str(current_disc) + '/' + str(current_disc + 1),
                 verticalalignment='center',
@@ -849,7 +849,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, fig_anat_straigh
     """
 
     if fig_anat_straight is None:
-        fig_anat_straight = Param.fig_anat_straight
+        fig_anat_straight = Param().fig_anat_straight
 
     # open segmentation
     seg = Image(fname_seg)
