@@ -488,7 +488,7 @@ class SpinalCordStraightener(object):
                 #hdr_warp_s.structarr['srow_x'][-1] = origin[0]
                 #hdr_warp_s.structarr['srow_y'][-1] = origin[1]
                 #hdr_warp_s.structarr['srow_z'][-1] = origin[2]
-                hdr_warp_s.structarr['quatern_b'] = 0.0
+                """hdr_warp_s.structarr['quatern_b'] = 0.0
                 hdr_warp_s.structarr['quatern_c'] = 1.0
                 hdr_warp_s.structarr['quatern_d'] = 0.0
                 hdr_warp_s.structarr['srow_x'][0] = -px_s
@@ -499,7 +499,7 @@ class SpinalCordStraightener(object):
                 hdr_warp_s.structarr['srow_y'][2] = 0.0
                 hdr_warp_s.structarr['srow_z'][0] = 0.0
                 hdr_warp_s.structarr['srow_z'][1] = 0.0
-                hdr_warp_s.structarr['srow_z'][2] = pz_s
+                hdr_warp_s.structarr['srow_z'][2] = pz_s"""
                 image_centerline_straight.hdr = hdr_warp_s
                 image_centerline_straight.compute_transform_matrix()
                 image_centerline_straight.save()
