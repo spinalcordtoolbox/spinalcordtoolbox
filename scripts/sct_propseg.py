@@ -15,12 +15,13 @@ from msct_parser import Parser
 import sys
 import sct_utils as sct
 import os
+import shutil
 from scipy import ndimage as ndi
 import numpy as np
 from sct_image import orientation
 
 
-def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5.0, verbose=0):
+def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5.0, remove_temp_files=1, verbose=0):
     """
     This function takes the outputs of isct_propseg (centerline and segmentation) and check if the centerline of the
     segmentation is coherent with the centerline provided by the isct_propseg, especially on the edges (related
@@ -34,11 +35,17 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
     Returns: None
     """
 
+    # creating a temporary folder in which all temporary files will be placed and deleted afterwards
+    path_tmp = sct.tmp_create(verbose=verbose)
+
     # convert segmentation image to RPI
     im_input = Image(fname_segmentation)
     image_input_orientation = orientation(im_input, get=True, verbose=False)
-    sct.run('sct_image -i ' + fname_segmentation + ' -setorient RPI -o tmp.segmentation_RPI.nii.gz', verbose)
-    sct.run('sct_image -i ' + fname_centerline + ' -setorient RPI -o tmp.centerline_RPI.nii.gz', verbose)
+    sct.run('sct_image -i ' + fname_segmentation + ' -setorient RPI -o ' + path_tmp + 'tmp.segmentation_RPI.nii.gz', verbose)
+    sct.run('sct_image -i ' + fname_centerline + ' -setorient RPI -o ' + path_tmp + 'tmp.centerline_RPI.nii.gz', verbose)
+
+    # go to tmp folder
+    os.chdir(path_tmp)
 
     # go through segmentation image, and compare with centerline from propseg
     im_seg = Image('tmp.segmentation_RPI.nii.gz')
@@ -86,8 +93,15 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
     im_seg.setFileName('tmp.segmentation_RPI_c.nii.gz')
     im_seg.save()
 
+    os.chdir('..')
+
     # replacing old segmentation with the corrected one
-    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_segmentation, verbose)
+    sct.run('sct_image -i ' + path_tmp + 'tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_segmentation, verbose)
+
+    # remove temporary files
+    if remove_temp_files:
+        sct.printv("\nRemove temporary files...", verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
 
 def get_parser():
@@ -137,6 +151,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="int",
                       description="up limit of the propagation, default is the highest slice of the image",
                       mandatory=False)
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="remove temporary files.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
@@ -272,6 +292,9 @@ if __name__ == "__main__":
     if "-up" in arguments:
         cmd += " -up " + str(arguments["-up"])
 
+    remove_temp_files = 1
+    if "-r" in arguments:
+        remove_temp_files = int(arguments["-r"])
     verbose = 0
     if "-v" in arguments:
         if arguments["-v"] is "1":
@@ -351,10 +374,11 @@ if __name__ == "__main__":
         # make sure image is in SAL orientation, as it is the orientation used by PropSeg
         image_input_orientation = orientation(image_input, get=True, verbose=False)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
-        sct.run('sct_image -i ' + input_filename + ' -o ' + folder_output + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
+        path_tmp_viewer = sct.tmp_create(verbose=verbose)
+        sct.run('sct_image -i ' + input_filename + ' -o ' + path_tmp_viewer + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
 
         from sct_viewer import ClickViewer
-        image_input_reoriented = Image(folder_output + reoriented_image_filename)
+        image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
         viewer = ClickViewer(image_input_reoriented)
         viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         if use_viewer == "mask":
@@ -371,11 +395,11 @@ if __name__ == "__main__":
         if mask_points:
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
-            sct.run("sct_label_utils -i " + folder_output + reoriented_image_filename + " -create " + mask_points + " -o " + folder_output + mask_filename, verbose=False)
+            sct.run("sct_label_utils -i " + path_tmp_viewer + reoriented_image_filename + " -create " + mask_points + " -o " + path_tmp_viewer + mask_filename, verbose=False)
 
             # reorient the initialization mask to correspond to input image orientation
             mask_reoriented_filename = sct.add_suffix(file_fname + ext_fname, "_mask_viewer")
-            sct.run('sct_image -i ' + folder_output + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
+            sct.run('sct_image -i ' + path_tmp_viewer + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
             # add mask filename to parameters string
             if use_viewer == "centerline":
@@ -393,10 +417,14 @@ if __name__ == "__main__":
     output_filename = file_fname + "_seg" + ext_fname
 
     fname_centerline = file_fname + '_centerline' + ext_fname
-    check_and_correct(folder_output + output_filename, folder_output + fname_centerline)
+    check_and_correct(folder_output + output_filename, folder_output + fname_centerline, remove_temp_files)
 
     # remove temporary files
-    sct.delete_tmp_files_and_folders(path=folder_output, verbose=verbose)
+    if remove_temp_files:
+        sct.printv("\nRemove temporary files...", verbose)
+        if use_viewer:
+            shutil.rmtree(path_tmp_viewer, ignore_errors=True)
+
 
     if folder_output == "./":
         output_name = output_filename
