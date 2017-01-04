@@ -666,7 +666,6 @@ class SpinalCordStraightener(object):
                                                     for coord in coordinates_centerline if coord.z == z], axis=0))
 
                 # compute error between the straightened centerline and the straight line.
-                from math import sqrt
                 x0 = file_centerline_straight.data.shape[0]/2.0
                 y0 = file_centerline_straight.data.shape[1]/2.0
                 count_mean = 0
