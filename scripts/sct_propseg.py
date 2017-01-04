@@ -15,12 +15,26 @@ from msct_parser import Parser
 import sys
 import sct_utils as sct
 import os
+import shutil
 from scipy import ndimage as ndi
 import numpy as np
 from sct_image import orientation
 
 
 def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5.0, verbose=0):
+    """
+    This function takes the outputs of isct_propseg (centerline and segmentation) and check if the centerline of the
+    segmentation is coherent with the centerline provided by the isct_propseg, especially on the edges (related
+    to issue #1074).
+    Args:
+        fname_segmentation: filename of binary segmentation
+        fname_centerline: filename of binary centerline
+        threshold_distance: threshold, in mm, beyond which centerlines are not coherent
+        verbose:
+
+    Returns: None
+    """
+
     # convert segmentation image to RPI
     im_input = Image(fname_segmentation)
     image_input_orientation = orientation(im_input, get=True, verbose=False)
@@ -373,7 +387,7 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
 
     cmd += ' -centerline-binary'
-    sct.run(cmd, verbose)
+    #sct.run(cmd, verbose)
 
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
@@ -383,7 +397,7 @@ if __name__ == "__main__":
     check_and_correct(folder_output + output_filename, folder_output + fname_centerline)
 
     # remove temporary files
-    sct.run('rm -rf ' + folder_output + 'tmp.*')
+    sct.delete_tmp_files_and_folders(path=folder_output, verbose=verbose)
 
     if folder_output == "./":
         output_name = output_filename
