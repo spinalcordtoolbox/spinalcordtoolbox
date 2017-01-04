@@ -15,7 +15,6 @@ from msct_parser import Parser
 import sys
 import sct_utils as sct
 import os
-import shutil
 from scipy import ndimage as ndi
 import numpy as np
 from sct_image import orientation
@@ -387,7 +386,7 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
 
     cmd += ' -centerline-binary'
-    #sct.run(cmd, verbose)
+    sct.run(cmd, verbose)
 
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
