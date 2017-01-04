@@ -395,6 +395,16 @@ def tmp_create(verbose=1):
 
 
 def delete_tmp_files_and_folders(path=''):
+    """
+    This function removes all files that starts with 'tmp.' in the path specified as input. If no path are provided,
+    the current path is selected. The function removes files and directories recursively and handles Exceptions and
+    errors by ignoring them.
+    Args:
+        path: directory in which temporary files and folders must be removed
+
+    Returns:
+
+    """
     if not path:
         path = os.getcwd()
     pattern = os.path.join(path, 'tmp.*')
