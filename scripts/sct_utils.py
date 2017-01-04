@@ -23,6 +23,9 @@ import subprocess
 import re
 from sys import stdout
 
+import glob
+import shutil
+
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
@@ -391,19 +394,15 @@ def tmp_create(verbose=1):
     return path_tmp
 
 
-def delete_tmp_files_and_folders(path='', verbose=1):
-    import os
-    from glob import glob
-    from shutil import rmtree
-
+def delete_tmp_files_and_folders(path=''):
     if not path:
         path = os.getcwd()
     pattern = os.path.join(path, 'tmp.*')
 
-    for item in glob(pattern):
+    for item in glob.glob(pattern):
         try:
             if os.path.isdir(item):
-                rmtree(item, ignore_errors=True)
+                shutil.rmtree(item, ignore_errors=True)
             elif os.path.isfile(item):
                 os.remove(item)
         except:  # in case an exception is raised (e.g., on Windows, if the file is in use)
