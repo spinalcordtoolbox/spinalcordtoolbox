@@ -61,6 +61,7 @@ def test(path_data='', parameters=''):
         status, o = 1, 'ERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
+    duration_accuracy_results = 0.0
 
     # initialization of results: must be NaN if test fails
     result_rmse, result_dist_max = float('nan'), float('nan')
