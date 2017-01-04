@@ -386,6 +386,25 @@ def tmp_create(verbose=1):
     return path_tmp
 
 
+def delete_tmp_files_and_folders(path='', verbose=1):
+    import os
+    from glob import glob
+    from shutil import rmtree
+
+    if not path:
+        path = os.getcwd()
+    pattern = os.path.join(path, 'tmp.*')
+
+    for item in glob(pattern):
+        try:
+            if os.path.isdir(item):
+                rmtree(item, ignore_errors=True)
+            elif os.path.isfile(item):
+                os.remove(item)
+        except:  # in case an exception is raised (e.g., on Windows, if the file is in use)
+            continue
+
+
 #=======================================================================================================================
 # copy a nifti file to (temporary) folder and convert to .nii or .nii.gz
 #=======================================================================================================================
