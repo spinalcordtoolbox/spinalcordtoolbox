@@ -202,6 +202,9 @@ class SpinalCordStraightener(object):
         self.resample_factor = 0.0
         self.accuracy_results = 1.0
 
+        self.elapsed_time = 0.0
+        self.elapsed_time_accuracy = 0.0
+
 
     def straighten(self):
         # Initialization
@@ -485,7 +488,7 @@ class SpinalCordStraightener(object):
                 #hdr_warp_s.structarr['srow_x'][-1] = origin[0]
                 #hdr_warp_s.structarr['srow_y'][-1] = origin[1]
                 #hdr_warp_s.structarr['srow_z'][-1] = origin[2]
-                hdr_warp_s.structarr['quatern_b'] = 0.0
+                """hdr_warp_s.structarr['quatern_b'] = 0.0
                 hdr_warp_s.structarr['quatern_c'] = 1.0
                 hdr_warp_s.structarr['quatern_d'] = 0.0
                 hdr_warp_s.structarr['srow_x'][0] = -px_s
@@ -496,7 +499,7 @@ class SpinalCordStraightener(object):
                 hdr_warp_s.structarr['srow_y'][2] = 0.0
                 hdr_warp_s.structarr['srow_z'][0] = 0.0
                 hdr_warp_s.structarr['srow_z'][1] = 0.0
-                hdr_warp_s.structarr['srow_z'][2] = pz_s
+                hdr_warp_s.structarr['srow_z'][2] = pz_s"""
                 image_centerline_straight.hdr = hdr_warp_s
                 image_centerline_straight.compute_transform_matrix()
                 image_centerline_straight.save()
@@ -647,6 +650,7 @@ class SpinalCordStraightener(object):
             sct.run('sct_apply_transfo -i data.nii -d ' + fname_ref + ' -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x '+interpolation_warp, verbose)
 
             if self.accuracy_results:
+                time_accuracy_results = time.time()
                 # compute the error between the straightened centerline/segmentation and the central vertical line.
                 # Ideally, the error should be zero.
                 # Apply deformation to input image
@@ -683,6 +687,8 @@ class SpinalCordStraightener(object):
                         count_mean += 1
                 self.mse_straightening = sqrt(self.mse_straightening/float(count_mean))
 
+                self.elapsed_time_accuracy = time.time() - time_accuracy_results
+
         except Exception as e:
             sct.printv('WARNING: Exception during Straightening:', 1, 'warning')
             sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
@@ -696,7 +702,7 @@ class SpinalCordStraightener(object):
         sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
         sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
         # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
-        shutil.copy(path_tmp+'/tmp.anat_rigid_warp.nii.gz', 'straight_ref.nii.gz')
+        shutil.copy(path_tmp+'/tmp.anat_rigid_warp.nii.gz', self.path_output + 'straight_ref.nii.gz')
         # move straightened input file
         if fname_output == '':
             fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
@@ -718,8 +724,11 @@ class SpinalCordStraightener(object):
                        " mm", verbose, "bold")
 
         # display elapsed time
-        elapsed_time = time.time() - start_time
-        sct.printv("\nFinished! Elapsed time: " + str(int(np.round(elapsed_time))) + "s", verbose)
+        self.elapsed_time = time.time() - start_time
+        sct.printv("\nFinished! Elapsed time: " + str(int(np.round(self.elapsed_time))) + " s", verbose)
+        if self.accuracy_results:
+            sct.printv('    including ' + str(int(np.round(self.elapsed_time_accuracy))) + ' s spent computing '
+                                                                                      'accuracy results', verbose)
         sct.printv("\nTo view results, type:", verbose)
         sct.printv("fslview " + fname_straight + " &\n", verbose, 'info')
 
