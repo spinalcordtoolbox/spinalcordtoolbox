@@ -47,7 +47,8 @@ def striu2mat(striu):
     -----
     Shear lengths are triangular numbers.
     See http://en.wikipedia.org/wiki/Triangular_number
-    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    This function has been taken from
+    https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
     """
     # Caching dictionary for common shear Ns, indices
     _shearers = {}
@@ -91,7 +92,8 @@ def compose(T, R, Z, S=None):
     A : array, shape (N+1, N+1)
         Affine transformation matrix where N usually == 3
         (3D case)
-    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    This function has been taken from
+    https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
     """
     n = len(T)
     R = np.asarray(R)
@@ -172,7 +174,8 @@ def decompose_affine_transform(A44):
     Similarly ``R[:,0].T * RZS[:,2]`` simplifies to ``sx*sxz``, and
     ``R[:,1].T * RZS[:,2]`` to ``sy*syz`` giving us the remaining
     unknowns.
-    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    This function has been taken from
+    https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
     """
     A44 = np.asarray(A44)
     T = A44[:-1,-1]
@@ -323,7 +326,8 @@ class Image(object):
             data_type = self.hdr.get_data_dtype()
 
         if data_type == 'minimize' or data_type == 'minimize_int':
-            # compute max value in the image and choose the best pixel type to represent all the pixels within smallest memory space
+            # compute max value in the image and choose the best pixel type to represent all the pixels within smallest
+            #  memory space
             # warning: does not take intensity resolution into account, neither complex voxels
             max_vox = np.nanmax(self.data)
             min_vox = np.nanmin(self.data)
@@ -424,7 +428,8 @@ class Image(object):
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
         """
         This function return all the non-zero coordinates that the image contains.
-        Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
+        Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y',
+        sorting='z' or sorting='value'
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
         n_dim = 1
@@ -504,12 +509,14 @@ class Image(object):
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
         return averaged_coordinates
 
-    # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
+    # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles
+    #  of the same size
     # orientation must be IRP to be able to go trough slices as first dimension
     def crop_and_stack(self, mask, suffix='_resized', save=True):
         """
-        Cropping function to be used with a mask centered on the spinal cord. The crop slices are stack in the z direction.
-        The result will be a kind of straighten image centered on the center of the mask (aka the center of the spinal cord)
+        Cropping function to be used with a mask centered on the spinal cord. The crop slices are stack in the z
+        direction. The result will be a kind of straighten image centered on the center of the mask (aka the center of
+        the spinal cord)
         :param mask: mask image
         :param suffix: suffix to add to the file name (usefull only with the save option)
         :param save: save the image if True
@@ -523,7 +530,8 @@ class Image(object):
         data_array = self.data
         data_mask = mask.data
 
-        # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
+        # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding
+        # to fit the mask's shape
         if data_array.shape != data_mask.shape:
             old_data_array = data_array
             pad_1 = int((data_mask.shape[1] - old_data_array.shape[1])/2 + 1)
@@ -639,7 +647,8 @@ class Image(object):
         This function changes the orientation of the data by swapping the image axis.
         Warning: the nifti image header is not changed!!!
         :param orientation: string of three character representing the new orientation (ex: AIL, default: RPI)
-               inversion_orient: boolean. If True, the data change to match the orientation in the header, based on the orientation provided as the argument orientation.
+               inversion_orient: boolean. If True, the data change to match the orientation in the header, based on
+               the orientation provided as the argument orientation.
         :return:
         """
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
@@ -762,7 +771,8 @@ class Image(object):
     def transfo_phys2pix(self, coordi=None):
         """
         This function returns the pixels coordinates of all points of 'coordi'
-        'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
+        'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will
+         return a list with the physical coordinates of the points in the space of the image.
 
 
         :return:
@@ -784,12 +794,15 @@ class Image(object):
 
     def transfo_phys2continuouspix(self, coordi=None, data_phys=None):
         """
-        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
+        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output
+        is a matrix of size: size(data_phys) but containing a 3D vector.
         This vector is the pixel position of the point in the space of the image.
-        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the point).
+        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the
+        point).
 
         If coordi is different from none:
-        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
+        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will
+        return a list with the physical coordinates of the points in the space of the image.
 
 
         :return:
@@ -814,7 +827,8 @@ class Image(object):
         """
         This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
         :param coordi: continuouspix
-        :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
+        :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline,
+                                   4= 2nd-order spline, 5= 5th-order spline
         :return: intensity values at continuouspix with interpolation_mode
         """
         return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode, mode=border)
@@ -901,7 +915,8 @@ class Image(object):
         # 2. apply transformation on coordinates
 
         coord_im = np.array(self.transfo_phys2continuouspix(physical_coordinates_ref))
-        interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode, border=border)
+        interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]),
+                                              interpolation_mode=interpolation_mode, border=border)
 
         im_output = Image(im_ref)
         if interpolation_mode == 0:
@@ -962,29 +977,26 @@ class Image(object):
                 if seg is not None:
                     slice_seg = seg.data[:, :, index]
         else:
-            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"',
+                       self.verbose, type='error')
 
         return (slice, slice_seg)
 
     #
-    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0, cmap_col='red', path_output='./'):
+    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='',
+                   seg=None, thr=0, cmap_col='red', path_output='./'):
         """
         Save a slice of self in the specified plan.
 
         :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
-
         :param index: index of the slice to save (if none, middle slice in the given direction/plan)
-
         :param format: format to be saved in. default = '.png'
-
         :param suffix: suffix to add to the image file name.
-
         :param seg: segmentation to add in transparency to the image to save. Type Image.
-
         :param thr: threshold to apply to the segmentation
-
         :param col: colormap description : 'red', 'red-yellow', or 'blue-cyan'
-
+        :param cmap_col:
+        :param path_output:
         :return filename_png: file name of the saved image
         """
         plt = matplotlib.pyplot
@@ -1039,7 +1051,8 @@ class Image(object):
             sct.printv(str(e), self.verbose, type='warning')
         return fname_png
 
-    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', path_output='./', verbose=1):
+    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png',
+                             path_output='./', verbose=1):
         ori = self.change_orientation('RPI')
         if seg is not None:
             ori_seg = seg.change_orientation('RPI')
@@ -1053,7 +1066,8 @@ class Image(object):
             max_n_slices = nz
         else:
             max_n_slices = None
-            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"',
+                       self.verbose, type='error')
 
         if n_slices > max_n_slices:
             index_list = range(max_n_slices)
@@ -1064,10 +1078,13 @@ class Image(object):
             index_list = [((i+1)*gap)-1 for i in range(n_slices)]
         index_list.sort()
         try:
-            filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list, format=format, path_output=path_output)
+            filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list,
+                                                 format=format, path_output=path_output)
             info_str = 'QC output image: ' + filename_image_png
             if seg is not None:
-                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
+                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg',
+                                                           index=index_list, seg=seg, thr=thr, cmap_col=cmap_col,
+                                                           format=format, path_output=path_output)
                 info_str += ' & ' + filename_gmseg_image_png
             sct.printv(info_str, verbose, 'info')
         except RuntimeError, e:
@@ -1102,7 +1119,8 @@ def get_dimension(im_file, verbose=1):
         header = im_file.hdr
     else:
         header = None
-        sct.printv('WARNING: the provided image file isn\'t a nibabel.nifti1.Nifti1Image instance nor a msct_image.Image instance', verbose, 'warning')
+        sct.printv('WARNING: the provided image file isn\'t a nibabel.nifti1.Nifti1Image instance nor a '
+                   'msct_image.Image instance', verbose, 'warning')
 
     nb_dims = len(header.get_data_shape())
     if nb_dims == 2:
