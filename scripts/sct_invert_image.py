@@ -57,7 +57,7 @@ def main(args=None):
     image_output = image_input.invert()
     if "-o" in arguments:
         image_output.setFileName(arguments["-o"])
-    image_output.save(type='minimize')
+    image_output.save(data_type='minimize')
 
 
 if __name__ == "__main__":
