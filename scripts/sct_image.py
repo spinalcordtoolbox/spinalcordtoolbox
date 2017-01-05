@@ -219,7 +219,7 @@ def main(args=None):
         # if only one output
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
-            im_out[0].save(squeeze_data=False, type=output_type)
+            im_out[0].save(squeeze_data=False, data_type=output_type)
         if '-mcs' in arguments:
             # use input file name and add _X, _Y _Z. Keep the same extension
             fname_out = []
