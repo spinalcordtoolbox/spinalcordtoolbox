@@ -368,7 +368,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
 
     # smooth data
     gf = scipy.ndimage.filters.gaussian_filter
-    data = gf(data, param().smooth_factor, output=None, mode="reflect")
+    data = gf(data, param.smooth_factor, output=None, mode="reflect")
 
     # get dimension of src
     nx, ny, nz = data.shape
@@ -410,7 +410,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
             target=data_template,
             x=xc,
             xshift=0,
-            xsize=param().size_RL_initc2,
+            xsize=param.size_RL_initc2,
             y=yc,
             yshift=param.shift_AP_initc2,
             ysize=param.size_AP_initc2,
@@ -838,26 +838,20 @@ def compute_corr_3d(src=[],
     return z + zrange[ind_peak] - zshift
 
 
-def label_segmentation(fname_seg, list_disc_z, list_disc_value, fig_anat_straight=None, verbose=1):
+def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
     Label segmentation image
     :param fname_seg: fname of the segmentation
     :param list_disc_z: list of z that correspond to a disc
-    :param list_disc_value: list of associated disc values
     :param verbose:
     :return:
     """
-
-    if fig_anat_straight is None:
-        fig_anat_straight = Param().fig_anat_straight
 
     # open segmentation
     seg = Image(fname_seg)
     dim = seg.dim
     ny = dim[1]
     nz = dim[2]
-    # open labeled discs
-    im_discs = Image(fname_seg)
     # loop across z
     for iz in range(nz):
         # get index of the disc right above iz
