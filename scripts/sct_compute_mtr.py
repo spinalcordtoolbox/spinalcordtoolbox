@@ -60,8 +60,8 @@ def main(args=None):
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
     from sct_convert import convert
-    convert(fname_mt0, path_tmp+'mt0.nii', type='float32')
-    convert(fname_mt1, path_tmp+'mt1.nii', type='float32')
+    convert(fname_mt0, path_tmp +'mt0.nii', data_type='float32')
+    convert(fname_mt1, path_tmp +'mt1.nii', data_type='float32')
 
     # go to tmp folder
     os.chdir(path_tmp)

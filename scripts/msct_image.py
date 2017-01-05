@@ -13,14 +13,22 @@
 #########################################################################################
 
 # TODO: update function to reflect the new get_dimension
+import copy
 import math
+import os
 import sys
 
+import matplotlib.cm
+import matplotlib.colors
+import matplotlib.pyplot
+import nibabel
 import numpy as np
 from scipy.ndimage import map_coordinates
 
 from msct_parser import Parser
+import msct_types
 import sct_crop_image
+import sct_image
 import sct_utils as sct
 
 
@@ -203,10 +211,7 @@ class Image(object):
 
     """
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
-        from sct_utils import extract_fname
-        from nibabel import Nifti1Header
 
-        # initialization of all parameters
         self.im_file = None
         self.data = None
         self.orientation = None
@@ -217,7 +222,7 @@ class Image(object):
         self.dim = None
 
         if hdr is None:
-            hdr = self.hdr = Nifti1Header()  # an empty header
+            hdr = self.hdr = nibabel.Nifti1Header()  # an empty header
         else:
             self.hdr = hdr
 
@@ -237,7 +242,7 @@ class Image(object):
             self.hdr = hdr
             self.orientation = orientation
             self.absolutepath = absolutepath
-            self.path, self.file_name, self.ext = extract_fname(absolutepath)
+            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
@@ -245,17 +250,17 @@ class Image(object):
             self.hdr = hdr
             self.orientation = orientation
             self.absolutepath = absolutepath
-            self.path, self.file_name, self.ext = extract_fname(absolutepath)
+            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
     def __deepcopy__(self, memo):
-        from copy import deepcopy
-        return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo), deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
+        deepcopy = copy.deepcopy
+        return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo),
+                          deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
 
     def copy(self, image=None):
-        from copy import deepcopy
-        from sct_utils import extract_fname
+        deepcopy = copy.deepcopy
         if image is not None:
             self.im_file = deepcopy(image.im_file)
             self.data = deepcopy(image.data)
@@ -263,7 +268,7 @@ class Image(object):
             self.hdr = deepcopy(image.hdr)
             self.orientation = deepcopy(image.orientation)
             self.absolutepath = deepcopy(image.absolutepath)
-            self.path, self.file_name, self.ext = extract_fname(self.absolutepath)
+            self.path, self.file_name, self.ext = sct.extract_fname(self.absolutepath)
         else:
             return deepcopy(self)
 
@@ -273,38 +278,29 @@ class Image(object):
         :param path: path of the file from which the image will be loaded
         :return:
         """
-        from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname
-        from sct_image import get_orientation
-
-        # check_file_exist(path, verbose=verbose)
         try:
-            self.im_file = load(path)
-        except spatialimages.ImageFileError:
-            printv('Error: make sure ' + path + ' is an image.', 1, 'error')
+            self.im_file = nibabel.load(path)
+        except nibabel.spatialimages.ImageFileError:
+            sct.printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.data = self.im_file.get_data()
         self.hdr = self.im_file.get_header()
-        self.orientation = get_orientation(self)
+        self.orientation = sct_image.get_orientation(self)
         self.absolutepath = path
-        self.path, self.file_name, self.ext = extract_fname(path)
+        self.path, self.file_name, self.ext = sct.extract_fname(path)
         self.dim = get_dimension(self.im_file)
-        # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
-        # self.dim = [nx, ny, nz]
-
 
     def setFileName(self, filename):
         """
         :param filename: file name with extension
         :return:
         """
-        from sct_utils import extract_fname
         self.absolutepath = filename
-        self.path, self.file_name, self.ext = extract_fname(filename)
+        self.path, self.file_name, self.ext = sct.extract_fname(filename)
 
-    def changeType(self, type=''):
+    def changeType(self, data_type=''):
         """
         Change the voxel type of the image
-        :param type:    if not set, the image is saved in standard type
+        :param data_type:    if not set, the image is saved in standard type
                         if 'minimize', image space is minimize
                         if 'minimize_int', image space is minimize and values are approximated to integers
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
@@ -323,10 +319,10 @@ class Image(object):
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         :return:
         """
-        if type == '':
-            type = self.hdr.get_data_dtype()
+        if data_type == '':
+            data_type = self.hdr.get_data_dtype()
 
-        if type == 'minimize' or type == 'minimize_int':
+        if data_type == 'minimize' or data_type == 'minimize_int':
             # compute max value in the image and choose the best pixel type to represent all the pixels within smallest memory space
             # warning: does not take intensity resolution into account, neither complex voxels
             max_vox = np.nanmax(self.data)
@@ -334,7 +330,7 @@ class Image(object):
 
             # check if voxel values are real or integer
             isInteger = True
-            if type == 'minimize':
+            if data_type == 'minimize':
                 for vox in self.data.flatten():
                     if int(vox) != vox:
                         isInteger = False
@@ -343,45 +339,43 @@ class Image(object):
             if isInteger:
                 if min_vox >= 0:  # unsigned
                     if max_vox <= np.iinfo(np.uint8).max:
-                        type = 'uint8'
+                        data_type = 'uint8'
                     elif max_vox <= np.iinfo(np.uint16):
-                        type = 'uint16'
+                        data_type = 'uint16'
                     elif max_vox <= np.iinfo(np.uint32).max:
-                        type = 'uint32'
+                        data_type = 'uint32'
                     elif max_vox <= np.iinfo(np.uint64).max:
-                        type = 'uint64'
+                        data_type = 'uint64'
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
                 else:
                     if max_vox <= np.iinfo(np.int8).max and min_vox >= np.iinfo(np.int8).min:
-                        type = 'int8'
+                        data_type = 'int8'
                     elif max_vox <= np.iinfo(np.int16).max and min_vox >= np.iinfo(np.int16).min:
-                        type = 'int16'
+                        data_type = 'int16'
                     elif max_vox <= np.iinfo(np.int32).max and min_vox >= np.iinfo(np.int32).min:
-                        type = 'int32'
+                        data_type = 'int32'
                     elif max_vox <= np.iinfo(np.int64).max and min_vox >= np.iinfo(np.int64).min:
-                        type = 'int64'
+                        data_type = 'int64'
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
             else:
                 # if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
                 #    type = 'np.float16' # not supported by nibabel
                 if max_vox <= np.finfo(np.float32).max and min_vox >= np.finfo(np.float32).min:
-                    type = 'float32'
+                    data_type = 'float32'
                 elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
-                    type = 'float64'
+                    data_type = 'float64'
 
         # print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
-        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64  # DON'T REMOVE THIS, IT IS MANDATORY FOR EVAL
-        type_build = eval(type)
-        self.data = type_build(self.data)
-        self.hdr.set_data_dtype(type)
+        self.data = getattr(np, data_type)(self.data)
+        self.hdr.set_data_dtype(data_type)
 
-    def save(self, type='', squeeze_data=True,  verbose=1):
+    def save(self, data_type='', squeeze_data=True, verbose=1):
         """
         Write an image in a nifti file
-        :param type:    if not set, the image is saved in the same type as input data
+        :param data_type:    if not set, the image is saved in the same type as input data
                         if 'minimize', image space is minimize
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
                         (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
@@ -398,24 +392,21 @@ class Image(object):
                         (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         """
-        from nibabel import Nifti1Image, save
-        from sct_utils import printv
-        from os import path, remove
         if squeeze_data:
             # remove singleton
             self.data = np.squeeze(self.data)
-        if type != '':
-            self.changeType(type)
+        if data_type != '':
+            self.changeType(data_type)
         # update header
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
-        img = Nifti1Image(self.data, None, self.hdr)
+        img = nibabel.Nifti1Image(self.data, None, self.hdr)
         fname_out = self.path + self.file_name + self.ext
-        if path.isfile(fname_out):
-            printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
-            remove(fname_out)
+        if os.path.isfile(fname_out):
+            sct.printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
+            os.remove(fname_out)
         # save file
-        save(img, fname_out)
+        nibabel.save(img, fname_out)
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
     # which would have returned (d,)
@@ -436,8 +427,6 @@ class Image(object):
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
-        from msct_types import Coordinate
-        from sct_utils import printv
         n_dim = 1
         if self.dim[3] == 1:
             n_dim = 3
@@ -449,26 +438,30 @@ class Image(object):
         try:
             if n_dim == 3:
                 X, Y, Z = (self.data > 0).nonzero()
-                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+                list_coordinates = [msct_types.Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
+                                    for i in range(0, len(X))]
             elif n_dim == 2:
                 X, Y = (self.data > 0).nonzero()
-                list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+                list_coordinates = [msct_types.Coordinate([X[i], Y[i], self.data[X[i], Y[i]]])
+                                    for i in range(0, len(X))]
         except Exception, e:
             print 'ERROR', e
-            printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
+            sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
-            from msct_types import CoordinateValue
             if n_dim == 3:
-                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+                list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
+                                    for i in range(0, len(X))]
             else:
-                list_coordinates = [CoordinateValue([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+                list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], self.data[X[i], Y[i]]])
+                                    for i in range(0, len(X))]
         else:
-            from msct_types import Coordinate
             if n_dim == 3:
-                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+                list_coordinates = [msct_types.Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
+                                    for i in range(0, len(X))]
             else:
-                list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+                list_coordinates = [msct_types.Coordinate([X[i], Y[i], self.data[X[i], Y[i]]])
+                                    for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -488,7 +481,8 @@ class Image(object):
 
     def getCoordinatesAveragedByValue(self):
         """
-        This function computes the mean coordinate of group of labels in the image. This is especially useful for label's images.
+        This function computes the mean coordinate of group of labels in the image. This is especially
+        useful for label's images.
         :return: list of coordinates that represent the center of mass of each group of value.
         """
         # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
@@ -651,8 +645,7 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            from sct_image import get_orientation_3d
-            self.orientation = get_orientation_3d(self)
+            self.orientation = sct_image.get_orientation_3d(self)
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
@@ -703,11 +696,10 @@ class Image(object):
         return raw_orientation
 
     def show(self):
-        from matplotlib.pyplot import imshow, show
-        imgplot = imshow(self.data)
+        imgplot = matplotlib.pyplot.imshow(self.data)
         imgplot.set_cmap('gray')
         imgplot.set_interpolation('nearest')
-        show()
+        matplotlib.pyplot.show()
 
     def compute_transform_matrix(self):
         m_p2f = self.hdr.get_sform()
@@ -970,8 +962,7 @@ class Image(object):
                 if seg is not None:
                     slice_seg = seg.data[:, :, index]
         else:
-            from sct_utils import printv
-            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
 
         return (slice, slice_seg)
 
@@ -996,31 +987,30 @@ class Image(object):
 
         :return filename_png: file name of the saved image
         """
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
-        from math import sqrt
-        from sct_utils import slash_at_the_end
+        plt = matplotlib.pyplot
         if type(index) is not list:
             index = [index]
 
         slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
-        path_output = slash_at_the_end(path_output, 1)
+        path_output = sct.slash_at_the_end(path_output, 1)
         if seg is not None:
-            import matplotlib.colors as col
+            col = matplotlib.colors
             color_white = col.colorConverter.to_rgba('white', alpha=0.0)
             if cmap_col == 'red-yellow':
                 color_red = col.colorConverter.to_rgba('red', alpha=0.7)
                 color_yellow = col.colorConverter.to_rgba('yellow', alpha=0.8)
-                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_yellow, color_red], N=256)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg',
+                                                                 [color_white, color_yellow, color_red], N=256)
             elif cmap_col == 'blue-cyan':
                 color_blue = col.colorConverter.to_rgba('blue', alpha=0.7)
                 color_cyan = col.colorConverter.to_rgba('cyan', alpha=0.8)
-                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_blue, color_cyan], N=256)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg',
+                                                                 [color_white, color_blue, color_cyan], N=256)
             else:
                 color_red = col.colorConverter.to_rgba('red', alpha=0.7)
                 cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_red], N=256)
 
-        n_lines = int(sqrt(len(slice_list)))
+        n_lines = int(math.sqrt(len(slice_list)))
         n_col = int(len(slice_list)/n_lines)
         n_lines += 1
 
@@ -1029,7 +1019,7 @@ class Image(object):
             for i, slices in enumerate(slice_list):
                 slice_im, slice_seg = slices
                 plot = fig.add_subplot(n_lines, n_col, i+1)
-                plot.imshow(slice_im, cmap=cm.gray, interpolation='nearest')
+                plot.imshow(slice_im, cmap=matplotlib.cm.gray, interpolation='nearest')
                 if index[i] is None:
                     title = 'mid slice'
                 else:
@@ -1040,18 +1030,13 @@ class Image(object):
                     plot.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
                 plt.axis('off')
 
-            # plt.imshow(slice, cmap=cm.gray, interpolation='nearest')
-            # if seg is not None:
-            #     plt.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
-            # plt.axis('off')
             fname_png = path_output + self.file_name + suffix + format
             plt.savefig(fname_png, bbox_inches='tight')
             plt.close(fig)
 
         except RuntimeError, e:
-            from sct_utils import printv
-            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
-            printv(str(e), self.verbose, type='warning')
+            sct.printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            sct.printv(str(e), self.verbose, type='warning')
         return fname_png
 
     def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', path_output='./', verbose=1):
@@ -1059,7 +1044,6 @@ class Image(object):
         if seg is not None:
             ori_seg = seg.change_orientation('RPI')
 
-        from sct_utils import printv
         nx, ny, nz, nt, px, py, pz, pt = self.dim
         if plane == 'sagittal':
             max_n_slices = nx
@@ -1069,7 +1053,7 @@ class Image(object):
             max_n_slices = nz
         else:
             max_n_slices = None
-            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
 
         if n_slices > max_n_slices:
             index_list = range(max_n_slices)
@@ -1085,10 +1069,10 @@ class Image(object):
             if seg is not None:
                 filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
                 info_str += ' & ' + filename_gmseg_image_png
-            printv(info_str, verbose, 'info')
+            sct.printv(info_str, verbose, 'info')
         except RuntimeError, e:
-            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
-            printv(str(e), self.verbose, type='warning')
+            sct.printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            sct.printv(str(e), self.verbose, type='warning')
 
         self.change_orientation(ori)
         if seg is not None:
@@ -1110,8 +1094,6 @@ def get_dimension(im_file, verbose=1):
     Get dimension from nibabel object. Manages 2D, 3D or 4D images.
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    import nibabel.nifti1
-    import sct_utils as sct
     # initialization
     nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
     if type(im_file) is nibabel.nifti1.Nifti1Image:
@@ -1182,10 +1164,6 @@ def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
         print 'Error: wrong orientation'
 
     return data
-
-# =======================================================================================================================
-# Start program
-#=======================================================================================================================
 
 def main(args=None):
 
