@@ -85,7 +85,6 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
 
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if status_output:
-        # from inspect import stack
         printv(output_final[0:-1], 1, error_exit)
         if raise_exception:
             raise Exception(output_final[0:-1])
@@ -779,11 +778,10 @@ class ___MsgUser(object):
     @classmethod
     def debug(cls, message, newline=True):
         if cls.__debug:
-            from sys import stderr
             mess = str(message)
             if newline:
                 mess += "\n"
-            stderr.write(mess)
+            sys.stderr.write(mess)
 
     @classmethod
     def message(cls, msg):
