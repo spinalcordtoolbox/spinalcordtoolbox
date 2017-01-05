@@ -41,6 +41,7 @@ from copy import copy
 from glob import glob
 from time import time
 
+import matplotlib.gridspec
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.lines import Line2D
@@ -48,6 +49,7 @@ from matplotlib.widgets import Button
 from numpy import arange, linspace, max, pad, percentile
 
 import sct_utils as sct
+import sct_image
 from msct_image import Image
 from msct_parser import Parser
 from msct_types import *
@@ -504,15 +506,16 @@ class ClickViewer(Viewer):
         self.compute_offset()
         self.pad_data()
 
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
+                                         int(self.images[0].data.shape[2] / 2)])
 
         # display axes, specific to viewer
-        import matplotlib.gridspec as gridspec
-        gs = gridspec.GridSpec(1, 3)
+        gs = matplotlib.gridspec.GridSpec(1, 3)
 
         # main plot on the right
         ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.primary_subplot], display_cross='', im_params=visualization_parameters))
+        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.primary_subplot],
+                                       display_cross='', im_params=visualization_parameters))
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
         if self.primary_subplot == 'ax':
             self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
@@ -533,7 +536,8 @@ class ClickViewer(Viewer):
         elif self.primary_subplot == 'sag':
             display_cross = 'h'
         ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot], display_cross=display_cross, im_params=visualization_parameters))
+        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot],
+                                       display_cross=display_cross, im_params=visualization_parameters))
 
         for window in self.windows:
             window.connect()
@@ -845,11 +849,13 @@ class ParamMultiImageVisualization(object):
 def prepare(list_images):
     fname_images, orientation_images = [], []
     for fname_im in list_images:
-        from sct_image import orientation
-        orientation_images.append(orientation(Image(fname_im), get=True, verbose=False))
+        orientation_images.append(sct_image.orientation(Image(fname_im), get=True, verbose=False))
         path_fname, file_fname, ext_fname = sct.extract_fname(fname_im)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
-        sct.run('sct_image -i ' + fname_im + ' -o ' + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
+        sct_image.main(['-i', fname_im,
+                        '-o', reoriented_image_filename,
+                        '-setorient', 'SAL',
+                        '-v', '0'])
         fname_images.append(reoriented_image_filename)
     return fname_images, orientation_images
 
