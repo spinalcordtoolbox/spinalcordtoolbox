@@ -20,7 +20,8 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 
 from msct_parser import Parser
-from sct_utils import add_suffix
+import sct_crop_image
+import sct_utils as sct
 
 
 def striu2mat(striu):
@@ -273,7 +274,7 @@ class Image(object):
         :return:
         """
         from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname, run
+        from sct_utils import check_file_exist, printv, extract_fname
         from sct_image import get_orientation
 
         # check_file_exist(path, verbose=verbose)
@@ -608,7 +609,7 @@ class Image(object):
         mask.change_orientation(mask_original_orientation)
         if save:
             self.file_name += suffix
-            add_suffix(self.absolutepath, suffix)
+            sct.add_suffix(self.absolutepath, suffix)
             self.save()
 
     def invert(self):
@@ -1096,13 +1097,13 @@ class Image(object):
 
 
 def find_zmin_zmax(fname):
-    import sct_utils as sct
-    # crop image
-    status, output = sct.run('sct_crop_image -i '+fname+' -dim 2 -bmax -o tmp.nii')
-    # parse output
-    zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
-    return int(zmin), int(zmax)
 
+    cropped_image = sct_crop_image.main(['-i', str(fname),
+                                         '-dim', '2',
+                                         '-bmax',
+                                         '-o', 'tmp.nii'])
+
+    return cropped_image.zmin, cropped_image.zmax
 
 def get_dimension(im_file, verbose=1):
     """
