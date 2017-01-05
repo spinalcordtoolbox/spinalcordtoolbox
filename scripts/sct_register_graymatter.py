@@ -18,7 +18,7 @@ import sct_utils as sct
 from msct_image import Image
 from msct_parser import Parser
 from sct_convert import convert
-
+import sct_crop_image
 
 class Param:
     def __init__(self):
@@ -394,17 +394,14 @@ def thr_im(im, low_thr, high_thr):
 
 def crop_im(fname_im, fname_mask):
     fname_im_crop = sct.add_suffix(fname_im, '_crop')
-    status, output_crop = sct.run('sct_crop_image -i ' + fname_im + ' -m ' + fname_mask + ' -o ' + fname_im_crop)
-    output_list = output_crop.split('\n')
-    xi, xf, yi, yf, zi, zf = 0, 0, 0, 0, 0, 0
-    for line in output_list:
-        if 'Dimension 0' in line:
-            dim, i, xi, xf = line.split(' ')
-        if 'Dimension 1' in line:
-            dim, i, yi, yf = line.split(' ')
-        if 'Dimension 2' in line:
-            dim, i, zi, zf = line.split(' ')
-    return fname_im_crop, int(xi), int(xf), int(yi), int(yf), int(zi), int(zf)
+    image_cropper = sct_crop_image.main(['-i', fname_im,
+                                         '-m', fname_mask,
+                                         '-o', fname_im_crop])
+
+    return (fname_im_crop,
+            int(image_cropper.xmin), int(image_cropper.xmax),
+            int(image_cropper.ymin), int(image_cropper.ymax),
+            int(image_cropper.zmin), int(image_cropper.zmax))
 
 
 def pad_im(fname_im, nx_full, ny_full, nz_full, xi, xf, yi, yf, zi, zf):
