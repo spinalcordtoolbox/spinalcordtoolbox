@@ -15,8 +15,12 @@ import os
 import sys
 from glob import glob
 
-import sct_utils as sct
+import msct_image
 from msct_parser import Parser
+import sct_utils as sct
+import sct_image
+import sct_label_utils
+import sct_viewer
 
 
 def get_parser():
@@ -191,46 +195,46 @@ def main(args=None):
     contrast_type = arguments["-c"]
 
     # Building the command
-    cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
+    isct_options = " -i " + input_filename + " -t " + contrast_type
 
     if "-ofolder" in arguments:
         folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
         folder_output = './'
-    cmd += " -o " + folder_output
+    isct_options += " -o " + folder_output
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
     if "-down" in arguments:
-        cmd += " -down " + str(arguments["-down"])
+        isct_options += " -down " + str(arguments["-down"])
     if "-up" in arguments:
-        cmd += " -up " + str(arguments["-up"])
+        isct_options += " -up " + str(arguments["-up"])
 
     verbose = 0
     if "-v" in arguments:
         if arguments["-v"] is "1":
             verbose = 2
-            cmd += " -verbose"
+            isct_options += " -verbose"
 
     # Output options
     if "-mesh" in arguments:
-        cmd += " -mesh"
+        isct_options += " -mesh"
     if "-centerline-binary" in arguments:
-        cmd += " -centerline-binary"
+        isct_options += " -centerline-binary"
     if "-CSF" in arguments:
-        cmd += " -CSF"
+        isct_options += " -CSF"
     if "-centerline-coord" in arguments:
-        cmd += " -centerline-coord"
+        isct_options += " -centerline-coord"
     if "-cross" in arguments:
-        cmd += " -cross"
+        isct_options += " -cross"
     if "-init-tube" in arguments:
-        cmd += " -init-tube"
+        isct_options += " -init-tube"
     if "-low-resolution-mesh" in arguments:
-        cmd += " -low-resolution-mesh"
+        isct_options += " -low-resolution-mesh"
     if "-detect-nii" in arguments:
-        cmd += " -detect-nii"
+        isct_options += " -detect-nii"
     if "-detect-png" in arguments:
-        cmd += " -detect-png"
+        isct_options += " -detect-png"
 
     # Helping options
     use_viewer = None
@@ -238,42 +242,42 @@ def main(args=None):
         if str(arguments["-init-centerline"]) == "viewer":
             use_viewer = "centerline"
         else:
-            cmd += " -init-centerline " + str(arguments["-init-centerline"])
+            isct_options += " -init-centerline " + str(arguments["-init-centerline"])
     if "-init" in arguments:
-        cmd += " -init " + str(arguments["-init"])
+        isct_options += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
         else:
-            cmd += " -init-mask " + str(arguments["-init-mask"])
+            isct_options += " -init-mask " + str(arguments["-init-mask"])
     if "-mask-correction" in arguments:
-        cmd += " -mask-correction " + str(arguments["-mask-correction"])
+        isct_options += " -mask-correction " + str(arguments["-mask-correction"])
     if "-radius" in arguments:
-        cmd += " -radius " + str(arguments["-radius"])
+        isct_options += " -radius " + str(arguments["-radius"])
     if "-detect-n" in arguments:
-        cmd += " -detect-n " + str(arguments["-detect-n"])
+        isct_options += " -detect-n " + str(arguments["-detect-n"])
     if "-detect-gap" in arguments:
-        cmd += " -detect-gap " + str(arguments["-detect-gap"])
+        isct_options += " -detect-gap " + str(arguments["-detect-gap"])
     if "-init-validation" in arguments:
-        cmd += " -init-validation"
+        isct_options += " -init-validation"
     if "-nbiter" in arguments:
-        cmd += " -nbiter " + str(arguments["-nbiter"])
+        isct_options += " -nbiter " + str(arguments["-nbiter"])
     if "-max-area" in arguments:
-        cmd += " -max-area " + str(arguments["-max-area"])
+        isct_options += " -max-area " + str(arguments["-max-area"])
     if "-max-deformation" in arguments:
-        cmd += " -max-deformation " + str(arguments["-max-deformation"])
+        isct_options += " -max-deformation " + str(arguments["-max-deformation"])
     if "-min-contrast" in arguments:
-        cmd += " -min-contrast " + str(arguments["-min-contrast"])
+        isct_options += " -min-contrast " + str(arguments["-min-contrast"])
     if "-d" in arguments:
-        cmd += " -d " + str(arguments["-d"])
+        isct_options += " -d " + str(arguments["-d"])
     if "-distance-search" in arguments:
-        cmd += " -dsearch " + str(arguments["-distance-search"])
+        isct_options += " -dsearch " + str(arguments["-distance-search"])
     if "-alpha" in arguments:
-        cmd += " -alpha " + str(arguments["-alpha"])
+        isct_options += " -alpha " + str(arguments["-alpha"])
 
-    # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
-    from msct_image import Image
-    image_input = Image(input_filename)
+    # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the
+    # first one.
+    image_input = msct_image.Image(input_filename)
     nx, ny, nz, nt, px, py, pz, pt = image_input.dim
     if nt > 1:
         sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
@@ -281,16 +285,18 @@ def main(args=None):
     # if centerline or mask is asked using viewer
     if use_viewer:
         # make sure image is in SAL orientation, as it is the orientation used by PropSeg
-        from sct_image import orientation
-        image_input_orientation = orientation(image_input, get=True, verbose=False)
+        image_input_orientation = sct_image.orientation(image_input, get=True, verbose=False)
         path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
-        sct.run('sct_image -i ' + input_filename + ' -o ' + folder_output + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
+        sct_image.main(['-i', input_filename,
+                        '-o', os.path.join(folder_output,reoriented_image_filename),
+                        '-setorient', 'SAL',
+                        '-v', '0'])
 
-        from sct_viewer import ClickViewer
-        image_input_reoriented = Image(folder_output + reoriented_image_filename)
-        viewer = ClickViewer(image_input_reoriented)
-        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
+        image_input_reoriented = msct_image.Image(folder_output + reoriented_image_filename)
+        viewer = sct_viewer.ClickViewer(image_input_reoriented)
+        viewer.help_url = \
+            'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         if use_viewer == "mask":
             viewer.number_of_slices = 3
             viewer.gap_inter_slice = int(10 / pz)
@@ -305,25 +311,31 @@ def main(args=None):
         if mask_points:
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
-            sct.run("sct_label_utils -i " + folder_output + reoriented_image_filename + " -create " + mask_points + " -o " + folder_output + mask_filename, verbose=False)
+
+            sct_label_utils.main(["-i", os.path.join(folder_output, reoriented_image_filename),
+                                  "-create", mask_points,
+                                  "-o", os.path.join(folder_output, mask_filename)])
 
             # reorient the initialization mask to correspond to input image orientation
             mask_reoriented_filename = sct.add_suffix(file_fname + ext_fname, "_mask_viewer")
-            sct.run('sct_image -i ' + folder_output + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
-
+            sct_image.main(['-i', os.path.join(folder_output, mask_filename),
+                            '-o', os.path.join(folder_output, mask_filename),
+                            '-setorient ' + image_input_orientation,
+                            '-v', '0'])
             # remove temporary files
             for tmp_file in glob(folder_output + 'tmp.*'):
                 os.remove(tmp_file)
 
             # add mask filename to parameters string
             if use_viewer == "centerline":
-                cmd += " -init-centerline " + folder_output + mask_reoriented_filename
+                isct_options += " -init-centerline " + folder_output + mask_reoriented_filename
             elif use_viewer == "mask":
-                cmd += " -init-mask " + folder_output + mask_reoriented_filename
+                isct_options += " -init-mask " + folder_output + mask_reoriented_filename
         else:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
+            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
+                       verbose, type='error')
 
-    sct.run(cmd, verbose)
+    sct.run("isct_propseg " + isct_options, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
