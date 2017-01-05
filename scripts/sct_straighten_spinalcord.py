@@ -796,7 +796,7 @@ def get_parser():
                                   'Resampling to lower resolution decreases computational time while decreasing straightening accuracy.\n'
                                   'To keep native resolution, set this option to 0.\n',
                       mandatory=False,
-                      default_value=1)
+                      default_value=0)
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="straightened file",
