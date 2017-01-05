@@ -1098,12 +1098,12 @@ class Image(object):
 
 def find_zmin_zmax(fname):
 
-    cropped_image = sct_crop_image.main(['-i', str(fname),
+    image_cropper = sct_crop_image.main(['-i', str(fname),
                                          '-dim', '2',
                                          '-bmax',
                                          '-o', 'tmp.nii'])
 
-    return cropped_image.zmin, cropped_image.zmax
+    return image_cropper.zmin, image_cropper.zmax
 
 def get_dimension(im_file, verbose=1):
     """
