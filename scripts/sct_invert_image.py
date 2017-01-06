@@ -15,11 +15,11 @@
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import sys
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from msct_image import Image
 
 # DEFAULT PARAMETERS
-class param:
+class param(object):
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -36,7 +36,7 @@ def main(args=None):
     # call main function
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Utility function for labels.')
     parser.add_option(name="-i",
                       type_value="file",
@@ -53,7 +53,7 @@ def main(args=None):
     arguments = parser.parse(args)
 
     input_filename = arguments["-i"]
-    image_input = Image(input_filename)
+    image_input = msct_image.Image(input_filename)
     image_output = image_input.invert()
     if "-o" in arguments:
         image_output.setFileName(arguments["-o"])

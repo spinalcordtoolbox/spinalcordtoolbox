@@ -18,7 +18,7 @@ import nibabel
 import sct_utils as sct
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
 

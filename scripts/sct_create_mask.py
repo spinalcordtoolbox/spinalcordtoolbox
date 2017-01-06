@@ -24,14 +24,14 @@ import sct_image
 import sct_label_utils
 import sct_maths
 import sct_utils as sct
-from msct_image import Image
+import msct_image
 from msct_parser import Parser
-from sct_convert import convert
+from sct_convert import sct_convert.convert
 from sct_image import concat_data, copy_header, get_orientation
 
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -113,15 +113,15 @@ def create_mask(param):
     path_tmp = sct.tmp_create(param.verbose)
 
     sct.printv('\nCheck orientation...', param.verbose)
-    orientation_input = get_orientation(Image(param.fname_data))
+    orientation_input = get_orientation(msct_image.Image(param.fname_data))
     sct.printv('.. ' + orientation_input, param.verbose)
 
     # copy input data to tmp folder
-    convert(param.fname_data, path_tmp + 'data.nii')
+    sct_convert.convert(param.fname_data, path_tmp + 'data.nii')
     if method_type == 'centerline':
-        convert(method_val, path_tmp + 'centerline.nii.gz')
+        sct_convert.convert(method_val, path_tmp + 'centerline.nii.gz')
     if method_type == 'point':
-        convert(method_val, path_tmp + 'point.nii.gz')
+        sct_convert.convert(method_val, path_tmp + 'point.nii.gz')
 
     os.chdir(path_tmp)
 
@@ -139,7 +139,7 @@ def create_mask(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image('data_RPI.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image('data_RPI.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' +
                str(nt), param.verbose)
     # in case user input 4d data
@@ -148,7 +148,7 @@ def create_mask(param):
                    ': Input image is 4d but output mask will 3D.',
                    param.verbose, 'warning')
         # extract first volume to have 3d reference
-        nii = Image('data_RPI.nii')
+        nii = msct_image.Image('data_RPI.nii')
         data3d = nii.data[:, :, :, 0]
         nii.data = data3d
         nii.save()
@@ -225,9 +225,9 @@ def create_mask(param):
     for iz in range(nz_not_null):
         if iz != 0 and iz % 100 == 0:
             im_temp.append(concat_data(im_list, 2))
-            im_list = [Image(file_mask + str(iz) + '.nii')]
+            im_list = [msct_image.Image(file_mask + str(iz) + '.nii')]
         else:
-            im_list.append(Image(file_mask+str(iz)+'.nii'))
+            im_list.append(msct_image.Image(file_mask+str(iz)+'.nii'))
 
     if im_temp:
         im_temp.append(concat_data(im_list, 2))
@@ -245,8 +245,8 @@ def create_mask(param):
     sct_image.main(['-i', 'mask_RPI.nii.gz', '-o', 'mask.nii.gz', '-setorient', str(orientation_input)])
 
     # copy header input --> mask
-    im_dat = Image('data.nii')
-    im_mask = Image('mask.nii.gz')
+    im_dat = msct_image.Image('data.nii')
+    im_mask = msct_image.Image('mask.nii.gz')
     im_mask = copy_header(im_dat, im_mask)
     im_mask.save()
 
@@ -342,7 +342,7 @@ def create_mask2d(center,
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     param_default = Param()
     parser.usage.set_description('Create mask along z direction.')
     parser.add_option(

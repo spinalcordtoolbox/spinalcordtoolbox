@@ -15,12 +15,12 @@ import shutil
 import sys
 
 import sct_utils as sct
-from msct_image import Image
-from msct_parser import Parser
-from sct_convert import convert
+import msct_image
+import msct_parser
+import sct_convert
 import sct_crop_image
 
-class Param:
+class Param(object):
     def __init__(self):
         self.thr = 0.5
         self.gap = (100, 200)
@@ -35,7 +35,7 @@ class Param:
         self.qc = 1
 
 
-class MultiLabelRegistration:
+class MultiLabelRegistration(object):
     def __init__(self,
                  fname_gm,
                  fname_wm,
@@ -49,16 +49,16 @@ class MultiLabelRegistration:
         else:
             self.param = param
         self.fname_gm = fname_gm
-        self.im_gm = Image(fname_gm)
-        self.im_wm = Image(fname_wm)
+        self.im_gm = msct_image.Image(fname_gm)
+        self.im_wm = msct_image.Image(fname_wm)
         self.path_template = sct.slash_at_the_end(path_template, 1)
         if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir(self.path_template + 'template/'):
-            self.im_template_gm = Image(self.path_template + 'template/MNI-Poly-AMU_GM.nii.gz')
-            self.im_template_wm = Image(self.path_template + 'template/MNI-Poly-AMU_WM.nii.gz')
+            self.im_template_gm = msct_image.Image(self.path_template + 'template/MNI-Poly-AMU_GM.nii.gz')
+            self.im_template_wm = msct_image.Image(self.path_template + 'template/MNI-Poly-AMU_WM.nii.gz')
             self.template = 'MNI-Poly-AMU'
         else:
-            self.im_template_gm = Image(self.path_template + 'template/PAM50_gm.nii.gz')
-            self.im_template_wm = Image(self.path_template + 'template/PAM50_wm.nii.gz')
+            self.im_template_gm = msct_image.Image(self.path_template + 'template/PAM50_gm.nii.gz')
+            self.im_template_wm = msct_image.Image(self.path_template + 'template/PAM50_wm.nii.gz')
             self.template = 'PAM50'
 
         # Previous warping fields:
@@ -100,15 +100,15 @@ class MultiLabelRegistration:
         path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(
             self.fname_warp_template2target)
 
-        convert(self.fname_gm, tmp_dir + file_gm + ext_gm)
-        convert(
+        sct_convert.convert(self.fname_gm, tmp_dir + file_gm + ext_gm)
+        sct_convert.convert(
             self.fname_warp_template2target,
             tmp_dir + file_warp_template2target + ext_warp_template2target,
             squeeze_data=0)
         if self.fname_warp_target2template is not None:
             path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(
                 self.fname_warp_target2template)
-            convert(
+            sct_convert.convert(
                 self.fname_warp_target2template,
                 tmp_dir + file_warp_target2template + ext_warp_target2template,
                 squeeze_data=0)
@@ -201,11 +201,11 @@ class MultiLabelRegistration:
 
         sct.run('sct_warp_template -d ' + fname_manual_gmseg + ' -w ' + self.fname_warp_template2gm + ' -qc 0 -a 0')
         if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir('label/template/'):
-            im_new_template_gm = Image('label/template/MNI-Poly-AMU_GM.nii.gz')
-            im_new_template_wm = Image('label/template/MNI-Poly-AMU_WM.nii.gz')
+            im_new_template_gm = msct_image.Image('label/template/MNI-Poly-AMU_GM.nii.gz')
+            im_new_template_wm = msct_image.Image('label/template/MNI-Poly-AMU_WM.nii.gz')
         else:
-            im_new_template_gm = Image('label/template/PAM50_gm.nii.gz')
-            im_new_template_wm = Image('label/template/PAM50_wm.nii.gz')
+            im_new_template_gm = msct_image.Image('label/template/PAM50_gm.nii.gz')
+            im_new_template_wm = msct_image.Image('label/template/PAM50_wm.nii.gz')
 
         im_new_template_gm = thr_im(im_new_template_gm, self.param.thr, self.param.thr)
         im_new_template_wm = thr_im(im_new_template_wm, self.param.thr, self.param.thr)
@@ -413,7 +413,7 @@ def pad_im(fname_im, nx_full, ny_full, nz_full, xi, xf, yi, yf, zi, zf):
     pad_zi = str(zi)
     pad_zf = str(nz_full - (zf + 1))
     pad = ','.join([pad_xi, pad_xf, pad_yi, pad_yf, pad_zi, pad_zf])
-    if len(Image(fname_im).data.shape) == 5:
+    if len(msct_image.Image(fname_im).data.shape) == 5:
         status, output = sct.run('sct_image -i ' + fname_im + ' -mcs')
         s = 'Created file(s):\n-->'
         output_fnames = output[output.find(s) + len(s):].split('\n')[0].split("'")
@@ -435,7 +435,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     if fname_grid is None:
         from numpy import zeros
         tmp_dir = sct.tmp_create()
-        im_warp = Image(fname_warp)
+        im_warp = msct_image.Image(fname_warp)
         os.chdir(tmp_dir)
 
         assert len(im_warp.data.shape) == 5, 'ERROR: Warping field does bot have 5 dimensions...'
@@ -454,7 +454,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
                     if dat[i:i + step, j:j + step, k].shape == (step, step):
                         dat[i:i + step, j:j + step, k] = sq
         fname_grid = 'grid_' + str(step) + '.nii.gz'
-        im_grid = Image(param=dat)
+        im_grid = msct_image.Image(param=dat)
         grid_hdr = im_warp.hdr
         im_grid.hdr = grid_hdr
         im_grid.setFileName(fname_grid)
@@ -473,7 +473,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Multi-label registration\n')
     parser.add_option(
         name="-gm",

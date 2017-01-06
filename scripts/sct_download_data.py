@@ -18,13 +18,13 @@ import urllib2
 import zipfile
 from os import path, remove, rename
 
-from msct_parser import Parser
-from sct_utils import printv
+from msct_parser import msct_parser.Parser
+from sct_utils import sct.printv
 
 
 def get_parser():
     # parser initialisation
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('''Download dataset from the web.''')
     parser.add_option(name="-d",
                       type_value="multiple_choice",
@@ -69,42 +69,42 @@ def main(args=None):
     try:
         download_from_url(url, tmp_file)
     except(KeyboardInterrupt):
-        printv('\nERROR: User canceled process.', 1, 'error')
+        sct.printv('\nERROR: User canceled process.', 1, 'error')
     # try:
-    #     printv('\nDownload data from: '+url, verbose)
+    #     sct.printv('\nDownload data from: '+url, verbose)
     #     urlretrieve(url, tmp_file)
     #     # Allow time for data to download/save:
     #     print "hola1"
     #     time.sleep(0.5)
     #     print "hola2"
     # except:
-    #     printv("ERROR: Download Failed.", verbose, 'error')
+    #     sct.printv("ERROR: Download Failed.", verbose, 'error')
 
     # Check if folder already exists
-    printv('Check if folder already exists...', verbose)
+    sct.printv('Check if folder already exists...', verbose)
     if path.isdir(data_name):
-        printv('.. WARNING: Folder '+data_name+' already exists. Removing it...', 1, 'warning')
+        sct.printv('.. WARNING: Folder '+data_name+' already exists. Removing it...', 1, 'warning')
         shutil.rmtree(data_name, ignore_errors=True)
 
     # unzip
-    printv('Unzip dataset...', verbose)
+    sct.printv('Unzip dataset...', verbose)
     try:
         zf = zipfile.ZipFile(tmp_file)
         zf.extractall()
     except (zipfile.BadZipfile):
-        printv('\nERROR: ZIP package corrupted. Please try downloading again.', verbose, 'error')
+        sct.printv('\nERROR: ZIP package corrupted. Please try downloading again.', verbose, 'error')
 
     # if downloaded from GitHub, need to remove the "-master" suffix
     if 'master.zip' in url:
-        printv('Rename folder...', verbose)
+        sct.printv('Rename folder...', verbose)
         rename(data_name+'-master', data_name)
 
     # remove zip file
-    printv('Remove temporary file...', verbose)
+    sct.printv('Remove temporary file...', verbose)
     remove(tmp_file)
 
     # display stuff
-    printv('Done! Folder created: '+data_name+'\n', verbose, 'info')
+    sct.printv('Done! Folder created: '+data_name+'\n', verbose, 'info')
 
 
 
@@ -124,16 +124,16 @@ def download_from_url(url, local):
         try:
             u = urllib2.urlopen(url)
         except urllib2.HTTPError, e:
-            printv('\nHTTPError = ' + str(e.code), 1, 'error')
+            sct.printv('\nHTTPError = ' + str(e.code), 1, 'error')
         except urllib2.URLError, e:
-            printv('\nURLError = ' + str(e.reason), 1, 'error')
+            sct.printv('\nURLError = ' + str(e.reason), 1, 'error')
         except httplib.HTTPException, e:
-            printv('\nHTTPException', 1, 'error')
+            sct.printv('\nHTTPException', 1, 'error')
         except(KeyboardInterrupt):
-            printv('\nERROR: User canceled process.', 1, 'error')
+            sct.printv('\nERROR: User canceled process.', 1, 'error')
         except Exception:
             import traceback
-            printv('\nERROR: Cannot open URL: ' + traceback.format_exc(), 1, 'error')
+            sct.printv('\nERROR: Cannot open URL: ' + traceback.format_exc(), 1, 'error')
         h = u.info()
         try:
             totalSize = int(h["Content-Length"])
@@ -141,14 +141,14 @@ def download_from_url(url, local):
         except:
             # if URL was badly reached (issue #895):
             # send warning message
-            printv('\nWARNING: URL cannot be reached. Trying again (maximum trials: '+str(max_trials)+').', 1, 'warning')
+            sct.printv('\nWARNING: URL cannot be reached. Trying again (maximum trials: '+str(max_trials)+').', 1, 'warning')
             # pause for 0.5s
             time.sleep(0.5)
             # iterate i_trial and try again
             i_trial += 1
             # if i_trial exceeds max_trials, exit with error
             if i_trial > max_trials:
-                printv('\nERROR: Maximum number of trials reached. Try again later.', 1, 'error')
+                sct.printv('\nERROR: Maximum number of trials reached. Try again later.', 1, 'error')
                 keep_connecting = False
 
     print "Downloading %s bytes..." % totalSize,

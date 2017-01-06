@@ -11,16 +11,17 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
 import math
+import os
+import sys
 import time
 
-from msct_parser import Parser
-import os
-import scipy
 import nibabel
+import scipy
+
+import msct_image
+import msct_parser
 import sct_utils as sct
-from msct_image import Image
 
 
 class LineBuilder:
@@ -51,7 +52,7 @@ class LineBuilder:
         self.line.figure.canvas.draw()
 
 
-class ImageCropper(Image):
+class ImageCropper(msct_image.Image):
     def __init__(self, input_file, output_file=None, mask=None, start=None, end=None, dim=None, shift=None,
                  background=None, bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
 
@@ -120,7 +121,7 @@ class ImageCropper(Image):
             # Run command line
             self.run_isct(self.cmd, verb)
 
-        self.result = Image(self.output_filename, verbose=self.verbose)
+        self.result = msct_image.Image(self.output_filename, verbose=self.verbose)
 
         # removes the output file created by the script if it is not needed
         if self.rm_output_file:
@@ -136,7 +137,7 @@ class ImageCropper(Image):
 
         return self.result
 
-    def call_isct(self, cmd, verb):
+    def run_isct(self, cmd, verb):
 
         _, stdout = sct.run(cmd, verb)
 
@@ -160,9 +161,9 @@ class ImageCropper(Image):
         :return:
         """
         from numpy import asarray, einsum
-        image_in = Image(self.input_filename)
+        image_in = msct_image.Image(self.input_filename)
         data_array = asarray(image_in.data)
-        data_mask = asarray(Image(self.mask).data)
+        data_mask = asarray(msct_image.Image(self.mask).data)
         assert data_array.shape == data_mask.shape
 
         # Element-wise matrix multiplication:
@@ -204,7 +205,7 @@ class ImageCropper(Image):
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
-        nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
+        nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_data).dim
         sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
         # check if 4D data
         if not nt == 1:
@@ -224,9 +225,9 @@ class ImageCropper(Image):
         sct.run('mkdir '+path_tmp)
 
         # copy files into tmp folder
-        from sct_convert import convert
+        from sct_convert import sct_convert.convert
         sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-        convert(fname_data, path_tmp+'data.nii')
+        sct_convert.convert(fname_data, path_tmp+'data.nii')
 
         # go to tmp folder
         os.chdir(path_tmp)
@@ -272,7 +273,7 @@ class ImageCropper(Image):
 
         # crop image
         sct.printv('\nCrop image...', verbose)
-        nii = Image('data_rpi.nii')
+        nii = msct_image.Image('data_rpi.nii')
         data_crop = nii.data[:, :, zcrop[0]:zcrop[1]]
         nii.data = data_crop
         nii.setFileName('data_rpi_crop.nii')
@@ -296,7 +297,7 @@ class ImageCropper(Image):
 
 def get_parser():
         # Initialize parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description('Tools to crop an image. Either through command line or GUI')
@@ -407,7 +408,7 @@ def find_mask_boundaries(fname_mask):
     """
     from numpy import nonzero, min, max
     # open mask
-    data = Image(fname_mask).data
+    data = msct_image.Image(fname_mask).data
     data_nonzero = nonzero(data)
     # find min and max boundaries of the mask
     dim = len(data_nonzero)

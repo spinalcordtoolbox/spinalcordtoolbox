@@ -14,15 +14,16 @@
 # TODO: also enable to concatenate reversed transfo
 
 
-import sys
 import os
-import getopt
+import sys
 from commands import getstatusoutput
+
 import sct_utils as sct
-from msct_parser import Parser
+import msct_parser
+
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -113,7 +114,7 @@ def main(args=None):
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.')
     parser.add_option(name="-d",
                       type_value="file",

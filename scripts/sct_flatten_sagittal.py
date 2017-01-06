@@ -23,13 +23,13 @@ import numpy
 import sct_utils as sct
 from msct_image import Image
 from msct_nurbs import NURBS
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from sct_image import (concat_data, get_orientation_3d, set_orientation,
                        split_data)
 from sct_utils import fsloutput
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.interp = 'sinc'  # final interpolation
@@ -75,11 +75,11 @@ def main(args=None):
     print ''
 
     # Get input image orientation
-    im_anat = Image(fname_anat)
+    im_anat = msct_image.Image(fname_anat)
     input_image_orientation = get_orientation_3d(im_anat)
 
     # Reorient input data into RL PA IS orientation
-    im_centerline = Image(fname_centerline)
+    im_centerline = msct_image.Image(fname_centerline)
     im_anat_orient = set_orientation(im_anat, 'RPI')
     im_anat_orient.setFileName('tmp.anat_orient.nii')
     im_centerline_orient = set_orientation(im_centerline, 'RPI')
@@ -193,7 +193,7 @@ def main(args=None):
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
     from glob import glob
-    im_to_concat_list = [Image(fname) for fname in glob('tmp.anat_orient_fit_Z*.nii')]
+    im_to_concat_list = [msct_image.Image(fname) for fname in glob('tmp.anat_orient_fit_Z*.nii')]
     im_concat_out = concat_data(im_to_concat_list, 2)
     im_concat_out.setFileName('tmp.anat_orient_fit.nii')
     im_concat_out.save()
@@ -254,7 +254,7 @@ def polynome_centerline(x_centerline,y_centerline,z_centerline):
 
 def get_parser():
     param_default = Param()
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description("""Flatten the spinal cord in the sagittal plane (to make nice pictures).""")
     parser.add_option(name='-i',
                       type_value='image_nifti',

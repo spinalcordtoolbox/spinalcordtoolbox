@@ -55,17 +55,18 @@ import sct_process_segmentation
 import sct_register_multimodal
 from msct_gmseg_utils import (apply_transfo, average_gm_wm, binarize,
                               normalize_slice, pre_processing, register_data)
-from msct_image import Image
-from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
-from msct_parser import Parser
+import msct_image
+import msct_multiatlas_seg
+#import Model, Param, ParamData, ParamModel
+import msct_parser
 from sct_image import set_orientation
-from sct_utils import (add_suffix, extract_fname, printv, slash_at_the_end,
+from sct_utils import (add_suffix, extract_fname, sct.printv, slash_at_the_end,
                        tmp_create)
 
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_image.Parser(__file__)
     parser.usage.set_description(
         'Segmentation of the white and gray matter.'
         ' The segmentation is based on a multi-atlas method that uses a dictionary of pre-segmented gray matter images (already included in SCT)'
@@ -197,7 +198,7 @@ def get_parser():
     return parser
 
 
-class ParamSeg:
+class ParamSeg(object):
     def __init__(self):
         self.fname_im = None
         self.fname_im_original = None
@@ -218,7 +219,7 @@ class ParamSeg:
         self.qc = True
 
 
-class SegmentGM:
+class SegmentGM(object):
     def __init__(self, param_seg=None, param_model=None, param_data=None, param=None):
         self.param_seg = param_seg if param_seg is not None else ParamSeg()
         self.param_model = param_model if param_model is not None else ParamModel()
@@ -255,48 +256,48 @@ class SegmentGM:
             verbose=self.param.verbose,
             rm_tmp=self.param.rm_tmp)
 
-        printv('\nRegister target image to model data...', self.param.verbose, 'normal')
+        sct.printv('\nRegister target image to model data...', self.param.verbose, 'normal')
         # register target image to model dictionary space
         path_warp = self.register_target()
 
-        printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
+        sct.printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
         self.normalize_target()
 
-        printv('\nProject target image into the model reduced space...', self.param.verbose, 'normal')
+        sct.printv('\nProject target image into the model reduced space...', self.param.verbose, 'normal')
         self.project_target()
 
-        printv('\nCompute similarities between target slices and model slices using model reduced space...',
+        sct.printv('\nCompute similarities between target slices and model slices using model reduced space...',
                self.param.verbose, 'normal')
         list_dic_indexes_by_slice = self.compute_similarities()
 
-        printv('\nLabel fusion of model slices most similar to target slices...', self.param.verbose, 'normal')
+        sct.printv('\nLabel fusion of model slices most similar to target slices...', self.param.verbose, 'normal')
         self.label_fusion(list_dic_indexes_by_slice)
 
-        printv('\nWarp back segmentation into image space...', self.param.verbose, 'normal')
+        sct.printv('\nWarp back segmentation into image space...', self.param.verbose, 'normal')
         self.warp_back_seg(path_warp)
 
-        printv('\nPost-processing...', self.param.verbose, 'normal')
+        sct.printv('\nPost-processing...', self.param.verbose, 'normal')
         self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
 
         if (self.param_seg.path_results != './') and (not os.path.exists('../' + self.param_seg.path_results)):
             # create output folder
-            printv('\nCreate output folder ...', self.param.verbose, 'normal')
+            sct.printv('\nCreate output folder ...', self.param.verbose, 'normal')
             os.chdir('..')
             os.mkdir(self.param_seg.path_results)
             os.chdir(self.tmp_dir)
 
         if self.param_seg.fname_manual_gmseg is not None:
             # compute validation metrics
-            printv('\nCompute validation metrics...', self.param.verbose, 'normal')
+            sct.printv('\nCompute validation metrics...', self.param.verbose, 'normal')
             self.validation()
 
         if self.param_seg.ratio is not '0':
-            printv('\nCompute GM/WM CSA ratio...', self.param.verbose, 'normal')
+            sct.printv('\nCompute GM/WM CSA ratio...', self.param.verbose, 'normal')
             self.compute_ratio()
 
         # go back to original directory
         os.chdir('..')
-        printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
+        sct.printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
         fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]),
                                                                    '_gmseg')
         fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]),
@@ -320,8 +321,8 @@ class SegmentGM:
 
         if self.param_seg.qc:
             # output QC image
-            printv('\nSave quality control images...', self.param.verbose, 'normal')
-            im = Image(self.tmp_dir + self.param_seg.fname_im)
+            sct.printv('\nSave quality control images...', self.param.verbose, 'normal')
+            im = msct_image.Image(self.tmp_dir + self.param_seg.fname_im)
             im.save_quality_control(
                 plane='axial',
                 n_slices=5,
@@ -330,8 +331,8 @@ class SegmentGM:
                 cmap_col='red-yellow',
                 path_output=self.param_seg.path_results)
 
-        printv('\nDone! To view results, type:', self.param.verbose)
-        printv('fslview ' + self.param_seg.fname_im_original + ' ' + fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col +
+        sct.printv('\nDone! To view results, type:', self.param.verbose)
+        sct.printv('fslview ' + self.param_seg.fname_im_original + ' ' + fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col +
                ' -t 0.7 ' + fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', self.param.verbose,
                'info')
 
@@ -345,14 +346,14 @@ class SegmentGM:
             shutil.copy(self.param_seg.fname_im, self.tmp_dir)
             self.param_seg.fname_im = ''.join(extract_fname(self.param_seg.fname_im)[1:])
         else:
-            printv('ERROR: No input image', self.param.verbose, 'error')
+            sct.printv('ERROR: No input image', self.param.verbose, 'error')
 
         # copy sc seg image
         if self.param_seg.fname_seg is not None:
             shutil.copy(self.param_seg.fname_seg, self.tmp_dir)
             self.param_seg.fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
         else:
-            printv('ERROR: No SC segmentation image', self.param.verbose, 'error')
+            sct.printv('ERROR: No SC segmentation image', self.param.verbose, 'error')
 
         # copy level file
         if self.param_seg.fname_level is not None:
@@ -364,7 +365,7 @@ class SegmentGM:
             self.param_seg.fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
 
     def get_im_from_list(self, data):
-        im = Image(data)
+        im = msct_image.Image(data)
         # set pix dimension
         im.hdr.structarr['pixdim'][1] = self.param_data.axial_res
         im.hdr.structarr['pixdim'][2] = self.param_data.axial_res
@@ -510,7 +511,7 @@ class SegmentGM:
         im_res_wmseg = im_sc_seg_original_rpi.copy()
         im_res_wmseg.data = np.zeros(im_res_wmseg.data.shape)
 
-        printv('  Interpolate result back into original space...', self.param.verbose, 'normal')
+        sct.printv('  Interpolate result back into original space...', self.param.verbose, 'normal')
 
         for iz, im_iz_preprocessed in enumerate(self.info_preprocessing['interpolated_images']):
             # im gmseg for slice iz
@@ -573,7 +574,7 @@ class SegmentGM:
                     shape_x, shape_y, shape_z = im_res_slice_interp.data.shape
                     im_res_slice_interp.data = im_res_slice_interp.data.reshape((shape_x, shape_y))
                 im_res_tot.data[:, :, iz] = im_res_slice_interp.data
-        printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
+        sct.printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
 
         # PUT RES BACK IN ORIGINAL ORIENTATION
         im_res_gmseg.setFileName('res_gmseg.nii.gz')
@@ -783,7 +784,7 @@ def main(args=None):
         elif os.path.isfile(arguments['-vertfile']):
             param_seg.fname_level = arguments['-vertfile']
         else:
-            printv(
+            sct.printv(
                 parser.usage.generate(error='ERROR: -vertfile input file: "' + arguments['-vertfile'] +
                                       '" does not exist.'))
     if '-denoising' in arguments:
@@ -820,7 +821,7 @@ def main(args=None):
     seg_gm.segment()
     end = time.time()
     t = end - start
-    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60, 1)) + ' sec', param.verbose, 'info')
+    sct.printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60, 1)) + ' sec', param.verbose, 'info')
 
 
 if __name__ == "__main__":

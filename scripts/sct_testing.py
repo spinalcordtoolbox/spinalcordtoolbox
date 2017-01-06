@@ -14,7 +14,7 @@ import time
 
 import sct_download_data
 import sct_utils as sct
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 
 # get path of the toolbox
 path_sct = os.environ.get('SCT_DIR')
@@ -24,7 +24,7 @@ sys.path.append(path_sct + '/testing')
 
 
 # define nice colors
-class bcolors:
+class bcolors(object):
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -251,7 +251,7 @@ def test_function(script_name, param):
 
 
 def get_parser(param):
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description(
         'Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.'
     )

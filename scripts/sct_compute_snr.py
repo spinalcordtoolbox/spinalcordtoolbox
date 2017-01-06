@@ -13,12 +13,14 @@
 #########################################################################################
 
 import sys
+from os import rmdir
+
 import numpy as np
-from msct_parser import Parser
-from msct_image import Image
-from sct_image import get_orientation_3d, set_orientation
+
+import msct_image
+import msct_parser
+import sct_image
 import sct_utils as sct
-from os import rmdir, chdir
 
 
 # PARSER
@@ -26,7 +28,7 @@ from os import rmdir, chdir
 def get_parser():
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Compute SNR in a given ROI according to different methods presented in Dietrich et al., Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils, parallel imaging, and reconstruction filters (2007).')
     parser.add_option(name="-i",
                       type_value='image_nifti',
@@ -92,8 +94,8 @@ def main(args=None):
 
 
     # Check if data are in RPI
-    input_im = Image(fname_data)
-    input_orient = get_orientation_3d(input_im)
+    input_im = msct_image.Image(fname_data)
+    input_orient = sct_image.get_orientation_3d(input_im)
 
     # If orientation is not RPI, change to RPI
     if input_orient != 'RPI':
@@ -101,16 +103,16 @@ def main(args=None):
         path_tmp = sct.tmp_create()
         # change orientation and load data
         sct.printv('\nChange input image orientation and load it...', verbose)
-        input_im_rpi = set_orientation(input_im, 'RPI', fname_out=path_tmp+'input_RPI.nii')
+        input_im_rpi = sct_image.set_orientation(input_im, 'RPI', fname_out=path_tmp+'input_RPI.nii')
         input_data = input_im_rpi.data
         # Do the same for the mask
         sct.printv('\nChange mask orientation and load it...', verbose)
-        mask_im_rpi = set_orientation(Image(fname_mask), 'RPI', fname_out=path_tmp+'mask_RPI.nii')
+        mask_im_rpi = sct_image.set_orientation(msct_image.Image(fname_mask), 'RPI', fname_out=path_tmp+'mask_RPI.nii')
         mask_data = mask_im_rpi.data
         # Do the same for vertebral labeling if present
         if vert_levels != 'None':
             sct.printv('\nChange vertebral labeling file orientation and load it...', verbose)
-            vert_label_im_rpi = set_orientation(Image(vert_label_fname), 'RPI', fname_out=path_tmp+'vert_labeling_RPI.nii')
+            vert_label_im_rpi = sct_image.set_orientation(msct_image.Image(vert_label_fname), 'RPI', fname_out=path_tmp+'vert_labeling_RPI.nii')
             vert_labeling_data = vert_label_im_rpi.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
@@ -119,9 +121,9 @@ def main(args=None):
         # Load data
         sct.printv('\nLoad data...', verbose)
         input_data = input_im.data
-        mask_data = Image(fname_mask).data
+        mask_data = msct_image.Image(fname_mask).data
         if vert_levels != 'None':
-            vert_labeling_data = Image(vert_label_fname).data
+            vert_labeling_data = msct_image.Image(vert_label_fname).data
     sct.printv('\tDone.', verbose)
 
     # Get slices corresponding to vertebral levels

@@ -22,14 +22,14 @@ import sct_convert as conv
 import sct_utils as sct
 from msct_base_classes import Algorithm
 from msct_image import Image
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from sct_convert import convert
 from sct_image import (concat_data, copy_header, get_orientation_3d, set_orientation, split_data)
 from sct_process_segmentation import extract_centerline
 from sct_straighten_spinalcord import smooth_centerline
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
@@ -121,7 +121,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Get image dimensions
     print '\nGet image dimensions...'
-    nx, ny, nz, nt, px, py, pz, pt = Image('tmp.anat_orient.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image('tmp.anat_orient.nii').dim
     sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz))
     sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm')
 
@@ -140,7 +140,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
         im.save()
 
     # Extract coordinates of input point
-    data_point = Image('tmp.point_orient.nii').data
+    data_point = msct_image.Image('tmp.point_orient.nii').data
     x_init, y_init, z_init = unravel_index(data_point.argmax(), data_point.shape)
     sct.printv('Coordinates of input point: (' + str(x_init) + ', ' + str(y_init) + ', ' + str(z_init) + ')', verbose)
 
@@ -155,7 +155,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Save mask to 2d file
     file_mask_split = ['tmp.mask_orient_Z' + str(z).zfill(4) for z in range(nz)]
-    nii_mask2d = Image('tmp.anat_orient_Z0000.nii')
+    nii_mask2d = msct_image.Image('tmp.anat_orient_Z0000.nii')
     nii_mask2d.data = mask2d
     nii_mask2d.setFileName(file_mask_split[z_init] + '.nii')
     nii_mask2d.save()
@@ -372,10 +372,10 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Copy header geometry from input data
     print '\nCopy header geometry from input data...'
-    im_anat = Image('tmp.anat_orient.nii')
-    im_anat_orient_fit = Image('tmp.anat_orient_fit.nii')
-    im_mask_orient_fit = Image('tmp.mask_orient_fit.nii')
-    im_point_orient_fit = Image('tmp.point_orient_fit.nii')
+    im_anat = msct_image.Image('tmp.anat_orient.nii')
+    im_anat_orient_fit = msct_image.Image('tmp.anat_orient_fit.nii')
+    im_mask_orient_fit = msct_image.Image('tmp.mask_orient_fit.nii')
+    im_point_orient_fit = msct_image.Image('tmp.point_orient_fit.nii')
     im_anat_orient_fit = copy_header(im_anat, im_anat_orient_fit)
     im_mask_orient_fit = copy_header(im_anat, im_mask_orient_fit)
     im_point_orient_fit = copy_header(im_anat, im_point_orient_fit)
@@ -433,7 +433,7 @@ def get_centerline_from_labels(fname_in,
     os.chdir(path_tmp)
 
     # Concatenation : sum of matrices
-    file_0 = Image('data.nii')
+    file_0 = msct_image.Image('data.nii')
     data_concatenation = file_0.data
     hdr_0 = file_0.hdr
     orientation_file_0 = get_orientation_3d(file_0)
@@ -627,7 +627,7 @@ def get_minimum_path(data, smooth_factor=np.sqrt(2), invert=1, verbose=1, debug=
 
 def get_minimum_path_nii(fname):
     from msct_image import Image
-    data = Image(fname)
+    data = msct_image.Image(fname)
     vesselness_data = data.data
     raw_orient = data.change_orientation()
     result, J1, J2 = get_minimum_path(data.data, invert=1)
@@ -705,7 +705,7 @@ class SymmetryDetector(Algorithm):
         This method executes the symmetry detection
         :return: returns the symmetry data
         """
-        img = Image(self.input_image)
+        img = msct_image.Image(self.input_image)
         raw_orientation = img.change_orientation()
         data = np.squeeze(img.data)
         dim = data.shape
@@ -722,7 +722,7 @@ class SymmetryDetector(Algorithm):
                 data[:, i * section_length:(i + 1) * section_length, :], cropped_xy=self.crop_xy)
             result[:, i * section_length:(i + 1) * section_length, :] = sym
 
-        result_image = Image(img)
+        result_image = msct_image.Image(img)
         if len(result_image.data) == 4:
             result_image.data = result[:, :, :, np.newaxis]
         else:
@@ -871,7 +871,7 @@ class SCAD(Algorithm):
         """
         if self.verbose == 2:
             try:
-                img = Image(img)
+                img = msct_image.Image(img)
                 img.data = data
                 img.change_orientation(self.raw_orientation)
                 img.file_name = file_name
@@ -914,7 +914,7 @@ class SCAD(Algorithm):
         os.chdir(self.path_tmp)
 
         # get input image information
-        img = Image(raw_file_name)
+        img = msct_image.Image(raw_file_name)
 
         # save original orientation and change image to RPI
         self.raw_orientation = img.change_orientation()
@@ -947,7 +947,7 @@ class SCAD(Algorithm):
                 self.spinalcord_radius))
 
         # load vesselness filter data and perform minimum path on it
-        img = Image(vesselness_file_name)
+        img = msct_image.Image(vesselness_file_name)
         img.change_orientation()
         self.minimum_path_data, self.J1_min_path, self.J2_min_path = get_minimum_path(img.data, invert=1, debug=1)
         self.output_debug_file(img, self.minimum_path_data, 'minimal_path')
@@ -1021,7 +1021,7 @@ def get_parser():
     :return: Returns the parser with the command line documentation contained in it.
     """
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description(
         """This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag ."""
     )
@@ -1200,7 +1200,7 @@ def main(args=None):
             sct.printv('The method automatic requires a contrast type to be defined', type='error')
 
         contrast = arguments['-c']
-        im = Image(fname_in)
+        im = msct_image.Image(fname_in)
         scad = SCAD(im, contrast=contrast)
         if '-o' in arguments:
             scad.output_filename = arguments['-o']

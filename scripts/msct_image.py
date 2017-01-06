@@ -25,7 +25,7 @@ import nibabel
 import numpy as np
 from scipy.ndimage import map_coordinates
 
-from msct_parser import Parser
+import msct_parser
 import msct_types
 import sct_crop_image
 import sct_image
@@ -1188,7 +1188,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Image processing functions')
     parser.add_option(name="-i",
                       type_value="file",

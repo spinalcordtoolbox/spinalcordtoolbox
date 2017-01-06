@@ -18,11 +18,11 @@ import sys
 import sct_apply_transfo
 import sct_utils as sct
 from msct_image import Image
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from sct_extract_metric import read_label_file
 
 
-class Param:
+class Param(object):
     def __init__(self):
         # get path of the script and the toolbox
         path_script = os.path.dirname(os.path.dirname(__file__))
@@ -45,7 +45,7 @@ class Param:
         self.qc = 1
 
 
-class WarpTemplate:
+class WarpTemplate(object):
     def __init__(self, fname_src, fname_transfo, warp_atlas,
                  warp_spinal_levels, folder_out, path_template, verbose, qc,
                  param):
@@ -209,7 +209,7 @@ def get_interp(file_label, param):
 def get_parser(param_default):
 
     # Initialize parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description(

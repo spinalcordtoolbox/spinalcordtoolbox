@@ -24,7 +24,7 @@ import sct_utils as sct
 
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     #  The constructor
     def __init__(self):
         self.debug = 0

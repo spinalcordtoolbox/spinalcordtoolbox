@@ -42,13 +42,13 @@ import numpy as np
 import msct_moco as moco
 import sct_utils as sct
 from msct_image import Image
-from msct_parser import Parser
-from sct_convert import convert
+from msct_parser import msct_parser.Parser
+from sct_convert import sct_convert.convert
 from sct_dmri_separate_b0_and_dwi import identify_b0
 from sct_image import concat_data, copy_header, split_data
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -160,7 +160,7 @@ def main(args=None):
     os.chdir(path_tmp)
 
     # convert dmri to nii format
-    convert(dmri_name+ext_data, dmri_name+ext)
+    sct_convert.convert(dmri_name+ext_data, dmri_name+ext)
 
     # update field in param (because used later).
     # TODO: make this cleaner...
@@ -211,7 +211,7 @@ def dmri_moco(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    im_data = Image(file_data + ext_data)
+    im_data = msct_image.Image(file_data + ext_data)
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
@@ -327,7 +327,7 @@ def dmri_moco(param):
         file_dwi_group = file_dwi_group+'_seg'
 
     # extract first DWI volume as target for registration
-    nii = Image(file_dwi_group+ext_data)
+    nii = msct_image.Image(file_dwi_group+ext_data)
     data_crop = nii.data[:, :, :, index_dwi[0]:index_dwi[0]+1]
     nii.data = data_crop
     target_dwi_name = 'target_dwi'
@@ -408,8 +408,8 @@ def dmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    im_dmri = Image(file_data+ext_data)
-    im_dmri_moco = Image(file_data+param.suffix+ext_data)
+    im_dmri = msct_image.Image(file_data+ext_data)
+    im_dmri_moco = msct_image.Image(file_data+param.suffix+ext_data)
     im_dmri_moco = copy_header(im_dmri, im_dmri_moco)
     im_dmri_moco.save()
 
@@ -423,7 +423,7 @@ def dmri_moco(param):
 
 def get_parser(param_default):
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('  Motion correction of dMRI data. Some robust features include:\n'
                                  '- group-wise (-g)\n'
                                  '- slice-wise regularized along z using polynomial function (-p). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'

@@ -18,7 +18,7 @@ import sys
 import os
 import getopt
 import math
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 
 
 # main
@@ -55,7 +55,7 @@ def main(args=None):
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Calculate b-value (in mm^2/s).')
     parser.add_option(name="-g",
                       type_value="float",

@@ -16,24 +16,24 @@ import sys
 
 import numpy as np
 
+import msct_image
+import msct_parser
+import sct_image
 import sct_utils as sct
-from msct_image import Image, get_dimension
-from msct_parser import Parser
-from sct_image import get_orientation_3d, set_orientation
 
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.thinning = True
         self.verbose = 1
 
 
-class Thinning:
+class Thinning(object):
     def __init__(self, im, v=1):
         sct.printv('Thinning ... ', v, 'normal')
         self.image = im
@@ -41,14 +41,14 @@ class Thinning:
         self.dim_im = len(self.image.data.shape)
 
         if self.dim_im == 2:
-            self.thinned_image = Image(param=self.zhang_suen(self.image.data), absolutepath=self.image.path + self.image.file_name + '_thinned' + self.image.ext, hdr=self.image.hdr)
+            self.thinned_image = msct_image.Image(param=self.zhang_suen(self.image.data), absolutepath=self.image.path + self.image.file_name + '_thinned' + self.image.ext, hdr=self.image.hdr)
 
         elif self.dim_im == 3:
             assert self.image.orientation == 'IRP'
 
             thinned_data = np.asarray([self.zhang_suen(im_slice) for im_slice in self.image.data])
 
-            self.thinned_image = Image(param=thinned_data, absolutepath=self.image.path + self.image.file_name + '_thinned' + self.image.ext, hdr=self.image.hdr)
+            self.thinned_image = msct_image.Image(param=thinned_data, absolutepath=self.image.path + self.image.file_name + '_thinned' + self.image.ext, hdr=self.image.hdr)
 
     # ------------------------------------------------------------------------------------------------------------------
     def get_neighbours(self, x, y, image):
@@ -137,7 +137,7 @@ class Thinning:
 
 # ----------------------------------------------------------------------------------------------------------------------
 # HAUSDORFF'S DISTANCE -------------------------------------------------------------------------------------------------
-class HausdorffDistance:
+class HausdorffDistance(object):
     def __init__(self, data1, data2, v=1):
         """
         the hausdorff distance between two sets is the maximum of the distances from a point in any of the sets to the nearest point in the other set
@@ -186,7 +186,7 @@ class HausdorffDistance:
 
 # ----------------------------------------------------------------------------------------------------------------------
 # COMPUTE DISTANCES ----------------------------------------------------------------------------------------------------
-class ComputeDistances:
+class ComputeDistances(object):
     def __init__(self, im1, im2=None, param=None):
         self.im1 = im1
         self.im2 = im2
@@ -201,12 +201,12 @@ class ComputeDistances:
         if self.dim_im == 3:
             self.orientation1 = self.im1.orientation
             if self.orientation1 != 'IRP':
-                self.im1 = set_orientation(self.im1, 'IRP')
+                self.im1 = sct_image.set_orientation(self.im1, 'IRP')
 
             if self.im2 is not None:
                 self.orientation2 = self.im2.orientation
                 if self.orientation2 != 'IRP':
-                    self.im2 = set_orientation(self.im2, 'IRP')
+                    self.im2 = sct_image.set_orientation(self.im2, 'IRP')
 
         if self.param.thinning:
             self.thinning1 = Thinning(self.im1, self.param.verbose)
@@ -252,8 +252,8 @@ class ComputeDistances:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_2im_2d(self):
-        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
-        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = get_dimension(self.im2)
+        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = msct_image.get_dimension(self.im1)
+        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = msct_image.get_dimension(self.im2)
         assert px1 == px2 and py1 == py2 and px1 == py1
         self.dim_pix = py1
 
@@ -271,7 +271,7 @@ class ComputeDistances:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_1im_3d(self):
-        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
+        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = msct_image.get_dimension(self.im1)
         self.dim_pix = py1
 
         if self.param.thinning:
@@ -285,8 +285,8 @@ class ComputeDistances:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_2im_3d(self):
-        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
-        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = get_dimension(self.im2)
+        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = msct_image.get_dimension(self.im1)
+        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = msct_image.get_dimension(self.im2)
         # assert round(pz1, 5) == round(pz2, 5) and round(py1, 5) == round(py2, 5)
         assert nx1 == nx2
         self.dim_pix = py1
@@ -358,10 +358,10 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     :param interpolation: type of interpolation used for the resampling
     :return: file name after resampling (or original fname if it was already in the correct resolution)
     """
-    im_in = Image(fname)
-    orientation = get_orientation_3d(im_in)
+    im_in = msct_image.Image(fname)
+    orientation = sct_image.get_orientation_3d(im_in)
     if orientation != 'RPI':
-        im_in = set_orientation(im_in, 'RPI')
+        im_in = sct_image.set_orientation(im_in, 'RPI')
         im_in.save()
         fname = im_in.absolutepath
     nx, ny, nz, nt, px, py, pz, pt = im_in.dim
@@ -378,14 +378,14 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
             sct.run('sct_maths -i ' + name_resample + ' -bin ' + str(thr) + ' -o ' + name_resample)
 
         if orientation != 'RPI':
-            im_resample = Image(name_resample)
-            im_resample = set_orientation(im_resample, orientation)
+            im_resample = msct_image.Image(name_resample)
+            im_resample = sct_image.set_orientation(im_resample, orientation)
             im_resample.save()
             name_resample = im_resample.absolutepath
         return name_resample
     else:
         if orientation != 'RPI':
-            im_in = set_orientation(im_in, orientation)
+            im_in = sct_image.set_orientation(im_in, orientation)
             im_in.save()
             fname = im_in.absolutepath
         sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
@@ -407,7 +407,7 @@ def non_zero_coord(data):
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Compute the Hausdorff\'s distance between two binary images which can be thinned (ie skeletonized)'
                                  'If only one image is inputted, it will be only thinned')
     parser.add_option(name="-i",
@@ -502,9 +502,9 @@ def main(args=None):
             shutil.copy(input_second_fname, os.path.join(tmp_dir, im2_name))
 
         os.chdir(tmp_dir)
-        input_im1 = Image(resample_image(im1_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
+        input_im1 = msct_image.Image(resample_image(im1_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
         if im2_name:
-            input_im2 = Image(resample_image(im2_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
+            input_im2 = msct_image.Image(resample_image(im2_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
         else:
             input_im2 = None
 
