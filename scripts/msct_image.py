@@ -1115,7 +1115,7 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     dice = 0.0  # default value of dice is 0
 
     # check if images are in the same coordinate system
-    assert image1.data.shape == image2.data.shape, "\n\nERROR: the data don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
+    assert image1.data.shape == image2.data.shape, "\n\nERROR: the data (" + image1.absolutepath + " and " + image2.absolutepath + ") don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
 
     # if necessary, change orientation of images to RPI and compute segmentation boundaries
     if mode == '2d-slices' or (mode == '3d' and zboundaries):
