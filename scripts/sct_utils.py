@@ -13,19 +13,19 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 
-import errno
 import email
+import errno
 import fnmatch
 import inspect
 import os
 import platform
-import re
 import random
+import re
 import shutil
+import smtplib
 import subprocess
 import sys
 import time
-import smtplib
 import traceback
 
 import numpy as np
@@ -33,6 +33,7 @@ import numpy as np
 import msct_image
 import sct_convert
 import sct_image
+
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -142,7 +143,7 @@ def checkRAM(os, verbose=1):
         return ram_total
 
 
-class Timer:
+class Timer(object):
     def __init__(self, number_of_iteration=1):
         self.start_timer = 0
         self.time_list = []

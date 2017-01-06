@@ -11,7 +11,7 @@
 #########################################################################################
 
 import sys
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from sct_utils import extract_fname
 from dipy.data.fetcher import read_bvals_bvecs
 
@@ -20,7 +20,7 @@ from dipy.data.fetcher import read_bvals_bvecs
 def get_parser():
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Concatenate bval files in time.')
     parser.add_option(name="-i",
                       type_value=[[','], 'file'],

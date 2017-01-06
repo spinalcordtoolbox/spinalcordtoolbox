@@ -16,7 +16,7 @@ import sys
 from glob import glob
 
 import msct_image
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 import sct_utils as sct
 import sct_image
 import sct_label_utils
@@ -25,7 +25,7 @@ import sct_viewer
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
 Initialization is provided by a spinal cord detection module based on the elliptical Hough transform on multiple axial slices. The result of the detection is available as a PNG image using option -detection-display.
 Parameters of the spinal cord detection are :

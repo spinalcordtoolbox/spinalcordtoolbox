@@ -14,7 +14,7 @@ sys.path.append(path_sct + '/scripts')
 
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -28,7 +28,7 @@ class Param:
 def get_parser():
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Utility function to denoise images. (Return the denoised image and also the difference between the input and the output.)')
     parser.add_option(name="-i",
                       type_value='file',

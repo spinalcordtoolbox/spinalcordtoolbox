@@ -19,14 +19,14 @@ import shutil
 import sys
 import time
 
+import msct_image
+import sct_convert
 import sct_resample
 import sct_smooth_spinalcord
 import sct_utils as sct
-from msct_image import Image
-from sct_convert import convert
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.smoothing_sigma = 5
@@ -107,14 +107,14 @@ def main(args=None):
         os.makedirs(path_tmp)
 
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(fname_data, path_tmp + '/data.nii')
+    sct_convert.convert(fname_data, path_tmp + '/data.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image('data.nii').dim
     sct.printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
 
     # upsample data

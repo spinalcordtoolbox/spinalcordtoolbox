@@ -12,12 +12,15 @@
 
 # TODO: add output check in convert
 
-from msct_parser import Parser
 import sys
+
+import msct_image
+import msct_parser
+import sct_utils as sct
 
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     ## The constructor
     def __init__(self):
         self.verbose = 1
@@ -28,7 +31,7 @@ class Param:
 def get_parser():
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Convert image file to another type.')
     parser.add_option(name="-i",
                       type_value="file",
@@ -56,11 +59,9 @@ def convert(fname_in, fname_out, squeeze_data=True, data_type=None, verbose=1):
     Convert data
     :return True/False
     """
-    from msct_image import Image
-    from sct_utils import printv
-    printv('sct_convert -i '+fname_in+' -o '+fname_out, verbose, 'code')
+    sct.printv('sct_convert -i '+fname_in+' -o '+fname_out, verbose, 'code')
     # Open file
-    im = Image(fname_in)
+    im = msct_image.Image(fname_in)
     # Save file
     im.setFileName(fname_out)
     if data_type is not None:

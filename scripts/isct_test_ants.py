@@ -17,11 +17,11 @@ import os
 import shutil
 import sys
 
-import numpy as np
 import nibabel as nib
+import numpy as np
 
-import sct_utils as sct
 import sct_dice_coefficient
+import sct_utils as sct
 
 
 def main():

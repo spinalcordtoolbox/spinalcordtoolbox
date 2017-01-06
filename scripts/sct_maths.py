@@ -13,12 +13,12 @@
 import sys
 
 import numpy as np
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from msct_image import Image
-from sct_utils import printv, extract_fname
+from sct_utils import sct.printv, extract_fname
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.verbose = '1'
 
@@ -28,7 +28,7 @@ def get_parser():
     param = Param()
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Perform mathematical operations on images. Some inputs can be either a number or a 4d image or several 3d images separated with ","')
     parser.add_option(name="-i",
                       type_value='file',
@@ -176,7 +176,7 @@ def main(args=None):
     verbose = int(arguments['-v'])
 
     # Open file(s)
-    im = Image(fname_in)
+    im = msct_image.Image(fname_in)
     data = im.data  # 3d or 4d numpy array
     dim = im.dim
 
@@ -220,7 +220,7 @@ def main(args=None):
         if len(sigmas) == 1:
             sigmas = [sigmas for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
-            printv(parser.usage.generate(error='ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
+            sct.printv(parser.usage.generate(error='ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
         sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
         # smooth data
@@ -256,7 +256,7 @@ def main(args=None):
         if len(sigmas) == 1:
             sigmas = [sigmas[0] for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
-            printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
+            sct.printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
         sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
         # smooth data
@@ -285,7 +285,7 @@ def main(args=None):
     elif '-mi' in arguments:
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
-        im_2 = Image(arguments['-mi'])
+        im_2 = msct_image.Image(arguments['-mi'])
         compute_similarity(im.data, im_2.data, fname_out, metric='mi', verbose=verbose)
 
         data_out=None
@@ -293,7 +293,7 @@ def main(args=None):
     elif '-corr' in arguments:
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
-        im_2 = Image(arguments['-corr'])
+        im_2 = msct_image.Image(arguments['-corr'])
         compute_similarity(im.data, im_2.data, fname_out, metric='corr', verbose=verbose)
 
         data_out=None
@@ -302,11 +302,11 @@ def main(args=None):
     # if no flag is set
     else:
         data_out = None
-        printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
+        sct.printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
     if data_out is not None:
         # Write output
-        nii_out = Image(fname_in)  # use header of input file
+        nii_out = msct_image.Image(fname_in)  # use header of input file
         nii_out.data = data_out
         nii_out.setFileName(fname_out)
         nii_out.save()
@@ -334,14 +334,14 @@ def main(args=None):
     #             im_out.hdr.set_intent('vector', (), '')
     #         im_out.save()
     # else:
-    #     printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
+    #     sct.printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
     # display message
     if data_out is not None:
-        printv('\nDone! To view results, type:', verbose)
-        printv('fslview '+fname_out+' &\n', verbose, 'info')
+        sct.printv('\nDone! To view results, type:', verbose)
+        sct.printv('fslview '+fname_out+' &\n', verbose, 'info')
     else:
-        printv('\nDone! File created: '+fname_out, verbose, 'info')
+        sct.printv('\nDone! File created: '+fname_out, verbose, 'info')
 
 def otsu(data, nbins):
     from skimage.filters import threshold_otsu
@@ -420,14 +420,14 @@ def get_data(list_fname):
     :param list_fname:
     :return: 3D or 4D numpy array.
     """
-    nii = [Image(f_in) for f_in in list_fname]
+    nii = [msct_image.Image(f_in) for f_in in list_fname]
     data0 = nii[0].data
     data = nii[0].data
     # check that every images have same shape
     for i in range(1, len(nii)):
         if not np.shape(nii[i].data) == np.shape(data0):
-            printv('\nWARNING: shape('+list_fname[i]+')='+str(np.shape(nii[i].data))+' incompatible with shape('+list_fname[0]+')='+str(np.shape(data0)), 1, 'warning')
-            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
+            sct.printv('\nWARNING: shape('+list_fname[i]+')='+str(np.shape(nii[i].data))+' incompatible with shape('+list_fname[0]+')='+str(np.shape(data0)), 1, 'warning')
+            sct.printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
             data = concatenate_along_4th_dimension(data, nii[i].data)
     return data
@@ -447,7 +447,7 @@ def get_data_or_scalar(argument, data_in):
     # if conversion fails, it should be a file
     except:
         # parse file name and check integrity
-        parser2 = Parser(__file__)
+        parser2 = msct_parser.Parser(__file__)
         parser2.add_option(name='-i', type_value=[[','], 'file'])
         list_fname = parser2.parse(['-i', argument]).get('-i')
         data_out = get_data(list_fname)
@@ -526,11 +526,11 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
         res = correlation(data1_1d, data2_1d)
         metric_full = 'Pearson correlation coefficient'
 
-    printv('\n'+ metric_full +': ' + str(res), verbose, 'info')
+    sct.printv('\n'+ metric_full +': ' + str(res), verbose, 'info')
 
     path_out, filename_out, ext_out = extract_fname(fname_out)
     if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
-        printv('ERROR: the output file should a text file or a pickle file. Received extension: '+ext_out, 1, 'error')
+        sct.printv('ERROR: the output file should a text file or a pickle file. Received extension: '+ext_out, 1, 'error')
 
     elif ext_out == '.txt':
         file_out = open(fname_out, 'w')
@@ -590,7 +590,7 @@ def correlation(x, y, type='pearson'):
 #     # check that element of the list have same shape
 #     for i in range(1, shape(data)[0]):
 #         if not shape(data[0]) == shape(data[i]):
-#             printv('ERROR: all input images must have same dimensions.', 1, 'error')
+#             sct.printv('ERROR: all input images must have same dimensions.', 1, 'error')
 #     # if data are 4d (hence giving 5d list), rearrange to list of 3d data
 #     if len(shape(data)) == 5:
 #         from numpy import squeeze

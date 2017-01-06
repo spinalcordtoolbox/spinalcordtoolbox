@@ -28,7 +28,7 @@ import numpy as np
 from sct_image import get_orientation_3d, set_orientation
 import sct_utils as sct
 from msct_image import Image
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 
 # get path of the script and the toolbox
 path_script = os.path.dirname(__file__)
@@ -38,7 +38,7 @@ path_sct = os.path.dirname(path_script)
 ALMOST_ZERO = 0.000001
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.method = 'wath'
         self.path_label = path_sct+'/data/PAM50/atlas/'
@@ -57,7 +57,7 @@ class Param:
 def get_parser(param_default=None):
 
 
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with 'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels. The labels should be in the same space coordinates as the input image.""")
     parser.add_option(name='-i',
                       type_value='image_nifti',
@@ -321,7 +321,7 @@ def main(args=None):
     # Load data
     # Check if the orientation of the data is RPI
     sct.printv('\nLoad metric image...', verbose)
-    input_im = Image(fname_data)
+    input_im = msct_image.Image(fname_data)
     orientation_data = input_im.orientation
 
     if orientation_data != 'RPI':
@@ -333,39 +333,39 @@ def main(args=None):
         sct.printv('\nChange labels orientation into RPI and load them...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(nb_labels):
-            im_label = Image(path_label+indiv_labels_files[i_label])
+            im_label = msct_image.Image(path_label+indiv_labels_files[i_label])
             im_label.change_orientation(orientation='RPI')
             labels[i_label] = im_label.data
         # if the "normalization" option is wanted,
         if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-            im_normalizing_label = Image(fname_normalizing_label)
+            im_normalizing_label = msct_image.Image(fname_normalizing_label)
             im_normalizing_label.change_orientation(orientation='RPI')
             normalizing_label[0] = im_normalizing_label.data
         # if vertebral levels were selected,
         if vertebral_levels:
-            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling = msct_image.Image(fname_vertebral_labeling)
             im_vertebral_labeling.change_orientation(orientation='RPI')
             data_vertebral_labeling = im_vertebral_labeling.data
         # if flag "-mask-weighted" is specified
         if fname_mask_weight:
-            im_weight = Image(fname_mask_weight)
+            im_weight = msct_image.Image(fname_mask_weight)
             im_weight.change_orientation(orientation='RPI')
     else:
         # Load labels
         sct.printv('\nLoad labels...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(0, nb_labels):
-            labels[i_label] = Image(path_label+indiv_labels_files[i_label]).data
+            labels[i_label] = msct_image.Image(path_label+indiv_labels_files[i_label]).data
         # if the "normalization" option is wanted,
         if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-            normalizing_label[0] = Image(fname_normalizing_label).data  # load the data of the normalizing label
+            normalizing_label[0] = msct_image.Image(fname_normalizing_label).data  # load the data of the normalizing label
         # if vertebral levels were selected,
         if vertebral_levels:
-            data_vertebral_labeling = Image(fname_vertebral_labeling).data
+            data_vertebral_labeling = msct_image.Image(fname_vertebral_labeling).data
         if fname_mask_weight:
-            im_weight = Image(fname_mask_weight)
+            im_weight = msct_image.Image(fname_mask_weight)
     data = input_im.data
     sct.printv('  OK!', verbose)
 

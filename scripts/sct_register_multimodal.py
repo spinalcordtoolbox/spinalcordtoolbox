@@ -39,9 +39,9 @@ import sct_concat_transfo
 import sct_image
 import sct_utils as sct
 from msct_image import Image, find_zmin_zmax
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from msct_register_landmarks import register_landmarks
-from sct_convert import convert
+from sct_convert import sct_convert.convert
 
 
 def get_parser(paramreg=None):
@@ -60,7 +60,7 @@ def get_parser(paramreg=None):
         step1 = Paramreg(step='1', type='im')
         paramreg = ParamregMultiStep([step0, step1])
 
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description(
         'This program co-registers two 3D volumes. The deformation is non-rigid and is '
         'constrained along Z direction (i.e., axial plane). Hence, this function assumes '
@@ -221,7 +221,7 @@ def get_parser(paramreg=None):
     return parser
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.outSuffix = "_reg"
@@ -278,7 +278,7 @@ class Paramreg(object):
             setattr(self, obj[0], obj[1])
 
 
-class ParamregMultiStep:
+class ParamregMultiStep(object):
     '''This class contains a dictionary with the params of multiple steps
     '''
 
@@ -453,19 +453,19 @@ def main(args=None):
     # copy files to temporary folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...',
                verbose)
-    convert(fname_src, path_tmp + 'src.nii')
-    convert(fname_dest, path_tmp + 'dest.nii')
+    sct_convert.convert(fname_src, path_tmp + 'src.nii')
+    sct_convert.convert(fname_dest, path_tmp + 'dest.nii')
 
     if fname_src_seg:
-        convert(fname_src_seg, path_tmp + 'src_seg.nii')
-        convert(fname_dest_seg, path_tmp + 'dest_seg.nii')
+        sct_convert.convert(fname_src_seg, path_tmp + 'src_seg.nii')
+        sct_convert.convert(fname_dest_seg, path_tmp + 'dest_seg.nii')
 
     if fname_src_label:
-        convert(fname_src_label, path_tmp + 'src_label.nii')
-        convert(fname_dest_label, path_tmp + 'dest_label.nii')
+        sct_convert.convert(fname_src_label, path_tmp + 'src_label.nii')
+        sct_convert.convert(fname_dest_label, path_tmp + 'dest_label.nii')
 
     if fname_mask != '':
-        convert(fname_mask, path_tmp + 'mask.nii.gz')
+        sct_convert.convert(fname_mask, path_tmp + 'mask.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -677,14 +677,14 @@ def register(src, dest, paramreg, param, i_step_str):
         else:
             # threshold images (otherwise, automatic crop does not work -- see issue #293)
             src_th = sct.add_suffix(src, '_th')
-            nii = Image(src)
+            nii = msct_image.Image(src)
             data = nii.data
             data[data < 0.1] = 0
             nii.data = data
             nii.setFileName(src_th)
             nii.save()
             dest_th = sct.add_suffix(dest, '_th')
-            nii = Image(dest)
+            nii = msct_image.Image(dest)
             data = nii.data
             data[data < 0.1] = 0
             nii.data = data

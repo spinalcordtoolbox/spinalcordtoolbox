@@ -31,7 +31,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.fname_data                = ''
         self.fname_bvecs               = ''
@@ -158,13 +158,13 @@ def eddy_correct(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...',verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_data).dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt),verbose)
 
     # split along T dimension
     sct.printv('\nSplit along T dimension...',verbose)
     from sct_image import split_data
-    im_to_split = Image(fname_data_new+'.nii')
+    im_to_split = msct_image.Image(fname_data_new+'.nii')
     im_split_list = split_data(im_to_split, 3)
     for im in im_split_list:
         im.save()
@@ -237,7 +237,7 @@ def eddy_correct(param):
             sct.printv('\nSplit volumes across Z...',verbose)
             fname_plus = file_data + '_T' + str(i_plus).zfill(4)
             fname_plus_Z = file_data + '_T' + str(i_plus).zfill(4) + '_Z'
-            im_plus = Image(fname_plus+'.nii')
+            im_plus = msct_image.Image(fname_plus+'.nii')
             im_plus_split_list = split_data(im_plus, 2)
             for im_p in im_plus_split_list:
                 im_p.save()
@@ -246,7 +246,7 @@ def eddy_correct(param):
 
             fname_minus = file_data + '_T' + str(i_minus).zfill(4)
             fname_minus_Z = file_data + '_T' + str(i_minus).zfill(4) + '_Z'
-            im_minus = Image(fname_minus+'.nii')
+            im_minus = msct_image.Image(fname_minus+'.nii')
             im_minus_split_list = split_data(im_minus, 2)
             for im_m in im_minus_split_list:
                 im_m.save()            # cmd = fsloutput + 'fslsplit ' + fname_minus + ' ' + fname_minus_Z + ' -z'

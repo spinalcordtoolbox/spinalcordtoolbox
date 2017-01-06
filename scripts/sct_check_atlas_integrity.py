@@ -20,13 +20,15 @@
 
 import os
 import sys
-import sct_utils as sct
-from msct_parser import Parser
+
 import nibabel as nib
 import numpy as np
 
+import sct_utils as sct
+import msct_parser
 
-class Param:
+
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.verbose = 1
@@ -268,7 +270,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath', param=None):
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description(
         'Check the integrity of the warped atlas by (i) evaluating the number of tracts that disappeared given a threshold, (ii) evaluating the number of voxels outside the spinal cord segmentation and (iii) evaluating the overlap between the white matter tracts and the gray matter.'
     )

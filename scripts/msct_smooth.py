@@ -509,7 +509,7 @@ def smoothing_window(x,
 
     TODO: the window parameter could be the window itself if an array instead of a string
     """
-    from numpy import append, insert, ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
+    from numpy import append, insert, ones, convolve  # IMPORTANT: here, we only import hanning. For more windows, add here.
     from math import ceil, floor
     import sct_utils as sct
 
@@ -725,7 +725,7 @@ def outliers_completion(mask, verbose=0):
     N.B.: this outlier replacement technique is not a good statistical solution. Our desire of replacing outliers comes
     from the fact that we need to treat data of same shape but by doing so we are also flawing the signal.
     """
-    from numpy import nan_to_num, nonzero, transpose, append, insert, isnan
+    from numpy import nan_to_num, nonzero, transpose, append, insert
     # Complete mask that as nan values by linear interpolation of the closest points
     #Define signal completed
     signal_completed = nan_to_num(mask)

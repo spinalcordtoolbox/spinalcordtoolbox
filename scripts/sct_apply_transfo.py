@@ -19,18 +19,18 @@ import shutil
 import sys
 
 import sct_utils as sct
-from msct_parser import Parser
-from sct_crop_image import ImageCropper
+import msct_parser
+import sct_crop_image
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.verbose = '1'
         self.remove_tmp_files = '1'
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description(
         'Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).'
     )
@@ -97,7 +97,7 @@ def get_parser():
     return parser
 
 
-class Transform:
+class Transform(object):
     def __init__(self,
                  input_filename,
                  warp,
@@ -202,8 +202,8 @@ class Transform:
             sct.printv(
                 '\nCopying input data to tmp folder and convert to nii...',
                 verbose)
-            from sct_convert import convert
-            convert(fname_src, path_tmp + 'data.nii')
+            from sct_convert import sct_convert.convert
+            sct_convert.convert(fname_src, path_tmp + 'data.nii')
             shutil.copy(fname_dest, path_tmp + file_dest + ext_dest)
             fname_warp_list_tmp = []
             for fname_warp in fname_warp_list:
@@ -259,14 +259,14 @@ class Transform:
                 'WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...',
                 verbose, 'warning')
         elif crop_reference == 1:
-            ImageCropper(
+            sct_crop_image.ImageCropper(
                 input_file=fname_out,
                 output_file=fname_out,
                 ref=warping_field,
                 background=0).crop()
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field+' -b 0')
         elif crop_reference == 2:
-            ImageCropper(
+            sct_crop_image.ImageCropper(
                 input_file=fname_out, output_file=fname_out,
                 ref=warping_field).crop()
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field)

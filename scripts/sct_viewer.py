@@ -51,11 +51,11 @@ from numpy import arange, linspace, max, pad, percentile
 import sct_utils as sct
 import sct_image
 from msct_image import Image
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from msct_types import *
 
 
-class SinglePlot:
+class SinglePlot(object):
     """
         This class manages mouse events on one image.
     """
@@ -756,7 +756,7 @@ class ClickViewer(Viewer):
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Volume Viewer')
     parser.add_option(name="-i",
                       type_value=[[','], 'file'],

@@ -23,12 +23,13 @@
 # TODO: normalize SSE: currently, it depends on the number of landmarks
 
 # from msct_types import Point
-from numpy import array, sin, cos, matrix, sum, mean, absolute
-from math import pow, sqrt
+from math import sqrt
 from operator import itemgetter
-# from msct_register_regularized import generate_warping_field
-import sct_utils as sct
+
 from nibabel import load
+from numpy import array, sin, cos, matrix, sum, mean, absolute
+
+import sct_utils as sct
 
 sse_results = []
 ini_param_rotation = 0.5 #rad
@@ -48,11 +49,11 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     """
     from msct_image import Image
     # open src label
-    im_src = Image(fname_src)
+    im_src = msct_image.Image(fname_src)
     # coord_src = im_src.getNonZeroCoordinates(sorting='value')  # landmarks are sorted by value
     coord_src = im_src.getCoordinatesAveragedByValue()  # landmarks are sorted by value
     # open dest labels
-    im_dest = Image(fname_dest)
+    im_dest = msct_image.Image(fname_dest)
     # coord_dest = im_dest.getNonZeroCoordinates(sorting='value')
     coord_dest = im_dest.getCoordinatesAveragedByValue()
     # Reorganize landmarks
@@ -221,7 +222,7 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
         # Importing data
         from nibabel import load
         from numpy import amax, cross, dot
-        from math import acos, pi
+        from math import acos
         data_moving = load(img_src).get_data()
         data_fixed = load(img_dest).get_data()
         data_moving_10percent = data_moving > amax(data_moving) * 0.1
@@ -349,7 +350,6 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
         # use Agg to prevent display
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
 
         fig = plt.figure()
         ax = fig.gca(projection='3d')

@@ -12,11 +12,11 @@
 
 import sys
 
-from msct_parser import Parser
-from sct_utils import printv
+import msct_parser
+from sct_utils import sct.printv
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.verbose = 1
 
@@ -26,7 +26,7 @@ class Param:
 def get_parser(param):
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Compute Diffusion Tensor Images (DTI) using dipy.')
     parser.add_option(name="-i",
                       type_value="file",
@@ -95,7 +95,7 @@ def main(args = None):
 
     # compute DTI
     if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, param):
-        printv('ERROR in compute_dti()', 1, 'error')
+        sct.printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
@@ -112,7 +112,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, p
     """
     # Open file.
     from msct_image import Image
-    nii = Image(fname_in)
+    nii = msct_image.Image(fname_in)
     data = nii.data
     print('data.shape (%d, %d, %d, %d)' % data.shape)
 
@@ -124,13 +124,13 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, p
 
     # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
     if not file_mask == '':
-        printv('Open mask file...', param.verbose)
+        sct.printv('Open mask file...', param.verbose)
         # open mask file
-        nii_mask = Image(file_mask)
+        nii_mask = msct_image.Image(file_mask)
         mask = nii_mask.data
 
     # fit tensor model
-    printv('Computing tensor using "'+method+'" method...', param.verbose)
+    sct.printv('Computing tensor using "'+method+'" method...', param.verbose)
     import dipy.reconst.dti as dti
     if method == 'standard':
         tenmodel = dti.TensorModel(gtab)
@@ -148,7 +148,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, p
             tenfit = dti_restore.fit(data, mask)
 
     # Compute metrics
-    printv('Computing metrics...', param.verbose)
+    sct.printv('Computing metrics...', param.verbose)
     # FA
     from dipy.reconst.dti import fractional_anisotropy
     nii.data = fractional_anisotropy(tenfit.evals)
@@ -189,7 +189,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, p
 #     bvecs = array([[float(j.strip("\n")) for j in list_bvecs[i].split(" ")] for i in range(len(list_bvecs))])
 #     # make sure one dimension is "3"
 #     if not 3 in bvecs.shape:
-#         printv('ERROR: bvecs should be text file with 3 lines (or columns).', 1, 'error')
+#         sct.printv('ERROR: bvecs should be text file with 3 lines (or columns).', 1, 'error')
 #     return bvecs
 #
 

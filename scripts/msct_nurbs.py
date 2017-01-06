@@ -60,19 +60,17 @@
 # License: see the LICENSE.TXT
 #=======================================================================================================================
 # check if needed Python libraries are already installed or not
-from sys import exit
+import sys
 try:
     from numpy import *
 except ImportError:
     print '--- numpy not installed! ---'
-    exit(2)
+    sys.exit(2)
 try:
     from scipy.interpolate import interp1d
 except ImportError:
     print '--- scipy not installed! ---'
-    exit(2)
-#import matplotlib.pyplot as plt
-#from mpl_toolkits.mplot3d import Axes3D
+    sys.exit(2)
 
 
 class NURBS():
@@ -126,7 +124,7 @@ class NURBS():
                 nb_points = len(P_x)
                 if self.nbControle > nb_points - 1:
                     print 'ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ', self.nbControle, '. Either change degre to a lower value, either add points to the curve.'
-                    exit(2)
+                    sys.exit(2)
 
                 # compute weights based on curve density
                 w = [1.0]*len(P_x)

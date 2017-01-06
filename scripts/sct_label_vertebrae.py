@@ -32,7 +32,7 @@ import sct_resample
 import sct_straighten_spinalcord
 import sct_utils as sct
 from msct_image import Image
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from sct_maths import mutual_information
 from sct_warp_template import get_file_label
 
@@ -40,7 +40,7 @@ path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.shift_AP_initc2 = 35
         self.size_AP_initc2 = 9  # 15
@@ -66,7 +66,7 @@ class Param:
 
 
 def get_parser(param_default):
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description(
         '''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord
 segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then
@@ -229,7 +229,7 @@ def main(args=None):
         create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
     elif initcenter:
         # find z centered in FOV
-        nii = Image('segmentation.nii.gz')
+        nii = msct_image.Image('segmentation.nii.gz')
         nii.change_orientation('RPI')  # reorient to RPI
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
         z_center = int(round(nz / 2))  # get z_center
@@ -359,11 +359,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     fname_template = get_file_label(path_template + 'template/', contrast.upper() + '-weighted', output='filewithpath')
 
     sct.printv('\nOpen template and vertebral levels...', verbose)
-    data_template = Image(fname_template).data
-    data_disc_template = Image(fname_level).data
+    data_template = msct_image.Image(fname_template).data
+    data_disc_template = msct_image.Image(fname_level).data
 
     # open anatomical volume
-    im_input = Image(fname)
+    im_input = msct_image.Image(fname)
     data = im_input.data
 
     # smooth data
@@ -627,7 +627,7 @@ def create_label_z(fname_seg, z, value):
     :return: fname_label
     """
     fname_label = 'labelz.nii.gz'
-    nii = Image(fname_seg)
+    nii = msct_image.Image(fname_seg)
     orientation_origin = nii.change_orientation('RPI')  # change orientation to RPI
     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
     # find x and y coordinates of the centerline at z using center of mass
@@ -651,7 +651,7 @@ def get_z_and_disc_values_from_label(fname_label):
     :param fname_label: image that contains label
     :return: [z_label, value_label] int list
     """
-    nii = Image(fname_label)
+    nii = msct_image.Image(fname_label)
     # get center of mass of label
     x_label, y_label, z_label = scipy.ndimage.measurements.center_of_mass(nii.data)
     x_label, y_label, z_label = int(round(x_label)), int(round(y_label)), int(round(z_label))
@@ -675,13 +675,13 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     # add voxels in segmentation that are not in segmentation_labeled
     sct_maths.main(['-i', fname_labeled_seg, '-dilate', '2', '-o', 'segmentation_labeled_dilate.nii.gz'])
     # dilate labeled segmentation
-    data_label_dilate = Image('segmentation_labeled_dilate.nii.gz').data
+    data_label_dilate = msct_image.Image('segmentation_labeled_dilate.nii.gz').data
     sct_maths.main('-i segmentation_labeled_mul.nii.gz -bin 0 -o segmentation_labeled_mul_bin.nii.gz'.split())
-    data_label_bin = Image('segmentation_labeled_mul_bin.nii.gz').data
-    data_seg = Image(fname_seg).data
+    data_label_bin = msct_image.Image('segmentation_labeled_mul_bin.nii.gz').data
+    data_seg = msct_image.Image(fname_seg).data
     data_diff = data_seg - data_label_bin
     ind_nonzero = np.where(data_diff)
-    im_label = Image('segmentation_labeled_mul.nii.gz')
+    im_label = msct_image.Image('segmentation_labeled_mul.nii.gz')
     for i_vox in range(len(ind_nonzero[0])):
         # assign closest label value for this voxel
         ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
@@ -848,7 +848,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
 
     # open segmentation
-    seg = Image(fname_seg)
+    seg = msct_image.Image(fname_seg)
     dim = seg.dim
     ny = dim[1]
     nz = dim[2]
@@ -893,7 +893,7 @@ def label_discs(fname_seg_labeled, verbose=1):
     :return:
     """
     # open labeled segmentation
-    im_seg_labeled = Image(fname_seg_labeled)
+    im_seg_labeled = msct_image.Image(fname_seg_labeled)
     orientation_native = im_seg_labeled.change_orientation('RPI')
     nx, ny, nz = im_seg_labeled.dim[0], im_seg_labeled.dim[1], im_seg_labeled.dim[2]
     data_disc = np.zeros([nx, ny, nz])

@@ -31,13 +31,15 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
-import numpy as np
-import sct_utils as sct
-from math import sqrt
 import os
+from math import sqrt
+
+import numpy as np
+
+import sct_utils as sct
 
 
-class PCA:
+class PCA(object):
     """
     Principal Component Analysis for a data set of images
 
