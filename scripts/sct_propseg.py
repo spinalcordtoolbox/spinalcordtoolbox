@@ -37,15 +37,17 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
 
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
     path_tmp = sct.tmp_create(verbose=verbose)
-
-    # convert segmentation image to RPI
-    im_input = Image(fname_segmentation)
-    image_input_orientation = orientation(im_input, get=True, verbose=False)
-    sct.run('sct_image -i ' + fname_segmentation + ' -setorient RPI -o ' + path_tmp + 'tmp.segmentation_RPI.nii.gz', verbose)
-    sct.run('sct_image -i ' + fname_centerline + ' -setorient RPI -o ' + path_tmp + 'tmp.centerline_RPI.nii.gz', verbose)
+    shutil.copy(fname_segmentation, path_tmp + 'tmp.segmentation.nii.gz')
+    shutil.copy(fname_centerline, path_tmp + 'tmp.centerline.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
+
+    # convert segmentation image to RPI
+    im_input = Image('tmp.segmentation.nii.gz')
+    image_input_orientation = orientation(im_input, get=True, verbose=False)
+    sct.run('sct_image -i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz', verbose)
+    sct.run('sct_image -i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz', verbose)
 
     # go through segmentation image, and compare with centerline from propseg
     im_seg = Image('tmp.segmentation_RPI.nii.gz')
@@ -93,10 +95,10 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
     im_seg.setFileName('tmp.segmentation_RPI_c.nii.gz')
     im_seg.save()
 
-    os.chdir('..')
-
     # replacing old segmentation with the corrected one
-    sct.run('sct_image -i ' + path_tmp + 'tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_segmentation, verbose)
+    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ../' + fname_segmentation, verbose)
+
+    os.chdir('..')
 
     # remove temporary files
     if remove_temp_files:
