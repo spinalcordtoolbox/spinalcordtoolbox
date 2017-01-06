@@ -25,11 +25,11 @@ import sys
 
 import numpy as np
 
+import msct_image
 import sct_apply_transfo
+import sct_image
 import sct_maths
 import sct_utils as sct
-from msct_image import Image
-from sct_image import concat_data, split_data
 
 
 def moco(param):
@@ -60,7 +60,7 @@ def moco(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    data_im = Image(file_data + ext)
+    data_im = msct_image.Image(file_data + ext)
     nx, ny, nz, nt, px, py, pz, pt = data_im.dim
     sct.printv(('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt)), verbose)
 
@@ -71,7 +71,7 @@ def moco(param):
 
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
-    data_split_list = split_data(data_im, dim=3)
+    data_split_list = sct_image.split_data(data_im, dim=3)
     for im in data_split_list:
         im.save()
     file_data_splitT = file_data + '_T'
@@ -134,9 +134,9 @@ def moco(param):
         sct.printv('\nMerge data back along T...', verbose)
         fname_list = []
         for indice_index in range(len(index)):
-            # im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
+            # im_list.append(msct_image.Image(file_data_splitT_moco_num[indice_index] + ext))
             fname_list.append(file_data_splitT_moco_num[indice_index] + ext)
-        im_out = concat_data(fname_list, 3)
+        im_out = sct_image.concat_data(fname_list, 3)
         im_out.setFileName(file_data_moco + ext)
         im_out.save()
 

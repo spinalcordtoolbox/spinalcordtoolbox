@@ -20,11 +20,11 @@ import time
 
 import sct_utils as sct
 from msct_image import Image
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from sct_image import split_data
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.average = 0
@@ -104,8 +104,8 @@ def main(args=None):
     dwi_name = 'dwi'
     dwi_mean_name = dwi_name+'_mean'
 
-    from sct_convert import convert
-    if not convert(fname_data, path_tmp+dmri_name+ext):
+    from sct_convert import sct_convert.convert
+    if not sct_convert.convert(fname_data, path_tmp+dmri_name+ext):
         sct.printv('ERROR in convert.', 1, 'error')
     shutil.copy(fname_bvecs, os.path.join(path_tmp, 'bvecs'))
 
@@ -113,7 +113,7 @@ def main(args=None):
     os.chdir(path_tmp)
 
     # Get size of data
-    im_dmri = Image(dmri_name+ext)
+    im_dmri = msct_image.Image(dmri_name+ext)
     sct.printv('\nGet dimensions data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_dmri.dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
@@ -287,7 +287,7 @@ EXAMPLE
 
 def get_parser(param_default):
     # Initialize parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description("Separate b=0 and DW images from diffusion dataset.")

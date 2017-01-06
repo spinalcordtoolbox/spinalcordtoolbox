@@ -10,15 +10,14 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-from msct_parser import Parser
-
 import sys
+
 import sct_utils as sct
-#import numpy as np
+import msct_parser
 
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -26,7 +25,7 @@ class Param:
         self.t1=0
 
 
-class ErnstAngle:
+class ErnstAngle(object):
     ## The constructor
     def __init__(self, t1,tr=None, fname_output=None):
         self.t1 = t1
@@ -69,7 +68,7 @@ class ErnstAngle:
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Function to get the Ernst Angle. For examples of T1 values, see Stikov et al. MRM 2015. Example in the white matter at 3T: 850ms.')
     parser.add_option(name="-t1",
                       type_value="float",

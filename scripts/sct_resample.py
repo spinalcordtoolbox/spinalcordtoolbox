@@ -18,10 +18,10 @@ import os
 import sys
 
 import sct_utils as sct
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -181,7 +181,7 @@ def resample(param):
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Anisotropic resampling of 3D or 4D data.')
     parser.add_option(
         name="-i",

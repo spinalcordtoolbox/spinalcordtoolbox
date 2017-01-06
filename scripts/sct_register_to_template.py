@@ -20,13 +20,13 @@ import time
 
 import sct_utils as sct
 from msct_image import Image, find_zmin_zmax
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from sct_label_utils import ProcessLabels
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from sct_utils import add_suffix
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.path_sct = os.environ.get('SCT_DIR')
         self.debug = 0
@@ -42,7 +42,7 @@ class Param:
 
 def get_parser(paramreg):
     param = Param()
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Register anatomical image to the template.')
     parser.add_option(
         name="-i",
@@ -246,7 +246,7 @@ def main(args=None):
 
     sct.printv('\nCheck input labels...')
     # check if label image contains coherent labels
-    image_label = Image(fname_landmarks)
+    image_label = msct_image.Image(fname_landmarks)
     # -> all labels must be different
     labels = image_label.getNonZeroCoordinates(sorting='value')
     hasDifferentLabels = True
@@ -295,7 +295,7 @@ def main(args=None):
     # check if provided labels are available in the template
     sct.printv('\nCheck if provided labels are available in the template',
                verbose)
-    image_label_template = Image(ftmp_template_label)
+    image_label_template = msct_image.Image(ftmp_template_label)
     labels_template = image_label_template.getNonZeroCoordinates(
         sorting='value')
     if labels[-1].value > labels_template[-1].value:
@@ -552,7 +552,7 @@ def main(args=None):
 
         # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This new label is added at the level of the upper most label (lowest value), at 1cm to the right.
         for i_file in [ftmp_label, ftmp_template_label]:
-            im_label = Image(i_file)
+            im_label = msct_image.Image(i_file)
             coord_label = im_label.getCoordinatesAveragedByValue(
             )  # N.B. landmarks are sorted by value
             # Create new label
@@ -688,8 +688,8 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     label using the old and new voxel size.
     """
     # get dimensions of input and destination files
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_labels).dim
-    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = Image(fname_dest).dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_labels).dim
+    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = msct_image.Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
     # read labels
     processor = ProcessLabels(fname_labels)

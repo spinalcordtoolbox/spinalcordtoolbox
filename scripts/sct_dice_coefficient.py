@@ -11,12 +11,12 @@
 ###############################################################################
 import sys
 
-from msct_parser import Parser
+import msct_parser
 import sct_utils as sct
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description(
         'Compute the Dice Coefficient. Note: indexing (in both time and space) starts with 0 not 1! '
         'Inputting -1 for a size will set it to the full image extent for that dimension.')

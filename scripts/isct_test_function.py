@@ -33,19 +33,20 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import sys
 import commands
+import copy_reg
+import json
+import os
 import platform
 import signal
-from time import time, strftime
-from msct_parser import Parser
-import sct_utils as sct
-import os
-import copy_reg
+import sys
 import types
-import pandas as pd
-import json
+from time import time, strftime
 
+import pandas as pd
+
+import sct_utils as sct
+import msct_parser
 
 # get path of the toolbox
 # TODO: put it back below when working again (julien 2016-04-04)
@@ -231,7 +232,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
 
 def get_parser():
     # Initialize parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description("")

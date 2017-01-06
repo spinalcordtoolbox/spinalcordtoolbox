@@ -15,10 +15,13 @@
 #########################################################################################
 
 from __future__ import division
+
 from math import sqrt
+
+import numpy as np
 from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
-import numpy as np
+
 
 class Point(object):
     def __init__(self):
@@ -123,14 +126,13 @@ class CoordinateValue(Coordinate):
         return hash(self.value)
 
 
-class Centerline:
+class Centerline(object):
     """
     This class represents a centerline in an image. Its coordinates can be in voxel space as well as in physical space.
     A centerline is defined by its points and the derivatives of each point.
     When initialized, the lenght of the centerline is computed as well as the coordinate reference system of each plane.
     """
     def __init__(self, points_x, points_y, points_z, deriv_x, deriv_y, deriv_z):
-        from math import sqrt
         #self.points = []
         self.derivatives = []
         self.length = 0.0

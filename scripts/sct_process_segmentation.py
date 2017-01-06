@@ -26,12 +26,12 @@ import scipy
 import sct_utils as sct
 from msct_image import Image
 from msct_nurbs import NURBS
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from sct_image import set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
@@ -51,7 +51,7 @@ def get_parser():
     :return: Returns the parser with the command line documentation contained in it.
     """
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description("""This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
     parser.add_option(name='-i',
                       type_value='image_nifti',
@@ -276,7 +276,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
 
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    im_seg = Image(file_data+ext_data)
+    im_seg = msct_image.Image(file_data+ext_data)
     fname_segmentation_orient = 'segmentation_rpi' + ext_data
     im_seg_orient = set_orientation(im_seg, 'RPI')
     im_seg_orient.setFileName(fname_segmentation_orient)
@@ -306,7 +306,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
             sct.printv('Selected vertebral levels... ' + vert_levels)
 
             # convert the vertebral labeling file to RPI orientation
-            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling = msct_image.Image(fname_vertebral_labeling)
             im_vertebral_labeling.change_orientation(orientation='RPI')
 
             # get the slices corresponding to the vertebral levels
@@ -386,7 +386,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
-    im_seg = Image('segmentation_RPI.nii.gz')
+    im_seg = msct_image.Image('segmentation_RPI.nii.gz')
     data = im_seg.data
 
     # Get size of data
@@ -453,7 +453,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     sct.printv('\nSet to original orientation...', verbose)
     # get orientation of the input data
-    im_seg_original = Image('segmentation.nii.gz')
+    im_seg_original = msct_image.Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
     sct.run('sct_image -i centerline_RPI.nii.gz -setorient '+orientation+' -o centerline.nii.gz')
 
@@ -508,7 +508,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
-    im_seg = Image('segmentation_RPI.nii.gz')
+    im_seg = msct_image.Image('segmentation_RPI.nii.gz')
     data_seg = im_seg.data
     # hdr_seg = im_seg.hdr
 
@@ -625,7 +625,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     im_seg.save()
 
     # get orientation of the input data
-    im_seg_original = Image('segmentation.nii.gz')
+    im_seg_original = msct_image.Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
     sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o csa_volume_in_initial_orientation.nii.gz')
     sct.run('sct_image -i angle_volume_RPI.nii.gz -setorient '+orientation+' -o angle_volume_in_initial_orientation.nii.gz')
@@ -680,7 +680,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
             sct.check_file_exist(fname_vertebral_labeling)
 
             # convert the vertebral labeling file to RPI orientation
-            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling = msct_image.Image(fname_vertebral_labeling)
             im_vertebral_labeling.change_orientation(orientation='RPI')
 
             # get the slices corresponding to the vertebral levels
@@ -764,7 +764,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
     :return:
     """
     # Open labels
-    im_disc = Image(fname_label)
+    im_disc = msct_image.Image(fname_label)
     # retrieve all labels
     coord_label = im_disc.getNonZeroCoordinates()
     # compute list_disc_z and list_disc_value
@@ -1058,7 +1058,7 @@ def ellipse_dim(a):
 def edge_detection(f):
 
     #sigma = 1.0
-    img = Image.open(f) #grayscale
+    img = msct_image.Image.open(f) #grayscale
     imgdata = np.array(img, dtype = float)
     G = imgdata
     #G = ndi.filters.gaussian_filter(imgdata, sigma)

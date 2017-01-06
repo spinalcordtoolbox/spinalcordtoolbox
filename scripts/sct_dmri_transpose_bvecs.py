@@ -23,22 +23,22 @@
 #########################################################################################
 
 import sys
-from msct_parser import Parser
-from sct_utils import extract_fname, printv
+from msct_parser import msct_parser.Parser
+from sct_utils import extract_fname, sct.printv
 
 
 # PARSER
 # ==========================================================================================
 def get_parser():
     # parser initialisation
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # # initialize parameters
     # param = Param()
     # param_default = Param()
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Transpose bvecs file (if necessary) to get nx3 structure.')
     parser.add_option(name='-bvec',
                       type_value='file',
@@ -87,7 +87,7 @@ def main(args=None):
     bvals, bvecs = read_bvals_bvecs(None, fname_in)
 
     # # Transpose bvecs
-    # printv('Transpose bvecs...', verbose)
+    # sct.printv('Transpose bvecs...', verbose)
     # # from numpy import transpose
     # bvecs = bvecs.transpose()
 
@@ -101,7 +101,7 @@ def main(args=None):
     fid.close()
 
     # display message
-    printv('Created file:\n--> '+fname_out+'\n', verbose, 'info')
+    sct.printv('Created file:\n--> '+fname_out+'\n', verbose, 'info')
 
 
 # Start program

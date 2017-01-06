@@ -30,7 +30,7 @@ import sct_crop_image
 import sct_image
 import sct_utils as sct
 from msct_image import Image
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from msct_smooth import evaluate_derivative_3D, smoothing_window
 from sct_apply_transfo import Transform
 
@@ -58,8 +58,8 @@ def smooth_centerline(fname_centerline,
     # get dimensions (again!)
     file_image = None
     if isinstance(fname_centerline, str):
-        file_image = Image(fname_centerline)
-    elif isinstance(fname_centerline, Image):
+        file_image = msct_image.Image(fname_centerline)
+    elif isinstance(fname_centerline, msct_image.Image):
         file_image = fname_centerline
     else:
         sct.printv('ERROR: wrong input image', 1, 'error')
@@ -317,7 +317,7 @@ class SpinalCordStraightener(object):
 
             # Get dimension
             sct.printv('\nGet dimensions...', verbose)
-            image_centerline = Image('centerline_rpi.nii.gz')
+            image_centerline = msct_image.Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
             sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' +
                        str(nz), verbose)
@@ -451,12 +451,12 @@ class SpinalCordStraightener(object):
             # Create straight NIFTI volumes
             # ==========================================================================================
             if self.use_straight_reference:
-                image_centerline_pad = Image('centerline_rpi.nii.gz')
+                image_centerline_pad = msct_image.Image('centerline_rpi.nii.gz')
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
 
                 sct_image.main('-i centerline_ref.nii.gz -setorient RPI -o centerline_ref_rpi.nii.gz'.split())
                 fname_ref = 'centerline_ref_rpi.nii.gz'
-                image_centerline_straight = Image('centerline_ref_rpi.nii.gz')
+                image_centerline_straight = msct_image.Image('centerline_ref_rpi.nii.gz')
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
                 x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
                     'centerline_ref_rpi.nii.gz',
@@ -477,7 +477,7 @@ class SpinalCordStraightener(object):
                 hdr_warp_s.set_data_dtype('float32')
 
                 if self.disks_input_filename != "" and self.disks_ref_filename != "":
-                    disks_input_image = Image('labels_input.nii.gz')
+                    disks_input_image = msct_image.Image('labels_input.nii.gz')
                     coord = disks_input_image.getNonZeroCoordinates(
                         sorting='z', reverse_coord=True)
                     coord_physical = []
@@ -491,7 +491,7 @@ class SpinalCordStraightener(object):
                         image=disks_input_image,
                         fname_output='disks_input_image.nii.gz')
 
-                    disks_ref_image = Image('labels_ref.nii.gz')
+                    disks_ref_image = msct_image.Image('labels_ref.nii.gz')
                     coord = disks_ref_image.getNonZeroCoordinates(
                         sorting='z', reverse_coord=True)
                     coord_physical = []
@@ -519,7 +519,7 @@ class SpinalCordStraightener(object):
                     ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0)
                          / pz))
                 sct_image.main(('-i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,' + str(padding_z)).split())
-                image_centerline_pad = Image('centerline_rpi.nii.gz')
+                image_centerline_pad = msct_image.Image('centerline_rpi.nii.gz')
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
                 hdr_warp = image_centerline_pad.hdr.copy()
                 start_point_coord = image_centerline_pad.transfo_phys2pix(
@@ -551,7 +551,7 @@ class SpinalCordStraightener(object):
                             warp_space_y[1]) + ',' + str(end_point_coord[2] -
                                                          start_point_coord[2])).split())
                 fname_ref = 'tmp.centerline_pad_crop.nii.gz'
-                image_centerline_straight = Image(
+                image_centerline_straight = msct_image.Image(
                     'tmp.centerline_pad_crop.nii.gz')
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
                 hdr_warp_s = image_centerline_straight.hdr.copy()
@@ -775,7 +775,7 @@ class SpinalCordStraightener(object):
                 interp="nn",
                 warp="tmp.curve2straight.nii.gz",
                 verbose=verbose).apply()
-            file_centerline_straight = Image(
+            file_centerline_straight = msct_image.Image(
                 'tmp.centerline_straight.nii.gz', verbose=verbose)
             coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(
                 sorting='z')
@@ -874,13 +874,13 @@ class SpinalCordStraightener(object):
 
         # output QC image
         if qc:
-            Image(fname_straight).save_quality_control(
+            msct_image.Image(fname_straight).save_quality_control(
                 plane='sagittal', n_slices=1, path_output=self.path_output)
 
 
 def get_parser():
     # Initialize parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description(

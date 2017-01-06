@@ -13,7 +13,7 @@
 import sys
 import nibabel as nib
 import sct_utils as sct
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 from dipy.denoise.noise_estimate import piesno
 
 # PARSER
@@ -26,7 +26,7 @@ def get_parser():
     #param = Param()
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('''Identification and estimation of noise in the diffusion signal, implemented by the Dipy software project (http://nipy.org/dipy/), based on the PIESNO method: Koay C.G., E. Ozarslan, C. Pierpaoli. Probabilistic Identification and Estimation of Noise (PIESNO): A self-consistent approach and its applications in MRI. JMR, 199(1):94-103, 2009.''')
     parser.add_option(name='-i',
                       type_value='file',

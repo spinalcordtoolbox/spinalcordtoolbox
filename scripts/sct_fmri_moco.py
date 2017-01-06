@@ -21,12 +21,12 @@ import time
 import msct_moco as moco
 import sct_utils as sct
 from msct_image import Image
-from msct_parser import Parser
-from sct_convert import convert
+from msct_parser import msct_parser.Parser
+from sct_convert import sct_convert.convert
 from sct_image import concat_data, copy_header, split_data
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -105,7 +105,7 @@ def main(args=None):
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(param.fname_data, path_tmp+'fmri.nii')
+    sct_convert.convert(param.fname_data, path_tmp+'fmri.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -150,12 +150,12 @@ def fmri_moco(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+'.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(file_data+'.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    im_data = Image(file_data + ext_data)
+    im_data = msct_image.Image(file_data + ext_data)
     im_data_split_list = split_data(im_data, 3)
     for im in im_data_split_list:
         im.save()
@@ -213,7 +213,7 @@ def fmri_moco(param):
     #     cmd = cmd + ' ' + file_data + '_mean_' + str(iGroup)
     im_mean_list = []
     for iGroup in range(nb_groups):
-        im_mean_list.append(Image(file_data + '_mean_' + str(iGroup) + ext_data))
+        im_mean_list.append(msct_image.Image(file_data + '_mean_' + str(iGroup) + ext_data))
     im_mean_concat = concat_data(im_mean_list, 3)
     im_mean_concat.setFileName(file_data_groups_means_merge + ext_data)
     im_mean_concat.save()
@@ -254,8 +254,8 @@ def fmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    im_fmri = Image('fmri.nii')
-    im_fmri_moco = Image('fmri_moco.nii')
+    im_fmri = msct_image.Image('fmri.nii')
+    im_fmri_moco = msct_image.Image('fmri_moco.nii')
     im_fmri_moco = copy_header(im_fmri, im_fmri_moco)
     im_fmri_moco.save()
 
@@ -270,7 +270,7 @@ def fmri_moco(param):
 
 def get_parser():
     param_default = Param()
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description("""Motion correction of fMRI data. Some robust features include:
   - group-wise (-g)
   - slice-wise regularized along z using polynomial function (-p)

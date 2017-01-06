@@ -19,7 +19,7 @@ import sct_utils as sct
 # from sct_average_data_across_dimension import average_data_across_dimension
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.verbose = 1
@@ -31,7 +31,7 @@ class Param:
 
 # ----------------------------------------------------------------------------------------------------------------------
 # TSNR -----------------------------------------------------------------------------------------------------------------
-class Tsnr:
+class Tsnr(object):
     def __init__(self, param=None, fmri=None, anat=None):
         self.param = param
         self.fmri = fmri
@@ -67,9 +67,9 @@ class Tsnr:
         # sct.run('fslmaths ' + fname_data + ' -Tstd ' + fname_data_std)
         fname_tsnr = sct.add_suffix(fname_data, '_tsnr')
         from msct_image import Image
-        nii_mean = Image(fname_data_mean)
+        nii_mean = msct_image.Image(fname_data_mean)
         data_mean = nii_mean.data
-        data_std = Image(fname_data_std).data
+        data_std = msct_image.Image(fname_data_std).data
         data_tsnr = data_mean/data_std
         nii_tsnr = nii_mean
         nii_tsnr.data = data_tsnr
@@ -89,7 +89,7 @@ class Tsnr:
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Compute temporal SNR (tSNR) in fMRI time series.')
     parser.add_option(name='-i',
                       type_value='file',

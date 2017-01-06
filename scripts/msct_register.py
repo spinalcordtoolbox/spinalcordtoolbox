@@ -16,8 +16,8 @@
 # TODO: add flag for setting threshold on PCA
 # TODO: clean code for generate_warping_field (unify with centermass_rot)
 
-import shutil
 import os
+import shutil
 import sys
 from math import acos, asin, cos, sin
 
@@ -25,11 +25,11 @@ import numpy as np
 from nibabel import Nifti1Image, load, save
 from scipy.io import loadmat
 
+import msct_image
+import sct_sct_convert.convert
+import sct_image
+import sct_register_multimodal
 import sct_utils as sct
-from msct_image import Image
-from sct_image import split_data
-from sct_convert import convert
-from sct_register_multimodal import Paramreg
 
 
 def register_slicewise(fname_src,
@@ -47,10 +47,10 @@ def register_slicewise(fname_src,
 
     # copy data to temp folder
     sct.printv('\nCopy input data to temp folder...', verbose)
-    convert(fname_src, path_tmp + 'src.nii')
-    convert(fname_dest, path_tmp + 'dest.nii')
+    sct_sct_convert.convert.sct_convert.convert(fname_src, path_tmp + 'src.nii')
+    sct_sct_convert.convert.sct_convert.convert(fname_dest, path_tmp + 'dest.nii')
     if fname_mask != '':
-        convert(fname_mask, path_tmp + 'mask.nii.gz')
+        sct_sct_convert.convert.sct_convert.convert(fname_mask, path_tmp + 'mask.nii.gz')
 
     # go to temporary folder
     os.chdir(path_tmp)
@@ -90,7 +90,7 @@ def register_slicewise(fname_src,
             path_qc=path_qc,
             smoothWarpXY=int(paramreg.smoothWarpXY))
     else:
-        # convert SCT flags into ANTs-compatible flags
+        # sct_convert.convert SCT flags into ANTs-compatible flags
         algo_dic = {
             'translation': 'Translation',
             'rigid': 'Rigid',
@@ -151,7 +151,7 @@ def register2d_centermassrot(fname_src,
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_dest).dim
     sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz),
                verbose)
     sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' +
@@ -159,15 +159,15 @@ def register2d_centermassrot(fname_src,
 
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
-    im_src = Image('src.nii')
-    split_source_list = split_data(im_src, 2)
+    im_src = msct_image.Image('src.nii')
+    split_source_list = sct_image.split_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination volume...', verbose)
-    im_dest = Image('dest.nii')
-    split_dest_list = split_data(im_dest, 2)
+    im_dest = msct_image.Image('dest.nii')
+    split_dest_list = sct_image.split_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
 
@@ -256,7 +256,7 @@ def register2d_centermassrot(fname_src,
         coord_init_pix = np.array([
             row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel())) * iz)
         ]).T
-        # convert coordinates to physical space
+        # sct_convert.convert coordinates to physical space
         coord_init_phy = np.array(im_src.transfo_pix2phys(coord_init_pix))
         # get centermass coordinates in physical space
         centermass_src_phy = im_src.transfo_pix2phys(
@@ -438,7 +438,7 @@ def register2d_columnwise(fname_src,
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_dest).dim
     sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz),
                verbose)
     sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' +
@@ -446,15 +446,15 @@ def register2d_columnwise(fname_src,
 
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
-    im_src = Image('src.nii')
-    split_source_list = split_data(im_src, 2)
+    im_src = msct_image.Image('src.nii')
+    split_source_list = sct_image.split_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination volume...', verbose)
-    im_dest = Image('dest.nii')
-    split_dest_list = split_data(im_dest, 2)
+    im_dest = msct_image.Image('dest.nii')
+    split_dest_list = sct_image.split_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
 
@@ -494,7 +494,7 @@ def register2d_columnwise(fname_src,
         coord_init_pix = np.array([
             row.ravel(), col.ravel(), np.array(np.ones(len(row.ravel())) * iz)
         ]).T
-        # convert coordinates to physical space
+        # sct_convert.convert coordinates to physical space
         coord_init_phy = np.array(im_src.transfo_pix2phys(coord_init_pix))
         # get 2d data from the selected slice
         src2d = data_src[:, :, iz]
@@ -748,7 +748,7 @@ def register2d(fname_src,
                fname_mask='',
                fname_warp='warp_forward.nii.gz',
                fname_warp_inv='warp_inverse.nii.gz',
-               paramreg=Paramreg(
+               paramreg=sct_register_multimodal.Paramreg(
                    step='0',
                    type='im',
                    algo='Translation',
@@ -785,7 +785,7 @@ def register2d(fname_src,
         mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
-        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
+        paramreg[optional]: parameters of antsRegistration (type: sct_register_multimodal.Paramreg class )
         ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
 
     output:
@@ -809,7 +809,7 @@ def register2d(fname_src,
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_dest).dim
     sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' +
                str(nz), verbose)
     sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' +
@@ -817,24 +817,23 @@ def register2d(fname_src,
 
     # Split input volume along z
     sct.printv('\nSplit input volume...', verbose)
-    from sct_image import split_data
-    im_src = Image('src.nii')
-    split_source_list = split_data(im_src, 2)
+    im_src = msct_image.Image('src.nii')
+    split_source_list = sct_image.split_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination volume...', verbose)
-    im_dest = Image('dest.nii')
-    split_dest_list = split_data(im_dest, 2)
+    im_dest = msct_image.Image('dest.nii')
+    split_dest_list = sct_image.split_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
 
     # Split mask volume along z
     if fname_mask != '':
         sct.printv('\nSplit mask volume...', verbose)
-        im_mask = Image('mask.nii.gz')
-        split_mask_list = split_data(im_mask, 2)
+        im_mask = msct_image.Image('mask.nii.gz')
+        split_mask_list = sct_image.split_data(im_mask, 2)
         for im in split_mask_list:
             im.save()
 
@@ -933,7 +932,7 @@ def register2d(fname_src,
     sct.printv('\nMerge warping fields along z...', verbose)
 
     if paramreg.algo in ['Translation']:
-        # convert to array
+        # sct_convert.convert to array
         x_disp_a = np.asarray(x_displacement)
         y_disp_a = np.asarray(y_displacement)
         theta_rot_a = np.asarray(theta_rotation)
@@ -998,7 +997,7 @@ def generate_warping_field(fname_dest,
 
     # Get image dimensions
     # sct.printv('Get destination dimension', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_dest).dim
     # sct.printv('  matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     # sct.printv('  voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 

@@ -15,11 +15,11 @@ import os
 import shutil
 import sys
 
+import msct_parser
 import sct_utils as sct
-from msct_parser import Parser
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         # self.register = 1
@@ -59,9 +59,9 @@ def main(args=None):
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    from sct_convert import convert
-    convert(fname_mt0, path_tmp +'mt0.nii', data_type='float32')
-    convert(fname_mt1, path_tmp +'mt1.nii', data_type='float32')
+    from sct_convert import sct_convert.convert
+    sct_convert.convert(fname_mt0, path_tmp +'mt0.nii', data_type='float32')
+    sct_convert.convert(fname_mt1, path_tmp +'mt1.nii', data_type='float32')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -69,9 +69,9 @@ def main(args=None):
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
     from msct_image import Image
-    nii_mt1 = Image('mt1.nii')
+    nii_mt1 = msct_image.Image('mt1.nii')
     data_mt1 = nii_mt1.data
-    data_mt0 = Image('mt0.nii').data
+    data_mt0 = msct_image.Image('mt0.nii').data
     data_mtr = 100 * (data_mt0 - data_mt1) / data_mt0
     # save MTR file
     nii_mtr = nii_mt1
@@ -99,7 +99,7 @@ def main(args=None):
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Compute magnetization transfer ratio (MTR). Output is given in percentage.')
     parser.add_option(name="-mt0",
                       type_value="file",

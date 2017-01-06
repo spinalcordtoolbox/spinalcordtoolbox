@@ -17,26 +17,24 @@
 # TODO: manage .cshrc files
 # TODO: add linux distrib when checking OS
 
+import commands
+import importlib
+import os
+import platform
+import sys
+
+import sct_utils as sct
+import msct_parser
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     ## The constructor
     def __init__(self):
         self.create_log_file = 0
         self.complete_test = 0
 
 
-import sys
-
-import os
-import commands
-import platform
-import importlib
-import sct_utils as sct
-from msct_parser import Parser
-
-
-class bcolors:
+class bcolors(object):
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -409,7 +407,7 @@ def check_package_version(installed, required, package_name):
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Check the installation and environment variables of the'
                                  ' toolbox and its dependencies.')
     parser.add_option(name="-c",

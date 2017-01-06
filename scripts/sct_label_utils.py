@@ -23,10 +23,10 @@ import numpy as np
 
 import sct_utils as sct
 from msct_image import Image
-from msct_parser import Parser
+from msct_parser import msct_parser.Parser
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.fname_label_output = 'labels.nii.gz'
@@ -46,10 +46,10 @@ class ProcessLabels(object):
                  verbose=1,
                  vertebral_levels=None,
                  value=None):
-        self.image_input = Image(fname_label, verbose=verbose)
+        self.image_input = msct_image.Image(fname_label, verbose=verbose)
         self.image_ref = None
         if fname_ref is not None:
-            self.image_ref = Image(fname_ref, verbose=verbose)
+            self.image_ref = msct_image.Image(fname_ref, verbose=verbose)
 
         if isinstance(fname_output, list):
             if len(fname_output) == 1:
@@ -131,7 +131,7 @@ class ProcessLabels(object):
         """
         This function add a specified value to all non-zero voxels.
         """
-        image_output = Image(self.image_input, self.verbose)
+        image_output = msct_image.Image(self.image_input, self.verbose)
         # image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
@@ -171,8 +171,8 @@ class ProcessLabels(object):
         create a cross.
         :return:
         """
-        output_image = Image(self.image_input, self.verbose)
-        nx, ny, nz, nt, px, py, pz, pt = Image(
+        output_image = msct_image.Image(self.image_input, self.verbose)
+        nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(
             self.image_input.absolutepath).dim
 
         coordinates_input = self.image_input.getNonZeroCoordinates()
@@ -378,7 +378,7 @@ class ProcessLabels(object):
         """
         Create a plane of thickness="width" and changes its value with an offset and a gap between labels.
         """
-        image_output = Image(self.image_input, self.verbose)
+        image_output = msct_image.Image(self.image_input, self.verbose)
         image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
@@ -394,11 +394,11 @@ class ProcessLabels(object):
         Generate a plane in the reference space for each label present in the input image
         """
 
-        image_output = Image(self.image_ref, self.verbose)
+        image_output = msct_image.Image(self.image_ref, self.verbose)
         image_output.data *= 0
 
-        image_input_neg = Image(self.image_input, self.verbose).copy()
-        image_input_pos = Image(self.image_input, self.verbose).copy()
+        image_input_neg = msct_image.Image(self.image_input, self.verbose).copy()
+        image_input_pos = msct_image.Image(self.image_input, self.verbose).copy()
         image_input_neg.data *= 0
         image_input_pos.data *= 0
         X, Y, Z = (self.image_input.data < 0).nonzero()
@@ -469,7 +469,7 @@ class ProcessLabels(object):
         Take all non-zero values, sort them along the inverse z direction, and attributes the values 1,
         2, 3, etc. This function assuming RPI orientation.
         """
-        image_output = Image(self.image_input, self.verbose)
+        image_output = msct_image.Image(self.image_input, self.verbose)
         image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates(
             sorting='z', reverse_coord=True)
@@ -487,7 +487,7 @@ class ProcessLabels(object):
         a segmentation image with vertebral levels labelized.
         Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
         """
-        image_output = Image(self.image_input, self.verbose)
+        image_output = msct_image.Image(self.image_input, self.verbose)
         image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
         coordinates_ref = self.image_ref.getNonZeroCoordinates(sorting='value')
@@ -695,7 +695,7 @@ class ProcessLabels(object):
         The symmetry option enables to remove labels from reference image that are not in input image
         """
         # image_output = Image(self.image_input.dim, orientation=self.image_input.orientation, hdr=self.image_input.hdr, verbose=self.verbose)
-        image_output = Image(self.image_input, verbose=self.verbose)
+        image_output = msct_image.Image(self.image_input, verbose=self.verbose)
         image_output.data *= 0  # put all voxels to 0
 
         result_coord_input, result_coord_ref = self.remove_label_coord(
@@ -708,8 +708,8 @@ class ProcessLabels(object):
                 round(coord.value))
 
         if symmetry:
-            # image_output_ref = Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
-            image_output_ref = Image(self.image_ref, verbose=self.verbose)
+            # image_output_ref = msct_image.Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
+            image_output_ref = msct_image.Image(self.image_ref, verbose=self.verbose)
             for coord in result_coord_ref:
                 image_output_ref.data[coord.x, coord.y, coord.z] = int(
                     round(coord.value))
@@ -813,8 +813,8 @@ class ProcessLabels(object):
         The image must be RPI
         :return:
         """
-        im_input = Image(self.image_input, self.verbose)
-        im_output = Image(self.image_input, self.verbose)
+        im_input = msct_image.Image(self.image_input, self.verbose)
+        im_output = msct_image.Image(self.image_input, self.verbose)
         im_output.data *= 0
 
         # 1. extract vertebral levels from input image
@@ -888,7 +888,7 @@ class ProcessLabels(object):
 
 def get_parser(param):
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Utility function for label image.')
     parser.add_option(
         name="-i",
