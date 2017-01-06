@@ -100,5 +100,11 @@ if __name__ == "__main__":
     if verbose == '0':
         cmd += ' -v '
 
+    # Computation of Dice coefficient using Python implementation.
+    # commented for now as it does not cover all the feature of isct_dice_coefficient
+    #from msct_image import Image, compute_dice
+    #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
+    #sct.printv('Dice (python-based) = ' + str(dice), verbose)
+
     status, output = sct.run(cmd, verbose)
     sct.printv(output, verbose)
