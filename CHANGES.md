@@ -9,6 +9,7 @@
 - BUG: **sct_register_graymatter**: fixed empty inverse warping field (#1068)
 - OPT: **sct_label_vertebrae**: now outputing verbose=2 pics in ofolder (#1094)
 - OPT: **sct_straighten_spinalcord**: fixed Reduce required RAM (#979)
+- OPT: **sct_straighten_spinalcord**: removes accuracy computation by default (#1075)
 - OPT: **sct_propseg**: improve robustness towards exception (#207)
 - OPT: **isct_test_function**: send email when finished (#1081)
 - OPT: **isct_test_function**: removed color tags on log entries  (#1035)
