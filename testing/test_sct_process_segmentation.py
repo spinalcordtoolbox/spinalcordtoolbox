@@ -116,7 +116,7 @@ def test(path_data='', parameters=''):
         output += '\nWARNING: CSA_ERROR = ' + str(csa_error) + ' < ' + str(th_csa_error)
 
     # compute CSA on rotated image
-    cmd = 'sct_process_segmentation -i data_seg_reg.nii.gz' \
+    cmd = 'sct_process_segmentation -i data_seg_src_reg.nii.gz' \
           + ' -p csa' \
           + ' -size 0' \
           + ' -r 0' \
