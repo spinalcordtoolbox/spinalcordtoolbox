@@ -19,6 +19,7 @@ from pandas import DataFrame
 import os.path
 import time, random
 from copy import deepcopy
+from msct_image import Image, compute_dice
 
 
 def test(path_data='', parameters=''):
@@ -102,10 +103,8 @@ def test(path_data='', parameters=''):
     # if command ran without error, test integrity
     if status == 0:
         # compute dice coefficient between generated image and image from database
-        cmd = 'sct_dice_coefficient -i ' + segmentation_filename + ' -d ' + manual_segmentation_filename
-        status, output = sct.run(cmd, verbose)
-        # parse output and compare to acceptable threshold
-        dice_segmentation = float(output.split('3D Dice coefficient = ')[1].split('\n')[0])
+        dice_segmentation = compute_dice(Image(segmentation_filename), Image(manual_segmentation_filename), mode='3d', zboundaries=False)
+
         if dice_segmentation < dice_threshold:
             status = 99
 
