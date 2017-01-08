@@ -52,7 +52,7 @@ def test(path_data='', parameters=''):
     param_with_path += ' -ofolder ' + path_output
 
     # run command
-    cmd = 'sct_straighten_spinalcord ' + param_with_path
+    cmd = 'sct_straighten_spinalcord -param accuracy_results=1 ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
@@ -67,6 +67,7 @@ def test(path_data='', parameters=''):
     result_rmse, result_dist_max = float('nan'), float('nan')
     if status == 0:
         # extraction of results
+        print output
         output_split = output.split('Maximum x-y error = ')[1].split(' mm')
         result_dist_max = float(output_split[0])
         result_rmse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
