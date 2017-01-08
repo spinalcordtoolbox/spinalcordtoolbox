@@ -55,7 +55,7 @@ def main(args=None):
     verbose = 1
     dict_url = {'sct_example_data': 'https://osf.io/feuef/?action=download',
                 'sct_testing_data': 'https://osf.io/uqcz5/?action=download',
-                'PAM50': 'https://osf.io/st8k4/?action=download',
+                'PAM50': 'https://osf.io/gdwn6/?action=download',
                 'MNI-Poly-AMU': 'https://osf.io/b26vh/?action=download',
                 'gm_model': 'https://osf.io/ugscu/?action=download'}
     tmp_file = 'tmp.data.zip'
