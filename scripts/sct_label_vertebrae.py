@@ -193,9 +193,9 @@ def main(args=None):
     # else:
     #     file_out = ''
     if '-ofolder' in arguments:
-        path_output = arguments['-ofolder']
+        path_output = sct.slash_at_the_end(os.path.abspath(arguments['-ofolder']), slash=1)
     else:
-        path_output = ''
+        path_output = sct.slash_at_the_end(os.path.abspath(os.curdir), slash=1)
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -302,7 +302,7 @@ def main(args=None):
         run('sct_maths -i data_straightr.nii -laplacian 1 -o data_straightr.nii', verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2)
+    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2, path_output=path_output)
 
     # un-straighten labeled spinal cord
     printv('\nUn-straighten labeling...', verbose)
@@ -341,7 +341,7 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', initc2='auto'):
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', initc2='auto', path_output='../'):
     """
     Find intervertebral discs in straightened image using template matching
     :param fname:
@@ -351,6 +351,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     :param init_disc:
     :param verbose:
     :param path_template:
+    :param path_output: output path for verbose=2 pictures
     :return:
     """
     printv('\nLook for template...', verbose)
@@ -434,7 +435,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_initc2, y=yc, yshift=param.shift_AP_initc2, ysize=param.size_AP_initc2, z=0, zshift=param.shift_IS_initc2, zsize=param.size_IS_initc2, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True)
+        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_initc2, y=yc, yshift=param.shift_AP_initc2, ysize=param.size_AP_initc2, z=0, zshift=param.shift_IS_initc2, zsize=param.size_IS_initc2, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True, path_output=path_output)
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
@@ -499,7 +500,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
         if not current_disc in [1]:
-            current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc), gaussian_weighting=False)
+            current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc), gaussian_weighting=False, path_output=path_output)
 
         # display new disc
         if verbose == 2:
@@ -588,7 +589,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
 
     # save figure
     if verbose == 2:
-        plt.figure(50), plt.savefig('../fig_anat_straight_with_labels.png')
+        plt.figure(50), plt.savefig(path_output + 'fig_anat_straight_with_labels.png')
         # plt.close()
 
 
@@ -670,7 +671,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     im_label.save()
 
 
-def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, z=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, zrange=[], verbose=1, save_suffix='', gaussian_weighting=True):
+def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, z=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, zrange=[], verbose=1, save_suffix='', gaussian_weighting=True, path_output='../'):
     """
     Find z that maximizes correlation between src and target 3d data.
     :param src: 3d source data
@@ -819,7 +820,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         plt.grid()
         # save figure
-        plt.figure(11), plt.savefig('../fig_pattern'+save_suffix+'.png'), plt.close()
+        plt.figure(11), plt.savefig(path_output + 'fig_pattern'+save_suffix+'.png'), plt.close()
 
     # return z-origin (z) + z-displacement minus zshift (to account for non-centered disc)
     return z + zrange[ind_peak] - zshift
