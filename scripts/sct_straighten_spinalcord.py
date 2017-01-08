@@ -200,7 +200,7 @@ class SpinalCordStraightener(object):
         self.straight2curved = True
 
         self.resample_factor = 0.0
-        self.accuracy_results = 1.0
+        self.accuracy_results = 0
 
         self.elapsed_time = 0.0
         self.elapsed_time_accuracy = 0.0
@@ -796,7 +796,7 @@ def get_parser():
                                   'Resampling to lower resolution decreases computational time while decreasing straightening accuracy.\n'
                                   'To keep native resolution, set this option to 0.\n',
                       mandatory=False,
-                      default_value=1)
+                      default_value=0)
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="straightened file",
@@ -833,7 +833,7 @@ def get_parser():
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
                                   "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
                                   "\nthreshold_distance: [0.0,inf[. Threshold for which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=1.0"
-                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=1",
+                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0",
                       mandatory=False,
                       example="algo_fitting=nurbs")
     parser.add_option(name="-params",
