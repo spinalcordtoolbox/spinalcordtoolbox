@@ -19,6 +19,7 @@ import numpy as np
 
 import msct_image
 import msct_parser
+import sct_extract_metric
 import sct_image
 import sct_utils as sct
 
@@ -128,8 +129,8 @@ def main(args=None):
 
     # Get slices corresponding to vertebral levels
     if vert_levels != 'None':
-        from sct_extract_metric import get_slices_matching_with_vertebral_levels
-        slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(mask_data, vert_levels, vert_labeling_data, verbose)
+        slices_of_interest, actual_vert_levels, warning_vert_levels = \
+            sct_extract_metric.get_slices_matching_with_vertebral_levels(mask_data, vert_levels, vert_labeling_data, verbose)
 
     # Remove slices that were not selected
     if slices_of_interest == 'None':
@@ -147,8 +148,8 @@ def main(args=None):
         std_input_temporal = np.std(input_data, 3)
         noise = np.mean(std_input_temporal[indexes_roi])
     elif method == 'diff':
-        data_1 = input_data[:, :, :, 0]
-        data_2 = input_data[:, :, :, 1]
+        b0_1 = input_data[:, :, :, 0]
+        b0_2 = input_data[:, :, :, 1]
         signal = np.mean(np.add(b0_1[indexes_roi], b0_2[indexes_roi]))
         noise = np.sqrt(2)*np.std(np.subtract(b0_1[indexes_roi], b0_2[indexes_roi]))
     elif method == 'background':

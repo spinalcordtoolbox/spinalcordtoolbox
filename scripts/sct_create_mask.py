@@ -20,14 +20,13 @@ import nibabel
 import numpy
 from scipy import ndimage
 
-import sct_image
 import sct_label_utils
 import sct_maths
 import sct_utils as sct
 import msct_image
-from msct_parser import Parser
-from sct_convert import sct_convert.convert
-from sct_image import concat_data, copy_header, get_orientation
+import msct_parser
+import sct_convert
+import sct_image
 
 
 # DEFAULT PARAMETERS
@@ -113,7 +112,7 @@ def create_mask(param):
     path_tmp = sct.tmp_create(param.verbose)
 
     sct.printv('\nCheck orientation...', param.verbose)
-    orientation_input = get_orientation(msct_image.Image(param.fname_data))
+    orientation_input = sct_image.get_orientation(msct_image.Image(param.fname_data))
     sct.printv('.. ' + orientation_input, param.verbose)
 
     # copy input data to tmp folder
@@ -224,19 +223,19 @@ def create_mask(param):
     im_temp = []
     for iz in range(nz_not_null):
         if iz != 0 and iz % 100 == 0:
-            im_temp.append(concat_data(im_list, 2))
+            im_temp.append(sct_image.concat_data(im_list, 2))
             im_list = [msct_image.Image(file_mask + str(iz) + '.nii')]
         else:
             im_list.append(msct_image.Image(file_mask+str(iz)+'.nii'))
 
     if im_temp:
-        im_temp.append(concat_data(im_list, 2))
-        im_out = concat_data(im_temp, 2, no_expand=True)
+        im_temp.append(sct_image.concat_data(im_list, 2))
+        im_out = sct_image.concat_data(im_temp, 2, no_expand=True)
     else:
-        im_out = concat_data(im_list, 2)
+        im_out = sct_image.concat_data(im_list, 2)
     '''
     fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
-    im_out = concat_data(fname_list, dim=2)
+    im_out = sct_image.concat_data(fname_list, dim=2)
     im_out.setFileName('mask_RPI.nii.gz')
     im_out.save()
 
@@ -247,7 +246,7 @@ def create_mask(param):
     # copy header input --> mask
     im_dat = msct_image.Image('data.nii')
     im_mask = msct_image.Image('mask.nii.gz')
-    im_mask = copy_header(im_dat, im_mask)
+    im_mask = sct_image.copy_header(im_dat, im_mask)
     im_mask.save()
 
     # come back to parent folder

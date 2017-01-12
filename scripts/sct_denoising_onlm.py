@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
-import sys, commands
-import numpy as np
+import commands
+import sys
 from time import time
+
 import nibabel as nib
-from msct_parser import Parser
+import numpy as np
+
 import sct_utils as sct
 
 # Get path of the toolbox

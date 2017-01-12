@@ -24,7 +24,7 @@ from msct_base_classes import Algorithm
 from msct_image import Image
 from msct_parser import msct_parser.Parser
 from sct_convert import convert
-from sct_image import (concat_data, copy_header, get_orientation_3d, set_orientation, split_data)
+from sct_image import (sct_image.concat_data, sct_image.copy_header, get_orientation_3d, sct_image.set_orientation, sct_image.split_data)
 from sct_process_segmentation import extract_centerline
 from sct_straighten_spinalcord import smooth_centerline
 
@@ -112,11 +112,11 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Reorient input anatomical volume into RL PA IS orientation
     print '\nReorient input volume to RL PA IS orientation...'
-    set_orientation(im_anat, 'RPI')
+    sct_image.set_orientation(im_anat, 'RPI')
     im_anat.setFileName('tmp.anat_orient.nii')
     # Reorient binary point into RL PA IS orientation
     print '\nReorient binary point into RL PA IS orientation...'
-    set_orientation(im_point, 'RPI')
+    sct_image.set_orientation(im_point, 'RPI')
     im_point.setFileName('tmp.point_orient.nii')
 
     # Get image dimensions
@@ -127,13 +127,13 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Split input volume
     sct.printv('\nSplit input volume...')
-    im_anat_split_list = split_data(im_anat, 2)
+    im_anat_split_list = sct_image.split_data(im_anat, 2)
     file_anat_split = []
     for im in im_anat_split_list:
         file_anat_split.append(im.absolutepath)
         im.save()
 
-    im_point_split_list = split_data(im_point, 2)
+    im_point_split_list = sct_image.split_data(im_point, 2)
     file_point_split = []
     for im in im_point_split_list:
         file_point_split.append(im.absolutepath)
@@ -356,17 +356,17 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
     fname_anat_list = glob.glob('tmp.anat_orient_fit_z*.nii')
-    im_anat_concat = concat_data(fname_anat_list, 2)
+    im_anat_concat = sct_image.concat_data(fname_anat_list, 2)
     im_anat_concat.setFileName('tmp.anat_orient_fit.nii')
     im_anat_concat.save()
 
     fname_mask_list = glob.glob('tmp.mask_orient_fit_z*.nii')
-    im_mask_concat = concat_data(fname_mask_list, 2)
+    im_mask_concat = sct_image.concat_data(fname_mask_list, 2)
     im_mask_concat.setFileName('tmp.mask_orient_fit.nii')
     im_mask_concat.save()
 
     fname_point_list = glob.glob('tmp.point_orient_fit_z*.nii')
-    im_point_concat = concat_data(fname_point_list, 2)
+    im_point_concat = sct_image.concat_data(fname_point_list, 2)
     im_point_concat.setFileName('tmp.point_orient_fit.nii')
     im_point_concat.save()
 
@@ -376,16 +376,16 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     im_anat_orient_fit = msct_image.Image('tmp.anat_orient_fit.nii')
     im_mask_orient_fit = msct_image.Image('tmp.mask_orient_fit.nii')
     im_point_orient_fit = msct_image.Image('tmp.point_orient_fit.nii')
-    im_anat_orient_fit = copy_header(im_anat, im_anat_orient_fit)
-    im_mask_orient_fit = copy_header(im_anat, im_mask_orient_fit)
-    im_point_orient_fit = copy_header(im_anat, im_point_orient_fit)
+    im_anat_orient_fit = sct_image.copy_header(im_anat, im_anat_orient_fit)
+    im_mask_orient_fit = sct_image.copy_header(im_anat, im_mask_orient_fit)
+    im_point_orient_fit = sct_image.copy_header(im_anat, im_point_orient_fit)
     for im in [im_anat_orient_fit, im_mask_orient_fit, im_point_orient_fit]:
         im.save()
 
     # Reorient outputs into the initial orientation of the input image
     print '\nReorient the centerline into the initial orientation of the input image...'
-    set_orientation('tmp.point_orient_fit.nii', input_image_orientation, 'tmp.point_orient_fit.nii')
-    set_orientation('tmp.mask_orient_fit.nii', input_image_orientation, 'tmp.mask_orient_fit.nii')
+    sct_image.set_orientation('tmp.point_orient_fit.nii', input_image_orientation, 'tmp.point_orient_fit.nii')
+    sct_image.set_orientation('tmp.mask_orient_fit.nii', input_image_orientation, 'tmp.mask_orient_fit.nii')
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'

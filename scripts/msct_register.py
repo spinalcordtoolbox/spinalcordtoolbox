@@ -26,7 +26,7 @@ from nibabel import Nifti1Image, load, save
 from scipy.io import loadmat
 
 import msct_image
-import sct_sct_convert.convert
+import sct_convert
 import sct_image
 import sct_register_multimodal
 import sct_utils as sct
@@ -47,10 +47,10 @@ def register_slicewise(fname_src,
 
     # copy data to temp folder
     sct.printv('\nCopy input data to temp folder...', verbose)
-    sct_sct_convert.convert.sct_convert.convert(fname_src, path_tmp + 'src.nii')
-    sct_sct_convert.convert.sct_convert.convert(fname_dest, path_tmp + 'dest.nii')
+    sct_convert.convert.sct_convert.convert(fname_src, path_tmp + 'src.nii')
+    sct_convert.convert.sct_convert.convert(fname_dest, path_tmp + 'dest.nii')
     if fname_mask != '':
-        sct_sct_convert.convert.sct_convert.convert(fname_mask, path_tmp + 'mask.nii.gz')
+        sct_convert.convert.sct_convert.convert(fname_mask, path_tmp + 'mask.nii.gz')
 
     # go to temporary folder
     os.chdir(path_tmp)

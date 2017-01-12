@@ -18,9 +18,10 @@ import os
 import shutil
 import sys
 
-import sct_utils as sct
 import msct_parser
+import sct_convert
 import sct_crop_image
+import sct_utils as sct
 
 
 class Param(object):
@@ -202,7 +203,6 @@ class Transform(object):
             sct.printv(
                 '\nCopying input data to tmp folder and convert to nii...',
                 verbose)
-            from sct_convert import sct_convert.convert
             sct_convert.convert(fname_src, path_tmp + 'data.nii')
             shutil.copy(fname_dest, path_tmp + file_dest + ext_dest)
             fname_warp_list_tmp = []
@@ -215,10 +215,10 @@ class Transform(object):
             os.chdir(path_tmp)
             # split along T dimension
             sct.printv('\nSplit along T dimension...', verbose)
-            from sct_image import split_data
+            from sct_image import sct_image.split_data
             im_dat = Image('data.nii')
             im_header = im_dat.hdr
-            data_split_list = split_data(im_dat, 3)
+            data_split_list = sct_image.split_data(im_dat, 3)
             for im in data_split_list:
                 im.save()
 
@@ -235,13 +235,13 @@ class Transform(object):
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
-            from sct_image import concat_data
+            from sct_image import sct_image.concat_data
             import glob
             path_out, name_out, ext_out = sct.extract_fname(fname_out)
             # im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]
             # concat_data use to take a list of image in input, now takes a list of file names to open the files one by one (see issue #715)
             fname_list = glob.glob('data_reg_T*.nii')
-            im_out = concat_data(fname_list, 3, im_header['pixdim'])
+            im_out = sct_image.concat_data(fname_list, 3, im_header['pixdim'])
             im_out.setFileName(name_out + ext_out)
             im_out.save()
             os.chdir('..')

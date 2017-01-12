@@ -23,7 +23,7 @@ import sct_utils as sct
 from msct_image import Image
 from msct_parser import msct_parser.Parser
 from sct_convert import sct_convert.convert
-from sct_image import concat_data, copy_header, split_data
+from sct_image import sct_image.concat_data, sct_image.copy_header, sct_image.split_data
 
 
 class Param(object):
@@ -156,7 +156,7 @@ def fmri_moco(param):
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
     im_data = msct_image.Image(file_data + ext_data)
-    im_data_split_list = split_data(im_data, 3)
+    im_data_split_list = sct_image.split_data(im_data, 3)
     for im in im_data_split_list:
         im.save()
 
@@ -192,7 +192,7 @@ def fmri_moco(param):
         im_fmri_list = []
         for it in range(nt_i):
             im_fmri_list.append(im_data_split_list[index_fmri_i[it]])
-        im_fmri_concat = concat_data(im_fmri_list, 3)
+        im_fmri_concat = sct_image.concat_data(im_fmri_list, 3)
         im_fmri_concat.setFileName(file_data_merge_i + ext_data)
         im_fmri_concat.save()
 
@@ -214,7 +214,7 @@ def fmri_moco(param):
     im_mean_list = []
     for iGroup in range(nb_groups):
         im_mean_list.append(msct_image.Image(file_data + '_mean_' + str(iGroup) + ext_data))
-    im_mean_concat = concat_data(im_mean_list, 3)
+    im_mean_concat = sct_image.concat_data(im_mean_list, 3)
     im_mean_concat.setFileName(file_data_groups_means_merge + ext_data)
     im_mean_concat.save()
 
@@ -256,7 +256,7 @@ def fmri_moco(param):
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
     im_fmri = msct_image.Image('fmri.nii')
     im_fmri_moco = msct_image.Image('fmri_moco.nii')
-    im_fmri_moco = copy_header(im_fmri, im_fmri_moco)
+    im_fmri_moco = sct_image.copy_header(im_fmri, im_fmri_moco)
     im_fmri_moco.save()
 
     # Average volumes

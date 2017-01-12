@@ -59,8 +59,8 @@ import msct_image
 import msct_multiatlas_seg
 #import Model, Param, ParamData, ParamModel
 import msct_parser
-from sct_image import set_orientation
-from sct_utils import (add_suffix, extract_fname, sct.printv, slash_at_the_end,
+from sct_image import sct_image.set_orientation
+from sct_utils import (add_suffix, sct.extract_fname, sct.printv, slash_at_the_end,
                        tmp_create)
 
 
@@ -298,9 +298,9 @@ class SegmentGM(object):
         # go back to original directory
         os.chdir('..')
         sct.printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
-        fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]),
+        fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(sct.extract_fname(self.param_seg.fname_im)[1:]),
                                                                    '_gmseg')
-        fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]),
+        fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(sct.extract_fname(self.param_seg.fname_im)[1:]),
                                                                    '_wmseg')
 
         self.im_res_gmseg.setFileName(fname_res_gmseg)
@@ -344,25 +344,25 @@ class SegmentGM(object):
         # copy input image
         if self.param_seg.fname_im is not None:
             shutil.copy(self.param_seg.fname_im, self.tmp_dir)
-            self.param_seg.fname_im = ''.join(extract_fname(self.param_seg.fname_im)[1:])
+            self.param_seg.fname_im = ''.join(sct.extract_fname(self.param_seg.fname_im)[1:])
         else:
             sct.printv('ERROR: No input image', self.param.verbose, 'error')
 
         # copy sc seg image
         if self.param_seg.fname_seg is not None:
             shutil.copy(self.param_seg.fname_seg, self.tmp_dir)
-            self.param_seg.fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
+            self.param_seg.fname_seg = ''.join(sct.extract_fname(self.param_seg.fname_seg)[1:])
         else:
             sct.printv('ERROR: No SC segmentation image', self.param.verbose, 'error')
 
         # copy level file
         if self.param_seg.fname_level is not None:
             shutil.copy(self.param_seg.fname_level, self.tmp_dir)
-            self.param_seg.fname_level = ''.join(extract_fname(self.param_seg.fname_level)[1:])
+            self.param_seg.fname_level = ''.join(sct.extract_fname(self.param_seg.fname_level)[1:])
 
         if self.param_seg.fname_manual_gmseg is not None:
             shutil.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir)
-            self.param_seg.fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
+            self.param_seg.fname_manual_gmseg = ''.join(sct.extract_fname(self.param_seg.fname_manual_gmseg)[1:])
 
     def get_im_from_list(self, data):
         im = msct_image.Image(data)
@@ -372,8 +372,8 @@ class SegmentGM(object):
         # set the correct orientation
         im.setFileName('im_to_orient.nii.gz')
         im.save()
-        im = set_orientation(im, 'IRP')
-        im = set_orientation(im, 'PIL', data_inversion=True)
+        im = sct_image.set_orientation(im, 'IRP')
+        im = sct_image.set_orientation(im, 'PIL', data_inversion=True)
 
         return im
 
@@ -579,11 +579,11 @@ class SegmentGM(object):
         # PUT RES BACK IN ORIGINAL ORIENTATION
         im_res_gmseg.setFileName('res_gmseg.nii.gz')
         im_res_gmseg.save()
-        im_res_gmseg = set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
+        im_res_gmseg = sct_image.set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
 
         im_res_wmseg.setFileName('res_wmseg.nii.gz')
         im_res_wmseg.save()
-        im_res_wmseg = set_orientation(im_res_wmseg, self.info_preprocessing['orientation'])
+        im_res_wmseg = sct_image.set_orientation(im_res_wmseg, self.info_preprocessing['orientation'])
 
         return im_res_gmseg, im_res_wmseg
 
@@ -595,8 +595,8 @@ class SegmentGM(object):
         shutil.copy(self.param_seg.fname_manual_gmseg, tmp_dir_val)
         shutil.copy(self.param_seg.fname_seg, tmp_dir_val)
         os.chdir(tmp_dir_val)
-        fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
-        fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
+        fname_manual_gmseg = ''.join(sct.extract_fname(self.param_seg.fname_manual_gmseg)[1:])
+        fname_seg = ''.join(sct.extract_fname(self.param_seg.fname_seg)[1:])
 
         im_gmseg = self.im_res_gmseg.copy()
         im_wmseg = self.im_res_wmseg.copy()
@@ -638,7 +638,7 @@ class SegmentGM(object):
             params = '-i %s -d %s -2d-slices 2' % (fname_manual_wmseg_corrected, fname_wmseg)
             output_wm = sct_dice_coefficient.main(params.split())
         # save results to a text file
-        fname_dc = 'dice_coefficient_' + extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        fname_dc = 'dice_coefficient_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
         file_dc = open(fname_dc, 'w')
 
         if self.param_seg.type_seg == 'prob':
@@ -657,7 +657,7 @@ class SegmentGM(object):
         file_dc.close()
 
         # compute HD and MD:
-        fname_hd = 'hausdorff_dist_' + extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        fname_hd = 'hausdorff_dist_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
         params = '-i %s -d %s -thinning 1 -o %s -v %s' % (fname_gmseg, fname_manual_gmseg, fname_hd, self.param.verbose)
         sct_compute_hausdorff_distance.main(params.split())
 
@@ -685,8 +685,8 @@ class SegmentGM(object):
         self.im_res_wmseg.save()
 
         if self.im_res_gmseg.orientation is not 'RPI':
-            im_res_gmseg = set_orientation(self.im_res_gmseg, 'RPI')
-            im_res_wmseg = set_orientation(self.im_res_wmseg, 'RPI')
+            im_res_gmseg = sct_image.set_orientation(self.im_res_gmseg, 'RPI')
+            im_res_wmseg = sct_image.set_orientation(self.im_res_wmseg, 'RPI')
             fname_gmseg = im_res_gmseg.absolutepath
             fname_wmseg = im_res_wmseg.absolutepath
 
@@ -779,7 +779,7 @@ def main(args=None):
     param_seg.fname_seg = arguments["-s"]
 
     if '-vertfile' in arguments:
-        if extract_fname(arguments['-vertfile'])[1].lower() == "none":
+        if sct.extract_fname(arguments['-vertfile'])[1].lower() == "none":
             param_seg.fname_level = None
         elif os.path.isfile(arguments['-vertfile']):
             param_seg.fname_level = arguments['-vertfile']

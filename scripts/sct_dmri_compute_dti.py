@@ -13,7 +13,8 @@
 import sys
 
 import msct_parser
-from sct_utils import sct.printv
+import msct_image
+import sct_utils as sct
 
 
 class Param(object):
@@ -111,7 +112,6 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, p
     :return: True/False
     """
     # Open file.
-    from msct_image import Image
     nii = msct_image.Image(fname_in)
     data = nii.data
     print('data.shape (%d, %d, %d, %d)' % data.shape)
