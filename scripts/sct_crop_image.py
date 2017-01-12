@@ -51,8 +51,10 @@ class LineBuilder:
         self.line.figure.canvas.draw()
 
 
-class ImageCropper(object):
-    def __init__(self, input_file, output_file=None, mask=None, start=None, end=None, dim=None, shift=None, background=None, bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
+class ImageCropper(Image):
+    def __init__(self, input_file, output_file=None, mask=None, start=None, end=None, dim=None, shift=None,
+                 background=None, bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
+
         self.input_filename = input_file
         self.output_filename = output_file
         self.mask = mask
@@ -66,17 +68,23 @@ class ImageCropper(object):
         self.mesh = mesh
         self.rm_tmp_files = rm_tmp_files
         self.verbose = verbose
-        self.cmd = None
-        self.result = None
+        self.cmd = "isct_crop_image" + " -i " + self.input_filename + " -o " + self.output_filename
         self.rm_output_file = rm_output_file
+
+        self.result = None
+
+        self.xmin = None
+        self.xmax = None
+        self.ymin = None
+        self.ymax = None
+        self.zmin = None
+        self.zmax = None
 
     def crop(self):
         """
         Crop image (change dimension)
         """
 
-        # create command line
-        self.cmd = "isct_crop_image" + " -i " + self.input_filename + " -o " + self.output_filename
         # Handling optional arguments
 
         # if mask is specified, find -start and -end arguments
@@ -110,7 +118,7 @@ class ImageCropper(object):
             self.crop_from_mask_with_background()
         else:
             # Run command line
-            sct.run(self.cmd, verb)
+            self.run_isct(self.cmd, verb)
 
         self.result = Image(self.output_filename, verbose=self.verbose)
 
@@ -128,9 +136,29 @@ class ImageCropper(object):
 
         return self.result
 
-    # mask the image in order to keep only voxels in the mask
-    # doesn't change the image dimension
+    def call_isct(self, cmd, verb):
+
+        _, stdout = sct.run(cmd, verb)
+
+        output_list = stdout.split('\n')
+        for line in output_list:
+            if 'Dimension 0' in line:
+                self.xmin, self.xmax = line.split()[2:4]
+            if 'Dimension 1' in line:
+                self.ymin, self.ymax = line.split()[2:4]
+            if 'Dimension 2' in line:
+                self.zmin, self.zmax = line.split()[2:4]
+
+
+
+
     def crop_from_mask_with_background(self):
+        """
+        mask the image in order to keep only voxels in the mask
+        doesn't change the image dimension
+
+        :return:
+        """
         from numpy import asarray, einsum
         image_in = Image(self.input_filename)
         data_array = asarray(image_in.data)
@@ -446,6 +474,8 @@ def main(args=None):
             cropper.mesh = arguments["-mesh"]
 
         cropper.crop()
+
+        return cropper
 
 if __name__ == "__main__":
     main()

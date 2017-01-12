@@ -10,19 +10,19 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
-from os import remove, rename, path
 import httplib
+import shutil
+import sys
 import time
 import zipfile
 import requests
 import shutil
-from sct_utils import run, printv, check_folder_exist
+from os import path, remove, rename
+
 from msct_parser import Parser
+from sct_utils import printv
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
     # parser initialisation
     parser = Parser(__file__)
@@ -44,8 +44,6 @@ def get_parser():
     return parser
 
 
-# MAIN
-# ==========================================================================================
 def main(args=None):
 
     if args is None:
@@ -55,7 +53,7 @@ def main(args=None):
     verbose = 1
     dict_url = {'sct_example_data': 'https://osf.io/feuef/?action=download',
                 'sct_testing_data': 'https://osf.io/uqcz5/?action=download',
-                'PAM50': 'https://osf.io/st8k4/?action=download',
+                'PAM50': 'https://osf.io/gdwn6/?action=download',
                 'MNI-Poly-AMU': 'https://osf.io/b26vh/?action=download',
                 'gm_model': 'https://osf.io/ugscu/?action=download'}
     tmp_file = 'tmp.data.zip'
@@ -78,7 +76,7 @@ def main(args=None):
     printv('Check if folder already exists...', verbose)
     if path.isdir(data_name):
         printv('.. WARNING: Folder '+data_name+' already exists. Removing it...', 1, 'warning')
-        run('rm -rf '+data_name, 0)
+        shutil.rmtree(data_name, ignore_errors=True)
 
     # unzip
     printv('Unzip dataset...', verbose)

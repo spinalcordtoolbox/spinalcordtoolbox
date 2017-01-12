@@ -454,7 +454,7 @@ class Centerline:
                 image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(labels_regions[current_label]) + current_dist_rel
 
         image_output.setFileName(fname_output)
-        image_output.save(type='float32')
+        image_output.save(data_type='float32')
 
 
 
