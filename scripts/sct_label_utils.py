@@ -22,8 +22,8 @@ import sys
 import numpy as np
 
 import sct_utils as sct
-from msct_image import Image
-from msct_parser import msct_parser.Parser
+import msct_image
+import msct_parser
 
 
 class Param(object):

@@ -38,10 +38,10 @@ import sct_apply_transfo
 import sct_concat_transfo
 import sct_image
 import sct_utils as sct
-from msct_image import Image, find_zmin_zmax
-from msct_parser import msct_parser.Parser
-from msct_register_landmarks import register_landmarks
-from sct_convert import sct_convert.convert
+import msct_image
+import msct_parser
+import msct_register_landmarks
+import sct_convert
 
 
 def get_parser(paramreg=None):
@@ -691,8 +691,8 @@ def register(src, dest, paramreg, param, i_step_str):
             nii.setFileName(dest_th)
             nii.save()
             # find zmin and zmax
-            zmin_src, zmax_src = find_zmin_zmax(src_th)
-            zmin_dest, zmax_dest = find_zmin_zmax(dest_th)
+            zmin_src, zmax_src = msct_image.find_zmin_zmax(src_th)
+            zmin_dest, zmax_dest = msct_image.find_zmin_zmax(dest_th)
             zmin_total = max([zmin_src, zmin_dest])
             zmax_total = min([zmax_src, zmax_dest])
             # crop data
@@ -871,7 +871,7 @@ def register(src, dest, paramreg, param, i_step_str):
         # check if user specified ilabel and dlabel
         warp_forward_out = 'step' + i_step_str + '0GenericAffine.txt'
         warp_inverse_out = '-step' + i_step_str + '0GenericAffine.txt'
-        register_landmarks(
+        msct_register_landmarks.register_landmarks(
             src,
             dest,
             paramreg.steps[i_step_str].dof,

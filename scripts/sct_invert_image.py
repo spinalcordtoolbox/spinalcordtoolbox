@@ -15,11 +15,11 @@
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import sys
-from msct_parser import msct_parser.Parser
-from msct_image import Image
+import msct_parser
+import msct_image
 
 # DEFAULT PARAMETERS
-class param(object):
+class Param(object):
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -32,7 +32,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     # initialize parameters
-    param = param()
+    param = Param()
     # call main function
 
     # Initialize the parser
