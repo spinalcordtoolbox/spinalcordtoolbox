@@ -18,6 +18,7 @@ import numpy as np
 from numpy import append, array, insert, mean, polyder, polyval, sqrt, std
 from scipy.interpolate import splev, splrep
 
+import msct_nurbs
 import sct_image
 import sct_utils as sct
 
@@ -260,7 +261,6 @@ def b_spline_nurbs(x,
                    all_slices=True):
     """3D B-Spline function, sct_nurbs"""
     from math import log
-    from msct_nurbs import msct_nurbs.NURBS
 
     twodim = False
     if z == None:

@@ -20,10 +20,10 @@ import time
 
 import msct_moco as moco
 import sct_utils as sct
-from msct_image import Image
-from msct_parser import msct_parser.Parser
-from sct_convert import sct_convert.convert
-from sct_image import sct_image.concat_data, sct_image.copy_header, sct_image.split_data
+import msct_image
+import msct_parser
+import sct_convert
+import sct_image
 
 
 class Param(object):

@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
+import os
 import sys
 
 import msct_image
@@ -79,7 +80,6 @@ class Tsnr(object):
 
         # Remove temp files
         sct.printv('\nRemove temporary files...', self.param.verbose, 'normal')
-        import os
         os.remove(fname_data_mean)
         os.remove(fname_data_std)
 
