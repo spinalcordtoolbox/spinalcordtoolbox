@@ -21,6 +21,7 @@ import scipy
 
 import msct_image
 import msct_parser
+import sct_convert
 import sct_utils as sct
 
 
@@ -225,7 +226,6 @@ class ImageCropper(msct_image.Image):
         sct.run('mkdir '+path_tmp)
 
         # copy files into tmp folder
-        from sct_convert import sct_convert.convert
         sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
         sct_convert.convert(fname_data, path_tmp+'data.nii')
 

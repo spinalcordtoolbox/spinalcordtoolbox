@@ -18,11 +18,12 @@
 
 import sys
 
+import msct_parser
 import nibabel
 from numpy import asarray, sqrt
 
-import msct_parser
 import sct_utils as sct
+
 
 # PARAMETERS
 debugging = 0  # automatic file names for debugging

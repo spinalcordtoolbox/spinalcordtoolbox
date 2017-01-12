@@ -15,7 +15,7 @@ import sys
 import numpy as np
 from msct_parser import msct_parser.Parser
 from msct_image import Image
-from sct_utils import sct.printv, extract_fname
+from sct_utils import sct.printv, sct.extract_fname
 
 
 class Param(object):
@@ -528,7 +528,7 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
 
     sct.printv('\n'+ metric_full +': ' + str(res), verbose, 'info')
 
-    path_out, filename_out, ext_out = extract_fname(fname_out)
+    path_out, filename_out, ext_out = sct.extract_fname(fname_out)
     if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
         sct.printv('ERROR: the output file should a text file or a pickle file. Received extension: '+ext_out, 1, 'error')
 
