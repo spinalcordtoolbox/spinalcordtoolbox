@@ -24,11 +24,11 @@ import numpy as np
 import scipy
 
 import sct_utils as sct
-from msct_image import Image
-from msct_nurbs import msct_nurbs.NURBS
-from msct_parser import msct_parser.Parser
-from sct_image import sct_image.set_orientation
-from sct_straighten_spinalcord import smooth_centerline
+import msct_image
+import msct_nurbs
+import msct_parser
+import sct_image
+import sct_straighten_spinalcord
 
 
 class Param(object):
@@ -289,7 +289,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # smooth segmentation/centerline
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline(
         fname_segmentation_orient, nurbs_pts_number=3000, phys_coordinates=False, all_slices=True, algo_fitting='nurbs', verbose=verbose)
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
@@ -410,7 +410,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
 
     if verbose == 2:
             import matplotlib.pyplot as plt
@@ -522,7 +522,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     min_z_index, max_z_index = min(Z), max(Z)
 
     # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
 
     # correct centerline fitted coordinates according to the data resolution
     x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz

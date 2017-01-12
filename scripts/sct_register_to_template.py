@@ -18,12 +18,13 @@ import shutil
 import sys
 import time
 
+import msct_image
+import msct_parser
+import msct_register_landmarks
+import sct_label_utils
+import sct_register_multimodal
 import sct_utils as sct
-from msct_image import Image, find_zmin_zmax
-from msct_parser import msct_parser.Parser
-from sct_label_utils import ProcessLabels
-from sct_register_multimodal import Paramreg, ParamregMultiStep, register
-from sct_utils import add_suffix
+import sct_warp_template
 
 
 class Param(object):
@@ -137,16 +138,16 @@ def get_parser(paramreg):
 def initMultiStep():
     # Note: step0 is used as pre-registration
     # if ref=template, we only need translations and z-scaling because the cord is already straight
-    step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Sz')
-    step1 = Paramreg(step='1', type='seg', algo='centermassrot', smooth='2')
-    step2 = Paramreg(
+    step0 = sct_register_multimodal.Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Sz')
+    step1 = sct_register_multimodal.Paramreg(step='1', type='seg', algo='centermassrot', smooth='2')
+    step2 = sct_register_multimodal.Paramreg(
         step='2',
         type='seg',
         algo='bsplinesyn',
         metric='MeanSquares',
         iter='3',
         smooth='1')
-    return ParamregMultiStep([step0, step1, step2])
+    return sct_register_multimodal.ParamregMultiStep([step0, step1, step2])
 
 
 def main(args=None):
@@ -178,14 +179,14 @@ def main(args=None):
     # registration parameters
     if '-param' in arguments:
         # reset parameters but keep step=0 (might be overwritten if user specified step=0)
-        paramreg = ParamregMultiStep([paramreg.steps['0']])
+        paramreg = sct_register_multimodal.ParamregMultiStep([paramreg.steps['0']])
         if ref == 'subject':
             paramreg.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
         # add user parameters
         for paramStep in arguments['-param']:
             paramreg.addStep(paramStep)
     else:
-        paramreg = ParamregMultiStep([step0, step1, step2])
+        paramreg = initMultiStep()
         # if ref=subject, initialize registration using different affine parameters
         if ref == 'subject':
             paramreg.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
@@ -197,12 +198,11 @@ def main(args=None):
     # smoothing_sigma = param.smoothing_sigma
 
     # retrieve template file names
-    from sct_warp_template import get_file_label
-    file_template_vertebral_labeling = get_file_label(
+    file_template_vertebral_labeling = sct_warp_template.get_file_label(
         path_template + 'template/', 'vertebral')
-    file_template = get_file_label(path_template + 'template/',
+    file_template = sct_warp_template.get_file_label(path_template + 'template/',
                                    contrast_template.upper() + '-weighted')
-    file_template_seg = get_file_label(path_template + 'template/',
+    file_template_seg = sct_warp_template.get_file_label(path_template + 'template/',
                                        'spinal cord')
 
     # start timer
@@ -314,36 +314,36 @@ def main(args=None):
         # resample data to 1mm isotropic
         sct.printv('\nResample data to 1mm isotropic...', verbose)
         sct.run('sct_resample -i ' + ftmp_data +
-                ' -mm 1.0x1.0x1.0 -x linear -o ' + add_suffix(ftmp_data,
+                ' -mm 1.0x1.0x1.0 -x linear -o ' + sct.add_suffix(ftmp_data,
                                                               '_1mm'))
-        ftmp_data = add_suffix(ftmp_data, '_1mm')
+        ftmp_data = sct.add_suffix(ftmp_data, '_1mm')
         sct.run('sct_resample -i ' + ftmp_seg +
-                ' -mm 1.0x1.0x1.0 -x linear -o ' + add_suffix(ftmp_seg,
+                ' -mm 1.0x1.0x1.0 -x linear -o ' + sct.add_suffix(ftmp_seg,
                                                               '_1mm'))
-        ftmp_seg = add_suffix(ftmp_seg, '_1mm')
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_1mm')
         # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
-        resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
-        ftmp_label = add_suffix(ftmp_label, '_1mm')
+        resample_labels(ftmp_label, ftmp_data, sct.add_suffix(ftmp_label, '_1mm'))
+        ftmp_label = sct.add_suffix(ftmp_label, '_1mm')
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
         sct.run('sct_image -i ' + ftmp_data + ' -setorient RPI -o ' +
-                add_suffix(ftmp_data, '_rpi'))
-        ftmp_data = add_suffix(ftmp_data, '_rpi')
+                sct.add_suffix(ftmp_data, '_rpi'))
+        ftmp_data = sct.add_suffix(ftmp_data, '_rpi')
         sct.run('sct_image -i ' + ftmp_seg + ' -setorient RPI -o ' +
-                add_suffix(ftmp_seg, '_rpi'))
-        ftmp_seg = add_suffix(ftmp_seg, '_rpi')
+                sct.add_suffix(ftmp_seg, '_rpi'))
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_rpi')
         sct.run('sct_image -i ' + ftmp_label + ' -setorient RPI -o ' +
-                add_suffix(ftmp_label, '_rpi'))
-        ftmp_label = add_suffix(ftmp_label, '_rpi')
+                sct.add_suffix(ftmp_label, '_rpi'))
+        ftmp_label = sct.add_suffix(ftmp_label, '_rpi')
 
         # get landmarks in native space
         # crop segmentation
         # output: segmentation_rpi_crop.nii.gz
         status_crop, output_crop = sct.run(
-            'sct_crop_image -i ' + ftmp_seg + ' -o ' + add_suffix(
+            'sct_crop_image -i ' + ftmp_seg + ' -o ' + sct.add_suffix(
                 ftmp_seg, '_crop') + ' -dim 2 -bzmax', verbose)
-        ftmp_seg = add_suffix(ftmp_seg, '_crop')
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_crop')
         cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[
             0].split(' ')
 
@@ -367,10 +367,10 @@ def main(args=None):
             # apply straightening
             sct.run('sct_apply_transfo -i ' + ftmp_seg +
                     ' -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o '
-                    + add_suffix(ftmp_seg, '_straight'))
+                    + sct.add_suffix(ftmp_seg, '_straight'))
         else:
             sct.run('sct_straighten_spinalcord -i ' + ftmp_seg + ' -s ' +
-                    ftmp_seg + ' -o ' + add_suffix(ftmp_seg, '_straight') +
+                    ftmp_seg + ' -o ' + sct.add_suffix(ftmp_seg, '_straight') +
                     ' -qc 0 -r 0 -v ' + str(verbose), verbose)
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
@@ -387,23 +387,22 @@ def main(args=None):
 
         # Dilating the input label so they can be straighten without losing them
         sct.printv('\nDilating input labels using 3vox ball radius')
-        sct.run('sct_maths -i ' + ftmp_label + ' -o ' + add_suffix(
+        sct.run('sct_maths -i ' + ftmp_label + ' -o ' + sct.add_suffix(
             ftmp_label, '_dilate') + ' -dilate 3')
-        ftmp_label = add_suffix(ftmp_label, '_dilate')
+        ftmp_label = sct.add_suffix(ftmp_label, '_dilate')
 
         # Apply straightening to labels
         sct.printv('\nApply straightening to labels...', verbose)
-        sct.run('sct_apply_transfo -i ' + ftmp_label + ' -o ' + add_suffix(
-            ftmp_label, '_straight') + ' -d ' + add_suffix(ftmp_seg,
+        sct.run('sct_apply_transfo -i ' + ftmp_label + ' -o ' + sct.add_suffix(
+            ftmp_label, '_straight') + ' -d ' + sct.add_suffix(ftmp_seg,
                                                            '_straight') +
                 ' -w warp_curve2straight.nii.gz -x nn')
-        ftmp_label = add_suffix(ftmp_label, '_straight')
+        ftmp_label = sct.add_suffix(ftmp_label, '_straight')
 
         # Compute rigid transformation straight landmarks --> template landmarks
         sct.printv('\nEstimate transformation for step #0...', verbose)
-        from msct_register_landmarks import register_landmarks
         try:
-            register_landmarks(
+           msct_register_landmarks.register_landmarks(
                 ftmp_label,
                 ftmp_template_label,
                 paramreg.steps['0'].dof,
@@ -425,59 +424,59 @@ def main(args=None):
 
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
-        sct.run('sct_apply_transfo -i ' + ftmp_data + ' -o ' + add_suffix(
+        sct.run('sct_apply_transfo -i ' + ftmp_data + ' -o ' + sct.add_suffix(
             ftmp_data, '_straightAffine') + ' -d ' + ftmp_template +
                 ' -w warp_curve2straightAffine.nii.gz')
-        ftmp_data = add_suffix(ftmp_data, '_straightAffine')
-        sct.run('sct_apply_transfo -i ' + ftmp_seg + ' -o ' + add_suffix(
+        ftmp_data = sct.add_suffix(ftmp_data, '_straightAffine')
+        sct.run('sct_apply_transfo -i ' + ftmp_seg + ' -o ' + sct.add_suffix(
             ftmp_seg, '_straightAffine') + ' -d ' + ftmp_template +
                 ' -w warp_curve2straightAffine.nii.gz -x linear')
-        ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_straightAffine')
 
         # binarize
         sct.printv('\nBinarize segmentation...', verbose)
-        sct.run('sct_maths -i ' + ftmp_seg + ' -bin 0.5 -o ' + add_suffix(
+        sct.run('sct_maths -i ' + ftmp_seg + ' -bin 0.5 -o ' + sct.add_suffix(
             ftmp_seg, '_bin'))
-        ftmp_seg = add_suffix(ftmp_seg, '_bin')
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_bin')
 
         # find min-max of anat2template (for subsequent cropping)
-        zmin_template, zmax_template = find_zmin_zmax(ftmp_seg)
+        zmin_template, zmax_template = msct_image.find_zmin_zmax(ftmp_seg)
 
         # crop template in z-direction (for faster processing)
         sct.printv('\nCrop data in template space (for faster processing)...',
                    verbose)
-        sct.run('sct_crop_image -i ' + ftmp_template + ' -o ' + add_suffix(
+        sct.run('sct_crop_image -i ' + ftmp_template + ' -o ' + sct.add_suffix(
             ftmp_template, '_crop') + ' -dim 2 -start ' + str(zmin_template) +
                 ' -end ' + str(zmax_template))
-        ftmp_template = add_suffix(ftmp_template, '_crop')
-        sct.run('sct_crop_image -i ' + ftmp_template_seg + ' -o ' + add_suffix(
+        ftmp_template = sct.add_suffix(ftmp_template, '_crop')
+        sct.run('sct_crop_image -i ' + ftmp_template_seg + ' -o ' + sct.add_suffix(
             ftmp_template_seg, '_crop') + ' -dim 2 -start ' + str(
                 zmin_template) + ' -end ' + str(zmax_template))
-        ftmp_template_seg = add_suffix(ftmp_template_seg, '_crop')
-        sct.run('sct_crop_image -i ' + ftmp_data + ' -o ' + add_suffix(
+        ftmp_template_seg = sct.add_suffix(ftmp_template_seg, '_crop')
+        sct.run('sct_crop_image -i ' + ftmp_data + ' -o ' + sct.add_suffix(
             ftmp_data, '_crop') + ' -dim 2 -start ' + str(zmin_template) +
                 ' -end ' + str(zmax_template))
-        ftmp_data = add_suffix(ftmp_data, '_crop')
-        sct.run('sct_crop_image -i ' + ftmp_seg + ' -o ' + add_suffix(
+        ftmp_data = sct.add_suffix(ftmp_data, '_crop')
+        sct.run('sct_crop_image -i ' + ftmp_seg + ' -o ' + sct.add_suffix(
             ftmp_seg, '_crop') + ' -dim 2 -start ' + str(zmin_template) +
                 ' -end ' + str(zmax_template))
-        ftmp_seg = add_suffix(ftmp_seg, '_crop')
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_crop')
 
         # sub-sample in z-direction
         sct.printv('\nSub-sample in z-direction (for faster processing)...',
                    verbose)
-        sct.run('sct_resample -i ' + ftmp_template + ' -o ' + add_suffix(
+        sct.run('sct_resample -i ' + ftmp_template + ' -o ' + sct.add_suffix(
             ftmp_template, '_sub') + ' -f 1x1x' + zsubsample, verbose)
-        ftmp_template = add_suffix(ftmp_template, '_sub')
-        sct.run('sct_resample -i ' + ftmp_template_seg + ' -o ' + add_suffix(
+        ftmp_template = sct.add_suffix(ftmp_template, '_sub')
+        sct.run('sct_resample -i ' + ftmp_template_seg + ' -o ' + sct.add_suffix(
             ftmp_template_seg, '_sub') + ' -f 1x1x' + zsubsample, verbose)
-        ftmp_template_seg = add_suffix(ftmp_template_seg, '_sub')
-        sct.run('sct_resample -i ' + ftmp_data + ' -o ' + add_suffix(
+        ftmp_template_seg = sct.add_suffix(ftmp_template_seg, '_sub')
+        sct.run('sct_resample -i ' + ftmp_data + ' -o ' + sct.add_suffix(
             ftmp_data, '_sub') + ' -f 1x1x' + zsubsample, verbose)
-        ftmp_data = add_suffix(ftmp_data, '_sub')
-        sct.run('sct_resample -i ' + ftmp_seg + ' -o ' + add_suffix(
+        ftmp_data = sct.add_suffix(ftmp_data, '_sub')
+        sct.run('sct_resample -i ' + ftmp_seg + ' -o ' + sct.add_suffix(
             ftmp_seg, '_sub') + ' -f 1x1x' + zsubsample, verbose)
-        ftmp_seg = add_suffix(ftmp_seg, '_sub')
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_sub')
 
         # Registration straight spinal cord to template
         sct.printv('\nRegister straight spinal cord to template...', verbose)
@@ -504,13 +503,13 @@ def main(args=None):
             if i_step > 1:
                 # apply transformation from previous step, to use as new src for registration
                 sct.run('sct_apply_transfo -i ' + src + ' -d ' + dest + ' -w '
-                        + ','.join(warp_forward) + ' -o ' + add_suffix(
+                        + ','.join(warp_forward) + ' -o ' + sct.add_suffix(
                             src, '_regStep' + str(i_step - 1)) + ' -x ' +
                         interp_step, verbose)
-                src = add_suffix(src, '_regStep' + str(i_step - 1))
+                src = sct.add_suffix(src, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
-            warp_forward_out, warp_inverse_out = register(src, dest, paramreg,
+            warp_forward_out, warp_inverse_out = sct_register_multimodal.register(src, dest, paramreg,
                                                           param, str(i_step))
             warp_forward.append(warp_forward_out)
             warp_inverse.append(warp_inverse_out)
@@ -534,14 +533,14 @@ def main(args=None):
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
         sct.run('sct_image -i ' + ftmp_data + ' -setorient RPI -o ' +
-                add_suffix(ftmp_data, '_rpi'))
-        ftmp_data = add_suffix(ftmp_data, '_rpi')
+                sct.add_suffix(ftmp_data, '_rpi'))
+        ftmp_data = sct.add_suffix(ftmp_data, '_rpi')
         sct.run('sct_image -i ' + ftmp_seg + ' -setorient RPI -o ' +
-                add_suffix(ftmp_seg, '_rpi'))
-        ftmp_seg = add_suffix(ftmp_seg, '_rpi')
+                sct.add_suffix(ftmp_seg, '_rpi'))
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_rpi')
         sct.run('sct_image -i ' + ftmp_label + ' -setorient RPI -o ' +
-                add_suffix(ftmp_label, '_rpi'))
-        ftmp_label = add_suffix(ftmp_label, '_rpi')
+                sct.add_suffix(ftmp_label, '_rpi'))
+        ftmp_label = sct.add_suffix(ftmp_label, '_rpi')
 
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv(
@@ -572,11 +571,10 @@ def main(args=None):
 
         # Bring template to subject space using landmark-based transformation
         sct.printv('\nEstimate transformation for step #0...', verbose)
-        from msct_register_landmarks import register_landmarks
         warp_forward = ['template2subjectAffine.txt']
         warp_inverse = ['-template2subjectAffine.txt']
         try:
-            register_landmarks(
+           msct_register_landmarks.register_landmarks(
                 ftmp_template_label,
                 ftmp_label,
                 paramreg.steps['0'].dof,
@@ -608,13 +606,13 @@ def main(args=None):
             # apply transformation from previous step, to use as new src for registration
             sct.run(
                 'sct_apply_transfo -i ' + src + ' -d ' + dest + ' -w ' +
-                ','.join(warp_forward) + ' -o ' + add_suffix(
+                ','.join(warp_forward) + ' -o ' + sct.add_suffix(
                     src, '_regStep' + str(i_step - 1)) + ' -x ' + interp_step,
                 verbose)
-            src = add_suffix(src, '_regStep' + str(i_step - 1))
+            src = sct.add_suffix(src, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
-            warp_forward_out, warp_inverse_out = register(src, dest, paramreg,
+            warp_forward_out, warp_inverse_out = sct_register_multimodal.register(src, dest, paramreg,
                                                           param, str(i_step))
             warp_forward.append(warp_forward_out)
             warp_inverse.insert(0, warp_inverse_out)
@@ -692,7 +690,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = msct_image.Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
     # read labels
-    processor = ProcessLabels(fname_labels)
+    processor = sct_label_utils.ProcessLabels(fname_labels)
     label_list = processor.display_voxel()
     label_new_list = []
     for label in label_list:

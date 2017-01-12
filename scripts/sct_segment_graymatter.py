@@ -60,8 +60,8 @@ import msct_multiatlas_seg
 #import Model, Param, ParamData, ParamModel
 import msct_parser
 from sct_image import sct_image.set_orientation
-from sct_utils import (add_suffix, sct.extract_fname, sct.printv, slash_at_the_end,
-                       tmp_create)
+from sct_utils import (sct.add_suffix, sct.extract_fname, sct.printv, slash_at_the_end,
+                       sct.tmp_create)
 
 
 def get_parser():
@@ -230,7 +230,7 @@ class SegmentGM(object):
         self.model = Model(param_model=self.param_model, param_data=self.param_data, param=self.param)
 
         # create tmp directory
-        self.tmp_dir = tmp_create(verbose=self.param.verbose)
+        self.tmp_dir = sct.tmp_create(verbose=self.param.verbose)
 
         self.target_im = None  # list of slices
         self.info_preprocessing = None  # dic containing {'orientation': 'xxx', 'im_sc_seg_rpi': im, 'interpolated_images': [list of im = interpolated image data per slice]}
@@ -298,9 +298,9 @@ class SegmentGM(object):
         # go back to original directory
         os.chdir('..')
         sct.printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
-        fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(sct.extract_fname(self.param_seg.fname_im)[1:]),
+        fname_res_gmseg = self.param_seg.path_results + sct.add_suffix(''.join(sct.extract_fname(self.param_seg.fname_im)[1:]),
                                                                    '_gmseg')
-        fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(sct.extract_fname(self.param_seg.fname_im)[1:]),
+        fname_res_wmseg = self.param_seg.path_results + sct.add_suffix(''.join(sct.extract_fname(self.param_seg.fname_im)[1:]),
                                                                    '_wmseg')
 
         self.im_res_gmseg.setFileName(fname_res_gmseg)
@@ -625,11 +625,11 @@ class SegmentGM(object):
             output_wm = sct_dice_coefficient.main(params.split())
         except Exception:
             # put ref and res in the same space if needed
-            fname_manual_gmseg_corrected = add_suffix(fname_manual_gmseg, '_reg')
+            fname_manual_gmseg_corrected = sct.add_suffix(fname_manual_gmseg, '_reg')
             sct_register_multimodal.main(args=['-i', fname_manual_gmseg, '-d', fname_gmseg, '-identity', '1'])
             sct_maths.main(args=['-i', fname_manual_gmseg_corrected, '-bin', '0.1', '-o', fname_manual_gmseg_corrected])
 
-            fname_manual_wmseg_corrected = add_suffix(fname_manual_wmseg, '_reg')
+            fname_manual_wmseg_corrected = sct.add_suffix(fname_manual_wmseg, '_reg')
             sct_register_multimodal.main(args=['-i', fname_manual_wmseg, '-d', fname_wmseg, '-identity', '1'])
             sct_maths.main(args=['-i', fname_manual_wmseg_corrected, '-bin', '0.1', '-o', fname_manual_wmseg_corrected])
             # recompute DC

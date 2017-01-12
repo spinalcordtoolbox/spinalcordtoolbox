@@ -16,7 +16,7 @@ import sys
 from glob import glob
 
 import msct_image
-from msct_parser import msct_parser.Parser
+import msct_parser
 import sct_utils as sct
 import sct_image
 import sct_label_utils
