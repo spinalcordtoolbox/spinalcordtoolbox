@@ -11,7 +11,7 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 # TODO: scale size in mm.
-import commands
+
 import os
 import shutil
 import sys
@@ -57,7 +57,7 @@ def main(args=None):
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        path_sct_data = os.environ.get('SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data + '/mt/mt1.nii.gz'
         param.process = 'point,' + path_sct_data + '/mt/mt1_point.nii.gz'
         param.shape = 'cylinder'
@@ -74,7 +74,9 @@ def main(args=None):
         if '-p' in arguments:
             param.process = arguments['-p']
             if param.process[0] not in param.process_list:
-                sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
+                sct.printv(
+                    parser.usage.generate(error='ERROR: Process ' + param.
+                                          process[0] + ' is not recognized.'))
         if '-size' in arguments:
             param.size = arguments['-size']
         if '-f' in arguments:
@@ -128,17 +130,22 @@ def create_mask(param):
     # if not orientation_input == 'RPI':
     sct_image.main("-i data.nii -o data_RPI.nii -setorient RPI -v 0".split())
     if method_type == 'centerline':
-        sct_image.main('-i centerline.nii.gz -o centerline_RPI.nii.gz -setorient RPI -v 0'.split())
+        sct_image.main(
+            '-i centerline.nii.gz -o centerline_RPI.nii.gz -setorient RPI -v 0'.
+            split())
     if method_type == 'point':
-        sct_image.main('-i point.nii.gz -o point_RPI.nii.gz -setorient RPI -v 0'.split())
+        sct_image.main(
+            '-i point.nii.gz -o point_RPI.nii.gz -setorient RPI -v 0'.split())
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image('data_RPI.nii').dim
-    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
+    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' +
+               str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
-        sct.printv('WARNING in ' + os.path.basename(__file__) + ': Input image is 4d but output mask will 3D.',
+        sct.printv('WARNING in ' + os.path.basename(__file__) +
+                   ': Input image is 4d but output mask will 3D.',
                    param.verbose, 'warning')
         # extract first volume to have 3d reference
         nii = Image('data_RPI.nii')
@@ -153,7 +160,9 @@ def create_mask(param):
     if method_type == 'point':
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
-        output = sct_label_utils.main(['-i', 'point_RPI.nii.gz', '-display'])
+        # TODO FIXIT move the label utils into a function call
+        status, output = sct.run(
+            'sct_label_utils -i point_RPI.nii.gz -display', param.verbose)
         coord = output[output.find('Position=') + 10:-17].split(',')
 
     if method_type == 'center':
@@ -175,13 +184,16 @@ def create_mask(param):
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
     spacing = hdr.structarr['pixdim']
     data_centerline = centerline.get_data()  # get centerline
-    z_centerline_not_null = [iz for iz in range(0, nz, 1) if data_centerline[:, :, iz].any()]
+    z_centerline_not_null = [
+        iz for iz in range(0, nz, 1) if data_centerline[:, :, iz].any()
+    ]
     # get center of mass of the centerline
     cx = [0] * nz
     cy = [0] * nz
     for iz in range(0, nz, 1):
         if iz in z_centerline_not_null:
-            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, iz]))
+            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(
+                numpy.array(data_centerline[:, :, iz]))
     # create 2d masks
     file_mask = 'data_mask'
     for iz in range(nz):
@@ -192,14 +204,19 @@ def create_mask(param):
         else:
             center = numpy.array([cx[iz], cy[iz]])
             mask2d = create_mask2d(
-                center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing, param=param)
+                center,
+                param.shape,
+                param.size,
+                nx,
+                ny,
+                even=param.even,
+                spacing=spacing,
+                param=param)
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(mask2d, None, hdr)
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
-    # merge along Z
-    # cmd = 'fslmerge -z mask '
 
-    # CHANGE THAT CAN IMPACT SPEED:
+    # TODO CHANGE THAT CAN IMPACT SPEED:
     # related to issue #755, we cannot open more than 256 files at one time.
     # to solve this issue, we do not open more than 100 files
     '''
@@ -234,7 +251,7 @@ def create_mask(param):
     im_mask.save()
 
     # come back to parent folder
-    os.chdir('..')
+    os.chdir(os.pardir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
@@ -247,7 +264,8 @@ def create_mask(param):
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview ' + param.fname_data + ' ' + param.fname_out + ' -l Red -t 0.5 &', param.verbose, 'info')
+    sct.printv('fslview ' + param.fname_data + ' ' + param.fname_out +
+               ' -l Red -t 0.5 &', param.verbose, 'info')
     print
 
 
@@ -258,7 +276,8 @@ def create_line(fname, coord, nz, param):
     except shutil.Error:
         pass
     except IOError:
-        sct.printv('Error creating a temporary line file', param.verbose, 'error')
+        sct.printv('Error creating a temporary line file', param.verbose,
+                   'error')
 
     # set all voxels to zero
     sct_maths.main(['-i', 'line.nii', '-mul', '0', '-o', 'line.nii'])
@@ -266,15 +285,24 @@ def create_line(fname, coord, nz, param):
     cmd = '-i line.nii -o line.nii -create-add '
     for iz in range(nz):
         if iz == nz - 1:
-            cmd += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1'
+            cmd += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(
+                iz) + ',1'
         else:
-            cmd += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1:'
+            cmd += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(
+                iz) + ',1:'
 
     sct_label_utils.main(cmd.split())
     return 'line.nii'
 
 
-def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None, param=None):
+def create_mask2d(center,
+                  shape,
+                  size,
+                  nx,
+                  ny,
+                  even=0,
+                  spacing=None,
+                  param=None):
     # extract offset d = 2r+1 --> r=ceil((d-1)/2.0)
     # s=11 -> r=5
     # s=10 -> r=5
@@ -301,12 +329,13 @@ def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None, param=None)
         mask2d[xc - radius:xc + radius + 1, yc - radius:yc + radius + 1] = 1
 
     elif shape == 'cylinder':
-        mask2d = ((xx + offset[0] - xc)**2 + (yy + offset[1] - yc)**2 <= radius**2) * 1
+        mask2d = ((xx + offset[0] - xc)**2 +
+                  (yy + offset[1] - yc)**2 <= radius**2) * 1
 
     elif shape == 'gaussian':
         sigma = float(radius)
-        mask2d = numpy.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) +
-                             ((yy + offset[1] - yc)**2) / (2 * (sigma**2))))
+        mask2d = numpy.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) + ((
+            yy + offset[1] - yc)**2) / (2 * (sigma**2))))
 
     return mask2d
 
@@ -365,7 +394,11 @@ def get_parser():
         default_value=param_default.shape,
         example=param_default.shape_list)
     parser.add_option(
-        name='-o', type_value='file_output', description='Name of output mask.', mandatory=False, example=['data.nii'])
+        name='-o',
+        type_value='file_output',
+        description='Name of output mask.',
+        mandatory=False,
+        example=['data.nii'])
     parser.add_option(
         name="-r",
         type_value="multiple_choice",

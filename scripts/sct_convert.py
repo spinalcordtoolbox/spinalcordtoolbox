@@ -51,7 +51,7 @@ def get_parser():
 
 # conversion
 # ==========================================================================================
-def convert(fname_in, fname_out, squeeze_data=True, type=None, verbose=1):
+def convert(fname_in, fname_out, squeeze_data=True, data_type=None, verbose=1):
     """
     Convert data
     :return True/False
@@ -63,8 +63,8 @@ def convert(fname_in, fname_out, squeeze_data=True, type=None, verbose=1):
     im = Image(fname_in)
     # Save file
     im.setFileName(fname_out)
-    if type is not None:
-        im.changeType(type=type)
+    if data_type is not None:
+        im.changeType(data_type=data_type)
     im.save(squeeze_data=squeeze_data)
     return im
 

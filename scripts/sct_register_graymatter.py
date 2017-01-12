@@ -13,13 +13,11 @@ import os
 import shutil
 import sys
 
-from sct_convert import convert
-import sct_image
 import sct_utils as sct
 from msct_image import Image
 from msct_parser import Parser
-
-
+from sct_convert import convert
+import sct_crop_image
 
 class Param:
     def __init__(self):
@@ -95,15 +93,6 @@ class MultiLabelRegistration:
         tmp_dir = sct.tmp_create()
 
         path_gm, file_gm, ext_gm = sct.extract_fname(self.fname_gm)
-<<<<<<< HEAD
-        path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template2target)
-
-        convert(self.fname_gm, tmp_dir+file_gm+ext_gm)
-        convert(self.fname_warp_template2target, tmp_dir+file_warp_template2target+ext_warp_template2target, squeeze_data=0)
-        if self.fname_warp_target2template:
-            path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(self.fname_warp_target2template)
-            convert(self.fname_warp_target2template, tmp_dir+file_warp_target2template+ext_warp_target2template, squeeze_data=0)
-=======
         path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(
             self.fname_warp_template2target)
 
@@ -119,7 +108,6 @@ class MultiLabelRegistration:
                 self.fname_warp_target2template,
                 tmp_dir + file_warp_target2template + ext_warp_target2template,
                 squeeze_data=0)
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
 
         os.chdir(tmp_dir)
         # save images
@@ -149,12 +137,6 @@ class MultiLabelRegistration:
         cmd_reg = 'sct_register_multimodal -i ' + fname_template_ml + ' -d ' + fname_automatic_ml + ' -param ' + self.param.param_reg
         if 'centermass' in self.param.param_reg:
             fname_template_ml_seg = sct.add_suffix(fname_template_ml, '_bin')
-<<<<<<< HEAD
-            sct.run('sct_maths -i '+fname_template_ml+' -bin 0 -o '+fname_template_ml_seg)
-            fname_automatic_ml_seg = sct.add_suffix(fname_automatic_ml, '_bin')
-            sct.run('sct_maths -i '+fname_automatic_ml+' -bin 50 -o '+fname_automatic_ml_seg)
-            cmd_reg += ' -iseg '+fname_template_ml_seg+' -dseg '+fname_automatic_ml_seg
-=======
             sct.run('sct_maths -i ' + fname_template_ml + ' -bin 0 -o ' + fname_template_ml_seg)
 
             fname_automatic_ml_seg = sct.add_suffix(fname_automatic_ml, '_bin')
@@ -162,17 +144,12 @@ class MultiLabelRegistration:
             sct.run('sct_maths -i ' + fname_automatic_ml + ' -bin 50 -o ' + fname_automatic_ml_seg)
 
             cmd_reg += ' -iseg ' + fname_template_ml_seg + ' -dseg ' + fname_automatic_ml_seg
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
 
         sct.run(cmd_reg)
         fname_warp_multilabel_template2auto = 'warp_' + file_template_ml + '2' + file_automatic_ml + '.nii.gz'
         fname_warp_multilabel_auto2template = 'warp_' + file_automatic_ml + '2' + file_template_ml + '.nii.gz'
 
-<<<<<<< HEAD
-        self.fname_warp_template2gm = 'warp_template2'+file_gm+'.nii.gz'
-=======
         self.fname_warp_template2gm = 'warp_template2' + file_gm + '.nii.gz'
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
 
         sct.run('sct_concat_transfo -w ' + file_warp_template2target + ext_warp_template2target + ',' +
                 fname_warp_multilabel_template2auto + ' -d ' + file_gm + ext_gm + ' -o ' + self.fname_warp_template2gm)
@@ -191,12 +168,8 @@ class MultiLabelRegistration:
 
         os.chdir('..')
 
-<<<<<<< HEAD
-        sct.generate_output_file(tmp_dir+self.fname_warp_template2gm, self.param.output_folder+self.fname_warp_template2gm)
-=======
         sct.generate_output_file(tmp_dir + self.fname_warp_template2gm,
                                  self.param.output_folder + self.fname_warp_template2gm)
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
         if self.fname_warp_target2template is not None:
             sct.generate_output_file(tmp_dir + self.fname_warp_gm2template,
                                      self.param.output_folder + self.fname_warp_gm2template)
@@ -208,11 +181,7 @@ class MultiLabelRegistration:
             sct.generate_output_file(fname_grid_warped, self.param.output_folder + file_grid_warped + ext_grid_warped)
 
         if self.param.remove_tmp:
-<<<<<<< HEAD
             shutil.rmtree(tmp_dir, ignore_errors=True)
-=======
-            sct.run('rm -rf ' + tmp_dir, error_exit='warning')
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
 
     def validation(self, fname_manual_gmseg, fname_sc_seg):
         path_manual_gmseg, file_manual_gmseg, ext_manual_gmseg = sct.extract_fname(fname_manual_gmseg)
@@ -220,17 +189,10 @@ class MultiLabelRegistration:
 
         # Create tmp folder and copy files in it
         tmp_dir = sct.tmp_create()
-<<<<<<< HEAD
-        shutil.copyfile(fname_manual_gmseg, os.path.join(tmp_dir, file_manual_gmseg, ext_manual_gmseg))
-        shutil.copyfile(fname_sc_seg, os.path.join(tmp_dir, file_sc_seg, ext_sc_seg))
-        shutil.copyfile(os.path.join(self.param.output_folder, self.fname_warp_template2gm),
-                        os.path.join(tmp_dir, self.fname_warp_template2gm))
-=======
-        sct.run('cp ' + fname_manual_gmseg + ' ' + tmp_dir + file_manual_gmseg + ext_manual_gmseg)
-        sct.run('cp ' + fname_sc_seg + ' ' + tmp_dir + file_sc_seg + ext_sc_seg)
-        sct.run('cp ' + self.param.output_folder + self.fname_warp_template2gm + ' ' + tmp_dir +
-                self.fname_warp_template2gm)
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
+        shutil.copy(fname_manual_gmseg, tmp_dir + file_manual_gmseg + ext_manual_gmseg)
+        shutil.copy(fname_sc_seg, tmp_dir + file_sc_seg + ext_sc_seg)
+        shutil.copy( self.param.output_folder + self.fname_warp_template2gm,
+                     tmp_dir + self.fname_warp_template2gm)
         os.chdir(tmp_dir)
 
         sct.run('sct_warp_template -d ' + fname_manual_gmseg + ' -w ' + self.fname_warp_template2gm + ' -qc 0 -a 0')
@@ -417,11 +379,7 @@ class MultiLabelRegistration:
         sct.generate_output_file(tmp_dir + dice_name, self.param.output_folder + dice_name)
 
         if self.param.remove_tmp:
-<<<<<<< HEAD
-            shutil.rmtree(tmp_dir)
-=======
-            sct.run('rm -rf ' + tmp_dir, error_exit='warning')
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 def thr_im(im, low_thr, high_thr):
@@ -432,17 +390,14 @@ def thr_im(im, low_thr, high_thr):
 
 def crop_im(fname_im, fname_mask):
     fname_im_crop = sct.add_suffix(fname_im, '_crop')
-    status, output_crop = sct.run('sct_crop_image -i ' + fname_im + ' -m ' + fname_mask + ' -o ' + fname_im_crop)
-    output_list = output_crop.split('\n')
-    xi, xf, yi, yf, zi, zf = 0, 0, 0, 0, 0, 0
-    for line in output_list:
-        if 'Dimension 0' in line:
-            dim, i, xi, xf = line.split(' ')
-        if 'Dimension 1' in line:
-            dim, i, yi, yf = line.split(' ')
-        if 'Dimension 2' in line:
-            dim, i, zi, zf = line.split(' ')
-    return fname_im_crop, int(xi), int(xf), int(yi), int(yf), int(zi), int(zf)
+    image_cropper = sct_crop_image.main(['-i', fname_im,
+                                         '-m', fname_mask,
+                                         '-o', fname_im_crop])
+
+    return (fname_im_crop,
+            int(image_cropper.xmin), int(image_cropper.xmax),
+            int(image_cropper.ymin), int(image_cropper.ymax),
+            int(image_cropper.zmin), int(image_cropper.zmax))
 
 
 def pad_im(fname_im, nx_full, ny_full, nz_full, xi, xf, yi, yf, zi, zf):
@@ -455,11 +410,7 @@ def pad_im(fname_im, nx_full, ny_full, nz_full, xi, xf, yi, yf, zi, zf):
     pad_zf = str(nz_full - (zf + 1))
     pad = ','.join([pad_xi, pad_xf, pad_yi, pad_yf, pad_zi, pad_zf])
     if len(Image(fname_im).data.shape) == 5:
-<<<<<<< HEAD
-        status, output = sct_image.main(['-i', fname_im, '-mcs'])
-=======
         status, output = sct.run('sct_image -i ' + fname_im + ' -mcs')
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
         s = 'Created file(s):\n-->'
         output_fnames = output[output.find(s) + len(s):].split('\n')[0].split("'")
         fname_comp_list = [output_fnames[i] for i in range(1, len(output_fnames), 2)]
@@ -512,11 +463,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     grid_warped = path_warp + 'grid_warped_gm' + ext_warp
     sct.run('sct_apply_transfo -i ' + fname_grid + ' -d ' + fname_grid + ' -w ' + fname_warp + ' -o ' + grid_warped)
     if rm_tmp:
-<<<<<<< HEAD
-        shutil.rmtree(tmp_dir)
-=======
-        sct.run('rm -rf ' + tmp_dir, error_exit='warning')
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
+        shutil.rmtree(tmp_dir, ignore_errors=True)
     return grid_warped
 
 
@@ -573,38 +520,6 @@ def get_parser():
         example='multilabel_registration/')
 
     parser.usage.addSection('\nVALIDATION: Use both flags for validation.')
-<<<<<<< HEAD
-    parser.add_option(name="-manual-gm",
-                      type_value='file',
-                      description='Manual gray matter segmentation on the target image. ',
-                      mandatory=False,
-                      example='t2star_manual_gmseg.nii.gz')
-    parser.add_option(name="-sc",
-                      type_value='file',
-                      description='Spinal cord segmentation on the target image. ',
-                      mandatory=False,
-                      example='t2star_seg.nii.gz')
-
-    parser.usage.addSection('\nMISC')
-    parser.add_option(name='-qc',
-                      type_value='multiple_choice',
-                      description='Output images for quality control.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
-=======
     parser.add_option(
         name="-manual-gm",
         type_value='file',
@@ -640,7 +555,6 @@ def get_parser():
         mandatory=False,
         example=['0', '1', '2'],
         default_value='1')
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
 
     return parser
 
@@ -692,12 +606,6 @@ def main(args=None):
             or (fname_manual_gmseg is None and fname_sc_seg is not None):
         sct.printv(parser.usage.generate(error='ERROR: you need to specify both arguments : -manual-gm and -sc.'))
 
-<<<<<<< HEAD
-    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template,
-                                    fname_warp_template, param=ml_param,
-                                    fname_warp_target2template=fname_warp_target2template,
-                                    apply_warp_template=apply_warp)
-=======
     ml_reg = MultiLabelRegistration(
         fname_gm,
         fname_wm,
@@ -706,7 +614,6 @@ def main(args=None):
         param=ml_param,
         fname_warp_target2template=fname_warp_target2template,
         apply_warp_template=apply_warp)
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
     ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg)

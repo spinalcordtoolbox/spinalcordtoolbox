@@ -10,21 +10,22 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
-import time
 import os
+import shutil
+import sys
+
 import numpy as np
+
 import sct_utils as sct
 from msct_image import Image, get_dimension
-from sct_image import set_orientation
 from msct_parser import Parser
-from sct_image import get_orientation_3d
+from sct_image import get_orientation_3d, set_orientation
+
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
 
-# ----------------------------------------------------------------------------------------------------------------------
-# PARAM ----------------------------------------------------------------------------------------------------------------
+
 class Param:
     def __init__(self):
         self.debug = 0
@@ -32,8 +33,6 @@ class Param:
         self.verbose = 1
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# THINNING -------------------------------------------------------------------------------------------------------------
 class Thinning:
     def __init__(self, im, v=1):
         sct.printv('Thinning ... ', v, 'normal')
@@ -495,20 +494,16 @@ def main(args=None):
         if "-v" in arguments:
             param.verbose = int(arguments["-v"])
 
-        tmp_dir = 'tmp_' + time.strftime("%y%m%d%H%M%S")
-        sct.run('mkdir ' + tmp_dir)
+        tmp_dir = sct.tmp_create(param.verbose)
         im1_name = "im1.nii.gz"
-        sct.run('cp ' + input_fname + ' ' + tmp_dir + '/' + im1_name)
-        if input_second_fname != '':
+        shutil.copy(input_fname, os.path.join(tmp_dir, im1_name))
+        if input_second_fname:
             im2_name = 'im2.nii.gz'
-            sct.run('cp ' + input_second_fname + ' ' + tmp_dir + '/' + im2_name)
-        else:
-            im2_name = None
+            shutil.copy(input_second_fname, os.path.join(tmp_dir, im2_name))
 
         os.chdir(tmp_dir)
-        # now = time.time()
         input_im1 = Image(resample_image(im1_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
-        if im2_name is not None:
+        if im2_name:
             input_im2 = Image(resample_image(im2_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
         else:
             input_im2 = None
@@ -522,12 +517,13 @@ def main(args=None):
 
         #TODO change back the orientatin of the thinned image
         if param.thinning:
-            sct.run('cp ' + computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext + ' ../' + sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2])
-            if im2_name is not None:
-                sct.run('cp ' + computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext + ' ../' + sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2])
+            shutil.copy(computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext,
+                        '../' + sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2])
+            if im2_name:
+                shutil.copy(computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext,
+                            '../' + sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2])
 
-        os.chdir('..')
-        # print 'Total time: ', time.time() - now
+        os.chdir(os.pardir)
 
 
 if __name__ == "__main__":

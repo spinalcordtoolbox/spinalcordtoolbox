@@ -403,7 +403,7 @@ class PCA:
         else:
             im_dir = 'mode_images_without_target'
         if im_dir not in os.listdir('.'):
-            sct.run('mkdir ./'+im_dir)
+            os.mkdir(im_dir)
         if nb_modes is None:
             nb_modes = int(round(len(self.kept_eigenval)/3))
 

@@ -14,19 +14,20 @@
 # TODO: add test.
 # TODO: remove FSL dependency
 
-# check if needed Python libraries are already installed or not
-import sys
-import os
 import commands
 import getopt
+import os
+import shutil
+import sys
 import time
+
 import numpy as np
-from msct_image import Image
+
 import sct_utils as sct
-# get path of the toolbox
+from msct_image import Image
+
+
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-
-
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
 
@@ -97,8 +98,7 @@ def main(args=None):
     if param.output_path=='': param.output_path = os.getcwd() + '/'
 
     # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+ path_tmp, param.verbose)
+    path_tmp = sct.tmp_create(param.verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -107,20 +107,18 @@ def main(args=None):
     eddy_correct(param)
 
     # come back to parent folder
-    os.chdir('..')
+    os.chdir(os.pardir)
 
     # Delete temporary files
     if param.delete_tmp_files == 1:
         print '\nDelete temporary files...'
-        sct.run('rm -rf '+ path_tmp, param.verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
     print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
 
-#=======================================================================================================================
-# Function eddy_correct
-#=======================================================================================================================
+
 def eddy_correct(param):
 
     sct.printv('\n\n\n\n===================================================',param.verbose)
@@ -138,9 +136,11 @@ def eddy_correct(param):
     #Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    if param.mat_eddy=='': param.mat_eddy= 'mat_eddy/'
-    if not os.path.exists(param.mat_eddy): os.makedirs(param.mat_eddy)
-    mat_eddy    = param.mat_eddy
+    if not param.mat_eddy:
+        param.mat_eddy= 'mat_eddy/'
+    if not os.path.exists(param.mat_eddy):
+        os.makedirs(param.mat_eddy)
+    mat_eddy = param.mat_eddy
 
     #Schedule file for FLIRT
     schedule_file = path_sct + '/flirtsch/schedule_TxTy_2mmScale.sch'

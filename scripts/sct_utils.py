@@ -13,14 +13,26 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 
-import commands
 import errno
+import email
+import fnmatch
+import inspect
 import os
+import platform
 import re
+import random
+import shutil
 import subprocess
 import sys
 import time
-from sys import stdout
+import smtplib
+import traceback
+
+import numpy as np
+
+import msct_image
+import sct_convert
+import sct_image
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -57,10 +69,8 @@ def add_suffix(fname, suffix):
 
 
 def run(cmd, verbose=1, error_exit='error', raise_exception=False):
-    if verbose == 2:
-        printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
-        print(bcolors.blue + cmd + bcolors.normal)
+        printv(cmd, 1, 'code')
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
@@ -75,7 +85,6 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
 
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if status_output:
-        # from inspect import stack
         printv(output_final[0:-1], 1, error_exit)
         if raise_exception:
             raise Exception(output_final[0:-1])
@@ -153,9 +162,9 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})'.format(
+        sys.stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})'.format(
             int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-        stdout.flush()
+        sys.stdout.flush()
 
     def iterations_done(self, total_num_iterations_done):
         if total_num_iterations_done != 0:
@@ -166,9 +175,9 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})'.format(
+            sys.stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})'.format(
                 int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            stdout.flush()
+            sys.stdout.flush()
 
     def stop(self):
         self.time_list.append(time.time() - self.start_timer)
@@ -184,9 +193,9 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})'.format(
+            sys.stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})'.format(
                 int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            stdout.flush()
+            sys.stdout.flush()
         else:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
 
@@ -194,14 +203,13 @@ class Timer:
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
-            stdout.flush()
+            sys.stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+            sys.stdout.flush()
         else:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
 
 
 def extract_fname(fname):
-<<<<<<< HEAD
     """Return the path, base file name and extension"""
     abspath = os.path.abspath(fname)
     path, filename = os.path.split(abspath)
@@ -211,23 +219,6 @@ def extract_fname(fname):
         extension += '.gz'
 
     return path, basename, extension
-=======
-    """Extract path, file and extension"""
-    # extract path
-    path_fname = os.path.dirname(fname) + '/'
-    # check if only single file was entered (without path)
-    if path_fname == '/':
-        path_fname = ''
-    # extract file and extension
-    file_fname = fname
-    file_fname = file_fname.replace(path_fname, '')
-    file_fname, ext_fname = os.path.splitext(file_fname)
-    # check if .nii.gz file
-    if ext_fname == '.gz':
-        file_fname = file_fname[0:len(file_fname) - 4]
-        ext_fname = ".nii.gz"
-    return path_fname, file_fname, ext_fname
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
 
 
 def get_absolute_path(fname):
@@ -246,11 +237,7 @@ def check_file_exist(fname, verbose=1):
         fname_to_test = fname
     if os.path.isfile(fname_to_test):
         if verbose:
-<<<<<<< HEAD
             printv('  OK: '+fname_to_test, verbose, 'normal')
-=======
-            printv('  OK: ' + fname, verbose, 'normal')
->>>>>>> 3a119fed618673d9608c571b6c815100505dfb6d
         return True
     else:
         printv('\nERROR: The file ' + os.path.abspath(os.curdir) + fname_to_test + ' does not exist. Exit program.\n', 1, 'error')
@@ -295,8 +282,8 @@ def check_if_3d(fname):
     :param fname:
     :return: True or False
     """
-    from msct_image import Image
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
+
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname).dim
     if not nt == 1:
         printv('\nERROR: ' + fname + ' is not a 3D volume. Exit program.\n', 1, 'error')
     else:
@@ -304,8 +291,7 @@ def check_if_3d(fname):
 
 
 def check_if_rpi(fname):
-    from sct_image import get_orientation_3d
-    if not get_orientation_3d(fname, filename=True) == 'RPI':
+    if not sct_image.get_orientation_3d(fname, filename=True) == 'RPI':
         printv('\nERROR: ' + fname +
                ' is not in RPI orientation. Use sct_image -setorient to reorient your data. Exit program.\n', 1,
                'error')
@@ -315,7 +301,6 @@ def find_file_within_folder(fname, directory, seek_type='file'):
     """Find file (or part of file, e.g. 'my_file*.txt') within folder tree recursively - fname and directory must be
     strings
     seek_type: 'file' or 'dir' to look for either a file or a directory respectively."""
-    import fnmatch
 
     all_path = []
     for root, dirs, files in os.walk(directory):
@@ -331,12 +316,13 @@ def find_file_within_folder(fname, directory, seek_type='file'):
 
 
 def tmp_create(verbose=1):
-    # path_tmp = tmp_create()
     printv('\nCreate temporary folder...', verbose)
-    import time
-    import random
     path_tmp = slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), 1)
-    run('mkdir ' + path_tmp, verbose)
+    try:
+        os.makedirs(path_tmp)
+    except OSError:
+        if not os.path.isdir(path_tmp):
+            raise
     return path_tmp
 
 
@@ -345,7 +331,7 @@ def tmp_copy_nifti(fname, path_tmp, fname_out='data.nii', verbose=0):
     path_fname, file_fname, ext_fname = extract_fname(fname)
     path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)
 
-    run('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
+    shutil.copy(fname, os.path.join(path_tmp, file_fname + ext_fname))
     if ext_fname_out == '.nii':
         run('fslchfiletype NIFTI ' + path_tmp + file_fname_out, 0)
     elif ext_fname_out == '.nii.gz':
@@ -359,7 +345,6 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     :param verbose:
     :return: fname_out
     """
-    import shutil  # for moving files
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
@@ -384,8 +369,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
             os.rename(path_in + file_in + '.nii', fname_out)
         else:
         '''
-        from sct_convert import convert
-        convert(fname_in, fname_out)
+        sct_convert.convert(fname_in, fname_out)
     else:
         # Generate output file without changing the extension
         shutil.move(fname_in, fname_out)
@@ -394,29 +378,17 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     return path_out + file_out + ext_out
 
 
-def check_if_installed(cmd, name_software):
-    """check if dependant software is installed"""
-    status, output = commands.getstatusoutput(cmd)
-    if status != 0:
-        print('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
-        sys.exit(2)
-
-
 def check_if_same_space(fname_1, fname_2):
     """check if two images are in the same space and same orientation"""
-    from msct_image import Image
-    from numpy import min, nonzero, all, around
-    from numpy import abs as np_abs
-    from numpy import log10 as np_log10
 
-    im_1 = Image(fname_1)
-    im_2 = Image(fname_2)
+    im_1 = msct_image.Image(fname_1)
+    im_2 = msct_image.Image(fname_2)
     q1 = im_1.hdr.get_qform()
     q2 = im_2.hdr.get_qform()
 
-    dec = int(np_abs(round(np_log10(min(np_abs(q1[nonzero(q1)]))))) + 1)
+    dec = int(np.abs(round(np.log10(min(np.abs(q1[np.nonzero(q1)]))))) + 1)
     dec = 4 if dec > 4 else dec
-    return all(around(q1, dec) == around(q2, dec))
+    return all(np.around(q1, dec) == np.around(q2, dec))
 
 
 def printv(string, verbose=1, type='normal'):
@@ -441,15 +413,40 @@ def printv(string, verbose=1, type='normal'):
             print(string)
 
     if type == 'error':
-        from inspect import stack
-        import traceback
-
-        frame, filename, line_number, function_name, lines, index = stack()[1]
+        frame, filename, line_number, function_name, lines, index = inspect.stack()[1]
         if sys.stdout.isatty():
             print('\n' + bcolors.red + filename + traceback.format_exc() + bcolors.normal)
         else:
             print('\n' + filename + traceback.format_exc())
         sys.exit(2)
+
+
+def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None):
+
+    msg = email.MIMEMultipart.MIMEMultipart()
+
+    msg['From'] = addr_from
+    msg['To'] = addr_to
+    msg['Subject'] = subject  # "SUBJECT OF THE EMAIL"
+    body = message  # "TEXT YOU WANT TO SEND"
+
+    msg.attach(email.MIMEText.MIMEText(body, 'plain'))
+
+    # filename = "NAME OF THE FILE WITH ITS EXTENSION"
+    if filename:
+        attachment = open(filename, "rb")
+        part = email.MIMEBase.MIMEBase('application', 'octet-stream')
+        part.set_payload((attachment).read())
+        email.encoders.encode_base64(part)
+        part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+        msg.attach(part)
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(addr_from, passwd_from)
+    text = msg.as_string()
+    server.sendmail(addr_from, addr_to, text)
+    server.quit()
 
 
 def sign(x):
@@ -534,9 +531,7 @@ class Os(object):
     '''Work out which platform we are running on'''
 
     def __init__(self):
-        import os
         if os.name != 'posix': raise UnsupportedOs('We only support OS X/Linux')
-        import platform
         self.os = platform.system().lower()
         self.arch = platform.machine()
         self.applever = ''
@@ -567,7 +562,7 @@ class Os(object):
             raise UnsupportedOs("We do not support this OS.")
 
 
-class ___Version(object):
+class Version(object):
     def __init__(self, version_sct):
         self.version_sct = version_sct
 
@@ -777,11 +772,10 @@ class ___MsgUser(object):
     @classmethod
     def debug(cls, message, newline=True):
         if cls.__debug:
-            from sys import stderr
             mess = str(message)
             if newline:
                 mess += "\n"
-            stderr.write(mess)
+            sys.stderr.write(mess)
 
     @classmethod
     def message(cls, msg):
