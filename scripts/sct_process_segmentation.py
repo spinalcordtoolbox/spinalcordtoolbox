@@ -18,6 +18,7 @@
 import sys
 import getopt
 import os
+import shutil
 import commands
 from random import randint
 import time
@@ -242,13 +243,17 @@ def main(args):
         sct.printv('\nLength of the segmentation = '+str(round(result_length,2))+' mm\n', verbose, 'info')
 
     if name_process == 'shape':
-        compute_shape(fname_segmentation, verbose=verbose)
+        fname_disks = None
+        if '-vertfile' in arguments:
+            fname_disks = arguments['-vertfile']
+        compute_shape(fname_segmentation, fname_disks=fname_disks, verbose=verbose)
 
         # End of Main
 
 
 # characterize the shape of the spinal cord, based on the segmentation
-def compute_shape(fname_segmentation, verbose=0):
+def compute_shape(fname_segmentation, fname_disks=None, verbose=0):
+    #TODO: make sure fname_segmentation and fname_disks are in the same space
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
@@ -260,6 +265,8 @@ def compute_shape(fname_segmentation, verbose=0):
 
     # copy files into tmp folder
     sct.run('cp ' + fname_segmentation + ' ' + path_tmp)
+    if fname_disks is not None:
+        sct.run('cp ' + fname_disks + ' ' + path_tmp)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -278,25 +285,18 @@ def compute_shape(fname_segmentation, verbose=0):
     sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
     sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', param.verbose)
 
-    #x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_segmentation_orient, type_window='hanning', window_length=80, algo_fitting='hanning', verbose=verbose)
-
     import msct_shape
-    #msct_shape.surface(volume=im_seg_orient.data, threshold=0.5, verbose=2)
+    msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation_orient,
+                                                   property_list=['area',
+                                                                  'equivalent_diameter',
+                                                                  'ratio_major_minor',
+                                                                  'eccentricity',
+                                                                  'solidity'],
+                                                   fname_disks_image=fname_disks,
+                                                   verbose=1)
 
-    """
-    for i in range(0, nz, 1):
-        slice = im_seg_orient.data[:, :, i]
-
-        # Find contours at a constant value of 0.5
-        sc_properties = msct_shape.properties2d(slice)
-        print 'area', sc_properties['area']
-        print 'perimeter', sc_properties['perimeter']
-        print 'equivalent_diameter', sc_properties['equivalent_diameter']
-        print 'major_axis_length', sc_properties['major_axis_length']
-        print 'orientation', sc_properties['orientation']
-    """
-
-    msct_shape.z_property(volume=im_seg_orient.data, property_list=['area', 'ratio_major_minor', 'solidity', 'eccentricity'], verbose=2)
+    os.chdir('..')
+    shutil.rmtree(path_tmp, ignore_errors=True)
 
 
 # compute the length of the spinal cord

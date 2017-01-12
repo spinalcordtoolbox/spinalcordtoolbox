@@ -17,6 +17,8 @@
 import numpy as np
 import sct_utils as sct
 import os
+import time
+from random import randint
 from skimage import measure
 from skimage import filters
 
@@ -49,18 +51,29 @@ def smoothing(image, sigma=1.0, verbose=1):
     return filters.gaussian(image, sigma=sigma)
 
 
-def properties2d(image, verbose=1):
+def properties2d(image, resolution=None, verbose=1):
     label_img = measure.label(image)
     regions = measure.regionprops(label_img)
-    #areas = [r.area for r in regions]
-    #ix = np.argsort(areas)
+    areas = [r.area for r in regions]
+    ix = np.argsort(areas)
     if len(regions) != 0:
-        sc_region = regions[0]
-        sc_properties = {'area': sc_region.area,
+        sc_region = regions[ix[-1]]
+        try:
+            ratio_major_minor = sc_region.major_axis_length / sc_region.minor_axis_length
+        except ZeroDivisionError:
+            ratio_major_minor = 0.0
+
+        area = sc_region.area
+        diameter = sc_region.equivalent_diameter
+        if resolution is not None:
+            area *= resolution[0] * resolution[1]
+            diameter *= resolution[0] * resolution[1]
+
+        sc_properties = {'area': area,
                          'bbox': sc_region.bbox,
                          'centroid': sc_region.centroid,
                          'eccentricity': sc_region.eccentricity,
-                         'equivalent_diameter': sc_region.equivalent_diameter,
+                         'equivalent_diameter': diameter,
                          'euler_number': sc_region.euler_number,
                          'inertia_tensor': sc_region.inertia_tensor,
                          'inertia_tensor_eigvals': sc_region.inertia_tensor_eigvals,
@@ -70,7 +83,7 @@ def properties2d(image, verbose=1):
                          'moments_central': sc_region.moments_central,
                          'orientation': sc_region.orientation,
                          'perimeter': sc_region.perimeter,
-                         'ratio_major_minor': sc_region.major_axis_length / sc_region.minor_axis_length,
+                         'ratio_major_minor': ratio_major_minor,
                          'solidity': sc_region.solidity  # convexity measure
                          }
     else:
@@ -78,27 +91,158 @@ def properties2d(image, verbose=1):
 
     return sc_properties
 
+def average_properties(fname_seg_images, property_list, fname_disks_images, group_images, verbose=1):
+    if len(fname_seg_images) != len(fname_disks_images):
+        raise ValueError('ERROR: each segmentation image must be accompagnied by a disk image')
 
-def z_property(volume, property_list, verbose=1):
-    number_of_slices = volume.shape[2]
+    # variables
+    xtick_disks = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+    regions_labels = {'-1': 'PONS', '0': 'MO',
+                      '1': 'C1', '2': 'C2', '3': 'C3', '4': 'C4', '5': 'C5', '6': 'C6', '7': 'C7',
+                      '8': 'T1', '9': 'T2', '10': 'T3', '11': 'T4', '12': 'T5', '13': 'T6', '14': 'T7', '15': 'T8', '16': 'T9', '17': 'T10', '18': 'T11', '19': 'T12',
+                      '20': 'L1', '21': 'L2', '22': 'L3', '23': 'L4', '24': 'L5',
+                      '25': 'S1', '26': 'S2', '27': 'S3', '28': 'S4', '29': 'S5',
+                      '30': 'Co'}
+    convert_vertlabel2disklabel = {'PONS': 'Pons', 'MO': 'Pons-MO',
+                          'C1': 'MO-C1', 'C2': 'C1-C2', 'C3': 'C2-C3', 'C4': 'C3-C4', 'C5': 'C4-C5', 'C6': 'C5-C6', 'C7': 'C6-C7',
+                          'T1': 'C7-T1', 'T2': 'T1-T2', 'T3': 'T2-T3', 'T4': 'T3-T4', 'T5': 'T4-T5', 'T6': 'T5-T6', 'T7': 'T6-T7', 'T8': 'T7-T8', 'T9': 'T8-T9',
+                          'T10': 'T9-T10', 'T11': 'T10-T11', 'T12': 'T11-T12',
+                          'L1': 'T12-L1', 'L2': 'L1-L2', 'L3': 'L2-L3', 'L4': 'L3-L4', 'L5': 'L4-L5',
+                          'S1': 'L5-S1', 'S2': 'S1-S2', 'S3': 'S2-S3', 'S4': 'S3-S4', 'S5': 'S4-S5',
+                          'Co': 'S5-Co'}
+    xlabel_disks = [convert_vertlabel2disklabel[regions_labels[str(label)]] for label in xtick_disks]
+
+    if verbose == 1:
+        import matplotlib.pyplot as plt
+        # Display the image and plot all contours found
+        fig, axes = plt.subplots(len(property_list), sharex=True, sharey=False)
+
+        xlim = [min(xtick_disks), max(xtick_disks)]
+
+    for i, fname_seg in enumerate(fname_seg_images):
+        sct.printv(fname_seg)
+        fname_disks = fname_disks_images[i]
+        properties_along_centerline = compute_properties_along_centerline(fname_seg, property_list, fname_disks, verbose)
+
+        centerline = properties_along_centerline['centerline']
+
+        from itertools import compress
+        mask_points = np.array([True if isinstance(item, str) else False for item in centerline.l_points])
+        dist_points_rel = list(compress(centerline.dist_points_rel, mask_points))
+        l_points = list(compress(centerline.l_points, mask_points))
+
+        relative_position = [dist_points_rel[k] + centerline.labels_regions[l_points[k]] for k in range(len(l_points))]
+        relative_position = [item - 51 if item >= 51 else item for item in relative_position]
+        relative_position = [item - 50 if item >= 50 else item for item in relative_position]
+
+        if verbose == 1:
+            labels = [centerline.labels_regions[l_points[k]] for k in range(len(l_points))]
+            xlim = [min(labels), max(labels)]
+            for k, property_name in enumerate(property_list):
+                axes[k].plot(relative_position, list(compress(properties_along_centerline[property_name], mask_points)), color=group_images[i])
+                axes[k].set_xlim(xlim)
+
+    if verbose == 1:
+        for k, property_name in enumerate(property_list):
+            axes[k].set_ylabel(property_name)
+        plt.xticks(xtick_disks, xlabel_disks, rotation=30)
+        axes[-1].set_xlim(xlim)
+        sct.printv('\nAffichage des resultats')
+        plt.show()
+
+def compute_properties_along_centerline(fname_seg_image, property_list, fname_disks_image=None, smooth_factor=5.0, verbose=1):
+    # create temporary folder
+    sct.printv('\nCreate temporary folder...', verbose)
+    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(randint(1, 1000000)), 1)
+    sct.run('mkdir ' + path_tmp, verbose)
+
+    sct.run('cp ' + fname_seg_image + ' ' + path_tmp)
+    if fname_disks_image is not None:
+        sct.run('cp ' + fname_disks_image + ' ' + path_tmp)
+
+    # go to tmp folder
+    os.chdir(path_tmp)
+
+    fname_segmentation = os.path.abspath(fname_seg_image)
+    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+
+    from sct_image import Image, set_orientation
+    # Change orientation of the input centerline into RPI
+    sct.printv('\nOrient centerline to RPI orientation...', verbose)
+    im_seg = Image(file_data + ext_data)
+    fname_segmentation_orient = 'segmentation_rpi' + ext_data
+    image = set_orientation(im_seg, 'RPI')
+    image.setFileName(fname_segmentation_orient)
+    image.save()
+
+    number_of_slices = image.data.shape[2]
+    nx, ny, nz, nt, px, py, pz, pt = image.dim
+    resolution = 0.5
     properties = {key: [] for key in property_list}
-    properties['slice_id'] = []
+    properties['incremental_length'] = []
+    properties['distance_from_C1'] = []
 
-    for i in range(0, number_of_slices, 1):
-        sc_properties = properties2d(volume[:, :, i])
+    # compute the spinal cord centerline based on the spinal cord segmentation
+    from sct_straighten_spinalcord import smooth_centerline
+    number_of_points = 5 * nz
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_segmentation_orient, algo_fitting='nurbs', verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
+
+    from msct_types import Centerline
+    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+    # Compute vertebral distribution along centerline based on position of intervertebral disks
+    if fname_disks_image is not None:
+        fname_disks = os.path.abspath(fname_disks_image)
+        path_data, file_data, ext_data = sct.extract_fname(fname_disks)
+        im_disks = Image(file_data + ext_data)
+        fname_disks_orient = 'disks_rpi' + ext_data
+        image_disks = set_orientation(im_disks, 'RPI')
+        image_disks.setFileName(fname_disks_orient)
+        image_disks.save()
+
+        image_disks = Image(fname_disks_orient)
+        coord = image_disks.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+        coord_physical = []
+        for c in coord:
+            c_p = image_disks.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+            c_p.append(c.value)
+            coord_physical.append(c_p)
+        centerline.compute_vertebral_distribution(coord_physical)
+
+    for i, index in enumerate(range(centerline.number_of_points)):
+        current_patch = centerline.extract_perpendicular_square(image, index, resolution=resolution, interpolation_mode=0)
+
+        sc_properties = properties2d(current_patch, [resolution, resolution])
         if sc_properties is not None:
-            properties['slice_id'].append(i)
+            properties['incremental_length'].append(centerline.incremental_length[i])
+            properties['distance_from_C1'].append(centerline.dist_points[i])
             for property_name in property_list:
                 properties[property_name].append(sc_properties[property_name])
+
+    properties['distance_disk_from_C1'] = centerline.distance_from_C1label  # distance between each disk and C1 (or first disk)
+    properties['centerline'] = centerline
+    xlabel_disks = [centerline.convert_vertlabel2disklabel[label] for label in properties['distance_disk_from_C1']]
+    xtick_disks = [properties['distance_disk_from_C1'][label] for label in properties['distance_disk_from_C1']]
+
+    print 'MEAN'
+    print np.mean(centerline.progressive_length), '+-', np.std(centerline.progressive_length)
+    if smooth_factor != 0.0:  # smooth_factor is in mm
+        import scipy
+        window = scipy.signal.hann(smooth_factor / np.mean(centerline.progressive_length))
+        for property_name in property_list:
+            properties[property_name] = scipy.signal.convolve(properties[property_name], window, mode='same') / np.sum(window)
 
     if verbose == 2:
         import matplotlib.pyplot as plt
         # Display the image and plot all contours found
         fig, axes = plt.subplots(len(property_list), sharex=True, sharey=False)
         for k, property_name in enumerate(property_list):
-            axes[k].plot(properties['slice_id'], properties[property_name])
+            axes[k].plot(properties['distance_from_C1'], properties[property_name])
             axes[k].set_ylabel(property_name)
+        plt.xticks(xtick_disks, xlabel_disks, rotation=30)
         plt.show()
+
+    os.chdir('..')
 
     return properties
 
@@ -123,3 +267,36 @@ def surface(volume, threshold=0.5, verbose=1):
 
 def shape_pca(data):
     return
+
+
+def prepare_data():
+    fname_seg_images = []
+    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/CSM1/t2_seg_manual.nii.gz')
+    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/CSM2/t2_seg_manual.nii.gz')
+    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/sct_004/t2/t2_seg_manual.nii.gz')
+    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/sct_005/t2/t2_seg_manual.nii.gz')
+    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/sct_006/t2/t2_seg_manual.nii.gz')
+
+    fname_disks_images = []
+    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/CSM1/t2_disks_manual.nii.gz')
+    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/CSM2/t2_disks_manual.nii.gz')
+    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/sct_004/t2/t2_disks_manual.nii.gz')
+    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/sct_005/t2/t2_disks_manual.nii.gz')
+    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/sct_006/t2/t2_disks_manual.nii.gz')
+
+    group_images = []
+    group_images.append('r')
+    group_images.append('r')
+    group_images.append('b')
+    group_images.append('b')
+    group_images.append('b')
+
+    property_list = ['area',
+                     'equivalent_diameter',
+                     'ratio_major_minor',
+                     'eccentricity',
+                     'solidity']
+
+    average_properties(fname_seg_images, property_list, fname_disks_images, group_images, verbose=1)
+
+prepare_data()
