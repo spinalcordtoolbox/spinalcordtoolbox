@@ -25,9 +25,9 @@ import scipy
 
 import sct_utils as sct
 from msct_image import Image
-from msct_nurbs import NURBS
+from msct_nurbs import msct_nurbs.NURBS
 from msct_parser import msct_parser.Parser
-from sct_image import set_orientation
+from sct_image import sct_image.set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 
 
@@ -278,7 +278,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
     im_seg = msct_image.Image(file_data+ext_data)
     fname_segmentation_orient = 'segmentation_rpi' + ext_data
-    im_seg_orient = set_orientation(im_seg, 'RPI')
+    im_seg_orient = sct_image.set_orientation(im_seg, 'RPI')
     im_seg_orient.setFileName(fname_segmentation_orient)
     im_seg_orient.save()
 
@@ -1000,7 +1000,7 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
                           
     print '\nFitting centerline using B-spline approximation...'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
-    nurbs = NURBS(3,3000,points)  # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+    nurbs = msct_nurbs.NURBS(3,3000,points)  # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
                           
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]

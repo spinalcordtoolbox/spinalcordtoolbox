@@ -18,17 +18,14 @@
 # Import common Python libraries
 import os
 import sys
-import commands
 from glob import glob
 import time
 
-import nibabel as nib
 import numpy as np
 
-from sct_image import get_orientation_3d, set_orientation
+import msct_image
 import sct_utils as sct
-from msct_image import Image
-from msct_parser import msct_parser.Parser
+import msct_parser
 
 # get path of the script and the toolbox
 path_script = os.path.dirname(__file__)

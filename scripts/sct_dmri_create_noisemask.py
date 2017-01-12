@@ -11,10 +11,12 @@
 #########################################################################################
 
 import sys
+
+from dipy.denoise.noise_estimate import piesno
+
 import nibabel as nib
 import sct_utils as sct
-from msct_parser import msct_parser.Parser
-from dipy.denoise.noise_estimate import piesno
+import msct_parser
 
 # PARSER
 # ==========================================================================================

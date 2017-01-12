@@ -20,13 +20,11 @@ from shutil import move
 
 import numpy
 
+import msct_image
+import msct_nurbs
+import msct_parser
+import sct_image
 import sct_utils as sct
-from msct_image import Image
-from msct_nurbs import NURBS
-from msct_parser import msct_parser.Parser
-from sct_image import (concat_data, get_orientation_3d, set_orientation,
-                       split_data)
-from sct_utils import fsloutput
 
 
 class Param(object):
@@ -76,13 +74,13 @@ def main(args=None):
 
     # Get input image orientation
     im_anat = msct_image.Image(fname_anat)
-    input_image_orientation = get_orientation_3d(im_anat)
+    input_image_orientation = sct.get_orientation_3d(im_anat)
 
     # Reorient input data into RL PA IS orientation
     im_centerline = msct_image.Image(fname_centerline)
-    im_anat_orient = set_orientation(im_anat, 'RPI')
+    im_anat_orient = sct_image.set_orientation(im_anat, 'RPI')
     im_anat_orient.setFileName('tmp.anat_orient.nii')
-    im_centerline_orient = set_orientation(im_centerline, 'RPI')
+    im_centerline_orient = sct_image.set_orientation(im_centerline, 'RPI')
     im_centerline_orient.setFileName('tmp.centerline_orient.nii')
 
     # Open centerline
@@ -140,7 +138,7 @@ def main(args=None):
     #==========================================================================================
     # Split input volume
     print '\nSplit input volume...'
-    im_anat_orient_split_list = split_data(im_anat_orient, 2)
+    im_anat_orient_split_list = sct_image.split_data(im_anat_orient, 2)
     file_anat_split = []
     for im in im_anat_orient_split_list:
         file_anat_split.append(im.absolutepath)
@@ -188,20 +186,20 @@ def main(args=None):
     file_anat_split_fit = ['tmp.anat_orient_fit_Z'+str(z).zfill(4) for z in range(0,nz,1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
-        sct.run(fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_anat_split_fit[iz]+' -interp '+interp)
+        sct.run(sct.fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_anat_split_fit[iz]+' -interp '+interp)
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
     from glob import glob
     im_to_concat_list = [msct_image.Image(fname) for fname in glob('tmp.anat_orient_fit_Z*.nii')]
-    im_concat_out = concat_data(im_to_concat_list, 2)
+    im_concat_out = sct_image.concat_data(im_to_concat_list, 2)
     im_concat_out.setFileName('tmp.anat_orient_fit.nii')
     im_concat_out.save()
     # sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
 
     # Reorient data as it was before
     print '\nReorient data back into native orientation...'
-    fname_anat_fit_orient = set_orientation(im_concat_out.absolutepath, input_image_orientation, filename=True)
+    fname_anat_fit_orient = sct_image.set_orientation(im_concat_out.absolutepath, input_image_orientation, filename=True)
     move(fname_anat_fit_orient, 'tmp.anat_orient_fit_reorient.nii')
 
     # Generate output file (in current folder)
@@ -224,7 +222,7 @@ def b_spline_centerline(x_centerline, y_centerline, z_centerline):
 
     points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
 
-    nurbs = NURBS(3, len(z_centerline)*3, points, nbControl=None, verbose=2) # for the third argument (number of points), give at least len(z_centerline)
+    nurbs = msct_nurbs.NURBS(3, len(z_centerline)*3, points, nbControl=None, verbose=2) # for the third argument (number of points), give at least len(z_centerline)
     # (len(z_centerline)+500 or 1000 is ok)
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]

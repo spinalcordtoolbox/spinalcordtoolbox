@@ -14,11 +14,10 @@
 #########################################################################################
 
 
-import sys
-import os
-import getopt
 import math
-from msct_parser import msct_parser.Parser
+import sys
+
+import msct_parser
 
 
 # main

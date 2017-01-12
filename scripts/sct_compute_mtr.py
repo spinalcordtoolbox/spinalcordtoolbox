@@ -16,6 +16,7 @@ import shutil
 import sys
 
 import msct_parser
+import sct_convert
 import sct_utils as sct
 
 
@@ -59,7 +60,6 @@ def main(args=None):
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    from sct_convert import sct_convert.convert
     sct_convert.convert(fname_mt0, path_tmp +'mt0.nii', data_type='float32')
     sct_convert.convert(fname_mt1, path_tmp +'mt1.nii', data_type='float32')
 
@@ -68,7 +68,6 @@ def main(args=None):
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
-    from msct_image import Image
     nii_mt1 = msct_image.Image('mt1.nii')
     data_mt1 = nii_mt1.data
     data_mt0 = msct_image.Image('mt0.nii').data

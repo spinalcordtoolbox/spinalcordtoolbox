@@ -18,8 +18,8 @@ import urllib2
 import zipfile
 from os import path, remove, rename
 
-from msct_parser import msct_parser.Parser
-from sct_utils import sct.printv
+import msct_parser
+import sct_utils as sct
 
 
 def get_parser():

@@ -260,7 +260,7 @@ def b_spline_nurbs(x,
                    all_slices=True):
     """3D B-Spline function, sct_nurbs"""
     from math import log
-    from msct_nurbs import NURBS
+    from msct_nurbs import msct_nurbs.NURBS
 
     twodim = False
     if z == None:
@@ -277,7 +277,7 @@ def b_spline_nurbs(x,
         nbControl = 30 * log(centerlineSize, 10) - 42
         nbControl = round(nbControl)
 
-    nurbs = NURBS(
+    nurbs = msct_nurbs.NURBS(
         degree,
         point_number,
         data,

@@ -13,10 +13,10 @@
 ########################################################################################################################
 
 import sys
-#import time
-from msct_parser import *
+
+import msct_image
+import msct_parser
 import sct_utils as sct
-# from sct_average_data_across_dimension import average_data_across_dimension
 
 
 class Param(object):

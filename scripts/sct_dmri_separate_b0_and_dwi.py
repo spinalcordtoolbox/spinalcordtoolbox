@@ -18,10 +18,11 @@ import shutil
 import sys
 import time
 
+import msct_image
+import msct_parser
+import sct_convert
+import sct_image
 import sct_utils as sct
-from msct_image import Image
-from msct_parser import msct_parser.Parser
-from sct_image import split_data
 
 
 class Param(object):
@@ -104,7 +105,6 @@ def main(args=None):
     dwi_name = 'dwi'
     dwi_mean_name = dwi_name+'_mean'
 
-    from sct_convert import sct_convert.convert
     if not sct_convert.convert(fname_data, path_tmp+dmri_name+ext):
         sct.printv('ERROR in convert.', 1, 'error')
     shutil.copy(fname_bvecs, os.path.join(path_tmp, 'bvecs'))
@@ -124,7 +124,7 @@ def main(args=None):
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
-    im_dmri_split_list = split_data(im_dmri, 3)
+    im_dmri_split_list = sct_image.split_data(im_dmri, 3)
     for im_d in im_dmri_split_list:
         im_d.save()
 

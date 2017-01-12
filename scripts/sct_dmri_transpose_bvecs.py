@@ -23,9 +23,9 @@
 #########################################################################################
 
 import sys
-from msct_parser import msct_parser.Parser
-from sct_utils import extract_fname, sct.printv
 
+import msct_parser
+import sct_utils as sct
 
 # PARSER
 # ==========================================================================================
@@ -93,7 +93,7 @@ def main(args=None):
 
     # Write new file
     if fname_out == '':
-        path_in, file_in, ext_in = extract_fname(fname_in)
+        path_in, file_in, ext_in = sct.extract_fname(fname_in)
         fname_out = path_in+file_in+ext_in
     fid = open(fname_out, 'w')
     for iLine in range(bvecs.shape[0]):

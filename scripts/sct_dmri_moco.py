@@ -41,11 +41,11 @@ import numpy as np
 
 import msct_moco as moco
 import sct_utils as sct
-from msct_image import Image
-from msct_parser import msct_parser.Parser
-from sct_convert import sct_convert.convert
-from sct_dmri_separate_b0_and_dwi import identify_b0
-from sct_image import concat_data, copy_header, split_data
+import msct_image
+import msct_parser
+import sct_convert
+import sct_dmri_separate_b0_and_dwi
+import sct_image
 
 
 class Param(object):
@@ -217,7 +217,7 @@ def dmri_moco(param):
 
     # Identify b=0 and DWI images
     sct.printv('\nIdentify b=0 and DWI images...', param.verbose)
-    index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
+    index_b0, index_dwi, nb_b0, nb_dwi = sct_dmri_separate_b0_and_dwi.identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
     # check if dmri and bvecs are the same size
     if not nb_b0 + nb_dwi == nt:
@@ -228,7 +228,7 @@ def dmri_moco(param):
     #===================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    im_data_split_list = split_data(im_data, 3)
+    im_data_split_list = sct_image.split_data(im_data, 3)
     for im in im_data_split_list:
         im.save()
 
@@ -240,7 +240,7 @@ def dmri_moco(param):
     im_b0_list = []
     for it in range(nb_b0):
         im_b0_list.append(im_data_split_list[index_b0[it]])
-    im_b0_out = concat_data(im_b0_list, 3)
+    im_b0_out = sct_image.concat_data(im_b0_list, 3)
     im_b0_out.setFileName(file_b0 + ext_data)
     im_b0_out.save()
     sct.printv(('  File created: ' + file_b0), param.verbose)
@@ -284,7 +284,7 @@ def dmri_moco(param):
         im_dwi_list = []
         for it in range(nb_dwi_i):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
-        im_dwi_out = concat_data(im_dwi_list, 3)
+        im_dwi_out = sct_image.concat_data(im_dwi_list, 3)
         im_dwi_out.setFileName(file_dwi_merge_i + ext_data)
         im_dwi_out.save()
 
@@ -299,7 +299,7 @@ def dmri_moco(param):
     im_dw_list = []
     for iGroup in range(nb_groups):
         im_dw_list.append(file_dwi_mean[iGroup] + ext_data)
-    im_dw_out = concat_data(im_dw_list, 3)
+    im_dw_out = sct_image.concat_data(im_dw_list, 3)
     im_dw_out.setFileName(file_dwi_group + ext_data)
     im_dw_out.save()
     # cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
@@ -410,7 +410,7 @@ def dmri_moco(param):
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
     im_dmri = msct_image.Image(file_data+ext_data)
     im_dmri_moco = msct_image.Image(file_data+param.suffix+ext_data)
-    im_dmri_moco = copy_header(im_dmri, im_dmri_moco)
+    im_dmri_moco = sct_image.copy_header(im_dmri, im_dmri_moco)
     im_dmri_moco.save()
 
 
