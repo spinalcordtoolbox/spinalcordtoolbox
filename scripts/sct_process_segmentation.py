@@ -15,28 +15,23 @@
 #########################################################################################
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
-import sys
-import getopt
 import os
 import shutil
-import commands
-from random import randint
+import sys
 import time
+
 import numpy as np
 import scipy
-import nibabel
+
 import sct_utils as sct
-from msct_nurbs import NURBS
-from sct_image import get_orientation_3d, set_orientation
-from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
-from shutil import move, copyfile
+from msct_nurbs import NURBS
 from msct_parser import Parser
+from sct_image import set_orientation
+from sct_straighten_spinalcord import smooth_centerline
 
 
-# DEFAULT PARAMETERS
 class Param:
-    ## The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
@@ -262,8 +257,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S") + '_'+str(randint(1, 1000000)), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose)
 
     # copy files into tmp folder
     sct.printv('cp '+fname_segmentation+' '+path_tmp)
@@ -377,8 +371,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S") + '_'+str(randint(1, 1000000)), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying data to tmp folder...', verbose)
@@ -389,12 +382,6 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    # fname_segmentation_orient = 'segmentation_RPI.nii.gz'
-    # BELOW DOES NOT WORK (JULIEN, 2015-10-17)
-    # im_seg = Image(file_data+ext_data)
-    # set_orientation(im_seg, 'RPI')
-    # im_seg.setFileName(fname_segmentation_orient)
-    # im_seg.save()
     sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz', verbose)
 
     # Open segmentation volume
@@ -407,18 +394,6 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
-
-    # # Get dimension
-    # sct.printv('\nGet dimensions...', verbose)
-    # nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-    #
-    # # Extract orientation of the input segmentation
-    # orientation = get_orientation(im_seg)
-    # sct.printv('\nOrientation of segmentation image: ' + orientation, verbose)
-    #
-    # sct.printv('\nOpen segmentation volume...', verbose)
-    # data = im_seg.data
-    # hdr = im_seg.hdr
 
     # Extract min and max index in Z direction
     X, Y, Z = (data>0).nonzero()
@@ -501,7 +476,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf '+path_tmp, verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     return file_data+'_centerline.nii.gz'
 
@@ -520,8 +495,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S") + '_'+str(randint(1, 1000000)), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -772,7 +746,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp, error_exit='warning')
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # Sum up the output file names
     sct.printv('\nOutput a nifti file of CSA values along the segmentation: '+output_folder+'csa_image.nii.gz', verbose, 'info')

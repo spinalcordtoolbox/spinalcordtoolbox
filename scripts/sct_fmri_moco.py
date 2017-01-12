@@ -11,20 +11,19 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
-import sys
-import os
 import commands
-import getopt
-import time
 import math
-import sct_utils as sct
+import os
+import shutil
+import sys
+import time
+
 import msct_moco as moco
-from sct_convert import convert
+import sct_utils as sct
 from msct_image import Image
-from sct_image import copy_header, split_data, concat_data
-# from sct_average_data_across_dimension import average_data_across_dimension
 from msct_parser import Parser
+from sct_convert import convert
+from sct_image import concat_data, copy_header, split_data
 
 
 class Param:
@@ -49,16 +48,12 @@ class Param:
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
 
 
-#=======================================================================================================================
-# main
-#=======================================================================================================================
 def main(args=None):
 
     if args is None:
         args = sys.argv[1:]
 
     param = Param()
-
     parser = get_parser()
     arguments = parser.parse(args)
 
@@ -106,25 +101,20 @@ def main(args=None):
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, param.verbose)
+    path_tmp = sct.tmp_create(param.verbose)
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, path_tmp+'fmri.nii')
-    # sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
-    #
+
     # go to tmp folder
     os.chdir(path_tmp)
-    #
-    # # convert fmri to nii format
-    # convert('fmri'+ext_data, 'fmri.nii')
 
     # run moco
     fmri_moco(param)
 
     # come back to parent folder
-    os.chdir('..')
+    os.chdir(os.pardir)
 
     # Generate output files
     path_out = sct.slash_at_the_end(path_out, 1)
@@ -139,7 +129,7 @@ def main(args=None):
     # Delete temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nDelete temporary files...', param.verbose)
-        sct.run('rm -rf '+path_tmp, param.verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -150,11 +140,8 @@ def main(args=None):
     sct.printv('fslview -m ortho,ortho '+param.path_out+file_data+param.suffix+' '+file_data+' &\n', param.verbose, 'info')
 
 
-#=======================================================================================================================
-# fmri_moco: motion correction specific to fmri data
-#=======================================================================================================================
 def fmri_moco(param):
-
+    """motion correction specific to fmri data"""
     file_data = 'fmri'
     ext_data = '.nii'
     mat_final = 'mat_final/'
@@ -201,9 +188,6 @@ def fmri_moco(param):
         # Merge Images
         sct.printv('Merge consecutive volumes...', param.verbose)
         file_data_merge_i = file_data + '_' + str(iGroup)
-        # cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
-        # for it in range(nt_i):
-        #     cmd = cmd + ' ' + file_data + '_T' + str(index_fmri_i[it]).zfill(4)
 
         im_fmri_list = []
         for it in range(nt_i):
@@ -254,11 +238,8 @@ def fmri_moco(param):
     sct.printv('\nCopy transformations...', param.verbose)
     for iGroup in range(nb_groups):
         for data in range(len(group_indexes[iGroup])):
-            # if param.slicewise:
-            #     for iz in range(nz):
-            #         sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+ext_mat, param.verbose)
-            # else:
-            sct.run('cp '+'mat_groups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][data])+ext_mat, param.verbose)
+            shutil.copy('mat_groups/' + 'mat.T' + str(iGroup) + ext_mat,
+                        mat_final + 'mat.T' + str(group_indexes[iGroup][data]) + ext_mat)
 
     # Apply moco on all fmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
