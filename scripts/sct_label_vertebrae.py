@@ -31,10 +31,9 @@ import sct_maths
 import sct_resample
 import sct_straighten_spinalcord
 import sct_utils as sct
-from msct_image import Image
-from msct_parser import msct_parser.Parser
-from sct_maths import mutual_information
-from sct_warp_template import get_file_label
+import msct_image
+import msct_parser
+import sct_wrap_template
 
 path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
@@ -355,8 +354,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
-    fname_level = get_file_label(path_template + 'template/', 'vertebral', output='filewithpath')
-    fname_template = get_file_label(path_template + 'template/', contrast.upper() + '-weighted', output='filewithpath')
+    fname_level = sct_wrap_template.get_file_label(path_template + 'template/', 'vertebral', output='filewithpath')
+    fname_template = sct_wrap_template.get_file_label(path_template + 'template/', contrast.upper() + '-weighted', output='filewithpath')
 
     sct.printv('\nOpen template and vertebral levels...', verbose)
     data_template = msct_image.Image(fname_template).data
@@ -767,7 +766,7 @@ def compute_corr_3d(src=[],
         data_chunk1d = data_chunk3d.ravel()
         # check if data_chunk1d contains at least one non-zero value
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-            I_corr[ind_I] = mutual_information(data_chunk1d, pattern1d, nbins=16)
+            I_corr[ind_I] = sct_maths.mutual_information(data_chunk1d, pattern1d, nbins=16)
         else:
             allzeros = 1
         ind_I = ind_I + 1

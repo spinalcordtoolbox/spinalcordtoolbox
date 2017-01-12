@@ -18,7 +18,7 @@ import os
 import sys
 
 import sct_utils as sct
-from msct_parser import msct_parser.Parser
+import msct_parser
 
 
 class Param(object):

@@ -18,15 +18,14 @@ from nibabel import Nifti1Image, load, save
 from numpy import (abs, exp, linalg, max, mgrid, poly1d, polyfit, polyval, savetxt, sqrt, unravel_index, zeros)
 from scipy.ndimage.filters import gaussian_filter
 
-import sct_convert as conv
+import msct_base_classes
+import msct_image
+import msct_parser
+import sct_convert
 import sct_utils as sct
-from msct_base_classes import Algorithm
-from msct_image import Image
-from msct_parser import msct_parser.Parser
-from sct_convert import convert
-from sct_image import (sct_image.concat_data, sct_image.copy_header, get_orientation_3d, sct_image.set_orientation, sct_image.split_data)
-from sct_process_segmentation import extract_centerline
-from sct_straighten_spinalcord import smooth_centerline
+import sct_image
+import sct_process_segmentation
+import sct_straighten_spinalcord
 
 
 class Param(object):
@@ -84,7 +83,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     file_schedule = path_sct + param.schedule_file
 
     # Get input image orientation
-    input_image_orientation = get_orientation_3d(fname_anat, filename=True)
+    input_image_orientation = sct_image.get_orientation_3d(fname_anat, filename=True)
 
     # Display arguments
     print '\nCheck input arguments...'
@@ -107,8 +106,8 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     os.chdir(path_tmp)
 
     # convert to nii
-    im_anat = convert('tmp.anat' + ext_anat, 'tmp.anat.nii')
-    im_point = convert('tmp.point' + ext_point, 'tmp.point.nii')
+    im_anat = sct_convert.convert('tmp.anat' + ext_anat, 'tmp.anat.nii')
+    im_point = sct_convert.convert('tmp.point' + ext_point, 'tmp.point.nii')
 
     # Reorient input anatomical volume into RL PA IS orientation
     print '\nReorient input volume to RL PA IS orientation...'
@@ -436,10 +435,10 @@ def get_centerline_from_labels(fname_in,
     file_0 = msct_image.Image('data.nii')
     data_concatenation = file_0.data
     hdr_0 = file_0.hdr
-    orientation_file_0 = get_orientation_3d(file_0)
+    orientation_file_0 = sct_image.get_orientation_3d(file_0)
     if len(list_fname_labels) > 0:
         for i in range(0, len(list_fname_labels)):
-            orientation_file_temp = get_orientation_3d(file_labels[i], filename=True)
+            orientation_file_temp = sct_image.get_orientation_3d(file_labels[i], filename=True)
             if orientation_file_0 != orientation_file_temp:
                 print 'ERROR: The files ', fname_in, ' and ', file_labels[
                     i], ' are not in the same orientation. Use sct_image -setorient to change the orientation of a file.'
@@ -454,7 +453,7 @@ def get_centerline_from_labels(fname_in,
     save(img, 'concatenation_file.nii.gz')
 
     # Applying nurbs to the concatenation and save file as binary file
-    fname_output = extract_centerline(
+    fname_output = sct_process_segmentation.extract_centerline(
         'concatenation_file.nii.gz',
         remove_temp_files=remove_temp_files,
         verbose=verbose,
@@ -669,7 +668,7 @@ def get_centerline(data, dim):
     return centerline
 
 
-class SymmetryDetector(Algorithm):
+class SymmetryDetector(msct_base_classes.Algorithm):
     def __init__(self, input_image, contrast=None, verbose=0, direction='lr', nb_sections=1, crop_xy=1):
         super(SymmetryDetector, self).__init__(input_image)
         self._contrast = contrast
@@ -733,7 +732,7 @@ class SymmetryDetector(Algorithm):
         return result_image.data
 
 
-class SCAD(Algorithm):
+class SCAD(msct_base_classes.Algorithm):
     def __init__(self,
                  input_image,
                  contrast=None,
@@ -893,7 +892,7 @@ class SCAD(Algorithm):
                 if not os.path.isdir(folder):
                     raise
             self.debug_folder = os.path.abspath(folder)
-            conv.convert(self.input_image.absolutepath, os.path.join(self.debug_folder, 'raw.nii.gz'))
+            sct_convert.convert(self.input_image.absolutepath, os.path.join(self.debug_folder, 'raw.nii.gz'))
 
     def execute(self):
         print 'Execution of the SCAD algorithm in ' + str(os.getcwd())
@@ -907,7 +906,7 @@ class SCAD(Algorithm):
 
         # create tmp and copy input
         self.path_tmp = sct.tmp_create(self.verbose)
-        conv.convert(self.input_image.absolutepath, self.path_tmp + raw_file_name)
+        sct_convert.convert(self.input_image.absolutepath, self.path_tmp + raw_file_name)
 
         if self.vesselness_provided:
             shutil.copy(vesselness_file_name, self.path_tmp + vesselness_file_name)
@@ -991,7 +990,7 @@ class SCAD(Algorithm):
         img.save()
 
         # use a b-spline to smooth out the centerline
-        x, y, z, dx, dy, dz = smooth_centerline('centerline_with_outliers.nii.gz')
+        x, y, z, dx, dy, dz = sct_straighten_spinalcord.('centerline_with_outliers.nii.gz')
 
         # save the centerline
         nx, ny, nz, nt, px, py, pz, pt = img.dim
@@ -1006,7 +1005,7 @@ class SCAD(Algorithm):
 
         # copy back centerline
         os.chdir('../')
-        conv.convert(self.path_tmp + img.file_name + img.ext, self.output_filename)
+        sct_convert.convert(self.path_tmp + img.file_name + img.ext, self.output_filename)
         if self.rm_tmp_file == 1:
             import shutil
             shutil.rmtree(self.path_tmp)

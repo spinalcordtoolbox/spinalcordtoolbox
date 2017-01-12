@@ -13,9 +13,10 @@
 import sys
 
 import numpy as np
-from msct_parser import msct_parser.Parser
-from msct_image import Image
-from sct_utils import sct.printv, sct.extract_fname
+
+import msct_parser
+import msct_image
+import sct_utils as sct
 
 
 class Param(object):
