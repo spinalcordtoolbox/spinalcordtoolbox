@@ -34,6 +34,9 @@ import msct_image
 import sct_convert
 import sct_image
 
+import glob
+import shutil
+
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
@@ -326,7 +329,32 @@ def tmp_create(verbose=1):
     return path_tmp
 
 
-def tmp_copy_nifti(fname, path_tmp, fname_out='data.nii', verbose=0):
+def delete_tmp_files_and_folders(path=''):
+    """
+    This function removes all files that starts with 'tmp.' in the path specified as input. If no path are provided,
+    the current path is selected. The function removes files and directories recursively and handles Exceptions and
+    errors by ignoring them.
+    Args:
+        path: directory in which temporary files and folders must be removed
+
+    Returns:
+
+    """
+    if not path:
+        path = os.getcwd()
+    pattern = os.path.join(path, 'tmp.*')
+
+    for item in glob.glob(pattern):
+        try:
+            if os.path.isdir(item):
+                shutil.rmtree(item, ignore_errors=True)
+            elif os.path.isfile(item):
+                os.remove(item)
+        except:  # in case an exception is raised (e.g., on Windows, if the file is in use)
+            continue
+
+
+def tmp_copy_nifti(fname,path_tmp,fname_out='data.nii',verbose=0):
     """Copy a nifti file to (temporary) folder and convert to .nii or .nii.gz"""
     path_fname, file_fname, ext_fname = extract_fname(fname)
     path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)
