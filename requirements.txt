@@ -10,3 +10,4 @@ pandas
 xlwt
 xlrd
 xlutils
+requests[security]

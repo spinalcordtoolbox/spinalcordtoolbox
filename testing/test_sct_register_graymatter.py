@@ -11,24 +11,15 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
-import commands
-import sys
 import os
-import time
-from pandas import DataFrame
-import sct_register_graymatter
-from msct_image import Image
-import sct_utils as sct
-from numpy import sum, mean
-# append path that contains scripts, to be able to load modules
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-sys.path.append(path_sct + '/scripts')
 
+import sct_register_graymatter
+import sct_utils as sct
+from numpy import mean
+from pandas import DataFrame
 
 
 def test(path_data, parameters=''):
-
     if not parameters:
         parameters = ' -t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt1_gmseg.nii.gz -wm mt/mt1_wmseg.nii.gz -manual-gm mt/mt1_gmseg_goldstandard.nii.gz -sc mt/mt1_seg.nii.gz -qc 0' #-d mt/mt0.nii.gz
 
@@ -56,7 +47,6 @@ def test(path_data, parameters=''):
     time_start = time.time()
     status, output = sct.run(cmd, 0)
     duration = time.time() - time_start
-
 
     # initialization of results: must be NaN if test fails
     result_dice_gm, result_diff_dc_gm, result_dice_wm, result_diff_dc_wm, result_hausdorff, result_diff_hd, result_median_dist, result_diff_md = float('nan'), float('nan'), float('nan'), float('nan'), float('nan'), float('nan'), float('nan'), float('nan')
@@ -147,4 +137,4 @@ def test(path_data, parameters=''):
 
 if __name__ == "__main__":
     # call main function
-    test(path_sct+'/data')
+    test()

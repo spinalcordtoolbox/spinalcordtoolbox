@@ -183,9 +183,9 @@ def main(args=None):
     contrast = arguments['-c']
     path_template = sct.slash_at_the_end(arguments['-t'], 1)
     if '-ofolder' in arguments:
-        path_output = arguments['-ofolder']
+        path_output = sct.slash_at_the_end(os.path.abspath(arguments['-ofolder']), slash=1)
     else:
-        path_output = ''
+        path_output = sct.slash_at_the_end(os.path.abspath(os.curdir), slash=1)
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -297,7 +297,8 @@ def main(args=None):
         init_disc=init_disc,
         verbose=verbose,
         path_template=path_template,
-        initc2=initc2)
+        initc2=initc2,
+        path_output=path_output)
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
@@ -339,7 +340,7 @@ def main(args=None):
                verbose, 'info')
 
 
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', initc2='auto'):
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc=None, verbose=1, path_template='', initc2='auto', path_output='../'):
     """Find intervertebral discs in straightened image using template matching
     :param fname:
     :param fname_seg:
@@ -348,6 +349,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     :param init_disc:
     :param verbose:
     :param path_template:
+    :param path_output: output path for verbose=2 pictures
     :return:
     """
 
@@ -401,7 +403,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     sct.printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # if automatic mode, find C2/C3 disc
-    if init_disc == [] and initc2 == 'auto':
+    if not init_disc and initc2 == 'auto':
         sct.printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
@@ -423,11 +425,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
             zrange=zrange,
             verbose=verbose,
             save_suffix='_initC2',
-            gaussian_weighting=True)
+            gaussian_weighting=True,
+            path_output=path_output)
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
-    if init_disc == [] and initc2 == 'manual':
+    if not init_disc and initc2 == 'manual':
+        from sct_viewer import ClickViewer
         # reorient image to SAL to be compatible with viewer
         im_input_SAL = im_input.copy()
         im_input_SAL.change_orientation('SAL')
@@ -518,7 +522,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
                 zrange=zrange,
                 verbose=verbose,
                 save_suffix='_disc' + str(current_disc),
-                gaussian_weighting=False)
+                gaussian_weighting=False,
+                path_output=path_output)
 
         # display new disc
         if verbose == 2:
@@ -615,7 +620,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     # save figure
     if verbose == 2:
         plt.figure(50)
-        plt.savefig('../fig_anat_straight_with_labels.png')
+        plt.savefig(path_output + 'fig_anat_straight_with_labels.png')
 
 
 def create_label_z(fname_seg, z, value):
@@ -706,7 +711,8 @@ def compute_corr_3d(src=[],
                     zrange=[],
                     verbose=1,
                     save_suffix='',
-                    gaussian_weighting=True):
+                    gaussian_weighting=True,
+                    path_output='../'):
     """
     Find z that maximizes correlation between src and target 3d data.
     :param src: 3d source data
@@ -831,7 +837,9 @@ def compute_corr_3d(src=[],
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         plt.grid()
         # save figure
-        plt.figure(11), plt.savefig('../fig_pattern' + save_suffix + '.png'), plt.close()
+        plt.figure(11)
+        plt.savefig(path_output + 'fig_pattern'+save_suffix+'.png')
+        plt.close()
 
     return z + zrange[ind_peak] - zshift
 
