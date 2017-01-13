@@ -121,7 +121,6 @@ def main(args=None):
 
     # Apply rigid transformation
     printv('\nApply rigid transformation to curved landmarks...', verbose)
-    import sct_apply_transfo
 
     sct_apply_transfo.main('-i data_src.nii.gz -o data_src_rigid.nii.gz -d data_dest.nii.gz -w curve2straight_rigid.txt -x nn'.split())
 

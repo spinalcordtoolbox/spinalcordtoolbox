@@ -28,6 +28,7 @@ import msct_image
 import msct_nurbs
 import msct_parser
 import sct_image
+import sct_label_vertebrae
 import sct_straighten_spinalcord
 
 
@@ -558,9 +559,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     sct.printv('\nSmooth CSA across slices...', verbose)
     if smoothing_param:
-        from msct_smooth import smoothing_window
         sct.printv('.. Hanning window: '+str(smoothing_param)+' mm', verbose)
-        csa_smooth = smoothing_window(csa, window_len=smoothing_param/pz, window='hanning', verbose=0)
+        csa_smooth = msct_smooth.smoothing_window(csa, window_len=smoothing_param/pz, window='hanning', verbose=0)
         # display figure
         if verbose == 2:
             import matplotlib.pyplot as plt
@@ -774,8 +774,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
         list_disc_z.insert(0, coord_label[i].z)
         list_disc_value.insert(0, coord_label[i].value)
     # label segmentation
-    from sct_label_vertebrae import label_segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    sct_label_vertebrae.label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
     # Generate output files
     sct.printv('--> File created: '+sct.add_suffix(fname_seg, '_labeled.nii.gz'), verbose)
 

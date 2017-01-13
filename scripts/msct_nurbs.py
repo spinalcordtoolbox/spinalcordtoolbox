@@ -72,6 +72,8 @@ except ImportError:
     print '--- scipy not installed! ---'
     sys.exit(2)
 
+import msct_types
+
 
 class NURBS():
     def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01, maxControlPoints=50, all_slices=True, twodim=False):
@@ -928,8 +930,7 @@ class NURBS():
         import numpy as np
         param = np.linspace(x[0], x[-1], prec)
         P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = self.compute_curve_from_parametrization(P, k, x, Nik, Nikp, param)
-        from msct_types import Centerline
-        centerline = Centerline(P_x, P_y, P_z, P_x_d, P_y_d, P_z_d)
+        centerline = msct_types.Centerline(P_x, P_y, P_z, P_x_d, P_y_d, P_z_d)
         distances_between_points = centerline.progressive_length
         range_points = np.linspace(0.0, 1.0, prec)
         dist_curved = np.zeros(prec)
