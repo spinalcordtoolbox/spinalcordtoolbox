@@ -24,6 +24,8 @@ import sys
 import numpy as np
 import scipy.ndimage
 
+import msct_image
+import msct_parser
 import sct_apply_transfo
 import sct_convert
 import sct_label_utils
@@ -31,9 +33,8 @@ import sct_maths
 import sct_resample
 import sct_straighten_spinalcord
 import sct_utils as sct
-import msct_image
-import msct_parser
-import sct_wrap_template
+import sct_viewer
+import sct_warp_template
 
 path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
@@ -354,8 +355,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
-    fname_level = sct_wrap_template.get_file_label(path_template + 'template/', 'vertebral', output='filewithpath')
-    fname_template = sct_wrap_template.get_file_label(path_template + 'template/', contrast.upper() + '-weighted', output='filewithpath')
+    fname_level = sct_warp_template.get_file_label(path_template + 'template/', 'vertebral', output='filewithpath')
+    fname_template = sct_warp_template.get_file_label(path_template + 'template/', contrast.upper() + '-weighted', output='filewithpath')
 
     sct.printv('\nOpen template and vertebral levels...', verbose)
     data_template = msct_image.Image(fname_template).data
@@ -427,11 +428,10 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
 
     # if manual mode, open viewer for user to click on C2/C3 disc
     if init_disc == [] and initc2 == 'manual':
-        from sct_viewer import ClickViewer
         # reorient image to SAL to be compatible with viewer
         im_input_SAL = im_input.copy()
         im_input_SAL.change_orientation('SAL')
-        viewer = ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'])
+        viewer = sct_viewer.ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'])
         viewer.number_of_slices = 1
         pz = 1
         viewer.gap_inter_slice = int(10 / pz)
@@ -636,8 +636,7 @@ def create_label_z(fname_seg, z, value):
     nii.data[:, :, :] = 0
     nii.data[x, y, z] = value
     # dilate label to prevent it from disappearing due to nearestneighbor interpolation
-    from sct_maths import dilate
-    nii.data = dilate(nii.data, [3])
+    nii.data = sct_maths.dilate(nii.data, [3])
     nii.setFileName(fname_label)
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save()

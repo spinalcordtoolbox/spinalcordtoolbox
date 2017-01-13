@@ -12,7 +12,7 @@
 
 import sct_utils as sct
 from sct_testing import write_to_log_file
-from sct_label_utils import sct_label_utils.ProcessLabels
+import sct_label_utils
 from numpy import linalg
 from math import sqrt
 import sct_label_vertebrae

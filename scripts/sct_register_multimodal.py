@@ -34,14 +34,15 @@ import os
 import sys
 import time
 
-import sct_apply_transfo
-import sct_concat_transfo
-import sct_image
-import sct_utils as sct
 import msct_image
 import msct_parser
+import msct_register
 import msct_register_landmarks
+import sct_apply_transfo
+import sct_concat_transfo
 import sct_convert
+import sct_image
+import sct_utils as sct
 
 
 def get_parser(paramreg=None):
@@ -809,8 +810,7 @@ def register(src, dest, paramreg, param, i_step_str):
                 paramreg.steps[i_step_str].shrink = '1'
             warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
             warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-            from msct_register import register_slicewise
-            register_slicewise(
+            msct_register.register_slicewise(
                 src,
                 dest,
                 paramreg=paramreg.steps[i_step_str],
@@ -850,8 +850,7 @@ def register(src, dest, paramreg, param, i_step_str):
             dest = sct.add_suffix(dest, '_smooth')
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        from msct_register import register_slicewise
-        register_slicewise(
+        msct_register.register_slicewise(
             src,
             dest,
             paramreg=paramreg.steps[i_step_str],

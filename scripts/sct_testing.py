@@ -12,9 +12,9 @@ import shutil
 import sys
 import time
 
+import msct_parser
 import sct_download_data
 import sct_utils as sct
-from msct_parser import msct_parser.Parser
 
 # get path of the toolbox
 path_sct = os.environ.get('SCT_DIR')

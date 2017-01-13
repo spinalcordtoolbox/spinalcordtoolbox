@@ -21,9 +21,11 @@ import sys
 
 import numpy as np
 
-import sct_utils as sct
 import msct_image
 import msct_parser
+import msct_types
+import sct_straighten_spinalcord
+import sct_utils as sct
 
 
 class Param(object):
@@ -202,31 +204,26 @@ class ProcessLabels(object):
                                 image_ref=None,
                                 dilate=False,
                                 verbose=0):
-        from msct_types import Coordinate
-
         # if reference image is provided (segmentation), we draw the cross perpendicular to the centerline
         if image_ref is not None:
             # smooth centerline
-            from sct_straighten_spinalcord import smooth_centerline
             x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, \
-            z_centerline_deriv = smooth_centerline(image_ref, verbose=verbose)
+            z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline(image_ref, verbose=verbose)
 
         # compute crosses
         cross_coordinates = []
         for coord in coordinates_input:
             if image_ref is None:
-                from sct_straighten_spinalcord import compute_cross
-                cross_coordinates_temp = compute_cross(coord, gapxy)
+                cross_coordinates_temp = sct_straighten_spinalcord.compute_cross(coord, gapxy)
             else:
-                from sct_straighten_spinalcord import compute_cross_centerline
                 from numpy import where
                 index_z = where(z_centerline == coord.z)
-                deriv = Coordinate([
+                deriv = msct_types.Coordinate([
                     x_centerline_deriv[index_z][0],
                     y_centerline_deriv[index_z][0],
                     z_centerline_deriv[index_z][0], 0.0
                 ])
-                cross_coordinates_temp = compute_cross_centerline(coord, deriv,
+                cross_coordinates_temp = sct_straighten_spinalcord.compute_cross_centerline(coord, deriv,
                                                                   gapxy)
 
             for i, coord_cross in enumerate(cross_coordinates_temp):
@@ -237,134 +234,134 @@ class ProcessLabels(object):
                 additional_coordinates = []
                 for coord_temp in cross_coordinates_temp:
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x, coord_temp.y, coord_temp.z + 1.0,
                             coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x, coord_temp.y, coord_temp.z - 1.0,
                             coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x, coord_temp.y + 1.0, coord_temp.z,
                             coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x, coord_temp.y + 1.0, coord_temp.z +
                             1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x, coord_temp.y + 1.0, coord_temp.z -
                             1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x, coord_temp.y - 1.0, coord_temp.z,
                             coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x, coord_temp.y - 1.0, coord_temp.z +
                             1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x, coord_temp.y - 1.0, coord_temp.z -
                             1.0, coord_temp.value
                         ]))
 
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x + 1.0, coord_temp.y, coord_temp.z,
                             coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x + 1.0, coord_temp.y, coord_temp.z +
                             1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x + 1.0, coord_temp.y, coord_temp.z -
                             1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x + 1.0, coord_temp.y + 1.0,
                             coord_temp.z, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x + 1.0, coord_temp.y + 1.0,
                             coord_temp.z + 1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x + 1.0, coord_temp.y + 1.0,
                             coord_temp.z - 1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x + 1.0, coord_temp.y - 1.0,
                             coord_temp.z, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x + 1.0, coord_temp.y - 1.0,
                             coord_temp.z + 1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x + 1.0, coord_temp.y - 1.0,
                             coord_temp.z - 1.0, coord_temp.value
                         ]))
 
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x - 1.0, coord_temp.y, coord_temp.z,
                             coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x - 1.0, coord_temp.y, coord_temp.z +
                             1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x - 1.0, coord_temp.y, coord_temp.z -
                             1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x - 1.0, coord_temp.y + 1.0,
                             coord_temp.z, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x - 1.0, coord_temp.y + 1.0,
                             coord_temp.z + 1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x - 1.0, coord_temp.y + 1.0,
                             coord_temp.z - 1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x - 1.0, coord_temp.y - 1.0,
                             coord_temp.z, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x - 1.0, coord_temp.y - 1.0,
                             coord_temp.z + 1.0, coord_temp.value
                         ]))
                     additional_coordinates.append(
-                        Coordinate([
+                        msct_types.Coordinate([
                             coord_temp.x - 1.0, coord_temp.y - 1.0,
                             coord_temp.z - 1.0, coord_temp.value
                         ]))
@@ -663,9 +660,8 @@ class ProcessLabels(object):
         :param symmetry: boolean,
         :return: intersection of CoordinateValue: list
         """
-        from msct_types import CoordinateValue
-        if isinstance(coord_input[0], CoordinateValue) and isinstance(
-                coord_ref[0], CoordinateValue) and symmetry:
+        if isinstance(coord_input[0], msct_types.CoordinateValue) and isinstance(
+                coord_ref[0], msct_types.CoordinateValue) and symmetry:
             coord_intersection = list(
                 set(coord_input).intersection(set(coord_ref)))
             result_coord_input = [
@@ -821,8 +817,7 @@ class ProcessLabels(object):
         #   a. extract centerline
         #   b. for each slice, extract corresponding level
         nx, ny, nz, nt, px, py, pz, pt = im_input.dim
-        from sct_straighten_spinalcord import smooth_centerline
-        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline.smooth_centerline(
             self.image_input, algo_fitting='nurbs', verbose=0)
         value_centerline = np.array([
             im_input.data[x_centerline_fit[it], y_centerline_fit[it],

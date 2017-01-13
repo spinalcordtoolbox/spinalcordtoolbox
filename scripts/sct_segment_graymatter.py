@@ -48,20 +48,15 @@ from math import exp
 
 import numpy as np
 
+import msct_gmseg_utils
+import msct_image
 import sct_compute_hausdorff_distance
 import sct_dice_coefficient
+import sct_image
 import sct_maths
 import sct_process_segmentation
 import sct_register_multimodal
-from msct_gmseg_utils import (apply_transfo, average_gm_wm, binarize,
-                              normalize_slice, pre_processing, register_data)
-import msct_image
-import msct_multiatlas_seg
-#import Model, Param, ParamData, ParamModel
-import msct_parser
-from sct_image import sct_image.set_orientation
-from sct_utils import (sct.add_suffix, sct.extract_fname, sct.printv, slash_at_the_end,
-                       sct.tmp_create)
+import sct_utils as sct
 
 
 def get_parser():
@@ -246,7 +241,7 @@ class SegmentGM(object):
         # load model
         self.model.load_model()
 
-        self.target_im, self.info_preprocessing = pre_processing(
+        self.target_im, self.info_preprocessing = msct_gmseg_utils.pre_processing(
             self.param_seg.fname_im,
             self.param_seg.fname_seg,
             self.param_seg.fname_level,
@@ -386,7 +381,7 @@ class SegmentGM(object):
         im_dest = self.get_im_from_list(np.array([self.model.mean_image for target_slice in self.target_im]))
         im_src = self.get_im_from_list(np.array([target_slice.im for target_slice in self.target_im]))
         # register list of target slices on list of model mean image
-        im_src_reg, fname_src2dest, fname_dest2src = register_data(
+        im_src_reg, fname_src2dest, fname_dest2src = msct_gmseg_utils.register_data(
             im_src,
             im_dest,
             param_reg=self.param_data.register_param,
@@ -413,7 +408,7 @@ class SegmentGM(object):
             level_int = int(round(target_slice.level))
             if level_int not in self.model.intensities.index:
                 level_int = 0
-            norm_im_M = normalize_slice(
+            norm_im_M = msct_gmseg_utils.normalize_slice(
                 target_slice.im_M,
                 gm_seg_model[level_int],
                 wm_seg_model[level_int],
@@ -469,7 +464,7 @@ class SegmentGM(object):
             # get list of slices corresponding to the indexes
             list_dic_slices = [self.model.slices[j] for j in list_dic_indexes_by_slice[target_slice.id]]
             # average slices GM and WM
-            data_mean_gm, data_mean_wm = average_gm_wm(list_dic_slices)
+            data_mean_gm, data_mean_wm = msct_gmseg_utils.average_gm_wm(list_dic_slices)
             if self.param_seg.type_seg == 'bin':
                 # binarize GM seg
                 data_mean_gm[data_mean_gm >= 0.5] = 1
@@ -486,13 +481,13 @@ class SegmentGM(object):
         im_src_gm = self.get_im_from_list(np.array([target_slice.gm_seg_M for target_slice in self.target_im]))
         im_src_wm = self.get_im_from_list(np.array([target_slice.wm_seg_M for target_slice in self.target_im]))
         #
-        fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1) + 'warp_dic2target.nii.gz'
+        fname_dic_space2slice_space = sct.slash_at_the_end(path_warp, slash=1) + 'warp_dic2target.nii.gz'
         interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
         # warp GM
-        im_src_gm_reg = apply_transfo(
+        im_src_gm_reg = msct_gmseg_utils.apply_transfo(
             im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
         # warp WM
-        im_src_wm_reg = apply_transfo(
+        im_src_wm_reg = msct_gmseg_utils.apply_transfo(
             im_src_wm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
         for i, target_slice in enumerate(self.target_im):
             # set GM and WM for each slice
@@ -602,8 +597,8 @@ class SegmentGM(object):
         im_wmseg = self.im_res_wmseg.copy()
 
         if self.param_seg.type_seg == 'prob':
-            im_gmseg = binarize(im_gmseg, thr_max=0.5, thr_min=0.5)
-            im_wmseg = binarize(im_wmseg, thr_max=0.5, thr_min=0.5)
+            im_gmseg = msct_gmseg_utils.binarize(im_gmseg, thr_max=0.5, thr_min=0.5)
+            im_wmseg = msct_gmseg_utils.binarize(im_wmseg, thr_max=0.5, thr_min=0.5)
 
         fname_gmseg = 'res_gmseg.nii.gz'
         im_gmseg.setFileName(fname_gmseg)

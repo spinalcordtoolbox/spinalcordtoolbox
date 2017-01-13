@@ -18,9 +18,11 @@ import os
 import shutil
 import sys
 
+import msct_image
 import msct_parser
 import sct_convert
 import sct_crop_image
+import sct_image
 import sct_utils as sct
 
 
@@ -178,8 +180,7 @@ class Transform(object):
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
-        from msct_image import Image
-        nx, ny, nz, nt, px, py, pz, pt = Image(fname_src).dim
+        nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_src).dim
         # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
         sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' +
                    str(nt), verbose)
@@ -215,8 +216,7 @@ class Transform(object):
             os.chdir(path_tmp)
             # split along T dimension
             sct.printv('\nSplit along T dimension...', verbose)
-            from sct_image import sct_image.split_data
-            im_dat = Image('data.nii')
+            im_dat = msct_image.Image('data.nii')
             im_header = im_dat.hdr
             data_split_list = sct_image.split_data(im_dat, 3)
             for im in data_split_list:
@@ -235,7 +235,6 @@ class Transform(object):
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
-            from sct_image import sct_image.concat_data
             import glob
             path_out, name_out, ext_out = sct.extract_fname(fname_out)
             # im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]

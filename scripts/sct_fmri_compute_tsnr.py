@@ -67,7 +67,6 @@ class Tsnr(object):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # sct.run('fslmaths ' + fname_data + ' -Tstd ' + fname_data_std)
         fname_tsnr = sct.add_suffix(fname_data, '_tsnr')
-        from msct_image import Image
         nii_mean = msct_image.Image(fname_data_mean)
         data_mean = nii_mean.data
         data_std = msct_image.Image(fname_data_std).data

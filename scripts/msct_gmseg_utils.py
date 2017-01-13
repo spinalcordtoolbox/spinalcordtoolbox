@@ -21,6 +21,7 @@ import numpy as np
 import msct_image
 import sct_apply_transfo
 import sct_image
+import sct_maths
 import sct_register_multimodal
 import sct_utils as sct
 
@@ -138,9 +139,8 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy
     if denoising:
         sct.printv('  Denoise...', verbose, 'normal')
-        from sct_maths import denoise_nlmeans
         data = np.asarray([im.data for im in list_im_slices])
-        data_denoised = denoise_nlmeans(data, block_radius = int(len(list_im_slices)/2))
+        data_denoised = sct_maths.denoise_nlmeans(data, block_radius = int(len(list_im_slices)/2))
         for i in range(len(list_im_slices)):
             list_im_slices[i].data = data_denoised[i]
 

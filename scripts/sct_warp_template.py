@@ -17,9 +17,9 @@ import sys
 
 import sct_apply_transfo
 import sct_utils as sct
-from msct_image import Image
-from msct_parser import msct_parser.Parser
-from sct_extract_metric import read_label_file
+import msct_image
+import msct_parser
+import sct_extract_metric
 
 
 class Param(object):
@@ -108,8 +108,8 @@ class WarpTemplate(object):
 
         if self.qc:
             # output QC image
-            im = Image(self.fname_src)
-            im_wm = Image(self.folder_out + self.folder_template +
+            im = msct_image.Image(self.fname_src)
+            im_wm = msct_image.Image(self.folder_out + self.folder_template +
                           get_file_label(self.folder_out +
                                          self.folder_template, 'white matter'))
             im.save_quality_control(
@@ -135,7 +135,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo,
     # read label file and check if file exists
     sct.printv('\nRead label file...', param.verbose)
     try:
-        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = read_label_file(
+        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = sct_extract_metric.read_label_file(
             path_label + folder_label, file_label)
     except Exception as error:
         sct.printv('\nWARNING: Cannot warp label ' + folder_label + ': ' +

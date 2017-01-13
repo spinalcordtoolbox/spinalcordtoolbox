@@ -24,16 +24,15 @@ from nibabel import Nifti1Image, save
 from numpy import linspace
 from scipy import ndimage
 
+import msct_image
+import msct_parser
+import msct_smooth
+import msct_types
 import sct_apply_transfo
 import sct_convert
 import sct_crop_image
 import sct_image
 import sct_utils as sct
-from msct_image import Image
-from msct_parser import msct_parser.Parser
-from msct_smooth import evaluate_derivative_3D, smoothing_window
-from sct_apply_transfo import Transform
-
 
 def smooth_centerline(fname_centerline,
                       algo_fitting='hanning',
@@ -152,14 +151,14 @@ def smooth_centerline(fname_centerline,
         y_centerline = np.asarray(y_centerline)
 
         # Smooth the curve
-        x_centerline_smooth = smoothing_window(
+        x_centerline_smooth = msct_smooth.smoothing_window(
             x_centerline,
             window_len=window_length / pz,
             window=type_window,
             verbose=verbose,
             robust=0,
             remove_edge_points=remove_edge_points)
-        y_centerline_smooth = smoothing_window(
+        y_centerline_smooth = msct_smooth.smoothing_window(
             y_centerline,
             window_len=window_length / pz,
             window=type_window,
@@ -179,7 +178,7 @@ def smooth_centerline(fname_centerline,
         z_centerline_fit = z_centerline
 
         # get derivative
-        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = evaluate_derivative_3D(
+        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(
             x_centerline_fit, y_centerline_fit, z_centerline, px, py, pz)
 
         x_centerline_fit = np.asarray(x_centerline_fit)
@@ -189,9 +188,8 @@ def smooth_centerline(fname_centerline,
     elif algo_fitting == "nurbs":
         # TODO: remove outliers that are at the edges of the spinal cord
         # simple way to do it: go from one end and remove point if the distance from mean is higher than 2 * std
-        from msct_smooth import b_spline_nurbs
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv,\
-            z_centerline_deriv = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None,
+            z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None,
                                                 point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
 
     else:
@@ -375,8 +373,7 @@ class SpinalCordStraightener(object):
                 all_slices=False,
                 phys_coordinates=True,
                 remove_outliers=True)
-            from msct_types import Centerline
-            centerline = Centerline(x_centerline_fit, y_centerline_fit,
+            centerline = msct_types.Centerline(x_centerline_fit, y_centerline_fit,
                                     z_centerline, x_centerline_deriv,
                                     y_centerline_deriv, z_centerline_deriv)
 
@@ -468,7 +465,7 @@ class SpinalCordStraightener(object):
                     all_slices=False,
                     phys_coordinates=True,
                     remove_outliers=True)
-                centerline_straight = Centerline(
+                centerline_straight = msct_types.Centerline(
                     x_centerline_fit, y_centerline_fit, z_centerline,
                     x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
@@ -594,7 +591,7 @@ class SpinalCordStraightener(object):
                 coord_phys_straight = np.asarray(
                     image_centerline_straight.transfo_pix2phys(coord_straight))
 
-                centerline_straight = Centerline(
+                centerline_straight = msct_types.Centerline(
                     coord_phys_straight[:, 0], coord_phys_straight[:, 1],
                     coord_phys_straight[:, 2], dx_straight, dy_straight,
                     dz_straight)
@@ -768,7 +765,7 @@ class SpinalCordStraightener(object):
             # Apply deformation to input image
             sct.printv('\nApply transformation to centerline image...',
                        verbose)
-            Transform(
+            sct_apply_transfo.Transform(
                 input_filename='centerline.nii.gz',
                 fname_dest=fname_ref,
                 output_filename="tmp.centerline_straight.nii.gz",
