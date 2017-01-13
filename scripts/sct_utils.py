@@ -16,6 +16,7 @@
 import email
 import errno
 import fnmatch
+import glob
 import inspect
 import os
 import platform
@@ -211,21 +212,15 @@ class Timer(object):
 
 
 def extract_fname(fname):
-    """Extract path, file and extension"""
-    # extract path
-    path_fname = os.path.dirname(fname) + '/'
-    # check if only single file was entered (without path)
-    if path_fname == '/':
-        path_fname = ''
-    # extract file and extension
-    file_fname = fname
-    file_fname = file_fname.replace(path_fname, '')
-    file_fname, ext_fname = os.path.splitext(file_fname)
-    # check if .nii.gz file
-    if ext_fname == '.gz':
-        file_fname = file_fname[0:len(file_fname) - 4]
-        ext_fname = ".nii.gz"
-    return path_fname, file_fname, ext_fname
+    """Return the path, base file name and extension"""
+    abspath = os.path.abspath(fname)
+    path, filename = os.path.split(abspath)
+    basename, extension = os.path.splitext(filename)
+    if extension == '.gz':
+        basename, extension = os.path.splitext(basename)
+        extension += '.gz'
+
+    return path, basename, extension
 
 
 def get_absolute_path(fname):
@@ -244,10 +239,10 @@ def check_file_exist(fname, verbose=1):
         fname_to_test = fname
     if os.path.isfile(fname_to_test):
         if verbose:
-            printv('  OK: ' + fname, verbose, 'normal')
+            printv('  OK: '+fname_to_test, verbose, 'normal')
         return True
     else:
-        printv('\nERROR: The file ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        printv('\nERROR: The file ' + os.path.abspath(os.curdir) + fname_to_test + ' does not exist. Exit program.\n', 1, 'error')
         return False
 
 
@@ -333,7 +328,32 @@ def tmp_create(verbose=1):
     return path_tmp
 
 
-def tmp_copy_nifti(fname, path_tmp, fname_out='data.nii', verbose=0):
+def delete_tmp_files_and_folders(path=''):
+    """
+    This function removes all files that starts with 'tmp.' in the path specified as input. If no path are provided,
+    the current path is selected. The function removes files and directories recursively and handles Exceptions and
+    errors by ignoring them.
+    Args:
+        path: directory in which temporary files and folders must be removed
+
+    Returns:
+
+    """
+    if not path:
+        path = os.getcwd()
+    pattern = os.path.join(path, 'tmp.*')
+
+    for item in glob.glob(pattern):
+        try:
+            if os.path.isdir(item):
+                shutil.rmtree(item, ignore_errors=True)
+            elif os.path.isfile(item):
+                os.remove(item)
+        except:  # in case an exception is raised (e.g., on Windows, if the file is in use)
+            continue
+
+
+def tmp_copy_nifti(fname,path_tmp,fname_out='data.nii',verbose=0):
     """Copy a nifti file to (temporary) folder and convert to .nii or .nii.gz"""
     path_fname, file_fname, ext_fname = extract_fname(fname)
     path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)

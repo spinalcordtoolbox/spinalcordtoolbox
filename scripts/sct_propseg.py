@@ -12,15 +12,103 @@
 #########################################################################################
 
 import os
+import shutil
 import sys
 from glob import glob
 
+import numpy as np
+import scipy
+
 import msct_image
 import msct_parser
-import sct_utils as sct
 import sct_image
 import sct_label_utils
-import sct_viewer
+import sct_utils as sct
+
+
+def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5.0, remove_temp_files=1, verbose=0):
+    """
+    This function takes the outputs of isct_propseg (centerline and segmentation) and check if the centerline of the
+    segmentation is coherent with the centerline provided by the isct_propseg, especially on the edges (related
+    to issue #1074).
+    Args:
+        fname_segmentation: filename of binary segmentation
+        fname_centerline: filename of binary centerline
+        threshold_distance: threshold, in mm, beyond which centerlines are not coherent
+        verbose:
+
+    Returns: None
+    """
+
+    # creating a temporary folder in which all temporary files will be placed and deleted afterwards
+    path_tmp = sct.tmp_create(verbose=verbose)
+    shutil.copy(fname_segmentation, path_tmp + 'tmp.segmentation.nii.gz')
+    shutil.copy(fname_centerline, path_tmp + 'tmp.centerline.nii.gz')
+
+    # go to tmp folder
+    os.chdir(path_tmp)
+
+    # convert segmentation image to RPI
+    im_input = msct_image.Image('tmp.segmentation.nii.gz')
+    image_input_orientation = sct_image.orientation(im_input, get=True, verbose=False)
+    sct.run('sct_image -i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz', verbose)
+    sct.run('sct_image -i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz', verbose)
+
+    # go through segmentation image, and compare with centerline from propseg
+    im_seg = msct_image.Image('tmp.segmentation_RPI.nii.gz')
+    im_centerline = msct_image.Image('tmp.centerline_RPI.nii.gz')
+
+    # Get size of data
+    sct.printv('\nGet data dimensions...', verbose)
+    nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+
+    # extraction of centerline provided by isct_propseg and computation of center of mass for each slice
+    # the centerline is defined as the center of the tubular mesh outputed by propseg.
+    centerline, key_centerline = {}, []
+    for i in range(nz):
+        slice = im_centerline.data[:, :, i]
+        if np.any(slice):
+            x_centerline, y_centerline = scipy.ndimage.measurements.center_of_mass(slice)
+            centerline[str(i)] = [x_centerline, y_centerline]
+            key_centerline.append(i)
+
+    # for each slice of the segmentation, check if only one object is present. If not, remove the slice from segmentation.
+    # If only one object (the spinal cord) is present in the slice, check if its center of mass is close to the centerline of isct_propseg.
+    for i in range(nz):
+        # extraction of slice
+        slice = im_seg.data[:, :, i]
+        to_remove = False  # flag that decides if the slice must be removed
+        label_objects, nb_labels = scipy.ndimage.label(slice)  # count binary objects in the slice
+        if nb_labels > 1:  # if there is more that one object in the slice, the slice is removed from the segmentation
+            to_remove = True
+        elif nb_labels == 1:  # check if the centerline is coherent with the one from isct_propseg
+            x_centerline, y_centerline = scipy.ndimage.measurements.center_of_mass(slice)
+            slice_nearest_coord = min(key_centerline, key=lambda x:abs(x-i))
+            coord_nearest_coord = centerline[str(slice_nearest_coord)]
+            distance = np.sqrt(((x_centerline - coord_nearest_coord[0]) * px) ** 2 +
+                               ((y_centerline - coord_nearest_coord[1]) * py) ** 2 +
+                               ((i - slice_nearest_coord) * pz) ** 2)
+
+            if distance >= threshold_distance:  # threshold must be adjusted, default is 5 mm
+                to_remove = True
+
+        # remove the slice
+        if to_remove:
+            im_seg.data[:, :, i] *= 0
+
+    # saving the image
+    im_seg.setFileName('tmp.segmentation_RPI_c.nii.gz')
+    im_seg.save()
+
+    # replacing old segmentation with the corrected one
+    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ../' + fname_segmentation, verbose)
+
+    os.chdir('..')
+
+    # remove temporary files
+    if remove_temp_files:
+        sct.printv("\nRemove temporary files...", verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
 
 def get_parser():
@@ -70,6 +158,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="int",
                       description="up limit of the propagation, default is the highest slice of the image",
                       mandatory=False)
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="remove temporary files.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
@@ -182,6 +276,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False)
     return parser
 
+
 def main(args=None):
 
     if not args:
@@ -210,6 +305,9 @@ def main(args=None):
     if "-up" in arguments:
         isct_options += " -up " + str(arguments["-up"])
 
+    remove_temp_files = 1
+    if "-r" in arguments:
+        remove_temp_files = int(arguments["-r"])
     verbose = 0
     if "-v" in arguments:
         if arguments["-v"] is "1":
@@ -282,21 +380,24 @@ def main(args=None):
     if nt > 1:
         sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
+    path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
+
     # if centerline or mask is asked using viewer
     if use_viewer:
         # make sure image is in SAL orientation, as it is the orientation used by PropSeg
         image_input_orientation = sct_image.orientation(image_input, get=True, verbose=False)
         path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
+        path_tmp_viewer = sct.tmp_create(verbose=verbose)
         sct_image.main(['-i', input_filename,
-                        '-o', os.path.join(folder_output,reoriented_image_filename),
+                        '-o', os.path.join(path_tmp_viewer, reoriented_image_filename),
                         '-setorient', 'SAL',
                         '-v', '0'])
 
-        image_input_reoriented = msct_image.Image(folder_output + reoriented_image_filename)
-        viewer = sct_viewer.ClickViewer(image_input_reoriented)
-        viewer.help_url = \
-            'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
+        from sct_viewer import ClickViewer
+        image_input_reoriented = msct_image.Image(path_tmp_viewer + reoriented_image_filename)
+        viewer = ClickViewer(image_input_reoriented)
+        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         if use_viewer == "mask":
             viewer.number_of_slices = 3
             viewer.gap_inter_slice = int(10 / pz)
@@ -312,14 +413,14 @@ def main(args=None):
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
 
-            sct_label_utils.main(["-i", os.path.join(folder_output, reoriented_image_filename),
+            sct_label_utils.main(["-i", os.path.join(path_tmp_viewer, reoriented_image_filename),
                                   "-create", mask_points,
-                                  "-o", os.path.join(folder_output, mask_filename)])
+                                  "-o", os.path.join(path_tmp_viewer, mask_filename)])
 
             # reorient the initialization mask to correspond to input image orientation
             mask_reoriented_filename = sct.add_suffix(file_fname + ext_fname, "_mask_viewer")
-            sct_image.main(['-i', os.path.join(folder_output, mask_filename),
-                            '-o', os.path.join(folder_output, mask_filename),
+            sct_image.main(['-i', os.path.join(path_tmp_viewer, mask_filename),
+                            '-o', os.path.join(path_tmp_viewer, mask_filename),
                             '-setorient ' + image_input_orientation,
                             '-v', '0'])
             # remove temporary files
@@ -337,16 +438,25 @@ def main(args=None):
 
     sct.run("isct_propseg " + isct_options, verbose)
 
-    sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
-    output_filename = file_fname+"_seg"+ext_fname
+    output_filename = file_fname + "_seg" + ext_fname
+
+    fname_centerline = file_fname + '_centerline' + ext_fname
+    check_and_correct(folder_output + output_filename, folder_output + fname_centerline, remove_temp_files)
+
+    # remove temporary files
+    if remove_temp_files:
+        sct.printv("\nRemove temporary files...", verbose)
+        if use_viewer:
+            shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
     if folder_output == "./":
         output_name = output_filename
     else:
         output_name = folder_output + output_filename
     sct.printv("fslview " + input_filename + " " + output_name + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+
 
 if __name__ == "__main__":
     main()

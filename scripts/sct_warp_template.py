@@ -33,7 +33,6 @@ class Param(object):
         self.folder_atlas = 'atlas/'
         self.folder_spinal_levels = 'spinal_levels/'
         self.file_info_label = 'info_label.txt'
-        # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
         # list of files for which nn interpolation should be used. Default = linear.

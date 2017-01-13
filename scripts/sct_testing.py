@@ -91,10 +91,7 @@ def main(args=None):
 
     # loop across all functions and test them
     status = []
-    [
-        status.append(test_function(f, param)) for f in functions
-        if function_to_test == f
-    ]
+    [status.append(test_function(f, param)) for f in functions if function_to_test == f]
     if not status:
         for f in functions:
             status.append(test_function(f, param))
@@ -236,7 +233,7 @@ def test_function(script_name, param):
     # write log file
     write_to_log_file(fname_log, output, 'w')
     # manage status
-    if status == 0:
+    if (status & 255) == 0:
         print_ok()
     else:
         if status == 99:
