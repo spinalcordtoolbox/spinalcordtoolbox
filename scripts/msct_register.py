@@ -26,6 +26,7 @@ from nibabel import Nifti1Image, load, save
 from scipy.io import loadmat
 
 import msct_image
+import msct_smooth
 import sct_convert
 import sct_image
 import sct_register_multimodal
@@ -223,8 +224,7 @@ def register2d_centermassrot(fname_src,
 
     # regularize rotation
     if not poly == 0 and rot == 1:
-        from msct_smooth import polynomial_fit
-        angle_src_dest_regularized = polynomial_fit(
+        angle_src_dest_regularized = msct_smooth.polynomial_fit(
             z_nonzero, angle_src_dest[z_nonzero], poly)[0]
         # display
         if verbose == 2:
@@ -945,10 +945,9 @@ def register2d(fname_src,
             'src.nii', -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
 
     if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
-        from sct_image import concat_warp2d
         # concatenate 2d warping fields along z
-        concat_warp2d(list_warp, fname_warp, 'dest.nii')
-        concat_warp2d(list_warp_inv, fname_warp_inv, 'src.nii')
+        sct_image.concat_warp2d(list_warp, fname_warp, 'dest.nii')
+        sct_image.concat_warp2d(list_warp_inv, fname_warp_inv, 'src.nii')
 
 
 def numerotation(nb):

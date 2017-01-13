@@ -625,7 +625,6 @@ def get_minimum_path(data, smooth_factor=np.sqrt(2), invert=1, verbose=1, debug=
 
 
 def get_minimum_path_nii(fname):
-    from msct_image import Image
     data = msct_image.Image(fname)
     vesselness_data = data.data
     raw_orient = data.change_orientation()
@@ -920,7 +919,6 @@ class SCAD(msct_base_classes.Algorithm):
 
         # get body symmetry
         if self.enable_symmetry:
-            from msct_image import change_data_orientation
             sym = SymmetryDetector(raw_file_name, self.contrast, crop_xy=0)
             self.raw_symmetry = sym.execute()
             img.change_orientation(self.raw_orientation)
@@ -928,12 +926,11 @@ class SCAD(msct_base_classes.Algorithm):
             img.change_orientation()
 
         if self.smooth_vesselness:
-            from msct_image import change_data_orientation
             img.data = gaussian_filter(img.data, [10, 10, 1])
             self.output_debug_file(img, img.data, "raw_smooth")
             normalised_symmetry = normalize_array_histogram(self.raw_symmetry)
             # normalized_data = normalize_array_histogram(img.data)
-            img.data = np.multiply(img.data, change_data_orientation(normalised_symmetry, self.raw_orientation, "RPI"))
+            img.data = np.multiply(img.data, msct_image.change_data_orientation(normalised_symmetry, self.raw_orientation, "RPI"))
             img.file_name = "symmetry_x_rawsmoothed"
             raw_file_name = img.file_name + img.ext
             img.change_orientation(self.raw_orientation)
@@ -970,8 +967,7 @@ class SCAD(msct_base_classes.Algorithm):
             self.output_debug_file(img, self.smoothed_min_path.data, "normalized_symmetry")
 
             # multiply normalised symmetry data with the minimum path result
-            from msct_image import change_data_orientation
-            rpi_normalized_sym = change_data_orientation(
+            rpi_normalized_sym = msct_image.change_data_orientation(
                 np.power(normalised_symmetry, self.symmetry_exponent), self.raw_orientation, "RPI")
             self.spine_detect_data = np.multiply(self.smoothed_min_path.data, rpi_normalized_sym)
             self.output_debug_file(img, self.spine_detect_data, "symmetry_x_min_path")
@@ -990,7 +986,7 @@ class SCAD(msct_base_classes.Algorithm):
         img.save()
 
         # use a b-spline to smooth out the centerline
-        x, y, z, dx, dy, dz = sct_straighten_spinalcord.('centerline_with_outliers.nii.gz')
+        x, y, z, dx, dy, dz = sct_straighten_spinalcord.smooth_centerline('centerline_with_outliers.nii.gz')
 
         # save the centerline
         nx, ny, nz, nt, px, py, pz, pt = img.dim
@@ -1007,7 +1003,6 @@ class SCAD(msct_base_classes.Algorithm):
         os.chdir('../')
         sct_convert.convert(self.path_tmp + img.file_name + img.ext, self.output_filename)
         if self.rm_tmp_file == 1:
-            import shutil
             shutil.rmtree(self.path_tmp)
 
         print 'To view the output with FSL :'

@@ -47,12 +47,13 @@ from matplotlib import cm
 from matplotlib.lines import Line2D
 from matplotlib.widgets import Button
 from numpy import arange, linspace, max, pad, percentile
+import numpy as np
 
-import sct_utils as sct
+import msct_parser
+import msct_types
 import sct_image
-from msct_image import Image
-from msct_parser import msct_parser.Parser
-from msct_types import *
+import sct_utils as sct
+import msct_image
 
 
 class SinglePlot(object):
@@ -273,7 +274,7 @@ class Viewer(object):
     def __init__(self, list_images, visualization_parameters=None):
         self.images = []
         for im in list_images:
-            if isinstance(im, Image):
+            if isinstance(im, msct_image.Image):
                 self.images.append(im)
             else:
                 print "Error, one of the images is actually not an image..."
@@ -296,7 +297,7 @@ class Viewer(object):
                              float(self.im_spacing[0]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[1])]
         self.offset = [0.0, 0.0, 0.0]
-        self.current_point = Coordinate([int(nx / 2), int(ny / 2), int(nz / 2)])
+        self.current_point = msct_types.Coordinate([int(nx / 2), int(ny / 2), int(nz / 2)])
 
         self.windows = []
         self.press = [0, 0]
@@ -384,15 +385,15 @@ class Viewer(object):
     def get_event_coordinates(self, event, plot=None):
         point = None
         if plot.view == 1:
-            point = Coordinate([self.current_point.x,
+            point = msct_types.Coordinate([self.current_point.x,
                                 int(round(event.ydata)),
                                 int(round(event.xdata)), 1])
         elif plot.view == 2:
-            point = Coordinate([int(round(event.ydata)),
+            point = msct_types.Coordinate([int(round(event.ydata)),
                                 self.current_point.y,
                                 int(round(event.xdata)), 1])
         elif plot.view == 3:
-            point = Coordinate([int(round(event.ydata)),
+            point = msct_types.Coordinate([int(round(event.ydata)),
                                 int(round(event.xdata)),
                                 self.current_point.z, 1])
         return point
@@ -411,7 +412,7 @@ class ThreeViewer(Viewer):
     Assumes AIL orientation
     """
     def __init__(self, list_images, visualization_parameters=None):
-        if isinstance(list_images, Image):
+        if isinstance(list_images, msct_image.Image):
             list_images = [list_images]
         if not visualization_parameters:
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
@@ -420,7 +421,7 @@ class ThreeViewer(Viewer):
         self.compute_offset()
         self.pad_data()
 
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
+        self.current_point = msct_types.Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
 
         ax = self.fig.add_subplot(222)
         self.windows.append(SinglePlot(ax=ax, images=self.images, viewer=self, view=1, im_params=visualization_parameters))  # SAL --> axial
@@ -490,7 +491,7 @@ class ClickViewer(Viewer):
     """
     def __init__(self, list_images, visualization_parameters=None, orientation_subplot=('ax', 'sag')):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
-        if isinstance(list_images, Image):
+        if isinstance(list_images, msct_image.Image):
             list_images = [list_images]
         if not visualization_parameters:
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
@@ -506,7 +507,7 @@ class ClickViewer(Viewer):
         self.compute_offset()
         self.pad_data()
 
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
+        self.current_point = msct_types.Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
 
         # display axes, specific to viewer
@@ -627,11 +628,11 @@ class ClickViewer(Viewer):
         # below is the subplot that refers to the label collection
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
             if self.primary_subplot == 'ax':
-                target_point = Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1])
+                target_point = msct_types.Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1])
             elif self.primary_subplot == 'cor':
-                target_point = Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[2], 1])
+                target_point = msct_types.Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[2], 1])
             elif self.primary_subplot == 'sag':
-                target_point = Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[self.current_slice]), 1])
+                target_point = msct_types.Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[self.current_slice]), 1])
             if self.is_point_in_image(target_point):
                 self.list_points.append(target_point)
 
@@ -639,7 +640,7 @@ class ClickViewer(Viewer):
                 if self.current_slice < len(self.list_slices):
                     point = [self.current_point.x, self.current_point.y, self.current_point.z]
                     point[self.orientation[self.secondary_subplot]-1] = self.list_slices[self.current_slice]
-                    self.current_point = Coordinate(point)
+                    self.current_point = msct_types.Coordinate(point)
                     self.windows[0].update_slice(self.list_slices[self.current_slice])
                     title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
                                                     str(self.list_slices[self.current_slice]) + '/' +
@@ -849,7 +850,7 @@ class ParamMultiImageVisualization(object):
 def prepare(list_images):
     fname_images, orientation_images = [], []
     for fname_im in list_images:
-        orientation_images.append(sct_image.orientation(Image(fname_im), get=True, verbose=False))
+        orientation_images.append(sct_image.orientation(msct_image.Image(fname_im), get=True, verbose=False))
         path_fname, file_fname, ext_fname = sct.extract_fname(fname_im)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
         sct_image.main(['-i', fname_im,
@@ -870,7 +871,7 @@ def main(args=None):
     arguments = parser.parse(args)
 
     fname_images, orientation_images = prepare(arguments["-i"])
-    list_images = [Image(fname) for fname in fname_images]
+    list_images = [msct_image.Image(fname) for fname in fname_images]
 
     mode = arguments['-mode']
 

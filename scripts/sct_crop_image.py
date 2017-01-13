@@ -22,8 +22,8 @@ import scipy
 import msct_image
 import msct_parser
 import sct_convert
+import sct_maths
 import sct_utils as sct
-
 
 class LineBuilder:
     def __init__(self, line):
@@ -176,8 +176,7 @@ class ImageCropper(msct_image.Image):
             new_data = einsum('ij,ij->ij', data_mask, data_array)
 
         if self.background != 0:
-            from sct_maths import get_data_or_scalar
-            data_background = get_data_or_scalar(str(self.background), data_array)
+            data_background = sct_maths.get_data_or_scalar(str(self.background), data_array)
             data_mask_inv = data_mask.max() - data_mask
             if dim == 3:
                 data_background = einsum('ijk,ijk->ijk', data_mask_inv, data_background)

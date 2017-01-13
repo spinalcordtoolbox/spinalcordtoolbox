@@ -29,6 +29,7 @@ from operator import itemgetter
 from nibabel import load
 from numpy import array, sin, cos, matrix, sum, mean, absolute
 
+import msct_image
 import sct_utils as sct
 
 sse_results = []
@@ -47,7 +48,6 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     :param verbose: 0, 1, 2
     :return:
     """
-    from msct_image import Image
     # open src label
     im_src = msct_image.Image(fname_src)
     # coord_src = im_src.getNonZeroCoordinates(sorting='value')  # landmarks are sorted by value
