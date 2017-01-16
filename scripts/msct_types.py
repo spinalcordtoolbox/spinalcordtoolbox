@@ -42,7 +42,7 @@ class Point(object):
 
 
 class Coordinate(Point):
-    def __init__(self, coord=None, mode='continuous'):
+    def __init__(self, coord=None, mode='index'):
         super(Coordinate, self).__init__()
         if coord is None:
             self.value = 0
