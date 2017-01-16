@@ -148,6 +148,7 @@ def average_properties(fname_seg_images, property_list, fname_disks_images, grou
         plt.xticks(xtick_disks, xlabel_disks, rotation=30)
         axes[-1].set_xlim(xlim)
         sct.printv('\nAffichage des resultats')
+        plt.savefig('foo.png')
         plt.show()
 
 def compute_properties_along_centerline(fname_seg_image, property_list, fname_disks_image=None, smooth_factor=5.0, verbose=1):
@@ -270,26 +271,33 @@ def shape_pca(data):
 
 
 def prepare_data():
+
+    folder_dataset = '/Volumes/data_shared/sct_testing/large/'
+    import isct_test_function
+    import json
+    json_requirements = 'gm_model=0'
+    data_subjects, subjects_name = isct_test_function.generate_data_list(folder_dataset, json_requirements=json_requirements)
+
     fname_seg_images = []
-    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/CSM1/t2_seg_manual.nii.gz')
-    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/CSM2/t2_seg_manual.nii.gz')
-    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/sct_004/t2/t2_seg_manual.nii.gz')
-    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/sct_005/t2/t2_seg_manual.nii.gz')
-    fname_seg_images.append('/Users/benjamindeleener/data/shape_analysis/sct_006/t2/t2_seg_manual.nii.gz')
-
     fname_disks_images = []
-    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/CSM1/t2_disks_manual.nii.gz')
-    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/CSM2/t2_disks_manual.nii.gz')
-    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/sct_004/t2/t2_disks_manual.nii.gz')
-    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/sct_005/t2/t2_disks_manual.nii.gz')
-    fname_disks_images.append('/Users/benjamindeleener/data/shape_analysis/sct_006/t2/t2_disks_manual.nii.gz')
-
     group_images = []
-    group_images.append('r')
-    group_images.append('r')
-    group_images.append('b')
-    group_images.append('b')
-    group_images.append('b')
+
+    for subject_folder in data_subjects:
+        if os.path.exists(subject_folder + 't2/'):
+            if os.path.exists(subject_folder + 't2/t2_seg_manual.nii.gz') and os.path.exists(subject_folder + 't2/t2_disks_manual.nii.gz'):
+                fname_seg_images.append(subject_folder + 't2/t2_seg_manual.nii.gz')
+                fname_disks_images.append(subject_folder + 't2/t2_disks_manual.nii.gz')
+                json_file = open(subject_folder + 'dataset_description.json')
+                dic_info = json.load(json_file)
+                json_file.close()
+                # pass keys and items to lower case
+                dic_info = dict((k.lower(), v.lower()) for k, v in dic_info.iteritems())
+                if dic_info['pathology'] == 'HC':
+                    group_images.append('b')
+                else:
+                    group_images.append('r')
+
+    print 'Number of images', len(fname_seg_images)
 
     property_list = ['area',
                      'equivalent_diameter',
@@ -300,3 +308,5 @@ def prepare_data():
     average_properties(fname_seg_images, property_list, fname_disks_images, group_images, verbose=1)
 
 prepare_data()
+
+
