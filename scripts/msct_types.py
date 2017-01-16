@@ -20,6 +20,7 @@ from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, roll
 from numpy.linalg import norm, inv
 import numpy as np
 
+
 class Point(object):
     def __init__(self):
         self.x = 0
@@ -39,6 +40,7 @@ class Point(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+
 class Coordinate(Point):
     def __init__(self, coord=None, mode='continuous'):
         super(Coordinate, self).__init__()
@@ -56,19 +58,15 @@ class Coordinate(Point):
         if len(coord) not in [3,4]:
             raise TypeError("Parameter must be a list with coordinates [x, y, z] or [x, y, z, value].")
 
-        self.x = coord[0]
-        self.y = coord[1]
-        self.z = coord[2]
-        if len(coord) == 4:
-            self.value = coord[3]
-        else:
-            self.value = 0
-        # coordinates and value must be digits:
+        type_m = int if mode == 'index' else float
         try:
-            if mode == 'index':
-                int(self.x), int(self.y), int(self.z), float(self.value)
+            self.x = type_m(coord[0])
+            self.y = type_m(coord[1])
+            self.z = type_m(coord[2])
+            if len(coord) == 4:
+                self.value = float(coord[3])
             else:
-                float(self.x), float(self.y), float(self.z), float(self.value)
+                self.value = 0.0
         except ValueError:
             raise TypeError("All coordinates must be int and the value can be a float or a int. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
 
