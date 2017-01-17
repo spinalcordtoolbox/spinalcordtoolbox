@@ -341,9 +341,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
                      warning_vert_levels=warning)
 
     elif (not (slices or vert_levels)) and (overwrite == 1):
-        sct.printv(
-            'WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in .txt and .pickle files only.',
-            type='warning')
+        sct.printv('WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in .txt and .pickle files only.', type='warning')
         length = np.nan
 
     else:
@@ -351,6 +349,11 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
         length = 0.0
         for i in range(len(x_centerline_fit)-1):
             length += sqrt(((x_centerline_fit[i+1]-x_centerline_fit[i])*px)**2+((y_centerline_fit[i+1]-y_centerline_fit[i])*py)**2+((z_centerline[i+1]-z_centerline[i])*pz)**2)
+
+        sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
+        # write result into output file
+        save_results(output_folder + 'length', overwrite, fname_segmentation, 'length', '(in mm)', length, np.nan,
+                     slices, actual_vert=[], warning_vert_levels='')
 
     # Remove temporary files
     if remove_temp_files:
