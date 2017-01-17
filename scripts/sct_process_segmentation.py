@@ -464,7 +464,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # Create an image with the centerline
     min_z_index, max_z_index = int(round(min(z_centerline_fit))), int(round(max(z_centerline_fit)))
     for iz in range(min_z_index, max_z_index+1):
-        data[round(x_centerline_fit[iz-min_z_index]), round(y_centerline_fit[iz-min_z_index]), iz] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+        data[int(round(x_centerline_fit[iz-min_z_index])), int(round(y_centerline_fit[iz-min_z_index])), int(iz)] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
     # Write the centerline image in RPI orientation
     # hdr.set_data_dtype('uint8') # set imagetype to uint8
     sct.printv('\nWrite NIFTI volumes...', verbose)
