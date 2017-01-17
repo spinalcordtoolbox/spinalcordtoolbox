@@ -19,6 +19,7 @@
 import sys
 import math
 import numpy as np
+from scipy import ndimage
 import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
@@ -136,6 +137,7 @@ class ProcessLabels(object):
             image_output.data[coord.x, coord.y, coord.z] = image_output.data[coord.x, coord.y, coord.z] + float(value)
         return image_output
 
+
     def create_label(self, add=False):
         """
         Create an image with labels listed by the user.
@@ -161,6 +163,7 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def cross(self):
         """
         create a cross.
@@ -183,6 +186,7 @@ class ProcessLabels(object):
             output_image.data[round(coord.x), round(coord.y), round(coord.z)] = coord.value
 
         return output_image
+
 
     @staticmethod
     def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
@@ -250,6 +254,7 @@ class ProcessLabels(object):
         cross_coordinates = sorted(cross_coordinates, key=lambda obj: obj.value)
         return cross_coordinates
 
+
     def plan(self, width, offset=0, gap=1):
         """
         Create a plane of thickness="width" and changes its value with an offset and a gap between labels.
@@ -263,6 +268,7 @@ class ProcessLabels(object):
             image_output.data[:,:,coord.z-width:coord.z+width] = offset + gap * coord.value
 
         return image_output
+
 
     def plan_ref(self):
         """
@@ -293,6 +299,7 @@ class ProcessLabels(object):
             image_output.data[:, :, coord.z] = coord.value
 
         return image_output
+
 
     def cubic_to_point(self):
         """
@@ -328,6 +335,7 @@ class ProcessLabels(object):
 
         return output_image
 
+
     def increment_z_inverse(self):
         """
         Take all non-zero values, sort them along the inverse z direction, and attributes the values 1,
@@ -342,6 +350,7 @@ class ProcessLabels(object):
             image_output.data[coord.x, coord.y, coord.z] = i + 1
 
         return image_output
+
 
     def labelize_from_disks(self):
         """
@@ -363,6 +372,7 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def label_vertebrae(self, levels_user=None):
         """
         Find the center of mass of vertebral levels specified by the user.
@@ -383,6 +393,7 @@ class ProcessLabels(object):
                 image_cubic2point.data[list_coordinates[i_label].x, list_coordinates[i_label].y, list_coordinates[i_label].z] = 0
         # list all labels
         return image_cubic2point
+
 
     # FUNCTION BELOW REMOVED BY JULIEN ON 2016-07-04 BECAUSE SEEMS NOT TO BE USED (AND DUPLICATION WITH ABOVE)
     # def label_vertebrae_from_disks(self, levels_user):
@@ -495,6 +506,7 @@ class ProcessLabels(object):
     #     # return image of labels
     #     return image_cubic2point
 
+
     def MSE(self, threshold_mse=0):
         """
         Compute the Mean Square Distance Error between two sets of labels (input and ref).
@@ -532,6 +544,7 @@ class ProcessLabels(object):
 
         return result
 
+
     @staticmethod
     def remove_label_coord(coord_input, coord_ref, symmetry=False):
         """
@@ -553,6 +566,7 @@ class ProcessLabels(object):
                 result_coord_ref = [coord for coord in coord_ref if filter(lambda x: x.value == coord.value, result_coord_input)]
 
         return result_coord_input, result_coord_ref
+
 
     def remove_label(self, symmetry=False):
         """
@@ -580,6 +594,7 @@ class ProcessLabels(object):
             self.fname_output = self.fname_output[0]
 
         return image_output
+
 
     def extract_centerline(self):
         """

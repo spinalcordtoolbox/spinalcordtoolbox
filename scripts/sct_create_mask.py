@@ -17,6 +17,7 @@
 import sys
 import os
 import commands
+import time
 
 import numpy
 import nibabel
