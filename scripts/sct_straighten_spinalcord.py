@@ -473,8 +473,6 @@ class SpinalCordStraightener(object):
                     warp_space_y[1] += warp_space_y[0] - 2
                     warp_space_y[0] = 0
 
-                print warp_space_x, warp_space_y, end_point_coord[2] - start_point_coord[2] + offset_z
-
                 sct.run('sct_crop_image -i tmp.centerline_pad.nii.gz -o tmp.centerline_pad_crop.nii.gz -dim 0,1,2 -start ' + str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0 -end ' + str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord[2] - start_point_coord[2] + offset_z))
 
                 image_centerline_straight = Image('tmp.centerline_pad_crop.nii.gz')
@@ -565,7 +563,6 @@ class SpinalCordStraightener(object):
                     if idx_closest is not None:
                         lookup_straight2curved[index] = centerline.get_closest_to_relative_position(disk_label, relative_position)[0]
             lookup_straight2curved = np.array(lookup_straight2curved)
-            print np.min(lookup_straight2curved), np.max(lookup_straight2curved)
 
             # Create volumes containing curved and straight warping fields
             time_generation_volumes = time.time()
@@ -579,7 +576,7 @@ class SpinalCordStraightener(object):
 
             if self.curved2straight:
                 for u in range(nz_s):
-                    print u+1, '/', nz_s
+                    #print u+1, '/', nz_s
                     x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u+1]
                     indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
                     physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
@@ -600,7 +597,7 @@ class SpinalCordStraightener(object):
 
             if self.straight2curved:
                 for u in range(nz):
-                    print u + 1, '/', nz
+                    #print u + 1, '/', nz
                     x, y, z = np.mgrid[0:nx, 0:ny, u:u+1]
                     indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
                     physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
