@@ -21,7 +21,7 @@ import numpy as np
 from sct_image import orientation
 
 
-def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5.0, remove_temp_files=1, verbose=0):
+def check_and_correct_segmentation(fname_segmentation, fname_centerline, threshold_distance=5.0, remove_temp_files=1, verbose=0):
     """
     This function takes the outputs of isct_propseg (centerline and segmentation) and check if the centerline of the
     segmentation is coherent with the centerline provided by the isct_propseg, especially on the edges (related
@@ -69,13 +69,14 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
 
     # for each slice of the segmentation, check if only one object is present. If not, remove the slice from segmentation.
     # If only one object (the spinal cord) is present in the slice, check if its center of mass is close to the centerline of isct_propseg.
+    slices_to_remove = [False] * nz  # flag that decides if the slice must be removed
     for i in range(nz):
         # extraction of slice
         slice = im_seg.data[:, :, i]
-        to_remove = False  # flag that decides if the slice must be removed
+        distance = -1
         label_objects, nb_labels = ndi.label(slice)  # count binary objects in the slice
         if nb_labels > 1:  # if there is more that one object in the slice, the slice is removed from the segmentation
-            to_remove = True
+            slices_to_remove[i] = True
         elif nb_labels == 1:  # check if the centerline is coherent with the one from isct_propseg
             x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
             slice_nearest_coord = min(key_centerline, key=lambda x:abs(x-i))
@@ -85,10 +86,29 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
                                ((i - slice_nearest_coord) * pz) ** 2)
 
             if distance >= threshold_distance:  # threshold must be adjusted, default is 5 mm
-                to_remove = True
+                slices_to_remove[i] = True
 
+    # Check list of removal and keep one continuous centerline (improve this comment)
+    # Method:
+    # starting from mid-centerline (in both directions), the first True encountered is applied to all following slices
+    slice_to_change = False
+    for i in range(nz / 2, nz):
+        if slice_to_change:
+            slices_to_remove[i] = True
+        elif slices_to_remove[i]:
+            slices_to_remove[i] = True
+            slice_to_change = True
+    slice_to_change = False
+    for i in range(nz / 2, -1, -1):
+        if slice_to_change:
+            slices_to_remove[i] = True
+        elif slices_to_remove[i]:
+            slices_to_remove[i] = True
+            slice_to_change = True
+
+    for i in range(nz):
         # remove the slice
-        if to_remove:
+        if slices_to_remove[i]:
             im_seg.data[:, :, i] *= 0
 
     # saving the image
@@ -99,6 +119,8 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
     sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ../' + fname_segmentation, verbose)
 
     os.chdir('..')
+
+    # display information about how much of the segmentation has been corrected
 
     # remove temporary files
     if remove_temp_files:
@@ -419,7 +441,7 @@ if __name__ == "__main__":
     output_filename = file_fname + "_seg" + ext_fname
 
     fname_centerline = file_fname + '_centerline' + ext_fname
-    check_and_correct(folder_output + output_filename, folder_output + fname_centerline, remove_temp_files)
+    check_and_correct_segmentation(folder_output + output_filename, folder_output + fname_centerline, threshold_distance=3.0, remove_temp_files=remove_temp_files)
 
     # remove temporary files
     if remove_temp_files:
