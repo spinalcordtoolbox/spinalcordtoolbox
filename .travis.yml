@@ -20,6 +20,7 @@ matrix:
     - os: linux
       python: 2.7  # these are just to make travis's UI a bit prettier
     - os: osx
+      python: 2.7
       language: generic
 
 before_install:
