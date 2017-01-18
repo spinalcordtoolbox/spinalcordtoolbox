@@ -1,6 +1,6 @@
 # CHANGES TO RELEASE
 
-##3.0_beta30 (2017-01-16)
+##3.0_beta31 (2017-01-16)
 - BUG: **sct_process_segmentation** display spinal cord length when required (full spinal cord) (#1112)
 - BUG: **sct_propseg** Adding rules for in-segmentation errors (#1110)
 - BUG: PAM50: probabilist templates of WM and GM not sum to 1 (#411)
