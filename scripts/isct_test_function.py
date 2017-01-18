@@ -433,6 +433,37 @@ if __name__ == "__main__":
         print results_display.to_string()
         print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing'
 
+        if verbose == '2':
+            import seaborn as sns
+            import matplotlib.pyplot as plt
+            from numpy import asarray 
+
+            fig, ax = plt.subplots(1, len(results_display.keys()) - 2, gridspec_kw={'wspace': 1})
+            sns.set(style="whitegrid", color_codes=True, font_scale=1)
+            i = 0
+            ax_array = asarray(ax)
+
+            for key in results_display.keys():
+                if key not in ['status', 'subject']:
+                    if ax_array.size == 1:
+                        a = ax
+                    else:
+                        a = ax[i]
+                    sns.violinplot(x='status', y=key, data=results_display, ax=a, inner="quartile", cut=0,
+                                   scale="count", color='lightsteelblue')
+                    sns.swarmplot(x='status', y=key, data=results_display, ax=a, color='dimgrey')
+                    i += 1
+            if ax_array.size == 1:
+                ax.set_xlabel(ax.get_ylabel())
+                ax.set_ylabel('')
+            else:
+                for a in ax:
+                    a.set_xlabel(a.get_ylabel())
+                    a.set_ylabel('')
+            plt.savefig('fig_' + file_log + '.png', bbox_inches='tight', pad_inches=0.5)
+            plt.close()
+
+
     except Exception as err:
         print err
 
