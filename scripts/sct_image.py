@@ -491,7 +491,7 @@ def multicomponent_merge(fname_list):
 def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=''):
     verbose = 0 if get else verbose
     sct.printv('\nGet dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = msct_image.get_dimention(im)
+    nx, ny, nz, nt, px, py, pz, pt = msct_image.get_dimension(im)
 
     sct.printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
