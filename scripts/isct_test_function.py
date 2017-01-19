@@ -440,7 +440,7 @@ if __name__ == "__main__":
 
             n_plots = len(results_display.keys()) - 2
             fig, ax = plt.subplots(1, n_plots, gridspec_kw={'wspace': 1}, figsize=(n_plots*4, 15))
-            sns.set(style="whitegrid", color_codes=True, font_scale=1)
+            sns.set_style("whitegrid")
             i = 0
             ax_array = asarray(ax)
 
