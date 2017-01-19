@@ -70,7 +70,6 @@ class ImageCropper(msct_image.Image):
         self.mesh = mesh
         self.rm_tmp_files = rm_tmp_files
         self.verbose = verbose
-        self.cmd = "isct_crop_image" + " -i " + self.input_filename + " -o " + self.output_filename
         self.rm_output_file = rm_output_file
 
         self.result = None
@@ -82,12 +81,15 @@ class ImageCropper(msct_image.Image):
         self.zmin = None
         self.zmax = None
 
+
     def crop(self):
         """
         Crop image (change dimension)
         """
 
         # Handling optional arguments
+
+        cmd = "isct_crop_image" + " -i " + self.input_filename + " -o " + self.output_filename
 
         # if mask is specified, find -start and -end arguments
         if self.mask is not None:
@@ -97,21 +99,21 @@ class ImageCropper(msct_image.Image):
             self.start, self.end, self.dim = find_mask_boundaries(self.mask)
 
         if self.start is not None:
-            self.cmd += " -start " + ','.join(map(str, self.start))
+            cmd += " -start " + ','.join(map(str, self.start))
         if self.end is not None:
-            self.cmd += " -end " + ','.join(map(str, self.end))
+            cmd += " -end " + ','.join(map(str, self.end))
         if self.dim is not None:
-            self.cmd += " -dim " + ','.join(map(str, self.dim))
+            cmd += " -dim " + ','.join(map(str, self.dim))
         if self.shift is not None:
-            self.cmd += " -shift " + ','.join(map(str, self.shift))
+            cmd += " -shift " + ','.join(map(str, self.shift))
         if self.background is not None:
-            self.cmd += " -b " + str(self.background)
+            cmd += " -b " + str(self.background)
         if self.bmax is True:
-            self.cmd += " -bmax"
+            cmd += " -bmax"
         if self.ref is not None:
-            self.cmd += " -ref " + self.ref
+            cmd += " -ref " + self.ref
         if self.mesh is not None:
-            self.cmd += " -mesh " + self.mesh
+            cmd += " -mesh " + self.mesh
 
         verb = 0
         if self.verbose == 1:
@@ -120,7 +122,7 @@ class ImageCropper(msct_image.Image):
             self.crop_from_mask_with_background()
         else:
             # Run command line
-            self.run_isct(self.cmd, verb)
+            self.run_isct(cmd, verb)
 
         self.result = msct_image.Image(self.output_filename, verbose=self.verbose)
 
@@ -420,7 +422,7 @@ def find_mask_boundaries(fname_mask):
     return ind_start, ind_end, range(dim)
 
 
-def main(args=None):
+def main(args=None, do_return=None):
 
     if args is None:
         args = sys.argv[1:]
@@ -475,7 +477,9 @@ def main(args=None):
 
         cropper.crop()
 
-        return cropper
+        if do_return:
+            return cropper
+
 
 if __name__ == "__main__":
     main()

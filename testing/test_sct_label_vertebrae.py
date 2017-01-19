@@ -35,7 +35,7 @@ def test(path_data='', parameters=''):
 
     # retrieve flags
     try:
-        parser = sct_label_vertebrae.get_parser()
+        parser = sct_label_vertebrae.get_parser(sct_label_vertebrae.Param())
         dict_param = parser.parse(parameters.split(), check_file_exist=False)
         dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
         # update template path because the previous command wrongly adds path to testing data
