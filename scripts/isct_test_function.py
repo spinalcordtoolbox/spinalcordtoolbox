@@ -439,8 +439,8 @@ if __name__ == "__main__":
             from numpy import asarray
 
             n_plots = len(results_display.keys()) - 2
-            fig, ax = plt.subplots(1, n_plots, gridspec_kw={'wspace': 1}, figsize=(n_plots*4, 15))
             sns.set_style("whitegrid")
+            fig, ax = plt.subplots(1, n_plots, gridspec_kw={'wspace': 1}, figsize=(n_plots*4, 15))
             i = 0
             ax_array = asarray(ax)
 
