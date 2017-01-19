@@ -436,9 +436,10 @@ if __name__ == "__main__":
         if verbose == '2':
             import seaborn as sns
             import matplotlib.pyplot as plt
-            from numpy import asarray 
+            from numpy import asarray
 
-            fig, ax = plt.subplots(1, len(results_display.keys()) - 2, gridspec_kw={'wspace': 1})
+            n_plots = len(results_display.keys()) - 2
+            fig, ax = plt.subplots(1, n_plots, gridspec_kw={'wspace': 1}, figsize=(n_plots*4, 15))
             sns.set(style="whitegrid", color_codes=True, font_scale=1)
             i = 0
             ax_array = asarray(ax)
@@ -449,9 +450,10 @@ if __name__ == "__main__":
                         a = ax
                     else:
                         a = ax[i]
-                    sns.violinplot(x='status', y=key, data=results_display, ax=a, inner="quartile", cut=0,
-                                   scale="count", color='lightsteelblue')
-                    sns.swarmplot(x='status', y=key, data=results_display, ax=a, color='dimgrey')
+                    data_passed = results_display[results_display['status']==0]
+                    sns.violinplot(x='status', y=key, data=data_passed, ax=a, inner="quartile", cut=0,
+                                   scale="count", color='lightgray')
+                    sns.swarmplot(x='status', y=key, data=data_passed, ax=a, color='0.3', size=4)
                     i += 1
             if ax_array.size == 1:
                 ax.set_xlabel(ax.get_ylabel())
