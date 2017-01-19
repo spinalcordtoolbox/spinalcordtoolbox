@@ -84,7 +84,6 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
                 print output.strip()
             output_final += output.strip() + '\n'
     status_output = process.returncode
-
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if status_output:
         printv(output_final[0:-1], 1, error_exit)

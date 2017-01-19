@@ -41,6 +41,7 @@ import msct_register_landmarks
 import sct_apply_transfo
 import sct_concat_transfo
 import sct_convert
+import sct_crop_image
 import sct_image
 import sct_utils as sct
 
@@ -692,12 +693,18 @@ def register(src, dest, paramreg, param, i_step_str):
             nii.setFileName(dest_th)
             nii.save()
             # find zmin and zmax
-            zmin_src, zmax_src = msct_image.find_zmin_zmax(src_th)
-            zmin_dest, zmax_dest = msct_image.find_zmin_zmax(dest_th)
-            zmin_total = max([zmin_src, zmin_dest])
-            zmax_total = min([zmax_src, zmax_dest])
+            src_threshold = sct_crop_image.main(['-i', str(src_th),
+                                                 '-dim', '2',
+                                                 '-bmax',
+                                                 '-o', 'tmp.nii'], do_return=True)
+            dest_threshold = sct_crop_image.main(['-i', str(dest_th),
+                                                 '-dim', '2',
+                                                 '-bmax',
+                                                 '-o', 'tmp.nii'], do_return=True)
+
+            zmin_total = max([src_threshold.zmin, dest_threshold.zmin])
+            zmax_total = min([src_threshold.zmax, dest_threshold.zmax])
             # crop data
-            import sct_crop_image
             src_crop = sct.add_suffix(src, '_crop')
             cmd = '-i ' + src + ' -o ' + src_crop + ' -dim 2 -start ' + str(
                 zmin_total) + ' -end ' + str(zmax_total)
