@@ -21,6 +21,7 @@ import time
 import msct_image
 import msct_parser
 import msct_register_landmarks
+import sct_crop_image
 import sct_label_utils
 import sct_register_multimodal
 import sct_utils as sct
@@ -440,26 +441,29 @@ def main(args=None):
         ftmp_seg = sct.add_suffix(ftmp_seg, '_bin')
 
         # find min-max of anat2template (for subsequent cropping)
-        zmin_template, zmax_template = msct_image.find_zmin_zmax(ftmp_seg)
+        seg_template = sct_crop_image.main(['-i', str(ftmp_seg),
+                                             '-dim', '2',
+                                             '-bmax',
+                                             '-o', 'tmp.nii'], do_return=True)
 
         # crop template in z-direction (for faster processing)
         sct.printv('\nCrop data in template space (for faster processing)...',
                    verbose)
         sct.run('sct_crop_image -i ' + ftmp_template + ' -o ' + sct.add_suffix(
-            ftmp_template, '_crop') + ' -dim 2 -start ' + str(zmin_template) +
-                ' -end ' + str(zmax_template))
+            ftmp_template, '_crop') + ' -dim 2 -start ' + str(seg_template.zmin) +
+                ' -end ' + str(seg_template.zmax))
         ftmp_template = sct.add_suffix(ftmp_template, '_crop')
         sct.run('sct_crop_image -i ' + ftmp_template_seg + ' -o ' + sct.add_suffix(
             ftmp_template_seg, '_crop') + ' -dim 2 -start ' + str(
-                zmin_template) + ' -end ' + str(zmax_template))
+                seg_template.zmin) + ' -end ' + str(seg_template.zmax))
         ftmp_template_seg = sct.add_suffix(ftmp_template_seg, '_crop')
         sct.run('sct_crop_image -i ' + ftmp_data + ' -o ' + sct.add_suffix(
-            ftmp_data, '_crop') + ' -dim 2 -start ' + str(zmin_template) +
-                ' -end ' + str(zmax_template))
+            ftmp_data, '_crop') + ' -dim 2 -start ' + str(seg_template.zmin) +
+                ' -end ' + str(seg_template.zmax))
         ftmp_data = sct.add_suffix(ftmp_data, '_crop')
         sct.run('sct_crop_image -i ' + ftmp_seg + ' -o ' + sct.add_suffix(
-            ftmp_seg, '_crop') + ' -dim 2 -start ' + str(zmin_template) +
-                ' -end ' + str(zmax_template))
+            ftmp_seg, '_crop') + ' -dim 2 -start ' + str(seg_template.zmin) +
+                ' -end ' + str(seg_template.zmax))
         ftmp_seg = sct.add_suffix(ftmp_seg, '_crop')
 
         # sub-sample in z-direction

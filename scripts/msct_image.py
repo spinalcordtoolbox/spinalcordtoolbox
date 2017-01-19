@@ -21,15 +21,13 @@ import sys
 import matplotlib.cm
 import matplotlib.colors
 import matplotlib.pyplot
-import nibabel
-import numpy as np
-from scipy.ndimage import map_coordinates
-
 import msct_parser
 import msct_types
-import sct_crop_image
+import nibabel
+import numpy as np
 import sct_image
 import sct_utils as sct
+from scipy.ndimage import map_coordinates
 
 
 def striu2mat(striu):
@@ -1165,14 +1163,6 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 
     return dice
 
-def find_zmin_zmax(fname):
-
-    image_cropper = sct_crop_image.main(['-i', str(fname),
-                                         '-dim', '2',
-                                         '-bmax',
-                                         '-o', 'tmp.nii'])
-
-    return image_cropper.zmin, image_cropper.zmax
 
 def get_dimension(im_file, verbose=1):
     """

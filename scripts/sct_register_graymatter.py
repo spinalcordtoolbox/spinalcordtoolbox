@@ -392,7 +392,7 @@ def crop_im(fname_im, fname_mask):
     fname_im_crop = sct.add_suffix(fname_im, '_crop')
     image_cropper = sct_crop_image.main(['-i', fname_im,
                                          '-m', fname_mask,
-                                         '-o', fname_im_crop])
+                                         '-o', fname_im_crop], do_return=True)
 
     return (fname_im_crop,
             int(image_cropper.xmin), int(image_cropper.xmax),
