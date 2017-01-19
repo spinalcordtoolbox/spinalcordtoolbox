@@ -41,23 +41,33 @@ class Param:
     ## The constructor
     def __init__(self):
         # self.path_template = path_sct+'/data/template/'
-        self.shift_AP_brainstem = 30
-        self.size_AP_brainstem = 11#15
-        self.shift_IS_brainstem = 15#15
-        self.size_IS_brainstem = 30#30
-        self.size_RL_brainstem = 1#
-        self.shift_AP = 32#0#32  # shift the centerline towards the spine (in voxel).
-        self.size_AP = 11#41#11  # window size in AP direction (=y) (in voxel)
-        self.size_RL = 1 #1 # window size in RL direction (=x) (in voxel)
+        self.shift_AP_initc2 = 35
+        self.size_AP_initc2 = 9  #15
+        self.shift_IS_initc2 = 15  #15
+        self.size_IS_initc2 = 30  #30
+        self.size_RL_initc2 = 1  #
+        self.shift_AP = 32  #0#32  # shift the centerline towards the spine (in voxel).
+        self.size_AP = 11  #41#11  # window size in AP direction (=y) (in voxel)
+        self.size_RL = 1  #1 # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
-        self.shift_AP_visu = 15#0#15  # shift AP for displaying disc values
+        self.shift_AP_visu = 15  #0#15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
-        self.fig_anat_straight = 50
+
+    # update constructor with user's parameters
+    def update(self, param_user):
+        list_objects = param_user.split(',')
+        for object in list_objects:
+            if len(object) < 2:
+                sct.printv('ERROR: Wrong usage.', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], int(obj[1]))
 
 
 # PARSER
 # ==========================================================================================
 def get_parser():
+    # initialize default param
+    param_default = Param()
     # parser initialisation
     parser = Parser(__file__)
     parser.usage.set_description('''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then performs a disc search in the superior, then inferior direction, using template disc matching based on mutual information score.
@@ -124,6 +134,19 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       mandatory=False,
                       default_value='0',
                       example=['0', '1'])
+    parser.add_option(name="-param",
+                      type_value=[[','], 'str'],
+                      description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+                                  "shift_AP_initc2 [mm]: AP shift for finding C2 disc. Default="+str(param_default.shift_AP_initc2)+".\n"
+                                  "size_AP_initc2 [mm]: AP window size finding C2 disc. Default="+str(param_default.size_AP_initc2)+".\n"
+                                  "shift_IS_initc2 [mm]: IS shift for finding C2 disc. Default=" + str(param_default.shift_IS_initc2) + ".\n"
+                                  "size_IS_initc2 [mm]: IS window size finding C2 disc. Default=" + str(param_default.size_IS_initc2) + ".\n"
+                                  "size_RL_initc2 [mm]: RL shift for size finding C2 disc. Default=" + str(param_default.size_RL_initc2) + ".\n"
+                                  "shift_AP [mm]: AP shift of centerline for disc search. Default=" + str(param_default.shift_AP) + ".\n"
+                                  "size_AP [mm]: AP window size for disc search. Default=" + str(param_default.size_AP) + ".\n"
+                                  "size_RL [mm]: RL window size for disc search. Default=" + str(param_default.size_RL) + ".\n"
+                                  "size_IS [mm]: IS window size for disc search. Default=" + str(param_default.size_IS) + ".\n",
+                      mandatory = False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
@@ -152,6 +175,7 @@ def main(args=None):
     initz = ''
     initcenter = ''
     initc2 = 'auto'
+    param = Param()
 
     # check user arguments
     if not args:
@@ -169,9 +193,9 @@ def main(args=None):
     # else:
     #     file_out = ''
     if '-ofolder' in arguments:
-        path_output = arguments['-ofolder']
+        path_output = sct.slash_at_the_end(os.path.abspath(arguments['-ofolder']), slash=1)
     else:
-        path_output = ''
+        path_output = sct.slash_at_the_end(os.path.abspath(os.curdir), slash=1)
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -189,6 +213,8 @@ def main(args=None):
                 initcenter = int(arg_initfile[i+1])
     if '-initc2' in arguments:
         initc2 = 'manual'
+    if '-param' in arguments:
+        param.update(arguments['-param'][0])
     verbose = int(arguments['-v'])
     remove_tmp_files = int(arguments['-r'])
     denoise = int(arguments['-denoise'])
@@ -276,7 +302,7 @@ def main(args=None):
         run('sct_maths -i data_straightr.nii -laplacian 1 -o data_straightr.nii', verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2)
+    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2, path_output=path_output)
 
     # un-straighten labeled spinal cord
     printv('\nUn-straighten labeling...', verbose)
@@ -315,20 +341,19 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, path_template='', initc2='auto'):
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', initc2='auto', path_output='../'):
     """
     Find intervertebral discs in straightened image using template matching
     :param fname:
     :param fname_seg:
     :param contrast:
+    :param param:  advanced parameters
     :param init_disc:
     :param verbose:
     :param path_template:
+    :param path_output: output path for verbose=2 pictures
     :return:
     """
-    # initializations
-    # fig_anat_straight = 1
-
     printv('\nLook for template...', verbose)
     # if path_template == '':
     #     # get path of SCT
@@ -410,7 +435,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_brainstem, y=yc, yshift=param.shift_AP_brainstem, ysize=param.size_AP_brainstem, z=0, zshift=param.shift_IS_brainstem, zsize=param.size_IS_brainstem, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True)
+        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_initc2, y=yc, yshift=param.shift_AP_initc2, ysize=param.size_AP_initc2, z=0, zshift=param.shift_IS_initc2, zsize=param.size_IS_initc2, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True, path_output=path_output)
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
@@ -441,10 +466,10 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-        plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=param.fig_anat_straight, cmap=plt.cm.gray, clim=[0, 800], origin='lower')
+        plt.matshow(np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose(), fignum=50, cmap=plt.cm.gray, clim=[0, 800], origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        plt.figure(param.fig_anat_straight), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
+        plt.figure(50), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
         plt.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
                  verticalalignment='center', horizontalalignment='left', color='pink', fontsize=15), plt.draw()
         # plt.ion()  # enables interactive mode
@@ -475,11 +500,11 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
         if not current_disc in [1]:
-            current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc), gaussian_weighting=False)
+            current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc'+str(current_disc), gaussian_weighting=False, path_output=path_output)
 
         # display new disc
         if verbose == 2:
-            plt.figure(param.fig_anat_straight), plt.scatter(yc+param.shift_AP_visu, current_z, c='yellow', s=50)
+            plt.figure(50), plt.scatter(yc+param.shift_AP_visu, current_z, c='yellow', s=50)
             plt.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
 
         # append to main list
@@ -564,7 +589,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc=[], verbose=1, pat
 
     # save figure
     if verbose == 2:
-        plt.figure(param.fig_anat_straight), plt.savefig('../fig_anat_straight_with_labels.png')
+        plt.figure(50), plt.savefig(path_output + 'fig_anat_straight_with_labels.png')
         # plt.close()
 
 
@@ -646,7 +671,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     im_label.save()
 
 
-def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, z=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, zrange=[], verbose=1, save_suffix='', gaussian_weighting=True):
+def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, z=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, zrange=[], verbose=1, save_suffix='', gaussian_weighting=True, path_output='../'):
     """
     Find z that maximizes correlation between src and target 3d data.
     :param src: 3d source data
@@ -795,7 +820,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         plt.grid()
         # save figure
-        plt.figure(11), plt.savefig('../fig_pattern'+save_suffix+'.png'), plt.close()
+        plt.figure(11), plt.savefig(path_output + 'fig_pattern'+save_suffix+'.png'), plt.close()
 
     # return z-origin (z) + z-displacement minus zshift (to account for non-centered disc)
     return z + zrange[ind_peak] - zshift
@@ -836,7 +861,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
             import matplotlib
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
-            plt.figure(param.fig_anat_straight)
+            plt.figure(50)
             plt.scatter(int(round(ny/2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
     # write file
     seg.file_name += '_labeled'
@@ -886,8 +911,6 @@ def label_discs(fname_seg_labeled, verbose=1):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()
 

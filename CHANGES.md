@@ -1,5 +1,21 @@
 # CHANGES TO RELEASE
 
+##3.0_beta31 (2017-01-16)
+- BUG: **sct_process_segmentation** display spinal cord length when required (full spinal cord) (#1112)
+- BUG: **sct_propseg** Adding rules for in-segmentation errors (#1110)
+- BUG: PAM50: probabilist templates of WM and GM not sum to 1 (#411)
+- BUG: **sct_propseg**: fixed edge issue (#1074)
+- BUG: **sct_label_vertebrae**: fixed temporary folder not created (#1083)
+- BUG: **isct_test_function**: fixed temp folder of subject being created inside test folder of another subject (#1084)
+- BUG: **sct_apply_transfo**: fixed TR field on NIFTI is lost (#1013)
+- BUG: **sct_register_graymatter**: fixed empty inverse warping field (#1068)
+- OPT: **sct_label_vertebrae**: now outputing verbose=2 pics in ofolder (#1094)
+- OPT: **sct_straighten_spinalcord**: fixed Reduce required RAM (#979)
+- OPT: **sct_straighten_spinalcord**: removes accuracy computation by default (#1075) 
+- OPT: **sct_propseg**: improve robustness towards exception (#207)
+- OPT: **isct_test_function**: send email when finished (#1081)
+- OPT: **isct_test_function**: removed color tags on log entries  (#1035)
+
 ##3.0_beta29 (2016-12-13)
 - NEW: PAM50 template now used as the default template
 - NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
