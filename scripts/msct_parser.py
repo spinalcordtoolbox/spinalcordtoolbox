@@ -259,7 +259,7 @@ class Option(object):
 ########################################################################################################################
 
 class Parser(object):
-    ## Constructor
+
     def __init__(self, file_name):
         self.file_name = file_name
         self.options = dict()
