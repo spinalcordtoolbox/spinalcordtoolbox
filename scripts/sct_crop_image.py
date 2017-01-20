@@ -426,6 +426,9 @@ def main(args=None, do_return=None):
 
     if args is None:
         args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     parser = get_parser()
     # Fetching script arguments

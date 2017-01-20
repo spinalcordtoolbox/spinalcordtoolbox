@@ -10,6 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
 import sys
 
 import numpy as np
@@ -168,6 +169,9 @@ def main(args=None):
 
     if not args:
         args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Get parser info
     parser = get_parser()
