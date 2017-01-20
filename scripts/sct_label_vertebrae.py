@@ -304,7 +304,6 @@ def main(args=None):
     sct.printv('\nUn-straighten labeling...', verbose)
     cmd = '-i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn'
     sct_apply_transfo.main(cmd.split())
-
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')

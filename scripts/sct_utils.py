@@ -241,7 +241,7 @@ def check_file_exist(fname, verbose=1):
             printv('  OK: '+fname_to_test, verbose, 'normal')
         return True
     else:
-        printv('\nERROR: The file ' + os.path.abspath(os.curdir) + fname_to_test + ' does not exist. Exit program.\n', 1, 'error')
+        printv('\nERROR: The file ' + os.path.abspath(os.curdir) + '/' + fname_to_test + ' does not exist. Exit program.\n', 1, 'error')
         return False
 
 
