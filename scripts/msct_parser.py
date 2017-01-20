@@ -275,7 +275,6 @@ class Parser(object):
     def parse(self, arguments, check_file_exist=True):
         # if you only want to parse a string and not checking for file existence, change flag check_file_exist
         self.check_file_exist = check_file_exist
-
         # if no arguments, print usage and quit
         if len(arguments) == 0 and len([opt for opt in self.options if self.options[opt].mandatory]) != 0:
             self.usage.error()
@@ -358,7 +357,6 @@ class Parser(object):
                     # check if option has an argument that is not another option
                     if param in self.options:
                         self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
-
                     dictionary[arg] = self.options[arg].check_integrity(param)
                     skip = True
                 else:
