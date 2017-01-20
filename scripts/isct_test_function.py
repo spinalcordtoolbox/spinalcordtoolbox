@@ -316,7 +316,7 @@ if __name__ == "__main__":
         email, passwd = arguments['-email'].split(',')
     else:
         email = ''
-    verbose = arguments["-v"]
+    verbose = int(arguments["-v"])
 
     # start timer
     start_time = time()
@@ -433,7 +433,7 @@ if __name__ == "__main__":
         print results_display.to_string()
         print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing'
 
-        if verbose == '2':
+        if verbose == 2:
             import seaborn as sns
             import matplotlib.pyplot as plt
             from numpy import asarray
