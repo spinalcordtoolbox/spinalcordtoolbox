@@ -32,6 +32,8 @@ from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
 from shutil import move, copyfile
 from msct_parser import Parser
+import msct_shape
+import pandas as pd
 
 
 # DEFAULT PARAMETERS
@@ -245,58 +247,73 @@ def main(args):
     if name_process == 'shape':
         fname_disks = None
         if '-vertfile' in arguments:
-            fname_disks = arguments['-vertfile']
+            if arguments['-vertfile'] != './label/template/PAM50_levels.nii.gz':
+                fname_disks = arguments['-vertfile']
         compute_shape(fname_segmentation, fname_disks=fname_disks, verbose=verbose)
 
         # End of Main
 
 
-# characterize the shape of the spinal cord, based on the segmentation
 def compute_shape(fname_segmentation, fname_disks=None, verbose=0):
-    #TODO: make sure fname_segmentation and fname_disks are in the same space
-    # Extract path, file and extension
-    fname_segmentation = os.path.abspath(fname_segmentation)
+    """
+    This function characterizes the shape of the spinal cord, based on the segmentation
+    Shape properties are computed along the spinal cord and averaged per z-slices.
+    Option is to provide intervertebral disks to average shape properties over vertebral levels (fname_disks).
+    """
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+    fname_output_csv = file_data + '_shape.csv'
 
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(randint(1, 1000000)), 1)
-    sct.run('mkdir ' + path_tmp, verbose)
+    # List of properties to compute on spinal cord
+    property_list = ['area',
+                     'diameters',
+                     'equivalent_diameter',
+                     'ratio_major_minor',
+                     'eccentricity',
+                     'solidity']
 
-    # copy files into tmp folder
-    sct.run('cp ' + fname_segmentation + ' ' + path_tmp)
+    shape_properties = msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation,
+                                                                      property_list=property_list,
+                                                                      fname_disks_image=fname_disks,
+                                                                      smooth_factor=0.0,
+                                                                      interpolation_mode=0,
+                                                                      verbose=verbose)
+
+    # TODO: find a way to move this part of code into msct_shape.compute_properties_along_centerline
+    if 'diameters' in property_list:
+        property_list.remove('diameters')
+        property_list.append('RL_diameter')
+        property_list.append('AP_diameter')
+        property_list.append('orientation')
+
+    # choose sorting mode: z-slice or vertebral levels, depending on input (fname_disks)
     if fname_disks is not None:
-        sct.run('cp ' + fname_disks + ' ' + path_tmp)
+        # average over spinal cord levels
+        sorting_mode = 'vertebral_level'
+    else:
+        # averaging over slices
+        sorting_mode = 'z_slice'
 
-    # go to tmp folder
-    os.chdir(path_tmp)
+    # extract all values for shape properties to be averaged on (z-slices or vertebral levels)
+    sorting_values = []
+    for label in shape_properties[sorting_mode]:
+        if label not in sorting_values and label not in ['0']:
+            sorting_values.append(label)
 
-    # Change orientation of the input centerline into RPI
-    sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
-    im_seg = Image(file_data + ext_data)
-    fname_segmentation_orient = 'segmentation_rpi' + ext_data
-    im_seg_orient = set_orientation(im_seg, 'RPI')
-    im_seg_orient.setFileName(fname_segmentation_orient)
-    im_seg_orient.save()
+    # average spinal cord shape properties
+    averaged_shape = dict()
+    for property_name in property_list:
+        averaged_shape[property_name] = []
+        for label in sorting_values:
+            averaged_shape[property_name].append(np.mean([item for i, item in enumerate(shape_properties[property_name]) if shape_properties[sorting_mode][i] == label]))
 
-    # Get dimension
-    sct.printv('\nGet dimensions...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = im_seg_orient.dim
-    sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
-    sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', param.verbose)
+    # save spinal cord shape properties
+    df_shape_properties = pd.DataFrame(averaged_shape, index=sorting_values)
+    df_shape_properties.sort_index(inplace=True)
+    pd.set_option('expand_frame_repr', True)
+    df_shape_properties.to_csv(fname_output_csv, sep=',')
 
-    import msct_shape
-    msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation_orient,
-                                                   property_list=['area',
-                                                                  'equivalent_diameter',
-                                                                  'ratio_major_minor',
-                                                                  'eccentricity',
-                                                                  'solidity'],
-                                                   fname_disks_image=fname_disks,
-                                                   verbose=1)
-
-    os.chdir('..')
-    shutil.rmtree(path_tmp, ignore_errors=True)
+    if verbose == 1:
+        print df_shape_properties
 
 
 # compute the length of the spinal cord

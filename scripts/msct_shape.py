@@ -18,9 +18,15 @@ import numpy as np
 import sct_utils as sct
 import os
 import time
+import math
 from random import randint
-from skimage import measure
-from skimage import filters
+from skimage import measure, filters
+import shutil
+import matplotlib.pyplot as plt
+from itertools import compress
+from sct_image import Image, set_orientation
+from msct_types import Centerline
+from sct_straighten_spinalcord import smooth_centerline
 
 
 def find_contours(image, threshold=0.5, smooth_sigma=0.0, verbose=1):
@@ -65,9 +71,14 @@ def properties2d(image, resolution=None, verbose=1):
 
         area = sc_region.area
         diameter = sc_region.equivalent_diameter
+        major_l = sc_region.major_axis_length
+        minor_l = sc_region.minor_axis_length
         if resolution is not None:
             area *= resolution[0] * resolution[1]
-            diameter *= resolution[0] * resolution[1]
+            # TODO: compute length depending on resolution. Here it assume the patch has the same X and Y resolution
+            diameter *= resolution[0]
+            major_l *= resolution[0]
+            minor_l *= resolution[0]
 
         sc_properties = {'area': area,
                          'bbox': sc_region.bbox,
@@ -77,11 +88,11 @@ def properties2d(image, resolution=None, verbose=1):
                          'euler_number': sc_region.euler_number,
                          'inertia_tensor': sc_region.inertia_tensor,
                          'inertia_tensor_eigvals': sc_region.inertia_tensor_eigvals,
-                         'minor_axis_length': sc_region.minor_axis_length,
-                         'major_axis_length': sc_region.major_axis_length,
+                         'minor_axis_length': minor_l,
+                         'major_axis_length': major_l,
                          'moments': sc_region.moments,
                          'moments_central': sc_region.moments_central,
-                         'orientation': sc_region.orientation,
+                         'orientation': 90 - abs(sc_region.orientation * 180.0 / math.pi),
                          'perimeter': sc_region.perimeter,
                          'ratio_major_minor': ratio_major_minor,
                          'solidity': sc_region.solidity  # convexity measure
@@ -112,8 +123,7 @@ def average_properties(fname_seg_images, property_list, fname_disks_images, grou
                           'Co': 'S5-Co'}
     xlabel_disks = [convert_vertlabel2disklabel[regions_labels[str(label)]] for label in xtick_disks]
 
-    if verbose == 1:
-        import matplotlib.pyplot as plt
+    if verbose == 2:
         # Display the image and plot all contours found
         fig, axes = plt.subplots(len(property_list), sharex=True, sharey=False)
 
@@ -126,7 +136,6 @@ def average_properties(fname_seg_images, property_list, fname_disks_images, grou
 
         centerline = properties_along_centerline['centerline']
 
-        from itertools import compress
         mask_points = np.array([True if isinstance(item, str) else False for item in centerline.l_points])
         dist_points_rel = list(compress(centerline.dist_points_rel, mask_points))
         l_points = list(compress(centerline.l_points, mask_points))
@@ -135,24 +144,38 @@ def average_properties(fname_seg_images, property_list, fname_disks_images, grou
         relative_position = [item - 51 if item >= 51 else item for item in relative_position]
         relative_position = [item - 50 if item >= 50 else item for item in relative_position]
 
-        if verbose == 1:
+        if verbose == 2:
             labels = [centerline.labels_regions[l_points[k]] for k in range(len(l_points))]
             xlim = [min(labels), max(labels)]
             for k, property_name in enumerate(property_list):
                 axes[k].plot(relative_position, list(compress(properties_along_centerline[property_name], mask_points)), color=group_images[i])
                 axes[k].set_xlim(xlim)
 
-    if verbose == 1:
+    if verbose == 2:
         for k, property_name in enumerate(property_list):
             axes[k].set_ylabel(property_name)
         plt.xticks(xtick_disks, xlabel_disks, rotation=30)
         axes[-1].set_xlim(xlim)
-        sct.printv('\nAffichage des resultats')
-        plt.savefig('foo.png')
+        sct.printv('\nAffichage des resultats', verbose=verbose)
+        plt.savefig('shape_results.png')
         plt.show()
 
-def compute_properties_along_centerline(fname_seg_image, property_list, fname_disks_image=None, smooth_factor=5.0, verbose=1):
-    # create temporary folder
+
+def compute_properties_along_centerline(fname_seg_image, property_list, fname_disks_image=None, smooth_factor=5.0, interpolation_mode=0, verbose=1):
+
+    # Check list of properties
+    # If diameters is in the list, compute major and minor axis length and check orientation
+    compute_diameters = False
+    property_list_local = list(property_list)
+    if 'diameters' in property_list_local:
+        compute_diameters = True
+        property_list_local.remove('diameters')
+        property_list_local.append('major_axis_length')
+        property_list_local.append('minor_axis_length')
+        property_list_local.append('orientation')
+
+    # TODO: make sure fname_segmentation and fname_disks are in the same space
+    # create temporary folder and copying data
     sct.printv('\nCreate temporary folder...', verbose)
     path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(randint(1, 1000000)), 1)
     sct.run('mkdir ' + path_tmp, verbose)
@@ -167,7 +190,6 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
     fname_segmentation = os.path.abspath(fname_seg_image)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
 
-    from sct_image import Image, set_orientation
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
     im_seg = Image(file_data + ext_data)
@@ -176,19 +198,19 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
     image.setFileName(fname_segmentation_orient)
     image.save()
 
+    # Initiating some variables
     number_of_slices = image.data.shape[2]
     nx, ny, nz, nt, px, py, pz, pt = image.dim
     resolution = 0.5
-    properties = {key: [] for key in property_list}
+    properties = {key: [] for key in property_list_local}
     properties['incremental_length'] = []
     properties['distance_from_C1'] = []
+    properties['vertebral_level'] = []
+    properties['z_slice'] = []
 
     # compute the spinal cord centerline based on the spinal cord segmentation
-    from sct_straighten_spinalcord import smooth_centerline
     number_of_points = 5 * nz
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_segmentation_orient, algo_fitting='nurbs', verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
-
-    from msct_types import Centerline
     centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
     # Compute vertebral distribution along centerline based on position of intervertebral disks
@@ -210,40 +232,68 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
             coord_physical.append(c_p)
         centerline.compute_vertebral_distribution(coord_physical)
 
+    # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
     for i, index in enumerate(range(centerline.number_of_points)):
-        current_patch = centerline.extract_perpendicular_square(image, index, resolution=resolution, interpolation_mode=0)
+        current_patch = centerline.extract_perpendicular_square(image, index, resolution=resolution, interpolation_mode=interpolation_mode)
 
         sc_properties = properties2d(current_patch, [resolution, resolution])
         if sc_properties is not None:
             properties['incremental_length'].append(centerline.incremental_length[i])
-            properties['distance_from_C1'].append(centerline.dist_points[i])
-            for property_name in property_list:
+            if fname_disks_image is not None:
+                properties['distance_from_C1'].append(centerline.dist_points[i])
+                properties['vertebral_level'].append(centerline.l_points[i])
+            properties['z_slice'].append(image.transfo_phys2pix([centerline.points[i]])[0][2])
+            for property_name in property_list_local:
                 properties[property_name].append(sc_properties[property_name])
 
-    properties['distance_disk_from_C1'] = centerline.distance_from_C1label  # distance between each disk and C1 (or first disk)
+    # Adding centerline to the properties for later use
     properties['centerline'] = centerline
-    xlabel_disks = [centerline.convert_vertlabel2disklabel[label] for label in properties['distance_disk_from_C1']]
-    xtick_disks = [properties['distance_disk_from_C1'][label] for label in properties['distance_disk_from_C1']]
 
-    print 'MEAN'
-    print np.mean(centerline.progressive_length), '+-', np.std(centerline.progressive_length)
+    # We assume that the major axis is in the right-left direction
+    # this script checks the orientation of the spinal cord and invert axis if necessary to make sure the major axis is right-left
+    if compute_diameters:
+        diameter_major = properties['major_axis_length']
+        diameter_minor = properties['minor_axis_length']
+        orientation = properties['orientation']
+        for i, orientation_item in enumerate(orientation):
+            if -45.0 < orientation_item < 45.0:
+                continue
+            else:
+                temp = diameter_minor[i]
+                properties['minor_axis_length'][i] = diameter_major[i]
+                properties['major_axis_length'][i] = temp
+
+        properties['RL_diameter'] = properties['major_axis_length']
+        properties['AP_diameter'] = properties['minor_axis_length']
+        del properties['major_axis_length']
+        del properties['minor_axis_length']
+
+    # smooth the spinal cord shape with a gaussian kernel if required
+    # TODO: not all properties can be smoothed
     if smooth_factor != 0.0:  # smooth_factor is in mm
         import scipy
         window = scipy.signal.hann(smooth_factor / np.mean(centerline.progressive_length))
-        for property_name in property_list:
+        for property_name in property_list_local:
             properties[property_name] = scipy.signal.convolve(properties[property_name], window, mode='same') / np.sum(window)
 
+    # Display properties on the referential space. Requires intervertebral disks
     if verbose == 2:
-        import matplotlib.pyplot as plt
+        properties['distance_disk_from_C1'] = centerline.distance_from_C1label  # distance between each disk and C1 (or first disk)
+        xlabel_disks = [centerline.convert_vertlabel2disklabel[label] for label in properties['distance_disk_from_C1']]
+        xtick_disks = [properties['distance_disk_from_C1'][label] for label in properties['distance_disk_from_C1']]
+
+
         # Display the image and plot all contours found
-        fig, axes = plt.subplots(len(property_list), sharex=True, sharey=False)
-        for k, property_name in enumerate(property_list):
+        fig, axes = plt.subplots(len(property_list_local), sharex=True, sharey=False)
+        for k, property_name in enumerate(property_list_local):
             axes[k].plot(properties['distance_from_C1'], properties[property_name])
             axes[k].set_ylabel(property_name)
         plt.xticks(xtick_disks, xlabel_disks, rotation=30)
         plt.show()
 
+    # Removing temporary folder
     os.chdir('..')
+    shutil.rmtree(path_tmp, ignore_errors=True)
 
     return properties
 
@@ -252,15 +302,6 @@ def surface(volume, threshold=0.5, verbose=1):
     verts, faces = measure.marching_cubes(volume, threshold)
 
     if verbose == 2:
-        """
-        from mayavi import mlab
-        mlab.triangular_mesh([vert[0] for vert in verts],
-                             [vert[1] for vert in verts],
-                             [vert[2] for vert in verts],
-                             faces)
-        mlab.show()
-        """
-
         import visvis as vv
         vv.mesh(np.fliplr(verts), faces)
         vv.use().Run()
@@ -270,6 +311,8 @@ def shape_pca(data):
     return
 
 
+"""
+Example of script that averages spinal cord shape from multiple subjects/patients, in a common reference frame (PAM50)
 def prepare_data():
 
     folder_dataset = '/Volumes/data_shared/sct_testing/large/'
@@ -307,6 +350,6 @@ def prepare_data():
 
     average_properties(fname_seg_images, property_list, fname_disks_images, group_images, verbose=1)
 
-prepare_data()
+"""
 
 
