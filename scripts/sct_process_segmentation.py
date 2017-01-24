@@ -246,9 +246,8 @@ def main(args):
 
     if name_process == 'shape':
         fname_disks = None
-        if '-vertfile' in arguments:
-            if arguments['-vertfile'] != './label/template/PAM50_levels.nii.gz':
-                fname_disks = arguments['-vertfile']
+        if '-discfile' in arguments:
+            fname_disks = arguments['-discfile']
         compute_shape(fname_segmentation, fname_disks=fname_disks, verbose=verbose)
 
         # End of Main
