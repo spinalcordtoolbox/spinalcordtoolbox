@@ -276,26 +276,40 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
         for property_name in property_list_local:
             properties[property_name] = scipy.signal.convolve(properties[property_name], window, mode='same') / np.sum(window)
 
+    if compute_diameters:
+        property_list_local.remove('major_axis_length')
+        property_list_local.remove('minor_axis_length')
+        property_list_local.append('RL_diameter')
+        property_list_local.append('AP_diameter')
+        property_list = property_list_local
+
     # Display properties on the referential space. Requires intervertebral disks
     if verbose == 2:
-        properties['distance_disk_from_C1'] = centerline.distance_from_C1label  # distance between each disk and C1 (or first disk)
-        xlabel_disks = [centerline.convert_vertlabel2disklabel[label] for label in properties['distance_disk_from_C1']]
-        xtick_disks = [properties['distance_disk_from_C1'][label] for label in properties['distance_disk_from_C1']]
-
+        x_increment = 'distance_from_C1'
+        if fname_disks_image is None:
+            x_increment = 'incremental_length'
 
         # Display the image and plot all contours found
         fig, axes = plt.subplots(len(property_list_local), sharex=True, sharey=False)
         for k, property_name in enumerate(property_list_local):
-            axes[k].plot(properties['distance_from_C1'], properties[property_name])
+            axes[k].plot(properties[x_increment], properties[property_name])
             axes[k].set_ylabel(property_name)
-        plt.xticks(xtick_disks, xlabel_disks, rotation=30)
+
+        if fname_disks_image is not None:
+            properties['distance_disk_from_C1'] = centerline.distance_from_C1label  # distance between each disk and C1 (or first disk)
+            xlabel_disks = [centerline.convert_vertlabel2disklabel[label] for label in properties['distance_disk_from_C1']]
+            xtick_disks = [properties['distance_disk_from_C1'][label] for label in properties['distance_disk_from_C1']]
+            plt.xticks(xtick_disks, xlabel_disks, rotation=30)
+        else:
+            axes[-1].set_xlabel('Position along the spinal cord (in mm)')
+
         plt.show()
 
     # Removing temporary folder
     os.chdir('..')
     shutil.rmtree(path_tmp, ignore_errors=True)
 
-    return properties
+    return property_list, properties
 
 
 def surface(volume, threshold=0.5, verbose=1):
