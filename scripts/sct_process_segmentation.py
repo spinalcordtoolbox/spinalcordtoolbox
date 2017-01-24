@@ -206,7 +206,7 @@ def main(args):
     if '-vertfile' in arguments:
         fname_vertebral_labeling = arguments['-vertfile']
     if '-v' in arguments:
-        verbose = arguments['-v']
+        verbose = int(arguments['-v'])
     if '-z' in arguments:
         slices = arguments['-z']
     if '-a' in arguments:
@@ -254,7 +254,7 @@ def main(args):
         # End of Main
 
 
-def compute_shape(fname_segmentation, fname_disks=None, verbose=0):
+def compute_shape(fname_segmentation, fname_disks=None, verbose=1):
     """
     This function characterizes the shape of the spinal cord, based on the segmentation
     Shape properties are computed along the spinal cord and averaged per z-slices.
@@ -271,24 +271,19 @@ def compute_shape(fname_segmentation, fname_disks=None, verbose=0):
                      'eccentricity',
                      'solidity']
 
-    shape_properties = msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation,
+    property_list, shape_properties = msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation,
                                                                       property_list=property_list,
                                                                       fname_disks_image=fname_disks,
                                                                       smooth_factor=0.0,
                                                                       interpolation_mode=0,
                                                                       verbose=verbose)
 
-    # TODO: find a way to move this part of code into msct_shape.compute_properties_along_centerline
-    if 'diameters' in property_list:
-        property_list.remove('diameters')
-        property_list.append('RL_diameter')
-        property_list.append('AP_diameter')
-        property_list.append('orientation')
-
     # choose sorting mode: z-slice or vertebral levels, depending on input (fname_disks)
+    rejected_values = []  # some values are not vertebral levels
     if fname_disks is not None:
         # average over spinal cord levels
         sorting_mode = 'vertebral_level'
+        rejected_values = [0, '0']
     else:
         # averaging over slices
         sorting_mode = 'z_slice'
@@ -296,7 +291,7 @@ def compute_shape(fname_segmentation, fname_disks=None, verbose=0):
     # extract all values for shape properties to be averaged on (z-slices or vertebral levels)
     sorting_values = []
     for label in shape_properties[sorting_mode]:
-        if label not in sorting_values and label not in ['0']:
+        if label not in sorting_values and label not in rejected_values:
             sorting_values.append(label)
 
     # average spinal cord shape properties
