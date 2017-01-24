@@ -349,6 +349,7 @@ def main(args=None):
     sct.check_if_3d(fname_src)
     sct.check_if_3d(fname_dest)
 
+
     # Check if user selected type=seg, but did not input segmentation data
     if 'paramreg_user' in locals():
         if True in ['type=seg' in paramreg_user[i] for i in range(len(paramreg_user))]:
@@ -359,14 +360,22 @@ def main(args=None):
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
     path_dest, file_dest, ext_dest = sct.extract_fname(fname_dest)
 
+    # check if source and destination images have the same name (related to issue #373)
+    # If so, change names to avoid conflict of result files and warns the user
+    suffix_src, suffix_dest = '_reg', '_reg'
+    if file_src == file_dest:
+        suffix_src, suffix_dest = '_src_reg', '_dest_reg'
+
     # define output folder and file name
     if fname_output == '':
         path_out = '' if not path_out else path_out  # output in user's current directory
-        file_out = file_src+"_reg"
+        file_out = file_src + suffix_src
+        file_out_inv = file_dest + suffix_dest
         ext_out = ext_src
     else:
         path, file_out, ext_out = sct.extract_fname(fname_output)
         path_out = path if not path_out else path_out
+        file_out_inv = file_out + '_inv'
 
     # create QC folder
     sct.create_folder(param.path_qc)
@@ -485,7 +494,7 @@ def main(args=None):
     sct.generate_output_file(path_tmp+'warp_src2dest.nii.gz', fname_output_warp, verbose)
     if generate_warpinv:
         # generate: dest_reg
-        fname_dest2src = sct.generate_output_file(path_tmp+'dest_reg.nii', path_out+file_dest+'_reg'+ext_dest, verbose)
+        fname_dest2src = sct.generate_output_file(path_tmp+'dest_reg.nii', path_out+file_out_inv+ext_dest, verbose)
         # generate: inverse warping field
         sct.generate_output_file(path_tmp+'warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
 
