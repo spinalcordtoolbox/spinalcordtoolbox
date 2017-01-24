@@ -657,21 +657,54 @@ for iz = 1:nb_slices
 end
 
 %% Interpolation between computed slices
+disp('*** Interpolation between computed slices ***')
 for label = 1:length(label_values)
+    disp(['LABEL: ', num2str(label), '/', num2str(length(label_values))])
     for k = 1:length(z_disks_mid)-1
         tractsHR{label} = m_linear_interp(tractsHR{label},z_disks_mid(k)+1,z_disks_mid(k+1)+1);
     end
 end
 
 %% Downsampling and partial volume computation
+disp('*** Downsampling and partial volume computation ***')
 max_indx = max(z_disks_mid(:));
-
 for label = 1:length(label_values)
+    disp(['LABEL: ', num2str(label), '/', num2str(length(label_values))])
     for zslice = 0:max_indx
         numSlice = zslice+1;
         tracts{label}(:,:,numSlice) = dnsamplelin(tractsHR{label}(:,:,numSlice),interp_factor);
     end
 end
+
+%% Normalize the sum of all voxels to one inside the cord
+tract_sum = zeros(size(tracts{1}));
+tracts_norm = tracts;
+% sum all labels
+for ilabel = 1:length(tracts)
+    tract_sum = tract_sum + tracts{ilabel};
+end
+imagesc(tract_sum(:,:,800)), axis square, title('tract sum'), colorbar
+% smooth with 3d isotropic kernel
+tract_sum_smooth = smooth3(tract_sum,'gaussian',[3 3 3]);
+imagesc(tract_sum_smooth(:,:,800)), axis square, title('tract sum smooth'), colorbar
+% binarize
+tract_sum_smooth(tract_sum_smooth<0.5) = 0;
+tract_sum_smooth(tract_sum_smooth>=0.5) = 1;
+imagesc(tract_sum_smooth(:,:,800)), axis square, title('tract sum smooth binary'), colorbar
+% get mask of non-null voxels
+nonnull = find(tract_sum_smooth);
+% loop across all labels and normalize to one
+for ilabel = 1:length(label_values)
+    tracts_norm{ilabel}(nonnull) = tracts{ilabel}(nonnull) ./ tract_sum(nonnull);
+end
+% sanity check
+tract_sum_norm = zeros(size(tracts{1}));
+for ilabel = 1:length(tracts)
+    tract_sum_norm = tract_sum_norm + tracts_norm{ilabel};
+end
+imagesc(tract_sum_norm(:,:,800)), axis square, title('tract norm sum'), colorbar
+% update variable
+tracts = tracts_norm
 
 %% open tract description file
 disp('*** Open label description file ***')
@@ -691,8 +724,8 @@ while ischar(tline)
 end
 fclose (fid);
 
-%% Loop on labels to compute partial volume values without HR version
-disp('*** Compute partial volume and save data ***')
+%% Save tracts to file
+disp('*** Save tracts to file ***')
 % loop across tracts
 for label = 1:length(label_values)
     % Compute label file name
