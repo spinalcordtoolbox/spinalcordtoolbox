@@ -134,7 +134,7 @@ class ProcessLabels(object):
 
         # for all points with non-zeros neighbors, force the neighbors to 0
         for i, coord in enumerate(coordinates_input):
-            image_output.data[coord.x, coord.y, coord.z] = image_output.data[coord.x, coord.y, coord.z] + float(value)
+            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = image_output.data[int(coord.x), int(coord.y), int(coord.z)] + float(value)
         return image_output
 
 
@@ -159,7 +159,7 @@ class ProcessLabels(object):
             # display info
             sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
                        str(coord.value), 1)
-            image_output.data[coord.x, coord.y, coord.z] = coord.value
+            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
 
         return image_output
 
@@ -183,7 +183,7 @@ class ProcessLabels(object):
         cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate)
 
         for coord in cross_coordinates:
-            output_image.data[round(coord.x), round(coord.y), round(coord.z)] = coord.value
+            output_image.data[int(round(coord.x)), int(round(coord.y)), int(round(coord.z))] = coord.value
 
         return output_image
 
@@ -265,7 +265,7 @@ class ProcessLabels(object):
 
         # for all points with non-zeros neighbors, force the neighbors to 0
         for coord in coordinates_input:
-            image_output.data[:,:,coord.z-width:coord.z+width] = offset + gap * coord.value
+            image_output.data[:, :, int(coord.z) - width:int(coord.z) + width] = offset + gap * coord.value
 
         return image_output
 
@@ -294,9 +294,9 @@ class ProcessLabels(object):
 
         image_output.changeType('float32')
         for coord in coordinates_input_neg:
-            image_output.data[:, :, coord.z] = -coord.value #PB: takes the int value of coord.value
+            image_output.data[:, :, int(coord.z)] = -coord.value #PB: takes the int value of coord.value
         for coord in coordinates_input_pos:
-            image_output.data[:, :, coord.z] = coord.value
+            image_output.data[:, :, int(coord.z)] = coord.value
 
         return image_output
 
@@ -331,7 +331,7 @@ class ProcessLabels(object):
         for value, list_coord in groups.iteritems():
             center_of_mass = sum(list_coord)/float(len(list_coord))
             sct.printv("Value = " + str(center_of_mass.value) + " : ("+str(center_of_mass.x) + ", "+str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( "+ str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
-            output_image.data[round(center_of_mass.x), round(center_of_mass.y), round(center_of_mass.z)] = center_of_mass.value
+            output_image.data[int(round(center_of_mass.x)), int(round(center_of_mass.y)), int(round(center_of_mass.z))] = center_of_mass.value
 
         return output_image
 
@@ -347,7 +347,7 @@ class ProcessLabels(object):
 
         # for all points with non-zeros neighbors, force the neighbors to 0
         for i, coord in enumerate(coordinates_input):
-            image_output.data[coord.x, coord.y, coord.z] = i + 1
+            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = i + 1
 
         return image_output
 
@@ -368,7 +368,7 @@ class ProcessLabels(object):
         for i, coord in enumerate(coordinates_input):
             for j in range(0, len(coordinates_ref)-1):
                 if coordinates_ref[j+1].z < coord.z <= coordinates_ref[j].z:
-                    image_output.data[coord.x, coord.y, coord.z] = coordinates_ref[j].value
+                    image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coordinates_ref[j].value
 
         return image_output
 
@@ -390,7 +390,7 @@ class ProcessLabels(object):
             # check if this level is NOT in levels_user
             if not levels_user.count(int(list_coordinates[i_label].value)):
                 # if not, set value to zero
-                image_cubic2point.data[list_coordinates[i_label].x, list_coordinates[i_label].y, list_coordinates[i_label].z] = 0
+                image_cubic2point.data[int(list_coordinates[i_label].x), int(list_coordinates[i_label].y), int(list_coordinates[i_label].z)] = 0
         # list all labels
         return image_cubic2point
 
@@ -581,13 +581,13 @@ class ProcessLabels(object):
                                                                        self.image_ref.getNonZeroCoordinates(coordValue=True), symmetry)
 
         for coord in result_coord_input:
-            image_output.data[coord.x, coord.y, coord.z] = int(round(coord.value))
+            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = int(round(coord.value))
 
         if symmetry:
             # image_output_ref = Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
             image_output_ref = Image(self.image_ref, verbose=self.verbose)
             for coord in result_coord_ref:
-                image_output_ref.data[coord.x, coord.y, coord.z] = int(round(coord.value))
+                image_output_ref.data[int(coord.x), int(coord.y), int(coord.z)] = int(round(coord.value))
             image_output_ref.setFileName(self.fname_output[1])
             image_output_ref.save('minimize_int')
 
@@ -690,7 +690,7 @@ class ProcessLabels(object):
         nx, ny, nz, nt, px, py, pz, pt = im_input.dim
         from sct_straighten_spinalcord import smooth_centerline
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_input, algo_fitting='nurbs', verbose=0)
-        value_centerline = np.array([im_input.data[x_centerline_fit[it], y_centerline_fit[it], z_centerline_fit[it]] for it in range(len(z_centerline_fit))])
+        value_centerline = np.array([im_input.data[int(x_centerline_fit[it]), int(y_centerline_fit[it]), int(z_centerline_fit[it])] for it in range(len(z_centerline_fit))])
 
         # 2. compute distance for each vertebral level --> Di for i being the vertebral levels
         vertebral_levels = {}
@@ -727,7 +727,7 @@ class ProcessLabels(object):
         im_output.changeType('float32')
         # for all points in input, find the value that has to be set up, depending on the vertebral level
         for i, coord in enumerate(coordinates_input):
-            im_output.data[coord.x, coord.y, coord.z] = continuous_values[coord.z]
+            im_output.data[int(coord.x), int(coord.y), int(coord.z)] = continuous_values[coord.z]
 
         return im_output
 
