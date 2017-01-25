@@ -14,9 +14,12 @@
 from msct_image import Image
 from sct_image import set_orientation
 from sct_utils import extract_fname, printv, add_suffix, tmp_create
+from sct_crop_image import ImageCropper
+import sct_create_mask
 import sct_register_multimodal, sct_apply_transfo
 import numpy as np
 import os
+import math
 import time
 import random
 import shutil
@@ -126,22 +129,37 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     im_sc_seg_rpi = set_orientation(im_sc_seg, 'RPI')
     original_info['im_sc_seg_rpi'] = im_sc_seg_rpi.copy()  # target image in RPI will be used to post-process segmentations
 
-    # interpolate image to reference square image (resample and square crop centered on SC)
-    printv('  Interpolate data to the model space...', verbose, 'normal')
-    list_im_slices = interpolate_im_to_ref(im_target_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
-    original_info['interpolated_images'] = list_im_slices # list of images (not Slice() objects)
-
     # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy
     if denoising:
         printv('  Denoise...', verbose, 'normal')
+        # crop image before denoising to fasten denoising
+        nx, ny, nz, nt, px, py, pz, pt = im_target_rpi.dim
+        size_x, size_y = (square_size_size_mm+1)/px, (square_size_size_mm+1)/py
+        size = int(math.ceil(max(size_x, size_y)))
+        # create mask
+        fname_mask = 'mask_pre_crop.nii.gz'
+        sct_create_mask.main(['-i', im_target_rpi.absolutepath, '-p', 'centerline,'+im_sc_seg_rpi.absolutepath, '-f', 'box', '-size', str(size), '-o', fname_mask])
+        # crop image
+        fname_target_crop = add_suffix(im_target_rpi.absolutepath, '_pre_crop')
+        crop_im = ImageCropper(input_file=im_target_rpi.absolutepath, output_file=fname_target_crop, mask=fname_mask)
+        im_target_rpi_crop = crop_im.crop()
+        # crop segmentation
+        fname_sc_seg_crop = add_suffix(im_sc_seg_rpi.absolutepath, '_pre_crop')
+        crop_sc_seg = ImageCropper(input_file=im_sc_seg_rpi.absolutepath, output_file=fname_sc_seg_crop, mask=fname_mask)
+        im_sc_seg_rpi_crop = crop_sc_seg.crop()
+        # denoising
         from sct_maths import denoise_nlmeans
-        data = np.asarray([im.data for im in list_im_slices])
-        data_denoised = denoise_nlmeans(data, block_radius = int(len(list_im_slices)/2))
-        for i in range(len(list_im_slices)):
-            list_im_slices[i].data = data_denoised[i]
+        block_radius = int(im_target_rpi_crop.data.shape[2]/2) if im_target_rpi_crop.data.shape[2]<10 else 5
+        data_denoised = denoise_nlmeans(im_target_rpi_crop.data, block_radius = block_radius)
+        im_target_rpi_crop.data = data_denoised
+
+    # interpolate image to reference square image (resample and square crop centered on SC)
+    printv('  Interpolate data to the model space...', verbose, 'normal')
+    list_im_slices = interpolate_im_to_ref(im_target_rpi_crop, im_sc_seg_rpi_crop, new_res=new_res, sq_size_size_mm=square_size_size_mm)
+    original_info['interpolated_images'] = list_im_slices # list of images (not Slice() objects)
 
     printv('  Mask data using the spinal cord segmentation...', verbose, 'normal')
-    list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=1)
+    list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi_crop, im_sc_seg_rpi_crop, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=1)
     for i in range(len(list_im_slices)):
         # list_im_slices[i].data[list_sc_seg_slices[i].data == 0] = 0
         list_sc_seg_slices[i] = binarize(list_sc_seg_slices[i], thr_min=0.5, thr_max=1)
