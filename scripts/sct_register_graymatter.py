@@ -135,7 +135,7 @@ class MultiLabelRegistration:
         fname_warp_multilabel_template2auto = 'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz'
         fname_warp_multilabel_auto2template = 'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz'
 
-        self.fname_warp_template2gm = 'warp_template2'+file_gm+'.nii.gz'
+        self.fname_warp_template2gm = sct.extract_fname(self.fname_warp_template2target)[1] + '_reg_gm' +sct.extract_fname(self.fname_warp_template2target)[2]
         # fname_warp_multilabel_template2auto = pad_im(fname_warp_multilabel_template2auto, nx, ny, nz, xi, xf, yi, yf, zi, zf)
         # fname_warp_multilabel_auto2template = pad_im(fname_warp_multilabel_auto2template, nx, ny, nz, xi, xf, yi, yf, zi, zf)
 
@@ -149,7 +149,7 @@ class MultiLabelRegistration:
             elif self.template == 'PAM50':
                 fname_dest = path_sct+'/data/PAM50/template/PAM50_t2.nii.gz'
 
-            self.fname_warp_gm2template = 'warp_'+file_gm+'_gm2template.nii.gz'
+            self.fname_warp_gm2template = sct.extract_fname(self.fname_warp_target2template)[1] + '_reg_gm' +sct.extract_fname(self.fname_warp_target2template)[2]
             sct.run('sct_concat_transfo -w '+fname_warp_multilabel_auto2template+','+file_warp_target2template+ext_warp_target2template+' -d '+fname_dest+' -o '+self.fname_warp_gm2template)
 
         os.chdir('..')
