@@ -421,7 +421,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Multi-label registration\n')
+    parser.usage.set_description('Registration function to improve the template registration by accounting for the gray and white matter shape using a multi-label approach. Output is a warping field from the template to the target image accounting for the gray matter shape. If -winv is used, output also includes the inverse warping field (from the target image to the template) that accounts for the gray matter shape.')
     parser.add_option(name="-gm",
                       type_value="file",
                       description="Gray matter automatic segmentation",
