@@ -32,6 +32,8 @@ from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
 from shutil import move, copyfile
 from msct_parser import Parser
+import msct_shape
+import pandas as pd
 
 
 # DEFAULT PARAMETERS
@@ -76,7 +78,7 @@ def get_parser():
                                   '  - csa_per_slice.pickle: a pickle file with the same results as \"csa_per_slice.txt\" recorded in a DataFrame (panda structure) that can be reloaded afterwrds,\n'
                                   '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n',
                       mandatory=True,
-                      example=['centerline', 'label-vert', 'length', 'csa'])
+                      example=['centerline', 'label-vert', 'length', 'csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -173,7 +175,7 @@ def main(args):
     # Initialization
     path_script = os.path.dirname(__file__)
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
-    processes = ['centerline', 'csa', 'length']
+    processes = ['centerline', 'csa', 'length', 'shape']
     verbose = param.verbose
     start_time = time.time()
     remove_temp_files = param.remove_temp_files
@@ -204,7 +206,7 @@ def main(args):
     if '-vertfile' in arguments:
         fname_vertebral_labeling = arguments['-vertfile']
     if '-v' in arguments:
-        verbose = arguments['-v']
+        verbose = int(arguments['-v'])
     if '-z' in arguments:
         slices = arguments['-z']
     if '-a' in arguments:
@@ -241,8 +243,70 @@ def main(args):
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_lev, fname_vertebral_labeling, verbose=verbose)
 
-    # End of Main
+    if name_process == 'shape':
+        fname_disks = None
+        if '-discfile' in arguments:
+            fname_disks = arguments['-discfile']
+        compute_shape(fname_segmentation, fname_disks=fname_disks, verbose=verbose)
 
+        # End of Main
+
+
+def compute_shape(fname_segmentation, fname_disks=None, verbose=1):
+    """
+    This function characterizes the shape of the spinal cord, based on the segmentation
+    Shape properties are computed along the spinal cord and averaged per z-slices.
+    Option is to provide intervertebral disks to average shape properties over vertebral levels (fname_disks).
+    """
+    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+    fname_output_csv = file_data + '_shape.csv'
+
+    # List of properties to compute on spinal cord
+    property_list = ['area',
+                     'diameters',
+                     'equivalent_diameter',
+                     'ratio_major_minor',
+                     'eccentricity',
+                     'solidity']
+
+    property_list, shape_properties = msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation,
+                                                                      property_list=property_list,
+                                                                      fname_disks_image=fname_disks,
+                                                                      smooth_factor=0.0,
+                                                                      interpolation_mode=0,
+                                                                      verbose=verbose)
+
+    # choose sorting mode: z-slice or vertebral levels, depending on input (fname_disks)
+    rejected_values = []  # some values are not vertebral levels
+    if fname_disks is not None:
+        # average over spinal cord levels
+        sorting_mode = 'vertebral_level'
+        rejected_values = [0, '0']
+    else:
+        # averaging over slices
+        sorting_mode = 'z_slice'
+
+    # extract all values for shape properties to be averaged on (z-slices or vertebral levels)
+    sorting_values = []
+    for label in shape_properties[sorting_mode]:
+        if label not in sorting_values and label not in rejected_values:
+            sorting_values.append(label)
+
+    # average spinal cord shape properties
+    averaged_shape = dict()
+    for property_name in property_list:
+        averaged_shape[property_name] = []
+        for label in sorting_values:
+            averaged_shape[property_name].append(np.mean([item for i, item in enumerate(shape_properties[property_name]) if shape_properties[sorting_mode][i] == label]))
+
+    # save spinal cord shape properties
+    df_shape_properties = pd.DataFrame(averaged_shape, index=sorting_values)
+    df_shape_properties.sort_index(inplace=True)
+    pd.set_option('expand_frame_repr', True)
+    df_shape_properties.to_csv(fname_output_csv, sep=',')
+
+    if verbose == 1:
+        print df_shape_properties
 
 
 # compute the length of the spinal cord
