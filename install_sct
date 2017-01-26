@@ -119,7 +119,7 @@ download ()
         echo exit status is ${e_status}
     fi
 
-    if [[ ! ${is_curl} && ! ${is_wget} ]] ; then
+    if [[ ${is_curl} -ne 0 && ${is_wget} -ne 0 ]] ; then
         echo You need to install "curl" OR "wget" before you can install the SPINALCORDTOOLBOX
         echo run
         echo "   > sudo apt-get install wget"
