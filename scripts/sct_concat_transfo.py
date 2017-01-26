@@ -94,7 +94,7 @@ def main(args=None):
         path_out, file_out, ext_out = sct.extract_fname(param.fname_warp_final)
     else:
         path_out, file_out, ext_out = sct.extract_fname(fname_warp_final)
-
+    print 33*'*', path_out
     # Concatenate warping fields
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
@@ -109,7 +109,7 @@ def main(args=None):
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final' + ext_out, path_out+file_out+ext_out)
+    sct.generate_output_file('warp_final' + ext_out, os.path.join(path_out, file_out+ext_out))
 
     print ''
 
