@@ -281,7 +281,7 @@ class Image(object):
         """
         try:
             self.im_file = nibabel.load(path)
-        except nibabel.spatialimages.ImageFileError:
+        except (nibabel.spatialimages.ImageFileError):
             sct.printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.data = self.im_file.get_data()
         self.hdr = self.im_file.get_header()
@@ -403,7 +403,7 @@ class Image(object):
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = nibabel.Nifti1Image(self.data, None, self.hdr)
-        fname_out = self.absolutepath
+        fname_out = os.path.join(self.path, self.file_name + self.ext)
         if os.path.isfile(fname_out):
             sct.printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
             os.remove(fname_out)

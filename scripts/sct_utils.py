@@ -219,7 +219,7 @@ def extract_fname(fname):
         basename, extension = os.path.splitext(basename)
         extension += '.gz'
 
-    return path, basename, extension
+    return path+'/', basename, extension
 
 
 def get_absolute_path(fname):
@@ -380,7 +380,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
         printv('  WARNING: fname_in and fname_out are the same. Do nothing.', verbose, 'warning')
-        print '  File created: {0}/{1} {2}'.format(path_out, file_out, ext_out)
+        printv('  File created: {0}{1}'.format(os.path.join(path_out, file_out), ext_out))
         return path_out + file_out + ext_out
     # if fname_out already exists in nii or nii.gz format
     if os.path.isfile(path_out + file_out + ext_out):
@@ -400,7 +400,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         # Generate output file without changing the extension
         shutil.move(fname_in, fname_out)
 
-    printv('  File created: ' + path_out + file_out + ext_out, verbose)
+    printv('  File created: ' + os.path.join(path_out + file_out) + ext_out, verbose)
     return path_out + file_out + ext_out
 
 
