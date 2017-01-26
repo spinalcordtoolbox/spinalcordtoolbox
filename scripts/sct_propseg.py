@@ -43,7 +43,7 @@ def check_and_correct(fname_segmentation, fname_centerline, threshold_distance=5
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
     path_tmp = sct.tmp_create(verbose=verbose)
     shutil.copy(fname_segmentation, path_tmp + 'tmp.segmentation.nii.gz')
-    shutil.copy(fname_centerline, path_tmp + 'tmp.centerline.nii.gz')
+    shutil.copy(fname_centerline, os.path.join(path_tmp, 'tmp.centerline.nii.gz'))
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -426,9 +426,6 @@ def main(args=None):
                             '-o', os.path.join(path_tmp_viewer, mask_filename),
                             '-setorient ' + image_input_orientation,
                             '-v', '0'])
-            # remove temporary files
-            for tmp_file in glob(folder_output + 'tmp.*'):
-                os.remove(tmp_file)
 
             # add mask filename to parameters string
             if use_viewer == "centerline":
@@ -439,13 +436,18 @@ def main(args=None):
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.',
                        verbose, type='error')
 
-    sct.run("isct_propseg " + isct_options, verbose)
+    cmd = 'isct_propseg  {0} -centerline-binary'.format(isct_options)
+    sct.run(cmd, verbose)
 
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname + "_seg" + ext_fname
-
     fname_centerline = file_fname + '_centerline' + ext_fname
+    print 33*'*',folder_output + output_filename
+    print folder_output + fname_centerline
+    print remove_temp_files
+    print use_viewer
+    print 33*'*'
     check_and_correct(folder_output + output_filename, folder_output + fname_centerline, remove_temp_files)
 
     # remove temporary files

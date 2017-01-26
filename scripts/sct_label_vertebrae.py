@@ -499,7 +499,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=None, verbo
         try:
             # get z corresponding to current disc on template
             current_z_template = list_disc_z_template[current_disc]
-        except:
+        except IndexError:
             # in case reached the bottom (see issue #849)
             sct.printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
             break
@@ -615,7 +615,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=None, verbo
         list_disc_z.insert(0, next_z)
     # assign disc value
     list_disc_value.insert(0, upper_disc - 1)
-
     # Label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
@@ -854,7 +853,6 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     :param verbose:
     :return:
     """
-
     # open segmentation
     seg = msct_image.Image(fname_seg)
     dim = seg.dim
