@@ -13,11 +13,13 @@ import os
 import shutil
 import sys
 
-import sct_utils as sct
 import msct_image
 import msct_parser
 import sct_convert
+import sct_create_mask
 import sct_crop_image
+import sct_utils as sct
+
 
 class Param(object):
     def __init__(self):
@@ -120,12 +122,13 @@ class MultiLabelRegistration(object):
             sct.run('sct_apply_transfo -i ' + fname_template_ml + ' -d ' + fname_automatic_ml + ' -w ' +
                     file_warp_template2target + ext_warp_template2target + ' -o ' + fname_template_ml_new)
             fname_template_ml = fname_template_ml_new
-
         nx, ny, nz, nt, px, py, pz, pt = im_automatic_ml.dim
         size_mask = int(22.5 / px)
         fname_mask = 'square_mask.nii.gz'
-        sct.run('sct_create_mask -i ' + fname_automatic_ml + ' -p centerline,' + fname_automatic_ml + ' -f box -size ' +
-                str(size_mask) + ' -o ' + fname_mask)
+
+        options = '-i ' + fname_automatic_ml + ' -p centerline,' + fname_automatic_ml + ' -f box -size '\
+                 + str(size_mask) + ' -o ' + fname_mask
+        sct_create_mask.main(options.split())
 
         fname_automatic_ml, xi, xf, yi, yf, zi, zf = crop_im(fname_automatic_ml, fname_mask)
         fname_template_ml, xi, xf, yi, yf, zi, zf = crop_im(fname_template_ml, fname_mask)
