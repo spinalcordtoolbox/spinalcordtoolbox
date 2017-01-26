@@ -268,7 +268,6 @@ def create_mask(param):
     sct.printv('\nDone! To view results, type:', param.verbose)
     sct.printv('fslview ' + param.fname_data + ' ' + param.fname_out +
                ' -l Red -t 0.5 &', param.verbose, 'info')
-    print
 
 
 def create_line(fname, coord, nz, param):
