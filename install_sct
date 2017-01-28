@@ -100,36 +100,38 @@ install_refresh ()
 download ()
 {
   # Use curl or wget to download goodies
-  set -x
-  if hash "curl" ; then
-    curl -o $1 -L $2
-    e_status=$?
-    echo exit status is ${e_status}
+    e_status=0
 
-  elif hash "wget"; then
-    wget -O $1 $2
-    e_status=$?
-    echo exit status is ${e_status}
+    hash "wget" 2> /dev/null
+    is_wget=$?
+    hash "curl" 2> /dev/null
+    is_curl=$?
 
-  else
-    set +x
-    echo You need to install "curl" OR "wget" before you can install the SPINALCORDTOOLBOX
-    echo run
-    echo "   > sudo apt-get install wget"
-    echo and rerun the installer
-    exit 1
-  fi
-  set +x
+    if [[ ${is_wget} -eq 0 ]] ; then
+        wget -O $1 $2
+        e_status=$?
+        echo exit status is ${e_status}
+    fi
 
-  ls ${1}
-  file_exist=$?
+    if [[ ${is_curl} -eq 0 && ! -e $1 ]] ; then
+        curl -o $1 -L $2
+        e_status=$?
+        echo exit status is ${e_status}
+    fi
 
-  if [[ ${e_status} != 0  || ${file_exist} != 0 ]]; then
-     echo "The download of $2 failed"
-     echo "Please check your internet connection before relaunching the installer"
-     exit 1
-  fi
+    if [[ ${is_curl} -ne 0 && ${is_wget} -ne 0 ]] ; then
+        echo You need to install "curl" OR "wget" before you can install the SPINALCORDTOOLBOX
+        echo run
+        echo "   > sudo apt-get install wget"
+        echo and rerun the installer
+        exit 1
+    fi
 
+    if [[ ${e_status} -ne 0  || ! -e $1 ]]; then
+        echo "The download of $2 failed"
+        echo "Please check your internet connection before relaunching the installer"
+        exit 1
+    fi
 }
 
 
@@ -459,7 +461,6 @@ else
   echo -e "\nInstalling data..."
   cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   cmd="mkdir -p ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
-  cmd="cd ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   cmd="cd ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   # Install PAM50
   cmd="python ../scripts/sct_download_data.py -d PAM50"; echo ">> "$cmd; $cmd
