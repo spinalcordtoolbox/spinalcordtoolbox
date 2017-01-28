@@ -76,7 +76,15 @@ def get_parser():
                                   '  - csa_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the angle (in degrees) between the spinal cord centerline and the inferior-superior direction,\n'
                                   '  - csa_per_slice.txt: a CSV text file with z (1st column), CSA in mm^2 (2nd column) and angle with respect to the I-S direction in degrees (3rd column),\n'
                                   '  - csa_per_slice.pickle: a pickle file with the same results as \"csa_per_slice.txt\" recorded in a DataFrame (panda structure) that can be reloaded afterwrds,\n'
-                                  '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n',
+                                  '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n'
+                                  '-shape: compute spinal shape properties, using scikit-image region measures, including:\n'
+                                  '  - AP and RL diameters\n'
+                                  '  - ratio between AP and RL diameters\n'
+                                  '  - spinal cord area\n'
+                                  '  - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.\n'
+                                  '  - equivalent diameter: The diameter of a circle with the same area as the spinal cord.\n'
+                                  '  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image\n'
+                                  '  - solidity: ratio of positive (spinal cord) over null (background) pixels that are contained in the convex hull region. The convex hull region is the smallest convex polygon that surround all positive pixels in the image.',
                       mandatory=True,
                       example=['centerline', 'label-vert', 'length', 'csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
@@ -247,34 +255,35 @@ def main(args):
         fname_disks = None
         if '-discfile' in arguments:
             fname_disks = arguments['-discfile']
-        compute_shape(fname_segmentation, fname_disks=fname_disks, verbose=verbose)
+        compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_lev, fname_disks=fname_disks, verbose=verbose)
 
-        # End of Main
+    # End of Main
 
 
-def compute_shape(fname_segmentation, fname_disks=None, verbose=1):
+def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_levels, fname_disks=None, verbose=1):
     """
     This function characterizes the shape of the spinal cord, based on the segmentation
     Shape properties are computed along the spinal cord and averaged per z-slices.
     Option is to provide intervertebral disks to average shape properties over vertebral levels (fname_disks).
     """
-    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
-    fname_output_csv = file_data + '_shape.csv'
-
     # List of properties to compute on spinal cord
     property_list = ['area',
                      'diameters',
                      'equivalent_diameter',
-                     'ratio_major_minor',
+                     'ratio_minor_major',
                      'eccentricity',
                      'solidity']
 
     property_list, shape_properties = msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation,
-                                                                      property_list=property_list,
-                                                                      fname_disks_image=fname_disks,
-                                                                      smooth_factor=0.0,
-                                                                      interpolation_mode=0,
-                                                                      verbose=verbose)
+                                                                                     property_list=property_list,
+                                                                                     fname_disks_image=fname_disks,
+                                                                                     smooth_factor=0.0,
+                                                                                     interpolation_mode=0,
+                                                                                     remove_temp_files=remove_temp_files,
+                                                                                     verbose=verbose)
+
+    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+    fname_output_csv = output_folder + file_data + '_shape.csv'
 
     # choose sorting mode: z-slice or vertebral levels, depending on input (fname_disks)
     rejected_values = []  # some values are not vertebral levels
@@ -282,6 +291,8 @@ def compute_shape(fname_segmentation, fname_disks=None, verbose=1):
         # average over spinal cord levels
         sorting_mode = 'vertebral_level'
         rejected_values = [0, '0']
+        #if vert_levels != '':
+
     else:
         # averaging over slices
         sorting_mode = 'z_slice'
@@ -292,21 +303,27 @@ def compute_shape(fname_segmentation, fname_disks=None, verbose=1):
         if label not in sorting_values and label not in rejected_values:
             sorting_values.append(label)
 
-    # average spinal cord shape properties
-    averaged_shape = dict()
-    for property_name in property_list:
-        averaged_shape[property_name] = []
-        for label in sorting_values:
-            averaged_shape[property_name].append(np.mean([item for i, item in enumerate(shape_properties[property_name]) if shape_properties[sorting_mode][i] == label]))
+    if slices != '' or vert_levels != '':
+        pass
 
-    # save spinal cord shape properties
-    df_shape_properties = pd.DataFrame(averaged_shape, index=sorting_values)
-    df_shape_properties.sort_index(inplace=True)
-    pd.set_option('expand_frame_repr', True)
-    df_shape_properties.to_csv(fname_output_csv, sep=',')
+    else:
 
-    if verbose == 1:
-        print df_shape_properties
+
+        # average spinal cord shape properties
+        averaged_shape = dict()
+        for property_name in property_list:
+            averaged_shape[property_name] = []
+            for label in sorting_values:
+                averaged_shape[property_name].append(np.mean([item for i, item in enumerate(shape_properties[property_name]) if shape_properties[sorting_mode][i] == label]))
+
+        # save spinal cord shape properties
+        df_shape_properties = pd.DataFrame(averaged_shape, index=sorting_values)
+        df_shape_properties.sort_index(inplace=True)
+        pd.set_option('expand_frame_repr', True)
+        df_shape_properties.to_csv(fname_output_csv, sep=',')
+
+        if verbose == 1:
+            print df_shape_properties
 
 
 # compute the length of the spinal cord
