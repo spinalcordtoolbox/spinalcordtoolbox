@@ -58,16 +58,16 @@ def smoothing(image, sigma=1.0, verbose=1):
 
 
 def properties2d(image, resolution=None, verbose=1):
-    label_img = measure.label(image)
+    label_img = measure.label(np.transpose(image))
     regions = measure.regionprops(label_img)
     areas = [r.area for r in regions]
     ix = np.argsort(areas)
     if len(regions) != 0:
         sc_region = regions[ix[-1]]
         try:
-            ratio_major_minor = sc_region.major_axis_length / sc_region.minor_axis_length
+            ratio_minor_major = sc_region.minor_axis_length / sc_region.major_axis_length
         except ZeroDivisionError:
-            ratio_major_minor = 0.0
+            ratio_minor_major = 0.0
 
         area = sc_region.area
         diameter = sc_region.equivalent_diameter
@@ -79,6 +79,13 @@ def properties2d(image, resolution=None, verbose=1):
             diameter *= resolution[0]
             major_l *= resolution[0]
             minor_l *= resolution[0]
+
+        """
+        import matplotlib.pyplot as plt
+        plt.imshow(label_img)
+        plt.text(1, 1, orientation, color='white')
+        plt.show()
+        """
 
         sc_properties = {'area': area,
                          'bbox': sc_region.bbox,
@@ -92,9 +99,9 @@ def properties2d(image, resolution=None, verbose=1):
                          'major_axis_length': major_l,
                          'moments': sc_region.moments,
                          'moments_central': sc_region.moments_central,
-                         'orientation': 90 - abs(sc_region.orientation * 180.0 / math.pi),
+                         'orientation': sc_region.orientation * 180.0 / math.pi,
                          'perimeter': sc_region.perimeter,
-                         'ratio_major_minor': ratio_major_minor,
+                         'ratio_minor_major': ratio_minor_major,
                          'solidity': sc_region.solidity  # convexity measure
                          }
     else:
@@ -161,7 +168,7 @@ def average_properties(fname_seg_images, property_list, fname_disks_images, grou
         plt.show()
 
 
-def compute_properties_along_centerline(fname_seg_image, property_list, fname_disks_image=None, smooth_factor=5.0, interpolation_mode=0, verbose=1):
+def compute_properties_along_centerline(fname_seg_image, property_list, fname_disks_image=None, smooth_factor=5.0, interpolation_mode=0, remove_temp_files=1, verbose=1):
 
     # Check list of properties
     # If diameters is in the list, compute major and minor axis length and check orientation
@@ -233,16 +240,26 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
         centerline.compute_vertebral_distribution(coord_physical)
 
     # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
-    for i, index in enumerate(range(centerline.number_of_points)):
-        current_patch = centerline.extract_perpendicular_square(image, index, resolution=resolution, interpolation_mode=interpolation_mode)
+    for index in range(centerline.number_of_points):
+        value_out = -5.0
+        current_patch = centerline.extract_perpendicular_square(image, index, resolution=resolution, interpolation_mode=interpolation_mode, border='constant', cval=value_out)
 
-        sc_properties = properties2d(current_patch, [resolution, resolution])
+        # check for pixels close to the spinal cord segmentation that are out of the image
+        from skimage.morphology import dilation
+        patch_zero = np.copy(current_patch)
+        patch_zero[patch_zero == value_out] = 0.0
+        patch_borders = dilation(patch_zero) - patch_zero
+
+        if np.count_nonzero(patch_borders + current_patch == value_out + 1.0) != 0:
+            continue
+
+        sc_properties = properties2d(patch_zero, [resolution, resolution])
         if sc_properties is not None:
-            properties['incremental_length'].append(centerline.incremental_length[i])
+            properties['incremental_length'].append(centerline.incremental_length[index])
             if fname_disks_image is not None:
-                properties['distance_from_C1'].append(centerline.dist_points[i])
-                properties['vertebral_level'].append(centerline.l_points[i])
-            properties['z_slice'].append(image.transfo_phys2pix([centerline.points[i]])[0][2])
+                properties['distance_from_C1'].append(centerline.dist_points[index])
+                properties['vertebral_level'].append(centerline.l_points[index])
+            properties['z_slice'].append(image.transfo_phys2pix([centerline.points[index]])[0][2])
             for property_name in property_list_local:
                 properties[property_name].append(sc_properties[property_name])
 

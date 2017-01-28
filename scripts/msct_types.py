@@ -444,12 +444,12 @@ class Centerline:
 
         return indexes_vert[idx]
 
-    def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0):
+    def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
         coordinates_grid = np.array(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel()))
         coordinates_phys = self.get_inverse_plans_coordinates(coordinates_grid, np.array([index] * len(coordinates_grid)))
         coordinates_im = np.array(image.transfo_phys2continuouspix(coordinates_phys))
-        square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode)
+        square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
         return square.reshape((len(x_grid), len(x_grid)))
 
 
