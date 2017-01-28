@@ -135,7 +135,7 @@ class MultiLabelRegistration:
         fname_warp_multilabel_template2auto = 'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz'
         fname_warp_multilabel_auto2template = 'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz'
 
-        self.fname_warp_template2gm = 'warp_template2'+file_gm+'.nii.gz'
+        self.fname_warp_template2gm = sct.extract_fname(self.fname_warp_template2target)[1] + '_reg_gm' +sct.extract_fname(self.fname_warp_template2target)[2]
         # fname_warp_multilabel_template2auto = pad_im(fname_warp_multilabel_template2auto, nx, ny, nz, xi, xf, yi, yf, zi, zf)
         # fname_warp_multilabel_auto2template = pad_im(fname_warp_multilabel_auto2template, nx, ny, nz, xi, xf, yi, yf, zi, zf)
 
@@ -149,7 +149,7 @@ class MultiLabelRegistration:
             elif self.template == 'PAM50':
                 fname_dest = path_sct+'/data/PAM50/template/PAM50_t2.nii.gz'
 
-            self.fname_warp_gm2template = 'warp_'+file_gm+'_gm2template.nii.gz'
+            self.fname_warp_gm2template = sct.extract_fname(self.fname_warp_target2template)[1] + '_reg_gm' +sct.extract_fname(self.fname_warp_target2template)[2]
             sct.run('sct_concat_transfo -w '+fname_warp_multilabel_auto2template+','+file_warp_target2template+ext_warp_target2template+' -d '+fname_dest+' -o '+self.fname_warp_gm2template)
 
         os.chdir('..')
@@ -421,7 +421,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Multi-label registration\n')
+    parser.usage.set_description('Registration function to improve the template registration by accounting for the gray and white matter shape using a multi-label approach. Output is a warping field from the template to the target image accounting for the gray matter shape. If -winv is used, output also includes the inverse warping field (from the target image to the template) that accounts for the gray matter shape.')
     parser.add_option(name="-gm",
                       type_value="file",
                       description="Gray matter automatic segmentation",
