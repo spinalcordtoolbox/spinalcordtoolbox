@@ -217,40 +217,16 @@ def main():
     # create QC folder
     sct.create_folder(param.path_qc)
 
-    #
-    # sct.printv('\nParameters for registration:')
-    # for pStep in range(0, len(paramreg.steps)):
-    #     sct.printv('Step #'+paramreg.steps[str(pStep)].step, verbose)
-    #     sct.printv('  Type .................... '+paramreg.steps[str(pStep)].type, verbose)
-    #     sct.printv('  Algorithm ............... '+paramreg.steps[str(pStep)].algo, verbose)
-    #     sct.printv('  Metric .................. '+paramreg.steps[str(pStep)].metric, verbose)
-    #     sct.printv('  Number of iterations .... '+paramreg.steps[str(pStep)].iter, verbose)
-    #     sct.printv('  Shrink factor ........... '+paramreg.steps[str(pStep)].shrink, verbose)
-    #     sct.printv('  Smoothing factor......... '+paramreg.steps[str(pStep)].smooth, verbose)
-    #     sct.printv('  Gradient step ........... '+paramreg.steps[str(pStep)].gradStep, verbose)
-    #     sct.printv('  Degree of polynomial .... '+paramreg.steps[str(pStep)].poly, verbose)
-
-    path_data, file_data, ext_data = sct.extract_fname(fname_data)
-
+    # check if data, segmentation and landmarks are in the same space
     sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
+    path_data, file_data, ext_data = sct.extract_fname(fname_data)
     if not sct.check_if_same_space(fname_data, fname_seg):
         sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
     if not sct.check_if_same_space(fname_data, fname_landmarks):
         sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
 
-    sct.printv('\nCheck input labels...')
-    # check if label image contains coherent labels
-    image_label = Image(fname_landmarks)
-    # -> all labels must be different
-    labels = image_label.getNonZeroCoordinates(sorting='value')
-    hasDifferentLabels = True
-    for lab in labels:
-        for otherlabel in labels:
-            if lab != otherlabel and lab.hasEqualValue(otherlabel):
-                hasDifferentLabels = False
-                break
-    if not hasDifferentLabels:
-        sct.printv('ERROR: Wrong landmarks input. All labels must be different.', verbose, 'error')
+    # check input labels
+    check_labels(fname_landmarks)
 
     # create temporary folder
     path_tmp = sct.tmp_create(verbose=verbose)
@@ -592,6 +568,33 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     label_new_list = ':'.join(label_new_list)
     # create new labels
     sct.run('sct_label_utils -i '+fname_dest+' -create '+label_new_list+' -v 1 -o '+fname_output)
+
+def check_labels(fname_landmarks):
+    """
+    Make sure input labels are consistent
+    Parameters
+    ----------
+    fname_landmarks: file name of input labels
+
+    Returns
+    -------
+    none
+    """
+    sct.printv('\nCheck input labels...')
+    # open label file
+    image_label = Image(fname_landmarks)
+    # -> all labels must be different
+    labels = image_label.getNonZeroCoordinates(sorting='value')
+    # check if there is two labels
+    if not len(labels) == 2:
+        sct.printv('ERROR: Label file has ' + str(len(labels)) + ' label(s). It must contain exactly two labels.', 1, 'error')
+    # check if the two labels are integer
+    for label in labels:
+        if not int(label.value) == label.value:
+            sct.printv('ERROR: Label should be integer.', 1, 'error')
+    # check if the two labels are different
+    if labels[0].value == labels[1].value:
+        sct.printv('ERROR: The two labels must be different.', 1, 'error')
 
 
 # START PROGRAM
