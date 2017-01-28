@@ -226,7 +226,7 @@ def main():
         sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
 
     # check input labels
-    check_labels(fname_landmarks)
+    labels = check_labels(fname_landmarks)
 
     # create temporary folder
     path_tmp = sct.tmp_create(verbose=verbose)
@@ -595,6 +595,7 @@ def check_labels(fname_landmarks):
     # check if the two labels are different
     if labels[0].value == labels[1].value:
         sct.printv('ERROR: The two labels must be different.', 1, 'error')
+    return labels
 
 
 # START PROGRAM
