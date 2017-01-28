@@ -444,7 +444,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         # reorient image to SAL to be compatible with viewer
         im_input_SAL = im_input.copy()
         im_input_SAL.change_orientation('SAL')
-        viewer = ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'])
+        viewer = ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'], title='Please click at intervertebral disc C2-C3')
         viewer.number_of_slices = 1
         pz = 1
         viewer.gap_inter_slice = int(10 / pz)
