@@ -453,9 +453,15 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
         if mask_points:
+            # orient input as SAL
+            sct.run("sct_image -i data_straightr.nii -setorient SAL -o data_straightr_SAL.nii", verbose=False)
+            # create label in SAL orientation
+            sct.run("sct_label_utils -i data_straightr_SAL.nii -create " + mask_points + " -o initlabel_SAL.nii.gz", verbose=False)
+            # Orient label in native orientation
+            sct.run('sct_image -i initlabel_SAL.nii.gz -setorient ' + im_input.orientation + ' -o ' + sct.add_suffix(fname, "_mask_viewer"))
             # create the mask containing either the three-points or centerline mask for initialization
-            mask_filename = sct.add_suffix(fname, "_mask_viewer")
-            sct.run("sct_label_utils -i " + fname + " -create " + mask_points + " -o " + mask_filename, verbose=False)
+            # mask_filename = sct.add_suffix(fname, "_mask_viewer")
+            # sct.run("sct_label_utils -i " + fname + " -create " + mask_points + " -o " + mask_filename, verbose=False)
         else:
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
         # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
