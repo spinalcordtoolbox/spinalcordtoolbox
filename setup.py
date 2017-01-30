@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
@@ -69,8 +69,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 with open(path.join(here, './install/requirements/requirementsPip.txt')) as f:
     requirements = f.read().splitlines()
 
-#with open(path.join(here, 'requirements_dev.txt')) as f:
-#    requirements_dev = f.read().splitlines()
+EXCLUDE_PACKAGES = []
 
 setup(
     name='spinalcordtoolbox',
@@ -95,7 +94,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     keywords='Image MRI spinal cord',
-    packages=['spinalcordtoolbox', 'scripts', 'testing'],
+    packages=find_packages(exclude=EXCLUDE_PACKAGES),
     install_requires=requirements,
 
     # If there are data files included in your packages that need to be
