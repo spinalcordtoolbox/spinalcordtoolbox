@@ -1,24 +1,28 @@
 #!/usr/bin/env python
-#########################################################################################
+###############################################################################
 #
 # msct_types
-# This file contains many useful (and tiny) classes corresponding to data types.
+# This file contains many useful (and tiny) classes corresponding to data types
 # Large data types with many options have their own file (e.g., msct_image)
 #
-# ---------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Benjamin De Leener
 # Created: 2015-02-10
 # Last modified: 2015-02-10
 #
 # About the license: see the file LICENSE.TXT
-#########################################################################################
+###############################################################################
 
 from __future__ import division
+
 from math import sqrt
-from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
-from numpy.linalg import norm, inv
+
 import numpy as np
+from numpy import (array, cross, dot, dstack, einsum, multiply, rollaxis,
+                   stack, tile, zeros)
+from numpy.linalg import inv, norm
+
 
 class Point(object):
     def __init__(self):
@@ -38,6 +42,7 @@ class Point(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
 
 class Coordinate(Point):
     def __init__(self, coord=None, mode='continuous'):
@@ -109,7 +114,6 @@ class CoordinateValue(Coordinate):
     def __init__(self, coord=None, mode='index'):
         super(CoordinateValue, self).__init__(coord, mode)
 
-
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return float(self.value) == float(other.value)
@@ -130,8 +134,6 @@ class Centerline:
     When initialized, the lenght of the centerline is computed as well as the coordinate reference system of each plane.
     """
     def __init__(self, points_x, points_y, points_z, deriv_x, deriv_y, deriv_z):
-        from math import sqrt
-        #self.points = []
         self.derivatives = []
         self.length = 0.0
         self.progressive_length = [0.0]
@@ -452,7 +454,6 @@ class Centerline:
         square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
         return square.reshape((len(x_grid), len(x_grid)))
 
-
     def save_centerline(self, image, fname_output):
         labels_regions = {'PONS': 50, 'MO': 51,
                           'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
@@ -475,6 +476,3 @@ class Centerline:
 
         image_output.setFileName(fname_output)
         image_output.save(type='float32')
-
-
-
