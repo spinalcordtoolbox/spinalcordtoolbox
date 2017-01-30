@@ -1,139 +1,37 @@
-#!/usr/bin/env python
-###############################################################################
-#
-# msct_types
-# This file contains many useful (and tiny) classes corresponding to data types
-# Large data types with many options have their own file (e.g., msct_image)
-#
-# -----------------------------------------------------------------------------
-# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener
-# Created: 2015-02-10
-# Last modified: 2015-02-10
-#
-# About the license: see the file LICENSE.TXT
-###############################################################################
+# -*- coding: utf-8 -*-
+"""A object representation of the centerline
 
+Example
+-------
+
+
+
+"""
 from __future__ import division
 
-from math import sqrt
-
 import numpy as np
-from numpy import (array, cross, dot, dstack, einsum, multiply, rollaxis,
-                   stack, tile, zeros)
-from numpy.linalg import inv, norm
 
 
-class Point(object):
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.z = 0
+class Centerline(object):
+    """Class representation a centerline in an image
 
-    # Euclidean distance
-    def euclideanDistance(self, other_point):
-        return sqrt(pow((self.x - other_point.x), 2) + pow((self.y - other_point.y), 2) + pow((self.z - other_point.z), 2))
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.x == other.x and self.y == other.y and self.z == other.z
-        else:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-
-class Coordinate(Point):
-    def __init__(self, coord=None, mode='continuous'):
-        super(Coordinate, self).__init__()
-        if coord is None:
-            self.value = 0
-            return
-
-        if not isinstance(coord, list) and not isinstance(coord, str):
-            raise TypeError("Coordinates parameter must be a list with coordinates [x, y, z] or [x, y, z, value] or a string with coordinates delimited by commas.")
-
-        if isinstance(coord, str):
-            # coordinate as a string. Values delimited by a comma.
-            coord = coord.split(',')
-
-        if len(coord) not in [3,4]:
-            raise TypeError("Parameter must be a list with coordinates [x, y, z] or [x, y, z, value].")
-
-        self.x = coord[0]
-        self.y = coord[1]
-        self.z = coord[2]
-        if len(coord) == 4:
-            self.value = coord[3]
-        else:
-            self.value = 0
-        # coordinates and value must be digits:
-        try:
-            if mode == 'index':
-                int(self.x), int(self.y), int(self.z), float(self.value)
-            else:
-                float(self.x), float(self.y), float(self.z), float(self.value)
-        except ValueError:
-            raise TypeError("All coordinates must be int and the value can be a float or a int. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
-
-    def __repr__(self):
-        return "("+str(self.x)+", "+str(self.y)+", "+str(self.z)+", "+str(self.value)+")"
-
-    def __str__(self):
-        return "("+str(self.x)+", "+str(self.y)+", "+str(self.z)+", "+str(self.value)+")"
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.x == other.x and self.y == other.y and self.z == other.z
-        else:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def hasEqualValue(self, other):
-        return self.value == other.value
-
-    def __add__(self, other):
-        if other == 0:  # this check is necessary for using the function sum() of list
-            other = Coordinate()
-        return Coordinate([self.x + other.x, self.y + other.y, self.z + other.z, self.value])
-
-    def __radd__(self, other):
-        return self + other
-
-    def __div__(self, scalar):
-        return Coordinate([self.x / float(scalar), self.y / float(scalar), self.z / float(scalar), self.value])
-
-    def __truediv__(self, scalar):
-        return Coordinate([self.x / float(scalar), self.y / float(scalar), self.z / float(scalar), self.value])
-
-
-class CoordinateValue(Coordinate):
-    def __init__(self, coord=None, mode='index'):
-        super(CoordinateValue, self).__init__(coord, mode)
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return float(self.value) == float(other.value)
-        else:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash(self.value)
-
-
-class Centerline:
-    """
-    This class represents a centerline in an image. Its coordinates can be in voxel space as well as in physical space.
-    A centerline is defined by its points and the derivatives of each point.
-    When initialized, the lenght of the centerline is computed as well as the coordinate reference system of each plane.
+    Its coordinates can be in voxel space as well as in physical space. A
+    centerline is defined by its points and the derivatives of each point. When
+    initialized, the lenght of the centerline is computed as well as the
+    coordinate reference system of each plane.
     """
     def __init__(self, points_x, points_y, points_z, deriv_x, deriv_y, deriv_z):
+        """
+        Parameters
+        ----------
+        points_x : list
+        points_y : list
+        points_z : list
+        deriv_x : list
+        deriv_x : list
+        deriv_x : list
+        points_x : list
+        """
         self.derivatives = []
         self.length = 0.0
         self.progressive_length = [0.0]
@@ -141,34 +39,34 @@ class Centerline:
         self.incremental_length = [0.0]
         self.incremental_length_inverse = [0.0]
 
-        self.points = array(zip(points_x, points_y, points_z))
-        self.derivatives = array(zip(deriv_x, deriv_y, deriv_z))
+        self.points = np.array(zip(points_x, points_y, points_z))
+        self.derivatives = np.array(zip(deriv_x, deriv_y, deriv_z))
         self.number_of_points = len(self.points)
 
         self.compute_length(points_x, points_y, points_z)
 
-        self.coordinate_system = [self.compute_coordinate_system(index) for index in range(0, self.number_of_points)]
-        self.plans_parameters = [self.get_plan_parameters(index) for index in range(0, self.number_of_points)]
+        self.coordinate_system = [self.compute_coordinate_system(idx) for idx in range(0, self.number_of_points)]
+        self.plans_parameters = [self.get_plan_parameters(idx) for idx in range(0, self.number_of_points)]
 
-        self.matrices = stack([item[4] for item in self.coordinate_system])
-        self.inverse_matrices = stack([item[5] for item in self.coordinate_system])
-        self.offset_plans = array([item[3] for item in self.plans_parameters])
+        self.matrices = np.stack([item[4] for item in self.coordinate_system])
+        self.inverse_matrices = np.stack([item[5] for item in self.coordinate_system])
+        self.offset_plans = np.array([item[3] for item in self.plans_parameters])
 
         from scipy.spatial import cKDTree
-        self.tree_points = cKDTree(dstack([points_x, points_y, points_z])[0])
+        self.tree_points = cKDTree(np.dstack([points_x, points_y, points_z])[0])
 
     def compute_length(self, points_x, points_y, points_z):
         for i in range(0, self.number_of_points - 1):
-            distance = sqrt((points_x[i] - points_x[i + 1]) ** 2 +
+            distance = np.sqrt((points_x[i] - points_x[i + 1]) ** 2 +
                             (points_y[i] - points_y[i + 1]) ** 2 +
                             (points_z[i] - points_z[i + 1]) ** 2)
             self.length += distance
             self.progressive_length.append(distance)
             self.incremental_length.append(self.incremental_length[-1] + distance)
         for i in range(self.number_of_points-1, 0, -1):
-            distance = sqrt((points_x[i] - points_x[i - 1]) ** 2 +
-                            (points_y[i] - points_y[i - 1]) ** 2 +
-                            (points_z[i] - points_z[i - 1]) ** 2)
+            distance = np.sqrt((points_x[i] - points_x[i - 1]) ** 2 +
+                               (points_y[i] - points_y[i - 1]) ** 2 +
+                               (points_z[i] - points_z[i - 1]) ** 2)
             self.progressive_length_inverse.append(distance)
             self.incremental_length_inverse.append(self.incremental_length_inverse[-1] + distance)
 
