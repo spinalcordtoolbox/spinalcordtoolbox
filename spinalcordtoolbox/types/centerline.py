@@ -154,26 +154,25 @@ class Centerline(object):
         return index, plane_params, distance
 
     def compute_coordinate_system(self, index):
-        """
-        This function computes the cordinate reference system (X, Y, and Z axes) for a given index of centerline.
+        """Compute the X, Y, and Z axes for a given index of centerline.
         :param index: int
         :return:
         """
         if 0 <= index < self.number_of_points:
             origin = self.points[index]
             z_prime_axis = self.derivatives[index]
-            z_prime_axis /= norm(z_prime_axis)
-            y_axis = array([0, 1, 0])
-            y_prime_axis = (y_axis - dot(y_axis, z_prime_axis) * z_prime_axis)
-            y_prime_axis /= norm(y_prime_axis)
-            x_prime_axis = cross(y_prime_axis, z_prime_axis)
-            x_prime_axis /= norm(x_prime_axis)
+            z_prime_axis = z_prime_axis / np.linalg.norm(z_prime_axis)
+            y_axis = np.array([0, 1, 0])
+            y_prime_axis = (y_axis - np.dot(y_axis, z_prime_axis) * z_prime_axis)
+            y_prime_axis = y_prime_axis / np.linalg.norm(y_prime_axis)
+            x_prime_axis = np.cross(y_prime_axis, z_prime_axis)
+            x_prime_axis = x_prime_axis / np.linalg.norm(x_prime_axis)
 
-            matrix_base = array([[x_prime_axis[0], y_prime_axis[0], z_prime_axis[0]],
-                                 [x_prime_axis[1], y_prime_axis[1], z_prime_axis[1]],
-                                 [x_prime_axis[2], y_prime_axis[2], z_prime_axis[2]]])
+            matrix_base = np.array([[x_prime_axis[0], y_prime_axis[0], z_prime_axis[0]],
+                                    [x_prime_axis[1], y_prime_axis[1], z_prime_axis[1]],
+                                    [x_prime_axis[2], y_prime_axis[2], z_prime_axis[2]]])
 
-            inverse_matrix = inv(matrix_base)
+            inverse_matrix = np.linalg.inv(matrix_base)
         else:
             raise IndexError('ERROR in msct_types.Centerline.compute_coordinate_system: index (' + str(index) + ') '
                              'should be within [' + str(0) + ', ' + str(self.number_of_points) + '[.')

@@ -1,9 +1,12 @@
-import pytest
+# -*- coding: utf-8 -*-
 import spinalcordtoolbox.types.centerline as centerline
 
 
-@pytest.mark.parametrize(('x', 'y', 'z', 'dx', 'dy', 'dz'),
-                         [(3, 5, 7, .4, .5, .8),
-                          (5, 52, 77, .6, .4, .6)])
-def test_centerline(x, y, z, dx, dy, dz):
+def test_centerline():
+    x = [0, 0, 0, 0, 0, 0]
+    y = [0, 0, 0, 0, 0, 0]
+    z = [0, 1, 2, 3, 4, 5]
+    dx = [0, 0, 0, 0, 0, 0]
+    dy = [0, 0, 0, 0, 0, 0]
+    dz = [1, 1, 1, 1, 1, 1]
     centerline.Centerline(x, y, z, dx, dy, dz)
