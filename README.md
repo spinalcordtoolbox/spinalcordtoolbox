@@ -29,7 +29,7 @@ The Spinal Cord Toolbox (SCT) is a comprehensive and open-source library of anal
 - [De Leener et al. Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. IEEE Transactions on Medical Imaging 2015;34(8):1705-1718](https://www.dropbox.com/s/2tsp1juxcvuq4bl/PID3727605.pdf)
 
 #### Registration
-- De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn Reson Imaging 2016;(accepted).
+- [De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn Reson Imaging 2016. doi: 10.1002/jmri.25622](https://www.dropbox.com/s/8bmnapj2bws7roc/De%20Leener%20et%20al.%202017%20-%20Topologically%20preserving%20straightening%20of%20spinal%20cord%20MRI.pdf?dl=0)
 - [De Leener et al. Template-based analysis of multi-parametric MRI data with the Spinal Cord Toolbox. Proc. ISMRM, Toronto, Canada 2015](https://dl.dropboxusercontent.com/u/20592661/publications/deleener_ismrm15_sct.pdf) 
 - [Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc. ISMRM, Toronto, Canada 2015](https://dl.dropboxusercontent.com/u/20592661/publications/cohenadad_ismrm15_slicereg.pdf)
 - [Taso et al. A reliable spatially normalized template of the human spinal cord--Applications to automated white matter/gray matter segmentation and tensor-based morphometry (TBM) mapping of gray matter alterations occurring with age. Neuroimage 2015](https://www.ncbi.nlm.nih.gov/pubmed/26003856)
