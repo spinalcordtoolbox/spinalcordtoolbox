@@ -2,3 +2,16 @@ include LICENSE
 include README.md
 graft install
 graft spinalcordtoolbox
+graft documentation
+graft testing
+graft scripts
+prune dev
+prune issues
+prune flirtsch
+
+# added by check_manifest.py
+include *.png
+include *.sh
+include *.txt
+include install_sct
+include tox.ini

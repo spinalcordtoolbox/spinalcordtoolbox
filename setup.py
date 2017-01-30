@@ -69,8 +69,6 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 with open(path.join(here, './install/requirements/requirementsPip.txt')) as f:
     requirements = f.read().splitlines()
 
-EXCLUDE_PACKAGES = []
-
 setup(
     name='spinalcordtoolbox',
     version=version,
@@ -94,7 +92,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     keywords='Image MRI spinal cord',
-    packages=find_packages(exclude=EXCLUDE_PACKAGES),
+    packages=find_packages(exclude=['dev', 'install']),
     install_requires=requirements,
 
     # If there are data files included in your packages that need to be
