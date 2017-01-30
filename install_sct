@@ -441,7 +441,8 @@ else
     # on certain linux distribution
     conda install -fy numpy
   fi
-
+  cmd="cd ${SCT_DIR}"; echo ">> "$cmd; $cmd
+  python setup.py install -f
 fi
 
 echo -e "All requirements installed!"
