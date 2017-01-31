@@ -438,14 +438,18 @@ if __name__ == "__main__":
 
     # extracting output filename
     file_seg = file_data + "_seg" + ext_data
+    if folder_output == "./":
+        fname_seg = file_seg
+    else:
+        fname_seg = folder_output + file_seg
 
     # check consistency of segmentation
-    file_centerline = file_data + '_centerline' + ext_data
-    check_and_correct_segmentation(folder_output + file_seg, folder_output + file_centerline, threshold_distance=3.0, remove_temp_files=remove_temp_files)
+    fname_centerline = folder_output + file_data + '_centerline' + ext_data
+    check_and_correct_segmentation(fname_seg, fname_centerline, threshold_distance=3.0, remove_temp_files=remove_temp_files)
 
     # copy header from input to segmentation to make sure qform is the same
     from sct_image import copy_header
-    im_seg = Image(file_seg)
+    im_seg = Image(fname_seg)
     im_seg = copy_header(image_input, im_seg)
     im_seg.save(type='int8')
 
@@ -455,9 +459,5 @@ if __name__ == "__main__":
         if use_viewer:
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
-    if folder_output == "./":
-        fname_seg = file_seg
-    else:
-        fname_seg = folder_output + file_seg
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview "+fname_data+" "+fname_seg+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
