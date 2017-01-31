@@ -14,6 +14,7 @@
 import sct_utils as sct
 import commands
 import sct_propseg
+from sct_testing import write_to_log_file
 from msct_parser import Parser
 from pandas import DataFrame
 import os.path
@@ -23,14 +24,17 @@ from msct_image import Image, compute_dice
 
 
 def test(path_data='', parameters=''):
+
+    # initialization
     verbose = 0
+    output = ''
 
     # check if isct_propseg compatibility
     status_isct_propseg, output_isct_propseg = commands.getstatusoutput('isct_propseg')
     isct_propseg_version = output_isct_propseg.split('\n')[0]
     if isct_propseg_version != 'sct_propseg - Version 1.1 (2015-03-24)':
         status = 99
-        output = 'ERROR: isct_propseg does not seem to be compatible with your system or is no up-to-date... Please contact SCT administrators.'
+        output += '\nERROR: isct_propseg does not seem to be compatible with your system or is no up-to-date... Please contact SCT administrators.'
         return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
 
     # parameters
@@ -57,21 +61,8 @@ def test(path_data='', parameters=''):
         input_filename = input_split[0]
     if not contrast:  # if no contrast folder, send error.
         status = 1
-        output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
+        output += '\nERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
-
-    # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i'])):
-        status = 200
-        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(
-            data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
-
-    # Check if ground truth files exist
-    if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
-        status = 201
-        output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
     import time, random
     subject_folder = path_data.split('/')
@@ -81,10 +72,29 @@ def test(path_data='', parameters=''):
         subject_folder = subject_folder[-1]
     path_output = sct.slash_at_the_end('sct_propseg_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
     param_with_path += ' -ofolder ' + path_output
+    sct.create_folder(path_output)
+
+    # log file
+    fname_log = path_output + 'output.log'
+
+    # Check if input files exist
+    if not (os.path.isfile(dict_param_with_path['-i'])):
+        status = 200
+        output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
+        write_to_log_file(fname_log, output, 'w')
+        return status, output, DataFrame(
+            data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
+
+    # Check if ground truth files exist
+    if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
+        status = 201
+        output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
+        write_to_log_file(fname_log, output, 'w')
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
     # run command
     cmd = 'sct_propseg ' + param_with_path
-    output = '\n====================================================================================================\n'\
+    output += '\n====================================================================================================\n'\
              + cmd + \
              '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
@@ -110,6 +120,9 @@ def test(path_data='', parameters=''):
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': status, 'output': output, 'dice_segmentation': dice_segmentation, 'duration [s]': duration}, index=[path_data])
+
+    # write log file
+    write_to_log_file(fname_log, output, 'w')
 
     return status, output, results
 
