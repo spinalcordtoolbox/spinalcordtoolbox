@@ -296,6 +296,7 @@ def get_parser():
 if __name__ == "__main__":
 
     # get parameters
+    print_if_error = False  # print error message if function crashes (could be messy)
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
@@ -467,7 +468,8 @@ if __name__ == "__main__":
 
 
     except Exception as err:
-        print err
+        if print_if_error:
+            print err
 
     # stop file redirection
     if create_log:
