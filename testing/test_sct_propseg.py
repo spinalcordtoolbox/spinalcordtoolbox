@@ -69,7 +69,7 @@ def test(path_data='', parameters=''):
 
     # Check if ground truth files exist
     if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
-        status = 200
+        status = 201
         output = 'ERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
