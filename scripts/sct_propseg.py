@@ -446,8 +446,8 @@ if __name__ == "__main__":
     # copy header from input to segmentation to make sure qform is the same
     from sct_image import copy_header
     im_seg = Image(file_seg)
-    copy_header(image_input, im_seg)
-    im_seg.save()
+    im_seg = copy_header(image_input, im_seg)
+    im_seg.save(type='int8')
 
     # remove temporary files
     if remove_temp_files:
