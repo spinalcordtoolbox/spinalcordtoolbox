@@ -38,8 +38,8 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
     path_tmp = sct.tmp_create(verbose=verbose)
     from sct_convert import convert
-    convert(fname_segmentation, path_tmp + 'tmp.segmentation.nii.gz', squeeze_data=False)
-    convert(fname_centerline, path_tmp + 'tmp.centerline.nii.gz', squeeze_data=False)
+    convert(fname_segmentation, path_tmp + 'tmp.segmentation.nii.gz', squeeze_data=False, verbose=0)
+    convert(fname_centerline, path_tmp + 'tmp.centerline.nii.gz', squeeze_data=False, verbose=0)
 
     # go to tmp folder
     os.chdir(path_tmp)
