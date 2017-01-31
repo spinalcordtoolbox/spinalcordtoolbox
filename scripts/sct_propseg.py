@@ -391,13 +391,13 @@ if __name__ == "__main__":
     if nt > 1:
         sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
-    path_fname, file_fname, ext_fname = sct.extract_fname(fname_data)
+    path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # if centerline or mask is asked using viewer
     if use_viewer:
         # make sure image is in SAL orientation, as it is the orientation used by PropSeg
         image_input_orientation = orientation(image_input, get=True, verbose=False)
-        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
+        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_data + ext_data, "_SAL")
         path_tmp_viewer = sct.tmp_create(verbose=verbose)
         sct.run('sct_image -i ' + fname_data + ' -o ' + path_tmp_viewer + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
 
@@ -422,7 +422,7 @@ if __name__ == "__main__":
             sct.run("sct_label_utils -i " + path_tmp_viewer + reoriented_image_filename + " -create " + mask_points + " -o " + path_tmp_viewer + mask_filename, verbose=False)
 
             # reorient the initialization mask to correspond to input image orientation
-            mask_reoriented_filename = sct.add_suffix(file_fname + ext_fname, "_mask_viewer")
+            mask_reoriented_filename = sct.add_suffix(file_data + ext_data, "_mask_viewer")
             sct.run('sct_image -i ' + path_tmp_viewer + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
             # add mask filename to parameters string
@@ -437,15 +437,15 @@ if __name__ == "__main__":
     sct.run(cmd, verbose)
 
     # extracting output filename
-    output_filename = file_fname + "_seg" + ext_fname
+    file_seg = file_data + "_seg" + ext_data
 
     # check consistency of segmentation
-    fname_centerline = file_fname + '_centerline' + ext_fname
-    check_and_correct_segmentation(folder_output + output_filename, folder_output + fname_centerline, threshold_distance=3.0, remove_temp_files=remove_temp_files)
+    file_centerline = file_data + '_centerline' + ext_data
+    check_and_correct_segmentation(folder_output + file_seg, folder_output + file_centerline, threshold_distance=3.0, remove_temp_files=remove_temp_files)
 
     # copy header from input to segmentation to make sure qform is the same
     from sct_image import copy_header
-    im_seg = Image()
+    im_seg = Image(file_seg)
     copy_header(image_input, im_seg)
     im_seg.save()
 
@@ -455,10 +455,9 @@ if __name__ == "__main__":
         if use_viewer:
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
-
     if folder_output == "./":
-        output_name = output_filename
+        fname_seg = file_seg
     else:
-        output_name = folder_output + output_filename
+        fname_seg = folder_output + file_seg
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview "+fname_data+" "+output_name+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+    sct.printv("fslview "+fname_data+" "+fname_seg+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
