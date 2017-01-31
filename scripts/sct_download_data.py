@@ -10,17 +10,14 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 
-import httplib
+import cgi
 import os
-import shutil
 import sys
 import tarfile
-import time
-import urllib2
+import tempfile
 import zipfile
 
 import requests
-
 from msct_parser import Parser
 from sct_utils import printv
 
@@ -126,95 +123,17 @@ def unzip(compressed, dest_folder, verbose):
 def download_data(url, verbose):
     """Download the binaries from a URL and return the destination filename"""
     response = requests.get(url, stream=True)
-    import re
-    import tempfile
 
-    filename = re.findall('filename="?([\w\.]+)"?',
-                          response.headers['Content-Disposition'])
-    tmp_path = os.path.join(tempfile.mkdtemp(), filename[0])
+    _, content = cgi.parse_header(response.headers['Content-Disposition'])
+    tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
 
     with open(tmp_path, 'wb') as tmp_file:
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 tmp_file.write(chunk)
 
-    printv('Download complete %s' % filename, verbose=verbose)
+    printv('Download complete %s' % content['filename'], verbose=verbose)
     return tmp_path
-
-
-def download_from_url(url, local):
-    """
-    Simple downloading with progress indicator, by Cees Timmerman, 16mar12.
-    :param url:
-    :param local:
-    :return:
-    """
-    keep_connecting = True
-    i_trial = 1
-    max_trials = 3
-
-    print 'Reaching URL: ' + url
-    while keep_connecting:
-        try:
-            u = urllib2.urlopen(url)
-        except urllib2.HTTPError, e:
-            printv('\nHTTPError = ' + str(e.code), 1, 'error')
-        except urllib2.URLError, e:
-            printv('\nURLError = ' + str(e.reason), 1, 'error')
-        except httplib.HTTPException, e:
-            printv('\nHTTPException', 1, 'error')
-        except (KeyboardInterrupt):
-            printv('\nERROR: User canceled process.', 1, 'error')
-        except Exception:
-            import traceback
-            printv('\nERROR: Cannot open URL: ' + traceback.format_exc(), 1,
-                   'error')
-        h = u.info()
-        try:
-            totalSize = int(h["Content-Length"])
-            keep_connecting = False
-        except:
-            # if URL was badly reached (issue #895):
-            # send warning message
-            printv(
-                '\nWARNING: URL cannot be reached. Trying again (maximum trials: '
-                + str(max_trials) + ').', 1, 'warning')
-            # pause for 0.5s
-            time.sleep(0.5)
-            # iterate i_trial and try again
-            i_trial += 1
-            # if i_trial exceeds max_trials, exit with error
-            if i_trial > max_trials:
-                printv(
-                    '\nERROR: Maximum number of trials reached. Try again later.',
-                    1, 'error')
-                keep_connecting = False
-
-    print "Downloading %s bytes..." % totalSize,
-    fp = open(local, 'wb')
-
-    blockSize = 8192
-    count = 0
-    while True:
-        chunk = u.read(blockSize)
-        if not chunk:
-            break
-        fp.write(chunk)
-        count += 1
-        if totalSize > 0:
-            percent = int(count * blockSize * 100 / totalSize)
-            if percent > 100:
-                percent = 100
-            print "%2d%%" % percent,
-            if percent < 100:
-                print "\b\b\b\b\b",
-            else:
-                print "Done."
-
-    fp.flush()
-    fp.close()
-    if not totalSize:
-        print
 
 
 if __name__ == "__main__":
