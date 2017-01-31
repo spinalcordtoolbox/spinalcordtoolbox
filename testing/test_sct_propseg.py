@@ -75,7 +75,12 @@ def test(path_data='', parameters=''):
     sct.create_folder(path_output)
 
     # log file
+    import sys
     fname_log = path_output + 'output.log'
+    stdout_log = file(fname_log, 'w')
+    # redirect to log file
+    stdout_orig = sys.stdout
+    sys.stdout = stdout_log
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i'])):
@@ -98,7 +103,10 @@ def test(path_data='', parameters=''):
              + cmd + \
              '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
-    status, o = sct.run(cmd, verbose)
+    try:
+        status, o = sct.run(cmd, 0)
+    except:
+        status, o = 1, 'ERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
 
@@ -121,8 +129,11 @@ def test(path_data='', parameters=''):
     # transform results into Pandas structure
     results = DataFrame(data={'status': status, 'output': output, 'dice_segmentation': dice_segmentation, 'duration [s]': duration}, index=[path_data])
 
+    sys.stdout.close()
+    sys.stdout = stdout_orig
+
     # write log file
-    write_to_log_file(fname_log, output, 'w')
+    write_to_log_file(fname_log, output, mode='r+', prepend=True)
 
     return status, output, results
 
