@@ -297,11 +297,11 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
-    input_filename = arguments["-i"]
+    fname_data = arguments["-i"]
     contrast_type = arguments["-c"]
 
     # Building the command
-    cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
+    cmd = "isct_propseg" + " -i " + fname_data + " -t " + contrast_type
 
     if "-ofolder" in arguments:
         folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
@@ -386,20 +386,20 @@ if __name__ == "__main__":
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
-    image_input = Image(input_filename)
+    image_input = Image(fname_data)
     nx, ny, nz, nt, px, py, pz, pt = image_input.dim
     if nt > 1:
         sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
-    path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
+    path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # if centerline or mask is asked using viewer
     if use_viewer:
         # make sure image is in SAL orientation, as it is the orientation used by PropSeg
         image_input_orientation = orientation(image_input, get=True, verbose=False)
-        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
+        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_data + ext_data, "_SAL")
         path_tmp_viewer = sct.tmp_create(verbose=verbose)
-        sct.run('sct_image -i ' + input_filename + ' -o ' + path_tmp_viewer + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
+        sct.run('sct_image -i ' + fname_data + ' -o ' + path_tmp_viewer + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
 
         from sct_viewer import ClickViewer
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
@@ -422,7 +422,7 @@ if __name__ == "__main__":
             sct.run("sct_label_utils -i " + path_tmp_viewer + reoriented_image_filename + " -create " + mask_points + " -o " + path_tmp_viewer + mask_filename, verbose=False)
 
             # reorient the initialization mask to correspond to input image orientation
-            mask_reoriented_filename = sct.add_suffix(file_fname + ext_fname, "_mask_viewer")
+            mask_reoriented_filename = sct.add_suffix(file_data + ext_data, "_mask_viewer")
             sct.run('sct_image -i ' + path_tmp_viewer + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
 
             # add mask filename to parameters string
@@ -437,11 +437,21 @@ if __name__ == "__main__":
     sct.run(cmd, verbose)
 
     # extracting output filename
-    path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
-    output_filename = file_fname + "_seg" + ext_fname
+    file_seg = file_data + "_seg" + ext_data
+    if folder_output == "./":
+        fname_seg = file_seg
+    else:
+        fname_seg = folder_output + file_seg
 
-    fname_centerline = file_fname + '_centerline' + ext_fname
-    check_and_correct_segmentation(folder_output + output_filename, folder_output + fname_centerline, threshold_distance=3.0, remove_temp_files=remove_temp_files)
+    # check consistency of segmentation
+    fname_centerline = folder_output + file_data + '_centerline' + ext_data
+    check_and_correct_segmentation(fname_seg, fname_centerline, threshold_distance=3.0, remove_temp_files=remove_temp_files)
+
+    # copy header from input to segmentation to make sure qform is the same
+    from sct_image import copy_header
+    im_seg = Image(fname_seg)
+    im_seg = copy_header(image_input, im_seg)
+    im_seg.save(type='int8')
 
     # remove temporary files
     if remove_temp_files:
@@ -449,10 +459,5 @@ if __name__ == "__main__":
         if use_viewer:
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
-
-    if folder_output == "./":
-        output_name = output_filename
-    else:
-        output_name = folder_output + output_filename
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview "+input_filename+" "+output_name+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+    sct.printv("fslview "+fname_data+" "+fname_seg+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
