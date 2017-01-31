@@ -377,7 +377,17 @@ if __name__ == "__main__":
 
     # test function
     try:
+        # during testing, redirect to standard output to avoid stacking error messages in the general log
+        if create_log:
+            sys.stdout = orig_stdout
+
         results = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
+
+        # after testing, redirect to log file
+        if create_log:
+            sys.stdout = handle_log
+
+        # build results
         pd.set_option('display.max_rows', 500)
         pd.set_option('display.max_columns', 500)
         pd.set_option('display.width', 1000)
