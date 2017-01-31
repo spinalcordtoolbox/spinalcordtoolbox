@@ -399,13 +399,13 @@ if __name__ == "__main__":
             results_subset.to_pickle(file_log+'.pickle')
 
         # mean
-        results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
+        results_mean = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
         results_mean['subject'] = 'Mean'
         results_mean.set_value('status', float('NaN'))  # set status to NaN
         # results_display = results_display.append(results_mean, ignore_index=True)
 
         # std
-        results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
+        results_std = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
         results_std['subject'] = 'STD'
         results_std.set_value('status', float('NaN'))  # set status to NaN
         # results_display = results_display.append(results_std, ignore_index=True)
@@ -414,7 +414,7 @@ if __name__ == "__main__":
         count_passed = results_subset.status[results_subset.status == 0].count()
         count_crashed = results_subset.status[results_subset.status == 1].count()
         # count tests that ran
-        count_ran = results_subset.status[results_subset.status != 200].count()
+        count_ran = results_subset.query('status != 200 & status != 201').count()['status']
 
         # results_display = results_display.set_index('subject')
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
