@@ -125,7 +125,6 @@ def download_data(url, verbose):
     _, content = cgi.parse_header(response.headers['Content-Disposition'])
     tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
     printv('Downloading %s\n' % content['filename'], verbose)
-    import pdb; pdb.set_trace()
 
     with open(tmp_path, 'wb') as tmp_file:
         total = int(response.headers.get('content-length', 1))
