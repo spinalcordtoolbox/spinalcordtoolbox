@@ -523,9 +523,6 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
     :param metric: 'mi' for mutual information or 'corr' for pearson correlation coefficient
     :return: None
     '''
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
     assert data1.size == data2.size, "\n\nERROR: the data don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
     data1_1d = data1.ravel()
     data2_1d = data2.ravel()
@@ -546,11 +543,15 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
         res = correlation(data1_1d, data2_1d)
         metric_full = 'Pearson correlation coefficient'
     # qc output
-    plt.plot(data1_1d, 'b')
-    plt.plot(data2_1d, 'r')
-    plt.grid
-    plt.title('Similarity: ' + metric_full + ' = ' + str(res))
-    plt.savefig('fig_similarity.png')
+    if verbose > 1:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        plt.plot(data1_1d, 'b')
+        plt.plot(data2_1d, 'r')
+        plt.grid
+        plt.title('Similarity: ' + metric_full + ' = ' + str(res))
+        plt.savefig('fig_similarity.png')
 
     printv('\n'+ metric_full +': ' + str(res), verbose, 'info')
 
