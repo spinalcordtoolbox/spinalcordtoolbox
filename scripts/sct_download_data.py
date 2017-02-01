@@ -70,29 +70,29 @@ def main(args=None):
         'binaries_centos': 'https://osf.io/4wbgt/?action=download',
         'binaries_osx': 'https://osf.io/ceg8p/?action=download'
     }
-    tmp_file = 'tmp.data.zip'
 
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(args)
     data_name = arguments['-d']
     verbose = int(arguments['-v'])
-    dest_folder = arguments.get('-o', os.curdir)
+    dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
 
     # Download data
     url = dict_url[data_name]
+    printv('Downloading %s\n' % data_name, verbose)
     try:
-        # download_from_url(url, tmp_file)
         tmp_file = download_data(url, verbose)
     except (KeyboardInterrupt):
-        printv('\nERROR: User canceled process.', 1, 'error')
+        printv('\nERROR: User canceled process.\n', 1, 'error')
 
+    printv('Copy binaries to %s\n' % dest_folder, verbose)
     unzip(tmp_file, dest_folder, verbose)
 
-    printv('Remove temporary file...', verbose)
+    printv('Remove temporary file...\n', verbose)
     os.remove(tmp_file)
 
-    printv('Done! Folder created: ' + dest_folder + '\n', verbose, 'info')
+    printv('Done! Folder created: %s\n' % dest_folder, verbose, 'info')
 
 
 def unzip(compressed, dest_folder, verbose):
