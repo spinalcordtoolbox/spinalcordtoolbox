@@ -18,6 +18,9 @@ import tempfile
 import zipfile
 
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util import Retry
+
 from msct_parser import Parser
 from sct_utils import printv
 
@@ -120,8 +123,17 @@ def unzip(compressed, dest_folder, verbose):
 
 
 def download_data(url, verbose):
-    """Download the binaries from a URL and return the destination filename"""
-    response = requests.get(url, stream=True)
+    """Download the binaries from a URL and return the destination filename
+
+    Retry downloading if either server or connection errors occur on a SSL
+    connection
+    """
+
+    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
+    session = requests.Session()
+    session.mount('https://', HTTPAdapter(max_retries=retry))
+    response = session.get(url, stream=True)
+
     _, content = cgi.parse_header(response.headers['Content-Disposition'])
     tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
     printv('Downloading %s\n' % content['filename'], verbose)
@@ -129,14 +141,14 @@ def download_data(url, verbose):
     with open(tmp_path, 'wb') as tmp_file:
         total = int(response.headers.get('content-length', 1))
         dl = 0
-        for chunk in response.iter_content(chunk_size=1024):
+        for chunk in response.iter_content(chunk_size=8192):
             if chunk:
                 tmp_file.write(chunk)
                 if verbose > 1:
                     dl += len(chunk)
-                    done = min(int(50 * dl / total), 50)
+                    done = min(int(20 * dl / total), 20)
                     sys.stdout.write("\r[%s%s]" % ('=' * done,
-                                                   ' ' * (50-done)))
+                                                   ' ' * (20-done)))
                     sys.stdout.flush()
 
     printv('\nDownload complete %s' % content['filename'], verbose=verbose)
