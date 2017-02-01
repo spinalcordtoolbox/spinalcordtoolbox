@@ -132,7 +132,7 @@ def download_data(url, verbose):
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 tmp_file.write(chunk)
-                if verbose:
+                if verbose > 1:
                     dl += len(chunk)
                     done = min(int(50 * dl / total), 50)
                     sys.stdout.write("\r[%s%s]" % ('=' * done,
