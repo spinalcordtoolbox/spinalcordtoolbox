@@ -80,13 +80,11 @@ def main(args=None):
 
     # Download data
     url = dict_url[data_name]
-    printv('Downloading %s\n' % data_name, verbose)
     try:
         tmp_file = download_data(url, verbose)
     except (KeyboardInterrupt):
         printv('\nERROR: User canceled process.\n', 1, 'error')
 
-    printv('Copy binaries to %s\n' % dest_folder, verbose)
     unzip(tmp_file, dest_folder, verbose)
 
     printv('Remove temporary file...\n', verbose)
@@ -97,7 +95,8 @@ def main(args=None):
 
 def unzip(compressed, dest_folder, verbose):
     """Extract compressed file to the dest_folder"""
-    printv('Unzip dataset...', verbose)
+    printv('Copy binaries to %s\n' % dest_folder, verbose)
+    printv('Unzip dataset...\n', verbose)
     if compressed.endswith('zip'):
         try:
             zf = zipfile.ZipFile(compressed)
@@ -123,16 +122,25 @@ def unzip(compressed, dest_folder, verbose):
 def download_data(url, verbose):
     """Download the binaries from a URL and return the destination filename"""
     response = requests.get(url, stream=True)
-
     _, content = cgi.parse_header(response.headers['Content-Disposition'])
     tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
+    printv('Downloading %s\n' % content['filename'], verbose)
+    import pdb; pdb.set_trace()
 
     with open(tmp_path, 'wb') as tmp_file:
+        total = int(response.headers.get('content-length', 1))
+        dl = 0
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 tmp_file.write(chunk)
+                if verbose:
+                    dl += len(chunk)
+                    done = min(int(50 * dl / total), 50)
+                    sys.stdout.write("\r[%s%s]" % ('=' * done,
+                                                   ' ' * (50-done)))
+                    sys.stdout.flush()
 
-    printv('Download complete %s' % content['filename'], verbose=verbose)
+    printv('\nDownload complete %s' % content['filename'], verbose=verbose)
     return tmp_path
 
 
