@@ -204,7 +204,7 @@ class NURBS():
                 list_param_that_worked_sorted = sorted(list_param_that_worked, key=lambda list_param_that_worked: list_param_that_worked[2])
                 nbControle_that_last_worked = list_param_that_worked_sorted[0][0]
                 pointsControle_that_last_worked = list_param_that_worked_sorted[0][1]
-                error_curve_that_last_worked = list_param_that_worked_sorted[0][2]
+                self.error_curve_that_last_worked = list_param_that_worked_sorted[0][2]
                 if not twodim:
                     self.courbe3D, self.courbe3D_deriv = self.construct3D_uniform(pointsControle_that_last_worked, self.degre, self.precision)  # generate curve with hig resolution
                 else:
@@ -213,7 +213,7 @@ class NURBS():
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        print 'The fitting of the curve was done using ', nbControle_that_last_worked, ' control points: the number that gave the best results. \nError on approximation = ' + str(round(error_curve_that_last_worked, 2)) + ' mm'
+                        print 'The fitting of the curve was done using ', nbControle_that_last_worked, ' control points: the number that gave the best results. \nError on approximation = ' + str(round(self.error_curve_that_last_worked, 2)) + ' mm'
                     else:
                         print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
             else:
