@@ -154,8 +154,19 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         # simple way to do it: go from one end and remove point if the distance from mean is higher than 2 * std
 
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv,\
-            z_centerline_deriv = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None,
+            z_centerline_deriv, mse = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None,
                                                 point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
+
+        # Checking accuracy of fitting. If NURBS fitting is not accurate enough, do not smooth segmentation
+        if mse >= 5.0:
+            x_centerline_fit = x_centerline
+            y_centerline_fit = y_centerline
+            z_centerline_fit = z_centerline
+            # get derivative
+            x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = evaluate_derivative_3D(x_centerline_fit,
+                                                                                                y_centerline_fit,
+                                                                                                z_centerline_fit,
+                                                                                                px, py, pz)
 
     else:
         sct.printv("ERROR: wrong algorithm for fitting", 1, "error")
