@@ -102,6 +102,8 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
     if status_output:
         # from inspect import stack
         printv(output_final[0:-1], 1, error_exit)
+        # in case error_exit is not error (immediate exit), the line below can be run
+        return status_output, output_final[0:-1]
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
         # sys.exit()
         if raise_exception:
