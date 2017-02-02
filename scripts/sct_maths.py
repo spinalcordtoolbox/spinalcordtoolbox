@@ -172,7 +172,6 @@ def main(args=None):
     else:
         script_name =os.path.splitext(os.path.basename(__file__))[0]
         sct.printv('{0} {1}'.format(script_name, " ".join(args)))
-        sct.printv('{2}pwd: {1}'.format(os.path.realpath('.'), 33*'*'))
 
     # Get parser info
     parser = get_parser()
