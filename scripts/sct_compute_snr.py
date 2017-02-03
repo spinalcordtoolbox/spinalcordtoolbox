@@ -12,8 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
 import sys
-from os import rmdir
 
 import numpy as np
 
@@ -30,7 +30,7 @@ def get_parser():
 
     # Initialize the parser
     parser = msct_parser.Parser(__file__)
-    parser.usage.set_description('Compute SNR in a given ROI according to different methods presented in Dietrich et al., Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils, parallel imaging, and reconstruction filters (2007).')
+    parser.usage.set_description('Compute SNR in a given ROI using methods described in [Dietrich et al., Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils, parallel imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].')
     parser.add_option(name="-i",
                       type_value='image_nifti',
                       description="Input images to compute the SNR on. Must be concatenated in time. Typically, 2 or 3 b0s concatenated in time (depending on the method used).",
@@ -43,10 +43,17 @@ def get_parser():
                       example='dwi_moco_mean_seg.nii.gz')
     parser.add_option(name="-method",
                       type_value='multiple_choice',
-                      description='Method to use to compute the SNR:\n- diff: Use the two first volumes to estimate noise variance.\n- mult: Use all volumes to estimate noise variance.',
+                      description='Method to use to compute the SNR:\n'
+                      '- diff: Substract two volumes (defined by -vol) and estimate noise variance over space.\n'
+                      '- mult: Use all volumes (or those defined by -vol) to estimate noise variance over time.',
                       mandatory=False,
                       default_value='diff',
-                      example=['diff', 'mult', 'background', 'nema'])
+                      example=['diff', 'mult'])
+    parser.add_option(name='-vol',
+                      type_value=[[','], 'int'],
+                      description='List of volume numbers to use for computing SNR, separated with ",". Example: 0,1',
+                      mandatory=False,
+                      default_value=[0, 1])
     parser.add_option(name="-vertfile",
                       type_value='image_nifti',
                       description='File name of the vertebral labeling registered to the input images.',
@@ -73,8 +80,6 @@ def get_parser():
     return parser
 
 
-# MAIN
-# ==========================================================================================
 def main(args=None):
 
     if args is None:
@@ -93,9 +98,9 @@ def main(args=None):
     vert_label_fname = arguments["-vertfile"]
     vert_levels = arguments["-vert"]
     slices_of_interest = arguments["-z"]
+    index_vol = arguments['-vol']
     method = arguments["-method"]
     verbose = int(arguments['-v'])
-
 
     # Check if data are in RPI
     input_im = msct_image.Image(fname_data)
@@ -120,7 +125,7 @@ def main(args=None):
             vert_labeling_data = vert_label_im_rpi.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
-        rmdir(path_tmp)
+        os.rmdir(path_tmp)
     else:
         # Load data
         sct.printv('\nLoad data...', verbose)
@@ -151,14 +156,10 @@ def main(args=None):
         std_input_temporal = np.std(input_data, 3)
         noise = np.mean(std_input_temporal[indexes_roi])
     elif method == 'diff':
-        b0_1 = input_data[:, :, :, 0]
-        b0_2 = input_data[:, :, :, 1]
-        signal = np.mean(np.add(b0_1[indexes_roi], b0_2[indexes_roi]))
-        noise = np.sqrt(2)*np.std(np.subtract(b0_1[indexes_roi], b0_2[indexes_roi]))
-    elif method == 'background':
-        sct.printv('ERROR: Sorry, method is not implemented yet.', 1, 'error')
-    elif method == 'nema':
-        sct.printv('ERROR: Sorry, method is not implemented yet.', 1, 'error')
+        data_1 = input_data[:, :, :, index_vol[0]]
+        data_2 = input_data[:, :, :, index_vol[1]]
+        signal = np.mean(np.add(data_1[indexes_roi], data_2[indexes_roi]))
+        noise = np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi]))
 
     # compute SNR
     SNR = signal/noise

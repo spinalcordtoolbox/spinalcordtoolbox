@@ -311,7 +311,7 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(args)
 
-    fname_data = arguments["-i"]
+    fname_data = os.path.abspath(arguments["-i"])
     contrast_type = arguments["-c"]
 
     # Building the command
@@ -322,6 +322,9 @@ def main(args=None):
     else:
         folder_output = './'
     isct_options += " -o " + folder_output
+    if not os.path.isdir(folder_output) and os.path.exists(folder_output):
+        sct.printv("ERROR output directory %s is not a valid directory" % folder_output, 1, 'error')
+
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
@@ -470,10 +473,7 @@ def main(args=None):
 
     # build output filename
     file_seg = file_data + "_seg" + ext_data
-    if folder_output == "./":
-        fname_seg = file_seg
-    else:
-        fname_seg = folder_output + file_seg
+    fname_seg = os.path.normpath(folder_output + file_seg)
 
     # check consistency of segmentation
     fname_centerline = folder_output + file_data + '_centerline' + ext_data
@@ -493,7 +493,6 @@ def main(args=None):
 
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview "+fname_data+" "+fname_seg+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
-
 
 if __name__ == "__main__":
     main()
