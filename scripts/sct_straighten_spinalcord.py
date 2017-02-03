@@ -189,8 +189,19 @@ def smooth_centerline(fname_centerline,
         # TODO: remove outliers that are at the edges of the spinal cord
         # simple way to do it: go from one end and remove point if the distance from mean is higher than 2 * std
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv,\
-            z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None,
+            z_centerline_deriv, mse = msct_smooth.b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None,
                                                 point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
+
+        # Checking accuracy of fitting. If NURBS fitting is not accurate enough, do not smooth segmentation
+        if mse >= 5.0:
+            x_centerline_fit = x_centerline
+            y_centerline_fit = y_centerline
+            z_centerline_fit = z_centerline
+            # get derivative
+            x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline_fit,
+                                                                                                y_centerline_fit,
+                                                                                                z_centerline_fit,
+                                                                                                px, py, pz)
 
     else:
         sct.printv("ERROR: wrong algorithm for fitting", 1, "error")
@@ -661,9 +672,6 @@ class SpinalCordStraightener(object):
                             index] = centerline.get_closest_to_relative_position(
                                 disk_label, relative_position)[0]
             lookup_straight2curved = np.array(lookup_straight2curved)
-            print np.min(lookup_straight2curved), np.max(
-                lookup_straight2curved)
-
             # Create volumes containing curved and straight warping fields
             time_generation_volumes = time.time()
             data_warp_curved2straight = np.zeros((nx_s, ny_s, nz_s, 1, 3))
@@ -676,31 +684,24 @@ class SpinalCordStraightener(object):
 
             if self.curved2straight:
                 for u in range(nz_s):
-                    print u + 1, '/', nz_s
-                    x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u + 1]
-                    indexes_straight = np.array(
-                        zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
-                    physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(
-                        indexes_straight)
-                    nearest_indexes_straight = centerline_straight.find_nearest_indexes(
-                        physical_coordinates_straight)
-                    distances_straight = centerline_straight.get_distances_from_planes(
-                        physical_coordinates_straight,
-                        nearest_indexes_straight)
-                    indexes_out_distance_straight = np.logical_or(
-                        distances_straight > self.threshold_distance,
-                        distances_straight < -self.threshold_distance)
+                    x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u+1]
+                    indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
+                    physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
+                    nearest_indexes_straight = centerline_straight.find_nearest_indexes(physical_coordinates_straight)
+                    distances_straight = centerline_straight.get_distances_from_planes(physical_coordinates_straight,
+                                                                                       nearest_indexes_straight)
+                    indexes_out_distance_straight = np.logical_or(distances_straight > self.threshold_distance,
+                                                                  distances_straight < -self.threshold_distance)
                     projected_points_straight = centerline_straight.get_projected_coordinates_on_planes(
-                        physical_coordinates_straight,
-                        nearest_indexes_straight)
-                    coord_in_planes_straight = centerline_straight.get_in_plans_coordinates(
-                        projected_points_straight, nearest_indexes_straight)
+                        physical_coordinates_straight, nearest_indexes_straight)
+                    coord_in_planes_straight = centerline_straight.get_in_plans_coordinates(projected_points_straight,
+                                                                                            nearest_indexes_straight)
 
                     coord_straight2curved = centerline.get_inverse_plans_coordinates(
-                        coord_in_planes_straight,
-                        lookup_straight2curved[nearest_indexes_straight])
+                        coord_in_planes_straight, lookup_straight2curved[nearest_indexes_straight])
                     displacements_straight = coord_straight2curved - physical_coordinates_straight
-                    # for some reason, displacement in Z is inverted. Probably due to left/right-handed definition of referential.
+                    # for some reason, displacement in Z is inverted. Probably due to left/right-handed
+                    # definition of referential.
                     #displacements_straight[:, 0] = -displacements_straight[:, 0]
                     displacements_straight[:, 2] = -displacements_straight[:,
                                                                            2]
@@ -714,8 +715,7 @@ class SpinalCordStraightener(object):
 
             if self.straight2curved:
                 for u in range(nz):
-                    print u + 1, '/', nz
-                    x, y, z = np.mgrid[0:nx, 0:ny, u:u + 1]
+                    x, y, z = np.mgrid[0: nx, 0: ny, u: u + 1]
                     indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
                     physical_coordinates = image_centerline_pad.transfo_pix2phys(
                         indexes)

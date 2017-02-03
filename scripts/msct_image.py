@@ -825,7 +825,7 @@ class Image(object):
 
             return coordi_pix_list
 
-    def get_values(self, coordi=None, interpolation_mode=0, border='constant'):
+    def get_values(self, coordi=None, interpolation_mode=0, border='constant', cval=0.0):
         """
         This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
         :param coordi: continuouspix
@@ -833,7 +833,7 @@ class Image(object):
                                    4= 2nd-order spline, 5= 5th-order spline
         :return: intensity values at continuouspix with interpolation_mode
         """
-        return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode, mode=border)
+        return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode, mode=border, cval=cval)
 
     def get_transform(self, im_ref, mode='affine'):
         aff_im_self = self.im_file.affine
