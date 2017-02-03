@@ -18,6 +18,9 @@ import tempfile
 import zipfile
 
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util import Retry
+
 from msct_parser import Parser
 from sct_utils import printv
 
@@ -70,34 +73,33 @@ def main(args=None):
         'binaries_centos': 'https://osf.io/4wbgt/?action=download',
         'binaries_osx': 'https://osf.io/ceg8p/?action=download'
     }
-    tmp_file = 'tmp.data.zip'
 
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(args)
     data_name = arguments['-d']
     verbose = int(arguments['-v'])
-    dest_folder = arguments.get('-o', os.curdir)
+    dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
 
     # Download data
     url = dict_url[data_name]
     try:
-        # download_from_url(url, tmp_file)
         tmp_file = download_data(url, verbose)
     except (KeyboardInterrupt):
-        printv('\nERROR: User canceled process.', 1, 'error')
+        printv('\nERROR: User canceled process.\n', 1, 'error')
 
     unzip(tmp_file, dest_folder, verbose)
 
-    printv('Remove temporary file...', verbose)
+    printv('Remove temporary file...\n', verbose)
     os.remove(tmp_file)
 
-    printv('Done! Folder created: ' + dest_folder + '\n', verbose, 'info')
+    printv('Done! Folder created: %s\n' % dest_folder, verbose, 'info')
 
 
 def unzip(compressed, dest_folder, verbose):
     """Extract compressed file to the dest_folder"""
-    printv('Unzip dataset...', verbose)
+    printv('Copy binaries to %s\n' % dest_folder, verbose)
+    printv('Unzip dataset...\n', verbose)
     if compressed.endswith('zip'):
         try:
             zf = zipfile.ZipFile(compressed)
@@ -121,18 +123,35 @@ def unzip(compressed, dest_folder, verbose):
 
 
 def download_data(url, verbose):
-    """Download the binaries from a URL and return the destination filename"""
-    response = requests.get(url, stream=True)
+    """Download the binaries from a URL and return the destination filename
+
+    Retry downloading if either server or connection errors occur on a SSL
+    connection
+    """
+
+    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
+    session = requests.Session()
+    session.mount('https://', HTTPAdapter(max_retries=retry))
+    response = session.get(url, stream=True)
 
     _, content = cgi.parse_header(response.headers['Content-Disposition'])
     tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
+    printv('Downloading %s\n' % content['filename'], verbose)
 
     with open(tmp_path, 'wb') as tmp_file:
-        for chunk in response.iter_content(chunk_size=1024):
+        total = int(response.headers.get('content-length', 1))
+        dl = 0
+        for chunk in response.iter_content(chunk_size=8192):
             if chunk:
                 tmp_file.write(chunk)
+                if verbose > 1:
+                    dl += len(chunk)
+                    done = min(int(20 * dl / total), 20)
+                    sys.stdout.write("\r[%s%s]" % ('=' * done,
+                                                   ' ' * (20-done)))
+                    sys.stdout.flush()
 
-    printv('Download complete %s' % content['filename'], verbose=verbose)
+    printv('\nDownload complete %s' % content['filename'], verbose=verbose)
     return tmp_path
 
 
