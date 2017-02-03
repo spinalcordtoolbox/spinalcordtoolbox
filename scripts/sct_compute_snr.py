@@ -44,6 +44,11 @@ def get_parser():
                       mandatory=False,
                       default_value='diff',
                       example=['diff', 'mult', 'background', 'nema'])
+    parser.add_option(name='-vol',
+                      type_value=[[','], 'int'],
+                      description='List of volume numbers to use for computing SNR, separated with ",". Example: 0,1',
+                      mandatory=False,
+                      default_value=[0, 1])
     parser.add_option(name="-vertfile",
                       type_value='image_nifti',
                       description='File name of the vertebral labeling registered to the input images.',
@@ -85,9 +90,9 @@ def main():
     vert_label_fname = arguments["-vertfile"]
     vert_levels = arguments["-vert"]
     slices_of_interest = arguments["-z"]
+    index_vol = arguments['-vol']
     method = arguments["-method"]
     verbose = int(arguments['-v'])
-
 
     # Check if data are in RPI
     input_im = Image(fname_data)
@@ -143,8 +148,8 @@ def main():
         std_input_temporal = np.std(input_data, 3)
         noise = np.mean(std_input_temporal[indexes_roi])
     elif method == 'diff':
-        data_1 = input_data[:, :, :, 0]
-        data_2 = input_data[:, :, :, 1]
+        data_1 = input_data[:, :, :, index_vol[0]]
+        data_2 = input_data[:, :, :, index_vol[1]]
         signal = np.mean(np.add(data_1[indexes_roi], data_2[indexes_roi]))
         noise = np.sqrt(2)*np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi]))
     elif method == 'background':
