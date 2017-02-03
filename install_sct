@@ -20,40 +20,78 @@
 # License: see the file LICENSE.TXT
 #########################################################################################
 
+# N.B. to generate and compress binaries, go to binary folder and type: tar -czf sct_binaries.tar.gz isct_*
+
+# TODO add some doc to the installer
+# TODO: remove python folder if not empty
+
+# functions
+# ========================================================================
+# Where tmp file are stored
+TMP_DIR=`mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR'`
+# Start Directory So we go back there at the end of the Script
 SCT_SOURCE=$PWD
 SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
-SCT_DIR=''
-NO_DATA_INSTALL=false
-NO_CONDA_INSTALL=false
-NO_SCT_BIN_INSTALL=false
-OFFLINE_INSTALL=false
-PYPI_INSTALL=false
-
-set -e
 
 
 # Force a clean exit
 finish ()
 {
+  # Get back to starting point
   cd ${SCT_SOURCE}
-  # Deactivating virtual environment
-  . ${SCT_DIR}/${PYTHON_DIR}/bin/deactivate > /dev/null 2>&1
+  # remove installation tmp files
+#  rm -Rf ${TMP_DIR}
 }
 trap finish EXIT
 
 
-# Installation text to insert in sctrc
-write_sct_source ()
+# Force bashrc loading
+force_bashrc_loading ()
 {
-    SCT_RC=${HOME}"/sctrc"
-    echo "" >> ${SCT_RC}
-    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${SCT_RC}
-    echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${SCT_RC}
-    echo "source ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}" >> ${SCT_RC}
-    echo "" >> ${SCT_RC}
+  sourceblock="
+if [ -n \"\$BASH_VERSION\" ]; then
+    # include .bashrc if it exists
+    if [ -f \"\$HOME/.bashrc\" ]; then
+    . \"\$HOME/.bashrc\"
+    fi
+fi"
+  for profiles in  ~/.bash_profile ~/.bash_login ~/.profile ; do
+    if [[ -a $profiles ]] ; then
+       if ! grep -E "(\.|source) .*bashrc" ${profiles} > /dev/null 2>&1 ; then
+         echo "${sourceblock}" >> ${profiles}
+       fi
+       bidon=0
+       break
+    fi
+  done
+
+  if [ -z ${bidon} ] ; then
+    echo "${sourceblock}" >> ~/.bash_profile
+  fi
+}
+
+
+
+# Installation text to insert in .bashrc
+install_refresh ()
+{
+
+  if [[ -z ${THE_CSHRC} ]]  ; then
+    echo
+    echo "" >> ${THE_BASHRC}
+    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
+    echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${THE_BASHRC}
+    echo "" >> ${THE_BASHRC}
+  else
+    # (t)csh for good measure
+    echo "" >> ${THE_CSHRC}
+    echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
+    echo "setenv PATH \"\${PATH}:${SCT_DIR}/${BIN_DIR}\"" >> ${THE_CSHRC}
+    echo "" >> ${THE_CSHRC}
+  fi
 }
 
 
@@ -61,41 +99,89 @@ write_sct_source ()
 download ()
 {
   # Use curl or wget to download goodies
-  set -x
-  if hash "curl" ; then
-    curl -o $1 -L $2
-    e_status=$?
-    echo exit status is ${e_status}
+    e_status=0
 
-  elif hash "wget"; then
-    wget -O $1 $2
-    e_status=$?
-    echo exit status is ${e_status}
+    hash "wget" 2> /dev/null
+    is_wget=$?
+    hash "curl" 2> /dev/null
+    is_curl=$?
 
-  else
-    set +x
-    echo You need to install "curl" OR "wget" before you can install the SPINALCORDTOOLBOX
-    echo run
-    echo "   > sudo apt-get install wget"
-    echo and rerun the installer
-    exit 1
-  fi
-  set +x
+    if [[ ${is_wget} -eq 0 ]] ; then
+        wget -O $1 $2
+        e_status=$?
+        echo exit status is ${e_status}
+    fi
 
-  ls ${1}
-  file_exist=$?
+    if [[ ${is_curl} -eq 0 && ! -e $1 ]] ; then
+        curl -o $1 -L $2
+        e_status=$?
+        echo exit status is ${e_status}
+    fi
 
-  if [[ ${e_status} != 0  || ${file_exist} != 0 ]]; then
-     echo "The download of $2 failed"
-     echo "Please check your internet connection before relaunching the installer"
-     exit 1
-  fi
+    if [[ ${is_curl} -ne 0 && ${is_wget} -ne 0 ]] ; then
+        echo You need to install "curl" OR "wget" before you can install the SPINALCORDTOOLBOX
+        echo run
+        echo "   > sudo apt-get install wget"
+        echo and rerun the installer
+        exit 1
+    fi
+
+    if [[ ${e_status} -ne 0  || ! -e $1 ]]; then
+        echo "The download of $2 failed"
+        echo "Please check your internet connection before relaunching the installer"
+        exit 1
+    fi
+}
+
+
+# Usage of this script
+usage()
+{
+  echo -e "\nUsage: $0 [-d ] [-m ] [-b]" 1>&2;
+  echo -e "\tWe only recommend the flags -d, -m and -b for developers"
+  echo -e "\nOPTION"
+  echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
+  echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
+  echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
+  echo -e "\n\t-o \v Use the the file form the offline installer (no internet connection required)"
 
 }
 
-# Set the spinalcordtoolbox version, install type and OS environment variables
-get_system_info ()
-{
+
+# SCRIPT STARTS HERE
+# ========================================================================
+echo -e "\nWelcome to the SCT installer!"
+
+while getopts ":dmhbo" opt; do
+  case $opt in
+    d)
+      echo " data directory will not be (re)-installed"
+      NO_DATA_INSTALL=yes
+      ;;
+    m)
+      echo " miniconda python will not be (re)-installed "
+      NO_CONDA_INSTALL=yes
+      ;;
+    b)
+      echo " SCT binaries will not be (re)-installed "
+      NO_SCT_BIN_INSTALL=yes
+      ;;
+    o)
+      echo " Using the offline folder for installation"
+      OFFLINE_INSTALL=yes
+      ;;
+    h)
+      usage
+      exit 0
+      ;;
+    \?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+# Catch SCT version
     if [ -e "version.txt" ]; then
         SCT_VERSION=`cat version.txt`
     else
@@ -112,19 +198,11 @@ get_system_info ()
         INSTALL_TYPE="package"
     fi
 
-    # Check the prompt environment
-    if [[ -n $BASH_VERSION ]]; then
-        hash -r
-    elif [[ -n $ZSH_VERSION ]]; then
-        rehash
-    else
-        echo "Only bash and zsh command prompts are supported"
-        return 1
-    fi
-
     # Fetch OS type
     if uname -a | grep -i  darwin > /dev/null 2>&1; then
-        OS=osx
+  # OSX
+      OS=osx
+      force_bashrc_loading
     elif uname -a | grep -i  linux > /dev/null 2>&1; then
         if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
             # CentOS 6.X
@@ -137,8 +215,7 @@ get_system_info ()
             OS=linux
         fi
     else
-        echo "Error:"
-        echo "The installer only supports Linux and OSX, Can not continue the installation"
+  echo Sorry, the installer only supports Linux and OSX, quitting installer
         exit 1
     fi
 
@@ -152,12 +229,16 @@ get_system_info ()
     else
         echo -e "sudo mode ........... 0"
     fi
-}
 
+# Define sh files
+if echo $(ps -o comm= $PPID) | grep csh ;then
+  THE_CSHRC=${HOME}/.cshrc
+  THE_RC=${THE_CSHRC}
+else
+  THE_BASHRC=${HOME}/.bashrc
+  THE_RC=${THE_BASHRC}
+fi
 
-# Create the installation directory and set the path as environment variable
-setup_sct_dirs ()
-{
     # if installing from git folder, then becomes default installation folder
     if [[ $INSTALL_TYPE == "git" ]]; then
         INSTALL_DIR=$SCT_SOURCE
@@ -166,7 +247,6 @@ setup_sct_dirs ()
     fi
 
     # Set install dir
-    change_default_path=''
     while  true ; do
         echo -e "\nSCT will be installed here: [${INSTALL_DIR}]"
         while  [[ ! ${change_default_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
@@ -208,7 +288,7 @@ setup_sct_dirs ()
     done
 
     # Create directory
-    mkdir -p ${INSTALL_DIR}
+    mkdir ${INSTALL_DIR}
     # check if directory was created
     if [ -d "${INSTALL_DIR}" ]; then
         # check write permission
@@ -244,63 +324,28 @@ setup_sct_dirs ()
         echo -e "\nSkipping copy of source files (source and destination folders are the same)"
     fi
 
+# Go to installation folder
+cd ${SCT_DIR}
+
     # Make sure we are in SCT folder (to avoid deleting folder from user)
-    cd ${SCT_DIR}
     if [ ! -f "version.txt" ]; then
         echo -e "\nERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
         exit 1
     fi
-}
 
-
-# Usage of this script
-usage()
-{
-  echo -e "\nUsage: $0 [-d ] [-m ] [-b]" 1>&2;
-  echo -e "\tWe only recommend the flags -d, -m and -b for developers"
-  echo -e "\nOPTION"
-  echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
-  echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
-  echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
-  echo -e "\n\t-o \v Use the the file form the offline installer (no internet connection required)"
-}
-
-
-install_binairies ()
-{
-    # Create launchers for Python scripts
+## Create launchers for Python scripts
     echo -e "\nCreate launchers for Python scripts"
     cmd="mkdir -p ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+# update_bin has to be executed from the install directory
+cmd="cd ${SCT_DIR}/install"; echo ">> "$cmd; $cmd
+cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run from /install folder (because uses relative path)
+# Copy binaries
 
-    if [ ${NO_SCT_BIN_INSTALL} = yes ]; then
-        echo "SCT binaries will not be (re)-install"
-    elif [ ${OFFLINE_INSTALL} = yes ]; then
-        cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
-    else
-        echo -e "\nInstalling binaries..."
-        if [ $OS == "linux" ]; then
-            download ${TMP_DIR}/sct_binaries.tar.gz https://osf.io/2pztn/?action=download
-        elif [ $OS == "linux_centos6" ]; then
-            download ${TMP_DIR}/sct_binaries.tar.gz https://osf.io/4wbgt/?action=download
-        elif [ $OS == "osx" ]; then
-            download ${TMP_DIR}/sct_binaries.tar.gz https://osf.io/ceg8p/?action=download
-        fi
-        # force disk buffer to refresh
-        ls ${TMP_DIR} > /dev/null
-
-        # unzip binaries
-        cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${TMP_DIR}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
-    fi
-}
-
-
-install_python ()
-{
-    # INSTALL PYTHON
-    if [ ${NO_CONDA_INSTALL} = yes ]; then
+## INSTALL PYTHON
+if [ ${NO_CONDA_INSTALL} ]; then
         echo "python/ will not be (re)-install"
+elif [ ${OFFLINE_INSTALL} ]; then
 
-    elif [ ${OFFLINE_INSTALL} = yes ]; then
         echo "Offline install"
 
         cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
@@ -325,12 +370,6 @@ install_python ()
 
         conda install --yes --no-deps ${SCT_SOURCE}/offline/pkgs_${OS}/*
         pip install --no-deps --ignore-installed ${dipy_whl} ${ornlm_whl} ${SCT_SOURCE}/offline/*none*.whl
-
-    elif [ ${PYPI_INSTALL} = yes ]; then
-        cmd="virtualenv ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-        cd ${SCT_DIR}
-        cmd="source ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-        cmd="pip install -U -r requirements.txt"; echo ">> "$cmd; $cmd;
 
     else
         # Install Python conda
@@ -383,45 +422,73 @@ install_python ()
             # on certain linux distribution
             conda install -fy numpy
         fi
+
+fi
+
+## Install binaries
+if [ ${NO_SCT_BIN_INSTALL} ]; then
+    echo "SCT binaries will not be (re)-install"
+elif [ ${OFFLINE_INSTALL} ]; then
+    cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
+else
+    echo -e "\nInstalling binaries..."
+    cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+    if [ $OS == "linux" ]; then
+        cmd="python ../scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    elif [ $OS == "linux_centos6" ]; then
+        cmd="python ../scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    elif [ $OS == "osx" ]; then
+        cmd="python ../scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     fi
-
-    cmd="python setup.py install"; echo ">> "$cmd; $cmd
-    echo -e "All requirements installed!"
-}
-
-# Install the additional spinalcordtoolbox  data
-install_data ()
-{
-    if [ ${NO_DATA_INSTALL} ]; then
-        echo "data/ will not be (re)-install"
-    elif [ ${OFFLINE_INSTALL} ]; then
-        echo "Offline install"
-        cmd="tar -C ${SCT_DIR} -zxvf ${SCT_SOURCE}/offline/data.tar.gz"; echo ">> "$cmd; $cmd
-    else
-        # forcing activation if python is not reinstalled
-        cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-
-        # Download data
-        echo -e "\nInstalling data..."
-        cmd="which python"; echo ">> "$cmd; $cmd
-        cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
-        cmd="mkdir -p ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
-        cmd="cd ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
-        # Install PAM50
-        cmd="python ../scripts/sct_download_data.py -d PAM50"; echo ">> "$cmd; $cmd
-        # Install GM model
-        cmd="python ../scripts/sct_download_data.py -d gm_model"; echo ">> "$cmd; $cmd
-    fi
-
-    # Make sure sct scripts are executable
-    find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 1 -type f -exec chmod 755 {} \;
-    # make sure there is no buffer/cache issue for the ${BIN_DIR} directory
-    ls -l ${SCT_DIR}/${BIN_DIR}/ > /dev/null 2>&1;
-}
+fi
 
 
-check_dependencies ()
-{
+echo -e "All requirements installed!"
+
+
+# INSTALL DATA
+if [ ${NO_DATA_INSTALL} ]; then
+  echo "data/ will not be (re)-install"
+elif [ ${OFFLINE_INSTALL} ]; then
+  echo "Offline install"
+  cmd="tar -C ${SCT_DIR} -zxvf ${SCT_SOURCE}/offline/data.tar.gz"; echo ">> "$cmd; $cmd
+else
+  # forcing activation if python is not reinstalled
+  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+
+  # Download data
+  echo -e "\nInstalling data..."
+  cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
+  cmd="mkdir -p ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
+  cmd="cd ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
+  # Install PAM50
+  cmd="python ../scripts/sct_download_data.py -d PAM50"; echo ">> "$cmd; $cmd
+  # Install GM model
+  cmd="python ../scripts/sct_download_data.py -d gm_model"; echo ">> "$cmd; $cmd
+fi
+
+# Make sure sct scripts are executable
+find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 1 -type f -exec chmod 755 {} \;
+# make sure there is no buffer/cache issue for the ${BIN_DIR} directory
+ls -l ${SCT_DIR}/${BIN_DIR}/ > /dev/null 2>&1;
+
+# Deactivating conda
+. ${SCT_DIR}/${PYTHON_DIR}/bin/deactivate > /dev/null 2>&1
+
+# if sudo=0
+if [[ $UID != 0 ]]; then
+  # update PATH environment
+  while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
+    echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? yes/no: "
+    read add_to_path
+  done
+  echo ""
+  if [[ ${add_to_path} =~ ^[Yy] ]]; then
+    install_refresh
+  else
+     echo Not adding ${INSTALL_DIR} to \$PATH
+     echo You can always add it later or call SCT functions with full path ${SCT_DIR}/${BIN_DIR}/sct_function
+  fi
   # run sct_check_dependencies
   echo -e "\nRun sct_check_dependencies..."
   # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
@@ -429,62 +496,15 @@ check_dependencies ()
   cd ${TMP_DIR}
   if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies ; then
     echo -e "INSTALLATION DONE!\n"
-    echo -e "Open a new Terminal window to load environment variables, or run:\n source .bashrc\n"
+    echo -e "Open a new Terminal window to load environment variables, or run:\n source ${THE_RC}\n"
   else
     echo -e "INSTALLATION ERROR!"
     echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
     echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
   fi
-}
-
-
-
-#########################################
-
-# The installation main script.
-echo -e "\nWelcome to the SCT installer!"
-
-while getopts ":dmboph" opt; do
-    case "${opt}" in
-        d)
-            echo " data directory will not be (re)-installed"
-            NO_DATA_INSTALL=yes
-            ;;
-        m)
-            echo " miniconda python will not be (re)-installed "
-            NO_CONDA_INSTALL=yes
-            ;;
-        b)
-            echo " SCT binaries will not be (re)-installed "
-            NO_SCT_BIN_INSTALL=yes
-            ;;
-        o)
-            echo " Using the offline folder for installation"
-            OFFLINE_INSTALL=yes
-            ;;
-        p)
-            echo " Using python virtual environment"
-            PYPI_INSTALL=yes
-            ;;
-        h)
-            usage
-            exit 0
-            ;;
-        \?)
-            usage
-            exit 1
-            ;;
-    esac
-done
-# Where tmp files are stored
-TMP_DIR=`mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR'`
-
-
-get_system_info
-setup_sct_dirs
-#install_python
-install_binairies
-#install_data
-
-# check_dependencies
-write_sct_source
+else
+  # if sudo=1
+  echo -e "\nWARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to the appropriate file (e.g., .bashrc):"
+  echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH"
+  echo -e "Then, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed.\n"
+fi

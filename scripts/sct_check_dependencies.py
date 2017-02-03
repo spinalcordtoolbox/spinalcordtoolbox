@@ -79,7 +79,7 @@ def main(args=None):
 
     # use variable "verbose" when calling sct.run for more clarity
     verbose = complete_test
-    
+
     # redirect to log file
     if create_log_file:
         orig_stdout = sys.stdout
@@ -236,7 +236,7 @@ def main(args=None):
         install_software = 1
 
     # CHECK EXTERNAL MODULES:
-    
+
     # Check if dipy is installed
     # print_line('Check if dipy ('+dipy_version+') is installed')
     # try:
@@ -322,7 +322,7 @@ def main(args=None):
         print "File generated: "+file_log+'\n'
     print ''
     sys.exit(e + install_software)
-    
+
 
 # print without carriage return
 # ==========================================================================================
@@ -338,7 +338,8 @@ def make_dot_lines(string):
     if len(string) < 52:
         dot_lines = '.'*(52 - len(string))
         return dot_lines
-    else: return ''
+    else:
+        return ''
 
 
 def print_ok():
@@ -351,13 +352,12 @@ def print_warning():
 
 def print_fail():
     print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
-    
+
 
 def add_bash_profile(string):
     from os.path import expanduser
     home = expanduser("~")
     with open(home+"/.bash_profile", "a") as file_bash:
-    # with open("test.txt", "a") as file_bash:
         file_bash.write("\n"+string)
 
 
@@ -374,6 +374,7 @@ def get_version_requirements():
     file.close()
     return dict
 
+
 def get_version_requirements_pip():
     status, path_sct = sct.run('echo $SCT_DIR', 0)
     file = open(path_sct+"/install/requirements/requirementsPip.txt")
@@ -383,9 +384,11 @@ def get_version_requirements_pip():
         if line == "":
             break  # OH GOD HELP
         arg = line.split("==")
+        arg[0] = arg[0].split('[')[0]
         dict[arg[0]] = arg[1].rstrip("\n")
     file.close()
     return dict
+
 
 def get_package_version(package_name):
     cmd = "conda list "+package_name

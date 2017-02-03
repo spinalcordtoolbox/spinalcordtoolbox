@@ -192,24 +192,30 @@ def print_fail():
 
 # write to log file
 # ==========================================================================================
-def write_to_log_file(fname_log, string, mode='w'):
+def write_to_log_file(fname_log, string, mode='w', prepend=False):
     """
     status, output = sct.run('echo $SCT_DIR', 0)
     path_logs_dir = output + '/testing/logs'
 
     if not os.path.isdir(path_logs_dir):
         os.makedirs(path_logs_dir)
+    mode: w: overwrite, a: append, p: prepend
     """
-
+    string_to_append = ''
     string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
              + fname_log \
              + string
     # open file
     try:
+        # if prepend, read current file and then overwrite
+        if prepend:
+            f = open(fname_log, 'r')
+            string_to_append = '\n\nOUTPUT:\n--\n' + f.read()
+            f.close()
         f = open(fname_log, mode)
     except Exception as ex:
         raise Exception('WARNING: Cannot open log file.')
-    f.write(string + '\n')
+    f.write(string + string_to_append + '\n')
     f.close()
 
 

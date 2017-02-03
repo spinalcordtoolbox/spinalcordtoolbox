@@ -476,6 +476,10 @@ class SegmentGM(object):
             list_dic_slices = [self.model.slices[j] for j in list_dic_indexes_by_slice[target_slice.id]]
             # average slices GM and WM
             data_mean_gm, data_mean_wm = msct_gmseg_utils.average_gm_wm(list_dic_slices)
+            # set negative values to 0
+            data_mean_gm[data_mean_gm < 0] = 0
+            data_mean_wm[data_mean_wm < 0] = 0
+
             if self.param_seg.type_seg == 'bin':
                 # binarize GM seg
                 data_mean_gm[data_mean_gm >= 0.5] = 1

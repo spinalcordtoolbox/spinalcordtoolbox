@@ -489,7 +489,7 @@ class ClickViewer(Viewer):
     Assumes SAL orientation
     orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
-    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=('ax', 'sag')):
+    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title=''):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         if isinstance(list_images, msct_image.Image):
             list_images = [list_images]
@@ -506,6 +506,7 @@ class ClickViewer(Viewer):
 
         self.compute_offset()
         self.pad_data()
+        self.title = title  # title to display in main figure
 
         self.current_point = msct_types.Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
@@ -598,8 +599,10 @@ class ClickViewer(Viewer):
                 window.update_slice(point, data_update=True)
 
         self.windows[1].axes.set_title('Click and hold\nto move around')
-        self.title = self.windows[0].axes.set_title('Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
-                self.image_dim[self.orientation[self.primary_subplot]-1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')')
+        if self.title == '':
+            self.title = 'Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
+                self.image_dim[self.orientation[self.primary_subplot]-1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')'
+        self.windows[0].axes.set_title(self.title)
 
     def compute_offset(self):
         if self.primary_subplot == 'ax':

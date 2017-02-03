@@ -344,9 +344,9 @@ def b_spline_nurbs(x,
             plt.show()
 
     if not twodim:
-        return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv
+        return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv, nurbs.error_curve_that_last_worked
     else:
-        return x_fit, y_fit, x_deriv, y_deriv
+        return x_fit, y_fit, x_deriv, y_deriv, nurbs.error_curve_that_last_worked
 
 
 def b_spline_nurbs_itk(fname_centerline, numberOfLevels=10):

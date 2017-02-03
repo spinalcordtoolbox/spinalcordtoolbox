@@ -17,6 +17,7 @@
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import math
+import os
 import sys
 
 import numpy as np
@@ -381,8 +382,7 @@ class ProcessLabels(object):
 
         # for all points with non-zeros neighbors, force the neighbors to 0
         for coord in coordinates_input:
-            image_output.data[:, :, coord.z - width:coord.z +
-                              width] = offset + gap * coord.value
+            image_output.data[:, :, int(coord.z) - width:int(coord.z) + width] = offset + gap * coord.value
 
         return image_output
 
@@ -412,10 +412,9 @@ class ProcessLabels(object):
 
         image_output.changeType('float32')
         for coord in coordinates_input_neg:
-            image_output.data[:, :, coord.
-                              z] = -coord.value  #PB: takes the int value of coord.value
+            image_output.data[:, :, int(coord.z)] = -coord.value #PB: takes the int value of coord.value
         for coord in coordinates_input_pos:
-            image_output.data[:, :, coord.z] = coord.value
+            image_output.data[:, :, int(coord.z)] = coord.value
 
         return image_output
 
@@ -473,7 +472,7 @@ class ProcessLabels(object):
 
         # for all points with non-zeros neighbors, force the neighbors to 0
         for i, coord in enumerate(coordinates_input):
-            image_output.data[coord.x, coord.y, coord.z] = i + 1
+            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = i + 1
 
         return image_output
 
@@ -491,10 +490,9 @@ class ProcessLabels(object):
 
         # for all points in input, find the value that has to be set up, depending on the vertebral level
         for i, coord in enumerate(coordinates_input):
-            for j in range(0, len(coordinates_ref) - 1):
-                if coordinates_ref[j + 1].z < coord.z <= coordinates_ref[j].z:
-                    image_output.data[coord.x, coord.y,
-                                      coord.z] = coordinates_ref[j].value
+            for j in range(0, len(coordinates_ref)-1):
+                if coordinates_ref[j+1].z < coord.z <= coordinates_ref[j].z:
+                    image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coordinates_ref[j].value
 
         return image_output
 
@@ -700,15 +698,13 @@ class ProcessLabels(object):
             symmetry)
 
         for coord in result_coord_input:
-            image_output.data[coord.x, coord.y, coord.z] = int(
-                round(coord.value))
+            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = int(round(coord.value))
 
         if symmetry:
             # image_output_ref = msct_image.Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
             image_output_ref = msct_image.Image(self.image_ref, verbose=self.verbose)
             for coord in result_coord_ref:
-                image_output_ref.data[coord.x, coord.y, coord.z] = int(
-                    round(coord.value))
+                image_output_ref.data[int(coord.x), int(coord.y), int(coord.z)] = int(round(coord.value))
             image_output_ref.setFileName(self.fname_output[1])
             image_output_ref.save('minimize_int')
 
@@ -817,7 +813,8 @@ class ProcessLabels(object):
         #   a. extract centerline
         #   b. for each slice, extract corresponding level
         nx, ny, nz, nt, px, py, pz, pt = im_input.dim
-        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline.smooth_centerline(
+        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
+        z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline(
             self.image_input, algo_fitting='nurbs', verbose=0)
         value_centerline = np.array([
             im_input.data[x_centerline_fit[it], y_centerline_fit[it],
@@ -875,100 +872,91 @@ class ProcessLabels(object):
         im_output.changeType('float32')
         # for all points in input, find the value that has to be set up, depending on the vertebral level
         for i, coord in enumerate(coordinates_input):
-            im_output.data[coord.x, coord.y, coord.z] = continuous_values[
-                coord.z]
+            im_output.data[int(coord.x), int(coord.y), int(coord.z)] = continuous_values[coord.z]
 
         return im_output
 
 
 def get_parser(param):
+    # initialize default param
     # Initialize the parser
     parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Utility function for label image.')
-    parser.add_option(
-        name="-i",
-        type_value="file",
-        description="Label image.",
-        mandatory=True,
-        example="t2_labels.nii.gz")
-    parser.add_option(
-        name="-o",
-        type_value=[[','], "file_output"],
-        description="Output image(s).",
-        mandatory=False,
-        example="t2_labels_cross.nii.gz",
-        default_value="labels.nii.gz")
-    parser.add_option(
-        name='-add',
-        type_value='int',
-        description='Add value to all labels. Value can be negative.',
-        mandatory=False)
-    parser.add_option(
-        name='-create',
-        type_value=[[':'], 'Coordinate'],
-        description='Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2, ...',
-        example='12,34,32,1:12,35,33,2',
-        mandatory=False)
-    parser.add_option(
-        name='-create-add',
-        type_value=[[':'], 'Coordinate'],
-        description='Same as create, but add labels to input image instead of creating a new one.',
-        example='12,34,32,1:12,35,33,2',
-        mandatory=False)
-    parser.add_option(
-        name='-cross',
-        type_value='int',
-        description='Create a cross around each non-zero value. Input cross radius in mm.',
-        example=param.cross_size,
-        mandatory=False)
-    parser.add_option(
-        name='-cubic-to-point',
-        type_value=None,
-        description='Compute the center-of-mass for each label value.',
-        mandatory=False)
-    parser.add_option(
-        name='-display',
-        type_value=None,
-        description='Display all labels (i.e. non-zero values).',
-        mandatory=False)
-    parser.add_option(
-        name='-increment',
-        type_value=None,
-        description='Takes all non-zero values, sort them along the inverse z direction, and attributes the values 1, 2, 3, etc.',
-        mandatory=False)
-    parser.add_option(
-        name='-vert-body',
-        type_value=[[','], 'int'],
-        description='From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired levels with ",". To get all levels, enter "0".',
-        example='3,8',
-        mandatory=False)
-    parser.add_option(
-        name='-vert-continuous',
-        type_value=None,
-        description='Convert discrete vertebral labeling to continuous vertebral labeling.',
-        mandatory=False)
-    parser.add_option(
-        name='-MSE',
-        type_value='file',
-        description='Compute Mean Square Error between labels from input and reference image. Specify reference image here.',
-        mandatory=False)
-    parser.add_option(
-        name='-remove',
-        type_value='file',
-        description='Remove labels from input image (-i) that are not in reference image (specified here).',
-        mandatory=False)
-    parser.add_option(
-        name='-remove-sym',
-        type_value='file',
-        description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
-        mandatory=False)
-    parser.add_option(
-        name="-v",
-        type_value="multiple_choice",
-        description='Verbose. 0: nothing. 1: basic. 2: extended.',
-        mandatory=False,
-        default_value=param.verbose,
-        example=['0', '1', '2'])
+
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Label image.",
+                      mandatory=True,
+                      example="t2_labels.nii.gz")
+    parser.add_option(name="-o",
+                      type_value=[[','], "file_output"],
+                      description="Output image(s).",
+                      mandatory=False,
+                      example="t2_labels_cross.nii.gz",
+                      default_value="labels.nii.gz")
+    parser.add_option(name='-add',
+                      type_value='int',
+                      description='Add value to all labels. Value can be negative.',
+                      mandatory=False)
+    parser.add_option(name='-create',
+                      type_value=[[':'], 'Coordinate'],
+                      description='Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2, ...',
+                      example='12,34,32,1:12,35,33,2',
+                      mandatory=False)
+    parser.add_option(name='-create-add',
+                      type_value=[[':'], 'Coordinate'],
+                      description='Same as create, but add labels to input image instead of creating a new one.',
+                      example='12,34,32,1:12,35,33,2',
+                      mandatory=False)
+    parser.add_option(name='-cross',
+                      type_value='int',
+                      description='Create a cross around each non-zero value. Input cross radius in mm.',
+                      example=param.cross_size,
+                      mandatory=False)
+    parser.add_option(name='-cubic-to-point',
+                      type_value=None,
+                      description='Compute the center-of-mass for each label value.',
+                      mandatory=False)
+    parser.add_option(name='-display',
+                      type_value=None,
+                      description='Display all labels (i.e. non-zero values).',
+                      mandatory=False)
+    parser.add_option(name='-increment',
+                      type_value=None,
+                      description='Takes all non-zero values, sort them along the inverse z direction, and attributes the values 1, 2, 3, etc.',
+                      mandatory=False)
+    parser.add_option(name='-vert-body',
+                      type_value=[[','], 'int'],
+                      description='From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired levels with ",". To get all levels, enter "0".',
+                      example='3,8',
+                      mandatory=False)
+    # parser.add_option(name='-vert-disc',
+    #                   type_value=[[','], 'int'],
+    #                   description='From vertebral labeling, create points that are centered at the intervertebral discs. Separate desired levels with ",". To get all levels, enter "0".',
+    #                   example='3,8',
+    #                   mandatory=False)
+    parser.add_option(name='-vert-continuous',
+                      type_value=None,
+                      description='Convert discrete vertebral labeling to continuous vertebral labeling.',
+                      mandatory=False)
+    parser.add_option(name='-MSE',
+                      type_value='file',
+                      description='Compute Mean Square Error between labels from input and reference image. Specify reference image here.',
+                      mandatory=False)
+    parser.add_option(name='-remove',
+                      type_value='file',
+                      description='Remove labels from input image (-i) that are not in reference image (specified here).',
+                      mandatory=False)
+    parser.add_option(name='-remove-sym',
+                      type_value='file',
+                      description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
+                      mandatory=False)
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description='Verbose. 0: nothing. 1: basic. 2: extended.',
+                      mandatory=False,
+                      default_value=param.verbose,
+                      example=['0', '1', '2'])
     return parser
 
 
@@ -978,8 +966,11 @@ def main(args=None):
     if not args:
         args = sys.argv[1:]
     else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        script_name = os.path.splitext(os.path.basename(__file__))[0]
         sct.printv('{0} {1}'.format(script_name, " ".join(args)))
+
+    # initialize parameters
+    param = Param()
 
     # Get parser info
     parser = get_parser(param)
