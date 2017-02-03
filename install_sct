@@ -507,3 +507,5 @@ else
   echo -e "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH"
   echo -e "Then, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed.\n"
 fi
+
+source install/sct_env
