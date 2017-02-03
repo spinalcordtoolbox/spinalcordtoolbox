@@ -44,10 +44,7 @@ def main(args=None):
         sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Initialization
-    fname_warp_list = ''  # list of warping fields
-    fname_dest = ''  # destination image (fix)
     fname_warp_final = ''  # concatenated transformations
-    verbose = 1
 
     # Parameters for debug mode
     if param.debug:
@@ -99,18 +96,17 @@ def main(args=None):
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
     fname_warp_list_invert.reverse()
-    cmd = 'isct_ComposeMultiTransform 3 warp_final' + ext_out + ' -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
+    cmd = 'isct_ComposeMultiTransform 3 warp_tmp' + ext_out + ' -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
     sct.printv('>> '+cmd, verbose)
     status, output = getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
 
     # check if output was generated
-    if not os.path.isfile('warp_final' + ext_out):
+    if not os.path.isfile('warp_tmp' + ext_out):
         sct.printv('ERROR: Warping field was not generated.\n'+output, 1, 'error')
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final' + ext_out, os.path.join(path_out, file_out+ext_out))
-
+    sct.generate_output_file('warp_tmp' + ext_out, os.path.join(path_out, file_out+ext_out))
     print ''
 
 

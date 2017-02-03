@@ -16,6 +16,7 @@ import shutil
 import sys
 
 import msct_parser
+import msct_image
 import sct_convert
 import sct_utils as sct
 
