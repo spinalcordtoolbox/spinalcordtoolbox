@@ -414,7 +414,7 @@ def check_if_same_space(fname_1, fname_2):
 
     dec = int(np.abs(round(np.log10(min(np.abs(q1[np.nonzero(q1)]))))) + 1)
     dec = 4 if dec > 4 else dec
-    return all(np.around(q1, dec) == np.around(q2, dec))
+    return np.array_equal(np.around(q1, dec), np.around(q2, dec))
 
 
 def printv(string, verbose=1, type='normal'):

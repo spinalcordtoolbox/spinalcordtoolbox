@@ -54,6 +54,7 @@ import sct_compute_hausdorff_distance
 import sct_dice_coefficient
 import sct_image
 import sct_maths
+import msct_parser
 import sct_process_segmentation
 import sct_register_multimodal
 import sct_utils as sct
@@ -61,7 +62,7 @@ import sct_utils as sct
 
 def get_parser():
     # Initialize the parser
-    parser = msct_image.Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description(
         'Segmentation of the white and gray matter.'
         ' The segmentation is based on a multi-atlas method that uses a dictionary of pre-segmented gray matter images (already included in SCT)'
