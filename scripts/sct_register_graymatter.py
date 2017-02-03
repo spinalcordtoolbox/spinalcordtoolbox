@@ -113,8 +113,8 @@ class MultiLabelRegistration(object):
 
         os.chdir(tmp_dir)
         # save images
-        im_automatic_ml.save()
-        im_template_ml.save()
+        im_automatic_ml.save(force_cwd=True)
+        im_template_ml.save(force_cwd=True)
 
         # apply template2image warping field
         if self.apply_warp_template == 1:
@@ -125,7 +125,6 @@ class MultiLabelRegistration(object):
         nx, ny, nz, nt, px, py, pz, pt = im_automatic_ml.dim
         size_mask = int(22.5 / px)
         fname_mask = 'square_mask.nii.gz'
-
         options = '-i ' + fname_automatic_ml + ' -p centerline,' + fname_automatic_ml + ' -f box -size '\
                  + str(size_mask) + ' -o ' + fname_mask
         sct_create_mask.main(options.split())

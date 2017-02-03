@@ -374,7 +374,7 @@ class Image(object):
         self.data = getattr(np, data_type)(self.data)
         self.hdr.set_data_dtype(data_type)
 
-    def save(self, data_type='', squeeze_data=True, verbose=1):
+    def save(self, data_type='', squeeze_data=True, verbose=1, force_cwd=False):
         """
         Write an image in a nifti file
         :param data_type:    if not set, the image is saved in the same type as input data
@@ -393,6 +393,7 @@ class Image(object):
                         (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
                         (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
+        :param force_cwd: force file to be saved in $CWD
         """
         if squeeze_data:
             # remove singleton
@@ -403,7 +404,10 @@ class Image(object):
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = nibabel.Nifti1Image(self.data, None, self.hdr)
-        fname_out = os.path.join(self.path, self.file_name + self.ext)
+        if force_cwd:
+            fname_out = os.path.join(os.getcwd(), self.file_name + self.ext)
+        else:
+            fname_out = os.path.join(self.path, self.file_name + self.ext)
         if os.path.isfile(fname_out):
             sct.printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
             os.remove(fname_out)
