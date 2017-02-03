@@ -298,17 +298,19 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
-    fname_data = arguments["-i"]
+    fname_data = os.path.abspath(arguments["-i"])
     contrast_type = arguments["-c"]
 
     # Building the command
-    cmd = "isct_propseg" + " -i " + fname_data + " -t " + contrast_type
+    cmd = 'isct_propseg -i "%s" -t %s' % (fname_data, contrast_type)
 
     if "-ofolder" in arguments:
         folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
         folder_output = './'
-    cmd += " -o " + folder_output
+    cmd += ' -o "%s"' % folder_output
+    if not os.path.isdir(folder_output) and os.path.exists(folder_output):
+        sct.printv("ERROR output directory %s is not a valid directory" % folder_output, 1, 'error')
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
@@ -400,7 +402,8 @@ if __name__ == "__main__":
         image_input_orientation = orientation(image_input, get=True, verbose=False)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_data + ext_data, "_SAL")
         path_tmp_viewer = sct.tmp_create(verbose=verbose)
-        sct.run('sct_image -i ' + fname_data + ' -o ' + path_tmp_viewer + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
+        cmd = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
+        sct.run(cmd, verbose=False)
 
         from sct_viewer import ClickViewer
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
@@ -443,10 +446,7 @@ if __name__ == "__main__":
 
     # build output filename
     file_seg = file_data + "_seg" + ext_data
-    if folder_output == "./":
-        fname_seg = file_seg
-    else:
-        fname_seg = folder_output + file_seg
+    fname_seg = os.path.normpath(folder_output + file_seg)
 
     # check consistency of segmentation
     fname_centerline = folder_output + file_data + '_centerline' + ext_data
