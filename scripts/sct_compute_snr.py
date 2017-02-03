@@ -145,8 +145,8 @@ def main():
     elif method == 'diff':
         data_1 = input_data[:, :, :, 0]
         data_2 = input_data[:, :, :, 1]
-        signal = np.mean(np.add(b0_1[indexes_roi], b0_2[indexes_roi]))
-        noise = np.sqrt(2)*np.std(np.subtract(b0_1[indexes_roi], b0_2[indexes_roi]))
+        signal = np.mean(np.add(data_1[indexes_roi], data_2[indexes_roi]))
+        noise = np.sqrt(2)*np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi]))
     elif method == 'background':
         sct.printv('ERROR: Sorry, method is not implemented yet.', 1, 'error')
     elif method == 'nema':
