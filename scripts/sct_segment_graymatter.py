@@ -50,18 +50,28 @@ import numpy as np
 
 import msct_gmseg_utils
 import msct_image
+import msct_multiatlas_seg
+import msct_parser
 import sct_compute_hausdorff_distance
 import sct_dice_coefficient
 import sct_image
 import sct_maths
-import msct_parser
 import sct_process_segmentation
 import sct_register_multimodal
 import sct_utils as sct
 
 
-def get_parser():
+def get_parser(param=None, param_data=None, param_seg=None):
     # Initialize the parser
+
+    # create param objects
+    if param_seg is None:
+        param_seg = ParamSeg()
+    if param_data is None:
+        param_data = msct_multiatlas_seg.ParamData()
+    if param is None:
+        param = msct_multiatlas_seg.Param()
+
     parser = msct_parser.Parser(__file__)
     parser.usage.set_description(
         'Segmentation of the white and gray matter.'
@@ -96,21 +106,21 @@ def get_parser():
         type_value='multiple_choice',
         description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been computed with denoising too)",
         mandatory=False,
-        default_value=int(ParamData().denoising),
+        default_value=int(param_data.denoising),
         example=['0', '1'])
     parser.add_option(
         name="-normalization",
         type_value='multiple_choice',
         description="Normalization of the target image's intensity using median intensity values of the WM and the GM, recomended with MT images or other types of contrast than T2*",
         mandatory=False,
-        default_value=int(ParamData().normalization),
+        default_value=int(param_data.normalization),
         example=['0', '1'])
     parser.add_option(
         name="-p",
         type_value='str',
         description="Registration parameters to register the image to segment on the model data. Use the same format as for sct_register_to_template and sct_register_multimodal.",
         mandatory=False,
-        default_value=ParamData().register_param,
+        default_value=param_data.register_param,
         example='step=1,type=seg,algo=centermassrot,metric=MeanSquares,smooth=2,iter=1:step=2,type=seg,algo=columnwise,metric=MeanSquares,smooth=3,iter=1:step=3,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3'
     )
     parser.add_option(
@@ -118,21 +128,21 @@ def get_parser():
         type_value='float',
         description="Weight parameter on the level differences to compute the similarities",
         mandatory=False,
-        default_value=ParamSeg().weight_level,
+        default_value=param_seg.weight_level,
         example=2.0)
     parser.add_option(
         name="-w-coordi",
         type_value='float',
         description="Weight parameter on the euclidean distance (based on images coordinates in the reduced sapce) to compute the similarities ",
         mandatory=False,
-        default_value=ParamSeg().weight_coord,
+        default_value=param_seg.weight_coord,
         example=0.005)
     parser.add_option(
         name="-thr-sim",
         type_value='float',
         description="Threshold to select the dictionary slices most similar to the slice to segment (similarities are normalized to 1)",
         mandatory=False,
-        default_value=ParamSeg().thr_similarity,
+        default_value=param_seg.thr_similarity,
         example=0.6)
     parser.add_option(
         name="-model",
@@ -146,14 +156,14 @@ def get_parser():
         type_value='multiple_choice',
         description="Type of result segmentation : binary or probabilistic",
         mandatory=False,
-        default_value=ParamSeg().type_seg,
+        default_value=param_seg.type_seg,
         example=['bin', 'prob'])
     parser.add_option(
         name="-ratio",
         type_value='multiple_choice',
         description="Compute GM/WM CSA ratio by slice or by vertebral level (average across levels)",
         mandatory=False,
-        default_value=ParamSeg().ratio,
+        default_value=param_seg.ratio,
         example=['0', 'slice', 'level'])
     parser.add_option(
         name="-ref",
@@ -166,7 +176,7 @@ def get_parser():
         type_value="folder_creation",
         description="Output folder",
         mandatory=False,
-        default_value=ParamSeg().path_results,
+        default_value=param_seg.path_results,
         example='gm_segmentation_results/')
     parser.usage.addSection('MISC')
     parser.add_option(
@@ -175,13 +185,13 @@ def get_parser():
         description='Output images for quality control.',
         mandatory=False,
         example=['0', '1'],
-        default_value=str(int(ParamSeg().qc)))
+        default_value=str(int(param_seg.qc)))
     parser.add_option(
         name="-r",
         type_value="multiple_choice",
         description='Remove temporary files.',
         mandatory=False,
-        default_value=str(int(Param().rm_tmp)),
+        default_value=str(int(param.rm_tmp)),
         example=['0', '1'])
     parser.add_option(
         name="-v",
@@ -189,7 +199,7 @@ def get_parser():
         description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
         mandatory=False,
         example=['0', '1', '2'],
-        default_value=str(Param().verbose))
+        default_value=str(param.verbose))
 
     return parser
 
@@ -218,12 +228,12 @@ class ParamSeg(object):
 class SegmentGM(object):
     def __init__(self, param_seg=None, param_model=None, param_data=None, param=None):
         self.param_seg = param_seg if param_seg is not None else ParamSeg()
-        self.param_model = param_model if param_model is not None else ParamModel()
-        self.param_data = param_data if param_data is not None else ParamData()
-        self.param = param if param is not None else Param()
+        self.param_model = param_model if param_model is not None else msct_multiatlas_seg.ParamModel()
+        self.param_data = param_data if param_data is not None else msct_multiatlas_seg.ParamData()
+        self.param = param if param is not None else msct_multiatlas_seg.Param()
 
         # create model:
-        self.model = Model(param_model=self.param_model, param_data=self.param_data, param=self.param)
+        self.model = msct_multiatlas_seg.Model(param_model=self.param_model, param_data=self.param_data, param=self.param)
 
         # create tmp directory
         self.tmp_dir = sct.tmp_create(verbose=self.param.verbose)
@@ -764,12 +774,12 @@ def main(args=None):
 
     # create param objects
     param_seg = ParamSeg()
-    param_data = ParamData()
-    param_model = ParamModel()
-    param = Param()
+    param_data = msct_multiatlas_seg.ParamData()
+    param_model = msct_multiatlas_seg.ParamModel()
+    param = msct_multiatlas_seg.Param()
 
     # get parser
-    parser = get_parser()
+    parser = get_parser(param, param_data, param_seg)
     arguments = parser.parse(args)
 
     # set param arguments ad inputted by user

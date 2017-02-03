@@ -492,7 +492,7 @@ class Model(object):
                 slices_by_level[level_int].append(dic_slice)
         # get average gm and wm by level
         for level, list_slices in slices_by_level.items():
-            data_mean_gm, data_mean_wm = msct_gmseg_utils.apply_transfo(list_slices)
+            data_mean_gm, data_mean_wm = msct_gmseg_utils.average_gm_wm(list_slices)
             gm_seg_model[level] = data_mean_gm
             wm_seg_model[level] = data_mean_wm
         # for level=0 (no leve or level not in model) output average GM and WM seg across all model data
