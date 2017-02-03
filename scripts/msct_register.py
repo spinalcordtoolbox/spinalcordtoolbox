@@ -48,10 +48,10 @@ def register_slicewise(fname_src,
 
     # copy data to temp folder
     sct.printv('\nCopy input data to temp folder...', verbose)
-    sct_convert.convert.sct_convert.convert(fname_src, path_tmp + 'src.nii')
-    sct_convert.convert.sct_convert.convert(fname_dest, path_tmp + 'dest.nii')
+    sct_convert.convert(fname_src, path_tmp + 'src.nii')
+    sct_convert.convert(fname_dest, path_tmp + 'dest.nii')
     if fname_mask != '':
-        sct_convert.convert.sct_convert.convert(fname_mask, path_tmp + 'mask.nii.gz')
+        sct_convert.convert(fname_mask, path_tmp + 'mask.nii.gz')
 
     # go to temporary folder
     os.chdir(path_tmp)
@@ -748,15 +748,7 @@ def register2d(fname_src,
                fname_mask='',
                fname_warp='warp_forward.nii.gz',
                fname_warp_inv='warp_inverse.nii.gz',
-               paramreg=sct_register_multimodal.Paramreg(
-                   step='0',
-                   type='im',
-                   algo='Translation',
-                   metric='MI',
-                   iter='5',
-                   shrink='1',
-                   smooth='0',
-                   gradStep='0.5'),
+               paramreg=None,
                ants_registration_params={
                    'rigid': '',
                    'affine': '',
@@ -800,6 +792,16 @@ def register2d(fname_src,
             creation of two 3D warping fields (forward and inverse) that are the concatenations of the slice-by-slice
             warps.
     """
+    if paramreg is None:
+        sct_register_multimodal.Paramreg(
+            step='0',
+            type='im',
+            algo='Translation',
+            metric='MI',
+            iter='5',
+            shrink='1',
+            smooth='0',
+            gradStep='0.5')
 
     # set metricSize
     if paramreg.metric == 'MI':
