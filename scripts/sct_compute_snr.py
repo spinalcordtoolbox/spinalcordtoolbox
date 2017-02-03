@@ -41,11 +41,11 @@ def get_parser():
     parser.add_option(name="-method",
                       type_value='multiple_choice',
                       description='Method to use to compute the SNR:\n'
-                      '- diff: Substract two volumes (defined by -vol) to estimate noise variance.'
-                      '\n- mult: Use all volumes to estimate noise variance.',
+                      '- diff: Substract two volumes (defined by -vol) and estimate noise variance over space.\n'
+                      '- mult: Use all volumes (or those defined by -vol) to estimate noise variance over time.',
                       mandatory=False,
                       default_value='diff',
-                      example=['diff', 'mult', 'background', 'nema'])
+                      example=['diff', 'mult'])
     parser.add_option(name='-vol',
                       type_value=[[','], 'int'],
                       description='List of volume numbers to use for computing SNR, separated with ",". Example: 0,1',
@@ -154,10 +154,6 @@ def main():
         data_2 = input_data[:, :, :, index_vol[1]]
         signal = np.mean(np.add(data_1[indexes_roi], data_2[indexes_roi]))
         noise = np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi]))
-    elif method == 'background':
-        sct.printv('ERROR: Sorry, method is not implemented yet.', 1, 'error')
-    elif method == 'nema':
-        sct.printv('ERROR: Sorry, method is not implemented yet.', 1, 'error')
 
     # compute SNR
     SNR = signal/noise
