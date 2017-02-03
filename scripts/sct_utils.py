@@ -89,6 +89,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         printv(output_final[0:-1], 1, error_exit)
         if raise_exception:
             raise Exception(output_final[0:-1])
+        return status_output, output_final[0:-1]
     else:
         # no need to output process.returncode (because different from 0)
         return status_output, output_final[0:-1]

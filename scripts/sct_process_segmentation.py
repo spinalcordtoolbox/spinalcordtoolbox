@@ -21,12 +21,15 @@ import sys
 import time
 
 import numpy as np
+import pandas
 import scipy
 
 import sct_utils as sct
 import msct_image
 import msct_nurbs
 import msct_parser
+import msct_shape
+import msct_smooth
 import sct_image
 import sct_label_vertebrae
 import sct_straighten_spinalcord
@@ -71,9 +74,17 @@ def get_parser():
                                   '  - csa_image.nii.gz: the cord segmentation (nifti file) where each slice\'s value is equal to the angle (in degrees) between the spinal cord centerline and the inferior-superior direction,\n'
                                   '  - csa_per_slice.txt: a CSV text file with z (1st column), CSA in mm^2 (2nd column) and angle with respect to the I-S direction in degrees (3rd column),\n'
                                   '  - csa_per_slice.pickle: a pickle file with the same results as \"csa_per_slice.txt\" recorded in a DataFrame (panda structure) that can be reloaded afterwrds,\n'
-                                  '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n',
+                                  '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n'
+                                  '-shape: compute spinal shape properties, using scikit-image region measures, including:\n'
+                                  '  - AP and RL diameters\n'
+                                  '  - ratio between AP and RL diameters\n'
+                                  '  - spinal cord area\n'
+                                  '  - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.\n'
+                                  '  - equivalent diameter: The diameter of a circle with the same area as the spinal cord.\n'
+                                  '  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image\n'
+                                  '  - solidity: ratio of positive (spinal cord) over null (background) pixels that are contained in the convex hull region. The convex hull region is the smallest convex polygon that surround all positive pixels in the image.',
                       mandatory=True,
-                      example=['centerline', 'label-vert', 'length', 'csa'])
+                      example=['centerline', 'label-vert', 'length', 'csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -178,7 +189,7 @@ def main(args=None):
     # Initialization
     path_script = os.path.dirname(__file__)
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
-    processes = ['centerline', 'csa', 'length']
+    processes = ['centerline', 'csa', 'length', 'shape']
     verbose = param.verbose
     start_time = time.time()
     remove_temp_files = param.remove_temp_files
@@ -209,7 +220,7 @@ def main(args=None):
     if '-vertfile' in arguments:
         fname_vertebral_labeling = arguments['-vertfile']
     if '-v' in arguments:
-        verbose = arguments['-v']
+        verbose = int(arguments['-v'])
     if '-z' in arguments:
         slices = arguments['-z']
     if '-a' in arguments:
@@ -234,7 +245,9 @@ def main(args=None):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length, angle_correction=angle_correction)
+        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param,
+                    figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting,
+                    type_window= param.type_window, window_length=param.window_length, angle_correction=angle_correction)
 
     if name_process == 'label-vert':
         if '-discfile' in arguments:
@@ -246,8 +259,79 @@ def main(args=None):
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_lev, fname_vertebral_labeling, verbose=verbose)
 
+    if name_process == 'shape':
+        fname_disks = None
+        if '-discfile' in arguments:
+            fname_disks = arguments['-discfile']
+        compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_lev, fname_disks=fname_disks, verbose=verbose)
+
     # End of Main
 
+
+def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_levels, fname_disks=None, verbose=1):
+    """
+    This function characterizes the shape of the spinal cord, based on the segmentation
+    Shape properties are computed along the spinal cord and averaged per z-slices.
+    Option is to provide intervertebral disks to average shape properties over vertebral levels (fname_disks).
+    """
+    # List of properties to compute on spinal cord
+    property_list = ['area',
+                     'diameters',
+                     'equivalent_diameter',
+                     'ratio_minor_major',
+                     'eccentricity',
+                     'solidity']
+
+    property_list, shape_properties = msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation,
+                                                                                     property_list=property_list,
+                                                                                     fname_disks_image=fname_disks,
+                                                                                     smooth_factor=0.0,
+                                                                                     interpolation_mode=0,
+                                                                                     remove_temp_files=remove_temp_files,
+                                                                                     verbose=verbose)
+
+    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+    fname_output_csv = output_folder + file_data + '_shape.csv'
+
+    # choose sorting mode: z-slice or vertebral levels, depending on input (fname_disks)
+    rejected_values = []  # some values are not vertebral levels
+    if fname_disks is not None:
+        # average over spinal cord levels
+        sorting_mode = 'vertebral_level'
+        rejected_values = [0, '0']
+        #if vert_levels != '':
+
+    else:
+        # averaging over slices
+        sorting_mode = 'z_slice'
+
+    # extract all values for shape properties to be averaged on (z-slices or vertebral levels)
+    sorting_values = []
+    for label in shape_properties[sorting_mode]:
+        if label not in sorting_values and label not in rejected_values:
+            sorting_values.append(label)
+
+    if slices != '' or vert_levels != '':
+        pass
+
+    else:
+
+
+        # average spinal cord shape properties
+        averaged_shape = dict()
+        for property_name in property_list:
+            averaged_shape[property_name] = []
+            for label in sorting_values:
+                averaged_shape[property_name].append(np.mean([item for i, item in enumerate(shape_properties[property_name]) if shape_properties[sorting_mode][i] == label]))
+
+        # save spinal cord shape properties
+        df_shape_properties = pandas.DataFrame(averaged_shape, index=sorting_values)
+        df_shape_properties.sort_index(inplace=True)
+        pandas.set_option('expand_frame_repr', True)
+        df_shape_properties.to_csv(fname_output_csv, sep=',')
+
+        if verbose == 1:
+            print df_shape_properties
 
 
 # compute the length of the spinal cord
@@ -345,9 +429,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
                      warning_vert_levels=warning)
 
     elif (not (slices or vert_levels)) and (overwrite == 1):
-        sct.printv(
-            'WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in .txt and .pickle files only.',
-            type='warning')
+        sct.printv('WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in .txt and .pickle files only.', type='warning')
         length = np.nan
 
     else:
@@ -355,6 +437,11 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
         length = 0.0
         for i in range(len(x_centerline_fit)-1):
             length += sqrt(((x_centerline_fit[i+1]-x_centerline_fit[i])*px)**2+((y_centerline_fit[i+1]-y_centerline_fit[i])*py)**2+((z_centerline[i+1]-z_centerline[i])*pz)**2)
+
+        sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
+        # write result into output file
+        save_results(output_folder + 'length', overwrite, fname_segmentation, 'length', '(in mm)', length, np.nan,
+                     slices, actual_vert=[], warning_vert_levels='')
 
     # Remove temporary files
     if remove_temp_files:
@@ -414,39 +501,43 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = \
+        sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', type_window=type_window,
+                                                    window_length=window_length, algo_fitting=algo_fitting,
+                                                    all_slices=True, verbose=verbose)
+
 
     if verbose == 2:
-            import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt
 
-            #Creation of a vector x that takes into account the distance between the labels
-            nz_nonz = len(z_centerline)
-            x_display = [0 for i in range(x_centerline_fit.shape[0])]
-            y_display = [0 for i in range(y_centerline_fit.shape[0])]
-            for i in range(0, nz_nonz, 1):
-                x_display[int(z_centerline[i]-z_centerline[0])] = x_centerline[i]
-                y_display[int(z_centerline[i]-z_centerline[0])] = y_centerline[i]
+        #Creation of a vector x that takes into account the distance between the labels
+        nz_nonz = len(z_centerline)
+        x_display = [0 for i in range(x_centerline_fit.shape[0])]
+        y_display = [0 for i in range(y_centerline_fit.shape[0])]
+        for i in range(0, nz_nonz, 1):
+            x_display[int(z_centerline[i]-z_centerline[0])] = x_centerline[i]
+            y_display[int(z_centerline[i]-z_centerline[0])] = y_centerline[i]
 
-            plt.figure(1)
-            plt.subplot(2,1,1)
-            plt.plot(z_centerline_fit, x_display, 'ro')
-            plt.plot(z_centerline_fit, x_centerline_fit)
-            plt.xlabel("Z")
-            plt.ylabel("X")
-            plt.title("x and x_fit coordinates")
+        plt.figure(1)
+        plt.subplot(2,1,1)
+        plt.plot(z_centerline_fit, x_display, 'ro')
+        plt.plot(z_centerline_fit, x_centerline_fit)
+        plt.xlabel("Z")
+        plt.ylabel("X")
+        plt.title("x and x_fit coordinates")
 
-            plt.subplot(2,1,2)
-            plt.plot(z_centerline_fit, y_display, 'ro')
-            plt.plot(z_centerline_fit, y_centerline_fit)
-            plt.xlabel("Z")
-            plt.ylabel("Y")
-            plt.title("y and y_fit coordinates")
-            plt.show()
+        plt.subplot(2,1,2)
+        plt.plot(z_centerline_fit, y_display, 'ro')
+        plt.plot(z_centerline_fit, y_centerline_fit)
+        plt.xlabel("Z")
+        plt.ylabel("Y")
+        plt.title("y and y_fit coordinates")
+        plt.show()
 
     # Create an image with the centerline
     min_z_index, max_z_index = int(round(min(z_centerline_fit))), int(round(max(z_centerline_fit)))
     for iz in range(min_z_index, max_z_index+1):
-        data[round(x_centerline_fit[iz-min_z_index]), round(y_centerline_fit[iz-min_z_index]), iz] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+        data[int(round(x_centerline_fit[iz-min_z_index])), int(round(y_centerline_fit[iz-min_z_index])), int(iz)] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
     # Write the centerline image in RPI orientation
     # hdr.set_data_dtype('uint8') # set imagetype to uint8
     sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -490,7 +581,6 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True):
 
     from math import degrees
-    import pandas as pd
     import pickle
 
     # Extract path, file and extension
@@ -655,7 +745,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     # Create output pickle file
     # data frame format
-    results_df = pd.DataFrame({'Slice (z)': range(min_z_index, max_z_index+1),
+    results_df = pandas.DataFrame({'Slice (z)': range(min_z_index, max_z_index+1),
                                'CSA (mm^2)': csa,
                                'Angle with respect to the I-S direction (degrees)': angles})
     # # dictionary format

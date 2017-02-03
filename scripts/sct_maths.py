@@ -137,7 +137,12 @@ def get_parser():
     parser.usage.addSection("\nSimilarity metric")
     parser.add_option(name='-mi',
                       type_value='file',
-                      description='Compute the mutual information (MI) between both input files (-i and -mi).',
+                      description='Compute the mutual information (MI) between both input files (-i and -mi) as in: http://scikit-learn.org/stable/modules/generated/sklearn.metrics.mutual_info_score.html',
+                      mandatory=False,
+                      example="")
+    parser.add_option(name='-minorm',
+                      type_value='file',
+                      description='Compute the normalized mutual information (MI) between both input files (-i and -mi) as in: http://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html',
                       mandatory=False,
                       example="")
     parser.add_option(name='-corr',
@@ -292,16 +297,19 @@ def main(args=None):
         # input 2 = from flag -mi
         im_2 = msct_image.Image(arguments['-mi'])
         compute_similarity(im.data, im_2.data, fname_out, metric='mi', verbose=verbose)
+        data_out = None
 
-        data_out=None
+    elif '-minorm' in arguments:
+        im_2 = msct_image.Image(arguments['-minorm'])
+        compute_similarity(im.data, im_2.data, fname_out, metric='minorm', verbose=verbose)
+        data_out = None
 
     elif '-corr' in arguments:
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
         im_2 = msct_image.Image(arguments['-corr'])
         compute_similarity(im.data, im_2.data, fname_out, metric='corr', verbose=verbose)
-
-        data_out=None
+        data_out = None
 
 
     # if no flag is set
@@ -511,25 +519,48 @@ def laplacian(data, sigmas):
     # from scipy.ndimage.filters import laplace
     # return laplace(data.astype(float))
 
-def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
+def compute_similarity(data1, data2, fname_out='', metric='', verbose=1, epsilon=0.000000001):
     '''
     Compute a similarity metric between two images data
     :param data1: numpy.array 3D data
     :param data2: numpy.array 3D data
     :param fname_out: file name of the output file. Output file should be either a text file ('.txt') or a pickle file ('.pkl', '.pklz' or '.pickle')
     :param metric: 'mi' for mutual information or 'corr' for pearson correlation coefficient
+    :param epsilon: Threshold to define null voxels
     :return: None
     '''
-    assert data1.size == data2.size, "\n\nERROR: the data don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
+    if not data1.size == data2.size:
+        message = ("\n\nData size are different.\nPlease use  \"sct_register_multimodal -i"
+         " im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space")
+        raise ValueError(message)
     data1_1d = data1.ravel()
     data2_1d = data2.ravel()
-
+    # get indices of non-null voxels from the intersection of both data
+    data_mult = data1_1d * data2_1d
+    ind_nonnull = np.where(data_mult > epsilon)[0]
+    # set new variables with non-null voxels
+    data1_1d = data1_1d[ind_nonnull]
+    data2_1d = data2_1d[ind_nonnull]
+    # compute similarity metric
     if metric == 'mi':
-        res = mutual_information(data1_1d, data2_1d, normalized=True)
+        res = mutual_information(data1_1d, data2_1d, normalized=False)
         metric_full = 'Mutual information'
+    if metric == 'minorm':
+        res = mutual_information(data1_1d, data2_1d, normalized=True)
+        metric_full = 'Normalized Mutual information'
     if metric == 'corr':
         res = correlation(data1_1d, data2_1d)
         metric_full = 'Pearson correlation coefficient'
+    # qc output
+    if verbose > 1:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        plt.plot(data1_1d, 'b')
+        plt.plot(data2_1d, 'r')
+        plt.grid
+        plt.title('Similarity: ' + metric_full + ' = ' + str(res))
+        plt.savefig('fig_similarity.png')
 
     sct.printv('\n'+ metric_full +': ' + str(res), verbose, 'info')
 
@@ -557,12 +588,12 @@ def mutual_information(x, y, nbins=32, normalized=False):
     :param nbins: number of bins to compute the contingency matrix (only used if normalized=False)
     :return: float non negative value : mutual information
     """
-    from sklearn.metrics import normalized_mutual_info_score, mutual_info_score
+    import sklearn.metrics
     if normalized:
-        mi = normalized_mutual_info_score(x, y)
+        mi = sklearn.metrics.normalized_mutual_info_score(x, y)
     else:
         c_xy = np.histogram2d(x, y, nbins)[0]
-        mi = mutual_info_score(None, None, contingency=c_xy)
+        mi = sklearn.metrics.mutual_info_score(None, None, contingency=c_xy)
     # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
     return mi
 

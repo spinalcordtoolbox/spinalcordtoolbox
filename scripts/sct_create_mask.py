@@ -327,7 +327,7 @@ def create_mask2d(center,
         radius = ceil((int(size) - 1) / 2.0)
 
     if shape == 'box':
-        mask2d[xc - radius:xc + radius + 1, yc - radius:yc + radius + 1] = 1
+        mask2d[int(xc - radius):int(xc + radius) + 1, int(yc - radius):int(yc + radius) + 1] = 1
 
     elif shape == 'cylinder':
         mask2d = ((xx + offset[0] - xc)**2 +

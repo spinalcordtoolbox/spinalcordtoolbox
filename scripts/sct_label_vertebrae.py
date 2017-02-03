@@ -28,6 +28,7 @@ import msct_image
 import msct_parser
 import sct_apply_transfo
 import sct_convert
+import sct_image
 import sct_label_utils
 import sct_maths
 import sct_resample
@@ -307,6 +308,7 @@ def main(args=None):
     sct.printv('\nUn-straighten labeling...', verbose)
     cmd = '-i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn'
     sct_apply_transfo.main(cmd.split())
+
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')
@@ -321,15 +323,12 @@ def main(args=None):
     # Generate output files
     path_seg, file_seg, ext_seg = sct.extract_fname(fname_seg)
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp + 'segmentation_labeled.nii.gz', path_output + file_seg + '_labeled' + ext_seg)
-    sct.generate_output_file(path_tmp + 'segmentation_labeled_disc.nii.gz',
-                             path_output + file_seg + '_labeled_discs' + ext_seg)
+    sct.generate_output_file(path_tmp+'segmentation_labeled.nii.gz', path_output+file_seg+'_labeled'+ext_seg)
+    sct.generate_output_file(path_tmp+'segmentation_labeled_disc.nii.gz', path_output+file_seg+'_labeled_discs'+ext_seg)
     # copy straightening files in case subsequent SCT functions need them
-    sct.generate_output_file(path_tmp + 'warp_curve2straight.nii.gz', path_output + 'warp_curve2straight.nii.gz',
-                             verbose)
-    sct.generate_output_file(path_tmp + 'warp_straight2curve.nii.gz', path_output + 'warp_straight2curve.nii.gz',
-                             verbose)
-    sct.generate_output_file(path_tmp + 'straight_ref.nii.gz', path_output + 'straight_ref.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'warp_curve2straight.nii.gz', path_output+'warp_curve2straight.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'warp_straight2curve.nii.gz', path_output+'warp_straight2curve.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'straight_ref.nii.gz', path_output+'straight_ref.nii.gz', verbose)
 
     # Remove temporary files
     if remove_tmp_files == 1:
@@ -354,13 +353,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=None, verbo
     :param path_output: output path for verbose=2 pictures
     :return:
     """
-
     sct.printv('\nLook for template...', verbose)
-    sct.printv('Path template: ' + path_template, verbose)
+    sct.printv('Path template: '+path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
-    fname_level = sct_warp_template.get_file_label(path_template + 'template/', 'vertebral', output='filewithpath')
-    fname_template = sct_warp_template.get_file_label(path_template + 'template/', contrast.upper() + '-weighted', output='filewithpath')
+    fname_level = sct_warp_template.get_file_label(path_template+'template/', 'vertebral', output='filewithpath')
+    fname_template = sct_warp_template.get_file_label(path_template+'template/', contrast.upper()+'-weighted', output='filewithpath')
 
     sct.printv('\nOpen template and vertebral levels...', verbose)
     data_template = msct_image.Image(fname_template).data
@@ -400,35 +398,34 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=None, verbo
     list_disc_z_template = diff_centerline_level.nonzero()[0].tolist()
     list_disc_z_template.reverse()
     sct.printv('Z-values for each disc: ' + str(list_disc_z_template), verbose)
-    list_distance_template = (np.diff(list_disc_z_template) *
-                              (-1)).tolist()  # multiplies by -1 to get positive distances
+    list_distance_template = (
+        np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
     sct.printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # if automatic mode, find C2/C3 disc
-    if not init_disc and initc2 == 'auto':
+    if init_disc == [] and initc2 == 'auto':
         sct.printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(
-            src=data,
-            target=data_template,
-            x=xc,
-            xshift=0,
-            xsize=param.size_RL_initc2,
-            y=yc,
-            yshift=param.shift_AP_initc2,
-            ysize=param.size_AP_initc2,
-            z=0,
-            zshift=param.shift_IS_initc2,
-            zsize=param.size_IS_initc2,
-            xtarget=xct,
-            ytarget=yct,
-            ztarget=list_disc_z_template[ind_c2],
-            zrange=zrange,
-            verbose=verbose,
-            save_suffix='_initC2',
-            gaussian_weighting=True,
-            path_output=path_output)
+        z_peak = compute_corr_3d(src=data,
+                                 target=data_template,
+                                 x=xc,
+                                 xshift=0,
+                                 xsize=param.size_RL_initc2,
+                                 y=yc,
+                                 yshift=param.shift_AP_initc2,
+                                 ysize=param.size_AP_initc2,
+                                 z=0,
+                                 zshift=param.shift_IS_initc2,
+                                 zsize=param.size_IS_initc2,
+                                 xtarget=xct,
+                                 ytarget=yct,
+                                 ztarget=list_disc_z_template[ind_c2],
+                                 zrange=zrange,
+                                 verbose=verbose,
+                                 save_suffix='_initC2',
+                                 gaussian_weighting=True,
+                                 path_output=path_output)
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
@@ -437,7 +434,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=None, verbo
         # reorient image to SAL to be compatible with viewer
         im_input_SAL = im_input.copy()
         im_input_SAL.change_orientation('SAL')
-        viewer = sct_viewer.ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'])
+        viewer = sct_viewer.ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'], title='Please click at intervertebral disc C2-C3')
         viewer.number_of_slices = 1
         pz = 1
         viewer.gap_inter_slice = int(10 / pz)
@@ -446,9 +443,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=None, verbo
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
         if mask_points:
-            # create the mask containing either the three-points or centerline mask for initialization
-            mask_filename = sct.add_suffix(fname, "_mask_viewer")
-            sct_label_utils.main(['-i', fname, '-create', mask_points, '-o', mask_filename])
+            # orient input as SAL
+            sct_image.main(args=['-i', 'data_straightr.nii', '-setorient', 'SAL', '-o', 'data_straightr_SAL.nii'])
+            # create label in SAL orientation
+            sct_label_utils.main(args=['-i', 'data_straightr_SAL.nii', '-create', mask_points, '-o', 'initlabel_SAL.nii.gz'])
+            # Orient label in native orientation
+            sct_image.main(args=['-i', 'initlabel_SAL.nii.gz', '-setorient', im_input.orientation, '-o', sct.add_suffix(fname, '_mask_viewer')])
         else:
             sct.printv(
                 '\nERROR: the viewer has been closed before entering all manual points. Please try again.',
@@ -772,10 +772,11 @@ def compute_corr_3d(src=[],
         data_chunk1d = data_chunk3d.ravel()
         # check if data_chunk1d contains at least one non-zero value
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-            I_corr[ind_I] = sct_maths.mutual_information(data_chunk1d, pattern1d, nbins=16)
+            I_corr[ind_I] = sct_maths.mutual_information(data_chunk1d, pattern1d, nbins=16, normalized=False)
         else:
             allzeros = 1
         ind_I = ind_I + 1
+
     if allzeros:
         sct.printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
 
