@@ -1,8 +1,14 @@
 """Create a changelog file from all the merged pull requests
 
-Looking into the latest milestone, all the pull requests for neuropoly/spinalcordtoolbox
-are grouped by label and saved in `changlog.md` in markdown format.
+Looking into the latest milestone, all the pull requests for
+neuropoly/spinalcordtoolbox are grouped by label and saved in `changlog.md` in
+markdown format.
 
+How it works: Once the new tag is ready, you can simply run
+
+`./install/sct_changlog.py`
+
+and copy and paste the content of changlog.[tagId].md to CHANGES.md
 """
 
 import logging
