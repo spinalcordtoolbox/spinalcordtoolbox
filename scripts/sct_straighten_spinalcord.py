@@ -158,7 +158,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
                                                 point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
 
         # Checking accuracy of fitting. If NURBS fitting is not accurate enough, do not smooth segmentation
-        if mse >= 5.0:
+        if mse >= 2.0:
             x_centerline_fit = x_centerline
             y_centerline_fit = y_centerline
             z_centerline_fit = z_centerline
