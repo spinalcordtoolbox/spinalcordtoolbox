@@ -117,6 +117,7 @@ class NURBS():
             P_y = [x[1] for x in liste]
             if not twodim:
                 P_z = [x[2] for x in liste]
+                self.P_z = P_z
 
             if nbControl is None:
                 # self.nbControl = len(P_z)/5  ## ordre 3 -> len(P_z)/10, 4 -> len/7, 5-> len/5   permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
@@ -974,5 +975,19 @@ class NURBS():
             P_x_d = coord_mean_d[:, :][:, 0]
             P_y_d = coord_mean_d[:, :][:, 1]
             P_z_d = coord_mean_d[:, :][:, 2]
+
+            # check if slice should be in the result, based on self.P_z
+            indexes_to_remove = []
+            for i, ind_z in enumerate(P_z):
+                if ind_z not in self.P_z:
+                    indexes_to_remove.append(i)
+
+            import numpy as np
+            P_x = np.delete(P_x, indexes_to_remove)
+            P_y = np.delete(P_y, indexes_to_remove)
+            P_z = np.delete(P_z, indexes_to_remove)
+            P_x_d = np.delete(P_x_d, indexes_to_remove)
+            P_y_d = np.delete(P_y_d, indexes_to_remove)
+            P_z_d = np.delete(P_z_d, indexes_to_remove)
 
         return [P_x, P_y, P_z], [P_x_d, P_y_d, P_z_d]
