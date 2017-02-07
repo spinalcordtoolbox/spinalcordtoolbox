@@ -11,4 +11,8 @@ def test_centerline():
     dx = [0, 0, 0, 0, 0, 0]
     dy = [0, 0, 0, 0, 0, 0]
     dz = [1, 1, 1, 1, 1, 1]
-    centerline.Centerline(x, y, z, dx, dy, dz)
+    cl = centerline.Centerline(x, y, z, dx, dy, dz)
+    cl.find_nearest_index([1, 1, 1])
+    cl.get_plan_parameters(2)
+    cl.compute_coordinate_system(3)
+    cl.find_nearest_indexes([2, 2, 3])
