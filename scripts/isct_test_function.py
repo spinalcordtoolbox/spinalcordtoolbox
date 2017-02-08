@@ -296,6 +296,7 @@ def get_parser():
 if __name__ == "__main__":
 
     # get parameters
+    print_if_error = False  # print error message if function crashes (could be messy)
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
@@ -376,7 +377,17 @@ if __name__ == "__main__":
 
     # test function
     try:
+        # during testing, redirect to standard output to avoid stacking error messages in the general log
+        if create_log:
+            sys.stdout = orig_stdout
+
         results = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
+
+        # after testing, redirect to log file
+        if create_log:
+            sys.stdout = handle_log
+
+        # build results
         pd.set_option('display.max_rows', 500)
         pd.set_option('display.max_columns', 500)
         pd.set_option('display.width', 1000)
@@ -388,13 +399,13 @@ if __name__ == "__main__":
             results_subset.to_pickle(file_log+'.pickle')
 
         # mean
-        results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
+        results_mean = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
         results_mean['subject'] = 'Mean'
         results_mean.set_value('status', float('NaN'))  # set status to NaN
         # results_display = results_display.append(results_mean, ignore_index=True)
 
         # std
-        results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
+        results_std = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
         results_std['subject'] = 'STD'
         results_std.set_value('status', float('NaN'))  # set status to NaN
         # results_display = results_display.append(results_std, ignore_index=True)
@@ -403,7 +414,7 @@ if __name__ == "__main__":
         count_passed = results_subset.status[results_subset.status == 0].count()
         count_crashed = results_subset.status[results_subset.status == 1].count()
         # count tests that ran
-        count_ran = results_subset.status[results_subset.status != 200].count()
+        count_ran = results_subset.query('status != 200 & status != 201').count()['status']
 
         # results_display = results_display.set_index('subject')
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
@@ -467,7 +478,8 @@ if __name__ == "__main__":
 
 
     except Exception as err:
-        print err
+        if print_if_error:
+            print err
 
     # stop file redirection
     if create_log:
