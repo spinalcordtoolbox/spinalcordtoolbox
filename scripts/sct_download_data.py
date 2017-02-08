@@ -53,7 +53,7 @@ def main(args=None):
 
     # initialization
     verbose = 1
-    dict_url = {'sct_example_data': 'https://osf.io/feuef/?action=download',
+    dict_url = {'sct_example_data': 'https://osf.io/4nnk3/?action=download',
                 'sct_testing_data': 'https://osf.io/uqcz5/?action=download',
                 'PAM50': 'https://osf.io/gdwn6/?action=download',
                 'MNI-Poly-AMU': 'https://osf.io/b26vh/?action=download',
