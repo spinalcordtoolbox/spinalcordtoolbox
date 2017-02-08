@@ -6,4 +6,4 @@ tar -czf MNI-Poly-AMU.tar.gz data
 
 # example data:
 # 1: put files in folder sct_example_data
-# 2: go outside of folder and type: 
+# 2: go outside of folder and type: zip -r DATE_sct_example_data.zip sct_example_data
