@@ -74,8 +74,6 @@ fi"
   fi
 }
 
-
-
 # Installation text to insert in .bashrc
 install_refresh ()
 {
@@ -85,12 +83,14 @@ install_refresh ()
     echo "" >> ${THE_BASHRC}
     echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
     echo "export PATH=${SCT_DIR}/${BIN_DIR}:\$PATH" >> ${THE_BASHRC}
+    echo "${SCT_DIR}/${BIN_DIR}/sct_env" >> ${THE_BASHRC}
     echo "" >> ${THE_BASHRC}
   else
     # (t)csh for good measure
     echo "" >> ${THE_CSHRC}
     echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
     echo "setenv PATH \"\${PATH}:${SCT_DIR}/${BIN_DIR}\"" >> ${THE_CSHRC}
+    echo "${SCT_DIR}/${BIN_DIR}/sct_env" >> ${THE_CSHRC}
     echo "" >> ${THE_CSHRC}
   fi
 }
@@ -332,7 +332,7 @@ if [ ! -f "version.txt" ]; then
   exit 1
 fi
 
-# Create launchers for Python scripts
+## Create launchers for Python scripts
 echo -e "\nCreate launchers for Python scripts"
 cmd="mkdir -p ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
 # update_bin has to be executed from the install directory
@@ -340,27 +340,7 @@ cmd="cd ${SCT_DIR}/install"; echo ">> "$cmd; $cmd
 cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run from /install folder (because uses relative path)
 # Copy binaries
 
-if [ ${NO_SCT_BIN_INSTALL} ]; then
-  echo "SCT binaries will not be (re)-install"
-elif [ ${OFFLINE_INSTALL} ]; then
-  cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
-else
-  echo -e "\nInstalling binaries..."
-  if [ $OS == "linux" ]; then
-    download ${TMP_DIR}/sct_binaries.tar.gz https://osf.io/2pztn/?action=download
-  elif [ $OS == "linux_centos6" ]; then
-    download ${TMP_DIR}/sct_binaries.tar.gz https://osf.io/4wbgt/?action=download
-  elif [ $OS == "osx" ]; then
-    download ${TMP_DIR}/sct_binaries.tar.gz https://osf.io/ceg8p/?action=download
-  fi
-  # force disk buffer to refresh
-  ls ${TMP_DIR} > /dev/null
-
-  # unzip binaries
-  cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${TMP_DIR}/sct_binaries.tar.gz"; echo ">> "$cmd; $cmd
-fi
-
-# INSTALL PYTHON
+## INSTALL PYTHON
 if [ ${NO_CONDA_INSTALL} ]; then
   echo "python/ will not be (re)-install"
 elif [ ${OFFLINE_INSTALL} ]; then
@@ -443,6 +423,24 @@ else
   fi
 
 fi
+
+## Install binaries
+if [ ${NO_SCT_BIN_INSTALL} ]; then
+    echo "SCT binaries will not be (re)-install"
+elif [ ${OFFLINE_INSTALL} ]; then
+    cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
+else
+    echo -e "\nInstalling binaries..."
+    cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+    if [ $OS == "linux" ]; then
+        cmd="python ../scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    elif [ $OS == "linux_centos6" ]; then
+        cmd="python ../scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    elif [ $OS == "osx" ]; then
+        cmd="python ../scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    fi
+fi
+
 
 echo -e "All requirements installed!"
 
