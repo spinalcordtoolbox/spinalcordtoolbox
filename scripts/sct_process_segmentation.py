@@ -513,34 +513,35 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window=type_window, window_length=window_length, algo_fitting=algo_fitting, all_slices=True, verbose=verbose)
+
 
     if verbose == 2:
-            import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt
 
-            #Creation of a vector x that takes into account the distance between the labels
-            nz_nonz = len(z_centerline)
-            x_display = [0 for i in range(x_centerline_fit.shape[0])]
-            y_display = [0 for i in range(y_centerline_fit.shape[0])]
-            for i in range(0, nz_nonz, 1):
-                x_display[int(z_centerline[i]-z_centerline[0])] = x_centerline[i]
-                y_display[int(z_centerline[i]-z_centerline[0])] = y_centerline[i]
+        #Creation of a vector x that takes into account the distance between the labels
+        nz_nonz = len(z_centerline)
+        x_display = [0 for i in range(x_centerline_fit.shape[0])]
+        y_display = [0 for i in range(y_centerline_fit.shape[0])]
+        for i in range(0, nz_nonz, 1):
+            x_display[int(z_centerline[i]-z_centerline[0])] = x_centerline[i]
+            y_display[int(z_centerline[i]-z_centerline[0])] = y_centerline[i]
 
-            plt.figure(1)
-            plt.subplot(2,1,1)
-            plt.plot(z_centerline_fit, x_display, 'ro')
-            plt.plot(z_centerline_fit, x_centerline_fit)
-            plt.xlabel("Z")
-            plt.ylabel("X")
-            plt.title("x and x_fit coordinates")
+        plt.figure(1)
+        plt.subplot(2,1,1)
+        plt.plot(z_centerline_fit, x_display, 'ro')
+        plt.plot(z_centerline_fit, x_centerline_fit)
+        plt.xlabel("Z")
+        plt.ylabel("X")
+        plt.title("x and x_fit coordinates")
 
-            plt.subplot(2,1,2)
-            plt.plot(z_centerline_fit, y_display, 'ro')
-            plt.plot(z_centerline_fit, y_centerline_fit)
-            plt.xlabel("Z")
-            plt.ylabel("Y")
-            plt.title("y and y_fit coordinates")
-            plt.show()
+        plt.subplot(2,1,2)
+        plt.plot(z_centerline_fit, y_display, 'ro')
+        plt.plot(z_centerline_fit, y_centerline_fit)
+        plt.xlabel("Z")
+        plt.ylabel("Y")
+        plt.title("y and y_fit coordinates")
+        plt.show()
 
     # Create an image with the centerline
     min_z_index, max_z_index = int(round(min(z_centerline_fit))), int(round(max(z_centerline_fit)))

@@ -117,6 +117,7 @@ class NURBS():
             P_y = [x[1] for x in liste]
             if not twodim:
                 P_z = [x[2] for x in liste]
+                self.P_z = P_z
 
             if nbControl is None:
                 # self.nbControl = len(P_z)/5  ## ordre 3 -> len(P_z)/10, 4 -> len/7, 5-> len/5   permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
@@ -204,7 +205,7 @@ class NURBS():
                 list_param_that_worked_sorted = sorted(list_param_that_worked, key=lambda list_param_that_worked: list_param_that_worked[2])
                 nbControle_that_last_worked = list_param_that_worked_sorted[0][0]
                 pointsControle_that_last_worked = list_param_that_worked_sorted[0][1]
-                error_curve_that_last_worked = list_param_that_worked_sorted[0][2]
+                self.error_curve_that_last_worked = list_param_that_worked_sorted[0][2]
                 if not twodim:
                     self.courbe3D, self.courbe3D_deriv = self.construct3D_uniform(pointsControle_that_last_worked, self.degre, self.precision)  # generate curve with hig resolution
                 else:
@@ -213,7 +214,7 @@ class NURBS():
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        print 'The fitting of the curve was done using ', nbControle_that_last_worked, ' control points: the number that gave the best results. \nError on approximation = ' + str(round(error_curve_that_last_worked, 2)) + ' mm'
+                        print 'The fitting of the curve was done using ', nbControle_that_last_worked, ' control points: the number that gave the best results. \nError on approximation = ' + str(round(self.error_curve_that_last_worked, 2)) + ' mm'
                     else:
                         print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
             else:
@@ -975,5 +976,19 @@ class NURBS():
             P_x_d = coord_mean_d[:, :][:, 0]
             P_y_d = coord_mean_d[:, :][:, 1]
             P_z_d = coord_mean_d[:, :][:, 2]
+
+            # check if slice should be in the result, based on self.P_z
+            indexes_to_remove = []
+            for i, ind_z in enumerate(P_z):
+                if ind_z not in self.P_z:
+                    indexes_to_remove.append(i)
+
+            import numpy as np
+            P_x = np.delete(P_x, indexes_to_remove)
+            P_y = np.delete(P_y, indexes_to_remove)
+            P_z = np.delete(P_z, indexes_to_remove)
+            P_x_d = np.delete(P_x_d, indexes_to_remove)
+            P_y_d = np.delete(P_y_d, indexes_to_remove)
+            P_z_d = np.delete(P_z_d, indexes_to_remove)
 
         return [P_x, P_y, P_z], [P_x_d, P_y_d, P_z_d]
