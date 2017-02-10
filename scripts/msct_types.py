@@ -136,6 +136,8 @@ class Centerline:
         self.length = 0.0
         self.progressive_length = [0.0]
         self.progressive_length_inverse = [0.0]
+        self.incremental_length = [0.0]
+        self.incremental_length_inverse = [0.0]
 
         self.points = array(zip(points_x, points_y, points_z))
         self.derivatives = array(zip(deriv_x, deriv_y, deriv_z))
@@ -160,11 +162,13 @@ class Centerline:
                             (points_z[i] - points_z[i + 1]) ** 2)
             self.length += distance
             self.progressive_length.append(distance)
+            self.incremental_length.append(self.incremental_length[-1] + distance)
         for i in range(self.number_of_points-1, 0, -1):
             distance = sqrt((points_x[i] - points_x[i - 1]) ** 2 +
                             (points_y[i] - points_y[i - 1]) ** 2 +
                             (points_z[i] - points_z[i - 1]) ** 2)
             self.progressive_length_inverse.append(distance)
+            self.incremental_length_inverse.append(self.incremental_length_inverse[-1] + distance)
 
     def find_nearest_index(self, coord):
         """
@@ -328,13 +332,20 @@ class Centerline:
         -------
 
         """
-        labels_regions = {'PONS': 50, 'MO': 51,
+        self.labels_regions = {'PONS': 50, 'MO': 51,
                           'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
                           'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16, 'T10': 17, 'T11': 18, 'T12': 19,
                           'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
                           'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
                           'Co': 30}
-        regions_labels = {'50': 'PONS', '51': 'MO',
+        self.convert_vertlabel2disklabel = {'PONS': 'Pons', 'MO': 'Pons-MO',
+                          'C1': 'MO-C1', 'C2': 'C1-C2', 'C3': 'C2-C3', 'C4': 'C3-C4', 'C5': 'C4-C5', 'C6': 'C5-C6', 'C7': 'C6-C7',
+                          'T1': 'C7-T1', 'T2': 'T1-T2', 'T3': 'T2-T3', 'T4': 'T3-T4', 'T5': 'T4-T5', 'T6': 'T5-T6', 'T7': 'T6-T7', 'T8': 'T7-T8', 'T9': 'T8-T9',
+                          'T10': 'T9-T10', 'T11': 'T10-T11', 'T12': 'T11-T12',
+                          'L1': 'T12-L1', 'L2': 'L1-L2', 'L3': 'L2-L3', 'L4': 'L3-L4', 'L5': 'L4-L5',
+                          'S1': 'L5-S1', 'S2': 'S1-S2', 'S3': 'S2-S3', 'S4': 'S3-S4', 'S5': 'S4-S5',
+                          'Co': 'S5-Co'}
+        self.regions_labels = {'50': 'PONS', '51': 'MO',
                           '1': 'C1', '2': 'C2', '3': 'C3', '4': 'C4', '5': 'C5', '6': 'C6', '7': 'C7',
                           '8': 'T1', '9': 'T2', '10': 'T3', '11': 'T4', '12': 'T5', '13': 'T6', '14': 'T7', '15': 'T8', '16': 'T9', '17': 'T10', '18': 'T11', '19': 'T12',
                           '20': 'L1', '21': 'L2', '22': 'L3', '23': 'L4', '24': 'L5',
@@ -367,7 +378,7 @@ class Centerline:
         self.index_disk, index_disk_inv = {}, []
         for level in disks_levels:
             coord_level = [level[0], level[1], level[2]]
-            disk = regions_labels[str(level[3])]
+            disk = self.regions_labels[str(level[3])]
             nearest_index = self.find_nearest_index(coord_level)
             labels_points[nearest_index] = disk + '-0.0'
             self.index_disk[disk] = nearest_index
@@ -386,13 +397,13 @@ class Centerline:
             upper = 31
             label_reference = ''
             for l in self.index_disk:
-                if labels_regions[l] < upper:
+                if self.labels_regions[l] < upper:
                     label_reference = l
-                    upper = labels_regions[l]
+                    upper = self.labels_regions[l]
 
         self.distance_from_C1label = {}
         for disk in self.index_disk:
-                self.distance_from_C1label[disk] = progress_length[self.index_disk[label_reference]] - progress_length[self.index_disk[disk]]
+            self.distance_from_C1label[disk] = progress_length[self.index_disk[label_reference]] - progress_length[self.index_disk[disk]]
 
         for i in range(1, len(index_disk_inv)):
             for j in range(index_disk_inv[i - 1][0], index_disk_inv[i][0]):
@@ -405,13 +416,13 @@ class Centerline:
             if current_label == 'bottom' or current_label == 0:
                 continue
             elif current_label in ['MO', 'PONS']:
-                next_label = regions_labels[str(list_labels[list_labels.index(labels_regions[self.l_points[i]]) + 1])]
+                next_label = self.regions_labels[str(list_labels[list_labels.index(self.labels_regions[self.l_points[i]]) + 1])]
                 if next_label in self.index_disk:
                     self.dist_points_rel[i] = - (self.dist_points[i] - self.dist_points[self.index_disk[next_label]]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
                 else:
                     self.dist_points_rel[i] = - (self.dist_points[i] - self.dist_points[self.index_disk[next_label]]) / average_vert_length[current_label]
             else:
-                next_label = regions_labels[str(list_labels[list_labels.index(labels_regions[self.l_points[i]]) + 1])]
+                next_label = self.regions_labels[str(list_labels[list_labels.index(self.labels_regions[self.l_points[i]]) + 1])]
                 if next_label in self.index_disk:
                     self.dist_points_rel[i] = (self.dist_points[i] - self.dist_points[self.index_disk[current_label]]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
                 else:
@@ -432,6 +443,15 @@ class Centerline:
         idx = np.argmin(np.abs(arr_dist_rel[indexes_vert] - relative_position))
 
         return indexes_vert[idx]
+
+    def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
+        x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
+        coordinates_grid = np.array(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel()))
+        coordinates_phys = self.get_inverse_plans_coordinates(coordinates_grid, np.array([index] * len(coordinates_grid)))
+        coordinates_im = np.array(image.transfo_phys2continuouspix(coordinates_phys))
+        square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
+        return square.reshape((len(x_grid), len(x_grid)))
+
 
     def save_centerline(self, image, fname_output):
         labels_regions = {'PONS': 50, 'MO': 51,

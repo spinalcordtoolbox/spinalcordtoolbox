@@ -1,187 +1,159 @@
 #!/usr/bin/env python
-#########################################################################################
+##############################################################################
 #
 # Download data using http.
 #
-# ---------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
-#########################################################################################
+###############################################################################
 
+import cgi
+import os
 import sys
-from os import remove, rename, path
-import urllib2
-import httplib
-import time
-# from urllib import urlretrieve
+import tarfile
+import tempfile
 import zipfile
-from sct_utils import run, printv, check_folder_exist
+
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util import Retry
+
 from msct_parser import Parser
+from sct_utils import printv
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
-    # parser initialisation
     parser = Parser(__file__)
-    parser.usage.set_description('''Download dataset from the web.''')
-    parser.add_option(name="-d",
-                      type_value="multiple_choice",
-                      description="Name of the dataset.",
-                      mandatory=True,
-                      example=['sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU', 'gm_model'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
-                      mandatory=False,
-                      example=['0', '1', '2'])
-    parser.add_option(name="-h",
-                      type_value=None,
-                      description="Display this help",
-                      mandatory=False)
+    parser.usage.set_description('''Download binaries from the web.''')
+    parser.add_option(
+        name="-d",
+        type_value="multiple_choice",
+        description="Name of the dataset.",
+        mandatory=True,
+        example=[
+            'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
+            'gm_model', 'binaries_debian', 'binaries_centos', 'binaries_osx'
+        ])
+    parser.add_option(
+        name="-v",
+        type_value="multiple_choice",
+        description="Verbose. 0: nothing. 1: basic. 2: extended.",
+        mandatory=False,
+        default_value=1,
+        example=['0', '1', '2'])
+    parser.add_option(
+        name="-o",
+        type_value="folder_creation",
+        description="path to save the downloaded data",
+        mandatory=False)
+    parser.add_option(
+        name="-h",
+        type_value=None,
+        description="Display this help",
+        mandatory=False)
     return parser
 
 
-# MAIN
-# ==========================================================================================
 def main(args=None):
 
     if args is None:
         args = sys.argv[1:]
 
     # initialization
-    verbose = 1
-    dict_url = {'sct_example_data': 'https://osf.io/feuef/?action=download',
-                'sct_testing_data': 'https://osf.io/uqcz5/?action=download',
-                'PAM50': 'https://osf.io/gdwn6/?action=download',
-                'MNI-Poly-AMU': 'https://osf.io/b26vh/?action=download',
-                'gm_model': 'https://osf.io/ugscu/?action=download'}
-    tmp_file = 'tmp.data.zip'
+    dict_url = {
+        'sct_example_data': 'https://osf.io/feuef/?action=download',
+        'sct_testing_data': 'https://osf.io/uqcz5/?action=download',
+        'PAM50': 'https://osf.io/gdwn6/?action=download',
+        'MNI-Poly-AMU': 'https://osf.io/b26vh/?action=download',
+        'gm_model': 'https://osf.io/ugscu/?action=download',
+        'binaries_debian': 'https://osf.io/2pztn/?action=download',
+        'binaries_centos': 'https://osf.io/4wbgt/?action=download',
+        'binaries_osx': 'https://osf.io/ceg8p/?action=download'
+    }
 
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(args)
     data_name = arguments['-d']
-    if '-v' in arguments:
-        verbose = int(arguments['-v'])
+    verbose = int(arguments['-v'])
+    dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
 
     # Download data
     url = dict_url[data_name]
     try:
-        download_from_url(url, tmp_file)
-    except(KeyboardInterrupt):
-        printv('\nERROR: User canceled process.', 1, 'error')
-    # try:
-    #     printv('\nDownload data from: '+url, verbose)
-    #     urlretrieve(url, tmp_file)
-    #     # Allow time for data to download/save:
-    #     print "hola1"
-    #     time.sleep(0.5)
-    #     print "hola2"
-    # except:
-    #     printv("ERROR: Download Failed.", verbose, 'error')
+        tmp_file = download_data(url, verbose)
+    except (KeyboardInterrupt):
+        printv('\nERROR: User canceled process.\n', 1, 'error')
 
-    # Check if folder already exists
-    printv('Check if folder already exists...', verbose)
-    if path.isdir(data_name):
-        printv('.. WARNING: Folder '+data_name+' already exists. Removing it...', 1, 'warning')
-        run('rm -rf '+data_name, 0)
+    unzip(tmp_file, dest_folder, verbose)
 
-    # unzip
-    printv('Unzip dataset...', verbose)
-    try:
-        zf = zipfile.ZipFile(tmp_file)
-        zf.extractall()
-    except (zipfile.BadZipfile):
-        printv('\nERROR: ZIP package corrupted. Please try downloading again.', verbose, 'error')
+    printv('Remove temporary file...\n', verbose)
+    os.remove(tmp_file)
 
-    # if downloaded from GitHub, need to remove the "-master" suffix
-    if 'master.zip' in url:
-        printv('Rename folder...', verbose)
-        rename(data_name+'-master', data_name)
-
-    # remove zip file
-    printv('Remove temporary file...', verbose)
-    remove(tmp_file)
-
-    # display stuff
-    printv('Done! Folder created: '+data_name+'\n', verbose, 'info')
+    printv('Done! Folder created: %s\n' % dest_folder, verbose, 'info')
 
 
-
-def download_from_url(url, local):
-    """
-    Simple downloading with progress indicator, by Cees Timmerman, 16mar12.
-    :param url:
-    :param local:
-    :return:
-    """
-    keep_connecting = True
-    i_trial = 1
-    max_trials = 3
-
-    print 'Reaching URL: '+url
-    while keep_connecting:
+def unzip(compressed, dest_folder, verbose):
+    """Extract compressed file to the dest_folder"""
+    printv('Copy binaries to %s\n' % dest_folder, verbose)
+    printv('Unzip dataset...\n', verbose)
+    if compressed.endswith('zip'):
         try:
-            u = urllib2.urlopen(url)
-        except urllib2.HTTPError, e:
-            printv('\nHTTPError = ' + str(e.code), 1, 'error')
-        except urllib2.URLError, e:
-            printv('\nURLError = ' + str(e.reason), 1, 'error')
-        except httplib.HTTPException, e:
-            printv('\nHTTPException', 1, 'error')
-        except(KeyboardInterrupt):
-            printv('\nERROR: User canceled process.', 1, 'error')
-        except Exception:
-            import traceback
-            printv('\nERROR: Cannot open URL: ' + traceback.format_exc(), 1, 'error')
-        h = u.info()
+            zf = zipfile.ZipFile(compressed)
+            zf.extractall(dest_folder)
+            return
+        except (zipfile.BadZipfile):
+            printv(
+                'ERROR: ZIP package corrupted. Please try downloading again.',
+                verbose, 'error')
+    elif compressed.endswith('tar.gz'):
         try:
-            totalSize = int(h["Content-Length"])
-            keep_connecting = False
-        except:
-            # if URL was badly reached (issue #895):
-            # send warning message
-            printv('\nWARNING: URL cannot be reached. Trying again (maximum trials: '+str(max_trials)+').', 1, 'warning')
-            # pause for 0.5s
-            time.sleep(0.5)
-            # iterate i_trial and try again
-            i_trial += 1
-            # if i_trial exceeds max_trials, exit with error
-            if i_trial > max_trials:
-                printv('\nERROR: Maximum number of trials reached. Try again later.', 1, 'error')
-                keep_connecting = False
-
-    print "Downloading %s bytes..." % totalSize,
-    fp = open(local, 'wb')
-
-    blockSize = 8192 #100000 # urllib.urlretrieve uses 8192
-    count = 0
-    while True:
-        chunk = u.read(blockSize)
-        if not chunk: break
-        fp.write(chunk)
-        count += 1
-        if totalSize > 0:
-            percent = int(count * blockSize * 100 / totalSize)
-            if percent > 100: percent = 100
-            print "%2d%%" % percent,
-            if percent < 100:
-                print "\b\b\b\b\b",  # Erase "NN% "
-            else:
-                print "Done."
-
-    fp.flush()
-    fp.close()
-    if not totalSize:
-        print
+            tar = tarfile.open(compressed)
+            tar.extractall(path=dest_folder)
+            return
+        except tarfile.TarError:
+            printv('ERROR: ZIP package corrupted. Please try again.',
+                   verbose, 'error')
+    else:
+        printv('ERROR: The file %s is of wrong format' % compressed, verbose,
+               'error')
 
 
+def download_data(url, verbose):
+    """Download the binaries from a URL and return the destination filename
 
-# START PROGRAM
-# ==========================================================================================
+    Retry downloading if either server or connection errors occur on a SSL
+    connection
+    """
+
+    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
+    session = requests.Session()
+    session.mount('https://', HTTPAdapter(max_retries=retry))
+    response = session.get(url, stream=True)
+
+    _, content = cgi.parse_header(response.headers['Content-Disposition'])
+    tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
+    printv('Downloading %s\n' % content['filename'], verbose)
+
+    with open(tmp_path, 'wb') as tmp_file:
+        total = int(response.headers.get('content-length', 1))
+        dl = 0
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                tmp_file.write(chunk)
+                if verbose > 1:
+                    dl += len(chunk)
+                    done = min(int(20 * dl / total), 20)
+                    sys.stdout.write("\r[%s%s]" % ('=' * done,
+                                                   ' ' * (20-done)))
+                    sys.stdout.flush()
+
+    printv('\nDownload complete %s' % content['filename'], verbose=verbose)
+    return tmp_path
+
+
 if __name__ == "__main__":
-    # call main function
     main()
