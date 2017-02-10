@@ -385,8 +385,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         return path_out + file_out + ext_out
     # if fname_out already exists in nii or nii.gz format
     if os.path.isfile(path_out + file_out + ext_out):
-        printv('  WARNING: File ' + path_out + file_out + ext_out + ' already exists. Deleting it...', 1, 'warning')
-        os.remove(path_out + file_out + ext_out)
+        printv('  WARNING: File ' + path_out + file_out + ext_out + ' already exists. Overwriting it...', 1, 'warning')
     if ext_in != ext_out:
         # Generate output file
         '''
