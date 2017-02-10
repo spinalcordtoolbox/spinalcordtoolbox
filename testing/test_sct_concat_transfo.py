@@ -29,8 +29,6 @@ def test(data_path):
           + data_path + folder_data[1] + file_data[1]\
           + ' -d ' + data_path + folder_data[2] + file_data[2]
 
-    # return
-    #return sct.run(cmd, 0)
     return commands.getstatusoutput(cmd)
 
 

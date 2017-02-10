@@ -21,12 +21,12 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 
-from msct_parser import Parser
-from sct_utils import printv
+import msct_parser
+import sct_utils as sct
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('''Download binaries from the web.''')
     parser.add_option(
         name="-d",
@@ -61,6 +61,9 @@ def main(args=None):
 
     if args is None:
         args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # initialization
     dict_url = {
@@ -86,27 +89,27 @@ def main(args=None):
     try:
         tmp_file = download_data(url, verbose)
     except (KeyboardInterrupt):
-        printv('\nERROR: User canceled process.\n', 1, 'error')
+        sct.printv('\nERROR: User canceled process.\n', 1, 'error')
 
     unzip(tmp_file, dest_folder, verbose)
 
-    printv('Remove temporary file...\n', verbose)
+    sct.printv('Remove temporary file...\n', verbose)
     os.remove(tmp_file)
 
-    printv('Done! Folder created: %s\n' % dest_folder, verbose, 'info')
+    sct.printv('Done! Folder created: %s\n' % dest_folder, verbose, 'info')
 
 
 def unzip(compressed, dest_folder, verbose):
     """Extract compressed file to the dest_folder"""
-    printv('Copy binaries to %s\n' % dest_folder, verbose)
-    printv('Unzip dataset...\n', verbose)
+    sct.printv('Copy binaries to %s\n' % dest_folder, verbose)
+    sct.printv('Unzip dataset...\n', verbose)
     if compressed.endswith('zip'):
         try:
             zf = zipfile.ZipFile(compressed)
             zf.extractall(dest_folder)
             return
         except (zipfile.BadZipfile):
-            printv(
+            sct.printv(
                 'ERROR: ZIP package corrupted. Please try downloading again.',
                 verbose, 'error')
     elif compressed.endswith('tar.gz'):
@@ -115,10 +118,10 @@ def unzip(compressed, dest_folder, verbose):
             tar.extractall(path=dest_folder)
             return
         except tarfile.TarError:
-            printv('ERROR: ZIP package corrupted. Please try again.',
+            sct.printv('ERROR: ZIP package corrupted. Please try again.',
                    verbose, 'error')
     else:
-        printv('ERROR: The file %s is of wrong format' % compressed, verbose,
+        sct.printv('ERROR: The file %s is of wrong format' % compressed, verbose,
                'error')
 
 
@@ -136,7 +139,7 @@ def download_data(url, verbose):
 
     _, content = cgi.parse_header(response.headers['Content-Disposition'])
     tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-    printv('Downloading %s\n' % content['filename'], verbose)
+    sct.printv('Downloading %s\n' % content['filename'], verbose)
 
     with open(tmp_path, 'wb') as tmp_file:
         total = int(response.headers.get('content-length', 1))
@@ -151,7 +154,7 @@ def download_data(url, verbose):
                                                    ' ' * (20-done)))
                     sys.stdout.flush()
 
-    printv('\nDownload complete %s' % content['filename'], verbose=verbose)
+        sct.printv('\nDownload complete %s' % content['filename'], verbose=verbose)
     return tmp_path
 
 

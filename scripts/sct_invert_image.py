@@ -15,11 +15,11 @@
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import sys
-from msct_parser import Parser
-from msct_image import Image
+import msct_parser
+import msct_image
 
 # DEFAULT PARAMETERS
-class param:
+class Param(object):
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -27,13 +27,19 @@ class param:
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
-if __name__ == "__main__":
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
     # initialize parameters
-    param = param()
+    param = Param()
     # call main function
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Utility function for labels.')
     parser.add_option(name="-i",
                       type_value="file",
@@ -47,11 +53,15 @@ if __name__ == "__main__":
                       mandatory=False,
                       example="output_image.nii.gz",
                       default_value="inverted_image.nii.gz")
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     input_filename = arguments["-i"]
-    image_input = Image(input_filename)
+    image_input = msct_image.Image(input_filename)
     image_output = image_input.invert()
     if "-o" in arguments:
         image_output.setFileName(arguments["-o"])
-    image_output.save(type='minimize')
+    image_output.save(data_type='minimize')
+
+
+if __name__ == "__main__":
+    main()

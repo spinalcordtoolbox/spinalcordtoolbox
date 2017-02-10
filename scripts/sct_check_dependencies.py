@@ -17,26 +17,24 @@
 # TODO: manage .cshrc files
 # TODO: add linux distrib when checking OS
 
+import commands
+import importlib
+import os
+import platform
+import sys
+
+import sct_utils as sct
+import msct_parser
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     ## The constructor
     def __init__(self):
         self.create_log_file = 0
         self.complete_test = 0
 
 
-import sys
-
-import os
-import commands
-import platform
-import importlib
-import sct_utils as sct
-from msct_parser import Parser
-
-
-class bcolors:
+class bcolors(object):
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -47,7 +45,18 @@ class bcolors:
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+    param = Param()
+
+    if not args:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
+
+    # Get parser info
+    parser = get_parser()
+    arguments = parser.parse(args)
 
     # initialization
     fsl_is_working = 1
@@ -63,8 +72,6 @@ def main():
     print
 
     # Check input parameters
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
     if '-c' in arguments:
         complete_test = 1
     if '-log' in arguments:
@@ -406,7 +413,7 @@ def check_package_version(installed, required, package_name):
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Check the installation and environment variables of the'
                                  ' toolbox and its dependencies.')
     parser.add_option(name="-c",
@@ -426,7 +433,5 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()
