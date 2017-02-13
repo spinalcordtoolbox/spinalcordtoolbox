@@ -15,6 +15,7 @@ import os
 import shutil
 import sys
 
+import msct_image
 import msct_parser
 import sct_convert
 import sct_utils as sct
@@ -37,7 +38,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        script_name = os.path.splitext(os.path.basename(__file__))[0]
         sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Initialization
@@ -62,9 +63,10 @@ def main(args=None):
     path_tmp = sct.tmp_create()
 
     # Copying input data to tmp folder and convert to nii
-    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct_convert.convert(fname_mt0, path_tmp +'mt0.nii', data_type='float32')
-    sct_convert.convert(fname_mt1, path_tmp +'mt1.nii', data_type='float32')
+    sct.printv('\nCopying input data to tmp folder and convert to nii...',
+               verbose)
+    sct_convert.convert(fname_mt0, path_tmp + 'mt0.nii', data_type='float32')
+    sct_convert.convert(fname_mt1, path_tmp + 'mt1.nii', data_type='float32')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -96,7 +98,8 @@ def main(args=None):
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &\n', verbose, 'info')
+    sct.printv('fslview ' + fname_mt0 + ' ' + fname_mt1 + ' ' + file_out + ' &\n',
+               verbose, 'info')
 
 
 def get_parser():
