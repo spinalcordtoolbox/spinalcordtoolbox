@@ -162,10 +162,8 @@ class ProcessLabels(object):
         # loop across labels
         for i, coord in enumerate(self.coordinates):
             # display info
-            sct.printv(
-                'Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) +
-                ',' + str(coord.z) + ' --> ' + str(coord.value), 1)
-            image_output.data[coord.x, coord.y, coord.z] = coord.value
+            sct.printv('Label #{}: {}, {}, {} --> {}'.format(i, coord.x, coord.y, coord.z, coord.value), 1)
+            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
 
         return image_output
 
@@ -447,17 +445,16 @@ class ProcessLabels(object):
         # 3. Compute the center of mass of each group of voxels and write them into the output image
         for value, list_coord in groups.iteritems():
             center_of_mass = sum(list_coord) / float(len(list_coord))
-            sct.printv(
-                "Value = " + str(center_of_mass.value) + " : (" +
-                str(center_of_mass.x) + ", " + str(center_of_mass.y) + ", " +
-                str(center_of_mass.z) + ") --> ( " +
-                str(round(center_of_mass.x)) + ", " +
-                str(round(center_of_mass.y)) + ", " +
-                str(round(center_of_mass.z)) + ")",
-                verbose=self.verbose)
-            output_image.data[round(center_of_mass.x), round(center_of_mass.y),
-                              round(center_of_mass.z)] = center_of_mass.value
-
+            x = int(round(center_of_mass.x))
+            y = int(round(center_of_mass.y))
+            z = int(round(center_of_mass.z))
+            sct.printv('Value = {} : ({}, {}, {}) --> ({}, {}, {})'.format(center_of_mass.value,
+                                                                           center_of_mass.x,
+                                                                           center_of_mass.y,
+                                                                           center_of_mass.z,
+                                                                           x, y, z),
+                       verbose=self.verbose)
+            output_image.data[x, y, z] = center_of_mass.value
         return output_image
 
     def increment_z_inverse(self):
