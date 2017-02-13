@@ -18,7 +18,13 @@ function addtopath {
 }
 
 SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export SCT_DIR=${SCT_DIR%/bin}
 # Python scripts (for imports)
+SCT_DIR=${SCT_DIR%/bin}
 addtopath ${SCT_DIR}/scripts PYTHONPATH
-export PYTHONPATH
+if echo $(ps -o comm= $$) | grep csh ; then
+    setenv SCT_DIR
+    setenv PYTHONPATH
+else
+    export SCT_DIR
+    export PYTHONPATH
+fi

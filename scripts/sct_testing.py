@@ -223,7 +223,6 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
 # ==========================================================================================
 def test_function(script_name, param):
     fname_log = '../' + script_name + ".log"
-    tmp_script_name = script_name
     result_folder = "results_" + script_name
     script_name = "test_" + script_name
 
@@ -242,7 +241,7 @@ def test_function(script_name, param):
     # write log file
     write_to_log_file(fname_log, output, 'w')
     # manage status
-    if (status & 255) == 0:
+    if status == 0:
         print_ok()
     else:
         if status == 99:

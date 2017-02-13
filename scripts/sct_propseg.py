@@ -311,17 +311,19 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(args)
 
-    fname_data = arguments["-i"]
+    fname_data = os.path.abspath(arguments["-i"])
     contrast_type = arguments["-c"]
 
     # Building the command
-    isct_options = " -i " + fname_data + " -t " + contrast_type
+    isct_options = ' -i "%s" -t %s' % (fname_data, contrast_type)
 
     if "-ofolder" in arguments:
         folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
         folder_output = './'
-    isct_options += " -o " + folder_output
+    isct_options += ' -o "%s"' % folder_output
+    if not os.path.isdir(folder_output) and os.path.exists(folder_output):
+        sct.printv("ERROR output directory %s is not a valid directory" % folder_output, 1, 'error')
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
@@ -408,10 +410,6 @@ def main(args=None):
     # if centerline or mask is asked using viewer
     if use_viewer:
         # make sure image is in SAL orientation, as it is the orientation used by PropSeg
-
-
-
-
         image_input_orientation = sct_image.orientation(image_input, get=True, verbose=False)
         path_fname, file_fname, ext_fname = sct.extract_fname(fname_data)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
@@ -470,10 +468,7 @@ def main(args=None):
 
     # build output filename
     file_seg = file_data + "_seg" + ext_data
-    if folder_output == "./":
-        fname_seg = file_seg
-    else:
-        fname_seg = folder_output + file_seg
+    fname_seg = os.path.normpath(folder_output + file_seg)
 
     # check consistency of segmentation
     fname_centerline = folder_output + file_data + '_centerline' + ext_data
