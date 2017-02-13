@@ -556,8 +556,7 @@ def main(args=None):
             # assign value 99
             new_label.value = 99
             # Add to existing image
-            im_label.data[new_label.x, new_label.y,
-                          new_label.z] = new_label.value
+            im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
             # Overwrite label file
             # im_label.setFileName('label_rpi_modif.nii.gz')
             im_label.save()
