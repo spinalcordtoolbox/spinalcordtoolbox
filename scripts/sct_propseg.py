@@ -420,6 +420,10 @@ if __name__ == "__main__":
 
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
+
+        if not mask_points and viewer.closed:
+            mask_points = viewer.list_points_useful_notation
+
         if mask_points:
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
