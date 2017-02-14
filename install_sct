@@ -145,7 +145,7 @@ usage()
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
   echo -e "\n\t-o \v Use the the file form the offline installer (no internet connection required)"
-
+  echo -e "\n\t-w \v Setup development environment for SCT"
 }
 
 
@@ -153,7 +153,7 @@ usage()
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
 
-while getopts ":dmhbo" opt; do
+while getopts ":dmhbow" opt; do
   case $opt in
     d)
       echo " data directory will not be (re)-installed"
@@ -170,6 +170,10 @@ while getopts ":dmhbo" opt; do
     o)
       echo " Using the offline folder for installation"
       OFFLINE_INSTALL=yes
+      ;;
+    w)
+      echo " Setup the development mode"
+      SCT_DEV_MODE=yes
       ;;
     h)
       usage
@@ -423,6 +427,15 @@ else
   fi
   cmd="cd ${SCT_DIR}"; echo ">> "$cmd; $cmd
   python setup.py install -f
+fi
+
+## Install SCT in conda's module path
+if [ ${SCT_DEV_MODE} ]; then
+    echo "Installing SCT in development mode"
+    pip install --ignore-installed -r ${SCT_SOURCE}/install/requirements/requirements-dev.txt
+    python setup.py develop
+else
+    python setup.py install -f
 fi
 
 ## Install binaries
