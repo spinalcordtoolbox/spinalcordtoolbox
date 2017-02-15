@@ -298,7 +298,8 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
-    fname_data = os.path.abspath(arguments["-i"])
+    fname_input_data = arguments["-i"]
+    fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
 
     # Building the command
@@ -469,4 +470,4 @@ if __name__ == "__main__":
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview "+fname_data+" "+fname_seg+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
