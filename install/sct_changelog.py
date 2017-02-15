@@ -10,8 +10,10 @@ How it works: Once the new tag is ready, you can simply run
 
 and copy and paste the content of changlog.[tagId].md to CHANGES.md
 """
-
+import argparse
 import logging
+
+import datetime
 import requests
 import sys
 
@@ -29,13 +31,13 @@ def latestMilestone():
     return data[0]
 
 
-def detailedChangeLog():
-    """Return the Github URL comparing the last two tags.
+def detailedChangeLog(new_tag):
+    """Return the Github URL comparing the last tags with the new_tag.
     """
     tagsURL = apiURL + 'tags'
     response = requests.get(tagsURL)
-    latest, previous = response.json()[:2]
-    return ("https://github.com/neuropoly/spinalcordtoolbox/compare/%s...%s" % (previous['name'], latest['name']))
+    previous = response.json()[0]
+    return ("https://github.com/neuropoly/spinalcordtoolbox/compare/%s...%s" % (previous['name'], new_tag))
 
 
 def search(milestone, label=''):
@@ -51,19 +53,35 @@ def search(milestone, label=''):
     logging.info('Pull requests "%s" labeled %s received %d', milestone, label, len(data))
     return data
 
+def cmd_options():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-t', '--tag', help='New tag name', action='store', dest='tag')
+    return parser.parse_args()
 
 if __name__ == '__main__':
+    options = cmd_options()
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='SCT changelog -- %(message)s')
     lines = []
     milestone = latestMilestone()
-    lines.append('# Milestone "%s"' % milestone['title'])
-    for label in ['bug', 'enhancement', 'feature', 'doc', 'testing', '']:
-        lines.append('## %s' % (label.upper() or 'OTHER'))
-        lines.append('[View detailed changelog](%s)' % detailedChangeLog())
+
+    lines.append('##{} ({})'.format(milestone['title'], datetime.date.today()))
+    lines.append('[View detailed changelog](%s)' % detailedChangeLog(options.tag))
+
+    changelog_pr = set()
+    for label in ['bug', 'enhancement', 'feature', 'doc', 'testing']:
         pulls = search(milestone['title'], label)
-        for pull in pulls.get('items'):
-            msg = " - (%s) %s [View pull request](%s)" % (pull['id'], pull['title'], pull['html_url'])
-            lines.append(msg)
+        if pulls.get('items'):
+            lines.append('### %{}'.format(label.upper()))
+            changelog_pr = changelog_pr.union(set([x['html_url'] for x in pulls.get('items')]))
+            for pull in pulls.get('items'):
+                msg = " - (%s) %s [View pull request](%s)" % (pull['id'], pull['title'], pull['html_url'])
+                lines.append(msg)
+
+    logging.info('Total pull request in changelog: %d', len(changelog_pr))
+    all_pr = set([x['html_url'] for x in search(milestone['title'])['items']])
+    diff_pr = all_pr - changelog_pr
+    for diff in diff_pr:
+        logging.warning('Pull request not labelled: %s', diff)
 
     filename = 'changelog.%d.md' % milestone['number']
     with open(filename, 'w') as changelog:
