@@ -61,7 +61,6 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
     # extraction of centerline provided by isct_propseg and computation of center of mass for each slice
     # the centerline is defined as the center of the tubular mesh outputed by propseg.
     centerline, key_centerline = {}, []
-    z_centerline = []
     for i in range(nz):
         slice = im_centerline.data[:, :, i]
         if np.any(slice):
@@ -72,7 +71,6 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
     minz_centerline = np.min(key_centerline)
     maxz_centerline = np.max(key_centerline)
     mid_slice = int((maxz_centerline - minz_centerline) / 2)
-    nb_slices = maxz_centerline - minz_centerline + 1
 
     # for each slice of the segmentation, check if only one object is present. If not, remove the slice from segmentation.
     # If only one object (the spinal cord) is present in the slice, check if its center of mass is close to the centerline of isct_propseg.
