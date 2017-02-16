@@ -1,5 +1,25 @@
 # CHANGES TO RELEASE
 
+##3.0_beta32 (2017-02-10)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta31...v3.0_beta32)
+### BUG
+ - (#206218460) BUG: install_sct: fixed PATH issue (#1153): closed at 2017-02-08 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1154)
+ - (#205166212) BUG: compute_snr: fixed variable name: closed at 2017-02-03 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1148)
+ - (#204452335) Changed the algorithm to fetch the download filename: closed at 2017-02-03 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1146)
+ - (#204170506) Copy header of input file to ensure qform is unchanged: closed at 2017-01-31 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1137)
+ - (#204162354) zero voxels no more included when computing MI + new flag to compute normalized MI: closed at 2017-02-01 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1136)
+ - (#204130142) Downloading the binaries using the python module instead of CURL: closed at 2017-01-30 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1134)
+ - (#204122317) [sct_segment_graymatter] correct background value: closed at 2017-01-31 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1133)
+ - (#201383821) Fixing indexes issue on Travis OSX: closed at 2017-01-17 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1115)
+ - (#201307094) REF: display spinal cord length when required (full spinal cord): closed at 2017-01-17 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1112)
+ - (#201032802) Adding rules for in-segmentation errors: closed at 2017-01-17 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1110)
+### ENHANCEMENT
+ - (#205619801) Generate a changelog from GitHub: closed at 2017-02-10 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1152)
+ - (#204651349) OPT: maths: visu only produced if verbose=2: closed at 2017-02-02 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1147)
+### TESTING
+ - (#204441260) Add message to user when spinal cord is not detected and verbose improvement for testing: closed at 2017-02-01 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1145)
+ - (#201891816) Display results of isct_test_function: closed at 2017-01-20 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1117)
+
 ##3.0_beta31 (2017-01-16)
 - BUG: **sct_process_segmentation** display spinal cord length when required (full spinal cord) (#1112)
 - BUG: **sct_propseg** Adding rules for in-segmentation errors (#1110)
