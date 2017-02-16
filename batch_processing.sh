@@ -17,9 +17,6 @@ else
   DISPLAY=true
 fi
 
-# get SCT_DIR
-source sct_env
-
 # download example data
 sct_download_data -d sct_example_data
 
@@ -100,7 +97,7 @@ mv warp_PAM50_t22mt1_crop_reg_gm.nii.gz warp_template2mt.nii.gz
 sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # Check registration result
 if [ $DISPLAY = true ]; then
-   fslview mt0_crop.nii.gz label/template/PAM50_t2.nii.gz -b 0,4000 label/template/PAM50_levels.nii.gz -l MGH-Cortical -t 0.5 label/template/PAM50_gm.nii.gz -l Red-Yellow -b 0.5,1 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.5,1 &
+   fslview mt0_crop_reg.nii.gz label/template/PAM50_t2.nii.gz -b 0,4000 label/template/PAM50_levels.nii.gz -l MGH-Cortical -t 0.5 label/template/PAM50_gm.nii.gz -l Red-Yellow -b 0.5,1 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.5,1 &
 fi
 # extract MTR within the white matter between C2 and C5
 sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm.txt -l 51 -vert 2:5
@@ -161,13 +158,12 @@ sct_create_mask -i fmri.nii.gz -p centerline,t1_seg_reg.nii.gz -size 35mm
 sct_crop_image -i fmri.nii.gz -m mask_fmri.nii.gz -o fmri_crop.nii.gz
 sct_crop_image -i t1_seg_reg.nii.gz -m mask_fmri.nii.gz -o t1_seg_reg_crop.nii.gz
 # moco
-sct_fmri_moco -i fmri_crop.nii.gz
 # tips: if you have low SNR you can group consecutive images with "-g"
+sct_fmri_moco -i fmri_crop.nii.gz
 # segment mean fMRI volume
-# tips: we use the T2 segmentation to help with fMRI segmentation
-# tips: we use "-radius 5" otherwise the segmentation is too small
-# tips: we use "-max-deformation 4" to prevent the propagation from stopping at the edge
-sct_propseg -i fmri_crop_moco_mean.nii.gz -init-centerline t1_seg_reg.nii.gz -c t2
+# tips: we use the T1 segmentation to help with fMRI segmentation
+# tips: we use "-radius 6" otherwise the segmentation is too small
+sct_propseg -i fmri_crop_moco_mean.nii.gz -init-centerline t1_seg_reg.nii.gz -c t2 -radius 6
 # check segmentation
 if [ $DISPLAY = true ]; then
   fslview fmri_crop_moco_mean -b 0,1000 fmri_crop_moco_mean_seg -l Red -t 0.5 &
