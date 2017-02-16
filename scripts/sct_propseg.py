@@ -402,8 +402,8 @@ if __name__ == "__main__":
         image_input_orientation = orientation(image_input, get=True, verbose=False)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_data + ext_data, "_SAL")
         path_tmp_viewer = sct.tmp_create(verbose=verbose)
-        cmd = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
-        sct.run(cmd, verbose=False)
+        cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
+        sct.run(cmd_image, verbose=False)
 
         from sct_viewer import ClickViewer
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
@@ -420,6 +420,10 @@ if __name__ == "__main__":
 
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
+
+        if not mask_points and viewer.closed:
+            mask_points = viewer.list_points_useful_notation
+
         if mask_points:
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
