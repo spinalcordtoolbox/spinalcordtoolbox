@@ -718,7 +718,8 @@ def main(args=None):
         elif os.path.isfile(arguments['-vertfile']):
             param_seg.fname_level = arguments['-vertfile']
         else:
-            sct.printv(parser.usage.generate(error='ERROR: -vertfile input file: "'+arguments['-vertfile']+'" does not exist.'))
+            param_seg.fname_level = None
+            sct.printv('WARNING: -vertfile input file: "'+arguments['-vertfile']+'" does not exist.\nSegmenting GM without using vertebral information', 1, 'warning')
     if '-denoising' in arguments:
         param_data.denoising = bool(int(arguments['-denoising']))
     if '-normalization' in arguments:
