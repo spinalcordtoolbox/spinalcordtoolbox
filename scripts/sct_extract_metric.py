@@ -57,14 +57,16 @@ def get_parser():
 
     parser = Parser(__file__)
     parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with 'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels. The labels should be in the same space coordinates as the input image.""")
+    # Mandatory arguments
     parser.add_option(name='-i',
                       type_value='image_nifti',
                       description='File to extract metrics from.',
                       mandatory=True,
                       example='FA.nii.gz')
+    # Optional arguments
     parser.add_option(name='-f',
-                      type_value='folder',
-                      description='Folder including labels to extract the metric from.',
+                      type_value='str',
+                      description='Folder containing WM tract labels, or single label file.',
                       mandatory=False,
                       default_value='./label/atlas',
                       example=path_sct+'/data/atlas')
@@ -212,13 +214,23 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     label_to_fix_fract_vol = None
     im_weight = None
 
-    # adjust file names and parameters for old MNI-Poly-AMU template
-    if not len(glob(path_label + 'WMtract*.*')) == 0:
-        # MNI-Poly-AMU
-        suffix_vertebral_labeling = '*_level.nii.gz'
+    # check if path_label is a file instead of a folder
+    if os.path.isfile(path_label):
+        single_label = 1
+    elif os.path.isdir(path_label):
+        single_label = 0
+        path_label = sct.slash_at_the_end(path_label, 1)
     else:
-        # PAM50 and later
-        suffix_vertebral_labeling = '*_levels.nii.gz'
+        sct.printv('\nERROR: '+path_label+' does not exist.', 1, 'error')
+
+    # adjust file names and parameters for old MNI-Poly-AMU template
+    if not single_label:
+        if not len(glob(path_label + 'WMtract*.*')) == 0:
+            # MNI-Poly-AMU
+            suffix_vertebral_labeling = '*_level.nii.gz'
+        else:
+            # PAM50 and later
+            suffix_vertebral_labeling = '*_levels.nii.gz'
 
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
@@ -245,19 +257,29 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     # print parameters
     print '\nChecked parameters:'
     print '  data ...................... '+fname_data
-    print '  folder label .............. '+path_label
-    print '  estimation method ......... '+method
+    print '  label ..................... '+path_label
+    print '  method .................... '+method
     print '  slices of interest ........ '+slices_of_interest
     print '  vertebral levels .......... '+vertebral_levels
     print '  vertebral labeling file.... '+fname_vertebral_labeling
     print '  advanced parameters ....... '+str(adv_param)+'\n'
 
     # parse labels according to the file info_label.txt
-    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
-
-    # check syntax of labels asked by user
-    labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0])
-
+    if not single_label:
+        indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
+        # check syntax of labels asked by user
+        labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0])
+    else:
+        indiv_labels_ids = [0]
+        labels_id_user = [0]
+        indiv_labels_names = [path_label]
+        indiv_labels_files = [path_label]
+        combined_labels_ids = []
+        combined_labels_names = []
+        combined_labels_id_groups = []
+        ml_clusters = []
+        # set path_label to empty string, because indiv_labels_files will replace it from now on
+        path_label = ''
     nb_labels = len(indiv_labels_files)
 
     # Load data
@@ -1244,14 +1266,11 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
-    # mandatory arguments
+    overwrite = 0
     fname_data = arguments['-i']
-    path_label = sct.slash_at_the_end(arguments['-f'], 1)
+    path_label = arguments['-f']
     method = arguments['-method']
     fname_output = arguments['-o']
-
-    # optional arguments
-    overwrite = 0
     if '-l' in arguments:
         labels_user = arguments['-l']
     else:
