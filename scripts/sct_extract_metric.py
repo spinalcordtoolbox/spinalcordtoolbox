@@ -56,7 +56,7 @@ def get_parser():
     param_default = Param()
 
     parser = Parser(__file__)
-    parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with 'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels. The labels should be in the same space coordinates as the input image.""")
+    parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or a folder generated with 'sct_warp_template' and containing multiple label files and a label description file (info_label.txt). The labels should be in the same space coordinates as the input image.""")
     # Mandatory arguments
     parser.add_option(name='-i',
                       type_value='image_nifti',
@@ -182,13 +182,19 @@ bin: binarize mask (threshold=0.5)""",
     default_info_label.close()
 
     str_section = """\n
-To list white matter atlas labels, type:
+To list white matter atlas labels:
 """ + os.path.basename(__file__) + """ -f """+path_sct+"""/data/atlas
 
 To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
 """ + os.path.basename(__file__) + """ -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
     if label_references != '':
         str_section += """
+
+To compute average MTR in a region defined by a single label file (could be binary or 0-1 weighted mask) between slices 1 and 4:
+""" + os.path.basename(__file__) + """ -i mtr.nii.gz -f my_mask.nii.gz -z 1:4 -m wa"""
+    if label_references != '':
+        str_section += """
+
 \nList of labels in """ + file_label + """:
 --------------------------------------------------------------------------------------
 """ + label_references + """
