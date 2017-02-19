@@ -593,11 +593,11 @@ def register(src, dest, paramreg, param, i_step_str):
             scr_regStep = sct.add_suffix(src, '_regStep'+i_step_str)
             # estimate transfo
             cmd = ('isct_antsSliceRegularizedRegistration '
-                   '-t Translation[0.5] '
+                   '-t Translation['+paramreg.steps[i_step_str].gradStep+'] '
                    '-m '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+',Regular,0.2] '
                    '-p '+paramreg.steps[i_step_str].poly+' '
                    '-i '+paramreg.steps[i_step_str].iter+' '
-                   '-f 1 '
+                   '-f '+paramreg.steps[i_step_str].shrink+' '
                    '-s '+paramreg.steps[i_step_str].smooth+' '
                    '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
                    '-o [step'+i_step_str+','+scr_regStep+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
