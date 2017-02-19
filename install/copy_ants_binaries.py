@@ -71,8 +71,8 @@ for file_ants in list_file_ants:
     if not os.path.exists(folder_ants+file_ants):
         print('\nERROR: File '+folder_ants+file_ants+' does not exist.\n')
     # copy data
-    print
+    print('Copying: '+file_ants)
     shutil.copyfile(folder_ants+file_ants, output_folder+prefix_sct+file_ants)
 #    os.cosct.run('cp '+folder_ants+file_ants+' '+path_bin+prefix_sct+file_ants, 1)
 
-print("done!\n")
+print("Done!\n")
