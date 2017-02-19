@@ -69,9 +69,9 @@ def main(args=None):
         'PAM50': 'https://osf.io/gdwn6/?action=download',
         'MNI-Poly-AMU': 'https://osf.io/b26vh/?action=download',
         'gm_model': 'https://osf.io/ugscu/?action=download',
-        'binaries_debian': 'https://osf.io/2pztn/?action=download',
-        'binaries_centos': 'https://osf.io/4wbgt/?action=download',
-        'binaries_osx': 'https://osf.io/ceg8p/?action=download'
+        'binaries_debian': 'https://osf.io/ke8f6/?action=download',
+        'binaries_centos': 'https://osf.io/v6hn8/?action=download',
+        'binaries_osx': 'https://osf.io/x6n63/?action=download'
     }
 
     # Get parser info
