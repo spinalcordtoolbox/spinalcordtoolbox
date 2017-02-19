@@ -593,7 +593,7 @@ def register(src, dest, paramreg, param, i_step_str):
             scr_regStep = sct.add_suffix(src, '_regStep'+i_step_str)
             # estimate transfo
             cmd = ('isct_antsSliceRegularizedRegistration '
-                   '-t Translation['+paramreg.steps[i_step_str].gradStep+'] '
+                   '-t Rigid['+paramreg.steps[i_step_str].gradStep+'] '
                    '-m '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+',Regular,0.2] '
                    '-p '+paramreg.steps[i_step_str].poly+' '
                    '-i '+paramreg.steps[i_step_str].iter+' '
