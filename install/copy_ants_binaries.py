@@ -10,8 +10,6 @@ import os
 import getopt
 import sys
 import shutil
-import sct_utils as sct
-
 
 # usage
 #=======================================================================================================================
