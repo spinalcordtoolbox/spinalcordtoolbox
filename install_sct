@@ -447,17 +447,15 @@ else
     echo -e "\nInstalling binaries..."
     cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
     if [ $OS == "linux" ]; then
-        cmd="python ../scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+        cmd="python ${SCT_DIR}/scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     elif [ $OS == "linux_centos6" ]; then
-        cmd="python ../scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+        cmd="python ${SCT_DIR}/scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     elif [ $OS == "osx" ]; then
-        cmd="python ../scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+        cmd="python ${SCT_DIR}/scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     fi
 fi
 
-
 echo -e "All requirements installed!"
-
 
 # INSTALL DATA
 if [ ${NO_DATA_INSTALL} ]; then
