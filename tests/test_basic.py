@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+
+import pytest
 import spinalcordtoolbox.types.centerline as centerline
 
 

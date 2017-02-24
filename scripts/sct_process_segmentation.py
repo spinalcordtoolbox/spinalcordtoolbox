@@ -203,8 +203,7 @@ def main(args):
     if "-ofolder" in arguments:
         output_folder = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
-        seg_path, seg_file, seg_ext = sct.extract_fname(os.path.abspath(fname_segmentation))
-        output_folder = seg_path
+        output_folder = os.getcwd()+'/'
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
     if '-vert' in arguments:

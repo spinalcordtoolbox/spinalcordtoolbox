@@ -68,10 +68,14 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
             centerline[str(i)] = [x_centerline, y_centerline]
             key_centerline.append(i)
 
+    minz_centerline = np.min(key_centerline)
+    maxz_centerline = np.max(key_centerline)
+    mid_slice = int((maxz_centerline - minz_centerline) / 2)
+
     # for each slice of the segmentation, check if only one object is present. If not, remove the slice from segmentation.
     # If only one object (the spinal cord) is present in the slice, check if its center of mass is close to the centerline of isct_propseg.
     slices_to_remove = [False] * nz  # flag that decides if the slice must be removed
-    for i in range(nz):
+    for i in range(minz_centerline, maxz_centerline+1):
         # extraction of slice
         slice = im_seg.data[:, :, i]
         distance = -1
@@ -93,21 +97,21 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
     # Method:
     # starting from mid-centerline (in both directions), the first True encountered is applied to all following slices
     slice_to_change = False
-    for i in range(nz / 2, nz):
+    for i in range(mid_slice, maxz_centerline):
         if slice_to_change:
             slices_to_remove[i] = True
         elif slices_to_remove[i]:
             slices_to_remove[i] = True
             slice_to_change = True
     slice_to_change = False
-    for i in range(nz / 2, -1, -1):
+    for i in range(mid_slice, minz_centerline-1, -1):
         if slice_to_change:
             slices_to_remove[i] = True
         elif slices_to_remove[i]:
             slices_to_remove[i] = True
             slice_to_change = True
 
-    for i in range(nz):
+    for i in range(mid_slice, maxz_centerline):
         # remove the slice
         if slices_to_remove[i]:
             im_seg.data[:, :, i] *= 0
@@ -298,17 +302,20 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
-    fname_data = arguments["-i"]
+    fname_input_data = arguments["-i"]
+    fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
 
     # Building the command
-    cmd = "isct_propseg" + " -i " + fname_data + " -t " + contrast_type
+    cmd = 'isct_propseg -i "%s" -t %s' % (fname_data, contrast_type)
 
     if "-ofolder" in arguments:
         folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
         folder_output = './'
-    cmd += " -o " + folder_output
+    cmd += ' -o "%s"' % folder_output
+    if not os.path.isdir(folder_output) and os.path.exists(folder_output):
+        sct.printv("ERROR output directory %s is not a valid directory" % folder_output, 1, 'error')
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
@@ -400,23 +407,40 @@ if __name__ == "__main__":
         image_input_orientation = orientation(image_input, get=True, verbose=False)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_data + ext_data, "_SAL")
         path_tmp_viewer = sct.tmp_create(verbose=verbose)
-        sct.run('sct_image -i ' + fname_data + ' -o ' + path_tmp_viewer + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
+        cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
+        sct.run(cmd_image, verbose=False)
 
         from sct_viewer import ClickViewer
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
         viewer = ClickViewer(image_input_reoriented)
         viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         if use_viewer == "mask":
+            viewer.input_type = 'mask'
             viewer.number_of_slices = 3
             viewer.gap_inter_slice = int(10 / pz)
             if viewer.gap_inter_slice == 0:
                 viewer.gap_inter_slice = 1
-            viewer.calculate_list_slices()
-        #else:
-        #    viewer.gap_inter_slice = 3
+
+            if '-init' in arguments:
+                starting_slice = arguments['-init']
+
+                # starting_slice can be provided as a ratio of the number of slices
+                # we assume slice number/ratio is in RPI orientation, which is the inverse of the one used in viewer (SAL)
+                if 0 < starting_slice < 1:
+                    starting_slice = int((1.0 - starting_slice) * image_input_reoriented.data.shape[0])
+                else:
+                    starting_slice = image_input_reoriented.data.shape[0] - starting_slice
+
+                viewer.calculate_list_slices(starting_slice=starting_slice)
+            else:
+                viewer.calculate_list_slices()
 
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
+
+        if not mask_points and viewer.closed:
+            mask_points = viewer.list_points_useful_notation
+
         if mask_points:
             # create the mask containing either the three-points or centerline mask for initialization
             mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
@@ -443,10 +467,7 @@ if __name__ == "__main__":
 
     # build output filename
     file_seg = file_data + "_seg" + ext_data
-    if folder_output == "./":
-        fname_seg = file_seg
-    else:
-        fname_seg = folder_output + file_seg
+    fname_seg = os.path.normpath(folder_output + file_seg)
 
     # check consistency of segmentation
     fname_centerline = folder_output + file_data + '_centerline' + ext_data
@@ -465,4 +486,4 @@ if __name__ == "__main__":
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview "+fname_data+" "+fname_seg+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
