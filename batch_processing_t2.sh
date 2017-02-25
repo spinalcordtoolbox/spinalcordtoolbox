@@ -40,7 +40,7 @@ cd t2
 sct_propseg -i t2.nii.gz -c t2
 # Check results:
 if [ $DISPLAY = true ]; then
-  fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
+  fslview t2 -b 0,1000 t2_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2
