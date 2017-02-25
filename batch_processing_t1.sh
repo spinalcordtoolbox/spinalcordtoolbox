@@ -151,43 +151,6 @@ sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.txt
 cd ..
 
 
-# fmri
-# ----------
-cd fmri
-# average across t to obtain 3d volume
-sct_maths -i fmri.nii.gz -mean t -o fmri_mean.nii.gz
-# put T1 segmentation into fmri space
-sct_register_multimodal -i ../t1/t1_seg.nii.gz -d fmri_mean.nii.gz -identity 1 -x nn
-# create mask at the center of the FOV (will be used for cropping)
-sct_create_mask -i fmri.nii.gz -p centerline,t1_seg_reg.nii.gz -size 35mm
-# crop fmri data
-sct_crop_image -i fmri.nii.gz -m mask_fmri.nii.gz -o fmri_crop.nii.gz
-sct_crop_image -i t1_seg_reg.nii.gz -m mask_fmri.nii.gz -o t1_seg_reg_crop.nii.gz
-# moco
-# tips: if you have low SNR you can group consecutive images with "-g"
-sct_fmri_moco -i fmri_crop.nii.gz
-# segment mean fMRI volume
-# tips: we use the T1 segmentation to help with fMRI segmentation
-# tips: we use "-radius 6" otherwise the segmentation is too small
-sct_propseg -i fmri_crop_moco_mean.nii.gz -init-centerline t1_seg_reg.nii.gz -c t2 -radius 6
-# check segmentation
-if [ $DISPLAY = true ]; then
-  fslview fmri_crop_moco_mean -b 0,1000 fmri_crop_moco_mean_seg -l Red -t 0.5 &
-fi
-# here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_manual.nii.gz"
-# register template to fmri: here we use the template register to the MT to get the correction of the internal structure
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d fmri_crop_moco_mean.nii.gz -dseg fmri_crop_moco_mean_seg_manual.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3,metric=CC:step=2,type=seg,algo=bsplinesyn,metric=CC,smooth=0,iter=3,slicewise=0 -initwarp ../mt/warp_template2mt.nii.gz
-# rename warping field for clarity
-mv warp_PAM50_t2s2fmri_crop_moco_mean.nii.gz warp_template2fmri.nii.gz
-# warp template and spinal levels (here we don't need the WM atlas)
-sct_warp_template -d fmri_crop_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
-# check results
-if [ $DISPLAY = true ]; then
-  fslview fmri_crop_moco_mean -b 0,500 label/spinal_levels/spinal_level_02.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_03.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_04.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_05.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_06.nii.gz -l Pink -b 0,0.05 &
-fi
-cd ..
-
-
 # display results (to easily compare integrity across SCT versions)
 # ----------
 echo "Ended at: $(date +%x_%r)"
