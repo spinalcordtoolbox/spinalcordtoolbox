@@ -7,6 +7,9 @@
 # To run without fslview output, type:
 #   ./batch_processing.sh -nodisplay
 #
+# To prevent downloading sct_example_data and run from local folder, run:
+#   ./batch_processing.sh -nodownload
+#
 # tested with Spinal Cord Toolbox (jca_newExampleData/2b72ae043690e5ecf017fbeb3b855dd288212849)
 
 # Check if display is on or off
@@ -17,39 +20,42 @@ else
   DISPLAY=true
 fi
 
-# download example data
-sct_download_data -d sct_example_data
+# Check if users wants to use his own data
+if [[ $@ == *"-nodownload"* ]]; then
+  echo "Use local folder instead of downloading data."
+else
+  # download example data
+  sct_download_data -d sct_example_data
+  # go in folder
+  cd sct_example_data
+fi
 
 # display starting time:
 echo "Started at: $(date +%x_%r)"
 
-# go in folder
-cd sct_example_data
-
-
-# t1
+# t2
 # ===========================================================================================
-cd t1
+cd t2
 # Spinal cord segmentation
-sct_propseg -i t1.nii.gz -c t1
+sct_propseg -i t2.nii.gz -c t2
 # Check results:
 if [ $DISPLAY = true ]; then
-  fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
+  fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
-sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -c t1
+sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2
 # Create labels at C3 and C7 vertebral levels
-sct_label_utils -i t1_seg_labeled.nii.gz -vert-body 3,7
+sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 3,7
 # Register to template
-sct_register_to_template -i t1.nii.gz -s t1_seg.nii.gz -l labels.nii.gz -c t1
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -c t2
 # Warp template without the white matter atlas (we don't need it at this point)
-sct_warp_template -d t1.nii.gz -w warp_template2anat.nii.gz -a 0
+sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # check results
 if [ $DISPLAY = true ]; then
-  fslview t1.nii.gz -b 0,800 label/template/PAM50_t1.nii.gz -b 0,4000 label/template/PAM50_levels.nii.gz -l MGH-Cortical -t 0.5 label/template/PAM50_gm.nii.gz -l Red-Yellow -b 0.5,1 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.5,1 &
+  fslview t2.nii.gz -b 0,800 label/template/PAM50_t2.nii.gz -b 0,4000 label/template/PAM50_levels.nii.gz -l MGH-Cortical -t 0.5 label/template/PAM50_gm.nii.gz -l Red-Yellow -b 0.5,1 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.5,1 &
 fi
 # compute average cross-sectional area and volume between C3 and C4 levels
-sct_process_segmentation -i t1_seg.nii.gz -p csa -vert 3:4
+sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 3:4
 # go back to root folder
 cd ..
 
@@ -58,14 +64,14 @@ cd ..
 # ----------
 cd mt
 # bring T1 segmentation in MT space to help segmentation (no optimization)
-sct_register_multimodal -i ../t1/t1_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
+sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
 # create mask for faster processing
-sct_create_mask -i mt1.nii.gz -p centerline,t1_seg_reg.nii.gz -size 45mm
+sct_create_mask -i mt1.nii.gz -p centerline,t2_seg_reg.nii.gz -size 45mm
 # crop data
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 sct_crop_image -i mt0.nii.gz -m mask_mt1.nii.gz -o mt0_crop.nii.gz
 # segment mt1
-sct_propseg -i mt1_crop.nii.gz -c t2 -init-centerline t1_seg_reg.nii.gz
+sct_propseg -i mt1_crop.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz
 # Check results
 if [ $DISPLAY = true ]; then
    fslview mt1_crop.nii.gz mt1_crop_seg.nii.gz -l Red -b 0,1 -t 0.7 &
@@ -84,7 +90,7 @@ sct_compute_mtr -mt0 mt0_crop_reg.nii.gz -mt1 mt1_crop.nii.gz
 # Register template to mt1
 # Tips: here we only use the segmentations due to poor SC/CSF contrast at the bottom slice.
 # Tips: First step: slicereg based on images, with large smoothing to capture potential motion between anat and mt, then at second step: bpslinesyn in order to adapt the shape of the cord to the mt modality (in case there are distortions between anat and mt).
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -d mt1_crop.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -m mask_mt1_crop.nii.gz -initwarp ../t1/warp_template2anat.nii.gz
+sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -d mt1_crop.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -m mask_mt1_crop.nii.gz -initwarp ../t2/warp_template2anat.nii.gz
 # Warp template (to get vertebral labeling)
 sct_warp_template -d mt1_crop.nii.gz -w warp_PAM50_t22mt1_crop.nii.gz -a 0
 # Segment gray matter
@@ -112,15 +118,15 @@ cd ..
 cd dmri
 # bring T1 segmentation in dmri space to create mask (no optimization)
 sct_maths -i dmri.nii.gz -mean t -o dmri_mean.nii.gz
-sct_register_multimodal -i ../t1/t1_seg.nii.gz -d dmri_mean.nii.gz -identity 1 -x nn
+sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dmri_mean.nii.gz -identity 1 -x nn
 # create mask to help moco and for faster processing
-sct_create_mask -i dmri_mean.nii.gz -p centerline,t1_seg_reg.nii.gz -size 35mm
+sct_create_mask -i dmri_mean.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm
 # crop data
 sct_crop_image -i dmri.nii.gz -m mask_dmri_mean.nii.gz -o dmri_crop.nii.gz
 # motion correction
 sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
 # segmentation with propseg
-sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline t1_seg_reg.nii.gz
+sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline t2_seg_reg.nii.gz
 # check segmentation
 if [ $DISPLAY = true ]; then
   fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 &
@@ -145,48 +151,11 @@ sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.txt
 cd ..
 
 
-# fmri
-# ----------
-cd fmri
-# average across t to obtain 3d volume
-sct_maths -i fmri.nii.gz -mean t -o fmri_mean.nii.gz
-# put T1 segmentation into fmri space
-sct_register_multimodal -i ../t1/t1_seg.nii.gz -d fmri_mean.nii.gz -identity 1 -x nn
-# create mask at the center of the FOV (will be used for cropping)
-sct_create_mask -i fmri.nii.gz -p centerline,t1_seg_reg.nii.gz -size 35mm
-# crop fmri data
-sct_crop_image -i fmri.nii.gz -m mask_fmri.nii.gz -o fmri_crop.nii.gz
-sct_crop_image -i t1_seg_reg.nii.gz -m mask_fmri.nii.gz -o t1_seg_reg_crop.nii.gz
-# moco
-# tips: if you have low SNR you can group consecutive images with "-g"
-sct_fmri_moco -i fmri_crop.nii.gz
-# segment mean fMRI volume
-# tips: we use the T1 segmentation to help with fMRI segmentation
-# tips: we use "-radius 6" otherwise the segmentation is too small
-sct_propseg -i fmri_crop_moco_mean.nii.gz -init-centerline t1_seg_reg.nii.gz -c t2 -radius 6
-# check segmentation
-if [ $DISPLAY = true ]; then
-  fslview fmri_crop_moco_mean -b 0,1000 fmri_crop_moco_mean_seg -l Red -t 0.5 &
-fi
-# here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_manual.nii.gz"
-# register template to fmri: here we use the template register to the MT to get the correction of the internal structure
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d fmri_crop_moco_mean.nii.gz -dseg fmri_crop_moco_mean_seg_manual.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3,metric=CC:step=2,type=seg,algo=bsplinesyn,metric=CC,smooth=0,iter=3,slicewise=0 -initwarp ../mt/warp_template2mt.nii.gz
-# rename warping field for clarity
-mv warp_PAM50_t2s2fmri_crop_moco_mean.nii.gz warp_template2fmri.nii.gz
-# warp template and spinal levels (here we don't need the WM atlas)
-sct_warp_template -d fmri_crop_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
-# check results
-if [ $DISPLAY = true ]; then
-  fslview fmri_crop_moco_mean -b 0,500 label/spinal_levels/spinal_level_02.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_03.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_04.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_05.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_06.nii.gz -l Pink -b 0,0.05 &
-fi
-cd ..
-
-
 # display results (to easily compare integrity across SCT versions)
 # ----------
 echo "Ended at: $(date +%x_%r)"
 echo
-echo "t1/CSA:  " `grep -v '^#' t1/csa_mean.txt | grep -v '^$'`
+echo "t2/CSA:  " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
 echo "mt/MTR:  " `grep -v '^#' mt/mtr_in_wm.txt | grep -v '^$'`
 echo "mt/CSA_GM:  " `grep -v '^#' mt/csa_gm/csa_mean.txt | grep -v '^$'`
 echo "mt/CSA_WM:  " `grep -v '^#' mt/csa_wm/csa_mean.txt | grep -v '^$'`
