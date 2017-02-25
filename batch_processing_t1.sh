@@ -43,7 +43,7 @@ if [ $DISPLAY = true ]; then
   fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
-sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -c t1
+sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -c t1 -v 2
 # Create labels at C3 and C7 vertebral levels
 sct_label_utils -i t1_seg_labeled.nii.gz -vert-body 3,7
 # Register to template
