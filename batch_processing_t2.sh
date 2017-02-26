@@ -22,7 +22,7 @@ fi
 
 # Check if users wants to use his own data
 if [[ $@ == *"-nodownload"* ]]; then
-  echo "Use local folder instead of downloading data."
+  echo "Use local folder."
 else
   # download example data
   sct_download_data -d sct_example_data
@@ -43,7 +43,8 @@ if [ $DISPLAY = true ]; then
   fslview t2 -b 0,1000 t2_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
-sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2
+# tips: here we use manual initialization of labeling using flag -initc2
+sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2 -initc2
 # Create labels at C3 and C7 vertebral levels
 sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 3,7
 # Register to template
@@ -52,7 +53,7 @@ sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -c t2
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # check results
 if [ $DISPLAY = true ]; then
-  fslview t2.nii.gz -b 0,800 label/template/PAM50_t2.nii.gz -b 0,4000 label/template/PAM50_levels.nii.gz -l MGH-Cortical -t 0.5 label/template/PAM50_gm.nii.gz -l Red-Yellow -b 0.5,1 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.5,1 &
+  fslview t2.nii.gz -b 0,1000 label/template/PAM50_t2.nii.gz -b 0,4000 label/template/PAM50_levels.nii.gz -l MGH-Cortical -t 0.5 label/template/PAM50_gm.nii.gz -l Red-Yellow -b 0.5,1 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.5,1 &
 fi
 # compute average cross-sectional area and volume between C3 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 3:4

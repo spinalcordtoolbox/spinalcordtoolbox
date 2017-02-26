@@ -22,7 +22,7 @@ fi
 
 # Check if users wants to use his own data
 if [[ $@ == *"-nodownload"* ]]; then
-  echo "Use local folder instead of downloading data."
+  echo "Use local folder."
 else
   # download example data
   sct_download_data -d sct_example_data
