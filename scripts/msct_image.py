@@ -448,9 +448,12 @@ class Image(object):
                 list_coordinates = [msct_types.Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
                                     for i in range(0, len(X))]
             elif n_dim == 2:
-                X, Y = (self.data > 0).nonzero()
-                list_coordinates = [msct_types.Coordinate([X[i], Y[i], self.data[X[i], Y[i]]])
-                                    for i in range(0, len(X))]
+                try:
+                    X, Y = (self.data > 0).nonzero()
+                    list_coordinates = [msct_types.Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+                except ValueError:
+                    X, Y, Z = (self.data > 0).nonzero()
+                    list_coordinates = [msct_types.Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
         except Exception, e:
             print 'ERROR', e
             sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
@@ -460,15 +463,7 @@ class Image(object):
                 list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
                                     for i in range(0, len(X))]
             else:
-                list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], self.data[X[i], Y[i]]])
-                                    for i in range(0, len(X))]
-        else:
-            if n_dim == 3:
-                list_coordinates = [msct_types.Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
-                                    for i in range(0, len(X))]
-            else:
-                list_coordinates = [msct_types.Coordinate([X[i], Y[i], self.data[X[i], Y[i]]])
-                                    for i in range(0, len(X))]
+                list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')

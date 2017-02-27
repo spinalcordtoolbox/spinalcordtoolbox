@@ -489,7 +489,7 @@ class ClickViewer(Viewer):
     Assumes SAL orientation
     orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
-    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title=''):
+    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='', input_type='centerline'):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         if isinstance(list_images, msct_image.Image):
             list_images = [list_images]
@@ -566,11 +566,18 @@ class ClickViewer(Viewer):
         self.fig.canvas.mpl_connect('close_event', self.close_window)
         self.closed = False
 
-    def calculate_list_slices(self):
+        self.input_type = input_type
+
+    def calculate_list_slices(self, starting_slice=-1):
         if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
-            central_slice = int(self.image_dim[self.orientation[self.primary_subplot]-1] / 2)
-            first_slice = central_slice - (self.number_of_slices / 2) * self.gap_inter_slice
-            last_slice = central_slice + (self.number_of_slices / 2) * self.gap_inter_slice
+
+            # if starting slice is not provided, middle slice is used
+            # starting slice must be an integer, in the range of the image [0, #slices]
+            if starting_slice == -1:
+                starting_slice = int(self.image_dim[self.orientation[self.primary_subplot]-1] / 2)
+
+            first_slice = starting_slice - (self.number_of_slices / 2) * self.gap_inter_slice
+            last_slice = starting_slice + (self.number_of_slices / 2) * self.gap_inter_slice
             if first_slice < 0:
                 first_slice = 0
             if last_slice >= self.image_dim[self.orientation[self.primary_subplot]-1]:
@@ -700,7 +707,8 @@ class ClickViewer(Viewer):
             if not is_in_axes:
                 return
 
-            self.enable_custom_points = True
+            if self.input_type == 'centerline':
+                self.enable_custom_points = True
 
             title_obj = self.windows[0].axes.set_title('Automatic sliding disabled\nPlease click on spinal cord center\nand close the window once finished\n(# points = ' + str(len(self.list_points)) + ')')
             plt.setp(title_obj, color='k')

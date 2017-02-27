@@ -162,8 +162,13 @@ class ProcessLabels(object):
         # loop across labels
         for i, coord in enumerate(self.coordinates):
             # display info
-            sct.printv('Label #{}: {}, {}, {} --> {}'.format(i, coord.x, coord.y, coord.z, coord.value), 1)
-            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
+            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
+                       str(coord.value), 1)
+            if len(image_output.data.shape) == 3:
+                image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
+            elif len(image_output.data.shape) == 2:
+                assert str(coord.z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :"+str(coord.z)
+                image_output.data[int(coord.x), int(coord.y)] = coord.value
 
         return image_output
 

@@ -50,20 +50,19 @@ class Param(object):
                           '10'] # STD of the assumed gaussian-distributed noise
 
 
-
 def get_parser(param_default=None):
-
-
-    parser = msct_parser.Parser(__file__)
-    parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with 'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels. The labels should be in the same space coordinates as the input image.""")
+    parser = Parser(__file__)
+    parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or a folder generated with 'sct_warp_template' and containing multiple label files and a label description file (info_label.txt). The labels should be in the same space coordinates as the input image.""")
+    # Mandatory arguments
     parser.add_option(name='-i',
                       type_value='image_nifti',
                       description='File to extract metrics from.',
                       mandatory=True,
                       example='FA.nii.gz')
+    # Optional arguments
     parser.add_option(name='-f',
-                      type_value='folder',
-                      description='Folder including labels to extract the metric from.',
+                      type_value='str',
+                      description='Folder containing WM tract labels, or single label file.',
                       mandatory=False,
                       default_value='./label/atlas',
                       example=path_sct+'/data/atlas')
@@ -179,13 +178,19 @@ bin: binarize mask (threshold=0.5)""",
     default_info_label.close()
 
     str_section = """\n
-To list white matter atlas labels, type:
+To list white matter atlas labels:
 """ + os.path.basename(__file__) + """ -f """+path_sct+"""/data/atlas
 
 To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
 """ + os.path.basename(__file__) + """ -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
     if label_references != '':
         str_section += """
+
+To compute average MTR in a region defined by a single label file (could be binary or 0-1 weighted mask) between slices 1 and 4:
+""" + os.path.basename(__file__) + """ -i mtr.nii.gz -f my_mask.nii.gz -z 1:4 -m wa"""
+    if label_references != '':
+        str_section += """
+
 \nList of labels in """ + file_label + """:
 --------------------------------------------------------------------------------------
 """ + label_references + """
@@ -270,13 +275,23 @@ def main(args=None):
     label_to_fix_fract_vol = None
     im_weight = None
 
-    # adjust file names and parameters for old MNI-Poly-AMU template
-    if not len(glob(path_label + 'WMtract*.*')) == 0:
-        # MNI-Poly-AMU
-        suffix_vertebral_labeling = '*_level.nii.gz'
+    # check if path_label is a file instead of a folder
+    if os.path.isfile(path_label):
+        single_label = 1
+    elif os.path.isdir(path_label):
+        single_label = 0
+        path_label = sct.slash_at_the_end(path_label, 1)
     else:
-        # PAM50 and later
-        suffix_vertebral_labeling = '*_levels.nii.gz'
+        sct.printv('\nERROR: '+path_label+' does not exist.', 1, 'error')
+
+    # adjust file names and parameters for old MNI-Poly-AMU template
+    if not single_label:
+        if not len(glob(path_label + 'WMtract*.*')) == 0:
+            # MNI-Poly-AMU
+            suffix_vertebral_labeling = '*_level.nii.gz'
+        else:
+            # PAM50 and later
+            suffix_vertebral_labeling = '*_levels.nii.gz'
 
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
@@ -303,19 +318,29 @@ def main(args=None):
     # print parameters
     print '\nChecked parameters:'
     print '  data ...................... '+fname_data
-    print '  folder label .............. '+path_label
-    print '  estimation method ......... '+method
+    print '  label ..................... '+path_label
+    print '  method .................... '+method
     print '  slices of interest ........ '+slices_of_interest
     print '  vertebral levels .......... '+vertebral_levels
     print '  vertebral labeling file.... '+fname_vertebral_labeling
     print '  advanced parameters ....... '+str(adv_param)+'\n'
 
     # parse labels according to the file info_label.txt
-    indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
-
-    # check syntax of labels asked by user
-    labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0], parser)
-
+    if not single_label:
+        indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
+        # check syntax of labels asked by user
+        labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0])
+    else:
+        indiv_labels_ids = [0]
+        labels_id_user = [0]
+        indiv_labels_names = [path_label]
+        indiv_labels_files = [path_label]
+        combined_labels_ids = []
+        combined_labels_names = []
+        combined_labels_id_groups = []
+        ml_clusters = []
+        # set path_label to empty string, because indiv_labels_files will replace it from now on
+        path_label = ''
     nb_labels = len(indiv_labels_files)
 
     # Load data
@@ -1297,5 +1322,3 @@ def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_l
 # =======================================================================================================================
 if __name__ == "__main__":
     main()
-
-
