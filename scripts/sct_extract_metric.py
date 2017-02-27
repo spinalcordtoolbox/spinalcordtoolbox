@@ -51,7 +51,7 @@ class Param(object):
 
 
 def get_parser(param_default=None):
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or a folder generated with 'sct_warp_template' and containing multiple label files and a label description file (info_label.txt). The labels should be in the same space coordinates as the input image.""")
     # Mandatory arguments
     parser.add_option(name='-i',
@@ -329,7 +329,7 @@ def main(args=None):
     if not single_label:
         indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
         # check syntax of labels asked by user
-        labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0])
+        labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0], parser)
     else:
         indiv_labels_ids = [0]
         labels_id_user = [0]
@@ -1255,7 +1255,6 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_n
     return data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user, label_to_fix_name, label_to_fix_fract_vol
 
 
-
 def parse_label_ID_groups(list_ID):
     """From a list of unparsed labels string, returns a list of list enumarating the label IDs combinations as integers.
     Example: ['0:5','8,10','12'] ==> [[0,1,2,3,4,5],[8,10],[12]]"""
@@ -1278,7 +1277,6 @@ def parse_label_ID_groups(list_ID):
         list_all_label_IDs.append(group_new)
 
     return list_all_label_IDs
-
 
 
 def remove_label_from_group(list_label_groups, label_ID):
