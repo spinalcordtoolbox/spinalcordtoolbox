@@ -1,7 +1,7 @@
 # CHANGES TO RELEASE
 
-## Milestone "Release 3.0_beta32"
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta31...3.0_beta32)
+##3.0_beta32 (2017-02-10)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta31...v3.0_beta32)
 ### BUG
  - (#206218460) BUG: install_sct: fixed PATH issue (#1153): closed at 2017-02-08 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1154)
  - (#205166212) BUG: compute_snr: fixed variable name: closed at 2017-02-03 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1148)

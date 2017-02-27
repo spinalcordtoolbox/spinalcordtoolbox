@@ -721,21 +721,18 @@ def register(src, dest, paramreg, param, i_step_str):
             dest = dest_crop
             scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
             # estimate transfo
-            cmd = (
-                'isct_antsSliceRegularizedRegistration '
-                '-t Translation[0.5] '
-                '-m ' + paramreg.steps[i_step_str].metric + '[' + dest + ',' +
-                src + ',1,' + metricSize + ',Regular,0.2] '
-                '-p ' + paramreg.steps[i_step_str].poly + ' '
-                '-i ' + paramreg.steps[i_step_str].iter + ' '
-                '-f 1 '
-                '-s ' + paramreg.steps[i_step_str].smooth + ' '
-                '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
-                '-o [step' + i_step_str + ',' + scr_regStep +
-                '] '  # here the warp name is stage10 because antsSliceReg add "Warp"
-                + masking)
-            warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
-            warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
+            cmd = ('isct_antsSliceRegularizedRegistration '
+                   '-t Translation['+paramreg.steps[i_step_str].gradStep+'] '
+                   '-m '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+',Regular,0.2] '
+                   '-p '+paramreg.steps[i_step_str].poly+' '
+                   '-i '+paramreg.steps[i_step_str].iter+' '
+                   '-f '+paramreg.steps[i_step_str].shrink+' '
+                   '-s '+paramreg.steps[i_step_str].smooth+' '
+                   '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
+                   '-o [step'+i_step_str+','+scr_regStep+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
+                   +masking)
+            warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
+            warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
             # run command
             status, output = sct.run(cmd, param.verbose)
 
