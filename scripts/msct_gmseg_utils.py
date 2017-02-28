@@ -149,8 +149,10 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         im_sc_seg_rpi_crop = crop_sc_seg.crop()
         # denoising
         from sct_maths import denoise_nlmeans
-        block_radius = int(im_target_rpi_crop.data.shape[2]/2) if im_target_rpi_crop.data.shape[2]<10 else 5
-        data_denoised = denoise_nlmeans(im_target_rpi_crop.data, block_radius = block_radius)
+        block_radius = 3
+        block_radius = int(im_target_rpi_crop.data.shape[2] / 2) if im_target_rpi_crop.data.shape[2] < (block_radius*2) else block_radius
+        patch_radius = block_radius -1
+        data_denoised = denoise_nlmeans(im_target_rpi_crop.data, block_radius=block_radius, patch_radius=patch_radius)
         im_target_rpi_crop.data = data_denoised
 
         im_target_rpi = im_target_rpi_crop
