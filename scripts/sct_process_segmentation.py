@@ -34,6 +34,7 @@ from shutil import move, copyfile
 from msct_parser import Parser
 import msct_shape
 import pandas as pd
+from msct_types import Centerline
 
 
 # DEFAULT PARAMETERS
@@ -625,11 +626,27 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
-    # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+    use_phys_coord = True
 
-    # correct centerline fitted coordinates according to the data resolution
-    x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
+    if use_phys_coord:
+        # fit centerline, smooth it and return the first derivative (in physical space)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+        # average centerline coordinates over slices of the image
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
+
+        # compute Z axis of the image, in physical coordinate
+        axis_X, axis_Y, axis_Z = im_seg.get_directions()
+
+    else:
+        # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+
+        # correct centerline fitted coordinates according to the data resolution
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
+
+        axis_Z = [0.0, 0.0, 1.0]
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -649,7 +666,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
                 sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.vdot(tangent_vect, [0.0, 0.0, 1.0]))
+            angle = np.arccos(np.vdot(tangent_vect, axis_Z))
         else:
             angle = 0.0
 
@@ -741,7 +758,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_folder+'csa_image.nii.gz')  # extension already included in name_output
     sct.generate_output_file(path_tmp+'angle_volume_in_initial_orientation.nii.gz', output_folder+'angle_image.nii.gz')  # extension already included in name_output
-    print('\n')
+    sct.printv('\n')
 
     # Create output text file
     sct.printv('Display CSA per slice:', verbose)
@@ -750,7 +767,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+ ',' + str(angles[i-min_z_index])+'\n')
         # Display results
-        sct.printv('z = '+str(i-min_z_index)+', CSA = '+str(csa[i-min_z_index])+' mm^2'+', Angle = '+str(angles[i-min_z_index])+' deg', type='info')
+        sct.printv('z = '+str(i)+', CSA = '+str(csa[i-min_z_index])+' mm^2'+', Angle = '+str(angles[i-min_z_index])+' deg', type='info')
     file_results.close()
     sct.printv('Save results in: '+output_folder+'csa_per_slice.txt\n', verbose)
 
@@ -1196,7 +1213,6 @@ def edge_detection(f):
                 mag[i][j] = 0
    
     return mag
-
 
 
 # START PROGRAM
