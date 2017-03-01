@@ -159,6 +159,13 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='0')
+    parser.add_option(name='-use-image-coord',
+                      type_value='multiple_choice',
+                      description='0: physical coordinates are used to compute CSA. 1: image coordinates are used to compute CSA.\n'
+                                  'Physical coordinates are less prone to instability in CSA computation and should be preferred.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
     parser.add_option(name='-v',
                       type_value='multiple_choice',
                       description='1: display on, 0: display off (default)',
@@ -195,6 +202,7 @@ def main(args):
     slices = param.slices
     vert_lev = param.vertebral_levels
     angle_correction = True
+    use_phys_coord = True
 
     fname_segmentation = arguments['-i']
     name_process = arguments['-p']
@@ -224,6 +232,11 @@ def main(args):
             angle_correction = False
         elif arguments['-no-angle'] == '0':
             angle_correction = True
+    if '-use-image-coord' in arguments:
+        if arguments['-use-image-coord'] == '1':
+            use_phys_coord = False
+        if arguments['-use-image-coord'] == '0':
+            use_phys_coord = True
 
     # update fields
     param.verbose = verbose
@@ -239,7 +252,7 @@ def main(args):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length, angle_correction=angle_correction)
+        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length, angle_correction=angle_correction, use_phys_coord=use_phys_coord)
 
     if name_process == 'label-vert':
         if '-discfile' in arguments:
@@ -587,7 +600,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True):
+def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True, use_phys_coord=True):
 
     from math import degrees
     import pandas as pd
@@ -625,8 +638,6 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # # Extract min and max index in Z direction
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
-
-    use_phys_coord = True
 
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
@@ -767,7 +778,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+ ',' + str(angles[i-min_z_index])+'\n')
         # Display results
-        sct.printv('z = '+str(i)+', CSA = '+str(csa[i-min_z_index])+' mm^2'+', Angle = '+str(angles[i-min_z_index])+' deg', type='info')
+        sct.printv('z = %d, CSA = %f mm^2, Angle = %f deg' % (i, csa[i-min_z_index], angles[i-min_z_index]), type='info')
     file_results.close()
     sct.printv('Save results in: '+output_folder+'csa_per_slice.txt\n', verbose)
 
