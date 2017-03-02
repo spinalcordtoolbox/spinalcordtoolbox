@@ -157,6 +157,8 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 
         im_target_rpi = im_target_rpi_crop
         im_sc_seg_rpi = im_sc_seg_rpi_crop
+    else:
+        fname_mask = None
 
     # interpolate image to reference square image (resample and square crop centered on SC)
     printv('  Interpolate data to the model space...', verbose, 'normal')
@@ -188,7 +190,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # load manual gmseg if there is one (model data)
     if fname_manual_gmseg is not None:
         printv('\n\tLoad manual GM segmentation(s) ...', verbose, 'normal')
-        list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=for_model)
+        list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=for_model, fname_mask=fname_mask)
 
     os.chdir('..')
     if rm_tmp:
@@ -364,7 +366,7 @@ def load_level(list_slices_target, fname_level):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=False):
+def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=False, fname_mask=None):
     if isinstance(list_fname_manual_gmseg, str):
         # consider fname_manual_gmseg as a list of file names to allow multiple manual GM segmentation
         list_fname_manual_gmseg = [list_fname_manual_gmseg]
@@ -381,6 +383,13 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
 
         # reorient to RPI
         im_manual_gmseg = set_orientation(im_manual_gmseg, 'RPI')
+
+        if fname_mask is not None:
+            fname_gmseg_crop = add_suffix(im_manual_gmseg.absolutepath, '_pre_crop')
+            crop_im = ImageCropper(input_file=im_manual_gmseg.absolutepath, output_file=fname_gmseg_crop,
+                                   mask=fname_mask)
+            im_manual_gmseg_crop = crop_im.crop()
+            im_manual_gmseg = im_manual_gmseg_crop
 
         # assert gmseg has the right number of slices
         assert im_manual_gmseg.data.shape[2] == len(list_slices_target), 'ERROR: the manual GM segmentation has not the same number of slices than the image.'
