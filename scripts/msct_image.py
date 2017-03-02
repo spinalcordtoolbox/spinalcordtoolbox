@@ -886,7 +886,7 @@ class Image(object):
         """
         direction_matrix = self.im_file.affine
         T_self, R_self, Sc_self, Sh_self = decompose_affine_transform(direction_matrix)
-        return R_self[0, 0:3], R_self[1, 0:3], R_self[2, 0:3]
+        return R_self[0:3, 0], R_self[0:3, 1], R_self[0:3, 2]
 
     def interpolate_from_image(self, im_ref, fname_output=None, interpolation_mode=1, border='constant'):
         """
