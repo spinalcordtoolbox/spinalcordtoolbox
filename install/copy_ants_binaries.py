@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 #
-# Copy ANTs binaries into SCT folder. 
+# Copy ANTs binaries into SCT folder.
 #
 # Author: Julien Cohen-Adad
 
 # TODO: remove quick fix with folder_sct_temp
+from __future__ import print_function
 
 import os
 import getopt
 import sys
 import shutil
 
-# usage
-#=======================================================================================================================
+
 def usage():
     print("""
 """+os.path.basename(__file__)+"""
@@ -33,10 +33,6 @@ EXAMPLE
 
     sys.exit(2)
 
-
-# main
-#=======================================================================================================================
-
 folder_bin = 'bin'
 prefix_sct = 'isct_'
 listOS = ['osx', 'linux']
@@ -44,9 +40,8 @@ list_file_ants = ['antsApplyTransforms', 'antsRegistration', 'antsSliceRegulariz
 output_folder = 'antsbin/'
 
 
-# Check input param
 try:
-    opts, args = getopt.getopt(sys.argv[1:],'hf:')
+    opts, args = getopt.getopt(sys.argv[1:], 'hf:')
 except getopt.GetoptError as err:
     print(str(err))
     usage()
