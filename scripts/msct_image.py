@@ -886,6 +886,16 @@ class Image(object):
 
         return transform
 
+    def get_directions(self):
+        """
+        This function return the X, Y, and Z axes of the image
+        Returns:
+            X, Y and Z axes of the image
+        """
+        direction_matrix = self.im_file.affine
+        T_self, R_self, Sc_self, Sh_self = decompose_affine_transform(direction_matrix)
+        return R_self[0:3, 0], R_self[0:3, 1], R_self[0:3, 2]
+
     def interpolate_from_image(self, im_ref, fname_output=None, interpolation_mode=1, border='constant'):
         """
         This function interpolates an image by following the grid of a reference image.

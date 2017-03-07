@@ -412,7 +412,7 @@ def main(args=None):
         # results_display = results_display.append(results_mean, ignore_index=True)
 
         # std
-        results_std = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
+        results_std = results_subset.query('status != 200 & status != 201').std(numeric_only=True)
         results_std['subject'] = 'STD'
         results_std.set_value('status', float('NaN'))  # set status to NaN
         # results_display = results_display.append(results_std, ignore_index=True)
