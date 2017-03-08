@@ -31,7 +31,7 @@ def get_parser():
     parser.usage.set_description('Compute SNR in a given ROI using methods described in [Dietrich et al., Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils, parallel imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].')
     parser.add_option(name="-i",
                       type_value='image_nifti',
-                      description="Input images to compute the SNR on. Must be concatenated in time. Typically, 2 or 3 b0s concatenated in time (depending on the method used).",
+                      description="4D data to compute the SNR on (along the 4th dimension).",
                       mandatory=True,
                       example="b0s.nii.gz")
     parser.add_option(name="-m",
@@ -144,7 +144,7 @@ def main():
     input_data = input_data[:, :, slices_of_interest_list, :]
     mask_data = mask_data[:, :, slices_of_interest_list]
 
-    # if user selected all slices (-vol 1), then assign index_vol
+    # if user selected all slices (-vol -1), then assign index_vol
     if index_vol[0] == -1:
         index_vol = range(0, input_data.shape[3], 1)
 
@@ -165,7 +165,7 @@ def main():
         data_2 = input_data[:, :, :, index_vol[1]]
         # compute voxel-average of voxelwise sum
         signal = np.mean(np.add(data_1[indexes_roi], data_2[indexes_roi]))
-        # compute voxel-average of voxelwise substraction, multiplied by sqrt(2) as described in equation 7 of Dietrich et al.
+        # compute voxel-STD of voxelwise substraction, multiplied by sqrt(2) as described in equation 7 of Dietrich et al.
         noise = np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi])) * np.sqrt(2)
 
     # compute SNR
