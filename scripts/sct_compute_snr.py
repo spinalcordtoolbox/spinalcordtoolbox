@@ -43,13 +43,13 @@ def get_parser():
                       type_value='multiple_choice',
                       description='Method to use to compute the SNR:\n'
                       '- diff: Substract two volumes (defined by -vol) and estimate noise variance over space.\n'
-                      '- mult: Use all volumes (or those defined by -vol) to estimate noise variance over time.',
+                      '- mult: Estimate noise variance over time across volumes specified with -vol.',
                       mandatory=False,
                       default_value='diff',
                       example=['diff', 'mult'])
     parser.add_option(name='-vol',
                       type_value=[[','], 'int'],
-                      description='List of volume numbers to use for computing SNR, separated with ",". Example: 0,1',
+                      description='List of volume numbers to use for computing SNR, separated with ",". Example: 0,31. To select all volumes in series set to -1.',
                       mandatory=False,
                       default_value=[-1])
     parser.add_option(name="-vertfile",
