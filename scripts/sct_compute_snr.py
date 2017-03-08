@@ -51,7 +51,7 @@ def get_parser():
                       type_value=[[','], 'int'],
                       description='List of volume numbers to use for computing SNR, separated with ",". Example: 0,1',
                       mandatory=False,
-                      default_value=[0, 1])
+                      default_value=[-1])
     parser.add_option(name="-vertfile",
                       type_value='image_nifti',
                       description='File name of the vertebral labeling registered to the input images.',
@@ -144,13 +144,23 @@ def main():
     input_data = input_data[:, :, slices_of_interest_list, :]
     mask_data = mask_data[:, :, slices_of_interest_list]
 
+    # if user selected all slices (-vol 1), then assign index_vol
+    if index_vol[0] == -1:
+        index_vol = range(0, input_data.shape[3], 1)
+
     # Get signal and noise
     indexes_roi = np.where(mask_data == 1)
     if method == 'mult':
-        signal = np.mean(input_data[indexes_roi])
-        std_input_temporal = np.std(input_data, 3)
-        noise = np.mean(std_input_temporal[indexes_roi])
+        # get voxels in ROI to obtain a (x*y*z)*t 2D matrix
+        input_data_in_roi = input_data[indexes_roi]
+        # compute signal and STD across by averaging across time
+        signal = np.mean(input_data_in_roi[:, index_vol])
+        std_input_temporal = np.std(input_data_in_roi[:, index_vol], 1)
+        noise = np.mean(std_input_temporal)
     elif method == 'diff':
+        # if user did not select two volumes, then exit with error
+        if not len(index_vol) == 2:
+            sct.printv('ERROR: '+str(len(index_vol))+' volumes were specified. Method "diff" should be used with exactly two volumes.', 1, 'error')
         data_1 = input_data[:, :, :, index_vol[0]]
         data_2 = input_data[:, :, :, index_vol[1]]
         # compute voxel-average of voxelwise sum
