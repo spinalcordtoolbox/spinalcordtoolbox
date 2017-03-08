@@ -153,8 +153,10 @@ def main():
     elif method == 'diff':
         data_1 = input_data[:, :, :, index_vol[0]]
         data_2 = input_data[:, :, :, index_vol[1]]
+        # compute voxel-average of voxelwise sum
         signal = np.mean(np.add(data_1[indexes_roi], data_2[indexes_roi]))
-        noise = np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi]))
+        # compute voxel-average of voxelwise substraction, multiplied by sqrt(2) as described in equation 7 of Dietrich et al.
+        noise = np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi])) * np.sqrt(2)
 
     # compute SNR
     SNR = signal/noise
