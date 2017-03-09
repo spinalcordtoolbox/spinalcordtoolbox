@@ -38,6 +38,10 @@ echo "Started at: $(date +%x_%r)"
 cd t1
 # Spinal cord segmentation
 sct_propseg -i t1.nii.gz -c t1
+# If segmentation leaks, you can try to smooth the cord and re-run the segmentation:
+sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
+sct_propseg -i t1_smooth.nii.gz -c t1 -init-centerline t1_seg.nii.gz
+mv t1_smooth_seg.nii.gz t1_seg.nii.gz
 # Check results:
 if [ $DISPLAY = true ]; then
   fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
