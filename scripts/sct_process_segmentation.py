@@ -33,6 +33,8 @@ import msct_smooth
 import sct_image
 import sct_label_vertebrae
 import sct_straighten_spinalcord
+import pandas as pd
+from msct_types import Centerline
 
 
 class Param(object):
@@ -156,6 +158,13 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='0')
+    parser.add_option(name='-use-image-coord',
+                      type_value='multiple_choice',
+                      description='0: physical coordinates are used to compute CSA. 1: image coordinates are used to compute CSA.\n'
+                                  'Physical coordinates are less prone to instability in CSA computation and should be preferred.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
     parser.add_option(name='-v',
                       type_value='multiple_choice',
                       description='1: display on, 0: display off (default)',
@@ -200,6 +209,7 @@ def main(args=None):
     slices = param.slices
     vert_lev = param.vertebral_levels
     angle_correction = True
+    use_phys_coord = True
 
     fname_segmentation = arguments['-i']
     name_process = arguments['-p']
@@ -207,8 +217,7 @@ def main(args=None):
     if "-ofolder" in arguments:
         output_folder = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
-        seg_path, seg_file, seg_ext = sct.extract_fname(os.path.abspath(fname_segmentation))
-        output_folder = seg_path
+        output_folder = os.getcwd()+'/'
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
     if '-vert' in arguments:
@@ -230,6 +239,11 @@ def main(args=None):
             angle_correction = False
         elif arguments['-no-angle'] == '0':
             angle_correction = True
+    if '-use-image-coord' in arguments:
+        if arguments['-use-image-coord'] == '1':
+            use_phys_coord = False
+        if arguments['-use-image-coord'] == '0':
+            use_phys_coord = True
 
     # update fields
     param.verbose = verbose
@@ -245,9 +259,7 @@ def main(args=None):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param,
-                    figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting,
-                    type_window= param.type_window, window_length=param.window_length, angle_correction=angle_correction)
+        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length, angle_correction=angle_correction, use_phys_coord=use_phys_coord)
 
     if name_process == 'label-vert':
         if '-discfile' in arguments:
@@ -578,7 +590,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True):
+def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True, use_phys_coord=True):
 
     from math import degrees
     import pickle
@@ -615,11 +627,25 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
-    # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+    if use_phys_coord:
+        # fit centerline, smooth it and return the first derivative (in physical space)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
-    # correct centerline fitted coordinates according to the data resolution
-    x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
+        # average centerline coordinates over slices of the image
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
+
+        # compute Z axis of the image, in physical coordinate
+        axis_X, axis_Y, axis_Z = im_seg.get_directions()
+
+    else:
+        # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+
+        # correct centerline fitted coordinates according to the data resolution
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
+
+        axis_Z = [0.0, 0.0, 1.0]
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -639,7 +665,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
                 sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.vdot(tangent_vect, [0.0, 0.0, 1.0]))
+            angle = np.arccos(np.vdot(tangent_vect, axis_Z))
         else:
             angle = 0.0
 
@@ -730,7 +756,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_folder+'csa_image.nii.gz')  # extension already included in name_output
     sct.generate_output_file(path_tmp+'angle_volume_in_initial_orientation.nii.gz', output_folder+'angle_image.nii.gz')  # extension already included in name_output
-    print('\n')
+    sct.printv('\n')
 
     # Create output text file
     sct.printv('Display CSA per slice:', verbose)
@@ -739,7 +765,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+ ',' + str(angles[i-min_z_index])+'\n')
         # Display results
-        sct.printv('z = '+str(i-min_z_index)+', CSA = '+str(csa[i-min_z_index])+' mm^2'+', Angle = '+str(angles[i-min_z_index])+' deg', type='info')
+        sct.printv('z = %d, CSA = %f mm^2, Angle = %f deg' % (i, csa[i-min_z_index], angles[i-min_z_index]), type='info')
     file_results.close()
     sct.printv('Save results in: '+output_folder+'csa_per_slice.txt\n', verbose)
 
@@ -1184,7 +1210,6 @@ def edge_detection(f):
                 mag[i][j] = 0
    
     return mag
-
 
 
 # START PROGRAM

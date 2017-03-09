@@ -186,9 +186,12 @@ def create_mask(param):
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
     spacing = hdr.structarr['pixdim']
     data_centerline = centerline.get_data()  # get centerline
-    z_centerline_not_null = [
-        iz for iz in range(0, nz, 1) if data_centerline[:, :, iz].any()
-    ]
+    # if data is 2D, reshape with empty third dimension
+    if len(data_centerline.shape) == 2:
+        data_centerline_shape = list(data_centerline.shape)
+        data_centerline_shape.append(1)
+        data_centerline = data_centerline.reshape(data_centerline_shape)
+    z_centerline_not_null = [iz for iz in range(0, nz, 1) if data_centerline[:, :, iz].any()]
     # get center of mass of the centerline
     cx = [0] * nz
     cy = [0] * nz
