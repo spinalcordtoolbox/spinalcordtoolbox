@@ -476,5 +476,38 @@ class Centerline:
         image_output.setFileName(fname_output)
         image_output.save(type='float32')
 
+    def average_coordinates_over_slices(self, image):
+        # extracting points information for each coordinates
+        P_x = np.array([point[0] for point in self.points])
+        P_y = np.array([point[1] for point in self.points])
+        P_z = np.array([point[2] for point in self.points])
+        P_z_vox = np.array([coord[2] for coord in image.transfo_phys2pix(self.points)])
+        P_x_d = np.array([deriv[0] for deriv in self.derivatives])
+        P_y_d = np.array([deriv[1] for deriv in self.derivatives])
+        P_z_d = np.array([deriv[2] for deriv in self.derivatives])
+
+        P_z_vox = np.array([int(np.round(P_z_vox[i])) for i in range(0, len(P_z_vox))])
+        # not perfect but works (if "enough" points), in order to deal with missing z slices
+        for i in range(min(P_z_vox), max(P_z_vox) + 1, 1):
+            if i not in P_z_vox:
+                P_x_temp = np.insert(P_x, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x[np.where(P_z_vox == i - 1)[-1][-1]] + P_x[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_y_temp = np.insert(P_y, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y[np.where(P_z_vox == i - 1)[-1][-1]] + P_y[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_z_temp = np.insert(P_z, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z[np.where(P_z_vox == i - 1)[-1][-1]] + P_z[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_x_d_temp = np.insert(P_x_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_x_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_y_d_temp = np.insert(P_y_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_y_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_z_d_temp = np.insert(P_z_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_z_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
+
+        coord_mean = np.array([[np.mean(P_x[P_z_vox == i]), np.mean(P_y[P_z_vox == i]), np.mean(P_z[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
+        x_centerline_fit = coord_mean[:, :][:, 0]
+        y_centerline_fit = coord_mean[:, :][:, 1]
+        coord_mean_d = np.array([[np.mean(P_x_d[P_z_vox == i]), np.mean(P_y_d[P_z_vox == i]), np.mean(P_z_d[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
+        z_centerline = coord_mean[:, :][:, 2]
+        x_centerline_deriv = coord_mean_d[:, :][:, 0]
+        y_centerline_deriv = coord_mean_d[:, :][:, 1]
+        z_centerline_deriv = coord_mean_d[:, :][:, 2]
+
+        return x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
+
 
 
