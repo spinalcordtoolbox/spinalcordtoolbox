@@ -19,12 +19,12 @@ import os
 import shutil
 import sys
 import time
+from random import randint
 
 import numpy as np
 import pandas
 import scipy
 
-import sct_utils as sct
 import msct_image
 import msct_nurbs
 import msct_parser
@@ -33,8 +33,10 @@ import msct_smooth
 import sct_image
 import sct_label_vertebrae
 import sct_straighten_spinalcord
-import pandas as pd
-from msct_types import Centerline
+import sct_utils as sct
+import msct_types
+import sct_image
+import sct_straighten_spinalcord
 
 
 class Param(object):
@@ -179,19 +181,15 @@ def get_parser():
     return parser
 
 
-
-# MAIN
-# ==========================================================================================
 def main(args=None):
 
-    param = Param()
-    param_default = Param()
     if args is None:
         args = sys.argv[1:]
     else:
         script_name =os.path.splitext(os.path.basename(__file__))[0]
         sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
+    param = Param()
     parser = get_parser()
     arguments = parser.parse(args)
 
@@ -630,7 +628,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
         x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
-        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+        centerline = msct_types.Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image
         x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
@@ -772,8 +770,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Create output pickle file
     # data frame format
     results_df = pandas.DataFrame({'Slice (z)': range(min_z_index, max_z_index+1),
-                               'CSA (mm^2)': csa,
-                               'Angle with respect to the I-S direction (degrees)': angles})
+                                   'CSA (mm^2)': csa,
+                                   'Angle with respect to the I-S direction (degrees)': angles})
     # # dictionary format
     # results_df = {'Slice (z)': range(min_z_index, max_z_index+1),
     #                            'CSA (mm^2)': csa,
@@ -1091,14 +1089,15 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
                              'nearest superior level available: ' + str(int(vert_levels_list[1])), type='warning')
 
     # Find slices included in the vertebral levels wanted by the user
+    # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
     sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
-    nz = len(z_centerline)
     matching_slices_centerline_vert_labeling = []
-    for zz in z_centerline:
-        # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
-        vertebral_labeling_slice_zz = vertebral_labeling_data[:, :, int(zz)]
-        if np.asarray(np.nonzero(vertebral_labeling_slice_zz)).shape != (2, 0) and int(np.median(vertebral_labeling_slice_zz[np.nonzero(vertebral_labeling_slice_zz)])) in range(vert_levels_list[0], vert_levels_list[1]+1):
-            matching_slices_centerline_vert_labeling.append(int(zz))
+    z_centerline = [x for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
+    vert_range = range(vert_levels_list[0], vert_levels_list[1]+1)
+    for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline,:,:]):
+        slice_idxs = np.nonzero(z_slice)
+        if np.asarray(slice_idxs).shape != (2, 0) and int(np.median(z_slice[slice_idxs])) in vert_range:
+            matching_slices_centerline_vert_labeling.append(idx)
 
     # now, find the min and max slices that are included in the vertebral levels
     if len(matching_slices_centerline_vert_labeling) == 0:
@@ -1111,24 +1110,24 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
 
     return slices, vert_levels_list, warning
 
-#=======================================================================================================================
-# b_spline_centerline
-#=======================================================================================================================
-def b_spline_centerline(x_centerline,y_centerline,z_centerline):
 
+def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     print '\nFitting centerline using B-spline approximation...'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
-    nurbs = msct_nurbs.NURBS(3,3000,points)  # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+    nurbs = msct_nurbs.NURBS(3, 3000, points)
+    # BE very careful with the spline order that you choose :
+    # if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ).
+    # For the third argument (number of points), give at least len(z_centerline)+500 or higher
 
     P = nurbs.getCourbe3D()
-    x_centerline_fit=P[0]
-    y_centerline_fit=P[1]
+    x_centerline_fit = P[0]
+    y_centerline_fit = P[1]
     Q = nurbs.getCourbe3D_deriv()
-    x_centerline_deriv=Q[0]
-    y_centerline_deriv=Q[1]
-    z_centerline_deriv=Q[2]
+    x_centerline_deriv = Q[0]
+    y_centerline_deriv = Q[1]
+    z_centerline_deriv = Q[2]
 
-    return x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv
+    return x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
 
 #=======================================================================================================================
@@ -1212,8 +1211,6 @@ def edge_detection(f):
     return mag
 
 
-# START PROGRAM
-# =========================================================================================
 if __name__ == "__main__":
     # initialize parameters
     # call main function
