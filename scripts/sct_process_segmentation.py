@@ -16,30 +16,24 @@
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
 import sys
-import getopt
 import os
 import shutil
-import commands
 from random import randint
 import time
 import numpy as np
 import scipy
-import nibabel
 import sct_utils as sct
 from msct_nurbs import NURBS
-from sct_image import get_orientation_3d, set_orientation
+from sct_image import set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
-from shutil import move, copyfile
 from msct_parser import Parser
 import msct_shape
 import pandas as pd
 from msct_types import Centerline
 
 
-# DEFAULT PARAMETERS
 class Param:
-    ## The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
@@ -52,6 +46,7 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
+
 
 def get_parser():
     """
@@ -180,9 +175,6 @@ def get_parser():
     return parser
 
 
-
-# MAIN
-# ==========================================================================================
 def main(args):
 
     parser = get_parser()
@@ -1105,14 +1097,15 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
                              'nearest superior level available: ' + str(int(vert_levels_list[1])), type='warning')
 
     # Find slices included in the vertebral levels wanted by the user
+    # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
     sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
-    nz = len(z_centerline)
     matching_slices_centerline_vert_labeling = []
-    for zz in z_centerline:
-        # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
-        vertebral_labeling_slice_zz = vertebral_labeling_data[:, :, int(zz)]
-        if np.asarray(np.nonzero(vertebral_labeling_slice_zz)).shape != (2, 0) and int(np.median(vertebral_labeling_slice_zz[np.nonzero(vertebral_labeling_slice_zz)])) in range(vert_levels_list[0], vert_levels_list[1]+1):
-            matching_slices_centerline_vert_labeling.append(int(zz))
+    z_centerline = [x for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
+    vert_range = range(vert_levels_list[0], vert_levels_list[1]+1)
+    for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline,:,:]):
+        slice_idxs = np.nonzero(z_slice)
+        if np.asarray(slice_idxs).shape != (2, 0) and int(np.median(z_slice[slice_idxs])) in vert_range:
+            matching_slices_centerline_vert_labeling.append(idx)
 
     # now, find the min and max slices that are included in the vertebral levels
     if len(matching_slices_centerline_vert_labeling) == 0:
@@ -1125,24 +1118,24 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
 
     return slices, vert_levels_list, warning
 
-#=======================================================================================================================
-# b_spline_centerline
-#=======================================================================================================================
-def b_spline_centerline(x_centerline,y_centerline,z_centerline):
-                          
+
+def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     print '\nFitting centerline using B-spline approximation...'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
-    nurbs = NURBS(3,3000,points)  # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
-                          
+    nurbs = NURBS(3, 3000, points)
+    # BE very careful with the spline order that you choose :
+    # if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ).
+    # For the third argument (number of points), give at least len(z_centerline)+500 or higher
+
     P = nurbs.getCourbe3D()
-    x_centerline_fit=P[0]
-    y_centerline_fit=P[1]
+    x_centerline_fit = P[0]
+    y_centerline_fit = P[1]
     Q = nurbs.getCourbe3D_deriv()
-    x_centerline_deriv=Q[0]
-    y_centerline_deriv=Q[1]
-    z_centerline_deriv=Q[2]
-                          
-    return x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv
+    x_centerline_deriv = Q[0]
+    y_centerline_deriv = Q[1]
+    z_centerline_deriv = Q[2]
+
+    return x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
 
 #=======================================================================================================================
@@ -1189,24 +1182,23 @@ def ellipse_dim(a):
 #=======================================================================================================================
 def edge_detection(f):
 
-    #sigma = 1.0
     img = Image.open(f) #grayscale
     imgdata = np.array(img, dtype = float)
     G = imgdata
     #G = ndi.filters.gaussian_filter(imgdata, sigma)
     gradx = np.array(G, dtype = float)
     grady = np.array(G, dtype = float)
- 
+
     mask_x = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-          
+
     mask_y = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
- 
+
     width = img.size[1]
     height = img.size[0]
- 
+
     for i in range(1, width-1):
         for j in range(1, height-1):
-        
+
             px = np.sum(mask_x*G[(i-1):(i+1)+1,(j-1):(j+1)+1])
             py = np.sum(mask_y*G[(i-1):(i+1)+1,(j-1):(j+1)+1])
             gradx[i][j] = px
@@ -1222,12 +1214,10 @@ def edge_detection(f):
                 mag[i][j]=1
             else:
                 mag[i][j] = 0
-   
+
     return mag
 
 
-# START PROGRAM
-# =========================================================================================
 if __name__ == "__main__":
     # initialize parameters
     param = Param()
