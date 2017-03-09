@@ -629,7 +629,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
         centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image
@@ -1115,11 +1115,11 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
 # b_spline_centerline
 #=======================================================================================================================
 def b_spline_centerline(x_centerline,y_centerline,z_centerline):
-                          
+
     print '\nFitting centerline using B-spline approximation...'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
     nurbs = msct_nurbs.NURBS(3,3000,points)  # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
-                          
+
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]
     y_centerline_fit=P[1]
@@ -1127,7 +1127,7 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
     x_centerline_deriv=Q[0]
     y_centerline_deriv=Q[1]
     z_centerline_deriv=Q[2]
-                          
+
     return x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv
 
 
@@ -1182,17 +1182,17 @@ def edge_detection(f):
     #G = ndi.filters.gaussian_filter(imgdata, sigma)
     gradx = np.array(G, dtype = float)
     grady = np.array(G, dtype = float)
- 
+
     mask_x = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-          
+
     mask_y = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
- 
+
     width = img.size[1]
     height = img.size[0]
- 
+
     for i in range(1, width-1):
         for j in range(1, height-1):
-        
+
             px = np.sum(mask_x*G[(i-1):(i+1)+1,(j-1):(j+1)+1])
             py = np.sum(mask_y*G[(i-1):(i+1)+1,(j-1):(j+1)+1])
             gradx[i][j] = px
@@ -1208,7 +1208,7 @@ def edge_detection(f):
                 mag[i][j]=1
             else:
                 mag[i][j] = 0
-   
+
     return mag
 
 
