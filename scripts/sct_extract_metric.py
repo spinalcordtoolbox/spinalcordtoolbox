@@ -318,7 +318,8 @@ def main(args=None):
     # print parameters
     print '\nChecked parameters:'
     print '  data ...................... '+fname_data
-    print '  label ..................... '+path_label
+    print '  path to label ............. '+path_label
+    print '  label ..................... '+labels_user
     print '  method .................... '+method
     print '  slices of interest ........ '+slices_of_interest
     print '  vertebral levels .......... '+vertebral_levels
