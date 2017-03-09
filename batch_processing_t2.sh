@@ -43,10 +43,10 @@ if [ $DISPLAY = true ]; then
   fslview t2 -b 0,1000 t2_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
-# tips: here we use manual initialization of labeling using flag -initc2
+# tips: here we use manual initialization of labeling by clicking at disc C2-C3
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2 -initc2
-# Create labels at C3 and C7 vertebral levels
-sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 3,7
+# Create labels at C2 and C5 vertebral levels
+sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 2,5
 # Register to template
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -c t2
 # Warp template without the white matter atlas (we don't need it at this point)
