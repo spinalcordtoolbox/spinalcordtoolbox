@@ -448,9 +448,12 @@ class Image(object):
                 list_coordinates = [msct_types.Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
                                     for i in range(0, len(X))]
             elif n_dim == 2:
-                X, Y = (self.data > 0).nonzero()
-                list_coordinates = [msct_types.Coordinate([X[i], Y[i], self.data[X[i], Y[i]]])
-                                    for i in range(0, len(X))]
+                try:
+                    X, Y = (self.data > 0).nonzero()
+                    list_coordinates = [msct_types.Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+                except ValueError:
+                    X, Y, Z = (self.data > 0).nonzero()
+                    list_coordinates = [msct_types.Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
         except Exception, e:
             print 'ERROR', e
             sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
@@ -460,15 +463,7 @@ class Image(object):
                 list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
                                     for i in range(0, len(X))]
             else:
-                list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], self.data[X[i], Y[i]]])
-                                    for i in range(0, len(X))]
-        else:
-            if n_dim == 3:
-                list_coordinates = [msct_types.Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
-                                    for i in range(0, len(X))]
-            else:
-                list_coordinates = [msct_types.Coordinate([X[i], Y[i], self.data[X[i], Y[i]]])
-                                    for i in range(0, len(X))]
+                list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -890,6 +885,16 @@ class Image(object):
                 transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
         return transform
+
+    def get_directions(self):
+        """
+        This function return the X, Y, and Z axes of the image
+        Returns:
+            X, Y and Z axes of the image
+        """
+        direction_matrix = self.im_file.affine
+        T_self, R_self, Sc_self, Sh_self = decompose_affine_transform(direction_matrix)
+        return R_self[0:3, 0], R_self[0:3, 1], R_self[0:3, 2]
 
     def interpolate_from_image(self, im_ref, fname_output=None, interpolation_mode=1, border='constant'):
         """
