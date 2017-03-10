@@ -39,17 +39,17 @@ cd t1
 # Spinal cord segmentation
 sct_propseg -i t1.nii.gz -c t1
 # If segmentation leaks, you can try to smooth the cord and re-run the segmentation:
-sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
-sct_propseg -i t1_smooth.nii.gz -c t1 -init-centerline t1_seg.nii.gz
-mv t1_smooth_seg.nii.gz t1_seg.nii.gz
+#sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
+#sct_propseg -i t1_smooth.nii.gz -c t1 -init-centerline t1_seg.nii.gz
+#mv t1_smooth_seg.nii.gz t1_seg.nii.gz
 # Check results:
 if [ $DISPLAY = true ]; then
   fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
 sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -c t1 -v 2
-# Create labels at C3 and C7 vertebral levels
-sct_label_utils -i t1_seg_labeled.nii.gz -vert-body 3,7
+# Create labels at C2 and C5 vertebral levels
+sct_label_utils -i t1_seg_labeled.nii.gz -vert-body 2,5
 # Register to template
 sct_register_to_template -i t1.nii.gz -s t1_seg.nii.gz -l labels.nii.gz -c t1
 # Warp template without the white matter atlas (we don't need it at this point)
@@ -145,7 +145,7 @@ mv warp_PAM50_t12dwi_moco_mean.nii.gz warp_template2dmri.nii.gz
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # Visualize white matter template and lateral CST on DWI
 if [ $DISPLAY = true ]; then
-  fslview dwi_moco_mean -b 0,300 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/PAM50_atlas_04.nii.gz -b 0.2,1 -l Red label/atlas/PAM50_atlas_05.nii.gz -b 0.2,1 -l Yellow &
+  fslview dwi_moco_mean -b 0,1000 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/PAM50_atlas_04.nii.gz -b 0.2,1 -l Red label/atlas/PAM50_atlas_05.nii.gz -b 0.2,1 -l Yellow &
 fi
 # Compute DTI metrics
 # Tips: the flag -method "restore" allows you to estimate the tensor with robust fit (see help)
