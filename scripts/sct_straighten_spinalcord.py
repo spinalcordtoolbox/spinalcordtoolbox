@@ -107,7 +107,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     if phys_coordinates:
         sct.printv('.. Computing physical coordinates of centerline/segmentation...', verbose)
         coord_centerline = np.array(zip(x_centerline, y_centerline, z_centerline))
-        phys_coord_centerline = np.asarray(file_image.transfo_pix2phys(coord_centerline), dtype=int)
+        phys_coord_centerline = np.asarray(file_image.transfo_pix2phys(coord_centerline))
         x_centerline = phys_coord_centerline[:, 0]
         y_centerline = phys_coord_centerline[:, 1]
         z_centerline = phys_coord_centerline[:, 2]
