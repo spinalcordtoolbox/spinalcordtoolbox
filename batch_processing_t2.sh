@@ -130,7 +130,7 @@ sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
 sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline t2_seg_reg.nii.gz
 # check segmentation
 if [ $DISPLAY = true ]; then
-  fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 &
+  fslview dwi_moco_mean -b 0,1000 dwi_moco_mean_seg -l Red -t 0.5 &
 fi
 # Register template to dwi
 # Tips: We use the template registered to the MT data in order to account for gray matter segmentation
@@ -142,7 +142,7 @@ mv warp_PAM50_t12dwi_moco_mean.nii.gz warp_template2dmri.nii.gz
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # Visualize white matter template and lateral CST on DWI
 if [ $DISPLAY = true ]; then
-  fslview dwi_moco_mean -b 0,300 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/PAM50_atlas_04.nii.gz -b 0.2,1 -l Red label/atlas/PAM50_atlas_05.nii.gz -b 0.2,1 -l Yellow &
+  fslview dwi_moco_mean -b 0,1000 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/PAM50_atlas_04.nii.gz -b 0.2,1 -l Red label/atlas/PAM50_atlas_05.nii.gz -b 0.2,1 -l Yellow &
 fi
 # Compute DTI metrics
 # Tips: the flag -method "restore" allows you to estimate the tensor with robust fit (see help)
