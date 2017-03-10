@@ -426,15 +426,15 @@ else
     conda install -fy numpy
   fi
   cmd="cd ${SCT_DIR}"; echo ">> "$cmd; $cmd
-  python setup.py install -f
 fi
 
 ## Install SCT in conda's module path
 if [ ${SCT_DEV_MODE} ]; then
-    echo "Installing SCT in development mode"
+    echo "Installing SCT package in development mode"
     pip install --ignore-installed -r ${SCT_SOURCE}/install/requirements/requirements-dev.txt
     python setup.py develop
 else
+    echo "Installing SCT package"
     python setup.py install -f
 fi
 

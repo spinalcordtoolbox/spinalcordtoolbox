@@ -16,24 +16,20 @@
 # TODO: find another way to create log file. E.g. sct.print(). For color as well.
 # TODO: manage .cshrc files
 # TODO: add linux distrib when checking OS
+import commands
+import importlib
+import os
+import platform
+import sys
+
+import sct_utils as sct
+from msct_parser import Parser
 
 
-# DEFAULT PARAMETERS
 class Param:
-    ## The constructor
     def __init__(self):
         self.create_log_file = 0
         self.complete_test = 0
-
-
-import sys
-
-import os
-import commands
-import platform
-import importlib
-import sct_utils as sct
-from msct_parser import Parser
 
 
 class bcolors:
@@ -45,21 +41,14 @@ class bcolors:
     ENDC = '\033[0m'
 
 
-# MAIN
-# ==========================================================================================
 def main():
 
-    # initialization
-    fsl_is_working = 1
-    # ants_is_installed = 1
     install_software = 0
     e = 0
-    restart_terminal = 0
     create_log_file = param.create_log_file
     file_log = 'sct_check_dependencies.log'
     complete_test = param.complete_test
     os_running = 'not identified'
-    dipy_version = '0.10.0dev'
     print
 
     # Check input parameters
@@ -97,12 +86,12 @@ def main():
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print 'OS: '+os_running+' ('+platform.platform()+')'
+    print 'OS: ' + os_running + ' (' + platform.platform() + ')'
 
     # Check number of CPU cores
     from multiprocessing import cpu_count
     status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
+    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: ' + output
 
     # check RAM
     sct.checkRAM(os_running, 0)
@@ -124,23 +113,16 @@ def main():
         if not (sct_commit.isalnum()):
             sct_commit = 'unknown'
             sct_branch = 'unknown'
-        print '  commit: '+sct_commit
-        print '  branch: '+sct_branch
+        print '  commit: ' + sct_commit
+        print '  branch: ' + sct_branch
     else:
         print 'Installation type: package'
         # fetch version
         with open(path_sct + '/version.txt', 'r') as myfile:
             version_sct = myfile.read().replace('\n', '')
-        print '  version: '+version_sct
+        print '  version: ' + version_sct
 
     os.chdir(path_curr)
-
-    # # fetch version of the toolbox
-    # with open (path_sct+"/version.txt", "r") as myfile:
-    #     version_sct = myfile.read().replace('\n', '')
-    # with open (path_sct+"/commit.txt", "r") as myfile:
-    #     commit_sct = myfile.read().replace('\n', '')
-    # print "SCT version: "+version_sct+'-'+commit_sct
 
     # check if Python path is within SCT path
     print_line('Check Python path')
@@ -149,11 +131,11 @@ def main():
         print_ok()
     else:
         print_fail()
-        print '  Python path: '+path_python
+        print '  Python path: ' + path_python
 
     # check if data folder is empty
     print_line('Check if data are installed')
-    if os.listdir(path_sct+"/data"):
+    if os.listdir(path_sct + "/data"):
         print_ok()
     else:
         print_fail()
@@ -170,7 +152,7 @@ def main():
             module = 'PyQt4'
         else:
             module = i
-        print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
+        print_line('Check if ' + i + ' (' + version_requirements.get(i) + ') is installed')
         try:
             module = importlib.import_module(module)
             # get version
@@ -187,7 +169,7 @@ def main():
                 print_ok()
             else:
                 print_warning()
-                print '  Detected version: '+version+'. Required version: '+version_requirements[i]
+                print '  Detected version: ' + version + '. Required version: ' + version_requirements[i]
         except ImportError:
             print_fail()
             install_software = 1
@@ -196,7 +178,7 @@ def main():
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
         module = i
-        print_line('Check if '+i+' ('+version_requirements_pip.get(i)+') is installed')
+        print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
         try:
             module = importlib.import_module(module)
             # get version
@@ -210,7 +192,6 @@ def main():
         except ImportError:
             print_fail()
             install_software = 1
-
 
     # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
     print_line('Check if numpy is installed')
@@ -228,37 +209,10 @@ def main():
         print_fail()
         install_software = 1
 
-    # CHECK EXTERNAL MODULES:
-
-    # Check if dipy is installed
-    # print_line('Check if dipy ('+dipy_version+') is installed')
-    # try:
-    #     module = importlib.import_module('dipy')
-    #     if module.__version__ == dipy_version:
-    #         print_ok()
-    #     else:
-    #         print_warning()
-    #         print '  Detected version: '+version+'. Required version: '+dipy_version
-    # except ImportError:
-    #     print_fail()
-    #     install_software = 1
-
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
     cmd = 'isct_test_ants'
-    # here, cannot use commands.getstatusoutput because status is wrong (because of launcher)
-    # status = os.system(cmd+" &> /dev/null")
-    # status, output = sct.run(cmd, 0)
-    # import subprocess
-    # process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    # status = subprocess.call(cmd, shell=True)
-    # status = process.returncode
     (status, output) = commands.getstatusoutput(cmd)
-    # from subprocess import call
-    # status, output = call(cmd)
-    # print status
-    # print output
-    # if status in [0, 256]:
     if status == 0:
         print_ok()
     else:
@@ -266,21 +220,8 @@ def main():
         print output
         e = 1
     if complete_test:
-        print '>> '+cmd
+        print '>> ' + cmd
         print (status, output), '\n'
-
-    # check if ANTs is compatible with OS
-    # print_line('Check ANTs compatibility with OS ')
-    # cmd = 'isct_antsRegistration'
-    # status, output = commands.getstatusoutput(cmd)
-    # if status in [0, 256]:
-    #     print_ok()
-    # else:
-    #     print_fail()
-    #     e = 1
-    # if complete_test:
-    #     print '>> '+cmd
-    #     print (status, output), '\n'
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
@@ -308,11 +249,20 @@ def main():
         print_fail()
         print sys.exc_info()
 
+    print_line('Check if SCT package is installed')
+    try:
+        import spinalcordtoolbox
+        spinalcordtoolbox.__name__
+        print_ok()
+    except ImportError:
+        print_fail()
+        print sys.exc_info()
+
     # close log file
     if create_log_file:
         sys.stdout = orig_stdout
         handle_log.close()
-        print "File generated: "+file_log+'\n'
+        print "File generated: " + file_log + '\n'
     print ''
     sys.exit(e + install_software)
 
@@ -350,13 +300,13 @@ def print_fail():
 def add_bash_profile(string):
     from os.path import expanduser
     home = expanduser("~")
-    with open(home+"/.bash_profile", "a") as file_bash:
-        file_bash.write("\n"+string)
+    with open(home + "/.bash_profile", "a") as file_bash:
+        file_bash.write("\n" + string)
 
 
 def get_version_requirements():
     status, path_sct = sct.run('echo $SCT_DIR', 0)
-    file = open(path_sct+"/install/requirements/requirementsConda.txt")
+    file = open(path_sct + "/install/requirements/requirementsConda.txt")
     dict = {}
     while True:
         line = file.readline()
@@ -370,7 +320,7 @@ def get_version_requirements():
 
 def get_version_requirements_pip():
     status, path_sct = sct.run('echo $SCT_DIR', 0)
-    file = open(path_sct+"/install/requirements/requirementsPip.txt")
+    file = open(path_sct + "/install/requirements/requirementsPip.txt")
     dict = {}
     while True:
         line = file.readline()
@@ -384,7 +334,7 @@ def get_version_requirements_pip():
 
 
 def get_package_version(package_name):
-    cmd = "conda list "+package_name
+    cmd = "conda list " + package_name
     output = commands.getoutput(cmd)
     while True:
         line = output.split("\n")
@@ -393,7 +343,7 @@ def get_package_version(package_name):
                 vers = i.split(' ')
                 vers[:] = (value for value in vers if value != "")
                 return vers[1]
-        raise Exception("Could not find package: "+package_name)
+        raise Exception("Could not find package: " + package_name)
 
 
 def check_package_version(installed, required, package_name):
@@ -403,9 +353,7 @@ def check_package_version(installed, required, package_name):
         return False
 
 
-# ==========================================================================================
 def get_parser():
-    # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Check the installation and environment variables of the'
                                  ' toolbox and its dependencies.')
@@ -423,10 +371,6 @@ def get_parser():
     return parser
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
     param = Param()
-    # call main function
     main()
