@@ -1100,7 +1100,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
     sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
     matching_slices_centerline_vert_labeling = []
-    z_centerline = [x for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
+    z_centerline = [int(x) for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
     vert_range = range(vert_levels_list[0], vert_levels_list[1]+1)
     for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline,:,:]):
         slice_idxs = np.nonzero(z_slice)
