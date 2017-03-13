@@ -133,7 +133,7 @@ sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
 sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline t1_seg_reg.nii.gz
 # check segmentation
 if [ $DISPLAY = true ]; then
-  fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 &
+  fslview dwi_moco_mean -b 0,1000 dwi_moco_mean_seg -l Red -t 0.5 &
 fi
 # Register template to dwi
 # Tips: We use the template registered to the MT data in order to account for gray matter segmentation
