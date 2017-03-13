@@ -642,6 +642,9 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         # compute Z axis of the image, in physical coordinate
         axis_X, axis_Y, axis_Z = im_seg.get_directions()
 
+        # compute z_centerline in image coordinates for usage in vertebrae mapping
+        z_centerline_voxel = [coord[2] for coord in im_seg.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])]
+
     else:
         # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
         x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
@@ -650,6 +653,9 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
 
         axis_Z = [0.0, 0.0, 1.0]
+
+        # compute z_centerline in image coordinates for usage in vertebrae mapping
+        z_centerline_voxel = z_centerline
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -796,7 +802,6 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
             sct.printv('\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/PAM50_levels.nii.gz\". See usage.\n', 1, 'error')
 
         elif vert_levels and fname_vertebral_labeling:
-
             # from sct_extract_metric import get_slices_matching_with_vertebral_levels
             sct.printv('Selected vertebral levels... '+vert_levels)
 
@@ -809,7 +814,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
             # get the slices corresponding to the vertebral levels
             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline_voxel)
 
         elif not vert_levels:
             vert_levels_list = []
@@ -1101,9 +1106,10 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
     matching_slices_centerline_vert_labeling = []
 
-    z_centerline = [int(x) for x in z_centerline if int(x) < vertebral_labeling_data.shape[2]]
+    z_centerline = [x for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
     vert_range = range(vert_levels_list[0], vert_levels_list[1]+1)
-    for idx, z_slice in enumerate(vertebral_labeling_data[:, :, z_centerline]):
+
+    for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline,:,:]):
         slice_idxs = np.nonzero(z_slice)
         if np.asarray(slice_idxs).shape != (2, 0) and int(np.median(z_slice[slice_idxs])) in vert_range:
             matching_slices_centerline_vert_labeling.append(idx)
