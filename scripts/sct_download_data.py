@@ -80,7 +80,7 @@ def main(args=None):
     arguments = parser.parse(args)
     data_name = arguments['-d']
     verbose = int(arguments['-v'])
-    dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
+    dest_folder = sct.slash_at_the_end(arguments.get('-o', os.path.abspath(os.curdir)), 1)
 
     # Download data
     url = dict_url[data_name]
@@ -90,7 +90,7 @@ def main(args=None):
         sct.printv('\nERROR: User canceled process.\n', 1, 'error')
 
     # Check if folder already exists
-    sct.printv('Check if folder already exists...', verbose)
+    sct.printv('\nCheck if folder already exists...', verbose)
     if os.path.isdir(data_name):
         sct.printv('WARNING: Folder ' + data_name + ' already exists. Removing it...', 1, 'warning')
         shutil.rmtree(data_name, ignore_errors=True)
@@ -98,16 +98,15 @@ def main(args=None):
     # unzip
     unzip(tmp_file, dest_folder, verbose)
 
-    sct.printv('Remove temporary file...\n', verbose)
+    sct.printv('\nRemove temporary file...', verbose)
     os.remove(tmp_file)
 
-    sct.printv('Done! Folder created: %s\n' % dest_folder, verbose, 'info')
+    sct.printv('\nDone! Folder created: %s\n' % (dest_folder + data_name), verbose, 'info')
 
 
 def unzip(compressed, dest_folder, verbose):
     """Extract compressed file to the dest_folder"""
-    sct.printv('Copy binaries to %s\n' % dest_folder, verbose)
-    sct.printv('Unzip dataset...\n', verbose)
+    sct.printv('\nUnzip data to: %s' % dest_folder, verbose)
     if compressed.endswith('zip'):
         try:
             zf = zipfile.ZipFile(compressed)
@@ -144,7 +143,7 @@ def download_data(url, verbose):
 
     _, content = cgi.parse_header(response.headers['Content-Disposition'])
     tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-    sct.printv('Downloading %s\n' % content['filename'], verbose)
+    sct.printv('\nDownloading %s...' % content['filename'], verbose)
 
     with open(tmp_path, 'wb') as tmp_file:
         total = int(response.headers.get('content-length', 1))
@@ -159,7 +158,7 @@ def download_data(url, verbose):
                                                    ' ' * (20-done)))
                     sys.stdout.flush()
 
-    sct.printv('\nDownload complete %s' % content['filename'], verbose=verbose)
+    sct.printv('Download complete', verbose=verbose)
     return tmp_path
 
 
