@@ -16,6 +16,7 @@ import sys
 import tarfile
 import tempfile
 import zipfile
+import shutil
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -88,12 +89,13 @@ def main(args=None):
     except (KeyboardInterrupt):
         sct.printv('\nERROR: User canceled process.\n', 1, 'error')
 
-    # Check if folder already exists		
-    # sct.printv('Check if folder already exists...', verbose)
-    # if os.path.isdir(data_name):
-    #     sct.printv('.. WARNING: Folder ' + data_name + ' already exists. Removing it...', 1, 'warning')
-        # sct.remo run('rm -rf ' + data_name, 0)
+    # Check if folder already exists
+    sct.printv('Check if folder already exists...', verbose)
+    if os.path.isdir(data_name):
+        sct.printv('WARNING: Folder ' + data_name + ' already exists. Removing it...', 1, 'warning')
+        shutil.rmtree(data_name, ignore_errors=True)
 
+    # unzip
     unzip(tmp_file, dest_folder, verbose)
 
     sct.printv('Remove temporary file...\n', verbose)
