@@ -1,6 +1,24 @@
 # CHANGES TO RELEASE
 
-##3.0_beta32 (2017-02-10)
+## Release 3.0.0 (2017-03-15)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta32...None)
+### BUG
+ - (213911156) Modifying the type of coordinates for vertebral matching [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1206)
+ - (212577204) Removing discontinuities at edges on segmentation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1196)
+ - (211176555) BUG: computing centreline using physical coordinates instead of voxel… [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1189)
+ - (208537967) Fix issue #1172: -vertfile as an optional parameter [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1173)
+ - (207979967) Improvements to the viewer of sct_propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1169)
+ - (207253627) Removed confusion with command variables when using PropSeg viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1161)
+ - (207088109) Patch sct_register_to_template with -ref subject [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1158)
+ - (204162354) zero voxels no more included when computing MI + new flag to compute normalized MI [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1136)
+### ENHANCEMENT
+ - (210324462) Changed default threshold_distance from 2.5 to 10 to avoid edge effect [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1183)
+ - (209209738) Adapt sct_create_mask and sct_label_utils to 2D data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1180)
+ - (207979967) Improvements to the viewer of sct_propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1169)
+### TESTING
+ - (210884964) OPT: display mean and std instead of mean twice [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1187)
+
+## 3.0_beta32 (2017-02-10)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta31...v3.0_beta32)
 ### BUG
  - (#206218460) BUG: install_sct: fixed PATH issue (#1153): closed at 2017-02-08 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1154)
@@ -20,7 +38,7 @@
  - (#204441260) Add message to user when spinal cord is not detected and verbose improvement for testing: closed at 2017-02-01 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1145)
  - (#201891816) Display results of isct_test_function: closed at 2017-01-20 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1117)
 
-##3.0_beta31 (2017-01-16)
+## 3.0_beta31 (2017-01-16)
 - BUG: **sct_process_segmentation** display spinal cord length when required (full spinal cord) (#1112)
 - BUG: **sct_propseg** Adding rules for in-segmentation errors (#1110)
 - BUG: PAM50: probabilist templates of WM and GM not sum to 1 (#411)
@@ -36,7 +54,7 @@
 - OPT: **isct_test_function**: send email when finished (#1081)
 - OPT: **isct_test_function**: removed color tags on log entries  (#1035)
 
-##3.0_beta29 (2016-12-13)
+## 3.0_beta29 (2016-12-13)
 - NEW: PAM50 template now used as the default template
 - NEW: **sct_compute_snr**: compute SNR using several methods (Dietrich et al. 2007)
 - NEW: **sct_propseg**: now accepts a correction solution for sct_propseg in case of missing CSF/SC contrast and/or artefacts (see issue #664 for details)
@@ -66,7 +84,7 @@
 - OPT: **sct_testing**: added integrity testing for CSA computation (#1031)
 - REF: **sct_testing**: sct_testing_data is now hosted on GitHub-release for better tracking and across-version compatibility.
 
-##3.0_beta28 (2016-11-25)
+## 3.0_beta28 (2016-11-25)
 - BUG: **sct_process_segmentation**: Fixed issue related to calculation of CSA (#1022)
 - BUG: **sct_label_vertebrae**: Fixed Vertebral labeling removes first vertebrae in the labelled segmentation (#700)
 - OPT: **sct_register_multimodal**: Now possible to input initial warping field (#1049)
@@ -74,47 +92,47 @@
 - OPT: **sct_extract_metric**: Added weighted-Maximum a posteriori extraction method (#1018)
 - OPT: Remove color tags on log entries (#1035)
 
-##3.0_beta27 (2016-10-23)
+## 3.0_beta27 (2016-10-23)
 - NEW: **sct_extract_metric**: method "max" to extract CSA value form interpolated volume (e.g. PAM50 space) without partial volume bias
 
-##3.0_beta26 (2016-10-05)
+## 3.0_beta26 (2016-10-05)
 - INST: Fixed #992, #1004, #1008, #1012
 
-##3.0_beta25 (2016-09-30)
+## 3.0_beta25 (2016-09-30)
 - OPT: Fixed #875
 - INST: Fixed #1007, #1009
 
-##3.0_beta24 (2016-09-28)
+## 3.0_beta24 (2016-09-28)
 - BUG: Fixed #870, #898, #859, #871, #1005, #750, #444, #878, #1000
 - INST: Fixed issue with matplotlib version 1.5.3
 
-##3.0_beta23 (2016-09-18)
+## 3.0_beta23 (2016-09-18)
 - BUG: Fixed #984, #983, #954, #978, #987, #938, #964, #638, #969, #922, #855
 - OPT: **sct_register_to_template**: added a flag "-ref" to be able to register to anisotropic data
 
-##3.0_beta22 (2016-09-09)
+## 3.0_beta22 (2016-09-09)
 - BUG: Fixed #994, #989, #988, #976, #968
 
-##2.2.3 (2016-02-04)
+## 2.2.3 (2016-02-04)
 - BUG: **sct_straighten_spinalcord**: fixed instabilities related to generation of labels (issue #722)
 
-##2.2.2 (2016-01-31)
+## 2.2.2 (2016-01-31)
 - OPT: **sct_dmri_moco**: added flag "-bvalmin" to specify b=0 threshold and improved reading of bval file.
 
-##2.2.1 (2016-01-29)
+## 2.2.1 (2016-01-29)
 - BUG: **sct_dmri_moco**: fixed bug related to the use of mask
 - BUG: **sct_dmri_moco**: fixed bug in the algorithm (iterative average of target DWI volume)
 
-##2.2 (2016-01-23)
+## 2.2 (2016-01-23)
 - BUG: Fixed major issue during installation (issue #708)
 - BUG: **sct_process_segmentation**: fixed bug occuring with small FOV (issue #706)
 
-##2.1.1 (2016-01-15)
+## 2.1.1 (2016-01-15)
 - BUG: **sct_resample**: fixed issue #691
 - OPT: **sct_segment_graymatter**: improved robustness of normalization
 - OPT: **sct_process_segmentation**: default parameter does not smooth CSA results anymore
 
-##2.1 (2015-12-01)
+## 2.1 (2015-12-01)
 - NEW: **sct_testing**: test SCT functions and their integrity
 - NEW: **sct_maths**: performs basic operations on images. Similar to fslmaths.
 - NEW: **sct_get_centerline -method auto**: uses advanced image processing methods for finding the spinal cord centerline automatically on any type of contrast. This script should be followed by sct_propseg for finer cord segmentation.
@@ -131,35 +149,35 @@
 - OPT: **sct_registration_to_template**: improved accuracy
 - REF: harmonization of flags. Most flags from v2.0 still work but a message of deprecation is sent.
 
-##2.1_beta21 (2015-11-30)
+## 2.1_beta21 (2015-11-30)
 - **sct_process_segmentation**: fixed issue with computation of volume based on vertebral level (slice selection now using centerline)
 
-##2.1_beta20 (2015-11-30)
+## 2.1_beta20 (2015-11-30)
 - fixed compatibility with new PAM50 template
 
-##2.1_beta19 (2015-11-25)
+## 2.1_beta19 (2015-11-25)
 - harmonized flags
 - **sct_process_segmentation**: now computes volume
 
-##2.0.6 (2015-06-30)
+## 2.0.6 (2015-06-30)
 - BUG: **sct_process_segmentation**: fixed bug of output file location (issue #395)
 
-##2.0.5 (2015-06-10)
+## 2.0.5 (2015-06-10)
 - BUG: **sct_process_segmentation**: fixed error when calculating CSA (issue #388)
 
-##2.0.4 (2015-06-06)
+## 2.0.4 (2015-06-06)
 - BUG: **sct_process_segmentation**: fixed error when calculating CSA (issue #388)
 - BUG: Hanning smoothing: fixed error that occurred when window size was larger than data (issue #390)
 - OPT: **sct_check_dependencies**: now checks if git is installed
 - OPT: simplified batch_processing.sh
 
-##2.0.3 (2015-05-19)
+## 2.0.3 (2015-05-19)
 - BUG: **sct_register_to_template**: fixed issue related to appearance of two overlapped templates in some cases (issue #367)
 - BUG: **sct_register_to_template**: now all input data are resampled to 1mm iso to avoid label mismatch (issue #368)
 - BUG: **sct_resample**: fixed bug when user specified output file
 - OPT: **sct_create_mask**: improved speed
 
-##2.0.2 (2015-05-16)
+## 2.0.2 (2015-05-16)
 - BUG: **sct_fmri_compute_tsnr**: fixed issue when input path includes folder
 - BUG: **sct_orientation**: now possibility to change orientation even if no qform in header (issue #360)
 - BUG: **msct_smooth**: fixed error with small Hanning window (issue #363)
@@ -168,11 +186,11 @@
 - NEW: **sct_orientation**: added a tool to fix wrong orientation of an image (issue #366)
 - OPT: **sct_register_to_template**: twice as fast! (issue #343)
 
-##2.0.1 (2015-04-28)
+## 2.0.1 (2015-04-28)
 - BUG: **sct_extract_metric**: MAP method did not scale properly with the data. Now fixed (issue #348)
 - BUG: fixed issue with parser when typing a command to see usage (it crashed)
 
-##2.0 (2015-04-17)
+## 2.0 (2015-04-17)
 
 - NEW: **sct_fmri_compute_tsnr**: new function to compute TSNR from fMRI data (performs moco before)
 - OPT: **sct_straighten_spinalcord**: now MUCH faster and more accurate (issue #240)
@@ -199,17 +217,17 @@
 - REF: msct_parser: new parser that generate documentation/usage
 - REF: msct_image, sct_label_utils: smoothly converting the toolbox to objet-oriented, some scripts can be used as python module
 
-##1.1.2_beta (2014-12-25)
+## 1.1.2_beta (2014-12-25)
 
 - BUG: sct_dmri_moco: fixed crash when using mask (issue # 245)
 - OPT: sct_create_mask: (1) updated usage (size in vox instead of mm), (2) fixed minor issues related to mask size.
 - INST: links are now created during installation of release or patch (issue ).
 
-##1.1.1 (2014-11-13)
+## 1.1.1 (2014-11-13)
 
 - FIX: updated ANTs binaries for compatibility with GLIBC_2.13 (issue: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/thread/e00b2aeb/)
 
-##1.1 (2014-11-04)
+## 1.1 (2014-11-04)
 
 - NEW: sct_crop: function to quickly crop an image.
 - NEW: sct_extract_metric (replaces the old sct_estimate_MAP_tracts.py). New functionalities added (maximum likelihood estimation and tract grouping). More flexible with label files.
@@ -233,7 +251,7 @@
 - REF: sct_straighten_spinalcord (fixed issues #56, #116)
 - TEST: major changes on the testing framework for better modularity with Travis. Now using separate small dataset.
 
-##1.0.3 (2014-07-30)
+## 1.0.3 (2014-07-30)
 
 - BUG: fixed bug in sct_process_segmentation.py related to import of scipy.misc imsave,imread in miniconda distrib (issue #62)
 - BUG: fixed bug in sct_process_segmentation.py related to import of PIL/Pillow module (issue #58)
@@ -245,28 +263,28 @@
 - NEW: sct_concat_transfo.py: concatenate warping fields (wrapper to ANTs ComposeMultiTransform)
 - NEW: batch_processing.sh: example batch for processing multi-parametric data
 
-##1.0.2 (2014-07-13)
+## 1.0.2 (2014-07-13)
 
 - NEW: virtual machine
 - BUG: fixed sct_check_dependencies for Linux
 - BUG: fix VM failure of sct_register_to_template (issue #41)
 - OPT: sct_register_to_template.py now registers the straight spinal cord to the template using sct_register_multimodal.py, which uses the spinal cord segmentation for more accurate results.
 
-##1.0.1 (2014-07-03)
+## 1.0.1 (2014-07-03)
 
 - INST: toolbox now requires matplotlib
 
-##1.0 (2014-06-15)
+## 1.0 (2014-06-15)
 
 - first public release!
 
-##0.7 (2014-06-14)
+## 0.7 (2014-06-14)
 
 - NEW: dMRI moco
 - INST: libraries are now statically compiled
 - OPT: propseg: now results are reproducible (i.e. removed pseudo-randomization)
 
-##0.6 (2014-06-13)
+## 0.6 (2014-06-13)
 
 - Debian + OSX binaries
 - BUG: fixed registration2template issue when labels were larger than 9
@@ -274,29 +292,29 @@
 - INST: now installer write on bashrc and links bash_profile to bashrc
 - BUG: removed random parts in PropSeg
 
-##0.5 (2014-06-03)
+## 0.5 (2014-06-03)
 
 - now possible to get both template2EPI and EPI2template warping fields
 - fixed major bug in registration (labels were cropped)
 - NEW: probabilistic location of spinal levels
 - NEW: binaries for Debian/Ubuntu
 
-##0.4 (2014-05-28)
+## 0.4 (2014-05-28)
 
 - NEW: installer for ANTs (currently only for OSX)
 - fixed bugs
 
-##0.3 (2014-05-26)
+## 0.3 (2014-05-26)
 
 - major changes in sct_register_multimodal
 - fixed bugs
 
-##0.2 (2014-05-18)
+## 0.2 (2014-05-18)
 
 - NEW: nonlocal means denoising filter
 - NEW: sct_smooth_spinalcord --> smoothing along centerline
 - fixed bugs
 
-##0.1 (2014-05-03)
+## 0.1 (2014-05-03)
 
 - first beta version!
