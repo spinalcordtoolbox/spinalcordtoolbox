@@ -16,29 +16,24 @@
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
 import sys
-import getopt
 import os
 import shutil
-import commands
 from random import randint
 import time
 import numpy as np
 import scipy
-import nibabel
 import sct_utils as sct
 from msct_nurbs import NURBS
-from sct_image import get_orientation_3d, set_orientation
+from sct_image import set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
-from shutil import move, copyfile
 from msct_parser import Parser
 import msct_shape
 import pandas as pd
+from msct_types import Centerline
 
 
-# DEFAULT PARAMETERS
 class Param:
-    ## The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
@@ -51,6 +46,7 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
+
 
 def get_parser():
     """
@@ -158,6 +154,13 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='0')
+    parser.add_option(name='-use-image-coord',
+                      type_value='multiple_choice',
+                      description='0: physical coordinates are used to compute CSA. 1: image coordinates are used to compute CSA.\n'
+                                  'Physical coordinates are less prone to instability in CSA computation and should be preferred.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
     parser.add_option(name='-v',
                       type_value='multiple_choice',
                       description='1: display on, 0: display off (default)',
@@ -172,9 +175,6 @@ def get_parser():
     return parser
 
 
-
-# MAIN
-# ==========================================================================================
 def main(args):
 
     parser = get_parser()
@@ -194,6 +194,7 @@ def main(args):
     slices = param.slices
     vert_lev = param.vertebral_levels
     angle_correction = True
+    use_phys_coord = True
 
     fname_segmentation = arguments['-i']
     name_process = arguments['-p']
@@ -201,8 +202,7 @@ def main(args):
     if "-ofolder" in arguments:
         output_folder = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
-        seg_path, seg_file, seg_ext = sct.extract_fname(os.path.abspath(fname_segmentation))
-        output_folder = seg_path
+        output_folder = os.getcwd()+'/'
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
     if '-vert' in arguments:
@@ -224,6 +224,11 @@ def main(args):
             angle_correction = False
         elif arguments['-no-angle'] == '0':
             angle_correction = True
+    if '-use-image-coord' in arguments:
+        if arguments['-use-image-coord'] == '1':
+            use_phys_coord = False
+        if arguments['-use-image-coord'] == '0':
+            use_phys_coord = True
 
     # update fields
     param.verbose = verbose
@@ -239,7 +244,7 @@ def main(args):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length, angle_correction=angle_correction)
+        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length, angle_correction=angle_correction, use_phys_coord=use_phys_coord)
 
     if name_process == 'label-vert':
         if '-discfile' in arguments:
@@ -587,7 +592,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True):
+def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True, use_phys_coord=True):
 
     from math import degrees
     import pandas as pd
@@ -626,11 +631,25 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
-    # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+    if use_phys_coord:
+        # fit centerline, smooth it and return the first derivative (in physical space)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
-    # correct centerline fitted coordinates according to the data resolution
-    x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
+        # average centerline coordinates over slices of the image
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
+
+        # compute Z axis of the image, in physical coordinate
+        axis_X, axis_Y, axis_Z = im_seg.get_directions()
+
+    else:
+        # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+
+        # correct centerline fitted coordinates according to the data resolution
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
+
+        axis_Z = [0.0, 0.0, 1.0]
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -650,7 +669,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
                 sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.vdot(tangent_vect, [0.0, 0.0, 1.0]))
+            angle = np.arccos(np.vdot(tangent_vect, axis_Z))
         else:
             angle = 0.0
 
@@ -742,7 +761,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'csa_volume_in_initial_orientation.nii.gz', output_folder+'csa_image.nii.gz')  # extension already included in name_output
     sct.generate_output_file(path_tmp+'angle_volume_in_initial_orientation.nii.gz', output_folder+'angle_image.nii.gz')  # extension already included in name_output
-    print('\n')
+    sct.printv('\n')
 
     # Create output text file
     sct.printv('Display CSA per slice:', verbose)
@@ -751,7 +770,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+ ',' + str(angles[i-min_z_index])+'\n')
         # Display results
-        sct.printv('z = '+str(i-min_z_index)+', CSA = '+str(csa[i-min_z_index])+' mm^2'+', Angle = '+str(angles[i-min_z_index])+' deg', type='info')
+        sct.printv('z = %d, CSA = %f mm^2, Angle = %f deg' % (i, csa[i-min_z_index], angles[i-min_z_index]), type='info')
     file_results.close()
     sct.printv('Save results in: '+output_folder+'csa_per_slice.txt\n', verbose)
 
@@ -1078,14 +1097,15 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
                              'nearest superior level available: ' + str(int(vert_levels_list[1])), type='warning')
 
     # Find slices included in the vertebral levels wanted by the user
+    # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
     sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
-    nz = len(z_centerline)
     matching_slices_centerline_vert_labeling = []
-    for zz in z_centerline:
-        # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
-        vertebral_labeling_slice_zz = vertebral_labeling_data[:, :, int(zz)]
-        if np.asarray(np.nonzero(vertebral_labeling_slice_zz)).shape != (2, 0) and int(np.median(vertebral_labeling_slice_zz[np.nonzero(vertebral_labeling_slice_zz)])) in range(vert_levels_list[0], vert_levels_list[1]+1):
-            matching_slices_centerline_vert_labeling.append(int(zz))
+    z_centerline = [x for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
+    vert_range = range(vert_levels_list[0], vert_levels_list[1]+1)
+    for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline,:,:]):
+        slice_idxs = np.nonzero(z_slice)
+        if np.asarray(slice_idxs).shape != (2, 0) and int(np.median(z_slice[slice_idxs])) in vert_range:
+            matching_slices_centerline_vert_labeling.append(idx)
 
     # now, find the min and max slices that are included in the vertebral levels
     if len(matching_slices_centerline_vert_labeling) == 0:
@@ -1098,24 +1118,24 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
 
     return slices, vert_levels_list, warning
 
-#=======================================================================================================================
-# b_spline_centerline
-#=======================================================================================================================
-def b_spline_centerline(x_centerline,y_centerline,z_centerline):
-                          
+
+def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     print '\nFitting centerline using B-spline approximation...'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
-    nurbs = NURBS(3,3000,points)  # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
-                          
+    nurbs = NURBS(3, 3000, points)
+    # BE very careful with the spline order that you choose :
+    # if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ).
+    # For the third argument (number of points), give at least len(z_centerline)+500 or higher
+
     P = nurbs.getCourbe3D()
-    x_centerline_fit=P[0]
-    y_centerline_fit=P[1]
+    x_centerline_fit = P[0]
+    y_centerline_fit = P[1]
     Q = nurbs.getCourbe3D_deriv()
-    x_centerline_deriv=Q[0]
-    y_centerline_deriv=Q[1]
-    z_centerline_deriv=Q[2]
-                          
-    return x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv
+    x_centerline_deriv = Q[0]
+    y_centerline_deriv = Q[1]
+    z_centerline_deriv = Q[2]
+
+    return x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
 
 #=======================================================================================================================
@@ -1162,24 +1182,23 @@ def ellipse_dim(a):
 #=======================================================================================================================
 def edge_detection(f):
 
-    #sigma = 1.0
     img = Image.open(f) #grayscale
     imgdata = np.array(img, dtype = float)
     G = imgdata
     #G = ndi.filters.gaussian_filter(imgdata, sigma)
     gradx = np.array(G, dtype = float)
     grady = np.array(G, dtype = float)
- 
+
     mask_x = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-          
+
     mask_y = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
- 
+
     width = img.size[1]
     height = img.size[0]
- 
+
     for i in range(1, width-1):
         for j in range(1, height-1):
-        
+
             px = np.sum(mask_x*G[(i-1):(i+1)+1,(j-1):(j+1)+1])
             py = np.sum(mask_y*G[(i-1):(i+1)+1,(j-1):(j+1)+1])
             gradx[i][j] = px
@@ -1195,13 +1214,10 @@ def edge_detection(f):
                 mag[i][j]=1
             else:
                 mag[i][j] = 0
-   
+
     return mag
 
 
-
-# START PROGRAM
-# =========================================================================================
 if __name__ == "__main__":
     # initialize parameters
     param = Param()
