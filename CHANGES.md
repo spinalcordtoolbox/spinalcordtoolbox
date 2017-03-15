@@ -1,5 +1,23 @@
 # CHANGES TO RELEASE
 
+##Release 3.0.0 (2017-03-15)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta32...None)
+### %BUG
+ - (213911156) Modifying the type of coordinates for vertebral matching [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1206)
+ - (212577204) Removing discontinuities at edges on segmentation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1196)
+ - (211176555) BUG: computing centreline using physical coordinates instead of voxel… [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1189)
+ - (208537967) Fix issue #1172: -vertfile as an optional parameter [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1173)
+ - (207979967) Improvements to the viewer of sct_propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1169)
+ - (207253627) Removed confusion with command variables when using PropSeg viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1161)
+ - (207088109) Patch sct_register_to_template with -ref subject [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1158)
+ - (204162354) zero voxels no more included when computing MI + new flag to compute normalized MI [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1136)
+### %ENHANCEMENT
+ - (210324462) Changed default threshold_distance from 2.5 to 10 to avoid edge effect [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1183)
+ - (209209738) Adapt sct_create_mask and sct_label_utils to 2D data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1180)
+ - (207979967) Improvements to the viewer of sct_propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1169)
+### %TESTING
+ - (210884964) OPT: display mean and std instead of mean twice [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1187)
+
 ##3.0_beta32 (2017-02-10)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta31...v3.0_beta32)
 ### BUG
