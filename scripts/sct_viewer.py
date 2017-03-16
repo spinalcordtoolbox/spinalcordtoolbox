@@ -503,16 +503,7 @@ class ClickViewer(Viewer):
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
         super(ClickViewer, self).__init__(list_images, visualization_parameters)
 
-        """ Declaration des variables globales"""
-        self.title = title  # title to display in main figure
-        self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
-        self.current_slice = 0
-        self.number_of_slices = 0
-        self.gap_inter_slice = 0
-
-
-        self.primary_subplot = orientation_subplot[0]
-        self.secondary_subplot = orientation_subplot[1]
+        self.declaration_global_variables(orientation_subplot,title)
 
         self.compute_offset() # ?!
         self.pad_data()       # ?!
@@ -550,22 +541,36 @@ class ClickViewer(Viewer):
         """ Create Buttons"""
         self.create_button_help()
 
+        """ Compute slices to display """
+        self.calculate_list_slices()
+
+        """ Variable to check if all slices have been processed """
+        self.all_processed = False
+        self.setup_intensity()
+
+        """ Manage closure of viewer"""
+        self.enable_custom_points = False
+        self.fig.canvas.mpl_connect('close_event', self.close_window)
+        self.closed = False
+        self.input_type = input_type
+
+    def declaration_global_variables(self,orientation_subplot,title):
+        self.title = title  # title to display in main figure
+        self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
+        self.primary_subplot = orientation_subplot[0]
+        self.secondary_subplot = orientation_subplot[1]
+
+        self.current_slice = 0
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
+
         # specialized for Click viewer
         self.list_points = []
         self.list_points_useful_notation = ''
 
         # compute slices to display
         self.list_slices = []
-        self.calculate_list_slices()
 
-        # variable to check if all slices have been processed
-        self.all_processed = False
-        self.setup_intensity()
-
-        self.enable_custom_points = False
-        self.fig.canvas.mpl_connect('close_event', self.close_window)
-        self.closed = False
-        self.input_type = input_type
 
     def set_display_cross(self):
         if self.primary_subplot == 'ax':
