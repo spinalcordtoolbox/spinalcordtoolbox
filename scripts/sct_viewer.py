@@ -73,15 +73,7 @@ class SinglePlot:
         self.aspect_ratio = None
         for i, image in enumerate(images):
             data_to_display = self.set_data_to_display(image)
-
-            if str(i) in im_params.images_parameters:
-                my_cmap = copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap))
-                my_interpolation = im_params.images_parameters[str(i)].interp
-                my_alpha = float(im_params.images_parameters[str(i)].alpha)
-            else:
-                my_cmap = cm.get_cmap('gray')
-                my_interpolation = 'nearest'
-                my_alpha = 1.0
+            (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,cm)
 
             my_cmap.set_under('b', alpha=0)
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
@@ -100,6 +92,15 @@ class SinglePlot:
             self.axes.add_line(self.line_vertical)
 
         self.zoom_factor = 1.0
+
+
+    def set_image_parameters(self,im_params,i,cm):
+        if str(i) in im_params.images_parameters:
+            return(copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap)),im_params.images_parameters[str(i)].interp,float(im_params.images_parameters[str(i)].alpha))
+        else:
+            return (cm.get_cmap('gray'), 'nearest', 1.0)
+
+
 
     def set_data_to_display(self,image):
         if self.view == 1:
