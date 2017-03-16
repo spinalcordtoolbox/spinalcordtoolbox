@@ -275,17 +275,14 @@ class Viewer(object):
     def __init__(self, list_images, visualization_parameters=None):
         self.images = []
         self.check_only_images(list_images)
-
-
-
         self.im_params = visualization_parameters
 
-        # initialisation of plot
+        """ Initialisation of plot """
         self.fig = plt.figure(figsize=(8, 8))
         self.fig.subplots_adjust(bottom=0.1, left=0.1)
         self.fig.patch.set_facecolor('lightgrey')
 
-        # pad the image so that it is square in axial view (useful for zooming)
+        """ Pad the image so that it is square in axial view (useful for zooming) """
         self.image_dim = self.images[0].data.shape
         nx, ny, nz, nt, px, py, pz, pt = self.images[0].dim
         self.im_spacing = [px, py, pz]
@@ -303,6 +300,7 @@ class Viewer(object):
 
         self.last_update = time()
         self.update_freq = 1.0/15.0  # 10 Hz
+
 
     def check_only_images(self,list_images):
         # TODO: check same space
