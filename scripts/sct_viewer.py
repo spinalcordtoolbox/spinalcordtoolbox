@@ -307,6 +307,7 @@ class Viewer(object):
         self.last_update = time()
         self.update_freq = 1.0/15.0  # 10 Hz
 
+
     def compute_offset(self):
         array_dim = [self.image_dim[0]*self.im_spacing[0], self.image_dim[1]*self.im_spacing[1], self.image_dim[2]*self.im_spacing[2]]
         index_max = np.argmax(array_dim)
@@ -562,7 +563,6 @@ class ClickViewer(Viewer):
         self.enable_custom_points = False
         self.fig.canvas.mpl_connect('close_event', self.close_window)
         self.closed = False
-
         self.input_type = input_type
 
     def calculate_list_slices(self, starting_slice=-1):
