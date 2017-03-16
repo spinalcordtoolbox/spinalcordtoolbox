@@ -508,7 +508,6 @@ class ClickViewer(Viewer):
         self.compute_offset() # ?!
         self.pad_data()       # ?!
 
-
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
 
         """ Display axes, specific to viewer """
@@ -518,21 +517,11 @@ class ClickViewer(Viewer):
         """ Main plot on the right"""
         ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
         self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.primary_subplot], display_cross='', im_params=visualization_parameters))
-        self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
-        if self.primary_subplot == 'ax':
-            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
-            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
-        elif self.primary_subplot == 'cor':
-            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
-            self.windows[0].axes.set_ylim([self.images[0].data.shape[0], 0])
-        elif self.primary_subplot == 'sag':
-            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[0]])
-            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+        self.set_main_plot()
 
         """Smaller plot on the left"""
         ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
         self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot], display_cross=self.set_display_cross(), im_params=visualization_parameters))
-
 
         """ Connect buttons to user actions"""
         for window in self.windows:
@@ -553,6 +542,21 @@ class ClickViewer(Viewer):
         self.fig.canvas.mpl_connect('close_event', self.close_window)
         self.closed = False
         self.input_type = input_type
+
+
+
+
+    def set_main_plot(self):
+        self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
+        if self.primary_subplot == 'ax':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+        elif self.primary_subplot == 'cor':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[0], 0])
+        elif self.primary_subplot == 'sag':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[0]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
 
     def declaration_global_variables(self,orientation_subplot,title):
         self.title = title  # title to display in main figure
