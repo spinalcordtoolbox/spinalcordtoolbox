@@ -765,7 +765,7 @@ class Image(object):
         """
         return np.transpose(self.coord_origin + np.dot(self.m_p2f_transfo, np.transpose(np.asarray(coordi))))
 
-    def transfo_phys2pix(self, coordi=None):
+    def transfo_phys2pix(self, coordi):
         """
         This function returns the pixels coordinates of all points of 'coordi'
         'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will
@@ -776,18 +776,17 @@ class Image(object):
         """
 
         m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3,0:3]
+        m_p2f_transfo = m_p2f[0:3, 0:3]
         m_f2p_transfo = np.linalg.inv(m_p2f_transfo)
 
-        coord_origin = np.array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
+        coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if coordi != None:
-            coordi_phys = np.transpose(np.asarray(coordi))
-            coordi_pix =  np.transpose(np.dot(m_f2p_transfo, (coordi_phys-coord_origin)))
-            coordi_pix_tmp = coordi_pix.tolist()
-            coordi_pix_list = [[int(np.round(coordi_pix_tmp[j][i])) for i in range(len(coordi_pix_tmp[j]))] for j in range(len(coordi_pix_tmp))]
+        coordi_phys = np.transpose(np.asarray(coordi))
+        coordi_pix = np.transpose(np.dot(m_f2p_transfo, (coordi_phys - coord_origin)))
+        coordi_pix_tmp = coordi_pix.tolist()
+        coordi_pix_list = [[int(np.round(coordi_pix_tmp[j][i])) for i in range(len(coordi_pix_tmp[j]))] for j in range(len(coordi_pix_tmp))]
 
-            return coordi_pix_list
+        return coordi_pix_list
 
     def transfo_phys2continuouspix(self, coordi=None, data_phys=None):
         """
