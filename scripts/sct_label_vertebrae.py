@@ -462,13 +462,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=None, verbo
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-        plt.matshow(
-            np.mean(
-                data[xc - param.size_RL:xc + param.size_RL, :, :], axis=0).transpose(),
-            fignum=param.fig_anat_straight,
-            cmap=plt.cm.gray,
-            clim=[0, 800],
-            origin='lower')
+        # get percentile for automatic contrast adjustment
+        data_display = np.mean(data[xc-param.size_RL:xc+param.size_RL, :, :], axis=0).transpose()
+        percmin = np.percentile(data_display, 10)
+        percmax = np.percentile(data_display, 90)
+        # display image
+        plt.matshow(data_display, fignum=50, cmap=plt.cm.gray, clim=[percmin, percmax], origin='lower')
         plt.title('Anatomical image')
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
         plt.figure(50)
