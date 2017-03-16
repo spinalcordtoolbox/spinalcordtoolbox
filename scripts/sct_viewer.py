@@ -539,21 +539,16 @@ class ClickViewer(Viewer):
             self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
 
         """Smaller plot on the left"""
-        display_cross = ''
-        if self.primary_subplot == 'ax':
-            display_cross = 'v'
-        else:
-            display_cross = 'h'
         ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot], display_cross=display_cross, im_params=visualization_parameters))
+        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot], display_cross=self.set_display_cross(), im_params=visualization_parameters))
 
+
+        """ Connect buttons to user actions"""
         for window in self.windows:
             window.connect()
 
-        self.ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
-        button_help = Button(self.ax_help, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.help)
-        self.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
+        """ Create Buttons"""
+        self.create_button_help()
 
         # specialized for Click viewer
         self.list_points = []
@@ -565,13 +560,26 @@ class ClickViewer(Viewer):
 
         # variable to check if all slices have been processed
         self.all_processed = False
-
         self.setup_intensity()
 
         self.enable_custom_points = False
         self.fig.canvas.mpl_connect('close_event', self.close_window)
         self.closed = False
         self.input_type = input_type
+
+    def set_display_cross(self):
+        if self.primary_subplot == 'ax':
+            return('v')
+        else:
+            return('h')
+
+
+    def create_button_help(self):
+        self.ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
+        button_help = Button(self.ax_help, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.help)
+        self.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
+
 
     def calculate_list_slices(self, starting_slice=-1):
         if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
