@@ -269,17 +269,14 @@ class SinglePlot:
         return
 
 
+
+
 class Viewer(object):
     def __init__(self, list_images, visualization_parameters=None):
         self.images = []
-        for im in list_images:
-            if isinstance(im, Image):
-                self.images.append(im)
-            else:
-                print "Error, one of the images is actually not an image..."
+        self.check_only_images(list_images)
 
-            # TODO: check same space
-            # TODO: check if at least one image
+
 
         self.im_params = visualization_parameters
 
@@ -306,6 +303,17 @@ class Viewer(object):
 
         self.last_update = time()
         self.update_freq = 1.0/15.0  # 10 Hz
+
+    def check_only_images(self,list_images):
+        # TODO: check same space
+        # TODO: check if at least one image
+
+        for im in list_images:
+            if isinstance(im, Image):
+                self.images.append(im)
+            else:
+                print "Error, one of the images is actually not an image..."
+
 
 
     def compute_offset(self):
