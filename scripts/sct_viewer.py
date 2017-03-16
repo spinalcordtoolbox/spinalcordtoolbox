@@ -72,23 +72,7 @@ class SinglePlot:
         self.cross_to_display = None
         self.aspect_ratio = None
         for i, image in enumerate(images):
-            data_to_display = None
-            if self.view == 1:
-                self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [-10000, 10000]],
-                                         [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[0]
-                data_to_display = image.data[int(self.image_dim[0] / 2), :, :]
-
-            elif self.view == 2:
-                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
-                                         [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[1]
-                data_to_display = image.data[:, int(self.image_dim[1] / 2), :]
-            elif self.view == 3:
-                self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
-                                         [[-10000, 10000], [self.viewer.current_point.y, self.viewer.current_point.y]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[2]
-                data_to_display = image.data[:, :, int(self.image_dim[2] / 2)]
+            data_to_display = self.set_data_to_display(image)
 
             if str(i) in im_params.images_parameters:
                 my_cmap = copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap))
@@ -116,6 +100,24 @@ class SinglePlot:
             self.axes.add_line(self.line_vertical)
 
         self.zoom_factor = 1.0
+
+    def set_data_to_display(self,image):
+        if self.view == 1:
+            self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [-10000, 10000]],
+                                     [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[0]
+            return( image.data[int(self.image_dim[0] / 2), :, :] )
+
+        elif self.view == 2:
+            self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[1]
+            return (image.data[:, int(self.image_dim[1] / 2), :])
+        elif self.view == 3:
+            self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [self.viewer.current_point.y, self.viewer.current_point.y]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[2]
+            return (image.data[:, :, int(self.image_dim[2] / 2)])
 
     def connect(self):
         """
@@ -497,6 +499,7 @@ class ClickViewer(Viewer):
     """
     def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='', input_type='centerline'):
 
+        # Ajust the input parameters into self. objects.
         if isinstance(list_images, Image):
             list_images = [list_images]
         if not visualization_parameters:
