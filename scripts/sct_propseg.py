@@ -101,21 +101,20 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
     # Method:
     # starting from mid-centerline (in both directions), the first True encountered is applied to all following slices
     slice_to_change = False
-    for i in range(mid_slice, maxz_centerline):
+    for i in range(mid_slice, nz):
         if slice_to_change:
             slices_to_remove[i] = True
         elif slices_to_remove[i]:
-            slices_to_remove[i] = True
             slice_to_change = True
+            
     slice_to_change = False
-    for i in range(mid_slice, minz_centerline-1, -1):
+    for i in range(mid_slice, 0, -1):
         if slice_to_change:
             slices_to_remove[i] = True
         elif slices_to_remove[i]:
-            slices_to_remove[i] = True
             slice_to_change = True
 
-    for i in range(mid_slice, maxz_centerline):
+    for i in range(0, nz):
         # remove the slice
         if slices_to_remove[i]:
             im_seg.data[:, :, i] *= 0
