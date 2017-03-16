@@ -496,31 +496,35 @@ class ClickViewer(Viewer):
     orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
     def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='', input_type='centerline'):
-        self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
+
         if isinstance(list_images, Image):
             list_images = [list_images]
         if not visualization_parameters:
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
         super(ClickViewer, self).__init__(list_images, visualization_parameters)
 
-        self.primary_subplot = orientation_subplot[0]
-        self.secondary_subplot = orientation_subplot[1]
-
+        """ Declaration des variables globales"""
+        self.title = title  # title to display in main figure
+        self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         self.current_slice = 0
         self.number_of_slices = 0
         self.gap_inter_slice = 0
 
-        self.compute_offset()
-        self.pad_data()
-        self.title = title  # title to display in main figure
 
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
+        self.primary_subplot = orientation_subplot[0]
+        self.secondary_subplot = orientation_subplot[1]
 
-        # display axes, specific to viewer
+        self.compute_offset() # ?!
+        self.pad_data()       # ?!
+
+
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
+
+        """ Display axes, specific to viewer """
         import matplotlib.gridspec as gridspec
         gs = gridspec.GridSpec(1, 3)
 
-        # main plot on the right
+        """ Main plot on the right"""
         ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
         self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.primary_subplot], display_cross='', im_params=visualization_parameters))
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
@@ -534,13 +538,11 @@ class ClickViewer(Viewer):
             self.windows[0].axes.set_xlim([0, self.images[0].data.shape[0]])
             self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
 
-        # smaller plot on the left
+        """Smaller plot on the left"""
         display_cross = ''
         if self.primary_subplot == 'ax':
             display_cross = 'v'
-        elif self.primary_subplot == 'cor':
-            display_cross = 'h'
-        elif self.primary_subplot == 'sag':
+        else:
             display_cross = 'h'
         ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
         self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot], display_cross=display_cross, im_params=visualization_parameters))
