@@ -664,24 +664,29 @@ class ClickViewer(Viewer):
                            int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
                            0]
 
+    def set_not_custom_target_points(self,event):
+        if self.primary_subplot == 'ax':
+            return( Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
+        elif self.primary_subplot == 'cor':
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[2], 1]) )
+        elif self.primary_subplot == 'sag':
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[self.current_slice]), 1]) )
+
+    def set_custom_target_points(self,event):
+        if self.primary_subplot == 'ax':
+            return ( Coordinate( [int(self.current_point.x), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
+        elif self.primary_subplot == 'cor':
+            return (Coordinate( [int(event.ydata) - self.offset[0], int(self.current_point.y), int(event.xdata) - self.offset[2], 1]))
+        elif self.primary_subplot == 'sag':
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], self.current_point.z, 1]))
+
     def on_press(self, event, plot=None):
         # below is the subplot that refers to the label collection
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
             if not self.enable_custom_points:
-                if self.primary_subplot == 'ax':
-                    target_point = Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1])
-                elif self.primary_subplot == 'cor':
-                    target_point = Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[2], 1])
-                elif self.primary_subplot == 'sag':
-                    target_point = Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[self.current_slice]), 1])
-
+                target_point=self.set_not_custom_target_points(event)
             else:
-                if self.primary_subplot == 'ax':
-                    target_point = Coordinate([int(self.current_point.x), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1])
-                elif self.primary_subplot == 'cor':
-                    target_point = Coordinate([int(event.ydata) - self.offset[0], int(self.current_point.y), int(event.xdata) - self.offset[2], 1])
-                elif self.primary_subplot == 'sag':
-                    target_point = Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], self.current_point.z, 1])
+                target_point=self.set_custom_target_points(event)
 
             if self.is_point_in_image(target_point):
                 self.list_points.append(target_point)
