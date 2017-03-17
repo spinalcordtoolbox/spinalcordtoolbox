@@ -73,6 +73,7 @@ class SinglePlot:
         self.aspect_ratio = None
         for i, image in enumerate(images):
             data_to_display = self.set_data_to_display(image)
+            # ?! image parameters ? C'est des options avancees pour plus tard ?
             (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,cm)
 
             my_cmap.set_under('b', alpha=0)
@@ -80,6 +81,7 @@ class SinglePlot:
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
 
+        # ?! pourquoi on a besoin de ticks et qu'est ce que c'est que set_axis_bgcolor.
         self.axes.set_axis_bgcolor('black')
         self.axes.set_xticks([])
         self.axes.set_yticks([])
@@ -93,16 +95,14 @@ class SinglePlot:
 
         self.zoom_factor = 1.0
 
-
     def set_image_parameters(self,im_params,i,cm):
         if str(i) in im_params.images_parameters:
             return(copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap)),im_params.images_parameters[str(i)].interp,float(im_params.images_parameters[str(i)].alpha))
         else:
             return (cm.get_cmap('gray'), 'nearest', 1.0)
 
-
-
     def set_data_to_display(self,image):
+        #?! cross to display, est ce que c'est une croix a afficher ? sur toutes les images ?
         if self.view == 1:
             self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [-10000, 10000]],
                                      [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
@@ -275,9 +275,8 @@ class SinglePlot:
 
 
 class Viewer(object):
-    def __init__(self, list_images, visualization_parameters=None):
-        self.images = []
-        self.check_only_images(list_images)
+    def __init__(self, list_input, visualization_parameters=None):
+        self.images = self.keep_only_images(list_input)
         self.im_params = visualization_parameters
 
         """ Initialisation of plot """
@@ -286,6 +285,7 @@ class Viewer(object):
         self.fig.patch.set_facecolor('lightgrey')
 
         """ Pad the image so that it is square in axial view (useful for zooming) """
+        # ?! definition des attributs de la classe Image
         self.image_dim = self.images[0].data.shape
         nx, ny, nz, nt, px, py, pz, pt = self.images[0].dim
         self.im_spacing = [px, py, pz]
@@ -293,6 +293,7 @@ class Viewer(object):
                              float(self.im_spacing[0]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[1])]
         self.offset = [0.0, 0.0, 0.0]
+        # ?! Coordinate ? Pourquoi pas seulement mettre les positions dans une liste ?
         self.current_point = Coordinate([int(nx / 2), int(ny / 2), int(nz / 2)])
 
         self.windows = []
@@ -304,18 +305,16 @@ class Viewer(object):
         self.last_update = time()
         self.update_freq = 1.0/15.0  # 10 Hz
 
-
-    def check_only_images(self,list_images):
+    def keep_only_images(self,list_input):
         # TODO: check same space
         # TODO: check if at least one image
-
-        for im in list_images:
+        images=[]
+        for im in list_input:
             if isinstance(im, Image):
-                self.images.append(im)
+                images.append(im)
             else:
                 print "Error, one of the images is actually not an image..."
-
-
+        return images
 
     def compute_offset(self):
         array_dim = [self.image_dim[0]*self.im_spacing[0], self.image_dim[1]*self.im_spacing[1], self.image_dim[2]*self.im_spacing[2]]
@@ -335,6 +334,7 @@ class Viewer(object):
                              constant_values=(0, 0))
 
     def setup_intensity(self):
+        # ?! Est ce que c'est le contraste, et si oui, comment exactement il fonctionne sur la page
         # TODO: change for segmentation images
         for i, image in enumerate(self.images):
             if str(i) in self.im_params.images_parameters:
@@ -368,6 +368,7 @@ class Viewer(object):
                 window.figs[i].set_clim(min_intensity, max_intensity)
 
     def is_point_in_image(self, target_point):
+        #?! On part tjs de 0 ? donc ca veut dire qu'il y a des coordonees negatives ?
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
 
     def change_intensity(self, event, plot=None):
@@ -500,7 +501,7 @@ class ClickViewer(Viewer):
     """
     def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='', input_type='centerline'):
 
-        # Ajust the input parameters into self. objects.
+        # Ajust the input parameters into viewer objects.
         if isinstance(list_images, Image):
             list_images = [list_images]
         if not visualization_parameters:
@@ -547,9 +548,6 @@ class ClickViewer(Viewer):
         self.closed = False
         self.input_type = input_type
 
-
-
-
     def set_main_plot(self):
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
         if self.primary_subplot == 'ax':
@@ -579,20 +577,17 @@ class ClickViewer(Viewer):
         # compute slices to display
         self.list_slices = []
 
-
     def set_display_cross(self):
         if self.primary_subplot == 'ax':
             return('v')
         else:
             return('h')
 
-
     def create_button_help(self):
         self.ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
         button_help = Button(self.ax_help, 'Help')
         self.fig.canvas.mpl_connect('button_press_event', self.help)
         self.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
-
 
     def calculate_list_slices(self, starting_slice=-1):
         if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
@@ -709,7 +704,6 @@ class ClickViewer(Viewer):
             title_obj = self.windows[0].axes.set_title('Automatic sliding disabled\nPlease click on spinal cord center\nand close the window once finished\n(# points = ' + str(len(self.list_points)) + ')')
             plt.setp(title_obj, color='k')
 
-
     def are_all_images_processed(self):
         if self.current_slice < len(self.list_slices):
             return False
@@ -774,20 +768,12 @@ class ClickViewer(Viewer):
                 self.draw_points(window, self.current_point.x)
                 window.update_slice(point, data_update=True)
 
-
-
     def on_press(self, event, plot=None):
         # event inaxes ?!
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
             self.on_press_main_window(event,plot)
-
         elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
             self.on_press_secondary_window(event,plot)
-
-
-
-
-
 
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
@@ -935,7 +921,6 @@ class ParamImageVisualization(object):
                 sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
             objs = obj.split('=')
             setattr(self, objs[0], objs[1])
-
 
 class ParamMultiImageVisualization(object):
     """
