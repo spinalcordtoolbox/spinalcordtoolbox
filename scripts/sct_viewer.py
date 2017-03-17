@@ -699,6 +699,27 @@ class ClickViewer(Viewer):
                                                         str(len(self.list_slices)) + ')')
             plt.setp(title_obj, color='k')
 
+        elif(key=='way_custom_next_point'):
+            title_obj = self.windows[0].axes.set_title(
+                'Automatic sliding disabled\nPlease click on spinal cord center\nand close the window once finished\n(# points = ' + str(
+                    len(self.list_points)) + ')')
+            plt.setp(title_obj, color='k')
+
+    def are_all_images_processed(self):
+        if self.current_slice < len(self.list_slices):
+            return False
+        else:
+            for coord in self.list_points:
+                if self.list_points_useful_notation != '':
+                    self.list_points_useful_notation += ':'
+                self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
+                    coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            self.all_processed = True
+            plt.close()
+            return True
+
+
+
 
 
 
@@ -716,8 +737,7 @@ class ClickViewer(Viewer):
                 if not self.enable_custom_points:
                     self.current_slice += 1
 
-                    if self.current_slice < len(self.list_slices):
-
+                    if not self.are_all_images_processed():
                         point = [self.current_point.x, self.current_point.y, self.current_point.z]
                         point[self.orientation[self.secondary_subplot]-1] = self.list_slices[self.current_slice]
                         self.current_point = Coordinate(point)
@@ -725,21 +745,12 @@ class ClickViewer(Viewer):
                         self.windows[0].update_slice(self.list_slices[self.current_slice])
                         self.update_title_text('way_automatic_next_point')
                         plot.draw()
-                    else:
-                        for coord in self.list_points:
-                            if self.list_points_useful_notation != '':
-                                self.list_points_useful_notation += ':'
-                            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
-                                coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-                        self.all_processed = True
-                        plt.close()
 
                 else:
                     point = [self.current_point.x, self.current_point.y, self.current_point.z]
                     self.draw_points(self.windows[0], self.current_point.x)
                     self.windows[0].update_slice(point, data_update=True)
-                    title_obj = self.windows[0].axes.set_title('Automatic sliding disabled\nPlease click on spinal cord center\nand close the window once finished\n(# points = ' + str(len(self.list_points)) + ')')
-                    plt.setp(title_obj, color='k')
+                    self.update_title_text('way_custom_next_point')
                     plot.draw()
 
 
@@ -767,6 +778,10 @@ class ClickViewer(Viewer):
                 else:
                     self.draw_points(window, self.current_point.x)
                     window.update_slice(point, data_update=True)
+
+
+
+
 
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
