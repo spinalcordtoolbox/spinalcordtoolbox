@@ -32,18 +32,24 @@ def get_parser():
                       type_value=[[','], 'file'],
                       description="List of warping fields from input images to destination image",
                       mandatory=True)
+    parser.add_option(name="-x",
+                      type_value='str',
+                      description="interpolation for warping the input images to the destination image",
+                      mandatory=False,
+                      default_value=Param().interp)
 
     parser.add_option(name="-o",
                       type_value='file_creation',
                       description="Output image",
                       mandatory=False,
-                      default_value='merged_images.nii.gz')
+                      default_value=Param().fname_out)
 
+    '''
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
                       mandatory=False)
-
+    '''
     parser.usage.addSection('MISC')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
@@ -63,11 +69,13 @@ def get_parser():
 
 class Param:
     def __init__(self):
+        self.fname_out = 'merged_images.nii.gz'
+        self.interp = 'nn'
         self.rm_tmp = True
         self.verbose = 1
 
 
-def compute(list_fname_src, fname_dest, list_fname_warp, fname_out):
+def compute(list_fname_src, fname_dest, list_fname_warp, param):
     # create temporary folder
     path_tmp = sct.tmp_create()
 
@@ -82,7 +90,7 @@ def compute(list_fname_src, fname_dest, list_fname_warp, fname_out):
     shutil.copy(fname_dest, path_tmp + fname_dest_tmp)
 
     list_fname_warp_tmp = []
-    for fname_warp in list_fname_warp:
+    for i, fname_warp in enumerate(list_fname_warp):
         fname_warp_new = 'warp_'+str(i)+'.nii.gz'
         shutil.copy(fname_warp, path_tmp + fname_warp_new)
         list_fname_warp_tmp.append(fname_warp_new)
@@ -150,7 +158,7 @@ def main(args=None):
     list_fname_src= arguments["-i"]
     fname_dest = arguments["-d"]
     list_fname_warp = arguments["-w"]
-    fname_out = arguments["-o"]
+    param.fname_out = arguments["-o"]
 
     if '-ofolder' in arguments:
         path_results= arguments['-ofolder']
@@ -161,7 +169,9 @@ def main(args=None):
 
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"
 
-    compute(list_fname_src, fname_dest, list_fname_warp, fname_out)
+    compute(list_fname_src, fname_dest, list_fname_warp, param)
+    sct.printv('Done ! to view your results, type: ', param.verbose, 'normal')
+    sct.printv('fslview '+param.fname_out+' &\n', param.verbose, 'info')
 
 if __name__ == "__main__":
     main()
