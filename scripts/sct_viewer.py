@@ -536,6 +536,10 @@ class ClickViewer(Viewer):
 
         """ Create Buttons"""
         self.create_button_help()
+        self.create_button_quit()
+        self.create_button_redo()
+        self.create_button_save()
+        self.create_button_skip()
 
         """ Compute slices to display """
         self.calculate_list_slices()
@@ -586,35 +590,35 @@ class ClickViewer(Viewer):
         else:
             return('h')
 
+    def create_button_redo(self):
+        ax = plt.axes([0.48, 0.85, 0.1, 0.075])
+        self.dic_axis_buttons['redo']=ax
+        button_help = Button(ax, 'Redo')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_redo)
+
+    def create_button_skip(self):
+        ax = plt.axes([0.59, 0.85, 0.1, 0.075])
+        self.dic_axis_buttons['skip']=ax
+        button_help = Button(ax, 'Skip')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_skip)
+
+    def create_button_save(self):
+        ax = plt.axes([0.70, 0.85, 0.1, 0.075])
+        self.dic_axis_buttons['save']=ax
+        button_help = Button(ax, 'Save')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_save)
+
+    def create_button_quit(self):
+        ax = plt.axes([0.81, 0.85, 0.1, 0.075])
+        self.dic_axis_buttons['quit']=ax
+        button_help = Button(ax, 'Quit')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_quit)
+
     def create_button_help(self):
         ax = plt.axes([0.81, 0.05, 0.1, 0.075])
         self.dic_axis_buttons['help']=ax
-        button_help = Button(ax_help, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.help)
-
-    def create_button_redo(self):
-        ax = plt.axes([0.31, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['redo']=ax_help
-        button_help = Button(ax_help, 'Redo')
-        self.fig.canvas.mpl_connect('button_press_event', self.help)
-
-    def create_button_skip(self):
-        ax = plt.axes([0.41, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['skip']=ax
-        button_help = Button(ax_help, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.help)
-
-    def create_button_save(self):
-        ax = plt.axes([0.51, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['help']=ax
-        button_help = Button(ax_help, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.help)
-
-    def create_button_quit(self):
-        ax = plt.axes([0.61, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['help']=ax
-        button_help = Button(ax_help, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.help)
+        button_help = Button(ax, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
 
 
 
@@ -866,9 +870,25 @@ class ClickViewer(Viewer):
         else:
             return None
 
-    def help(self, event):
+    def press_help(self, event):
         if event.inaxes == self.dic_axis_buttons['help']:
             webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
+
+    def press_redo(self, event):
+        if event.inaxes == self.dic_axis_buttons['redo']:
+            print('option Redo : not ready yet')
+
+    def press_skip(self, event):
+        if event.inaxes == self.dic_axis_buttons['skip']:
+            print('option Skip : not ready yet')
+
+    def press_save(self, event):
+        if event.inaxes == self.dic_axis_buttons['save']:
+            print('option Save : not ready yet')
+
+    def press_quit(self, event):
+        if event.inaxes == self.dic_axis_buttons['quit']:
+            print('option Quit : not ready yet')
 
     def start(self):
         super(ClickViewer, self).start()
