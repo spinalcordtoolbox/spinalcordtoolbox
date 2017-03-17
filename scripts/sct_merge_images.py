@@ -75,16 +75,16 @@ def compute(list_fname_src, fname_dest, list_fname_warp, fname_out):
     list_fname_src_tmp = []
     for fname_src in list_fname_src:
         fname_src = sct.extract_fname(fname_src)[1:]
-        os.copy(fname_src, path_tmp + fname_src)
+        shutil.copy(fname_src, path_tmp + fname_src)
         list_fname_src_tmp.append(fname_src)
 
     fname_dest_tmp = sct.extract_fname(fname_dest)[1:]
-    os.copy(fname_dest, path_tmp + fname_dest_tmp)
+    shutil.copy(fname_dest, path_tmp + fname_dest_tmp)
 
     list_fname_warp_tmp = []
     for fname_warp in list_fname_warp:
         fname_warp = sct.extract_fname(fname_warp)[1:]
-        os.copy(fname_warp, path_tmp + fname_warp)
+        shutil.copy(fname_warp, path_tmp + fname_warp)
         list_fname_warp_tmp.append(fname_warp)
 
     # go to tmp folder
