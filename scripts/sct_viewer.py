@@ -567,6 +567,7 @@ class ClickViewer(Viewer):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         self.primary_subplot = orientation_subplot[0]
         self.secondary_subplot = orientation_subplot[1]
+        self.dic_axis_buttons={}
 
         self.current_slice = 0
         self.number_of_slices = 0
@@ -586,10 +587,10 @@ class ClickViewer(Viewer):
             return('h')
 
     def create_button_help(self):
-        self.ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
-        button_help = Button(self.ax_help, 'Help')
+        ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['help']=ax_help
+        button_help = Button(ax_help, 'Help')
         self.fig.canvas.mpl_connect('button_press_event', self.help)
-        self.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
 
     def calculate_list_slices(self, starting_slice=-1):
         if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
@@ -840,8 +841,8 @@ class ClickViewer(Viewer):
             return None
 
     def help(self, event):
-        if event.inaxes == self.ax_help:
-            webbrowser.open(self.help_url, new=0, autoraise=True)
+        if event.inaxes == self.dic_axis_buttons['help']:
+            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def start(self):
         super(ClickViewer, self).start()
