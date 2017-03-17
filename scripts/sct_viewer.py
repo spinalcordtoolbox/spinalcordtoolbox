@@ -65,17 +65,16 @@ class SinglePlot:
         self.viewer = viewer
         self.view = view
         self.display_cross = display_cross
-
         self.image_dim = self.images[0].data.shape
         self.figs = []
-
         self.cross_to_display = None
         self.aspect_ratio = None
+        self.zoom_factor = 1.0
+
         for i, image in enumerate(images):
             data_to_display = self.set_data_to_display(image)
             # ?! image parameters ? C'est des options avancees pour plus tard ?
             (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,cm)
-
             my_cmap.set_under('b', alpha=0)
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
             self.figs[-1].set_cmap(my_cmap)
@@ -86,6 +85,10 @@ class SinglePlot:
         self.axes.set_xticks([])
         self.axes.set_yticks([])
 
+        self.draw_line(display_cross)
+
+
+    def draw_line(self,display_cross):
         self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
         self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
         if 'h' in display_cross:
@@ -93,7 +96,6 @@ class SinglePlot:
         if 'v' in display_cross:
             self.axes.add_line(self.line_vertical)
 
-        self.zoom_factor = 1.0
 
     def set_image_parameters(self,im_params,i,cm):
         if str(i) in im_params.images_parameters:
