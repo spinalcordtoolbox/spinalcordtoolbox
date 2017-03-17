@@ -705,6 +705,11 @@ class ClickViewer(Viewer):
                     len(self.list_points)) + ')')
             plt.setp(title_obj, color='k')
 
+        elif(key=='way_custom_start'):
+            title_obj = self.windows[0].axes.set_title('Automatic sliding disabled\nPlease click on spinal cord center\nand close the window once finished\n(# points = ' + str(len(self.list_points)) + ')')
+            plt.setp(title_obj, color='k')
+
+
     def are_all_images_processed(self):
         if self.current_slice < len(self.list_slices):
             return False
@@ -724,7 +729,7 @@ class ClickViewer(Viewer):
 
 
     def on_press(self, event, plot=None):
-        # below is the subplot that refers to the label collection
+        # event inaxes ?!
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
             if not self.enable_custom_points:
                 target_point=self.set_not_custom_target_points(event)
@@ -765,8 +770,7 @@ class ClickViewer(Viewer):
             if self.input_type == 'centerline':
                 self.enable_custom_points = True
 
-            title_obj = self.windows[0].axes.set_title('Automatic sliding disabled\nPlease click on spinal cord center\nand close the window once finished\n(# points = ' + str(len(self.list_points)) + ')')
-            plt.setp(title_obj, color='k')
+            self.update_title_text('way_custom_start')
             plot.draw()
 
             self.last_update = time()
