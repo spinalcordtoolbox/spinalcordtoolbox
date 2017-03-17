@@ -723,65 +723,67 @@ class ClickViewer(Viewer):
             plt.close()
             return True
 
+    def on_press_main_window(self,event,plot):
+        if not self.enable_custom_points:
+            target_point = self.set_not_custom_target_points(event)
+        else:
+            target_point = self.set_custom_target_points(event)
 
+        if self.check_point_is_valid(target_point, plot):
+            self.list_points.append(target_point)
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
 
+            if not self.enable_custom_points:
+                self.current_slice += 1
+
+                if not self.are_all_images_processed():
+                    point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]
+                    self.current_point = Coordinate(point)
+                    self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)
+                    self.windows[0].update_slice(self.list_slices[self.current_slice])
+                    self.update_title_text('way_automatic_next_point')
+                    plot.draw()
+
+            else:
+                self.draw_points(self.windows[0], self.current_point.x)
+                self.windows[0].update_slice(point, data_update=True)
+                self.update_title_text('way_custom_next_point')
+                plot.draw()
+
+    def on_press_secondary_window(self,event,plot):
+        is_in_axes = False
+        for window in self.windows:
+            if event.inaxes == window.axes:
+                is_in_axes = True
+        if not is_in_axes:  # ?!
+            return
+
+        if self.input_type == 'centerline':
+            self.enable_custom_points = True
+
+        self.update_title_text('way_custom_start')
+        plot.draw()
+
+        self.last_update = time()
+        self.current_point = self.get_event_coordinates(event, plot)
+        point = [self.current_point.x, self.current_point.y, self.current_point.z]
+        for window in self.windows:
+            if window is plot:
+                window.update_slice(point, data_update=False)
+            else:
+                self.draw_points(window, self.current_point.x)
+                window.update_slice(point, data_update=True)
 
 
 
     def on_press(self, event, plot=None):
         # event inaxes ?!
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
-            if not self.enable_custom_points:
-                target_point=self.set_not_custom_target_points(event)
-            else:
-                target_point=self.set_custom_target_points(event)
-
-            if self.check_point_is_valid(target_point,plot):
-                self.list_points.append(target_point)
-
-                if not self.enable_custom_points:
-                    self.current_slice += 1
-
-                    if not self.are_all_images_processed():
-                        point = [self.current_point.x, self.current_point.y, self.current_point.z]
-                        point[self.orientation[self.secondary_subplot]-1] = self.list_slices[self.current_slice]
-                        self.current_point = Coordinate(point)
-                        self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)
-                        self.windows[0].update_slice(self.list_slices[self.current_slice])
-                        self.update_title_text('way_automatic_next_point')
-                        plot.draw()
-
-                else:
-                    point = [self.current_point.x, self.current_point.y, self.current_point.z]
-                    self.draw_points(self.windows[0], self.current_point.x)
-                    self.windows[0].update_slice(point, data_update=True)
-                    self.update_title_text('way_custom_next_point')
-                    plot.draw()
-
+            self.on_press_main_window(event,plot)
 
         elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
-            is_in_axes = False
-            for window in self.windows:
-                if event.inaxes == window.axes:
-                    is_in_axes = True
-            if not is_in_axes:
-                return
+            self.on_press_secondary_window(event,plot)
 
-            if self.input_type == 'centerline':
-                self.enable_custom_points = True
-
-            self.update_title_text('way_custom_start')
-            plot.draw()
-
-            self.last_update = time()
-            self.current_point = self.get_event_coordinates(event, plot)
-            point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            for window in self.windows:
-                if window is plot:
-                    window.update_slice(point, data_update=False)
-                else:
-                    self.draw_points(window, self.current_point.x)
-                    window.update_slice(point, data_update=True)
 
 
 
