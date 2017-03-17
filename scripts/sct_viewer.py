@@ -587,10 +587,36 @@ class ClickViewer(Viewer):
             return('h')
 
     def create_button_help(self):
-        ax_help = plt.axes([0.81, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['help']=ax_help
+        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['help']=ax
         button_help = Button(ax_help, 'Help')
         self.fig.canvas.mpl_connect('button_press_event', self.help)
+
+    def create_button_redo(self):
+        ax = plt.axes([0.31, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['redo']=ax_help
+        button_help = Button(ax_help, 'Redo')
+        self.fig.canvas.mpl_connect('button_press_event', self.help)
+
+    def create_button_skip(self):
+        ax = plt.axes([0.41, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['skip']=ax
+        button_help = Button(ax_help, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.help)
+
+    def create_button_save(self):
+        ax = plt.axes([0.51, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['help']=ax
+        button_help = Button(ax_help, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.help)
+
+    def create_button_quit(self):
+        ax = plt.axes([0.61, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['help']=ax
+        button_help = Button(ax_help, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.help)
+
+
 
     def calculate_list_slices(self, starting_slice=-1):
         if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
