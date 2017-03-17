@@ -73,22 +73,22 @@ def compute(list_fname_src, fname_dest, list_fname_warp, fname_out):
 
     #copy input files to tmp folder
     list_fname_src_tmp = []
-    for fname_src in list_fname_src:
-        fname_src = sct.extract_fname(fname_src)[1:]
-        shutil.copy(fname_src, path_tmp + fname_src)
-        list_fname_src_tmp.append(fname_src)
+    for i, fname_src in enumerate(list_fname_src):
+        fname_src_new= 'input_'+str(i)+'.nii.gz'
+        shutil.copy(fname_src, path_tmp + fname_src_new)
+        list_fname_src_tmp.append(fname_src_new)
 
-    fname_dest_tmp = sct.extract_fname(fname_dest)[1:]
+    fname_dest_tmp = 'dest.nii.gz'
     shutil.copy(fname_dest, path_tmp + fname_dest_tmp)
 
     list_fname_warp_tmp = []
     for fname_warp in list_fname_warp:
-        fname_warp = sct.extract_fname(fname_warp)[1:]
-        shutil.copy(fname_warp, path_tmp + fname_warp)
-        list_fname_warp_tmp.append(fname_warp)
+        fname_warp_new = 'warp_'+str(i)+'.nii.gz'
+        shutil.copy(fname_warp, path_tmp + fname_warp_new)
+        list_fname_warp_tmp.append(fname_warp_new)
 
     # go to tmp folder
-    path_wd = os.getwd('.')
+    path_wd = os.getcwd()
     os.chdir(path_tmp)
 
     # warp src images to dest
@@ -99,7 +99,7 @@ def compute(list_fname_src, fname_dest, list_fname_warp, fname_out):
 
     # go back to original working directory
     os.chdir(path_wd)
-    shutil.copy(path_tmp+fname_merged, fname_out)
+    sct.generate_output_file(path_tmp+fname_merged, fname_out)
 
 
 
