@@ -45,7 +45,10 @@ class Thinning:
             self.thinned_image = Image(param=self.zhang_suen(self.image.data), absolutepath=self.image.path + self.image.file_name + '_thinned' + self.image.ext, hdr=self.image.hdr)
 
         elif self.dim_im == 3:
-            assert self.image.orientation == 'IRP'
+            if not self.image.orientation == 'IRP':
+                from sct_image import set_orientation
+                print '-- changing orientation ...'
+                self.image = set_orientation(self.image, 'IRP')
 
             thinned_data = np.asarray([self.zhang_suen(im_slice) for im_slice in self.image.data])
 
