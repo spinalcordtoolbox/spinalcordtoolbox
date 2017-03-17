@@ -536,7 +536,7 @@ class ClickViewer(Viewer):
 
         """ Create Buttons"""
         self.create_button_help()
-        self.create_button_quit()
+        self.create_button_done()
         self.create_button_redo()
         self.create_button_save()
         self.create_button_skip()
@@ -592,28 +592,28 @@ class ClickViewer(Viewer):
             return('h')
 
     def create_button_redo(self):
-        ax = plt.axes([0.48, 0.85, 0.1, 0.075])
+        ax = plt.axes([0.48, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['redo']=ax
         button_help = Button(ax, 'Redo')
         self.fig.canvas.mpl_connect('button_press_event', self.press_redo)
 
     def create_button_skip(self):
-        ax = plt.axes([0.59, 0.85, 0.1, 0.075])
+        ax = plt.axes([0.59, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['skip']=ax
         button_help = Button(ax, 'Skip')
         self.fig.canvas.mpl_connect('button_press_event', self.press_skip)
 
     def create_button_save(self):
-        ax = plt.axes([0.70, 0.85, 0.1, 0.075])
+        ax = plt.axes([0.70, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['save']=ax
         button_help = Button(ax, 'Save')
         self.fig.canvas.mpl_connect('button_press_event', self.press_save)
 
-    def create_button_quit(self):
-        ax = plt.axes([0.81, 0.85, 0.1, 0.075])
-        self.dic_axis_buttons['quit']=ax
-        button_help = Button(ax, 'Quit')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_quit)
+    def create_button_done(self):
+        ax = plt.axes([0.81, 0.90, 0.1, 0.075])
+        self.dic_axis_buttons['done']=ax
+        button_help = Button(ax, 'Done')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_done)
 
     def create_button_help(self):
         ax = plt.axes([0.81, 0.05, 0.1, 0.075])
@@ -737,12 +737,16 @@ class ClickViewer(Viewer):
             plt.setp(title_obj, color='k')
 
         elif(key=='save_over'):
-            title_obj = self.windows[0].axes.set_title('Your work has been saved.')
+            title_obj = self.windows[0].axes.set_title('Your work has been saved : you can carry on the segmentation.')
             plt.setp(title_obj, color='g')
 
         elif(key=='ask_for_leaving'):
-            title_obj = self.windows[0].axes.set_title('Are you sure ? Your unsaved work will be lost.')
+            title_obj = self.windows[0].axes.set_title('Please confirm : all your unsaved work will be lost.')
             plt.setp(title_obj, color='r')
+
+        elif(key=='ready_to_save'):
+            title_obj = self.windows[0].axes.set_title('You can save your work and close this window.')
+            plt.setp(title_obj, color='g')
 
         self.windows[0].draw()
 
@@ -750,13 +754,7 @@ class ClickViewer(Viewer):
         if self.current_slice < len(self.list_slices):
             return False
         else:
-            for coord in self.list_points:
-                if self.list_points_useful_notation != '':
-                    self.list_points_useful_notation += ':'
-                self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
-                    coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-            self.all_processed = True
-            plt.close()
+            self.update_title_text('ready_to_save')
             return True
 
     def on_press_main_window(self,event,plot):
@@ -899,9 +897,10 @@ class ClickViewer(Viewer):
                 self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
                     coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
             self.update_title_text('save_over')
+            self.bool_already_ask_for_leaving=True
 
-    def press_quit(self, event):
-        if event.inaxes == self.dic_axis_buttons['quit']:
+    def press_done(self, event):
+        if event.inaxes == self.dic_axis_buttons['done']:
             if not self.bool_already_ask_for_leaving:
                 self.update_title_text('ask_for_leaving')
                 self.bool_already_ask_for_leaving=True
@@ -919,7 +918,7 @@ class ClickViewer(Viewer):
             return None
 
     def close_window(self, event):
-        pass    
+        pass
         """
         for coord in self.list_points:
             if self.list_points_useful_notation != '':
