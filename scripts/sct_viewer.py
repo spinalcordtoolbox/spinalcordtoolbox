@@ -583,6 +583,7 @@ class ClickViewer(Viewer):
 
         # compute slices to display
         self.list_slices = []
+        self.bool_already_ask_for_leaving=False
 
     def set_display_cross(self):
         if self.primary_subplot == 'ax':
@@ -739,6 +740,10 @@ class ClickViewer(Viewer):
             title_obj = self.windows[0].axes.set_title('Your work has been saved.')
             plt.setp(title_obj, color='g')
 
+        elif(key=='ask_for_leaving'):
+            title_obj = self.windows[0].axes.set_title('Are you sure ? Your unsaved work will be lost.')
+            plt.setp(title_obj, color='r')
+
         self.windows[0].draw()
 
     def are_all_images_processed(self):
@@ -894,11 +899,16 @@ class ClickViewer(Viewer):
                 self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
                     coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
             self.update_title_text('save_over')
-            print('option Save : not ready yet')
 
     def press_quit(self, event):
         if event.inaxes == self.dic_axis_buttons['quit']:
-            print('option Quit : not ready yet')
+            if not self.bool_already_ask_for_leaving:
+                self.update_title_text('ask_for_leaving')
+                self.bool_already_ask_for_leaving=True
+            else:
+                self.closed=True
+                plt.close('all')
+
 
     def start(self):
         super(ClickViewer, self).start()
@@ -909,6 +919,7 @@ class ClickViewer(Viewer):
             return None
 
     def close_window(self, event):
+
         for coord in self.list_points:
             if self.list_points_useful_notation != '':
                 self.list_points_useful_notation += ':'
