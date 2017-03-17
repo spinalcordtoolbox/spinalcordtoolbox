@@ -680,6 +680,28 @@ class ClickViewer(Viewer):
         elif self.primary_subplot == 'sag':
             return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], self.current_point.z, 1]))
 
+    def check_point_is_valid(self,target_point,plot):
+        if(self.is_point_in_image(target_point)):
+            return True
+        else:
+            title_obj = self.windows[0].axes.set_title('The point you selected in not in the image. Please try again.')
+            plt.setp(title_obj, color='r')
+            plot.draw()
+            return False
+
+    def update_title_text(self,key):
+        if(key=='way_automatic_next_point'):
+            title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
+                                                       str(self.list_slices[self.current_slice]) + '/' +
+                                                       str(self.image_dim[
+                                                               self.orientation[self.primary_subplot] - 1] - 1) + ' (' +
+                                                       str(self.current_slice + 1) + '/' +
+                                                        str(len(self.list_slices)) + ')')
+            plt.setp(title_obj, color='k')
+
+
+
+
     def on_press(self, event, plot=None):
         # below is the subplot that refers to the label collection
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
@@ -688,7 +710,7 @@ class ClickViewer(Viewer):
             else:
                 target_point=self.set_custom_target_points(event)
 
-            if self.is_point_in_image(target_point):
+            if self.check_point_is_valid(target_point,plot):
                 self.list_points.append(target_point)
 
                 if not self.enable_custom_points:
@@ -701,12 +723,7 @@ class ClickViewer(Viewer):
                         self.current_point = Coordinate(point)
                         self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)
                         self.windows[0].update_slice(self.list_slices[self.current_slice])
-                        title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
-                                                        str(self.list_slices[self.current_slice]) + '/' +
-                                                        str(self.image_dim[self.orientation[self.primary_subplot]-1] - 1) + ' (' +
-                                                        str(self.current_slice + 1) + '/' +
-                                                        str(len(self.list_slices)) + ')')
-                        plt.setp(title_obj, color='k')
+                        self.update_title_text('way_automatic_next_point')
                         plot.draw()
                     else:
                         for coord in self.list_points:
@@ -725,10 +742,6 @@ class ClickViewer(Viewer):
                     plt.setp(title_obj, color='k')
                     plot.draw()
 
-            else:
-                title_obj = self.windows[0].axes.set_title('The point you selected in not in the image. Please try again.')
-                plt.setp(title_obj, color='r')
-                plot.draw()
 
         elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
             is_in_axes = False
