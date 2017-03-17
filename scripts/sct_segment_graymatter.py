@@ -247,6 +247,11 @@ class SegmentGM:
         printv('\nLabel fusion of model slices most similar to target slices...', self.param.verbose, 'normal')
         self.label_fusion(list_dic_indexes_by_slice)
 
+        ########## IN DEVELOPMENT ##########
+        #printv('\nz-regularization of the segementation...', self.param.verbose, 'normal')
+        #self.z_regularization(list_dic_indexes_by_slice)
+        ########## -------------- ##########
+        #
         printv('\nWarp back segmentation into image space...', self.param.verbose, 'normal')
         self.warp_back_seg(path_warp)
 
@@ -384,7 +389,7 @@ class SegmentGM:
             slice_data = slice_data.reshape(1, -1) # data with single sample
             # project slice data into the model
             slice_data_projected = self.model.fitted_model.transform(slice_data)
-            projected_target_slices.append(slice_data_projected)
+            projected_target_slices.append(slice_data_projected.reshape(-1, ))
         # store projected target slices
         self.projected_target = projected_target_slices
 
@@ -434,6 +439,74 @@ class SegmentGM:
                 data_mean_wm[data_mean_wm < 0.5] = 0
             # store segmentation into target_im
             target_slice.set(gm_seg_m=data_mean_gm, wm_seg_m=data_mean_wm)
+
+    ########## IN DEVELOPMENT ##########
+    def z_regularization(self, list_dic_indexes_by_slice):
+        os.mkdir('model_slices_skel')
+        from sct_compute_hausdorff_distance import Thinning, HausdorffDistance
+        import copy
+        # compute skeleton for all model slices
+        for i, s in enumerate(self.model.slices):
+            im_model_slice_gm = Image(s.gm_seg_M, absolutepath='model_slices_skel/model_slice_'+str(i)+'.nii.gz')
+            im_model_slice_gm.save()
+            thin = Thinning(im_model_slice_gm)
+            s.gm_skel_M = thin.thinned_image.data
+            if s.gm_skel_M.shape[0]==1:
+                s.gm_skel_M = s.gm_skel_M.reshape(s.gm_skel_M.shape[1:])
+            Image(s.gm_skel_M, absolutepath='model_slices_skel/model_slice_' + str(i) + '_skel.nii.gz').save()
+
+        # compute skeleton for all target slices label fusion results
+        for target_slice in self.target_im:
+            im_target_slice_gm = Image(target_slice.gm_seg_M)
+            thin_target = Thinning(im_target_slice_gm)
+            target_slice.gm_skel_M = thin_target.thinned_image.data
+            if target_slice.gm_skel_M.shape[0] == 1:
+                target_slice.gm_skel_M = target_slice.gm_skel_M.reshape(target_slice.gm_skel_M.shape[1:])
+
+        # save model mean image
+        Image(self.model.mean_image, absolutepath='mean_model_image.nii.gz').save()
+        #
+        # find model slices to discard
+        list_k = range(len(self.target_im))
+        dic_slices_to_discard = {}
+        for k_target in list_k:
+            dic_shd_k_sup = {}
+            dic_shd_k_inf = {}
+
+            k_sup_exist = True if k_target != max(list_k) else False
+            k_inf_exist = True if k_target != min(list_k) else False
+            for j_model_slice in list_dic_indexes_by_slice[k_target]:
+                if  k_sup_exist:
+                    dist_k_sup = HausdorffDistance(self.target_im[k_target+1].gm_skel_M, self.model.slices[j_model_slice].gm_skel_M)
+                    dic_shd_k_sup[j_model_slice] = dist_k_sup.H
+                if k_inf_exist:
+                    dist_k_inf = HausdorffDistance(self.target_im[k_target - 1].gm_skel_M,self.model.slices[j_model_slice].gm_skel_M)
+                    dic_shd_k_inf[j_model_slice] = dist_k_inf.H
+            # keep models slices that have a sHD<95% of max sHD
+            percentile = 0.5
+
+            thr_hd_sup = max(dic_shd_k_sup.values()) * percentile if k_sup_exist else 0
+            thr_hd_inf = max(dic_shd_k_inf.values()) * percentile if k_inf_exist else 0
+            #
+            model_index_k_sup, shd_val_k_sup, model_index_k_inf, shd_val_k_inf = np.asarray(dic_shd_k_sup.keys()), np.asarray(dic_shd_k_sup.values()), np.asarray(dic_shd_k_inf.keys()), np.asarray(dic_shd_k_inf.values())
+            slices_to_discard = np.concatenate((model_index_k_sup[shd_val_k_sup>thr_hd_sup], model_index_k_inf[shd_val_k_inf>thr_hd_inf]))
+            dic_slices_to_discard[k_target] = list(set(slices_to_discard))
+        #
+        # remove model slices for each target slice
+        print 'Model slices to discard: ', dic_slices_to_discard
+        new_list_dic_indexes_by_slice = copy.deepcopy(list_dic_indexes_by_slice)
+        for k_target in list_k:
+            print 'slice ' + str(k_target) + ' :'
+            print '- selecetd model indices: ', list_dic_indexes_by_slice[k_target]
+            if len(list_dic_indexes_by_slice[k_target]) - len(dic_slices_to_discard[k_target]) >= 2:
+                for j_model_slice in dic_slices_to_discard[k_target]:
+                    poped = new_list_dic_indexes_by_slice[k_target].pop(new_list_dic_indexes_by_slice[k_target].index(j_model_slice))
+                    print '--- ', poped
+        # recompute label fusion result
+        self.label_fusion(new_list_dic_indexes_by_slice)
+
+
+    ########## -------------- ##########
 
     def warp_back_seg(self, path_warp):
         # get 3D images from list of slices
