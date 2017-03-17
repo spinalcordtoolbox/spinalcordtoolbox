@@ -39,7 +39,7 @@ def get_parser():
                       default_value=Param().interp)
 
     parser.add_option(name="-o",
-                      type_value='file_creation',
+                      type_value='file_output',
                       description="Output image",
                       mandatory=False,
                       default_value=Param().fname_out)
@@ -100,15 +100,18 @@ def compute(list_fname_src, fname_dest, list_fname_warp, param):
     os.chdir(path_tmp)
 
     # warp src images to dest
-    list_fname_reg = warp_images(list_fname_src_tmp, fname_dest_tmp, list_fname_warp_tmp)
+    list_fname_reg = warp_images(list_fname_src_tmp, fname_dest_tmp, list_fname_warp_tmp, interp=param.interp)
 
     # merge images
     fname_merged = merge_images(list_fname_reg)
 
     # go back to original working directory
     os.chdir(path_wd)
-    sct.generate_output_file(path_tmp+fname_merged, fname_out)
+    sct.generate_output_file(path_tmp+fname_merged, param.fname_out)
 
+    # remove temporary folder
+    if param.rm_tmp:
+        shutil.rmtree(path_tmp)
 
 
 def warp_images(list_fname_src, fname_dest, list_fname_warp, interp='nn'):
