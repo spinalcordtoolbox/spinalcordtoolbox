@@ -100,10 +100,10 @@ def compute(list_fname_src, fname_dest, list_fname_warp, param):
     os.chdir(path_tmp)
 
     # warp src images to dest
-    list_fname_reg = warp_images(list_fname_src_tmp, fname_dest_tmp, list_fname_warp_tmp, interp=param.interp)
+    list_fname_reg = warp_images(list_fname_src_tmp, fname_dest_tmp, list_fname_warp_tmp, interp=param.interp, param=param)
 
     # merge images
-    fname_merged = merge_images(list_fname_reg)
+    fname_merged = merge_images(list_fname_reg, param=param)
 
     # go back to original working directory
     os.chdir(path_wd)
@@ -114,7 +114,7 @@ def compute(list_fname_src, fname_dest, list_fname_warp, param):
         shutil.rmtree(path_tmp)
 
 
-def warp_images(list_fname_src, fname_dest, list_fname_warp, interp='nn'):
+def warp_images(list_fname_src, fname_dest, list_fname_warp, interp='nn', param=Param()):
     list_fname_out = []
     for fname_src, fname_warp in zip(list_fname_src, list_fname_warp):
         fname_out = sct.add_suffix(fname_src, '_reg')
@@ -122,24 +122,27 @@ def warp_images(list_fname_src, fname_dest, list_fname_warp, interp='nn'):
                                      '-d', fname_dest,
                                      '-w', fname_warp,
                                      '-x', interp,
-                                     '-o', fname_out])
+                                     '-o', fname_out,
+                                     '-v', param.verbose])
         list_fname_out.append(fname_out)
     return list_fname_out
 
 
-def merge_images(list_fname_to_merge):
+def merge_images(list_fname_to_merge, param=Param()):
     str_concat = ','.join(list_fname_to_merge)
 
     # run SCT Image concatenation
     fname_concat = 'concat_image.nii.gz'
     sct_image.main(args=['-i', str_concat,
                          '-concat', 't',
-                         '-o', fname_concat])
+                         '-o', fname_concat,
+                         '-v', param.verbose])
     # run SCT Math mean
     fname_merged = 'merged_image.nii.gz'
     sct_maths.main(args=['-i', fname_concat,
                          '-mean', 't',
-                         '-o', fname_merged])
+                         '-o', fname_merged,
+                         '-v', param.verbose])
     return fname_merged
 
 ########################################################################################################################
