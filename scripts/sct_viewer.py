@@ -620,8 +620,6 @@ class ClickViewer(Viewer):
         button_help = Button(ax, 'Help')
         self.fig.canvas.mpl_connect('button_press_event', self.press_help)
 
-
-
     def calculate_list_slices(self, starting_slice=-1):
         if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
 
@@ -736,6 +734,12 @@ class ClickViewer(Viewer):
         elif(key=='way_custom_start'):
             title_obj = self.windows[0].axes.set_title('Automatic sliding disabled\nPlease click on spinal cord center\nand close the window once finished\n(# points = ' + str(len(self.list_points)) + ')')
             plt.setp(title_obj, color='k')
+
+        elif(key=='save_over'):
+            title_obj = self.windows[0].axes.set_title('Your work has been saved.')
+            plt.setp(title_obj, color='g')
+
+        self.windows[0].draw()
 
     def are_all_images_processed(self):
         if self.current_slice < len(self.list_slices):
@@ -884,6 +888,12 @@ class ClickViewer(Viewer):
 
     def press_save(self, event):
         if event.inaxes == self.dic_axis_buttons['save']:
+            for coord in self.list_points:
+                if self.list_points_useful_notation != '':
+                    self.list_points_useful_notation += ':'
+                self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
+                    coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            self.update_title_text('save_over')
             print('option Save : not ready yet')
 
     def press_quit(self, event):
