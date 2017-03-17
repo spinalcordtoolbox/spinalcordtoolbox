@@ -919,11 +919,13 @@ class ClickViewer(Viewer):
             return None
 
     def close_window(self, event):
-
+        pass    
+        """
         for coord in self.list_points:
             if self.list_points_useful_notation != '':
                 self.list_points_useful_notation += ':'
             self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+        """
         self.closed = True
 
 
