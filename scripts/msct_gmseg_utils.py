@@ -31,7 +31,7 @@ class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
-    def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=0):
+    def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, im_m=None, gm_seg_m=None, wm_seg_m=None, gm_skel_m=None, level=0):
         """
         Slice constructor
         :param slice_id: slice ID number, type: int
@@ -50,10 +50,11 @@ class Slice:
         self.wm_seg = wm_seg
         self.im_M = im_m
         self.gm_seg_M = gm_seg_m
+        self.gm_skel_M = gm_skel_m
         self.wm_seg_M = wm_seg_m
         self.level = level
 
-    def set(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=None):
+    def set(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, im_m=None, gm_seg_m=None, wm_seg_m=None, gm_skel_m=None, level=None):
         """
         Slice setter, only the specified parameters are set
         :param slice_id: slice ID number, type: int
@@ -80,6 +81,8 @@ class Slice:
             self.gm_seg_M = np.asarray(gm_seg_m)
         if wm_seg_m is not None:
             self.wm_seg_M = np.asarray(wm_seg_m)
+        if gm_skel_m is not None:
+            self.gm_skel_M = gm_skel_m
         if level is not None:
             self.level = level
 
