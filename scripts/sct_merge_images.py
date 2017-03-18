@@ -139,7 +139,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-i', fname_src,
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
-            '-x', param.interp,
+            '-x', 'linear',
             '-o', 'src_'+str(i_file)+'_template.nii.gz',
             '-v', param.verbose])
 
