@@ -22,12 +22,12 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 
-from msct_parser import Parser
+import msct_parser
 import sct_utils as sct
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('''Download binaries from the web.''')
     parser.add_option(
         name="-d",
@@ -62,6 +62,9 @@ def main(args=None):
 
     if args is None:
         args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # initialization
     dict_url = {
@@ -144,7 +147,6 @@ def download_data(url, verbose):
     _, content = cgi.parse_header(response.headers['Content-Disposition'])
     tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
     sct.printv('\nDownloading %s...' % content['filename'], verbose)
-
     with open(tmp_path, 'wb') as tmp_file:
         total = int(response.headers.get('content-length', 1))
         dl = 0

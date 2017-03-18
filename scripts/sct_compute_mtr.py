@@ -11,18 +11,17 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
-import sys
 import os
-import getopt
-import commands
-import sct_utils as sct
-import time
-from msct_parser import Parser
+import shutil
+import sys
 
-# DEFAULT PARAMETERS
-class Param:
-    ## The constructor
+import msct_image
+import msct_parser
+import sct_convert
+import sct_utils as sct
+
+
+class Param(object):
     def __init__(self):
         self.debug = 0
         # self.register = 1
@@ -31,24 +30,25 @@ class Param:
         self.remove_tmp_files = 1
 
 
-# main
-#=======================================================================================================================
-def main():
+def main(args=None):
+
+    # initialize parameters
+    param = Param()
+
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name = os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Initialization
     fname_mt0 = ''
     fname_mt1 = ''
     file_out = param.file_out
-    # register = param.register
-    # remove_tmp_files = param.remove_tmp_files
-    # verbose = param.verbose
-
-    # get path of the toolbox
-    # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Check input parameters
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
@@ -63,20 +63,19 @@ def main():
     path_tmp = sct.tmp_create()
 
     # Copying input data to tmp folder and convert to nii
-    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    from sct_convert import convert
-    convert(fname_mt0, path_tmp+'mt0.nii', type='float32')
-    convert(fname_mt1, path_tmp+'mt1.nii', type='float32')
+    sct.printv('\nCopying input data to tmp folder and convert to nii...',
+               verbose)
+    sct_convert.convert(fname_mt0, path_tmp + 'mt0.nii', data_type='float32')
+    sct_convert.convert(fname_mt1, path_tmp + 'mt1.nii', data_type='float32')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
-    from msct_image import Image
-    nii_mt1 = Image('mt1.nii')
+    nii_mt1 = msct_image.Image('mt1.nii')
     data_mt1 = nii_mt1.data
-    data_mt0 = Image('mt0.nii').data
+    data_mt0 = msct_image.Image('mt0.nii').data
     data_mtr = 100 * (data_mt0 - data_mt1) / data_mt0
     # save MTR file
     nii_mtr = nii_mt1
@@ -86,7 +85,7 @@ def main():
     # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
 
     # come back to parent folder
-    os.chdir('..')
+    os.chdir(os.pardir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
@@ -95,17 +94,17 @@ def main():
     # Remove temporary files
     if remove_tmp_files == 1:
         print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &\n', verbose, 'info')
+    sct.printv('fslview ' + fname_mt0 + ' ' + fname_mt1 + ' ' + file_out + ' &\n',
+               verbose, 'info')
 
 
-# ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Compute magnetization transfer ratio (MTR). Output is given in percentage.')
     parser.add_option(name="-mt0",
                       type_value="file",
@@ -143,12 +142,5 @@ def get_parser():
     return parser
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    # param_default = Param()
-    # call main function
     main()

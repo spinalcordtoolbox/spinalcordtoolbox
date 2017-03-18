@@ -12,21 +12,18 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
-
-import sys
-
-import numpy as np
-
-import nibabel as nib
-
 import getopt
 import os
+import shutil
+import sys
+
+import nibabel as nib
+import numpy as np
+
+import sct_dice_coefficient
 import sct_utils as sct
 
 
-# main
-#=======================================================================================================================
 def main():
 
     # Initialization
@@ -81,7 +78,8 @@ def main():
     # Estimate rigid transformation
     printv('\nEstimate rigid transformation between paired landmarks...', verbose)
     # sct.run('isct_ANTSLandmarksBSplineTransform data_dest.nii.gz data_src.nii.gz rigid curve2straight_rigid.txt', verbose)
-    sct.run('isct_antsRegistration -d 3 -t syn[1,3,1] -m MeanSquares[data_dest.nii.gz,data_src.nii.gz,1,3] -f 2 -s 0 -o [src2reg, data_src_reg.nii.gz] -c 5 -v 1 -n NearestNeighbor', verbose)
+    sct.run('isct_antsRegistration -d 3 -t syn[1,3,1] -m MeanSquares[data_dest.nii.gz,data_src.nii.gz,1,3] -f 2 -s 0 '
+            '-o [src2reg, data_src_reg.nii.gz] -c 5 -v 1 -n NearestNeighbor', verbose)
 
     # # Apply rigid transformation
     # printv('\nApply rigid transformation to curved landmarks...', verbose)
@@ -103,7 +101,8 @@ def main():
     #
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
-    sct.run('sct_dice_coefficient -i data_dest.nii.gz -d data_src_reg.nii.gz -o dice.txt', verbose)
+    sct_dice_coefficient.main(args=['-i', 'data_dest.nii.gz', '-d', 'data_src_reg.nii.gz', '-o', 'dice.txt'])
+
     with open ("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
     printv('Dice coeff = '+str(dice)+' (should be above '+str(dice_acceptable)+')', verbose)
@@ -118,7 +117,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         printv('\nDelete temporary files...', verbose)
-        sct.run('rm -rf '+ path_tmp, verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # output result for parent function
     if test_passed:
@@ -129,17 +128,11 @@ def main():
         sys.exit(1)
 
 
-
-# printv: enables to print or not, depending on verbose status
-#=======================================================================================================================
 def printv(string,verbose):
     if verbose:
         print(string)
 
 
-
-# Print usage
-# ==========================================================================================
 def usage():
     print '\n' \
         ''+os.path.basename(__file__)+'\n' \
@@ -163,10 +156,5 @@ def usage():
     sys.exit(2)
 
 
-
-# Start program
-#=======================================================================================================================
 if __name__ == "__main__":
-    # call main function
     main()
-

@@ -12,17 +12,19 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
+import os
 import sys
-#import time
-from msct_parser import *
+
+import msct_image
+import msct_parser
 import sct_utils as sct
-# from sct_average_data_across_dimension import average_data_across_dimension
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.verbose = 1
+
 
 ########################################################################################################################
 ######------------------------------------------------- Classes --------------------------------------------------######
@@ -30,12 +32,9 @@ class Param:
 
 # ----------------------------------------------------------------------------------------------------------------------
 # TSNR -----------------------------------------------------------------------------------------------------------------
-class Tsnr:
+class Tsnr(object):
     def __init__(self, param=None, fmri=None, anat=None):
-        if param is not None:
-            self.param = param
-        else:
-            self.param = Param()
+        self.param = param
         self.fmri = fmri
         self.anat = anat
 
@@ -68,10 +67,9 @@ class Tsnr:
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # sct.run('fslmaths ' + fname_data + ' -Tstd ' + fname_data_std)
         fname_tsnr = sct.add_suffix(fname_data, '_tsnr')
-        from msct_image import Image
-        nii_mean = Image(fname_data_mean)
+        nii_mean = msct_image.Image(fname_data_mean)
         data_mean = nii_mean.data
-        data_std = Image(fname_data_std).data
+        data_std = msct_image.Image(fname_data_std).data
         data_tsnr = data_mean/data_std
         nii_tsnr = nii_mean
         nii_tsnr.data = data_tsnr
@@ -81,7 +79,6 @@ class Tsnr:
 
         # Remove temp files
         sct.printv('\nRemove temporary files...', self.param.verbose, 'normal')
-        import os
         os.remove(fname_data_mean)
         os.remove(fname_data_std)
 
@@ -91,7 +88,7 @@ class Tsnr:
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Compute temporal SNR (tSNR) in fMRI time series.')
     parser.add_option(name='-i',
                       type_value='file',
@@ -105,16 +102,21 @@ def get_parser():
                       example=['0', '1'])
     return parser
 
-if __name__ == '__main__':
+def main(args=None):
+
     param = Param()
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
     else:
-        param_default = Param()
 
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
         input_fmri = arguments['-i']
 
         if '-v' in arguments:
@@ -124,6 +126,5 @@ if __name__ == '__main__':
         tsnr.compute()
 
 
-
-
-
+if __name__ == '__main__':
+    main()
