@@ -44,18 +44,11 @@ def get_parser():
                       type_value=[[','], 'file'],
                       description="List of warping fields from input images to destination image",
                       mandatory=True)
-    parser.add_option(name="-otype",
-                      type_value='multiple_choice',
-                      description="Output type. For a list of all possible types, see: sct_image",
+    parser.add_option(name="-x",
+                      type_value='str',
+                      description="interpolation for warping the input images to the destination image",
                       mandatory=False,
-                      default_value=Param().output_type,
-                      example=['uint8', 'int8', 'uint16', 'float32'])
-
-    # parser.add_option(name="-x",
-    #                   type_value='str',
-    #                   description="interpolation for warping the input images to the destination image",
-    #                   mandatory=False,
-    #                   default_value=Param().interp)
+                      default_value=Param().interp)
 
     parser.add_option(name="-o",
                       type_value='file_output',
@@ -93,7 +86,6 @@ class Param:
         self.rm_tmp = True
         self.verbose = 1
         self.almost_zero = 0.00000001
-        self.output_type = 'float32'
 
 
 def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
@@ -139,7 +131,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-i', fname_src,
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
-            '-x', 'linear',
+            '-x', param.interp,
             '-o', 'src_'+str(i_file)+'_template.nii.gz',
             '-v', param.verbose])
 
@@ -154,7 +146,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-i', 'src_'+str(i_file)+'native_bin.nii.gz',
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
-            '-x', 'linear',
+            '-x', param.interp,
             '-o', 'src_'+str(i_file)+'_template_partialVolume.nii.gz'])
 
         # open data
@@ -169,7 +161,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     # write result in file
     nii_dest.data = data_merge
     nii_dest.setFileName(param.fname_out)
-    nii_dest.save(type=param.output_type)
+    nii_dest.save()
 
     # remove temporary folder
     if param.rm_tmp:
@@ -267,12 +259,12 @@ def main(args=None):
 
     if '-ofolder' in arguments:
         path_results= arguments['-ofolder']
-    if '-otype' in arguments:
-        param.output_type = arguments['-otype']
+    if '-x' in arguments:
+        param.interp = arguments['-x']
     if '-r' in arguments:
-        param.rm_tmp= bool(int(arguments['-r']))
+        param.rm_tmp = bool(int(arguments['-r']))
     if '-v' in arguments:
-        param.verbose= arguments['-v']
+        param.verbose = arguments['-v']
 
     # check if list of input files and warping fields have same length
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"
