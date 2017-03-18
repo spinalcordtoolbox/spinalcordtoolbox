@@ -11,10 +11,18 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
+
+# TODO: do averaging only in overlapping voxels (ie: excluding zero voxels), otherwise the mean is wrong.
+# TODO: in compute: do NOT copy files like that, because if using nii this will fail. use "convert" or do not copy
+# TODO: do not copy certain files that are now opened and processed with numpy (save time)
+# TODO: parameter "almost_zero" might case problem if merging data with very low values (e.g. MD from diffusion)
+
 import sys, os, shutil
 from msct_parser import Parser
 import sct_utils as sct
 import sct_apply_transfo, sct_image, sct_maths
+import sct_image
+import numpy as np
 
 def get_parser():
     # Initialize the parser
@@ -73,77 +81,135 @@ class Param:
         self.interp = 'nn'
         self.rm_tmp = True
         self.verbose = 1
+        self.almost_zero = 0.5
 
 
-def compute(list_fname_src, fname_dest, list_fname_warp, param):
+def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
+
     # create temporary folder
     path_tmp = sct.tmp_create()
 
-    #copy input files to tmp folder
-    list_fname_src_tmp = []
-    for i, fname_src in enumerate(list_fname_src):
-        fname_src_new= 'input_'+str(i)+'.nii.gz'
-        shutil.copy(fname_src, path_tmp + fname_src_new)
-        list_fname_src_tmp.append(fname_src_new)
+    # get dimensions of destination file
+    nii_dest = sct_image.Image(fname_dest)
 
-    fname_dest_tmp = 'dest.nii.gz'
-    shutil.copy(fname_dest, path_tmp + fname_dest_tmp)
+    # initialize variables
+    data = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
+    partial_volume = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
+    data_merge = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2]])
 
-    list_fname_warp_tmp = []
-    for i, fname_warp in enumerate(list_fname_warp):
-        fname_warp_new = 'warp_'+str(i)+'.nii.gz'
-        shutil.copy(fname_warp, path_tmp + fname_warp_new)
-        list_fname_warp_tmp.append(fname_warp_new)
+    # loop across files
+    i_file = 0
+    for fname_src in list_fname_src:
 
-    # go to tmp folder
-    path_wd = os.getcwd()
-    os.chdir(path_tmp)
+        # apply transformation src --> dest
+        sct_apply_transfo.main(args=[
+            '-i', fname_src,
+            '-d', fname_dest,
+            '-w', list_fname_warp[i_file],
+            '-x', param.interp,
+            '-o', 'src_'+str(i_file)+'_template.nii.gz',
+            '-v', param.verbose])
 
-    # warp src images to dest
-    list_fname_reg = warp_images(list_fname_src_tmp, fname_dest_tmp, list_fname_warp_tmp, interp=param.interp, param=param)
+        # create binary mask from input file by assigning one to all non-null voxels
+        sct_maths.main(args=[
+            '-i', fname_src,
+            '-bin', param.almost_zero,
+            '-o', 'src_'+str(i_file)+'native_bin.nii.gz'])
 
-    # merge images
-    fname_merged = merge_images(list_fname_reg, param=param)
+        # apply transformation to binary mask to compute partial volume
+        sct_apply_transfo.main(args=[
+            '-i', 'src_'+str(i_file)+'native_bin.nii.gz',
+            '-d', fname_dest,
+            '-w', list_fname_warp[i_file],
+            '-x', 'linear',
+            '-o', 'src_'+str(i_file)+'_template_partialVolume.nii.gz'])
 
-    # go back to original working directory
-    os.chdir(path_wd)
-    sct.generate_output_file(path_tmp+fname_merged, param.fname_out)
+        # open data
+        data[:, :, :, i_file] = sct_image.Image('src_'+str(i_file)+'_template.nii.gz').data
+        partial_volume[:, :, :, i_file] = sct_image.Image('src_'+str(i_file)+'_template_partialVolume.nii.gz').data
+        i_file += 1
+
+    # merge files using partial volume information (and convert nan resulting from division by zero to zeros)
+    data_merge = np.divide(np.sum(data * partial_volume, axis=3), np.sum(partial_volume, axis=3))
+    data_merge = np.nan_to_num(data_merge)
+
+    # write result in file
+    nii_dest.data = data_merge
+    nii_dest.setFileName(param.fname_out)
+    nii_dest.save()
 
     # remove temporary folder
     if param.rm_tmp:
         shutil.rmtree(path_tmp)
 
+    #
+    #
+    # #copy input files to tmp folder
+    # list_fname_src_tmp = []
+    # for i, fname_src in enumerate(list_fname_src):
+    #     fname_src_new= 'input_'+str(i)+'.nii.gz'
+    #     shutil.copy(fname_src, path_tmp + fname_src_new)
+    #     list_fname_src_tmp.append(fname_src_new)
+    #
+    # fname_dest_tmp = 'dest.nii.gz'
+    # shutil.copy(fname_dest, path_tmp + fname_dest_tmp)
+    #
+    # list_fname_warp_tmp = []
+    # for i, fname_warp in enumerate(list_fname_warp):
+    #     fname_warp_new = 'warp_'+str(i)+'.nii.gz'
+    #     shutil.copy(fname_warp, path_tmp + fname_warp_new)
+    #     list_fname_warp_tmp.append(fname_warp_new)
+    #
+    # # go to tmp folder
+    # path_wd = os.getcwd()
+    # os.chdir(path_tmp)
+    #
+    # # warp src images to dest
+    # list_fname_reg = warp_images(list_fname_src_tmp, fname_dest_tmp, list_fname_warp_tmp, interp=param.interp, param=param)
+    #
+    # # merge images
+    # fname_merged = merge_images(list_fname_reg, param=param)
+    #
+    # # go back to original working directory
+    # os.chdir(path_wd)
+    # sct.generate_output_file(path_tmp+fname_merged, param.fname_out)
 
-def warp_images(list_fname_src, fname_dest, list_fname_warp, interp='nn', param=Param()):
-    list_fname_out = []
-    for fname_src, fname_warp in zip(list_fname_src, list_fname_warp):
-        fname_out = sct.add_suffix(fname_src, '_reg')
-        sct_apply_transfo.main(args=['-i', fname_src,
-                                     '-d', fname_dest,
-                                     '-w', fname_warp,
-                                     '-x', interp,
-                                     '-o', fname_out,
-                                     '-v', param.verbose])
-        list_fname_out.append(fname_out)
-    return list_fname_out
+#
+#
+# def warp_images(list_fname_src, fname_dest, list_fname_warp, interp='nn', param=Param()):
+#     list_fname_out = []
+#     for fname_src, fname_warp in zip(list_fname_src, list_fname_warp):
+#         fname_out = sct.add_suffix(fname_src, '_reg')
+#         sct_apply_transfo.main(args=['-i', fname_src,
+#                                      '-d', fname_dest,
+#                                      '-w', fname_warp,
+#                                      '-x', interp,
+#                                      '-o', fname_out,
+#                                      '-v', param.verbose])
+#         list_fname_out.append(fname_out)
+#     return list_fname_out
 
-
-def merge_images(list_fname_to_merge, param=Param()):
-    str_concat = ','.join(list_fname_to_merge)
-
-    # run SCT Image concatenation
-    fname_concat = 'concat_image.nii.gz'
-    sct_image.main(args=['-i', str_concat,
-                         '-concat', 't',
-                         '-o', fname_concat,
-                         '-v', param.verbose])
-    # run SCT Math mean
-    fname_merged = 'merged_image.nii.gz'
-    sct_maths.main(args=['-i', fname_concat,
-                         '-mean', 't',
-                         '-o', fname_merged,
-                         '-v', param.verbose])
-    return fname_merged
+#
+# def merge_images(list_fname_to_merge, param=Param()):
+#
+#
+#
+#
+#     str_concat = ','.join(list_fname_to_merge)
+#
+#     # run SCT Image concatenation
+#     fname_concat = 'concat_image.nii.gz'
+#     sct_image.main(args=['-i', str_concat,
+#                          '-concat', 't',
+#                          '-o', fname_concat,
+#                          '-v', param.verbose])
+#     # run SCT Math mean
+#     fname_merged = 'merged_image.nii.gz'
+#     sct_maths.main(args=['-i', fname_concat,
+#                          '-mean', 't',
+#                          '-o', fname_merged,
+#                          '-v', param.verbose])
+#     return fname_merged
 
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
@@ -173,9 +239,15 @@ def main(args=None):
     if '-v' in arguments:
         param.verbose= arguments['-v']
 
+    # check if list of input files and warping fields have same length
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"
 
-    compute(list_fname_src, fname_dest, list_fname_warp, param)
+    # merge src images to destination image
+    try:
+        merge_images(list_fname_src, fname_dest, list_fname_warp, param)
+    except Exception as e:
+        sct.printv(str(e), 1, 'error')
+
     sct.printv('Done ! to view your results, type: ', param.verbose, 'normal')
     sct.printv('fslview '+param.fname_out+' &\n', param.verbose, 'info')
 
