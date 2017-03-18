@@ -17,12 +17,16 @@
 # TODO: do not copy certain files that are now opened and processed with numpy (save time)
 # TODO: parameter "almost_zero" might case problem if merging data with very low values (e.g. MD from diffusion)
 
-import sys, os, shutil
+# Python imports
+import sys
+import shutil
+import numpy as np
+# SCT imports
 from msct_parser import Parser
 import sct_utils as sct
-import sct_apply_transfo, sct_image, sct_maths
+import sct_apply_transfo
 import sct_image
-import numpy as np
+import sct_maths
 
 def get_parser():
     # Initialize the parser
@@ -81,10 +85,31 @@ class Param:
         self.interp = 'nn'
         self.rm_tmp = True
         self.verbose = 1
-        self.almost_zero = 0.5
+        self.almost_zero = 0.00000001
 
 
 def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
+    """
+    Merge multiple source images onto destination space. All images are warped to the destination space and then added.
+    To deal with overlap during merging (e.g. one voxel in destination image is shared with two input images), the
+    resulting voxel is divided by the sum of the partial volume of each image. For example, if src(x,y,z)=1 is mapped to
+    dest(i,j,k) with a partial volume of 0.5 (because destination voxel is bigger), then its value after linear interpolation
+    will be 0.5. To account for partial volume, the resulting voxel will be: dest(i,j,k) = 0.5*0.5/0.5 = 0.5.
+    Now, if two voxels overlap in the destination space, let's say: src(x,y,z)=1 and src2'(x',y',z')=1, then the
+    resulting value will be: dest(i,j,k) = (0.5*0.5 + 0.5*0.5) / (0.5+0.5) = 0.5. So this function acts like a weighted
+    average operator, only in destination voxels that share multiple source voxels.
+
+    Parameters
+    ----------
+    list_fname_src
+    fname_dest
+    list_fname_warp
+    param
+
+    Returns
+    -------
+
+    """
 
     # create temporary folder
     path_tmp = sct.tmp_create()
@@ -113,7 +138,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
         # create binary mask from input file by assigning one to all non-null voxels
         sct_maths.main(args=[
             '-i', fname_src,
-            '-bin', param.almost_zero,
+            '-bin', str(param.almost_zero),
             '-o', 'src_'+str(i_file)+'native_bin.nii.gz'])
 
         # apply transformation to binary mask to compute partial volume
