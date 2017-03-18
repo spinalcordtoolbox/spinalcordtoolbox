@@ -17,7 +17,7 @@ import time
 import commands
 import sys
 from msct_parser import Parser
-from sct_label_utils import ProcessLabels
+from sct_label_utils import sct_label_utils.ProcessLabels
 from sct_crop_image import ImageCropper
 from nibabel import load, Nifti1Image, save
 from numpy import array, asarray, sum, isnan
@@ -772,7 +772,7 @@ class SpinalCordStraightener(object):
                 # This stands to avoid overlapping between landmarks
                 # TODO: do symmetric removal
                 sct.printv('\nMake sure all labels between landmark_straight and landmark_curved match 1...', verbose)
-                label_process_straight = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
+                label_process_straight = sct_label_utils.ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
                                                        fname_output=["tmp.landmarks_straight.nii.gz",
                                                                      "tmp.landmarks_curved.nii.gz"],
                                                        fname_ref="tmp.landmarks_curved.nii.gz",
@@ -829,7 +829,7 @@ class SpinalCordStraightener(object):
             if (self.use_continuous_labels == 1 and self.algo_landmark_rigid is not None and
                     self.algo_landmark_rigid != "None") or self.use_continuous_labels == '1':
                 if self.algo_landmark_rigid != 'euler':
-                    landmark_curved_rigid, landmark_straight = ProcessLabels.remove_label_coord(landmark_curved_rigid,
+                    landmark_curved_rigid, landmark_straight = sct_label_utils.ProcessLabels.remove_label_coord(landmark_curved_rigid,
                                                                                                 landmark_straight,
                                                                                                 symmetry=True)
 
@@ -855,7 +855,7 @@ class SpinalCordStraightener(object):
                             self.bspline_numberOfLevels + " LandmarksRealCurve.txt LandmarksRealStraight.txt " +
                             self.bspline_order + " 0", verbose)
                 else:
-                    landmark_curved, landmark_straight = ProcessLabels.remove_label_coord(landmark_curved,
+                    landmark_curved, landmark_straight = sct_label_utils.ProcessLabels.remove_label_coord(landmark_curved,
                                                                                           landmark_straight,
                                                                                           symmetry=True)
 
@@ -894,7 +894,7 @@ class SpinalCordStraightener(object):
             else:
                 # This stands to avoid overlapping between landmarks
                 sct.printv("\nMake sure all labels between landmark_straight and landmark_curved match 2...", verbose)
-                label_process = ProcessLabels(fname_label="tmp.landmarks_curved_rigid.nii.gz",
+                label_process = sct_label_utils.ProcessLabels(fname_label="tmp.landmarks_curved_rigid.nii.gz",
                                               fname_output=["tmp.landmarks_curved_rigid.nii.gz",
                                                             "tmp.landmarks_straight.nii.gz"],
                                               fname_ref="tmp.landmarks_straight.nii.gz", verbose=verbose)

@@ -11,16 +11,18 @@
 #########################################################################################
 
 import sys
-from msct_parser import Parser
-from sct_utils import extract_fname
+
 from dipy.data.fetcher import read_bvals_bvecs
+
+import msct_parser
+import sct_utils as sct
 
 # PARSER
 # ==========================================================================================
 def get_parser():
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Concatenate bval files in time.')
     parser.add_option(name="-i",
                       type_value=[[','], 'file'],
@@ -47,10 +49,10 @@ def main():
     if "-o" in arguments:
         fname_out = arguments["-o"]
     else:
-        path_in, file_in, ext_in = extract_fname(fname_bval_list[0])
+        path_in, file_in, ext_in = sct.extract_fname(fname_bval_list[0])
         fname_out = path_in+'bvals_concat'+ext_in
 
-    # Open bval files and concatenate
+    # Open bval files and concatenateextract_fname
     bvals_concat = ''
     # for file_i in fname_bval_list:
     #     f = open(file_i, 'r')

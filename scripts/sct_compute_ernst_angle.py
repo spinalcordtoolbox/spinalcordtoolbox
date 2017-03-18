@@ -10,15 +10,14 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-from msct_parser import Parser
-
 import sys
+
 import sct_utils as sct
-#import numpy as np
+import msct_parser
 
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -26,12 +25,11 @@ class Param:
         self.t1=0
 
 
-
-class ErnstAngle:
+class ErnstAngle(object):
     ## The constructor
     def __init__(self, t1,tr=None, fname_output=None):
-        self.t1=t1
-        self.tr=tr
+        self.t1 = t1
+        self.tr = tr
         self.fname_output = fname_output
 
 
@@ -70,7 +68,7 @@ class ErnstAngle:
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Function to get the Ernst Angle. For examples of T1 values, see Stikov et al. MRM 2015. Example in the white matter at 3T: 850ms.')
     parser.add_option(name="-t1",
                       type_value="float",
@@ -105,16 +103,22 @@ def get_parser():
                       default_value='1')
     return parser
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
+def main(args=None):
+
     # initialize parameters
     param = Param()
     param_default = Param()
 
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
+
+    # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     input_t1 = arguments["-t1"]
     input_fname_output = None
@@ -144,4 +148,8 @@ if __name__ == "__main__":
         graph.draw(input_tr_min, input_tr_max)
 
 
-
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+    main()
