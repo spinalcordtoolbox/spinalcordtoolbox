@@ -44,11 +44,18 @@ def get_parser():
                       type_value=[[','], 'file'],
                       description="List of warping fields from input images to destination image",
                       mandatory=True)
-    parser.add_option(name="-x",
-                      type_value='str',
-                      description="interpolation for warping the input images to the destination image",
+    parser.add_option(name="-otype",
+                      type_value='multiple_choice',
+                      description="Output type. For a list of all possible types, see: sct_image",
                       mandatory=False,
-                      default_value=Param().interp)
+                      default_value=Param().output_type,
+                      example=['uint8', 'int8', 'uint16', 'float32'])
+
+    # parser.add_option(name="-x",
+    #                   type_value='str',
+    #                   description="interpolation for warping the input images to the destination image",
+    #                   mandatory=False,
+    #                   default_value=Param().interp)
 
     parser.add_option(name="-o",
                       type_value='file_output',
@@ -86,6 +93,7 @@ class Param:
         self.rm_tmp = True
         self.verbose = 1
         self.almost_zero = 0.00000001
+        self.output_type = 'float32'
 
 
 def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
@@ -161,7 +169,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     # write result in file
     nii_dest.data = data_merge
     nii_dest.setFileName(param.fname_out)
-    nii_dest.save()
+    nii_dest.save(type=param.output_type)
 
     # remove temporary folder
     if param.rm_tmp:
@@ -259,6 +267,8 @@ def main(args=None):
 
     if '-ofolder' in arguments:
         path_results= arguments['-ofolder']
+    if '-otype' in arguments:
+        param.output_type = arguments['-otype']
     if '-r' in arguments:
         param.rm_tmp= bool(int(arguments['-r']))
     if '-v' in arguments:
