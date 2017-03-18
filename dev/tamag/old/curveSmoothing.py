@@ -14,7 +14,7 @@ sys.path.append(path_sct + '/scripts')
 from msct_image import Image
 from msct_types import Coordinate
 from msct_parser import Parser
-from sct_label_utils import ProcessLabels
+from sct_label_utils import sct_label_utils.ProcessLabels
 import os
 import sct_utils as sct
 

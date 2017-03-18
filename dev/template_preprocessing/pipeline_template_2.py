@@ -788,7 +788,7 @@ def average_centerline(contrast):
         if 0 <= coord_pix[0] < image_centerline.data.shape[0] and 0 <= coord_pix[1] < image_centerline.data.shape[1] and 0 <= coord_pix[2] < image_centerline.data.shape[2]:
             image_centerline.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = 1
     image_centerline.setFileName('/Users/benjamindeleener/code/sct/dev/template_creation/template_centerline.nii.gz')
-    image_centerline.save(type='uint8')
+    image_centerline.save(data_type='uint8')
 
     # generate template disks position
     image_disks = template_space.copy()
@@ -801,7 +801,7 @@ def average_centerline(contrast):
         else:
             print 'ERROR: the disk label ' + str(disk) + ' is not in the template image.'
     image_disks.setFileName('/Users/benjamindeleener/code/sct/dev/template_creation/template_disks.nii.gz')
-    image_disks.save(type='uint8')
+    image_disks.save(data_type='uint8')
 
 
 def straighten_all_subjects(contrast):

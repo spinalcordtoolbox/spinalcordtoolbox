@@ -11,17 +11,19 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
 import math
+import os
+import sys
 import time
 
-from msct_parser import Parser
-import os
-import scipy
 import nibabel
-import sct_utils as sct
-from msct_image import Image
+import scipy
 
+import msct_image
+import msct_parser
+import sct_convert
+import sct_maths
+import sct_utils as sct
 
 class LineBuilder:
     def __init__(self, line):
@@ -51,8 +53,10 @@ class LineBuilder:
         self.line.figure.canvas.draw()
 
 
-class ImageCropper(object):
-    def __init__(self, input_file, output_file=None, mask=None, start=None, end=None, dim=None, shift=None, background=None, bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
+class ImageCropper(msct_image.Image):
+    def __init__(self, input_file, output_file=None, mask=None, start=None, end=None, dim=None, shift=None,
+                 background=None, bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
+
         self.input_filename = input_file
         self.output_filename = output_file
         self.mask = mask
@@ -66,18 +70,26 @@ class ImageCropper(object):
         self.mesh = mesh
         self.rm_tmp_files = rm_tmp_files
         self.verbose = verbose
-        self.cmd = None
-        self.result = None
         self.rm_output_file = rm_output_file
+
+        self.result = None
+
+        self.xmin = None
+        self.xmax = None
+        self.ymin = None
+        self.ymax = None
+        self.zmin = None
+        self.zmax = None
+
 
     def crop(self):
         """
         Crop image (change dimension)
         """
 
-        # create command line
-        self.cmd = "isct_crop_image" + " -i " + self.input_filename + " -o " + self.output_filename
         # Handling optional arguments
+
+        cmd = "isct_crop_image" + " -i " + self.input_filename + " -o " + self.output_filename
 
         # if mask is specified, find -start and -end arguments
         if self.mask is not None:
@@ -87,21 +99,21 @@ class ImageCropper(object):
             self.start, self.end, self.dim = find_mask_boundaries(self.mask)
 
         if self.start is not None:
-            self.cmd += " -start " + ','.join(map(str, self.start))
+            cmd += " -start " + ','.join(map(str, self.start))
         if self.end is not None:
-            self.cmd += " -end " + ','.join(map(str, self.end))
+            cmd += " -end " + ','.join(map(str, self.end))
         if self.dim is not None:
-            self.cmd += " -dim " + ','.join(map(str, self.dim))
+            cmd += " -dim " + ','.join(map(str, self.dim))
         if self.shift is not None:
-            self.cmd += " -shift " + ','.join(map(str, self.shift))
+            cmd += " -shift " + ','.join(map(str, self.shift))
         if self.background is not None:
-            self.cmd += " -b " + str(self.background)
+            cmd += " -b " + str(self.background)
         if self.bmax is True:
-            self.cmd += " -bmax"
+            cmd += " -bmax"
         if self.ref is not None:
-            self.cmd += " -ref " + self.ref
+            cmd += " -ref " + self.ref
         if self.mesh is not None:
-            self.cmd += " -mesh " + self.mesh
+            cmd += " -mesh " + self.mesh
 
         verb = 0
         if self.verbose == 1:
@@ -110,9 +122,9 @@ class ImageCropper(object):
             self.crop_from_mask_with_background()
         else:
             # Run command line
-            sct.run(self.cmd, verb)
+            self.run_isct(cmd, verb)
 
-        self.result = Image(self.output_filename, verbose=self.verbose)
+        self.result = msct_image.Image(self.output_filename, verbose=self.verbose)
 
         # removes the output file created by the script if it is not needed
         if self.rm_output_file:
@@ -128,13 +140,33 @@ class ImageCropper(object):
 
         return self.result
 
-    # mask the image in order to keep only voxels in the mask
-    # doesn't change the image dimension
+    def run_isct(self, cmd, verb):
+
+        _, stdout = sct.run(cmd, verb)
+
+        output_list = stdout.split('\n')
+        for line in output_list:
+            if 'Dimension 0' in line:
+                self.xmin, self.xmax = line.split()[2:4]
+            if 'Dimension 1' in line:
+                self.ymin, self.ymax = line.split()[2:4]
+            if 'Dimension 2' in line:
+                self.zmin, self.zmax = line.split()[2:4]
+
+
+
+
     def crop_from_mask_with_background(self):
+        """
+        mask the image in order to keep only voxels in the mask
+        doesn't change the image dimension
+
+        :return:
+        """
         from numpy import asarray, einsum
-        image_in = Image(self.input_filename)
+        image_in = msct_image.Image(self.input_filename)
         data_array = asarray(image_in.data)
-        data_mask = asarray(Image(self.mask).data)
+        data_mask = asarray(msct_image.Image(self.mask).data)
         assert data_array.shape == data_mask.shape
 
         # Element-wise matrix multiplication:
@@ -146,8 +178,7 @@ class ImageCropper(object):
             new_data = einsum('ij,ij->ij', data_mask, data_array)
 
         if self.background != 0:
-            from sct_maths import get_data_or_scalar
-            data_background = get_data_or_scalar(str(self.background), data_array)
+            data_background = sct_maths.get_data_or_scalar(str(self.background), data_array)
             data_mask_inv = data_mask.max() - data_mask
             if dim == 3:
                 data_background = einsum('ijk,ijk->ijk', data_mask_inv, data_background)
@@ -176,7 +207,7 @@ class ImageCropper(object):
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
-        nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
+        nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(fname_data).dim
         sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
         # check if 4D data
         if not nt == 1:
@@ -196,9 +227,8 @@ class ImageCropper(object):
         sct.run('mkdir '+path_tmp)
 
         # copy files into tmp folder
-        from sct_convert import convert
         sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-        convert(fname_data, path_tmp+'data.nii')
+        sct_convert.convert(fname_data, path_tmp+'data.nii')
 
         # go to tmp folder
         os.chdir(path_tmp)
@@ -244,7 +274,7 @@ class ImageCropper(object):
 
         # crop image
         sct.printv('\nCrop image...', verbose)
-        nii = Image('data_rpi.nii')
+        nii = msct_image.Image('data_rpi.nii')
         data_crop = nii.data[:, :, zcrop[0]:zcrop[1]]
         nii.data = data_crop
         nii.setFileName('data_rpi_crop.nii')
@@ -268,7 +298,7 @@ class ImageCropper(object):
 
 def get_parser():
         # Initialize parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description('Tools to crop an image. Either through command line or GUI')
@@ -379,7 +409,7 @@ def find_mask_boundaries(fname_mask):
     """
     from numpy import nonzero, min, max
     # open mask
-    data = Image(fname_mask).data
+    data = msct_image.Image(fname_mask).data
     data_nonzero = nonzero(data)
     # find min and max boundaries of the mask
     dim = len(data_nonzero)
@@ -392,10 +422,17 @@ def find_mask_boundaries(fname_mask):
     return ind_start, ind_end, range(dim)
 
 
-if __name__ == "__main__":
+def main(args=None, do_return=None):
+
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
+
     parser = get_parser()
     # Fetching script arguments
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     # assigning variables to arguments
     input_filename = arguments["-i"]
@@ -442,3 +479,10 @@ if __name__ == "__main__":
             cropper.mesh = arguments["-mesh"]
 
         cropper.crop()
+
+        if do_return:
+            return cropper
+
+
+if __name__ == "__main__":
+    main()

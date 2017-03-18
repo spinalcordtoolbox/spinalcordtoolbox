@@ -12,7 +12,7 @@ sys.path.append(path_sct + '/scripts')
 from msct_image import Image
 from msct_types import Coordinate
 from msct_parser import Parser
-from sct_label_utils import ProcessLabels
+from sct_label_utils import sct_label_utils.ProcessLabels
 
 from sct_get_centerline_from_labels import ComputeZMinMax
 
@@ -49,7 +49,7 @@ def add_label(brainstem_file, segmented_file, output_file_name, label_depth_comp
 
     #Placement du nouveau label aux coordonnees x_bar, y_bar et zmax-label_depth_compared_to_zmax
     coordi = Coordinate([x_bar, y_bar, zmax-label_depth_compared_to_zmax, label_value])
-    object_for_process = ProcessLabels(brainstem_file, coordinates=[coordi])
+    object_for_process = sct_label_utils.ProcessLabels(brainstem_file, coordinates=[coordi])
     #print("object_for_process.coordinates=", object_for_process.coordinates.x, object_for_process.coordinates.y, object_for_process.coordinates.z)
     file_with_new_label=object_for_process.create_label()
 

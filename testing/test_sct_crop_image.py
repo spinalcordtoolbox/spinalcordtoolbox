@@ -12,7 +12,7 @@
 #########################################################################################
 
 import sct_utils as sct
-from msct_image import Image
+import msct_image
 
 
 def test(data_path):
@@ -28,7 +28,7 @@ def test(data_path):
 
     if status == 0:
         # check if cropping was correct
-        nx, ny, nz, nt, px, py, pz, pt = Image('cropped_normal.nii.gz').dim
+        nx, ny, nz, nt, px, py, pz, pt = msct_image.Image('cropped_normal.nii.gz').dim
         if (ny != 41):
             status = 5
     return status, output

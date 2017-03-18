@@ -14,45 +14,45 @@
 #########################################################################################
 
 
-import sys
-import os
-import getopt
 import math
-from msct_parser import Parser
+import sys
+
+import msct_parser
 
 
-# main
-#=======================================================================================================================
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Initialization
-    GYRO = float(42.576 * 10 ** 6) # gyromagnetic ratio (in Hz.T^-1)
-    gradamp = []
-    bigdelta = []
-    smalldelta = []
+    GYRO = float(42.576 * 10 ** 6)  # gyromagnetic ratio (in Hz.T^-1)
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     gradamp = arguments['-g']
     bigdelta = arguments['-b']
     smalldelta = arguments['-d']
 
     # print arguments
     print '\nCheck parameters:'
-    print '  gradient amplitude ..... '+str(gradamp*1000)+' mT/m'
-    print '  big delta .............. '+str(bigdelta*1000)+' ms'
-    print '  small delta ............ '+str(smalldelta*1000)+' ms'
-    print '  gyromagnetic ratio ..... '+str(GYRO)+' Hz/T'
+    print '  gradient amplitude ..... ' + str(gradamp * 1000) + ' mT/m'
+    print '  big delta .............. ' + str(bigdelta * 1000) + ' ms'
+    print '  small delta ............ ' + str(smalldelta * 1000) + ' ms'
+    print '  gyromagnetic ratio ..... ' + str(GYRO) + ' Hz/T'
     print ''
 
-    bvalue = ( 2 * math.pi * GYRO * gradamp * smalldelta ) ** 2 * (bigdelta - smalldelta/3)
+    bvalue = (2 * math.pi * GYRO * gradamp * smalldelta) ** 2 * (bigdelta - smalldelta / 3)
 
-    print 'b-value = '+str(bvalue / 10**6)+' mm^2/s\n'
+    print 'b-value = ' + str(bvalue / 10 ** 6) + ' mm^2/s\n'
     return bvalue
+
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Calculate b-value (in mm^2/s).')
     parser.add_option(name="-g",
                       type_value="float",
@@ -73,9 +73,5 @@ def get_parser():
     return parser
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
 if __name__ == "__main__":
-    # call main function
     main()

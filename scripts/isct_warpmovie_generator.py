@@ -11,14 +11,16 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+import os
+import sys
 
-from msct_image import Image
-from sct_utils import run, printv, extract_fname
 from scipy.misc import toimage
-# from sct_utils import tmp_create, tmp_copy_nifti
-# from os import chdir
 
-class WarpingField(Image):
+import msct_image
+import msct_parser
+import sct_utils as sct
+
+class WarpingField(msct_image.Image):
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
         super(WarpingField, self).__init__(param, hdr, orientation, absolutepath, verbose)
         self.num_of_frames = 5
@@ -29,7 +31,7 @@ class WarpingField(Image):
 
     def next(self):
         if self.iteration <= self.num_of_frames:
-            result = Image(self)
+            result = msct_image.Image(self)
             print "Iteration #" + str(self.iteration)
             result.data *= float(self.iteration) / float(self.num_of_frames)
             result.file_name = "tmp."+result.file_name+"_" + str(self.iteration)
@@ -38,11 +40,15 @@ class WarpingField(Image):
         else:
             raise StopIteration()
 
-if __name__ == "__main__":
-    from msct_parser import Parser
-    import sys
+def main(args=None):
 
-    parser = Parser(__file__)
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
+
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('This script generates multiple images from a warping field.')
     parser.add_option(name="-i",
                       type_value="file",
@@ -70,7 +76,7 @@ if __name__ == "__main__":
                       mandatory=False,
                       example="20",
                       default_value=5)
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     input_file = arguments["-i"]
     output_file = arguments["-o"]
@@ -84,10 +90,10 @@ if __name__ == "__main__":
 
     # path_tmp = tmp_create()
     # tmp_copy_nifti(input_file, path_tmp, 'raw.nii')
-    # run('cp '+warping_fields_filename[0]+' '+path_tmp)
+    # sct.run('cp '+warping_fields_filename[0]+' '+path_tmp)
     # chdir(path_tmp)
-    run('mkdir images')
-    run('mkdir niftis')
+    os.mkdir("images")
+    os.mkdir("niftis")
     while True:
         try:
             warping_fields[0].num_of_frames = number_of_frames
@@ -95,16 +101,19 @@ if __name__ == "__main__":
             image_output_iter.save()
             filename_warp = image_output_iter.path + image_output_iter.file_name + image_output_iter.ext
             filename_output = "niftis/tmp.warped_image_" + str(iteration - 1) + image_output_iter.ext
-            run("sct_apply_transfo -i " + input_file + " -d " + reference_image + " -w " + filename_warp +
+            sct.run("sct_apply_transfo -i " + input_file + " -d " + reference_image + " -w " + filename_warp +
                 " -o " + filename_output)
-            result=Image(filename_output)
+            result = msct_image.Image(filename_output)
             result.change_orientation()
 
-            toimage(result.data[int(result.data.shape[0]/2)].squeeze(), cmin=0.0).save('images/'+extract_fname(filename_output)[1]+'.jpg')
+            toimage(result.data[int(result.data.shape[0] / 2)].squeeze(), cmin=0.0).save(
+                'images/' + sct.extract_fname(filename_output)[1] + '.jpg')
             filenames_output.append(filename_output)
         except ValueError:
-            printv('\nError during warping field generation...', 1, 'error')
+            sct.printv('\nError during warping field generation...', 1, 'error')
         except StopIteration:
-            printv('\nFinished iterations.')
+            sct.printv('\nFinished iterations.')
             break
 
+if __name__ == "__main__":
+    main()

@@ -33,19 +33,20 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import sys
 import commands
+import copy_reg
+import json
+import os
 import platform
 import signal
-from time import time, strftime
-from msct_parser import Parser
-import sct_utils as sct
-import os
-import copy_reg
+import sys
 import types
-import pandas as pd
-import json
+from time import time, strftime
 
+import pandas as pd
+
+import sct_utils as sct
+import msct_parser
 
 # get path of the toolbox
 # TODO: put it back below when working again (julien 2016-04-04)
@@ -231,7 +232,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
 
 def get_parser():
     # Initialize parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description("")
@@ -293,12 +294,18 @@ def get_parser():
 # ====================================================================================================
 # Start program
 # ====================================================================================================
-if __name__ == "__main__":
+def main(args=None):
 
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
     # get parameters
     print_if_error = False  # print error message if function crashes (could be messy)
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
+
     function_to_test = arguments["-f"]
     dataset = arguments["-d"]
     dataset = sct.slash_at_the_end(dataset, slash=1)
@@ -487,11 +494,13 @@ if __name__ == "__main__":
         sys.stdout = orig_stdout
         # display log file to Terminal
         handle_log = file(fname_log, 'r')
-        message = handle_log.read()
-        print message
-
+        print handle_log.read()
     # send email
     if email:
         print 'Sending email...'
         sct.send_email(email, passwd_from=passwd, subject=file_log, message=message, filename=file_log+'.log')
         print 'done!'
+
+
+if __name__ == '__main__':
+    main()

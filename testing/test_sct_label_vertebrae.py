@@ -12,7 +12,7 @@
 
 import sct_utils as sct
 from sct_testing import write_to_log_file
-from sct_label_utils import ProcessLabels
+import sct_label_utils
 from numpy import linalg
 from math import sqrt
 import sct_label_vertebrae
@@ -35,7 +35,7 @@ def test(path_data='', parameters=''):
 
     # retrieve flags
     try:
-        parser = sct_label_vertebrae.get_parser()
+        parser = sct_label_vertebrae.get_parser(sct_label_vertebrae.Param())
         dict_param = parser.parse(parameters.split(), check_file_exist=False)
         dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
         # update template path because the previous command wrongly adds path to testing data
@@ -85,7 +85,7 @@ def test(path_data='', parameters=''):
     # open ground truth
     fname_labels_manual = path_data + contrast + '/' + contrast + '_labeled_center_manual.nii.gz'
     try:
-        label_manual = ProcessLabels(fname_labels_manual)
+        label_manual = sct_label_utils.ProcessLabels(fname_labels_manual)
         list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
     except:
         status = 201
@@ -113,7 +113,7 @@ def test(path_data='', parameters=''):
         path_seg, file_seg, ext_seg = sct.extract_fname(dict_param['-s'])
         try:
             sct.run('sct_label_utils -i '+path_output+file_seg+'_labeled.nii.gz -vert-body 0 -o '+path_output+contrast+'_seg_labeled_center.nii.gz', verbose=0)
-            label_results = ProcessLabels(path_output + contrast + '_seg_labeled_center.nii.gz')
+            label_results = sct_label_utils.ProcessLabels(path_output + contrast + '_seg_labeled_center.nii.gz')
             list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
             # get dimension
             # from msct_image import Image
