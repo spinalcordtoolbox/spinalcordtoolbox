@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 #######################################################################################################################
 #
-#
-# Merge images
+# Merge images. See details in function "merge_images".
 #
 # ----------------------------------------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -28,6 +27,18 @@ import sct_apply_transfo
 import sct_image
 import sct_maths
 
+
+class Param:
+    def __init__(self):
+        self.fname_out = 'merged_images.nii.gz'
+        self.interp = 'nn'
+        self.rm_tmp = True
+        self.verbose = 1
+        self.almost_zero = 0.00000001
+
+
+# PARSER
+# ==========================================================================================
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
@@ -77,15 +88,6 @@ def get_parser():
                       default_value=str(Param().verbose))
 
     return parser
-
-
-class Param:
-    def __init__(self):
-        self.fname_out = 'merged_images.nii.gz'
-        self.interp = 'nn'
-        self.rm_tmp = True
-        self.verbose = 1
-        self.almost_zero = 0.00000001
 
 
 def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
@@ -167,79 +169,9 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     if param.rm_tmp:
         shutil.rmtree(path_tmp)
 
-    #
-    #
-    # #copy input files to tmp folder
-    # list_fname_src_tmp = []
-    # for i, fname_src in enumerate(list_fname_src):
-    #     fname_src_new= 'input_'+str(i)+'.nii.gz'
-    #     shutil.copy(fname_src, path_tmp + fname_src_new)
-    #     list_fname_src_tmp.append(fname_src_new)
-    #
-    # fname_dest_tmp = 'dest.nii.gz'
-    # shutil.copy(fname_dest, path_tmp + fname_dest_tmp)
-    #
-    # list_fname_warp_tmp = []
-    # for i, fname_warp in enumerate(list_fname_warp):
-    #     fname_warp_new = 'warp_'+str(i)+'.nii.gz'
-    #     shutil.copy(fname_warp, path_tmp + fname_warp_new)
-    #     list_fname_warp_tmp.append(fname_warp_new)
-    #
-    # # go to tmp folder
-    # path_wd = os.getcwd()
-    # os.chdir(path_tmp)
-    #
-    # # warp src images to dest
-    # list_fname_reg = warp_images(list_fname_src_tmp, fname_dest_tmp, list_fname_warp_tmp, interp=param.interp, param=param)
-    #
-    # # merge images
-    # fname_merged = merge_images(list_fname_reg, param=param)
-    #
-    # # go back to original working directory
-    # os.chdir(path_wd)
-    # sct.generate_output_file(path_tmp+fname_merged, param.fname_out)
 
-#
-#
-# def warp_images(list_fname_src, fname_dest, list_fname_warp, interp='nn', param=Param()):
-#     list_fname_out = []
-#     for fname_src, fname_warp in zip(list_fname_src, list_fname_warp):
-#         fname_out = sct.add_suffix(fname_src, '_reg')
-#         sct_apply_transfo.main(args=['-i', fname_src,
-#                                      '-d', fname_dest,
-#                                      '-w', fname_warp,
-#                                      '-x', interp,
-#                                      '-o', fname_out,
-#                                      '-v', param.verbose])
-#         list_fname_out.append(fname_out)
-#     return list_fname_out
-
-#
-# def merge_images(list_fname_to_merge, param=Param()):
-#
-#
-#
-#
-#     str_concat = ','.join(list_fname_to_merge)
-#
-#     # run SCT Image concatenation
-#     fname_concat = 'concat_image.nii.gz'
-#     sct_image.main(args=['-i', str_concat,
-#                          '-concat', 't',
-#                          '-o', fname_concat,
-#                          '-v', param.verbose])
-#     # run SCT Math mean
-#     fname_merged = 'merged_image.nii.gz'
-#     sct_maths.main(args=['-i', fname_concat,
-#                          '-mean', 't',
-#                          '-o', fname_merged,
-#                          '-v', param.verbose])
-#     return fname_merged
-
-########################################################################################################################
-# ------------------------------------------------------  MAIN ------------------------------------------------------- #
-########################################################################################################################
-
+# MAIN
+# ==========================================================================================
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
