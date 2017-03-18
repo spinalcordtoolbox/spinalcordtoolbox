@@ -11,9 +11,6 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
-# TODO: do averaging only in overlapping voxels (ie: excluding zero voxels), otherwise the mean is wrong.
-# TODO: in compute: do NOT copy files like that, because if using nii this will fail. use "convert" or do not copy
-# TODO: do not copy certain files that are now opened and processed with numpy (save time)
 # TODO: parameter "almost_zero" might case problem if merging data with very low values (e.g. MD from diffusion)
 
 # Python imports
