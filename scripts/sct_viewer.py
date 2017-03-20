@@ -670,7 +670,8 @@ class ClickViewer(Viewer):
             else:
                 window.update_slice(point, data_update=True)
 
-        self.windows[1].axes.set_title('Click and hold\nto move around')
+        self.windows[1].axes.set_title('Select the slice \n '
+                                       'to inspect. \n')
         if self.title == '':
             self.title = 'Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
                 self.image_dim[self.orientation[self.primary_subplot]-1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')'
@@ -731,29 +732,36 @@ class ClickViewer(Viewer):
                                                        str(self.image_dim[
                                                                self.orientation[self.primary_subplot] - 1] - 1) + ' (' +
                                                        str(self.current_slice + 1) + '/' +
-                                                        str(len(self.list_slices)) + ')')
+                                                        str(len(self.list_slices)) + ') \n')
             plt.setp(title_obj, color='k')
 
         elif(key=='way_custom_next_point'):
             title_obj = self.windows[0].axes.set_title(
-                'Automatic sliding disabled\nPlease click on spinal cord center\nand close the window once finished\n(# points = ' + str(
-                    len(self.list_points)) + ')')
+                'You have made '+str(len(self.list_points))+ ' points. \n')
             plt.setp(title_obj, color='k')
 
         elif(key=='way_custom_start'):
-            title_obj = self.windows[0].axes.set_title('Automatic sliding disabled\nPlease click on spinal cord center\nand close the window once finished\n(# points = ' + str(len(self.list_points)) + ')')
+            title_obj = self.windows[0].axes.set_title('You have chosen Manual Mode\n '
+                                                       'All previous data has been erased\n'
+                                                       'Please choose the slices on the small picture\n')
+            plt.setp(title_obj, color='k')
+
+        elif(key=='way_auto_start'):
+            title_obj = self.windows[0].axes.set_title('You have chosen Auto Mode \n '
+                                                       'All previous data has been erased \n '
+                                                       'Please select a new point on slice \n ')
             plt.setp(title_obj, color='k')
 
         elif(key=='save_over'):
-            title_obj = self.windows[0].axes.set_title('Your work has been saved : you can carry on the segmentation.')
+            title_obj = self.windows[0].axes.set_title('Your work has been saved : you can carry on the segmentation. \n')
             plt.setp(title_obj, color='g')
 
         elif(key=='ask_for_leaving'):
-            title_obj = self.windows[0].axes.set_title('Please confirm : all your unsaved work will be lost.')
+            title_obj = self.windows[0].axes.set_title('Please confirm : all your unsaved work will be lost. \n')
             plt.setp(title_obj, color='r')
 
         elif(key=='ready_to_save'):
-            title_obj = self.windows[0].axes.set_title('You can save your work and close this window.')
+            title_obj = self.windows[0].axes.set_title('You can save your work and close this window. \n')
             plt.setp(title_obj, color='g')
 
         self.windows[0].draw()
@@ -801,10 +809,10 @@ class ClickViewer(Viewer):
         if not is_in_axes:  # ?!
             return
 
-        if self.input_type == 'centerline':
-            self.bool_enable_custom_points = True
+        #if self.input_type == 'centerline':
+        #    self.bool_enable_custom_points = True
 
-        self.update_title_text('way_custom_start')
+        #self.update_title_text('way_custom_start')
         plot.draw()
 
         self.last_update = time()
@@ -924,10 +932,13 @@ class ClickViewer(Viewer):
 
             if(self.bool_enable_custom_points):
                 self.button_choose_auto_manual.label.set_text('Mode Manual')
+                self.update_title_text('way_custom_start')
             else:
                 self.button_choose_auto_manual.label.set_text('Mode Auto')
+                self.update_title_text('way_auto_start')
 
     def reset_useful_global_variables(self):
+        self.windows[0].update_slice(0)
         # specialized for Click viewer
         self.list_points = []
         self.list_points_useful_notation = ''
