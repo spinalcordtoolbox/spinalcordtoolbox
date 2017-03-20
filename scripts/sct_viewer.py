@@ -919,12 +919,23 @@ class ClickViewer(Viewer):
 
     def press_choose_mode(self,event):
         if event.inaxes == self.dic_axis_buttons['choose_mode']:
+            self.reset_useful_global_variables()
             self.bool_enable_custom_points=not self.bool_enable_custom_points
 
             if(self.bool_enable_custom_points):
                 self.button_choose_auto_manual.label.set_text('Mode Manual')
             else:
                 self.button_choose_auto_manual.label.set_text('Mode Auto')
+
+    def reset_useful_global_variables(self):
+        # specialized for Click viewer
+        self.list_points = []
+        self.list_points_useful_notation = ''
+
+        # compute slices to display
+        self.list_slices = []
+        self.bool_already_ask_for_leaving = False
+
 
 
     def start(self):
