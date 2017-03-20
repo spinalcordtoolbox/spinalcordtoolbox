@@ -763,6 +763,10 @@ class ClickViewer(Viewer):
             title_obj = self.windows[0].axes.set_title('You can save your work and close this window. \n')
             plt.setp(title_obj, color='g')
 
+        elif(key=='warning_redo_auto'):
+            title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
+            plt.setp(title_obj, color='r')
+
         self.windows[0].draw()
 
     def are_all_images_processed(self):
@@ -789,7 +793,7 @@ class ClickViewer(Viewer):
                 if not self.are_all_images_processed():
                     point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]
                     self.current_point = Coordinate(point)
-                    self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)
+                    self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  #?!
                     self.windows[0].update_slice(self.list_slices[self.current_slice])
                     self.update_title_text('way_automatic_next_point')
                     plot.draw()
@@ -899,7 +903,27 @@ class ClickViewer(Viewer):
 
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
-            print('option Redo : not ready yet')
+            if not self.bool_enable_custom_points:
+                self.redo_last_auto_point()
+            else:
+                print('option Redo for custom points : not ready yet')
+
+    def redo_last_auto_point(self):
+        if(self.current_slice>0):
+            self.current_slice += -1
+            self.windows[0].update_slice(self.list_slices[self.current_slice])
+            if(len(self.list_points)>1):
+                self.list_points=[self.list_points[0:len(self.list_points)-2]]
+                #self.windows[1].update_slice([self.list_points[len(self.list_points)-1][2], self.list_points[len(self.list_points)-1][0], self.list_points[len(self.list_points)-1][1]], data_update=False)
+            else:
+                self.list_points=[]
+                #self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)
+            self.update_title_text('way_automatic_next_point')
+
+
+        else:
+            self.update_title_text('warning_redo_auto')
+
 
     def press_skip(self, event):
         if event.inaxes == self.dic_axis_buttons['skip']:
@@ -952,8 +976,6 @@ class ClickViewer(Viewer):
 
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
         self.calculate_list_slices()
-
-
 
     def start(self):
         super(ClickViewer, self).start()
