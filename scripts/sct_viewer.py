@@ -501,7 +501,7 @@ class ClickViewer(Viewer):
     Assumes SAL orientation
     orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
-    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='', input_type='centerline'):
+    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='Mode Automatique', input_type='centerline'):
 
         # Ajust the input parameters into viewer objects.
         if isinstance(list_images, Image):
@@ -540,6 +540,7 @@ class ClickViewer(Viewer):
         self.create_button_redo()
         self.create_button_save()
         self.create_button_skip()
+        self.create_button_auto_manual()
 
         """ Compute slices to display """
         self.calculate_list_slices()
@@ -549,7 +550,6 @@ class ClickViewer(Viewer):
         self.setup_intensity()
 
         """ Manage closure of viewer"""
-        self.enable_custom_points = False
         self.fig.canvas.mpl_connect('close_event', self.close_window)
         self.closed = False
         self.input_type = input_type
@@ -572,6 +572,7 @@ class ClickViewer(Viewer):
         self.primary_subplot = orientation_subplot[0]
         self.secondary_subplot = orientation_subplot[1]
         self.dic_axis_buttons={}
+        self.bool_enable_custom_points = False
 
         self.current_slice = 0
         self.number_of_slices = 0
@@ -591,6 +592,12 @@ class ClickViewer(Viewer):
         else:
             return('h')
 
+    def create_button_auto_manual(self):
+        ax = plt.axes([0.08, 0.90, 0.15, 0.075])
+        self.dic_axis_buttons['choose_mode']=ax
+        self.button_choose_auto_manual = Button(ax, 'Mode Auto')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_choose_mode)
+
     def create_button_redo(self):
         ax = plt.axes([0.48, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['redo']=ax
@@ -607,6 +614,7 @@ class ClickViewer(Viewer):
         ax = plt.axes([0.70, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['save']=ax
         button_help = Button(ax, 'Save')
+        button_help.label.set_text('Hello')
         self.fig.canvas.mpl_connect('button_press_event', self.press_save)
 
     def create_button_done(self):
@@ -759,7 +767,7 @@ class ClickViewer(Viewer):
 
     def on_press_main_window(self,event,plot):
         self.bool_already_ask_for_leaving=False
-        if not self.enable_custom_points:
+        if not self.bool_enable_custom_points:
             target_point = self.set_not_custom_target_points(event)
         else:
             target_point = self.set_custom_target_points(event)
@@ -768,7 +776,7 @@ class ClickViewer(Viewer):
             self.list_points.append(target_point)
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
 
-            if not self.enable_custom_points:
+            if not self.bool_enable_custom_points:
                 self.current_slice += 1
 
                 if not self.are_all_images_processed():
@@ -794,7 +802,7 @@ class ClickViewer(Viewer):
             return
 
         if self.input_type == 'centerline':
-            self.enable_custom_points = True
+            self.bool_enable_custom_points = True
 
         self.update_title_text('way_custom_start')
         plot.draw()
@@ -836,7 +844,7 @@ class ClickViewer(Viewer):
         """
         if event.button == 1 and event.inaxes == plot.axes and plot.view == self.orientation[self.secondary_subplot]:
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            if not self.enable_custom_points:
+            if not self.bool_enable_custom_points:
                 point[self.orientation[self.primary_subplot]-1] = self.list_slices[self.current_slice]
             for window in self.windows:
                 if window is plot:
@@ -909,6 +917,15 @@ class ClickViewer(Viewer):
                 self.closed=True
                 plt.close('all')
 
+    def press_choose_mode(self,event):
+        if event.inaxes == self.dic_axis_buttons['choose_mode']:
+            self.bool_enable_custom_points=not self.bool_enable_custom_points
+
+            if(self.bool_enable_custom_points):
+                self.button_choose_auto_manual.label.set_text('Mode Manual')
+            else:
+                self.button_choose_auto_manual.label.set_text('Mode Auto')
+
 
     def start(self):
         super(ClickViewer, self).start()
@@ -927,7 +944,6 @@ class ClickViewer(Viewer):
             self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         """
         self.closed = True
-
 
 def get_parser():
     parser = Parser(__file__)
