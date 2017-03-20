@@ -104,7 +104,6 @@ class SinglePlot:
             return (cm.get_cmap('gray'), 'nearest', 1.0)
 
     def set_data_to_display(self,image):
-        #?! cross to display, est ce que c'est une croix a afficher ? sur toutes les images ?
         if self.view == 1:
             self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [-10000, 10000]],
                                      [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
@@ -501,7 +500,7 @@ class ClickViewer(Viewer):
     Assumes SAL orientation
     orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
-    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='Mode Automatique', input_type='centerline'):
+    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='Mode Automatique \n', input_type='centerline'):
 
         # Ajust the input parameters into viewer objects.
         if isinstance(list_images, Image):
