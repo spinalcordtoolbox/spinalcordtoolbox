@@ -891,6 +891,7 @@ class ClickViewer(Viewer):
 
     def redo_last_auto_point(self):
         if(self.current_slice>0):
+            self.bool_skip_all_to_end=False
             self.current_slice += -1
             self.windows[0].update_slice(self.list_slices[self.current_slice])
             if(len(self.list_points)>1):
@@ -900,8 +901,6 @@ class ClickViewer(Viewer):
                 self.list_points=[]
                 #self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)
             self.update_title_text('way_automatic_next_point')
-
-
         else:
             self.update_title_text('warning_redo_auto')
 
