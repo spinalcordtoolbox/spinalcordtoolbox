@@ -96,7 +96,6 @@ class SinglePlot:
         if 'v' in display_cross:
             self.axes.add_line(self.line_vertical)
 
-
     def set_image_parameters(self,im_params,i,cm):
         if str(i) in im_params.images_parameters:
             return(copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap)),im_params.images_parameters[str(i)].interp,float(im_params.images_parameters[str(i)].alpha))
@@ -109,7 +108,6 @@ class SinglePlot:
                                      [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
             self.aspect_ratio = self.viewer.aspect_ratio[0]
             return( image.data[int(self.image_dim[0] / 2), :, :] )
-
         elif self.view == 2:
             self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
                                      [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
@@ -167,7 +165,6 @@ class SinglePlot:
             self.line_vertical.set_ydata(self.cross_to_display[0][0])
         if 'h' in self.display_cross:
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
-
 
     def on_press(self, event):
         """
@@ -405,7 +402,6 @@ class Viewer(object):
     def start(self):
         plt.show()
 
-
 class ThreeViewer(Viewer):
     """
     This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
@@ -481,7 +477,6 @@ class ThreeViewer(Viewer):
             return self.move(event, plot)
         else:
             return
-
 
 class ClickViewer(Viewer):
     """
@@ -561,6 +556,7 @@ class ClickViewer(Viewer):
         self.secondary_subplot = orientation_subplot[1]
         self.dic_axis_buttons={}
         self.bool_enable_custom_points = False
+        self.bool_skip_all_to_end=False
 
         self.current_slice = 0
         self.number_of_slices = 0
@@ -602,7 +598,6 @@ class ClickViewer(Viewer):
         ax = plt.axes([0.70, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['save']=ax
         button_help = Button(ax, 'Save')
-        button_help.label.set_text('Hello')
         self.fig.canvas.mpl_connect('button_press_event', self.press_save)
 
     def create_button_done(self):
@@ -767,6 +762,7 @@ class ClickViewer(Viewer):
 
     def on_press_main_window(self,event,plot):
         self.bool_already_ask_for_leaving=False
+        self.bool_skip_all_to_end=True
         if not self.bool_enable_custom_points:
             target_point = self.set_not_custom_target_points(event)
         else:
@@ -780,7 +776,7 @@ class ClickViewer(Viewer):
                 self.current_slice += 1
 
                 if not self.are_all_images_processed():
-                    point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]
+                    point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice] #?!
                     self.current_point = Coordinate(point)
                     self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  #?!
                     self.windows[0].update_slice(self.list_slices[self.current_slice])
@@ -913,10 +909,13 @@ class ClickViewer(Viewer):
         else:
             self.update_title_text('warning_redo_auto')
 
-
     def press_skip(self, event):
         if event.inaxes == self.dic_axis_buttons['skip']:
-            print('option Skip : not ready yet')
+            if self.bool_skip_all_to_end:
+                self.update_title_text('ready_to_save')
+            else:
+                self.current_slice += 1
+                self.windows[0].update_slice(self.list_slices[self.current_slice])
 
     def press_save(self, event):
         if event.inaxes == self.dic_axis_buttons['save']:
@@ -1027,7 +1026,6 @@ def get_parser():
                       example=['0', '1', '2'])
 
     return parser
-
 
 class ParamImageVisualization(object):
     def __init__(self, id='0', mode='image', cmap='gray', interp='nearest', vmin='0', vmax='99', vmean='98', vmode='percentile', alpha='1.0'):
