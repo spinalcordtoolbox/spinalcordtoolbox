@@ -155,30 +155,28 @@ class SinglePlot:
                 if data_update:
                     for i, image in enumerate(self.images):
                         self.figs[i].set_data(image.data[target_slice, :, :])
-                if 'v' in self.display_cross:
-                    self.line_vertical.set_ydata(self.cross_to_display[0][0])
-                if 'h' in self.display_cross:
-                    self.line_horizontal.set_xdata(self.cross_to_display[1][1])
+                self.set_line_to_display()
         elif self.view == 2:
             if 0 <= target_slice < self.images[0].data.shape[1]:
                 if data_update:
                     for i, image in enumerate(self.images):
                         self.figs[i].set_data(image.data[:, target_slice, :])
-                if 'v' in self.display_cross:
-                    self.line_vertical.set_ydata(self.cross_to_display[0][0])
-                if 'h' in self.display_cross:
-                    self.line_horizontal.set_xdata(self.cross_to_display[1][1])
+                self.set_line_to_display()
         elif self.view == 3:
             if 0 <= target_slice < self.images[0].data.shape[2]:
                 if data_update:
                     for i, image in enumerate(self.images):
                         self.figs[i].set_data(image.data[:, :, target_slice])
-                if 'v' in self.display_cross:
-                    self.line_vertical.set_ydata(self.cross_to_display[0][0])
-                if 'h' in self.display_cross:
-                    self.line_horizontal.set_xdata(self.cross_to_display[1][1])
+                self.set_line_to_display()
 
         self.figs[0].figure.canvas.draw()
+
+    def set_line_to_display(self):
+        if 'v' in self.display_cross:
+            self.line_vertical.set_ydata(self.cross_to_display[0][0])
+        if 'h' in self.display_cross:
+            self.line_horizontal.set_xdata(self.cross_to_display[1][1])
+
 
     def on_press(self, event):
         """
