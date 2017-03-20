@@ -896,10 +896,8 @@ class ClickViewer(Viewer):
             self.windows[0].update_slice(self.list_slices[self.current_slice])
             if(len(self.list_points)>1):
                 self.list_points=[self.list_points[0:len(self.list_points)-2]]
-                #self.windows[1].update_slice([self.list_points[len(self.list_points)-1][2], self.list_points[len(self.list_points)-1][0], self.list_points[len(self.list_points)-1][1]], data_update=False)
             else:
                 self.list_points=[]
-                #self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)
             self.update_title_text('way_automatic_next_point')
         else:
             self.update_title_text('warning_redo_auto')
