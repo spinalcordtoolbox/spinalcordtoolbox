@@ -797,10 +797,6 @@ class ClickViewer(Viewer):
         if not is_in_axes:  # ?!
             return
 
-        #if self.input_type == 'centerline':
-        #    self.bool_enable_custom_points = True
-
-        #self.update_title_text('way_custom_start')
         plot.draw()
 
         self.last_update = time()
@@ -964,6 +960,9 @@ class ClickViewer(Viewer):
 
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
         self.calculate_list_slices()
+        self.bool_skip_all_to_end=False
+
+        self.draw_points(self.windows[0],self.current_point.x)
 
     def start(self):
         super(ClickViewer, self).start()
