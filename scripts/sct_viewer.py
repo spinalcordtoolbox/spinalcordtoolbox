@@ -758,6 +758,7 @@ class ClickViewer(Viewer):
             return True
 
     def on_press_main_window(self,event,plot):
+        self.bool_already_ask_for_leaving=False
         if not self.enable_custom_points:
             target_point = self.set_not_custom_target_points(event)
         else:
