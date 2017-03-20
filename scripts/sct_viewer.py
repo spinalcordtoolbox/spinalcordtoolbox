@@ -726,6 +726,7 @@ class ClickViewer(Viewer):
             return False
 
     def update_title_text(self,key):
+
         if(key=='way_automatic_next_point'):
             title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
                                                        str(self.list_slices[self.current_slice]) + '/' +
@@ -750,7 +751,6 @@ class ClickViewer(Viewer):
             title_obj = self.windows[0].axes.set_title('You have chosen Auto Mode \n '
                                                        'All previous data has been erased \n '
                                                        'Please select a new point on slice \n ')
-            plt.setp(title_obj, color='k')
 
         elif(key=='save_over'):
             title_obj = self.windows[0].axes.set_title('Your work has been saved : you can carry on the segmentation. \n')
@@ -946,6 +946,13 @@ class ClickViewer(Viewer):
         # compute slices to display
         self.list_slices = []
         self.bool_already_ask_for_leaving = False
+
+        self.current_slice = 0
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
+
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
+        self.calculate_list_slices()
 
 
 
