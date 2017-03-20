@@ -248,8 +248,9 @@ class SegmentGM:
         self.label_fusion(list_dic_indexes_by_slice)
 
         ########## IN DEVELOPMENT ##########
-        #printv('\nz-regularization of the segementation...', self.param.verbose, 'normal')
-        #self.z_regularization(list_dic_indexes_by_slice)
+        # printv('\nz-regularization of the segementation...', self.param.verbose, 'normal')
+        # self.z_regularization_discard_model_slices(list_dic_indexes_by_slice)
+        # self.z_regularization_average_slices()
         ########## -------------- ##########
         #
         printv('\nWarp back segmentation into image space...', self.param.verbose, 'normal')
@@ -441,7 +442,7 @@ class SegmentGM:
             target_slice.set(gm_seg_m=data_mean_gm, wm_seg_m=data_mean_wm)
 
     ########## IN DEVELOPMENT ##########
-    def z_regularization(self, list_dic_indexes_by_slice):
+    def z_regularization_discard_model_slices(self, list_dic_indexes_by_slice):
         os.mkdir('model_slices_skel')
         from sct_compute_hausdorff_distance import Thinning, HausdorffDistance
         import copy
@@ -505,7 +506,38 @@ class SegmentGM:
         # recompute label fusion result
         self.label_fusion(new_list_dic_indexes_by_slice)
 
+    def z_regularization_average_slices(self):
+        list_new_gm = []
+        list_new_wm = []
+        for k, target_slice in enumerate(self.target_im):
+            # define slices
+            gm_k = target_slice.gm_seg_M
+            gm_inf = self.target_im[k - 1].gm_seg_M if k != 0 else np.zeros(gm_k.shape)
+            gm_sup = self.target_im[k + 1].gm_seg_M if k != len(self.target_im)-1 else np.zeros(gm_k.shape)
 
+            wm_k = target_slice.wm_seg_M
+            wm_inf = self.target_im[k - 1].wm_seg_M if k != 0 else np.zeros(wm_k.shape)
+            wm_sup = self.target_im[k + 1].wm_seg_M if k != len(self.target_im) - 1 else np.zeros(wm_k.shape)
+
+            # weights for the weighted average
+            weight_k = 2
+            weight_other_k = 1
+            n_other_slices = 2 if (k != 0 and  k != len(self.target_im)-1) else 1
+
+            # weighted average
+            new_gm = (weight_other_k * gm_inf + weight_k * gm_k + weight_other_k * gm_sup) / (weight_k + n_other_slices * weight_other_k)
+            new_wm = (weight_other_k * wm_inf + weight_k * wm_k + weight_other_k * wm_sup) / (weight_k + n_other_slices * weight_other_k)
+
+            Image(gm_k, absolutepath='slice'+str(k)+'_gm_original.nii.gz').save()
+            Image(wm_k, absolutepath='slice' + str(k) + '_wm_original.nii.gz').save()
+            Image(new_gm, absolutepath='slice' + str(k) + '_gm_new.nii.gz').save()
+            Image(new_wm, absolutepath='slice' + str(k) + '_wm_new.nii.gz').save()
+
+            list_new_gm.append(new_gm)
+            list_new_wm.append(new_wm)
+        # set slices new gm and wm once they all have been computed
+        for k, target_slice in enumerate(self.target_im):
+            target_slice.set(gm_seg_m=list_new_gm[k], wm_seg_m=list_new_wm[k])
     ########## -------------- ##########
 
     def warp_back_seg(self, path_warp):
