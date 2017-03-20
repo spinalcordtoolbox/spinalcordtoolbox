@@ -150,25 +150,16 @@ class SinglePlot:
         else:
             target_slice = target
 
-        if self.view == 1:
-            if 0 <= target_slice < self.images[0].data.shape[0]:
-                if data_update:
-                    for i, image in enumerate(self.images):
+        if 0 <= target_slice < self.images[0].data.shape[int(self.view)-1]:
+            if data_update:
+                for i, image in enumerate(self.images):
+                    if(self.view==1):
                         self.figs[i].set_data(image.data[target_slice, :, :])
-                self.set_line_to_display()
-        elif self.view == 2:
-            if 0 <= target_slice < self.images[0].data.shape[1]:
-                if data_update:
-                    for i, image in enumerate(self.images):
+                    elif(self.view==2):
                         self.figs[i].set_data(image.data[:, target_slice, :])
-                self.set_line_to_display()
-        elif self.view == 3:
-            if 0 <= target_slice < self.images[0].data.shape[2]:
-                if data_update:
-                    for i, image in enumerate(self.images):
+                    elif(self.view==3):
                         self.figs[i].set_data(image.data[:, :, target_slice])
-                self.set_line_to_display()
-
+            self.set_line_to_display()
         self.figs[0].figure.canvas.draw()
 
     def set_line_to_display(self):
