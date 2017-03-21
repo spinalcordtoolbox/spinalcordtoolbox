@@ -528,6 +528,7 @@ class SegmentGM:
             new_gm = (weight_other_k * gm_inf + weight_k * gm_k + weight_other_k * gm_sup) / (weight_k + n_other_slices * weight_other_k)
             new_wm = (weight_other_k * wm_inf + weight_k * wm_k + weight_other_k * wm_sup) / (weight_k + n_other_slices * weight_other_k)
 
+            Image(target_slice.im_M, absolutepath='slice' + str(k) + '_im.nii.gz').save()
             Image(gm_k, absolutepath='slice'+str(k)+'_gm_original.nii.gz').save()
             Image(wm_k, absolutepath='slice' + str(k) + '_wm_original.nii.gz').save()
             Image(new_gm, absolutepath='slice' + str(k) + '_gm_new.nii.gz').save()
