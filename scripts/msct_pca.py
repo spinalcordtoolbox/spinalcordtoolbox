@@ -31,13 +31,15 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
-import numpy as np
-import sct_utils as sct
-from math import sqrt
 import os
+from math import sqrt
+
+import numpy as np
+
+import sct_utils as sct
 
 
-class PCA:
+class PCA(object):
     """
     Principal Component Analysis for a data set of images
 
@@ -403,7 +405,7 @@ class PCA:
         else:
             im_dir = 'mode_images_without_target'
         if im_dir not in os.listdir('.'):
-            sct.run('mkdir ./'+im_dir)
+            os.mkdir(im_dir)
         if nb_modes is None:
             nb_modes = int(round(len(self.kept_eigenval)/3))
 
