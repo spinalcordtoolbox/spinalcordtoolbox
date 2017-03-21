@@ -12,29 +12,22 @@
 
 import sys
 
-from msct_parser import Parser
-from sct_utils import printv
+import msct_parser
+import msct_image
+import sct_utils as sct
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.verbose = 1
 
 
 # PARSER
 # ==========================================================================================
-def get_parser():
-    param = Param()
-
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # # initialize parameters
-    # param = Param()
-    # param_default = Param()
+def get_parser(param):
 
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Compute Diffusion Tensor Images (DTI) using dipy.')
     parser.add_option(name="-i",
                       type_value="file",
@@ -80,15 +73,21 @@ def get_parser():
 # ==========================================================================================
 def main(args = None):
 
+    # initialize parameters
+    param = Param()
+
     if not args:
         args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # initialization
     file_mask = ''
 
     # Get parser info
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    parser = get_parser(param)
+    arguments = parser.parse(args)
     fname_in = arguments['-i']
     fname_bvals = arguments['-bval']
     fname_bvecs = arguments['-bvec']
@@ -99,13 +98,13 @@ def main(args = None):
     param.verbose = int(arguments['-v'])
 
     # compute DTI
-    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
-        printv('ERROR in compute_dti()', 1, 'error')
+    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, param):
+        sct.printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
 # ==========================================================================================
-def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
+def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask, param):
     """
     Compute DTI.
     :param fname_in: input 4d file.
@@ -116,8 +115,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     :return: True/False
     """
     # Open file.
-    from msct_image import Image
-    nii = Image(fname_in)
+    nii = msct_image.Image(fname_in)
     data = nii.data
     print('data.shape (%d, %d, %d, %d)' % data.shape)
 
@@ -129,13 +127,13 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
 
     # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
     if not file_mask == '':
-        printv('Open mask file...', param.verbose)
+        sct.printv('Open mask file...', param.verbose)
         # open mask file
-        nii_mask = Image(file_mask)
+        nii_mask = msct_image.Image(file_mask)
         mask = nii_mask.data
 
     # fit tensor model
-    printv('Computing tensor using "'+method+'" method...', param.verbose)
+    sct.printv('Computing tensor using "'+method+'" method...', param.verbose)
     import dipy.reconst.dti as dti
     if method == 'standard':
         tenmodel = dti.TensorModel(gtab)
@@ -153,7 +151,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
             tenfit = dti_restore.fit(data, mask)
 
     # Compute metrics
-    printv('Computing metrics...', param.verbose)
+    sct.printv('Computing metrics...', param.verbose)
     # FA
     from dipy.reconst.dti import fractional_anisotropy
     nii.data = fractional_anisotropy(tenfit.evals)
@@ -194,7 +192,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
 #     bvecs = array([[float(j.strip("\n")) for j in list_bvecs[i].split(" ")] for i in range(len(list_bvecs))])
 #     # make sure one dimension is "3"
 #     if not 3 in bvecs.shape:
-#         printv('ERROR: bvecs should be text file with 3 lines (or columns).', 1, 'error')
+#         sct.printv('ERROR: bvecs should be text file with 3 lines (or columns).', 1, 'error')
 #     return bvecs
 #
 
@@ -202,7 +200,5 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()

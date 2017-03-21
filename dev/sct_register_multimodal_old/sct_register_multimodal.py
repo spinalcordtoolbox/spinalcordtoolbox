@@ -385,7 +385,7 @@ def register(src, dest, paramreg, param, i_step_str):
         masking = ''
 
     if paramreg.steps[i_step_str].algo == 'slicereg':
-        from msct_image import find_zmin_zmax
+        from msct_image import msct_image.find_zmin_zmax
         # threshold images (otherwise, automatic crop does not work -- see issue #293)
         src_th = sct.add_suffix(src, '_th')
         from msct_image import Image
@@ -405,8 +405,8 @@ def register(src, dest, paramreg, param, i_step_str):
         nii.save()
         # sct.run(fsloutput+'fslmaths '+dest+' -thr 0.1 '+dest_th, param.verbose)
         # find zmin and zmax
-        zmin_src, zmax_src = find_zmin_zmax(src_th)
-        zmin_dest, zmax_dest = find_zmin_zmax(dest_th)
+        zmin_src, zmax_src = msct_image.find_zmin_zmax(src_th)
+        zmin_dest, zmax_dest = msct_image.find_zmin_zmax(dest_th)
         zmin_total = max([zmin_src, zmin_dest])
         zmax_total = min([zmax_src, zmax_dest])
         # crop data

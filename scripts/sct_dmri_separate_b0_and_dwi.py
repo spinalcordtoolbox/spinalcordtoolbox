@@ -12,20 +12,20 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
-import sys
 import math
+import os
+import shutil
+import sys
 import time
 
-import os
-import commands
+import msct_image
+import msct_parser
+import sct_convert
+import sct_image
 import sct_utils as sct
-from msct_image import Image
-from sct_image import split_data
-from msct_parser import Parser
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.average = 0
@@ -34,9 +34,43 @@ class Param:
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
 
 
-# MAIN
-# ==========================================================================================
-def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files):
+def main(args=None):
+
+    # initialize parameters
+    param = Param()
+    param_default = Param()
+
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
+
+    # call main function
+    parser = get_parser(param_default)
+    arguments = parser.parse(args)
+
+    fname_data = arguments['-i']
+    fname_bvecs = arguments['-bvec']
+
+    fname_bvals = ''
+    path_out = ''
+    average = param.average
+    verbose = param.verbose
+    remove_tmp_files = param.remove_tmp_files
+
+    if '-bval' in arguments:
+        fname_bvals = arguments['-bval']
+    if '-bvalmin' in arguments:
+        param.bval_min = arguments['-bvalmin']
+    if '-a' in arguments:
+        average = arguments['-a']
+    if '-ofolder' in arguments:
+        path_out = arguments['-ofolder']
+    if '-v' in arguments:
+        verbose = int(arguments['-v'])
+    if '-r' in arguments:
+        remove_tmp_files = int(arguments['-r'])
 
     # Initialization
     start_time = time.time()
@@ -63,8 +97,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose)
 
     # copy files into tmp folder and convert to nifti
     sct.printv('\nCopy files into temporary folder...', verbose)
@@ -75,16 +108,15 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     dwi_name = 'dwi'
     dwi_mean_name = dwi_name+'_mean'
 
-    from sct_convert import convert
-    if not convert(fname_data, path_tmp+dmri_name+ext):
+    if not sct_convert.convert(fname_data, path_tmp+dmri_name+ext):
         sct.printv('ERROR in convert.', 1, 'error')
-    sct.run('cp '+fname_bvecs+' '+path_tmp+'bvecs', verbose)
+    shutil.copy(fname_bvecs, os.path.join(path_tmp, 'bvecs'))
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Get size of data
-    im_dmri = Image(dmri_name+ext)
+    im_dmri = msct_image.Image(dmri_name+ext)
     sct.printv('\nGet dimensions data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_dmri.dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
@@ -95,7 +127,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
-    im_dmri_split_list = split_data(im_dmri, 3)
+    im_dmri_split_list = sct_image.split_data(im_dmri, 3)
     for im_d in im_dmri_split_list:
         im_d.save()
 
@@ -125,12 +157,9 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     if average:
         sct.printv('\nAverage DWI...', verbose)
         sct.run('sct_maths -i '+dwi_name+ext+' -o '+dwi_mean_name+ext+' -mean t', verbose)
-        # if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
-        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
-        # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
 
     # come back to parent folder
-    os.chdir('..')
+    os.chdir(os.pardir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
@@ -143,7 +172,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     # Remove temporary files
     if remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf '+path_tmp, verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -229,7 +258,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 
 # Print usage
 # ==========================================================================================
-def usage():
+def usage(param_default):
     print """
 """+os.path.basename(__file__)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -259,10 +288,9 @@ EXAMPLE
     #Exit Program
     sys.exit(2)
 
-def get_parser():
+def get_parser(param_default):
     # Initialize parser
-    param_default = Param()
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description("Separate b=0 and DW images from diffusion dataset.")
@@ -333,33 +361,4 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-    # call main function
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
-    fname_data = arguments['-i']
-    fname_bvecs = arguments['-bvec']
-
-    fname_bvals = ''
-    path_out = ''
-    average = param.average
-    verbose = param.verbose
-    remove_tmp_files = param.remove_tmp_files
-
-    if '-bval' in arguments:
-        fname_bvals = arguments['-bval']
-    if '-bvalmin' in arguments:
-        param.bval_min = arguments['-bvalmin']
-    if '-a' in arguments:
-        average = arguments['-a']
-    if '-ofolder' in arguments:
-        path_out = arguments['-ofolder']
-    if '-v' in arguments:
-        verbose = int(arguments['-v'])
-    if '-r' in arguments:
-        remove_tmp_files = int(arguments['-r'])
-
-    main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files)
+    main()

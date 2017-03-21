@@ -13,12 +13,14 @@
 #########################################################################################
 
 import sys
+from os import rmdir
+
 import numpy as np
-from msct_parser import Parser
-from msct_image import Image
-from sct_image import get_orientation, orientation
+import msct_image
+import msct_parser
+import sct_extract_metric
+import sct_image
 import sct_utils as sct
-from os import rmdir, chdir
 import shutil
 
 
@@ -27,8 +29,8 @@ import shutil
 def get_parser():
 
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Compute SNR in a given ROI using methods described in [Dietrich et al., Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils, parallel imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].')
+    parser = msct_parser.Parser(__file__)
+    parser.usage.set_description('Compute SNR in a given ROI according to different methods presented in Dietrich et al., Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils, parallel imaging, and reconstruction filters (2007).')
     parser.add_option(name="-i",
                       type_value='image_nifti',
                       description="4D data to compute the SNR on (along the 4th dimension).",
@@ -80,14 +82,19 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
 
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
     # initialization
     fname_mask = ''
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
     fname_data = arguments['-i']
     fname_mask = arguments['-m']
     vert_label_fname = arguments["-vertfile"]
@@ -98,8 +105,8 @@ def main():
     verbose = int(arguments['-v'])
 
     # Check if data are in RPI
-    input_im = Image(fname_data)
-    input_orient = get_orientation(input_im)
+    input_im = msct_image.Image(fname_data)
+    input_orient = sct_image.get_orientation(input_im)
 
     # If orientation is not RPI, change to RPI
     if input_orient != 'RPI':
@@ -107,16 +114,16 @@ def main():
         path_tmp = sct.tmp_create()
         # change orientation and load data
         sct.printv('\nChange input image orientation and load it...', verbose)
-        input_im_rpi = orientation(input_im, ori='RPI', set=True, fname_out=path_tmp+'input_RPI.nii')
+        input_im_rpi = sct_image.orientation(input_im, 'RPI', fname_out=path_tmp+'input_RPI.nii')
         input_data = input_im_rpi.data
         # Do the same for the mask
         sct.printv('\nChange mask orientation and load it...', verbose)
-        mask_im_rpi = orientation(Image(fname_mask), ori='RPI', set=True, fname_out=path_tmp+'mask_RPI.nii')
+        mask_im_rpi = sct_image.orientation(msct_image.Image(fname_mask), 'RPI', fname_out=path_tmp+'mask_RPI.nii')
         mask_data = mask_im_rpi.data
         # Do the same for vertebral labeling if present
         if vert_levels != 'None':
             sct.printv('\nChange vertebral labeling file orientation and load it...', verbose)
-            vert_label_im_rpi = orientation(Image(vert_label_fname), ori='RPI', set=True, fname_out=path_tmp+'vert_labeling_RPI.nii')
+            vert_label_im_rpi = sct_image.orientation(msct_image.Image(vert_label_fname), 'RPI', fname_out=path_tmp+'vert_labeling_RPI.nii')
             vert_labeling_data = vert_label_im_rpi.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
@@ -125,15 +132,15 @@ def main():
         # Load data
         sct.printv('\nLoad data...', verbose)
         input_data = input_im.data
-        mask_data = Image(fname_mask).data
+        mask_data = msct_image.Image(fname_mask).data
         if vert_levels != 'None':
-            vert_labeling_data = Image(vert_label_fname).data
+            vert_labeling_data = msct_image.Image(vert_label_fname).data
     sct.printv('\tDone.', verbose)
 
     # Get slices corresponding to vertebral levels
     if vert_levels != 'None':
-        from sct_extract_metric import get_slices_matching_with_vertebral_levels
-        slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(mask_data, vert_levels, vert_labeling_data, verbose)
+        slices_of_interest, actual_vert_levels, warning_vert_levels = \
+            sct_extract_metric.get_slices_matching_with_vertebral_levels(mask_data, vert_levels, vert_labeling_data, verbose)
 
     # Remove slices that were not selected
     if slices_of_interest == 'None':

@@ -11,17 +11,21 @@
 #########################################################################################
 
 import sys
-from msct_parser import Parser
-from sct_utils import extract_fname
+
 from dipy.data.fetcher import read_bvals_bvecs
+
+import msct_parser
+import sct_utils as sct
 
 # PARSER
 # ==========================================================================================
 def get_parser():
 
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Concatenate bvec files in time. You can either use bvecs in lines or columns.\nN.B.: Return bvecs in lines. If you need it in columns, please use sct_dmri_transpose_bvecs afterwards.')
+    parser = msct_parser.Parser(__file__)
+    parser.usage.set_description('Concatenate bvec files in time. You can either use bvecs in lines or columns.\nN.B.: '
+                                 'Return bvecs in lines. If you need it in columns, please use '
+                                 'sct_dmri_transpose_bvecs afterwards.')
     parser.add_option(name="-i",
                       type_value=[[','], 'file'],
                       description="List of the bvec files to concatenate.",
@@ -47,7 +51,7 @@ def main():
     if "-o" in arguments:
         fname_out = arguments["-o"]
     else:
-        path_in, file_in, ext_in = extract_fname(fname_bvecs_list[0])
+        path_in, file_in, ext_in = sct.extract_fname(fname_bvecs_list[0])
         fname_out = path_in+'bvecs_concat'+ext_in
 
     # # Open bvec files and collect values

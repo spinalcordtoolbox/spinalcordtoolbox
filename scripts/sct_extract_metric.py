@@ -18,15 +18,14 @@
 # Import common Python libraries
 import os
 import sys
-import commands
 from glob import glob
 import time
-import nibabel as nib
+
 import numpy as np
+
+import msct_image
 import sct_utils as sct
-from sct_image import get_orientation_3d, set_orientation
-from msct_image import Image
-from msct_parser import Parser
+import msct_parser
 
 # get path of the script and the toolbox
 path_script = os.path.dirname(__file__)
@@ -36,7 +35,7 @@ path_sct = os.path.dirname(path_script)
 ALMOST_ZERO = 0.000001
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.method = 'wath'
         self.path_label = path_sct+'/data/PAM50/atlas/'
@@ -51,11 +50,8 @@ class Param:
                           '10'] # STD of the assumed gaussian-distributed noise
 
 
-def get_parser():
-
-    param_default = Param()
-
-    parser = Parser(__file__)
+def get_parser(param_default=None):
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or a folder generated with 'sct_warp_template' and containing multiple label files and a label description file (info_label.txt). The labels should be in the same space coordinates as the input image.""")
     # Mandatory arguments
     parser.add_option(name='-i',
@@ -206,8 +202,67 @@ To compute average MTR in a region defined by a single label file (could be bina
     return parser
 
 
-def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight):
-    """Main."""
+#=======================================================================================================================
+# main
+#=======================================================================================================================
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
+
+    param_default = Param()
+    parser = get_parser(param_default=param_default)
+    arguments = parser.parse(args)
+
+
+    # mandatory arguments
+    fname_data = arguments['-i']
+    path_label = sct.slash_at_the_end(arguments['-f'], 1)
+    method = arguments['-method']
+    fname_output = arguments['-o']
+
+    # optional arguments
+    overwrite = 0
+    if '-l' in arguments:
+        labels_user = arguments['-l']
+    else:
+        labels_user = ''
+    if '-param' in arguments:
+        adv_param_user = arguments['-param']
+    else:
+        adv_param_user = ''
+    if '-z' in arguments:
+        slices_of_interest = arguments['-z']
+    else:
+        slices_of_interest = ''
+    if '-vert' in arguments:
+        vertebral_levels = arguments['-vert']
+    else:
+        vertebral_levels = ''
+    if '-overwrite' in arguments:
+        overwrite = arguments['-overwrite']
+    fname_normalizing_label = ''
+    if '-norm-file' in arguments:
+        fname_normalizing_label = arguments['-norm-file']
+    normalization_method = ''
+    if '-norm-method' in arguments:
+        normalization_method = arguments['-norm-method']
+    if '-fix-label' in arguments:
+        label_to_fix = arguments['-fix-label']
+    else:
+        label_to_fix = ''
+    if '-output-map' in arguments:
+        fname_output_metric_map = arguments['-output-map']
+    else:
+        fname_output_metric_map = ''
+    if '-mask-weighted' in arguments:
+        fname_mask_weight = arguments['-mask-weighted']
+    else:
+        fname_mask_weight = ''
+
 
     # Initialization
     fname_vertebral_labeling = ''
@@ -252,7 +307,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
                 fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
 
     # Check input parameters
-    check_method(method, fname_normalizing_label, normalization_method)
+    check_method(method, fname_normalizing_label, normalization_method, parser)
 
     # parse argument for param
     if not adv_param_user == '':
@@ -275,7 +330,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     if not single_label:
         indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
         # check syntax of labels asked by user
-        labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0])
+        labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0], parser)
     else:
         indiv_labels_ids = [0]
         labels_id_user = [0]
@@ -292,7 +347,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     # Load data
     # Check if the orientation of the data is RPI
     sct.printv('\nLoad metric image...', verbose)
-    input_im = Image(fname_data)
+    input_im = msct_image.Image(fname_data)
     orientation_data = input_im.orientation
 
     if orientation_data != 'RPI':
@@ -304,39 +359,39 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         sct.printv('\nChange labels orientation into RPI and load them...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(nb_labels):
-            im_label = Image(path_label+indiv_labels_files[i_label])
+            im_label = msct_image.Image(path_label+indiv_labels_files[i_label])
             im_label.change_orientation(orientation='RPI')
             labels[i_label] = im_label.data
         # if the "normalization" option is wanted,
         if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-            im_normalizing_label = Image(fname_normalizing_label)
+            im_normalizing_label = msct_image.Image(fname_normalizing_label)
             im_normalizing_label.change_orientation(orientation='RPI')
             normalizing_label[0] = im_normalizing_label.data
         # if vertebral levels were selected,
         if vertebral_levels:
-            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling = msct_image.Image(fname_vertebral_labeling)
             im_vertebral_labeling.change_orientation(orientation='RPI')
             data_vertebral_labeling = im_vertebral_labeling.data
         # if flag "-mask-weighted" is specified
         if fname_mask_weight:
-            im_weight = Image(fname_mask_weight)
+            im_weight = msct_image.Image(fname_mask_weight)
             im_weight.change_orientation(orientation='RPI')
     else:
         # Load labels
         sct.printv('\nLoad labels...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(0, nb_labels):
-            labels[i_label] = Image(path_label+indiv_labels_files[i_label]).data
+            labels[i_label] = msct_image.Image(path_label+indiv_labels_files[i_label]).data
         # if the "normalization" option is wanted,
         if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-            normalizing_label[0] = Image(fname_normalizing_label).data  # load the data of the normalizing label
+            normalizing_label[0] = msct_image.Image(fname_normalizing_label).data  # load the data of the normalizing label
         # if vertebral levels were selected,
         if vertebral_levels:
-            data_vertebral_labeling = Image(fname_vertebral_labeling).data
+            data_vertebral_labeling = msct_image.Image(fname_vertebral_labeling).data
         if fname_mask_weight:
-            im_weight = Image(fname_mask_weight)
+            im_weight = msct_image.Image(fname_mask_weight)
     data = input_im.data
     sct.printv('  OK!', verbose)
 
@@ -380,7 +435,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # Extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
     # individual labels
-    indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = extract_metric(method, data, labels, indiv_labels_ids, clusters_all_labels, adv_param, normalizing_label, normalization_method, im_weight=im_weight)
+    indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = extract_metric(method, data, labels, indiv_labels_ids, clusters_all_labels, adv_param, normalizing_label, normalization_method, im_weight=im_weight,param_default=param_default)
     # combined labels
     combined_labels_value = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
     combined_labels_std = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
@@ -428,7 +483,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         data_metric_map = generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_labels_value, slices_list, label_to_fix, label_to_fix_fract_vol)
 
 
-def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', adv_param='', normalizing_label=[], normalization_method='', im_weight='', combined_labels_id_group='', verbose=0):
+def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', adv_param='', normalizing_label=[], normalization_method='', im_weight='', combined_labels_id_group='', verbose=0, param_default=None, parser=None):
     """Extract metric in the labels specified by the file info_label.txt in the atlas folder."""
 
     # Initialization to default values
@@ -437,7 +492,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
     nb_labels_total = len(indiv_labels_ids)
 
     # check consistency of label input parameter (* LOI=Labels of Interest)
-    list_ids_LOI = check_labels(indiv_labels_ids, combined_labels_id_group)  # If 'labels_of_interest' is empty, then label_id_user' contains the index of all labels in the file info_label.txt
+    list_ids_LOI = check_labels(indiv_labels_ids, combined_labels_id_group, parser)  # If 'labels_of_interest' is empty, then label_id_user' contains the index of all labels in the file info_label.txt
 
     if method == 'map':
         # get clustered labels
@@ -520,7 +575,6 @@ def read_label_file(path_info_label, file_info_label):
         # info_label_title = header_lines[0].split('-')[0].strip()
         # if '# White matter atlas' not in info_label_title:
         #     sct.printv("ERROR: Please provide the White matter atlas. According to the file "+fname_label+", you provided the: "+info_label_title, type='error')
-
         # remove header lines (every line starting with "#")
         section = ''
         for line in lines:
@@ -916,9 +970,10 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
     sct.printv('\tDone.')
 
-
-def check_method(method, fname_normalizing_label, normalization_method):
-    """Check the consistency of the methods asked by the user."""
+#=======================================================================================================================
+# Check the consistency of the methods asked by the user
+#=======================================================================================================================
+def check_method(method, fname_normalizing_label, normalization_method, parser):
 
     # THIS BELOW IS ALREADY CHECKED BY THE PARSER SO I COMMENTED IT. jcohenadad 2016-10-23
     # if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'map'):
@@ -931,7 +986,7 @@ def check_method(method, fname_normalizing_label, normalization_method):
         sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:'+str(normalization_method)))
 
 
-def check_labels(indiv_labels_ids, selected_labels):
+def check_labels(indiv_labels_ids, selected_labels, parser):
     """Check the consistency of the labels asked by the user."""
 
     # TODO: allow selection of combined labels as "36, Ventral, 7:14,22:19"
@@ -1201,7 +1256,6 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_n
     return data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user, label_to_fix_name, label_to_fix_fract_vol
 
 
-
 def parse_label_ID_groups(list_ID):
     """From a list of unparsed labels string, returns a list of list enumarating the label IDs combinations as integers.
     Example: ['0:5','8,10','12'] ==> [[0,1,2,3,4,5],[8,10],[12]]"""
@@ -1224,7 +1278,6 @@ def parse_label_ID_groups(list_ID):
         list_all_label_IDs.append(group_new)
 
     return list_all_label_IDs
-
 
 
 def remove_label_from_group(list_label_groups, label_ID):
@@ -1267,53 +1320,4 @@ def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_l
 # Start program
 # =======================================================================================================================
 if __name__ == "__main__":
-
-    param_default = Param()
-
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
-    overwrite = 0
-    fname_data = arguments['-i']
-    path_label = arguments['-f']
-    method = arguments['-method']
-    fname_output = arguments['-o']
-    if '-l' in arguments:
-        labels_user = arguments['-l']
-    else:
-        labels_user = ''
-    if '-param' in arguments:
-        adv_param_user = arguments['-param']
-    else:
-        adv_param_user = ''
-    if '-z' in arguments:
-        slices_of_interest = arguments['-z']
-    else:
-        slices_of_interest = ''
-    if '-vert' in arguments:
-        vertebral_levels = arguments['-vert']
-    else:
-        vertebral_levels = ''
-    if '-overwrite' in arguments:
-        overwrite = arguments['-overwrite']
-    fname_normalizing_label = ''
-    if '-norm-file' in arguments:
-        fname_normalizing_label = arguments['-norm-file']
-    normalization_method = ''
-    if '-norm-method' in arguments:
-        normalization_method = arguments['-norm-method']
-    if '-fix-label' in arguments:
-        label_to_fix = arguments['-fix-label']
-    else:
-        label_to_fix = ''
-    if '-output-map' in arguments:
-        fname_output_metric_map = arguments['-output-map']
-    else:
-        fname_output_metric_map = ''
-    if '-mask-weighted' in arguments:
-        fname_mask_weight = arguments['-mask-weighted']
-    else:
-        fname_mask_weight = ''
-
-    # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)
+    main()
