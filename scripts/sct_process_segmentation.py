@@ -15,25 +15,31 @@
 #########################################################################################
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
-import sys
 import os
 import shutil
-from random import randint
+import sys
 import time
+from random import randint
+
 import numpy as np
+import pandas
 import scipy
-import sct_utils as sct
-from msct_nurbs import NURBS
-from sct_image import set_orientation
-from sct_straighten_spinalcord import smooth_centerline
-from msct_image import Image
-from msct_parser import Parser
+
+import msct_image
+import msct_nurbs
+import msct_parser
 import msct_shape
-import pandas as pd
-from msct_types import Centerline
+import msct_smooth
+import sct_image
+import sct_label_vertebrae
+import sct_straighten_spinalcord
+import sct_utils as sct
+import msct_types
+import sct_image
+import sct_straighten_spinalcord
 
 
-class Param:
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
@@ -53,7 +59,7 @@ def get_parser():
     :return: Returns the parser with the command line documentation contained in it.
     """
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description("""This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
     parser.add_option(name='-i',
                       type_value='image_nifti',
@@ -175,8 +181,15 @@ def get_parser():
     return parser
 
 
-def main(args):
+def main(args=None):
 
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
+
+    param = Param()
     parser = get_parser()
     arguments = parser.parse(args)
 
@@ -322,9 +335,9 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
                 averaged_shape[property_name].append(np.mean([item for i, item in enumerate(shape_properties[property_name]) if shape_properties[sorting_mode][i] == label]))
 
         # save spinal cord shape properties
-        df_shape_properties = pd.DataFrame(averaged_shape, index=sorting_values)
+        df_shape_properties = pandas.DataFrame(averaged_shape, index=sorting_values)
         df_shape_properties.sort_index(inplace=True)
-        pd.set_option('expand_frame_repr', True)
+        pandas.set_option('expand_frame_repr', True)
         df_shape_properties.to_csv(fname_output_csv, sep=',')
 
         if verbose == 1:
@@ -342,8 +355,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S") + '_'+str(randint(1, 1000000)), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose)
 
     # copy files into tmp folder
     sct.printv('cp '+fname_segmentation+' '+path_tmp)
@@ -361,21 +373,21 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     os.chdir(path_tmp)
 
     # Change orientation of the input centerline into RPI
-    sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
-    im_seg = Image(file_data+ext_data)
+    sct.printv('\nOrient centerline to RPI orientation...', verbose)
+    im_seg = msct_image.Image(file_data+ext_data)
     fname_segmentation_orient = 'segmentation_rpi' + ext_data
-    im_seg_orient = set_orientation(im_seg, 'RPI')
+    im_seg_orient = sct_image.set_orientation(im_seg, 'RPI')
     im_seg_orient.setFileName(fname_segmentation_orient)
     im_seg_orient.save()
 
     # Get dimension
-    sct.printv('\nGet dimensions...', param.verbose)
+    sct.printv('\nGet dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_seg_orient.dim
-    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), param.verbose)
-    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
+    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # smooth segmentation/centerline
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline(
         fname_segmentation_orient, nurbs_pts_number=3000, phys_coordinates=False, all_slices=True, algo_fitting='nurbs', verbose=verbose)
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
@@ -392,7 +404,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
             sct.printv('Selected vertebral levels... ' + vert_levels)
 
             # convert the vertebral labeling file to RPI orientation
-            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling = msct_image.Image(fname_vertebral_labeling)
             im_vertebral_labeling.change_orientation(orientation='RPI')
 
             # get the slices corresponding to the vertebral levels
@@ -460,8 +472,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S") + '_'+str(randint(1, 1000000)), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying data to tmp folder...', verbose)
@@ -472,17 +483,11 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    # fname_segmentation_orient = 'segmentation_RPI.nii.gz'
-    # BELOW DOES NOT WORK (JULIEN, 2015-10-17)
-    # im_seg = Image(file_data+ext_data)
-    # set_orientation(im_seg, 'RPI')
-    # im_seg.setFileName(fname_segmentation_orient)
-    # im_seg.save()
     sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz', verbose)
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
-    im_seg = Image('segmentation_RPI.nii.gz')
+    im_seg = msct_image.Image('segmentation_RPI.nii.gz')
     data = im_seg.data
 
     # Get size of data
@@ -490,18 +495,6 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
-
-    # # Get dimension
-    # sct.printv('\nGet dimensions...', verbose)
-    # nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-    #
-    # # Extract orientation of the input segmentation
-    # orientation = get_orientation(im_seg)
-    # sct.printv('\nOrientation of segmentation image: ' + orientation, verbose)
-    #
-    # sct.printv('\nOpen segmentation volume...', verbose)
-    # data = im_seg.data
-    # hdr = im_seg.hdr
 
     # Extract min and max index in Z direction
     X, Y, Z = (data>0).nonzero()
@@ -520,21 +513,35 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # extract centerline and smooth it
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
-        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv \
+            = sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting,
+                                                          type_window=type_window, window_length=window_length,
+                                                          nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose,
+                                                          all_slices=False)
+        centerline = msct_types.Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,
+                                y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image
-        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, \
+        y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
 
         # compute z_centerline in image coordinates for usage in vertebrae mapping
-        voxel_coordinates = im_seg.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
+        voxel_coordinates = im_seg.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i],
+                                                      z_centerline_rescorr[i]]
+                                                     for i in range(len(z_centerline_rescorr))])
         x_centerline_voxel = [coord[0] for coord in voxel_coordinates]
         y_centerline_voxel = [coord[1] for coord in voxel_coordinates]
         z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
 
     else:
         # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-        x_centerline_voxel, y_centerline_voxel, z_centerline_voxel, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+        x_centerline_voxel, y_centerline_voxel, z_centerline_voxel, x_centerline_deriv, y_centerline_deriv, \
+        z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz',
+                                                                         algo_fitting=algo_fitting,
+                                                                         type_window=type_window,
+                                                                         window_length=window_length,
+                                                                         nurbs_pts_number=3000, phys_coordinates=False,
+                                                                         verbose=verbose, all_slices=True)
 
     if verbose == 2:
         import matplotlib.pyplot as plt
@@ -577,7 +584,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     sct.printv('\nSet to original orientation...', verbose)
     # get orientation of the input data
-    im_seg_original = Image('segmentation.nii.gz')
+    im_seg_original = msct_image.Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
     sct.run('sct_image -i centerline_RPI.nii.gz -setorient '+orientation+' -o centerline.nii.gz')
 
@@ -600,7 +607,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf '+path_tmp, verbose)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     return file_data+'_centerline.nii.gz'
 
@@ -610,7 +617,6 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True, use_phys_coord=True):
 
     from math import degrees
-    import pandas as pd
     import pickle
 
     # Extract path, file and extension
@@ -619,8 +625,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S") + '_'+str(randint(1, 1000000)), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -633,7 +638,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
-    im_seg = Image('segmentation_RPI.nii.gz')
+    im_seg = msct_image.Image('segmentation_RPI.nii.gz')
     data_seg = im_seg.data
     # hdr_seg = im_seg.hdr
 
@@ -648,8 +653,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
-        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        centerline = msct_types.Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image
         x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
@@ -662,7 +667,11 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     else:
         # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv =\
+            sct_straighten_spinalcord.smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting,
+                                                        type_window=type_window, window_length=window_length,
+                                                        nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose,
+                                                        all_slices=True)
 
         # correct centerline fitted coordinates according to the data resolution
         x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
@@ -703,9 +712,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     sct.printv('\nSmooth CSA across slices...', verbose)
     if smoothing_param:
-        from msct_smooth import smoothing_window
         sct.printv('.. Hanning window: '+str(smoothing_param)+' mm', verbose)
-        csa_smooth = smoothing_window(csa, window_len=smoothing_param/pz, window='hanning', verbose=0)
+        csa_smooth = msct_smooth.smoothing_window(csa, window_len=smoothing_param/pz, window='hanning', verbose=0)
         # display figure
         if verbose == 2:
             import matplotlib.pyplot as plt
@@ -770,7 +778,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     im_seg.save()
 
     # get orientation of the input data
-    im_seg_original = Image('segmentation.nii.gz')
+    im_seg_original = msct_image.Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
     sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o csa_volume_in_initial_orientation.nii.gz')
     sct.run('sct_image -i angle_volume_RPI.nii.gz -setorient '+orientation+' -o angle_volume_in_initial_orientation.nii.gz')
@@ -797,9 +805,9 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     # Create output pickle file
     # data frame format
-    results_df = pd.DataFrame({'Slice (z)': range(min_z_index, max_z_index+1),
-                               'CSA (mm^2)': csa,
-                               'Angle with respect to the I-S direction (degrees)': angles})
+    results_df = pandas.DataFrame({'Slice (z)': range(min_z_index, max_z_index+1),
+                                   'CSA (mm^2)': csa,
+                                   'Angle with respect to the I-S direction (degrees)': angles})
     # # dictionary format
     # results_df = {'Slice (z)': range(min_z_index, max_z_index+1),
     #                            'CSA (mm^2)': csa,
@@ -824,7 +832,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
             sct.check_file_exist(fname_vertebral_labeling)
 
             # convert the vertebral labeling file to RPI orientation
-            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling = msct_image.Image(fname_vertebral_labeling)
             im_vertebral_labeling.change_orientation(orientation='RPI')
 
             # get the slices corresponding to the vertebral levels
@@ -890,14 +898,14 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp, error_exit='warning')
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
     # Sum up the output file names
-    sct.printv('\nOutput a nifti file of CSA values along the segmentation: '+output_folder+'csa_image.nii.gz', param.verbose, 'info')
-    sct.printv('Output result text file of CSA per slice: '+output_folder+'csa_per_slice.txt', param.verbose, 'info')
+    sct.printv('\nOutput a nifti file of CSA values along the segmentation: '+output_folder+'csa_image.nii.gz', verbose, 'info')
+    sct.printv('Output result text file of CSA per slice: '+output_folder+'csa_per_slice.txt', verbose, 'info')
     if slices or vert_levels:
-        sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t'+output_folder+'csa_mean.txt\n\t\t'+output_folder+'csa_mean.xls\n\t\t'+output_folder+'csa_mean.pickle', param.verbose, 'info')
-        sct.printv('Output result files of the volume in between the selected slices: \n\t\t'+output_folder+'csa_volume.txt\n\t\t'+output_folder+'csa_volume.xls\n\t\t'+output_folder+'csa_volume.pickle', param.verbose, 'info')
+        sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t'+output_folder+'csa_mean.txt\n\t\t'+output_folder+'csa_mean.xls\n\t\t'+output_folder+'csa_mean.pickle', verbose, 'info')
+        sct.printv('Output result files of the volume in between the selected slices: \n\t\t'+output_folder+'csa_volume.txt\n\t\t'+output_folder+'csa_volume.xls\n\t\t'+output_folder+'csa_volume.pickle', verbose, 'info')
 
 def label_vert(fname_seg, fname_label, verbose=1):
     """
@@ -908,7 +916,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
     :return:
     """
     # Open labels
-    im_disc = Image(fname_label)
+    im_disc = msct_image.Image(fname_label)
     # retrieve all labels
     coord_label = im_disc.getNonZeroCoordinates()
     # compute list_disc_z and list_disc_value
@@ -918,8 +926,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
         list_disc_z.insert(0, coord_label[i].z)
         list_disc_value.insert(0, coord_label[i].value)
     # label segmentation
-    from sct_label_vertebrae import label_segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    sct_label_vertebrae.label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
     # Generate output files
     sct.printv('--> File created: '+sct.add_suffix(fname_seg, '_labeled.nii.gz'), verbose)
 
@@ -1144,7 +1151,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
 def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     print '\nFitting centerline using B-spline approximation...'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
-    nurbs = NURBS(3, 3000, points)
+    nurbs = msct_nurbs.NURBS(3, 3000, points)
     # BE very careful with the spline order that you choose :
     # if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ).
     # For the third argument (number of points), give at least len(z_centerline)+500 or higher
@@ -1204,7 +1211,8 @@ def ellipse_dim(a):
 #=======================================================================================================================
 def edge_detection(f):
 
-    img = Image.open(f) #grayscale
+    #sigma = 1.0
+    img = msct_image.Image.open(f) #grayscale
     imgdata = np.array(img, dtype = float)
     G = imgdata
     #G = ndi.filters.gaussian_filter(imgdata, sigma)
@@ -1242,7 +1250,5 @@ def edge_detection(f):
 
 if __name__ == "__main__":
     # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
-    main(sys.argv[1:])
+    main()

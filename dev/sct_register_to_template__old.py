@@ -229,7 +229,7 @@ def main():
     # If mask exist, put it in the space of the source for more robust registration
     if fname_anat_mask != '':
         print '\nReslice: mask --> source...'
-        cmdisct_c3d'c3d '+fname_src+' '+fname_anat_mask+' -reslice-identity tmp.mask2src.nii.gz'
+        # cmdisct_c3d'c3d '+fname_src+' '+fname_anat_mask+' -reslice-identity tmp.mask2src.nii.gz'
         print('>> '+cmd)
         status, output = commands.getstatusoutput(cmd)
         if debugging:
@@ -237,7 +237,7 @@ def main():
 
     # Pad the source image (because ants doesn't deform the extremities)
     print '\nPad source image and mask...'
-   isct_c3dd = 'c3d '+fname_src+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o tmp.src_padded.nii.gz'
+    isct_c3dd = 'c3d '+fname_src+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o tmp.src_padded.nii.gz'
     print(">> "+cmd)
     status, output = commands.getstatusoutput(cmd)
     cmd = 'c3d tmp.mask2src.nii.gz -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o tmp.mask2src_padded.nii.gz'

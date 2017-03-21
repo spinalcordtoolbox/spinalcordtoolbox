@@ -14,24 +14,31 @@
 # TODO: also enable to concatenate reversed transfo
 
 
-import sys
 import os
-import getopt
+import sys
 from commands import getstatusoutput
+
 import sct_utils as sct
-from msct_parser import Parser
+import msct_parser
+
 
 # DEFAULT PARAMETERS
-class Param:
-    ## The constructor
+class Param(object):
     def __init__(self):
         self.debug = 0
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
-# main
-#=======================================================================================================================
-def main():
+def main(args=None):
+
+    # initialize parameters
+    param = Param()
+
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        script_name = os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Initialization
     fname_warp_list = ''  # list of warping fields
@@ -43,13 +50,13 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz,-'+path_sct_data+'/mt/warp_template2mt.nii.gz'
+        fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz,-' + path_sct_data + '/mt/warp_template2mt.nii.gz'
         fname_dest = path_sct_data+'/mt/mtr.nii.gz'
         verbose = 1
     else:
         # Check input parameters
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
 
         fname_dest = arguments['-d']
         fname_warp_list = arguments['-w']
@@ -57,7 +64,6 @@ def main():
         if '-o' in arguments:
             fname_warp_final = arguments['-o']
         verbose = int(arguments['-v'])
-
 
     # Parse list of warping fields
     sct.printv('\nParse list of transformations...', verbose)
@@ -84,12 +90,12 @@ def main():
         path_out, file_out, ext_out = sct.extract_fname(param.fname_warp_final)
     else:
         path_out, file_out, ext_out = sct.extract_fname(fname_warp_final)
-
+    print 33*'*', path_out
     # Concatenate warping fields
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
     fname_warp_list_invert.reverse()
-    cmd = 'isct_ComposeMultiTransform 3 warp_final' + ext_out + ' -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
+    cmd = 'isct_ComposeMultiTransform 3 warp_final' + ext_out + ' -R ' + fname_dest + ' ' + ' '.join(fname_warp_list_invert)
     sct.printv('>> '+cmd, verbose)
     status, output = getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
 
@@ -99,15 +105,13 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final' + ext_out, path_out+file_out+ext_out)
+    sct.generate_output_file('warp_final' + ext_out,
+                             os.path.join(path_out, file_out + ext_out))
 
-    print ''
 
-
-# ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.')
     parser.add_option(name="-d",
                       type_value="file",
@@ -130,15 +134,8 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value='1')
-
     return parser
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    # call main function
     main()

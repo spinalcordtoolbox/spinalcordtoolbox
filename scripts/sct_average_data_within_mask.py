@@ -17,21 +17,28 @@
 # TODO: do a zmin zmax
 
 import sys
-import getopt
-import os
-from numpy import asarray, sqrt
+
+import msct_parser
 import nibabel
-from sct_utils import printv
-from msct_parser import Parser
+from numpy import asarray, sqrt
+
+import sct_utils as sct
 
 
 # PARAMETERS
-debugging           = 0 # automatic file names for debugging
+debugging = 0  # automatic file names for debugging
 
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+    else:
+        script_name =os.path.splitext(os.path.basename(__file__))[0]
+        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Initialization
     fname_src = ''
@@ -48,7 +55,7 @@ def main():
         zmask = '445'
     else:
         parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+        arguments = parser.parse(args)
 
         fname_src = arguments['-i']
         fname_mask = arguments['-m']
@@ -129,7 +136,7 @@ def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=1):
     weighted_std = sqrt(sum(weight*(data-weighted_average)**2) / ( (n/(n-1)) * sum(weight) ))
 
     # print result
-    printv('\n'+str(weighted_average)+' +/- '+str(weighted_std), verbose)
+    sct.printv('\n'+str(weighted_average)+' +/- '+str(weighted_std), verbose)
 
     return weighted_average, weighted_std
 
@@ -138,7 +145,7 @@ def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=1):
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
     parser.usage.set_description('Average data within mask. Compute a weighted average if mask is non-binary (values distributed between 0 and 1).')
     parser.add_option(name="-i",
                       type_value="file",

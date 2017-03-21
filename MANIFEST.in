@@ -1,0 +1,20 @@
+include *.md
+include *.sh
+include *.txt
+include LICENSE
+include install_sct
+recursive-include bin isct_*
+recursive-include dev *.py
+recursive-include dev *.pyx
+recursive-include dev *.rtf
+recursive-include dev *.sh
+recursive-include dev *.txt
+recursive-include dev *.xml
+recursive-include install *.py
+recursive-include install *.sh
+recursive-include install *.txt
+recursive-include scripts *.py
+recursive-include scripts *.sh
+recursive-include testing *.py
+recursive-include testing *.sh
+recursive-include testing *.txt
