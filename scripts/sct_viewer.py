@@ -873,7 +873,7 @@ class ClickViewer(Viewer):
 
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
-            if (len(self.list_points) > 0   ):
+            if (len(self.list_points) > 0   or self.current_slice>0 ):
                 self.bool_skip_all_to_end = False
                 if not self.bool_enable_custom_points:
                     self.redo_auto()
