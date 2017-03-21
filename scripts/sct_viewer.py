@@ -715,7 +715,7 @@ class ClickViewer(Viewer):
         elif(key=='way_custom_next_point'):
             title_obj = self.windows[0].axes.set_title(
                 'You have made '+str(len(self.list_points))+ ' points. \n'
-                                                             'You can Save & Quit at any time')
+                                                             'You can save and quit at any time. \n')
             plt.setp(title_obj, color='k')
 
         elif(key=='way_custom_start'):
