@@ -844,7 +844,7 @@ class ClickViewer(Viewer):
                     window.update_slice(point, data_update=False)
                 else:
                     window.update_slice(point, data_update=True)
-                    self.draw_points(window, self.current_point.y)
+                    self.draw_points(window, self.current_point.x)
         return
 
     def on_motion(self, event, plot=None):
