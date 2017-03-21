@@ -21,7 +21,7 @@ import numpy as np
 from msct_parser import Parser
 import sct_utils as sct
 import sct_apply_transfo
-import sct_image
+import msct_image
 import sct_maths
 
 
@@ -114,7 +114,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     path_tmp = sct.tmp_create()
 
     # get dimensions of destination file
-    nii_dest = sct_image.Image(fname_dest)
+    nii_dest = msct_image.Image(fname_dest)
 
     # initialize variables
     data = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
@@ -149,8 +149,8 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-o', 'src_'+str(i_file)+'_template_partialVolume.nii.gz'])
 
         # open data
-        data[:, :, :, i_file] = sct_image.Image('src_'+str(i_file)+'_template.nii.gz').data
-        partial_volume[:, :, :, i_file] = sct_image.Image('src_'+str(i_file)+'_template_partialVolume.nii.gz').data
+        data[:, :, :, i_file] = msct_image.Image('src_'+str(i_file)+'_template.nii.gz').data
+        partial_volume[:, :, :, i_file] = msct_image.Image('src_'+str(i_file)+'_template_partialVolume.nii.gz').data
         i_file += 1
 
     # merge files using partial volume information (and convert nan resulting from division by zero to zeros)
