@@ -29,7 +29,7 @@ import sct_maths
 class Param:
     def __init__(self):
         self.fname_out = 'merged_images.nii.gz'
-        self.interp = 'nn'
+        self.interp = 'linear'
         self.rm_tmp = True
         self.verbose = 1
         self.almost_zero = 0.00000001
