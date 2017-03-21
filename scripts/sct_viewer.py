@@ -748,7 +748,7 @@ class ClickViewer(Viewer):
             title_obj = self.windows[0].axes.set_title('You can save your work and close this window. \n')
             plt.setp(title_obj, color='g')
 
-        elif(key=='warning_redo_auto'):
+        elif(key=='warning_redo'):
             title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
             plt.setp(title_obj, color='r')
 
@@ -820,7 +820,7 @@ class ClickViewer(Viewer):
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
             x_data, y_data = [], []
-            for pt in self.list_points:
+            for pt in self.list_points: #?!
                 if pt.x == current_slice:
                     x_data.append(pt.z + self.offset[2])
                     y_data.append(pt.y + self.offset[1])
@@ -888,7 +888,19 @@ class ClickViewer(Viewer):
             if not self.bool_enable_custom_points:
                 self.redo_last_auto_point()
             else:
-                print('option Redo for custom points : not ready yet')
+                self.redo_last_custom_point()
+
+    def redo_last_custom_point(self):
+        #print('option Redo for custom points : not ready yet')
+        if (len(self.list_points) > 0):
+            self.bool_skip_all_to_end = False
+            if(len(self.list_points)>1):
+                self.list_points=self.list_points[0:len(self.list_points)-1]
+            else:
+                self.list_points=[]
+            self.update_title_text('way_custom_next_point')
+        else:
+            self.update_title_text('warning_redo')
 
     def redo_last_auto_point(self):
         if(self.current_slice>0):
@@ -896,12 +908,14 @@ class ClickViewer(Viewer):
             self.current_slice += -1
             self.windows[0].update_slice(self.list_slices[self.current_slice])
             if(len(self.list_points)>1):
-                self.list_points=[self.list_points[0:len(self.list_points)-2]]
+                print(self.list_points)
+                self.list_points=self.list_points[0:len(self.list_points)-1]
+                print(self.list_points)
             else:
                 self.list_points=[]
             self.update_title_text('way_automatic_next_point')
         else:
-            self.update_title_text('warning_redo_auto')
+            self.update_title_text('warning_redo')
 
     def press_skip(self, event):
         if event.inaxes == self.dic_axis_buttons['skip']:
