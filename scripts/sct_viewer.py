@@ -736,7 +736,8 @@ class ClickViewer(Viewer):
                                                        'Please select a new point on slice \n ')
 
         elif(key=='save_over'):
-            title_obj = self.windows[0].axes.set_title('Your work has been saved : you can carry on the segmentation. \n')
+            title_obj = self.windows[0].axes.set_title('Your work has been saved. \n'
+                                                       'You can carry on the segmentation. \n')
             plt.setp(title_obj, color='g')
 
         elif(key=='ask_for_leaving'):
