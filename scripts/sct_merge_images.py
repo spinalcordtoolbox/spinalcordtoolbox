@@ -15,6 +15,7 @@
 
 # Python imports
 import sys
+import os
 import shutil
 import numpy as np
 # SCT imports
@@ -181,13 +182,13 @@ def main(args=None):
     arguments = parser.parse(args)
 
     # set param arguments ad inputted by user
-    list_fname_src= arguments["-i"]
+    list_fname_src = arguments["-i"]
     fname_dest = arguments["-d"]
     list_fname_warp = arguments["-w"]
     param.fname_out = arguments["-o"]
 
-    if '-ofolder' in arguments:
-        path_results= arguments['-ofolder']
+    # if '-ofolder' in arguments:
+    #     path_results = arguments['-ofolder']
     if '-x' in arguments:
         param.interp = arguments['-x']
     if '-r' in arguments:
@@ -205,7 +206,7 @@ def main(args=None):
         sct.printv(str(e), 1, 'error')
 
     sct.printv('Done ! to view your results, type: ', param.verbose, 'normal')
-    sct.printv('fslview '+param.fname_out+' &\n', param.verbose, 'info')
+    sct.printv('fslview '+fname_dest+' '+os.path.abspath(param.fname_out)+' &\n', param.verbose, 'info')
 
 if __name__ == "__main__":
     main()
