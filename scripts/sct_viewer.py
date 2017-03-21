@@ -915,6 +915,7 @@ class ClickViewer(Viewer):
             else:
                 self.list_points=[]
             self.update_title_text('way_automatic_next_point')
+            self.draw_points(self.windows[0],self.current_point.x)
         else:
             self.update_title_text('warning_redo')
 
