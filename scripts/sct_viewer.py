@@ -519,9 +519,8 @@ class ClickViewer(Viewer):
 
         """ Create Buttons"""
         self.create_button_help()
-        self.create_button_done()
+        self.create_button_save_and_quit()
         self.create_button_redo()
-        self.create_button_save()
         self.create_button_skip()
         self.create_button_auto_manual()
 
@@ -568,7 +567,6 @@ class ClickViewer(Viewer):
 
         # compute slices to display
         self.list_slices = []
-        self.bool_already_ask_for_leaving=False
 
     def set_display_cross(self):
         if self.primary_subplot == 'ax':
@@ -583,28 +581,23 @@ class ClickViewer(Viewer):
         self.fig.canvas.mpl_connect('button_press_event', self.press_choose_mode)
 
     def create_button_redo(self):
-        ax = plt.axes([0.48, 0.90, 0.1, 0.075])
+        ax = plt.axes([0.59, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['redo']=ax
         button_help = Button(ax, 'Redo')
         self.fig.canvas.mpl_connect('button_press_event', self.press_redo)
 
     def create_button_skip(self):
-        ax = plt.axes([0.59, 0.90, 0.1, 0.075])
+        ax = plt.axes([0.70, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['skip']=ax
         button_help = Button(ax, 'Skip')
         self.fig.canvas.mpl_connect('button_press_event', self.press_skip)
 
-    def create_button_save(self):
-        ax = plt.axes([0.70, 0.90, 0.1, 0.075])
-        self.dic_axis_buttons['save']=ax
-        button_help = Button(ax, 'Save')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_save)
-
-    def create_button_done(self):
+    def create_button_save_and_quit(self):
         ax = plt.axes([0.81, 0.90, 0.1, 0.075])
-        self.dic_axis_buttons['done']=ax
-        button_help = Button(ax, 'Done')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_done)
+        self.dic_axis_buttons['save_and_quit']=ax
+        button_help = Button(ax, 'Save &\n'
+                                 'Quit')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_save_and_quit)
 
     def create_button_help(self):
         ax = plt.axes([0.81, 0.05, 0.1, 0.075])
@@ -721,7 +714,8 @@ class ClickViewer(Viewer):
 
         elif(key=='way_custom_next_point'):
             title_obj = self.windows[0].axes.set_title(
-                'You have made '+str(len(self.list_points))+ ' points. \n')
+                'You have made '+str(len(self.list_points))+ ' points. \n'
+                                                             'You can Save & Quit at any time')
             plt.setp(title_obj, color='k')
 
         elif(key=='way_custom_start'):
@@ -735,21 +729,16 @@ class ClickViewer(Viewer):
                                                        'All previous data has been erased \n '
                                                        'Please select a new point on slice \n ')
 
-        elif(key=='save_over'):
-            title_obj = self.windows[0].axes.set_title('Your work has been saved. \n'
-                                                       'You can carry on the segmentation. \n')
-            plt.setp(title_obj, color='g')
-
-        elif(key=='ask_for_leaving'):
-            title_obj = self.windows[0].axes.set_title('Please confirm : all your unsaved work will be lost. \n')
-            plt.setp(title_obj, color='r')
-
-        elif(key=='ready_to_save'):
-            title_obj = self.windows[0].axes.set_title('You can save your work and close this window. \n')
+        elif(key=='ready_to_save_and_quit'):
+            title_obj = self.windows[0].axes.set_title('You can save and quit. \n')
             plt.setp(title_obj, color='g')
 
         elif(key=='warning_redo'):
             title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
+            plt.setp(title_obj, color='r')
+
+        elif(key=='warning_skip_on_custom'):
+            title_obj = self.windows[0].axes.set_title('This option is not used in Manual Mode. \n')
             plt.setp(title_obj, color='r')
 
         self.windows[0].draw()
@@ -758,11 +747,10 @@ class ClickViewer(Viewer):
         if self.current_slice < len(self.list_slices):
             return False
         else:
-            self.update_title_text('ready_to_save')
+            self.update_title_text('ready_to_save_and_quit')
             return True
 
     def on_press_main_window(self,event,plot):
-        self.bool_already_ask_for_leaving=False
         self.bool_skip_all_to_end=True
         if not self.bool_enable_custom_points:
             target_point = self.set_not_custom_target_points(event)
@@ -885,9 +873,8 @@ class ClickViewer(Viewer):
 
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
-            if (len(self.list_points) > 0):
+            if (len(self.list_points) > 0   ):
                 self.bool_skip_all_to_end = False
-                self.bool_already_ask_for_leaving=False
                 if not self.bool_enable_custom_points:
                     self.redo_auto()
                 self.remove_last_dot()
@@ -914,30 +901,27 @@ class ClickViewer(Viewer):
 
     def press_skip(self, event):
         if event.inaxes == self.dic_axis_buttons['skip']:
-            if self.bool_skip_all_to_end:
-                self.update_title_text('ready_to_save')
+            if not self.bool_enable_custom_points:
+                if self.bool_skip_all_to_end:
+                    self.update_title_text('ready_to_save_and_quit')
+                else:
+                    self.current_slice += 1
+                    self.windows[0].update_slice(self.list_slices[self.current_slice])
             else:
-                self.current_slice += 1
-                self.windows[0].update_slice(self.list_slices[self.current_slice])
+                self.update_title_text('warning_skip_on_custom')
 
-    def press_save(self, event):
-        if event.inaxes == self.dic_axis_buttons['save']:
-            for coord in self.list_points:
-                if self.list_points_useful_notation != '':
-                    self.list_points_useful_notation += ':'
-                self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
-                    coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-            self.update_title_text('save_over')
-            self.bool_already_ask_for_leaving=True
+    def save_data(self):
+        for coord in self.list_points:
+            if self.list_points_useful_notation != '':
+                self.list_points_useful_notation += ':'
+            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
+                coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
 
-    def press_done(self, event):
-        if event.inaxes == self.dic_axis_buttons['done']:
-            if not self.bool_already_ask_for_leaving:
-                self.update_title_text('ask_for_leaving')
-                self.bool_already_ask_for_leaving=True
-            else:
-                self.closed=True
-                plt.close('all')
+    def press_save_and_quit(self, event):
+        if event.inaxes == self.dic_axis_buttons['save_and_quit']:
+            self.save_data()
+            self.closed=True
+            plt.close('all')
 
     def press_choose_mode(self,event):
         if event.inaxes == self.dic_axis_buttons['choose_mode']:
@@ -959,7 +943,6 @@ class ClickViewer(Viewer):
 
         # compute slices to display
         self.list_slices = []
-        self.bool_already_ask_for_leaving = False
 
         self.current_slice = 0
         self.number_of_slices = 0
