@@ -238,7 +238,7 @@ def main(args):
     print '.. segmentation file:             '+fname_segmentation
 
     if name_process == 'centerline':
-        fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting)
+        fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting, use_phys_coord=use_phys_coord)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
@@ -452,7 +452,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
 
 # extract_centerline
 # ==========================================================================================
-def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, use_phys_coord=True):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -518,40 +518,55 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window=type_window, window_length=window_length, algo_fitting=algo_fitting, all_slices=True, verbose=verbose)
+    if use_phys_coord:
+        # fit centerline, smooth it and return the first derivative (in physical space)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
+        # average centerline coordinates over slices of the image
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
+
+        # compute z_centerline in image coordinates for usage in vertebrae mapping
+        voxel_coordinates = im_seg.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
+        x_centerline_voxel = [coord[0] for coord in voxel_coordinates]
+        y_centerline_voxel = [coord[1] for coord in voxel_coordinates]
+        z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
+
+    else:
+        # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
+        x_centerline_voxel, y_centerline_voxel, z_centerline_voxel, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
 
     if verbose == 2:
         import matplotlib.pyplot as plt
 
-        #Creation of a vector x that takes into account the distance between the labels
-        nz_nonz = len(z_centerline)
-        x_display = [0 for i in range(x_centerline_fit.shape[0])]
-        y_display = [0 for i in range(y_centerline_fit.shape[0])]
+        # Creation of a vector x that takes into account the distance between the labels
+        nz_nonz = len(z_centerline_voxel)
+        x_display = [0 for i in range(x_centerline_voxel.shape[0])]
+        y_display = [0 for i in range(y_centerline_voxel.shape[0])]
         for i in range(0, nz_nonz, 1):
-            x_display[int(z_centerline[i]-z_centerline[0])] = x_centerline[i]
-            y_display[int(z_centerline[i]-z_centerline[0])] = y_centerline[i]
+            x_display[int(z_centerline_voxel[i]-z_centerline_voxel[0])] = x_centerline[i]
+            y_display[int(z_centerline_voxel[i]-z_centerline_voxel[0])] = y_centerline[i]
 
         plt.figure(1)
         plt.subplot(2,1,1)
-        plt.plot(z_centerline_fit, x_display, 'ro')
-        plt.plot(z_centerline_fit, x_centerline_fit)
+        plt.plot(z_centerline_voxel, x_display, 'ro')
+        plt.plot(z_centerline_voxel, x_centerline_voxel)
         plt.xlabel("Z")
         plt.ylabel("X")
         plt.title("x and x_fit coordinates")
 
         plt.subplot(2,1,2)
-        plt.plot(z_centerline_fit, y_display, 'ro')
-        plt.plot(z_centerline_fit, y_centerline_fit)
+        plt.plot(z_centerline_voxel, y_display, 'ro')
+        plt.plot(z_centerline_voxel, y_centerline_voxel)
         plt.xlabel("Z")
         plt.ylabel("Y")
         plt.title("y and y_fit coordinates")
         plt.show()
 
     # Create an image with the centerline
-    min_z_index, max_z_index = int(round(min(z_centerline_fit))), int(round(max(z_centerline_fit)))
+    min_z_index, max_z_index = int(round(min(z_centerline_voxel))), int(round(max(z_centerline_voxel)))
     for iz in range(min_z_index, max_z_index+1):
-        data[int(round(x_centerline_fit[iz-min_z_index])), int(round(y_centerline_fit[iz-min_z_index])), int(iz)] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+        data[int(round(x_centerline_voxel[iz-min_z_index])), int(round(y_centerline_voxel[iz-min_z_index])), int(iz)] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
     # Write the centerline image in RPI orientation
     # hdr.set_data_dtype('uint8') # set imagetype to uint8
     sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -571,7 +586,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     sct.printv('\nWrite text file...', verbose)
     file_results = open(name_output_txt, 'w')
     for i in range(min_z_index, max_z_index+1):
-        file_results.write(str(int(i)) + ' ' + str(x_centerline_fit[i-min_z_index]) + ' ' + str(y_centerline_fit[i-min_z_index]) + '\n')
+        file_results.write(str(int(i)) + ' ' + str(x_centerline_voxel[i-min_z_index]) + ' ' + str(y_centerline_voxel[i-min_z_index]) + '\n')
     file_results.close()
 
     # come back to parent folder
@@ -642,6 +657,9 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         # compute Z axis of the image, in physical coordinate
         axis_X, axis_Y, axis_Z = im_seg.get_directions()
 
+        # compute z_centerline in image coordinates for usage in vertebrae mapping
+        z_centerline_voxel = [coord[2] for coord in im_seg.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])]
+
     else:
         # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
         x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
@@ -650,6 +668,9 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit*px, y_centerline_fit*py, z_centerline*pz, x_centerline_deriv*px, y_centerline_deriv*py, z_centerline_deriv*pz
 
         axis_Z = [0.0, 0.0, 1.0]
+
+        # compute z_centerline in image coordinates for usage in vertebrae mapping
+        z_centerline_voxel = z_centerline
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -796,7 +817,6 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
             sct.printv('\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/PAM50_levels.nii.gz\". See usage.\n', 1, 'error')
 
         elif vert_levels and fname_vertebral_labeling:
-
             # from sct_extract_metric import get_slices_matching_with_vertebral_levels
             sct.printv('Selected vertebral levels... '+vert_levels)
 
@@ -809,7 +829,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
             # get the slices corresponding to the vertebral levels
             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, z_centerline_voxel)
 
         elif not vert_levels:
             vert_levels_list = []
@@ -1100,8 +1120,10 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     # if the median vertebral level of this slice is in the vertebral levels asked by the user, record the slice number
     sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
     matching_slices_centerline_vert_labeling = []
+
     z_centerline = [x for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
     vert_range = range(vert_levels_list[0], vert_levels_list[1]+1)
+
     for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline,:,:]):
         slice_idxs = np.nonzero(z_slice)
         if np.asarray(slice_idxs).shape != (2, 0) and int(np.median(z_slice[slice_idxs])) in vert_range:

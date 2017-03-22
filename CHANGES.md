@@ -1,5 +1,10 @@
 # CHANGES TO RELEASE
 
+##Release 3.0.1 (2017-03-22)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.0...None)
+### %FEATURE
+ - (216042066) Merge multiple source images onto destination space. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1220)
+
 ## Release 3.0.0 (2017-03-15)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta32...None)
 ### BUG
