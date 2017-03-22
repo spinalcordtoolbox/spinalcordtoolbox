@@ -409,9 +409,9 @@ if __name__ == "__main__":
         cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
         sct.run(cmd_image, verbose=False)
 
-        from sct_viewer import ClickViewer
+        from sct_viewer import ClickViewerPropseg
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
-        viewer = ClickViewer(image_input_reoriented)
+        viewer = ClickViewerPropseg(image_input_reoriented)
         viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         if use_viewer == "mask":
             viewer.input_type = 'mask'

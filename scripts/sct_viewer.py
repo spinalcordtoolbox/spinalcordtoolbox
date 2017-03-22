@@ -478,14 +478,13 @@ class ThreeViewer(Viewer):
         else:
             return
 
-
-
 class ClickViewer(Viewer):
     """
     This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
     Assumes SAL orientation
     orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
+
     def __init__(self,
                  list_images,
                  visualization_parameters=None,
@@ -526,22 +525,17 @@ class ClickViewer(Viewer):
             window.connect()
 
         """ Create Buttons"""
-        self.create_button_help()
         self.create_button_save_and_quit()
         self.create_button_redo()
-        self.create_button_skip()
-        self.create_button_auto_manual()
 
         """ Compute slices to display """
         self.calculate_list_slices()
 
         """ Variable to check if all slices have been processed """
-        self.bool_all_processed = False
+
         self.setup_intensity()
 
         """ Manage closure of viewer"""
-        self.fig.canvas.mpl_connect('close_event', self.close_window)
-        self.closed = False
         self.input_type = input_type
 
     def set_main_plot(self):
@@ -564,6 +558,8 @@ class ClickViewer(Viewer):
         self.dic_axis_buttons={}
         self.bool_enable_custom_points = False
         self.bool_skip_all_to_end=False
+        self.bool_all_processed = False
+        self.closed = False
 
         self.current_slice = 0
         self.number_of_slices = 0
@@ -971,22 +967,30 @@ class ClickViewer(Viewer):
         else:
             return None
 
-    def close_window(self, event):
-        pass
-        """
-        for coord in self.list_points:
-            if self.list_points_useful_notation != '':
-                self.list_points_useful_notation += ':'
-            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-        """
-        self.closed = True
-
 
 class ClickViewerPropseg(ClickViewer):
 
-    def __init__(self,title='Mode Auto \n'
-                            'Please select a new point'):
-        pass
+    def __init__(self,
+                 list_images,
+                 visualization_parameters=None,
+                 orientation_subplot=['ax', 'sag'],
+                 title='Mode Auto \n '
+                       'Please select a new point \n',
+                 input_type='centerline'):
+
+        ClickViewer.__init__(self,list_images,
+                 visualization_parameters=visualization_parameters,
+                 orientation_subplot=orientation_subplot,
+                 title=title,
+                 input_type=input_type)
+
+
+        """ Create Buttons"""
+        self.create_button_help()
+        self.create_button_redo()
+        self.create_button_skip()
+        self.create_button_auto_manual()
+
 
     def create_button_skip(self):
         ax = plt.axes([0.70, 0.90, 0.1, 0.075])
