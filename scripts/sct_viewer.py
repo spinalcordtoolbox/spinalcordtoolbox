@@ -807,6 +807,28 @@ class ClickViewerPropseg(ClickViewer):
         self.create_button_skip()
         self.create_button_auto_manual()
 
+
+
+    def on_release(self, event, plot=None):
+        """
+        This subplot refers to the secondary window. It captures event "release"
+        :param event:
+        :param plot:
+        :return:
+        """
+        if event.button == 1 and event.inaxes == plot.axes and plot.view == self.orientation[self.secondary_subplot]:
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            if not self.bool_enable_custom_points:
+                point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
+            for window in self.windows:
+                if window is plot:
+                    window.update_slice(point, data_update=False)
+                else:
+                    window.update_slice(point, data_update=True)
+                    self.draw_points(window, self.current_point.x)
+        return
+
+
     def create_button_help(self):
         ax = plt.axes([0.81, 0.05, 0.1, 0.075])
         self.dic_axis_buttons['help']=ax
