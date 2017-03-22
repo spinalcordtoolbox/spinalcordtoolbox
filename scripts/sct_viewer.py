@@ -764,6 +764,20 @@ class ClickViewer(Viewer):
             self.closed=True
             plt.close('all')
 
+    def press_redo(self, event):
+        if event.inaxes == self.dic_axis_buttons['redo']:
+            if self.current_slice>0:
+                self.current_slice += -1
+                self.windows[0].update_slice(self.list_slices[self.current_slice])
+                self.remove_last_dot()
+                self.update_ui_after_redo()
+            else:
+                self.update_title_text('warning_redo_beyond_first_dot')
+
+    def update_ui_after_redo(self):
+        self.update_title_text('redo_done')
+        self.draw_points(self.windows[0], self.current_point.x)
+
     def start(self):
         super(ClickViewer, self).start()
 
@@ -790,7 +804,6 @@ class ClickViewerPropseg(ClickViewer):
 
         """ Create Buttons"""
         self.create_button_help()
-        self.create_button_redo()
         self.create_button_skip()
         self.create_button_auto_manual()
 
