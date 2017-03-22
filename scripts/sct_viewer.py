@@ -550,13 +550,11 @@ class ClickViewer(Viewer):
             self.windows[0].axes.set_xlim([0, self.images[0].data.shape[0]])
             self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
 
-    def declaration_global_variables(self,orientation_subplot):
+    def declaration_global_variables_general(self,orientation_subplot):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         self.primary_subplot = orientation_subplot[0]
         self.secondary_subplot = orientation_subplot[1]
         self.dic_axis_buttons={}
-        self.bool_enable_custom_points = False
-        self.bool_skip_all_to_end=False
         self.bool_all_processed = False
         self.closed = False
 
@@ -787,9 +785,8 @@ class ClickViewerPropseg(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
-
+        self.declaration_global_variables_specific(orientation_subplot)
         self.update_title_text('init')
-
 
         """ Create Buttons"""
         self.create_button_help()
@@ -802,6 +799,10 @@ class ClickViewerPropseg(ClickViewer):
         self.dic_axis_buttons['help']=ax
         button_help = Button(ax, 'Help')
         self.fig.canvas.mpl_connect('button_press_event', self.press_help)
+
+    def declaration_global_variables_specific(self,orientation_subplot):
+        self.bool_enable_custom_points = False
+        self.bool_skip_all_to_end=False
 
     def create_button_skip(self):
         ax = plt.axes([0.70, 0.90, 0.1, 0.075])
@@ -965,51 +966,6 @@ class ClickViewerPropseg(ClickViewer):
             self.plot_points.set_xdata(x_data)
             self.plot_points.set_ydata(y_data)
             self.fig.canvas.draw()
-
-    def on_release(self, event, plot=None):
-        """
-        This subplot refers to the secondary window. It captures event "release"
-        :param event:
-        :param plot:
-        :return:
-        """
-        if event.button == 1 and event.inaxes == plot.axes and plot.view == self.orientation[self.secondary_subplot]:
-            point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            if not self.bool_enable_custom_points:
-                point[self.orientation[self.primary_subplot]-1] = self.list_slices[self.current_slice]
-            for window in self.windows:
-                if window is plot:
-                    window.update_slice(point, data_update=False)
-                else:
-                    window.update_slice(point, data_update=True)
-                    self.draw_points(window, self.current_point.x)
-        return
-
-    def on_motion(self, event, plot=None):
-        """
-        This subplot refers to the secondary window. It captures event "motion"
-        :param event:
-        :param plot:
-        :return:
-        """
-        if event.button == 1 and event.inaxes and plot.view == self.orientation[self.secondary_subplot] and time() - self.last_update > self.update_freq:
-            is_in_axes = False
-            for window in self.windows:
-                if event.inaxes == window.axes:
-                    is_in_axes = True
-            if not is_in_axes:
-                return
-
-            self.last_update = time()
-            self.current_point = self.get_event_coordinates(event, plot)
-            point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            for window in self.windows:
-                if window is plot:
-                    window.update_slice(point, data_update=False)
-                else:
-                    self.draw_points(window, self.current_point.x)
-                    window.update_slice(point, data_update=True)
-        return
 
     def set_not_custom_target_points(self,event):
         if self.primary_subplot == 'ax':
