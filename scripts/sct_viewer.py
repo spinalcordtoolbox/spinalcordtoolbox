@@ -528,7 +528,7 @@ class ClickViewer(Viewer):
         self.calculate_list_slices()
 
         """ Variable to check if all slices have been processed """
-        self.all_processed = False
+        self.bool_all_processed = False
         self.setup_intensity()
 
         """ Manage closure of viewer"""
@@ -748,6 +748,7 @@ class ClickViewer(Viewer):
             return False
         else:
             self.update_title_text('ready_to_save_and_quit')
+            self.bool_all_processed=True
             return True
 
     def on_press_main_window(self,event,plot):
@@ -914,11 +915,12 @@ class ClickViewer(Viewer):
         for coord in self.list_points:
             if self.list_points_useful_notation != '':
                 self.list_points_useful_notation += ':'
-            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + str(
-                coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
+                                               str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
 
     def press_save_and_quit(self, event):
         if event.inaxes == self.dic_axis_buttons['save_and_quit']:
+            print(self.list_points)
             self.save_data()
             self.closed=True
             plt.close('all')
@@ -957,7 +959,7 @@ class ClickViewer(Viewer):
     def start(self):
         super(ClickViewer, self).start()
 
-        if self.all_processed:
+        if self.bool_all_processed:
             return self.list_points_useful_notation
         else:
             return None
