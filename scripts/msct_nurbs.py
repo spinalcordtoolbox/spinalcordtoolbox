@@ -60,19 +60,19 @@
 # License: see the LICENSE.TXT
 #=======================================================================================================================
 # check if needed Python libraries are already installed or not
-import sys
+from sys import exit
 try:
     from numpy import *
 except ImportError:
     print '--- numpy not installed! ---'
-    sys.exit(2)
+    exit(2)
 try:
     from scipy.interpolate import interp1d
 except ImportError:
     print '--- scipy not installed! ---'
-    sys.exit(2)
-
-import msct_types
+    exit(2)
+#import matplotlib.pyplot as plt
+#from mpl_toolkits.mplot3d import Axes3D
 
 
 class NURBS():
@@ -127,7 +127,7 @@ class NURBS():
                 nb_points = len(P_x)
                 if self.nbControle > nb_points - 1:
                     print 'ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ', self.nbControle, '. Either change degre to a lower value, either add points to the curve.'
-                    sys.exit(2)
+                    exit(2)
 
                 # compute weights based on curve density
                 w = [1.0]*len(P_x)
@@ -931,7 +931,8 @@ class NURBS():
         import numpy as np
         param = np.linspace(x[0], x[-1], prec)
         P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = self.compute_curve_from_parametrization(P, k, x, Nik, Nikp, param)
-        centerline = msct_types.Centerline(P_x, P_y, P_z, P_x_d, P_y_d, P_z_d)
+        from msct_types import Centerline
+        centerline = Centerline(P_x, P_y, P_z, P_x_d, P_y_d, P_z_d)
         distances_between_points = centerline.progressive_length
         range_points = np.linspace(0.0, 1.0, prec)
         dist_curved = np.zeros(prec)

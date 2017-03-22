@@ -31,6 +31,7 @@
 TMP_DIR=`mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR'`
 # Start Directory So we go back there at the end of the Script
 SCT_SOURCE=$PWD
+
 SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
@@ -182,53 +183,53 @@ while getopts ":dmhbo" opt; do
 done
 
 # Catch SCT version
-    if [ -e "version.txt" ]; then
-        SCT_VERSION=`cat version.txt`
-    else
-        echo "ERROR: version.txt not found."
-        echo "The install_sct script must be execute from the source directory"
-        exit 1
-    fi
+if [ -e "version.txt" ]; then
+  SCT_VERSION=`cat version.txt`
+else
+  echo "ERROR: version.txt not found."
+  echo "The install_sct script must be execute from the source directory"
+  exit 1
+fi
 
-    # Get installation type (from git or from package)
-    if [ -d ".git" ]; then
-        # folder .git exist, therefore it is a git installation
-        INSTALL_TYPE="git"
-    else
-        INSTALL_TYPE="package"
-    fi
+# Get installation type (from git or from package)
+if [ -d ".git" ]; then
+  # folder .git exist, therefore it is a git installation
+  INSTALL_TYPE="git"
+else
+  INSTALL_TYPE="package"
+fi
 
-    # Fetch OS type
-    if uname -a | grep -i  darwin > /dev/null 2>&1; then
+# Fetch OS type
+if uname -a | grep -i  darwin > /dev/null 2>&1; then
   # OSX
-      OS=osx
-      force_bashrc_loading
-    elif uname -a | grep -i  linux > /dev/null 2>&1; then
-        if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
-            # CentOS 6.X
-            OS=linux_centos6
-        elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
-            # RedHat 6.X
-            OS=linux_centos6
-        else
-            # Other Linux
-            OS=linux
-        fi
-    else
+  OS=osx
+  force_bashrc_loading
+elif uname -a | grep -i  linux > /dev/null 2>&1; then
+  if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
+    # CentOS 6.X
+    OS=linux_centos6
+  elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
+    # RedHat 6.X
+    OS=linux_centos6
+  else
+    # Other Linux
+    OS=linux
+  fi
+else
   echo Sorry, the installer only supports Linux and OSX, quitting installer
-        exit 1
-    fi
+  exit 1
+fi
 
-    #echo -e "\nInstallation info:"
-    echo -e "\nSCT version ......... "$SCT_VERSION
-    echo -e "Installation type ... "$INSTALL_TYPE
-    echo -e "Operating system .... "$OS
-    # Check if sudo
-    if [[ $UID == 0 ]]; then
-        echo -e "sudo mode ........... 1"
-    else
-        echo -e "sudo mode ........... 0"
-    fi
+#echo -e "\nInstallation info:"
+echo -e "\nSCT version ......... "$SCT_VERSION
+echo -e "Installation type ... "$INSTALL_TYPE
+echo -e "Operating system .... "$OS
+# Check if sudo
+if [[ $UID == 0 ]]; then
+  echo -e "sudo mode ........... 1"
+else
+  echo -e "sudo mode ........... 0"
+fi
 
 # Define sh files
 if echo $(ps -o comm= $PPID) | grep csh ;then
@@ -239,103 +240,101 @@ else
   THE_RC=${THE_BASHRC}
 fi
 
-    # if installing from git folder, then becomes default installation folder
-    if [[ $INSTALL_TYPE == "git" ]]; then
-        INSTALL_DIR=$SCT_SOURCE
-    else
-        INSTALL_DIR="${HOME}/sct_${SCT_VERSION}"
-    fi
+# if installing from git folder, then becomes default installation folder
+if [[ $INSTALL_TYPE == "git" ]]; then
+  INSTALL_DIR=$SCT_SOURCE
+else
+  INSTALL_DIR="${HOME}/sct_${SCT_VERSION}"
+fi
 
-    # Set install dir
-    while  true ; do
-        echo -e "\nSCT will be installed here: [${INSTALL_DIR}]"
-        while  [[ ! ${change_default_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
-            echo -n "Do you agree? yes/no: "
-            read change_default_path
-        done
+# Set install dir
+while  true ; do
+  echo -e "\nSCT will be installed here: [${INSTALL_DIR}]"
+  while  [[ ! ${change_default_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
+    echo -n "Do you agree? yes/no: "
+    read change_default_path
+  done
+  if [[ ${change_default_path} =~ ^[Yy] ]]; then
+    # user accepts default path --> exit loop
+    break
+  fi
+  echo -n "Choose install directory. Warning! Give full path (e.g. /usr/django/sct_v3.0): "
+  # user enters new path
+  read new_install
 
-        if [[ ${change_default_path} =~ ^[Yy] ]]; then
-            # user accepts default path --> exit loop
-            break
-        fi
+  # Expand ~/
+  new_install=${new_install/#\~\//$HOME\/}
+  # Remove trailing /
+  new_install=${new_install%/}
 
-        echo -n "Choose install directory. Warning! Give full path (e.g. /usr/django/sct_v3.0): "
-        # user enters new path
-        read new_install
+  # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
+  if [ "${new_install}" == "/" ] || [ "${HOME}" == "${new_install%/}" ] ; then
+    echo Cannot be installed directly in ${new_install}
+    echo Please pick a full path
+    continue
+  elif [ -d "${new_install}" ]; then
+    # directory exists --> update INSTALL_DIR and exit loop
+    echo -e "WARNING: Directory already exists. Files will be overwritten."
+    INSTALL_DIR=${new_install}
+    break
+  elif [ ! "${new_install}" ]; then
+    # If no input, asking again, and again, and again
+    continue
+  else
+    INSTALL_DIR=${new_install}
+    break
+  fi
+done
 
-        # Expand ~/
-        new_install=${new_install/#\~\//$HOME\/}
-        # Remove trailing /
-        new_install=${new_install%/}
+# Create directory
+mkdir ${INSTALL_DIR}
+# check if directory was created
+if [ -d "${INSTALL_DIR}" ]; then
+  # check write permission
+  if [ ! -w "${INSTALL_DIR}" ]; then
+    echo "ERROR: ${INSTALL_DIR} exists but does not have write permission."
+    exit 1
+  fi
+else
+  echo "ERROR: ${INSTALL_DIR} cannot be created. Make sure you have write permission."
+  exit 1
+fi
+SCT_DIR=${INSTALL_DIR}
 
-        # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
-        if [ "${new_install}" == "/" ] || [ "${HOME}" == "${new_install%/}" ] ; then
-            echo Cannot be installed directly in ${new_install}
-            echo Please pick a full path
-            continue
-        elif [ -d "${new_install}" ]; then
-            # directory exists --> update INSTALL_DIR and exit loop
-            echo -e "WARNING: Directory already exists. Files will be overwritten."
-            INSTALL_DIR=${new_install}
-            break
-        elif [ ! "${new_install}" ]; then
-            # If no input, asking again, and again, and again
-            continue
-        else
-            INSTALL_DIR=${new_install}
-            break
-        fi
-    done
+# Clean old install setup in bin/
+echo -e "\nRemoving sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
+find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
+find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
 
-    # Create directory
-    mkdir ${INSTALL_DIR}
-    # check if directory was created
-    if [ -d "${INSTALL_DIR}" ]; then
-        # check write permission
-        if [ ! -w "${INSTALL_DIR}" ]; then
-            echo "ERROR: ${INSTALL_DIR} exists but does not have write permission."
-            exit 1
-        fi
-    else
-        echo "ERROR: ${INSTALL_DIR} cannot be created. Make sure you have write permission."
-        exit 1
-    fi
-    SCT_DIR=${INSTALL_DIR}
-
-    # Clean old install setup in bin/
-    echo -e "\nRemoving sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
-    find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
-    find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
-
-    # Copy files to destination directory
-    if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
-        echo -e "\nCopying source files from ${SCT_SOURCE} to ${SCT_DIR}"
-        cp -vR ${SCT_SOURCE}/${SCRIPT_DIR}  ${SCT_DIR}/.
-        cp ${SCT_SOURCE}/version.txt  ${SCT_DIR}/.
-        cp ${SCT_SOURCE}/commit.txt  ${SCT_DIR}/.
-        cp ${SCT_SOURCE}/README.md  ${SCT_DIR}/.
-        cp ${SCT_SOURCE}/CHANGES.md  ${SCT_DIR}/.
-        cp ${SCT_SOURCE}/batch_processing.sh  ${SCT_DIR}/.
-        cp ${SCT_SOURCE}/batch_processing_PAM50.sh  ${SCT_DIR}/.
-        mkdir -p ${SCT_DIR}/install
-        cp -vRp ${SCT_SOURCE}/install ${SCT_DIR}
-        cp -vRp ${SCT_SOURCE}/testing ${SCT_DIR}/.
-    else
-        echo -e "\nSkipping copy of source files (source and destination folders are the same)"
-    fi
+# Copy files to destination directory
+if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
+  echo -e "\nCopying source files from ${SCT_SOURCE} to ${SCT_DIR}"
+  cp -vR ${SCT_SOURCE}/${SCRIPT_DIR}  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/version.txt  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/commit.txt  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/README.md  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/CHANGES.md  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/batch_processing.sh  ${SCT_DIR}/.
+  cp ${SCT_SOURCE}/batch_processing_PAM50.sh  ${SCT_DIR}/.
+  mkdir -p ${SCT_DIR}/install
+  cp -vRp ${SCT_SOURCE}/install ${SCT_DIR}
+  cp -vRp ${SCT_SOURCE}/testing ${SCT_DIR}/.
+else
+  echo -e "\nSkipping copy of source files (source and destination folders are the same)"
+fi
 
 # Go to installation folder
 cd ${SCT_DIR}
 
-    # Make sure we are in SCT folder (to avoid deleting folder from user)
-    if [ ! -f "version.txt" ]; then
-        echo -e "\nERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
-        exit 1
-    fi
+# Make sure we are in SCT folder (to avoid deleting folder from user)
+if [ ! -f "version.txt" ]; then
+  echo -e "\nERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
+  exit 1
+fi
 
 ## Create launchers for Python scripts
-    echo -e "\nCreate launchers for Python scripts"
-    cmd="mkdir -p ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+echo -e "\nCreate launchers for Python scripts"
+cmd="mkdir -p ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
 # update_bin has to be executed from the install directory
 cmd="cd ${SCT_DIR}/install"; echo ">> "$cmd; $cmd
 cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run from /install folder (because uses relative path)
@@ -343,85 +342,85 @@ cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run 
 
 ## INSTALL PYTHON
 if [ ${NO_CONDA_INSTALL} ]; then
-        echo "python/ will not be (re)-install"
+  echo "python/ will not be (re)-install"
 elif [ ${OFFLINE_INSTALL} ]; then
 
-        echo "Offline install"
+  echo "Offline install"
 
-        cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-        # Install Python conda
-        echo -e "\nInstalling conda..."
-        cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  # Install Python conda
+  echo -e "\nInstalling conda..."
+  cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
 
-        cmd="bash ${SCT_SOURCE}/offline/miniconda_${OS}.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
-        ret_code_conda=$?
-        if [[ $ret_code_conda != 0 ]]; then
-            echo -e Conda did not installed properly with return code $ret_code_conda
-            exit $ret_code_conda
-        else
-            echo -e Conda installation successful
-        fi
+  cmd="bash ${SCT_SOURCE}/offline/miniconda_${OS}.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
+  ret_code_conda=$?
+  if [[ $ret_code_conda != 0 ]]; then
+    echo -e Conda did not installed properly with return code $ret_code_conda
+    exit $ret_code_conda
+  else
+    echo -e Conda installation successful
+  fi
 
-        cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
 
-        tar -C ${TMP_DIR} -zxvf ${SCT_SOURCE}/offline/wheels_${OS}.tar.gz
-        dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
-        ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
+  tar -C ${TMP_DIR} -zxvf ${SCT_SOURCE}/offline/wheels_${OS}.tar.gz
+  dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
+  ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
 
-        conda install --yes --no-deps ${SCT_SOURCE}/offline/pkgs_${OS}/*
-        pip install --no-deps --ignore-installed ${dipy_whl} ${ornlm_whl} ${SCT_SOURCE}/offline/*none*.whl
+  conda install --yes --no-deps ${SCT_SOURCE}/offline/pkgs_${OS}/*
+  pip install --no-deps --ignore-installed ${dipy_whl} ${ornlm_whl} ${SCT_SOURCE}/offline/*none*.whl
 
-    else
-        # Install Python conda
-        echo -e "\nInstalling conda..."
-        cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-        cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-        # downloading
-        if [ $OS == "linux" ]; then
-            download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
-        elif [ $OS == "linux_centos6" ]; then
-            download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
-        elif [ $OS == "osx" ]; then
-            download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-MacOSX-x86_64.sh
-        fi
+else
+  # Install Python conda
+  echo -e "\nInstalling conda..."
+  cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  # downloading
+  if [ $OS == "linux" ]; then
+    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
+  elif [ $OS == "linux_centos6" ]; then
+    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
+  elif [ $OS == "osx" ]; then
+    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-MacOSX-x86_64.sh
+  fi
 
-        # run conda installer
-        cmd="bash ${TMP_DIR}/miniconda.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
-        ret_code_conda=$?
-        if [[ $ret_code_conda != 0 ]]; then
-            echo -e Conda did not installed properly with return code $ret_code_conda
-            exit $ret_code_conda
-        else
-            echo -e Conda installation successful
-        fi
+  # run conda installer
+  cmd="bash ${TMP_DIR}/miniconda.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
+  ret_code_conda=$?
+  if [[ $ret_code_conda != 0 ]]; then
+    echo -e Conda did not installed properly with return code $ret_code_conda
+    exit $ret_code_conda
+  else
+    echo -e Conda installation successful
+  fi
 
-        # activate miniconda
-        cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  # activate miniconda
+  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
 
-        # Install Python dependencies
-        echo -e "\nInstalling Python dependencies..."
-        # N.B. the flag --ignore-installed is required because locally install
-        # package are skip
-        conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
-        e_status=$?
-        if [ ${e_status} != 0 ] ; then
-            echo "conda install error with exit status $e_status. Check logs for more details
+  # Install Python dependencies
+  echo -e "\nInstalling Python dependencies..."
+  # N.B. the flag --ignore-installed is required because locally install
+  # package are skip
+  conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
+  e_status=$?
+  if [ ${e_status} != 0 ] ; then
+    echo "conda install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
-            exit $e_status
-        fi
-        pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
-        e_status=$?
-        if [ ${e_status} != 0 ] ; then
-            echo "pip install error with exit status $e_status. Check logs for more details
+    exit $e_status
+  fi
+  pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+  e_status=$?
+  if [ ${e_status} != 0 ] ; then
+    echo "pip install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
-            exit $e_status
-        fi
-        # reinstall numpy at the end to prevent a conda bug
-        if [[ $OS == linux ]]; then
-            # Fix Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so or libmkl_def.so.
-            # on certain linux distribution
-            conda install -fy numpy
-        fi
+    exit $e_status
+  fi
+  # reinstall numpy at the end to prevent a conda bug
+  if [[ $OS == linux ]]; then
+    # Fix Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so or libmkl_def.so.
+    # on certain linux distribution
+    conda install -fy numpy
+  fi
 
 fi
 

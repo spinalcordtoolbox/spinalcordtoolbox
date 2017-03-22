@@ -16,19 +16,20 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-# TODO Missing tests.
 
 import os
 import sys
-
+import commands
+import getopt
+import sct_utils as sct
+from msct_parser import Parser
 import nibabel as nib
 import numpy as np
 
-import sct_utils as sct
-import msct_parser
 
-
-class Param(object):
+# DEFAULT PARAMETERS
+class Param:
+    ## The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 1
@@ -38,26 +39,24 @@ class Param(object):
         self.fname_seg = ''
         self.fname_GM = ''
 
-
+# constants
 ALMOST_ZERO = 0.0000001
 
 
-def main(args=None):
-
-    param = Param()
-    if not args:
-        args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
-
+# main
+#=======================================================================================================================
+def main():
+    
+    # Initialization
     path_atlas = ''
-
+    
+    # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
     else:
+        # Check input parameters
         parser = get_parser()
-        arguments = parser.parse(args)
+        arguments = parser.parse(sys.argv[1:])
 
         path_atlas = arguments['-i']
 
@@ -72,26 +71,29 @@ def main(args=None):
         if '-v' in arguments:
             param.verbose = int(arguments['-v'])
 
+
     # Extract atlas info
-    atlas_id, atlas_name, atlas_file = read_label_file(path_atlas, param)
+    atlas_id, atlas_name, atlas_file = read_label_file(path_atlas)
     nb_tracts_total = len(atlas_id)
 
     # Load atlas
     sct.printv('\nLoad atlas...', param.verbose)
-    atlas = np.empty(
-        [nb_tracts_total], dtype=object)  # labels(nb_labels_total, x, y, z)
+    atlas = np.empty([nb_tracts_total], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_atlas in range(0, nb_tracts_total):
-        atlas[i_atlas] = nib.load(path_atlas + atlas_file[i_atlas]).get_data()
+        atlas[i_atlas] = nib.load(path_atlas+atlas_file[i_atlas]).get_data()
 
     # Check integrity
     sct.printv('\nCheck atlas integrity...', param.verbose)
-    check_integrity(atlas, atlas_id, atlas_name, param)
+    check_integrity(atlas, atlas_id, atlas_name)
 
 
-def read_label_file(path_info_label, param):
-    """Read label.txt file which is located inside label folder"""
+#=======================================================================================================================
+# Read label.txt file which is located inside label folder
+#=======================================================================================================================
+def read_label_file(path_info_label):
+
     # file name of info_label.txt
-    fname_label = path_info_label + param.file_info_label
+    fname_label = path_info_label+param.file_info_label
 
     # Check info_label.txt existence
     sct.check_file_exist(fname_label)
@@ -109,8 +111,8 @@ def read_label_file(path_info_label, param):
     label_id = []
     label_name = []
     label_file = []
-    for line in lines:
-        line = line.split(',')
+    for i in range(0, len(lines)-1):
+        line = lines[i].split(',')
         label_id.append(int(line[0]))
         label_name.append(line[1])
         label_file.append(line[2][:-1].strip())
@@ -119,35 +121,38 @@ def read_label_file(path_info_label, param):
     line = lines[-1].split(',')
     label_id.append(int(line[0]))
     label_name.append(line[1])
-    line[2] = line[2] + ' '
+    line[2]=line[2]+' '
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
-    print '\nCheck existence of all files listed in ' + param.file_info_label + ' ...'
+    print '\nCheck existence of all files listed in '+param.file_info_label+' ...'
     for fname in label_file:
-        if os.path.isfile(path_info_label + fname) or os.path.isfile(path_info_label + fname + '.nii') or \
-                os.path.isfile(path_info_label + fname + '.nii.gz'):
-            print('  OK: ' + path_info_label + fname)
+        if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
+                os.path.isfile(path_info_label+fname + '.nii.gz'):
+            print('  OK: '+path_info_label+fname)
             pass
         else:
-            print('  WARNING: ' + path_info_label + fname +
-                  ' does not exist but is listed in ' + param.file_info_label +
-                  '.\n')
+            print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '
+                  +param.file_info_label+'.\n')
 
+    # Close file.txt
     f.close()
 
     return [label_id, label_name, label_file]
 
 
-def check_integrity(atlas, atlas_id, atlas_name, method='wath', param=None):
-    """Check integrity of the atlas"""
-    nb_tracts = len(atlas)  # number of tracts
+#=======================================================================================================================
+# Check integrity of the atlas
+#=======================================================================================================================
+def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
+
+    nb_tracts = len(atlas) # number of tracts
 
     # Get dimensions of the atlas
     sct.printv('\nGet dimensions of atlas...', param.verbose)
     nx_atlas, ny_atlas, nz_atlas = atlas[0].shape
-    sct.printv('.. ' + str(nx_atlas) + ' x ' + str(ny_atlas) + ' x ' +
-               str(nz_atlas) + ' x ' + str(nb_tracts), param.verbose)
+    sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas)+' x '+str(nb_tracts), param.verbose)
+
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
@@ -162,17 +167,15 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath', param=None):
 
     # Does all the tracts are present?
     tracts_are_present = True
-    sct.printv('\nDoes all the tracts are present in the atlas?',
-               param.verbose)
+    sct.printv('\nDoes all the tracts are present in the atlas?',param.verbose)
     sum_tract = []
     for i_atlas in range(0, nb_tracts):
         sum_tract.append(np.sum(atlas[i_atlas]))
         if sum_tract[i_atlas] < ALMOST_ZERO:
-            sct.printv('The tract #' + str(atlas_id[i_atlas]) +
-                       atlas_name[i_atlas] + ' is non-existent', param.verbose)
+            sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' is non-existent',param.verbose)
             tracts_are_present = False
-    if tracts_are_present:
-        sct.printv('All the tracts are present.', param.verbose)
+    if tracts_are_present: sct.printv('All the tracts are present.',param.verbose)
+
 
     # Does any tract gets out the spinal cord?
     if param.fname_seg != '':
@@ -180,9 +183,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath', param=None):
         segmentation = nib.load(param.fname_seg).get_data()
         sct.printv('\nGet dimensions of segmentation image...', param.verbose)
         nx_seg, ny_seg, nz_seg = segmentation.shape
-        sct.printv(
-            '.. ' + str(nx_seg) + ' x ' + str(ny_seg) + ' x ' + str(nz_seg),
-            param.verbose)
+        sct.printv('.. ' + str(nx_seg) + ' x ' + str(ny_seg) + ' x ' + str(nz_seg), param.verbose)
 
         # Check dimensions consistency between atlas and segmentation image
         if (nx_seg, ny_seg, nz_seg) != (nx_atlas, ny_atlas, nz_atlas):
@@ -192,34 +193,25 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath', param=None):
         tracts_are_inside_SC = True
         total_outside = 0
         total_sum_tracts = 0
-        sct.printv('\nDoes any tract gets out the spinal cord?', param.verbose)
-        ind_seg_outside_cord = segmentation <= ALMOST_ZERO
+        sct.printv('\nDoes any tract gets out the spinal cord?',param.verbose)
+        ind_seg_outside_cord = segmentation<=ALMOST_ZERO
         for i_atlas in range(0, nb_tracts):
-            ind_atlas_positive = atlas[i_atlas] >= ALMOST_ZERO
-            sum_tract_outside_SC = np.sum(atlas[i_atlas][ind_atlas_positive &
-                                                         ind_seg_outside_cord])
+            ind_atlas_positive = atlas[i_atlas]>=ALMOST_ZERO
+            sum_tract_outside_SC = np.sum(atlas[i_atlas][ind_atlas_positive & ind_seg_outside_cord])
             sum_tract = np.sum(atlas[i_atlas][ind_atlas_positive])
             if sum_tract_outside_SC > ALMOST_ZERO:
-                percentage_out = float(sum_tract_outside_SC / sum_tract)
-                sct.printv(
-                    'The tract #' + str(atlas_id[i_atlas]) +
-                    atlas_name[i_atlas] + ' gets out the spinal cord of ' +
-                    str(round(percentage_out * 100, 2)) + '%', param.verbose)
+                percentage_out = float(sum_tract_outside_SC/sum_tract)
+                sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' gets out the spinal cord of '+str(round(percentage_out*100,2))+'%',param.verbose)
                 tracts_are_inside_SC = False
                 total_outside += sum_tract_outside_SC
             total_sum_tracts += sum_tract
         if tracts_are_inside_SC:
-            sct.printv('All the tracts are inside the spinal cord.',
-                       param.verbose)
-            sct.printv(
-                '\nTotal percentage of present tracts outside the spinal cord: 0%',
-                param.verbose)
+            sct.printv('All the tracts are inside the spinal cord.',param.verbose)
+            sct.printv('\nTotal percentage of present tracts outside the spinal cord: 0%', param.verbose)
         else:
-            total_percentage_out = float(total_outside / total_sum_tracts)
-            sct.printv(
-                '\nTotal percentage of present tracts outside the spinal cord: '
-                + str(round(total_percentage_out * 100, 2)) + '%',
-                param.verbose)
+            total_percentage_out = float(total_outside/total_sum_tracts)
+            sct.printv('\nTotal percentage of present tracts outside the spinal cord: ' + str(round(total_percentage_out*100, 2)) + '%', param.verbose)
+
 
     # Does any tract overlaps the spinal cord gray matter?
     if param.fname_GM != '':
@@ -227,114 +219,97 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath', param=None):
         graymatter = nib.load(param.fname_GM).get_data()
         sct.printv('\nGet dimensions of gray matter image...', param.verbose)
         nx_gm, ny_gm, nz_gm = graymatter.shape
-        sct.printv(
-            '.. ' + str(nx_gm) + ' x ' + str(ny_gm) + ' x ' + str(nz_gm),
-            param.verbose)
+        sct.printv('.. ' + str(nx_gm) + ' x ' + str(ny_gm) + ' x ' + str(nz_gm), param.verbose)
 
         # Check dimensions consistency between atlas and spinal cord gray matter image
         if (nx_gm, ny_gm, nz_gm) != (nx_atlas, ny_atlas, nz_atlas):
             print '\nERROR: Gray matter image and the atlas DO NOT HAVE SAME DIMENSIONS.'
             sys.exit(2)
-
+    
         tracts_overlap_GM = False
         total_overlaps = 0
         total_sum_tracts = 0
-        sct.printv('\nDoes any tract overlaps the spinal cord gray matter?',
-                   param.verbose)
-        ind_GM = graymatter >= param.threshold_GM
+        sct.printv('\nDoes any tract overlaps the spinal cord gray matter?',param.verbose)
+        ind_GM = graymatter>=param.threshold_GM
         for i_atlas in range(0, nb_tracts):
-            ind_atlas_positive = atlas[i_atlas] >= ALMOST_ZERO
-            sum_tract_overlap_GM = np.sum(atlas[i_atlas][ind_atlas_positive &
-                                                         ind_GM])
+            ind_atlas_positive = atlas[i_atlas]>=ALMOST_ZERO
+            sum_tract_overlap_GM = np.sum(atlas[i_atlas][ind_atlas_positive & ind_GM])
             sum_tract = np.sum(atlas[i_atlas])
             if sum_tract_overlap_GM > ALMOST_ZERO:
-                percentage_overlap = float(sum_tract_overlap_GM / sum_tract)
-                sct.printv('The tract #' + str(atlas_id[i_atlas]) + atlas_name[
-                    i_atlas] + ' overlaps the spinal cord gray matter of ' +
-                           str(round(percentage_overlap * 100, 2)) + '%',
-                           param.verbose)
+                percentage_overlap = float(sum_tract_overlap_GM/sum_tract)
+                sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' overlaps the spinal cord gray matter of '+str(round(percentage_overlap*100,2))+'%',param.verbose)
                 tracts_overlap_GM = True
                 total_overlaps += sum_tract_overlap_GM
             total_sum_tracts += sum_tract
         if not tracts_overlap_GM:
-            sct.printv('No tract overlaps the spinal cord gray matter.',
-                       param.verbose)
-            sct.printv(
-                '\nTotal percentage of present tracts overlapping gray matter: 0%',
-                param.verbose)
+            sct.printv('No tract overlaps the spinal cord gray matter.',param.verbose)
+            sct.printv('\nTotal percentage of present tracts overlapping gray matter: 0%', param.verbose)
         else:
-            total_percentage_overlap = float(total_overlaps / total_sum_tracts)
-            sct.printv(
-                '\nTotal percentage of present tracts overlapping gray matter: '
-                + str(round(total_percentage_overlap * 100, 2)) + '%',
-                param.verbose)
+            total_percentage_overlap = float(total_overlaps/total_sum_tracts)
+            sct.printv('\nTotal percentage of present tracts overlapping gray matter: ' + str(round(total_percentage_overlap*100, 2)) + '%', param.verbose)
 
 
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = msct_parser.Parser(__file__)
-    parser.usage.set_description(
-        'Check the integrity of the warped atlas by (i) evaluating the number of tracts that disappeared given a threshold, (ii) evaluating the number of voxels outside the spinal cord segmentation and (iii) evaluating the overlap between the white matter tracts and the gray matter.'
-    )
-    parser.add_option(
-        name="-i",
-        type_value="folder",
-        description="Atlas folder path.",
-        mandatory=True,
-        example='label/atlas')
-    parser.add_option(
-        name="-s",
-        type_value="file",
-        description="Segmentation of the cord.",
-        mandatory=False,
-        example='label/template/MNI-Poly-AMU_cord.nii.gz')
-    parser.add_option(
-        name="-gm",
-        type_value="file",
-        description="Segmentation of the Gray matter",
-        mandatory=False,
-        example='label/template/MNI-Poly-AMU_GM.nii.gz')
-    parser.add_option(
-        name="-m",
-        type_value=None,
-        description="Segmentation of the Gray matter",
-        deprecated_by="-gm",
-        mandatory=False)
-    parser.add_option(
-        name="-thr",
-        type_value="float",
-        description="Atlas threshold, between 0 and 1.",
-        mandatory=False,
-        example='0.4')
-    parser.add_option(
-        name="-t",
-        type_value=None,
-        description="Atlas threshold, between 0 and 1.",
-        deprecated_by="-thr",
-        mandatory=False)
-    parser.add_option(
-        name="-thrgm",
-        type_value="float",
-        description="Gray matter image threshold, between 0 and 1.",
-        mandatory=False,
-        example='0.4')
-    parser.add_option(
-        name="-g",
-        type_value=None,
-        description="Gray matter image threshold, between 0 and 1.",
-        deprecated_by="-thrgm",
-        mandatory=False)
+    parser = Parser(__file__)
+    parser.usage.set_description('Check the integrity of the warped atlas by (i) evaluating the number of tracts that disappeared given a threshold, (ii) evaluating the number of voxels outside the spinal cord segmentation and (iii) evaluating the overlap between the white matter tracts and the gray matter.')
+    parser.add_option(name="-i",
+                      type_value="folder",
+                      description="Atlas folder path.",
+                      mandatory=True,
+                      example='label/atlas')
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="Segmentation of the cord.",
+                      mandatory=False,
+                      example='label/template/MNI-Poly-AMU_cord.nii.gz')
+    parser.add_option(name="-gm",
+                      type_value="file",
+                      description="Segmentation of the Gray matter",
+                      mandatory=False,
+                      example='label/template/MNI-Poly-AMU_GM.nii.gz')
+    parser.add_option(name="-m",
+                      type_value=None,
+                      description="Segmentation of the Gray matter",
+                      deprecated_by="-gm",
+                      mandatory=False)
+    parser.add_option(name="-thr",
+                      type_value="float",
+                      description="Atlas threshold, between 0 and 1.",
+                      mandatory=False,
+                      example='0.4')
+    parser.add_option(name="-t",
+                      type_value=None,
+                      description="Atlas threshold, between 0 and 1.",
+                      deprecated_by="-thr",
+                      mandatory=False)
+    parser.add_option(name="-thrgm",
+                      type_value="float",
+                      description="Gray matter image threshold, between 0 and 1.",
+                      mandatory=False,
+                      example='0.4')
+    parser.add_option(name="-g",
+                      type_value=None,
+                      description="Gray matter image threshold, between 0 and 1.",
+                      deprecated_by="-thrgm",
+                      mandatory=False)
 
-    parser.add_option(
-        name="-v",
-        type_value='multiple_choice',
-        description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-        mandatory=False,
-        example=['0', '1', '2'],
-        default_value='1')
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
     return parser
 
 
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
 if __name__ == "__main__":
+    # initialize parameters
+    param = Param()
+    param_default = Param()
+    # call main function
     main()
