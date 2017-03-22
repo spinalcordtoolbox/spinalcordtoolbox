@@ -13,40 +13,29 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import getopt
-import os
-import shutil
+
 import sys
+import os
+import commands
+import getopt
 import time
-
-import msct_image
-import sct_convert
-import sct_resample
-import sct_smooth_spinalcord
 import sct_utils as sct
+from msct_image import Image
 
-
-class Param(object):
+class Param:
     def __init__(self):
         self.debug = 0
         self.smoothing_sigma = 5
-        # interpolation factor. Works fine with 1 (i.e., no interpolation required).
-        self.interp_factor = 1
-        self.suffix = '_trilin'
+        self.interp_factor = 1 # interpolation factor. Works fine with 1 (i.e., no interpolation required).
+        self.suffix = '_trilin' # output suffix
         self.remove_temp_files = 1
         self.verbose = 1
+        
 
-
-def main(args=None):
-
-    param = Param()
-
-    if not args:
-        args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
-
+# main
+#=======================================================================================================================
+def main():
+    
     # Initialization
     fname_data = ''
     interp_factor = param.interp_factor
@@ -57,19 +46,19 @@ def main(args=None):
 
     # start timer
     start_time = time.time()
-
+    
     # get path of the toolbox
-    path_sct = os.environ.get('SCT_DIR')
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Parameters for debug mode
     if param.debug:
-        fname_data = path_sct + '/testing/data/errsm_23/t2/t2_manual_segmentation.nii.gz'
+        fname_data = path_sct+'/testing/data/errsm_23/t2/t2_manual_segmentation.nii.gz'
         remove_temp_files = 0
         param.mask_size = 10
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(args, 'hi:v:r:s:')
+            opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:s:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -91,77 +80,70 @@ def main(args=None):
         usage()
 
     # print arguments
-    sct.printv('\nCheck parameters:')
-    sct.printv('  segmentation ........... ' + fname_data)
-    sct.printv('  interp factor .......... ' + str(interp_factor))
-    sct.printv('  smoothing sigma ........ ' + str(smoothing_sigma))
+    print '\nCheck parameters:'
+    print '  segmentation ........... '+fname_data
+    print '  interp factor .......... '+str(interp_factor)
+    print '  smoothing sigma ........ '+str(smoothing_sigma)
 
     # check existence of input files
-    sct.printv('\nCheck existence of input files...')
+    print('\nCheck existence of input files...')
     sct.check_file_exist(fname_data, verbose)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # create temporary folder
-    sct.printv('\nCreate temporary folder...')
-    path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
-    if os.path.exists(path_tmp):
-        os.makedirs(path_tmp)
+    print('\nCreate temporary folder...')
+    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    sct.run('mkdir '+path_tmp)
 
+    from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct_convert.convert(fname_data, path_tmp + '/data.nii')
+    convert(fname_data, path_tmp+'/data.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image('data.nii').dim
-    sct.printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
+    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
+    sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
 
     # upsample data
     sct.printv('\nUpsample data...', verbose)
-    sct_resample.main(args=[
-        '-i', 'data.nii', '-x', 'linear'
-        '-vox', '{0}x{1}x{2}'.format(nx * interp_factor, ny * interp_factor, nz * interp_factor), '-o', 'data_up.nii'
-    ])
+    sct.run('sct_resample -i data.nii -x linear -vox '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+' -o data_up.nii', verbose)
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
-    sct_smooth_spinalcord.main(args=[
-        '-i', 'data_up.nii', '-s', 'data_up.nii', '-smooth', '{0}'.format(smoothing_sigma), '-r',
-        '{0}'.format(remove_temp_files), '-v', '{0}'.format(verbose)
-    ])
+    sct.run('sct_smooth_spinalcord -i data_up.nii -s data_up.nii'+' -smooth '+str(smoothing_sigma)+' -r '+str(remove_temp_files)+' -v '+str(verbose), verbose)
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    sct_resample.main(args=[
-        '-i', 'data_up_smooth.nii', '-x', 'linear', '-vox', '{0}x{1}x{2}'.format(nx, ny, nz), '-o',
-        'data_up_smooth_down.nii'
-    ])
+    sct.run('sct_resample -i data_up_smooth.nii -x linear -vox '+str(nx)+'x'+str(ny)+'x'+str(nz)+' -o data_up_smooth_down.nii', verbose)
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
-    sct.printv('\nGenerate output files...')
-    sct.generate_output_file(path_tmp + '/data_up_smooth_down.nii', '' + file_data + suffix + ext_data)
+    print('\nGenerate output files...')
+    fname_out = sct.generate_output_file(path_tmp+'/data_up_smooth_down.nii', ''+file_data+suffix+ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:
         print '\nRemove temporary files...'
-        shutil.rmtree(path_tmp, ignore_errors=True)
+        sct.run('rm -rf '+ path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's')
+    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
 
     # to view results
-    sct.printv('\nTo view results, type:')
-    sct.printv('fslview ' + file_data + ' ' + file_data + suffix + ' &\n')
+    print '\nTo view results, type:'
+    print 'fslview '+file_data+' '+file_data+suffix+' &\n'
 
 
+# Print usage
+# ==========================================================================================
 def usage():
     print '\n' \
         ''+os.path.basename(__file__)+'\n' \
@@ -188,10 +170,18 @@ def usage():
         'EXAMPLE\n' \
         '  '+os.path.basename(__file__)+' -i segmentation.nii \n'
 
+
     # exit program
     sys.exit(2)
 
 
+
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
 if __name__ == "__main__":
+    # initialize parameters
+    param = Param()
+    param_default = Param()
     # call main function
     main()

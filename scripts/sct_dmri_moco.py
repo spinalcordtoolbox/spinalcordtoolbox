@@ -29,26 +29,26 @@
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 # TODO (no priority): for sinc interp, use ANTs instead of flirt
 
-import commands
-import importlib
-import math
-import os
-import shutil
 import sys
+import os
+import commands
+import getopt
 import time
-
+import glob
+import math
 import numpy as np
-
-import msct_moco as moco
+from sct_dmri_eddy_correct import eddy_correct
 import sct_utils as sct
-import msct_image
-import msct_parser
-import sct_convert
-import sct_dmri_separate_b0_and_dwi
-import sct_image
+import msct_moco as moco
+from sct_dmri_separate_b0_and_dwi import identify_b0
+import importlib
+from sct_convert import convert
+from msct_image import Image
+from sct_image import copy_header, split_data, concat_data
+from msct_parser import Parser
 
 
-class Param(object):
+class Param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -81,15 +81,7 @@ class Param(object):
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main(args=None):
-
-    param = Param()
-    param_default = Param()
-    if args is None:
-        args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
+def main():
 
     # initialization
     start_time = time.time()
@@ -102,8 +94,8 @@ def main(args=None):
     # get path of the toolbox
     status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-    parser = get_parser(param_default)
-    arguments = parser.parse(args)
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
 
     param.fname_data = arguments['-i']
     param.fname_bvecs = arguments['-bvec']
@@ -163,7 +155,7 @@ def main(args=None):
     os.chdir(path_tmp)
 
     # convert dmri to nii format
-    sct_convert.convert(dmri_name+ext_data, dmri_name+ext)
+    convert(dmri_name+ext_data, dmri_name+ext)
 
     # update field in param (because used later).
     # TODO: make this cleaner...
@@ -214,13 +206,13 @@ def dmri_moco(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    im_data = msct_image.Image(file_data + ext_data)
+    im_data = Image(file_data + ext_data)
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
     # Identify b=0 and DWI images
     sct.printv('\nIdentify b=0 and DWI images...', param.verbose)
-    index_b0, index_dwi, nb_b0, nb_dwi = sct_dmri_separate_b0_and_dwi.identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
+    index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
     # check if dmri and bvecs are the same size
     if not nb_b0 + nb_dwi == nt:
@@ -231,7 +223,7 @@ def dmri_moco(param):
     #===================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    im_data_split_list = sct_image.split_data(im_data, 3)
+    im_data_split_list = split_data(im_data, 3)
     for im in im_data_split_list:
         im.save()
 
@@ -243,7 +235,7 @@ def dmri_moco(param):
     im_b0_list = []
     for it in range(nb_b0):
         im_b0_list.append(im_data_split_list[index_b0[it]])
-    im_b0_out = sct_image.concat_data(im_b0_list, 3)
+    im_b0_out = concat_data(im_b0_list, 3)
     im_b0_out.setFileName(file_b0 + ext_data)
     im_b0_out.save()
     sct.printv(('  File created: ' + file_b0), param.verbose)
@@ -259,12 +251,12 @@ def dmri_moco(param):
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi/param.group_size))
-
+    
     # Generate groups indexes
     group_indexes = []
     for iGroup in range(nb_groups):
         group_indexes.append(index_dwi[(iGroup*param.group_size):((iGroup+1)*param.group_size)])
-
+    
     # add the remaining images to the last DWI group
     nb_remaining = nb_dwi%param.group_size  # number of remaining images
     if nb_remaining > 0:
@@ -287,7 +279,7 @@ def dmri_moco(param):
         im_dwi_list = []
         for it in range(nb_dwi_i):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
-        im_dwi_out = sct_image.concat_data(im_dwi_list, 3)
+        im_dwi_out = concat_data(im_dwi_list, 3)
         im_dwi_out.setFileName(file_dwi_merge_i + ext_data)
         im_dwi_out.save()
 
@@ -302,7 +294,7 @@ def dmri_moco(param):
     im_dw_list = []
     for iGroup in range(nb_groups):
         im_dw_list.append(file_dwi_mean[iGroup] + ext_data)
-    im_dw_out = sct_image.concat_data(im_dw_list, 3)
+    im_dw_out = concat_data(im_dw_list, 3)
     im_dw_out.setFileName(file_dwi_group + ext_data)
     im_dw_out.save()
     # cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
@@ -330,7 +322,7 @@ def dmri_moco(param):
         file_dwi_group = file_dwi_group+'_seg'
 
     # extract first DWI volume as target for registration
-    nii = msct_image.Image(file_dwi_group+ext_data)
+    nii = Image(file_dwi_group+ext_data)
     data_crop = nii.data[:, :, :, index_dwi[0]:index_dwi[0]+1]
     nii.data = data_crop
     target_dwi_name = 'target_dwi'
@@ -378,15 +370,13 @@ def dmri_moco(param):
     sct.printv('\nCopy b=0 registration matrices...', param.verbose)
 
     for it in range(nb_b0):
-        shutil.copy('mat_b0groups/' + 'mat.T' + str(it) + ext_mat,
-                    mat_final + 'mat.T' + str(index_b0[it]) + ext_mat)
+        sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+ext_mat, param.verbose)
 
     # Copy DWI registration matrices
     sct.printv('\nCopy DWI registration matrices...', param.verbose)
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
-            shutil.copy('mat_dwigroups/' + 'mat.T' + str(iGroup) + ext_mat,
-                        mat_final + 'mat.T' + str(group_indexes[iGroup][dwi]) + ext_mat)
+            sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+ext_mat, param.verbose)
 
     # Spline Regularization along T
     if param.spline_fitting:
@@ -411,9 +401,9 @@ def dmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    im_dmri = msct_image.Image(file_data+ext_data)
-    im_dmri_moco = msct_image.Image(file_data+param.suffix+ext_data)
-    im_dmri_moco = sct_image.copy_header(im_dmri, im_dmri_moco)
+    im_dmri = Image(file_data+ext_data)
+    im_dmri_moco = Image(file_data+param.suffix+ext_data)
+    im_dmri_moco = copy_header(im_dmri, im_dmri_moco)
     im_dmri_moco.save()
 
 
@@ -424,9 +414,16 @@ def dmri_moco(param):
     sct.run(cmd, param.verbose)
 
 
-def get_parser(param_default):
+def get_parser():
+    # parser initialisation
+    parser = Parser(__file__)
+
+    # initialize parameters
+    param = Param()
+    param_default = Param()
+
     # Initialize the parser
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description('  Motion correction of dMRI data. Some robust features include:\n'
                                  '- group-wise (-g)\n'
                                  '- slice-wise regularized along z using polynomial function (-p). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'
@@ -544,4 +541,6 @@ def get_parser(param_default):
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    param = Param()
+    param_default = Param()
     main()

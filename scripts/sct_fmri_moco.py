@@ -11,22 +11,23 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
-import math
-import os
-import shutil
+
 import sys
+import os
+import commands
+import getopt
 import time
-
-import msct_moco as moco
+import math
 import sct_utils as sct
-import msct_image
-import msct_parser
-import sct_convert
-import sct_image
+import msct_moco as moco
+from sct_convert import convert
+from msct_image import Image
+from sct_image import copy_header, split_data, concat_data
+# from sct_average_data_across_dimension import average_data_across_dimension
+from msct_parser import Parser
 
 
-class Param(object):
+class Param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -48,29 +49,10 @@ class Param(object):
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
 
 
-def main(args=None):
-
-    if args is None:
-        args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
-
-    param = Param()
-    parser = get_parser()
-    arguments = parser.parse(args)
-
-    param.fname_data = arguments['-i']
-    if '-m' in arguments:
-        param.fname_mask = arguments['-m']
-    param.group_size = arguments['-g']
-    path_out = arguments['-ofolder']
-    param_user = ''
-    if '-param' in arguments:
-        param_user = arguments['-param']
-    param.interp = arguments['-x']
-    param.remove_tmp_files = arguments['-r']
-    param.verbose = arguments['-v']
+#=======================================================================================================================
+# main
+#=======================================================================================================================
+def main(path_out, param_user):
 
     # initialization
     start_time = time.time()
@@ -104,20 +86,25 @@ def main(args=None):
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = sct.tmp_create(param.verbose)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    sct.run('mkdir '+path_tmp, param.verbose)
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct_convert.convert(param.fname_data, path_tmp+'fmri.nii')
-
+    convert(param.fname_data, path_tmp+'fmri.nii')
+    # sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
+    #
     # go to tmp folder
     os.chdir(path_tmp)
+    #
+    # # convert fmri to nii format
+    # convert('fmri'+ext_data, 'fmri.nii')
 
     # run moco
     fmri_moco(param)
 
     # come back to parent folder
-    os.chdir(os.pardir)
+    os.chdir('..')
 
     # Generate output files
     path_out = sct.slash_at_the_end(path_out, 1)
@@ -132,7 +119,7 @@ def main(args=None):
     # Delete temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nDelete temporary files...', param.verbose)
-        shutil.rmtree(path_tmp, ignore_errors=True)
+        sct.run('rm -rf '+path_tmp, param.verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -143,8 +130,11 @@ def main(args=None):
     sct.printv('fslview -m ortho,ortho '+param.path_out+file_data+param.suffix+' '+file_data+' &\n', param.verbose, 'info')
 
 
+#=======================================================================================================================
+# fmri_moco: motion correction specific to fmri data
+#=======================================================================================================================
 def fmri_moco(param):
-    """motion correction specific to fmri data"""
+
     file_data = 'fmri'
     ext_data = '.nii'
     mat_final = 'mat_final/'
@@ -153,13 +143,13 @@ def fmri_moco(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = msct_image.Image(file_data+'.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+'.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    im_data = msct_image.Image(file_data + ext_data)
-    im_data_split_list = sct_image.split_data(im_data, 3)
+    im_data = Image(file_data + ext_data)
+    im_data_split_list = split_data(im_data, 3)
     for im in im_data_split_list:
         im.save()
 
@@ -191,11 +181,14 @@ def fmri_moco(param):
         # Merge Images
         sct.printv('Merge consecutive volumes...', param.verbose)
         file_data_merge_i = file_data + '_' + str(iGroup)
+        # cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
+        # for it in range(nt_i):
+        #     cmd = cmd + ' ' + file_data + '_T' + str(index_fmri_i[it]).zfill(4)
 
         im_fmri_list = []
         for it in range(nt_i):
             im_fmri_list.append(im_data_split_list[index_fmri_i[it]])
-        im_fmri_concat = sct_image.concat_data(im_fmri_list, 3)
+        im_fmri_concat = concat_data(im_fmri_list, 3)
         im_fmri_concat.setFileName(file_data_merge_i + ext_data)
         im_fmri_concat.save()
 
@@ -216,8 +209,8 @@ def fmri_moco(param):
     #     cmd = cmd + ' ' + file_data + '_mean_' + str(iGroup)
     im_mean_list = []
     for iGroup in range(nb_groups):
-        im_mean_list.append(msct_image.Image(file_data + '_mean_' + str(iGroup) + ext_data))
-    im_mean_concat = sct_image.concat_data(im_mean_list, 3)
+        im_mean_list.append(Image(file_data + '_mean_' + str(iGroup) + ext_data))
+    im_mean_concat = concat_data(im_mean_list, 3)
     im_mean_concat.setFileName(file_data_groups_means_merge + ext_data)
     im_mean_concat.save()
 
@@ -241,8 +234,11 @@ def fmri_moco(param):
     sct.printv('\nCopy transformations...', param.verbose)
     for iGroup in range(nb_groups):
         for data in range(len(group_indexes[iGroup])):
-            shutil.copy('mat_groups/' + 'mat.T' + str(iGroup) + ext_mat,
-                        mat_final + 'mat.T' + str(group_indexes[iGroup][data]) + ext_mat)
+            # if param.slicewise:
+            #     for iz in range(nz):
+            #         sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+ext_mat, param.verbose)
+            # else:
+            sct.run('cp '+'mat_groups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][data])+ext_mat, param.verbose)
 
     # Apply moco on all fmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -257,9 +253,9 @@ def fmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    im_fmri = msct_image.Image('fmri.nii')
-    im_fmri_moco = msct_image.Image('fmri_moco.nii')
-    im_fmri_moco = sct_image.copy_header(im_fmri, im_fmri_moco)
+    im_fmri = Image('fmri.nii')
+    im_fmri_moco = Image('fmri_moco.nii')
+    im_fmri_moco = copy_header(im_fmri, im_fmri_moco)
     im_fmri_moco.save()
 
     # Average volumes
@@ -273,7 +269,7 @@ def fmri_moco(param):
 
 def get_parser():
     param_default = Param()
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description("""Motion correction of fMRI data. Some robust features include:
   - group-wise (-g)
   - slice-wise regularized along z using polynomial function (-p)
@@ -289,7 +285,7 @@ def get_parser():
                       type_value='int',
                       description='Group nvols successive fMRI volumes for more robustness.',
                       mandatory=False,
-                      default_value=param_default.group_size)
+                      default_value=param.group_size)
     parser.add_option(name='-m',
                       type_value='image_nifti',
                       description='Binary mask to limit voxels considered by the registration metric.',
@@ -353,5 +349,22 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    param = Param()
+    param_default = Param()
 
-    main()
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    param.fname_data = arguments['-i']
+    if '-m' in arguments:
+        param.fname_mask = arguments['-m']
+    param.group_size = arguments['-g']
+    path_out = arguments['-ofolder']
+    param_user = ''
+    if '-param' in arguments:
+        param_user = arguments['-param']
+    param.interp = arguments['-x']
+    param.remove_tmp_files = arguments['-r']
+    param.verbose = arguments['-v']
+
+    main(path_out, param_user)
