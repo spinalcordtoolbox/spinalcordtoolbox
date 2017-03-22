@@ -11,28 +11,23 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
-import math
+from msct_image import Image
+from sct_image import set_orientation
+from sct_utils import extract_fname, printv, add_suffix, tmp_create
+from sct_crop_image import ImageCropper
+import sct_create_mask
+import sct_register_multimodal, sct_apply_transfo
+import numpy as np
 import os
+import math
+import time
 import random
 import shutil
-import time
-
-import numpy as np
-
-import msct_image
-import sct_apply_transfo
-import sct_create_mask
-import sct_crop_image
-import sct_image
-import sct_maths
-import sct_register_multimodal
-import sct_utils as sct
-
 
 ########################################################################################################################
 #                                   CLASS SLICE
 ########################################################################################################################
-class Slice(object):
+class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
@@ -106,37 +101,37 @@ class Slice(object):
 ########################################################################################################################
 # ----------------------------------------------------------------------------------------------------------------------
 def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1, rm_tmp=True, for_model=False):
-    sct.printv('\nPre-process data...', verbose, 'normal')
+    printv('\nPre-process data...', verbose, 'normal')
 
     tmp_dir = 'tmp_preprocessing_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)) + '/'
     if not os.path.exists(tmp_dir):
         os.mkdir(tmp_dir)
 
     shutil.copy(fname_target, tmp_dir)
-    fname_target = ''.join(sct.extract_fname(fname_target)[1:])
+    fname_target = ''.join(extract_fname(fname_target)[1:])
     shutil.copy(fname_sc_seg, tmp_dir)
-    fname_sc_seg = ''.join(sct.extract_fname(fname_sc_seg)[1:])
+    fname_sc_seg = ''.join(extract_fname(fname_sc_seg)[1:])
     os.chdir(tmp_dir)
 
     original_info = {'orientation': None, 'im_sc_seg_rpi': None, 'interpolated_images': []}
 
-    im_target = msct_image.Image(fname_target).copy()
-    im_sc_seg = msct_image.Image(fname_sc_seg).copy()
+    im_target = Image(fname_target).copy()
+    im_sc_seg = Image(fname_sc_seg).copy()
 
     # get original orientation
-    sct.printv('  Reorient...', verbose, 'normal')
+    printv('  Reorient...', verbose, 'normal')
     original_info['orientation'] = im_target.orientation
 
     # assert images are in the same orientation
     assert im_target.orientation == im_sc_seg.orientation, "ERROR: the image to segment and it's SC segmentation are not in the same orientation"
 
-    im_target_rpi = sct_image.set_orientation(im_target, 'RPI')
-    im_sc_seg_rpi = sct_image.set_orientation(im_sc_seg, 'RPI')
+    im_target_rpi = set_orientation(im_target, 'RPI')
+    im_sc_seg_rpi = set_orientation(im_sc_seg, 'RPI')
     original_info['im_sc_seg_rpi'] = im_sc_seg_rpi.copy()  # target image in RPI will be used to post-process segmentations
 
     # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy
     if denoising:
-        sct.printv('  Denoise...', verbose, 'normal')
+        printv('  Denoise...', verbose, 'normal')
         # crop image before denoising to fasten denoising
         nx, ny, nz, nt, px, py, pz, pt = im_target_rpi.dim
         size_x, size_y = (square_size_size_mm+1)/px, (square_size_size_mm+1)/py
@@ -145,48 +140,49 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         fname_mask = 'mask_pre_crop.nii.gz'
         sct_create_mask.main(['-i', im_target_rpi.absolutepath, '-p', 'centerline,'+im_sc_seg_rpi.absolutepath, '-f', 'box', '-size', str(size), '-o', fname_mask])
         # crop image
-        fname_target_crop = sct.add_suffix(im_target_rpi.absolutepath, '_pre_crop')
-        crop_im = sct_crop_image.ImageCropper(input_file=im_target_rpi.absolutepath, output_file=fname_target_crop, mask=fname_mask)
+        fname_target_crop = add_suffix(im_target_rpi.absolutepath, '_pre_crop')
+        crop_im = ImageCropper(input_file=im_target_rpi.absolutepath, output_file=fname_target_crop, mask=fname_mask)
         im_target_rpi_crop = crop_im.crop()
         # crop segmentation
-        fname_sc_seg_crop = sct.add_suffix(im_sc_seg_rpi.absolutepath, '_pre_crop')
-        crop_sc_seg = sct_crop_image.ImageCropper(input_file=im_sc_seg_rpi.absolutepath, output_file=fname_sc_seg_crop, mask=fname_mask)
+        fname_sc_seg_crop = add_suffix(im_sc_seg_rpi.absolutepath, '_pre_crop')
+        crop_sc_seg = ImageCropper(input_file=im_sc_seg_rpi.absolutepath, output_file=fname_sc_seg_crop, mask=fname_mask)
         im_sc_seg_rpi_crop = crop_sc_seg.crop()
         # denoising
+        from sct_maths import denoise_nlmeans
         block_radius = int(im_target_rpi_crop.data.shape[2]/2) if im_target_rpi_crop.data.shape[2]<10 else 5
-        data_denoised = sct_maths.denoise_nlmeans(im_target_rpi_crop.data, block_radius = block_radius)
+        data_denoised = denoise_nlmeans(im_target_rpi_crop.data, block_radius = block_radius)
         im_target_rpi_crop.data = data_denoised
 
     # interpolate image to reference square image (resample and square crop centered on SC)
-    sct.printv('  Interpolate data to the model space...', verbose, 'normal')
+    printv('  Interpolate data to the model space...', verbose, 'normal')
     list_im_slices = interpolate_im_to_ref(im_target_rpi_crop, im_sc_seg_rpi_crop, new_res=new_res, sq_size_size_mm=square_size_size_mm)
     original_info['interpolated_images'] = list_im_slices # list of images (not Slice() objects)
 
-    sct.printv('  Mask data using the spinal cord segmentation...', verbose, 'normal')
+    printv('  Mask data using the spinal cord segmentation...', verbose, 'normal')
     list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi_crop, im_sc_seg_rpi_crop, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=1)
     for i in range(len(list_im_slices)):
         # list_im_slices[i].data[list_sc_seg_slices[i].data == 0] = 0
         list_sc_seg_slices[i] = binarize(list_sc_seg_slices[i], thr_min=0.5, thr_max=1)
         list_im_slices[i].data = list_im_slices[i].data * list_sc_seg_slices[i].data
 
-    sct.printv('  Split along rostro-caudal direction...', verbose, 'normal')
+    printv('  Split along rostro-caudal direction...', verbose, 'normal')
     list_slices_target = [Slice(slice_id=i, im=im_slice.data, gm_seg=[], wm_seg=[]) for i, im_slice in enumerate(list_im_slices)]
 
     # load vertebral levels
     if fname_level is not None:
-        sct.printv('  Load vertebral levels...', verbose, 'normal')
+        printv('  Load vertebral levels...', verbose, 'normal')
         # copy level file to tmp dir
         os.chdir('..')
         shutil.copy(fname_level, tmp_dir)
         os.chdir(tmp_dir)
         # change fname level to only file name (path = tmp dir now)
-        fname_level = ''.join(sct.extract_fname(fname_level)[1:])
+        fname_level = ''.join(extract_fname(fname_level)[1:])
         # load levels
         list_slices_target = load_level(list_slices_target, fname_level)
 
     # load manual gmseg if there is one (model data)
     if fname_manual_gmseg is not None:
-        sct.printv('\n\tLoad manual GM segmentation(s) ...', verbose, 'normal')
+        printv('\n\tLoad manual GM segmentation(s) ...', verbose, 'normal')
         list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=for_model)
 
     os.chdir('..')
@@ -216,7 +212,7 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
 
     sq_size = int(sq_size_size_mm/new_res)
     # create a reference image : square of ones
-    im_ref = msct_image.Image(np.ones((sq_size, sq_size, 1), dtype=np.int), dim=(sq_size, sq_size, 1, 0, new_res, new_res, pz, 0), orientation='RPI')
+    im_ref = Image(np.ones((sq_size, sq_size, 1), dtype=np.int), dim=(sq_size, sq_size, 1, 0, new_res, new_res, pz, 0), orientation='RPI')
 
     # copy input qform matrix to reference image
     im_ref.hdr.set_qform(im_input.hdr.get_qform())
@@ -230,7 +226,7 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
     fname_ref = 'im_ref.nii.gz'
     im_ref.setFileName(fname_ref)
     im_ref.save()
-    im_ref = sct_image.set_orientation(im_ref, 'RPI', fname_out=fname_ref)
+    im_ref = set_orientation(im_ref, 'RPI', fname_out=fname_ref)
 
     # set header origin to zero to get physical coordinates of the center of the square
     im_ref.hdr.as_analyze_map()['qoffset_x'] = 0
@@ -272,12 +268,12 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
 # ----------------------------------------------------------------------------------------------------------------------
 def load_level(list_slices_target, fname_level):
     verbose = 1
-    path_level, file_level, ext_level = sct.extract_fname(fname_level)
+    path_level, file_level, ext_level = extract_fname(fname_level)
 
     #  ####### Check if the level file is an image or a text file
     # Level file is an image
     if ext_level in ['.nii', '.nii.gz']:
-        im_level = msct_image.Image(fname_level)
+        im_level = Image(fname_level)
         im_level.change_orientation('IRP')
 
         list_level = []
@@ -291,7 +287,7 @@ def load_level(list_slices_target, fname_level):
                 # change med in int if it is an int
                 med = int(med) if int(med)==med else med
             except Exception, e:
-                sct.printv('WARNING: ' + str(e) + '\nNo level label found. Level will be set to 0 for this slice', verbose, 'warning')
+                printv('WARNING: ' + str(e) + '\nNo level label found. Level will be set to 0 for this slice', verbose, 'warning')
                 l = 0
                 med = 0
             list_level.append(l)
@@ -353,7 +349,7 @@ def load_level(list_slices_target, fname_level):
     # Level file is not recognized
     else:
         list_level = None
-        sct.printv('ERROR: the level file is nor an image nor a text file ...', verbose, 'error')
+        printv('ERROR: the level file is nor an image nor a text file ...', verbose, 'error')
 
     #  ####### Set level number for each slice of list_slices_target:
     for target_slice, level in zip(list_slices_target, list_level):
@@ -372,14 +368,14 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
         os.chdir('..')
         shutil.copy(fname_manual_gmseg, tmp_dir)
         # change fname level to only file name (path = tmp dir now)
-        path_gm, file_gm, ext_gm = sct.extract_fname(fname_manual_gmseg)
+        path_gm, file_gm, ext_gm = extract_fname(fname_manual_gmseg)
         fname_manual_gmseg = file_gm + ext_gm
         os.chdir(tmp_dir)
 
-        im_manual_gmseg = msct_image.Image(fname_manual_gmseg)
+        im_manual_gmseg = Image(fname_manual_gmseg)
 
         # reorient to RPI
-        im_manual_gmseg = sct_image.set_orientation(im_manual_gmseg, 'RPI')
+        im_manual_gmseg = set_orientation(im_manual_gmseg, 'RPI')
 
         # assert gmseg has the right number of slices
         assert im_manual_gmseg.data.shape[2] == len(list_slices_target), 'ERROR: the manual GM segmentation has not the same number of slices than the image.'
@@ -414,12 +410,12 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
 
     Parameters
     ----------
-    im_src: class msct_image.Image: source image
-    im_dest: class msct_image.Image: destination image
+    im_src: class Image: source image
+    im_dest: class Image: destination image
     param_reg: str: registration parameter
     path_copy_warp: path: path to copy the warping fields
 
-    Returns: im_src_reg: class msct_image.Image: source image registered on destination image
+    Returns: im_src_reg: class Image: source image registered on destination image
     -------
 
     '''
@@ -428,7 +424,7 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     im_src_seg = binarize(im_src, thr_min=1, thr_max=1)
     im_dest_seg = binarize(im_dest)
     # create tmp dir and go in it
-    tmp_dir = sct.tmp_create()
+    tmp_dir = tmp_create()
     os.chdir(tmp_dir)
     # save image and seg
     fname_src = 'src.nii.gz'
@@ -451,15 +447,15 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
                                        '-param', param_reg])
 
     # get registration result
-    fname_src_reg = sct.add_suffix(fname_src, '_reg')
-    im_src_reg = msct_image.Image(fname_src_reg)
+    fname_src_reg = add_suffix(fname_src, '_reg')
+    im_src_reg = Image(fname_src_reg)
     # get out of tmp dir
     os.chdir('..')
     # copy warping fields
     if path_copy_warp is not None and os.path.isdir(os.path.abspath(path_copy_warp)):
         path_copy_warp = os.path.abspath(path_copy_warp)
-        file_src = sct.extract_fname(fname_src)[1]
-        file_dest = sct.extract_fname(fname_dest)[1]
+        file_src = extract_fname(fname_src)[1]
+        file_dest = extract_fname(fname_dest)[1]
         fname_src2dest = 'warp_' + file_src +'2' + file_dest +'.nii.gz'
         fname_dest2src = 'warp_' + file_dest +'2' + file_src +'.nii.gz'
         shutil.copy(tmp_dir +'/' + fname_src2dest, path_copy_warp + '/')
@@ -472,10 +468,10 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
 
 def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     # create tmp dir and go in it
-    tmp_dir = sct.tmp_create()
+    tmp_dir = tmp_create()
     # copy warping field to tmp dir
     shutil.copy(warp, tmp_dir)
-    warp = ''.join(sct.extract_fname(warp)[1:])
+    warp = ''.join(extract_fname(warp)[1:])
     # go to tmp dir
     os.chdir(tmp_dir)
     # save image and seg
@@ -486,13 +482,13 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     im_dest.setFileName(fname_dest)
     im_dest.save()
     # apply warping field
-    fname_src_reg = sct.add_suffix(fname_src, '_reg')
+    fname_src_reg = add_suffix(fname_src, '_reg')
     sct_apply_transfo.main(args=['-i', fname_src,
                                   '-d', fname_dest,
                                   '-w', warp,
                                   '-x', interp])
 
-    im_src_reg = msct_image.Image(fname_src_reg)
+    im_src_reg = Image(fname_src_reg)
     # get out of tmp dir
     os.chdir('..')
     if rm_tmp:
@@ -578,7 +574,7 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, val_min=None, val_ma
             max_data = max(np.max(data_in_gm[data_in_gm.nonzero()]), np.max(data_in_wm[data_in_wm.nonzero()]))
             new_data = ((data - min_data) * (val_max - val_min) / (max_data - min_data)) + val_min
         except ValueError:
-            sct.printv('WARNING: an incomplete slice will not be normalized',1,'warning')
+            printv('WARNING: an incomplete slice will not be normalized',1,'warning')
             return data
     # else (=normal data): use median values to normalize data
     else:

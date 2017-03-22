@@ -36,7 +36,7 @@ def test(data_path):
     ## Removed orientation test: see issue #765 for guidelines of what to do to put it back
     # TEST ORIENTATION
     # test 3d data
-    cmd = 'sct_image -i ' + data_path +folder_data[1] + file_data[1] + ' -getorient '
+    cmd = 'sct_image -i ' + data_path + folder_data[1] + file_data[1] + ' -getorient '
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     s1, o1 = commands.getstatusoutput(cmd)
     status += s1
@@ -122,6 +122,4 @@ def test(data_path):
 
 if __name__ == "__main__":
     # call main function
-    import sys
-    # print sys.argv[1:2][0]
-    test(sys.argv[1:2][0])
+    test()

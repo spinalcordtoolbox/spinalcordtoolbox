@@ -11,16 +11,15 @@
 #########################################################################################
 
 import sys
-
 import sct_utils as sct
-import msct_parser
+from msct_parser import Parser
 
 
 # PARSER
 # ==========================================================================================
 def get_parser():
     # parser initialisation
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description('Compute Maximum Spinal Cord Compression (MSCC) as in: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243(3):820-827.')
     parser.add_option(name='-di',
                       type_value='float',
@@ -54,13 +53,10 @@ def main(args=None):
     # check user arguments
     if not args:
         args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(args)
+    arguments = parser.parse(sys.argv[1:])
     di = arguments['-di']
     da = arguments['-da']
     db = arguments['-db']
