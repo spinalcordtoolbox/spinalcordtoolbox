@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 
-import commands
-import sys
-from time import time
-
-import nibabel as nib
+import sys, commands
 import numpy as np
-
+from time import time
+import nibabel as nib
+from msct_parser import Parser
 import sct_utils as sct
 
 # Get path of the toolbox
@@ -16,7 +14,7 @@ sys.path.append(path_sct + '/scripts')
 
 
 # DEFAULT PARAMETERS
-class Param(object):
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -27,10 +25,93 @@ class Param(object):
         self.output_file_name = ''
 
 
-def get_parser():
+def main(file_to_denoise, param, output_file_name) :
+
+    path, file, ext = sct.extract_fname(file_to_denoise)
+
+    img = nib.load(file_to_denoise)
+    hdr_0 = img.get_header()
+
+    data = img.get_data()
+    aff = img.get_affine()
+
+    if min(data.shape) <= 5:
+        sct.printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')
+        block_radius = min(data.shape) - 1
+    else:
+        block_radius = 5  # default value
+
+    # Process for manual detecting of background
+    # mask = data[:, :, :] > noise_threshold
+    # data = data[:, :, :]
+
+    from dipy.denoise.nlmeans import nlmeans
+
+    if '-std' in arguments:
+        sigma = std_noise
+        # Application of NLM filter to the image
+        print 'Applying Non-local mean filter...'
+        if param.parameter == 'Rician':
+            den = nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
+        else : den = nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
+    else:
+        # # Process for manual detecting of background
+        mask = data > noise_threshold
+        sigma = np.std(data[~mask])
+        # Application of NLM filter to the image
+        print 'Applying Non-local mean filter...'
+        if param.parameter == 'Rician':
+            den = nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
+        else: den = nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
+
+    t = time()
+    print("total time", time() - t)
+    print("vol size", den.shape)
+
+
+    axial_middle = data.shape[2] / 2
+
+    before = data[:, :, axial_middle].T
+    after = den[:, :, axial_middle].T
+
+    diff_3d = np.absolute(den.astype('f8') - data.astype('f8'))
+    difference = np.absolute(after.astype('f8') - before.astype('f8'))
+    if '-std' not in arguments:
+        difference[~mask[:, :, axial_middle].T] = 0
+
+    if param.verbose == 2 :
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(1, 3)
+        ax[0].imshow(before, cmap='gray', origin='lower')
+        ax[0].set_title('before')
+        ax[1].imshow(after, cmap='gray', origin='lower')
+        ax[1].set_title('after')
+        ax[2].imshow(difference, cmap='gray', origin='lower')
+        ax[2].set_title('difference')
+        for i in range(3):
+            ax[i].set_axis_off()
+
+        plt.show()
+
+    #Save files
+    img_denoise = nib.Nifti1Image(den, None, hdr_0)
+    img_diff = nib.Nifti1Image(diff_3d, None, hdr_0)
+    if output_file_name != None :
+        output_file_name =output_file_name
+    else: output_file_name = file + '_denoised' + ext
+    nib.save(img_denoise,output_file_name)
+    nib.save(img_diff, file + '_difference' +ext)
+
+
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+    # initialize parameters
+
 
     # Initialize the parser
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description('Utility function to denoise images. (Return the denoised image and also the difference between the input and the output.)')
     parser.add_option(name="-i",
                       type_value='file',
@@ -68,22 +149,6 @@ def get_parser():
                       mandatory=False,
                       default_value='0',
                       example=['0', '1', '2'])
-
-    return parser
-
-
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-def main(args=None):
-
-    if args is None:
-        args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
-
-    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     parameter = arguments["-p"]
@@ -105,79 +170,4 @@ def main(args=None):
     param.remove_temp_files =remove_temp_files
     param.parameter = parameter
 
-    path, file, ext = sct.extract_fname(file_to_denoise)
-
-    img = nib.load(file_to_denoise)
-    hdr_0 = img.get_header()
-
-    data = img.get_data()
-    aff = img.get_affine()
-
-    if min(data.shape) <= 5:
-        sct.printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')
-        block_radius = min(data.shape) - 1
-    else:
-        block_radius = 5  # default value
-
-    # Process for manual detecting of background
-    # mask = data[:, :, :] > noise_threshold
-    # data = data[:, :, :]
-
-    from dipy.denoise.nlmeans import nlmeans
-
-    if '-std' in arguments:
-        sigma = std_noise
-        # Application of NLM filter to the image
-        print 'Applying Non-local mean filter...'
-        if param.parameter == 'Rician':
-            den = nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
-        else:
-            den = nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
-    else:
-        # # Process for manual detecting of background
-        mask = data > noise_threshold
-        sigma = np.std(data[~mask])
-        # Application of NLM filter to the image
-        print 'Applying Non-local mean filter...'
-        if param.parameter == 'Rician':
-            den = nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
-        else:
-            den = nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
-
-    t = time()
-    print("total time", time() - t)
-    print("vol size", den.shape)
-
-    axial_middle = data.shape[2] / 2
-
-    before = data[:, :, axial_middle].T
-    after = den[:, :, axial_middle].T
-
-    diff_3d = np.absolute(den.astype('f8') - data.astype('f8'))
-    difference = np.absolute(after.astype('f8') - before.astype('f8'))
-    if '-std' not in arguments:
-        difference[~mask[:, :, axial_middle].T] = 0
-
-    if param.verbose == 2:
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots(1, 3)
-        ax[0].imshow(before, cmap='gray', origin='lower')
-        ax[0].set_title('before')
-        ax[1].imshow(after, cmap='gray', origin='lower')
-        ax[1].set_title('after')
-        ax[2].imshow(difference, cmap='gray', origin='lower')
-        ax[2].set_title('difference')
-        for i in range(3):
-            ax[i].set_axis_off()
-
-        plt.show()
-
-    # Save files
-    img_denoise = nib.Nifti1Image(den, None, hdr_0)
-    img_diff = nib.Nifti1Image(diff_3d, None, hdr_0)
-    if output_file_name != None:
-        output_file_name = output_file_name
-    else:
-        output_file_name = file + '_denoised' + ext
-    nib.save(img_denoise, output_file_name)
-    nib.save(img_diff, file + '_difference' + ext)
+    main(file_to_denoise, param, output_file_name)

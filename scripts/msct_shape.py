@@ -14,21 +14,19 @@
 ########################################################################################################################
 
 
-import math
-import os
-import shutil
-import time
-from itertools import compress
-from random import randint
-
-import matplotlib.pyplot as plt
 import numpy as np
-from skimage import measure, filters
-
 import sct_utils as sct
-import msct_types
-import sct_image
-import sct_straighten_spinalcord
+import os
+import time
+import math
+from random import randint
+from skimage import measure, filters
+import shutil
+import matplotlib.pyplot as plt
+from itertools import compress
+from sct_image import Image, set_orientation
+from msct_types import Centerline
+from sct_straighten_spinalcord import smooth_centerline
 
 
 def find_contours(image, threshold=0.5, smooth_sigma=0.0, verbose=1):
@@ -201,9 +199,9 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
 
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    im_seg = sct_image.Image(file_data + ext_data)
+    im_seg = Image(file_data + ext_data)
     fname_segmentation_orient = 'segmentation_rpi' + ext_data
-    image = sct_image.set_orientation(im_seg, 'RPI')
+    image = set_orientation(im_seg, 'RPI')
     image.setFileName(fname_segmentation_orient)
     image.save()
 
@@ -219,24 +217,20 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
 
     # compute the spinal cord centerline based on the spinal cord segmentation
     number_of_points = 5 * nz
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv =\
-        sct_straighten_spinalcord.smooth_centerline(fname_segmentation_orient, algo_fitting='nurbs',
-                                                    verbose=verbose, nurbs_pts_number=number_of_points,
-                                                    all_slices=False, phys_coordinates=True, remove_outliers=True)
-    centerline = msct_types.Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,
-                                       y_centerline_deriv, z_centerline_deriv)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_segmentation_orient, algo_fitting='nurbs', verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
+    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
     # Compute vertebral distribution along centerline based on position of intervertebral disks
     if fname_disks_image is not None:
         fname_disks = os.path.abspath(fname_disks_image)
         path_data, file_data, ext_data = sct.extract_fname(fname_disks)
-        im_disks = sct_image.Image(file_data + ext_data)
+        im_disks = Image(file_data + ext_data)
         fname_disks_orient = 'disks_rpi' + ext_data
-        image_disks = sct_image.set_orientation(im_disks, 'RPI')
+        image_disks = set_orientation(im_disks, 'RPI')
         image_disks.setFileName(fname_disks_orient)
         image_disks.save()
 
-        image_disks = sct_image.Image(fname_disks_orient)
+        image_disks = Image(fname_disks_orient)
         coord = image_disks.getNonZeroCoordinates(sorting='z', reverse_coord=True)
         coord_physical = []
         for c in coord:
@@ -248,9 +242,7 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
     # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
     for index in range(centerline.number_of_points):
         value_out = -5.0
-        current_patch = centerline.extract_perpendicular_square(image, index, resolution=resolution,
-                                                                interpolation_mode=interpolation_mode,
-                                                                border='constant', cval=value_out)
+        current_patch = centerline.extract_perpendicular_square(image, index, resolution=resolution, interpolation_mode=interpolation_mode, border='constant', cval=value_out)
 
         # check for pixels close to the spinal cord segmentation that are out of the image
         from skimage.morphology import dilation

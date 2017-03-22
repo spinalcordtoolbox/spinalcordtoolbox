@@ -10,27 +10,24 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
-import re
-import shutil
-import sys
-
-from numpy import newaxis, shape
-
-import msct_image
-import msct_parser
-import sct_utils as sct
+import sys, os
+from numpy import concatenate, shape, newaxis
+from msct_parser import Parser
+from msct_image import Image, get_dimension
+from sct_utils import printv, add_suffix, extract_fname, run, tmp_create
 
 
-class Param(object):
+class Param:
     def __init__(self):
         self.verbose = '1'
 
-
-def get_parser(param):
+# PARSER
+# ==========================================================================================
+def get_parser():
+    param = Param()
 
     # Initialize the parser
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description('Perform manipulations on images (e.g., pad, change space, split along dimension). Inputs can be a number, a 4d image, or several 3d images separated with ","')
     parser.add_option(name="-i",
                       type_value=[[','], 'file'],
@@ -113,22 +110,19 @@ def get_parser(param):
     return parser
 
 
-def main(args=None):
-
-    param = Param()
+# MAIN
+# ==========================================================================================
+def main(args = None):
     dim_list = ['x', 'y', 'z', 't']
 
     if not args:
         args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # initialization
     output_type = ''
 
     # Get parser info
-    parser = get_parser(param)
+    parser = get_parser()
     arguments = parser.parse(args)
     fname_in = arguments["-i"]
     n_in = len(fname_in)
@@ -139,29 +133,33 @@ def main(args=None):
     else:
         fname_out = None
 
+    # Open file(s)
+    # im_in_list = [Image(fn) for fn in fname_in]
+
+    # run command
     if "-pad" in arguments:
         # TODO: check input is 3d
-        im_in = msct_image.Image(fname_in[0])
+        im_in = Image(fname_in[0])
         padx, pady, padz = arguments["-pad"].split(',')
         padx, pady, padz = int(padx), int(pady), int(padz)
         im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady, pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
 
     elif "-pad-asym" in arguments:
         # TODO: check input is 3d
-        im_in = msct_image.Image(fname_in[0])
+        im_in = Image(fname_in[0])
         padxi, padxf, padyi, padyf, padzi, padzf = arguments["-pad-asym"].split(',')
         padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
         im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
-
+        
     elif "-copy-header" in arguments:
-        im_in = msct_image.Image(fname_in[0])
-        im_dest = msct_image.Image(arguments["-copy-header"])
+        im_in = Image(fname_in[0])
+        im_dest = Image(arguments["-copy-header"])
         im_out = [copy_header(im_in, im_dest)]
 
     elif "-split" in arguments:
         dim = arguments["-split"]
         assert dim in dim_list
-        im_in = msct_image.Image(fname_in[0])
+        im_in = Image(fname_in[0])
         dim = dim_list.index(dim)
         im_out = split_data(im_in, dim)
 
@@ -173,37 +171,37 @@ def main(args=None):
 
     elif '-type' in arguments:
         output_type = arguments['-type']
-        im_in = msct_image.Image(fname_in[0])
+        im_in = Image(fname_in[0])
         im_out = [im_in]  #TODO: adapt to fname_in
 
     elif "-getorient" in arguments:
-        im_in = msct_image.Image(fname_in[0])
+        im_in = Image(fname_in[0])
         orient = orientation(im_in, get=True, verbose=verbose)
         im_out = None
 
     elif "-setorient" in arguments:
         print fname_in[0]
-        im_in = msct_image.Image(fname_in[0])
+        im_in = Image(fname_in[0])
         im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose, fname_out=fname_out)]
 
     elif "-setorient-data" in arguments:
-        im_in = msct_image.Image(fname_in[0])
+        im_in = Image(fname_in[0])
         im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
 
     elif '-mcs' in arguments:
-        im_in = msct_image.Image(fname_in[0])
+        im_in = Image(fname_in[0])
         if n_in != 1:
-            sct.printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
+            printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
         if len(im_in.data.shape) != 5:
-            sct.printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
+            printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
         im_out = multicomponent_split(im_in)
 
     elif '-omc' in arguments:
-        im_ref = msct_image.Image(fname_in[0])
+        im_ref = Image(fname_in[0])
         for fname in fname_in:
-            im = msct_image.Image(fname)
+            im = Image(fname)
             if im.data.shape != im_ref.data.shape:
-                sct.printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
+                printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
             del im
         im_out = [multicomponent_merge(fname_in)] #TODO: adapt to fname_in
 
@@ -214,39 +212,38 @@ def main(args=None):
 
     else:
         im_out = None
-        sct.printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
+        printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
     # Write output
     if im_out is not None:
-        sct.printv('\nGenerate output files...', verbose)
+        printv('\nGenerate output files...', verbose)
         # if only one output
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
-            im_out[0].save(squeeze_data=False, data_type=output_type)
+            im_out[0].save(squeeze_data=False, type=output_type)
         if '-mcs' in arguments:
             # use input file name and add _X, _Y _Z. Keep the same extension
             fname_out = []
             for i_dim in xrange(3):
-                fname_out.append(sct.add_suffix(fname_in[0], '_'+dim_list[i_dim].upper()))
+                fname_out.append(add_suffix(fname_in[0], '_'+dim_list[i_dim].upper()))
                 im_out[i_dim].setFileName(fname_out[i_dim])
                 im_out[i_dim].save()
         if '-split' in arguments:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             fname_out = []
             for i, im in enumerate(im_out):
-                fname_out.append(sct.add_suffix(fname_in[0], '_'+dim_list[dim].upper()+str(i).zfill(4)))
+                fname_out.append(add_suffix(fname_in[0], '_'+dim_list[dim].upper()+str(i).zfill(4)))
                 im.setFileName(fname_out[i])
                 im.save()
 
-        sct.printv('Created file(s):\n--> '+str(fname_out)+'\n', verbose, 'info')
-        # sct.printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
+        printv('Created file(s):\n--> '+str(fname_out)+'\n', verbose, 'info')
+        # printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
         print(orient)
-        return orient
     elif '-display-warp' in arguments:
-        sct.printv('Warping grid generated.\n', verbose, 'info')
+        printv('Warping grid generated.\n', verbose, 'info')
     else:
-        sct.printv('An error occurred in sct_image...', verbose, "error")
+        printv('An error occurred in sct_image...', verbose, "error")
 
 
 def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
@@ -346,7 +343,7 @@ def concat_data(fname_in_list, dim, pixdim=None):
     data_concat_list = []
 
     # check if shape of first image is smaller than asked dim to concatenate along
-    data0 = msct_image.Image(fname_in_list[0]).data
+    data0 = Image(fname_in_list[0]).data
     if len(data0.shape) <= dim:
         expand_dim = True
     else:
@@ -356,7 +353,7 @@ def concat_data(fname_in_list, dim, pixdim=None):
         # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
         if i != 0 and i % 100 == 0:
             data_concat_list.append(concatenate(dat_list, axis=dim))
-            im = msct_image.Image(fname)
+            im = Image(fname)
             dat = im.data
             if expand_dim:
                 dat = expand_dims(dat, dim)
@@ -364,7 +361,7 @@ def concat_data(fname_in_list, dim, pixdim=None):
             del im
             del dat
         else:
-            im = msct_image.Image(fname)
+            im = Image(fname)
             dat = im.data
             if expand_dim:
                 dat = expand_dims(dat, dim)
@@ -377,7 +374,7 @@ def concat_data(fname_in_list, dim, pixdim=None):
     else:
         data_concat = concatenate(dat_list, axis=dim)
     # write file
-    im_out = msct_image.Image(fname_in_list[0]).copy()
+    im_out = Image(fname_in_list[0]).copy()
     im_out.data = data_concat
     im_out.setFileName(im_out.file_name+'_concat'+im_out.ext)
 
@@ -398,11 +395,12 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     :return: none
     """
     from numpy import zeros, reshape
+    from msct_image import get_dimension
     import nibabel as nib
 
     # get dimensions
     # nib.load(fname_list[0])
-    # im_0 = msct_image.Image(fname_list[0])
+    # im_0 = Image(fname_list[0])
     nx, ny = nib.load(fname_list[0]).shape[0:2]
     nz = len(fname_list)
     # warp3d = tuple([nx, ny, nz, 1, 3])
@@ -421,7 +419,7 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     nib.save(im_warp3d, fname_warp3d)
     # copy header from 2d warping field
     #
-    # im_dest = msct_image.Image(fname_dest)
+    # im_dest = Image(fname_dest)
     # im_warp3d = im_dest.copy()
     # im_warp3d.data = warp3d.astype('float32')
     # # add dimension between 3rd and 5th
@@ -465,7 +463,7 @@ def multicomponent_merge(fname_list):
     from numpy import zeros, reshape
     # WARNING: output multicomponent is not optimal yet, some issues may be related to the use of this function
 
-    im_0 = msct_image.Image(fname_list[0])
+    im_0 = Image(fname_list[0])
     new_shape = list(im_0.data.shape)
     if len(new_shape) == 3:
         new_shape.append(1)
@@ -474,7 +472,7 @@ def multicomponent_merge(fname_list):
 
     data_out = zeros(new_shape)
     for i, fname in enumerate(fname_list):
-        im = msct_image.Image(fname)
+        im = Image(fname)
         dat = im.data
         if len(dat.shape) == 2:
             data_out[:, :, 0, 0, i] = dat.astype('float32')
@@ -493,25 +491,25 @@ def multicomponent_merge(fname_list):
 
 def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=''):
     verbose = 0 if get else verbose
-    sct.printv('\nGet dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = msct_image.get_dimension(im)
+    printv('\nGet dimensions of data...', verbose)
+    nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
-    sct.printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
+    printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
     # if data are 2d or 3d, get orientation from header using fslhd
 
     if (nz == 1 or nt==1) and len(im.data.shape)<5:
         if get:
             try:
-                sct.printv('\nGet orientation...', verbose)
+                printv('\nGet orientation...', verbose)
                 im_out = None
                 ori = get_orientation(im)
             except Exception, e:
-                sct.printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
+                printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
             return ori
         elif set:
             # set orientation
-            sct.printv('\nChange orientation...', verbose)
+            printv('\nChange orientation...', verbose)
             im_out = set_orientation(im, ori)
         elif set_data:
             im_out = set_orientation(im, ori, True)
@@ -523,16 +521,16 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
         # 4D data: split along T dimension
         # or 5D data: split along 5th dimension
         # Create a temporary directory and go in it
-        tmp_folder = sct.tmp_create(verbose)
+        tmp_folder = tmp_create(verbose)
         chdir(tmp_folder)
         if len(im.data.shape) == 5 and im.data.shape[-1] not in [0, 1]:
             # 5D data
-            sct.printv('\nSplit along 5th dimension...', verbose)
+            printv('\nSplit along 5th dimension...', verbose)
             im_split_list = multicomponent_split(im)
             dim = 5
         else:
             # 4D data
-            sct.printv('\nSplit along T dimension...', verbose)
+            printv('\nSplit along T dimension...', verbose)
             im_split_list = split_data(im, 3)
             dim = 4
         for im_s in im_split_list:
@@ -540,38 +538,38 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
 
         if get:
             # get orientation
-            sct.printv('\nGet orientation...', verbose)
+            printv('\nGet orientation...', verbose)
             im_out=None
             ori = get_orientation(im_split_list[0])
-            chdir(os.pardir)
-            shutil.rmtree(tmp_folder, ignore_errors=True)
+            chdir('..')
+            run('rm -rf '+tmp_folder, error_exit='warning')
             return ori
         elif set:
             # set orientation
-            sct.printv('\nChange orientation...', verbose)
+            printv('\nChange orientation...', verbose)
             im_changed_ori_list = []
             for im_s in im_split_list:
                 im_set = set_orientation(im_s, ori)
                 im_changed_ori_list.append(im_set)
-            sct.printv('\nMerge file back...', verbose)
+            printv('\nMerge file back...', verbose)
             if dim == 4:
                 im_out = concat_data(im_changed_ori_list, 3)
             elif dim == 5:
                 fname_changed_ori_list = [im_ch_ori.absolutepath for im_ch_ori in im_changed_ori_list]
                 im_out = multicomponent_merge(fname_changed_ori_list)
         elif set_data:
-            sct.printv('\nSet orientation of the data only is not compatible with 4D data...', verbose, 'error')
+            printv('\nSet orientation of the data only is not compatible with 4D data...', verbose, 'error')
         else:
             im_out = None
 
         # Go back to previous directory:
-        chdir(os.pardir)
-        shutil.rmtree(tmp_folder, ignore_errors=True)
+        chdir('..')
+        run('rm -rf '+tmp_folder, error_exit='warning')
 
     if fname_out:
         im_out.setFileName(fname_out)
         if fname_out != im.file_name+'_'+ori+im.ext:
-            os.remove(im.file_name + '_' + ori + im.ext)
+            run('rm -f ' + im.file_name + '_' + ori + im.ext)
     else:
         im_out.setFileName(im.file_name + '_' + ori + im.ext)
     return im_out
@@ -594,26 +592,31 @@ def get_orientation(im):
     return ori
 
 
+# get_orientation
+# ==========================================================================================
 def get_orientation_3d(im, filename=False):
     """
     Get orientation from 3D data
     :param im:
     :return:
     """
-    regex_str = 'Input image orientation : ([A-Z]{3})\n?'
+    from sct_utils import run
+    string_out = 'Input image orientation : '
     # get orientation
     if filename:
-        status, output = sct.run('isct_orientation3d -i '+im+' -get ', 0)
+        status, output = run('isct_orientation3d -i '+im+' -get ', 0)
     else:
-        status, output = sct.run('isct_orientation3d -i '+im.absolutepath+' -get ', 0)
+        status, output = run('isct_orientation3d -i '+im.absolutepath+' -get ', 0)
     # check status
     if status != 0:
-        sct.printv('ERROR in get_orientation.', 1, 'error')
-    orientation = re.search(regex_str,output).groups()[0]
+        printv('ERROR in get_orientation.', 1, 'error')
+    orientation = output[output.index(string_out)+len(string_out):]
     # orientation = output[26:]
     return orientation
 
 
+# set_orientation
+# ==========================================================================================
 def set_orientation(im, orientation, data_inversion=False, filename=False, fname_out=''):
     """
     Set orientation on image
@@ -627,21 +630,22 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
     if fname_out:
         pass
     elif filename:
-        path, fname, ext = sct.extract_fname(im)
+        path, fname, ext = extract_fname(im)
         fname_out = fname+'_'+orientation+ext
     else:
         fname_out = im.file_name+'_'+orientation+im.ext
 
     if not data_inversion:
+        from sct_utils import run
         if filename:
-            sct.run('isct_orientation3d -i '+im+' -orientation '+orientation+' -o '+fname_out, 0)
+            run('isct_orientation3d -i '+im+' -orientation '+orientation+' -o '+fname_out, 0)
             im_out = fname_out
         else:
             fname_in = im.absolutepath
             if fname_in not in os.listdir('.'):
                 im.save()
-            sct.run('isct_orientation3d -i '+im.absolutepath+' -orientation '+orientation+' -o '+fname_out, 0)
-            im_out = msct_image.Image(fname_out)
+            run('isct_orientation3d -i '+im.absolutepath+' -orientation '+orientation+' -o '+fname_out, 0)
+            im_out = Image(fname_out)
     else:
         im_out = im.copy()
         im_out.change_orientation(orientation, True)
@@ -652,9 +656,9 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
 def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     if fname_grid is None:
         from numpy import zeros
-        tmp_dir = sct.tmp_create()
-        im_warp = msct_image.Image(fname_warp)
-        status, out = sct.run('fslhd '+fname_warp)
+        tmp_dir = tmp_create()
+        im_warp = Image(fname_warp)
+        status, out = run('fslhd '+fname_warp)
         from os import chdir
         chdir(tmp_dir)
         dim1 = 'dim1           '
@@ -673,21 +677,26 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
                     if dat[i:i+step, j:j+step, k].shape == (step, step):
                         dat[i:i+step, j:j+step, k] = sq
         fname_grid = 'grid_'+str(step)+'.nii.gz'
-        im_grid = msct_image.Image(param=dat)
+        im_grid = Image(param=dat)
         grid_hdr = im_warp.hdr
         im_grid.hdr = grid_hdr
         im_grid.setFileName(fname_grid)
         im_grid.save()
-        fname_grid_resample = sct.add_suffix(fname_grid, '_resample')
-        sct.run('sct_resample -i '+fname_grid+' -f 3x3x1 -x nn -o '+fname_grid_resample)
+        fname_grid_resample = add_suffix(fname_grid, '_resample')
+        run('sct_resample -i '+fname_grid+' -f 3x3x1 -x nn -o '+fname_grid_resample)
         fname_grid = tmp_dir+fname_grid_resample
         chdir('..')
-    path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
-    grid_warped = path_warp+sct.extract_fname(fname_grid)[1]+'_'+file_warp+ext_warp
-    sct.run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
+    path_warp, file_warp, ext_warp = extract_fname(fname_warp)
+    grid_warped = path_warp+extract_fname(fname_grid)[1]+'_'+file_warp+ext_warp
+    run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
     if rm_tmp:
-        shutil.rmtree(tmp_dir, ignore_errors=True)
+        run('rm -rf '+tmp_dir, error_exit='warning')
 
 
+# START PROGRAM
+# ==========================================================================================
 if __name__ == "__main__":
+    # # initialize parameters
+    param = Param()
+    # call main function
     main()

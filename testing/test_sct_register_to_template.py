@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-###############################################################################
+#########################################################################################
 #
 # Test function for sct_register_to_template script
 #
 #   replace the shell test script in sct 1.0
 #
-# ------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Augustin Roux
 # modified: 2014/09/28
 #
 # About the license: see the file LICENSE.TXT
-###############################################################################
+#########################################################################################
 
+import commands
 import sct_utils as sct
 import sct_register_to_template
 from pandas import DataFrame
@@ -37,7 +38,7 @@ def test(path_data='', parameters=''):
                      '-t template/ -r 0'
         add_path_for_template = True  # in this case, path to data should be added
 
-    parser = sct_register_to_template.get_parser(sct_register_to_template.initMultiStep())
+    parser = sct_register_to_template.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     if add_path_for_template:
         dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
@@ -52,6 +53,16 @@ def test(path_data='', parameters=''):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+        # return status, output, DataFrame(
+        #     data={'status': status, 'output': output,
+        #           'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')},
+        #     index=[path_data])
+
+    # if template is not specified, use default
+    # if not os.path.isdir(dict_param_with_path['-t']):
+    #     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    #     dict_param_with_path['-t'] = path_sct + default_template
+    #     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # get contrast folder from -i option.
     # We suppose we can extract it as the first object when spliting with '/' delimiter.
@@ -82,7 +93,7 @@ def test(path_data='', parameters=''):
     param_with_path += ' -ofolder ' + path_output
 
     cmd = 'sct_register_to_template ' + param_with_path
-    output += '\n==================================\n'+cmd+'\n==========================\n\n'
+    output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
         status, o = sct.run(cmd, verbose)

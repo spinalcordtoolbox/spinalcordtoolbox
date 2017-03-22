@@ -11,12 +11,10 @@
 #########################################################################################
 
 import sys
-
-from dipy.denoise.noise_estimate import piesno
-
 import nibabel as nib
 import sct_utils as sct
-import msct_parser
+from msct_parser import Parser
+from dipy.denoise.noise_estimate import piesno
 
 # PARSER
 # ==========================================================================================
@@ -28,7 +26,7 @@ def get_parser():
     #param = Param()
 
     # Initialize the parser
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description('''Identification and estimation of noise in the diffusion signal, implemented by the Dipy software project (http://nipy.org/dipy/), based on the PIESNO method: Koay C.G., E. Ozarslan, C. Pierpaoli. Probabilistic Identification and Estimation of Noise (PIESNO): A self-consistent approach and its applications in MRI. JMR, 199(1):94-103, 2009.''')
     parser.add_option(name='-i',
                       type_value='file',
@@ -54,24 +52,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
-
-    if args is None:
-        args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
-
-    parser = get_parser()
-    arguments = parser.parse(args)
-
-    fname_in = arguments['-i']
-    freedom_degree = int(arguments['-dof'])
-
-    if "-o" in arguments:
-        file_output = arguments["-o"]
-    else:
-        file_output = 'noise_mask.nii.gz'
+def main(fname_in, freedom_degree,file_output):
 
     img = nib.load(fname_in)
     data = img.get_data()
@@ -86,4 +67,15 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == '__main__':
-    main()
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    fname_in = arguments['-i']
+    freedom_degree = int(arguments['-dof'])
+
+    if "-o" in arguments:
+        file_output = arguments["-o"]
+    else:
+        file_output = 'noise_mask.nii.gz'
+
+    main(fname_in, freedom_degree,file_output)

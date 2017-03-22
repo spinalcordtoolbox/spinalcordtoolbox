@@ -13,21 +13,25 @@
 
 # TODO: remove FSL dependency
 
-import commands
 import os
+import getopt
 import sys
-from shutil import move
-
+import commands
+import nibabel
 import numpy
-
-import msct_image
-import msct_nurbs
-import msct_parser
-import sct_image
+from shutil import move
 import sct_utils as sct
+from msct_nurbs import NURBS
+from sct_utils import fsloutput
+from sct_image import get_orientation_3d, set_orientation
+from msct_image import Image
+from sct_image import split_data, concat_data
+from msct_parser import Parser
 
 
-class Param(object):
+## Default parameters
+class Param:
+    ## The constructor
     def __init__(self):
         self.debug = 0
         self.interp = 'sinc'  # final interpolation
@@ -36,54 +40,40 @@ class Param(object):
         self.verbose = 1
 
 
-def main(args=None):
 
-    if args is None:
-        args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
-
-    param = Param()
-
-    parser = get_parser()
-    arguments = parser.parse(args)
-    fname_anat = arguments['-i']
-    fname_centerline = arguments['-s']
-    degree_poly = arguments['-d']
-    centerline_fitting = arguments['-f']
-    interp = arguments['-x']
-    remove_temp_files = arguments['-r']
-    verbose = int(arguments['-v'])
-
+#=======================================================================================================================
+# main
+#=======================================================================================================================
+def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
+    
     # extract path of the script
     path_script = os.path.dirname(__file__)+'/'
-
+    
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_anat = path_sct_data+'/t2/t2.nii.gz'
         fname_centerline = path_sct_data+'/t2/t2_seg.nii.gz'
-
+    
     # extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
-
+    
     # Display arguments
     print '\nCheck input arguments...'
     print '  Input volume ...................... '+fname_anat
     print '  Centerline ........................ '+fname_centerline
     print ''
-
+    
     # Get input image orientation
-    im_anat = msct_image.Image(fname_anat)
-    input_image_orientation = sct.get_orientation_3d(im_anat)
+    im_anat = Image(fname_anat)
+    input_image_orientation = get_orientation_3d(im_anat)
 
     # Reorient input data into RL PA IS orientation
-    im_centerline = msct_image.Image(fname_centerline)
-    im_anat_orient = sct_image.set_orientation(im_anat, 'RPI')
+    im_centerline = Image(fname_centerline)
+    im_anat_orient = set_orientation(im_anat, 'RPI')
     im_anat_orient.setFileName('tmp.anat_orient.nii')
-    im_centerline_orient = sct_image.set_orientation(im_centerline, 'RPI')
+    im_centerline_orient = set_orientation(im_centerline, 'RPI')
     im_centerline_orient.setFileName('tmp.centerline_orient.nii')
 
     # Open centerline
@@ -92,14 +82,14 @@ def main(args=None):
     nx, ny, nz, nt, px, py, pz, pt = im_centerline_orient.dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
-
+    
     print '\nOpen centerline volume...'
     data = im_centerline_orient.data
 
     X, Y, Z = (data>0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
-
-
+    
+    
     # loop across z and associate x,y coordinate with the point having maximum intensity
     x_centerline = [0 for iz in range(min_z_index, max_z_index+1, 1)]
     y_centerline = [0 for iz in range(min_z_index, max_z_index+1, 1)]
@@ -124,10 +114,10 @@ def main(args=None):
 
     # TODO: find a way to do the previous loop with this, which is more neat:
     # [numpy.unravel_index(data[:,:,iz].argmax(), data[:,:,iz].shape) for iz in range(0,nz,1)]
-
+    
     # clear variable
     del data
-
+    
     # Fit the centerline points with the kind of curve given as argument of the script and return the new smoothed coordinates
     if centerline_fitting == 'nurbs':
         try:
@@ -141,7 +131,7 @@ def main(args=None):
     #==========================================================================================
     # Split input volume
     print '\nSplit input volume...'
-    im_anat_orient_split_list = sct_image.split_data(im_anat_orient, 2)
+    im_anat_orient_split_list = split_data(im_anat_orient, 2)
     file_anat_split = []
     for im in im_anat_orient_split_list:
         file_anat_split.append(im.absolutepath)
@@ -189,20 +179,20 @@ def main(args=None):
     file_anat_split_fit = ['tmp.anat_orient_fit_Z'+str(z).zfill(4) for z in range(0,nz,1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
-        sct.run(sct.fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_anat_split_fit[iz]+' -interp '+interp)
+        sct.run(fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_anat_split_fit[iz]+' -interp '+interp)
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
     from glob import glob
-    im_to_concat_list = [msct_image.Image(fname) for fname in glob('tmp.anat_orient_fit_Z*.nii')]
-    im_concat_out = sct_image.concat_data(im_to_concat_list, 2)
+    im_to_concat_list = [Image(fname) for fname in glob('tmp.anat_orient_fit_Z*.nii')]
+    im_concat_out = concat_data(im_to_concat_list, 2)
     im_concat_out.setFileName('tmp.anat_orient_fit.nii')
     im_concat_out.save()
     # sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
 
     # Reorient data as it was before
     print '\nReorient data back into native orientation...'
-    fname_anat_fit_orient = sct_image.set_orientation(im_concat_out.absolutepath, input_image_orientation, filename=True)
+    fname_anat_fit_orient = set_orientation(im_concat_out.absolutepath, input_image_orientation, filename=True)
     move(fname_anat_fit_orient, 'tmp.anat_orient_fit_reorient.nii')
 
     # Generate output file (in current folder)
@@ -212,8 +202,7 @@ def main(args=None):
     # Delete temporary files
     if remove_temp_files == 1:
         print '\nDelete temporary files...'
-        for tmp_file in glob('tmp*'):
-            os.remove(tmp_file)
+        sct.run('rm -rf tmp.*')
 
     # to view results
     print '\nDone! To view results, type:'
@@ -225,37 +214,37 @@ def b_spline_centerline(x_centerline, y_centerline, z_centerline):
 
     points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
 
-    nurbs = msct_nurbs.NURBS(3, len(z_centerline)*3, points, nbControl=None, verbose=2) # for the third argument (number of points), give at least len(z_centerline)
+    nurbs = NURBS(3, len(z_centerline)*3, points, nbControl=None, verbose=2) # for the third argument (number of points), give at least len(z_centerline)
     # (len(z_centerline)+500 or 1000 is ok)
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]
     y_centerline_fit=P[1]
-
+    
     return x_centerline_fit, y_centerline_fit
 
 
 def polynome_centerline(x_centerline,y_centerline,z_centerline):
     """Fit polynomial function through centerline"""
-
+    
     # Fit centerline in the Z-X plane using polynomial function
     print '\nFit centerline in the Z-X plane using polynomial function...'
     coeffsx = numpy.polyfit(z_centerline, x_centerline, deg=5)
     polyx = numpy.poly1d(coeffsx)
     x_centerline_fit = numpy.polyval(polyx, z_centerline)
-
+    
     # Fit centerline in the Z-Y plane using polynomial function
     print '\nFit centerline in the Z-Y plane using polynomial function...'
     coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=5)
     polyy = numpy.poly1d(coeffsy)
     y_centerline_fit = numpy.polyval(polyy, z_centerline)
-
-
+    
+    
     return x_centerline_fit, y_centerline_fit
 
 
 def get_parser():
     param_default = Param()
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description("""Flatten the spinal cord in the sagittal plane (to make nice pictures).""")
     parser.add_option(name='-i',
                       type_value='image_nifti',
@@ -313,6 +302,19 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    # initialize parameters
+    param = Param()
+    param_default = Param()
+
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+    fname_anat = arguments['-i']
+    fname_centerline = arguments['-s']
+    degree_poly = arguments['-d']
+    centerline_fitting = arguments['-f']
+    interp = arguments['-x']
+    remove_temp_files = arguments['-r']
+    verbose = int(arguments['-v'])
 
     # call main function
-    main()
+    main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose)

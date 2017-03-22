@@ -19,8 +19,8 @@
 # The parser returns a dictionary with all mandatory arguments as well as optional arguments with default values.
 #
 # Usage:
-# import msct_parser
-# parser = msct_parser.Parser(__file__)
+# from msct_parser import *
+# parser = Parser(__file__)
 # parser.usage.set_description('Here is your script description')
 # parser.add_option("-input","file", "image"*, True*, "t2.nii.gz"*)
 # * optional arguments : description, mandatory (boolean), example
@@ -78,12 +78,13 @@
 #########################################################################################
 
 import sct_utils as sct
+from msct_types import Coordinate  # DO NOT REMOVE THIS LINE!!!!!!! IT IS MANDATORY!
 
-# DO NOT REMOVE THIS IMPORT! IT IS MANDATORY
-import msct_types
-Coordinate = msct_types.Coordinate
+########################################################################################################################
+####### OPTION
+########################################################################################################################
 
-class Option(object):
+class Option:
     # list of option type that can be casted
     OPTION_TYPES = ["str", "int", "float", "long", "complex", "Coordinate"]
     # list of options that are path type
@@ -113,18 +114,18 @@ class Option(object):
         return to_type(val)
 
     # Do we need to stop the execution if the input is not correct?
-    def check_integrity(self, param, data_type=None):
+    def check_integrity(self, param, type=None):
         """
         check integrity of each option type
         if type is provided, use type instead of self.type_value --> allow recursive integrity checking
         """
 
         type_option = self.type_value
-        if data_type is not None:
-            type_option = data_type
+        if type is not None:
+            type_option = type
 
         if type_option in self.OPTION_TYPES:
-            return self.checkStandardType(param, data_type)
+            return self.checkStandardType(param, type)
 
         elif type_option == "image_nifti":
             return self.checkIfNifti(param)
@@ -176,11 +177,11 @@ class Option(object):
             sct.printv("WARNING : Option "+str(self.type_value)+" does not exist and will have no effect on the execution of the script", "warining")
             sct.printv("Type -h to see supported options", "warning")
 
-    def checkStandardType(self, param, data_type=None):
+    def checkStandardType(self, param, type=None):
         # check if a int is really a int (same for str, float, long and complex)
         type_option = self.type_value
-        if data_type is not None:
-            type_option = data_type
+        if type is not None:
+            type_option = type
         try:
             return self.__safe_cast__(param, eval(type_option))
         except ValueError:
@@ -258,8 +259,8 @@ class Option(object):
 ####### PARSER
 ########################################################################################################################
 
-class Parser(object):
-
+class Parser:
+    ## Constructor
     def __init__(self, file_name):
         self.file_name = file_name
         self.options = dict()
@@ -275,6 +276,7 @@ class Parser(object):
     def parse(self, arguments, check_file_exist=True):
         # if you only want to parse a string and not checking for file existence, change flag check_file_exist
         self.check_file_exist = check_file_exist
+
         # if no arguments, print usage and quit
         if len(arguments) == 0 and len([opt for opt in self.options if self.options[opt].mandatory]) != 0:
             self.usage.error()
@@ -357,6 +359,7 @@ class Parser(object):
                     # check if option has an argument that is not another option
                     if param in self.options:
                         self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
+
                     dictionary[arg] = self.options[arg].check_integrity(param)
                     skip = True
                 else:
@@ -432,7 +435,7 @@ class Parser(object):
 ########################################################################################################################
 ####### USAGE
 ########################################################################################################################
-class Usage(object):
+class Usage:
     # Constructor
     def __init__(self, parser, file):
         self.file = file
@@ -552,8 +555,8 @@ class Usage(object):
         usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
-            sct.printv(error+'\nAborted...', type='warning')
-            sct.printv(usage, type='normal')
+            sct.printv(error+'\nAborted...',type='warning')
+            sct.printv(usage,type='normal')
             raise SyntaxError(error)
             exit(1)
         else:
@@ -637,7 +640,7 @@ class Usage(object):
 # GENERATION OF SOURCEFORGE GENERATED DOC
 ########################################################################################################################
 
-class DocSourceForge(object):
+class DocSourceForge:
     # Constructor
     def __init__(self, parser, file):
         self.file = file
@@ -825,7 +828,7 @@ class DocSourceForge(object):
 ####### SPELLING CHECKER
 ########################################################################################################################
 
-class SpellingChecker(object):
+class SpellingChecker:
     # spelling checker from http://norvig.com/spell-correct.html
     def __init__(self):
         self.alphabet = 'abcdefghijklmnopqrstuvwxyz-_0123456789'

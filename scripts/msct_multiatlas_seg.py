@@ -11,22 +11,18 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
-import gzip
 import os
-import pickle
 import shutil
 import sys
 import time
-
 import numpy as np
 import pandas as pd
+import pickle, gzip
 from sklearn import manifold, decomposition
-
-import msct_gmseg_utils
-import msct_image
-import msct_parser
-import sct_utils as sct
-
+from sct_utils import printv, slash_at_the_end, check_file_exist
+from msct_gmseg_utils import pre_processing, register_data, apply_transfo, average_gm_wm, normalize_slice
+from msct_image import Image
+from msct_parser import *
 
 ########################################################################################################################
 #                                                 PARAM CLASSES
@@ -34,7 +30,7 @@ import sct_utils as sct
 
 def get_parser():
     # Initialize the parser
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description('Compute the model for GM segmentation.\n'
                                  'Dataset should be organized with one folder per subject containing: \n'
                                  '\t- A WM/GM contrasted image containing "im" in its name\n'
@@ -125,7 +121,7 @@ def get_parser():
 
     return parser
 
-class ParamModel(object):
+class ParamModel:
     def __init__(self):
         self.path_data = ''
         self.todo = 'load'# 'compute' or 'load'
@@ -154,7 +150,7 @@ class ParamModel(object):
 
         return info
 
-class ParamData(object):
+class ParamData:
     def __init__(self):
         self.denoising = True
         self.axial_res = 0.3
@@ -172,7 +168,7 @@ class ParamData(object):
 
         return info
 
-class Param(object):
+class Param:
     def __init__(self):
         self.verbose = 1
         self.rm_tmp = True
@@ -180,7 +176,7 @@ class Param(object):
 ########################################################################################################################
 #                                           CLASS MODEL
 ########################################################################################################################
-class Model(object):
+class Model:
     def __init__(self, param_model=None, param_data=None, param=None):
         self.param_model = param_model if param_model is not None else ParamModel()
         self.param_data = param_data if param_data is not None else ParamData()
@@ -198,10 +194,10 @@ class Model(object):
     #                                       FUNCTIONS USED TO COMPUTE THE MODEL
     # ------------------------------------------------------------------------------------------------------------------
     def compute_model(self):
-        sct.printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
+        printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
         # create model folder
         if os.path.exists(self.param_model.new_model_dir) and os.listdir(self.param_model.new_model_dir) != []:
-            shutil.move(self.param_model.new_model_dir, sct.slash_at_the_end(self.param_model.new_model_dir, slash=0) + '_old')
+            shutil.move(self.param_model.new_model_dir, slash_at_the_end(self.param_model.new_model_dir, slash=0) + '_old')
         if not os.path.exists(self.param_model.new_model_dir):
             os.mkdir(self.param_model.new_model_dir)
         # write model info
@@ -211,20 +207,20 @@ class Model(object):
         param_fic.write(str(self.param_data))
         param_fic.close()
 
-        sct.printv('\n\tLoading data dictionary ...', self.param.verbose, 'normal')
+        printv('\n\tLoading data dictionary ...', self.param.verbose, 'normal')
         self.load_model_data()
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
-        sct.printv('\n\tCo-register all the data into a common groupwise space ...', self.param.verbose, 'normal')
+        printv('\n\tCo-register all the data into a common groupwise space ...', self.param.verbose, 'normal')
         self.coregister_model_data()
 
-        sct.printv('\n\tNormalize data intensities against averaged median values in the dictionary ...', self.param.verbose, 'normal')
+        printv('\n\tNormalize data intensities against averaged median values in the dictionary ...', self.param.verbose, 'normal')
         self.normalize_model_data()
 
-        sct.printv('\nComputing the model reduced space ...', self.param.verbose, 'normal')
+        printv('\nComputing the model reduced space ...', self.param.verbose, 'normal')
         self.compute_reduced_space()
 
-        sct.printv('\nSaving model elements ...', self.param.verbose, 'normal')
+        printv('\nSaving model elements ...', self.param.verbose, 'normal')
         self.save_model()
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -236,7 +232,7 @@ class Model(object):
             - a/several manual segmentation(s) of GM containing 'gm' in its/their name(s)
             - a file containing vertebral level information as a nifti image or as a text file containing 'level' in its name
         '''
-        path_data = sct.slash_at_the_end(self.param_model.path_data, slash=1)
+        path_data = slash_at_the_end(self.param_model.path_data, slash=1)
 
         list_sub = [sub for sub in os.listdir(path_data) if os.path.isdir(os.path.join(path_data, sub))]
         if self.param_model.ind_rm is not None and self.param_model.ind_rm < len(list_sub):
@@ -270,12 +266,12 @@ class Model(object):
             info_data += 'Levels: ...... ' + str(fname_level) + '\n'
 
             if fname_data == None or fname_sc_seg == None or list_fname_gmseg == []:
-                sct.printv(info_data, self.param.verbose, 'error')
+                printv(info_data, self.param.verbose, 'error')
             else:
-                sct.printv(info_data, self.param.verbose, 'normal')
+                printv(info_data, self.param.verbose, 'normal')
 
             # preprocess data
-            list_slices_sub, info = msct_gmseg_utils.pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm,  denoising=self.param_data.denoising, for_model=True)
+            list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm,  denoising=self.param_data.denoising, for_model=True)
             for i_slice, slice_sub in enumerate(list_slices_sub):
                 slice_sub.set(slice_id=i_slice+j)
                 self.slices.append(slice_sub)
@@ -285,7 +281,7 @@ class Model(object):
     # ------------------------------------------------------------------------------------------------------------------
     def coregister_model_data(self):
         # get mean image
-        im_mean = msct_image.Image(param=self.mean_image)
+        im_mean = Image(param=self.mean_image)
 
         # register all slices WM on mean WM
         for dic_slice in self.slices:
@@ -295,24 +291,24 @@ class Model(object):
                 os.mkdir(warp_dir)
 
             # get slice mean WM image
-            im_slice = msct_image.Image(param=dic_slice.im)
+            im_slice = Image(param=dic_slice.im)
             # register slice image on mean dic image
-            im_slice_reg, fname_src2dest, fname_dest2src = msct_gmseg_utils.register_data(im_src=im_slice, im_dest=im_mean, param_reg=self.param_data.register_param, path_copy_warp=warp_dir)
+            im_slice_reg, fname_src2dest, fname_dest2src = register_data(im_src=im_slice, im_dest=im_mean, param_reg=self.param_data.register_param, path_copy_warp=warp_dir)
             shape = im_slice_reg.data.shape
 
             # use forward warping field to register all slice wm
             list_wmseg_reg = []
             for wm_seg in dic_slice.wm_seg:
-                im_wmseg = msct_image.Image(param=wm_seg)
-                im_wmseg_reg = msct_gmseg_utils.apply_transfo(im_src=im_wmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
+                im_wmseg = Image(param=wm_seg)
+                im_wmseg_reg = apply_transfo(im_src=im_wmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
 
                 list_wmseg_reg.append(im_wmseg_reg.data.reshape(shape))
 
             # use forward warping field to register gm seg
             list_gmseg_reg = []
             for gm_seg in dic_slice.gm_seg:
-                im_gmseg = msct_image.Image(param=gm_seg)
-                im_gmseg_reg = msct_gmseg_utils.apply_transfo(im_src=im_gmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
+                im_gmseg = Image(param=gm_seg)
+                im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
                 list_gmseg_reg.append(im_gmseg_reg.data.reshape(shape))
 
             # set slice attributes with data registered into the model space
@@ -383,8 +379,8 @@ class Model(object):
         # Normalize slices using dic values
         for dic_slice in self.slices:
             level_int = int(round(dic_slice.level))
-            av_gm_slice, av_wm_slice = msct_gmseg_utils.apply_transfo([dic_slice], bin=True)
-            norm_im_M = msct_gmseg_utils.normalize_slice(dic_slice.im_M, av_gm_slice, av_wm_slice, self.intensities['GM'][level_int], self.intensities['WM'][level_int], val_min=self.intensities['MIN'][level_int], val_max=self.intensities['MAX'][level_int])
+            av_gm_slice, av_wm_slice = average_gm_wm([dic_slice], bin=True)
+            norm_im_M = normalize_slice(dic_slice.im_M, av_gm_slice, av_wm_slice, self.intensities['GM'][level_int], self.intensities['WM'][level_int], val_min=self.intensities['MIN'][level_int], val_max=self.intensities['MAX'][level_int])
             dic_slice.set(im_m=norm_im_M)
 
 
@@ -438,28 +434,28 @@ class Model(object):
     # ------------------------------------------------------------------------------------------------------------------
     def load_model(self):
         path = os.path.abspath('.')
-        sct.printv('\nLoading model...', self.param.verbose, 'normal')
+        printv('\nLoading model...', self.param.verbose, 'normal')
         os.chdir(self.param_model.path_model_to_load)
 
         model_files = {'slices': 'slices.pklz', 'intensity': 'intensities.pklz', 'model': 'fitted_model.pklz', 'data': 'fitted_data.pklz'}
         correct_model = True
         for fname in model_files.values():
             if os.path.isfile(fname):
-                sct.printv('  OK: ' + fname, self.param.verbose, 'normal')
+                printv('  OK: ' + fname, self.param.verbose, 'normal')
             else:
-                sct.printv('  MISSING FILE: ' + fname, self.param.verbose, 'warning')
+                printv('  MISSING FILE: ' + fname, self.param.verbose, 'warning')
                 correct_model = False
         if not correct_model:
             path_script = os.path.dirname(__file__)
             path_sct = os.path.dirname(path_script)
-            sct.printv('ERROR: The GM segmentation model is not compatible with this version of the code.\n'
+            printv('ERROR: The GM segmentation model is not compatible with this version of the code.\n'
                    'To update the model, run the following lines:\n\n'
                    'cd '+path_sct+'\n'
                    './install_sct -m -b\n', self.param.verbose, 'error')
 
         ##   - self.slices = dictionary
         self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'))
-        sct.printv('  '+str(len(self.slices))+' slices in the model dataset', self.param.verbose, 'normal')
+        printv('  '+str(len(self.slices))+' slices in the model dataset', self.param.verbose, 'normal')
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
         ##   - self.intensities = for normalization
@@ -471,8 +467,8 @@ class Model(object):
         ##   - fitted data (=eigen vectors or embedding vectors )
         self.fitted_data = pickle.load(gzip.open(model_files['data'], 'rb'))
 
-        sct.printv('  model: '+self.param_model.method)
-        sct.printv('  '+str(self.fitted_data.shape[1])+' components kept on '+str(self.fitted_data.shape[0]), self.param.verbose, 'normal')
+        printv('  model: '+self.param_model.method)
+        printv('  '+str(self.fitted_data.shape[1])+' components kept on '+str(self.fitted_data.shape[0]), self.param.verbose, 'normal')
         # when model == pca, self.fitted_data.shape[1] = self.fitted_model.n_components_
         os.chdir(path)
 
@@ -492,7 +488,7 @@ class Model(object):
                 slices_by_level[level_int].append(dic_slice)
         # get average gm and wm by level
         for level, list_slices in slices_by_level.items():
-            data_mean_gm, data_mean_wm = msct_gmseg_utils.average_gm_wm(list_slices)
+            data_mean_gm, data_mean_wm = average_gm_wm(list_slices)
             gm_seg_model[level] = data_mean_gm
             wm_seg_model[level] = data_mean_wm
         # for level=0 (no leve or level not in model) output average GM and WM seg across all model data
@@ -507,9 +503,6 @@ def main(args=None):
 
     if args is None:
         args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # create param objects
     param_data = ParamData()
@@ -556,7 +549,7 @@ def main(args=None):
     model.compute_model()
     end = time.time()
     t = end-start
-    sct.printv('Model computed in '+str(int(round(t/60)))+' min, '+str(t%60)+' sec', param.verbose, 'info')
+    printv('Model computed in '+str(int(round(t/60)))+' min, '+str(t%60)+' sec', param.verbose, 'info')
 
 
 if __name__ == "__main__":
