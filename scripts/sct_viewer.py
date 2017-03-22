@@ -662,7 +662,6 @@ class ClickViewer(Viewer):
 
         self.windows[0].draw()
 
-
     def are_all_images_processed(self):
         if self.current_slice < len(self.list_slices):
             return False
@@ -733,7 +732,7 @@ class ClickViewer(Viewer):
             return None
 
     def create_button_redo(self):
-        ax = plt.axes([0.59, 0.90, 0.1, 0.075])
+        ax = plt.axes([0.70, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['redo']=ax
         button_help = Button(ax, 'Redo')
         self.fig.canvas.mpl_connect('button_press_event', self.press_redo)
@@ -806,7 +805,7 @@ class ClickViewerPropseg(ClickViewer):
         self.bool_skip_all_to_end=False
 
     def create_button_skip(self):
-        ax = plt.axes([0.70, 0.90, 0.1, 0.075])
+        ax = plt.axes([0.59, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['skip']=ax
         button_help = Button(ax, 'Skip')
         self.fig.canvas.mpl_connect('button_press_event', self.press_skip)
