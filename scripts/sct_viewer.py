@@ -658,47 +658,18 @@ class ClickViewer(Viewer):
             plot.draw()
             return False
 
-    def update_title_text(self,key):
-
-        if(key=='way_automatic_next_point'):
-            title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
-                                                       str(self.list_slices[self.current_slice]) + '/' +
-                                                       str(self.image_dim[
-                                                               self.orientation[self.primary_subplot] - 1] - 1) + ' (' +
-                                                       str(self.current_slice + 1) + '/' +
-                                                        str(len(self.list_slices)) + ') \n')
-            plt.setp(title_obj, color='k')
-
-        elif(key=='way_custom_next_point'):
-            title_obj = self.windows[0].axes.set_title(
-                'You have made '+str(len(self.list_points))+ ' points. \n'
-                                                             'You can save and quit at any time. \n')
-            plt.setp(title_obj, color='k')
-
-        elif(key=='way_custom_start'):
-            title_obj = self.windows[0].axes.set_title('You have chosen Manual Mode\n '
-                                                       'All previous data has been erased\n'
-                                                       'Please choose the slices on the small picture\n')
-            plt.setp(title_obj, color='k')
-
-        elif(key=='way_auto_start'):
-            title_obj = self.windows[0].axes.set_title('You have chosen Auto Mode \n '
-                                                       'All previous data has been erased \n '
-                                                       'Please select a new point on slice \n ')
-
-        elif(key=='ready_to_save_and_quit'):
+    def update_title_text_general(self,key):
+        if(key=='ready_to_save_and_quit'):
             title_obj = self.windows[0].axes.set_title('You can save and quit. \n')
             plt.setp(title_obj, color='g')
 
-        elif(key=='warning_redo'):
+        elif(key=='warning_redo_beyond_first_dot'):
             title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
             plt.setp(title_obj, color='r')
 
-        elif(key=='warning_skip_on_custom'):
+        elif(key=='warning_skip_not_defined'):
             title_obj = self.windows[0].axes.set_title('This option is not used in Manual Mode. \n')
             plt.setp(title_obj, color='r')
-
-        self.windows[0].draw()
 
     def are_all_images_processed(self):
         if self.current_slice < len(self.list_slices):
@@ -783,29 +754,7 @@ class ClickViewer(Viewer):
                                  'Quit')
         self.fig.canvas.mpl_connect('button_press_event', self.press_save_and_quit)
 
-    def press_redo(self, event):
-        if event.inaxes == self.dic_axis_buttons['redo']:
-            if (len(self.list_points) > 0   or self.current_slice>0 ):
-                self.bool_skip_all_to_end = False
-                if not self.bool_enable_custom_points:
-                    self.redo_auto()
-                self.remove_last_dot()
-                self.update_ui_after_redo()
-            else:
-                self.update_title_text('warning_redo')
-
-    def update_ui_after_redo(self):
-        if not self.bool_enable_custom_points:
-            self.update_title_text('way_automatic_next_point')
-        else:
-            self.update_title_text('way_custom_next_point')
-        self.draw_points(self.windows[0], self.current_point.x)
-
-    # TODO : gerer redo_auto dans ClickViewerPropseg
-    def redo_auto(self):
-        self.current_slice += -1
-        self.windows[0].update_slice(self.list_slices[self.current_slice])
-
+    # TODO : Faire une fonction redo par defaut : ce sera celle utilisee dans le cas automatique
     def remove_last_dot(self):
         if (len(self.list_points) > 1):
             self.list_points = self.list_points[0:len(self.list_points) - 1]
@@ -832,7 +781,6 @@ class ClickViewer(Viewer):
             return self.list_points_useful_notation
         else:
             return None
-
 
 class ClickViewerPropseg(ClickViewer):
 
@@ -878,7 +826,7 @@ class ClickViewerPropseg(ClickViewer):
                     self.current_slice += 1
                     self.windows[0].update_slice(self.list_slices[self.current_slice])
             else:
-                self.update_title_text('warning_skip_on_custom')
+                self.update_title_text('warning_skip_not_defined')
 
     def create_button_auto_manual(self):
         ax = plt.axes([0.08, 0.90, 0.15, 0.075])
@@ -913,18 +861,10 @@ class ClickViewerPropseg(ClickViewer):
             title_obj = self.windows[0].axes.set_title('You have chosen Auto Mode \n '
                                                        'All previous data has been erased \n '
                                                        'Please select a new point on slice \n ')
+            plt._setp(title_obj,color='k')
 
-        elif(key=='ready_to_save_and_quit'):
-            title_obj = self.windows[0].axes.set_title('You can save and quit. \n')
-            plt.setp(title_obj, color='g')
-
-        elif(key=='warning_redo'):
-            title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
-            plt.setp(title_obj, color='r')
-
-        elif(key=='warning_skip_on_custom'):
-            title_obj = self.windows[0].axes.set_title('This option is not used in Manual Mode. \n')
-            plt.setp(title_obj, color='r')
+        else:
+            self.update_title_text_general(key)
 
         self.windows[0].draw()
 
@@ -1089,6 +1029,28 @@ class ClickViewerPropseg(ClickViewer):
             return (Coordinate( [int(event.ydata) - self.offset[0], int(self.current_point.y), int(event.xdata) - self.offset[2], 1]))
         elif self.primary_subplot == 'sag':
             return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], self.current_point.z, 1]))
+
+    def press_redo(self, event):
+        if event.inaxes == self.dic_axis_buttons['redo']:
+            if (len(self.list_points) > 0   or self.current_slice>0 ):
+                self.bool_skip_all_to_end = False
+                if not self.bool_enable_custom_points:
+                    self.redo_auto()
+                self.remove_last_dot()
+                self.update_ui_after_redo()
+            else:
+                self.update_title_text('warning_redo_beyound_first_dot')
+
+    def update_ui_after_redo(self):
+        if not self.bool_enable_custom_points:
+            self.update_title_text('way_automatic_next_point')
+        else:
+            self.update_title_text('way_custom_next_point')
+        self.draw_points(self.windows[0], self.current_point.x)
+
+    def redo_auto(self):
+        self.current_slice += -1
+        self.windows[0].update_slice(self.list_slices[self.current_slice])
 
 
 def get_parser():
