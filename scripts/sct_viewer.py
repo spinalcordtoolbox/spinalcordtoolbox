@@ -478,13 +478,227 @@ class ThreeViewer(Viewer):
         else:
             return
 
+
+class ClickViewerPropseg(object):
+
+    def __init__(self,title='Mode Auto \n'
+                            'Please select a new point'):
+        pass
+
+    def create_button_skip(self):
+        ax = plt.axes([0.70, 0.90, 0.1, 0.075])
+        self.dic_axis_buttons['skip']=ax
+        button_help = Button(ax, 'Skip')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_skip)
+
+    def create_button_auto_manual(self):
+        ax = plt.axes([0.08, 0.90, 0.15, 0.075])
+        self.dic_axis_buttons['choose_mode']=ax
+        self.button_choose_auto_manual = Button(ax, 'Mode Auto')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_choose_mode)
+
+    def update_title_text(self,key):
+
+        if(key=='way_automatic_next_point'):
+            title_obj = self.windows[0].axes.set_title('Please select a new point on slice ' +
+                                                       str(self.list_slices[self.current_slice]) + '/' +
+                                                       str(self.image_dim[
+                                                               self.orientation[self.primary_subplot] - 1] - 1) + ' (' +
+                                                       str(self.current_slice + 1) + '/' +
+                                                        str(len(self.list_slices)) + ') \n')
+            plt.setp(title_obj, color='k')
+
+        elif(key=='way_custom_next_point'):
+            title_obj = self.windows[0].axes.set_title(
+                'You have made '+str(len(self.list_points))+ ' points. \n'
+                                                             'You can save and quit at any time. \n')
+            plt.setp(title_obj, color='k')
+
+        elif(key=='way_custom_start'):
+            title_obj = self.windows[0].axes.set_title('You have chosen Manual Mode\n '
+                                                       'All previous data has been erased\n'
+                                                       'Please choose the slices on the small picture\n')
+            plt.setp(title_obj, color='k')
+
+        elif(key=='way_auto_start'):
+            title_obj = self.windows[0].axes.set_title('You have chosen Auto Mode \n '
+                                                       'All previous data has been erased \n '
+                                                       'Please select a new point on slice \n ')
+
+        elif(key=='ready_to_save_and_quit'):
+            title_obj = self.windows[0].axes.set_title('You can save and quit. \n')
+            plt.setp(title_obj, color='g')
+
+        elif(key=='warning_redo'):
+            title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
+            plt.setp(title_obj, color='r')
+
+        elif(key=='warning_skip_on_custom'):
+            title_obj = self.windows[0].axes.set_title('This option is not used in Manual Mode. \n')
+            plt.setp(title_obj, color='r')
+
+        self.windows[0].draw()
+
+    def reset_useful_global_variables(self):
+        self.windows[0].update_slice(0)
+        # specialized for Click viewer
+        self.list_points = []
+        self.list_points_useful_notation = ''
+
+        # compute slices to display
+        self.list_slices = []
+
+        self.current_slice = 0
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
+
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
+        self.calculate_list_slices()
+        self.bool_skip_all_to_end=False
+
+        self.draw_points(self.windows[0],self.current_point.x)
+
+    def press_choose_mode(self,event):
+        if event.inaxes == self.dic_axis_buttons['choose_mode']:
+            self.reset_useful_global_variables()
+            self.bool_enable_custom_points=not self.bool_enable_custom_points
+
+            if(self.bool_enable_custom_points):
+                self.button_choose_auto_manual.label.set_text('Mode Manual')
+                self.update_title_text('way_custom_start')
+            else:
+                self.button_choose_auto_manual.label.set_text('Mode Auto')
+                self.update_title_text('way_auto_start')
+
+    def press_help(self, event):
+        if event.inaxes == self.dic_axis_buttons['help']:
+            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
+
+    def on_press_main_window(self,event,plot):
+        self.bool_skip_all_to_end=True
+        if not self.bool_enable_custom_points:
+            target_point = self.set_not_custom_target_points(event)
+        else:
+            target_point = self.set_custom_target_points(event)
+
+        if self.check_point_is_valid(target_point, plot):
+            self.list_points.append(target_point)
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+
+            if not self.bool_enable_custom_points:
+                self.current_slice += 1
+
+                if not self.are_all_images_processed():
+                    point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice] #?!
+                    self.current_point = Coordinate(point)
+                    self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  #?!
+                    self.windows[0].update_slice(self.list_slices[self.current_slice])
+                    self.update_title_text('way_automatic_next_point')
+                    plot.draw()
+
+            else:
+                self.draw_points(self.windows[0], self.current_point.x)
+                self.windows[0].update_slice(point, data_update=True)
+                self.update_title_text('way_custom_next_point')
+                plot.draw()
+
+    def on_press_secondary_window(self,event,plot):
+        is_in_axes = False
+        for window in self.windows:
+            if event.inaxes == window.axes:
+                is_in_axes = True
+        if not is_in_axes:  # ?!
+            return
+
+        plot.draw()
+
+        self.last_update = time()
+        self.current_point = self.get_event_coordinates(event, plot)
+        point = [self.current_point.x, self.current_point.y, self.current_point.z]
+        for window in self.windows:
+            if window is plot:
+                window.update_slice(point, data_update=False)
+            else:
+                self.draw_points(window, self.current_point.x)
+                window.update_slice(point, data_update=True)
+
+    def on_press(self, event, plot=None):
+        # event inaxes ?!
+        if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
+            self.on_press_main_window(event,plot)
+        elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
+            self.on_press_secondary_window(event,plot)
+
+    def draw_points(self, window, current_slice):
+        if window.view == self.orientation[self.primary_subplot]:
+            x_data, y_data = [], []
+            for pt in self.list_points: #?!
+                if pt.x == current_slice:
+                    x_data.append(pt.z + self.offset[2])
+                    y_data.append(pt.y + self.offset[1])
+            self.plot_points.set_xdata(x_data)
+            self.plot_points.set_ydata(y_data)
+            self.fig.canvas.draw()
+
+    def on_release(self, event, plot=None):
+        """
+        This subplot refers to the secondary window. It captures event "release"
+        :param event:
+        :param plot:
+        :return:
+        """
+        if event.button == 1 and event.inaxes == plot.axes and plot.view == self.orientation[self.secondary_subplot]:
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            if not self.bool_enable_custom_points:
+                point[self.orientation[self.primary_subplot]-1] = self.list_slices[self.current_slice]
+            for window in self.windows:
+                if window is plot:
+                    window.update_slice(point, data_update=False)
+                else:
+                    window.update_slice(point, data_update=True)
+                    self.draw_points(window, self.current_point.x)
+        return
+
+    def on_motion(self, event, plot=None):
+        """
+        This subplot refers to the secondary window. It captures event "motion"
+        :param event:
+        :param plot:
+        :return:
+        """
+        if event.button == 1 and event.inaxes and plot.view == self.orientation[self.secondary_subplot] and time() - self.last_update > self.update_freq:
+            is_in_axes = False
+            for window in self.windows:
+                if event.inaxes == window.axes:
+                    is_in_axes = True
+            if not is_in_axes:
+                return
+
+            self.last_update = time()
+            self.current_point = self.get_event_coordinates(event, plot)
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            for window in self.windows:
+                if window is plot:
+                    window.update_slice(point, data_update=False)
+                else:
+                    self.draw_points(window, self.current_point.x)
+                    window.update_slice(point, data_update=True)
+        return
+
+
 class ClickViewer(Viewer):
     """
     This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
     Assumes SAL orientation
     orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
-    def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='Mode Automatique \n', input_type='centerline'):
+    def __init__(self,
+                 list_images,
+                 visualization_parameters=None,
+                 orientation_subplot=['ax', 'sag'],
+                 title='Mode Auto \n '
+                       'Please select a new point \n',
+                 input_type='centerline'):
 
         # Ajust the input parameters into viewer objects.
         if isinstance(list_images, Image):
@@ -920,7 +1134,6 @@ class ClickViewer(Viewer):
 
     def press_save_and_quit(self, event):
         if event.inaxes == self.dic_axis_buttons['save_and_quit']:
-            print(self.list_points)
             self.save_data()
             self.closed=True
             plt.close('all')
