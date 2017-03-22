@@ -638,13 +638,11 @@ class ClickViewer(Viewer):
                            int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
                            0]
 
-    def check_point_is_valid(self,target_point,plot):
+    def check_point_is_valid(self,target_point):
         if(self.is_point_in_image(target_point)):
             return True
         else:
-            title_obj = self.windows[0].axes.set_title('The point you selected in not in the image. Please try again.')
-            plt.setp(title_obj, color='r')
-            plot.draw()
+            self.update_title_text_general('warning_selected_point_not_in_image')
             return False
 
     def update_title_text_general(self,key):
@@ -658,6 +656,10 @@ class ClickViewer(Viewer):
 
         elif(key=='warning_skip_not_defined'):
             title_obj = self.windows[0].axes.set_title('This option is not used in Manual Mode. \n')
+            plt.setp(title_obj, color='r')
+
+        elif(key=='warning_selected_point_not_in_image'):
+            title_obj = self.windows[0].axes.set_title('The point you selected in not in the image. Please try again.')
             plt.setp(title_obj, color='r')
 
         self.windows[0].draw()
@@ -744,7 +746,6 @@ class ClickViewer(Viewer):
                                  'Quit')
         self.fig.canvas.mpl_connect('button_press_event', self.press_save_and_quit)
 
-    # TODO : Faire une fonction redo par defaut : ce sera celle utilisee dans le cas automatique
     def remove_last_dot(self):
         if (len(self.list_points) > 1):
             self.list_points = self.list_points[0:len(self.list_points) - 1]
@@ -827,7 +828,6 @@ class ClickViewerPropseg(ClickViewer):
                     window.update_slice(point, data_update=True)
                     self.draw_points(window, self.current_point.x)
         return
-
 
     def create_button_help(self):
         ax = plt.axes([0.81, 0.05, 0.1, 0.075])
@@ -943,7 +943,7 @@ class ClickViewerPropseg(ClickViewer):
         else:
             target_point = self.set_custom_target_points(event)
 
-        if self.check_point_is_valid(target_point, plot):
+        if self.check_point_is_valid(target_point):
             self.list_points.append(target_point)
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
 
@@ -1088,16 +1088,19 @@ class ClickViewerLabelVertebrae(ClickViewer):
     def on_press_main_window(self,event,plot):
         target_point = self.set_target_point(event)
 
-        if self.check_point_is_valid(target_point, plot):
+        if self.check_point_is_valid(target_point):
             self.list_points.append(target_point)
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            self.current_slice += 1
+
+            self.current_slice = 1
 
         if not self.are_all_images_processed():
-                point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]  # ?!
-                self.current_point = Coordinate(point)
-                self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  # ?!
-                plot.draw()
+            self.draw_points(self.windows[0], self.current_point.x)
+            self.windows[0].update_slice(point, data_update=True)
+            point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]  # ?!
+            self.current_point = Coordinate(point)
+            self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  # ?!
+            plot.draw()
 
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
@@ -1139,12 +1142,11 @@ class ClickViewerLabelVertebrae(ClickViewer):
 
     def set_target_point(self,event):
         if self.primary_subplot == 'ax':
-            return( Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
+            return( Coordinate([int(self.list_slices[0]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
         elif self.primary_subplot == 'cor':
-            return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[2], 1]) )
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[0]), int(event.xdata) - self.offset[2], 1]) )
         elif self.primary_subplot == 'sag':
-            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[self.current_slice]), 1]) )
-
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[0]), 1]) )
 
 def get_parser():
     parser = Parser(__file__)
