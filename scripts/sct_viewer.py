@@ -489,8 +489,6 @@ class ClickViewer(Viewer):
                  list_images,
                  visualization_parameters=None,
                  orientation_subplot=['ax', 'sag'],
-                 title='Mode Auto \n '
-                       'Please select a new point \n',
                  input_type='centerline'):
 
         # Ajust the input parameters into viewer objects.
@@ -500,7 +498,7 @@ class ClickViewer(Viewer):
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
         super(ClickViewer, self).__init__(list_images, visualization_parameters)
 
-        self.declaration_global_variables(orientation_subplot,title)
+        self.declaration_global_variables(orientation_subplot)
 
         self.compute_offset() # ?!
         self.pad_data()       # ?!
@@ -519,6 +517,8 @@ class ClickViewer(Viewer):
         """Smaller plot on the left"""
         ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
         self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot], display_cross=self.set_display_cross(), im_params=visualization_parameters))
+        self.windows[1].axes.set_title('Select the slice \n '
+                                       'to inspect. \n')
 
         """ Connect buttons to user actions"""
         for window in self.windows:
@@ -550,8 +550,7 @@ class ClickViewer(Viewer):
             self.windows[0].axes.set_xlim([0, self.images[0].data.shape[0]])
             self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
 
-    def declaration_global_variables(self,orientation_subplot,title):
-        self.title = title  # title to display in main figure
+    def declaration_global_variables(self,orientation_subplot):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         self.primary_subplot = orientation_subplot[0]
         self.secondary_subplot = orientation_subplot[1]
@@ -618,13 +617,6 @@ class ClickViewer(Viewer):
                 window.update_slice(point, data_update=False)
             else:
                 window.update_slice(point, data_update=True)
-
-        self.windows[1].axes.set_title('Select the slice \n '
-                                       'to inspect. \n')
-        if self.title == '':
-            self.title = 'Please select a new point on slice ' + str(self.list_slices[self.current_slice]) + '/' + str(
-                self.image_dim[self.orientation[self.primary_subplot]-1] - 1) + ' (' + str(self.current_slice + 1) + '/' + str(len(self.list_slices)) + ')'
-        self.windows[0].axes.set_title(self.title)
 
     def compute_offset(self):
         if self.primary_subplot == 'ax':
@@ -795,8 +787,10 @@ class ClickViewerPropseg(ClickViewer):
         ClickViewer.__init__(self,list_images,
                  visualization_parameters=visualization_parameters,
                  orientation_subplot=orientation_subplot,
-                 title=title,
                  input_type=input_type)
+
+
+        self.update_title_text('init')
 
 
         """ Create Buttons"""
@@ -861,6 +855,11 @@ class ClickViewerPropseg(ClickViewer):
             title_obj = self.windows[0].axes.set_title('You have chosen Auto Mode \n '
                                                        'All previous data has been erased \n '
                                                        'Please select a new point on slice \n ')
+            plt._setp(title_obj,color='k')
+
+        elif(key=='init'):
+            title_obj = self.windows[0].axes.set_title('Mode Auto \n '
+                                                       'Please select a new point \n')
             plt._setp(title_obj,color='k')
 
         else:
