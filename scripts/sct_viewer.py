@@ -578,37 +578,6 @@ class ClickViewer(Viewer):
         else:
             return('h')
 
-    def create_button_auto_manual(self):
-        ax = plt.axes([0.08, 0.90, 0.15, 0.075])
-        self.dic_axis_buttons['choose_mode']=ax
-        self.button_choose_auto_manual = Button(ax, 'Mode Auto')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_choose_mode)
-
-    def create_button_redo(self):
-        ax = plt.axes([0.59, 0.90, 0.1, 0.075])
-        self.dic_axis_buttons['redo']=ax
-        button_help = Button(ax, 'Redo')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_redo)
-
-    def create_button_skip(self):
-        ax = plt.axes([0.70, 0.90, 0.1, 0.075])
-        self.dic_axis_buttons['skip']=ax
-        button_help = Button(ax, 'Skip')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_skip)
-
-    def create_button_save_and_quit(self):
-        ax = plt.axes([0.81, 0.90, 0.1, 0.075])
-        self.dic_axis_buttons['save_and_quit']=ax
-        button_help = Button(ax, 'Save &\n'
-                                 'Quit')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_save_and_quit)
-
-    def create_button_help(self):
-        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['help']=ax
-        button_help = Button(ax, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
-
     def calculate_list_slices(self, starting_slice=-1):
         if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
 
@@ -680,22 +649,6 @@ class ClickViewer(Viewer):
                            int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
                            0]
 
-    def set_not_custom_target_points(self,event):
-        if self.primary_subplot == 'ax':
-            return( Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
-        elif self.primary_subplot == 'cor':
-            return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[2], 1]) )
-        elif self.primary_subplot == 'sag':
-            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[self.current_slice]), 1]) )
-
-    def set_custom_target_points(self,event):
-        if self.primary_subplot == 'ax':
-            return ( Coordinate( [int(self.current_point.x), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
-        elif self.primary_subplot == 'cor':
-            return (Coordinate( [int(event.ydata) - self.offset[0], int(self.current_point.y), int(event.xdata) - self.offset[2], 1]))
-        elif self.primary_subplot == 'sag':
-            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], self.current_point.z, 1]))
-
     def check_point_is_valid(self,target_point,plot):
         if(self.is_point_in_image(target_point)):
             return True
@@ -754,61 +707,6 @@ class ClickViewer(Viewer):
             self.update_title_text('ready_to_save_and_quit')
             self.bool_all_processed=True
             return True
-
-    def on_press_main_window(self,event,plot):
-        self.bool_skip_all_to_end=True
-        if not self.bool_enable_custom_points:
-            target_point = self.set_not_custom_target_points(event)
-        else:
-            target_point = self.set_custom_target_points(event)
-
-        if self.check_point_is_valid(target_point, plot):
-            self.list_points.append(target_point)
-            point = [self.current_point.x, self.current_point.y, self.current_point.z]
-
-            if not self.bool_enable_custom_points:
-                self.current_slice += 1
-
-                if not self.are_all_images_processed():
-                    point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice] #?!
-                    self.current_point = Coordinate(point)
-                    self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  #?!
-                    self.windows[0].update_slice(self.list_slices[self.current_slice])
-                    self.update_title_text('way_automatic_next_point')
-                    plot.draw()
-
-            else:
-                self.draw_points(self.windows[0], self.current_point.x)
-                self.windows[0].update_slice(point, data_update=True)
-                self.update_title_text('way_custom_next_point')
-                plot.draw()
-
-    def on_press_secondary_window(self,event,plot):
-        is_in_axes = False
-        for window in self.windows:
-            if event.inaxes == window.axes:
-                is_in_axes = True
-        if not is_in_axes:  # ?!
-            return
-
-        plot.draw()
-
-        self.last_update = time()
-        self.current_point = self.get_event_coordinates(event, plot)
-        point = [self.current_point.x, self.current_point.y, self.current_point.z]
-        for window in self.windows:
-            if window is plot:
-                window.update_slice(point, data_update=False)
-            else:
-                self.draw_points(window, self.current_point.x)
-                window.update_slice(point, data_update=True)
-
-    def on_press(self, event, plot=None):
-        # event inaxes ?!
-        if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
-            self.on_press_main_window(event,plot)
-        elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
-            self.on_press_secondary_window(event,plot)
 
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
@@ -872,9 +770,18 @@ class ClickViewer(Viewer):
         else:
             return None
 
-    def press_help(self, event):
-        if event.inaxes == self.dic_axis_buttons['help']:
-            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
+    def create_button_redo(self):
+        ax = plt.axes([0.59, 0.90, 0.1, 0.075])
+        self.dic_axis_buttons['redo']=ax
+        button_help = Button(ax, 'Redo')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_redo)
+
+    def create_button_save_and_quit(self):
+        ax = plt.axes([0.81, 0.90, 0.1, 0.075])
+        self.dic_axis_buttons['save_and_quit']=ax
+        button_help = Button(ax, 'Save &\n'
+                                 'Quit')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_save_and_quit)
 
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
@@ -894,6 +801,7 @@ class ClickViewer(Viewer):
             self.update_title_text('way_custom_next_point')
         self.draw_points(self.windows[0], self.current_point.x)
 
+    # TODO : gerer redo_auto dans ClickViewerPropseg
     def redo_auto(self):
         self.current_slice += -1
         self.windows[0].update_slice(self.list_slices[self.current_slice])
@@ -903,17 +811,6 @@ class ClickViewer(Viewer):
             self.list_points = self.list_points[0:len(self.list_points) - 1]
         else:
             self.list_points = []
-
-    def press_skip(self, event):
-        if event.inaxes == self.dic_axis_buttons['skip']:
-            if not self.bool_enable_custom_points:
-                if self.bool_skip_all_to_end:
-                    self.update_title_text('ready_to_save_and_quit')
-                else:
-                    self.current_slice += 1
-                    self.windows[0].update_slice(self.list_slices[self.current_slice])
-            else:
-                self.update_title_text('warning_skip_on_custom')
 
     def save_data(self):
         for coord in self.list_points:
@@ -927,37 +824,6 @@ class ClickViewer(Viewer):
             self.save_data()
             self.closed=True
             plt.close('all')
-
-    def press_choose_mode(self,event):
-        if event.inaxes == self.dic_axis_buttons['choose_mode']:
-            self.reset_useful_global_variables()
-            self.bool_enable_custom_points=not self.bool_enable_custom_points
-
-            if(self.bool_enable_custom_points):
-                self.button_choose_auto_manual.label.set_text('Mode Manual')
-                self.update_title_text('way_custom_start')
-            else:
-                self.button_choose_auto_manual.label.set_text('Mode Auto')
-                self.update_title_text('way_auto_start')
-
-    def reset_useful_global_variables(self):
-        self.windows[0].update_slice(0)
-        # specialized for Click viewer
-        self.list_points = []
-        self.list_points_useful_notation = ''
-
-        # compute slices to display
-        self.list_slices = []
-
-        self.current_slice = 0
-        self.number_of_slices = 0
-        self.gap_inter_slice = 0
-
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
-        self.calculate_list_slices()
-        self.bool_skip_all_to_end=False
-
-        self.draw_points(self.windows[0],self.current_point.x)
 
     def start(self):
         super(ClickViewer, self).start()
@@ -991,12 +857,28 @@ class ClickViewerPropseg(ClickViewer):
         self.create_button_skip()
         self.create_button_auto_manual()
 
+    def create_button_help(self):
+        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['help']=ax
+        button_help = Button(ax, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
 
     def create_button_skip(self):
         ax = plt.axes([0.70, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['skip']=ax
         button_help = Button(ax, 'Skip')
         self.fig.canvas.mpl_connect('button_press_event', self.press_skip)
+
+    def press_skip(self, event):
+        if event.inaxes == self.dic_axis_buttons['skip']:
+            if not self.bool_enable_custom_points:
+                if self.bool_skip_all_to_end:
+                    self.update_title_text('ready_to_save_and_quit')
+                else:
+                    self.current_slice += 1
+                    self.windows[0].update_slice(self.list_slices[self.current_slice])
+            else:
+                self.update_title_text('warning_skip_on_custom')
 
     def create_button_auto_manual(self):
         ax = plt.axes([0.08, 0.90, 0.15, 0.075])
@@ -1192,7 +1074,21 @@ class ClickViewerPropseg(ClickViewer):
                     window.update_slice(point, data_update=True)
         return
 
+    def set_not_custom_target_points(self,event):
+        if self.primary_subplot == 'ax':
+            return( Coordinate([int(self.list_slices[self.current_slice]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
+        elif self.primary_subplot == 'cor':
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[self.current_slice]), int(event.xdata) - self.offset[2], 1]) )
+        elif self.primary_subplot == 'sag':
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[self.current_slice]), 1]) )
 
+    def set_custom_target_points(self,event):
+        if self.primary_subplot == 'ax':
+            return ( Coordinate( [int(self.current_point.x), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
+        elif self.primary_subplot == 'cor':
+            return (Coordinate( [int(event.ydata) - self.offset[0], int(self.current_point.y), int(event.xdata) - self.offset[2], 1]))
+        elif self.primary_subplot == 'sag':
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], self.current_point.z, 1]))
 
 
 def get_parser():
