@@ -13,31 +13,32 @@
 
 # TODO: add integrity check
 
+#import sct_utils as sct
 import commands
-import os
 
 
 def test(path_data):
 
+    # parameters
     folder_data = ['mt/', 'label/atlas']
     file_data = ['mtr.nii.gz']
     file_output = ['quantif_mtr.txt']
 
-    input_file = os.path.join(path_data, 'mt', 'mtr.nii.gz')
-    output = os.path.join(path_data, 'mt', 'label', 'atlas')
-
     # define command
     cmd = 'sct_extract_metric' \
-        ' -i ' + input_file + \
-        ' -f ' + output + \
+        ' -i '+path_data+folder_data[0]+file_data[0]+ \
+        ' -f '+path_data+folder_data[0]+folder_data[1]+ \
         ' -method wath '+ \
         ' -vert 1:3'+ \
-        ' -o quantif_mtr.txt' \
+        ' -o '+file_output[0]+ \
         ' -v 1'
 
+    # return
+    #return sct.run(cmd, 0)
     return commands.getstatusoutput(cmd)
 
 
 # call to function
 if __name__ == "__main__":
+    # call main function
     test()
