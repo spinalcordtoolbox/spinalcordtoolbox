@@ -498,7 +498,7 @@ class ClickViewer(Viewer):
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
         super(ClickViewer, self).__init__(list_images, visualization_parameters)
 
-        self.declaration_global_variables(orientation_subplot)
+        self.declaration_global_variables_general(orientation_subplot)
 
         self.compute_offset() # ?!
         self.pad_data()       # ?!
