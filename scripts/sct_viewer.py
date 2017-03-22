@@ -688,8 +688,7 @@ class ClickViewer(Viewer):
         """
         if event.button == 1 and event.inaxes == plot.axes and plot.view == self.orientation[self.secondary_subplot]:
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            if not self.bool_enable_custom_points:
-                point[self.orientation[self.primary_subplot]-1] = self.list_slices[self.current_slice]
+            point[self.orientation[self.primary_subplot]-1] = self.list_slices[self.current_slice]
             for window in self.windows:
                 if window is plot:
                     window.update_slice(point, data_update=False)
@@ -1017,7 +1016,6 @@ class ClickViewerLabelVertebrae(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
-        self.declaration_global_variables_specific(orientation_subplot)
         self.update_title_text('init')
 
         """ Create Buttons"""
@@ -1030,14 +1028,15 @@ class ClickViewerLabelVertebrae(ClickViewer):
         button_help = Button(ax, 'Help')
         self.fig.canvas.mpl_connect('button_press_event', self.press_help)
 
-    def declaration_global_variables_specific(self,orientation_subplot):
-        self.bool_enable_custom_points = False
-        self.bool_skip_all_to_end=False
-
-    def update_title_text(self,key):
+    def     update_title_text(self,key):
 
         if(key=='init'):
             title_obj = self.windows[0].axes.set_title( 'Please click at intervertebral disc C2-C3 \n')
+            plt._setp(title_obj,color='k')
+
+        if(key=='redo_done'):
+            title_obj = self.windows[0].axes.set_title( 'Previous dot erased \n'
+                                                        'Please click at intervertebral disc C2-C3 \n')
             plt._setp(title_obj,color='k')
 
         else:
@@ -1050,32 +1049,22 @@ class ClickViewerLabelVertebrae(ClickViewer):
             webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def on_press_main_window(self,event,plot):
-        self.bool_skip_all_to_end=True
-        if not self.bool_enable_custom_points:
-            target_point = self.set_not_custom_target_points(event)
-        else:
-            target_point = self.set_custom_target_points(event)
+        target_point = self.set_not_custom_target_points(event)
 
         if self.check_point_is_valid(target_point, plot):
             self.list_points.append(target_point)
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            self.current_slice += 1
 
-            if not self.bool_enable_custom_points:
-                self.current_slice += 1
-
-                if not self.are_all_images_processed():
-                    point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice] #?!
-                    self.current_point = Coordinate(point)
-                    self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  #?!
-                    self.windows[0].update_slice(self.list_slices[self.current_slice])
-                    self.update_title_text('way_automatic_next_point')
-                    plot.draw()
-
-            else:
-                self.draw_points(self.windows[0], self.current_point.x)
-                self.windows[0].update_slice(point, data_update=True)
-                self.update_title_text('way_custom_next_point')
+            if not self.are_all_images_processed():
+                point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]  # ?!
+                self.current_point = Coordinate(point)
+                self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  # ?!
+                self.windows[0].update_slice(self.list_slices[self.current_slice])
+                self.update_title_text('way_automatic_next_point')
                 plot.draw()
+
+
 
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
@@ -1126,20 +1115,15 @@ class ClickViewerLabelVertebrae(ClickViewer):
 
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
-            if (len(self.list_points) > 0   or self.current_slice>0 ):
-                self.bool_skip_all_to_end = False
-                if not self.bool_enable_custom_points:
-                    self.redo_auto()
+            if self.current_slice>0:
+                self.redo_auto()
                 self.remove_last_dot()
                 self.update_ui_after_redo()
             else:
                 self.update_title_text('warning_redo_beyound_first_dot')
 
     def update_ui_after_redo(self):
-        if not self.bool_enable_custom_points:
-            self.update_title_text('way_automatic_next_point')
-        else:
-            self.update_title_text('way_custom_next_point')
+        self.update_title_text('redo_done')
         self.draw_points(self.windows[0], self.current_point.x)
 
     def redo_auto(self):
