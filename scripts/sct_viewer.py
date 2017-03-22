@@ -780,8 +780,6 @@ class ClickViewerPropseg(ClickViewer):
                  list_images,
                  visualization_parameters=None,
                  orientation_subplot=['ax', 'sag'],
-                 title='Mode Auto \n '
-                       'Please select a new point \n',
                  input_type='centerline'):
 
         ClickViewer.__init__(self,list_images,
