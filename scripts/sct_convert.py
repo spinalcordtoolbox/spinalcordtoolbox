@@ -11,16 +11,13 @@
 #########################################################################################
 
 # TODO: add output check in convert
-import os
-import sys
 
-import msct_image
-import msct_parser
-import sct_utils as sct
+from msct_parser import Parser
+import sys
 
 
 # DEFAULT PARAMETERS
-class Param(object):
+class Param:
     ## The constructor
     def __init__(self):
         self.verbose = 1
@@ -29,9 +26,15 @@ class Param(object):
 # PARSER
 # ==========================================================================================
 def get_parser():
+    # parser initialisation
+    parser = Parser(__file__)
+
+    # initialize parameters
+    param = Param()
+    param_default = Param()
 
     # Initialize the parser
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description('Convert image file to another type.')
     parser.add_option(name="-i",
                       type_value="file",
@@ -54,38 +57,34 @@ def get_parser():
 
 # conversion
 # ==========================================================================================
-def convert(fname_in, fname_out, squeeze_data=True, data_type=None, verbose=1):
+def convert(fname_in, fname_out, squeeze_data=True, type=None, verbose=1):
     """
     Convert data
     :return True/False
     """
-    sct.printv('sct_convert -i '+fname_in+' -o '+fname_out, verbose, 'code')
+    from msct_image import Image
+    from sct_utils import printv
+    printv('sct_convert -i '+fname_in+' -o '+fname_out, verbose, 'code')
     # Open file
-    im = msct_image.Image(fname_in)
+    im = Image(fname_in)
     # Save file
     im.setFileName(fname_out)
-    if data_type is not None:
-        im.changeType(data_type=data_type)
+    if type is not None:
+        im.changeType(type=type)
     im.save(squeeze_data=squeeze_data)
     return im
 
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(args = None):
 
-    # initialize parameters
-    param = Param()
-
-    if args is None:
+    if not args:
         args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Building the command, do sanity checks
     parser = get_parser()
-    arguments = parser.parse(args)
+    arguments = parser.parse(sys.argv[1:])
     fname_in = arguments["-i"]
     fname_out = arguments["-o"]
     squeeze_data = bool(int(arguments['-squeeze']))
@@ -98,6 +97,8 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    # initialize parameters
+    param = Param()
     # call main function
     main()
 

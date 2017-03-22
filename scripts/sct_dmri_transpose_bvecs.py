@@ -23,22 +23,22 @@
 #########################################################################################
 
 import sys
+from msct_parser import Parser
+from sct_utils import extract_fname, printv
 
-import msct_parser
-import sct_utils as sct
 
 # PARSER
 # ==========================================================================================
 def get_parser():
     # parser initialisation
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
 
     # # initialize parameters
     # param = Param()
     # param_default = Param()
 
     # Initialize the parser
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description('Transpose bvecs file (if necessary) to get nx3 structure.')
     parser.add_option(name='-bvec',
                       type_value='file',
@@ -71,13 +71,10 @@ def main(args=None):
 
     if not args:
         args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(args)
+    arguments = parser.parse(sys.argv[1:])
     fname_in = arguments['-bvec']
     if '-o' in arguments:
         fname_out = arguments['-o']
@@ -90,13 +87,13 @@ def main(args=None):
     bvals, bvecs = read_bvals_bvecs(None, fname_in)
 
     # # Transpose bvecs
-    # sct.printv('Transpose bvecs...', verbose)
+    # printv('Transpose bvecs...', verbose)
     # # from numpy import transpose
     # bvecs = bvecs.transpose()
 
     # Write new file
     if fname_out == '':
-        path_in, file_in, ext_in = sct.extract_fname(fname_in)
+        path_in, file_in, ext_in = extract_fname(fname_in)
         fname_out = path_in+file_in+ext_in
     fid = open(fname_out, 'w')
     for iLine in range(bvecs.shape[0]):
@@ -104,7 +101,7 @@ def main(args=None):
     fid.close()
 
     # display message
-    sct.printv('Created file:\n--> '+fname_out+'\n', verbose, 'info')
+    printv('Created file:\n--> '+fname_out+'\n', verbose, 'info')
 
 
 # Start program

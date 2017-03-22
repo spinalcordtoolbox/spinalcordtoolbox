@@ -13,21 +13,11 @@
 #########################################################################################
 
 # TODO: update function to reflect the new get_dimension
-import copy
-import math
-import os
-import sys
 
-import matplotlib.cm
-import matplotlib.colors
-import matplotlib.pyplot
-import msct_parser
-import msct_types
-import nibabel
+
 import numpy as np
-import sct_image
-import sct_utils as sct
 from scipy.ndimage import map_coordinates
+import math
 
 
 def striu2mat(striu):
@@ -45,8 +35,7 @@ def striu2mat(striu):
     -----
     Shear lengths are triangular numbers.
     See http://en.wikipedia.org/wiki/Triangular_number
-    This function has been taken from
-    https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
     """
     # Caching dictionary for common shear Ns, indices
     _shearers = {}
@@ -90,8 +79,7 @@ def compose(T, R, Z, S=None):
     A : array, shape (N+1, N+1)
         Affine transformation matrix where N usually == 3
         (3D case)
-    This function has been taken from
-    https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
     """
     n = len(T)
     R = np.asarray(R)
@@ -172,8 +160,7 @@ def decompose_affine_transform(A44):
     Similarly ``R[:,0].T * RZS[:,2]`` simplifies to ``sx*sxz``, and
     ``R[:,1].T * RZS[:,2]`` to ``sy*syz`` giving us the remaining
     unknowns.
-    This function has been taken from
-    https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
     """
     A44 = np.asarray(A44)
     T = A44[:-1,-1]
@@ -212,7 +199,10 @@ class Image(object):
 
     """
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
+        from sct_utils import extract_fname
+        from nibabel import Nifti1Header
 
+        # initialization of all parameters
         self.im_file = None
         self.data = None
         self.orientation = None
@@ -223,7 +213,7 @@ class Image(object):
         self.dim = None
 
         if hdr is None:
-            hdr = self.hdr = nibabel.Nifti1Header()  # an empty header
+            hdr = self.hdr = Nifti1Header()  # an empty header
         else:
             self.hdr = hdr
 
@@ -243,7 +233,7 @@ class Image(object):
             self.hdr = hdr
             self.orientation = orientation
             self.absolutepath = absolutepath
-            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
+            self.path, self.file_name, self.ext = extract_fname(absolutepath)
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
@@ -251,17 +241,17 @@ class Image(object):
             self.hdr = hdr
             self.orientation = orientation
             self.absolutepath = absolutepath
-            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
+            self.path, self.file_name, self.ext = extract_fname(absolutepath)
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
     def __deepcopy__(self, memo):
-        deepcopy = copy.deepcopy
-        return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo),
-                          deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
+        from copy import deepcopy
+        return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo), deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
 
     def copy(self, image=None):
-        deepcopy = copy.deepcopy
+        from copy import deepcopy
+        from sct_utils import extract_fname
         if image is not None:
             self.im_file = deepcopy(image.im_file)
             self.data = deepcopy(image.data)
@@ -269,7 +259,7 @@ class Image(object):
             self.hdr = deepcopy(image.hdr)
             self.orientation = deepcopy(image.orientation)
             self.absolutepath = deepcopy(image.absolutepath)
-            self.path, self.file_name, self.ext = sct.extract_fname(self.absolutepath)
+            self.path, self.file_name, self.ext = extract_fname(self.absolutepath)
         else:
             return deepcopy(self)
 
@@ -279,29 +269,38 @@ class Image(object):
         :param path: path of the file from which the image will be loaded
         :return:
         """
+        from nibabel import load, spatialimages
+        from sct_utils import check_file_exist, printv, extract_fname, run
+        from sct_image import get_orientation
+
+        # check_file_exist(path, verbose=verbose)
         try:
-            self.im_file = nibabel.load(path)
-        except (nibabel.spatialimages.ImageFileError):
-            sct.printv('Error: make sure ' + path + ' is an image.', 1, 'error')
+            self.im_file = load(path)
+        except spatialimages.ImageFileError:
+            printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.data = self.im_file.get_data()
         self.hdr = self.im_file.get_header()
-        self.orientation = sct_image.get_orientation(self)
+        self.orientation = get_orientation(self)
         self.absolutepath = path
-        self.path, self.file_name, self.ext = sct.extract_fname(path)
+        self.path, self.file_name, self.ext = extract_fname(path)
         self.dim = get_dimension(self.im_file)
+        # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
+        # self.dim = [nx, ny, nz]
+
 
     def setFileName(self, filename):
         """
         :param filename: file name with extension
         :return:
         """
+        from sct_utils import extract_fname
         self.absolutepath = filename
-        self.path, self.file_name, self.ext = sct.extract_fname(filename)
+        self.path, self.file_name, self.ext = extract_fname(filename)
 
-    def changeType(self, data_type=''):
+    def changeType(self, type=''):
         """
         Change the voxel type of the image
-        :param data_type:    if not set, the image is saved in standard type
+        :param type:    if not set, the image is saved in standard type
                         if 'minimize', image space is minimize
                         if 'minimize_int', image space is minimize and values are approximated to integers
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
@@ -320,19 +319,18 @@ class Image(object):
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         :return:
         """
-        if data_type == '':
-            data_type = self.hdr.get_data_dtype()
+        if type == '':
+            type = self.hdr.get_data_dtype()
 
-        if data_type == 'minimize' or data_type == 'minimize_int':
-            # compute max value in the image and choose the best pixel type to represent all the pixels within smallest
-            #  memory space
+        if type == 'minimize' or type == 'minimize_int':
+            # compute max value in the image and choose the best pixel type to represent all the pixels within smallest memory space
             # warning: does not take intensity resolution into account, neither complex voxels
             max_vox = np.nanmax(self.data)
             min_vox = np.nanmin(self.data)
 
             # check if voxel values are real or integer
             isInteger = True
-            if data_type == 'minimize':
+            if type == 'minimize':
                 for vox in self.data.flatten():
                     if int(vox) != vox:
                         isInteger = False
@@ -341,43 +339,45 @@ class Image(object):
             if isInteger:
                 if min_vox >= 0:  # unsigned
                     if max_vox <= np.iinfo(np.uint8).max:
-                        data_type = 'uint8'
+                        type = 'uint8'
                     elif max_vox <= np.iinfo(np.uint16):
-                        data_type = 'uint16'
+                        type = 'uint16'
                     elif max_vox <= np.iinfo(np.uint32).max:
-                        data_type = 'uint32'
+                        type = 'uint32'
                     elif max_vox <= np.iinfo(np.uint64).max:
-                        data_type = 'uint64'
+                        type = 'uint64'
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
                 else:
                     if max_vox <= np.iinfo(np.int8).max and min_vox >= np.iinfo(np.int8).min:
-                        data_type = 'int8'
+                        type = 'int8'
                     elif max_vox <= np.iinfo(np.int16).max and min_vox >= np.iinfo(np.int16).min:
-                        data_type = 'int16'
+                        type = 'int16'
                     elif max_vox <= np.iinfo(np.int32).max and min_vox >= np.iinfo(np.int32).min:
-                        data_type = 'int32'
+                        type = 'int32'
                     elif max_vox <= np.iinfo(np.int64).max and min_vox >= np.iinfo(np.int64).min:
-                        data_type = 'int64'
+                        type = 'int64'
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
             else:
                 # if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
                 #    type = 'np.float16' # not supported by nibabel
                 if max_vox <= np.finfo(np.float32).max and min_vox >= np.finfo(np.float32).min:
-                    data_type = 'float32'
+                    type = 'float32'
                 elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
-                    data_type = 'float64'
+                    type = 'float64'
 
         # print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
-        self.data = getattr(np, data_type)(self.data)
-        self.hdr.set_data_dtype(data_type)
+        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64  # DON'T REMOVE THIS, IT IS MANDATORY FOR EVAL
+        type_build = eval(type)
+        self.data = type_build(self.data)
+        self.hdr.set_data_dtype(type)
 
-    def save(self, data_type='', squeeze_data=True, verbose=1, force_cwd=False):
+    def save(self, type='', squeeze_data=True,  verbose=1):
         """
         Write an image in a nifti file
-        :param data_type:    if not set, the image is saved in the same type as input data
+        :param type:    if not set, the image is saved in the same type as input data
                         if 'minimize', image space is minimize
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
                         (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
@@ -393,26 +393,25 @@ class Image(object):
                         (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
                         (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
-        :param force_cwd: force file to be saved in $CWD
         """
+        from nibabel import Nifti1Image, save
+        from sct_utils import printv
+        from os import path, remove
         if squeeze_data:
             # remove singleton
             self.data = np.squeeze(self.data)
-        if data_type != '':
-            self.changeType(data_type)
+        if type != '':
+            self.changeType(type)
         # update header
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
-        img = nibabel.Nifti1Image(self.data, None, self.hdr)
-        if force_cwd:
-            fname_out = os.path.join(os.getcwd(), self.file_name + self.ext)
-        else:
-            fname_out = os.path.join(self.path, self.file_name + self.ext)
-        if os.path.isfile(fname_out):
-            sct.printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
-            os.remove(fname_out)
+        img = Nifti1Image(self.data, None, self.hdr)
+        fname_out = self.path + self.file_name + self.ext
+        if path.isfile(fname_out):
+            printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
+            remove(fname_out)
         # save file
-        nibabel.save(img, fname_out)
+        save(img, fname_out)
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
     # which would have returned (d,)
@@ -430,10 +429,11 @@ class Image(object):
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
         """
         This function return all the non-zero coordinates that the image contains.
-        Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y',
-        sorting='z' or sorting='value'
+        Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
+        from msct_types import Coordinate
+        from sct_utils import printv
         n_dim = 1
         if self.dim[3] == 1:
             n_dim = 3
@@ -445,25 +445,24 @@ class Image(object):
         try:
             if n_dim == 3:
                 X, Y, Z = (self.data > 0).nonzero()
-                list_coordinates = [msct_types.Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
-                                    for i in range(0, len(X))]
+                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
             elif n_dim == 2:
                 try:
                     X, Y = (self.data > 0).nonzero()
-                    list_coordinates = [msct_types.Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+                    list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
                 except ValueError:
                     X, Y, Z = (self.data > 0).nonzero()
-                    list_coordinates = [msct_types.Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
+                    list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
         except Exception, e:
             print 'ERROR', e
-            sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
+            printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
+            from msct_types import CoordinateValue
             if n_dim == 3:
-                list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]])
-                                    for i in range(0, len(X))]
+                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
             else:
-                list_coordinates = [msct_types.CoordinateValue([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+                list_coordinates = [CoordinateValue([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -483,8 +482,7 @@ class Image(object):
 
     def getCoordinatesAveragedByValue(self):
         """
-        This function computes the mean coordinate of group of labels in the image. This is especially
-        useful for label's images.
+        This function computes the mean coordinate of group of labels in the image. This is especially useful for label's images.
         :return: list of coordinates that represent the center of mass of each group of value.
         """
         # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
@@ -506,14 +504,12 @@ class Image(object):
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
         return averaged_coordinates
 
-    # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles
-    #  of the same size
+    # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
     # orientation must be IRP to be able to go trough slices as first dimension
     def crop_and_stack(self, mask, suffix='_resized', save=True):
         """
-        Cropping function to be used with a mask centered on the spinal cord. The crop slices are stack in the z
-        direction. The result will be a kind of straighten image centered on the center of the mask (aka the center of
-        the spinal cord)
+        Cropping function to be used with a mask centered on the spinal cord. The crop slices are stack in the z direction.
+        The result will be a kind of straighten image centered on the center of the mask (aka the center of the spinal cord)
         :param mask: mask image
         :param suffix: suffix to add to the file name (usefull only with the save option)
         :param save: save the image if True
@@ -527,8 +523,7 @@ class Image(object):
         data_array = self.data
         data_mask = mask.data
 
-        # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding
-        # to fit the mask's shape
+        # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
         if data_array.shape != data_mask.shape:
             old_data_array = data_array
             pad_1 = int((data_mask.shape[1] - old_data_array.shape[1])/2 + 1)
@@ -607,8 +602,9 @@ class Image(object):
         self.change_orientation(original_orientation)
         mask.change_orientation(mask_original_orientation)
         if save:
+            from sct_utils import add_suffix
             self.file_name += suffix
-            sct.add_suffix(self.absolutepath, suffix)
+            add_suffix(self.absolutepath, suffix)
             self.save()
 
     def invert(self):
@@ -644,14 +640,14 @@ class Image(object):
         This function changes the orientation of the data by swapping the image axis.
         Warning: the nifti image header is not changed!!!
         :param orientation: string of three character representing the new orientation (ex: AIL, default: RPI)
-               inversion_orient: boolean. If True, the data change to match the orientation in the header, based on
-               the orientation provided as the argument orientation.
+               inversion_orient: boolean. If True, the data change to match the orientation in the header, based on the orientation provided as the argument orientation.
         :return:
         """
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            self.orientation = sct_image.get_orientation_3d(self)
+            from sct_image import get_orientation_3d
+            self.orientation = get_orientation_3d(self)
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
@@ -702,10 +698,11 @@ class Image(object):
         return raw_orientation
 
     def show(self):
-        imgplot = matplotlib.pyplot.imshow(self.data)
+        from matplotlib.pyplot import imshow, show
+        imgplot = imshow(self.data)
         imgplot.set_cmap('gray')
         imgplot.set_interpolation('nearest')
-        matplotlib.pyplot.show()
+        show()
 
     def compute_transform_matrix(self):
         m_p2f = self.hdr.get_sform()
@@ -768,8 +765,7 @@ class Image(object):
     def transfo_phys2pix(self, coordi):
         """
         This function returns the pixels coordinates of all points of 'coordi'
-        'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will
-         return a list with the physical coordinates of the points in the space of the image.
+        'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
 
 
         :return:
@@ -790,15 +786,12 @@ class Image(object):
 
     def transfo_phys2continuouspix(self, coordi=None, data_phys=None):
         """
-        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output
-        is a matrix of size: size(data_phys) but containing a 3D vector.
+        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
         This vector is the pixel position of the point in the space of the image.
-        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the
-        point).
+        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the point).
 
         If coordi is different from none:
-        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will
-        return a list with the physical coordinates of the points in the space of the image.
+        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
 
 
         :return:
@@ -823,8 +816,7 @@ class Image(object):
         """
         This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
         :param coordi: continuouspix
-        :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline,
-                                   4= 2nd-order spline, 5= 5th-order spline
+        :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
         :return: intensity values at continuouspix with interpolation_mode
         """
         return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode, mode=border, cval=cval)
@@ -921,8 +913,7 @@ class Image(object):
         # 2. apply transformation on coordinates
 
         coord_im = np.array(self.transfo_phys2continuouspix(physical_coordinates_ref))
-        interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]),
-                                              interpolation_mode=interpolation_mode, border=border)
+        interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode, border=border)
 
         im_output = Image(im_ref)
         if interpolation_mode == 0:
@@ -983,52 +974,57 @@ class Image(object):
                 if seg is not None:
                     slice_seg = seg.data[:, :, index]
         else:
-            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"',
-                       self.verbose, type='error')
+            from sct_utils import printv
+            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
 
         return (slice, slice_seg)
 
     #
-    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='',
-                   seg=None, thr=0, cmap_col='red', path_output='./'):
+    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0, cmap_col='red', path_output='./'):
         """
         Save a slice of self in the specified plan.
 
         :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
+
         :param index: index of the slice to save (if none, middle slice in the given direction/plan)
+
         :param format: format to be saved in. default = '.png'
+
         :param suffix: suffix to add to the image file name.
+
         :param seg: segmentation to add in transparency to the image to save. Type Image.
+
         :param thr: threshold to apply to the segmentation
+
         :param col: colormap description : 'red', 'red-yellow', or 'blue-cyan'
-        :param cmap_col:
-        :param path_output:
+
         :return filename_png: file name of the saved image
         """
-        plt = matplotlib.pyplot
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+        from math import sqrt
+        from sct_utils import slash_at_the_end
         if type(index) is not list:
             index = [index]
 
         slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
-        path_output = sct.slash_at_the_end(path_output, 1)
+        path_output = slash_at_the_end(path_output, 1)
         if seg is not None:
-            col = matplotlib.colors
+            import matplotlib.colors as col
             color_white = col.colorConverter.to_rgba('white', alpha=0.0)
             if cmap_col == 'red-yellow':
                 color_red = col.colorConverter.to_rgba('red', alpha=0.7)
                 color_yellow = col.colorConverter.to_rgba('yellow', alpha=0.8)
-                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg',
-                                                                 [color_white, color_yellow, color_red], N=256)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_yellow, color_red], N=256)
             elif cmap_col == 'blue-cyan':
                 color_blue = col.colorConverter.to_rgba('blue', alpha=0.7)
                 color_cyan = col.colorConverter.to_rgba('cyan', alpha=0.8)
-                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg',
-                                                                 [color_white, color_blue, color_cyan], N=256)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_blue, color_cyan], N=256)
             else:
                 color_red = col.colorConverter.to_rgba('red', alpha=0.7)
                 cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_red], N=256)
 
-        n_lines = int(math.sqrt(len(slice_list)))
+        n_lines = int(sqrt(len(slice_list)))
         n_col = int(len(slice_list)/n_lines)
         n_lines += 1
 
@@ -1037,7 +1033,7 @@ class Image(object):
             for i, slices in enumerate(slice_list):
                 slice_im, slice_seg = slices
                 plot = fig.add_subplot(n_lines, n_col, i+1)
-                plot.imshow(slice_im, cmap=matplotlib.cm.gray, interpolation='nearest')
+                plot.imshow(slice_im, cmap=cm.gray, interpolation='nearest')
                 if index[i] is None:
                     title = 'mid slice'
                 else:
@@ -1048,21 +1044,26 @@ class Image(object):
                     plot.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
                 plt.axis('off')
 
+            # plt.imshow(slice, cmap=cm.gray, interpolation='nearest')
+            # if seg is not None:
+            #     plt.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
+            # plt.axis('off')
             fname_png = path_output + self.file_name + suffix + format
             plt.savefig(fname_png, bbox_inches='tight')
             plt.close(fig)
 
         except RuntimeError, e:
-            sct.printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
-            sct.printv(str(e), self.verbose, type='warning')
+            from sct_utils import printv
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
         return fname_png
 
-    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png',
-                             path_output='./', verbose=1):
+    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', path_output='./', verbose=1):
         ori = self.change_orientation('RPI')
         if seg is not None:
             ori_seg = seg.change_orientation('RPI')
 
+        from sct_utils import printv
         nx, ny, nz, nt, px, py, pz, pt = self.dim
         if plane == 'sagittal':
             max_n_slices = nx
@@ -1072,8 +1073,7 @@ class Image(object):
             max_n_slices = nz
         else:
             max_n_slices = None
-            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"',
-                       self.verbose, type='error')
+            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
 
         if n_slices > max_n_slices:
             index_list = range(max_n_slices)
@@ -1084,18 +1084,15 @@ class Image(object):
             index_list = [((i+1)*gap)-1 for i in range(n_slices)]
         index_list.sort()
         try:
-            filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list,
-                                                 format=format, path_output=path_output)
+            filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list, format=format, path_output=path_output)
             info_str = 'QC output image: ' + filename_image_png
             if seg is not None:
-                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg',
-                                                           index=index_list, seg=seg, thr=thr, cmap_col=cmap_col,
-                                                           format=format, path_output=path_output)
+                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
                 info_str += ' & ' + filename_gmseg_image_png
-            sct.printv(info_str, verbose, 'info')
+            printv(info_str, verbose, 'info')
         except RuntimeError, e:
-            sct.printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
-            sct.printv(str(e), self.verbose, type='warning')
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
 
         self.change_orientation(ori)
         if seg is not None:
@@ -1171,12 +1168,22 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 
     return dice
 
+def find_zmin_zmax(fname):
+    import sct_utils as sct
+    # crop image
+    status, output = sct.run('sct_crop_image -i '+fname+' -dim 2 -bmax -o tmp.nii')
+    # parse output
+    zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
+    return int(zmin), int(zmax)
+
 
 def get_dimension(im_file, verbose=1):
     """
     Get dimension from nibabel object. Manages 2D, 3D or 4D images.
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
+    import nibabel.nifti1
+    import sct_utils as sct
     # initialization
     nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
     if type(im_file) is nibabel.nifti1.Nifti1Image:
@@ -1185,8 +1192,7 @@ def get_dimension(im_file, verbose=1):
         header = im_file.hdr
     else:
         header = None
-        sct.printv('WARNING: the provided image file isn\'t a nibabel.nifti1.Nifti1Image instance nor a '
-                   'msct_image.Image instance', verbose, 'warning')
+        sct.printv('WARNING: the provided image file isn\'t a nibabel.nifti1.Nifti1Image instance nor a msct_image.Image instance', verbose, 'warning')
 
     nb_dims = len(header.get_data_shape())
     if nb_dims == 2:
@@ -1249,15 +1255,15 @@ def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
 
     return data
 
-def main(args=None):
+# =======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+    from msct_parser import Parser
+    from sct_utils import add_suffix
+    import sys
 
-    if args is None:
-        args = sys.argv[1:]
-    else:
-        script_name =os.path.splitext(os.path.basename(__file__))[0]
-        sct.printv('{0} {1}'.format(script_name, " ".join(args)))
-
-    parser = msct_parser.Parser(__file__)
+    parser = Parser(__file__)
     parser.usage.set_description('Image processing functions')
     parser.add_option(name="-i",
                       type_value="file",
@@ -1270,13 +1276,11 @@ def main(args=None):
                       mandatory=False,
                       example='im_out.nii.gz')
 
-    arguments = parser.parse(args)
+
+    arguments = parser.parse(sys.argv[1:])
 
     image = Image(arguments["-i"])
     image.changeType('minimize')
     name_out = ''
     if "-o" in arguments:
         name_out = arguments["-o"]
-
-if __name__ == "__main__":
-    main()
