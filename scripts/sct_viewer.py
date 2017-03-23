@@ -258,9 +258,6 @@ class SinglePlot:
 
         return
 
-
-
-
 class Viewer(object):
     def __init__(self, list_input, visualization_parameters=None):
         self.images = self.keep_only_images(list_input)
@@ -948,21 +945,27 @@ class ClickViewerPropseg(ClickViewer):
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
 
             if not self.bool_enable_custom_points:
-                self.current_slice += 1
-
                 if not self.are_all_images_processed():
-                    point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice] #?!
-                    self.current_point = Coordinate(point)
-                    self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  #?!
-                    self.windows[0].update_slice(self.list_slices[self.current_slice])
-                    self.update_title_text('way_automatic_next_point')
-                    plot.draw()
-
+                    self.current_slice += 1
+                    self.show_next_slice(plot,point)
             else:
-                self.draw_points(self.windows[0], self.current_point.x)
-                self.windows[0].update_slice(point, data_update=True)
-                self.update_title_text('way_custom_next_point')
-                plot.draw()
+                self.add_dot_to_current_slice(plot,point)
+
+    def add_dot_to_current_slice(self,plot,point):
+        self.draw_points(self.windows[0], self.current_point.x)
+        self.windows[0].update_slice(point, data_update=True)
+        self.update_title_text('way_custom_next_point')
+        plot.draw()
+
+
+    def show_next_slice(self,plot,point):
+        point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]  # ?!
+        self.current_point = Coordinate(point)
+        self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  # ?!
+        self.windows[0].update_slice(self.list_slices[self.current_slice])
+        self.update_title_text('way_automatic_next_point')
+        plot.draw()
+
 
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
@@ -1020,14 +1023,14 @@ class ClickViewerPropseg(ClickViewer):
 
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
-            if (len(self.list_points) > 0   or self.current_slice>0 ):
+            if (len(self.list_points) > 0   or self.current_slice>0):
                 self.bool_skip_all_to_end = False
                 if not self.bool_enable_custom_points:
                     self.redo_auto()
                 self.remove_last_dot()
                 self.update_ui_after_redo()
             else:
-                self.update_title_text('warning_redo_beyound_first_dot')
+                self.update_title_text('warning_redo_beyond_first_dot')
 
     def update_ui_after_redo(self):
         if not self.bool_enable_custom_points:
