@@ -135,7 +135,6 @@ def get_parser():
 
     return parser
 
-
 def rewrite_arguments(arguments):
     fname_data = arguments['-i']
     fname_seg = arguments['-s']
@@ -180,6 +179,20 @@ def write_paramaters(arguments,param,ref,verbose):
 
     return (param,paramreg)
 
+def check_do_files_exist(fname_template,fname_template_vertebral_labeling,fname_template_seg,verbose):
+    # TODO: no need to do that!
+    sct.printv('\nCheck template files...')
+    sct.check_file_exist(fname_template, verbose)
+    sct.check_file_exist(fname_template_vertebral_labeling, verbose)
+    sct.check_file_exist(fname_template_seg, verbose)
+
+def make_fname_of_templates(file_template,path_template,file_template_vertebral_labeling,file_template_seg):
+    fname_template = path_template+'template/'+file_template
+    fname_template_vertebral_labeling = path_template+'template/'+file_template_vertebral_labeling
+    fname_template_seg = path_template+'template/'+file_template_seg
+    return(fname_template,fname_template_vertebral_labeling,fname_template_seg)
+
+
 
 
 # MAIN
@@ -209,17 +222,8 @@ def main():
     # start timer
     start_time = time.time()
 
-    # get fname of the template + template objects
-    fname_template = path_template+'template/'+file_template
-    fname_template_vertebral_labeling = path_template+'template/'+file_template_vertebral_labeling
-    fname_template_seg = path_template+'template/'+file_template_seg
-
-    # check file existence
-    # TODO: no need to do that!
-    sct.printv('\nCheck template files...')
-    sct.check_file_exist(fname_template, verbose)
-    sct.check_file_exist(fname_template_vertebral_labeling, verbose)
-    sct.check_file_exist(fname_template_seg, verbose)
+    (fname_template, fname_template_vertebral_labeling, fname_template_seg)=make_fname_of_templates(file_template,path_template,file_template_vertebral_labeling,file_template_seg)
+    check_do_files_exist(fname_template,fname_template_vertebral_labeling,fname_template_seg,verbose)
 
     # print arguments
     sct.printv('\nCheck parameters:', verbose)
