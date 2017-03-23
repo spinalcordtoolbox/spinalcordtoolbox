@@ -1113,19 +1113,10 @@ class ClickViewerLabelVertebrae(ClickViewer):
     def on_press_main_window(self,event,plot):
         target_point = self.set_target_point(event)
 
-        if self.check_point_is_valid(target_point):
+        if self.check_point_is_valid(target_point) and not self.are_all_slices_done():
             self.list_points.append(target_point)
-            point = [self.current_point.x, self.current_point.y, self.current_point.z]
-
             self.current_slice = 1
-
-        if not self.is_there_next_slice():
-            self.draw_points(self.windows[0], self.current_point.x)
-            self.windows[0].update_slice(point, data_update=True)
-            point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]  # ?!
-            self.current_point = Coordinate(point)
-            self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  # ?!
-            plot.draw()
+            self.update_title_text('ready_to_save_and_quit')
 
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
