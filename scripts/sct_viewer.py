@@ -1165,6 +1165,106 @@ class ClickViewerLabelVertebrae(ClickViewer):
         elif self.primary_subplot == 'sag':
             return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[0]), 1]) )
 
+class ClickViewerRegisterToTemplate(ClickViewer):
+
+    def __init__(self,
+                 list_images,
+                 visualization_parameters=None,
+                 orientation_subplot=['ax', 'sag'],
+                 input_type='centerline'):
+
+        ClickViewer.__init__(self,list_images,
+                 visualization_parameters=visualization_parameters,
+                 orientation_subplot=orientation_subplot,
+                 input_type=input_type)
+
+        self.update_title_text('init')
+
+        """ Create Buttons"""
+        self.create_button_help()
+        self.create_button_redo()
+
+    def create_button_help(self):
+        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['help']=ax
+        button_help = Button(ax, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
+
+    def update_title_text(self,key):
+
+        if(key=='init'):
+            title_obj = self.windows[0].axes.set_title( 'Please click at intervertebral disc C2-C3 \n')
+            plt._setp(title_obj,color='k')
+
+        if(key=='redo_done'):
+            title_obj = self.windows[0].axes.set_title( 'Previous dot erased \n'
+                                                        'Please click at intervertebral disc C2-C3 \n')
+            plt._setp(title_obj,color='k')
+
+        else:
+            self.update_title_text_general(key)
+
+        self.windows[0].draw()
+
+    def press_help(self, event):
+        if event.inaxes == self.dic_axis_buttons['help']:
+            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
+
+    def on_press_main_window(self,event,plot):
+        if not self.are_all_slices_done():
+            target_point = self.set_target_point(event)
+            if self.check_point_is_valid(target_point):
+                self.list_points.append(target_point)
+                self.current_slice = 1
+                self.update_title_text('ready_to_save_and_quit')
+
+
+    def on_press_secondary_window(self,event,plot):
+        is_in_axes = False
+        for window in self.windows:
+            if event.inaxes == window.axes:
+                is_in_axes = True
+        if not is_in_axes:  # ?!
+            return
+
+        plot.draw()
+
+        self.last_update = time()
+        self.current_point = self.get_event_coordinates(event, plot)
+        point = [self.current_point.x, self.current_point.y, self.current_point.z]
+        for window in self.windows:
+            if window is plot:
+                window.update_slice(point, data_update=False)
+            else:
+                self.draw_points(window, self.current_point.x)
+                window.update_slice(point, data_update=True)
+
+    def on_press(self, event, plot=None):
+        # event inaxes ?!
+        if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
+            self.on_press_main_window(event,plot)
+        elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
+            self.on_press_secondary_window(event,plot)
+
+    def draw_points(self, window, current_slice):
+        if window.view == self.orientation[self.primary_subplot]:
+            x_data, y_data = [], []
+            for pt in self.list_points: #?!
+                if pt.x == current_slice:
+                    x_data.append(pt.z + self.offset[2])
+                    y_data.append(pt.y + self.offset[1])
+            self.plot_points.set_xdata(x_data)
+            self.plot_points.set_ydata(y_data)
+            self.fig.canvas.draw()
+
+    def set_target_point(self,event):
+        if self.primary_subplot == 'ax':
+            return( Coordinate([int(self.list_slices[0]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
+        elif self.primary_subplot == 'cor':
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[0]), int(event.xdata) - self.offset[2], 1]) )
+        elif self.primary_subplot == 'sag':
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[0]), 1]) )
+
 def get_parser():
     parser = Parser(__file__)
     parser.usage.set_description('Volume Viewer')
