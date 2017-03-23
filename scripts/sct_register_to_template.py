@@ -192,6 +192,40 @@ def make_fname_of_templates(file_template,path_template,file_template_vertebral_
     fname_template_seg = path_template+'template/'+file_template_seg
     return(fname_template,fname_template_vertebral_labeling,fname_template_seg)
 
+def print_arguments(verbose,fname_data,fname_landmarks,fname_seg,path_template,remove_temp_files):
+    sct.printv('\nCheck parameters:', verbose)
+    sct.printv('  Data:                 '+fname_data, verbose)
+    sct.printv('  Landmarks:            '+fname_landmarks, verbose)
+    sct.printv('  Segmentation:         '+fname_seg, verbose)
+    sct.printv('  Path template:        '+path_template, verbose)
+    sct.printv('  Remove temp files:    '+str(remove_temp_files), verbose)
+
+def check_data_segmentation_landmarks_same_space(fname_data,fname_seg,fname_landmarks):
+    sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
+    path_data, file_data, ext_data = sct.extract_fname(fname_data)
+    if not sct.check_if_same_space(fname_data, fname_seg):
+        sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    if not sct.check_if_same_space(fname_data, fname_landmarks):
+        sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
+
+def set_temporary_files():
+    ftmp_data = 'data.nii'
+    ftmp_seg = 'seg.nii.gz'
+    ftmp_label = 'label.nii.gz'
+    ftmp_template = 'template.nii'
+    ftmp_template_seg = 'template_seg.nii.gz'
+    ftmp_template_label = 'template_label.nii.gz'
+    return(ftmp_data,ftmp_seg,ftmp_label,ftmp_template,ftmp_template_seg,ftmp_template_label)
+
+def copy_files_to_temporary_files(verbose,fname_data,path_tmp,ftmp_seg,ftmp_data,fname_seg,fname_landmarks,ftmp_label,fname_template,ftmp_template,fname_template_seg,ftmp_template_seg):
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+    sct.run('sct_convert -i '+fname_data+' -o '+path_tmp+ftmp_data)
+    sct.run('sct_convert -i '+fname_seg+' -o '+path_tmp+ftmp_seg)
+    sct.run('sct_convert -i '+fname_landmarks+' -o '+path_tmp+ftmp_label)
+    sct.run('sct_convert -i '+fname_template+' -o '+path_tmp+ftmp_template)
+    sct.run('sct_convert -i '+fname_template_seg+' -o '+path_tmp+ftmp_template_seg)
+    # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
+
 
 
 
@@ -201,10 +235,10 @@ def main():
     parser = get_parser()
     param = Param()
 
+    """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
     (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,verbose)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
-
 
 
     # initialize other parameters
@@ -219,62 +253,35 @@ def main():
     file_template = get_file_label(path_template+'template/', contrast_template.upper()+'-weighted')
     file_template_seg = get_file_label(path_template+'template/', 'spinal cord')
 
-    # start timer
+    """ Start timer"""
     start_time = time.time()
 
+    """ Manage file of templates"""
     (fname_template, fname_template_vertebral_labeling, fname_template_seg)=make_fname_of_templates(file_template,path_template,file_template_vertebral_labeling,file_template_seg)
     check_do_files_exist(fname_template,fname_template_vertebral_labeling,fname_template_seg,verbose)
+    print_arguments(verbose, fname_data, fname_landmarks, fname_seg, path_template, remove_temp_files)
 
-    # print arguments
-    sct.printv('\nCheck parameters:', verbose)
-    sct.printv('  Data:                 '+fname_data, verbose)
-    sct.printv('  Landmarks:            '+fname_landmarks, verbose)
-    sct.printv('  Segmentation:         '+fname_seg, verbose)
-    sct.printv('  Path template:        '+path_template, verbose)
-    sct.printv('  Remove temp files:    '+str(remove_temp_files), verbose)
-
-    # create QC folder
+    """ Create QC folder """
     sct.create_folder(param.path_qc)
 
-    # check if data, segmentation and landmarks are in the same space
-    sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
-    path_data, file_data, ext_data = sct.extract_fname(fname_data)
-    if not sct.check_if_same_space(fname_data, fname_seg):
-        sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
-    if not sct.check_if_same_space(fname_data, fname_landmarks):
-        sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    """ Check if data, segmentation and landmarks are in the same space"""
+    check_data_segmentation_landmarks_same_space(fname_data, fname_seg, fname_landmarks)
 
-    # check input labels
+    ''' Check input labels'''
     labels = check_labels(fname_landmarks)
 
-    # create temporary folder
+    """ create temporary folder, set temporary file names, copy files into it and go in it """
     path_tmp = sct.tmp_create(verbose=verbose)
-
-    # set temporary file names
-    ftmp_data = 'data.nii'
-    ftmp_seg = 'seg.nii.gz'
-    ftmp_label = 'label.nii.gz'
-    ftmp_template = 'template.nii'
-    ftmp_template_seg = 'template_seg.nii.gz'
-    ftmp_template_label = 'template_label.nii.gz'
-
-    # copy files to temporary folder
-    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_convert -i '+fname_data+' -o '+path_tmp+ftmp_data)
-    sct.run('sct_convert -i '+fname_seg+' -o '+path_tmp+ftmp_seg)
-    sct.run('sct_convert -i '+fname_landmarks+' -o '+path_tmp+ftmp_label)
-    sct.run('sct_convert -i '+fname_template+' -o '+path_tmp+ftmp_template)
-    sct.run('sct_convert -i '+fname_template_seg+' -o '+path_tmp+ftmp_template_seg)
-    # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
-
-    # go to tmp folder
+    (ftmp_data, ftmp_seg, ftmp_label, ftmp_template, ftmp_template_seg, ftmp_template_label)=set_temporary_files()
+    copy_files_to_temporary_files(verbose, fname_data, path_tmp, ftmp_seg, ftmp_data, fname_seg, fname_landmarks,
+                                  ftmp_label, fname_template, ftmp_template, fname_template_seg, ftmp_template_seg)
     os.chdir(path_tmp)
 
-    # Generate labels from template vertebral labeling
+    ''' Generate labels from template vertebral labeling'''
     sct.printv('\nGenerate labels from template vertebral labeling', verbose)
     sct.run('sct_label_utils -i '+fname_template_vertebral_labeling+' -vert-body 0 -o '+ftmp_template_label)
 
-    # check if provided labels are available in the template
+    ''' check if provided labels are available in the template'''
     sct.printv('\nCheck if provided labels are available in the template', verbose)
     image_label_template = Image(ftmp_template_label)
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
@@ -283,7 +290,7 @@ def main():
                    'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
                    str(labels_template[-1].value), verbose, 'error')
 
-    # binarize segmentation (in case it has values below 0 caused by manual editing)
+    ''' binarize segmentation (in case it has values below 0 caused by manual editing)'''
     sct.printv('\nBinarize segmentation', verbose)
     sct.run('sct_maths -i seg.nii.gz -bin 0.5 -o seg.nii.gz')
 
