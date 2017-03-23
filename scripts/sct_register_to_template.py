@@ -79,7 +79,7 @@ def get_parser():
                       type_value="file",
                       description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels\n",
                       mandatory=False,
-                      default_value='anat_seg.nii.gz',
+                      default_value='label_position.txt',
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -263,7 +263,7 @@ def use_viewer_to_define_labels(fname_data):
                    type='error')
     """
     # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
-    init_disc = [nz - int(mask_points.split(',')[0]), 2]
+    #init_disc = [nz - int(mask_points.split(',')[0]), 2]
 
 # MAIN
 # ==========================================================================================
