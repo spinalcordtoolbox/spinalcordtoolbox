@@ -1111,14 +1111,13 @@ class ClickViewerLabelVertebrae(ClickViewer):
             webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def on_press_main_window(self,event,plot):
-        target_point = self.set_target_point(event)
+        if not self.are_all_slices_done():
+            target_point = self.set_target_point(event)
+            if self.check_point_is_valid(target_point):
+                self.list_points.append(target_point)
+                self.current_slice = 1
+                self.update_title_text('ready_to_save_and_quit')
 
-        if self.check_point_is_valid(target_point) and not self.are_all_slices_done():
-            self.list_points.append(target_point)
-            self.current_slice = 1
-            point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            self.add_dot_to_current_slice(plot, point)
-            self.update_title_text('ready_to_save_and_quit')
 
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
