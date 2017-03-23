@@ -647,6 +647,12 @@ class ClickViewer(Viewer):
             title_obj = self.windows[0].axes.set_title('You can save and quit. \n')
             plt.setp(title_obj, color='g')
 
+        elif(key=='warning_all_slices_are_done_already'):
+            title_obj = self.windows[0].axes.set_title('You have processed all slices \n'
+                                                       'If you made a mistake please use \'Redo\' \n'
+                                                       'Otherwise, you can save and quit. \n')
+            plt.setp(title_obj, color='g')
+
         elif(key=='warning_redo_beyond_first_dot'):
             title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
             plt.setp(title_obj, color='r')
@@ -661,13 +667,13 @@ class ClickViewer(Viewer):
 
         self.windows[0].draw()
 
-    def are_all_images_processed(self):
+    def is_there_next_slice(self):
         if self.current_slice < len(self.list_slices):
-            return False
+            return True
         else:
             self.update_title_text('ready_to_save_and_quit')
             self.bool_all_processed=True
-            return True
+            return False
 
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
@@ -783,6 +789,15 @@ class ClickViewer(Viewer):
             return self.list_points_useful_notation
         else:
             return None
+
+    def are_all_slices_done(self):
+        if self.current_slice < len(self.list_slices):
+            return False
+        else:
+            self.update_title_text('warning_all_slices_are_done_already')
+            self.bool_all_processed=True
+            return True
+
 
 class ClickViewerPropseg(ClickViewer):
 
@@ -935,21 +950,28 @@ class ClickViewerPropseg(ClickViewer):
 
     def on_press_main_window(self,event,plot):
         self.bool_skip_all_to_end=True
-        if not self.bool_enable_custom_points:
-            target_point = self.set_not_custom_target_points(event)
+        if self.bool_enable_custom_points:
+            self.save_target_point_custom_way(event, plot)
         else:
-            target_point = self.set_custom_target_points(event)
+            if not self.are_all_slices_done():
+                self.save_target_point_not_custom_way(event,plot)
 
+
+    def save_target_point_custom_way(self,event,plot):
+        target_point = self.set_custom_target_points(event)
         if self.check_point_is_valid(target_point):
             self.list_points.append(target_point)
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            self.add_dot_to_current_slice(plot, point)
 
-            if not self.bool_enable_custom_points:
-                if not self.are_all_images_processed():
-                    self.current_slice += 1
-                    self.show_next_slice(plot,point)
-            else:
-                self.add_dot_to_current_slice(plot,point)
+    def save_target_point_not_custom_way(self,event,plot):
+        target_point = self.set_not_custom_target_points(event)
+        if self.check_point_is_valid(target_point):
+            self.list_points.append(target_point)
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            self.current_slice += 1
+            if self.is_there_next_slice():
+                self.show_next_slice(plot,point)
 
     def add_dot_to_current_slice(self,plot,point):
         self.draw_points(self.windows[0], self.current_point.x)
@@ -1097,7 +1119,7 @@ class ClickViewerLabelVertebrae(ClickViewer):
 
             self.current_slice = 1
 
-        if not self.are_all_images_processed():
+        if not self.is_there_next_slice():
             self.draw_points(self.windows[0], self.current_point.x)
             self.windows[0].update_slice(point, data_update=True)
             point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]  # ?!
