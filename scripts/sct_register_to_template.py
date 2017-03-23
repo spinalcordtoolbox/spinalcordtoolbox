@@ -77,7 +77,7 @@ def get_parser():
                       example="anat_seg.nii.gz")
     parser.add_option(name="-l",
                       type_value="file",
-                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
+                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels\n You can create your own labels using a interactive viewer using option 'viewer'\n Example : -l viewer",
                       mandatory=True,
                       default_value='',
                       example="anat_labels.nii.gz")
@@ -136,15 +136,7 @@ def get_parser():
     return parser
 
 
-# MAIN
-# ==========================================================================================
-def main():
-    parser = get_parser()
-    param = Param()
-
-    arguments = parser.parse(sys.argv[1:])
-
-    # get arguments
+def rewrite_arguments(arguments):
     fname_data = arguments['-i']
     fname_seg = arguments['-s']
     fname_landmarks = arguments['-l']
@@ -157,6 +149,19 @@ def main():
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
+
+    return (fname_data,fname_seg,fname_landmarks,path_template,contrast_template,ref,remove_temp_files,verbose)
+
+
+# MAIN
+# ==========================================================================================
+def main():
+    parser = get_parser()
+    param = Param()
+
+    arguments = parser.parse(sys.argv[1:])
+    (fname_data, fname_seg, fname_landmarks, path_template, contrast_template, ref, remove_temp_files, verbose)=rewrite_arguments(arguments)
+
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
     if '-param-straighten' in arguments:
         param.param_straighten = arguments['-param-straighten']
@@ -580,6 +585,10 @@ def check_labels(fname_landmarks):
     -------
     none
     """
+
+    if(fname_landmarks=='viewer'):
+        print('halloooooo')
+
     sct.printv('\nCheck input labels...')
     # open label file
     image_label = Image(fname_landmarks)
