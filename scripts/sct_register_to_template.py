@@ -154,8 +154,9 @@ def rewrite_arguments(arguments):
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
+    init_template=int(arguments['-init-template'])
 
-    return (fname_data,fname_seg,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose)
+    return (fname_data,fname_seg,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_template)
 
 def write_paramaters(arguments,param,ref,verbose):
     param.verbose = verbose
@@ -232,8 +233,8 @@ def copy_files_to_temporary_files(verbose,fname_data,path_tmp,ftmp_seg,ftmp_data
     sct.run('sct_convert -i '+fname_template_seg+' -o '+path_tmp+ftmp_template_seg)
     # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
 
-
-
+def use_viewer_to_define_labels():  
+    pass
 
 # MAIN
 # ==========================================================================================
@@ -244,11 +245,11 @@ def main():
     print(sys.argv[1:])
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
-
-    (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,verbose)=rewrite_arguments(arguments)
+    (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,verbose,init_template)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
-
+    if(init_template):
+        use_viewer_to_define_labels()
     # initialize other parameters
     # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
