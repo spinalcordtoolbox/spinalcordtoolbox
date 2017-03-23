@@ -798,7 +798,6 @@ class ClickViewer(Viewer):
             self.bool_all_processed=True
             return True
 
-
 class ClickViewerPropseg(ClickViewer):
 
     def __init__(self,
@@ -1178,7 +1177,9 @@ class ClickViewerRegisterToTemplate(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
-        self.update_title_text('init')
+        self.number_of_dots_final=2
+        self.current_dot_number=0
+        self.update_title_text(str(self.current_dot_number))
 
         """ Create Buttons"""
         self.create_button_help()
@@ -1192,11 +1193,17 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def update_title_text(self,key):
 
-        if(key=='init'):
-            title_obj = self.windows[0].axes.set_title( 'Please click at intervertebral disc C2-C3 \n')
+        if(key=='0'):
+            title_obj = self.windows[0].axes.set_title( 'Please click in the center of the spinal cord \n '
+                                                        'in the higher back \n')
             plt._setp(title_obj,color='k')
 
-        if(key=='redo_done'):
+        elif(key=='1'):
+            title_obj = self.windows[0].axes.set_title( 'Please click in the center of the spinal cord \n'
+                                                        ' in the lower back \n')
+            plt._setp(title_obj,color='k')
+
+        elif(key=='redo_done'):
             title_obj = self.windows[0].axes.set_title( 'Previous dot erased \n'
                                                         'Please click at intervertebral disc C2-C3 \n')
             plt._setp(title_obj,color='k')
@@ -1215,9 +1222,8 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             target_point = self.set_target_point(event)
             if self.check_point_is_valid(target_point):
                 self.list_points.append(target_point)
-                self.current_slice = 1
-                self.update_title_text('ready_to_save_and_quit')
-
+                self.current_dot_number += 1
+                self.is_there_next_slice()
 
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
@@ -1264,6 +1270,37 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[0]), int(event.xdata) - self.offset[2], 1]) )
         elif self.primary_subplot == 'sag':
             return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[0]), 1]) )
+
+    def are_all_slices_done(self):
+        if self.current_dot_number < self.number_of_dots_final:
+            return False
+        else:
+            self.update_title_text('warning_all_slices_are_done_already')
+            self.bool_all_processed=True
+            return True
+
+    def is_there_next_slice(self):
+        if self.current_dot_number < self.number_of_dots_final:
+            self.update_title_text(str(self.current_dot_number))
+            return True
+        else:
+            self.update_title_text('ready_to_save_and_quit')
+            self.bool_all_processed=True
+            return False
+
+    def press_redo(self, event):
+        if event.inaxes == self.dic_axis_buttons['redo']:
+            if self.current_dot_number>0:
+                self.current_dot_number += -1
+                self.windows[0].update_slice(self.list_slices[self.current_slice])
+                self.remove_last_dot()
+                self.update_ui_after_redo()
+                self.update_title_text(str(self.current_dot_number))
+            else:
+                self.update_title_text('warning_redo_beyond_first_dot')
+
+
+
 
 def get_parser():
     parser = Parser(__file__)
