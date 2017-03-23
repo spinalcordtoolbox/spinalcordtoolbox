@@ -77,9 +77,9 @@ def get_parser():
                       example="anat_seg.nii.gz")
     parser.add_option(name="-l",
                       type_value="file",
-                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels\n You can create your own labels using a interactive viewer using option 'viewer'\n Example : -l viewer",
-                      mandatory=True,
-                      default_value='',
+                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels\n",
+                      mandatory=False,
+                      default_value='anat_seg.nii.gz',
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -120,6 +120,12 @@ def get_parser():
     #                   description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
     #                   mandatory=False,
     #                   example="8")
+    parser.add_option(name="-init-template",
+                      type_value="multiple_choice",
+                      description="You can create your own labels using a interactive viewer using option 'viewer",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -235,8 +241,10 @@ def main():
     parser = get_parser()
     param = Param()
 
+    print(sys.argv[1:])
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
+
     (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,verbose)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
@@ -248,10 +256,12 @@ def main():
     # smoothing_sigma = param.smoothing_sigma
 
     # retrieve template file names
+
     from sct_warp_template import get_file_label
     file_template_vertebral_labeling = get_file_label(path_template+'template/', 'vertebral')
     file_template = get_file_label(path_template+'template/', contrast_template.upper()+'-weighted')
     file_template_seg = get_file_label(path_template+'template/', 'spinal cord')
+
 
     """ Start timer"""
     start_time = time.time()
