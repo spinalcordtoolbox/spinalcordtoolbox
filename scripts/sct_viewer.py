@@ -1299,7 +1299,15 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             else:
                 self.update_title_text('warning_redo_beyond_first_dot')
 
-
+    def save_data(self):
+        for coord in self.list_points:
+            if self.list_points_useful_notation != '':
+                self.list_points_useful_notation += ':'
+            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
+                                               str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+        with open("label_position.txt", "w") as fichier:
+            print fichier.write(self.list_points_useful_notation)
+        print(self.list_points_useful_notation)
 
 
 def get_parser():
