@@ -150,26 +150,20 @@ def rewrite_arguments(arguments):
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
 
-    return (fname_data,fname_seg,fname_landmarks,path_template,contrast_template,ref,remove_temp_files,verbose)
+    return (fname_data,fname_seg,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose)
 
-
-# MAIN
-# ==========================================================================================
-def main():
-    parser = get_parser()
-    param = Param()
-
-    arguments = parser.parse(sys.argv[1:])
-    (fname_data, fname_seg, fname_landmarks, path_template, contrast_template, ref, remove_temp_files, verbose)=rewrite_arguments(arguments)
-
-    param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
+def write_paramaters(arguments,param,ref,verbose):
+    param.verbose = verbose
     if '-param-straighten' in arguments:
         param.param_straighten = arguments['-param-straighten']
-    # if '-cpu-nb' in arguments:
-    #     arg_cpu = ' -cpu-nb '+str(arguments['-cpu-nb'])
-    # else:
-    #     arg_cpu = ''
-    # registration parameters
+
+    """
+    if '-cpu-nb' in arguments:
+         arg_cpu = ' -cpu-nb '+str(arguments['-cpu-nb'])
+    else:
+         arg_cpu = ''
+     registration parameters
+    """
     if '-param' in arguments:
         # reset parameters but keep step=0 (might be overwritten if user specified step=0)
         paramreg = ParamregMultiStep([step0])
@@ -183,6 +177,22 @@ def main():
         # if ref=subject, initialize registration using different affine parameters
         if ref == 'subject':
             paramreg.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
+
+    return (param,paramreg)
+
+
+
+# MAIN
+# ==========================================================================================
+def main():
+    parser = get_parser()
+    param = Param()
+
+    arguments = parser.parse(sys.argv[1:])
+    (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,verbose)=rewrite_arguments(arguments)
+    (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
+
+
 
     # initialize other parameters
     # file_template_label = param.file_template_label
