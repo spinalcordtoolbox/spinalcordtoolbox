@@ -233,8 +233,37 @@ def copy_files_to_temporary_files(verbose,fname_data,path_tmp,ftmp_seg,ftmp_data
     sct.run('sct_convert -i '+fname_template_seg+' -o '+path_tmp+ftmp_template_seg)
     # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
 
-def use_viewer_to_define_labels():  
-    pass
+def use_viewer_to_define_labels(fname_data):
+    im_input = Image(fname_data)
+    from sct_viewer import ClickViewerRegisterToTemplate
+    import sct_image
+    # reorient image to SAL to be compatible with viewer
+    im_input_SAL = im_input.copy()
+    im_input_SAL.change_orientation('SAL')
+    viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    viewer.number_of_slices = 1
+    pz = 1
+    viewer.gap_inter_slice = int(10 / pz)
+    viewer.calculate_list_slices()
+    viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_label_vertebrae/attachment/label_vertebrae_viewer.png'
+    # start the viewer that ask the user to enter a few points along the spinal cord
+    mask_points = viewer.start()
+    """
+    if mask_points:
+        # orient input as SAL
+        sct_image.main(args=['-i', 'data_straightr.nii', '-setorient', 'SAL', '-o', 'data_straightr_SAL.nii'])
+        # create label in SAL orientation
+        sct_label_utils.main(
+            args=['-i', 'data_straightr_SAL.nii', '-create', mask_points, '-o', 'initlabel_SAL.nii.gz'])
+        # Orient label in native orientation
+        sct_image.main(args=['-i', 'initlabel_SAL.nii.gz', '-setorient', im_input.orientation, '-o',
+                             sct.add_suffix(fname, '_mask_viewer')])
+    else:
+        sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose,
+                   type='error')
+    """
+    # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
+    init_disc = [nz - int(mask_points.split(',')[0]), 2]
 
 # MAIN
 # ==========================================================================================
@@ -249,7 +278,7 @@ def main():
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
     if(init_template):
-        use_viewer_to_define_labels()
+        use_viewer_to_define_labels(fname_data)
     # initialize other parameters
     # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
