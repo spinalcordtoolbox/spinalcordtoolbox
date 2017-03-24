@@ -79,7 +79,7 @@ def get_parser():
                       type_value="file",
                       description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels\n",
                       mandatory=False,
-                      default_value='labels.nii.gz',
+                      default_value='labels_reoriented.nii.gz',
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -257,19 +257,36 @@ def check_mask_point_not_empty(mask_points):
 
 def use_viewer_to_define_labels(fname_data):
     from sct_viewer import ClickViewerRegisterToTemplate
+    from msct_image import Image
+    import sct_image
+
+    image_input = Image(fname_data)
+
+    image_input_orientation = sct_image.orientation(image_input, get=True, verbose=False)
+    reoriented_image_filename = 'reoriented_image_source.nii.gz'
+    path_tmp_viewer = sct.tmp_create(verbose=False)
+    cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (
+    fname_data, reoriented_image_filename)
+    sct.run(cmd_image, verbose=False)
+
+
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
     viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
     set_viewer_parameters(viewer)
 
     mask_points = viewer.start()
+    #if not mask_points and viewer.closed:
+    #    mask_points = viewer.list_points_useful_notation
 
-    if not mask_points and viewer.closed:
-        mask_points = viewer.list_points_useful_notation
-
-    if check_mask_point_not_empty(mask_points):
+    #if check_mask_point_not_empty(mask_points):
+    if True:
+        print(0)
         import sct_image
         # create the mask containing either the three-points or centerline mask for initialization
-        sct.run("sct_label_utils -i " + fname_data + " -create " + mask_points ,verbose=False)
+        sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
+        print(1)
+        sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
+        print(2)
 
         # reorient the initialization mask to correspond to input image orientation
         #mask_reoriented_filename = sct.add_suffix(file_data + ext_data, "_mask_viewer")
