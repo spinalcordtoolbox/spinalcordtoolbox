@@ -1240,7 +1240,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
     def press_help(self, event):
         if event.inaxes == self.dic_axis_buttons['help']:
             webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
-t 
+
     def on_press_main_window(self,event,plot):
         if not self.are_all_slices_done():
             target_point = self.set_target_point(event)
@@ -1332,7 +1332,7 @@ t
         with open("label_position.txt", "w") as fichier:
             fichier.write(self.list_points_useful_notation)
 
-    def is_it_possible_to_lower(self):
+    def is_it_possible_to_get_higher(self):
         if not self.current_dot_number:
             if self.list_current_wanted_labels[0]>1:
                 return True
@@ -1347,22 +1347,8 @@ t
                 return False
 
 
-    def create_button_lower_label(self):
-        ax = plt.axes([0.08, 0.90, 0.15, 0.075])
-        self.dic_axis_buttons['lower_label']=ax
-        self.button_choose_auto_manual = Button(ax, 'Pick \n '
-                                                    'Lower Label')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_lower_label)
-
-    def press_lower_label(self,event):
-        if event.inaxes == self.dic_axis_buttons['lower_label']:
-            if self.is_it_possible_to_lower():
-                self.list_current_wanted_labels[self.current_dot_number]+= -1
-                self.update_title_text('0')
-            pass
-
     def create_button_higher_label(self):
-        ax = plt.axes([0.25, 0.90, 0.15, 0.075])
+        ax = plt.axes([0.08, 0.90, 0.15, 0.075])
         self.dic_axis_buttons['higher_label']=ax
         self.button_choose_auto_manual = Button(ax, 'Pick \n '
                                                     'Higher Label')
@@ -1370,6 +1356,20 @@ t
 
     def press_higher_label(self,event):
         if event.inaxes == self.dic_axis_buttons['higher_label']:
+            if self.is_it_possible_to_get_higher():
+                self.list_current_wanted_labels[self.current_dot_number]+= -1
+                self.update_title_text('0')
+            pass
+
+    def create_button_lower_label(self):
+        ax = plt.axes([0.25, 0.90, 0.15, 0.075])
+        self.dic_axis_buttons['lower_label']=ax
+        self.button_choose_auto_manual = Button(ax, 'Pick \n '
+                                                    'Lower Label')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_lower_label)
+
+    def press_lower_label(self,event):
+        if event.inaxes == self.dic_axis_buttons['lower_label']:
 
             pass
 
