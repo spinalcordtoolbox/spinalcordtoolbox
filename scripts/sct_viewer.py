@@ -1228,6 +1228,10 @@ class ClickViewerRegisterToTemplate(ClickViewer):
                                                         'Please click at intervertebral disc C2-C3 \n')
             plt._setp(title_obj,color='k')
 
+        elif(key=='cant_go_higher'):
+            title_obj = self.windows[0].axes.set_title( 'You can\'t choose a higher label \n')
+            plt._setp(title_obj,color='r')
+
         else:
             self.update_title_text_general(key)
 
@@ -1236,7 +1240,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
     def press_help(self, event):
         if event.inaxes == self.dic_axis_buttons['help']:
             webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
-
+t 
     def on_press_main_window(self,event,plot):
         if not self.are_all_slices_done():
             target_point = self.set_target_point(event)
@@ -1328,6 +1332,21 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         with open("label_position.txt", "w") as fichier:
             fichier.write(self.list_points_useful_notation)
 
+    def is_it_possible_to_lower(self):
+        if not self.current_dot_number:
+            if self.list_current_wanted_labels[0]>1:
+                return True
+            else:
+                self.update_title_text('cant_go_higher')
+                return False
+        else:
+            if self.list_current_wanted_labels[1]>self.list_current_wanted_labels[0]+1:
+                return True
+            else:
+                self.update_title_text('cant_go_higher')
+                return False
+
+
     def create_button_lower_label(self):
         ax = plt.axes([0.08, 0.90, 0.15, 0.075])
         self.dic_axis_buttons['lower_label']=ax
@@ -1337,6 +1356,9 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def press_lower_label(self,event):
         if event.inaxes == self.dic_axis_buttons['lower_label']:
+            if self.is_it_possible_to_lower():
+                self.list_current_wanted_labels[self.current_dot_number]+= -1
+                self.update_title_text('0')
             pass
 
     def create_button_higher_label(self):
