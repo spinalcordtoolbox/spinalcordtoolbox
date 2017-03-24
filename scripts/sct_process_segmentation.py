@@ -1067,7 +1067,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
         sct.printv('\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n', type='error')
 
     # Extract the vertebral levels available in the metric image
-    vertebral_levels_available = np.array(list(set(vertebral_labeling_data[vertebral_labeling_data > 0])))
+    vertebral_levels_available = np.array(list(set(vertebral_labeling_data[vertebral_labeling_data > 0])), dtype=np.int32)
 
     # Check if the vertebral levels selected are available
     warning = []  # list of strings gathering the potential following warning(s) to be written in the output .txt file
