@@ -79,7 +79,7 @@ def get_parser():
                       type_value="file",
                       description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels\n",
                       mandatory=False,
-                      default_value='label_position.txt',
+                      default_value='labels.nii.gz',
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -269,8 +269,7 @@ def use_viewer_to_define_labels(fname_data):
     if check_mask_point_not_empty(mask_points):
         import sct_image
         # create the mask containing either the three-points or centerline mask for initialization
-        sct.run(
-            "sct_label_utils -i " + fname_data + " -create " + mask_points ,verbose=False)
+        sct.run("sct_label_utils -i " + fname_data + " -create " + mask_points ,verbose=False)
 
         # reorient the initialization mask to correspond to input image orientation
         #mask_reoriented_filename = sct.add_suffix(file_data + ext_data, "_mask_viewer")
