@@ -247,31 +247,36 @@ def prepare_input_image_for_viewer(fname_data):
     im_input_SAL.change_orientation('SAL')
     return(im_input_SAL)
 
-def use_viewer_to_define_labels(fname_data):
+def check_mask_point_not_empty(mask_points):
+    if(mask_points):
+        return True
+    else:
+        sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1,
+                   type='error')
+        return False
 
-    import sct_image
+def use_viewer_to_define_labels(fname_data):
     from sct_viewer import ClickViewerRegisterToTemplate
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
     viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
     set_viewer_parameters(viewer)
-    
+
     mask_points = viewer.start()
-    """
-    if mask_points:
-        # orient input as SAL
-        sct_image.main(args=['-i', 'data_straightr.nii', '-setorient', 'SAL', '-o', 'data_straightr_SAL.nii'])
-        # create label in SAL orientation
-        sct_label_utils.main(
-            args=['-i', 'data_straightr_SAL.nii', '-create', mask_points, '-o', 'initlabel_SAL.nii.gz'])
-        # Orient label in native orientation
-        sct_image.main(args=['-i', 'initlabel_SAL.nii.gz', '-setorient', im_input.orientation, '-o',
-                             sct.add_suffix(fname, '_mask_viewer')])
-    else:
-        sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose,
-                   type='error')
-    """
-    # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
-    #init_disc = [nz - int(mask_points.split(',')[0]), 2]
+
+    if not mask_points and viewer.closed:
+        mask_points = viewer.list_points_useful_notation
+
+    if check_mask_point_not_empty(mask_points):
+        import sct_image
+        # create the mask containing either the three-points or centerline mask for initialization
+        sct.run(
+            "sct_label_utils -i " + fname_data + " -create " + mask_points ,verbose=False)
+
+        # reorient the initialization mask to correspond to input image orientation
+        #mask_reoriented_filename = sct.add_suffix(file_data + ext_data, "_mask_viewer")
+        #sct.run(
+            #'sct_image -i ' + path_tmp_viewer + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0',
+            #verbose=False)
 
 # MAIN
 # ==========================================================================================
