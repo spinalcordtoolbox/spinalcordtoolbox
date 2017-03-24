@@ -207,7 +207,7 @@ def print_arguments(verbose,fname_data,fname_landmarks,fname_seg,path_template,r
     sct.printv('  Path template:        '+path_template, verbose)
     sct.printv('  Remove temp files:    '+str(remove_temp_files), verbose)
 
-def check_data_segmentation_landmarks_same_space(fname_data,fname_seg,fname_landmarks):
+def check_data_segmentation_landmarks_same_space(fname_data,fname_seg,fname_landmarks,verbose):
     sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
     if not sct.check_if_same_space(fname_data, fname_seg):
@@ -233,20 +233,28 @@ def copy_files_to_temporary_files(verbose,fname_data,path_tmp,ftmp_seg,ftmp_data
     sct.run('sct_convert -i '+fname_template_seg+' -o '+path_tmp+ftmp_template_seg)
     # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
 
-def use_viewer_to_define_labels(fname_data):
-    im_input = Image(fname_data)
-    from sct_viewer import ClickViewerRegisterToTemplate
-    import sct_image
-    # reorient image to SAL to be compatible with viewer
-    im_input_SAL = im_input.copy()
-    im_input_SAL.change_orientation('SAL')
-    viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
+def set_viewer_parameters(viewer):
     viewer.number_of_slices = 1
     pz = 1
     viewer.gap_inter_slice = int(10 / pz)
     viewer.calculate_list_slices()
     viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_label_vertebrae/attachment/label_vertebrae_viewer.png'
-    # start the viewer that ask the user to enter a few points along the spinal cord
+
+def prepare_input_image_for_viewer(fname_data):
+    # reorient image to SAL to be compatible with viewer
+    im_input = Image(fname_data)
+    im_input_SAL = im_input.copy()
+    im_input_SAL.change_orientation('SAL')
+    return(im_input_SAL)
+
+def use_viewer_to_define_labels(fname_data):
+
+    import sct_image
+    from sct_viewer import ClickViewerRegisterToTemplate
+    im_input_SAL=prepare_input_image_for_viewer(fname_data)
+    viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    set_viewer_parameters(viewer)
+    
     mask_points = viewer.start()
     """
     if mask_points:
@@ -305,7 +313,7 @@ def main():
     sct.create_folder(param.path_qc)
 
     """ Check if data, segmentation and landmarks are in the same space"""
-    check_data_segmentation_landmarks_same_space(fname_data, fname_seg, fname_landmarks)
+    check_data_segmentation_landmarks_same_space(fname_data, fname_seg, fname_landmarks,verbose)
 
     ''' Check input labels'''
     labels = check_labels(fname_landmarks)
