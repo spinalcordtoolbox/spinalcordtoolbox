@@ -281,13 +281,10 @@ def use_viewer_to_define_labels(fname_data):
 
     #if check_mask_point_not_empty(mask_points):
     if True:
-        print(0)
         import sct_image
         # create the mask containing either the three-points or centerline mask for initialization
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
-        print(1)
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
-        print(2)
 
         # reorient the initialization mask to correspond to input image orientation
         #mask_reoriented_filename = sct.add_suffix(file_data + ext_data, "_mask_viewer")
@@ -301,7 +298,6 @@ def main():
     parser = get_parser()
     param = Param()
 
-    print(sys.argv[1:])
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
     (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,verbose,init_template)=rewrite_arguments(arguments)
@@ -678,8 +674,6 @@ def check_labels(fname_landmarks):
     """
 
     if(fname_landmarks=='viewer'):
-        print('halloooooo')
-
     sct.printv('\nCheck input labels...')
     # open label file
     image_label = Image(fname_landmarks)
