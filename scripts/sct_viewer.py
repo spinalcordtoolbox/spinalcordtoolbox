@@ -1178,13 +1178,34 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
         self.number_of_dots_final=2
         self.current_dot_number=0
+        self.dic_message_labels=self.define_dic_message_labels()
+        self.list_current_wanted_labels=[4,10]
         self.update_title_text(str(self.current_dot_number))
+
 
         """ Create Buttons"""
         self.create_button_help()
         self.create_button_redo()
         self.create_button_lower_label()
         self.create_button_higher_label()
+
+    def define_dic_message_labels(self):
+        dic={'1':'Please click on the 50th label \n',
+             '2': 'Please click on the 49th label \n',
+             '3': 'Please click on C1/C2 \n',
+             '4': 'Please click on C2/C3 \n',
+             '5': 'Please click on 5 \n',
+             '6': 'Please click on 6 \n',
+             '7': 'Please click on 7 \n',
+             '8': 'Please click on 8 \n',
+             '9': 'Please click on 9 \n',
+             '10': 'Please click on 10 \n',
+             '11': 'Please click on 11 \n',
+             '12': 'Please click on 11 \n',
+             '13': 'Please click on 12 \n',
+             }
+        return dic
+
 
     def create_button_help(self):
         ax = plt.axes([0.81, 0.05, 0.1, 0.075])
@@ -1195,13 +1216,11 @@ class ClickViewerRegisterToTemplate(ClickViewer):
     def update_title_text(self,key):
 
         if(key=='0'):
-            title_obj = self.windows[0].axes.set_title( 'Please click in the center of the spinal cord \n '
-                                                        'in the higher back \n')
+            title_obj = self.windows[0].axes.set_title(self.dic_message_labels[str(self.list_current_wanted_labels[self.current_dot_number])])
             plt._setp(title_obj,color='k')
 
         elif(key=='1'):
-            title_obj = self.windows[0].axes.set_title( 'Please click in the center of the spinal cord \n'
-                                                        ' in the lower back \n')
+            title_obj = self.windows[0].axes.set_title(self.dic_message_labels[str(self.list_current_wanted_labels[self.current_dot_number])])
             plt._setp(title_obj,color='k')
 
         elif(key=='redo_done'):
@@ -1329,6 +1348,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def press_higher_label(self,event):
         if event.inaxes == self.dic_axis_buttons['higher_label']:
+
             pass
 
 
