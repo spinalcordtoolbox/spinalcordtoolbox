@@ -1201,8 +1201,8 @@ class ClickViewerRegisterToTemplate(ClickViewer):
              '9': 'Please click on 9 \n',
              '10': 'Please click on 10 \n',
              '11': 'Please click on 11 \n',
-             '12': 'Please click on 11 \n',
-             '13': 'Please click on 12 \n',
+             '12': 'Please click on 12 \n',
+             '13': 'Please click on 13 \n',
              }
         return dic
 
@@ -1307,8 +1307,13 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             self.bool_all_processed=True
             return True
 
+    def update_second_label_if_necessary(self):
+        if self.list_current_wanted_labels[0]>=self.list_current_wanted_labels[1]:
+            self.list_current_wanted_labels[1]=self.list_current_wanted_labels[0]+1
+
     def is_there_next_slice(self):
         if self.current_dot_number < self.number_of_dots_final:
+            self.update_second_label_if_necessary()
             self.update_title_text(str(self.current_dot_number))
             return True
         else:
@@ -1364,7 +1369,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
                 self.update_title_text('cant_go_higher')
                 return False
 
-
     def create_button_higher_label(self):
         ax = plt.axes([0.08, 0.90, 0.15, 0.075])
         self.dic_axis_buttons['higher_label']=ax
@@ -1377,7 +1381,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             if self.is_it_possible_to_get_higher():
                 self.list_current_wanted_labels[self.current_dot_number]+= -1
                 self.update_title_text('0')
-
 
     def create_button_lower_label(self):
         ax = plt.axes([0.25, 0.90, 0.15, 0.075])
