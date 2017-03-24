@@ -1265,11 +1265,11 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def set_target_point(self,event):
         if self.primary_subplot == 'ax':
-            return( Coordinate([int(self.list_slices[0]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], 1]))
+            return( Coordinate([int(self.list_slices[0]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], self.current_dot_number+1]))
         elif self.primary_subplot == 'cor':
-            return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[0]), int(event.xdata) - self.offset[2], 1]) )
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[0]), int(event.xdata) - self.offset[2], self.current_dot_number+1]) )
         elif self.primary_subplot == 'sag':
-            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[0]), 1]) )
+            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[0]), self.current_dot_number+1]) )
 
     def are_all_slices_done(self):
         if self.current_dot_number < self.number_of_dots_final:
@@ -1306,8 +1306,8 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
                                                str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         with open("label_position.txt", "w") as fichier:
-            print fichier.write(self.list_points_useful_notation)
-        print(self.list_points_useful_notation)
+            fichier.write(self.list_points_useful_notation)
+
 
 
 def get_parser():
