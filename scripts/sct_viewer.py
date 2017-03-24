@@ -1117,7 +1117,6 @@ class ClickViewerLabelVertebrae(ClickViewer):
                 self.current_slice = 1
                 self.update_title_text('ready_to_save_and_quit')
 
-
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
         for window in self.windows:
@@ -1184,6 +1183,8 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         """ Create Buttons"""
         self.create_button_help()
         self.create_button_redo()
+        self.create_button_lower_label()
+        self.create_button_higher_label()
 
     def create_button_help(self):
         ax = plt.axes([0.81, 0.05, 0.1, 0.075])
@@ -1307,6 +1308,28 @@ class ClickViewerRegisterToTemplate(ClickViewer):
                                                str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         with open("label_position.txt", "w") as fichier:
             fichier.write(self.list_points_useful_notation)
+
+    def create_button_lower_label(self):
+        ax = plt.axes([0.08, 0.90, 0.15, 0.075])
+        self.dic_axis_buttons['lower_label']=ax
+        self.button_choose_auto_manual = Button(ax, 'Pick \n '
+                                                    'Lower Label')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_lower_label)
+
+    def press_lower_label(self,event):
+        if event.inaxes == self.dic_axis_buttons['lower_label']:
+            pass
+
+    def create_button_higher_label(self):
+        ax = plt.axes([0.25, 0.90, 0.15, 0.075])
+        self.dic_axis_buttons['higher_label']=ax
+        self.button_choose_auto_manual = Button(ax, 'Pick \n '
+                                                    'Higher Label')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_higher_label)
+
+    def press_higher_label(self,event):
+        if event.inaxes == self.dic_axis_buttons['higher_label']:
+            pass
 
 
 
