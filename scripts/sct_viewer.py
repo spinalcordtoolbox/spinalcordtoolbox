@@ -1206,7 +1206,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
              }
         return dic
 
-
     def create_button_help(self):
         ax = plt.axes([0.81, 0.05, 0.1, 0.075])
         self.dic_axis_buttons['help']=ax
@@ -1291,14 +1290,42 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             self.plot_points.set_ydata(y_data)
             self.fig.canvas.draw()
 
-    def set_target_point(self,event):
-        if self.primary_subplot == 'ax':
-            return( Coordinate([int(self.list_slices[0]), int(event.ydata) - self.offset[1], int(event.xdata) - self.offset[2], self.current_dot_number+1]))
-        elif self.primary_subplot == 'cor':
-            return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[0]), int(event.xdata) - self.offset[2], self.current_dot_number+1]) )
-        elif self.primary_subplot == 'sag':
-            return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[0]), self.current_dot_number+1]) )
+    def define_translate_dic(self):
+        dic={'1':50,
+             '2':49,
+             '3':1,
+             '4':2,
+             '5':3,
+             '6':4,
+             '7':5,
+             '8':6,
+             '9':7,
+             '10':8,
+             '11':9,
+             '12':10,
+             '13':11}
+        return dic
 
+    def set_target_point(self,event):
+        dic_translate_labels=self.define_translate_dic()
+        if self.primary_subplot == 'ax':
+            return( Coordinate([int(self.list_slices[0]),
+                                int(event.ydata) - self.offset[1],
+                                int(event.xdata) - self.offset[2],
+                                dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
+            ] ) )
+        elif self.primary_subplot == 'cor':
+            return ( Coordinate([int(event.ydata) - self.offset[0],
+                                 int(self.list_slices[0]),
+                                 int(event.xdata) - self.offset[2],
+                                 dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
+                                 ]))
+        elif self.primary_subplot == 'sag':
+            return ( Coordinate([int(event.ydata) - self.offset[0],
+                                 int(event.xdata) - self.offset[1],
+                                 int(self.list_slices[0]),
+                                 dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
+                                 ]))
     def are_all_slices_done(self):
         if self.current_dot_number < self.number_of_dots_final:
             return False
