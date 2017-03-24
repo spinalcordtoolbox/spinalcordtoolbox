@@ -214,6 +214,7 @@ def check_data_segmentation_landmarks_same_space(fname_data,fname_seg,fname_land
         sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
     if not sct.check_if_same_space(fname_data, fname_landmarks):
         sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    return (ext_data,path_data,file_data)
 
 def set_temporary_files():
     ftmp_data = 'data.nii'
@@ -334,7 +335,7 @@ def main():
     sct.create_folder(param.path_qc)
 
     """ Check if data, segmentation and landmarks are in the same space"""
-    check_data_segmentation_landmarks_same_space(fname_data, fname_seg, fname_landmarks,verbose)
+    (ext_data, path_data, file_data)=check_data_segmentation_landmarks_same_space(fname_data, fname_seg, fname_landmarks,verbose)
 
     ''' Check input labels'''
     labels = check_labels(fname_landmarks)
