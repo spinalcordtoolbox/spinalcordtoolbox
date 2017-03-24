@@ -1232,6 +1232,10 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             title_obj = self.windows[0].axes.set_title( 'You can\'t choose a higher label \n')
             plt._setp(title_obj,color='r')
 
+        elif(key=='cant_go_lower'):
+            title_obj = self.windows[0].axes.set_title( 'You can\'t choose a lower label \n')
+            plt._setp(title_obj,color='r')
+
         else:
             self.update_title_text_general(key)
 
@@ -1332,6 +1336,20 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         with open("label_position.txt", "w") as fichier:
             fichier.write(self.list_points_useful_notation)
 
+    def is_it_possible_to_get_lower(self):
+        if not self.current_dot_number:
+            if self.list_current_wanted_labels[0]<len(self.dic_message_labels)-1:
+                return True
+            else:
+                self.update_title_text('cant_go_lower')
+                return False
+        else:
+            if self.list_current_wanted_labels[1]<len(self.dic_message_labels):
+                return True
+            else:
+                self.update_title_text('cant_go_lower')
+                return False
+
     def is_it_possible_to_get_higher(self):
         if not self.current_dot_number:
             if self.list_current_wanted_labels[0]>1:
@@ -1359,7 +1377,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             if self.is_it_possible_to_get_higher():
                 self.list_current_wanted_labels[self.current_dot_number]+= -1
                 self.update_title_text('0')
-            pass
+
 
     def create_button_lower_label(self):
         ax = plt.axes([0.25, 0.90, 0.15, 0.075])
@@ -1370,9 +1388,9 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def press_lower_label(self,event):
         if event.inaxes == self.dic_axis_buttons['lower_label']:
-
-            pass
-
+            if self.is_it_possible_to_get_lower():
+                self.list_current_wanted_labels[self.current_dot_number]+= +1
+                self.update_title_text('0')
 
 
 def get_parser():
