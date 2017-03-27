@@ -863,7 +863,7 @@ class ClickViewerPropseg(ClickViewer):
         if event.inaxes == self.dic_axis_buttons['skip']:
             if not self.bool_enable_custom_points:
                 if self.bool_skip_all_to_end:
-                    self.update_title_text('ready_to_save_and_quit')
+                    self.update_title_text('skipped_all_remaining_slices')
                 else:
                     self.current_slice += 1
                     self.windows[0].update_slice(self.list_slices[self.current_slice])
@@ -909,6 +909,12 @@ class ClickViewerPropseg(ClickViewer):
             title_obj = self.windows[0].axes.set_title('Mode Auto \n '
                                                        'Please select a new point \n')
             plt._setp(title_obj,color='k')
+
+        elif(key=='skipped_all_remaining_slices'):
+            title_obj = self.windows[0].axes.set_title('You have skipped all remaining slices \n '
+                                                       'You may now save and quit. \n')
+            plt._setp(title_obj, color='g')
+
 
         else:
             self.update_title_text_general(key)
@@ -1041,7 +1047,8 @@ class ClickViewerPropseg(ClickViewer):
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
             if (len(self.list_points) > 0   or self.current_slice>0):
-                self.bool_skip_all_to_end = False
+                if(len(self.list_points)==1):
+                    self.bool_skip_all_to_end = False
                 if not self.bool_enable_custom_points:
                     self.redo_auto()
                 self.remove_last_dot()
@@ -1176,7 +1183,6 @@ class ClickViewerLabelVertebrae(ClickViewer):
             else:
                 self.update_title_text('impossible_to_leave')
                 self.bool_ignore_warning_about_leaving=True
-
 
 class ClickViewerRegisterToTemplate(ClickViewer):
 
