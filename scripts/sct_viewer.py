@@ -809,7 +809,6 @@ class ClickViewer(Viewer):
         button_help = Button(ax, 'Help')
         self.fig.canvas.mpl_connect('button_press_event', self.press_help)
 
-
 class ClickViewerPropseg(ClickViewer):
 
     def __init__(self,
@@ -1075,6 +1074,7 @@ class ClickViewerLabelVertebrae(ClickViewer):
                  input_type=input_type)
 
         self.update_title_text('init')
+        self.bool_ignore_warning_about_leaving=False
 
         """ Create Buttons"""
         self.create_button_help()
@@ -1092,10 +1092,17 @@ class ClickViewerLabelVertebrae(ClickViewer):
             title_obj = self.windows[0].axes.set_title( 'Please click at intervertebral disc C2-C3 \n')
             plt._setp(title_obj,color='k')
 
-        if(key=='redo_done'):
+        elif(key=='redo_done'):
             title_obj = self.windows[0].axes.set_title( 'Previous dot erased \n'
                                                         'Please click at intervertebral disc C2-C3 \n')
             plt._setp(title_obj,color='k')
+
+        elif(key=='impossible_to_leave'):
+            title_obj = self.windows[0].axes.set_title('Please confirm : You have not drawn the dot \n'
+                                                       'If you leave now, the software will crash\n')
+            plt._setp(title_obj, color='r')
+
+
 
         else:
             self.update_title_text_general(key)
@@ -1159,6 +1166,17 @@ class ClickViewerLabelVertebrae(ClickViewer):
             return ( Coordinate([int(event.ydata) - self.offset[0], int(self.list_slices[0]), int(event.xdata) - self.offset[2], 1]) )
         elif self.primary_subplot == 'sag':
             return ( Coordinate([int(event.ydata) - self.offset[0], int(event.xdata) - self.offset[1], int(self.list_slices[0]), 1]) )
+
+    def press_save_and_quit(self, event):
+        if event.inaxes == self.dic_axis_buttons['save_and_quit']:
+            if len(self.list_points)>0 or self.bool_ignore_warning_about_leaving:
+                self.save_data()
+                self.closed = True
+                plt.close('all')
+            else:
+                self.update_title_text('impossible_to_leave')
+                self.bool_ignore_warning_about_leaving=True
+
 
 class ClickViewerRegisterToTemplate(ClickViewer):
 
