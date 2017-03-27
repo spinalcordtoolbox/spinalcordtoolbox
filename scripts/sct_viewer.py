@@ -1432,6 +1432,7 @@ class ClickViewerGroundTruth(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
+        self.bool_may_skip_all_remaining=False
         self.number_of_dots_final=10
         self.current_dot_number=1
         self.dic_message_labels=self.define_dic_message_labels()
@@ -1485,6 +1486,11 @@ class ClickViewerGroundTruth(ClickViewer):
                                                         'Please confirm you wish to leave \n')
             plt._setp(title_obj,color='r')
 
+        elif(key=='all_remaining_labels_skipped'):
+            title_obj = self.windows[0].axes.set_title( 'All unprocessed labels have been skipped \n'
+                                                        'You may now save and quit \n')
+            plt._setp(title_obj,color='g')
+
         else:
             self.update_title_text_general(key)
 
@@ -1498,17 +1504,23 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def press_skip(self, event):
         if event.inaxes == self.dic_axis_buttons['skip']:
-            if not self.are_all_slices_done():
+            if not self.are_all_slices_done() and not self.bool_may_skip_all_remaining:
                 dic_translate_labels = self.define_translate_dic()
                 self.current_dot_number += 1
                 self.list_points.append([-1, -1, -1, dic_translate_labels[str(self.current_dot_number)]])
                 self.is_there_next_slice()
+            elif self.bool_may_skip_all_remaining:
+                self.skip_all_remaining_labels()
+                self.update_title_text('all_remaining_labels_skipped')
+
+
 
     def press_help(self, event):
         if event.inaxes == self.dic_axis_buttons['help']:
             webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def on_press_main_window(self,event,plot):
+        self.bool_may_skip_all_remaining=True
         if not self.are_all_slices_done():
             target_point = self.set_target_point(event)
             if self.check_point_is_valid(target_point):
@@ -1572,7 +1584,6 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def set_target_point(self,event):
         dic_translate_labels=self.define_translate_dic()
-        print(self.current_dot_number)
         if self.primary_subplot == 'ax':
             return( Coordinate([int(self.list_slices[0]),
                                 int(event.ydata) - self.offset[1],
@@ -1612,6 +1623,7 @@ class ClickViewerGroundTruth(ClickViewer):
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
             if self.current_dot_number>1:
+                self.bool_may_skip_all_remaining=False
                 self.current_dot_number += -1
                 self.list_points=self.list_points[0:len(self.list_points)-1]
                 self.update_title_text('current_dot_to_draw')
