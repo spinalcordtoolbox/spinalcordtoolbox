@@ -955,7 +955,6 @@ class ClickViewerPropseg(ClickViewer):
             if not self.are_all_slices_done():
                 self.save_target_point_not_custom_way(event,plot)
 
-
     def save_target_point_custom_way(self,event,plot):
         target_point = self.set_custom_target_points(event)
         if self.check_point_is_valid(target_point):
@@ -978,7 +977,6 @@ class ClickViewerPropseg(ClickViewer):
         self.update_title_text('way_custom_next_point')
         plot.draw()
 
-
     def show_next_slice(self,plot,point):
         point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]  # ?!
         self.current_point = Coordinate(point)
@@ -986,7 +984,6 @@ class ClickViewerPropseg(ClickViewer):
         self.windows[0].update_slice(self.list_slices[self.current_slice])
         self.update_title_text('way_automatic_next_point')
         plot.draw()
-
 
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
@@ -1435,16 +1432,19 @@ class ClickViewerGroundTruth(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
-        self.number_of_dots_final=2
-        self.current_dot_number=0
+        self.number_of_dots_final=10
+        self.current_dot_number=1
         self.dic_message_labels=self.define_dic_message_labels()
-        self.list_current_wanted_labels=[4,10]
         self.update_title_text(str(self.current_dot_number))
 
 
         """ Create Buttons"""
         self.create_button_help()
         self.create_button_redo()
+        self.create_button_skip()
+
+        self.update_title_text('current_dot_to_draw')
+
 
     def define_dic_message_labels(self):
         dic={'1':'Please click on the 50th label \n',
@@ -1471,12 +1471,8 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def update_title_text(self,key):
 
-        if(key=='0'):
-            title_obj = self.windows[0].axes.set_title(self.dic_message_labels[str(self.list_current_wanted_labels[self.current_dot_number])])
-            plt._setp(title_obj,color='k')
-
-        elif(key=='1'):
-            title_obj = self.windows[0].axes.set_title(self.dic_message_labels[str(self.list_current_wanted_labels[self.current_dot_number])])
+        if(key=='current_dot_to_draw'):
+            title_obj = self.windows[0].axes.set_title(self.dic_message_labels[str(self.current_dot_number)])
             plt._setp(title_obj,color='k')
 
         elif(key=='redo_done'):
@@ -1484,18 +1480,23 @@ class ClickViewerGroundTruth(ClickViewer):
                                                         'Please click at intervertebral disc C2-C3 \n')
             plt._setp(title_obj,color='k')
 
-        elif(key=='cant_go_higher'):
-            title_obj = self.windows[0].axes.set_title( 'You can\'t choose a higher label \n')
-            plt._setp(title_obj,color='r')
-
-        elif(key=='cant_go_lower'):
-            title_obj = self.windows[0].axes.set_title( 'You can\'t choose a lower label \n')
-            plt._setp(title_obj,color='r')
-
         else:
             self.update_title_text_general(key)
 
         self.windows[0].draw()
+
+    def create_button_skip(self):
+        ax = plt.axes([0.59, 0.90, 0.1, 0.075])
+        self.dic_axis_buttons['skip']=ax
+        button_help = Button(ax, 'Skip')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_skip)
+
+    def press_skip(self, event):
+        if event.inaxes == self.dic_axis_buttons['skip']:
+            dic_translate_labels = self.define_translate_dic()
+            self.current_dot_number += 1
+            self.list_points.append([-1,-1,-1,dic_translate_labels[str(self.current_dot_number)]])
+            self.update_title_text('current_dot_to_draw')
 
     def press_help(self, event):
         if event.inaxes == self.dic_axis_buttons['help']:
@@ -1565,23 +1566,24 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def set_target_point(self,event):
         dic_translate_labels=self.define_translate_dic()
+        print(self.current_dot_number)
         if self.primary_subplot == 'ax':
             return( Coordinate([int(self.list_slices[0]),
                                 int(event.ydata) - self.offset[1],
                                 int(event.xdata) - self.offset[2],
-                                dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
+                                dic_translate_labels[str(self.current_dot_number)]
             ] ) )
         elif self.primary_subplot == 'cor':
             return ( Coordinate([int(event.ydata) - self.offset[0],
                                  int(self.list_slices[0]),
                                  int(event.xdata) - self.offset[2],
-                                 dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
+                                 dic_translate_labels[str(self.current_dot_number)]
                                  ]))
         elif self.primary_subplot == 'sag':
             return ( Coordinate([int(event.ydata) - self.offset[0],
                                  int(event.xdata) - self.offset[1],
                                  int(self.list_slices[0]),
-                                 dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
+                                 dic_translate_labels[str(self.current_dot_number)]
                                  ]))
 
     def are_all_slices_done(self):
@@ -1592,14 +1594,9 @@ class ClickViewerGroundTruth(ClickViewer):
             self.bool_all_processed=True
             return True
 
-    def update_second_label_if_necessary(self):
-        if self.list_current_wanted_labels[0]>=self.list_current_wanted_labels[1]:
-            self.list_current_wanted_labels[1]=self.list_current_wanted_labels[0]+1
-
     def is_there_next_slice(self):
         if self.current_dot_number < self.number_of_dots_final:
-            self.update_second_label_if_necessary()
-            self.update_title_text(str(self.current_dot_number))
+            self.update_title_text('current_dot_to_draw')
             return True
         else:
             self.update_title_text('ready_to_save_and_quit')
@@ -1625,8 +1622,6 @@ class ClickViewerGroundTruth(ClickViewer):
                                                str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         with open("label_position.txt", "w") as fichier:
             fichier.write(self.list_points_useful_notation)
-
-
 
 
 def get_parser():
