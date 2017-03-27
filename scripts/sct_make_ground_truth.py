@@ -264,7 +264,6 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
 
 def use_viewer_to_define_labels(fname_data):
-    from sct_viewer import ClickViewerRegisterToTemplate
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -280,8 +279,7 @@ def use_viewer_to_define_labels(fname_data):
 
 
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
-    #viewer = ClickViewerGroundTruth(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    viewer = ClickViewerGroundTruth(im_input_SAL, orientation_subplot=['sag', 'ax'])
     set_viewer_parameters(viewer)
 
     mask_points = viewer.start()
