@@ -107,7 +107,7 @@ def get_parser():
                       type_value='int',
                       description='Define the label from which you wish to start. It can\'t be greater than 12 nor smaller than 1.',
                       mandatory=False,
-                      default_value='1',
+                      default_value=1,
                       example=2)
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
