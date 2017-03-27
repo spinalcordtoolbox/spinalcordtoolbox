@@ -907,7 +907,8 @@ class ClickViewerPropseg(ClickViewer):
 
         elif(key=='init'):
             title_obj = self.windows[0].axes.set_title('Mode Auto \n '
-                                                       'Please select a new point \n')
+                                                       'Please click in the center of the spinal cord \n'
+                                                       'If it is not visible yet, you may skip the first slices \n')
             plt._setp(title_obj,color='k')
 
         elif(key=='skipped_all_remaining_slices'):
