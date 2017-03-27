@@ -831,8 +831,6 @@ class ClickViewerPropseg(ClickViewer):
         self.create_button_skip()
         self.create_button_auto_manual()
 
-
-
     def on_release(self, event, plot=None):
         """
         This subplot refers to the secondary window. It captures event "release"
@@ -1349,15 +1347,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             else:
                 self.update_title_text('warning_redo_beyond_first_dot')
 
-    def save_data(self):
-        for coord in self.list_points:
-            if self.list_points_useful_notation != '':
-                self.list_points_useful_notation += ':'
-            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
-                                               str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-        with open("label_position.txt", "w") as fichier:
-            fichier.write(self.list_points_useful_notation)
-
     def is_it_possible_to_get_lower(self):
         if not self.current_dot_number:
             if self.list_current_wanted_labels[0]<len(self.dic_message_labels)-1:
@@ -1611,15 +1600,6 @@ class ClickViewerGroundTruth(ClickViewer):
             else:
                 self.update_title_text('warning_redo_beyond_first_dot')
 
-    def save_data(self):
-        for coord in self.list_points:
-            if self.list_points_useful_notation != '':
-                self.list_points_useful_notation += ':'
-            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
-                                               str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-        with open("label_position.txt", "w") as fichier:
-            fichier.write(self.list_points_useful_notation)
-
     def skip_all_remaining_labels(self):
         dic_translate_labels = self.define_translate_dic()
         for ilabels in range (self.current_dot_number,self.number_of_dots_final):
@@ -1639,7 +1619,6 @@ class ClickViewerGroundTruth(ClickViewer):
                 self.save_data()
                 self.closed = True
                 plt.close('all')
-
 
 def get_parser():
     parser = Parser(__file__)
