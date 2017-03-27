@@ -73,7 +73,7 @@ def get_parser():
     parser.add_option(name="-s",
                       type_value="file",
                       description="Spinal cord segmentation.",
-                      mandatory=True,
+                      mandatory=False,
                       example="anat_seg.nii.gz")
     parser.add_option(name="-l",
                       type_value="file",
@@ -103,6 +103,18 @@ def get_parser():
                       mandatory=False,
                       default_value='template',
                       example=['template', 'subject'])
+    parser.add_option(name='-start',
+                      type_value='multiple_choice',
+                      description='Define the label from which you wish to start. It can\'t be greater than 12',
+                      mandatory=False,
+                      default_value='0',
+                      example='2')
+    parser.add_option(name='-end',
+                      type_value='multiple_choice',
+                      description='Define the label you wish to end with. It can\'t be smaller than 1, or than the start value.',
+                      mandatory=False,
+                      default_value='12',
+                      example='12')
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description='Parameters for registration (see sct_register_multimodal). Default: \
@@ -115,12 +127,7 @@ def get_parser():
                       description="""Parameters for straightening (see sct_straighten_spinalcord).""",
                       mandatory=False,
                       default_value='')
-    # parser.add_option(name="-cpu-nb",
-    #                   type_value="int",
-    #                   description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
-    #                   mandatory=False,
-    #                   example="8")
-    parser.add_option(name="-init-template",
+    parser.add_option(name="-init-labels",
                       type_value="multiple_choice",
                       description="You can create your own labels using a interactive viewer using option 'viewer",
                       mandatory=False,
@@ -143,20 +150,22 @@ def get_parser():
 
 def rewrite_arguments(arguments):
     fname_data = arguments['-i']
-    fname_seg = arguments['-s']
+    #fname_seg = arguments['-s']
     fname_landmarks = arguments['-l']
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
     else:
         path_output = ''
+    firstLabel=arguments['-start']
+    lastLabel=arguments['-end']
     path_template = sct.slash_at_the_end(arguments['-t'], 1)
     contrast_template = arguments['-c']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
-    init_template=int(arguments['-init-template'])
+    init_template=int(arguments['-init-labels'])
 
-    return (fname_data,fname_seg,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_template)
+    return (fname_data,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_template,firstLabel,lastLabel)
 
 def write_paramaters(arguments,param,ref,verbose):
     param.verbose = verbose
@@ -297,7 +306,8 @@ def main():
 
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
-    (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,verbose,init_template)=rewrite_arguments(arguments)
+    (fname_data, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,
+     verbose, init_template, firstLabel, lastLabel)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
     if(init_template):
