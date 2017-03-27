@@ -785,11 +785,7 @@ class ClickViewer(Viewer):
 
     def start(self):
         super(ClickViewer, self).start()
-
-        if self.bool_all_processed:
-            return self.list_points_useful_notation
-        else:
-            return None
+        return self.list_points_useful_notation
 
     def are_all_slices_done(self):
         if self.current_slice < len(self.list_slices):
@@ -1184,10 +1180,6 @@ class ClickViewerLabelVertebrae(ClickViewer):
             else:
                 self.update_title_text('impossible_to_leave')
                 self.bool_ignore_warning_about_leaving=True
-
-    def start(self):
-        super(ClickViewer, self).start()
-        return self.list_points_useful_notation
 
 
 class ClickViewerRegisterToTemplate(ClickViewer):
