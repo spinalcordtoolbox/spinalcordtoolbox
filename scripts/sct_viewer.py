@@ -1445,7 +1445,6 @@ class ClickViewerGroundTruth(ClickViewer):
 
         self.update_title_text('current_dot_to_draw')
 
-
     def define_dic_message_labels(self):
         dic={'1':'Please click on the 50th label \n',
              '2': 'Please click on the 49th label \n',
@@ -1493,10 +1492,11 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def press_skip(self, event):
         if event.inaxes == self.dic_axis_buttons['skip']:
-            dic_translate_labels = self.define_translate_dic()
-            self.current_dot_number += 1
-            self.list_points.append([-1,-1,-1,dic_translate_labels[str(self.current_dot_number)]])
-            self.update_title_text('current_dot_to_draw')
+            if not self.are_all_slices_done():
+                dic_translate_labels = self.define_translate_dic()
+                self.current_dot_number += 1
+                self.list_points.append([-1, -1, -1, dic_translate_labels[str(self.current_dot_number)]])
+                self.is_there_next_slice()
 
     def press_help(self, event):
         if event.inaxes == self.dic_axis_buttons['help']:
@@ -1607,10 +1607,8 @@ class ClickViewerGroundTruth(ClickViewer):
         if event.inaxes == self.dic_axis_buttons['redo']:
             if self.current_dot_number>0:
                 self.current_dot_number += -1
-                self.windows[0].update_slice(self.list_slices[self.current_slice])
-                self.remove_last_dot()
-                self.update_ui_after_redo()
-                self.update_title_text(str(self.current_dot_number))
+                self.list_points=self.list_points[0:len(self.list_points)-1]
+                self.update_title_text('current_dot_to_draw')
             else:
                 self.update_title_text('warning_redo_beyond_first_dot')
 
