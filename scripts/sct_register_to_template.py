@@ -256,6 +256,13 @@ def check_mask_point_not_empty(mask_points):
                    type='error')
         return False
 
+def make_labels_image_from_list_points(mask_points,reoriented_image_filename,image_input_orientation):
+    if check_mask_point_not_empty(mask_points):
+        import sct_image
+        # create the mask containing either the three-points or centerline mask for initialization
+        sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
+        sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
+
 def use_viewer_to_define_labels(fname_data):
     from sct_viewer import ClickViewerRegisterToTemplate
     from sct_viewer import ClickViewerGroundTruth
@@ -280,18 +287,9 @@ def use_viewer_to_define_labels(fname_data):
     mask_points = viewer.start()
     if not mask_points and viewer.closed:
         mask_points = viewer.list_points_useful_notation
+    make_labels_image_from_list_points(mask_points,reoriented_image_filename,image_input_orientation)
 
-    if check_mask_point_not_empty(mask_points):
-        import sct_image
-        # create the mask containing either the three-points or centerline mask for initialization
-        sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
-        sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
 
-        # reorient the initialization mask to correspond to input image orientation
-        #mask_reoriented_filename = sct.add_suffix(file_data + ext_data, "_mask_viewer")
-        #sct.run(
-            #'sct_image -i ' + path_tmp_viewer + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0',
-            #verbose=False)
 
 # MAIN
 # ==========================================================================================
