@@ -80,7 +80,7 @@ def get_parser():
                       description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels\n",
                       mandatory=False,
                       default_value='labels_reoriented.nii.gz',
-                      example="anat_labels.nii.gz")
+                      example="labels_reoriented.nii.gz")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
