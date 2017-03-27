@@ -1417,6 +1417,7 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def __init__(self,
                  list_images,
+                 first_label,
                  visualization_parameters=None,
                  orientation_subplot=['ax', 'sag'],
                  input_type='centerline'):
@@ -1431,6 +1432,7 @@ class ClickViewerGroundTruth(ClickViewer):
         self.current_dot_number=1
         self.dic_message_labels=self.define_dic_message_labels()
         self.update_title_text(str(self.current_dot_number))
+        self.first_label=first_label
 
 
         """ Create Buttons"""
@@ -1441,7 +1443,10 @@ class ClickViewerGroundTruth(ClickViewer):
         self.update_title_text('current_dot_to_draw')
 
     def skip_until_first_slice(self):
-        pass
+        dic_translate_labels = self.define_translate_dic()
+        for ilabels in range (1,self.first_label):
+            self.current_dot_number += 1
+            self.list_points.append(Coordinate([-1, -1, -1, dic_translate_labels[str(self.current_dot_number)]]))
 
     def define_dic_message_labels(self):
         dic={'1':'Please click on the 50th label \n',
