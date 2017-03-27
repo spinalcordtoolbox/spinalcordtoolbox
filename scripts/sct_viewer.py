@@ -1507,13 +1507,11 @@ class ClickViewerGroundTruth(ClickViewer):
             if not self.are_all_slices_done() and not self.bool_may_skip_all_remaining:
                 dic_translate_labels = self.define_translate_dic()
                 self.current_dot_number += 1
-                self.list_points.append([-1, -1, -1, dic_translate_labels[str(self.current_dot_number)]])
+                self.list_points.append( Coordinate([-1,-1,-1,dic_translate_labels[str(self.current_dot_number ) ] ] ) )
                 self.is_there_next_slice()
             elif self.bool_may_skip_all_remaining:
                 self.skip_all_remaining_labels()
                 self.update_title_text('all_remaining_labels_skipped')
-
-
 
     def press_help(self, event):
         if event.inaxes == self.dic_axis_buttons['help']:
@@ -1643,7 +1641,7 @@ class ClickViewerGroundTruth(ClickViewer):
         dic_translate_labels = self.define_translate_dic()
         for ilabels in range (self.current_dot_number,self.number_of_dots_final):
             self.current_dot_number += 1
-            self.list_points.append([-1, -1, -1, dic_translate_labels[str(self.current_dot_number)]])
+            self.list_points.append(Coordinate([-1, -1, -1, dic_translate_labels[str(self.current_dot_number)]]))
 
     def check_all_labels_are_done(self):
         if self.current_dot_number==self.number_of_dots_final:
