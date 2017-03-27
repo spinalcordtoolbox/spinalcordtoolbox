@@ -273,8 +273,8 @@ def use_viewer_to_define_labels(fname_data):
 
 
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    #viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
-    viewer = ClickViewerGroundTruth(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    #viewer = ClickViewerGroundTruth(im_input_SAL, orientation_subplot=['sag', 'ax'])
     set_viewer_parameters(viewer)
 
     mask_points = viewer.start()
@@ -337,7 +337,7 @@ def main():
     ''' Check input labels'''
     labels = check_labels(fname_landmarks)
 
-    """ create temporary folder, set temporary file names, copy files into it and go in it """
+    """ Create temporary folder, set temporary file names, copy files into it and go in it """
     path_tmp = sct.tmp_create(verbose=verbose)
     (ftmp_data, ftmp_seg, ftmp_label, ftmp_template, ftmp_template_seg, ftmp_template_label)=set_temporary_files()
     copy_files_to_temporary_files(verbose, fname_data, path_tmp, ftmp_seg, ftmp_data, fname_seg, fname_landmarks,
@@ -348,7 +348,7 @@ def main():
     sct.printv('\nGenerate labels from template vertebral labeling', verbose)
     sct.run('sct_label_utils -i '+fname_template_vertebral_labeling+' -vert-body 0 -o '+ftmp_template_label)
 
-    ''' check if provided labels are available in the template'''
+    ''' Check if provided labels are available in the template'''
     sct.printv('\nCheck if provided labels are available in the template', verbose)
     image_label_template = Image(ftmp_template_label)
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
@@ -357,7 +357,7 @@ def main():
                    'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
                    str(labels_template[-1].value), verbose, 'error')
 
-    ''' binarize segmentation (in case it has values below 0 caused by manual editing)'''
+    ''' Binarize segmentation (in case it has values below 0 caused by manual editing)'''
     sct.printv('\nBinarize segmentation', verbose)
     sct.run('sct_maths -i seg.nii.gz -bin 0.5 -o seg.nii.gz')
 
