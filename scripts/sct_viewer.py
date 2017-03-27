@@ -524,6 +524,7 @@ class ClickViewer(Viewer):
         """ Create Buttons"""
         self.create_button_save_and_quit()
         self.create_button_redo()
+        self.create_button_help()
 
         """ Compute slices to display """
         self.calculate_list_slices()
@@ -823,7 +824,6 @@ class ClickViewerPropseg(ClickViewer):
         self.update_title_text('init')
 
         """ Create Buttons"""
-        self.create_button_help()
         self.create_button_skip()
         self.create_button_auto_manual()
 
@@ -1083,7 +1083,6 @@ class ClickViewerLabelVertebrae(ClickViewer):
         self.help_web_adress='https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_label_vertebrae/attachment/label_vertebrae_viewer.png'
 
         """ Create Buttons"""
-        self.create_button_help()
         self.create_button_redo()
 
     def update_title_text(self,key):
@@ -1196,7 +1195,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
 
         """ Create Buttons"""
-        self.create_button_help()
         self.create_button_redo()
         self.create_button_lower_label()
         self.create_button_higher_label()
@@ -1437,7 +1435,6 @@ class ClickViewerGroundTruth(ClickViewer):
 
 
         """ Create Buttons"""
-        self.create_button_help()
         self.create_button_redo()
         self.create_button_skip()
 
