@@ -273,8 +273,8 @@ def use_viewer_to_define_labels(fname_data):
 
 
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
-    #viewer = ClickViewerGroundTruth(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    #viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    viewer = ClickViewerGroundTruth(im_input_SAL, orientation_subplot=['sag', 'ax'])
     set_viewer_parameters(viewer)
 
     mask_points = viewer.start()
