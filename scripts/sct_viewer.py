@@ -1480,6 +1480,11 @@ class ClickViewerGroundTruth(ClickViewer):
                                                         'Please click at intervertebral disc C2-C3 \n')
             plt._setp(title_obj,color='k')
 
+        elif(key=='confirm_to_quit'):
+            title_obj = self.windows[0].axes.set_title( 'All unprocessed labels have been skipped \n'
+                                                        'Please confirm you wish to leave \n')
+            plt._setp(title_obj,color='r')
+
         else:
             self.update_title_text_general(key)
 
@@ -1621,6 +1626,26 @@ class ClickViewerGroundTruth(ClickViewer):
                                                str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         with open("label_position.txt", "w") as fichier:
             fichier.write(self.list_points_useful_notation)
+
+    def skip_all_remaining_labels(self):
+        dic_translate_labels = self.define_translate_dic()
+        for ilabels in range (self.current_dot_number,self.number_of_dots_final):
+            self.current_dot_number += 1
+            self.list_points.append([-1, -1, -1, dic_translate_labels[str(self.current_dot_number)]])
+
+    def check_all_labels_are_done(self):
+        if self.current_dot_number==self.number_of_dots_final:
+            return True
+        else:
+            self.skip_all_remaining_labels()
+            self.update_title_text('confirm_to_quit')
+
+    def press_save_and_quit(self, event):
+        if event.inaxes == self.dic_axis_buttons['save_and_quit']:
+            if self.check_all_labels_are_done():
+                self.save_data()
+                self.closed = True
+                plt.close('all')
 
 
 def get_parser():
