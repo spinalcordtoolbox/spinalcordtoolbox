@@ -674,7 +674,7 @@ def check_labels(fname_landmarks):
     """
 
     if(fname_landmarks=='viewer'):
-    sct.printv('\nCheck input labels...')
+        sct.printv('\nCheck input labels...')
     # open label file
     image_label = Image(fname_landmarks)
     # -> all labels must be different
