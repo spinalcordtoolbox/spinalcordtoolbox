@@ -1185,6 +1185,11 @@ class ClickViewerLabelVertebrae(ClickViewer):
                 self.update_title_text('impossible_to_leave')
                 self.bool_ignore_warning_about_leaving=True
 
+    def start(self):
+        super(ClickViewer, self).start()
+        return self.list_points_useful_notation
+
+
 class ClickViewerRegisterToTemplate(ClickViewer):
 
     def __init__(self,
@@ -1743,6 +1748,8 @@ def prepare(list_images):
         sct.run('sct_image -i ' + fname_im + ' -o ' + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
         fname_images.append(reoriented_image_filename)
     return fname_images, orientation_images
+
+
 
 
 def clean():
