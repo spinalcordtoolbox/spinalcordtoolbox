@@ -455,7 +455,7 @@ if __name__ == "__main__":
             elif use_viewer == "mask":
                 cmd += " -init-mask " + folder_output + mask_reoriented_filename
         else:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
+            sct.printv('\nERROR: the viewer has been closed before entering any manual points. Please try again.', 1, type='error')
 
     cmd += ' -centerline-binary'
     status, output = sct.run(cmd, verbose, error_exit='verbose')
