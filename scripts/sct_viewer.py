@@ -1172,7 +1172,6 @@ class ClickViewerLabelVertebrae(ClickViewer):
                 self.update_title_text('impossible_to_leave')
                 self.bool_ignore_warning_about_leaving=True
 
-
 class ClickViewerRegisterToTemplate(ClickViewer):
 
     def __init__(self,
@@ -1438,7 +1437,11 @@ class ClickViewerGroundTruth(ClickViewer):
         self.create_button_redo()
         self.create_button_skip()
 
+        self.skip_until_first_slice()
         self.update_title_text('current_dot_to_draw')
+
+    def skip_until_first_slice(self):
+        pass
 
     def define_dic_message_labels(self):
         dic={'1':'Please click on the 50th label \n',
