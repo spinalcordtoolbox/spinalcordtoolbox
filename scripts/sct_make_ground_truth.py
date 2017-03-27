@@ -104,11 +104,11 @@ def get_parser():
                       default_value='template',
                       example=['template', 'subject'])
     parser.add_option(name='-start',
-                      type_value='multiple_choice',
+                      type_value='int',
                       description='Define the label from which you wish to start. It can\'t be greater than 12 nor smaller than 1.',
                       mandatory=False,
                       default_value='1',
-                      example='2')
+                      example=2)
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description='Parameters for registration (see sct_register_multimodal). Default: \
@@ -150,15 +150,15 @@ def rewrite_arguments(arguments):
         path_output = arguments['-ofolder']
     else:
         path_output = ''
-    firstLabel=arguments['-start']
+    first_label=arguments['-start']
     path_template = sct.slash_at_the_end(arguments['-t'], 1)
     contrast_template = arguments['-c']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
-    init_template=int(arguments['-init-labels'])
+    init_labels=int(arguments['-init-labels'])
 
-    return (fname_data,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_template,firstLabel)
+    return (fname_data,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_labels,first_label)
 
 def write_paramaters(arguments,param,ref,verbose):
     param.verbose = verbose
@@ -236,12 +236,11 @@ def copy_files_to_temporary_files(verbose,fname_data,path_tmp,ftmp_seg,ftmp_data
     sct.run('sct_convert -i '+fname_template_seg+' -o '+path_tmp+ftmp_template_seg)
     # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
 
-def set_viewer_parameters(viewer,firstSlice):
+def set_viewer_parameters(viewer):
     viewer.number_of_slices = 1
     pz = 1
     viewer.gap_inter_slice = int(10 / pz)
     viewer.calculate_list_slices()
-    viewer.firstSlice=firstSlice
 
 
 
@@ -268,7 +267,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
 
-def use_viewer_to_define_labels(fname_data,firstSlice):
+def use_viewer_to_define_labels(fname_data,first_label):
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -284,8 +283,8 @@ def use_viewer_to_define_labels(fname_data,firstSlice):
 
 
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = ClickViewerGroundTruth(im_input_SAL, orientation_subplot=['sag', 'ax'])
-    set_viewer_parameters(viewer,firstSlice)
+    viewer = ClickViewerGroundTruth(im_input_SAL, first_label,orientation_subplot=['sag', 'ax'])
+    set_viewer_parameters(viewer)
 
     mask_points = viewer.start()
     if not mask_points and viewer.closed:
@@ -303,15 +302,15 @@ def main():
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
     (fname_data, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,
-     verbose, init_template, firstLabel)=rewrite_arguments(arguments)
+     verbose, init_labels, first_label)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
-    if(init_template):
-        use_viewer_to_define_labels(fname_data,firstLabel)
+    if(init_labels):
+        use_viewer_to_define_labels(fname_data,first_label)
     # initialize other parameters
     # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
-    template = os.path.basename(os.path.normpath(path_template))
+    template = os.path.basename(os.path.normpath(pth_template))
     # smoothing_sigma = param.smoothing_sigma
 
     # retrieve template file names
