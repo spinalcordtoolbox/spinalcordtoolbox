@@ -1323,6 +1323,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
                                  int(self.list_slices[0]),
                                  dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
                                  ]))
+
     def are_all_slices_done(self):
         if self.current_dot_number < self.number_of_dots_final:
             return False

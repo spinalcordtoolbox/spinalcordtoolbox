@@ -257,7 +257,7 @@ def check_mask_point_not_empty(mask_points):
         return False
 
 def use_viewer_to_define_labels(fname_data):
-    #from sct_viewer import ClickViewerRegisterToTemplate
+    from sct_viewer import ClickViewerRegisterToTemplate
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -273,16 +273,15 @@ def use_viewer_to_define_labels(fname_data):
 
 
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    #viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
-    viewer = ClickViewerGroundTruth(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    #viewer = ClickViewerGroundTruth(im_input_SAL, orientation_subplot=['sag', 'ax'])
     set_viewer_parameters(viewer)
 
     mask_points = viewer.start()
-    #if not mask_points and viewer.closed:
-    #    mask_points = viewer.list_points_useful_notation
+    if not mask_points and viewer.closed:
+        mask_points = viewer.list_points_useful_notation
 
-    #if check_mask_point_not_empty(mask_points):
-    if True:
+    if check_mask_point_not_empty(mask_points):
         import sct_image
         # create the mask containing either the three-points or centerline mask for initialization
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
