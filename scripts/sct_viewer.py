@@ -1605,7 +1605,7 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
-            if self.current_dot_number>0:
+            if self.current_dot_number>1:
                 self.current_dot_number += -1
                 self.list_points=self.list_points[0:len(self.list_points)-1]
                 self.update_title_text('current_dot_to_draw')
