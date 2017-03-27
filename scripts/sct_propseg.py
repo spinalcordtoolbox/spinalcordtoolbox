@@ -412,7 +412,6 @@ if __name__ == "__main__":
         from sct_viewer import ClickViewerPropseg
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
         viewer = ClickViewerPropseg(image_input_reoriented)
-        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         if use_viewer == "mask":
             viewer.input_type = 'mask'
             viewer.number_of_slices = 3

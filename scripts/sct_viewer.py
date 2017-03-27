@@ -818,6 +818,7 @@ class ClickViewerPropseg(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
+        self.help_web_adress= 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         self.declaration_global_variables_specific()
         self.update_title_text('init')
 
@@ -1079,16 +1080,11 @@ class ClickViewerLabelVertebrae(ClickViewer):
 
         self.update_title_text('init')
         self.bool_ignore_warning_about_leaving=False
+        self.help_web_adress='https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_label_vertebrae/attachment/label_vertebrae_viewer.png'
 
         """ Create Buttons"""
         self.create_button_help()
         self.create_button_redo()
-
-    def create_button_help(self):
-        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['help']=ax
-        button_help = Button(ax, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
 
     def update_title_text(self,key):
 
@@ -1112,10 +1108,6 @@ class ClickViewerLabelVertebrae(ClickViewer):
             self.update_title_text_general(key)
 
         self.windows[0].draw()
-
-    def press_help(self, event):
-        if event.inaxes == self.dic_axis_buttons['help']:
-            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def on_press_main_window(self,event,plot):
         if not self.are_all_slices_done():
@@ -1200,6 +1192,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         self.dic_message_labels=self.define_dic_message_labels()
         self.list_current_wanted_labels=[4,10]
         self.update_title_text(str(self.current_dot_number))
+        self.help_web_adress='https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_register_to_template/attachment/sct_register_to_template.png'
 
 
         """ Create Buttons"""
