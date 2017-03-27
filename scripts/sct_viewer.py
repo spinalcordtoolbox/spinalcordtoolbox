@@ -1471,7 +1471,8 @@ class ClickViewerGroundTruth(ClickViewer):
     def update_title_text(self,key):
 
         if(key=='current_dot_to_draw'):
-            title_obj = self.windows[0].axes.set_title(self.dic_message_labels[str(self.current_dot_number)])
+            title_obj = self.windows[0].axes.set_title(self.dic_message_labels[str(self.current_dot_number)]
+                                                       + ' ( ' + str(self.current_dot_number) + ' / ' + str(self.number_of_dots_final) + ' )\n')
             plt._setp(title_obj,color='k')
 
         elif(key=='redo_done'):
