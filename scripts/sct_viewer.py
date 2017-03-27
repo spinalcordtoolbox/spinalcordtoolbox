@@ -547,6 +547,7 @@ class ClickViewer(Viewer):
             self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
 
     def declaration_global_variables_general(self,orientation_subplot):
+        self.help_web_adress='https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         self.primary_subplot = orientation_subplot[0]
         self.secondary_subplot = orientation_subplot[1]
@@ -798,6 +799,17 @@ class ClickViewer(Viewer):
             self.bool_all_processed=True
             return True
 
+    def press_help(self, event):
+        if event.inaxes == self.dic_axis_buttons['help']:
+            webbrowser.open(self.help_web_adress, new=0, autoraise=True)
+
+    def create_button_help(self):
+        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['help']=ax
+        button_help = Button(ax, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
+
+
 class ClickViewerPropseg(ClickViewer):
 
     def __init__(self,
@@ -839,12 +851,6 @@ class ClickViewerPropseg(ClickViewer):
                     window.update_slice(point, data_update=True)
                     self.draw_points(window, self.current_point.x)
         return
-
-    def create_button_help(self):
-        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['help']=ax
-        button_help = Button(ax, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
 
     def declaration_global_variables_specific(self):
         self.bool_enable_custom_points = False
@@ -942,10 +948,6 @@ class ClickViewerPropseg(ClickViewer):
             else:
                 self.button_choose_auto_manual.label.set_text('Mode Auto')
                 self.update_title_text('way_auto_start')
-
-    def press_help(self, event):
-        if event.inaxes == self.dic_axis_buttons['help']:
-            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def on_press_main_window(self,event,plot):
         self.bool_skip_all_to_end=True
@@ -1203,12 +1205,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
              }
         return dic
 
-    def create_button_help(self):
-        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['help']=ax
-        button_help = Button(ax, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
-
     def update_title_text(self,key):
 
         if(key=='0'):
@@ -1236,10 +1232,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             self.update_title_text_general(key)
 
         self.windows[0].draw()
-
-    def press_help(self, event):
-        if event.inaxes == self.dic_axis_buttons['help']:
-            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def on_press_main_window(self,event,plot):
         if not self.are_all_slices_done():
@@ -1464,12 +1456,6 @@ class ClickViewerGroundTruth(ClickViewer):
              }
         return dic
 
-    def create_button_help(self):
-        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['help']=ax
-        button_help = Button(ax, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
-
     def update_title_text(self,key):
 
         if(key=='current_dot_to_draw'):
@@ -1513,10 +1499,6 @@ class ClickViewerGroundTruth(ClickViewer):
             elif self.bool_may_skip_all_remaining:
                 self.skip_all_remaining_labels()
                 self.update_title_text('all_remaining_labels_skipped')
-
-    def press_help(self, event):
-        if event.inaxes == self.dic_axis_buttons['help']:
-            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
 
     def on_press_main_window(self,event,plot):
         self.bool_may_skip_all_remaining=True
