@@ -1427,10 +1427,12 @@ class ClickViewerGroundTruth(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
+
         self.bool_may_skip_all_remaining=False
         self.number_of_dots_final=10
         self.current_dot_number=1
         self.dic_message_labels=self.define_dic_message_labels()
+        self.dic_translate_labels=self.define_translate_dic()
         self.update_title_text(str(self.current_dot_number))
         self.first_label=first_label
 
@@ -1442,11 +1444,19 @@ class ClickViewerGroundTruth(ClickViewer):
         self.skip_until_first_slice()
         self.update_title_text('current_dot_to_draw')
 
+    def check_first_label(self):
+        if self.first_label in range (1,9):
+            return True
+        else:
+            sct.printv('Warning : You have selected a wrong number for \'-start\' : parameter ignored.',True,'warning')
+            return False
+
     def skip_until_first_slice(self):
-        dic_translate_labels = self.define_translate_dic()
-        for ilabels in range (1,self.first_label):
-            self.current_dot_number += 1
-            self.list_points.append(Coordinate([-1, -1, -1, dic_translate_labels[str(self.current_dot_number)]]))
+        if self.check_first_label():
+            for ilabels in range(1, self.first_label):
+                self.current_dot_number += 1
+                self.list_points.append(
+                    Coordinate([-1, -1, -1, self.dic_translate_labels[str(self.current_dot_number)]]))
 
     def define_dic_message_labels(self):
         dic={'1':'Please click on the 50th label \n',
@@ -1501,9 +1511,8 @@ class ClickViewerGroundTruth(ClickViewer):
     def press_skip(self, event):
         if event.inaxes == self.dic_axis_buttons['skip']:
             if not self.are_all_slices_done() and not self.bool_may_skip_all_remaining:
-                dic_translate_labels = self.define_translate_dic()
                 self.current_dot_number += 1
-                self.list_points.append( Coordinate([-1,-1,-1,dic_translate_labels[str(self.current_dot_number ) ] ] ) )
+                self.list_points.append( Coordinate([-1,-1,-1,self.dic_translate_labels[str(self.current_dot_number ) ] ] ) )
                 self.is_there_next_slice()
             elif self.bool_may_skip_all_remaining:
                 self.skip_all_remaining_labels()
@@ -1621,10 +1630,9 @@ class ClickViewerGroundTruth(ClickViewer):
                 self.update_title_text('warning_redo_beyond_first_dot')
 
     def skip_all_remaining_labels(self):
-        dic_translate_labels = self.define_translate_dic()
         for ilabels in range (self.current_dot_number,self.number_of_dots_final):
             self.current_dot_number += 1
-            self.list_points.append(Coordinate([-1, -1, -1, dic_translate_labels[str(self.current_dot_number)]]))
+            self.list_points.append(Coordinate([-1, -1, -1, self.dic_translate_labels[str(self.current_dot_number)]]))
 
     def check_all_labels_are_done(self):
         if self.current_dot_number==self.number_of_dots_final:
