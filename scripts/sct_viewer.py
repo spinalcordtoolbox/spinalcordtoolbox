@@ -1422,6 +1422,212 @@ class ClickViewerRegisterToTemplate(ClickViewer):
                 self.list_current_wanted_labels[self.current_dot_number]+= +1
                 self.update_title_text('0')
 
+class ClickViewerGroundTruth(ClickViewer):
+
+    def __init__(self,
+                 list_images,
+                 visualization_parameters=None,
+                 orientation_subplot=['ax', 'sag'],
+                 input_type='centerline'):
+
+        ClickViewer.__init__(self,list_images,
+                 visualization_parameters=visualization_parameters,
+                 orientation_subplot=orientation_subplot,
+                 input_type=input_type)
+
+        self.number_of_dots_final=2
+        self.current_dot_number=0
+        self.dic_message_labels=self.define_dic_message_labels()
+        self.list_current_wanted_labels=[4,10]
+        self.update_title_text(str(self.current_dot_number))
+
+
+        """ Create Buttons"""
+        self.create_button_help()
+        self.create_button_redo()
+
+    def define_dic_message_labels(self):
+        dic={'1':'Please click on the 50th label \n',
+             '2': 'Please click on the 49th label \n',
+             '3': 'Please click on C1/C2 \n',
+             '4': 'Please click on C2/C3 \n',
+             '5': 'Please click on 5 \n',
+             '6': 'Please click on 6 \n',
+             '7': 'Please click on 7 \n',
+             '8': 'Please click on 8 \n',
+             '9': 'Please click on 9 \n',
+             '10': 'Please click on 10 \n',
+             '11': 'Please click on 11 \n',
+             '12': 'Please click on 12 \n',
+             '13': 'Please click on 13 \n',
+             }
+        return dic
+
+    def create_button_help(self):
+        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
+        self.dic_axis_buttons['help']=ax
+        button_help = Button(ax, 'Help')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
+
+    def update_title_text(self,key):
+
+        if(key=='0'):
+            title_obj = self.windows[0].axes.set_title(self.dic_message_labels[str(self.list_current_wanted_labels[self.current_dot_number])])
+            plt._setp(title_obj,color='k')
+
+        elif(key=='1'):
+            title_obj = self.windows[0].axes.set_title(self.dic_message_labels[str(self.list_current_wanted_labels[self.current_dot_number])])
+            plt._setp(title_obj,color='k')
+
+        elif(key=='redo_done'):
+            title_obj = self.windows[0].axes.set_title( 'Previous dot erased \n'
+                                                        'Please click at intervertebral disc C2-C3 \n')
+            plt._setp(title_obj,color='k')
+
+        elif(key=='cant_go_higher'):
+            title_obj = self.windows[0].axes.set_title( 'You can\'t choose a higher label \n')
+            plt._setp(title_obj,color='r')
+
+        elif(key=='cant_go_lower'):
+            title_obj = self.windows[0].axes.set_title( 'You can\'t choose a lower label \n')
+            plt._setp(title_obj,color='r')
+
+        else:
+            self.update_title_text_general(key)
+
+        self.windows[0].draw()
+
+    def press_help(self, event):
+        if event.inaxes == self.dic_axis_buttons['help']:
+            webbrowser.open('https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/', new=0, autoraise=True)
+
+    def on_press_main_window(self,event,plot):
+        if not self.are_all_slices_done():
+            target_point = self.set_target_point(event)
+            if self.check_point_is_valid(target_point):
+                self.list_points.append(target_point)
+                self.current_dot_number += 1
+                self.is_there_next_slice()
+
+    def on_press_secondary_window(self,event,plot):
+        is_in_axes = False
+        for window in self.windows:
+            if event.inaxes == window.axes:
+                is_in_axes = True
+        if not is_in_axes:  # ?!
+            return
+
+        plot.draw()
+
+        self.last_update = time()
+        self.current_point = self.get_event_coordinates(event, plot)
+        point = [self.current_point.x, self.current_point.y, self.current_point.z]
+        for window in self.windows:
+            if window is plot:
+                window.update_slice(point, data_update=False)
+            else:
+                self.draw_points(window, self.current_point.x)
+                window.update_slice(point, data_update=True)
+
+    def on_press(self, event, plot=None):
+        # event inaxes ?!
+        if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
+            self.on_press_main_window(event,plot)
+        elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
+            self.on_press_secondary_window(event,plot)
+
+    def draw_points(self, window, current_slice):
+        if window.view == self.orientation[self.primary_subplot]:
+            x_data, y_data = [], []
+            for pt in self.list_points: #?!
+                if pt.x == current_slice:
+                    x_data.append(pt.z + self.offset[2])
+                    y_data.append(pt.y + self.offset[1])
+            self.plot_points.set_xdata(x_data)
+            self.plot_points.set_ydata(y_data)
+            self.fig.canvas.draw()
+
+    def define_translate_dic(self):
+        dic={'1':50,
+             '2':49,
+             '3':1,
+             '4':2,
+             '5':3,
+             '6':4,
+             '7':5,
+             '8':6,
+             '9':7,
+             '10':8,
+             '11':9,
+             '12':10,
+             '13':11}
+        return dic
+
+    def set_target_point(self,event):
+        dic_translate_labels=self.define_translate_dic()
+        if self.primary_subplot == 'ax':
+            return( Coordinate([int(self.list_slices[0]),
+                                int(event.ydata) - self.offset[1],
+                                int(event.xdata) - self.offset[2],
+                                dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
+            ] ) )
+        elif self.primary_subplot == 'cor':
+            return ( Coordinate([int(event.ydata) - self.offset[0],
+                                 int(self.list_slices[0]),
+                                 int(event.xdata) - self.offset[2],
+                                 dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
+                                 ]))
+        elif self.primary_subplot == 'sag':
+            return ( Coordinate([int(event.ydata) - self.offset[0],
+                                 int(event.xdata) - self.offset[1],
+                                 int(self.list_slices[0]),
+                                 dic_translate_labels[str(self.list_current_wanted_labels[self.current_dot_number])]
+                                 ]))
+
+    def are_all_slices_done(self):
+        if self.current_dot_number < self.number_of_dots_final:
+            return False
+        else:
+            self.update_title_text('warning_all_slices_are_done_already')
+            self.bool_all_processed=True
+            return True
+
+    def update_second_label_if_necessary(self):
+        if self.list_current_wanted_labels[0]>=self.list_current_wanted_labels[1]:
+            self.list_current_wanted_labels[1]=self.list_current_wanted_labels[0]+1
+
+    def is_there_next_slice(self):
+        if self.current_dot_number < self.number_of_dots_final:
+            self.update_second_label_if_necessary()
+            self.update_title_text(str(self.current_dot_number))
+            return True
+        else:
+            self.update_title_text('ready_to_save_and_quit')
+            self.bool_all_processed=True
+            return False
+
+    def press_redo(self, event):
+        if event.inaxes == self.dic_axis_buttons['redo']:
+            if self.current_dot_number>0:
+                self.current_dot_number += -1
+                self.windows[0].update_slice(self.list_slices[self.current_slice])
+                self.remove_last_dot()
+                self.update_ui_after_redo()
+                self.update_title_text(str(self.current_dot_number))
+            else:
+                self.update_title_text('warning_redo_beyond_first_dot')
+
+    def save_data(self):
+        for coord in self.list_points:
+            if self.list_points_useful_notation != '':
+                self.list_points_useful_notation += ':'
+            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
+                                               str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+        with open("label_position.txt", "w") as fichier:
+            fichier.write(self.list_points_useful_notation)
+
+
+
 
 def get_parser():
     parser = Parser(__file__)
