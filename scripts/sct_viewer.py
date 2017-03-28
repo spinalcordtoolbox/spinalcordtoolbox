@@ -1543,7 +1543,15 @@ class ClickViewerGroundTruth(ClickViewer):
             if self.check_point_is_valid(target_point):
                 self.list_points.append(target_point)
                 self.current_dot_number += 1
+                self.add_dot_to_current_slice(plot, target_point)
                 self.is_there_next_slice()
+
+
+    def add_dot_to_current_slice(self,plot,point):
+        self.draw_points(self.windows[0], self.current_point.z)
+        self.windows[0].update_slice(point, data_update=True)
+        self.update_title_text('way_custom_next_point')
+        plot.draw()
 
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
@@ -1576,9 +1584,9 @@ class ClickViewerGroundTruth(ClickViewer):
         if window.view == self.orientation[self.primary_subplot]:
             x_data, y_data = [], []
             for pt in self.list_points: #?!
-                if pt.x == current_slice:
-                    x_data.append(pt.z + self.offset[2])
-                    y_data.append(pt.y + self.offset[1])
+                if pt.z == current_slice:
+                    x_data.append(pt.y + self.offset[1])
+                    y_data.append(pt.x + self.offset[0])
             self.plot_points.set_xdata(x_data)
             self.plot_points.set_ydata(y_data)
             self.fig.canvas.draw()
@@ -1699,6 +1707,7 @@ class ClickViewerGroundTruth(ClickViewer):
             ''' Reset central image '''
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
             point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
+            print(self.orientation[self.primary_subplot] - 1)
             for window in self.windows:
                 window.update_slice(point, data_update=True)
                 self.draw_points(window, self.current_point.x)
