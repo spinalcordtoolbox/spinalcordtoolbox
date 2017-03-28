@@ -19,7 +19,8 @@ import numpy as np
 import pandas as pd
 import pickle, gzip
 from sklearn import manifold, decomposition
-from sct_utils import printv, slash_at_the_end, check_file_exist
+from sct_utils import printv
+from sct_utils import slash_at_the_end
 from msct_gmseg_utils import pre_processing, register_data, apply_transfo, average_gm_wm, normalize_slice
 from msct_image import Image
 from msct_parser import *

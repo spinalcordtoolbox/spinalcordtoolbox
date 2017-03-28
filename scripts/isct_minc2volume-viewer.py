@@ -24,8 +24,6 @@
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Modified by : Benjamin De Leener
 
-import sys
-import shutil
 import os.path
 import argparse
 import subprocess

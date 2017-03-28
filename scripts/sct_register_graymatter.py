@@ -9,7 +9,8 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import sys, os, time
+import os
+import sys
 from msct_parser import Parser
 from msct_image import Image
 from sct_convert import convert

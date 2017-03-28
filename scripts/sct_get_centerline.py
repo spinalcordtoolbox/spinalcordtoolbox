@@ -21,7 +21,6 @@ from time import strftime, time
 import sct_utils as sct
 from numpy import mgrid, zeros, exp, unravel_index, argmax, poly1d, polyval, linalg, max, polyfit, sqrt, abs, savetxt
 import glob
-#from sct_utils import fsloutput
 from sct_image import get_orientation_3d, set_orientation
 from sct_convert import convert
 from msct_image import Image
@@ -588,7 +587,6 @@ def get_minimum_path(data, smooth_factor=np.sqrt(2), invert=1, verbose=1, debug=
 
         Jq = np.dstack((pJ[0:-3, 1:-2], pJ[1:-2, 0:-3], pJ[1:-2, 1:-2], pJ[1:-2, 2:-1], pJ[2:-1, 1:-2]))
         J1[1:-2, 1:-2, row] = np.min(Jq+VI, 2)
-        pass
 
     J2[:, :, p-1] = 0
     for row in range(p-2, -1, -1):
@@ -598,7 +596,6 @@ def get_minimum_path(data, smooth_factor=np.sqrt(2), invert=1, verbose=1, debug=
 
         Jq = np.dstack((pJ[0:-3, 1:-2], pJ[1:-2, 0:-3], pJ[1:-2, 1:-2], pJ[1:-2, 2:-1], pJ[2:-1, 1:-2]))
         J2[1:-2, 1:-2, row] = np.min(Jq+VI, 2)
-        pass
 
     result = J1+J2
     if invert:

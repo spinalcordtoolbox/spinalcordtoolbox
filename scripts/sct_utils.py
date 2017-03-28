@@ -278,7 +278,6 @@ def check_file_exist(fname, verbose=1):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
         return True
-        pass
     else:
         printv('\nERROR: The file ' + fname + ' does not exist. Exit program.\n', 1, 'error')
         return False
@@ -292,7 +291,6 @@ def check_folder_exist(fname, verbose=1):
     if os.path.isdir(fname):
         printv('  OK: '+fname, verbose, 'normal')
         return True
-        pass
     else:
         printv('\nWarning: The directory ' + str(fname) + ' does not exist.\n', 1, 'warning')
         return False

@@ -130,7 +130,6 @@ def read_label_file(path_info_label):
         if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
                 os.path.isfile(path_info_label+fname + '.nii.gz'):
             print('  OK: '+path_info_label+fname)
-            pass
         else:
             print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '
                   +param.file_info_label+'.\n')

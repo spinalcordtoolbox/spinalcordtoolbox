@@ -130,8 +130,6 @@ class Centerline:
     When initialized, the lenght of the centerline is computed as well as the coordinate reference system of each plane.
     """
     def __init__(self, points_x, points_y, points_z, deriv_x, deriv_y, deriv_z):
-        from math import sqrt
-        #self.points = []
         self.derivatives = []
         self.length = 0.0
         self.progressive_length = [0.0]
