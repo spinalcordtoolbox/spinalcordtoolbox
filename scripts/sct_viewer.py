@@ -1432,7 +1432,7 @@ class ClickViewerGroundTruth(ClickViewer):
         self.bool_may_skip_all_remaining=False
         self.number_of_dots_final=10
         self.current_dot_number=1
-        self.number_of_slices_to_mean=3
+        self.number_of_slices_to_mean=25
         self.dic_message_labels=self.define_dic_message_labels()
         self.dic_translate_labels=self.define_translate_dic()
         self.update_title_text(str(self.current_dot_number))
@@ -1458,6 +1458,10 @@ class ClickViewerGroundTruth(ClickViewer):
         for ii in range (0,data.shape[1]):
             for jj in range (0,data.shape[2]):
                 imMoy[ii,jj]=np.mean(dataRacc[:,ii,jj])
+        print(imMoy.shape)
+
+        self.windows[1].figs[0].set_data(imMoy)
+        self.windows[1].figs[0].figure.canvas.draw()
         return imMoy
 
     def check_first_label(self):
@@ -1748,7 +1752,9 @@ class ClickViewerGroundTruth(ClickViewer):
                 window.update_slice(point, data_update=True)
                 self.draw_points(window, self.current_point.x)
 
-            self.number_of_slices_to_mean=3
+            self.number_of_slices_to_mean=25
+
+            self.calc_mean_slices()
 
 
 
