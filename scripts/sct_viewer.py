@@ -1507,6 +1507,19 @@ class ClickViewerGroundTruth(ClickViewer):
 
         self.windows[0].draw()
 
+    def on_release(self, event, plot=None):
+        if event.button == 1 and event.inaxes == plot.axes and plot.view == self.orientation[self.secondary_subplot]:
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            self.update_pictures_in_windows(plot,point)
+
+    def update_pictures_in_windows(self,plot,point):
+        for window in self.windows:
+            if window is plot:
+                window.update_slice(point, data_update=False)
+            else:
+                window.update_slice(point, data_update=True)
+                self.draw_points(window, self.current_point.x)
+
     def create_button_skip(self):
         ax = plt.axes([0.59, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['skip']=ax
