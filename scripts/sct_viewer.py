@@ -1449,18 +1449,24 @@ class ClickViewerGroundTruth(ClickViewer):
 
         self.skip_until_first_slice()
         self.update_title_text('current_dot_to_draw')
-        self.calc_mean_slices()
+        self.show_image_mean()
+
+    def show_image_mean(self):
+        imMean=self.calc_mean_slices()
+        self.windows[0].figs[0].set_data(imMean)
+        self.windows[0].figs[0].figure.canvas.draw()
+
 
     def calc_mean_slices(self):
         data=self.images[0].data
         dataRacc=data[:,:,self.current_point.z-(self.number_of_slices_to_mean-1)/2:self.current_point.x+(self.number_of_slices_to_mean-1)/2+1]
-        imMoy=np.empty([data.shape[0],data.shape[1]])
+        imMean=np.empty([data.shape[0],data.shape[1]])
         for ii in range (0,data.shape[0]):
             for jj in range (0,data.shape[1]):
-                imMoy[ii,jj]=np.mean(dataRacc[ii,jj,:])
+                imMean[ii,jj]=np.mean(dataRacc[ii,jj,:])
+        return imMean
 
-        self.windows[0].figs[0].set_data(imMoy)
-        self.windows[0].figs[0].figure.canvas.draw()
+
 
     def check_first_label(self):
         if self.first_label in range (1,9):
@@ -1750,9 +1756,9 @@ class ClickViewerGroundTruth(ClickViewer):
                 window.update_slice(point, data_update=True)
                 self.draw_points(window, self.current_point.x)
 
-            self.number_of_slices_to_mean=25
+            self.number_of_slices_to_mean=15
 
-            self.calc_mean_slices()
+            self.show_image_mean()
 
 
 
