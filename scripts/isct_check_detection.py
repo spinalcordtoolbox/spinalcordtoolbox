@@ -3,7 +3,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Benjamin De Leener
-# Modified: 
+# Modified:
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -33,7 +33,7 @@ def main():
     # Initialization
     fname_input = ''
     fname_segmentation = ''
-    
+
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
@@ -57,7 +57,7 @@ def main():
     # display usage if a mandatory argument is not provided
     if fname_segmentation == '' or fname_input == '':
         usage()
-        
+
     # check existence of input files
     sct.check_file_exist(fname_input)
     sct.check_file_exist(fname_segmentation)
@@ -101,10 +101,10 @@ def usage():
         'OPTIONAL ARGUMENTS\n' \
         '  -h           help. Show this message.\n' \
         '\n'\
-        
+
     sys.exit(2)
-    
-    
+
+
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================

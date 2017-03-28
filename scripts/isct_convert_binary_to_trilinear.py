@@ -30,12 +30,12 @@ class Param:
         self.suffix = '_trilin' # output suffix
         self.remove_temp_files = 1
         self.verbose = 1
-        
+
 
 # main
 #=======================================================================================================================
 def main():
-    
+
     # Initialization
     fname_data = ''
     interp_factor = param.interp_factor
@@ -46,7 +46,7 @@ def main():
 
     # start timer
     start_time = time.time()
-    
+
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 

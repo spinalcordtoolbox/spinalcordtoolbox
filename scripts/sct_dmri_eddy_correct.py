@@ -59,7 +59,7 @@ def main():
     except getopt.GetoptError:
         usage()
     if not opts:
-            usage()
+        usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
@@ -126,17 +126,17 @@ def eddy_correct(param):
     min_norm      = param.min_norm
     cost_function = param.cost_function_flirt
     verbose       = param.verbose
-    
+
     sct.printv(('Input File:'+ param.fname_data),verbose)
     sct.printv(('Bvecs File:' + param.fname_bvecs),verbose)
-    
+
     #Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
-    
+
     if param.mat_eddy=='': param.mat_eddy= 'mat_eddy/'
     if not os.path.exists(param.mat_eddy): os.makedirs(param.mat_eddy)
     mat_eddy    = param.mat_eddy
-    
+
     #Schedule file for FLIRT
     schedule_file = path_sct + '/flirtsch/schedule_TxTy_2mmScale.sch'
     sct.printv(('\n.. Schedule file: '+ schedule_file),verbose)
@@ -226,7 +226,7 @@ def eddy_correct(param):
 
         sct.printv(('\nFinding affine transformation between volumes #'+str(i_plus)+' and #'+str(i_minus)+' (' + str(iN)+'/'+str(nb_oppositeGradients)+')'),verbose)
         sct.printv('------------------------------------------------------------------------------------\n',verbose)
-        
+
         #Slicewise correction
         if param.slicewise:
             sct.printv('\nSplit volumes across Z...',verbose)
@@ -304,7 +304,7 @@ def eddy_correct(param):
                 cmd = fsloutput + 'flirt -in ' + fname + ' -ref ' + fname + ' -out ' + fname_corr + ' -init ' + omat + ' -applyxfm -paddingsize 3 -interp ' + param.interp
                 status, output = sct.run(cmd,verbose)
 
-    
+
     # =========================================================================
     #	Merge back across Z
     # =========================================================================
@@ -336,7 +336,7 @@ def eddy_correct(param):
     # =========================================================================
     sct.printv('\nMerge back across T...',verbose)
     sct.printv('------------------------------------------------------------------------------------\n',verbose)
-    
+
     fname_data_corr = param.output_path + file_data + '_eddy'
     cmd = fsloutput + 'fslmerge -t ' + fname_data_corr
     path_tmp = os.getcwd()
@@ -345,7 +345,7 @@ def eddy_correct(param):
             fname_data_corr_3d = file_data + '_T' + str(iT).zfill(4) + '_corr_' + '__div2'
         elif iT in index_b0:
             fname_data_corr_3d = file_data + '_T' + str(iT).zfill(4)
-        
+
         cmd = cmd + ' ' + fname_data_corr_3d
     status, output = sct.run(cmd,verbose)
 
@@ -359,7 +359,7 @@ def eddy_correct(param):
         fname_data_final = fname_data_corr
 
     sct.printv(('... File created: '+fname_data_final),verbose)
-    
+
     sct.printv('\n===================================================',verbose)
     sct.printv('              Completed: eddy_correct',verbose)
     sct.printv('===================================================\n\n\n',verbose)
@@ -396,7 +396,7 @@ def usage():
         '\n'\
         'EXAMPLE:\n' \
         '  '+os.path.basename(__file__)+' -i KS_HCP34.nii -b KS_HCP_bvec.txt \n'
-    
+
     #Exit Program
     sys.exit(2)
 

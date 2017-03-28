@@ -159,7 +159,7 @@ def checkRAM(os, verbose=1):
             rowText = vmLines[row].strip()
             rowElements = sep.split(rowText)
             vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
-        
+
         if verbose:
             print '  Wired Memory:\t\t%d MB' % ( vmStats["Pages wired down"]/1024/1024 )
             print '  Active Memory:\t%d MB' % ( vmStats["Pages active"]/1024/1024 )
@@ -431,7 +431,7 @@ def tmp_copy_nifti(fname,path_tmp,fname_out='data.nii',verbose=0):
 
     run('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
     if ext_fname_out == '.nii':
-       run('fslchfiletype NIFTI ' + path_tmp + file_fname_out,0)
+        run('fslchfiletype NIFTI ' + path_tmp + file_fname_out,0)
     elif ext_fname_out == '.nii.gz':
         run('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out,0)
 
@@ -692,7 +692,7 @@ class Os(object):
         self.os = platform.system().lower()
         self.arch = platform.machine()
         self.applever = ''
-        
+
         if self.os == 'darwin':
             self.os = 'osx'
             self.vendor = 'apple'
@@ -814,7 +814,7 @@ class Version(object):
             return False
         # major, minor and patch all match so this is not less than
         return False
-    
+
     def __gt__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
@@ -839,15 +839,15 @@ class Version(object):
         if self.isbeta and not other.isbeta:
             return False
         # major, minor and patch all match so this is not less than
-        return False 
-    
+        return False
+
     def __eq__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
         if self.major == other.major and self.minor == other.minor and self.patch == other.patch and self.hotfix == other.hotfix and self.beta == other.beta:
             return True
         return False
-    
+
     def __ne__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
@@ -893,10 +893,10 @@ class Version(object):
         result = result+"_"+self.beta
         return result
 
-class MsgUser(object): 
+class MsgUser(object):
     __debug = False
     __quiet = False
-    
+
     @classmethod
     def debugOn(cls):
         cls.__debug = True
@@ -913,12 +913,12 @@ class MsgUser(object):
     @classmethod
     def isquiet(cls):
         return cls.__quiet
-    
+
     @classmethod
     def isdebug(cls):
         return cls.__debug
-    
-    @classmethod    
+
+    @classmethod
     def debug(cls, message, newline=True):
         if cls.__debug:
             from sys import stderr
@@ -926,17 +926,17 @@ class MsgUser(object):
             if newline:
                 mess += "\n"
             stderr.write(mess)
-    
+
     @classmethod
     def message(cls, msg):
         if cls.__quiet:
             return
         print msg
-    
+
     @classmethod
     def question(cls, msg):
         print msg,
-                  
+
     @classmethod
     def skipped(cls, msg):
         if cls.__quiet:
@@ -948,11 +948,11 @@ class MsgUser(object):
         if cls.__quiet:
             return
         print "".join( (bcolors.green, "[OK] ", bcolors.normal, msg ) )
-    
+
     @classmethod
     def failed(cls, msg):
         print "".join( (bcolors.red, "[FAILED] ", bcolors.normal, msg ) )
-    
+
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
