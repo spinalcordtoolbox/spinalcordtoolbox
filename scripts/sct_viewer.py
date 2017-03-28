@@ -1449,6 +1449,13 @@ class ClickViewerGroundTruth(ClickViewer):
 
         self.skip_until_first_slice()
         self.update_title_text('current_dot_to_draw')
+        self.try_to_mean()
+
+    def try_to_mean(self):
+        im=self.images[0]
+        data=im.data    
+        print(data.shape)
+
 
     def check_first_label(self):
         if self.first_label in range (1,9):
