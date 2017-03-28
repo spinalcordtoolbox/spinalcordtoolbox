@@ -1453,16 +1453,14 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def calc_mean_slices(self):
         data=self.images[0].data
-        dataRacc=data[self.current_point.x-(self.number_of_slices_to_mean-1)/2:self.current_point.x+(self.number_of_slices_to_mean-1)/2+1,:,:]
-        imMoy=np.empty(data.shape[1:3])
-        for ii in range (0,data.shape[1]):
-            for jj in range (0,data.shape[2]):
-                imMoy[ii,jj]=np.mean(dataRacc[:,ii,jj])
-        print(imMoy.shape)
+        dataRacc=data[:,:,self.current_point.z-(self.number_of_slices_to_mean-1)/2:self.current_point.x+(self.number_of_slices_to_mean-1)/2+1]
+        imMoy=np.empty([data.shape[0],data.shape[1]])
+        for ii in range (0,data.shape[0]):
+            for jj in range (0,data.shape[1]):
+                imMoy[ii,jj]=np.mean(dataRacc[ii,jj,:])
 
-        self.windows[1].figs[0].set_data(imMoy)
-        self.windows[1].figs[0].figure.canvas.draw()
-        return imMoy
+        self.windows[0].figs[0].set_data(imMoy)
+        self.windows[0].figs[0].figure.canvas.draw()
 
     def check_first_label(self):
         if self.first_label in range (1,9):
