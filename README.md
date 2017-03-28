@@ -8,8 +8,8 @@ The Spinal Cord Toolbox (SCT) is a comprehensive and open-source library of anal
 
 - [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
-- [Getting started with T1](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing_t1.sh)
-- [Getting started with T2](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing_t2.sh)
+- [Getting started with T1 as anatomical datq](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing_t1.sh)
+- [Getting started with T2 as anatomical data](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing_t2.sh)
 - [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
 
 ## References
