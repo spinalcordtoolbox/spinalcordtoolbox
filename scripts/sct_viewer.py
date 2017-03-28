@@ -1689,7 +1689,7 @@ class ClickViewerGroundTruth(ClickViewer):
             pass
 
     def create_button_reset_mean(self):
-        ax = plt.axes([0.08, 0.82, 0.32, 0.075])
+        ax = plt.axes([0.12, 0.82, 0.24, 0.075])
         self.dic_axis_buttons['reset_mean']=ax
         self.button_choose_auto_manual = Button(ax, 'Reset mean settings')
         self.fig.canvas.mpl_connect('button_press_event', self.press_reset_settings)
