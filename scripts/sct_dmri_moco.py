@@ -86,7 +86,6 @@ def main():
     # initialization
     start_time = time.time()
     path_out = '.'
-    param_user = ''
 
     # reducing the number of CPU used for moco (see issue #201)
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -304,7 +303,6 @@ def dmri_moco(param):
     # Average DW Images
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
-    fname_dwi_mean = file_dwi+'_mean'
     sct.run('sct_maths -i '+file_dwi_group+ext_data+' -o '+file_dwi_group+'_mean'+ext_data+' -mean t', param.verbose)
 
     # segment dwi images using otsu algorithm
@@ -419,7 +417,6 @@ def get_parser():
     parser = Parser(__file__)
 
     # initialize parameters
-    param = Param()
     param_default = Param()
 
     # Initialize the parser
