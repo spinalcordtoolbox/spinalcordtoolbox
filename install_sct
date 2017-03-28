@@ -145,7 +145,7 @@ usage()
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
   echo -e "\n\t-o \v Use the the file form the offline installer (no internet connection required)"
-
+  echo -e "\n\t-w \v Setup development environment for SCT"
 }
 
 
@@ -153,7 +153,7 @@ usage()
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
 
-while getopts ":dmhbo" opt; do
+while getopts ":dmhbow" opt; do
   case $opt in
     d)
       echo " data directory will not be (re)-installed"
@@ -170,6 +170,10 @@ while getopts ":dmhbo" opt; do
     o)
       echo " Using the offline folder for installation"
       OFFLINE_INSTALL=yes
+      ;;
+    w)
+      echo " Setup the development mode"
+      SCT_DEV_MODE=yes
       ;;
     h)
       usage
@@ -408,7 +412,7 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
-  pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+  pip install -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
   e_status=$?
   if [ ${e_status} != 0 ] ; then
     echo "pip install error with exit status $e_status. Check logs for more details
@@ -421,7 +425,17 @@ else
     # on certain linux distribution
     conda install -fy numpy
   fi
+  cmd="cd ${SCT_DIR}"; echo ">> "$cmd; $cmd
+fi
 
+## Install SCT in conda's module path
+if [ ${SCT_DEV_MODE} ]; then
+    echo "Installing SCT package in development mode"
+    pip install --ignore-installed -r ${SCT_SOURCE}/install/requirements/requirements-dev.txt
+    python setup.py develop
+else
+    echo "Installing SCT package"
+    python setup.py install -f
 fi
 
 ## Install binaries
@@ -433,17 +447,15 @@ else
     echo -e "\nInstalling binaries..."
     cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
     if [ $OS == "linux" ]; then
-        cmd="python ../scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+        cmd="python ${SCT_DIR}/scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     elif [ $OS == "linux_centos6" ]; then
-        cmd="python ../scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+        cmd="python ${SCT_DIR}/scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     elif [ $OS == "osx" ]; then
-        cmd="python ../scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+        cmd="python ${SCT_DIR}/scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     fi
 fi
 
-
 echo -e "All requirements installed!"
-
 
 # INSTALL DATA
 if [ ${NO_DATA_INSTALL} ]; then

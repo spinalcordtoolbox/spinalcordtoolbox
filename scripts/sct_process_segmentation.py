@@ -15,22 +15,25 @@
 #########################################################################################
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
-import sys
 import os
 import shutil
-from random import randint
+import sys
 import time
+from random import randint
+from shutil import copyfile, move
+
+import msct_shape
+import nibabel
 import numpy as np
+import pandas as pd
 import scipy
 import sct_utils as sct
+from msct_image import Image
 from msct_nurbs import NURBS
+from msct_parser import Parser
+from msct_types import Centerline
 from sct_image import set_orientation
 from sct_straighten_spinalcord import smooth_centerline
-from msct_image import Image
-from msct_parser import Parser
-import msct_shape
-import pandas as pd
-from msct_types import Centerline
 
 
 class Param:
