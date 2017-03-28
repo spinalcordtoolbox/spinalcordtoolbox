@@ -1545,6 +1545,7 @@ class ClickViewerGroundTruth(ClickViewer):
         if event.button == 1 and event.inaxes == plot.axes and plot.view == self.orientation[self.secondary_subplot]:
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
             self.update_pictures_in_windows(plot,point)
+            self.show_image_mean()
 
     def update_pictures_in_windows(self,plot,point):
         for window in self.windows:
