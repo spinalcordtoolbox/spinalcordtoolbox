@@ -1432,7 +1432,7 @@ class ClickViewerGroundTruth(ClickViewer):
         self.bool_may_skip_all_remaining=False
         self.number_of_dots_final=10
         self.current_dot_number=1
-        self.number_of_slices_to_mean=25
+        self.number_of_slices_to_mean=3
         self.dic_message_labels=self.define_dic_message_labels()
         self.dic_translate_labels=self.define_translate_dic()
         self.update_title_text(str(self.current_dot_number))
@@ -1456,17 +1456,14 @@ class ClickViewerGroundTruth(ClickViewer):
         self.windows[0].figs[0].set_data(imMean)
         self.windows[0].figs[0].figure.canvas.draw()
 
-
     def calc_mean_slices(self):
         data=self.images[0].data
-        dataRacc=data[:,:,self.current_point.z-(self.number_of_slices_to_mean-1)/2:self.current_point.x+(self.number_of_slices_to_mean-1)/2+1]
+        dataRacc=data[:,:,self.current_point.z-(self.number_of_slices_to_mean-1)/2:self.current_point.z+(self.number_of_slices_to_mean-1)/2+1]
         imMean=np.empty([data.shape[0],data.shape[1]])
         for ii in range (0,data.shape[0]):
             for jj in range (0,data.shape[1]):
                 imMean[ii,jj]=np.mean(dataRacc[ii,jj,:])
         return imMean
-
-
 
     def check_first_label(self):
         if self.first_label in range (1,9):
@@ -1719,9 +1716,10 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def press_mean_more(self,event):
         if event.inaxes == self.dic_axis_buttons['mean_more']:
-            if self.number_of_slices_to_mean < 7 :
+            if self.number_of_slices_to_mean < 9 :
                 self.number_of_slices_to_mean+= 2
                 self.update_title_text('new_number_of_slice_to_mean')
+                self.show_image_mean()
             else:
                 self.update_title_text('warning_cannot_mean_more_slices')
 
@@ -1737,6 +1735,7 @@ class ClickViewerGroundTruth(ClickViewer):
             if self.number_of_slices_to_mean >1 :
                 self.number_of_slices_to_mean+= -2
                 self.update_title_text('new_number_of_slice_to_mean')
+                self.show_image_mean()
             else:
                 self.update_title_text('warning_cannot_mean_fewer_slices')
 
@@ -1751,12 +1750,11 @@ class ClickViewerGroundTruth(ClickViewer):
             ''' Reset central image '''
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
             point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
-            print(self.orientation[self.primary_subplot] - 1)
             for window in self.windows:
                 window.update_slice(point, data_update=True)
                 self.draw_points(window, self.current_point.x)
 
-            self.number_of_slices_to_mean=15
+            self.number_of_slices_to_mean=3
 
             self.show_image_mean()
 
