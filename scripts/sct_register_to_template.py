@@ -16,18 +16,12 @@
 import sys
 import os
 import shutil
-import commands
 import time
-from glob import glob
 import sct_utils as sct
 from sct_utils import add_suffix
-from sct_image import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
 from msct_image import Image, find_zmin_zmax
-from shutil import move
-from sct_label_utils import ProcessLabels
-import numpy as np
 
 
 # get path of the toolbox

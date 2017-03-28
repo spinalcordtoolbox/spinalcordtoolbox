@@ -14,10 +14,7 @@
 
 import sys
 import os
-import getopt
-import commands
 import sct_utils as sct
-import time
 from msct_parser import Parser
 
 # DEFAULT PARAMETERS

@@ -208,7 +208,6 @@ class Option:
             else:
                 nii, niigz = True, False
             param_tmp = param[:-4]
-            pass
         elif param.lower().endswith('.nii.gz'):
             if self.parser.check_file_exist:
                 niigz = os.path.isfile(param)
@@ -216,10 +215,8 @@ class Option:
             else:
                 nii, niigz = False, True
             param_tmp = param[:-7]
-            pass
         elif param.lower() == "viewer":
             viewer = True
-            pass
         else:
             sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
 

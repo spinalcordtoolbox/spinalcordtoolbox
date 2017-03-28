@@ -43,7 +43,6 @@ Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function
 from msct_multiatlas_seg import Param, ParamData, ParamModel, Model
 from msct_gmseg_utils import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm, binarize
 from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end, run
-import sct_image
 from sct_image import set_orientation
 from msct_image import Image
 from msct_parser import *

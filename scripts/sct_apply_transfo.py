@@ -16,8 +16,6 @@
 
 import sys
 import os
-import getopt
-import commands
 import time
 from msct_parser import Parser
 import sct_utils as sct
