@@ -1432,6 +1432,7 @@ class ClickViewerGroundTruth(ClickViewer):
         self.bool_may_skip_all_remaining=False
         self.number_of_dots_final=10
         self.current_dot_number=1
+        self.number_of_slices_to_mean=3
         self.dic_message_labels=self.define_dic_message_labels()
         self.dic_translate_labels=self.define_translate_dic()
         self.update_title_text(str(self.current_dot_number))
@@ -1501,6 +1502,24 @@ class ClickViewerGroundTruth(ClickViewer):
             title_obj = self.windows[0].axes.set_title( 'All unprocessed labels have been skipped \n'
                                                         'You may now save and quit \n')
             plt._setp(title_obj,color='g')
+
+        elif(key=='warning_cannot_mean_fewer_slices'):
+            title_obj = self.windows[0].axes.set_title( 'You can\'t mean fewer slices. \n')
+            plt._setp(title_obj,color='r')
+
+        elif(key=='warning_cannot_mean_more_slices'):
+            title_obj = self.windows[0].axes.set_title( 'You can\'t mean more slices. \n')
+            plt._setp(title_obj,color='r')
+
+        elif(key=='new_number_of_slice_to_mean'):
+            if(self.number_of_slices_to_mean > 1 ):
+                title_obj = self.windows[0].axes.set_title( 'The main picture is now the \n'
+                                                            'mean of ' + str(self.number_of_slices_to_mean) + ' slices. \n')
+            else:
+                title_obj = self.windows[0].axes.set_title( 'The main picture is no more \n'
+                                                            'the mean of several slices. \n')
+            plt._setp(title_obj,color='k')
+
 
         else:
             self.update_title_text_general(key)
@@ -1682,7 +1701,11 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def press_mean_more(self,event):
         if event.inaxes == self.dic_axis_buttons['mean_more']:
-            pass
+            if self.number_of_slices_to_mean < 7 :
+                self.number_of_slices_to_mean+= 2
+                self.update_title_text('new_number_of_slice_to_mean')
+            else:
+                self.update_title_text('warning_cannot_mean_more_slices')
 
     def create_button_mean_less(self):
         ax = plt.axes([0.25, 0.90, 0.15, 0.075])
@@ -1693,7 +1716,11 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def press_mean_less(self,event):
         if event.inaxes == self.dic_axis_buttons['mean_less']:
-            pass
+            if self.number_of_slices_to_mean >1 :
+                self.number_of_slices_to_mean+= -2
+                self.update_title_text('new_number_of_slice_to_mean')
+            else:
+                self.update_title_text('warning_cannot_mean_fewer_slices')
 
     def create_button_reset_mean(self):
         ax = plt.axes([0.12, 0.82, 0.24, 0.075])
@@ -1710,6 +1737,9 @@ class ClickViewerGroundTruth(ClickViewer):
             for window in self.windows:
                 window.update_slice(point, data_update=True)
                 self.draw_points(window, self.current_point.x)
+
+            self.number_of_slices_to_mean=3
+
 
 
 def get_parser():
