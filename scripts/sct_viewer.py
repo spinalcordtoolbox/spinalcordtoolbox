@@ -1696,7 +1696,12 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def press_reset_settings(self, event):
         if event.inaxes == self.dic_axis_buttons['reset_mean']:
-            pass
+            ''' Reset central image '''
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
+            for window in self.windows:
+                window.update_slice(point, data_update=True)
+                self.draw_points(window, self.current_point.x)
 
 
 def get_parser():
