@@ -139,6 +139,7 @@ class SinglePlot:
         :param data_update: False if you don't want to update data
         :return:
         """
+        #?!?
         if isinstance(target, list):
             target_slice = target[self.view - 1]
             list_remaining_views = list([0, 1, 2])
@@ -1440,6 +1441,10 @@ class ClickViewerGroundTruth(ClickViewer):
         """ Create Buttons"""
         self.create_button_redo()
         self.create_button_skip()
+        self.create_button_mean_more()
+        self.create_button_mean_less()
+        self.create_button_reset_mean()
+
 
         self.skip_until_first_slice()
         self.update_title_text('current_dot_to_draw')
@@ -1647,6 +1652,39 @@ class ClickViewerGroundTruth(ClickViewer):
                 self.save_data()
                 self.closed = True
                 plt.close('all')
+
+    def create_button_mean_more(self):
+        ax = plt.axes([0.08, 0.90, 0.15, 0.075])
+        self.dic_axis_buttons['mean_more']=ax
+        self.button_choose_auto_manual = Button(ax, 'Mean more \n '
+                                                    'slices')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_mean_more)
+
+    def press_mean_more(self,event):
+        if event.inaxes == self.dic_axis_buttons['mean_more']:
+            pass
+
+    def create_button_mean_less(self):
+        ax = plt.axes([0.25, 0.90, 0.15, 0.075])
+        self.dic_axis_buttons['mean_less']=ax
+        self.button_choose_auto_manual = Button(ax, 'Mean fewer \n '
+                                                    'slices')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_mean_less)
+
+    def press_mean_less(self,event):
+        if event.inaxes == self.dic_axis_buttons['mean_less']:
+            pass
+
+    def create_button_reset_mean(self):
+        ax = plt.axes([0.08, 0.82, 0.32, 0.075])
+        self.dic_axis_buttons['reset_mean']=ax
+        self.button_choose_auto_manual = Button(ax, 'Reset mean settings')
+        self.fig.canvas.mpl_connect('button_press_event', self.press_reset_settings)
+
+    def press_reset_settings(self, event):
+        if event.inaxes == self.dic_axis_buttons['reset_mean']:
+            pass
+
 
 def get_parser():
     parser = Parser(__file__)
