@@ -29,8 +29,8 @@ from scipy.ndimage.filters import gaussian_filter
 
 
 class Param:
-   ## The constructor
-   def __init__(self):
+    ## The constructor
+    def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
         self.remove_temp_files = 1
@@ -431,7 +431,7 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
     hdr_0 = file_0.hdr
     orientation_file_0 = get_orientation_3d(file_0)
     if len(list_fname_labels) > 0:
-       for i in range(0, len(list_fname_labels)):
+        for i in range(0, len(list_fname_labels)):
             orientation_file_temp = get_orientation_3d(file_labels[i], filename=True)
             if orientation_file_0 != orientation_file_temp :
                 print 'ERROR: The files ', fname_in, ' and ', file_labels[i], ' are not in the same orientation. Use sct_image -setorient to change the orientation of a file.'
@@ -450,7 +450,7 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
 
     # Rename files after processing
     if output_file_name != None:
-       output_file_name = output_file_name
+        output_file_name = output_file_name
     else : output_file_name = 'generated_centerline.nii.gz'
 
     os.rename(fname_output, output_file_name)
@@ -466,8 +466,8 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
     os.chdir('../')
     # Remove temporary files
     if remove_temp_files:
-       print('\nRemove temporary files...')
-       sct.run('rm -rf '+path_tmp, error_exit='warning')
+        print('\nRemove temporary files...')
+        sct.run('rm -rf '+path_tmp, error_exit='warning')
 
 
 
@@ -1081,7 +1081,7 @@ def get_parser():
                       description="Approximate radius of spinal cord to help the algorithm",
                       mandatory=False,
                       default_value="4",
-                      example="4")    
+                      example="4")
     parser.add_option(name="-smooth_vesselness",
                       type_value="multiple_choice",
                       description="Smoothing of the vesselness image",
@@ -1111,7 +1111,7 @@ def get_parser():
                       description="Gap between slices for registration. Higher is faster but less robust.",
                       mandatory=False,
                       default_value=4,
-                      example="4")    
+                      example="4")
     parser.add_option(name='-k',
                       type_value='int',
                       description='Kernel size for gaussian mask. Higher is more robust but less accurate.',

@@ -56,7 +56,7 @@ class MultiLabelRegistration:
         # new warping fields:
         self.fname_warp_template2gm = ''
         self.fname_wwarp_gm2template = ''
-        
+
         # temporary fix - related to issue #871
         self.apply_warp_template = apply_warp_template
 
@@ -537,7 +537,7 @@ if __name__ == "__main__":
         ml_param.remove_tmp = int(arguments['-r'])
     if '-v' in arguments:
         ml_param.verbose = int(arguments['-v'])
-    
+
     apply_warp = 0
     if '-apply-warp' in arguments:
         apply_warp = int(arguments['-apply-warp'])

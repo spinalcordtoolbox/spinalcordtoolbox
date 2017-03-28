@@ -79,7 +79,7 @@ def main():
 
     # check existence of input files
     sct.check_file_exist(fname_in)
-    
+
     # read nifti input file
     img = nibabel.load(fname_in)
     # 3d array for each x y z voxel values for the input nifti image
@@ -152,7 +152,7 @@ OPTIONAL ARGUMENTS
     # exit program
     sys.exit(2)
 
-    
+
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================

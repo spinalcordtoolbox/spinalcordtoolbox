@@ -102,7 +102,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
             slices_to_remove[i] = True
         elif slices_to_remove[i]:
             slice_to_change = True
-            
+
     slice_to_change = False
     for i in range(mid_slice, 0, -1):
         if slice_to_change:

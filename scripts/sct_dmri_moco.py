@@ -248,12 +248,12 @@ def dmri_moco(param):
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi/param.group_size))
-    
+
     # Generate groups indexes
     group_indexes = []
     for iGroup in range(nb_groups):
         group_indexes.append(index_dwi[(iGroup*param.group_size):((iGroup+1)*param.group_size)])
-    
+
     # add the remaining images to the last DWI group
     nb_remaining = nb_dwi%param.group_size  # number of remaining images
     if nb_remaining > 0:

@@ -46,10 +46,10 @@ ALMOST_ZERO = 0.0000001
 # main
 #=======================================================================================================================
 def main():
-    
+
     # Initialization
     path_atlas = ''
-    
+
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
@@ -224,7 +224,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
         if (nx_gm, ny_gm, nz_gm) != (nx_atlas, ny_atlas, nz_atlas):
             print '\nERROR: Gray matter image and the atlas DO NOT HAVE SAME DIMENSIONS.'
             sys.exit(2)
-    
+
         tracts_overlap_GM = False
         total_overlaps = 0
         total_sum_tracts = 0

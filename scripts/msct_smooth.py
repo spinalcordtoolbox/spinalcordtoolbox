@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Module containing fitting functions 
+# Module containing fitting functions
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -51,20 +51,20 @@ def polynomial_fit(x,y,degree):
     coeffs = np.polyfit(x, y, degree)
     poly = np.poly1d(coeffs)
     y_fit = np.polyval(poly, x)
- 
+
     return y_fit, poly
 
 
 #=======================================================================================================================
 # Polynomial derivative
-#=======================================================================================================================   
+#=======================================================================================================================
 def polynomial_deriv(x,poly):
 
     from numpy import polyder, polyval
 
     poly_deriv = polyder(poly, m = 1)
     y_fit_deriv = polyval(poly_deriv, x)
-    
+
     return y_fit_deriv, poly_deriv
 
 
@@ -169,7 +169,7 @@ def non_parametric(x,y,f = 0.25,iter = 3):
     from math import ceil
     from scipy import linalg
     from numpy import sort, abs, zeros, ones, array, sum, median, clip
-    
+
     n = len(x)
     r = int(ceil(f*n))
     h = [sort(abs(x - x[i]))[r] for i in range(n)]
@@ -282,7 +282,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     """x.reverse()
     y.reverse()
     z.reverse()"""
-          
+
     sct.printv('\nFitting centerline using B-spline approximation...', verbose)
     if not twodim:
         data = [[x[n], y[n], z[n]] for n in range(len(x))]
@@ -463,7 +463,7 @@ def b_spline_python(x, y, z, s = 0, k = 3, nest = -1):
 
 
 #=======================================================================================================================
-# lowpass filter  
+# lowpass filter
 #=======================================================================================================================
 def lowpass(y):
     """Signal smoothing by low pass filtering.
@@ -494,7 +494,7 @@ def lowpass(y):
 
 #=======================================================================================================================
 # moving_average
-#=======================================================================================================================   
+#=======================================================================================================================
 def moving_average(y, n=3):
     from numpy import cumsum
     y_smooth = cumsum(y, dtype=float)
