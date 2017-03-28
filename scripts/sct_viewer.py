@@ -1453,9 +1453,18 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def try_to_mean(self):
         im=self.images[0]
-        data=im.data    
-        print(data.shape)
-
+        data=im.data
+        dataRacc=data[self.current_point.x-(self.number_of_slices_to_mean-1)/2:self.current_point.x+(self.number_of_slices_to_mean-1)/2+1,:,:]
+        imMoy=np.empty(data.shape[1:3])
+        for ii in range (0,data.shape[1]):
+            for jj in range (0,data.shape[2]):
+                imMoy[ii,jj]=np.mean(dataRacc[:,ii,jj])
+                if(ii==50 and jj==50):
+                    print(dataRacc[:, ii, jj])
+                    print(np.mean(dataRacc[:,ii,jj]))
+        px=50
+        print( (dataRacc[0,px,px] + dataRacc[1,px,px] + dataRacc[2,px,px]) /3  )
+        print(imMoy[50,50])
 
     def check_first_label(self):
         if self.first_label in range (1,9):
