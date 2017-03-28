@@ -1546,11 +1546,9 @@ class ClickViewerGroundTruth(ClickViewer):
                 self.add_dot_to_current_slice(plot, target_point)
                 self.is_there_next_slice()
 
-
     def add_dot_to_current_slice(self,plot,point):
         self.draw_points(self.windows[0], self.current_point.z)
         self.windows[0].update_slice(point, data_update=True)
-        self.update_title_text('way_custom_next_point')
         plot.draw()
 
     def on_press_secondary_window(self,event,plot):
@@ -1583,12 +1581,12 @@ class ClickViewerGroundTruth(ClickViewer):
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
             x_data, y_data = [], []
-            for pt in self.list_points: #?!
+            for pt in self.list_points:
                 if pt.z == current_slice:
-                    x_data.append(pt.y + self.offset[1])
-                    y_data.append(pt.x + self.offset[0])
-            self.plot_points.set_xdata(x_data)
-            self.plot_points.set_ydata(y_data)
+                    y_data.append(pt.y + self.offset[1])
+                    x_data.append(pt.x + self.offset[0])
+            self.plot_points.set_xdata(y_data)
+            self.plot_points.set_ydata(x_data)
             self.fig.canvas.draw()
 
     def define_translate_dic(self):
@@ -1610,21 +1608,21 @@ class ClickViewerGroundTruth(ClickViewer):
     def set_target_point(self,event):
         dic_translate_labels=self.define_translate_dic()
         if self.primary_subplot == 'ax':
-            return( Coordinate([int(self.list_slices[0]),
+            return( Coordinate([int(self.current_point.x),
                                 int(event.ydata) - self.offset[1],
                                 int(event.xdata) - self.offset[2],
                                 dic_translate_labels[str(self.current_dot_number)]
             ] ) )
         elif self.primary_subplot == 'cor':
             return ( Coordinate([int(event.ydata) - self.offset[0],
-                                 int(self.list_slices[0]),
+                                 int(self.current_point.y),
                                  int(event.xdata) - self.offset[2],
                                  dic_translate_labels[str(self.current_dot_number)]
                                  ]))
         elif self.primary_subplot == 'sag':
             return ( Coordinate([int(event.ydata) - self.offset[0],
                                  int(event.xdata) - self.offset[1],
-                                 int(self.list_slices[0]),
+                                 int(self.current_point.z),
                                  dic_translate_labels[str(self.current_dot_number)]
                                  ]))
 
@@ -1651,6 +1649,7 @@ class ClickViewerGroundTruth(ClickViewer):
                 self.bool_may_skip_all_remaining=False
                 self.current_dot_number += -1
                 self.list_points=self.list_points[0:len(self.list_points)-1]
+                self.draw_points(self.windows[0],self.current_point.z)
                 self.update_title_text('current_dot_to_draw')
             else:
                 self.update_title_text('warning_redo_beyond_first_dot')
