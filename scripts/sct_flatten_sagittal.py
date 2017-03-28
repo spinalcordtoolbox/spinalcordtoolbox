@@ -45,26 +45,26 @@ class Param:
 # main
 #=======================================================================================================================
 def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
-    
+
     # extract path of the script
     path_script = os.path.dirname(__file__)+'/'
-    
+
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_anat = path_sct_data+'/t2/t2.nii.gz'
         fname_centerline = path_sct_data+'/t2/t2_seg.nii.gz'
-    
+
     # extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
-    
+
     # Display arguments
     print '\nCheck input arguments...'
     print '  Input volume ...................... '+fname_anat
     print '  Centerline ........................ '+fname_centerline
     print ''
-    
+
     # Get input image orientation
     im_anat = Image(fname_anat)
     input_image_orientation = get_orientation_3d(im_anat)
@@ -82,14 +82,14 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     nx, ny, nz, nt, px, py, pz, pt = im_centerline_orient.dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
-    
+
     print '\nOpen centerline volume...'
     data = im_centerline_orient.data
 
     X, Y, Z = (data>0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
-    
-    
+
+
     # loop across z and associate x,y coordinate with the point having maximum intensity
     x_centerline = [0 for iz in range(min_z_index, max_z_index+1, 1)]
     y_centerline = [0 for iz in range(min_z_index, max_z_index+1, 1)]
@@ -114,10 +114,10 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # TODO: find a way to do the previous loop with this, which is more neat:
     # [numpy.unravel_index(data[:,:,iz].argmax(), data[:,:,iz].shape) for iz in range(0,nz,1)]
-    
+
     # clear variable
     del data
-    
+
     # Fit the centerline points with the kind of curve given as argument of the script and return the new smoothed coordinates
     if centerline_fitting == 'nurbs':
         try:
@@ -219,26 +219,26 @@ def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]
     y_centerline_fit=P[1]
-    
+
     return x_centerline_fit, y_centerline_fit
 
 
 def polynome_centerline(x_centerline,y_centerline,z_centerline):
     """Fit polynomial function through centerline"""
-    
+
     # Fit centerline in the Z-X plane using polynomial function
     print '\nFit centerline in the Z-X plane using polynomial function...'
     coeffsx = numpy.polyfit(z_centerline, x_centerline, deg=5)
     polyx = numpy.poly1d(coeffsx)
     x_centerline_fit = numpy.polyval(polyx, z_centerline)
-    
+
     # Fit centerline in the Z-Y plane using polynomial function
     print '\nFit centerline in the Z-Y plane using polynomial function...'
     coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=5)
     polyy = numpy.poly1d(coeffsy)
     y_centerline_fit = numpy.polyval(polyy, z_centerline)
-    
-    
+
+
     return x_centerline_fit, y_centerline_fit
 
 
