@@ -182,7 +182,7 @@ def main():
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', param.verbose)
 
-    #To view results
+    # To view results
     sct.printv('\nTo view results, type:', param.verbose)
     sct.printv('fslview -m ortho,ortho '+param.path_out+file_data+param.suffix+' '+file_data+' &\n', param.verbose, 'info')
 
@@ -263,7 +263,7 @@ def dmri_moco(param):
     # DWI groups
     file_dwi_mean = []
     for iGroup in range(nb_groups):
-        sct.printv('\nDWI group: ' +str((iGroup+1))+'/'+str(nb_groups), param.verbose)
+        sct.printv('\nDWI group: ' + str((iGroup+1))+'/'+str(nb_groups), param.verbose)
 
         # get index
         index_dwi_i = group_indexes[iGroup]
@@ -325,7 +325,6 @@ def dmri_moco(param):
     target_dwi_name = 'target_dwi'
     nii.setFileName(target_dwi_name+ext_data)
     nii.save()
-
 
     # START MOCO
     #===================================================================================================================
@@ -402,7 +401,6 @@ def dmri_moco(param):
     im_dmri_moco = Image(file_data+param.suffix+ext_data)
     im_dmri_moco = copy_header(im_dmri, im_dmri_moco)
     im_dmri_moco.save()
-
 
     # generate b0_moco_mean and dwi_moco_mean
     cmd = 'sct_dmri_separate_b0_and_dwi -i '+file_data+param.suffix+ext_data+' -bvec bvecs.txt -a 1'
@@ -531,7 +529,6 @@ def get_parser():
                       example=['0', '1', '2'],
                       default_value='1')
     return parser
-
 
 
 #=======================================================================================================================

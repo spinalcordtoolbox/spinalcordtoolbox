@@ -22,8 +22,10 @@ import sct_utils as sct
 from msct_parser import Parser
 
 # DEFAULT PARAMETERS
+
+
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.fname_warp_final = 'warp_final.nii.gz'
@@ -57,7 +59,6 @@ def main():
         if '-o' in arguments:
             fname_warp_final = arguments['-o']
         verbose = int(arguments['-v'])
-
 
     # Parse list of warping fields
     sct.printv('\nParse list of transformations...', verbose)

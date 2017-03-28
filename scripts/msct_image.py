@@ -53,7 +53,7 @@ def striu2mat(striu):
         if N != math.floor(N):
             raise ValueError('%d is a strange number of shear elements' %
                              n)
-        inds = np.triu(np.ones((N,N)), 1).astype(bool)
+        inds = np.triu(np.ones((N, N)), 1).astype(bool)
     M = np.eye(N)
     M[inds] = striu
     return M
@@ -83,16 +83,16 @@ def compose(T, R, Z, S=None):
     """
     n = len(T)
     R = np.asarray(R)
-    if R.shape != (n,n):
-        raise ValueError('Expecting shape (%d,%d) for rotations' % (n,n))
+    if R.shape != (n, n):
+        raise ValueError('Expecting shape (%d,%d) for rotations' % (n, n))
     A = np.eye(n+1)
     if S is not None:
         Smat = striu2mat(S)
         ZS = np.dot(np.diag(Z), Smat)
     else:
         ZS = np.diag(Z)
-    A[:n,:n] = np.dot(R, ZS)
-    A[:n,n] = T[:]
+    A[:n, :n] = np.dot(R, ZS)
+    A[:n, n] = T[:]
     return A
 
 
@@ -163,8 +163,8 @@ def decompose_affine_transform(A44):
     This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
     """
     A44 = np.asarray(A44)
-    T = A44[:-1,-1]
-    RZS = A44[:-1,:-1]
+    T = A44[:-1, -1]
+    RZS = A44[:-1, :-1]
     # compute scales and shears
     M0, M1, M2 = np.array(RZS).T
     # extract x scale and normalize
@@ -190,7 +190,7 @@ def decompose_affine_transform(A44):
     Rmat = np.array([M0, M1, M2]).T
     if np.linalg.det(Rmat) < 0:
         sx *= -1
-        Rmat[:,0] *= -1
+        Rmat[:, 0] *= -1
     return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])
 
 
@@ -198,6 +198,7 @@ class Image(object):
     """
 
     """
+
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
         from sct_utils import extract_fname
         from nibabel import Nifti1Header
@@ -286,7 +287,6 @@ class Image(object):
         self.dim = get_dimension(self.im_file)
         # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
         # self.dim = [nx, ny, nz]
-
 
     def setFileName(self, filename):
         """
@@ -634,7 +634,6 @@ class Image(object):
 
         return perm, inversion
 
-
     def change_orientation(self, orientation='RPI', inversion_orient=False):
         """
         This function changes the orientation of the data by swapping the image axis.
@@ -750,7 +749,7 @@ class Image(object):
 
             coordi_phys = np.concatenate((result_temp, coordi_phys), axis=0)
             coordi_phys_list = coordi_phys.tolist()
-            #print coordi_phys.shape
+            # print coordi_phys.shape
 
             return coordi_phys_list
         """
@@ -1168,6 +1167,7 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 
     return dice
 
+
 def find_zmin_zmax(fname):
     import sct_utils as sct
     # crop image
@@ -1275,7 +1275,6 @@ if __name__ == "__main__":
                       description="Image output name.",
                       mandatory=False,
                       example='im_out.nii.gz')
-
 
     arguments = parser.parse(sys.argv[1:])
 

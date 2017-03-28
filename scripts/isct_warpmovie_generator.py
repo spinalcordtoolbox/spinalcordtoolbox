@@ -18,6 +18,7 @@ from scipy.misc import toimage
 # from sct_utils import tmp_create, tmp_copy_nifti
 # from os import chdir
 
+
 class WarpingField(Image):
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
         super(WarpingField, self).__init__(param, hdr, orientation, absolutepath, verbose)
@@ -97,7 +98,7 @@ if __name__ == "__main__":
             filename_output = "niftis/tmp.warped_image_" + str(iteration - 1) + image_output_iter.ext
             run("sct_apply_transfo -i " + input_file + " -d " + reference_image + " -w " + filename_warp +
                 " -o " + filename_output)
-            result=Image(filename_output)
+            result = Image(filename_output)
             result.change_orientation()
 
             toimage(result.data[int(result.data.shape[0]/2)].squeeze(), cmin=0.0).save('images/'+extract_fname(filename_output)[1]+'.jpg')
@@ -107,4 +108,3 @@ if __name__ == "__main__":
         except StopIteration:
             printv('\nFinished iterations.')
             break
-

@@ -29,8 +29,10 @@ path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
 
 # DEFAULT PARAMETERS
+
+
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.remove_temp_files = 1  # remove temporary files
@@ -562,6 +564,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     label_new_list = ':'.join(label_new_list)
     # create new labels
     sct.run('sct_label_utils -i '+fname_dest+' -create '+label_new_list+' -v 1 -o '+fname_output)
+
 
 def check_labels(fname_landmarks):
     """

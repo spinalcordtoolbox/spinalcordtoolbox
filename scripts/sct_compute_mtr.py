@@ -18,8 +18,10 @@ import sct_utils as sct
 from msct_parser import Parser
 
 # DEFAULT PARAMETERS
+
+
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         # self.register = 1

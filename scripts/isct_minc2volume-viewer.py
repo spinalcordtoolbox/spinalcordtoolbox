@@ -32,25 +32,29 @@ import sct_utils as sct
 
 required_minc_cmdline_tools = ['mincinfo', 'minctoraw']
 
+
 def console_log(message):
     print(message)
+
 
 def cmd(command):
     return subprocess.check_output(command.split(), universal_newlines=True).strip()
 
+
 def get_space(mincfile, space):
     header = {
-        "start" : float(cmd("mincinfo -attval {}:start {}".format(space,mincfile))),
-        "space_length" : float(cmd("mincinfo -dimlength {} {}".format(space,mincfile))),
-        "step" : float(cmd("mincinfo -attval {}:step {}".format(space,mincfile))),
+        "start" : float(cmd("mincinfo -attval {}:start {}".format(space, mincfile))),
+        "space_length" : float(cmd("mincinfo -dimlength {} {}".format(space, mincfile))),
+        "step" : float(cmd("mincinfo -attval {}:step {}".format(space, mincfile))),
     }
 
-    cosines = cmd("mincinfo -attval {}:direction_cosines {}".format(space,mincfile))
+    cosines = cmd("mincinfo -attval {}:direction_cosines {}".format(space, mincfile))
     cosines = cosines.strip().split()
     if len(cosines) > 1:
         header["direction_cosines"] = list(map(float, cosines))
 
     return header
+
 
 def make_header(mincfile, headerfile):
     header = {}
@@ -69,24 +73,26 @@ def make_header(mincfile, headerfile):
         time_start  = cmd("mincinfo -attval time:start {}".format(mincfile))
         time_length = cmd("mincinfo -dimlength time {}".format(mincfile))
 
-        header["time"] = { "start" : float(time_start),
-                           "space_length" : float(time_length) }
+        header["time"] = {"start" : float(time_start),
+                           "space_length" : float(time_length)}
 
     # find space
-    header["xspace"] = get_space(mincfile,"xspace")
-    header["yspace"] = get_space(mincfile,"yspace")
-    header["zspace"] = get_space(mincfile,"zspace")
+    header["xspace"] = get_space(mincfile, "xspace")
+    header["yspace"] = get_space(mincfile, "yspace")
+    header["zspace"] = get_space(mincfile, "zspace")
 
     if len(order) > 3:
-        header["time"] = get_space(mincfile,"time")
+        header["time"] = get_space(mincfile, "time")
 
     # write out the header
-    open(headerfile,"w").write(json.dumps(header))
+    open(headerfile, "w").write(json.dumps(header))
+
 
 def make_raw(mincfile, rawfile):
     raw = open(rawfile, "wb")
     raw.write(
-        subprocess.check_output(["minctoraw","-byte","-unsigned","-normalize",mincfile]))
+        subprocess.check_output(["minctoraw", "-byte", "-unsigned", "-normalize", mincfile]))
+
 
 def main(filename, fname_out=''):
     if not os.path.isfile(filename):
@@ -115,4 +121,4 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--fname_out", action="store", default="", help="absolute path of output image (without image format)")
     args = parser.parse_args()
 
-    main(args.filename,args.fname_out)
+    main(args.filename, args.fname_out)

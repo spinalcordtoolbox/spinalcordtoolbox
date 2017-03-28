@@ -18,7 +18,7 @@ import sys
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.verbose = 1
 
@@ -93,7 +93,6 @@ def main(args = None):
     convert(fname_in, fname_out, squeeze_data=squeeze_data)
 
 
-
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
@@ -101,7 +100,6 @@ if __name__ == "__main__":
     param = Param()
     # call main function
     main()
-
 
 
 # import os
@@ -276,4 +274,3 @@ if __name__ == "__main__":
 #                 """
 #     # exit program
 #     sys.exit(2)
-

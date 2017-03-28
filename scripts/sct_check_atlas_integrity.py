@@ -29,7 +29,7 @@ import numpy as np
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 1
@@ -70,7 +70,6 @@ def main():
             param.threshold_GM = arguments['-thrgm']
         if '-v' in arguments:
             param.verbose = int(arguments['-v'])
-
 
     # Extract atlas info
     atlas_id, atlas_name, atlas_file = read_label_file(path_atlas)
@@ -121,7 +120,7 @@ def read_label_file(path_info_label):
     line = lines[-1].split(',')
     label_id.append(int(line[0]))
     label_name.append(line[1])
-    line[2]=line[2]+' '
+    line[2] = line[2]+' '
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
@@ -132,7 +131,7 @@ def read_label_file(path_info_label):
             print('  OK: '+path_info_label+fname)
         else:
             print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '
-                  +param.file_info_label+'.\n')
+                  + param.file_info_label+'.\n')
 
     # Close file.txt
     f.close()
@@ -152,7 +151,6 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
     nx_atlas, ny_atlas, nz_atlas = atlas[0].shape
     sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas)+' x '+str(nb_tracts), param.verbose)
 
-
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
         for i in range(0, nb_tracts):
@@ -166,15 +164,15 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
 
     # Does all the tracts are present?
     tracts_are_present = True
-    sct.printv('\nDoes all the tracts are present in the atlas?',param.verbose)
+    sct.printv('\nDoes all the tracts are present in the atlas?', param.verbose)
     sum_tract = []
     for i_atlas in range(0, nb_tracts):
         sum_tract.append(np.sum(atlas[i_atlas]))
         if sum_tract[i_atlas] < ALMOST_ZERO:
-            sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' is non-existent',param.verbose)
+            sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' is non-existent', param.verbose)
             tracts_are_present = False
-    if tracts_are_present: sct.printv('All the tracts are present.',param.verbose)
-
+    if tracts_are_present:
+        sct.printv('All the tracts are present.', param.verbose)
 
     # Does any tract gets out the spinal cord?
     if param.fname_seg != '':
@@ -192,25 +190,24 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
         tracts_are_inside_SC = True
         total_outside = 0
         total_sum_tracts = 0
-        sct.printv('\nDoes any tract gets out the spinal cord?',param.verbose)
-        ind_seg_outside_cord = segmentation<=ALMOST_ZERO
+        sct.printv('\nDoes any tract gets out the spinal cord?', param.verbose)
+        ind_seg_outside_cord = segmentation <= ALMOST_ZERO
         for i_atlas in range(0, nb_tracts):
-            ind_atlas_positive = atlas[i_atlas]>=ALMOST_ZERO
+            ind_atlas_positive = atlas[i_atlas] >= ALMOST_ZERO
             sum_tract_outside_SC = np.sum(atlas[i_atlas][ind_atlas_positive & ind_seg_outside_cord])
             sum_tract = np.sum(atlas[i_atlas][ind_atlas_positive])
             if sum_tract_outside_SC > ALMOST_ZERO:
                 percentage_out = float(sum_tract_outside_SC/sum_tract)
-                sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' gets out the spinal cord of '+str(round(percentage_out*100,2))+'%',param.verbose)
+                sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' gets out the spinal cord of '+str(round(percentage_out*100, 2))+'%', param.verbose)
                 tracts_are_inside_SC = False
                 total_outside += sum_tract_outside_SC
             total_sum_tracts += sum_tract
         if tracts_are_inside_SC:
-            sct.printv('All the tracts are inside the spinal cord.',param.verbose)
+            sct.printv('All the tracts are inside the spinal cord.', param.verbose)
             sct.printv('\nTotal percentage of present tracts outside the spinal cord: 0%', param.verbose)
         else:
             total_percentage_out = float(total_outside/total_sum_tracts)
             sct.printv('\nTotal percentage of present tracts outside the spinal cord: ' + str(round(total_percentage_out*100, 2)) + '%', param.verbose)
-
 
     # Does any tract overlaps the spinal cord gray matter?
     if param.fname_GM != '':
@@ -228,20 +225,20 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
         tracts_overlap_GM = False
         total_overlaps = 0
         total_sum_tracts = 0
-        sct.printv('\nDoes any tract overlaps the spinal cord gray matter?',param.verbose)
-        ind_GM = graymatter>=param.threshold_GM
+        sct.printv('\nDoes any tract overlaps the spinal cord gray matter?', param.verbose)
+        ind_GM = graymatter >= param.threshold_GM
         for i_atlas in range(0, nb_tracts):
-            ind_atlas_positive = atlas[i_atlas]>=ALMOST_ZERO
+            ind_atlas_positive = atlas[i_atlas] >= ALMOST_ZERO
             sum_tract_overlap_GM = np.sum(atlas[i_atlas][ind_atlas_positive & ind_GM])
             sum_tract = np.sum(atlas[i_atlas])
             if sum_tract_overlap_GM > ALMOST_ZERO:
                 percentage_overlap = float(sum_tract_overlap_GM/sum_tract)
-                sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' overlaps the spinal cord gray matter of '+str(round(percentage_overlap*100,2))+'%',param.verbose)
+                sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' overlaps the spinal cord gray matter of '+str(round(percentage_overlap*100, 2))+'%', param.verbose)
                 tracts_overlap_GM = True
                 total_overlaps += sum_tract_overlap_GM
             total_sum_tracts += sum_tract
         if not tracts_overlap_GM:
-            sct.printv('No tract overlaps the spinal cord gray matter.',param.verbose)
+            sct.printv('No tract overlaps the spinal cord gray matter.', param.verbose)
             sct.printv('\nTotal percentage of present tracts overlapping gray matter: 0%', param.verbose)
         else:
             total_percentage_overlap = float(total_overlaps/total_sum_tracts)

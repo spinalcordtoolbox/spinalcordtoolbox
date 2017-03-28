@@ -29,6 +29,7 @@ from msct_parser import *
 #                                                 PARAM CLASSES
 ########################################################################################################################
 
+
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
@@ -119,8 +120,8 @@ def get_parser():
                       example=['0', '1', '2'],
                       default_value=str(Param().verbose))
 
-
     return parser
+
 
 class ParamModel:
     def __init__(self):
@@ -140,7 +141,7 @@ class ParamModel:
 
     def __repr__(self):
         info = 'Model Param:\n'
-        info += '\t- path to data: '+ self.path_data+'\n'
+        info += '\t- path to data: ' + self.path_data+'\n'
         info += '\t- created folder: '+self.new_model_dir+'\n'
         info += '\t- used method: '+self.method+'\n'
         if self.method == 'pca':
@@ -150,6 +151,7 @@ class ParamModel:
             info += '\t\t-> # neighbors for isomap: ' + str(self.n_neighbors_iso) + '\n'
 
         return info
+
 
 class ParamData:
     def __init__(self):
@@ -169,6 +171,7 @@ class ParamData:
 
         return info
 
+
 class Param:
     def __init__(self):
         self.verbose = 1
@@ -177,6 +180,8 @@ class Param:
 ########################################################################################################################
 #                                           CLASS MODEL
 ########################################################################################################################
+
+
 class Model:
     def __init__(self, param_model=None, param_data=None, param=None):
         self.param_model = param_model if param_model is not None else ParamModel()
@@ -189,7 +194,6 @@ class Model:
 
         self.fitted_model = None # PCA or Isomap model
         self.fitted_data = None
-
 
     # ------------------------------------------------------------------------------------------------------------------
     #                                       FUNCTIONS USED TO COMPUTE THE MODEL
@@ -262,7 +266,7 @@ class Model:
 
             info_data = 'Loaded files: \n'
             info_data += 'Image: ....... '+str(fname_data)+'\n'
-            info_data += 'SC seg: ...... ' + str(fname_sc_seg)+ '\n'
+            info_data += 'SC seg: ...... ' + str(fname_sc_seg) + '\n'
             info_data += 'GM seg: ...... ' + str(list_fname_gmseg) + '\n'
             info_data += 'Levels: ...... ' + str(fname_level) + '\n'
 
@@ -321,7 +325,6 @@ class Model:
             if self.param.rm_tmp:
                 shutil.rmtree(warp_dir)
 
-
     # ------------------------------------------------------------------------------------------------------------------
     def normalize_model_data(self):
         # get the id of the slices by vertebral level
@@ -350,7 +353,7 @@ class Model:
                 for id_slice in list_id_slices:
                     slice = self.slices[id_slice]
                     for gm in slice.gm_seg_M:
-                        med_gm = np.median(slice.im_M[gm==1])
+                        med_gm = np.median(slice.im_M[gm == 1])
                         list_med_gm.append(med_gm)
                     for wm in slice.wm_seg_M:
                         med_wm = np.median(slice.im_M[wm == 1])
@@ -384,21 +387,20 @@ class Model:
             norm_im_M = normalize_slice(dic_slice.im_M, av_gm_slice, av_wm_slice, self.intensities['GM'][level_int], self.intensities['WM'][level_int], val_min=self.intensities['MIN'][level_int], val_max=self.intensities['MAX'][level_int])
             dic_slice.set(im_m=norm_im_M)
 
-
     # ------------------------------------------------------------------------------------------------------------------
     def compute_reduced_space(self):
         model = None
         model_data =  np.asarray([dic_slice.im_M.flatten() for dic_slice in self.slices])
 
         if self.param_model.method == 'pca':
-            ## PCA
+            # PCA
             model = decomposition.PCA(n_components=self.param_model.k_pca)
             self.fitted_data = model.fit_transform(model_data)
 
         if self.param_model.method == 'isomap':
-            ## ISOMAP
+            # ISOMAP
             n_neighbors = self.param_model.n_neighbors_iso
-            n_components = int(model_data.shape[0] * self.param_model.n_compo_iso )
+            n_components = int(model_data.shape[0] * self.param_model.n_compo_iso)
 
             model = manifold.Isomap(n_neighbors=n_neighbors, n_components=n_components)
             self.fitted_data = model.fit_transform(model_data)
@@ -409,20 +411,20 @@ class Model:
     # ------------------------------------------------------------------------------------------------------------------
     def save_model(self):
         os.chdir(self.param_model.new_model_dir)
-        ## to save:
-        ##   - self.slices = dictionary
+        # to save:
+        # - self.slices = dictionary
         slices = self.slices
         pickle.dump(slices, gzip.open('slices.pklz', 'wb'), protocol=2)
 
-        ##   - self.intensities = for normalization
+        # - self.intensities = for normalization
         intensities = self.intensities
         pickle.dump(intensities, gzip.open('intensities.pklz', 'wb'), protocol=2)
 
-        ##   - reduced space (pca or isomap)
+        # - reduced space (pca or isomap)
         model = self.fitted_model
         pickle.dump(model, gzip.open('fitted_model.pklz', 'wb'), protocol=2)
 
-        ##   - fitted data (=eigen vectors or embedding vectors )
+        # - fitted data (=eigen vectors or embedding vectors )
         data = self.fitted_data
         pickle.dump(data, gzip.open('fitted_data.pklz', 'wb'), protocol=2)
 
@@ -454,18 +456,18 @@ class Model:
                    'cd '+path_sct+'\n'
                    './install_sct -m -b\n', self.param.verbose, 'error')
 
-        ##   - self.slices = dictionary
+        # - self.slices = dictionary
         self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'))
         printv('  '+str(len(self.slices))+' slices in the model dataset', self.param.verbose, 'normal')
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
-        ##   - self.intensities = for normalization
+        # - self.intensities = for normalization
         self.intensities = pickle.load(gzip.open(model_files['intensity'], 'rb'))
 
-        ##   - reduced space (pca or isomap)
+        # - reduced space (pca or isomap)
         self.fitted_model = pickle.load(gzip.open(model_files['model'], 'rb'))
 
-        ##   - fitted data (=eigen vectors or embedding vectors )
+        # - fitted data (=eigen vectors or embedding vectors )
         self.fitted_data = pickle.load(gzip.open(model_files['data'], 'rb'))
 
         printv('  model: '+self.param_model.method)
@@ -495,7 +497,6 @@ class Model:
         # for level=0 (no leve or level not in model) output average GM and WM seg across all model data
         gm_seg_model[0] = np.mean(gm_seg_model.values(), axis=0)
         wm_seg_model[0] = np.mean(wm_seg_model.values(), axis=0)
-
 
         return gm_seg_model, wm_seg_model
 
@@ -539,10 +540,9 @@ def main(args=None):
     if '-ind-rm' in arguments:
         param_model.ind_rm = arguments['-ind-rm']
     if '-r' in arguments:
-        param.rm_tmp= bool(int(arguments['-r']))
+        param.rm_tmp = bool(int(arguments['-r']))
     if '-v' in arguments:
-        param.verbose= arguments['-v']
-
+        param.verbose = arguments['-v']
 
     model = Model(param_model=param_model, param_data=param_data, param=param)
 
