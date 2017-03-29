@@ -783,7 +783,7 @@ class ClickViewer(Viewer):
 
     def update_ui_after_redo(self):
         self.update_title_text('redo_done')
-        self.draw_points(self.windows[0], self.current_point.x)
+        self.draw_points(self.windows[0], self.current_point.z)
 
     def start(self):
         super(ClickViewer, self).start()
