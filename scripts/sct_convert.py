@@ -29,10 +29,6 @@ def get_parser():
     # parser initialisation
     parser = Parser(__file__)
 
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Convert image file to another type.')

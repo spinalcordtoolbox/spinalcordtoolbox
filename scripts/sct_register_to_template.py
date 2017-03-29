@@ -178,7 +178,6 @@ def main():
     # initialize other parameters
     # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
-    template = os.path.basename(os.path.normpath(path_template))
     # smoothing_sigma = param.smoothing_sigma
 
     # retrieve template file names
