@@ -1115,7 +1115,13 @@ class ClickViewerLabelVertebrae(ClickViewer):
             if self.check_point_is_valid(target_point):
                 self.list_points.append(target_point)
                 self.current_slice = 1
+                self.add_dot_to_current_slice(plot, target_point)
                 self.update_title_text('ready_to_save_and_quit')
+                
+    def add_dot_to_current_slice(self,plot,point):
+        self.draw_points(self.windows[0], self.current_point.z)
+        self.windows[0].update_slice(point, data_update=True)
+        plot.draw()
 
     def on_press_secondary_window(self,event,plot):
         is_in_axes = False
@@ -1147,12 +1153,12 @@ class ClickViewerLabelVertebrae(ClickViewer):
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
             x_data, y_data = [], []
-            for pt in self.list_points: #?!
-                if pt.x == current_slice:
-                    x_data.append(pt.z + self.offset[2])
+            for pt in self.list_points:
+                if pt.z == current_slice:
                     y_data.append(pt.y + self.offset[1])
-            self.plot_points.set_xdata(x_data)
-            self.plot_points.set_ydata(y_data)
+                    x_data.append(pt.x + self.offset[0])
+            self.plot_points.set_xdata(y_data)
+            self.plot_points.set_ydata(x_data)
             self.fig.canvas.draw()
 
     def set_target_point(self,event):
@@ -1555,7 +1561,6 @@ class ClickViewerGroundTruth(ClickViewer):
             title_obj = self.windows[0].axes.set_title( 'You have reseted the parameters\n'
                                                         'The main picture is the mean of ' + str(self.number_of_slices_to_mean) +' slices.\n')
             plt._setp(title_obj,color='k')
-
 
         else:
             self.update_title_text_general(key)
