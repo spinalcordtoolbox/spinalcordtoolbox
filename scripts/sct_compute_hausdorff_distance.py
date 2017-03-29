@@ -25,6 +25,8 @@ from sct_image import get_orientation_3d
 
 # ----------------------------------------------------------------------------------------------------------------------
 # PARAM ----------------------------------------------------------------------------------------------------------------
+
+
 class Param:
     def __init__(self):
         self.debug = 0
@@ -393,7 +395,6 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         return fname
 
 
-
 # ----------------------------------------------------------------------------------------------------------------------
 def non_zero_coord(data):
     dim = len(data.shape)
@@ -513,7 +514,7 @@ if __name__ == "__main__":
         res_fic.write('\nInput 2: ' + input_second_fname)
         res_fic.close()
 
-        #TODO change back the orientatin of the thinned image
+        # TODO change back the orientatin of the thinned image
         if param.thinning:
             sct.run('cp ' + computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext + ' ../' + sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2])
             if im2_name is not None:

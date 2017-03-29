@@ -116,7 +116,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     # Merge DWI
     cmd = 'sct_image -concat t -o '+dwi_name+ext+' -i '
     for it in range(nb_dwi):
-        cmd = cmd+dmri_name+'_T' + str(index_dwi[it]).zfill(4) + ext+ ','
+        cmd = cmd+dmri_name+'_T' + str(index_dwi[it]).zfill(4) + ext + ','
     cmd = cmd[:-1]  # remove ',' at the end of the string
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue
     status, output = sct.run(cmd, param.verbose)
@@ -256,8 +256,9 @@ OPTIONAL ARGUMENTS
 EXAMPLE
   """+os.path.basename(__file__)+""" -i dmri.nii.gz -b bvecs.txt -a 1\n"""
 
-    #Exit Program
+    # Exit Program
     sys.exit(2)
+
 
 def get_parser():
     # Initialize parser

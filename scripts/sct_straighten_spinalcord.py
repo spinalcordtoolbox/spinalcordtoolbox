@@ -216,7 +216,6 @@ class SpinalCordStraightener(object):
         self.elapsed_time = 0.0
         self.elapsed_time_accuracy = 0.0
 
-
     def straighten(self):
         # Initialization
         fname_anat = self.input_filename
@@ -534,7 +533,6 @@ class SpinalCordStraightener(object):
                 centerline_straight = Centerline(coord_phys_straight[:, 0], coord_phys_straight[:, 1], coord_phys_straight[:, 2],
                                                  dx_straight, dy_straight, dz_straight)
 
-
                 time_centerlines = time.time() - time_centerlines
                 sct.printv('Time to generate centerline: ' + str(np.round(time_centerlines * 1000.0)) + ' ms', verbose)
 
@@ -583,11 +581,11 @@ class SpinalCordStraightener(object):
             # 5. compute transformations
             # Curved and straight images and the same dimensions, so we compute both warping fields at the same time.
             # b. determine which plane of spinal cord centreline it is included
-            #print nx * ny * nz, nx_s * ny_s * nz_s
+            # print nx * ny * nz, nx_s * ny_s * nz_s
 
             if self.curved2straight:
                 for u in range(nz_s):
-                    #print u+1, '/', nz_s
+                    # print u+1, '/', nz_s
                     x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u+1]
                     indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
                     physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
@@ -608,7 +606,7 @@ class SpinalCordStraightener(object):
 
             if self.straight2curved:
                 for u in range(nz):
-                    #print u + 1, '/', nz
+                    # print u + 1, '/', nz
                     x, y, z = np.mgrid[0:nx, 0:ny, u:u+1]
                     indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
                     physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)

@@ -513,7 +513,6 @@ def read_label_file(path_info_label, file_info_label):
         lines = [line for line in f.readlines() if line.strip()]
         lines[-1] += ' ' # To fix an error that could occur at the last line (deletion of the last character of the .txt file)
 
-
         # Check if the White matter atlas was provided by the user
         # look at first line
         # header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
@@ -575,7 +574,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
     vertebral_levels_available = np.array(list(set(data_vertebral_labeling[data_vertebral_labeling > 0])))
 
     # Check if the vertebral levels selected are available
-    warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
+    warning = []  # list of strings gathering the potential following warning(s) to be written in the output .txt file
     min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
     max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
     if vert_levels_list[0] < min_vert_level_available:
@@ -583,7 +582,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         warning.append('WARNING: the bottom vertebral level you selected is lower than the lowest level available --> '
                        'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
                        # warning to write it later in the .txt output file
-        sct.printv('WARNING: the bottom vertebral level you selected is lower than the lowest level available \n--> Selected the lowest vertebral level available: '+ str(int(vert_levels_list[0])), type='warning')
+        sct.printv('WARNING: the bottom vertebral level you selected is lower than the lowest level available \n--> Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])), type='warning')
 
     if vert_levels_list[1] > max_vert_level_available:
         vert_levels_list[1] = max_vert_level_available
@@ -727,9 +726,9 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
         # WRITE HEADER:
         # Write date and time
-        fid_metric.write('# Date - Time: '+ time.strftime('%Y/%m/%d - %H:%M:%S'))
+        fid_metric.write('# Date - Time: ' + time.strftime('%Y/%m/%d - %H:%M:%S'))
         # Write metric data file path
-        fid_metric.write('\n'+'# Metric file: '+ os.path.abspath(fname_data))
+        fid_metric.write('\n'+'# Metric file: ' + os.path.abspath(fname_data))
         # If it's the case, write the label used to normalize the metric estimation:
         if fname_normalizing_label:
             fid_metric.write('\n'+'# Label used to normalize the metric estimation slice-by-slice: '+fname_normalizing_label)
@@ -925,7 +924,7 @@ def check_method(method, fname_normalizing_label, normalization_method):
     #     sct.printv(parser.usage.generate(error='ERROR: Method "' + method + '" is not correct. See help. Exit program.\n'))
 
     if normalization_method and not fname_normalizing_label:
-        sct.printv(parser.usage.generate(error='ERROR: You selected a normalization method ('+ str(normalization_method)+ ') but you didn\'t selected any label to be used for the normalization.'))
+        sct.printv(parser.usage.generate(error='ERROR: You selected a normalization method (' + str(normalization_method) + ') but you didn\'t selected any label to be used for the normalization.'))
 
     if fname_normalizing_label and normalization_method != 'sbs' and normalization_method != 'whole':
         sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:'+str(normalization_method)))
@@ -938,7 +937,6 @@ def check_labels(indiv_labels_ids, selected_labels):
 
     # convert strings to int
     list_ids_of_labels_of_interest = map(int, indiv_labels_ids)
-
 
     # if selected_labels:
     #     # Check if label chosen is in the right format
@@ -964,7 +962,6 @@ def check_labels(indiv_labels_ids, selected_labels):
         # Check if the selected labels are in the available labels ids
         if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
             sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available according to the label list from the text file in the atlas folder. Exit program.\n\n', type='error')
-
 
     return list_ids_of_labels_of_interest
 
@@ -1082,10 +1079,10 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
         # define the problem: y is the measurements vector (to which weights are applied, to each voxel) and x is the linear relation between the measurements y and the true metric value to be estimated beta
         y = np.dot(W, data1d)  # [nb_vox x 1]
         x = np.dot(W, labels2d.T)  # [nb_vox x nb_labels]
-        beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
+        beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))  # beta = (Xt . X)-1 . Xt . y
         #beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
         #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
-        #print beta, residuals, rank, singular_value
+        # print beta, residuals, rank, singular_value
         for i_label in range(0, nb_labels):
             metric_mean[i_label] = beta[i_label]
             metric_std[i_label] = 0  # need to assign a value for writing output file
@@ -1201,7 +1198,6 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_n
     return data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user, label_to_fix_name, label_to_fix_fract_vol
 
 
-
 def parse_label_ID_groups(list_ID):
     """From a list of unparsed labels string, returns a list of list enumarating the label IDs combinations as integers.
     Example: ['0:5','8,10','12'] ==> [[0,1,2,3,4,5],[8,10],[12]]"""
@@ -1226,7 +1222,6 @@ def parse_label_ID_groups(list_ID):
     return list_all_label_IDs
 
 
-
 def remove_label_from_group(list_label_groups, label_ID):
     """Redefine groups of labels after removing one specific label."""
 
@@ -1241,7 +1236,6 @@ def remove_label_from_group(list_label_groups, label_ID):
 
 def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_labels_value, slices_list, label_to_fix, label_to_fix_fract_vol):
     """Produces a map where each label is assigned the metric value estimated previously based on their fractional volumes."""
-
 
     sct.printv('\nGenerate metric value map based on each label fractional volumes: ' + fname_output_metric_map + '...')
 

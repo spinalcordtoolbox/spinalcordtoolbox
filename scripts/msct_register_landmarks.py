@@ -36,6 +36,7 @@ ini_param_trans_x = 270.0 #pix
 ini_param_trans_y = -150.0 #pix
 initial_step = 2
 
+
 def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1, path_qc='./'):
     """
     Register two NIFTI volumes containing landmarks
@@ -98,7 +99,6 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     text_file.close()
 
 
-
 def getNeighbors(point, set_points, k=1):
     '''
     Locate most similar neighbours
@@ -115,7 +115,6 @@ def getNeighbors(point, set_points, k=1):
     return [distances[x][0] for x in range(k)]
 
 
-
 def SSE(pointsA, pointsB):
     """
     Compute sum of squared error between pair-wise landmarks
@@ -126,14 +125,12 @@ def SSE(pointsA, pointsB):
     return sum(array(pointsA[:, 0:3]-pointsB[:, 0:3])**2.0)
 
 
-
 def real_optimization_parameters(param_from_optimizer, initial_param = 0, initial_step = 10):
     # The initial step for the Nelder-Mead algorithm is of (initial_param * 5e-2) which is too small when we want initial_param = 30 pix and step = 5 or 10.
     # This function allows to choose the scale of the steps after the first movement
     step_factor = float(initial_step)/float(initial_param*5e-2)
     real_param = initial_param + (param_from_optimizer - initial_param) * step_factor
     return real_param
-
 
 
 def Metric_Images(imageA, imageB, type=''):
@@ -161,7 +158,6 @@ def Metric_Images(imageA, imageB, type=''):
     # Return results
     print '\nResult of metric is: '+str(result_metric)
     return result_metric
-
 
 
 def minimize_transform(params, points_dest, points_src, constraints):
@@ -227,22 +223,22 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
         data_moving_10percent = data_moving > amax(data_moving) * 0.1
         data_fixed_10percent = data_fixed > amax(data_fixed) * 0.1
         # Calculating position of barycenters
-        coord_barycenter_moving = (1.0/(sum(data_moving))) * sum(array([[data_moving[i,j,k] * i, data_moving[i,j,k] * j, data_moving[i,j,k] * k] for i in range(data_moving.shape[0]) for j in range(data_moving.shape[1]) for k in range(data_moving.shape[2])]), axis=0)
-        coord_barycenter_fixed = (1.0/(sum(data_fixed))) * sum(array([[data_fixed[i,j,k] * i, data_fixed[i,j,k] * j, data_fixed[i,j,k] * k] for i in range(data_fixed.shape[0]) for j in range(data_fixed.shape[1]) for k in range(data_fixed.shape[2])]), axis=0)
-        coord_barycenter_moving_10percent = (1.0/(sum(data_moving_10percent))) * sum(array([[data_moving_10percent[i,j,k] * i, data_moving_10percent[i,j,k] * j, data_moving_10percent[i,j,k] * k] for i in range(data_moving_10percent.shape[0]) for j in range(data_moving_10percent.shape[1]) for k in range(data_moving_10percent.shape[2])]), axis=0)
-        coord_barycenter_fixed_10percent = (1.0/(sum(data_fixed_10percent))) * sum(array([[data_fixed_10percent[i,j,k] * i, data_fixed_10percent[i,j,k] * j, data_fixed_10percent[i,j,k] * k] for i in range(data_fixed_10percent.shape[0]) for j in range(data_fixed_10percent.shape[1]) for k in range(data_fixed_10percent.shape[2])]), axis=0)
+        coord_barycenter_moving = (1.0/(sum(data_moving))) * sum(array([[data_moving[i, j, k] * i, data_moving[i, j, k] * j, data_moving[i, j, k] * k] for i in range(data_moving.shape[0]) for j in range(data_moving.shape[1]) for k in range(data_moving.shape[2])]), axis=0)
+        coord_barycenter_fixed = (1.0/(sum(data_fixed))) * sum(array([[data_fixed[i, j, k] * i, data_fixed[i, j, k] * j, data_fixed[i, j, k] * k] for i in range(data_fixed.shape[0]) for j in range(data_fixed.shape[1]) for k in range(data_fixed.shape[2])]), axis=0)
+        coord_barycenter_moving_10percent = (1.0/(sum(data_moving_10percent))) * sum(array([[data_moving_10percent[i, j, k] * i, data_moving_10percent[i, j, k] * j, data_moving_10percent[i, j, k] * k] for i in range(data_moving_10percent.shape[0]) for j in range(data_moving_10percent.shape[1]) for k in range(data_moving_10percent.shape[2])]), axis=0)
+        coord_barycenter_fixed_10percent = (1.0/(sum(data_fixed_10percent))) * sum(array([[data_fixed_10percent[i, j, k] * i, data_fixed_10percent[i, j, k] * j, data_fixed_10percent[i, j, k] * k] for i in range(data_fixed_10percent.shape[0]) for j in range(data_fixed_10percent.shape[1]) for k in range(data_fixed_10percent.shape[2])]), axis=0)
 
         print '\nPosition of the barycenters:' \
-              '\n\t-moving image : '+ str(coord_barycenter_moving) +  \
+              '\n\t-moving image : ' + str(coord_barycenter_moving) +  \
               '\n\t-fixed image: ' + str(coord_barycenter_fixed)
-        #Evaluating initial translations to match the barycenters
+        # Evaluating initial translations to match the barycenters
         ini_param_trans_x_real = int(round(coord_barycenter_fixed[0] - coord_barycenter_moving[0]))
         ini_param_trans_y_real = int(round(coord_barycenter_fixed[1] - coord_barycenter_moving[1]))
 
         # Defining new center of rotation
         coord_center_rotation = [int(round(coord_barycenter_fixed[0])), int(round(coord_barycenter_fixed[1])), int(round(coord_barycenter_fixed[2]))]
 
-        #Evaluating the initial rotation to match the 10 percent barycenters
+        # Evaluating the initial rotation to match the 10 percent barycenters
         # We have calculated two relevant points to evaluate the best initial registration for the algorithm so that it may converge more quickly
         # First a translation to match the barycenters and then a rotation (of center: the barycenter of the fixed image) to match the 10_percent barycenters
         vector_bar_fix_2_bar_10p_moving = coord_barycenter_moving_10percent - coord_barycenter_fixed
@@ -258,7 +254,7 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
             ini_param_rotation_real = -acos((a + b - c)/(2.0*sqrt(a)*sqrt(b)))    # theorem of Al-Kashi
 
     else:
-        coord_center_rotation=None
+        coord_center_rotation = None
         ini_param_trans_x_real = ini_param_trans_x
         ini_param_trans_y_real = ini_param_trans_y
         ini_param_rotation_real = ini_param_rotation

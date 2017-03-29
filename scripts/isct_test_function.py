@@ -116,6 +116,7 @@ def generate_data_list(folder_dataset, json_requirements=None, verbose=1):
 
     return data_subjects, subjects_dir
 
+
 def read_json(path_dir, json_requirements=None, fname_json='dataset_description.json'):
     path_dir = sct.slash_at_the_end(path_dir, slash=1)
     if fname_json not in os.listdir(path_dir) and json_requirements is not None:
@@ -461,7 +462,7 @@ if __name__ == "__main__":
                         a = ax
                     else:
                         a = ax[i]
-                    data_passed = results_display[results_display['status']==0]
+                    data_passed = results_display[results_display['status'] == 0]
                     sns.violinplot(x='status', y=key, data=data_passed, ax=a, inner="quartile", cut=0,
                                    scale="count", color='lightgray')
                     sns.swarmplot(x='status', y=key, data=data_passed, ax=a, color='0.3', size=4)
@@ -475,7 +476,6 @@ if __name__ == "__main__":
                     a.set_ylabel('')
             plt.savefig('fig_' + file_log + '.png', bbox_inches='tight', pad_inches=0.5)
             plt.close()
-
 
     except Exception as err:
         if print_if_error:

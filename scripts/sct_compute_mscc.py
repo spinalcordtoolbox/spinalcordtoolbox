@@ -62,11 +62,10 @@ def main(args=None):
     db = arguments['-db']
 
     # Compute MSCC
-    MSCC = (1 - float(di) / ( (da + db) / float(2) ) ) * 100
+    MSCC = (1 - float(di) / ((da + db) / float(2))) * 100
 
     # Display results
     sct.printv('\nMSCC = '+str(MSCC)+'\n', verbose, 'info')
-
 
 
 # START PROGRAM

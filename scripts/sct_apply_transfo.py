@@ -54,7 +54,7 @@ def get_parser():
                       description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
                       mandatory=False,
                       default_value='0',
-                      example=['0','1','2'])
+                      example=['0', '1', '2'])
     parser.add_option(name="-c",
                       type_value=None,
                       description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
@@ -71,7 +71,7 @@ def get_parser():
                       description="interpolation method",
                       mandatory=False,
                       default_value='spline',
-                      example=['nn','linear','spline'])
+                      example=['nn', 'linear', 'spline'])
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -160,7 +160,7 @@ class Transform:
         from msct_image import Image
         nx, ny, nz, nt, px, py, pz, pt = Image(fname_src).dim
         # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
-        sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
+        sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
 
         # if 3d
         if nt == 1:
@@ -228,7 +228,7 @@ class Transform:
         warping_field = fname_warp_list_invert[-1]
         # if last warping field is an affine transfo, we need to compute the space of the concatenate warping field:
         if isLastAffine:
-            sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...',verbose,'warning')
+            sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...', verbose, 'warning')
         elif crop_reference == 1:
             ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field, background=0).crop()
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field+' -b 0')
