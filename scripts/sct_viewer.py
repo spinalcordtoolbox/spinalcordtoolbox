@@ -1497,7 +1497,6 @@ class ClickViewerGroundTruth(ClickViewer):
 
         self.dic_message_labels=self.define_dic_message_labels()
 
-        self.bool_may_skip_all_remaining=False
         self.current_dot_number=1
         self.number_of_slices_to_mean=3
 
@@ -1705,7 +1704,6 @@ class ClickViewerGroundTruth(ClickViewer):
 
 
     def on_press_main_window(self,event,plot):
-        self.bool_may_skip_all_remaining=True
         if not self.are_all_slices_done():
             target_point = self.set_target_point(event)
             if self.check_point_is_valid(target_point):
@@ -1834,7 +1832,6 @@ class ClickViewerGroundTruth(ClickViewer):
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
             if self.current_dot_number>1:
-                self.bool_may_skip_all_remaining=False
                 self.current_dot_number += -1
                 self.list_points=self.list_points[0:len(self.list_points)-1]
                 self.draw_points(self.windows[0],self.current_point.z)
