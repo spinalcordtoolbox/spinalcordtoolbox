@@ -296,7 +296,7 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
         # average over spinal cord levels
         sorting_mode = 'vertebral_level'
         rejected_values = [0, '0']
-        #if vert_levels != '':
+        # if vert_levels != '':
 
     else:
         # averaging over slices
@@ -312,7 +312,6 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
         pass
 
     else:
-
 
         # average spinal cord shape properties
         averaged_shape = dict()
@@ -449,7 +448,6 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     return length
 
 
-
 # extract_centerline
 # ==========================================================================================
 def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, use_phys_coord=True):
@@ -504,14 +502,14 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # hdr = im_seg.hdr
 
     # Extract min and max index in Z direction
-    X, Y, Z = (data>0).nonzero()
+    X, Y, Z = (data > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
-    x_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
-    y_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
+    x_centerline = [0 for i in range(0, max_z_index-min_z_index+1)]
+    y_centerline = [0 for i in range(0, max_z_index-min_z_index+1)]
     z_centerline = [iz for iz in range(min_z_index, max_z_index+1)]
     # Extract segmentation points and average per slice
     for iz in range(min_z_index, max_z_index+1):
-        x_seg, y_seg = (data[:,:,iz]>0).nonzero()
+        x_seg, y_seg = (data[:, :, iz] > 0).nonzero()
         x_centerline[iz-min_z_index] = np.mean(x_seg)
         y_centerline[iz-min_z_index] = np.mean(y_seg)
     for k in range(len(X)):
@@ -548,14 +546,14 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
             y_display[int(z_centerline_voxel[i]-z_centerline_voxel[0])] = y_centerline[i]
 
         plt.figure(1)
-        plt.subplot(2,1,1)
+        plt.subplot(2, 1, 1)
         plt.plot(z_centerline_voxel, x_display, 'ro')
         plt.plot(z_centerline_voxel, x_centerline_voxel)
         plt.xlabel("Z")
         plt.ylabel("X")
         plt.title("x and x_fit coordinates")
 
-        plt.subplot(2,1,2)
+        plt.subplot(2, 1, 2)
         plt.plot(z_centerline_voxel, y_display, 'ro')
         plt.plot(z_centerline_voxel, y_centerline_voxel)
         plt.xlabel("Z")
@@ -730,7 +728,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     for iz in range(min_z_index, max_z_index+1):
         # retrieve seg pixels
         x_seg, y_seg = (data_csa[:, :, iz] > 0).nonzero()
-        seg = [[x_seg[i],y_seg[i]] for i in range(0, len(x_seg))]
+        seg = [[x_seg[i], y_seg[i]] for i in range(0, len(x_seg))]
         # loop across pixels in segmentation
         for i in seg:
             # replace value with csa value
@@ -789,7 +787,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     file_results = open(output_folder+'csa_per_slice.txt', 'w')
     file_results.write('# Slice (z),CSA (mm^2),Angle with respect to the I-S direction (degrees)\n')
     for i in range(min_z_index, max_z_index+1):
-        file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+ ',' + str(angles[i-min_z_index])+'\n')
+        file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index]) + ',' + str(angles[i-min_z_index])+'\n')
         # Display results
         sct.printv('z = %d, CSA = %f mm^2, Angle = %f deg' % (i, csa[i-min_z_index], angles[i-min_z_index]), type='info')
     file_results.close()
@@ -899,6 +897,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t'+output_folder+'csa_mean.txt\n\t\t'+output_folder+'csa_mean.xls\n\t\t'+output_folder+'csa_mean.pickle', param.verbose, 'info')
         sct.printv('Output result files of the volume in between the selected slices: \n\t\t'+output_folder+'csa_volume.txt\n\t\t'+output_folder+'csa_volume.xls\n\t\t'+output_folder+'csa_volume.pickle', param.verbose, 'info')
 
+
 def label_vert(fname_seg, fname_label, verbose=1):
     """
     Label segmentation using vertebral labeling information
@@ -946,10 +945,9 @@ def save_results(fname_output, overwrite, fname_data, metric_name, method, mean,
     else:
         slices_of_interest_field = 'ALL'
 
-
     sct.printv('Save results in: '+fname_output+'.txt\n')
 
-    ## Save results in a CSV text file
+    # Save results in a CSV text file
     # CSV format, header lines start with "#"
     fid_metric = open(fname_output+'.txt', 'w')
 
@@ -975,7 +973,7 @@ def save_results(fname_output, overwrite, fname_data, metric_name, method, mean,
     # Close file .txt
     fid_metric.close()
 
-    ## Save results in a MS Excel file
+    # Save results in a MS Excel file
     # if the user asked for no overwriting but the specified output file does not exist yet
     if (not overwrite) and (not os.path.isfile(fname_output + '.xls')):
         sct.printv('WARNING: You asked to edit the pre-existing file \"' + fname_output + '.xls\" but this file does not exist. It will be created.', type='warning')
@@ -1023,8 +1021,7 @@ def save_results(fname_output, overwrite, fname_data, metric_name, method, mean,
 
     book.save(fname_output+'.xls')
 
-
-    ## Save results in a pickle file
+    # Save results in a pickle file
     # write results in a dictionary
     output_results = {}
     output_results['Date - Time'] = time.strftime('%Y/%m/%d - %H:%M:%S')
@@ -1079,7 +1076,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
                        'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
                        # warning to write it later in the .txt output file
         sct.printv('WARNING: the bottom vertebral level you selected is lower to the lowest ' \
-                                          'level available \n--> Selected the lowest vertebral level available: '+\
+                                          'level available \n--> Selected the lowest vertebral level available: ' +\
               str(int(vert_levels_list[0])), type='warning')
 
     if vert_levels_list[1] > max_vert_level_available:
@@ -1124,7 +1121,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     z_centerline = [x for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
     vert_range = range(vert_levels_list[0], vert_levels_list[1]+1)
 
-    for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline,:,:]):
+    for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline, :, :]):
         slice_idxs = np.nonzero(z_slice)
         if np.asarray(slice_idxs).shape != (2, 0) and int(np.median(z_slice[slice_idxs])) in vert_range:
             matching_slices_centerline_vert_labeling.append(idx)
@@ -1143,7 +1140,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
 
 def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     print '\nFitting centerline using B-spline approximation...'
-    points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
+    points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
     nurbs = NURBS(3, 3000, points)
     # BE very careful with the spline order that you choose :
     # if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ).
@@ -1164,25 +1161,25 @@ def b_spline_centerline(x_centerline, y_centerline, z_centerline):
 # Normalization
 #=======================================================================================================================
 def normalize(vect):
-    norm=np.linalg.norm(vect)
+    norm = np.linalg.norm(vect)
     return vect/norm
 
 
 #=======================================================================================================================
 # Ellipse fitting for a set of data
 #=======================================================================================================================
-#http://nicky.vanforeest.com/misc/fitEllipse/fitEllipse.html
-def Ellipse_fit(x,y):
-    x = x[:,np.newaxis]
-    y = y[:,np.newaxis]
+# http://nicky.vanforeest.com/misc/fitEllipse/fitEllipse.html
+def Ellipse_fit(x, y):
+    x = x[:, np.newaxis]
+    y = y[:, np.newaxis]
     D =  np.hstack((x*x, x*y, y*y, x, y, np.ones_like(x)))
-    S = np.dot(D.T,D)
-    C = np.zeros([6,6])
-    C[0,2] = C[2,0] = 2
-    C[1,1] = -1
+    S = np.dot(D.T, D)
+    C = np.zeros([6, 6])
+    C[0, 2] = C[2, 0] = 2
+    C[1, 1] = -1
     E, V =  np.linalg.eig(np.dot(np.linalg.inv(S), C))
     n = np.argmax(np.abs(E))
-    a = V[:,n]
+    a = V[:, n]
     return a
 
 
@@ -1190,12 +1187,12 @@ def Ellipse_fit(x,y):
 # Getting a and b parameter for fitted ellipse
 #=======================================================================================================================
 def ellipse_dim(a):
-    b,c,d,f,g,a = a[1]/2, a[2], a[3]/2, a[4]/2, a[5], a[0]
+    b, c, d, f, g, a = a[1]/2, a[2], a[3]/2, a[4]/2, a[5], a[0]
     up = 2*(a*f*f+c*d*d+g*b*b-2*b*d*f-a*c*g)
-    down1=(b*b-a*c)*( (c-a)*np.sqrt(1+4*b*b/((a-c)*(a-c)))-(c+a))
-    down2=(b*b-a*c)*( (a-c)*np.sqrt(1+4*b*b/((a-c)*(a-c)))-(c+a))
-    res1=np.sqrt(up/down1)
-    res2=np.sqrt(up/down2)
+    down1 = (b*b-a*c)*((c-a)*np.sqrt(1+4*b*b/((a-c)*(a-c)))-(c+a))
+    down2 = (b*b-a*c)*((a-c)*np.sqrt(1+4*b*b/((a-c)*(a-c)))-(c+a))
+    res1 = np.sqrt(up/down1)
+    res2 = np.sqrt(up/down2)
     return np.array([res1, res2])
 
 
@@ -1211,9 +1208,9 @@ def edge_detection(f):
     gradx = np.array(G, dtype = float)
     grady = np.array(G, dtype = float)
 
-    mask_x = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
+    mask_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
 
-    mask_y = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
+    mask_y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
 
     width = img.size[1]
     height = img.size[0]
@@ -1221,19 +1218,19 @@ def edge_detection(f):
     for i in range(1, width-1):
         for j in range(1, height-1):
 
-            px = np.sum(mask_x*G[(i-1):(i+1)+1,(j-1):(j+1)+1])
-            py = np.sum(mask_y*G[(i-1):(i+1)+1,(j-1):(j+1)+1])
+            px = np.sum(mask_x*G[(i-1):(i+1)+1, (j-1):(j+1)+1])
+            py = np.sum(mask_y*G[(i-1):(i+1)+1, (j-1):(j+1)+1])
             gradx[i][j] = px
             grady[i][j] = py
 
-    mag = scipy.hypot(gradx,grady)
+    mag = scipy.hypot(gradx, grady)
 
     treshold = np.max(mag)*0.9
 
     for i in range(width):
         for j in range(height):
-            if mag[i][j]>treshold:
-                mag[i][j]=1
+            if mag[i][j] > treshold:
+                mag[i][j] = 1
             else:
                 mag[i][j] = 0
 

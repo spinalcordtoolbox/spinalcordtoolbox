@@ -19,8 +19,10 @@ import nibabel
 import numpy as np
 
 # DEFAULT PARAMETERS
+
+
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug               = 0
 
@@ -42,7 +44,7 @@ def main():
     else:
     # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:t:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:t:')
         except getopt.GetoptError as err:
             print str(err)
             usage()
@@ -72,15 +74,15 @@ def main():
     # 3d array for each x y z voxel values for the input nifti image
     data_seg = img_seg.get_data()
 
-    X, Y, Z = (data>0).nonzero()
+    X, Y, Z = (data > 0).nonzero()
     status = 0
-    for i in range(0,len(X)):
-        if data_seg[X[i],Y[i],Z[i]] == 0:
+    for i in range(0, len(X)):
+        if data_seg[X[i], Y[i], Z[i]] == 0:
             status = 1
             break;
 
     if status is not 0:
-        sct.printv('ERROR: detected point is not in segmentation',1,'warning')
+        sct.printv('ERROR: detected point is not in segmentation', 1, 'warning')
     else:
         sct.printv('OK: detected point is in segmentation')
 
@@ -89,6 +91,8 @@ def main():
 #=======================================================================================================================
 # usage
 #=======================================================================================================================
+
+
 def usage():
     print 'USAGE: \n' \
         'This script check if the point contained in inputdata is in the spinal cord segmentation.\n'\

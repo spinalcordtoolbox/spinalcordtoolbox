@@ -13,7 +13,6 @@
 #########################################################################################
 
 
-
 import sys
 
 import numpy as np
@@ -39,7 +38,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hvr:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hvr:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -104,7 +103,7 @@ def main():
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
     sct.run('sct_dice_coefficient -i data_dest.nii.gz -d data_src_reg.nii.gz -o dice.txt', verbose)
-    with open ("dice.txt", "r") as file_dice:
+    with open("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
     printv('Dice coeff = '+str(dice)+' (should be above '+str(dice_acceptable)+')', verbose)
 
@@ -118,7 +117,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         printv('\nDelete temporary files...', verbose)
-        sct.run('rm -rf '+ path_tmp, verbose)
+        sct.run('rm -rf ' + path_tmp, verbose)
 
     # output result for parent function
     if test_passed:
@@ -129,13 +128,11 @@ def main():
         sys.exit(1)
 
 
-
 # printv: enables to print or not, depending on verbose status
 #=======================================================================================================================
-def printv(string,verbose):
+def printv(string, verbose):
     if verbose:
         print(string)
-
 
 
 # Print usage
@@ -163,10 +160,8 @@ def usage():
     sys.exit(2)
 
 
-
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
     # call main function
     main()
-

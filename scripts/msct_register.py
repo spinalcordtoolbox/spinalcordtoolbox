@@ -417,7 +417,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 src1d = src2d_scaleX[ix, :]
                 dest1d = dest2d[ix, :]
                 # make sure there are non-zero data in src or dest
-                if np.any(src1d>th_nonzero) and np.any(dest1d>th_nonzero):
+                if np.any(src1d > th_nonzero) and np.any(dest1d > th_nonzero):
                     # retrieve min/max of non-zeros elements (edge of the segmentation)
                     # src1d_min, src1d_max = min(np.nonzero(src1d)[0]), max(np.nonzero(src1d)[0])
                     # dest1d_min, dest1d_max = min(np.nonzero(dest1d)[0]), max(np.nonzero(dest1d)[0])
@@ -532,7 +532,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
 
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
-                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '', 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}, verbose=0):
     """Slice-by-slice registration of two images.
 
@@ -622,7 +622,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         prefix_warp2d = 'warp2d_'+num
         # if mask is used, prepare command for ANTs
         if fname_mask != '':
-            masking = '-x mask_Z' +num+ '.nii.gz'
+            masking = '-x mask_Z' + num + '.nii.gz'
         else:
             masking = ''
         # main command for registration
@@ -630,11 +630,11 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                '--dimensionality 2 '
                '--transform '+paramreg.algo+'['+str(paramreg.gradStep) +
                ants_registration_params[paramreg.algo.lower()]+'] '
-               '--metric '+paramreg.metric+'[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' +',1,'+metricSize+'] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+               '--metric '+paramreg.metric+'[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,'+metricSize+'] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
                '--convergence '+str(paramreg.iter)+' '
                '--shrink-factors '+str(paramreg.shrink)+' '
                '--smoothing-sigmas '+str(paramreg.smooth)+'mm '
-               '--output ['+prefix_warp2d+',src_Z'+ num +'_reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
+               '--output ['+prefix_warp2d+',src_Z' + num + '_reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
                + masking)
         # add init translation
@@ -695,7 +695,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         concat_warp2d(list_warp_inv, fname_warp_inv, 'src.nii')
 
 
-
 def numerotation(nb):
     """Indexation of number for matching fslsplit's index.
 
@@ -722,7 +721,6 @@ def numerotation(nb):
         print 'ERROR: the number is superior to 9999.'
         sys.exit(status = 2)
     return nb_output
-
 
 
 def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz', verbose=1):
@@ -807,7 +805,6 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     # sct.printv('\nDone! Warping field generated: '+fname, verbose)
 
 
-
 def angle_between(a, b):
     """
     compute angle in radian between a and b. Throws an exception if a or b has zero magnitude.
@@ -861,7 +858,6 @@ def compute_pca(data2d):
     # pca_score = pca.explained_variance_ratio_
     # V = pca.components_
     return coordsrc, pca, centermass
-
 
 
 def find_index_halfmax(data1d):

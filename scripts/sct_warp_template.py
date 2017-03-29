@@ -31,7 +31,7 @@ path_sct = os.path.dirname(path_script)
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.folder_out = 'label/'  # name of output folder
@@ -152,7 +152,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
             # check if file exists
             # sct.check_file_exist(fname_label)
             # apply transfo
-            sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] +' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i]), param.verbose)
+            sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] + ' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i]), param.verbose)
         # Copy list.txt
         sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
 

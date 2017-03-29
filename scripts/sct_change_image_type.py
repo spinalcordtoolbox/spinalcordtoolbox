@@ -25,7 +25,7 @@ import math
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.fname_label_output = 'labels.nii.gz'
@@ -107,17 +107,17 @@ def main():
         hdr.set_data_dtype(np.uint64)
     elif type_output == 'float16':
         sct.printv('Error: voxel type (float16) not supported by nibabel (although it is supported by numpy)... See usage.', 1, 'error')
-        #hdr.set_data_dtype(np.float16)
+        # hdr.set_data_dtype(np.float16)
     elif type_output == 'float32':
         hdr.set_data_dtype(np.float32)
     elif type_output == 'float64':
         hdr.set_data_dtype(np.float64)
     else:
-        sct.printv('Error: voxel type not supported... See usage.',1,'error')
+        sct.printv('Error: voxel type not supported... See usage.', 1, 'error')
 
     hdr.set_data_dtype(type_output) # set imagetype to uint8, previous: int32.
     print '\nWrite NIFTI volumes...'
-    #data.astype('int')
+    # data.astype('int')
     img = nibabel.Nifti1Image(data, None, hdr)
     nibabel.save(img, 'tmp.'+file_output+'.nii.gz')
     sct.generate_output_file('tmp.'+file_output+'.nii.gz', file_output+ext_output)

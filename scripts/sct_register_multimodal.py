@@ -135,9 +135,9 @@ def get_parser(paramreg=None):
                                   "  geometric: Geometric center of images\n"
                                   "  centermass: Center of mass of images\n"
                                   "  origin: Physical origin of images\n"
-                                  "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" +paramreg.steps['1'].poly + "\n"
-                                  "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +paramreg.steps['1'].smoothWarpXY + "\n"
-                                  "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" +paramreg.steps['1'].pca_eigenratio_th + "\n"
+                                  "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" + paramreg.steps['1'].poly + "\n"
+                                  "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" + paramreg.steps['1'].smoothWarpXY + "\n"
+                                  "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" + paramreg.steps['1'].pca_eigenratio_th + "\n"
                                   "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" + paramreg.steps['0'].dof + "\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
@@ -182,7 +182,7 @@ def get_parser(paramreg=None):
 # DEFAULT PARAMETERS
 
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.outSuffix  = "_reg"
@@ -190,6 +190,8 @@ class Param:
         self.path_qc = os.path.abspath(os.curdir)+'/qc/'
 
 # Parameters for registration
+
+
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
         self.step = step
@@ -220,10 +222,12 @@ class Paramreg(object):
             obj = object.split('=')
             setattr(self, obj[0], obj[1])
 
+
 class ParamregMultiStep:
     '''
     This class contains a dictionary with the params of multiple steps
     '''
+
     def __init__(self, listParam=[]):
         self.steps = dict()
         for stepParam in listParam:
@@ -247,7 +251,6 @@ class ParamregMultiStep:
         # parameters must contain 'type'
         if int(param_reg.step) != 0 and param_reg.type not in param_reg.type_list:
             sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
-
 
 
 # MAIN
@@ -348,7 +351,6 @@ def main(args=None):
     sct.printv('\nCheck if input data are 3D...', verbose)
     sct.check_if_3d(fname_src)
     sct.check_if_3d(fname_dest)
-
 
     # Check if user selected type=seg, but did not input segmentation data
     if 'paramreg_user' in locals():
@@ -512,7 +514,6 @@ def main(args=None):
         sct.printv('fslview '+fname_src+' '+fname_dest2src+' &\n', verbose, 'info')
 
 
-
 # register images
 # ==========================================================================================
 def register(src, dest, paramreg, param, i_step_str):
@@ -601,7 +602,7 @@ def register(src, dest, paramreg, param, i_step_str):
                    '-s '+paramreg.steps[i_step_str].smooth+' '
                    '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
                    '-o [step'+i_step_str+','+scr_regStep+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
-                   +masking)
+                   + masking)
             warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
             warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
             # run command
@@ -638,7 +639,7 @@ def register(src, dest, paramreg, param, i_step_str):
                    '--restrict-deformation 1x1x0 '
                    '--output [step'+i_step_str+','+scr_regStep+'] '
                    '--interpolation BSpline[3] '
-                   +masking)
+                   + masking)
             # add verbose
             if param.verbose >= 1:
                 cmd += ' --verbose 1'
@@ -754,7 +755,6 @@ def register(src, dest, paramreg, param, i_step_str):
     return warp_forward, warp_inverse
 
 
-
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
@@ -765,7 +765,7 @@ if __name__ == "__main__":
 # Convert deformation field to 4D volume (readable by fslview)
 # DONE: clean code below-- right now it does not work
 #===========
-#if convertDeformation:
+# if convertDeformation:
 #    print('\nConvert deformation field...')
 #    cmd = 'sct_image -i tmp.regWarp.nii -mcs  -o tmp.regWarp.nii'
 #    print(">> "+cmd)

@@ -84,7 +84,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
             slices_to_remove[i] = True
         elif nb_labels == 1:  # check if the centerline is coherent with the one from isct_propseg
             x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
-            slice_nearest_coord = min(key_centerline, key=lambda x:abs(x-i))
+            slice_nearest_coord = min(key_centerline, key=lambda x: abs(x-i))
             coord_nearest_coord = centerline[str(slice_nearest_coord)]
             distance = np.sqrt(((x_centerline - coord_nearest_coord[0]) * px) ** 2 +
                                ((y_centerline - coord_nearest_coord[1]) * py) ** 2 +
@@ -158,12 +158,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False,
                       deprecated=1,
                       deprecated_by="-c",
-                      example=['t1','t2'])
+                      example=['t1', 't2'])
     parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
-                      example=['t1','t2'])
+                      example=['t1', 't2'])
     parser.usage.addSection("General options")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
