@@ -1551,6 +1551,12 @@ class ClickViewerGroundTruth(ClickViewer):
                                                         'The number of slice you can average is ' + str(self.number_of_slices_to_mean) +'.\n')
             plt._setp(title_obj,color='r')
 
+        elif(key=='reset_average_parameters'):
+            title_obj = self.windows[0].axes.set_title( 'You have reseted the parameters\n'
+                                                        'The main picture is the mean of ' + str(self.number_of_slices_to_mean) +' slices.\n')
+            plt._setp(title_obj,color='k')
+
+
         else:
             self.update_title_text_general(key)
 
@@ -1766,11 +1772,15 @@ class ClickViewerGroundTruth(ClickViewer):
             ''' Reset central image '''
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
             point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
-            self.update_pictures_in_windows(self.windows[0],point)
+            self.update_pictures_in_windows(self.windows[1],point)
 
+            self.current_point = Coordinate(
+                [int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
+                 int(self.images[0].data.shape[2] / 2)])
             self.number_of_slices_to_mean=3
-
             self.show_image_mean()
+
+            self.update_title_text('reset_average_parameters')
 
 
 
