@@ -1467,7 +1467,6 @@ class ClickViewerGroundTruth(ClickViewer):
         else:
             return True
 
-
     def calc_mean_slices(self):
         data=self.images[0].data
         dataRacc=data[:,:,self.current_point.z-(self.number_of_slices_to_mean-1)/2:self.current_point.z+(self.number_of_slices_to_mean-1)/2+1]
@@ -1767,9 +1766,7 @@ class ClickViewerGroundTruth(ClickViewer):
             ''' Reset central image '''
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
             point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
-            for window in self.windows:
-                window.update_slice(point, data_update=True)
-                self.draw_points(window, self.current_point.x)
+            self.update_pictures_in_windows(self.windows[0],point)
 
             self.number_of_slices_to_mean=3
 
