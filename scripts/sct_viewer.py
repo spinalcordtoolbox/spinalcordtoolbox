@@ -59,6 +59,7 @@ class SinglePlot:
     """
         This class manages mouse events on one image.
     """
+
     def __init__(self, ax, images, viewer, view=2, display_cross='hv', im_params=None):
         self.axes = ax
         self.images = images  # this is a list of images
@@ -410,6 +411,7 @@ class ThreeViewer(Viewer):
     This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
     Assumes AIL orientation
     """
+
     def __init__(self, list_images, visualization_parameters=None):
         if isinstance(list_images, Image):
             list_images = [list_images]
@@ -488,6 +490,7 @@ class ClickViewer(Viewer):
     Assumes SAL orientation
     orientation_subplot: list of two views that will be plotted next to each other. The first view is the main one (right) and the second view is the smaller one (left). Orientations are: ax, sag, cor.
     """
+
     def __init__(self, list_images, visualization_parameters=None, orientation_subplot=['ax', 'sag'], title='', input_type='centerline'):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         if isinstance(list_images, Image):
@@ -873,6 +876,7 @@ class ParamMultiImageVisualization(object):
     """
     This class contains a dictionary with the params of multiple images visualization
     """
+
     def __init__(self, list_param):
         self.ids = []
         self.images_parameters = dict()
@@ -892,6 +896,7 @@ class ParamMultiImageVisualization(object):
                 self.images_parameters[param_im.id] = param_im
         else:
             sct.printv("ERROR: parameters must contain 'id'", 1, 'error')
+
 
 def prepare(list_images):
     fname_images, orientation_images = [], []

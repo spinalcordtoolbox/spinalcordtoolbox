@@ -39,7 +39,7 @@ path_sct = os.path.dirname(path_script)
 
 # PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         # self.path_template = path_sct+'/data/template/'
         self.shift_AP_initc2 = 35
@@ -165,7 +165,6 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       description="display this help",
                       mandatory=False)
     return parser
-
 
 
 # MAIN
@@ -744,7 +743,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
                            y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize: z+ iz + zsize + 1]
+                           z + iz - zsize: z + iz + zsize + 1]
         # if verbose == 2 and iz in range(0, nz, 10):
         #     # display template and subject patterns
         #     plt.figure(11)

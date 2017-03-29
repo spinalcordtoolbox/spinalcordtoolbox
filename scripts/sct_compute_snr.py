@@ -18,7 +18,6 @@ from msct_parser import Parser
 from msct_image import Image
 from sct_image import get_orientation, orientation
 import sct_utils as sct
-from os import rmdir, chdir
 import shutil
 
 
@@ -173,7 +172,6 @@ def main():
 
     # Display result
     sct.printv('\nSNR_'+method+' = '+str(SNR)+'\n', type='info')
-
 
 
 # START PROGRAM

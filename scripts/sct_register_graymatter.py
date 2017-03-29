@@ -9,11 +9,13 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import sys, os, time
+import os
+import sys
 from msct_parser import Parser
 from msct_image import Image
 from sct_convert import convert
 import sct_utils as sct
+
 
 class Param:
     def __init__(self):
@@ -55,7 +57,7 @@ class MultiLabelRegistration:
         # new warping fields:
         self.fname_warp_template2gm = ''
         self.fname_wwarp_gm2template = ''
-        
+
         # temporary fix - related to issue #871
         self.apply_warp_template = apply_warp_template
 
@@ -66,7 +68,7 @@ class MultiLabelRegistration:
         self.im_template_gm = thr_im(self.im_template_gm, 0.01, self.param.thr)
         self.im_template_wm = thr_im(self.im_template_wm, 0.01, self.param.thr)
 
-        ## create multilabel images:
+        # create multilabel images:
         # copy GM images to keep header information
         im_automatic_ml = self.im_gm.copy()
         im_template_ml = self.im_template_gm.copy()
@@ -135,7 +137,7 @@ class MultiLabelRegistration:
         fname_warp_multilabel_template2auto = 'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz'
         fname_warp_multilabel_auto2template = 'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz'
 
-        self.fname_warp_template2gm = sct.extract_fname(self.fname_warp_template2target)[1] + '_reg_gm' +sct.extract_fname(self.fname_warp_template2target)[2]
+        self.fname_warp_template2gm = sct.extract_fname(self.fname_warp_template2target)[1] + '_reg_gm' + sct.extract_fname(self.fname_warp_template2target)[2]
         # fname_warp_multilabel_template2auto = pad_im(fname_warp_multilabel_template2auto, nx, ny, nz, xi, xf, yi, yf, zi, zf)
         # fname_warp_multilabel_auto2template = pad_im(fname_warp_multilabel_auto2template, nx, ny, nz, xi, xf, yi, yf, zi, zf)
 
@@ -149,7 +151,7 @@ class MultiLabelRegistration:
             elif self.template == 'PAM50':
                 fname_dest = path_sct+'/data/PAM50/template/PAM50_t2.nii.gz'
 
-            self.fname_warp_gm2template = sct.extract_fname(self.fname_warp_target2template)[1] + '_reg_gm' +sct.extract_fname(self.fname_warp_target2template)[2]
+            self.fname_warp_gm2template = sct.extract_fname(self.fname_warp_target2template)[1] + '_reg_gm' + sct.extract_fname(self.fname_warp_target2template)[2]
             sct.run('sct_concat_transfo -w '+fname_warp_multilabel_auto2template+','+file_warp_target2template+ext_warp_target2template+' -d '+fname_dest+' -o '+self.fname_warp_gm2template)
 
         os.chdir('..')
@@ -474,7 +476,6 @@ def get_parser():
                       mandatory=False,
                       example='t2star_seg.nii.gz')
 
-
     parser.usage.addSection('\nMISC')
     # parser.add_option(name="-apply-warp",
     #                   type_value='multiple_choice',
@@ -536,7 +537,7 @@ if __name__ == "__main__":
         ml_param.remove_tmp = int(arguments['-r'])
     if '-v' in arguments:
         ml_param.verbose = int(arguments['-v'])
-    
+
     apply_warp = 0
     if '-apply-warp' in arguments:
         apply_warp = int(arguments['-apply-warp'])

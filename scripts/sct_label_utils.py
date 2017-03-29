@@ -27,7 +27,7 @@ from msct_image import Image
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.fname_label_output = 'labels.nii.gz'
@@ -137,7 +137,6 @@ class ProcessLabels(object):
             image_output.data[int(coord.x), int(coord.y), int(coord.z)] = image_output.data[int(coord.x), int(coord.y), int(coord.z)] + float(value)
         return image_output
 
-
     def create_label(self, add=False):
         """
         Create an image with labels listed by the user.
@@ -167,7 +166,6 @@ class ProcessLabels(object):
 
         return image_output
 
-
     def cross(self):
         """
         create a cross.
@@ -190,7 +188,6 @@ class ProcessLabels(object):
             output_image.data[int(round(coord.x)), int(round(coord.y)), int(round(coord.z))] = coord.value
 
         return output_image
-
 
     @staticmethod
     def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
@@ -258,7 +255,6 @@ class ProcessLabels(object):
         cross_coordinates = sorted(cross_coordinates, key=lambda obj: obj.value)
         return cross_coordinates
 
-
     def plan(self, width, offset=0, gap=1):
         """
         Create a plane of thickness="width" and changes its value with an offset and a gap between labels.
@@ -273,7 +269,6 @@ class ProcessLabels(object):
 
         return image_output
 
-
     def plan_ref(self):
         """
         Generate a plane in the reference space for each label present in the input image
@@ -284,12 +279,12 @@ class ProcessLabels(object):
 
         image_input_neg = Image(self.image_input, self.verbose).copy()
         image_input_pos = Image(self.image_input, self.verbose).copy()
-        image_input_neg.data *=0
-        image_input_pos.data *=0
-        X, Y, Z = (self.image_input.data< 0).nonzero()
+        image_input_neg.data *= 0
+        image_input_pos.data *= 0
+        X, Y, Z = (self.image_input.data < 0).nonzero()
         for i in range(len(X)):
             image_input_neg.data[X[i], Y[i], Z[i]] = -self.image_input.data[X[i], Y[i], Z[i]] # in order to apply getNonZeroCoordinates
-        X_pos, Y_pos, Z_pos = (self.image_input.data> 0).nonzero()
+        X_pos, Y_pos, Z_pos = (self.image_input.data > 0).nonzero()
         for i in range(len(X_pos)):
             image_input_pos.data[X_pos[i], Y_pos[i], Z_pos[i]] = self.image_input.data[X_pos[i], Y_pos[i], Z_pos[i]]
 
@@ -303,7 +298,6 @@ class ProcessLabels(object):
             image_output.data[:, :, int(coord.z)] = coord.value
 
         return image_output
-
 
     def cubic_to_point(self):
         """
@@ -334,11 +328,10 @@ class ProcessLabels(object):
         # 3. Compute the center of mass of each group of voxels and write them into the output image
         for value, list_coord in groups.iteritems():
             center_of_mass = sum(list_coord)/float(len(list_coord))
-            sct.printv("Value = " + str(center_of_mass.value) + " : ("+str(center_of_mass.x) + ", "+str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( "+ str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
+            sct.printv("Value = " + str(center_of_mass.value) + " : ("+str(center_of_mass.x) + ", "+str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( " + str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
             output_image.data[int(round(center_of_mass.x)), int(round(center_of_mass.y)), int(round(center_of_mass.z))] = center_of_mass.value
 
         return output_image
-
 
     def increment_z_inverse(self):
         """
@@ -354,7 +347,6 @@ class ProcessLabels(object):
             image_output.data[int(coord.x), int(coord.y), int(coord.z)] = i + 1
 
         return image_output
-
 
     def labelize_from_disks(self):
         """
@@ -376,7 +368,6 @@ class ProcessLabels(object):
 
         return image_output
 
-
     def label_vertebrae(self, levels_user=None):
         """
         Find the center of mass of vertebral levels specified by the user.
@@ -397,7 +388,6 @@ class ProcessLabels(object):
                 image_cubic2point.data[int(list_coordinates[i_label].x), int(list_coordinates[i_label].y), int(list_coordinates[i_label].z)] = 0
         # list all labels
         return image_cubic2point
-
 
     # FUNCTION BELOW REMOVED BY JULIEN ON 2016-07-04 BECAUSE SEEMS NOT TO BE USED (AND DUPLICATION WITH ABOVE)
     # def label_vertebrae_from_disks(self, levels_user):
@@ -421,7 +411,6 @@ class ProcessLabels(object):
     #             image_cubic2point.data[int(list_coordinates_vertebrae[i_label].x), int(list_coordinates_vertebrae[i_label].y), int(list_coordinates_vertebrae[i_label].z)] = list_coordinates_vertebrae[i_label].value
     #
     #     return image_cubic2point
-
 
     # BELOW: UNFINISHED BUSINESS (JULIEN)
     # def label_disc(self, levels_user=None):
@@ -510,7 +499,6 @@ class ProcessLabels(object):
     #     # return image of labels
     #     return image_cubic2point
 
-
     def MSE(self, threshold_mse=0):
         """
         Compute the Mean Square Distance Error between two sets of labels (input and ref).
@@ -548,7 +536,6 @@ class ProcessLabels(object):
 
         return result
 
-
     @staticmethod
     def remove_label_coord(coord_input, coord_ref, symmetry=False):
         """
@@ -570,7 +557,6 @@ class ProcessLabels(object):
                 result_coord_ref = [coord for coord in coord_ref if filter(lambda x: x.value == coord.value, result_coord_input)]
 
         return result_coord_input, result_coord_ref
-
 
     def remove_label(self, symmetry=False):
         """
@@ -599,7 +585,6 @@ class ProcessLabels(object):
 
         return image_output
 
-
     def extract_centerline(self):
         """
         Write a text file with the coordinates of the centerline.
@@ -609,10 +594,9 @@ class ProcessLabels(object):
 
         fo = open(self.fname_output, "wb")
         for coord in coordinates_input:
-            line = (coord.x,coord.y, coord.z)
+            line = (coord.x, coord.y, coord.z)
             fo.write("%i %i %i\n" % line)
         fo.close()
-
 
     def display_voxel(self):
         """
@@ -629,7 +613,6 @@ class ProcessLabels(object):
         print 'All labels (useful syntax):'
         print useful_notation
         return coordinates_input
-
 
     def diff(self):
         """
@@ -658,7 +641,6 @@ class ProcessLabels(object):
             if not isIn:
                 print coord_ref.value
 
-
     def distance_interlabels(self, max_dist):
         """
         Calculate the distances between each label in the input image.
@@ -674,7 +656,6 @@ class ProcessLabels(object):
                     coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i+1) + '[' + str(
                     coordinates_input[i+1].x) + ',' + str(coordinates_input[i+1].y) + ',' + str(coordinates_input[i+1].z) + ']=' + str(
                     coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
-
 
     def continuous_vertebral_levels(self):
         """

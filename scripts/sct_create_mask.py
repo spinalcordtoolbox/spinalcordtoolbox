@@ -157,13 +157,13 @@ def create_mask():
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image('data_RPI.nii').dim
-    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
+    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
         sct.printv('WARNING in '+os.path.basename(__file__)+': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
         # extract first volume to have 3d reference
         nii = Image('data_RPI.nii')
-        data3d = nii.data[:,:,:,0]
+        data3d = nii.data[:, :, :, 0]
         nii.data = data3d
         nii.save()
 

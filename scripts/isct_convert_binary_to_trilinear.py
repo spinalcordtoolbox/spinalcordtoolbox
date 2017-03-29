@@ -22,6 +22,7 @@ import time
 import sct_utils as sct
 from msct_image import Image
 
+
 class Param:
     def __init__(self):
         self.debug = 0
@@ -30,12 +31,12 @@ class Param:
         self.suffix = '_trilin' # output suffix
         self.remove_temp_files = 1
         self.verbose = 1
-        
+
 
 # main
 #=======================================================================================================================
 def main():
-    
+
     # Initialization
     fname_data = ''
     interp_factor = param.interp_factor
@@ -46,7 +47,7 @@ def main():
 
     # start timer
     start_time = time.time()
-    
+
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -58,7 +59,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:s:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:v:r:s:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -131,7 +132,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         print '\nRemove temporary files...'
-        sct.run('rm -rf '+ path_tmp)
+        sct.run('rm -rf ' + path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -170,10 +171,8 @@ def usage():
         'EXAMPLE\n' \
         '  '+os.path.basename(__file__)+' -i segmentation.nii \n'
 
-
     # exit program
     sys.exit(2)
-
 
 
 #=======================================================================================================================

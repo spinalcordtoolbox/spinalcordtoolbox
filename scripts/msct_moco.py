@@ -140,7 +140,7 @@ def moco(param):
 
     # delete file target.nii (to avoid conflict if this function is run another time)
     sct.printv('\nRemove temporary file...', verbose)
-    #os.remove('target.nii')
+    # os.remove('target.nii')
     sct.run('rm target.nii')
 
 
@@ -161,14 +161,14 @@ def register(param, file_src, file_dest, file_mat, file_out):
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
         cmd = 'isct_antsSliceRegularizedRegistration' \
-              ' -p '+param.param[0]+ \
+              ' -p '+param.param[0] + \
               ' --transform Translation['+param.param[2]+']' \
               ' --metric '+param.param[3]+'['+file_dest+'.nii, '+file_src+'.nii, 1, '+metric_radius+', Regular, 0.2]' \
               ' --iterations 5' \
               ' --shrinkFactors 1' \
-              ' --smoothingSigmas '+param.param[1]+ \
+              ' --smoothingSigmas '+param.param[1] + \
               ' --output ['+file_mat+','+file_out+'.nii]' \
-              +sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
+              + sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
         if not param.fname_mask == '':
             cmd += ' -x '+param.fname_mask
     if param.todo == 'apply':
@@ -207,28 +207,29 @@ def register(param, file_src, file_dest, file_mat, file_out):
 #=======================================================================================================================
 # spline
 #=======================================================================================================================
-def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
+def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
     # append path that contains scripts, to be able to load modules
     sys.path.append(path_sct + '/scripts')
     import sct_utils as sct
 
-    sct.printv('\n\n\n------------------------------------------------------------------------------',verbose)
-    sct.printv('Spline Regularization along T: Smoothing Patient Motion...',verbose)
+    sct.printv('\n\n\n------------------------------------------------------------------------------', verbose)
+    sct.printv('Spline Regularization along T: Smoothing Patient Motion...', verbose)
 
     file_mat = [[[] for i in range(nz)] for i in range(nt)]
     for it in range(nt):
         for iz in range(nz):
             file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz) + '.txt'
 
-    #Copying the existing Matrices to another folder
+    # Copying the existing Matrices to another folder
     old_mat = folder_mat + 'old/'
-    if not os.path.exists(old_mat): os.makedirs(old_mat)
+    if not os.path.exists(old_mat):
+        os.makedirs(old_mat)
     cmd = 'cp ' + folder_mat + '*.txt ' + old_mat
     status, output = sct.run(cmd, verbose)
 
-    sct.printv('\nloading matrices...',verbose)
+    sct.printv('\nloading matrices...', verbose)
     X = [[[] for i in range(nt)] for i in range(nz)]
     Y = [[[] for i in range(nt)] for i in range(nz)]
     X_smooth = [[[] for i in range(nt)] for i in range(nz)]
@@ -239,11 +240,11 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
             Matrix = np.loadtxt(file)
             file.close()
 
-            X[iz][it] = Matrix[0,3]
-            Y[iz][it] = Matrix[1,3]
+            X[iz][it] = Matrix[0, 3]
+            Y[iz][it] = Matrix[1, 3]
 
     # Generate motion splines
-    sct.printv('\nGenerate motion splines...',verbose)
+    sct.printv('\nGenerate motion splines...', verbose)
     T = np.arange(nt)
     if graph:
         import pylab as pl
@@ -261,12 +262,12 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
         X_smooth[iz][:] = spline(T)
 
         if graph:
-            pl.plot(T,X_smooth[iz][:],label='spline_smoothing')
-            pl.plot(T,X[iz][:],marker='*',linestyle='None',label='original_val')
-            if len(index_b0)!=0:
+            pl.plot(T, X_smooth[iz][:], label='spline_smoothing')
+            pl.plot(T, X[iz][:], marker='*', linestyle='None', label='original_val')
+            if len(index_b0) != 0:
                 T_b0 = [T[i_b0] for i_b0 in index_b0]
                 X_b0 = [X[iz][i_b0] for i_b0 in index_b0]
-                pl.plot(T_b0,X_b0,marker='D',linestyle='None',color='k',label='b=0')
+                pl.plot(T_b0, X_b0, marker='D', linestyle='None', color='k', label='b=0')
             pl.title('X')
             pl.grid()
             pl.legend()
@@ -283,34 +284,34 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
         Y_smooth[iz][:] = spline(T)
 
         if graph:
-            pl.plot(T,Y_smooth[iz][:],label='spline_smoothing')
-            pl.plot(T,Y[iz][:],marker='*', linestyle='None',label='original_val')
-            if len(index_b0)!=0:
+            pl.plot(T, Y_smooth[iz][:], label='spline_smoothing')
+            pl.plot(T, Y[iz][:], marker='*', linestyle='None', label='original_val')
+            if len(index_b0) != 0:
                 T_b0 = [T[i_b0] for i_b0 in index_b0]
                 Y_b0 = [Y[iz][i_b0] for i_b0 in index_b0]
-                pl.plot(T_b0,Y_b0,marker='D',linestyle='None',color='k',label='b=0')
+                pl.plot(T_b0, Y_b0, marker='D', linestyle='None', color='k', label='b=0')
             pl.title('Y')
             pl.grid()
             pl.legend()
             pl.show()
 
-    #Storing the final Matrices
-    sct.printv('\nStoring the final Matrices...',verbose)
+    # Storing the final Matrices
+    sct.printv('\nStoring the final Matrices...', verbose)
     for iz in range(nz):
         for it in range(nt):
             file =  open(file_mat[it][iz])
             Matrix = np.loadtxt(file)
             file.close()
 
-            Matrix[0,3] = X_smooth[iz][it]
-            Matrix[1,3] = Y_smooth[iz][it]
+            Matrix[0, 3] = X_smooth[iz][it]
+            Matrix[1, 3] = Y_smooth[iz][it]
 
-            file =  open(file_mat[it][iz],'w')
+            file =  open(file_mat[it][iz], 'w')
             np.savetxt(file_mat[it][iz], Matrix, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
     sct.printv('\n...Done. Patient motion has been smoothed', verbose)
-    sct.printv('------------------------------------------------------------------------------\n',verbose)
+    sct.printv('------------------------------------------------------------------------------\n', verbose)
 
 
 #=======================================================================================================================
@@ -325,7 +326,7 @@ def combine_matrix(param):
 
     sct.printv('\nCombine matrices...', param.verbose)
     # list all mat files in source mat folder
-    m2c_fnames = [ fname for fname in os.listdir(param.mat_2_combine) if os.path.isfile(os.path.join(param.mat_2_combine, fname)) ]
+    m2c_fnames = [fname for fname in os.listdir(param.mat_2_combine) if os.path.isfile(os.path.join(param.mat_2_combine, fname))]
     # loop across files
     for fname in m2c_fnames:
         if os.path.isfile(os.path.join(param.mat_final, fname)):

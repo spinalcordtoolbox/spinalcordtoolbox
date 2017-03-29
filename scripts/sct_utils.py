@@ -63,7 +63,6 @@ def add_suffix(fname, suffix):
         return fname[:ind_nii] + suffix + fname[ind_nii:]
 
 
-
 #=======================================================================================================================
 # run
 #=======================================================================================================================
@@ -113,7 +112,6 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         return status_output, output_final[0:-1]
 
 
-
 #=======================================================================================================================
 # check RAM usage
 # work only on Mac OSX
@@ -155,17 +153,17 @@ def checkRAM(os, verbose=1):
         vmLines = vm.split('\n')
         sep = re.compile(':[\s]+')
         vmStats = {}
-        for row in range(1,len(vmLines)-2):
+        for row in range(1, len(vmLines)-2):
             rowText = vmLines[row].strip()
             rowElements = sep.split(rowText)
             vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
-        
+
         if verbose:
-            print '  Wired Memory:\t\t%d MB' % ( vmStats["Pages wired down"]/1024/1024 )
-            print '  Active Memory:\t%d MB' % ( vmStats["Pages active"]/1024/1024 )
-            print '  Inactive Memory:\t%d MB' % ( vmStats["Pages inactive"]/1024/1024 )
-            print '  Free Memory:\t\t%d MB' % ( vmStats["Pages free"]/1024/1024 )
-            #print 'Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 )
+            print '  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"]/1024/1024)
+            print '  Active Memory:\t%d MB' % (vmStats["Pages active"]/1024/1024)
+            print '  Inactive Memory:\t%d MB' % (vmStats["Pages inactive"]/1024/1024)
+            print '  Free Memory:\t\t%d MB' % (vmStats["Pages free"]/1024/1024)
+            # print 'Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 )
 
         return ram_total
 
@@ -246,7 +244,7 @@ def extract_fname(fname):
         path_fname = ''
     # extract file and extension
     file_fname = fname
-    file_fname = file_fname.replace(path_fname,'')
+    file_fname = file_fname.replace(path_fname, '')
     file_fname, ext_fname = os.path.splitext(file_fname)
     # check if .nii.gz file
     if ext_fname == '.gz':
@@ -268,6 +266,8 @@ def get_absolute_path(fname):
 #=======================================================================================================================
 # check_file_exist:  Check existence of a file or path
 #=======================================================================================================================
+
+
 def check_file_exist(fname, verbose=1):
     if fname[0] == '-':
         # fname should be a warping field that will be inverted, ignore the "-"
@@ -278,7 +278,6 @@ def check_file_exist(fname, verbose=1):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
         return True
-        pass
     else:
         printv('\nERROR: The file ' + fname + ' does not exist. Exit program.\n', 1, 'error')
         return False
@@ -292,7 +291,6 @@ def check_folder_exist(fname, verbose=1):
     if os.path.isdir(fname):
         printv('  OK: '+fname, verbose, 'normal')
         return True
-        pass
     else:
         printv('\nWarning: The directory ' + str(fname) + ' does not exist.\n', 1, 'warning')
         return False
@@ -311,7 +309,6 @@ def check_write_permission(fname, verbose=1):
     else:
         path_fname, file_fname, ext_fname = extract_fname(os.path.abspath(fname))
         return os.access(path_fname, os.W_OK)
-
 
 
 #=======================================================================================================================
@@ -334,6 +331,8 @@ def create_folder(folder):
 #=======================================================================================================================
 # check_if_3d
 #=======================================================================================================================
+
+
 def check_if_3d(fname):
     """
     Check if input volume is 3d or less.
@@ -350,6 +349,8 @@ def check_if_3d(fname):
 #=======================================================================================================================
 # check_if_rpi:  check if data are in RPI orientation
 #=======================================================================================================================
+
+
 def check_if_rpi(fname):
     from sct_image import get_orientation_3d
     if not get_orientation_3d(fname, filename=True) == 'RPI':
@@ -376,7 +377,6 @@ def find_file_within_folder(fname, directory, seek_type='file'):
                 if fnmatch.fnmatch(file, fname):
                     all_path.append(os.path.join(root, file))
     return all_path
-
 
 
 #=======================================================================================================================
@@ -424,17 +424,16 @@ def delete_tmp_files_and_folders(path=''):
 #=======================================================================================================================
 # copy a nifti file to (temporary) folder and convert to .nii or .nii.gz
 #=======================================================================================================================
-def tmp_copy_nifti(fname,path_tmp,fname_out='data.nii',verbose=0):
+def tmp_copy_nifti(fname, path_tmp, fname_out='data.nii', verbose=0):
     # tmp_copy_nifti('input.nii', path_tmp, 'raw.nii')
     path_fname, file_fname, ext_fname = extract_fname(fname)
     path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)
 
     run('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
     if ext_fname_out == '.nii':
-       run('fslchfiletype NIFTI ' + path_tmp + file_fname_out,0)
+        run('fslchfiletype NIFTI ' + path_tmp + file_fname_out, 0)
     elif ext_fname_out == '.nii.gz':
-        run('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out,0)
-
+        run('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out, 0)
 
 
 #=======================================================================================================================
@@ -554,7 +553,6 @@ def printv(string, verbose=1, type='normal'):
         sys.exit(2)
 
 
-
 #=======================================================================================================================
 # send email
 #=======================================================================================================================
@@ -589,7 +587,6 @@ def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', passwd_from='',
     text = msg.as_string()
     server.sendmail(addr_from, addr_to, text)
     server.quit()
-
 
 
 #=======================================================================================================================
@@ -678,6 +675,7 @@ def template_dict(template):
 class UnsupportedOs(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
@@ -687,18 +685,20 @@ class Os(object):
 
     def __init__(self):
         import os
-        if os.name != 'posix': raise UnsupportedOs('We only support OS X/Linux')
+        if os.name != 'posix':
+            raise UnsupportedOs('We only support OS X/Linux')
         import platform
         self.os = platform.system().lower()
         self.arch = platform.machine()
         self.applever = ''
-        
+
         if self.os == 'darwin':
             self.os = 'osx'
             self.vendor = 'apple'
             self.version = Version(platform.release())
-            (self.applever,_,_) = platform.mac_ver()
-            if self.arch == 'Power Macintosh': raise UnsupportedOs('We do not support PowerPC')
+            (self.applever, _, _) = platform.mac_ver()
+            if self.arch == 'Power Macintosh':
+                raise UnsupportedOs('We do not support PowerPC')
             self.glibc = ''
             self.bits = ''
         elif self.os == 'linux':
@@ -718,11 +718,12 @@ class Os(object):
         else:
             raise UnsupportedOs("We do not support this OS.")
 
+
 class Version(object):
-    def __init__(self,version_sct):
+    def __init__(self, version_sct):
         self.version_sct = version_sct
 
-        if not isinstance(version_sct,basestring):
+        if not isinstance(version_sct, basestring):
             print version_sct
             raise Exception('Version is not a string.')
 
@@ -775,12 +776,14 @@ class Version(object):
         if self > other or self == other:
             return True
         return False
+
     def __le__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
         if self < other or self == other:
             return True
         return False
+
     def __cmp__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
@@ -789,6 +792,7 @@ class Version(object):
         if self.__gt__(other):
             return 1
         return 0
+
     def __lt__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
@@ -814,7 +818,7 @@ class Version(object):
             return False
         # major, minor and patch all match so this is not less than
         return False
-    
+
     def __gt__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
@@ -839,15 +843,15 @@ class Version(object):
         if self.isbeta and not other.isbeta:
             return False
         # major, minor and patch all match so this is not less than
-        return False 
-    
+        return False
+
     def __eq__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
         if self.major == other.major and self.minor == other.minor and self.patch == other.patch and self.hotfix == other.hotfix and self.beta == other.beta:
             return True
         return False
-    
+
     def __ne__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
@@ -893,19 +897,23 @@ class Version(object):
         result = result+"_"+self.beta
         return result
 
-class MsgUser(object): 
+
+class MsgUser(object):
     __debug = False
     __quiet = False
-    
+
     @classmethod
     def debugOn(cls):
         cls.__debug = True
+
     @classmethod
     def debugOff(cls):
         cls.__debug = False
+
     @classmethod
     def quietOn(cls):
         cls.__quiet = True
+
     @classmethod
     def quietOff(cls):
         cls.__quiet = False
@@ -913,12 +921,12 @@ class MsgUser(object):
     @classmethod
     def isquiet(cls):
         return cls.__quiet
-    
+
     @classmethod
     def isdebug(cls):
         return cls.__debug
-    
-    @classmethod    
+
+    @classmethod
     def debug(cls, message, newline=True):
         if cls.__debug:
             from sys import stderr
@@ -926,35 +934,35 @@ class MsgUser(object):
             if newline:
                 mess += "\n"
             stderr.write(mess)
-    
+
     @classmethod
     def message(cls, msg):
         if cls.__quiet:
             return
         print msg
-    
+
     @classmethod
     def question(cls, msg):
         print msg,
-                  
+
     @classmethod
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (bcolors.magenta, "[Skipped] ", bcolors.normal, msg ) )
+        print "".join((bcolors.magenta, "[Skipped] ", bcolors.normal, msg))
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (bcolors.green, "[OK] ", bcolors.normal, msg ) )
-    
+        print "".join((bcolors.green, "[OK] ", bcolors.normal, msg))
+
     @classmethod
     def failed(cls, msg):
-        print "".join( (bcolors.red, "[FAILED] ", bcolors.normal, msg ) )
-    
+        print "".join((bcolors.red, "[FAILED] ", bcolors.normal, msg))
+
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg ) )
+        print "".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg))

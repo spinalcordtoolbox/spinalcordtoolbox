@@ -20,7 +20,7 @@
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.create_log_file = 0
         self.complete_test = 0
@@ -210,7 +210,6 @@ def main():
         except ImportError:
             print_fail()
             install_software = 1
-
 
     # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
     print_line('Check if numpy is installed')

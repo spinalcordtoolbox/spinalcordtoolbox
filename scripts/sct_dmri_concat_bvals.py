@@ -17,6 +17,8 @@ from dipy.data.fetcher import read_bvals_bvecs
 
 # PARSER
 # ==========================================================================================
+
+
 def get_parser():
 
     # Initialize the parser
@@ -73,6 +75,3 @@ def main():
 if __name__ == "__main__":
     # call main function
     main()
-
-
-

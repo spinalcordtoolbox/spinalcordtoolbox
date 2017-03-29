@@ -125,7 +125,7 @@ def main(path_out, param_user):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', param.verbose)
 
-    #To view results
+    # To view results
     sct.printv('\nTo view results, type:', param.verbose)
     sct.printv('fslview -m ortho,ortho '+param.path_out+file_data+param.suffix+' '+file_data+' &\n', param.verbose, 'info')
 
@@ -172,7 +172,7 @@ def fmri_moco(param):
 
     # groups
     for iGroup in range(nb_groups):
-        sct.printv('\nGroup: ' +str((iGroup+1))+'/'+str(nb_groups), param.verbose)
+        sct.printv('\nGroup: ' + str((iGroup+1))+'/'+str(nb_groups), param.verbose)
 
         # get index
         index_fmri_i = group_indexes[iGroup]
@@ -213,7 +213,6 @@ def fmri_moco(param):
     im_mean_concat = concat_data(im_mean_list, 3)
     im_mean_concat.setFileName(file_data_groups_means_merge + ext_data)
     im_mean_concat.save()
-
 
     # Estimate moco on dwi groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)

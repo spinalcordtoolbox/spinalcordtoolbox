@@ -81,8 +81,9 @@ import sct_utils as sct
 from msct_types import Coordinate  # DO NOT REMOVE THIS LINE!!!!!!! IT IS MANDATORY!
 
 ########################################################################################################################
-####### OPTION
+# OPTION
 ########################################################################################################################
+
 
 class Option:
     # list of option type that can be casted
@@ -93,7 +94,7 @@ class Option:
     # output file/folder
     OPTION_PATH_OUTPUT = ["file_output", "folder_output"]
 
-    ## Constructor
+    # Constructor
     def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None, deprecated_rm=False, deprecated=False):
         self.name = name
         self.type_value = type_value
@@ -208,7 +209,6 @@ class Option:
             else:
                 nii, niigz = True, False
             param_tmp = param[:-4]
-            pass
         elif param.lower().endswith('.nii.gz'):
             if self.parser.check_file_exist:
                 niigz = os.path.isfile(param)
@@ -216,10 +216,8 @@ class Option:
             else:
                 nii, niigz = False, True
             param_tmp = param[:-7]
-            pass
         elif param.lower() == "viewer":
             viewer = True
-            pass
         else:
             sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
 
@@ -256,11 +254,11 @@ class Option:
 
 
 ########################################################################################################################
-####### PARSER
+# PARSER
 ########################################################################################################################
 
 class Parser:
-    ## Constructor
+    # Constructor
     def __init__(self, file_name):
         self.file_name = file_name
         self.options = dict()
@@ -303,7 +301,7 @@ class Parser:
         # we also check if double-quotes are present. If so, we need to concatenate the fields.
         arguments_temp = []
         index_next = 0
-        for index in range(0,len(arguments)):
+        for index in range(0, len(arguments)):
             if index == index_next:
                 if arguments[index][0] == '-':
                     arguments_temp.append(arguments[index])
@@ -433,7 +431,7 @@ class Parser:
 
 
 ########################################################################################################################
-####### USAGE
+# USAGE
 ########################################################################################################################
 class Usage:
     # Constructor
@@ -555,8 +553,8 @@ class Usage:
         usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
-            sct.printv(error+'\nAborted...',type='warning')
-            sct.printv(usage,type='normal')
+            sct.printv(error+'\nAborted...', type='warning')
+            sct.printv(usage, type='normal')
             raise SyntaxError(error)
             exit(1)
         else:
@@ -593,7 +591,6 @@ class Usage:
 
         return tab
 
-
     def align(self, string, length=70, pad=30):
         """
         This function split a string into a list of 100 char max strings
@@ -608,12 +605,12 @@ class Usage:
         # check if "\n" are present in the string. If so, decompose the string.
         string_split_line = string.split('\n')
         if len(string_split_line) > 1:
-            for i in range(0,len(string_split_line)):
+            for i in range(0, len(string_split_line)):
                 if i != 0:
                     string_split_line[i] = '  ' + string_split_line[i]
 
         # check if a string length is over "length"
-        for k,stri in enumerate(string_split_line):
+        for k, stri in enumerate(string_split_line):
             i = 0
             for c in stri:
                 i += 1
@@ -628,7 +625,7 @@ class Usage:
             strings.append(stri)
 
         # Concatenate strings
-        for i,yes in enumerate(strings):
+        for i, yes in enumerate(strings):
             if i != 0:
                 s += ' '*pad
             s += yes
@@ -639,6 +636,7 @@ class Usage:
 ########################################################################################################################
 # GENERATION OF SOURCEFORGE GENERATED DOC
 ########################################################################################################################
+
 
 class DocSourceForge:
     # Constructor
@@ -780,7 +778,6 @@ class DocSourceForge:
 
         return tab
 
-
     def align(self, string, length=70, pad=30):
         """
         This function split a string into a list of 100 char max strings
@@ -795,12 +792,12 @@ class DocSourceForge:
         # check if "\n" are present in the string. If so, decompose the string.
         string_split_line = string.split('\n')
         if len(string_split_line) > 1:
-            for i in range(0,len(string_split_line)):
+            for i in range(0, len(string_split_line)):
                 if i != 0:
                     string_split_line[i] = '  ' + string_split_line[i]
 
         # check if a string length is over "length"
-        for k,stri in enumerate(string_split_line):
+        for k, stri in enumerate(string_split_line):
             i = 0
             for c in stri:
                 i += 1
@@ -815,7 +812,7 @@ class DocSourceForge:
             strings.append(stri)
 
         # Concatenate strings
-        for i,yes in enumerate(strings):
+        for i, yes in enumerate(strings):
             if i != 0:
                 s += ' '*pad
             s += yes
@@ -825,7 +822,7 @@ class DocSourceForge:
 
 
 ########################################################################################################################
-####### SPELLING CHECKER
+# SPELLING CHECKER
 ########################################################################################################################
 
 class SpellingChecker:
@@ -859,7 +856,7 @@ class SpellingChecker:
     def edits1(self, word):
         splits     = [(word[:i], word[i:]) for i in range(len(word) + 1)]
         deletes    = [a + b[1:] for a, b in splits if b]
-        transposes = [a + b[1] + b[0] + b[2:] for a, b in splits if len(b)>1]
+        transposes = [a + b[1] + b[0] + b[2:] for a, b in splits if len(b) > 1]
         replaces   = [a + c + b[1:] for a, b in splits for c in self.alphabet if b]
         inserts    = [a + c + b     for a, b in splits for c in self.alphabet]
         return set(deletes + transposes + replaces + inserts)
@@ -871,4 +868,4 @@ class SpellingChecker:
 
     def correct(self, word):
         return self.known([word]) or self.known(self.edits1(word)) or self.known_edits2(word) #
-        #return max(candidates, key=self.NWORDS.get) # return the most potential candidate
+        # return max(candidates, key=self.NWORDS.get) # return the most potential candidate
