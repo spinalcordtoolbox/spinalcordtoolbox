@@ -109,6 +109,12 @@ def get_parser():
                       mandatory=False,
                       default_value=1,
                       example=2)
+    parser.add_option(name='-slice-to-mean',
+                      type_value='int',
+                      description='Define the number of slice you want to average.',
+                      mandatory=False,
+                      default_value=3,
+                      example=2)
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description='Parameters for registration (see sct_register_multimodal). Default: \
@@ -157,8 +163,9 @@ def rewrite_arguments(arguments):
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
     init_labels=int(arguments['-init-labels'])
+    nb_slice_to_mean=int(arguments['-slice-to-mean'])
 
-    return (fname_data,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_labels,first_label)
+    return (fname_data,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_labels,first_label,nb_slice_to_mean)
 
 def write_paramaters(arguments,param,ref,verbose):
     param.verbose = verbose
@@ -241,9 +248,7 @@ def set_viewer_parameters(viewer):
     pz = 1
     viewer.gap_inter_slice = int(10 / pz)
     viewer.calculate_list_slices()
-
-
-
+    viewer.show_image_mean()
 
 def prepare_input_image_for_viewer(fname_data):
     # reorient image to SAL to be compatible with viewer
@@ -302,11 +307,11 @@ def main():
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
     (fname_data, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,
-     verbose, init_labels, first_label)=rewrite_arguments(arguments)
+     verbose, init_labels, first_label,nb_slice_to_mean)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
     if(init_labels):
-        use_viewer_to_define_labels(fname_data,first_label)
+        use_viewer_to_define_labels(fname_data,first_label,nb_slice_to_mean)
     # initialize other parameters
     # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
