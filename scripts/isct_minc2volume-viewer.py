@@ -100,7 +100,7 @@ def main(filename, fname_out=''):
 
     if fname_out != '':
         path_out, file_out, ext_out = sct.extract_fname(fname_out)
-        basename = path_out+file_out
+        basename = path_out + file_out
     else:
         basename = os.path.basename(filename)
 

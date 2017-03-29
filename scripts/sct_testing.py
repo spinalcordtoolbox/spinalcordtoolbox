@@ -95,7 +95,7 @@ def main(args=None):
         downloaddata()
 
     # display path to data
-    sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
+    sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.tmp_create()
@@ -112,16 +112,16 @@ def main(args=None):
     if not status:
         for f in functions:
             status.append(test_function(f))
-    print 'status: '+str(status)
+    print 'status: ' + str(status)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
+    print 'Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n'
 
     # remove temp files
     if param.remove_tmp_file:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf '+param.path_tmp, param.verbose)
+        sct.run('rm -rf ' + param.path_tmp, param.verbose)
 
     e = 0
     if sum(status) != 0:
@@ -191,7 +191,7 @@ def print_line(string):
 # ==========================================================================================
 def make_dot_lines(string):
     if len(string) < 52:
-        dot_lines = '.'*(52 - len(string))
+        dot_lines = '.' * (52 - len(string))
         return dot_lines
     else:
         return ''
@@ -223,7 +223,7 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
     mode: w: overwrite, a: append, p: prepend
     """
     string_to_append = ''
-    string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
+    string = "test ran at " + time.strftime("%y%m%d%H%M%S") + "\n" \
              + fname_log \
              + string
     # open file
@@ -249,14 +249,14 @@ def test_function(script_name):
     # build script name
     fname_log = '../' + script_name + ".log"
     tmp_script_name = script_name
-    result_folder = "results_"+script_name
-    script_name = "test_"+script_name
+    result_folder = "results_" + script_name
+    script_name = "test_" + script_name
 
     sct.create_folder(result_folder)
     os.chdir(result_folder)
 
     # display script name
-    print_line('Checking '+script_name)
+    print_line('Checking ' + script_name)
     # import function as a module
     script_tested = importlib.import_module(script_name)
     # test function

@@ -68,8 +68,8 @@ def resample():
     # Get dimensions of data
     p = nii.header.get_zooms()
     n = nii.header.get_data_shape()
-    sct.printv('  pixdim: '+str(p), verbose)
-    sct.printv('  shape: '+str(n), verbose)
+    sct.printv('  pixdim: ' + str(p), verbose)
+    sct.printv('  shape: ' + str(n), verbose)
 
     # Calculate new dimensions
     sct.printv('\nCalculate new dimensions...', verbose)
@@ -95,18 +95,18 @@ def resample():
         n_r = tuple([int(round(n[i] * float(p[i]) / float(new_size[i]))) for i in range(len(n))])
     else:
         sct.printv('\nERROR: param.new_size_type is not recognized.', 1, 'error')
-    sct.printv('  new shape: '+str(n_r), verbose)
+    sct.printv('  new shape: ' + str(n_r), verbose)
 
     # get_base_affine()
     affine = nii.coordmap.affine
     # if len(p) == 4:
     #     affine = np.delete(affine, 3, 0)
     #     affine = np.delete(affine, 3, 1)
-    sct.printv('  affine matrix: \n'+str(affine))
+    sct.printv('  affine matrix: \n' + str(affine))
 
     # create ref image
     arr_r = np.zeros(n_r)
-    R = np.eye(len(n)+1)
+    R = np.eye(len(n) + 1)
     for i in range(len(n)):
         R[i, i] = n[i] / float(n_r[i])
     affine_r = np.dot(affine, R)
@@ -122,9 +122,9 @@ def resample():
         transfo = np.delete(transfo, 3, 0)
         transfo = np.delete(transfo, 3, 1)
     # translate to account for voxel size (otherwise resulting image will be shifted by half a voxel). Modify the three first rows of the last column, corresponding to the translation.
-    transfo[:3, -1] = np.array(((R[0, 0]-1)/2, (R[1, 1]-1)/2, (R[2, 2]-1)/2), dtype='f8')
+    transfo[:3, -1] = np.array(((R[0, 0] - 1) / 2, (R[1, 1] - 1) / 2, (R[2, 2] - 1) / 2), dtype='f8')
     # print transfo
-    sct.printv('  transfo: \n'+str(transfo), verbose)
+    sct.printv('  transfo: \n' + str(transfo), verbose)
 
     # set interpolation method
     if param.interpolation == 'nn':
@@ -176,7 +176,7 @@ def resample():
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview '+fname_out+' &', verbose, 'info')
+    sct.printv('fslview ' + fname_out + ' &', verbose, 'info')
 
     # new_im = Image(param=new_data)
     # new_im.absolutepath = param.fname_out
@@ -321,8 +321,8 @@ def main(args=None):
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data+'/fmri/fmri.nii.gz'
-        param.new_size = '2' #'0.5x0.5x1'
+        param.fname_data = path_sct_data + '/fmri/fmri.nii.gz'
+        param.new_size = '2'  # '0.5x0.5x1'
         param.remove_tmp_files = 0
         param.verbose = 1
     else:

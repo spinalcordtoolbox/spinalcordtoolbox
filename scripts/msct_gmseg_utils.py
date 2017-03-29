@@ -137,11 +137,11 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         printv('  Denoise...', verbose, 'normal')
         # crop image before denoising to fasten denoising
         nx, ny, nz, nt, px, py, pz, pt = im_target_rpi.dim
-        size_x, size_y = (square_size_size_mm+1)/px, (square_size_size_mm+1)/py
+        size_x, size_y = (square_size_size_mm + 1) / px, (square_size_size_mm + 1) / py
         size = int(math.ceil(max(size_x, size_y)))
         # create mask
         fname_mask = 'mask_pre_crop.nii.gz'
-        sct_create_mask.main(['-i', im_target_rpi.absolutepath, '-p', 'centerline,'+im_sc_seg_rpi.absolutepath, '-f', 'box', '-size', str(size), '-o', fname_mask])
+        sct_create_mask.main(['-i', im_target_rpi.absolutepath, '-p', 'centerline,' + im_sc_seg_rpi.absolutepath, '-f', 'box', '-size', str(size), '-o', fname_mask])
         # crop image
         fname_target_crop = add_suffix(im_target_rpi.absolutepath, '_pre_crop')
         crop_im = ImageCropper(input_file=im_target_rpi.absolutepath, output_file=fname_target_crop, mask=fname_mask)
@@ -152,14 +152,14 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         im_sc_seg_rpi_crop = crop_sc_seg.crop()
         # denoising
         from sct_maths import denoise_nlmeans
-        block_radius = int(im_target_rpi_crop.data.shape[2]/2) if im_target_rpi_crop.data.shape[2] < 10 else 5
+        block_radius = int(im_target_rpi_crop.data.shape[2] / 2) if im_target_rpi_crop.data.shape[2] < 10 else 5
         data_denoised = denoise_nlmeans(im_target_rpi_crop.data, block_radius = block_radius)
         im_target_rpi_crop.data = data_denoised
 
     # interpolate image to reference square image (resample and square crop centered on SC)
     printv('  Interpolate data to the model space...', verbose, 'normal')
     list_im_slices = interpolate_im_to_ref(im_target_rpi_crop, im_sc_seg_rpi_crop, new_res=new_res, sq_size_size_mm=square_size_size_mm)
-    original_info['interpolated_images'] = list_im_slices # list of images (not Slice() objects)
+    original_info['interpolated_images'] = list_im_slices  # list of images (not Slice() objects)
 
     printv('  Mask data using the spinal cord segmentation...', verbose, 'normal')
     list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi_crop, im_sc_seg_rpi_crop, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=1)
@@ -213,7 +213,7 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
     im_input.hdr.set_sform(input_qform)
     im_input_sc.hdr = im_input.hdr
 
-    sq_size = int(sq_size_size_mm/new_res)
+    sq_size = int(sq_size_size_mm / new_res)
     # create a reference image : square of ones
     im_ref = Image(np.ones((sq_size, sq_size, 1), dtype=np.int), dim=(sq_size, sq_size, 1, 0, new_res, new_res, pz, 0), orientation='RPI')
 
@@ -299,7 +299,7 @@ def load_level(list_slices_target, fname_level):
         # if all median of level are int for all slices : consider level as int
         if all([isinstance(med, int) for med in list_med_level]):
             # level as int are placed in the middle of each vertebra (that's why there is a "+0.5")
-            list_level = [int(round(l))+0.5 for l in list_level]
+            list_level = [int(round(l)) + 0.5 for l in list_level]
 
     # Level file is a text file
     elif ext_level == '.txt':
@@ -347,7 +347,7 @@ def load_level(list_slices_target, fname_level):
             # levels are float: keep them untouched
             to_add = 0
 
-        list_level = [l[1]+to_add for l in list_level_by_slice]
+        list_level = [l[1] + to_add for l in list_level_by_slice]
 
     # Level file is not recognized
     else:
@@ -392,7 +392,7 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
         n_poped = 0
         for im_gm, slice_im in zip(list_im_gm, list_slices_target):
             if im_gm.data.max() == 0 and for_model:
-                list_slices_target.pop(slice_im.id-n_poped)
+                list_slices_target.pop(slice_im.id - n_poped)
                 n_poped += 1
             else:
                 slice_im.gm_seg.append(im_gm.data)
@@ -602,7 +602,7 @@ def binarize(im, thr_min=None, thr_max=None):
     if thr_max is None and thr_min is not None:
         thr_max = thr_min
     if thr_min is None and thr_max is None:
-        thr_min = thr_max = np.max(im.data)/2
+        thr_min = thr_max = np.max(im.data) / 2
     im_bin = im.copy()
     im_bin.data[im.data >= thr_max] = 1
     im_bin.data[im.data < thr_min] = 0

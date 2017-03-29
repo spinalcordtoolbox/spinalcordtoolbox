@@ -81,7 +81,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         num_features[iz] = num_f
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(slice)
         if iz != 0:
-            distances.append(sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2))
+            distances.append(sqrt((x_centerline[iz] - x_centerline[iz - 1]) ** 2 + (y_centerline[iz] - y_centerline[iz - 1]) ** 2))
 
     if remove_outliers:
         mean_distances = np.mean(distances)
@@ -89,14 +89,14 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         indices_to_remove = []
 
         # ascending verification
-        for iz in range(0, nz_nonz/2, 1):
-            distance = sqrt((x_centerline[iz]-x_centerline[iz+1]) ** 2 + (y_centerline[iz]-y_centerline[iz+1]) ** 2)
+        for iz in range(0, nz_nonz / 2, 1):
+            distance = sqrt((x_centerline[iz] - x_centerline[iz + 1]) ** 2 + (y_centerline[iz] - y_centerline[iz + 1]) ** 2)
             if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
                 indices_to_remove.append(iz)
 
         # descending verification
-        for iz in range(nz_nonz-1, nz_nonz/2, -1):
-            distance = sqrt((x_centerline[iz]-x_centerline[iz-1]) ** 2 + (y_centerline[iz]-y_centerline[iz-1]) ** 2)
+        for iz in range(nz_nonz - 1, nz_nonz / 2, -1):
+            distance = sqrt((x_centerline[iz] - x_centerline[iz - 1]) ** 2 + (y_centerline[iz] - y_centerline[iz - 1]) ** 2)
             if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
                 indices_to_remove.append(iz)
 
@@ -112,19 +112,19 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         y_centerline = phys_coord_centerline[:, 1]
         z_centerline = phys_coord_centerline[:, 2]
 
-    sct.printv('.. Smoothing algo = '+algo_fitting, verbose)
+    sct.printv('.. Smoothing algo = ' + algo_fitting, verbose)
     if algo_fitting == 'hanning':
         # 2D smoothing
-        sct.printv('.. Windows length = '+str(window_length), verbose)
+        sct.printv('.. Windows length = ' + str(window_length), verbose)
 
         # change to array
         x_centerline = np.asarray(x_centerline)
         y_centerline = np.asarray(y_centerline)
 
         # Smooth the curve
-        x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length/pz, window=type_window,
+        x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length / pz, window=type_window,
                                                verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
-        y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length/pz, window=type_window,
+        y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length / pz, window=type_window,
                                                verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
 
         # convert to list final result
@@ -256,8 +256,8 @@ class SpinalCordStraightener(object):
 
         # Copying input data to tmp folder
         sct.printv('\nCopy files to tmp folder...', verbose)
-        sct.run('sct_convert -i '+fname_anat+' -o '+path_tmp+'data.nii')
-        sct.run('sct_convert -i '+fname_centerline+' -o '+path_tmp+'centerline.nii.gz')
+        sct.run('sct_convert -i ' + fname_anat + ' -o ' + path_tmp + 'data.nii')
+        sct.run('sct_convert -i ' + fname_centerline + ' -o ' + path_tmp + 'centerline.nii.gz')
 
         if self.use_straight_reference:
             sct.run('sct_convert -i ' + self.centerline_reference_filename + ' -o ' + path_tmp + 'centerline_ref.nii.gz')
@@ -279,8 +279,8 @@ class SpinalCordStraightener(object):
             from msct_image import Image
             image_centerline = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
-            sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-            sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+            sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
+            sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
             if self.resample_factor != 0.0:
                 os.rename('centerline_rpi.nii.gz', 'centerline_rpi_native.nii.gz')
@@ -465,7 +465,7 @@ class SpinalCordStraightener(object):
 
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
                 padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz)) + offset_z
-                sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,'+str(padding_z))
+                sct.run('sct_image -i centerline_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad 0,0,' + str(padding_z))
                 image_centerline_pad = Image('centerline_rpi.nii.gz')
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
                 hdr_warp = image_centerline_pad.hdr.copy()
@@ -586,7 +586,7 @@ class SpinalCordStraightener(object):
             if self.curved2straight:
                 for u in range(nz_s):
                     # print u+1, '/', nz_s
-                    x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u+1]
+                    x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u + 1]
                     indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
                     physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
                     nearest_indexes_straight = centerline_straight.find_nearest_indexes(physical_coordinates_straight)
@@ -607,7 +607,7 @@ class SpinalCordStraightener(object):
             if self.straight2curved:
                 for u in range(nz):
                     # print u + 1, '/', nz
-                    x, y, z = np.mgrid[0:nx, 0:ny, u:u+1]
+                    x, y, z = np.mgrid[0:nx, 0:ny, u:u + 1]
                     indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
                     physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
                     nearest_indexes_curved = centerline.find_nearest_indexes(physical_coordinates)
@@ -653,7 +653,7 @@ class SpinalCordStraightener(object):
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
-            sct.run('sct_apply_transfo -i data.nii -d ' + fname_ref + ' -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x '+interpolation_warp, verbose)
+            sct.run('sct_apply_transfo -i data.nii -d ' + fname_ref + ' -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x ' + interpolation_warp, verbose)
 
             if self.accuracy_results:
                 time_accuracy_results = time.time()
@@ -676,8 +676,8 @@ class SpinalCordStraightener(object):
                                                     for coord in coordinates_centerline if coord.z == z], axis=0))
 
                 # compute error between the straightened centerline and the straight line.
-                x0 = file_centerline_straight.data.shape[0]/2.0
-                y0 = file_centerline_straight.data.shape[1]/2.0
+                x0 = file_centerline_straight.data.shape[0] / 2.0
+                y0 = file_centerline_straight.data.shape[1] / 2.0
                 count_mean = 0
                 if number_of_points >= 10:
                     mean_c = mean_coord[2:-2]  # we don't include the four extrema because there are usually messy.
@@ -685,13 +685,13 @@ class SpinalCordStraightener(object):
                     mean_c = mean_coord
                 for coord_z in mean_c:
                     if not np.isnan(np.sum(coord_z)):
-                        dist = ((x0-coord_z[0])*px)**2 + ((y0-coord_z[1])*py)**2
+                        dist = ((x0 - coord_z[0]) * px)**2 + ((y0 - coord_z[1]) * py)**2
                         self.mse_straightening += dist
                         dist = sqrt(dist)
                         if dist > self.max_distance_straightening:
                             self.max_distance_straightening = dist
                         count_mean += 1
-                self.mse_straightening = sqrt(self.mse_straightening/float(count_mean))
+                self.mse_straightening = sqrt(self.mse_straightening / float(count_mean))
 
                 self.elapsed_time_accuracy = time.time() - time_accuracy_results
 
@@ -708,13 +708,13 @@ class SpinalCordStraightener(object):
         sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
         sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
         # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
-        shutil.copy(path_tmp+'/tmp.anat_rigid_warp.nii.gz', self.path_output + 'straight_ref.nii.gz')
+        shutil.copy(path_tmp + '/tmp.anat_rigid_warp.nii.gz', self.path_output + 'straight_ref.nii.gz')
         # move straightened input file
         if fname_output == '':
             fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
                                                       self.path_output + file_anat + "_straight" + ext_anat, verbose)
         else:
-            fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz',
+            fname_straight = sct.generate_output_file(path_tmp + '/tmp.anat_rigid_warp.nii.gz',
                                                       self.path_output + fname_output, verbose)  # straightened anatomic
 
         # Remove temporary files

@@ -136,7 +136,7 @@ class Option:
 
         elif type_option == "file_output":  # check if permission are required
             if not sct.check_write_permission(param):
-                self.parser.usage.error("Error of writing permissions on file: "+param)
+                self.parser.usage.error("Error of writing permissions on file: " + param)
             return param
 
         elif type_option == "folder":
@@ -171,11 +171,11 @@ class Option:
                     param_splitted = param_splitted[0].split(' ')
                 return list([self.check_integrity(val, sub_type) for val in param_splitted])
             else:
-                self.parser.usage.error("ERROR: Option "+self.name+" must be correctly written. See usage.")
+                self.parser.usage.error("ERROR: Option " + self.name + " must be correctly written. See usage.")
 
         else:
             # self.parser.usage.error("ERROR: Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
-            sct.printv("WARNING : Option "+str(self.type_value)+" does not exist and will have no effect on the execution of the script", "warining")
+            sct.printv("WARNING : Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", "warining")
             sct.printv("Type -h to see supported options", "warning")
 
     def checkStandardType(self, param, type=None):
@@ -186,7 +186,7 @@ class Option:
         try:
             return self.__safe_cast__(param, eval(type_option))
         except ValueError:
-            self.parser.usage.error("ERROR: Option "+self.name+" must be "+type_option)
+            self.parser.usage.error("ERROR: Option " + self.name + " must be " + type_option)
 
     def checkFile(self, param):
         # check if the file exist
@@ -205,7 +205,7 @@ class Option:
         if param.lower().endswith('.nii'):
             if self.parser.check_file_exist:
                 nii = os.path.isfile(param)
-                niigz = os.path.isfile(param+'.gz')
+                niigz = os.path.isfile(param + '.gz')
             else:
                 nii, niigz = True, False
             param_tmp = param[:-4]
@@ -222,13 +222,13 @@ class Option:
             sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
 
         if nii:
-            return param_tmp+'.nii'
+            return param_tmp + '.nii'
         elif niigz:
-            return param_tmp+'.nii.gz'
+            return param_tmp + '.nii.gz'
         elif viewer:
             return param
         else:
-            sct.printv("ERROR: File "+param+" does not exist. Exiting", type='error')
+            sct.printv("ERROR: File " + param + " does not exist. Exiting", type='error')
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
@@ -247,7 +247,7 @@ class Option:
         if result_creation == 2:
             sct.printv("ERROR: Permission denied for folder creation...", type="error")
         elif result_creation == 1:
-            sct.printv("Folder "+param+" has been created.", 0, type='warning')
+            sct.printv("Folder " + param + " has been created.", 0, type='warning')
         # add slash at the end
         param = sct.slash_at_the_end(param, 1)
         return param
@@ -268,7 +268,7 @@ class Parser:
         self.check_file_exist = True
 
     def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False):
-        order = len(self.options)+1
+        order = len(self.options) + 1
         self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated)
 
     def parse(self, arguments, check_file_exist=True):
@@ -305,11 +305,11 @@ class Parser:
             if index == index_next:
                 if arguments[index][0] == '-':
                     arguments_temp.append(arguments[index])
-                    index_next = index+1
+                    index_next = index + 1
                 else:
                     temp_str = arguments[index]
                     index_temp = index
-                    if index_temp < len(arguments)-1:
+                    if index_temp < len(arguments) - 1:
                         if arguments[index][0] == '"':
                             while arguments[index_temp + 1][-1] != '"':  # loop until we find a double quote. Then concatenate.
                                 temp_str += ' ' + arguments[index_temp + 1]
@@ -319,12 +319,12 @@ class Parser:
                             temp_str += ' ' + arguments[index_temp + 1]
                             temp_str = temp_str[1:-1]
                         else:
-                            while arguments[index_temp+1][0] != '-':  # check if a space is present. If so, concatenation of strings.
-                                temp_str += ' '+arguments[index_temp+1]
+                            while arguments[index_temp + 1][0] != '-':  # check if a space is present. If so, concatenation of strings.
+                                temp_str += ' ' + arguments[index_temp + 1]
                                 index_temp += 1
-                                if index_temp >= len(arguments)-1:
+                                if index_temp >= len(arguments) - 1:
                                     break
-                    index_next = index_temp+1
+                    index_next = index_temp + 1
                     if '"' not in temp_str:
                         arguments_temp.append(temp_str)
         arguments = arguments_temp
@@ -337,20 +337,20 @@ class Parser:
 
             if arg in self.options:
                 if self.options[arg].deprecated_rm:
-                    sct.printv("ERROR : "+arg+" is a deprecated argument and is no longer supported by the current version.", 1, 'error')
+                    sct.printv("ERROR : " + arg + " is a deprecated argument and is no longer supported by the current version.", 1, 'error')
                 # for each argument, check if is in the option list.
                 # if so, check the integrity of the argument
                 if self.options[arg].deprecated:
-                    sct.printv("WARNING : "+arg+" is a deprecated argument and will no longer be updated in future versions.", 1, 'warning')
+                    sct.printv("WARNING : " + arg + " is a deprecated argument and will no longer be updated in future versions.", 1, 'warning')
                 if self.options[arg].deprecated_by is not None:
                     try:
-                        sct.printv("WARNING : "+arg+" is a deprecated argument and will no longer be updated in future versions. Changing argument to "+self.options[arg].deprecated_by+".", 1, 'warning')
+                        sct.printv("WARNING : " + arg + " is a deprecated argument and will no longer be updated in future versions. Changing argument to " + self.options[arg].deprecated_by + ".", 1, 'warning')
                         arg = self.options[arg].deprecated_by
                     except KeyError as e:
                         sct.printv("ERROR : Current argument non existent : " + e.message, 1, 'error')
                 if self.options[arg].type_value:
-                    if len(arguments) > index+1:  # Check if option is not the last item
-                        param = arguments[index+1]
+                    if len(arguments) > index + 1:  # Check if option is not the last item
+                        param = arguments[index + 1]
                     else:
                         self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
 
@@ -367,9 +367,9 @@ class Parser:
                 # check if the input argument is close to a known option
                 spelling_candidates = self.spelling.correct(arg)
                 if len(spelling_candidates) != 0:
-                    self.usage.error("ERROR: argument "+arg+" does not exist. Did you mean: "+', '.join(spelling_candidates) + '?')
+                    self.usage.error("ERROR: argument " + arg + " does not exist. Did you mean: " + ', '.join(spelling_candidates) + '?')
                 else:
-                    self.usage.error("ERROR: argument "+arg+" does not exist. See documentation.")
+                    self.usage.error("ERROR: argument " + arg + " does not exist. See documentation.")
 
         # check if all mandatory arguments are provided by the user
         for option in [opt for opt in self.options if self.options[opt].mandatory and self.options[opt].deprecated_by is None]:
@@ -461,7 +461,7 @@ class Usage:
         self.description = '\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
 
     def addSection(self, section):
-        self.section[len(self.arguments)+1] = section
+        self.section[len(self.arguments) + 1] = section
 
     # def get_sct_version(self):
     #     from commands import getstatusoutput
@@ -500,7 +500,7 @@ class Usage:
                     self.arguments_string += self.section[self.arguments[opt].order] + '\n'
                 # display argument
                 type_value = self.refactor_type_value(opt)
-                line = [" "+opt+" "+type_value, self.align(self.arguments[opt].description)]
+                line = [" " + opt + " " + type_value, self.align(self.arguments[opt].description)]
                 self.arguments_string += self.tab(line) + '\n'
         if optional:
             self.arguments_string += '\nOPTIONAL ARGUMENTS\n'
@@ -512,14 +512,14 @@ class Usage:
                 type_value = self.refactor_type_value(opt)
                 description = self.arguments[opt].description
                 if self.arguments[opt].default_value:
-                    description += " Default value = "+str(self.arguments[opt].default_value)
+                    description += " Default value = " + str(self.arguments[opt].default_value)
                 if self.arguments[opt].deprecated:
                     description += " Deprecated argument!"
-                line = [" "+opt+" "+type_value, self.align(description)]
+                line = [" " + opt + " " + type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
 
-        if len(self.arguments)+1 in self.section:
-            self.arguments_string += self.section[len(self.arguments)+1] + '\n'
+        if len(self.arguments) + 1 in self.section:
+            self.arguments_string += self.section[len(self.arguments) + 1] + '\n'
 
     def refactor_type_value(self, opt):
         if self.arguments[opt].type_value is None:
@@ -553,7 +553,7 @@ class Usage:
         usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
-            sct.printv(error+'\nAborted...', type='warning')
+            sct.printv(error + '\nAborted...', type='warning')
             sct.printv(usage, type='normal')
             raise SyntaxError(error)
             exit(1)
@@ -585,7 +585,7 @@ class Usage:
         tab = ''
         for string in strings:
             if len(string) < 30:
-                spaces = ' '*(30 - len(string))
+                spaces = ' ' * (30 - len(string))
                 string += spaces
             tab += string
 
@@ -620,16 +620,16 @@ class Usage:
                     strings.append(stri[0:last_space])
                     stri = stri[last_space:]
                     if k != 0:
-                        stri = '    '+stri
+                        stri = '    ' + stri
                     i = i - last_space
             strings.append(stri)
 
         # Concatenate strings
         for i, yes in enumerate(strings):
             if i != 0:
-                s += ' '*pad
+                s += ' ' * pad
             s += yes
-            if i != len(strings)-1:
+            if i != len(strings) - 1:
                 s += '\n'
         return s
 
@@ -665,7 +665,7 @@ class DocSourceForge:
         self.description = '-----------\n#####DESCRIPTION#####\n' + self.align(description, length=100, pad=0)
 
     def addSection(self, section):
-        self.section[len(self.arguments)+1] = section
+        self.section[len(self.arguments) + 1] = section
 
     def set_usage(self):
         from os.path import basename
@@ -692,7 +692,7 @@ class DocSourceForge:
                     self.arguments_string += self.section[self.arguments[opt].order] + '\n'
                 # display argument
                 type_value = self.refactor_type_value(opt)
-                line = ["  "+opt+" "+type_value+'`', '|'+self.arguments[opt].description]
+                line = ["  " + opt + " " + type_value + '`', '|' + self.arguments[opt].description]
                 self.arguments_string += self.tab(line) + '\n'
         if optional:
             self.arguments_string += '\n\nOPTIONAL ARGUMENTS  |` `\n--------------------|---\n'
@@ -704,7 +704,7 @@ class DocSourceForge:
                         self.arguments_string += self.section[self.arguments[opt].order] + '\n'
                     # display argument
                     type_value = self.refactor_type_value(opt)
-                    line = ["  "+opt+" "+type_value+'`', '|'+self.arguments[opt].description]
+                    line = ["  " + opt + " " + type_value + '`', '|' + self.arguments[opt].description]
                     self.arguments_string += self.tab(line) + '\n'
 
     def refactor_type_value(self, opt):
@@ -721,7 +721,7 @@ class DocSourceForge:
     def set_example(self):
         from os.path import basename
         self.example = '\n\n#####EXAMPLE#####\n' + \
-            '`'+basename(self.file)
+            '`' + basename(self.file)
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
         mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
         for opt in [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].example]:
@@ -733,7 +733,7 @@ class DocSourceForge:
 
     def generate(self, error=None):
         # self.set_header()
-        self.set_description(self.parser.usage.description[2+len('description'):])
+        self.set_description(self.parser.usage.description[2 + len('description'):])
         self.set_arguments()
         self.set_usage()
         self.set_example()
@@ -741,7 +741,7 @@ class DocSourceForge:
         # doc = self.header + self.description + self.usage + self.arguments_string + self.example
         doc = self.header + self.description + self.usage + self.arguments_string
         from os.path import basename
-        file_doc_sf = open('doc_sf_'+basename(self.file)[:-3]+'.txt', 'w')
+        file_doc_sf = open('doc_sf_' + basename(self.file)[:-3] + '.txt', 'w')
         file_doc_sf.write(doc)
         file_doc_sf.close()
 
@@ -772,7 +772,7 @@ class DocSourceForge:
         tab = ''
         for string in strings:
             if len(string) < 30:
-                spaces = ' '*(30 - len(string))
+                spaces = ' ' * (30 - len(string))
                 string += spaces
             tab += string
 
@@ -807,16 +807,16 @@ class DocSourceForge:
                     strings.append(stri[0:last_space])
                     stri = stri[last_space:]
                     if k != 0:
-                        stri = '    '+stri
+                        stri = '    ' + stri
                     i = i - last_space
             strings.append(stri)
 
         # Concatenate strings
         for i, yes in enumerate(strings):
             if i != 0:
-                s += ' '*pad
+                s += ' ' * pad
             s += yes
-            if i != len(strings)-1:
+            if i != len(strings) - 1:
                 s += '\n'
         return s
 
@@ -867,5 +867,5 @@ class SpellingChecker:
     def known(self, words): return set(w for w in words if w in self.NWORDS)
 
     def correct(self, word):
-        return self.known([word]) or self.known(self.edits1(word)) or self.known_edits2(word) #
+        return self.known([word]) or self.known(self.edits1(word)) or self.known_edits2(word)
         # return max(candidates, key=self.NWORDS.get) # return the most potential candidate

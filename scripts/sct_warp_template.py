@@ -35,7 +35,7 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.folder_out = 'label/'  # name of output folder
-        self.path_template = path_sct+'/data/PAM50/'
+        self.path_template = path_sct + '/data/PAM50/'
         self.folder_template = 'template/'
         self.folder_atlas = 'atlas/'
         self.folder_spinal_levels = 'spinal_levels/'
@@ -76,17 +76,17 @@ class WarpTemplate:
 
         # print arguments
         print '\nCheck parameters:'
-        print '  Working directory ........ '+os.getcwd()
-        print '  Destination image ........ '+self.fname_src
-        print '  Warping field ............ '+self.fname_transfo
-        print '  Path template ............ '+self.path_template
-        print '  Output folder ............ '+self.folder_out+'\n'
+        print '  Working directory ........ ' + os.getcwd()
+        print '  Destination image ........ ' + self.fname_src
+        print '  Warping field ............ ' + self.fname_transfo
+        print '  Path template ............ ' + self.path_template
+        print '  Output folder ............ ' + self.folder_out + '\n'
 
         # create output folder
         if os.path.exists(self.folder_out):
             sct.printv('WARNING: Output folder already exists. Deleting it...', self.verbose, 'warning')
-            sct.run('rm -rf '+self.folder_out)
-        sct.run('mkdir '+self.folder_out)
+            sct.run('rm -rf ' + self.folder_out)
+        sct.run('mkdir ' + self.folder_out)
 
         # Warp template objects
         sct.printv('\nWARP TEMPLATE:', self.verbose)
@@ -104,7 +104,7 @@ class WarpTemplate:
 
         # to view results
         sct.printv('\nDone! To view results, type:', self.verbose)
-        sct.printv('fslview '+self.fname_src+' ' \
+        sct.printv('fslview ' + self.fname_src + ' ' \
                    + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'T2') + ' -b 0,4000 ' \
                    + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'vertebral') + ' -l MGH-Cortical -t 0.5 ' \
                    + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'gray matter') + ' -l Red-Yellow -b 0.5,1 ' \
@@ -136,7 +136,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     try:
         template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = read_label_file(path_label + folder_label, file_label)
     except Exception as error:
-        sct.printv('\nWARNING: Cannot warp label '+folder_label+': '+str(error), 1, 'warning')
+        sct.printv('\nWARNING: Cannot warp label ' + folder_label + ': ' + str(error), 1, 'warning')
         # raise
     # try:
     #     template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(path_label+folder_label, file_label)
@@ -145,16 +145,16 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     #     sct.printv('\nERROR: ' + traceback.format_exc(), 1, 'error')
     else:
         # create output folder
-        sct.run('mkdir '+path_out+folder_label, param.verbose)
+        sct.run('mkdir ' + path_out + folder_label, param.verbose)
         # Warp label
         for i in xrange(0, len(template_label_file)):
-            fname_label = path_label+folder_label+template_label_file[i]
+            fname_label = path_label + folder_label + template_label_file[i]
             # check if file exists
             # sct.check_file_exist(fname_label)
             # apply transfo
-            sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] + ' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i]), param.verbose)
+            sct.run('sct_apply_transfo -i ' + fname_label + ' -o ' + path_out + folder_label + template_label_file[i] + ' -d ' + fname_src + ' -w ' + fname_transfo + ' -x ' + get_interp(template_label_file[i]), param.verbose)
         # Copy list.txt
-        sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
+        sct.run('cp ' + path_label + folder_label + param.file_info_label + ' ' + path_out + folder_label, 0)
 
 
 # Get file label
@@ -174,7 +174,7 @@ def get_file_label(path_label='', label='', output='file'):
     # make sure there is a slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
     # Open file
-    fname_label = path_label+file_info_label
+    fname_label = path_label + file_info_label
     try:
         f = open(fname_label)
     except IOError:
@@ -193,12 +193,12 @@ def get_file_label(path_label='', label='', output='file'):
                     # sct.printv('Found Label ' + label + ' in file: ' + file_label)
                     break
         if file_label == '':
-            sct.printv('\nWARNING: Label '+label+' not found.', 1, 'warning')
+            sct.printv('\nWARNING: Label ' + label + ' not found.', 1, 'warning')
         # output
         if output == 'file':
             return file_label
         elif output == 'filewithpath':
-            return path_label+file_label
+            return path_label + file_label
 
 
 # Get interpolation method
