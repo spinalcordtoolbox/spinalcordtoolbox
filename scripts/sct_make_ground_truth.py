@@ -174,7 +174,7 @@ def correct_nb_slice_to_mean(i):
         return i
     elif i%2 == 0:
         return i-1
-        
+
 def write_paramaters(arguments,param,ref,verbose):
     param.verbose = verbose
     if '-param-straighten' in arguments:
