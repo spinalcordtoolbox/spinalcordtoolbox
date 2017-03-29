@@ -1211,7 +1211,8 @@ class ClickViewerRegisterToTemplate(ClickViewer):
              '2': 'Please click on pontomedullary groove \n'
                   ' (label=49) \n',
 
-             '3': 'Please click on top of C1 vertebrae (label=1) \n',
+             '3': 'Please click on top of C1 vertebrae \n'
+                  '(label=1) \n',
              '4': 'Please click on posterior edge of  \n'
                   'C2/C3 intervertebral disk (label=3) \n',
              '5': 'Please click on posterior edge of  \n'
@@ -1346,16 +1347,9 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         dic={'1':50,
              '2':49,
              '3':1,
-             '4':2,
-             '5':3,
-             '6':4,
-             '7':5,
-             '8':6,
-             '9':7,
-             '10':8,
-             '11':9,
-             '12':10,
-             '13':11}
+             '4':3,}
+        for ii in range (5,len(self.dic_message_labels)):
+            dic[str(ii)]=ii-1
         return dic
 
     def set_target_point(self,event):
@@ -1430,7 +1424,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def is_it_possible_to_get_lower(self):
         if not self.current_dot_number:
-            if self.list_current_wanted_labels[0]<len(self.dic_message_labels)-1:
+            if self.list_current_wanted_labels[0]<len(self.dic_message_labels):
                 return True
             else:
                 self.update_title_text('cant_go_lower')
@@ -1499,14 +1493,18 @@ class ClickViewerGroundTruth(ClickViewer):
         self.windows[1].axes.set_title('Select the center slice \n '
                                        'for the averaging. \n')
 
+        self.first_label=first_label
+
+        self.dic_message_labels=self.define_dic_message_labels()
+
         self.bool_may_skip_all_remaining=False
-        self.number_of_dots_final=10
         self.current_dot_number=1
         self.number_of_slices_to_mean=3
-        self.dic_message_labels=self.define_dic_message_labels()
+
+        self.number_of_dots_final = len(self.dic_message_labels)
         self.dic_translate_labels=self.define_translate_dic()
         self.update_title_text(str(self.current_dot_number))
-        self.first_label=first_label
+
 
         """ Create Buttons"""
         self.create_button_redo()
@@ -1559,19 +1557,65 @@ class ClickViewerGroundTruth(ClickViewer):
                     Coordinate([-1, -1, -1, self.dic_translate_labels[str(self.current_dot_number)]]))
 
     def define_dic_message_labels(self):
-        dic={'1':'Please click on the 50th label \n',
-             '2': 'Please click on the 49th label \n',
-             '3': 'Please click on C1/C2 \n',
-             '4': 'Please click on C2/C3 \n',
-             '5': 'Please click on 5 \n',
-             '6': 'Please click on 6 \n',
-             '7': 'Please click on 7 \n',
-             '8': 'Please click on 8 \n',
-             '9': 'Please click on 9 \n',
-             '10': 'Please click on 10 \n',
-             '11': 'Please click on 11 \n',
-             '12': 'Please click on 12 \n',
-             '13': 'Please click on 13 \n',
+        dic={'1':'Please click on anterior base \n'
+                 'of pontomedullary junction (label=50) \n',
+             '2': 'Please click on pontomedullary groove \n'
+                  ' (label=49) \n',
+
+             '3': 'Please click on top of C1 vertebrae \n'
+                  '(label=1) \n',
+             '4': 'Please click on posterior edge of  \n'
+                  'C2/C3 intervertebral disk (label=3) \n',
+             '5': 'Please click on posterior edge of  \n'
+                  'C3/C4 intervertebral disk (label=4) \n',
+             '6': 'Please click on posterior edge of  \n'
+                  'C4/C5 intervertebral disk (label=5) \n',
+             '7': 'Please click on posterior edge of  \n'
+                  'C5/C6 intervertebral disk (label=6) \n',
+             '8': 'Please click on posterior edge of  \n'
+                  'C6/C7 intervertebral disk (label=7) \n',
+             '9': 'Please click on posterior edge of  \n'
+                  'C7/T1 intervertebral disk (label=8) \n',
+
+             '10': 'Please click on posterior edge of  \n'
+                  'T1/T2 intervertebral disk (label=9) \n',
+             '11': 'Please click on posterior edge of  \n'
+                  'T2/T3 intervertebral disk (label=10) \n',
+             '12': 'Please click on posterior edge of  \n'
+                  'T3/T4 intervertebral disk (label=11) \n',
+             '13': 'Please click on posterior edge of  \n'
+                  'T4/T5 intervertebral disk (label=12) \n',
+             '14': 'Please click on posterior edge of  \n'
+                   'T5/T6 intervertebral disk (label=13) \n',
+             '15': 'Please click on posterior edge of  \n'
+                   'T6/T7 intervertebral disk (label=14) \n',
+             '16': 'Please click on posterior edge of  \n'
+                   'T7/T8 intervertebral disk (label=15) \n',
+             '17': 'Please click on posterior edge of  \n'
+                   'T8/T9 intervertebral disk (label=16) \n',
+             '18': 'Please click on posterior edge of  \n'
+                   'T9/T10 intervertebral disk (label=17) \n',
+             '19': 'Please click on posterior edge of  \n'
+                   'T10/T11 intervertebral disk (label=18) \n',
+             '20': 'Please click on posterior edge of  \n'
+                   'T11/T12 intervertebral disk (label=19) \n',
+             '21': 'Please click on posterior edge of  \n'
+                   'T12/L1 intervertebral disk (label=20) \n',
+
+             '22': 'Please click on posterior edge of  \n'
+                   'L1/L2 intervertebral disk (label=21) \n',
+             '23': 'Please click on posterior edge of  \n'
+                   'L2/L3 intervertebral disk (label=22) \n',
+             '24': 'Please click on posterior edge of  \n'
+                   'L3/L4 intervertebral disk (label=23) \n',
+             '25': 'Please click on posterior edge of  \n'
+                   'L4/S1 intervertebral disk (label=24) \n',
+
+             '26': 'Please click on posterior edge of  \n'
+                   'S1/S2 intervertebral disk (label=25) \n',
+             '27': 'Please click on posterior edge of  \n'
+                   'S2/S3 intervertebral disk (label=26) \n',
+
              }
         return dic
 
@@ -1716,16 +1760,9 @@ class ClickViewerGroundTruth(ClickViewer):
         dic={'1':50,
              '2':49,
              '3':1,
-             '4':2,
-             '5':3,
-             '6':4,
-             '7':5,
-             '8':6,
-             '9':7,
-             '10':8,
-             '11':9,
-             '12':10,
-             '13':11}
+             '4':3,}
+        for ii in range (5,len(self.dic_message_labels)):
+            dic[str(ii)]=ii-1
         return dic
 
     def set_target_point(self,event):
