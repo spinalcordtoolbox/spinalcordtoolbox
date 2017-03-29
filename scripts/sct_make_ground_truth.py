@@ -243,11 +243,12 @@ def copy_files_to_temporary_files(verbose,fname_data,path_tmp,ftmp_seg,ftmp_data
     sct.run('sct_convert -i '+fname_template_seg+' -o '+path_tmp+ftmp_template_seg)
     # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
 
-def set_viewer_parameters(viewer):
+def set_viewer_parameters(viewer,nb_slices_to_mean):
     viewer.number_of_slices = 1
     pz = 1
     viewer.gap_inter_slice = int(10 / pz)
     viewer.calculate_list_slices()
+    viewer.number_of_slices_to_mean=nb_slices_to_mean
     viewer.show_image_mean()
 
 def prepare_input_image_for_viewer(fname_data):
@@ -272,7 +273,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
 
-def use_viewer_to_define_labels(fname_data,first_label):
+def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -289,7 +290,7 @@ def use_viewer_to_define_labels(fname_data,first_label):
 
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
     viewer = ClickViewerGroundTruth(im_input_SAL, first_label,orientation_subplot=['sag', 'ax'])
-    set_viewer_parameters(viewer)
+    set_viewer_parameters(viewer,nb_of_slices_to_mean)
 
     mask_points = viewer.start()
     if not mask_points and viewer.closed:
