@@ -1678,6 +1678,7 @@ class ClickViewerGroundTruth(ClickViewer):
             point = [self.current_point.x, self.current_point.y, self.current_point.z]
             self.update_pictures_in_windows(plot,point)
             self.show_image_mean()
+            self.draw_points(self.windows[0],self.current_point.z)
 
     def update_pictures_in_windows(self,plot,point):
         for window in self.windows:
@@ -1755,6 +1756,33 @@ class ClickViewerGroundTruth(ClickViewer):
             self.plot_points.set_xdata(y_data)
             self.plot_points.set_ydata(x_data)
             self.fig.canvas.draw()
+
+    def on_motion(self, event, plot=None):
+        """
+        This subplot refers to the secondary window. It captures event "motion"
+        :param event:
+        :param plot:
+        :return:
+        """
+        if event.button == 1 and event.inaxes and plot.view == self.orientation[self.secondary_subplot] and time() - self.last_update > self.update_freq:
+            is_in_axes = False
+            for window in self.windows:
+                if event.inaxes == window.axes:
+                    is_in_axes = True
+            if not is_in_axes:
+                return
+
+            self.last_update = time()
+            self.current_point = self.get_event_coordinates(event, plot)
+            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            for window in self.windows:
+                if window is plot:
+                    window.update_slice(point, data_update=False)
+                else:
+                    self.draw_points(window, self.current_point.x)
+                    window.update_slice(point, data_update=True)
+            self.draw_points(self.windows[0],self.current_point.z)
+        return
 
     def define_translate_dic(self):
         dic={'1':50,
