@@ -124,8 +124,8 @@ def get_parser():
                       type_value="multiple_choice",
                       description="You can create your own labels using a interactive viewer using option 'viewer",
                       mandatory=False,
-                      default_value='0',
-                      example=['0', '1'])
+                      default_value='none',
+                      example=['none', 'viewer'])
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -154,9 +154,15 @@ def rewrite_arguments(arguments):
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
-    init_template=int(arguments['-init-template'])
+    init_template=correct_init_template(arguments['-init-template'])
 
     return (fname_data,fname_seg,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_template)
+
+def correct_init_template(s):
+    if s=='viewer':
+        return True
+    else:
+        return False
 
 def write_paramaters(arguments,param,ref,verbose):
     param.verbose = verbose
