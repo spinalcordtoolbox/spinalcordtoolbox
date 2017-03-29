@@ -848,8 +848,6 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     dim = seg.dim
     ny = dim[1]
     nz = dim[2]
-    # open labeled discs
-    im_discs = Image(fname_seg)
     # loop across z
     for iz in range(nz):
         # get index of the disc right above iz
