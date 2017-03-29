@@ -1428,6 +1428,8 @@ class ClickViewerGroundTruth(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
+        self.windows[1].axes.set_title('Select the center slice \n '
+                                       'for the averaging. \n')
 
         self.bool_may_skip_all_remaining=False
         self.number_of_dots_final=10
@@ -1438,14 +1440,12 @@ class ClickViewerGroundTruth(ClickViewer):
         self.update_title_text(str(self.current_dot_number))
         self.first_label=first_label
 
-
         """ Create Buttons"""
         self.create_button_redo()
         self.create_button_skip()
         self.create_button_mean_more()
         self.create_button_mean_less()
         self.create_button_reset_mean()
-
 
         self.skip_until_first_slice()
         self.update_title_text('current_dot_to_draw')
