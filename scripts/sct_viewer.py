@@ -1696,13 +1696,13 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def press_skip(self, event):
         if event.inaxes == self.dic_axis_buttons['skip']:
-            if not self.are_all_slices_done() and not self.bool_may_skip_all_remaining:
+            if not self.are_all_slices_done():
                 self.current_dot_number += 1
                 self.list_points.append( Coordinate([-1,-1,-1,self.dic_translate_labels[str(self.current_dot_number ) ] ] ) )
                 self.is_there_next_slice()
-            elif self.bool_may_skip_all_remaining:
-                self.skip_all_remaining_labels()
-                self.update_title_text('all_remaining_labels_skipped')
+            else:
+                self.update_title_text('warning_all_slices_are_done_already')
+
 
     def on_press_main_window(self,event,plot):
         self.bool_may_skip_all_remaining=True
@@ -1843,7 +1843,7 @@ class ClickViewerGroundTruth(ClickViewer):
                 self.update_title_text('warning_redo_beyond_first_dot')
 
     def skip_all_remaining_labels(self):
-        for ilabels in range (self.current_dot_number,self.number_of_dots_final):
+        for ilabels in range (self.current_dot_number,self.number_of_dots_final-1):
             self.current_dot_number += 1
             self.list_points.append(Coordinate([-1, -1, -1, self.dic_translate_labels[str(self.current_dot_number)]]))
 
