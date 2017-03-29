@@ -1452,9 +1452,21 @@ class ClickViewerGroundTruth(ClickViewer):
         self.show_image_mean()
 
     def show_image_mean(self):
-        imMean=self.calc_mean_slices()
-        self.windows[0].figs[0].set_data(imMean)
-        self.windows[0].figs[0].figure.canvas.draw()
+        if self.check_averaging_possible():
+            imMean = self.calc_mean_slices()
+            self.windows[0].figs[0].set_data(imMean)
+            self.windows[0].figs[0].figure.canvas.draw()
+
+    def check_averaging_possible(self):
+        data=self.images[0].data
+        if self.current_point.z-(self.number_of_slices_to_mean-1)/2 <1 or self.current_point.z+(self.number_of_slices_to_mean-1)/2+1 > data.shape[2]-1:
+            self.number_of_slices_to_mean+= -2
+            self.show_image_mean()
+            self.update_title_text('warning_averaging_excedes_data_shape')
+            return False
+        else:
+            return True
+
 
     def calc_mean_slices(self):
         data=self.images[0].data
@@ -1535,6 +1547,10 @@ class ClickViewerGroundTruth(ClickViewer):
                                                             'the mean of several slices. \n')
             plt._setp(title_obj,color='k')
 
+        elif(key=='warning_averaging_excedes_data_shape'):
+            title_obj = self.windows[0].axes.set_title( 'You are too close to the border \n'
+                                                        'The number of slice you can average is ' + str(self.number_of_slices_to_mean) +'.\n')
+            plt._setp(title_obj,color='r')
 
         else:
             self.update_title_text_general(key)
