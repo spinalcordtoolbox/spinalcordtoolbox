@@ -13,7 +13,6 @@
 #########################################################################################
 
 
-
 import sys
 import commands
 import getopt
@@ -22,7 +21,6 @@ import time
 import numpy as np
 import nibabel as nib
 import sct_utils as sct
-
 
 
 # main
@@ -39,7 +37,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hv:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hv:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -50,7 +48,7 @@ def main():
 
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+ path_tmp, verbose)
+    sct.run('mkdir ' + path_tmp, verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -136,7 +134,7 @@ def main():
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
     sct.run('sct_dice_coefficient data_dest.nii.gz data_src_warp.nii.gz -o dice.txt', verbose)
-    with open ("dice.txt", "r") as file_dice:
+    with open("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
     printv('Dice coeff = '+str(dice), verbose)
 
@@ -150,7 +148,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         printv('\nDelete temporary files...', verbose)
-        sct.run('rm -rf '+ path_tmp, verbose)
+        sct.run('rm -rf ' + path_tmp, verbose)
 
     # output result for parent function
     if test_passed:
@@ -161,13 +159,11 @@ def main():
         sys.exit(1)
 
 
-
 # printv: enables to print or not, depending on verbose status
 #=======================================================================================================================
-def printv(string,verbose):
+def printv(string, verbose):
     if verbose:
         print(string)
-
 
 
 # Print usage
@@ -194,10 +190,8 @@ def usage():
     sys.exit(2)
 
 
-
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
     # call main function
     main()
-

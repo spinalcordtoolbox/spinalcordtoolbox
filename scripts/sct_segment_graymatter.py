@@ -177,8 +177,6 @@ def get_parser():
     return parser
 
 
-
-
 class ParamSeg:
     def __init__(self):
         self.fname_im = None
@@ -219,7 +217,6 @@ class SegmentGM:
         self.projected_target = None # list of coordinates of the target slices in the model reduced space
         self.im_res_gmseg = None
         self.im_res_wmseg = None
-
 
     def segment(self):
         self.copy_data_to_tmp()
@@ -302,7 +299,6 @@ class SegmentGM:
         if self.param.rm_tmp:
             # remove tmp_dir
             shutil.rmtree(self.tmp_dir)
-
 
     def copy_data_to_tmp(self):
         # copy input image
@@ -451,7 +447,7 @@ class SegmentGM:
             target_slice.set(gm_seg=im_src_gm_reg.data[i], wm_seg=im_src_wm_reg.data[i])
 
     def post_processing(self):
-        ## DO INTERPOLATION BACK TO ORIGINAL IMAGE
+        # DO INTERPOLATION BACK TO ORIGINAL IMAGE
         # get original SC segmentation oriented in RPI
         im_sc_seg_original_rpi = self.info_preprocessing['im_sc_seg_rpi'].copy()
         nx_ref, ny_ref, nz_ref, nt_ref, px_ref, py_ref, pz_ref, pt_ref = im_sc_seg_original_rpi.dim
@@ -464,7 +460,6 @@ class SegmentGM:
         im_res_wmseg.data = np.zeros(im_res_wmseg.data.shape)
 
         printv('  Interpolate result back into original space...', self.param.verbose, 'normal')
-
 
         for iz, im_iz_preprocessed in enumerate(self.info_preprocessing['interpolated_images']):
             # im gmseg for slice iz
@@ -527,7 +522,7 @@ class SegmentGM:
                 im_res_tot.data[:, :, iz] = im_res_slice_interp.data
         printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
 
-        ## PUT RES BACK IN ORIGINAL ORIENTATION
+        # PUT RES BACK IN ORIGINAL ORIENTATION
         im_res_gmseg.setFileName('res_gmseg.nii.gz')
         im_res_gmseg.save()
         im_res_gmseg = set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
@@ -548,7 +543,6 @@ class SegmentGM:
         os.chdir(tmp_dir_val)
         fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
         fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
-
 
         im_gmseg = self.im_res_gmseg.copy()
         im_wmseg = self.im_res_wmseg.copy()
@@ -571,10 +565,10 @@ class SegmentGM:
                              '-sub', fname_manual_gmseg,
                              '-o', fname_manual_wmseg])
 
-        ## compute DC:
+        # compute DC:
         try:
-            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg + ' -d ' + fname_gmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
-            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg + ' -d ' + fname_gmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put ref and res in the same space if needed
             fname_manual_gmseg_corrected = add_suffix(fname_manual_gmseg, '_reg')
@@ -593,8 +587,8 @@ class SegmentGM:
                                  '-bin', '0.1',
                                  '-o', fname_manual_wmseg_corrected])
             # recompute DC
-            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
-            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
         # save results to a text file
         fname_dc = 'dice_coefficient_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
         file_dc = open(fname_dc, 'w')
@@ -608,7 +602,7 @@ class SegmentGM:
         file_dc.write(output_wm)
         file_dc.close()
 
-        ## compute HD and MD:
+        # compute HD and MD:
         fname_hd = 'hausdorff_dist_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
         run('sct_compute_hausdorff_distance -i ' + fname_gmseg + ' -d ' + fname_manual_gmseg + ' -thinning 1 -o ' + fname_hd + ' -v ' + str(self.param.verbose))
 
@@ -686,8 +680,6 @@ class SegmentGM:
         os.chdir('..')
 
 
-
-
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
@@ -734,26 +726,26 @@ def main(args=None):
     if '-model' in arguments:
         param_model.path_model_to_load = os.path.abspath(arguments['-model'])
     if '-res-type' in arguments:
-        param_seg.type_seg= arguments['-res-type']
+        param_seg.type_seg = arguments['-res-type']
     if '-ratio' in arguments:
         param_seg.ratio = arguments['-ratio']
     if '-ref' in arguments:
         param_seg.fname_manual_gmseg = arguments['-ref']
     if '-ofolder' in arguments:
-        param_seg.path_results= arguments['-ofolder']
+        param_seg.path_results = arguments['-ofolder']
     if '-qc' in arguments:
         param_seg.qc = bool(int(arguments['-qc']))
     if '-r' in arguments:
-        param.rm_tmp= bool(int(arguments['-r']))
+        param.rm_tmp = bool(int(arguments['-r']))
     if '-v' in arguments:
-        param.verbose= arguments['-v']
+        param.verbose = arguments['-v']
 
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
     start = time.time()
     seg_gm.segment()
     end = time.time()
     t = end - start
-    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
+    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60, 1)) + ' sec', param.verbose, 'info')
 
 if __name__ == "__main__":
     main()

@@ -109,6 +109,7 @@ def properties2d(image, resolution=None, verbose=1):
 
     return sc_properties
 
+
 def average_properties(fname_seg_images, property_list, fname_disks_images, group_images, verbose=1):
     if len(fname_seg_images) != len(fname_disks_images):
         raise ValueError('ERROR: each segmentation image must be accompagnied by a disk image')
@@ -382,5 +383,3 @@ def prepare_data():
     average_properties(fname_seg_images, property_list, fname_disks_images, group_images, verbose=1)
 
 """
-
-

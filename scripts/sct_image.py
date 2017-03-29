@@ -23,6 +23,8 @@ class Param:
 
 # PARSER
 # ==========================================================================================
+
+
 def get_parser():
     param = Param()
 
@@ -432,7 +434,6 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     # return im_out
 
 
-
 def multicomponent_split(im):
     """
     Convert composite image (e.g., ITK warping field, 5dim) into several 3d volumes.
@@ -494,18 +495,18 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
     printv('\nGet dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
-    printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
+    printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
 
     # if data are 2d or 3d, get orientation from header using fslhd
 
-    if (nz == 1 or nt==1) and len(im.data.shape)<5:
+    if (nz == 1 or nt == 1) and len(im.data.shape) < 5:
         if get:
             try:
                 printv('\nGet orientation...', verbose)
                 im_out = None
                 ori = get_orientation(im)
             except Exception, e:
-                printv('ERROR: an error occurred: \n'+str(e), verbose,'error')
+                printv('ERROR: an error occurred: \n'+str(e), verbose, 'error')
             return ori
         elif set:
             # set orientation
@@ -539,7 +540,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
         if get:
             # get orientation
             printv('\nGet orientation...', verbose)
-            im_out=None
+            im_out = None
             ori = get_orientation(im_split_list[0])
             chdir('..')
             run('rm -rf '+tmp_folder, error_exit='warning')

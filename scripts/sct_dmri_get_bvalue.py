@@ -45,10 +45,11 @@ def main():
     print '  gyromagnetic ratio ..... '+str(GYRO)+' Hz/T'
     print ''
 
-    bvalue = ( 2 * math.pi * GYRO * gradamp * smalldelta ) ** 2 * (bigdelta - smalldelta/3)
+    bvalue = (2 * math.pi * GYRO * gradamp * smalldelta) ** 2 * (bigdelta - smalldelta/3)
 
     print 'b-value = '+str(bvalue / 10**6)+' mm^2/s\n'
     return bvalue
+
 
 def get_parser():
     # Initialize the parser

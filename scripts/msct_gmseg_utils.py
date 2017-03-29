@@ -27,10 +27,13 @@ import shutil
 ########################################################################################################################
 #                                   CLASS SLICE
 ########################################################################################################################
+
+
 class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
+
     def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, im_m=None, gm_seg_m=None, wm_seg_m=None, level=0):
         """
         Slice constructor
@@ -149,7 +152,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         im_sc_seg_rpi_crop = crop_sc_seg.crop()
         # denoising
         from sct_maths import denoise_nlmeans
-        block_radius = int(im_target_rpi_crop.data.shape[2]/2) if im_target_rpi_crop.data.shape[2]<10 else 5
+        block_radius = int(im_target_rpi_crop.data.shape[2]/2) if im_target_rpi_crop.data.shape[2] < 10 else 5
         data_denoised = denoise_nlmeans(im_target_rpi_crop.data, block_radius = block_radius)
         im_target_rpi_crop.data = data_denoised
 
@@ -197,13 +200,13 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
     nx, ny, nz, nt, px, py, pz, pt = im_input.dim
 
     im_input_sc = im_input_sc.copy()
-    im_input= im_input.copy()
+    im_input = im_input.copy()
 
     # keep only spacing and origin in qform to avoid rotation issues
     input_qform = im_input.hdr.get_qform()
     for i in range(4):
         for j in range(4):
-            if i!=j and j!=3:
+            if i != j and j != 3:
                 input_qform[i, j] = 0
 
     im_input.hdr.set_qform(input_qform)
@@ -285,7 +288,7 @@ def load_level(list_slices_target, fname_level):
                 # median of the vertebral level of the slice: if all voxels are int, med will be an int.
                 med = np.median(slice_level[slice_level > 0])
                 # change med in int if it is an int
-                med = int(med) if int(med)==med else med
+                med = int(med) if int(med) == med else med
             except Exception, e:
                 printv('WARNING: ' + str(e) + '\nNo level label found. Level will be set to 0 for this slice', verbose, 'warning')
                 l = 0
@@ -386,7 +389,7 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
         list_im_gm = interpolate_im_to_ref(im_manual_gmseg, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=0)
 
         # load gm seg in list of slices
-        n_poped=0
+        n_poped = 0
         for im_gm, slice_im in zip(list_im_gm, list_slices_target):
             if im_gm.data.max() == 0 and for_model:
                 list_slices_target.pop(slice_im.id-n_poped)
@@ -399,7 +402,6 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
     return list_slices_target
 
 ########################################### End of pre-processing function #############################################
-
 
 
 ########################################################################################################################
@@ -456,15 +458,16 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
         path_copy_warp = os.path.abspath(path_copy_warp)
         file_src = extract_fname(fname_src)[1]
         file_dest = extract_fname(fname_dest)[1]
-        fname_src2dest = 'warp_' + file_src +'2' + file_dest +'.nii.gz'
-        fname_dest2src = 'warp_' + file_dest +'2' + file_src +'.nii.gz'
-        shutil.copy(tmp_dir +'/' + fname_src2dest, path_copy_warp + '/')
+        fname_src2dest = 'warp_' + file_src + '2' + file_dest + '.nii.gz'
+        fname_dest2src = 'warp_' + file_dest + '2' + file_src + '.nii.gz'
+        shutil.copy(tmp_dir + '/' + fname_src2dest, path_copy_warp + '/')
         shutil.copy(tmp_dir + '/' + fname_dest2src, path_copy_warp + '/')
     if rm_tmp:
         # remove tmp dir
         shutil.rmtree(tmp_dir)
     # return res image
     return im_src_reg, fname_src2dest, fname_dest2src
+
 
 def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     # create tmp dir and go in it
@@ -560,8 +563,8 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, val_min=None, val_ma
         data_wm[data_wm >= 0.5] = 1
 
     # get GM and WM values in slice
-    data_in_gm = data[data_gm==1]
-    data_in_wm = data[data_wm==1]
+    data_in_gm = data[data_gm == 1]
+    data_in_wm = data[data_wm == 1]
     med_data_gm = np.median(data_in_gm)
     med_data_wm = np.median(data_in_wm)
     std_data = np.mean([np.std(data_in_gm), np.std(data_in_wm)])
@@ -574,7 +577,7 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, val_min=None, val_ma
             max_data = max(np.max(data_in_gm[data_in_gm.nonzero()]), np.max(data_in_wm[data_in_wm.nonzero()]))
             new_data = ((data - min_data) * (val_max - val_min) / (max_data - min_data)) + val_min
         except ValueError:
-            printv('WARNING: an incomplete slice will not be normalized',1,'warning')
+            printv('WARNING: an incomplete slice will not be normalized', 1, 'warning')
             return data
     # else (=normal data): use median values to normalize data
     else:
@@ -590,7 +593,6 @@ def normalize_slice(data, data_gm, data_wm, val_gm, val_wm, val_min=None, val_ma
 ########################################### End of processing function #############################################
 
 
-
 ########################################################################################################################
 #                                                   UTILS FUNCTIONS
 ########################################################################################################################
@@ -602,7 +604,7 @@ def binarize(im, thr_min=None, thr_max=None):
     if thr_min is None and thr_max is None:
         thr_min = thr_max = np.max(im.data)/2
     im_bin = im.copy()
-    im_bin.data[im.data>=thr_max] = 1
+    im_bin.data[im.data >= thr_max] = 1
     im_bin.data[im.data < thr_min] = 0
 
     return im_bin

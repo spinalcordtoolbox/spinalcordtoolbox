@@ -18,12 +18,16 @@ from msct_image import Image
 from sct_utils import printv, extract_fname
 
 ALMOST_ZERO = 0.000000001
+
+
 class Param:
     def __init__(self):
         self.verbose = '1'
 
 # PARSER
 # ==========================================================================================
+
+
 def get_parser():
     param = Param()
 
@@ -306,7 +310,6 @@ def main(args = None):
         compute_similarity(im.data, im_2.data, fname_out, metric='corr', verbose=verbose)
         data_out = None
 
-
     # if no flag is set
     else:
         data_out = None
@@ -350,6 +353,7 @@ def main(args = None):
         printv('fslview '+fname_out+' &\n', verbose, 'info')
     else:
         printv('\nDone! File created: '+fname_out, verbose, 'info')
+
 
 def otsu(data, nbins):
     from skimage.filters import threshold_otsu
@@ -514,6 +518,7 @@ def laplacian(data, sigmas):
     # from scipy.ndimage.filters import laplace
     # return laplace(data.astype(float))
 
+
 def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
     '''
     Compute a similarity metric between two images data
@@ -553,7 +558,7 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
         plt.title('Similarity: ' + metric_full + ' = ' + str(res))
         plt.savefig('fig_similarity.png')
 
-    printv('\n'+ metric_full +': ' + str(res), verbose, 'info')
+    printv('\n' + metric_full + ': ' + str(res), verbose, 'info')
 
     path_out, filename_out, ext_out = extract_fname(fname_out)
     if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
@@ -571,6 +576,7 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
         else:
             pickle.dump(res, open(fname_out, 'w'), protocol=2)
 
+
 def mutual_information(x, y, nbins=32, normalized=False):
     """
     Compute mutual information
@@ -587,6 +593,7 @@ def mutual_information(x, y, nbins=32, normalized=False):
         mi = sklearn.metrics.mutual_info_score(None, None, contingency=c_xy)
     # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
     return mi
+
 
 def correlation(x, y, type='pearson'):
     """
@@ -683,7 +690,6 @@ def correlation(x, y, type='pearson'):
 
     # k-means clustering
     # from sklearn.cluster import KMeans
-
 
 
 # START PROGRAM

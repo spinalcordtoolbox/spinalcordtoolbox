@@ -29,7 +29,7 @@ from msct_parser import Parser
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -48,6 +48,8 @@ param = Param()
 
 # resample
 # ======================================================================================================================
+
+
 def resample():
     """
     Resample data using nipy. Note: we cannot use msct_image because coordmap needs to be used.
@@ -120,7 +122,7 @@ def resample():
         transfo = np.delete(transfo, 3, 0)
         transfo = np.delete(transfo, 3, 1)
     # translate to account for voxel size (otherwise resulting image will be shifted by half a voxel). Modify the three first rows of the last column, corresponding to the translation.
-    transfo[:3, -1] = np.array(( (R[0, 0]-1)/2, (R[1, 1]-1)/2, (R[2, 2]-1)/2 ), dtype='f8')
+    transfo[:3, -1] = np.array(((R[0, 0]-1)/2, (R[1, 1]-1)/2, (R[2, 2]-1)/2), dtype='f8')
     # print transfo
     sct.printv('  transfo: \n'+str(transfo), verbose)
 
@@ -214,7 +216,6 @@ def resample():
     #
     # input_im = Image(param.fname_data)
 
-
     # import numpy as np
     # affine_new = np.array([[2., 0., 0., 1],
     #                 [0., 2., 0., 1],
@@ -259,8 +260,6 @@ def resample():
     #                    [0., 0., 0., 1.]])
 
     # new_data, new_affine = dp_iso.reslice(input_im.data, affine, zooms, new_zooms, mode=param.mode, order=order)
-
-
 
 
 def get_parser():
@@ -310,6 +309,7 @@ def get_parser():
                       default_value=1,
                       example=['0', '1', '2'])
     return parser
+
 
 def main(args=None):
 

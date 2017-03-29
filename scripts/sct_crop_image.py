@@ -266,6 +266,7 @@ class ImageCropper(object):
         print 'fslview '+path_out+file_out+ext_out+' &'
         print
 
+
 def get_parser():
         # Initialize parser
     parser = Parser(__file__)
