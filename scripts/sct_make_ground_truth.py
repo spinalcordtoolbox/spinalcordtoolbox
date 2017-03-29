@@ -163,10 +163,18 @@ def rewrite_arguments(arguments):
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
     init_labels=int(arguments['-init-labels'])
-    nb_slice_to_mean=int(arguments['-slice-to-mean'])
+    nb_slice_to_mean=correct_nb_slice_to_mean(int(arguments['-slice-to-mean']))
 
     return (fname_data,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_labels,first_label,nb_slice_to_mean)
 
+def correct_nb_slice_to_mean(i):
+    if i == 0:
+        return 1
+    elif i%2==1:
+        return i
+    elif i%2 == 0:
+        return i-1
+        
 def write_paramaters(arguments,param,ref,verbose):
     param.verbose = verbose
     if '-param-straighten' in arguments:
