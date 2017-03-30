@@ -79,8 +79,8 @@ def get_parser():
                       type_value="file",
                       description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels\n",
                       mandatory=False,
-                      default_value='labels_reoriented.nii.gz',
-                      example="labels_reoriented.nii.gz")
+                      default_value='labels_ground_truth.nii.gz',
+                      example="labels_ground_truth.nii.gz")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
@@ -285,7 +285,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         import sct_image
         # create the mask containing either the three-points or centerline mask for initialization
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
-        sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
+        sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_ground_truth.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
 
 def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
     from sct_viewer import ClickViewerGroundTruth
