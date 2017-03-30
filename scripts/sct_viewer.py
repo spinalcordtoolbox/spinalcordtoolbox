@@ -1185,7 +1185,9 @@ class ClickViewerRegisterToTemplate(ClickViewer):
                  list_images,
                  visualization_parameters=None,
                  orientation_subplot=['ax', 'sag'],
-                 input_type='centerline'):
+                 input_type='centerline',
+                 first_label=4,
+                 last_label=10):
 
         ClickViewer.__init__(self,list_images,
                  visualization_parameters=visualization_parameters,
@@ -1195,7 +1197,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         self.number_of_dots_final=2
         self.current_dot_number=0
         self.dic_message_labels=self.define_dic_message_labels()
-        self.list_current_wanted_labels=[4,10]
+        self.list_current_wanted_labels=[self.correct_label_choice(first_label),self.correct_label_choice(last_label)]
         self.update_title_text(str(self.current_dot_number))
         self.help_web_adress='https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_register_to_template/attachment/sct_register_to_template.png'
 
@@ -1204,6 +1206,16 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         self.create_button_redo()
         self.create_button_lower_label()
         self.create_button_higher_label()
+
+    def correct_label_choice(self,i):
+        if i==50:
+            return 0
+        elif i==49:
+            return 1
+        elif i==2:
+            return 2
+        else :
+            return i+1
 
     def define_dic_message_labels(self):
         dic={'1':'Please click on anterior base \n'

@@ -110,6 +110,18 @@ def get_parser():
                       \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\niter=' + paramreg.steps['1'].iter + '\nsmooth=' + paramreg.steps['1'].smooth + '\ngradStep=' + paramreg.steps['1'].gradStep + '\nslicewise=' + paramreg.steps['1'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['1'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th + '\
                       \n--\nstep=2\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\niter=' + paramreg.steps['2'].iter + '\nsmooth=' + paramreg.steps['2'].smooth + '\ngradStep=' + paramreg.steps['2'].gradStep + '\nslicewise=' + paramreg.steps['2'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['2'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th,
                       mandatory=False)
+    parser.add_option(name='-first',
+                      type_value='int',
+                      description='Define the label from which you wish to start. It can\'t be greater than 25 nor smaller than 1 ( you may choose 49 ou 50).',
+                      mandatory=False,
+                      default_value=4,
+                      example=1)
+    parser.add_option(name='-last',
+                      type_value='int',
+                      description='Define the label you wish to finish with. It can\'t be greater than 26 nor smaller than 2 (you may choose 50 ).',
+                      mandatory=False,
+                      default_value=8,
+                      example=26)
     parser.add_option(name="-param-straighten",
                       type_value='str',
                       description="""Parameters for straightening (see sct_straighten_spinalcord).""",
@@ -154,9 +166,11 @@ def rewrite_arguments(arguments):
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
+    first_label=int(arguments['-first'])
+    last_label = int(arguments['-last'])
     init_template=correct_init_template(arguments['-init-template'])
 
-    return (fname_data,fname_seg,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_template)
+    return (fname_data,fname_seg,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_template,first_label,last_label)
 
 def correct_init_template(s):
     if s=='viewer':
@@ -269,7 +283,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
 
-def use_viewer_to_define_labels(fname_data):
+def use_viewer_to_define_labels(fname_data,first_label,last_label):
     from sct_viewer import ClickViewerRegisterToTemplate
     from msct_image import Image
     import sct_image
@@ -285,7 +299,7 @@ def use_viewer_to_define_labels(fname_data):
 
 
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'])
+    viewer = ClickViewerRegisterToTemplate(im_input_SAL, orientation_subplot=['sag', 'ax'],first_label=first_label,last_label=last_label)
     set_viewer_parameters(viewer)
 
     mask_points = viewer.start()
@@ -303,11 +317,12 @@ def main():
 
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
-    (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,verbose,init_template)=rewrite_arguments(arguments)
+    (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,
+     verbose, init_template, first_label, last_label)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
     if(init_template):
-        use_viewer_to_define_labels(fname_data)
+        use_viewer_to_define_labels(fname_data,first_label=first_label,last_label=last_label)
     # initialize other parameters
     # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
