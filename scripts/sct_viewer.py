@@ -764,6 +764,7 @@ class ClickViewer(Viewer):
                 self.list_points_useful_notation += ':'
             self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
                                                str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            print(self.list_points_useful_notation)
 
     def press_save_and_quit(self, event):
         if event.inaxes == self.dic_axis_buttons['save_and_quit']:
@@ -1209,12 +1210,12 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def correct_label_choice(self,i):
         if i==50:
-            return 0
-        elif i==49:
             return 1
-        elif i==2:
+        elif i==49:
             return 2
-        else :
+        elif i==2 or i==1:
+            return 3
+        else:
             return i+1
 
     def define_dic_message_labels(self):
@@ -1360,7 +1361,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
              '2':49,
              '3':1,
              '4':3,}
-        for ii in range (5,len(self.dic_message_labels)):
+        for ii in range (5,len(self.dic_message_labels)+1):
             dic[str(ii)]=ii-1
         return dic
 
