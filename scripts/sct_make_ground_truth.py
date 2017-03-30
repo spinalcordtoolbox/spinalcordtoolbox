@@ -103,12 +103,12 @@ def get_parser():
                       mandatory=False,
                       default_value='template',
                       example=['template', 'subject'])
-    parser.add_option(name='-start',
+    parser.add_option(name='-first',
                       type_value='int',
-                      description='Define the label from which you wish to start. It can\'t be greater than 12 nor smaller than 1.',
+                      description='Define the label from which you wish to start. You can choose among the following labels : {50,49,1,3,4,...,25}. \n ',
                       mandatory=False,
-                      default_value=1,
-                      example=2)
+                      default_value=4,
+                      example= 4)
     parser.add_option(name='-slice-to-mean',
                       type_value='int',
                       description='Define the number of slice you want to average.',
@@ -156,7 +156,7 @@ def rewrite_arguments(arguments):
         path_output = arguments['-ofolder']
     else:
         path_output = ''
-    first_label=arguments['-start']
+    first_label=arguments['-first']
     path_template = sct.slash_at_the_end(arguments['-t'], 1)
     contrast_template = arguments['-c']
     ref = arguments['-ref']
