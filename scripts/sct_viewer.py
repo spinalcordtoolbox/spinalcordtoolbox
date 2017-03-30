@@ -764,11 +764,11 @@ class ClickViewer(Viewer):
                 self.list_points_useful_notation += ':'
             self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
                                                str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-            print(self.list_points_useful_notation)
 
     def press_save_and_quit(self, event):
         if event.inaxes == self.dic_axis_buttons['save_and_quit']:
             self.save_data()
+            print(self.list_points_useful_notation)
             self.closed=True
             plt.close('all')
 
@@ -1493,7 +1493,7 @@ class ClickViewerGroundTruth(ClickViewer):
 
     def __init__(self,
                  list_images,
-                 first_label,
+                 first_label=50,
                  visualization_parameters=None,
                  orientation_subplot=['ax', 'sag'],
                  input_type='centerline'):
@@ -1506,7 +1506,8 @@ class ClickViewerGroundTruth(ClickViewer):
         self.windows[1].axes.set_title('Select the center slice \n '
                                        'for the averaging. \n')
 
-        self.first_label=first_label
+        if self.check_first_label(first_label):
+            self.first_label=self.correct_label_choice(first_label)
 
         self.dic_message_labels=self.define_dic_message_labels()
 
@@ -1528,6 +1529,16 @@ class ClickViewerGroundTruth(ClickViewer):
         self.skip_until_first_slice()
         self.update_title_text('current_dot_to_draw')
         self.show_image_mean()
+
+    def correct_label_choice(self,i):
+        if i==50:
+            return 1
+        elif i==49:
+            return 2
+        elif i==2 or i==1:
+            return 3
+        else:
+            return i+1
 
     def show_image_mean(self):
         if self.check_averaging_possible():
@@ -1554,19 +1565,19 @@ class ClickViewerGroundTruth(ClickViewer):
                 imMean[ii,jj]=np.mean(dataRacc[ii,jj,:])
         return imMean
 
-    def check_first_label(self):
-        if self.first_label in range (1,9):
+    def check_first_label(self,i):
+        if i in range (1,27) or i in range (49,51):
             return True
         else:
-            sct.printv('Warning : You have selected a wrong number for \'-start\' : parameter ignored.',True,'warning')
+            sct.printv('Warning : You have selected a wrong number for \'-start\' : starting from label 50.',True,'warning')
+            self.first_label=1
             return False
 
     def skip_until_first_slice(self):
-        if self.check_first_label():
-            for ilabels in range(1, self.first_label):
-                self.current_dot_number += 1
-                self.list_points.append(
-                    Coordinate([-1, -1, -1, self.dic_translate_labels[str(self.current_dot_number)]]))
+        for ilabels in range(1, self.first_label):
+            self.current_dot_number += 1
+            self.list_points.append(
+                Coordinate([-1, -1, -1, self.dic_translate_labels[str(self.current_dot_number)]]))
 
     def define_dic_message_labels(self):
         dic={'1':'Please click on anterior base \n'
@@ -1799,7 +1810,7 @@ class ClickViewerGroundTruth(ClickViewer):
              '2':49,
              '3':1,
              '4':3,}
-        for ii in range (5,len(self.dic_message_labels)):
+        for ii in range (5,len(self.dic_message_labels)+1):
             dic[str(ii)]=ii-1
         return dic
 
