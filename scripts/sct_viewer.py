@@ -768,7 +768,6 @@ class ClickViewer(Viewer):
     def press_save_and_quit(self, event):
         if event.inaxes == self.dic_axis_buttons['save_and_quit']:
             self.save_data()
-            print(self.list_points_useful_notation)
             self.closed=True
             plt.close('all')
 
@@ -1868,7 +1867,7 @@ class ClickViewerGroundTruth(ClickViewer):
             self.list_points.append(Coordinate([-1, -1, -1, self.dic_translate_labels[str(self.current_dot_number)]]))
 
     def check_all_labels_are_done(self):
-        if self.current_dot_number==self.number_of_dots_final:
+        if self.current_dot_number==self.number_of_dots_final-1:
             return True
         else:
             self.skip_all_remaining_labels()
