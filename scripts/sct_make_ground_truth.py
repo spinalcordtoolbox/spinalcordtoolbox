@@ -107,8 +107,8 @@ def get_parser():
                       type_value='int',
                       description='Define the label from which you wish to start. You can choose among the following labels : {50,49,1,3,4,...,25}. \n ',
                       mandatory=False,
-                      default_value=4,
-                      example= 4)
+                      default_value=50,
+                      example= 50)
     parser.add_option(name='-slice-to-mean',
                       type_value='int',
                       description='Define the number of slice you want to average.',
