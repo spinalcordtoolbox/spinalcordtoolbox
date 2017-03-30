@@ -1702,7 +1702,6 @@ class ClickViewerGroundTruth(ClickViewer):
             else:
                 self.update_title_text('warning_all_slices_are_done_already')
 
-
     def on_press_main_window(self,event,plot):
         if not self.are_all_slices_done():
             target_point = self.set_target_point(event)
@@ -1851,10 +1850,15 @@ class ClickViewerGroundTruth(ClickViewer):
             self.skip_all_remaining_labels()
             self.update_title_text('confirm_to_quit')
 
+    def print_useful_points(self):
+        print('Labels positions are : ')
+        print(self.list_points_useful_notation)
+
     def press_save_and_quit(self, event):
         if event.inaxes == self.dic_axis_buttons['save_and_quit']:
             if self.check_all_labels_are_done():
                 self.save_data()
+                self.print_useful_points()
                 self.closed = True
                 plt.close('all')
 
