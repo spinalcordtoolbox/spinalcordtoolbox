@@ -282,6 +282,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         # create the mask containing either the three-points or centerline mask for initialization
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_reoriented.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
+        sct.run('rm -rf ' + 'labels.nii.gz')
 
 def use_viewer_to_define_labels(fname_data,first_label,last_label):
     from sct_viewer import ClickViewerRegisterToTemplate
