@@ -1859,7 +1859,7 @@ class ClickViewerGroundTruth(ClickViewer):
                 self.update_title_text('warning_redo_beyond_first_dot')
 
     def skip_all_remaining_labels(self):
-        for ilabels in range (self.current_dot_number,self.number_of_dots_final-1):
+        for ilabels in range (self.current_dot_number,self.number_of_dots_final):
             self.current_dot_number += 1
             self.list_points.append(Coordinate([-1, -1, -1, self.dic_translate_labels[str(self.current_dot_number)]]))
 
