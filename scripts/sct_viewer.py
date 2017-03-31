@@ -1066,10 +1066,6 @@ class ClickViewerPropseg(ClickViewer):
             else:
                 self.draw_points(self.windows[0], self.current_point.x)
 
-
-
-
-
 class ClickViewerLabelVertebrae(ClickViewer):
 
     def __init__(self,
@@ -1093,20 +1089,20 @@ class ClickViewerLabelVertebrae(ClickViewer):
     def update_title_text(self,key):
 
         if(key=='init'):
-            title_obj = self.windows[0].axes.set_title( 'Please click at intervertebral disc C2-C3 \n')
+            title_obj = self.windows[0].axes.set_title( 'Please click on posterior edge of  \n'
+                  'C2/C3 intervertebral disk (label=3) \n')
             plt._setp(title_obj,color='k')
 
         elif(key=='redo_done'):
             title_obj = self.windows[0].axes.set_title( 'Previous dot erased \n'
-                                                        'Please click at intervertebral disc C2-C3 \n')
+                                                        'Please click on posterioer edge of \n'
+                                                        'intervertebral disc C2-C3 \n')
             plt._setp(title_obj,color='k')
 
         elif(key=='impossible_to_leave'):
             title_obj = self.windows[0].axes.set_title('Please confirm : You have not drawn the dot \n'
                                                        'If you leave now, the software will crash\n')
             plt._setp(title_obj, color='r')
-
-
 
         else:
             self.update_title_text_general(key)
