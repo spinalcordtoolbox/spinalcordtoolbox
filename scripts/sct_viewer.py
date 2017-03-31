@@ -846,7 +846,6 @@ class ClickViewerPropseg(ClickViewer):
 
     def declaration_global_variables_specific(self):
         self.bool_enable_custom_points = False
-        self.bool_skip_all_to_end=False
 
     def create_button_skip(self):
         ax = plt.axes([0.59, 0.90, 0.1, 0.075])
@@ -857,12 +856,11 @@ class ClickViewerPropseg(ClickViewer):
     def press_skip(self, event):
         if event.inaxes == self.dic_axis_buttons['skip']:
             if not self.bool_enable_custom_points:
-                if self.bool_skip_all_to_end:
-                    self.update_title_text('skipped_all_remaining_slices')
-                else:
+                if not self.are_all_slices_done():
                     self.current_slice += 1
-                    #self.windows[0].update_slice(self.list_slices[self.current_slice])
-                    self.show_next_slice(self.windows[0],[self.current_point.x, self.current_point.y, self.current_point.z])
+                    if self.is_there_next_slice():
+                        self.show_next_slice(self.windows[0],
+                                         [self.current_point.x, self.current_point.y, self.current_point.z])
             else:
                 self.update_title_text('warning_skip_not_defined')
 
@@ -933,7 +931,6 @@ class ClickViewerPropseg(ClickViewer):
 
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
         self.calculate_list_slices()
-        self.bool_skip_all_to_end=False
 
         self.draw_points(self.windows[0],self.current_point.x)
 
@@ -950,7 +947,6 @@ class ClickViewerPropseg(ClickViewer):
                 self.update_title_text('way_auto_start')
 
     def on_press_main_window(self,event,plot):
-        self.bool_skip_all_to_end=True
         if self.bool_enable_custom_points:
             self.save_target_point_custom_way(event, plot)
         else:
@@ -1044,8 +1040,6 @@ class ClickViewerPropseg(ClickViewer):
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
             if (len(self.list_points) > 0   or self.current_slice>0):
-                if(len(self.list_points)==1):
-                    self.bool_skip_all_to_end = False
                 if not self.bool_enable_custom_points:
                     self.redo_auto()
                 self.remove_last_dot()
