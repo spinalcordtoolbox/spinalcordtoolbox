@@ -1221,10 +1221,9 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             return [4,10]
 
     def correct_label_choice(self,i):
-        if i==50:
-            return 1
-        elif i==49:
-            return 2
+        if i>20:
+            sct.printv('Warning : You can not choose this label : parameter ignored.', True, 'warning')
+            return 3
         elif i==2 or i==1:
             return 3
         else:
@@ -1447,13 +1446,13 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def is_it_possible_to_get_lower(self):
         if not self.current_dot_number:
-            if self.list_current_wanted_labels[0]<len(self.dic_message_labels)-1:
+            if self.list_current_wanted_labels[0]<20:
                 return True
             else:
                 self.update_title_text('cant_go_lower')
                 return False
         else:
-            if self.list_current_wanted_labels[1]<len(self.dic_message_labels):
+            if self.list_current_wanted_labels[1]<21:
                 return True
             else:
                 self.update_title_text('cant_go_lower')
@@ -1461,7 +1460,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def is_it_possible_to_get_higher(self):
         if not self.current_dot_number:
-            if self.list_current_wanted_labels[0]>1 and self.list_current_wanted_labels[1]>abs(self.list_current_wanted_labels[0]):
+            if self.list_current_wanted_labels[0]>3:
                 return True
             else:
                 self.update_title_text('cant_go_higher')

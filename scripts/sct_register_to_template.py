@@ -112,13 +112,13 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name='-first',
                       type_value='int',
-                      description='Define the label from which you wish to start. You can choose among the following labels : {50,49,1,3,4,...,25}. \n ',
+                      description='Define the label from which you wish to start. You can choose among the following labels : {1,3,4,...,19}. \n ',
                       mandatory=False,
                       default_value=4,
                       example= 4)
     parser.add_option(name='-last',
                       type_value='int',
-                      description='Define the label you wish to finish with. You can choose among the following labels : {49,1,3,4,...,25,26}. \n',
+                      description='Define the label you wish to finish with. You can choose among the following labels : {3,4,...,20}. \n',
                       mandatory=False,
                       default_value=8,
                       example= 10)
