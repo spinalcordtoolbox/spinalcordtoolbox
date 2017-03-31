@@ -1356,17 +1356,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
             self.on_press_secondary_window(event,plot)
 
-    def draw_points(self, window, current_slice):
-        if window.view == self.orientation[self.primary_subplot]:
-            x_data, y_data = [], []
-            for pt in self.list_points:
-                if pt.x == current_slice:
-                    x_data.append(pt.z + self.offset[2])
-                    y_data.append(pt.y + self.offset[1])
-            self.plot_points.set_xdata(x_data)
-            self.plot_points.set_ydata(y_data)
-            self.fig.canvas.draw()
-
     def define_translate_dic(self):
         dic={'1':50,
              '2':49,
