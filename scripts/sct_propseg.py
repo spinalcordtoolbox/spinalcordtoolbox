@@ -75,7 +75,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
     # for each slice of the segmentation, check if only one object is present. If not, remove the slice from segmentation.
     # If only one object (the spinal cord) is present in the slice, check if its center of mass is close to the centerline of isct_propseg.
     slices_to_remove = [False] * nz  # flag that decides if the slice must be removed
-    for i in range(minz_centerline, maxz_centerline+1):
+    for i in range(minz_centerline, maxz_centerline + 1):
         # extraction of slice
         slice = im_seg.data[:, :, i]
         distance = -1
@@ -84,7 +84,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
             slices_to_remove[i] = True
         elif nb_labels == 1:  # check if the centerline is coherent with the one from isct_propseg
             x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
-            slice_nearest_coord = min(key_centerline, key=lambda x: abs(x-i))
+            slice_nearest_coord = min(key_centerline, key=lambda x: abs(x - i))
             coord_nearest_coord = centerline[str(slice_nearest_coord)]
             distance = np.sqrt(((x_centerline - coord_nearest_coord[0]) * px) ** 2 +
                                ((y_centerline - coord_nearest_coord[1]) * py) ** 2 +

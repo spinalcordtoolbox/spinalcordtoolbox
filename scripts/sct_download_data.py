@@ -155,7 +155,7 @@ def download_data(url, verbose):
                     dl += len(chunk)
                     done = min(int(20 * dl / total), 20)
                     sys.stdout.write("\r[%s%s]" % ('=' * done,
-                                                   ' ' * (20-done)))
+                                                   ' ' * (20 - done)))
                     sys.stdout.flush()
 
     sct.printv('Download complete', verbose=verbose)

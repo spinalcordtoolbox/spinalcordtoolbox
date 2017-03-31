@@ -64,7 +64,7 @@ class Thinning:
         :return:
         """
         # now = time.time()
-        x_1, y_1, x1, y1 = x-1, y-1, x+1, y+1
+        x_1, y_1, x1, y1 = x - 1, y - 1, x + 1, y + 1
         neighbours = [image[x_1][y], image[x_1][y1], image[x][y1], image[x1][y1],     # P2,P3,P4,P5
                       image[x1][y], image[x1][y_1], image[x][y_1], image[x_1][y_1]]    # P6,P7,P8,P9
         # t = time.time() - now
@@ -180,7 +180,7 @@ class HausdorffDistance:
                     # for y2 in range(dat2.shape[1]):
                     # if dat2[x2, y2] == 1:
                     p2 = np.asarray([x2, y2])
-                    d_p1_dat2.append(np.linalg.norm(p1-p2))  # Euclidean distance between p1 and p2
+                    d_p1_dat2.append(np.linalg.norm(p1 - p2))  # Euclidean distance between p1 and p2
                 h[x1, y1] = min(d_p1_dat2)
         else:
             sct.printv('Warning: an image is empty', v, 'warning')
@@ -243,9 +243,9 @@ class ComputeDistances:
                 med1 = np.median(self.dist1_distribution[i])
                 med2 = np.median(self.dist2_distribution[i])
                 if self.im2 is None:
-                    self.res += 'Slice ' + str(i) + ' - slice ' + str(i+1) + ': ' + str(d.H*self.dim_pix) + '  -  ' + str(med1*self.dim_pix) + '  -  ' + str(med2*self.dim_pix) + ' \n'
+                    self.res += 'Slice ' + str(i) + ' - slice ' + str(i + 1) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
                 else:
-                    self.res += 'Slice ' + str(i) + ': ' + str(d.H*self.dim_pix) + '  -  ' + str(med1*self.dim_pix) + '  -  ' + str(med2*self.dim_pix) + ' \n'
+                    self.res += 'Slice ' + str(i) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
 
         sct.printv('-----------------------------------------------------------------------------\n' +
                    self.res, self.param.verbose, 'normal')
@@ -268,9 +268,9 @@ class ComputeDistances:
             dat2 = bin_data(self.im2.data)
 
         self.distances = HausdorffDistance(dat1, dat2, self.param.verbose)
-        self.res = 'Hausdorff\'s distance : ' + str(self.distances.H*self.dim_pix) + ' mm\n\n' \
-                   'First relative Hausdorff\'s distance : ' + str(self.distances.h1*self.dim_pix) + ' mm\n' \
-                   'Second relative Hausdorff\'s distance : ' + str(self.distances.h2*self.dim_pix) + ' mm'
+        self.res = 'Hausdorff\'s distance : ' + str(self.distances.H * self.dim_pix) + ' mm\n\n' \
+                   'First relative Hausdorff\'s distance : ' + str(self.distances.h1 * self.dim_pix) + ' mm\n' \
+                   'Second relative Hausdorff\'s distance : ' + str(self.distances.h2 * self.dim_pix) + ' mm'
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_1im_3d(self):
@@ -284,7 +284,7 @@ class ComputeDistances:
 
         self.distances = []
         for i, dat_slice in enumerate(dat1[:-1]):
-            self.distances.append(HausdorffDistance(bin_data(dat_slice), bin_data(dat1[i+1]), self.param.verbose))
+            self.distances.append(HausdorffDistance(bin_data(dat_slice), bin_data(dat1[i + 1]), self.param.verbose))
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_2im_3d(self):
@@ -317,22 +317,22 @@ class ComputeDistances:
         data_dist = {"distances": [], "image": [], "slice": []}
 
         if self.dim_im == 2:
-            data_dist["distances"].append([dist*self.dim_pix for dist in self.dist1_distribution])
-            data_dist["image"].append(len(self.dist1_distribution)*[1])
-            data_dist["slice"].append(len(self.dist1_distribution)*[0])
+            data_dist["distances"].append([dist * self.dim_pix for dist in self.dist1_distribution])
+            data_dist["image"].append(len(self.dist1_distribution) * [1])
+            data_dist["slice"].append(len(self.dist1_distribution) * [0])
 
-            data_dist["distances"].append([dist*self.dim_pix for dist in self.dist2_distribution])
-            data_dist["image"].append(len(self.dist2_distribution)*[2])
-            data_dist["slice"].append(len(self.dist2_distribution)*[0])
+            data_dist["distances"].append([dist * self.dim_pix for dist in self.dist2_distribution])
+            data_dist["image"].append(len(self.dist2_distribution) * [2])
+            data_dist["slice"].append(len(self.dist2_distribution) * [0])
 
         if self.dim_im == 3:
             for i in range(len(self.distances)):
-                data_dist["distances"].append([dist*self.dim_pix for dist in self.dist1_distribution[i]])
-                data_dist["image"].append(len(self.dist1_distribution[i])*[1])
-                data_dist["slice"].append(len(self.dist1_distribution[i])*[i])
-                data_dist["distances"].append([dist*self.dim_pix for dist in self.dist2_distribution[i]])
-                data_dist["image"].append(len(self.dist2_distribution[i])*[2])
-                data_dist["slice"].append(len(self.dist2_distribution[i])*[i])
+                data_dist["distances"].append([dist * self.dim_pix for dist in self.dist1_distribution[i]])
+                data_dist["image"].append(len(self.dist1_distribution[i]) * [1])
+                data_dist["slice"].append(len(self.dist1_distribution[i]) * [i])
+                data_dist["distances"].append([dist * self.dim_pix for dist in self.dist2_distribution[i]])
+                data_dist["image"].append(len(self.dist2_distribution[i]) * [2])
+                data_dist["slice"].append(len(self.dist2_distribution[i]) * [i])
 
         for k in data_dist.keys():  # flatten the lists in data_dist
             data_dist[k] = [item for sublist in data_dist[k] for item in sublist]
@@ -374,7 +374,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if binary:
             interpolation = 'nn'
 
-        sct.run('sct_resample -i '+fname+' -mm '+str(npx)+'x'+str(npy)+'x'+str(pz)+' -o '+name_resample+' -x '+interpolation)
+        sct.run('sct_resample -i ' + fname + ' -mm ' + str(npx) + 'x' + str(npy) + 'x' + str(pz) + ' -o ' + name_resample + ' -x ' + interpolation)
 
         if binary:
             # sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)

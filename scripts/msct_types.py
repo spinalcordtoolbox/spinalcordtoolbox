@@ -72,13 +72,13 @@ class Coordinate(Point):
             else:
                 float(self.x), float(self.y), float(self.z), float(self.value)
         except ValueError:
-            raise TypeError("All coordinates must be int and the value can be a float or a int. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
+            raise TypeError("All coordinates must be int and the value can be a float or a int. x=" + str(self.x) + ", y=" + str(self.y) + ", z=" + str(self.z) + ", value=" + str(self.value))
 
     def __repr__(self):
-        return "("+str(self.x)+", "+str(self.y)+", "+str(self.z)+", "+str(self.value)+")"
+        return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
 
     def __str__(self):
-        return "("+str(self.x)+", "+str(self.y)+", "+str(self.z)+", "+str(self.value)+")"
+        return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -163,7 +163,7 @@ class Centerline:
             self.length += distance
             self.progressive_length.append(distance)
             self.incremental_length.append(self.incremental_length[-1] + distance)
-        for i in range(self.number_of_points-1, 0, -1):
+        for i in range(self.number_of_points - 1, 0, -1):
             distance = sqrt((points_x[i] - points_x[i - 1]) ** 2 +
                             (points_y[i] - points_y[i - 1]) ** 2 +
                             (points_z[i] - points_z[i - 1]) ** 2)
@@ -390,7 +390,7 @@ class Centerline:
 
         progress_length = zeros(self.number_of_points)
         for i in range(self.number_of_points - 1):
-            progress_length[i+1] = progress_length[i] + self.progressive_length[i]
+            progress_length[i + 1] = progress_length[i] + self.progressive_length[i]
 
         label_reference = 'C1'
         if 'C1' not in self.index_disk:

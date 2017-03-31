@@ -46,22 +46,22 @@ class Param:
 def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
 
     # extract path of the script
-    path_script = os.path.dirname(__file__)+'/'
+    path_script = os.path.dirname(__file__) + '/'
 
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_anat = path_sct_data+'/t2/t2.nii.gz'
-        fname_centerline = path_sct_data+'/t2/t2_seg.nii.gz'
+        fname_anat = path_sct_data + '/t2/t2.nii.gz'
+        fname_centerline = path_sct_data + '/t2/t2_seg.nii.gz'
 
     # extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
 
     # Display arguments
     print '\nCheck input arguments...'
-    print '  Input volume ...................... '+fname_anat
-    print '  Centerline ........................ '+fname_centerline
+    print '  Input volume ...................... ' + fname_anat
+    print '  Centerline ........................ ' + fname_centerline
     print ''
 
     # Get input image orientation
@@ -79,8 +79,8 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     #==========================================================================================
     print '\nGet dimensions of input centerline...'
     nx, ny, nz, nt, px, py, pz, pt = im_centerline_orient.dim
-    print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
-    print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
+    print '.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)
+    print '.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm'
 
     print '\nOpen centerline volume...'
     data = im_centerline_orient.data
@@ -89,9 +89,9 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     min_z_index, max_z_index = min(Z), max(Z)
 
     # loop across z and associate x,y coordinate with the point having maximum intensity
-    x_centerline = [0 for iz in range(min_z_index, max_z_index+1, 1)]
-    y_centerline = [0 for iz in range(min_z_index, max_z_index+1, 1)]
-    z_centerline = [iz for iz in range(min_z_index, max_z_index+1, 1)]
+    x_centerline = [0 for iz in range(min_z_index, max_z_index + 1, 1)]
+    y_centerline = [0 for iz in range(min_z_index, max_z_index + 1, 1)]
+    z_centerline = [iz for iz in range(min_z_index, max_z_index + 1, 1)]
 
     # Two possible scenario:
     # 1. the centerline is probabilistic: each slices contains voxels with the probability of containing the centerline [0:...:1]
@@ -99,16 +99,16 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     # 2. The centerline/segmentation image contains many pixels per slice with values {0,1}.
     # We take all the points and approximate the centerline on all these points.
 
-    X, Y, Z = ((data < 1)*(data > 0)).nonzero() # X is empty if binary image
-    if (len(X) > 0): # Scenario 1
-        for iz in range(min_z_index, max_z_index+1, 1):
-            x_centerline[iz-min_z_index], y_centerline[iz-min_z_index] = numpy.unravel_index(data[:, :, iz].argmax(), data[:, :, iz].shape)
-    else: # Scenario 2
-        for iz in range(min_z_index, max_z_index+1, 1):
+    X, Y, Z = ((data < 1) * (data > 0)).nonzero()  # X is empty if binary image
+    if (len(X) > 0):  # Scenario 1
+        for iz in range(min_z_index, max_z_index + 1, 1):
+            x_centerline[iz - min_z_index], y_centerline[iz - min_z_index] = numpy.unravel_index(data[:, :, iz].argmax(), data[:, :, iz].shape)
+    else:  # Scenario 2
+        for iz in range(min_z_index, max_z_index + 1, 1):
             x_seg, y_seg = (data[:, :, iz] > 0).nonzero()
             if len(x_seg) > 0:
-                x_centerline[iz-min_z_index] = numpy.mean(x_seg)
-                y_centerline[iz-min_z_index] = numpy.mean(y_seg)
+                x_centerline[iz - min_z_index] = numpy.mean(x_seg)
+                y_centerline[iz - min_z_index] = numpy.mean(y_seg)
 
     # TODO: find a way to do the previous loop with this, which is more neat:
     # [numpy.unravel_index(data[:,:,iz].argmax(), data[:,:,iz].shape) for iz in range(0,nz,1)]
@@ -136,20 +136,20 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         im.save()
 
     # initialize variables
-    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
     z_init = min_z_index
-    displacement_max_z_index = x_centerline_fit[z_init-min_z_index]-x_centerline_fit[max_z_index-min_z_index]
+    displacement_max_z_index = x_centerline_fit[z_init - min_z_index] - x_centerline_fit[max_z_index - min_z_index]
 
     # write centerline as text file
     print '\nGenerate fitted transformation matrices...'
-    file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
-    for iz in range(min_z_index, max_z_index+1, 1):
+    file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
+    for iz in range(min_z_index, max_z_index + 1, 1):
         # compute inverse cumulative fitted transformation matrix
         fid = open(file_mat_inv_cumul_fit[iz], 'w')
-        if (x_centerline[iz-min_z_index] == 0 and y_centerline[iz-min_z_index] == 0):
+        if (x_centerline[iz - min_z_index] == 0 and y_centerline[iz - min_z_index] == 0):
             displacement = 0
         else:
-            displacement = x_centerline_fit[z_init-min_z_index]-x_centerline_fit[iz-min_z_index]
+            displacement = x_centerline_fit[z_init - min_z_index] - x_centerline_fit[iz - min_z_index]
         fid.write('%i %i %i %f\n' % (1, 0, 0, displacement))
         fid.write('%i %i %i %f\n' % (0, 1, 0, 0))
         fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
@@ -164,7 +164,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
         fid.write('%i %i %i %i\n' % (0, 0, 0, 1))
         fid.close()
-    for iz in range(max_z_index+1, nz, 1):
+    for iz in range(max_z_index + 1, nz, 1):
         fid = open(file_mat_inv_cumul_fit[iz], 'w')
         fid.write('%i %i %i %f\n' % (1, 0, 0, displacement_max_z_index))
         fid.write('%i %i %i %f\n' % (0, 1, 0, 0))
@@ -174,10 +174,10 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # apply transformations to data
     print '\nApply fitted transformation matrices...'
-    file_anat_split_fit = ['tmp.anat_orient_fit_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_anat_split_fit = ['tmp.anat_orient_fit_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
-        sct.run(fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_anat_split_fit[iz]+' -interp '+interp)
+        sct.run(fsloutput + 'flirt -in ' + file_anat_split[iz] + ' -ref ' + file_anat_split[iz] + ' -applyxfm -init ' + file_mat_inv_cumul_fit[iz] + ' -out ' + file_anat_split_fit[iz] + ' -interp ' + interp)
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
@@ -195,7 +195,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
-    sct.generate_output_file('tmp.anat_orient_fit_reorient.nii', file_anat+'_flatten'+ext_anat)
+    sct.generate_output_file('tmp.anat_orient_fit_reorient.nii', file_anat + '_flatten' + ext_anat)
 
     # Delete temporary files
     if remove_temp_files == 1:
@@ -204,7 +204,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # to view results
     print '\nDone! To view results, type:'
-    print 'fslview '+file_anat+ext_anat+' '+file_anat+'_flatten'+ext_anat+' &\n'
+    print 'fslview ' + file_anat + ext_anat + ' ' + file_anat + '_flatten' + ext_anat + ' &\n'
 
 
 def b_spline_centerline(x_centerline, y_centerline, z_centerline):
@@ -212,7 +212,7 @@ def b_spline_centerline(x_centerline, y_centerline, z_centerline):
 
     points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
 
-    nurbs = NURBS(3, len(z_centerline)*3, points, nbControl=None, verbose=2) # for the third argument (number of points), give at least len(z_centerline)
+    nurbs = NURBS(3, len(z_centerline) * 3, points, nbControl=None, verbose=2)  # for the third argument (number of points), give at least len(z_centerline)
     # (len(z_centerline)+500 or 1000 is ok)
     P = nurbs.getCourbe3D()
     x_centerline_fit = P[0]

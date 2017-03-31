@@ -44,10 +44,10 @@ def register_slicewise(fname_src,
 
     # copy data to temp folder
     sct.printv('\nCopy input data to temp folder...', verbose)
-    convert(fname_src, path_tmp+'src.nii')
-    convert(fname_dest, path_tmp+'dest.nii')
+    convert(fname_src, path_tmp + 'src.nii')
+    convert(fname_dest, path_tmp + 'dest.nii')
     if fname_mask != '':
-        convert(fname_mask, path_tmp+'mask.nii.gz')
+        convert(fname_mask, path_tmp + 'mask.nii.gz')
 
     # go to temporary folder
     chdir(path_tmp)
@@ -70,8 +70,8 @@ def register_slicewise(fname_src,
         register2d('src.nii', 'dest.nii', fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
 
     sct.printv('\nMove warping fields to parent folder...', verbose)
-    sct.run('mv '+warp_forward_out+' ../')
-    sct.run('mv '+warp_inverse_out+' ../')
+    sct.run('mv ' + warp_forward_out + ' ../')
+    sct.run('mv ' + warp_inverse_out + ' ../')
 
     # go back to parent folder
     chdir('../')
@@ -102,8 +102,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
-    sct.printv('  matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-    sct.printv('  voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+    sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
+    sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
@@ -176,7 +176,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             plt.grid()
             plt.xlabel('z')
             plt.ylabel('Angle (deg)')
-            plt.savefig(path_qc+'register2d_centermassrot_regularize_rotation.png')
+            plt.savefig(path_qc + 'register2d_centermassrot_regularize_rotation.png')
             plt.close()
         # update variable
         angle_src_dest[z_nonzero] = angle_src_dest_regularized
@@ -190,7 +190,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        print str(iz)+'/'+str(nz)+'..',
+        print str(iz) + '/' + str(nz) + '..',
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -298,8 +298,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
-    sct.printv('  matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-    sct.printv('  voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+    sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
+    sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
@@ -339,7 +339,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     # Loop across slices
     sct.printv('\nEstimate columnwise transformation...', verbose)
     for iz in range(0, nz):
-        print str(iz)+'/'+str(nz)+'..',
+        print str(iz) + '/' + str(nz) + '..',
 
         # PREPARE COORDINATES
         # ============================================================
@@ -499,7 +499,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 plt.imshow(np.swapaxes(src2d_scaleXYsmooth, 1, 0), cmap=plt.cm.gray, interpolation='none')
                 plt.hold(True)  # add other layer
                 plt.imshow(np.swapaxes(dest2d, 1, 0), cmap=plt.cm.copper, interpolation='none', alpha=0.5)
-                plt.title('src_scaleXYsmooth (s='+str(smoothWarpXY)+')')
+                plt.title('src_scaleXYsmooth (s=' + str(smoothWarpXY) + ')')
                 plt.xlabel('x')
                 plt.ylabel('y')
                 plt.xlim(mean_dest_x - 15, mean_dest_x + 15)
@@ -519,11 +519,11 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             coord_init_phy_scaleXinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleXinv))
             coord_init_phy_scaleYinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleYinv))
             # compute displacement per pixel in destination space (for forward warping field)
-            warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-            warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+            warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
+            warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
             # compute displacement per pixel in source space (for inverse warping field)
-            warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in xrange(nx*ny)]).reshape((nx, ny))
-            warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in xrange(nx*ny)]).reshape((nx, ny))
+            warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
+            warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
@@ -574,8 +574,8 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
-    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+    sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
+    sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
     # Split input volume along z
     sct.printv('\nSplit input volume...', verbose)
@@ -617,9 +617,9 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     # loop across slices
     for i in range(nz):
         # set masking
-        sct.printv('Registering slice '+str(i)+'/'+str(nz-1)+'...', verbose)
+        sct.printv('Registering slice ' + str(i) + '/' + str(nz - 1) + '...', verbose)
         num = numerotation(i)
-        prefix_warp2d = 'warp2d_'+num
+        prefix_warp2d = 'warp2d_' + num
         # if mask is used, prepare command for ANTs
         if fname_mask != '':
             masking = '-x mask_Z' + num + '.nii.gz'
@@ -628,52 +628,52 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         # main command for registration
         cmd = ('isct_antsRegistration '
                '--dimensionality 2 '
-               '--transform '+paramreg.algo+'['+str(paramreg.gradStep) +
-               ants_registration_params[paramreg.algo.lower()]+'] '
-               '--metric '+paramreg.metric+'[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,'+metricSize+'] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
-               '--convergence '+str(paramreg.iter)+' '
-               '--shrink-factors '+str(paramreg.shrink)+' '
-               '--smoothing-sigmas '+str(paramreg.smooth)+'mm '
-               '--output ['+prefix_warp2d+',src_Z' + num + '_reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
+               '--transform ' + paramreg.algo + '[' + str(paramreg.gradStep) +
+               ants_registration_params[paramreg.algo.lower()] + '] '
+               '--metric ' + paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + '] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+               '--convergence ' + str(paramreg.iter) + ' '
+               '--shrink-factors ' + str(paramreg.shrink) + ' '
+               '--smoothing-sigmas ' + str(paramreg.smooth) + 'mm '
+               '--output [' + prefix_warp2d + ',src_Z' + num + '_reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
                + masking)
         # add init translation
         if not paramreg.init == '':
             init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
-            cmd += ' -r [dest_Z'+num+'.nii'+',src_Z'+num+'.nii,'+init_dict[paramreg.init]+']'
+            cmd += ' -r [dest_Z' + num + '.nii' + ',src_Z' + num + '.nii,' + init_dict[paramreg.init] + ']'
 
         try:
             # run registration
             sct.run(cmd)
 
             if paramreg.algo in ['Translation']:
-                file_mat = prefix_warp2d+'0GenericAffine.mat'
+                file_mat = prefix_warp2d + '0GenericAffine.mat'
                 matfile = loadmat(file_mat, struct_as_record=True)
                 array_transfo = matfile['AffineTransform_double_2_2']
                 x_displacement[i] = array_transfo[4][0]  # Tx in ITK'S coordinate system
                 y_displacement[i] = array_transfo[5][0]  # Ty  in ITK'S and fslview's coordinate systems
-                theta_rotation[i] = asin(array_transfo[2]) # angle of rotation theta in ITK'S coordinate system (minus theta for fslview)
+                theta_rotation[i] = asin(array_transfo[2])  # angle of rotation theta in ITK'S coordinate system (minus theta for fslview)
 
             if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
                 # List names of 2d warping fields for subsequent merge along Z
-                file_warp2d = prefix_warp2d+'0Warp.nii.gz'
-                file_warp2d_inv = prefix_warp2d+'0InverseWarp.nii.gz'
+                file_warp2d = prefix_warp2d + '0Warp.nii.gz'
+                file_warp2d_inv = prefix_warp2d + '0InverseWarp.nii.gz'
                 list_warp.append(file_warp2d)
                 list_warp_inv.append(file_warp2d_inv)
 
             if paramreg.algo in ['Rigid', 'Affine']:
                 # Generating null 2d warping field (for subsequent concatenation with affine transformation)
-                sct.run('isct_antsRegistration -d 2 -t SyN[1, 1, 1] -c 0 -m MI[dest_Z'+num+'.nii, src_Z'+num+'.nii, 1, 32] -o warp2d_null -f 1 -s 0')
+                sct.run('isct_antsRegistration -d 2 -t SyN[1, 1, 1] -c 0 -m MI[dest_Z' + num + '.nii, src_Z' + num + '.nii, 1, 32] -o warp2d_null -f 1 -s 0')
                 # --> outputs: warp2d_null0Warp.nii.gz, warp2d_null0InverseWarp.nii.gz
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
                 # Concatenating mat transfo and null 2d warping field to obtain 2d warping field of affine transformation
-                sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d + ' -R dest_Z'+num+'.nii warp2d_null0Warp.nii.gz ' + file_mat)
-                sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d_inv + ' -R src_Z'+num+'.nii warp2d_null0InverseWarp.nii.gz -i ' + file_mat)
+                sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d + ' -R dest_Z' + num + '.nii warp2d_null0Warp.nii.gz ' + file_mat)
+                sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d_inv + ' -R src_Z' + num + '.nii warp2d_null0InverseWarp.nii.gz -i ' + file_mat)
 
         # if an exception occurs with ants, take the last value for the transformation
         # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)
         except Exception, e:
-            sct.printv('ERROR: Exception occurred.\n'+str(e), 1, 'error')
+            sct.printv('ERROR: Exception occurred.\n' + str(e), 1, 'error')
 
     # Merge warping field along z
     sct.printv('\nMerge warping fields along z...', verbose)
@@ -710,11 +710,11 @@ def numerotation(nb):
         print 'ERROR: the number is negative.'
         sys.exit(status = 2)
     elif -1 < nb < 10:
-        nb_output = '000'+str(nb)
+        nb_output = '000' + str(nb)
     elif 9 < nb < 100:
-        nb_output = '00'+str(nb)
+        nb_output = '00' + str(nb)
     elif 99 < nb < 1000:
-        nb_output = '0'+str(nb)
+        nb_output = '0' + str(nb)
     elif 999 < nb < 10000:
         nb_output = str(nb)
     elif nb > 9999:
@@ -756,7 +756,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     hdr_warp.set_data_dtype('float32')
     img = Nifti1Image(data_warp, None, hdr_warp)
     save(img, fname_warp)
-    sct.printv(' --> '+fname_warp, verbose)
+    sct.printv(' --> ' + fname_warp, verbose)
 
     #
     # file_dest = load(fname_dest)
@@ -816,7 +816,7 @@ def angle_between(a, b):
     # from numpy.linalg import norm
     # from numpy import dot
     # import math
-    arccosInput = np.dot(a, b)/np.linalg.norm(a)/np.linalg.norm(b)
+    arccosInput = np.dot(a, b) / np.linalg.norm(a) / np.linalg.norm(b)
     # print arccosInput
     arccosInput = 1.0 if arccosInput > 1.0 else arccosInput
     arccosInput = -1.0 if arccosInput < -1.0 else arccosInput
@@ -873,13 +873,13 @@ def find_index_halfmax(data1d):
         if data1d[i] > 0.5:
             break
     # compute center of mass to get coordinate at 0.5
-    xmin = i - 1 + (0.5 - data1d[i-1]) / float(data1d[i] - data1d[i-1])
+    xmin = i - 1 + (0.5 - data1d[i - 1]) / float(data1d[i] - data1d[i - 1])
     # continue for the descending slope
     for i in range(i, len(data1d)):
         if data1d[i] < 0.5:
             break
     # compute center of mass to get coordinate at 0.5
-    xmax = i - 1 + (0.5 - data1d[i-1]) / float(data1d[i] - data1d[i-1])
+    xmax = i - 1 + (0.5 - data1d[i - 1]) / float(data1d[i] - data1d[i - 1])
     # display
     # import matplotlib.pyplot as plt
     # plt.figure()

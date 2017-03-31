@@ -65,7 +65,7 @@ def main(args=None):
     MSCC = (1 - float(di) / ((da + db) / float(2))) * 100
 
     # Display results
-    sct.printv('\nMSCC = '+str(MSCC)+'\n', verbose, 'info')
+    sct.printv('\nMSCC = ' + str(MSCC) + '\n', verbose, 'info')
 
 
 # START PROGRAM

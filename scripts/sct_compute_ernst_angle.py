@@ -38,15 +38,15 @@ class ErnstAngle:
         from numpy import arccos
         from numpy import exp
         from math import pi
-        angle_rad = arccos(exp(-tr/self.t1))
-        angle_deg = angle_rad*180/pi
+        angle_rad = arccos(exp(-tr / self.t1))
+        angle_deg = angle_rad * 180 / pi
         return angle_deg
 
     # draw the graph
     def draw(self, tr_min, tr_max):
         import matplotlib.pyplot as plt
         from numpy import arange
-        step = (tr_max-tr_min)/50
+        step = (tr_max - tr_min) / 50
         tr_range = arange(tr_min, tr_max, step)
         theta_E = self.getErnstAngle(tr_range)
 
@@ -54,8 +54,8 @@ class ErnstAngle:
         plt.plot(tr_range, theta_E, linewidth=1.0)
         plt.xlabel("TR (in $ms$)")
         plt.ylabel("$\Theta_E$ (in degree)")
-        plt.ylim(min(theta_E), max(theta_E)+2)
-        plt.title("Ernst Angle with T1="+str(self.t1)+"ms")
+        plt.ylim(min(theta_E), max(theta_E) + 2)
+        plt.title("Ernst Angle with T1=" + str(self.t1) + "ms")
         plt.grid(True)
 
         if self.tr is not None:
@@ -132,11 +132,11 @@ if __name__ == "__main__":
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
     if input_tr is not None:
-        sct.printv("\nValue of the Ernst Angle with T1="+str(graph.t1)+"ms and TR="+str(input_tr)+"ms :", verbose=verbose, type='info')
+        sct.printv("\nValue of the Ernst Angle with T1=" + str(graph.t1) + "ms and TR=" + str(input_tr) + "ms :", verbose=verbose, type='info')
         sct.printv(str(graph.getErnstAngle(input_tr)))
         if input_tr > input_tr_max:
-            input_tr_max = input_tr+500
+            input_tr_max = input_tr + 500
         elif input_tr < input_tr_min:
-            input_tr_min = input_tr-500
+            input_tr_min = input_tr - 500
     if verbose == 2 :
         graph.draw(input_tr_min, input_tr_max)

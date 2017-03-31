@@ -93,7 +93,7 @@ def main():
         param.output_path = os.getcwd() + '/'
 
     # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
     sct.run('mkdir ' + path_tmp, param.verbose)
 
     # go to tmp folder
@@ -112,7 +112,7 @@ def main():
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
+    print '\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's'
 
 #=======================================================================================================================
 # Function eddy_correct
@@ -152,19 +152,19 @@ def eddy_correct(param):
         fname_data_new = 'tmp.data_swap'
         cmd = fsloutput + 'fslswapdim ' + fname_data + ' -y -x -z ' + fname_data_new
         status, output = sct.run(cmd, verbose)
-        sct.printv(('\n.. updated data file name: '+fname_data_new), verbose)
+        sct.printv(('\n.. updated data file name: ' + fname_data_new), verbose)
     else:
         fname_data_new = fname_data
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
-    sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
+    sct.printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
 
     # split along T dimension
     sct.printv('\nSplit along T dimension...', verbose)
     from sct_image import split_data
-    im_to_split = Image(fname_data_new+'.nii')
+    im_to_split = Image(fname_data_new + '.nii')
     im_split_list = split_data(im_to_split, 3)
     for im in im_split_list:
         im.save()
@@ -205,20 +205,20 @@ def eddy_correct(param):
     opposite_gradients_jT = []
     index_identified = []
     index_b0 = []
-    for iT in range(nt-1):
+    for iT in range(nt - 1):
         if np.linalg.norm(bvecs[iT, :]) != 0:
             if iT not in index_identified:
-                jT = iT+1
-                if np.linalg.norm((bvecs[iT, :]+bvecs[jT, :])) < min_norm:
-                    sct.printv(('.. Opposite gradient for #'+str(iT)+' is: #'+str(jT)), verbose)
+                jT = iT + 1
+                if np.linalg.norm((bvecs[iT, :] + bvecs[jT, :])) < min_norm:
+                    sct.printv(('.. Opposite gradient for #' + str(iT) + ' is: #' + str(jT)), verbose)
                     opposite_gradients_iT.append(iT)
                     opposite_gradients_jT.append(jT)
                     index_identified.append(iT)
         else:
             index_b0.append(iT)
-            sct.printv(('.. Opposite gradient for #'+str(iT)+' is: NONE (b=0)'), verbose)
+            sct.printv(('.. Opposite gradient for #' + str(iT) + ' is: NONE (b=0)'), verbose)
     nb_oppositeGradients = len(opposite_gradients_iT)
-    sct.printv(('.. Number of gradient directions: ' + str(2*nb_oppositeGradients) + ' (2*' + str(nb_oppositeGradients) + ')'), verbose)
+    sct.printv(('.. Number of gradient directions: ' + str(2 * nb_oppositeGradients) + ' (2*' + str(nb_oppositeGradients) + ')'), verbose)
     sct.printv('.. Index b=0: ' + str(index_b0), verbose)
 
     # =========================================================================
@@ -228,7 +228,7 @@ def eddy_correct(param):
         i_plus = opposite_gradients_iT[iN]
         i_minus = opposite_gradients_jT[iN]
 
-        sct.printv(('\nFinding affine transformation between volumes #'+str(i_plus)+' and #'+str(i_minus)+' (' + str(iN)+'/'+str(nb_oppositeGradients)+')'), verbose)
+        sct.printv(('\nFinding affine transformation between volumes #' + str(i_plus) + ' and #' + str(i_minus) + ' (' + str(iN) + '/' + str(nb_oppositeGradients) + ')'), verbose)
         sct.printv('------------------------------------------------------------------------------------\n', verbose)
 
         # Slicewise correction
@@ -236,7 +236,7 @@ def eddy_correct(param):
             sct.printv('\nSplit volumes across Z...', verbose)
             fname_plus = file_data + '_T' + str(i_plus).zfill(4)
             fname_plus_Z = file_data + '_T' + str(i_plus).zfill(4) + '_Z'
-            im_plus = Image(fname_plus+'.nii')
+            im_plus = Image(fname_plus + '.nii')
             im_plus_split_list = split_data(im_plus, 2)
             for im_p in im_plus_split_list:
                 im_p.save()
@@ -245,7 +245,7 @@ def eddy_correct(param):
 
             fname_minus = file_data + '_T' + str(i_minus).zfill(4)
             fname_minus_Z = file_data + '_T' + str(i_minus).zfill(4) + '_Z'
-            im_minus = Image(fname_minus+'.nii')
+            im_minus = Image(fname_minus + '.nii')
             im_minus_split_list = split_data(im_minus, 2)
             for im_m in im_minus_split_list:
                 im_m.save()            # cmd = fsloutput + 'fslsplit ' + fname_minus + ' ' + fname_minus_Z + ' -z'
@@ -260,32 +260,32 @@ def eddy_correct(param):
             sct.printv('\nFind transformation for each pair of opposite gradient directions...', verbose)
             fname_plus_corr = file_data + '_T' + str(i_plus).zfill(4) + file_suffix[iZ] + '_corr_'
             omat = 'mat_' + file_data + '_T' + str(i_plus).zfill(4) + file_suffix[iZ] + '.txt'
-            cmd = fsloutput+'flirt -in '+fname_plus+' -ref '+fname_minus+' -paddingsize 3 -schedule '+schedule_file+' -verbose 2 -omat '+omat+' -cost '+cost_function+' -forcescaling'
+            cmd = fsloutput + 'flirt -in ' + fname_plus + ' -ref ' + fname_minus + ' -paddingsize 3 -schedule ' + schedule_file + ' -verbose 2 -omat ' + omat + ' -cost ' + cost_function + ' -forcescaling'
             status, output = sct.run(cmd, verbose)
 
             file =  open(omat)
             Matrix = np.loadtxt(file)
             file.close()
             M = Matrix[0:4, 0:4]
-            sct.printv(('.. Transformation matrix:\n'+str(M)), verbose)
-            sct.printv(('.. Output matrix file: '+omat), verbose)
+            sct.printv(('.. Transformation matrix:\n' + str(M)), verbose)
+            sct.printv(('.. Output matrix file: ' + omat), verbose)
 
             # Divide affine transformation by two
             sct.printv('\nDivide affine transformation by two...', verbose)
-            A = (M - np.identity(4))/2
-            Mplus = np.identity(4)+A
+            A = (M - np.identity(4)) / 2
+            Mplus = np.identity(4) + A
             omat_plus = mat_eddy + 'mat.T' + str(i_plus) + '_Z' + str(iZ) + '.txt'
             file =  open(omat_plus, 'w')
             np.savetxt(omat_plus, Mplus, fmt='%.6e', delimiter='  ', newline='\n', header='', footer='', comments='#')
             file.close()
-            sct.printv(('.. Output matrix file (plus): '+omat_plus), verbose)
+            sct.printv(('.. Output matrix file (plus): ' + omat_plus), verbose)
 
-            Mminus = np.identity(4)-A
+            Mminus = np.identity(4) - A
             omat_minus = mat_eddy + 'mat.T' + str(i_minus) + '_Z' + str(iZ) + '.txt'
             file =  open(omat_minus, 'w')
             np.savetxt(omat_minus, Mminus, fmt='%.6e', delimiter='  ', newline='\n', header='', footer='', comments='#')
             file.close()
-            sct.printv(('.. Output matrix file (minus): '+omat_minus), verbose)
+            sct.printv(('.. Output matrix file (minus): ' + omat_minus), verbose)
 
     # =========================================================================
     #	Apply affine transformation
@@ -361,7 +361,7 @@ def eddy_correct(param):
     else:
         fname_data_final = fname_data_corr
 
-    sct.printv(('... File created: '+fname_data_final), verbose)
+    sct.printv(('... File created: ' + fname_data_final), verbose)
 
     sct.printv('\n===================================================', verbose)
     sct.printv('              Completed: eddy_correct', verbose)
@@ -373,14 +373,14 @@ def eddy_correct(param):
 #=======================================================================================================================
 def usage():
     print '\n' \
-        ' '+os.path.basename(__file__)+'\n' \
+        ' ' + os.path.basename(__file__) + '\n' \
         '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
         'DESCRIPTION\n' \
         'Correct Eddy-current distortions using pairs of DW images acquired at reversed gradient polarities' \
         '\nUSAGE: \n' \
-        '  '+os.path.basename(__file__)+' -i <filename> -b <bvecs_file>\n' \
+        '  ' + os.path.basename(__file__) + ' -i <filename> -b <bvecs_file>\n' \
         '\n'\
         'MANDATORY ARGUMENTS\n' \
         '  -i           input_file \n' \
@@ -398,7 +398,7 @@ def usage():
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  '+os.path.basename(__file__)+' -i KS_HCP34.nii -b KS_HCP_bvec.txt \n'
+        '  ' + os.path.basename(__file__) + ' -i KS_HCP34.nii -b KS_HCP_bvec.txt \n'
 
     # Exit Program
     sys.exit(2)
