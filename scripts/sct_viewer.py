@@ -1056,7 +1056,7 @@ class ClickViewerPropseg(ClickViewer):
 
     def redo_auto(self):
         self.current_slice += -1
-        self.windows[0].update_slice(self.list_slices[self.current_slice])
+        self.show_next_slice(self.windows[0], [self.current_point.x, self.current_point.y, self.current_point.z])
 
 class ClickViewerLabelVertebrae(ClickViewer):
 
