@@ -73,14 +73,12 @@ class SinglePlot:
 
         for i, image in enumerate(images):
             data_to_display = self.set_data_to_display(image)
-            # ?! image parameters ? C'est des options avancees pour plus tard ?
             (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,cm)
             my_cmap.set_under('b', alpha=0)
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
 
-        # ?! pourquoi on a besoin de ticks et qu'est ce que c'est que set_axis_bgcolor.
         self.axes.set_axis_bgcolor('black')
         self.axes.set_xticks([])
         self.axes.set_yticks([])
@@ -269,7 +267,6 @@ class Viewer(object):
         self.fig.patch.set_facecolor('lightgrey')
 
         """ Pad the image so that it is square in axial view (useful for zooming) """
-        # ?! definition des attributs de la classe Image
         self.image_dim = self.images[0].data.shape
         nx, ny, nz, nt, px, py, pz, pt = self.images[0].dim
         self.im_spacing = [px, py, pz]
@@ -277,7 +274,6 @@ class Viewer(object):
                              float(self.im_spacing[0]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[1])]
         self.offset = [0.0, 0.0, 0.0]
-        # ?! Coordinate ? Pourquoi pas seulement mettre les positions dans une liste ?
         self.current_point = Coordinate([int(nx / 2), int(ny / 2), int(nz / 2)])
 
         self.windows = []
@@ -318,7 +314,6 @@ class Viewer(object):
                              constant_values=(0, 0))
 
     def setup_intensity(self):
-        # ?! Est ce que c'est le contraste, et si oui, comment exactement il fonctionne sur la page
         # TODO: change for segmentation images
         for i, image in enumerate(self.images):
             if str(i) in self.im_params.images_parameters:
@@ -496,8 +491,8 @@ class ClickViewer(Viewer):
 
         self.declaration_global_variables_general(orientation_subplot)
 
-        self.compute_offset() # ?!
-        self.pad_data()       # ?!
+        self.compute_offset()
+        self.pad_data()
 
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
 
@@ -987,7 +982,7 @@ class ClickViewerPropseg(ClickViewer):
         for window in self.windows:
             if event.inaxes == window.axes:
                 is_in_axes = True
-        if not is_in_axes:  # ?!
+        if not is_in_axes:
             return
 
         plot.draw()
@@ -1003,7 +998,6 @@ class ClickViewerPropseg(ClickViewer):
                 window.update_slice(point, data_update=True)
 
     def on_press(self, event, plot=None):
-        # event inaxes ?!
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
             self.on_press_main_window(event,plot)
         elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
@@ -1128,7 +1122,7 @@ class ClickViewerLabelVertebrae(ClickViewer):
         for window in self.windows:
             if event.inaxes == window.axes:
                 is_in_axes = True
-        if not is_in_axes:  # ?!
+        if not is_in_axes:
             return
 
         plot.draw()
@@ -1144,7 +1138,6 @@ class ClickViewerLabelVertebrae(ClickViewer):
                 window.update_slice(point, data_update=True)
 
     def on_press(self, event, plot=None):
-        # event inaxes ?!
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
             self.on_press_main_window(event,plot)
         elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
@@ -1334,7 +1327,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         for window in self.windows:
             if event.inaxes == window.axes:
                 is_in_axes = True
-        if not is_in_axes:  # ?!
+        if not is_in_axes:
             return
 
         plot.draw()
@@ -1350,7 +1343,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
                 window.update_slice(point, data_update=True)
 
     def on_press(self, event, plot=None):
-        # event inaxes ?!
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
             self.on_press_main_window(event,plot)
         elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
@@ -1763,7 +1755,6 @@ class ClickViewerGroundTruth(ClickViewer):
                 window.update_slice(point, data_update=True)
 
     def on_press(self, event, plot=None):
-        # event inaxes ?!
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
             self.on_press_main_window(event,plot)
         elif event.inaxes and plot.view == self.orientation[self.secondary_subplot]:
