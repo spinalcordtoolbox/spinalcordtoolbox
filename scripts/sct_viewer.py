@@ -139,7 +139,6 @@ class SinglePlot:
         :param data_update: False if you don't want to update data
         :return:
         """
-        #?!?
         if isinstance(target, list):
             target_slice = target[self.view - 1]
             list_remaining_views = list([0, 1, 2])
@@ -353,7 +352,6 @@ class Viewer(object):
                 window.figs[i].set_clim(min_intensity, max_intensity)
 
     def is_point_in_image(self, target_point):
-        #?! On part tjs de 0 ? donc ca veut dire qu'il y a des coordonees negatives ?
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
 
     def change_intensity(self, event, plot=None):
@@ -501,7 +499,7 @@ class ClickViewer(Viewer):
         self.compute_offset() # ?!
         self.pad_data()       # ?!
 
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
 
         """ Display axes, specific to viewer """
         import matplotlib.gridspec as gridspec
@@ -679,7 +677,7 @@ class ClickViewer(Viewer):
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
             x_data, y_data = [], []
-            for pt in self.list_points: #?!
+            for pt in self.list_points:
                 if pt.x == current_slice:
                     x_data.append(pt.z + self.offset[2])
                     y_data.append(pt.y + self.offset[1])
@@ -878,7 +876,8 @@ class ClickViewerPropseg(ClickViewer):
                                                        str(self.image_dim[
                                                                self.orientation[self.primary_subplot] - 1] - 1) + ' (' +
                                                        str(self.current_slice + 1) + '/' +
-                                                        str(len(self.list_slices)) + ') \n')
+                                                        str(len(self.list_slices)) + ') \n'
+                                                                                     'You may save and quit at any time \n')
             plt.setp(title_obj, color='k')
 
         elif(key=='way_custom_next_point'):
@@ -929,7 +928,7 @@ class ClickViewerPropseg(ClickViewer):
         self.number_of_slices = 0
         self.gap_inter_slice = 0
 
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)]) #?!
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
         self.calculate_list_slices()
 
         self.draw_points(self.windows[0],self.current_point.x)
@@ -1013,7 +1012,7 @@ class ClickViewerPropseg(ClickViewer):
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
             x_data, y_data = [], []
-            for pt in self.list_points: #?!
+            for pt in self.list_points:
                 if pt.x == current_slice:
                     x_data.append(pt.z + self.offset[2])
                     y_data.append(pt.y + self.offset[1])
@@ -1352,7 +1351,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
     def draw_points(self, window, current_slice):
         if window.view == self.orientation[self.primary_subplot]:
             x_data, y_data = [], []
-            for pt in self.list_points: #?!
+            for pt in self.list_points:
                 if pt.x == current_slice:
                     x_data.append(pt.z + self.offset[2])
                     y_data.append(pt.y + self.offset[1])
@@ -1747,7 +1746,7 @@ class ClickViewerGroundTruth(ClickViewer):
         for window in self.windows:
             if event.inaxes == window.axes:
                 is_in_axes = True
-        if not is_in_axes:  # ?!
+        if not is_in_axes:
             return
 
         plot.draw()
