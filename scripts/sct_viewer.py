@@ -976,9 +976,9 @@ class ClickViewerPropseg(ClickViewer):
         plot.draw()
 
     def show_next_slice(self,plot,point):
-        point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]  # ?!
+        point[self.orientation[self.secondary_subplot] - 1] = self.list_slices[self.current_slice]
         self.current_point = Coordinate(point)
-        self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)  # ?!
+        self.windows[1].update_slice([point[2], point[0], point[1]], data_update=False)
         self.windows[0].update_slice(self.list_slices[self.current_slice])
         self.update_title_text('way_automatic_next_point')
         plot.draw()
@@ -1041,22 +1041,35 @@ class ClickViewerPropseg(ClickViewer):
         if event.inaxes == self.dic_axis_buttons['redo']:
             if (len(self.list_points) > 0   or self.current_slice>0):
                 if not self.bool_enable_custom_points:
-                    self.redo_auto()
+                    self.current_slice += -1
                 self.remove_last_dot()
                 self.update_ui_after_redo()
             else:
                 self.update_title_text('warning_redo_beyond_first_dot')
 
+    def show_previous_slice_in_custom(self):
+        point = self.list_points[-1]
+        self.windows[1].update_slice([point.x, point.y, point.z], data_update=False)
+        self.windows[0].update_slice(point.x)
+        self.draw_points(self.windows[0], point.x)
+        return point
+
+
     def update_ui_after_redo(self):
         if not self.bool_enable_custom_points:
             self.update_title_text('way_automatic_next_point')
+            self.show_next_slice(self.windows[0], [self.current_point.x, self.current_point.y, self.current_point.z])
+            self.draw_points(self.windows[0], self.current_point.x)
         else:
             self.update_title_text('way_custom_next_point')
-        self.draw_points(self.windows[0], self.current_point.x)
+            if self.list_points :
+                self.show_previous_slice_in_custom()
+            else:
+                self.draw_points(self.windows[0], self.current_point.x)
 
-    def redo_auto(self):
-        self.current_slice += -1
-        self.show_next_slice(self.windows[0], [self.current_point.x, self.current_point.y, self.current_point.z])
+
+
+
 
 class ClickViewerLabelVertebrae(ClickViewer):
 
