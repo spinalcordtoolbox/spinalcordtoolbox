@@ -161,7 +161,7 @@ class ProcessLabels(object):
             if len(image_output.data.shape) == 3:
                 image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
             elif len(image_output.data.shape) == 2:
-                assert str(coord.z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :"+str(coord.z)
+                assert str(coord.z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(coord.z)
                 image_output.data[int(coord.x), int(coord.y)] = coord.value
 
         return image_output
@@ -219,34 +219,34 @@ class ProcessLabels(object):
             if dilate:
                 additional_coordinates = []
                 for coord_temp in cross_coordinates_temp:
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y, coord_temp.z+1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y, coord_temp.z-1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y+1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y+1.0, coord_temp.z+1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y+1.0, coord_temp.z-1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y-1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y-1.0, coord_temp.z+1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y-1.0, coord_temp.z-1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y, coord_temp.z + 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y, coord_temp.z - 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y + 1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y + 1.0, coord_temp.z + 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y + 1.0, coord_temp.z - 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y - 1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y - 1.0, coord_temp.z + 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y - 1.0, coord_temp.z - 1.0, coord_temp.value]))
 
-                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y, coord_temp.z+1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y, coord_temp.z-1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y+1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y+1.0, coord_temp.z+1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y+1.0, coord_temp.z-1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y-1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y-1.0, coord_temp.z+1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y-1.0, coord_temp.z-1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y, coord_temp.z + 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y, coord_temp.z - 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y + 1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y + 1.0, coord_temp.z + 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y + 1.0, coord_temp.z - 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y - 1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y - 1.0, coord_temp.z + 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y - 1.0, coord_temp.z - 1.0, coord_temp.value]))
 
-                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y, coord_temp.z+1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y, coord_temp.z-1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y+1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y+1.0, coord_temp.z+1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y+1.0, coord_temp.z-1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y-1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y-1.0, coord_temp.z+1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y-1.0, coord_temp.z-1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y, coord_temp.z + 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y, coord_temp.z - 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y + 1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y + 1.0, coord_temp.z + 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y + 1.0, coord_temp.z - 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y - 1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y - 1.0, coord_temp.z + 1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y - 1.0, coord_temp.z - 1.0, coord_temp.value]))
 
                 cross_coordinates_temp.extend(additional_coordinates)
 
@@ -283,7 +283,7 @@ class ProcessLabels(object):
         image_input_pos.data *= 0
         X, Y, Z = (self.image_input.data < 0).nonzero()
         for i in range(len(X)):
-            image_input_neg.data[X[i], Y[i], Z[i]] = -self.image_input.data[X[i], Y[i], Z[i]] # in order to apply getNonZeroCoordinates
+            image_input_neg.data[X[i], Y[i], Z[i]] = -self.image_input.data[X[i], Y[i], Z[i]]  # in order to apply getNonZeroCoordinates
         X_pos, Y_pos, Z_pos = (self.image_input.data > 0).nonzero()
         for i in range(len(X_pos)):
             image_input_pos.data[X_pos[i], Y_pos[i], Z_pos[i]] = self.image_input.data[X_pos[i], Y_pos[i], Z_pos[i]]
@@ -293,7 +293,7 @@ class ProcessLabels(object):
 
         image_output.changeType('float32')
         for coord in coordinates_input_neg:
-            image_output.data[:, :, int(coord.z)] = -coord.value #PB: takes the int value of coord.value
+            image_output.data[:, :, int(coord.z)] = -coord.value  # PB: takes the int value of coord.value
         for coord in coordinates_input_pos:
             image_output.data[:, :, int(coord.z)] = coord.value
 
@@ -327,8 +327,8 @@ class ProcessLabels(object):
 
         # 3. Compute the center of mass of each group of voxels and write them into the output image
         for value, list_coord in groups.iteritems():
-            center_of_mass = sum(list_coord)/float(len(list_coord))
-            sct.printv("Value = " + str(center_of_mass.value) + " : ("+str(center_of_mass.x) + ", "+str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( " + str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
+            center_of_mass = sum(list_coord) / float(len(list_coord))
+            sct.printv("Value = " + str(center_of_mass.value) + " : (" + str(center_of_mass.x) + ", " + str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( " + str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
             output_image.data[int(round(center_of_mass.x)), int(round(center_of_mass.y)), int(round(center_of_mass.z))] = center_of_mass.value
 
         return output_image
@@ -362,8 +362,8 @@ class ProcessLabels(object):
 
         # for all points in input, find the value that has to be set up, depending on the vertebral level
         for i, coord in enumerate(coordinates_input):
-            for j in range(0, len(coordinates_ref)-1):
-                if coordinates_ref[j+1].z < coord.z <= coordinates_ref[j].z:
+            for j in range(0, len(coordinates_ref) - 1):
+                if coordinates_ref[j + 1].z < coord.z <= coordinates_ref[j].z:
                     image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coordinates_ref[j].value
 
         return image_output
@@ -650,12 +650,12 @@ class ProcessLabels(object):
 
         # for all points with non-zeros neighbors, force the neighbors to 0
         for i in range(0, len(coordinates_input) - 1):
-            dist = math.sqrt((coordinates_input[i].x - coordinates_input[i+1].x)**2 + (coordinates_input[i].y - coordinates_input[i+1].y)**2 + (coordinates_input[i].z - coordinates_input[i+1].z)**2)
+            dist = math.sqrt((coordinates_input[i].x - coordinates_input[i + 1].x)**2 + (coordinates_input[i].y - coordinates_input[i + 1].y)**2 + (coordinates_input[i].z - coordinates_input[i + 1].z)**2)
             if dist < max_dist:
                 print 'Warning: the distance between label ' + str(i) + '[' + str(coordinates_input[i].x) + ',' + str(coordinates_input[i].y) + ',' + str(
-                    coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i+1) + '[' + str(
-                    coordinates_input[i+1].x) + ',' + str(coordinates_input[i+1].y) + ',' + str(coordinates_input[i+1].z) + ']=' + str(
-                    coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
+                    coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i + 1) + '[' + str(
+                    coordinates_input[i + 1].x) + ',' + str(coordinates_input[i + 1].y) + ',' + str(coordinates_input[i + 1].z) + ']=' + str(
+                    coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
 
     def continuous_vertebral_levels(self):
         """
@@ -686,9 +686,9 @@ class ProcessLabels(object):
         length_levels = {}
         for level in vertebral_levels:
             indexes_slice = np.where(value_centerline == level)
-            length_levels[level] = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[0][index_slice + 1]] - x_centerline_fit[indexes_slice[0][index_slice]])*px)**2 +
-                                                     ((y_centerline_fit[indexes_slice[0][index_slice + 1]] - y_centerline_fit[indexes_slice[0][index_slice]])*py)**2 +
-                                                     ((z_centerline_fit[indexes_slice[0][index_slice + 1]] - z_centerline_fit[indexes_slice[0][index_slice]])*pz)**2)
+            length_levels[level] = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[0][index_slice + 1]] - x_centerline_fit[indexes_slice[0][index_slice]]) * px)**2 +
+                                                     ((y_centerline_fit[indexes_slice[0][index_slice + 1]] - y_centerline_fit[indexes_slice[0][index_slice]]) * py)**2 +
+                                                     ((z_centerline_fit[indexes_slice[0][index_slice + 1]] - z_centerline_fit[indexes_slice[0][index_slice]]) * pz)**2)
                                            for index_slice in range(len(indexes_slice[0]) - 1)])
 
         # 2. for each slice:

@@ -169,7 +169,7 @@ def main(args = None):
         dim = arguments["-concat"]
         assert dim in dim_list
         dim = dim_list.index(dim)
-        im_out = [concat_data(fname_in, dim)] #TODO: adapt to fname_in
+        im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
 
     elif '-type' in arguments:
         output_type = arguments['-type']
@@ -205,7 +205,7 @@ def main(args = None):
             if im.data.shape != im_ref.data.shape:
                 printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
             del im
-        im_out = [multicomponent_merge(fname_in)] #TODO: adapt to fname_in
+        im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
     elif '-display-warp' in arguments:
         im_in = fname_in[0]
@@ -227,18 +227,18 @@ def main(args = None):
             # use input file name and add _X, _Y _Z. Keep the same extension
             fname_out = []
             for i_dim in xrange(3):
-                fname_out.append(add_suffix(fname_in[0], '_'+dim_list[i_dim].upper()))
+                fname_out.append(add_suffix(fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].setFileName(fname_out[i_dim])
                 im_out[i_dim].save()
         if '-split' in arguments:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             fname_out = []
             for i, im in enumerate(im_out):
-                fname_out.append(add_suffix(fname_in[0], '_'+dim_list[dim].upper()+str(i).zfill(4)))
+                fname_out.append(add_suffix(fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.setFileName(fname_out[i])
                 im.save()
 
-        printv('Created file(s):\n--> '+str(fname_out)+'\n', verbose, 'info')
+        printv('Created file(s):\n--> ' + str(fname_out) + '\n', verbose, 'info')
         # printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
         print(orient)
@@ -257,7 +257,7 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
         new_shape = list(im.data.shape)
         new_shape.append(1)
         im.data = im.data.reshape(new_shape)
-    padded_data = zeros((nx+pad_x_i+pad_x_f, ny+pad_y_i+pad_y_f, nz+pad_z_i+pad_z_f))
+    padded_data = zeros((nx + pad_x_i + pad_x_f, ny + pad_y_i + pad_y_f, nz + pad_z_i + pad_z_f))
 
     if pad_x_f == 0:
         pad_x_f = None
@@ -275,7 +275,7 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
     padded_data[pad_x_i:pad_x_f, pad_y_i:pad_y_f, pad_z_i:pad_z_f] = im.data
     im_out = im.copy()
     im_out.data = padded_data  # done after the call of the function
-    im_out.setFileName(im_out.file_name+'_pad'+im_out.ext)
+    im_out.setFileName(im_out.file_name + '_pad' + im_out.ext)
 
     # adapt the origin in the sform and qform matrix
     new_origin = dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
@@ -315,7 +315,7 @@ def split_data(im_in, dim):
     # Parse file name
     # Open first file.
     data = im_in.data
-    if dim+1 > len(shape(data)):  # in case input volume is 3d and dim=t
+    if dim + 1 > len(shape(data)):  # in case input volume is 3d and dim=t
         data = data[..., newaxis]
     # Split data into list
     data_split = array_split(data, data.shape[dim], dim)
@@ -324,7 +324,7 @@ def split_data(im_in, dim):
     for i, dat in enumerate(data_split):
         im_out = im_in.copy()
         im_out.data = dat
-        im_out.setFileName(im_out.file_name+'_'+dim_list[dim].upper()+str(i).zfill(4)+im_out.ext)
+        im_out.setFileName(im_out.file_name + '_' + dim_list[dim].upper() + str(i).zfill(4) + im_out.ext)
         im_out_list.append(im_out)
 
     return im_out_list
@@ -378,7 +378,7 @@ def concat_data(fname_in_list, dim, pixdim=None):
     # write file
     im_out = Image(fname_in_list[0]).copy()
     im_out.data = data_concat
-    im_out.setFileName(im_out.file_name+'_concat'+im_out.ext)
+    im_out.setFileName(im_out.file_name + '_concat' + im_out.ext)
 
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
@@ -456,7 +456,7 @@ def multicomponent_split(im):
     for i, im in enumerate(im_out):
         im.data = data_out[i]
         im.hdr.set_intent('vector', (), '')
-        im.setFileName(im.file_name+'_'+str(i)+im.ext)
+        im.setFileName(im.file_name + '_' + str(i) + im.ext)
     return im_out
 
 
@@ -486,7 +486,7 @@ def multicomponent_merge(fname_list):
     im_out = im_0.copy()
     im_out.data = data_out.astype('float32')
     im_out.hdr.set_intent('vector', (), '')
-    im_out.setFileName(im_out.file_name+'_multicomponent'+im_out.ext)
+    im_out.setFileName(im_out.file_name + '_multicomponent' + im_out.ext)
     return im_out
 
 
@@ -506,7 +506,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
                 im_out = None
                 ori = get_orientation(im)
             except Exception, e:
-                printv('ERROR: an error occurred: \n'+str(e), verbose, 'error')
+                printv('ERROR: an error occurred: \n' + str(e), verbose, 'error')
             return ori
         elif set:
             # set orientation
@@ -543,7 +543,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             im_out = None
             ori = get_orientation(im_split_list[0])
             chdir('..')
-            run('rm -rf '+tmp_folder, error_exit='warning')
+            run('rm -rf ' + tmp_folder, error_exit='warning')
             return ori
         elif set:
             # set orientation
@@ -565,11 +565,11 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
 
         # Go back to previous directory:
         chdir('..')
-        run('rm -rf '+tmp_folder, error_exit='warning')
+        run('rm -rf ' + tmp_folder, error_exit='warning')
 
     if fname_out:
         im_out.setFileName(fname_out)
-        if fname_out != im.file_name+'_'+ori+im.ext:
+        if fname_out != im.file_name + '_' + ori + im.ext:
             run('rm -f ' + im.file_name + '_' + ori + im.ext)
     else:
         im_out.setFileName(im.file_name + '_' + ori + im.ext)
@@ -605,13 +605,13 @@ def get_orientation_3d(im, filename=False):
     string_out = 'Input image orientation : '
     # get orientation
     if filename:
-        status, output = run('isct_orientation3d -i '+im+' -get ', 0)
+        status, output = run('isct_orientation3d -i ' + im + ' -get ', 0)
     else:
-        status, output = run('isct_orientation3d -i '+im.absolutepath+' -get ', 0)
+        status, output = run('isct_orientation3d -i ' + im.absolutepath + ' -get ', 0)
     # check status
     if status != 0:
         printv('ERROR in get_orientation.', 1, 'error')
-    orientation = output[output.index(string_out)+len(string_out):]
+    orientation = output[output.index(string_out) + len(string_out):]
     # orientation = output[26:]
     return orientation
 
@@ -632,20 +632,20 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
         pass
     elif filename:
         path, fname, ext = extract_fname(im)
-        fname_out = fname+'_'+orientation+ext
+        fname_out = fname + '_' + orientation + ext
     else:
-        fname_out = im.file_name+'_'+orientation+im.ext
+        fname_out = im.file_name + '_' + orientation + im.ext
 
     if not data_inversion:
         from sct_utils import run
         if filename:
-            run('isct_orientation3d -i '+im+' -orientation '+orientation+' -o '+fname_out, 0)
+            run('isct_orientation3d -i ' + im + ' -orientation ' + orientation + ' -o ' + fname_out, 0)
             im_out = fname_out
         else:
             fname_in = im.absolutepath
             if fname_in not in os.listdir('.'):
                 im.save()
-            run('isct_orientation3d -i '+im.absolutepath+' -orientation '+orientation+' -o '+fname_out, 0)
+            run('isct_orientation3d -i ' + im.absolutepath + ' -orientation ' + orientation + ' -o ' + fname_out, 0)
             im_out = Image(fname_out)
     else:
         im_out = im.copy()
@@ -659,7 +659,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         from numpy import zeros
         tmp_dir = tmp_create()
         im_warp = Image(fname_warp)
-        status, out = run('fslhd '+fname_warp)
+        status, out = run('fslhd ' + fname_warp)
         from os import chdir
         chdir(tmp_dir)
         dim1 = 'dim1           '
@@ -669,29 +669,29 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         ny = int(out[out.find(dim2):][len(dim2):out[out.find(dim2):].find('\n')])
         nz = int(out[out.find(dim3):][len(dim3):out[out.find(dim3):].find('\n')])
         sq = zeros((step, step))
-        sq[step-1] = 1
-        sq[:, step-1] = 1
+        sq[step - 1] = 1
+        sq[:, step - 1] = 1
         dat = zeros((nx, ny, nz))
         for i in range(0, dat.shape[0], step):
             for j in range(0, dat.shape[1], step):
                 for k in range(dat.shape[2]):
-                    if dat[i:i+step, j:j+step, k].shape == (step, step):
-                        dat[i:i+step, j:j+step, k] = sq
-        fname_grid = 'grid_'+str(step)+'.nii.gz'
+                    if dat[i:i + step, j:j + step, k].shape == (step, step):
+                        dat[i:i + step, j:j + step, k] = sq
+        fname_grid = 'grid_' + str(step) + '.nii.gz'
         im_grid = Image(param=dat)
         grid_hdr = im_warp.hdr
         im_grid.hdr = grid_hdr
         im_grid.setFileName(fname_grid)
         im_grid.save()
         fname_grid_resample = add_suffix(fname_grid, '_resample')
-        run('sct_resample -i '+fname_grid+' -f 3x3x1 -x nn -o '+fname_grid_resample)
-        fname_grid = tmp_dir+fname_grid_resample
+        run('sct_resample -i ' + fname_grid + ' -f 3x3x1 -x nn -o ' + fname_grid_resample)
+        fname_grid = tmp_dir + fname_grid_resample
         chdir('..')
     path_warp, file_warp, ext_warp = extract_fname(fname_warp)
-    grid_warped = path_warp+extract_fname(fname_grid)[1]+'_'+file_warp+ext_warp
-    run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
+    grid_warped = path_warp + extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp
+    run('sct_apply_transfo -i ' + fname_grid + ' -d ' + fname_grid + ' -w ' + fname_warp + ' -o ' + grid_warped)
     if rm_tmp:
-        run('rm -rf '+tmp_dir, error_exit='warning')
+        run('rm -rf ' + tmp_dir, error_exit='warning')
 
 
 # START PROGRAM

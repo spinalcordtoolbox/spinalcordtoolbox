@@ -132,26 +132,26 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
-            '-o', 'src_'+str(i_file)+'_template.nii.gz',
+            '-o', 'src_' + str(i_file) + '_template.nii.gz',
             '-v', param.verbose])
 
         # create binary mask from input file by assigning one to all non-null voxels
         sct_maths.main(args=[
             '-i', fname_src,
             '-bin', str(param.almost_zero),
-            '-o', 'src_'+str(i_file)+'native_bin.nii.gz'])
+            '-o', 'src_' + str(i_file) + 'native_bin.nii.gz'])
 
         # apply transformation to binary mask to compute partial volume
         sct_apply_transfo.main(args=[
-            '-i', 'src_'+str(i_file)+'native_bin.nii.gz',
+            '-i', 'src_' + str(i_file) + 'native_bin.nii.gz',
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
-            '-o', 'src_'+str(i_file)+'_template_partialVolume.nii.gz'])
+            '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz'])
 
         # open data
-        data[:, :, :, i_file] = msct_image.Image('src_'+str(i_file)+'_template.nii.gz').data
-        partial_volume[:, :, :, i_file] = msct_image.Image('src_'+str(i_file)+'_template_partialVolume.nii.gz').data
+        data[:, :, :, i_file] = msct_image.Image('src_' + str(i_file) + '_template.nii.gz').data
+        partial_volume[:, :, :, i_file] = msct_image.Image('src_' + str(i_file) + '_template_partialVolume.nii.gz').data
         i_file += 1
 
     # merge files using partial volume information (and convert nan resulting from division by zero to zeros)
@@ -206,7 +206,7 @@ def main(args=None):
         sct.printv(str(e), 1, 'error')
 
     sct.printv('Done ! to view your results, type: ', param.verbose, 'normal')
-    sct.printv('fslview '+fname_dest+' '+os.path.abspath(param.fname_out)+' &\n', param.verbose, 'info')
+    sct.printv('fslview ' + fname_dest + ' ' + os.path.abspath(param.fname_out) + ' &\n', param.verbose, 'info')
 
 if __name__ == "__main__":
     main()

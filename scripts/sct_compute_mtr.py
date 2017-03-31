@@ -64,8 +64,8 @@ def main():
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
     from sct_convert import convert
-    convert(fname_mt0, path_tmp+'mt0.nii', type='float32')
-    convert(fname_mt1, path_tmp+'mt1.nii', type='float32')
+    convert(fname_mt0, path_tmp + 'mt0.nii', type='float32')
+    convert(fname_mt1, path_tmp + 'mt1.nii', type='float32')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -89,16 +89,16 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'mtr.nii', path_out+file_out+ext_out)
+    sct.generate_output_file(path_tmp + 'mtr.nii', path_out + file_out + ext_out)
 
     # Remove temporary files
     if remove_tmp_files == 1:
         print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp)
+        sct.run('rm -rf ' + path_tmp)
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &\n', verbose, 'info')
+    sct.printv('fslview ' + fname_mt0 + ' ' + fname_mt1 + ' ' + file_out + ' &\n', verbose, 'info')
 
 
 # ==========================================================================================

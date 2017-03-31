@@ -60,7 +60,7 @@ def convert(fname_in, fname_out, squeeze_data=True, type=None, verbose=1):
     """
     from msct_image import Image
     from sct_utils import printv
-    printv('sct_convert -i '+fname_in+' -o '+fname_out, verbose, 'code')
+    printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
     # Open file
     im = Image(fname_in)
     # Save file

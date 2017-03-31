@@ -49,7 +49,7 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_label = path_sct_data+'/mt/mt1.nii.gz'
+        fname_label = path_sct_data + '/mt/mt1.nii.gz'
         param.labels = '5,5,2,1:5,7,2,3'
         type_process = 'create'
         cross_radius = 5
@@ -115,12 +115,12 @@ def main():
     else:
         sct.printv('Error: voxel type not supported... See usage.', 1, 'error')
 
-    hdr.set_data_dtype(type_output) # set imagetype to uint8, previous: int32.
+    hdr.set_data_dtype(type_output)  # set imagetype to uint8, previous: int32.
     print '\nWrite NIFTI volumes...'
     # data.astype('int')
     img = nibabel.Nifti1Image(data, None, hdr)
-    nibabel.save(img, 'tmp.'+file_output+'.nii.gz')
-    sct.generate_output_file('tmp.'+file_output+'.nii.gz', file_output+ext_output)
+    nibabel.save(img, 'tmp.' + file_output + '.nii.gz')
+    sct.generate_output_file('tmp.' + file_output + '.nii.gz', file_output + ext_output)
 
 
 #=======================================================================================================================
@@ -128,7 +128,7 @@ def main():
 #=======================================================================================================================
 def usage():
     print """
-"""+os.path.basename(__file__)+"""
+""" + os.path.basename(__file__) + """
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
@@ -136,7 +136,7 @@ DESCRIPTION
   Change the type of voxel in the image
 
 USAGE
-  """+os.path.basename(__file__)+""" -i <data> -o <outputname> -t <type>
+  """ + os.path.basename(__file__) + """ -i <data> -o <outputname> -t <type>
 
 MANDATORY ARGUMENTS
   -i <data>         input image name
