@@ -554,7 +554,6 @@ class ClickViewer(Viewer):
         self.primary_subplot = orientation_subplot[0]
         self.secondary_subplot = orientation_subplot[1]
         self.dic_axis_buttons={}
-        self.bool_all_processed = False
         self.closed = False
 
         self.current_slice = 0
@@ -675,7 +674,6 @@ class ClickViewer(Viewer):
             return True
         else:
             self.update_title_text('ready_to_save_and_quit')
-            self.bool_all_processed=True
             return False
 
     def draw_points(self, window, current_slice):
@@ -794,7 +792,6 @@ class ClickViewer(Viewer):
             return False
         else:
             self.update_title_text('warning_all_slices_are_done_already')
-            self.bool_all_processed=True
             return True
 
     def press_help(self, event):
@@ -864,7 +861,8 @@ class ClickViewerPropseg(ClickViewer):
                     self.update_title_text('skipped_all_remaining_slices')
                 else:
                     self.current_slice += 1
-                    self.windows[0].update_slice(self.list_slices[self.current_slice])
+                    #self.windows[0].update_slice(self.list_slices[self.current_slice])
+                    self.show_next_slice(self.windows[0],[self.current_point.x, self.current_point.y, self.current_point.z])
             else:
                 self.update_title_text('warning_skip_not_defined')
 
@@ -1390,7 +1388,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             return False
         else:
             self.update_title_text('warning_all_slices_are_done_already')
-            self.bool_all_processed=True
             return True
 
     def update_second_label_if_necessary(self):
@@ -1404,7 +1401,6 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             return True
         else:
             self.update_title_text('ready_to_save_and_quit')
-            self.bool_all_processed=True
             return False
 
     def add_dot_to_current_slice(self,plot,point):
@@ -1839,7 +1835,6 @@ class ClickViewerGroundTruth(ClickViewer):
             return False
         else:
             self.update_title_text('warning_all_slices_are_done_already')
-            self.bool_all_processed=True
             return True
 
     def is_there_next_slice(self):
@@ -1848,7 +1843,6 @@ class ClickViewerGroundTruth(ClickViewer):
             return True
         else:
             self.update_title_text('ready_to_save_and_quit')
-            self.bool_all_processed=True
             return False
 
     def press_redo(self, event):
