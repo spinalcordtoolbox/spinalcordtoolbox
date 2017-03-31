@@ -1197,7 +1197,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         self.number_of_dots_final=2
         self.current_dot_number=0
         self.dic_message_labels=self.define_dic_message_labels()
-        self.list_current_wanted_labels=[self.correct_label_choice(first_label),self.correct_label_choice(last_label)]
+        self.list_current_wanted_labels=self.control_list_wanted_label(first_label,last_label)
         self.update_title_text(str(self.current_dot_number))
         self.help_web_adress='https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_register_to_template/attachment/sct_register_to_template.png'
 
@@ -1206,6 +1206,19 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         self.create_button_redo()
         self.create_button_lower_label()
         self.create_button_higher_label()
+
+    def control_list_wanted_label(self,first_label,last_label):
+        a=self.correct_label_choice(first_label)
+        b=self.correct_label_choice(last_label)
+        if b>a:
+            return [a,b]
+        elif b<a:
+            sct.printv('Warning : You can not have the first label higher than the last one : parameter corrected.',
+                       True, 'warning')
+            return [b,a]
+        else:
+            sct.printv('Warning : You can not have the same first and last label : parameter ignored.', True, 'warning')
+            return [4,10]
 
     def correct_label_choice(self,i):
         if i==50:
