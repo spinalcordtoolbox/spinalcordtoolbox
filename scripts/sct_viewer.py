@@ -1434,7 +1434,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def is_it_possible_to_get_lower(self):
         if not self.current_dot_number:
-            if self.list_current_wanted_labels[0]<len(self.dic_message_labels):
+            if self.list_current_wanted_labels[0]<len(self.dic_message_labels)-1:
                 return True
             else:
                 self.update_title_text('cant_go_lower')
@@ -1448,7 +1448,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
 
     def is_it_possible_to_get_higher(self):
         if not self.current_dot_number:
-            if self.list_current_wanted_labels[0]>1:
+            if self.list_current_wanted_labels[0]>1 and self.list_current_wanted_labels[1]>abs(self.list_current_wanted_labels[0]):
                 return True
             else:
                 self.update_title_text('cant_go_higher')
