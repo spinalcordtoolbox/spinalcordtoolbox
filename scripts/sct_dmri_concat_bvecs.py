@@ -50,7 +50,7 @@ def main():
         fname_out = arguments["-o"]
     else:
         path_in, file_in, ext_in = extract_fname(fname_bvecs_list[0])
-        fname_out = path_in+'bvecs_concat'+ext_in
+        fname_out = path_in + 'bvecs_concat' + ext_in
 
     # # Open bvec files and collect values
     # nb_files = len(fname_bvecs_list)

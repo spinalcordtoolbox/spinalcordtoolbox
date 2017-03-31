@@ -126,11 +126,11 @@ def get_parser():
 class ParamModel:
     def __init__(self):
         self.path_data = ''
-        self.todo = 'load'# 'compute' or 'load'
+        self.todo = 'load'  # 'compute' or 'load'
         self.new_model_dir = 'gm_model/'
-        self.method = 'pca' # 'pca' or 'isomap'
-        self.k_pca = 0.95 # chosen after loocv optimization with the 37subjects-model
-        self.n_compo_iso = 0.5 # float between 0 and 1 : percentage of component to keep. 0.5 = keep half of the components
+        self.method = 'pca'  # 'pca' or 'isomap'
+        self.k_pca = 0.95  # chosen after loocv optimization with the 37subjects-model
+        self.n_compo_iso = 0.5  # float between 0 and 1 : percentage of component to keep. 0.5 = keep half of the components
         self.n_neighbors_iso = 5
         #
         self.ind_rm = None
@@ -141,13 +141,13 @@ class ParamModel:
 
     def __repr__(self):
         info = 'Model Param:\n'
-        info += '\t- path to data: ' + self.path_data+'\n'
-        info += '\t- created folder: '+self.new_model_dir+'\n'
-        info += '\t- used method: '+self.method+'\n'
+        info += '\t- path to data: ' + self.path_data + '\n'
+        info += '\t- created folder: ' + self.new_model_dir + '\n'
+        info += '\t- used method: ' + self.method + '\n'
         if self.method == 'pca':
-            info += '\t\t-> % of variability kept for PCA: '+str(self.k_pca)+'\n'
+            info += '\t\t-> % of variability kept for PCA: ' + str(self.k_pca) + '\n'
         if self.method == 'isomap':
-            info += '\t\t-> # components for isomap: '+str(self.n_compo_iso)+' (in percentage: 0.5 = keep half of the components)\n'
+            info += '\t\t-> # components for isomap: ' + str(self.n_compo_iso) + ' (in percentage: 0.5 = keep half of the components)\n'
             info += '\t\t-> # neighbors for isomap: ' + str(self.n_neighbors_iso) + '\n'
 
         return info
@@ -163,11 +163,11 @@ class ParamData:
 
     def __repr__(self):
         info = 'Data Param:\n'
-        info += '\t- denoising: ' + str(self.denoising)+'\n'
-        info += '\t- resampling to an axial resolution of: ' + str(self.axial_res)+'mm\n'
-        info += '\t- size of the square mask: ' + str(self.square_size_size_mm)+'mm\n'
-        info += '\t- registration parameters: '+self.register_param+'\n'
-        info += '\t- intensity normalization: ' + str(self.normalization)+'\n'
+        info += '\t- denoising: ' + str(self.denoising) + '\n'
+        info += '\t- resampling to an axial resolution of: ' + str(self.axial_res) + 'mm\n'
+        info += '\t- size of the square mask: ' + str(self.square_size_size_mm) + 'mm\n'
+        info += '\t- registration parameters: ' + self.register_param + '\n'
+        info += '\t- intensity normalization: ' + str(self.normalization) + '\n'
 
         return info
 
@@ -188,11 +188,11 @@ class Model:
         self.param_data = param_data if param_data is not None else ParamData()
         self.param = param if param is not None else Param()
 
-        self.slices = [] # list of Slice() : Model dictionary
+        self.slices = []  # list of Slice() : Model dictionary
         self.mean_image = None
         self.intensities = None
 
-        self.fitted_model = None # PCA or Isomap model
+        self.fitted_model = None  # PCA or Isomap model
         self.fitted_data = None
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -207,7 +207,7 @@ class Model:
             os.mkdir(self.param_model.new_model_dir)
         # write model info
         param_fic = open(self.param_model.new_model_dir + 'info.txt', 'w')
-        param_fic.write('Model computed on '+'-'.join(str(t) for t in time.localtime()[:3])+'\n')
+        param_fic.write('Model computed on ' + '-'.join(str(t) for t in time.localtime()[:3]) + '\n')
         param_fic.write(str(self.param_model))
         param_fic.write(str(self.param_data))
         param_fic.close()
@@ -252,8 +252,8 @@ class Model:
             fname_sc_seg = None
             list_fname_gmseg = []
             fname_level = None
-            for file_name in os.listdir(path_data+sub):
-                fname = path_data+sub+'/'+file_name
+            for file_name in os.listdir(path_data + sub):
+                fname = path_data + sub + '/' + file_name
                 if os.path.isfile(fname):
                     if 'gm' in file_name:
                         list_fname_gmseg.append(fname)
@@ -265,7 +265,7 @@ class Model:
                         fname_level = fname
 
             info_data = 'Loaded files: \n'
-            info_data += 'Image: ....... '+str(fname_data)+'\n'
+            info_data += 'Image: ....... ' + str(fname_data) + '\n'
             info_data += 'SC seg: ...... ' + str(fname_sc_seg) + '\n'
             info_data += 'GM seg: ...... ' + str(list_fname_gmseg) + '\n'
             info_data += 'Levels: ...... ' + str(fname_level) + '\n'
@@ -278,7 +278,7 @@ class Model:
             # preprocess data
             list_slices_sub, info = pre_processing(fname_data, fname_sc_seg, fname_level=fname_level, fname_manual_gmseg=list_fname_gmseg, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm,  denoising=self.param_data.denoising, for_model=True)
             for i_slice, slice_sub in enumerate(list_slices_sub):
-                slice_sub.set(slice_id=i_slice+j)
+                slice_sub.set(slice_id=i_slice + j)
                 self.slices.append(slice_sub)
 
             j += len(list_slices_sub)
@@ -291,7 +291,7 @@ class Model:
         # register all slices WM on mean WM
         for dic_slice in self.slices:
             # create a directory to get the warping fields
-            warp_dir = 'wf_slice'+str(dic_slice.id)
+            warp_dir = 'wf_slice' + str(dic_slice.id)
             if not os.path.exists(warp_dir):
                 os.mkdir(warp_dir)
 
@@ -305,7 +305,7 @@ class Model:
             list_wmseg_reg = []
             for wm_seg in dic_slice.wm_seg:
                 im_wmseg = Image(param=wm_seg)
-                im_wmseg_reg = apply_transfo(im_src=im_wmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
+                im_wmseg_reg = apply_transfo(im_src=im_wmseg, im_dest=im_mean, warp=warp_dir + '/' + fname_src2dest, interp='nn')
 
                 list_wmseg_reg.append(im_wmseg_reg.data.reshape(shape))
 
@@ -313,7 +313,7 @@ class Model:
             list_gmseg_reg = []
             for gm_seg in dic_slice.gm_seg:
                 im_gmseg = Image(param=gm_seg)
-                im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean, warp=warp_dir+'/'+fname_src2dest, interp='nn')
+                im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean, warp=warp_dir + '/' + fname_src2dest, interp='nn')
                 list_gmseg_reg.append(im_gmseg_reg.data.reshape(shape))
 
             # set slice attributes with data registered into the model space
@@ -453,12 +453,12 @@ class Model:
             path_sct = os.path.dirname(path_script)
             printv('ERROR: The GM segmentation model is not compatible with this version of the code.\n'
                    'To update the model, run the following lines:\n\n'
-                   'cd '+path_sct+'\n'
+                   'cd ' + path_sct + '\n'
                    './install_sct -m -b\n', self.param.verbose, 'error')
 
         # - self.slices = dictionary
         self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'))
-        printv('  '+str(len(self.slices))+' slices in the model dataset', self.param.verbose, 'normal')
+        printv('  ' + str(len(self.slices)) + ' slices in the model dataset', self.param.verbose, 'normal')
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
         # - self.intensities = for normalization
@@ -470,8 +470,8 @@ class Model:
         # - fitted data (=eigen vectors or embedding vectors )
         self.fitted_data = pickle.load(gzip.open(model_files['data'], 'rb'))
 
-        printv('  model: '+self.param_model.method)
-        printv('  '+str(self.fitted_data.shape[1])+' components kept on '+str(self.fitted_data.shape[0]), self.param.verbose, 'normal')
+        printv('  model: ' + self.param_model.method)
+        printv('  ' + str(self.fitted_data.shape[1]) + ' components kept on ' + str(self.fitted_data.shape[0]), self.param.verbose, 'normal')
         # when model == pca, self.fitted_data.shape[1] = self.fitted_model.n_components_
         os.chdir(path)
 
@@ -549,8 +549,8 @@ def main(args=None):
     start = time.time()
     model.compute_model()
     end = time.time()
-    t = end-start
-    printv('Model computed in '+str(int(round(t/60)))+' min, '+str(t%60)+' sec', param.verbose, 'info')
+    t = end - start
+    printv('Model computed in ' + str(int(round(t / 60))) + ' min, ' + str(t%60) + ' sec', param.verbose, 'info')
 
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ class WarpingField(Image):
             result = Image(self)
             print "Iteration #" + str(self.iteration)
             result.data *= float(self.iteration) / float(self.num_of_frames)
-            result.file_name = "tmp."+result.file_name+"_" + str(self.iteration)
+            result.file_name = "tmp." + result.file_name + "_" + str(self.iteration)
             self.iteration += 1
             return result, self.iteration
         else:
@@ -101,7 +101,7 @@ if __name__ == "__main__":
             result = Image(filename_output)
             result.change_orientation()
 
-            toimage(result.data[int(result.data.shape[0]/2)].squeeze(), cmin=0.0).save('images/'+extract_fname(filename_output)[1]+'.jpg')
+            toimage(result.data[int(result.data.shape[0] / 2)].squeeze(), cmin=0.0).save('images/' + extract_fname(filename_output)[1] + '.jpg')
             filenames_output.append(filename_output)
         except ValueError:
             printv('\nError during warping field generation...', 1, 'error')

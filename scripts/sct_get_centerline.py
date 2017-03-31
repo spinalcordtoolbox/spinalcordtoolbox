@@ -63,10 +63,10 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Parameters for debug mode
     if param.debug == 1:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n\t\t\tCurrent working directory: '+os.getcwd(), 'warning')
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n\t\t\tCurrent working directory: ' + os.getcwd(), 'warning')
         status, path_sct_testing_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_anat = path_sct_testing_data+'/t2/t2.nii.gz'
-        fname_point = path_sct_testing_data+'/t2/t2_centerline_init.nii.gz'
+        fname_anat = path_sct_testing_data + '/t2/t2.nii.gz'
+        fname_point = path_sct_testing_data + '/t2/t2_centerline_init.nii.gz'
         slice_gap = 5
 
     # check existence of input files
@@ -87,27 +87,27 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Display arguments
     print '\nCheck input arguments...'
-    print '  Anatomical image:     '+fname_anat
-    print '  Orientation:          '+input_image_orientation
-    print '  Point in spinal cord: '+fname_point
-    print '  Slice gap:            '+str(slice_gap)
-    print '  Gaussian kernel:      '+str(gaussian_kernel)
-    print '  Degree of polynomial: '+str(param.deg_poly)
+    print '  Anatomical image:     ' + fname_anat
+    print '  Orientation:          ' + input_image_orientation
+    print '  Point in spinal cord: ' + fname_point
+    print '  Slice gap:            ' + str(slice_gap)
+    print '  Gaussian kernel:      ' + str(gaussian_kernel)
+    print '  Degree of polynomial: ' + str(param.deg_poly)
 
     # create temporary folder
     print('\nCreate temporary folder...')
-    path_tmp = 'tmp.'+strftime('%y%m%d%H%M%S')
+    path_tmp = 'tmp.' + strftime('%y%m%d%H%M%S')
     sct.create_folder(path_tmp)
     print '\nCopy input data...'
-    sct.run('cp '+fname_anat + ' '+path_tmp+'/tmp.anat'+ext_anat)
-    sct.run('cp '+fname_point + ' '+path_tmp+'/tmp.point'+ext_point)
+    sct.run('cp ' + fname_anat + ' ' + path_tmp + '/tmp.anat' + ext_anat)
+    sct.run('cp ' + fname_point + ' ' + path_tmp + '/tmp.point' + ext_point)
 
     # go to temporary folder
     os.chdir(path_tmp)
 
     # convert to nii
-    im_anat = convert('tmp.anat'+ext_anat, 'tmp.anat.nii')
-    im_point = convert('tmp.point'+ext_point, 'tmp.point.nii')
+    im_anat = convert('tmp.anat' + ext_anat, 'tmp.anat.nii')
+    im_point = convert('tmp.point' + ext_point, 'tmp.point.nii')
 
     # Reorient input anatomical volume into RL PA IS orientation
     print '\nReorient input volume to RL PA IS orientation...'
@@ -122,8 +122,8 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     # Get image dimensions
     print '\nGet image dimensions...'
     nx, ny, nz, nt, px, py, pz, pt = Image('tmp.anat_orient.nii').dim
-    print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
-    print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
+    print '.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)
+    print '.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm'
 
     # Split input volume
     print '\nSplit input volume...'
@@ -142,27 +142,27 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     # Extract coordinates of input point
     data_point = Image('tmp.point_orient.nii').data
     x_init, y_init, z_init = unravel_index(data_point.argmax(), data_point.shape)
-    sct.printv('Coordinates of input point: ('+str(x_init)+', '+str(y_init)+', '+str(z_init)+')', verbose)
+    sct.printv('Coordinates of input point: (' + str(x_init) + ', ' + str(y_init) + ', ' + str(z_init) + ')', verbose)
 
     # Create 2D gaussian mask
     sct.printv('\nCreate gaussian mask from point...', verbose)
     xx, yy = mgrid[:nx, :ny]
     mask2d = zeros((nx, ny))
-    radius = round(float(gaussian_kernel+1)/2)  # add 1 because the radius includes the center.
+    radius = round(float(gaussian_kernel + 1) / 2)  # add 1 because the radius includes the center.
     sigma = float(radius)
-    mask2d = exp(-(((xx-x_init)**2)/(2*(sigma**2)) + ((yy-y_init)**2)/(2*(sigma**2))))
+    mask2d = exp(-(((xx - x_init)**2) / (2 * (sigma**2)) + ((yy - y_init)**2) / (2 * (sigma**2))))
 
     # Save mask to 2d file
-    file_mask_split = ['tmp.mask_orient_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mask_split = ['tmp.mask_orient_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
     nii_mask2d = Image('tmp.anat_orient_Z0000.nii')
     nii_mask2d.data = mask2d
-    nii_mask2d.setFileName(file_mask_split[z_init]+'.nii')
+    nii_mask2d.setFileName(file_mask_split[z_init] + '.nii')
     nii_mask2d.save()
 
     # initialize variables
-    file_mat = ['tmp.mat_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
-    file_mat_inv = ['tmp.mat_inv_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
-    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mat = ['tmp.mat_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mat_inv = ['tmp.mat_inv_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
 
     # create identity matrix for initial transformation matrix
     fid = open(file_mat_inv_cumul[z_init], 'w')
@@ -200,37 +200,37 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
         while 0 <= z_src < nz:
 
             # print current z:
-            print 'z='+str(z_src)+':'
+            print 'z=' + str(z_src) + ':'
 
             # estimate transformation
-            sct.run(fsloutput+'flirt -in '+file_anat_split[z_src]+' -ref '+file_anat_split[z_dest]+' -schedule ' +
+            sct.run(fsloutput + 'flirt -in ' + file_anat_split[z_src] + ' -ref ' + file_anat_split[z_dest] + ' -schedule ' +
                     file_schedule + ' -verbose 0 -omat ' + file_mat[z_src] +
                     ' -cost normcorr -forcescaling -inweight ' + file_mask_split[z_dest] +
-                    ' -refweight '+file_mask_split[z_dest])
+                    ' -refweight ' + file_mask_split[z_dest])
 
             # display transfo
-            status, output = sct.run('cat '+file_mat[z_src])
+            status, output = sct.run('cat ' + file_mat[z_src])
             print output
 
             # check if transformation is bigger than 1.5x slice_gap
             tx = float(output.split()[3])
             ty = float(output.split()[7])
             norm_txy = linalg.norm([tx, ty], ord=2)
-            if norm_txy > 1.5*slice_gap:
+            if norm_txy > 1.5 * slice_gap:
                 print 'WARNING: Transformation is too large --> using previous one.'
                 warning_count = warning_count + 1
                 # if previous transformation exists, replace current one with previous one
                 if os.path.isfile(file_mat[z_dest]):
-                    sct.run('cp '+file_mat[z_dest]+' '+file_mat[z_src])
+                    sct.run('cp ' + file_mat[z_dest] + ' ' + file_mat[z_src])
 
             # estimate inverse transformation matrix
-            sct.run('convert_xfm -omat '+file_mat_inv[z_src]+' -inverse '+file_mat[z_src])
+            sct.run('convert_xfm -omat ' + file_mat_inv[z_src] + ' -inverse ' + file_mat[z_src])
 
             # compute cumulative transformation
-            sct.run('convert_xfm -omat '+file_mat_inv_cumul[z_src]+' -concat '+file_mat_inv[z_src]+' '+file_mat_inv_cumul[z_dest])
+            sct.run('convert_xfm -omat ' + file_mat_inv_cumul[z_src] + ' -concat ' + file_mat_inv[z_src] + ' ' + file_mat_inv_cumul[z_dest])
 
             # apply inverse cumulative transformation to initial gaussian mask (to put it in src space)
-            sct.run(fsloutput+'flirt -in '+file_mask_split[z_init]+' -ref '+file_mask_split[z_init]+' -applyxfm -init '+file_mat_inv_cumul[z_src]+' -out '+file_mask_split[z_src])
+            sct.run(fsloutput + 'flirt -in ' + file_mask_split[z_init] + ' -ref ' + file_mask_split[z_init] + ' -applyxfm -init ' + file_mat_inv_cumul[z_src] + ' -out ' + file_mask_split[z_src])
 
             # open inverse cumulative transformation file and generate centerline
             fid = open(file_mat_inv_cumul[z_src])
@@ -258,11 +258,11 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     polyx = poly1d(coeffsx)
     x_centerline_fit = polyval(polyx, z_centerline)
     # calculate RMSE
-    rmse = linalg.norm(x_centerline_fit-x_centerline)/sqrt(len(x_centerline))
+    rmse = linalg.norm(x_centerline_fit - x_centerline) / sqrt(len(x_centerline))
     # calculate max absolute error
-    max_abs = max(abs(x_centerline_fit-x_centerline))
-    print '.. RMSE (in mm): '+str(rmse*px)
-    print '.. Maximum absolute error (in mm): '+str(max_abs*px)
+    max_abs = max(abs(x_centerline_fit - x_centerline))
+    print '.. RMSE (in mm): ' + str(rmse * px)
+    print '.. Maximum absolute error (in mm): ' + str(max_abs * px)
 
     # fit centerline in the Z-Y plane using polynomial function
     print '\nFit centerline in the Z-Y plane using polynomial function...'
@@ -270,11 +270,11 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     polyy = poly1d(coeffsy)
     y_centerline_fit = polyval(polyy, z_centerline)
     # calculate RMSE
-    rmse = linalg.norm(y_centerline_fit-y_centerline)/sqrt(len(y_centerline))
+    rmse = linalg.norm(y_centerline_fit - y_centerline) / sqrt(len(y_centerline))
     # calculate max absolute error
-    max_abs = max(abs(y_centerline_fit-y_centerline))
-    print '.. RMSE (in mm): '+str(rmse*py)
-    print '.. Maximum absolute error (in mm): '+str(max_abs*py)
+    max_abs = max(abs(y_centerline_fit - y_centerline))
+    print '.. RMSE (in mm): ' + str(rmse * py)
+    print '.. Maximum absolute error (in mm): ' + str(max_abs * py)
 
     # display
     if param.debug == 1:
@@ -300,19 +300,19 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Generate fitted transformation matrices and write centerline coordinates in text file
     print '\nGenerate fitted transformation matrices and write centerline coordinates in text file...'
-    file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_z'+str(z).zfill(4) for z in range(0, nz, 1)]
-    file_mat_cumul_fit = ['tmp.mat_cumul_fit_z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_z' + str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mat_cumul_fit = ['tmp.mat_cumul_fit_z' + str(z).zfill(4) for z in range(0, nz, 1)]
     fid_centerline = open('tmp.centerline_coordinates.txt', 'w')
     for iz in range(0, nz, 1):
         # compute inverse cumulative fitted transformation matrix
         fid = open(file_mat_inv_cumul_fit[iz], 'w')
-        fid.write('%i %i %i %f\n' % (1, 0, 0, x_centerline_fit_full[iz]-x_init))
-        fid.write('%i %i %i %f\n' % (0, 1, 0, y_centerline_fit_full[iz]-y_init))
+        fid.write('%i %i %i %f\n' % (1, 0, 0, x_centerline_fit_full[iz] - x_init))
+        fid.write('%i %i %i %f\n' % (0, 1, 0, y_centerline_fit_full[iz] - y_init))
         fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
         fid.write('%i %i %i %i\n' % (0, 0, 0, 1))
         fid.close()
         # compute forward cumulative fitted transformation matrix
-        sct.run('convert_xfm -omat '+file_mat_cumul_fit[iz]+' -inverse '+file_mat_inv_cumul_fit[iz])
+        sct.run('convert_xfm -omat ' + file_mat_cumul_fit[iz] + ' -inverse ' + file_mat_inv_cumul_fit[iz])
         # write centerline coordinates in x, y, z format
         fid_centerline.write('%f %f %f\n' % (x_centerline_fit_full[iz], y_centerline_fit_full[iz], z_centerline_full[iz]))
     fid_centerline.close()
@@ -324,8 +324,8 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     for iz in range(0, nz, 1):
         # compute inverse cumulative fitted transformation matrix
         fid = open(file_mat_inv_cumul_fit[iz], 'w')
-        fid.write('%i %i %i %f\n' % (1, 0, 0, x_centerline_fit_full[iz]-x_init))
-        fid.write('%i %i %i %f\n' % (0, 1, 0, y_centerline_fit_full[iz]-y_init))
+        fid.write('%i %i %i %f\n' % (1, 0, 0, x_centerline_fit_full[iz] - x_init))
+        fid.write('%i %i %i %f\n' % (0, 1, 0, y_centerline_fit_full[iz] - y_init))
         fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
         fid.write('%i %i %i %i\n' % (0, 0, 0, 1))
         fid.close()
@@ -336,16 +336,16 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # apply transformations to data
     print '\nApply fitted transformation matrices...'
-    file_anat_split_fit = ['tmp.anat_orient_fit_z'+str(z).zfill(4) for z in range(0, nz, 1)]
-    file_mask_split_fit = ['tmp.mask_orient_fit_z'+str(z).zfill(4) for z in range(0, nz, 1)]
-    file_point_split_fit = ['tmp.point_orient_fit_z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_anat_split_fit = ['tmp.anat_orient_fit_z' + str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mask_split_fit = ['tmp.mask_orient_fit_z' + str(z).zfill(4) for z in range(0, nz, 1)]
+    file_point_split_fit = ['tmp.point_orient_fit_z' + str(z).zfill(4) for z in range(0, nz, 1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
-        sct.run(fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_cumul_fit[iz]+' -out '+file_anat_split_fit[iz])
+        sct.run(fsloutput + 'flirt -in ' + file_anat_split[iz] + ' -ref ' + file_anat_split[iz] + ' -applyxfm -init ' + file_mat_cumul_fit[iz] + ' -out ' + file_anat_split_fit[iz])
         # inverse cumulative transformation to mask
-        sct.run(fsloutput+'flirt -in '+file_mask_split[z_init]+' -ref '+file_mask_split[z_init]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_mask_split_fit[iz])
+        sct.run(fsloutput + 'flirt -in ' + file_mask_split[z_init] + ' -ref ' + file_mask_split[z_init] + ' -applyxfm -init ' + file_mat_inv_cumul_fit[iz] + ' -out ' + file_mask_split_fit[iz])
         # inverse cumulative transformation to point
-        sct.run(fsloutput+'flirt -in '+file_point_split[z_init]+' -ref '+file_point_split[z_init]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_point_split_fit[iz]+' -interp nearestneighbour')
+        sct.run(fsloutput + 'flirt -in ' + file_point_split[z_init] + ' -ref ' + file_point_split[z_init] + ' -applyxfm -init ' + file_mat_inv_cumul_fit[iz] + ' -out ' + file_point_split_fit[iz] + ' -interp nearestneighbour')
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
@@ -387,19 +387,19 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
     os.chdir('..')  # come back to parent folder
-    fname_output_centerline = sct.generate_output_file(path_tmp+'/tmp.point_orient_fit.nii', file_anat+'_centerline'+ext_anat)
+    fname_output_centerline = sct.generate_output_file(path_tmp + '/tmp.point_orient_fit.nii', file_anat + '_centerline' + ext_anat)
 
     # Delete temporary files
     if remove_tmp_files == 1:
         print '\nRemove temporary files...'
-        sct.run('rm -rf '+path_tmp, error_exit='warning')
+        sct.run('rm -rf ' + path_tmp, error_exit='warning')
 
     # print number of warnings
-    print '\nNumber of warnings: '+str(warning_count)+' (if >10, you should probably reduce the gap and/or increase the kernel size'
+    print '\nNumber of warnings: ' + str(warning_count) + ' (if >10, you should probably reduce the gap and/or increase the kernel size'
 
     # display elapsed time
     elapsed_time = time() - start_time
-    print '\nFinished! \n\tGenerated file: '+fname_output_centerline+'\n\tElapsed time: '+str(int(round(elapsed_time)))+'s\n'
+    print '\nFinished! \n\tGenerated file: ' + fname_output_centerline + '\n\tElapsed time: ' + str(int(round(elapsed_time))) + 's\n'
 
 
 def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_name=None, remove_temp_files=1, verbose=0):
@@ -407,16 +407,16 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
     path, file, ext = sct.extract_fname(fname_in)
 
     # create temporary folder
-    path_tmp = sct.slash_at_the_end('tmp.'+strftime('%y%m%d%H%M%S'), 1)
-    sct.run('mkdir '+path_tmp)
+    path_tmp = sct.slash_at_the_end('tmp.' + strftime('%y%m%d%H%M%S'), 1)
+    sct.run('mkdir ' + path_tmp)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)
-    sct.run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
+    sct.run('sct_convert -i ' + fname_in + ' -o ' + path_tmp + 'data.nii')
     file_labels = []
     for i in range(len(list_fname_labels)):
-        file_labels.append('labels_'+str(i)+'.nii.gz')
-        sct.run('sct_convert -i '+list_fname_labels[i]+' -o '+path_tmp+file_labels[i])
+        file_labels.append('labels_' + str(i) + '.nii.gz')
+        sct.run('sct_convert -i ' + list_fname_labels[i] + ' -o ' + path_tmp + file_labels[i])
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -454,19 +454,19 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
 
     os.rename(fname_output, output_file_name)
     path_binary, file_binary, ext_binary = sct.extract_fname(output_file_name)
-    os.rename('concatenation_file_centerline.txt', file_binary+'.txt')
+    os.rename('concatenation_file_centerline.txt', file_binary + '.txt')
 
     # Process for a binary file as output:
-    sct.run('cp '+output_file_name+' ../')
+    sct.run('cp ' + output_file_name + ' ../')
 
     # Process for a text file as output:
-    sct.run('cp '+file_binary + '.txt' + ' ../')
+    sct.run('cp ' + file_binary + '.txt' + ' ../')
 
     os.chdir('../')
     # Remove temporary files
     if remove_temp_files:
         print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp, error_exit='warning')
+        sct.run('rm -rf ' + path_tmp, error_exit='warning')
 
     # Display results
     # The concatenate centerline and its fitted curve are displayed whithin extract_centerline
@@ -485,7 +485,7 @@ def smooth_minimal_path(img, nb_pixels=1):
     from scipy.ndimage.filters import gaussian_filter
     raw_orientation = img.change_orientation()
 
-    img.data = gaussian_filter(img.data, [nb_pixels/px, nb_pixels/py, 0])
+    img.data = gaussian_filter(img.data, [nb_pixels / px, nb_pixels / py, 0])
 
     img.change_orientation(raw_orientation)
     return img
@@ -508,9 +508,9 @@ def symmetry_detector_right_left(data, cropped_xy=0):
 
     # Cropping around center of image to remove side noise
     if cropped_xy:
-        x_mid = np.round(dim[0]/2)
-        x_crop_min = int(x_mid - (0.25/2)*dim[0])
-        x_crop_max = int(x_mid + (0.25/2)*dim[0])
+        x_mid = np.round(dim[0] / 2)
+        x_crop_min = int(x_mid - (0.25 / 2) * dim[0])
+        x_crop_max = int(x_mid + (0.25 / 2) * dim[0])
 
         img_data[0:x_crop_min, :, :] = 0
         img_data[x_crop_max:-1, :, :] = 0
@@ -521,7 +521,7 @@ def symmetry_detector_right_left(data, cropped_xy=0):
 
     # initialise containers for correlation
     m, n = slice_p.shape
-    cross_corr = ((2*m)-1, n)
+    cross_corr = ((2 * m) - 1, n)
     cross_corr = np.zeros(cross_corr)
     for iz in range(0, np.size(slice_p[1])):
         corr1 = slice_p[:, iz]
@@ -531,16 +531,16 @@ def symmetry_detector_right_left(data, cropped_xy=0):
         if max_value == 0:
             cross_corr[:, iz] = 0
         else:
-            cross_corr[:, iz] = cross_corr[:, iz]/max_value
+            cross_corr[:, iz] = cross_corr[:, iz] / max_value
     data_out = np.zeros((dim[0], dim[2]))
-    index1 = np.round(np.linspace(0, 2*m-3, m))
-    index2 = np.round(np.linspace(1, 2*m-2, m))
+    index1 = np.round(np.linspace(0, 2 * m - 3, m))
+    index2 = np.round(np.linspace(1, 2 * m - 2, m))
     for i in range(0, m):
         indx1 = int(index1[i])
         indx2 = int(index2[i])
         out1 = cross_corr[indx1, :]
         out2 = cross_corr[indx2, :]
-        data_out[i, :] = 0.5*(out1 + out2)
+        data_out[i, :] = 0.5 * (out1 + out2)
     result = np.hstack([data_out[:, np.newaxis, :] for i in range(0, dim[1])])
 
     return result
@@ -573,28 +573,28 @@ def get_minimum_path(data, smooth_factor=np.sqrt(2), invert=1, verbose=1, debug=
     [m, n, p] = data.shape
     max_value = np.amax(data)
     if invert:
-        data = max_value-data
-    J1 = np.ones([m, n, p])*np.inf
-    J2 = np.ones([m, n, p])*np.inf
+        data = max_value - data
+    J1 = np.ones([m, n, p]) * np.inf
+    J2 = np.ones([m, n, p]) * np.inf
     J1[:, :, 0] = 0
     for row in range(1, p):
-        pJ = J1[:, :, row-1]
+        pJ = J1[:, :, row - 1]
         cP = np.squeeze(data[1:-2, 1:-2, row])
-        VI = np.dstack((cP*smooth_factor, cP*smooth_factor, cP, cP*smooth_factor, cP*smooth_factor))
+        VI = np.dstack((cP * smooth_factor, cP * smooth_factor, cP, cP * smooth_factor, cP * smooth_factor))
 
         Jq = np.dstack((pJ[0:-3, 1:-2], pJ[1:-2, 0:-3], pJ[1:-2, 1:-2], pJ[1:-2, 2:-1], pJ[2:-1, 1:-2]))
-        J1[1:-2, 1:-2, row] = np.min(Jq+VI, 2)
+        J1[1:-2, 1:-2, row] = np.min(Jq + VI, 2)
 
-    J2[:, :, p-1] = 0
-    for row in range(p-2, -1, -1):
-        pJ = J2[:, :, row+1]
+    J2[:, :, p - 1] = 0
+    for row in range(p - 2, -1, -1):
+        pJ = J2[:, :, row + 1]
         cP = np.squeeze(data[1:-2, 1:-2, row])
-        VI = np.dstack((cP*smooth_factor, cP*smooth_factor, cP, cP*smooth_factor, cP*smooth_factor))
+        VI = np.dstack((cP * smooth_factor, cP * smooth_factor, cP, cP * smooth_factor, cP * smooth_factor))
 
         Jq = np.dstack((pJ[0:-3, 1:-2], pJ[1:-2, 0:-3], pJ[1:-2, 1:-2], pJ[1:-2, 2:-1], pJ[2:-1, 1:-2]))
-        J2[1:-2, 1:-2, row] = np.min(Jq+VI, 2)
+        J2[1:-2, 1:-2, row] = np.min(Jq + VI, 2)
 
-    result = J1+J2
+    result = J1 + J2
     if invert:
         percent = np.percentile(result, 50)
         result[result > percent] = percent
@@ -604,7 +604,7 @@ def get_minimum_path(data, smooth_factor=np.sqrt(2), invert=1, verbose=1, debug=
         result = np.divide(np.subtract(result, result_min), result_max)
         result_max = np.amax(result)
 
-    result = 1-result
+    result = 1 - result
 
     result[result == np.inf] = 0
     result[result == np.nan] = 0
@@ -696,16 +696,16 @@ class SymmetryDetector(Algorithm):
         raw_orientation = img.change_orientation()
         data = np.squeeze(img.data)
         dim = data.shape
-        section_length = dim[1]/self.nb_sections
+        section_length = dim[1] / self.nb_sections
 
         result = np.zeros(dim)
 
         for i in range(0, self.nb_sections):
-            if (i+1)*section_length > dim[1]:
-                y_length = (i+1)*section_length - ((i+1)*section_length - dim[1])
-                result[:, i*section_length:i*section_length + y_length, :] = symmetry_detector_right_left(data[:, i*section_length:i*section_length + y_length, :],  cropped_xy=self.crop_xy)
-            sym = symmetry_detector_right_left(data[:, i*section_length:(i+1)*section_length, :], cropped_xy=self.crop_xy)
-            result[:, i*section_length:(i+1)*section_length, :] = sym
+            if (i + 1) * section_length > dim[1]:
+                y_length = (i + 1) * section_length - ((i + 1) * section_length - dim[1])
+                result[:, i * section_length:i * section_length + y_length, :] = symmetry_detector_right_left(data[:, i * section_length:i * section_length + y_length, :],  cropped_xy=self.crop_xy)
+            sym = symmetry_detector_right_left(data[:, i * section_length:(i + 1) * section_length, :], cropped_xy=self.crop_xy)
+            result[:, i * section_length:(i + 1) * section_length, :] = sym
 
         result_image = Image(img)
         if len(result_image.data) == 4:
@@ -795,8 +795,8 @@ class SCAD(Algorithm):
         """
         import time
         from sct_utils import slash_at_the_end
-        path_tmp = slash_at_the_end('scad_output_'+time.strftime('%y%m%d%H%M%S'), 1)
-        sct.run('mkdir '+path_tmp, self.verbose)
+        path_tmp = slash_at_the_end('scad_output_' + time.strftime('%y%m%d%H%M%S'), 1)
+        sct.run('mkdir ' + path_tmp, self.verbose)
         # getting input image header
         img = self.input_image.copy()
 
@@ -823,13 +823,13 @@ class SCAD(Algorithm):
         # saving minimum path powered
         img.data = self.minimum_path_powered
         img.change_orientation(self.raw_orientation)
-        img.file_name = 'min_path_powered_'+str(self.minimum_path_exponent)
+        img.file_name = 'min_path_powered_' + str(self.minimum_path_exponent)
         img.save()
 
         # saving smoothed min path
         img = self.smoothed_min_path.copy()
         img.change_orientation(self.raw_orientation)
-        img.file_name = 'min_path_power_'+str(self.minimum_path_exponent)+'_smoothed'
+        img.file_name = 'min_path_power_' + str(self.minimum_path_exponent) + '_smoothed'
         img.save()
 
         # save symmetry_weighted_minimal_path
@@ -868,20 +868,20 @@ class SCAD(Algorithm):
         if self.produce_output:
             import time
             from sct_utils import slash_at_the_end
-            folder = slash_at_the_end('scad_output_'+time.strftime('%y%m%d%H%M%S'), 1)
-            sct.run('mkdir '+folder, self.verbose)
+            folder = slash_at_the_end('scad_output_' + time.strftime('%y%m%d%H%M%S'), 1)
+            sct.run('mkdir ' + folder, self.verbose)
             self.debug_folder = os.path.abspath(folder)
-            conv.convert(str(self.input_image.absolutepath), str(self.debug_folder)+'/raw.nii.gz')
+            conv.convert(str(self.input_image.absolutepath), str(self.debug_folder) + '/raw.nii.gz')
 
     def create_temporary_path(self):
         import time
         from sct_utils import slash_at_the_end
-        path_tmp = slash_at_the_end('tmp.'+time.strftime('%y%m%d%H%M%S'), 1)
-        sct.run('mkdir '+path_tmp, self.verbose)
+        path_tmp = slash_at_the_end('tmp.' + time.strftime('%y%m%d%H%M%S'), 1)
+        sct.run('mkdir ' + path_tmp, self.verbose)
         return path_tmp
 
     def execute(self):
-        print 'Execution of the SCAD algorithm in '+str(os.getcwd())
+        print 'Execution of the SCAD algorithm in ' + str(os.getcwd())
 
         original_name = self.input_image.file_name
         vesselness_file_name = 'imageVesselNessFilter.nii.gz'
@@ -890,14 +890,14 @@ class SCAD(Algorithm):
         # self.setup_debug_folder()
 
         if self.debug:
-            import matplotlib.pyplot as plt # import for debug purposes
+            import matplotlib.pyplot as plt  # import for debug purposes
 
         # create tmp and copy input
         self.path_tmp = self.create_temporary_path()
-        conv.convert(self.input_image.absolutepath, self.path_tmp+raw_file_name)
+        conv.convert(self.input_image.absolutepath, self.path_tmp + raw_file_name)
 
         if self.vesselness_provided:
-            sct.run('cp '+vesselness_file_name+' '+self.path_tmp+vesselness_file_name)
+            sct.run('cp ' + vesselness_file_name + ' ' + self.path_tmp + vesselness_file_name)
         os.chdir(self.path_tmp)
 
         # get input image information
@@ -930,7 +930,7 @@ class SCAD(Algorithm):
 
         # vesselness filter
         if not self.vesselness_provided:
-            sct.run('isct_vesselness -i '+raw_file_name+' -t ' + self._contrast+' -radius '+str(self.spinalcord_radius))
+            sct.run('isct_vesselness -i ' + raw_file_name + ' -t ' + self._contrast + ' -radius ' + str(self.spinalcord_radius))
 
         # load vesselness filter data and perform minimum path on it
         img = Image(vesselness_file_name)
@@ -942,7 +942,7 @@ class SCAD(Algorithm):
 
         # Apply an exponent to the minimum path
         self.minimum_path_powered = np.power(self.minimum_path_data, self.minimum_path_exponent)
-        self.output_debug_file(img, self.minimum_path_powered, 'minimal_path_power_'+str(self.minimum_path_exponent))
+        self.output_debug_file(img, self.minimum_path_powered, 'minimal_path_power_' + str(self.minimum_path_exponent))
 
         # Saving in Image since smooth_minimal_path needs pixel dimensions
         img.data = self.minimum_path_powered
@@ -990,13 +990,13 @@ class SCAD(Algorithm):
 
         # copy back centerline
         os.chdir('../')
-        conv.convert(self.path_tmp+img.file_name+img.ext, self.output_filename)
+        conv.convert(self.path_tmp + img.file_name + img.ext, self.output_filename)
         if self.rm_tmp_file == 1:
             import shutil
             shutil.rmtree(self.path_tmp)
 
         print 'To view the output with FSL :'
-        sct.printv('fslview '+self.input_image.absolutepath+' '+self.output_filename+' -l Red &', self.verbose, 'info')
+        sct.printv('fslview ' + self.input_image.absolutepath + ' ' + self.output_filename + ' -l Red &', self.verbose, 'info')
 
 
 def get_parser():

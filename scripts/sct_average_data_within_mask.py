@@ -26,7 +26,7 @@ from msct_parser import Parser
 
 
 # PARAMETERS
-debugging           = 0 # automatic file names for debugging
+debugging           = 0  # automatic file names for debugging
 
 
 # MAIN
@@ -63,10 +63,10 @@ def main():
     # print arguments
     if verbose:
         print '\nCheck input parameters...'
-        print '.. Image:    '+fname_src
-        print '.. Mask:     '+fname_mask
-        print '.. tmask:    '+str(tmask)
-        print '.. zmask:    '+str(zmask)
+        print '.. Image:    ' + fname_src
+        print '.. Mask:     ' + fname_mask
+        print '.. tmask:    ' + str(tmask)
+        print '.. zmask:    ' + str(zmask)
 
     # Extract path, file and extension
     #path_src, file_src, ext_src = extract_fname(fname_src)
@@ -104,7 +104,7 @@ def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=1):
     # if user specified zmin and zmax, put rest of slices to 0
     if zmask != '':
         data_mask[:, :, :zmask] = 0
-        data_mask[:, :, zmask+1:] = 0
+        data_mask[:, :, zmask + 1:] = 0
 
     # find indices of non-zero elements the mask
     ind_nonzero = data_mask.nonzero()
@@ -124,12 +124,12 @@ def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=1):
     weight = asarray(weight)
     n = len(data)
     # compute weighted_average
-    weighted_average = sum(data*weight) / sum(weight)
+    weighted_average = sum(data * weight) / sum(weight)
     # compute weighted STD
-    weighted_std = sqrt(sum(weight*(data-weighted_average)**2) / ((n/(n-1)) * sum(weight)))
+    weighted_std = sqrt(sum(weight * (data - weighted_average)**2) / ((n / (n - 1)) * sum(weight)))
 
     # print result
-    printv('\n'+str(weighted_average)+' +/- '+str(weighted_std), verbose)
+    printv('\n' + str(weighted_average) + ' +/- ' + str(weighted_std), verbose)
 
     return weighted_average, weighted_std
 

@@ -40,7 +40,7 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_input = ''
-        fname_segmentation = path_sct_data+'/t2/t2_seg.nii.gz'
+        fname_segmentation = path_sct_data + '/t2/t2_seg.nii.gz'
     else:
     # Check input param
         try:

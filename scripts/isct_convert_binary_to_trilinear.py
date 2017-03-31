@@ -27,8 +27,8 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.smoothing_sigma = 5
-        self.interp_factor = 1 # interpolation factor. Works fine with 1 (i.e., no interpolation required).
-        self.suffix = '_trilin' # output suffix
+        self.interp_factor = 1  # interpolation factor. Works fine with 1 (i.e., no interpolation required).
+        self.suffix = '_trilin'  # output suffix
         self.remove_temp_files = 1
         self.verbose = 1
 
@@ -53,7 +53,7 @@ def main():
 
     # Parameters for debug mode
     if param.debug:
-        fname_data = path_sct+'/testing/data/errsm_23/t2/t2_manual_segmentation.nii.gz'
+        fname_data = path_sct + '/testing/data/errsm_23/t2/t2_manual_segmentation.nii.gz'
         remove_temp_files = 0
         param.mask_size = 10
     else:
@@ -82,9 +82,9 @@ def main():
 
     # print arguments
     print '\nCheck parameters:'
-    print '  segmentation ........... '+fname_data
-    print '  interp factor .......... '+str(interp_factor)
-    print '  smoothing sigma ........ '+str(smoothing_sigma)
+    print '  segmentation ........... ' + fname_data
+    print '  interp factor .......... ' + str(interp_factor)
+    print '  smoothing sigma ........ ' + str(smoothing_sigma)
 
     # check existence of input files
     print('\nCheck existence of input files...')
@@ -95,12 +95,12 @@ def main():
 
     # create temporary folder
     print('\nCreate temporary folder...')
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
+    sct.run('mkdir ' + path_tmp)
 
     from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(fname_data, path_tmp+'/data.nii')
+    convert(fname_data, path_tmp + '/data.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -108,26 +108,26 @@ def main():
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
-    sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
 
     # upsample data
     sct.printv('\nUpsample data...', verbose)
-    sct.run('sct_resample -i data.nii -x linear -vox '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+' -o data_up.nii', verbose)
+    sct.run('sct_resample -i data.nii -x linear -vox ' + str(nx * interp_factor) + 'x' + str(ny * interp_factor) + 'x' + str(nz * interp_factor) + ' -o data_up.nii', verbose)
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
-    sct.run('sct_smooth_spinalcord -i data_up.nii -s data_up.nii'+' -smooth '+str(smoothing_sigma)+' -r '+str(remove_temp_files)+' -v '+str(verbose), verbose)
+    sct.run('sct_smooth_spinalcord -i data_up.nii -s data_up.nii' + ' -smooth ' + str(smoothing_sigma) + ' -r ' + str(remove_temp_files) + ' -v ' + str(verbose), verbose)
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    sct.run('sct_resample -i data_up_smooth.nii -x linear -vox '+str(nx)+'x'+str(ny)+'x'+str(nz)+' -o data_up_smooth_down.nii', verbose)
+    sct.run('sct_resample -i data_up_smooth.nii -x linear -vox ' + str(nx) + 'x' + str(ny) + 'x' + str(nz) + ' -o data_up_smooth_down.nii', verbose)
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
     print('\nGenerate output files...')
-    fname_out = sct.generate_output_file(path_tmp+'/data_up_smooth_down.nii', ''+file_data+suffix+ext_data)
+    fname_out = sct.generate_output_file(path_tmp + '/data_up_smooth_down.nii', '' + file_data + suffix + ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:
@@ -136,18 +136,18 @@ def main():
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
+    print '\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's'
 
     # to view results
     print '\nTo view results, type:'
-    print 'fslview '+file_data+' '+file_data+suffix+' &\n'
+    print 'fslview ' + file_data + ' ' + file_data + suffix + ' &\n'
 
 
 # Print usage
 # ==========================================================================================
 def usage():
     print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
+        '' + os.path.basename(__file__) + '\n' \
         '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
@@ -157,19 +157,19 @@ def usage():
         '  (to remove step-effects), then downsamples back to native resolution.\n' \
         '\n' \
         'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -i <bin_seg>\n' \
+        '  ' + os.path.basename(__file__) + ' -i <bin_seg>\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
         '  -i <bin_seg>      binary segmentation of spinal cord\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
-        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default='+str(param_default.smoothing_sigma)+'\n' \
-        '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
-        '  -v {0,1}          verbose. Default='+str(param_default.verbose)+'\n' \
+        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=' + str(param_default.smoothing_sigma) + '\n' \
+        '  -r {0,1}          remove temporary files. Default=' + str(param_default.remove_temp_files) + '\n' \
+        '  -v {0,1}          verbose. Default=' + str(param_default.verbose) + '\n' \
         '  -h                help. Show this message\n' \
         '\n'\
         'EXAMPLE\n' \
-        '  '+os.path.basename(__file__)+' -i segmentation.nii \n'
+        '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n'
 
     # exit program
     sys.exit(2)
