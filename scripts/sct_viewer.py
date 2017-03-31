@@ -1932,7 +1932,7 @@ class ClickViewerGroundTruth(ClickViewer):
                  int(self.images[0].data.shape[2] / 2)])
             self.number_of_slices_to_mean=3
             self.show_image_mean()
-
+            self.draw_points(self.windows[0],self.current_point.z)
             self.update_title_text('reset_average_parameters')
 
 def get_parser():
