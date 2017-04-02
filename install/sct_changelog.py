@@ -60,10 +60,11 @@ def search(milestone, label=''):
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='SCT changelog -- %(message)s')
     milestone = latest_milestone()
+    title = milestone['title'].split()[-1]
 
     lines = [
-        '## {} ({})'.format(milestone['title'], datetime.date.today()),
-        '[View detailed changelog](%s)' % detailed_changelog(milestone['title'].split()[-1])
+        '## {} ({})'.format(title, datetime.date.today()),
+        '[View detailed changelog](%s)' % detailed_changelog(title)
     ]
 
     changelog_pr = set()
