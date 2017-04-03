@@ -11,23 +11,22 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
+import gzip
 import os
+import pickle
 import shutil
 import sys
 import time
+
 import numpy as np
 import pandas as pd
-import pickle, gzip
-from sklearn import manifold, decomposition
-from sct_utils import printv
-from sct_utils import slash_at_the_end
-from msct_gmseg_utils import pre_processing, register_data, apply_transfo, average_gm_wm, normalize_slice
-from msct_image import Image
-from msct_parser import *
+from sklearn import decomposition, manifold
 
-########################################################################################################################
-#                                                 PARAM CLASSES
-########################################################################################################################
+from msct_gmseg_utils import (apply_transfo, average_gm_wm, normalize_slice,
+                              pre_processing, register_data)
+from msct_image import Image
+from msct_parser import Parser
+from sct_utils import printv, slash_at_the_end
 
 
 def get_parser():
@@ -176,10 +175,6 @@ class Param:
     def __init__(self):
         self.verbose = 1
         self.rm_tmp = True
-
-########################################################################################################################
-#                                           CLASS MODEL
-########################################################################################################################
 
 
 class Model:
