@@ -58,26 +58,17 @@
 # Modified: 2014-07-01
 #
 # License: see the LICENSE.TXT
-#=======================================================================================================================
+# ============================================================================================================
 # check if needed Python libraries are already installed or not
+
+import math
 from sys import exit
-try:
-    from numpy import *
-except ImportError:
-    print '--- numpy not installed! ---'
-    exit(2)
-try:
-    from scipy.interpolate import interp1d
-except ImportError:
-    print '--- scipy not installed! ---'
-    exit(2)
-#import matplotlib.pyplot as plt
-#from mpl_toolkits.mplot3d import Axes3D
+
+import numpy as np
 
 
 class NURBS():
     def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01, maxControlPoints=50, all_slices=True, twodim=False):
-        #(self, degre=3, precision=1000, liste=None, sens=False, nurbs_ctl_points=None, size=None, div=None)
         """
         Ce constructeur initialise une NURBS et la construit.
         Si la variable sens est True : On construit la courbe en fonction des points de controle
@@ -89,7 +80,7 @@ class NURBS():
         self.pointsControleRelatif = []
         self.courbe3D, self.courbe3D_deriv = [], []
         self.courbe2D, self.courbe2D_deriv = [], []
-        self.nbControle = 10  ### correspond au nombre de points de controle calcules.
+        self.nbControle = 10  # correspond au nombre de points de controle calcules.
         self.precision = precision
         self.tolerance = tolerance  # in mm
         self.maxControlPoints = maxControlPoints
@@ -97,7 +88,7 @@ class NURBS():
         self.all_slices = all_slices
         self.twodim = twodim
 
-        if sens:                  #### si on donne les points de controle#####
+        if sens:                  # si on donne les points de controle#####
             if type(liste[0][0]).__name__ == 'list':
                 self.pointsControle = liste
             else:
@@ -194,7 +185,6 @@ class NURBS():
                         if verbose >= 1:
                             print ex
                         error_curve = last_error_curve + 10000.0
-                        #error_curve = float('Inf')
 
                     # prepare for next iteration
                     self.nbControle += 1
@@ -258,7 +248,7 @@ class NURBS():
     def N(self, i, k, x):
         global Nik_temp
         if k == 1:
-            tab = [[poly1d(1), i + 1]]
+            tab = [[np.poly1d(1), i + 1]]
         else:
             tab = []
             den_g = x[i + k - 1] - x[i]
@@ -266,12 +256,12 @@ class NURBS():
             if den_g != 0:
                 if Nik_temp[i][k - 1] == -1:
                     Nik_temp[i][k - 1] = self.N(i, k - 1, x)
-                tab_b = self.multipolynome(poly1d([1 / den_g, -x[i] / den_g]), Nik_temp[i][k - 1])
+                tab_b = self.multipolynome(np.poly1d([1 / den_g, -x[i] / den_g]), Nik_temp[i][k - 1])
                 tab.extend(tab_b)
             if den_d != 0:
                 if Nik_temp[i + 1][k - 1] == -1:
                     Nik_temp[i + 1][k - 1] = self.N(i + 1, k - 1, x)
-                tab_d = self.multipolynome(poly1d([-1 / den_d, x[i + k] / den_d]), Nik_temp[i + 1][k - 1])
+                tab_d = self.multipolynome(np.poly1d([-1 / den_d, x[i + k] / den_d]), Nik_temp[i + 1][k - 1])
                 tab.extend(tab_d)
 
         return tab
@@ -279,7 +269,7 @@ class NURBS():
     def Np(self, i, k, x):
         global Nik_temp_deriv, Nik_temp
         if k == 1:
-            tab = [[poly1d(0), i + 1]]
+            tab = [[np.poly1d(0), i + 1]]
         else:
             tab = []
             den_g = x[i + k - 1] - x[i]
@@ -287,12 +277,12 @@ class NURBS():
             if den_g != 0:
                 if Nik_temp_deriv[i][-1] == -1:
                     Nik_temp_deriv[i][-1] = self.N(i, k - 1, x)
-                tab_b = self.multipolynome(poly1d([k / den_g]), Nik_temp_deriv[i][-1])
+                tab_b = self.multipolynome(np.poly1d([k / den_g]), Nik_temp_deriv[i][-1])
                 tab.extend(tab_b)
             if den_d != 0:
-                if Nik_temp_deriv[i + 1][-1] == -1 :
+                if Nik_temp_deriv[i + 1][-1] == -1:
                     Nik_temp_deriv[i + 1][-1] = self.N(i + 1, k - 1, x)
-                tab_d = self.multipolynome(poly1d([-k / den_d]), Nik_temp_deriv[i + 1][-1])
+                tab_d = self.multipolynome(np.poly1d([-k / den_d]), Nik_temp_deriv[i + 1][-1])
                 tab.extend(tab_d)
 
         return tab
@@ -366,7 +356,7 @@ class NURBS():
             Nikp.append(Nik_temp_deriv[i][-1])
 
         # Calcul de la courbe
-        param = linspace(x[0], x[-1], prec)
+        param = np.linspace(x[0], x[-1], prec)
         P_x, P_y, P_z = [], [], []  # coord fitees
         P_x_d, P_y_d, P_z_d = [], [], []  # derivees
         for i in xrange(len(param)):
@@ -401,42 +391,42 @@ class NURBS():
             if sum_den <= 0.05:
                 raise Exception('WARNING: NURBS instability -> wrong reconstruction')
 
-        P_x = [P_x[i] for i in argsort(P_z)]
-        P_y = [P_y[i] for i in argsort(P_z)]
-        P_x_d = [P_x_d[i] for i in argsort(P_z)]
-        P_y_d = [P_y_d[i] for i in argsort(P_z)]
-        P_z_d = [P_z_d[i] for i in argsort(P_z)]
-        P_z = sort(P_z)
+        P_x = [P_x[i] for i in np.argsort(P_z)]
+        P_y = [P_y[i] for i in np.argsort(P_z)]
+        P_x_d = [P_x_d[i] for i in np.argsort(P_z)]
+        P_y_d = [P_y_d[i] for i in np.argsort(P_z)]
+        P_z_d = [P_z_d[i] for i in np.argsort(P_z)]
+        P_z = np.sort(P_z)
 
         # on veut que les coordonnees fittees aient le meme z que les coordonnes de depart. on se ramene donc a des entiers et on moyenne en x et y  .
-        P_x = array(P_x)
-        P_y = array(P_y)
-        P_x_d = array(P_x_d)
-        P_y_d = array(P_y_d)
-        P_z_d = array(P_z_d)
+        P_x = np.array(P_x)
+        P_y = np.array(P_y)
+        P_x_d = np.array(P_x_d)
+        P_y_d = np.array(P_y_d)
+        P_z_d = np.array(P_z_d)
 
         if self.all_slices:
-            P_z = array([int(round(P_z[i])) for i in range(0, len(P_z))])
+            P_z = np.array([int(round(P_z[i])) for i in range(0, len(P_z))])
 
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_z), max(P_z) + 1, 1):
                 if i not in P_z:
                     # print ' Missing z slice '
                     # print i
-                    P_z_temp = insert(P_z, where(P_z == i - 1)[-1][-1] + 1, i)
-                    P_x_temp = insert(P_x, where(P_z == i - 1)[-1][-1] + 1, (P_x[where(P_z == i - 1)[-1][-1]] + P_x[where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_y_temp = insert(P_y, where(P_z == i - 1)[-1][-1] + 1, (P_y[where(P_z == i - 1)[-1][-1]] + P_y[where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_x_d_temp = insert(P_x_d, where(P_z == i - 1)[-1][-1] + 1, (P_x_d[where(P_z == i - 1)[-1][-1]] + P_x_d[where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_y_d_temp = insert(P_y_d, where(P_z == i - 1)[-1][-1] + 1, (P_y_d[where(P_z == i - 1)[-1][-1]] + P_y_d[where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_z_d_temp = insert(P_z_d, where(P_z == i - 1)[-1][-1] + 1, (P_z_d[where(P_z == i - 1)[-1][-1]] + P_z_d[where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_z_temp = np.insert(P_z, np.where(P_z == i - 1)[-1][-1] + 1, i)
+                    P_x_temp = np.insert(P_x, np.where(P_z == i - 1)[-1][-1] + 1, (P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_temp = np.insert(P_y, np.where(P_z == i - 1)[-1][-1] + 1, (P_y[np.where(P_z == i - 1)[-1][-1]] + P_y[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_x_d_temp = np.insert(P_x_d, np.where(P_z == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_z == i - 1)[-1][-1]] + P_x_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_d_temp = np.insert(P_y_d, np.where(P_z == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_z == i - 1)[-1][-1]] + P_y_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_z_d_temp = np.insert(P_z_d, np.where(P_z == i - 1)[-1][-1] + 1, (P_z_d[np.where(P_z == i - 1)[-1][-1]] + P_z_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
                     P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
 
-            coord_mean = array([[mean(P_x[P_z == i]), mean(P_y[P_z == i]), i] for i in range(min(P_z), max(P_z) + 1, 1)])
+            coord_mean = np.array([[np.mean(P_x[P_z == i]), np.mean(P_y[P_z == i]), i] for i in range(min(P_z), max(P_z) + 1, 1)])
 
             P_x = coord_mean[:, :][:, 0]
             P_y = coord_mean[:, :][:, 1]
 
-            coord_mean_d = array([[mean(P_x_d[P_z == i]), mean(P_y_d[P_z == i]), mean(P_z_d[P_z == i])] for i in range(min(P_z), max(P_z) + 1, 1)])
+            coord_mean_d = np.array([[np.mean(P_x_d[P_z == i]), np.mean(P_y_d[P_z == i]), np.mean(P_z_d[P_z == i])] for i in range(min(P_z), max(P_z) + 1, 1)])
 
             P_z = coord_mean[:, :][:, 2]
 
@@ -470,7 +460,7 @@ class NURBS():
             Nikp.append(Nik_temp_deriv[i][-1])
 
         # Calcul de la courbe
-        param = linspace(x[0], x[-1], prec)
+        param = np.linspace(x[0], x[-1], prec)
         P_x, P_y = [], []  # coord fitees
         P_x_d, P_y_d = [], []  # derivees
         for i in xrange(len(param)):
@@ -501,34 +491,34 @@ class NURBS():
             if sum_den <= 0.05:
                 raise Exception('WARNING: NURBS instability -> wrong reconstruction')
 
-        P_x = [P_x[i] for i in argsort(P_y)]
-        P_x_d = [P_x_d[i] for i in argsort(P_y)]
-        P_y_d = [P_y_d[i] for i in argsort(P_y)]
-        P_y = sort(P_y)
+        P_x = [P_x[i] for i in np.argsort(P_y)]
+        P_x_d = [P_x_d[i] for i in np.argsort(P_y)]
+        P_y_d = [P_y_d[i] for i in np.argsort(P_y)]
+        P_y = np.sort(P_y)
 
         # on veut que les coordonnees fittees aient le meme z que les coordonnes de depart. on se ramene donc a des entiers et on moyenne en x et y  .
-        P_x = array(P_x)
-        P_y = array(P_y)
-        P_x_d = array(P_x_d)
-        P_y_d = array(P_y_d)
+        P_x = np.array(P_x)
+        P_y = np.array(P_y)
+        P_x_d = np.array(P_x_d)
+        P_y_d = np.array(P_y_d)
 
         if self.all_slices:
-            P_y = array([int(round(P_y[i])) for i in range(0, len(P_y))])
+            P_y = np.array([int(round(P_y[i])) for i in range(0, len(P_y))])
 
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_y), max(P_y) + 1, 1):
                 if i not in P_y:
-                    P_y_temp = insert(P_y, where(P_y == i - 1)[-1][-1] + 1, i)
-                    P_x_temp = insert(P_x, where(P_y == i - 1)[-1][-1] + 1, (P_x[where(P_y == i - 1)[-1][-1]] + P_x[where(P_y == i - 1)[-1][-1] + 1]) / 2)
-                    P_x_d_temp = insert(P_x_d, where(P_y == i - 1)[-1][-1] + 1, (P_x_d[where(P_y == i - 1)[-1][-1]] + P_x_d[where(P_y == i - 1)[-1][-1] + 1]) / 2)
-                    P_y_d_temp = insert(P_y_d, where(P_y == i - 1)[-1][-1] + 1, (P_y_d[where(P_y == i - 1)[-1][-1]] + P_y_d[where(P_y == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_temp = np.insert(P_y, np.where(P_y == i - 1)[-1][-1] + 1, i)
+                    P_x_temp = np.insert(P_x, np.where(P_y == i - 1)[-1][-1] + 1, (P_x[np.where(P_y == i - 1)[-1][-1]] + P_x[np.where(P_y == i - 1)[-1][-1] + 1]) / 2)
+                    P_x_d_temp = np.insert(P_x_d, np.where(P_y == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_y == i - 1)[-1][-1]] + P_x_d[np.where(P_y == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_d_temp = np.insert(P_y_d, np.where(P_y == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_y == i - 1)[-1][-1]] + P_y_d[np.where(P_y == i - 1)[-1][-1] + 1]) / 2)
                     P_x, P_y, P_x_d, P_y_d = P_x_temp, P_y_temp, P_x_d_temp, P_y_d_temp
 
-            coord_mean = array([[mean(P_x[P_y == i]), i] for i in range(min(P_y), max(P_y) + 1, 1)])
+            coord_mean = np.array([[np.mean(P_x[P_y == i]), i] for i in range(min(P_y), max(P_y) + 1, 1)])
 
             P_x = coord_mean[:, :][:, 0]
 
-            coord_mean_d = array([[mean(P_x_d[P_y == i]), mean(P_y_d[P_y == i])] for i in range(min(P_y), max(P_y) + 1, 1)])
+            coord_mean_d = np.array([[np.mean(P_x_d[P_y == i]), np.mean(P_y_d[P_y == i])] for i in range(min(P_y), max(P_y) + 1, 1)])
 
             P_y = coord_mean[:, :][:, 1]
 
@@ -592,16 +582,16 @@ class NURBS():
         # while isKnotSpaceEmpty:
         #     knotVector += gamma * (nonuniformKnotVector - nonuniformKnotVector)
         #     # where gamma is a ratio [0,1] multiplier of an integer: 1/gamma = int
-        u_uniform = array(u_uniform)
-        u_nonuniform = array(u_nonuniform)
-        u = array(u_uniform, copy=True)
+        u_uniform = np.array(u_uniform)
+        u_nonuniform = np.array(u_nonuniform)
+        u = np.array(u_uniform, copy=True)
         gamma = 1.0 / 10.0
         n_iter = 0
         while not self.isXinY(y=u, x=ubar) and n_iter <= 10000:
             u += gamma * (u_nonuniform - u_uniform)
             n_iter += 1
 
-        Nik_temp = [[-1 for j in xrange(p)] for i in xrange(n)]
+        Nik_temp = [[-1 for j in xrange(p)] for i in xrange(n)]  # noqa
         for i in xrange(n):
             Nik_temp[i][-1] = self.N(i, p, u)
         Nik = []
@@ -617,10 +607,10 @@ class NURBS():
             for i in xrange(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
-        R = matrix(R)
+        R = np.matrix(R)
 
         # create W diagonal matrix
-        W = diag(w[0:-1])
+        W = np.diag(w[0:-1])
 
         # calcul des denominateurs par ubar
         denU = []
@@ -635,7 +625,7 @@ class NURBS():
             for k in xrange(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
-        Tx = matrix(Tx)
+        Tx = np.matrix(Tx)
 
         Ty = []
         for i in xrange(n - 1):
@@ -643,7 +633,7 @@ class NURBS():
             for k in xrange(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
-        Ty = matrix(Ty)
+        Ty = np.matrix(Ty)
 
         Tz = []
         for i in xrange(n - 1):
@@ -651,7 +641,7 @@ class NURBS():
             for k in xrange(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_z, Nik, ubar[k], u) / denU[k]
             Tz.append(somme)
-        Tz = matrix(Tz)
+        Tz = np.matrix(Tz)
 
         P_xb = (R.T * W * R).I * Tx.T
         P_yb = (R.T * W * R).I * Ty.T
@@ -665,7 +655,7 @@ class NURBS():
         # Typically, control points should be far from the data points. One way to do so is to ensure that the
         from numpy import std
         std_factor = 10.0
-        std_Px, std_Py, std_Pz, std_x, std_y, std_z = std(P_xb), std(P_yb), std(P_zb), std(array(P_x)), std(array(P_y)), std(array(P_z))
+        std_Px, std_Py, std_Pz, std_x, std_y, std_z = std(P_xb), std(P_yb), std(P_zb), std(np.array(P_x)), std(np.array(P_y)), std(np.array(P_z))
         if std_x >= 0.1 and std_y >= 0.1 and std_z >= 0.1 and (std_Px > std_factor * std_x or std_Py > std_factor * std_y or std_Pz > std_factor * std_z):
             raise Exception('WARNING: NURBS instability -> wrong control points')
 
@@ -713,16 +703,16 @@ class NURBS():
         # while isKnotSpaceEmpty:
         #     knotVector += gamma * (nonuniformKnotVector - nonuniformKnotVector)
         #     # where gamma is a ratio [0,1] multiplier of an integer: 1/gamma = int
-        u_uniform = array(u_uniform)
-        u_nonuniform = array(u_nonuniform)
-        u = array(u_uniform, copy=True)
+        u_uniform = np.array(u_uniform)
+        u_nonuniform = np.array(u_nonuniform)
+        u = np.array(u_uniform, copy=True)
         gamma = 1.0 / 10.0
         n_iter = 0
         while not self.isXinY(y=u, x=ubar) and n_iter <= 10000:
             u += gamma * (u_nonuniform - u_uniform)
             n_iter += 1
 
-        Nik_temp = [[-1 for j in xrange(p)] for i in xrange(n)]
+        Nik_temp = [[-1 for j in xrange(p)] for i in xrange(n)]  # noqa
         for i in xrange(n):
             Nik_temp[i][-1] = self.N(i, p, u)
         Nik = []
@@ -738,10 +728,10 @@ class NURBS():
             for i in xrange(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
-        R = matrix(R)
+        R = np.matrix(R)
 
         # create W diagonal matrix
-        W = diag(w[0:-1])
+        W = np.diag(w[0:-1])
 
         # calcul des denominateurs par ubar
         denU = []
@@ -756,7 +746,7 @@ class NURBS():
             for k in xrange(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
-        Tx = matrix(Tx)
+        Tx = np.matrix(Tx)
 
         Ty = []
         for i in xrange(n - 1):
@@ -764,7 +754,7 @@ class NURBS():
             for k in xrange(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
-        Ty = matrix(Ty)
+        Ty = np.matrix(Ty)
 
         P_xb = (R.T * W * R).I * Tx.T
         P_yb = (R.T * W * R).I * Ty.T
@@ -777,7 +767,7 @@ class NURBS():
         # Typically, control points should be far from the data points. One way to do so is to ensure that the
         from numpy import std
         std_factor = 10.0
-        std_Px, std_Py, std_x, std_y = std(P_xb), std(P_yb), std(array(P_x)), std(array(P_y))
+        std_Px, std_Py, std_x, std_y = std(P_xb), std(P_yb), std(np.array(P_x)), std(np.array(P_y))
         if std_x >= 0.1 and std_y >= 0.1 and (std_Px > std_factor * std_x or std_Py > std_factor * std_y):
             raise Exception('WARNING: NURBS instability -> wrong control points')
 
@@ -785,7 +775,7 @@ class NURBS():
 
         return P
 
-    def reconstructGlobalInterpolation(self, P_x, P_y, P_z, p):  ### now in 3D
+    def reconstructGlobalInterpolation(self, P_x, P_y, P_z, p):  # now in 3D
         global Nik_temp
         n = 13
         l = len(P_x)
@@ -827,12 +817,12 @@ class NURBS():
             for j in xrange(n):
                 ligneM.append(self.evaluateN(Nik[j], ubar[i], u))
             M.append(ligneM)
-        M = matrix(M)
+        M = np.matrix(M)
 
         # Matrice des points interpoles
-        Qx = matrix(newPx).T
-        Qy = matrix(newPy).T
-        Qz = matrix(newPz).T
+        Qx = np.matrix(newPx).T
+        Qy = np.matrix(newPy).T
+        Qz = np.matrix(newPz).T
 
         # Calcul des points de controle
         P_xb = M.I * Qx
@@ -877,19 +867,19 @@ class NURBS():
             if sum_den <= 0.05:
                 raise Exception('WARNING: NURBS instability -> wrong reconstruction')
 
-        P_x = [P_x[i] for i in argsort(P_z)]
-        P_y = [P_y[i] for i in argsort(P_z)]
-        P_x_d = [P_x_d[i] for i in argsort(P_z)]
-        P_y_d = [P_y_d[i] for i in argsort(P_z)]
-        P_z_d = [P_z_d[i] for i in argsort(P_z)]
-        P_z = sort(P_z)
+        P_x = [P_x[i] for i in np.argsort(P_z)]
+        P_y = [P_y[i] for i in np.argsort(P_z)]
+        P_x_d = [P_x_d[i] for i in np.argsort(P_z)]
+        P_y_d = [P_y_d[i] for i in np.argsort(P_z)]
+        P_z_d = [P_z_d[i] for i in np.argsort(P_z)]
+        P_z = np.sort(P_z)
 
         # on veut que les coordonnees fittees aient le meme z que les coordonnes de depart. on se ramene donc a des entiers et on moyenne en x et y  .
-        P_x = array(P_x)
-        P_y = array(P_y)
-        P_x_d = array(P_x_d)
-        P_y_d = array(P_y_d)
-        P_z_d = array(P_z_d)
+        P_x = np.array(P_x)
+        P_y = np.array(P_y)
+        P_x_d = np.array(P_x_d)
+        P_y_d = np.array(P_y_d)
+        P_z_d = np.array(P_z_d)
         return P_x, P_y, P_z, P_x_d, P_y_d, P_z_d
 
     def construct3D_uniform(self, P, k, prec):  # P point de controles
@@ -931,34 +921,34 @@ class NURBS():
         P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = self.compute_curve_from_parametrization(P, k, x, Nik, Nikp, param)
 
         if self.all_slices:
-            P_z = array([int(round(P_z[i])) for i in range(0, len(P_z))])
+            P_z = np.array([int(round(P_z[i])) for i in range(0, len(P_z))])
 
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_z), max(P_z) + 1, 1):
                 if i not in P_z:
                     # print ' Missing z slice '
                     # print i
-                    P_z_temp = insert(P_z, where(P_z == i - 1)[-1][-1] + 1, i)
-                    P_x_temp = insert(P_x, where(P_z == i - 1)[-1][-1] + 1,
-                                      (P_x[where(P_z == i - 1)[-1][-1]] + P_x[where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_y_temp = insert(P_y, where(P_z == i - 1)[-1][-1] + 1,
-                                      (P_y[where(P_z == i - 1)[-1][-1]] + P_y[where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_x_d_temp = insert(P_x_d, where(P_z == i - 1)[-1][-1] + 1, (
-                    P_x_d[where(P_z == i - 1)[-1][-1]] + P_x_d[where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_y_d_temp = insert(P_y_d, where(P_z == i - 1)[-1][-1] + 1, (
-                    P_y_d[where(P_z == i - 1)[-1][-1]] + P_y_d[where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_z_d_temp = insert(P_z_d, where(P_z == i - 1)[-1][-1] + 1, (
-                    P_z_d[where(P_z == i - 1)[-1][-1]] + P_z_d[where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_z_temp = np.insert(P_z, np.where(P_z == i - 1)[-1][-1] + 1, i)
+                    P_x_temp = np.insert(P_x, np.where(P_z == i - 1)[-1][-1] + 1,
+                                         (P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_temp = np.insert(P_y, np.where(P_z == i - 1)[-1][-1] + 1,
+                                         (P_y[np.where(P_z == i - 1)[-1][-1]] + P_y[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_x_d_temp = np.insert(P_x_d, np.where(P_z == i - 1)[-1][-1] + 1, (
+                        P_x_d[np.where(P_z == i - 1)[-1][-1]] + P_x_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_d_temp = np.insert(P_y_d, np.where(P_z == i - 1)[-1][-1] + 1, (
+                        P_y_d[np.where(P_z == i - 1)[-1][-1]] + P_y_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_z_d_temp = np.insert(P_z_d, np.where(P_z == i - 1)[-1][-1] + 1, (
+                        P_z_d[np.where(P_z == i - 1)[-1][-1]] + P_z_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
                     P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
 
-            coord_mean = array(
-                [[mean(P_x[P_z == i]), mean(P_y[P_z == i]), i] for i in range(min(P_z), max(P_z) + 1, 1)])
+            coord_mean = np.array(
+                [[np.mean(P_x[P_z == i]), np.mean(P_y[P_z == i]), i] for i in range(min(P_z), max(P_z) + 1, 1)])
 
             P_x = coord_mean[:, :][:, 0]
             P_y = coord_mean[:, :][:, 1]
 
-            coord_mean_d = array([[mean(P_x_d[P_z == i]), mean(P_y_d[P_z == i]), mean(P_z_d[P_z == i])] for i in
-                                  range(min(P_z), max(P_z) + 1, 1)])
+            coord_mean_d = np.array([[np.mean(P_x_d[P_z == i]), np.mean(P_y_d[P_z == i]), np.mean(P_z_d[P_z == i])] for i in
+                                     range(min(P_z), max(P_z) + 1, 1)])
 
             P_z = coord_mean[:, :][:, 2]
 
