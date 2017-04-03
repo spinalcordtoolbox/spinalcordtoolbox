@@ -810,7 +810,6 @@ class ClickViewerPropseg(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
-        self.help_web_adress= 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
         self.declaration_global_variables_specific()
         self.update_title_text('init')
 
@@ -839,6 +838,8 @@ class ClickViewerPropseg(ClickViewer):
 
     def declaration_global_variables_specific(self):
         self.bool_enable_custom_points = False
+        self.help_web_adress= 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
+
 
     def create_button_skip(self):
         ax = plt.axes([0.59, 0.90, 0.1, 0.075])
@@ -1571,7 +1572,6 @@ class ClickViewerGroundTruth(ClickViewer):
             self.list_points.append(
                 Coordinate([-1, -1, -1, self.dic_translate_labels[str(self.current_dot_number)]]))
         self.current_dot_number += 1
-
 
     def define_dic_message_labels(self):
         dic={'1':'Please click on anterior base \n'
