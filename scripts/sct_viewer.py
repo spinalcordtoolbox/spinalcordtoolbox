@@ -1118,7 +1118,12 @@ class ClickViewerLabelVertebrae(ClickViewer):
         self.windows[0].update_slice(point, data_update=True)
         plot.draw()
 
+    def on_motion(self,event,plot):
+        pass
+
     def on_press_secondary_window(self,event,plot):
+        pass
+        '''
         is_in_axes = False
         for window in self.windows:
             if event.inaxes == window.axes:
@@ -1137,6 +1142,7 @@ class ClickViewerLabelVertebrae(ClickViewer):
             else:
                 self.draw_points(window, self.current_point.x)
                 window.update_slice(point, data_update=True)
+        '''
 
     def on_press(self, event, plot=None):
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
@@ -1323,7 +1329,12 @@ class ClickViewerRegisterToTemplate(ClickViewer):
                 self.add_dot_to_current_slice(plot, target_point)
                 self.is_there_next_slice()
 
+    def on_motion(self,event,plot):
+        pass
+
     def on_press_secondary_window(self,event,plot):
+        pass
+        '''
         is_in_axes = False
         for window in self.windows:
             if event.inaxes == window.axes:
@@ -1342,6 +1353,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             else:
                 self.draw_points(window, self.current_point.x)
                 window.update_slice(point, data_update=True)
+        '''
 
     def on_press(self, event, plot=None):
         if event.inaxes and plot.view == self.orientation[self.primary_subplot]:
