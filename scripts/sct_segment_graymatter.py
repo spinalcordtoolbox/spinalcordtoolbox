@@ -40,16 +40,25 @@ Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function
 
 '''
 
-from msct_multiatlas_seg import Param, ParamData, ParamModel, Model
-from msct_gmseg_utils import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm, binarize
-from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end, run
-from sct_image import set_orientation
-from msct_image import Image
-from msct_parser import *
-import sct_maths, sct_register_multimodal
+import os
+import shutil
+import sys
+import time
 from math import exp
+
 import numpy as np
-import shutil, os, sys, time
+
+import sct_maths
+import sct_process_segmentation
+import sct_register_multimodal
+from msct_gmseg_utils import (apply_transfo, average_gm_wm, binarize,
+                              normalize_slice, pre_processing, register_data)
+from msct_image import Image
+from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
+from msct_parser import Parser
+from sct_image import set_orientation
+from sct_utils import (add_suffix, extract_fname, printv, run,
+                       slash_at_the_end, tmp_create)
 
 
 def get_parser():
@@ -399,7 +408,7 @@ class SegmentGM:
                     similarity = exp(-self.param_seg.weight_coord * square_norm)
                 # add similarity to list
                 list_dic_similarities.append(similarity)
-            list_norm_similarities =  [float(s) / sum(list_dic_similarities) for s in list_dic_similarities]
+            list_norm_similarities = [float(s) / sum(list_dic_similarities) for s in list_dic_similarities]
             # select indexes of most similar slices
             list_dic_indexes = []
             for j, norm_sim in enumerate(list_norm_similarities):
@@ -590,7 +599,7 @@ class SegmentGM:
             status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
             status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
         # save results to a text file
-        fname_dc = 'dice_coefficient_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        fname_dc = 'dice_coefficient_' + extract_fname(self.param_seg.fname_im)[1] + '.txt'
         file_dc = open(fname_dc, 'w')
 
         if self.param_seg.type_seg == 'prob':
@@ -603,7 +612,7 @@ class SegmentGM:
         file_dc.close()
 
         # compute HD and MD:
-        fname_hd = 'hausdorff_dist_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        fname_hd = 'hausdorff_dist_' + extract_fname(self.param_seg.fname_im)[1] + '.txt'
         run('sct_compute_hausdorff_distance -i ' + fname_gmseg + ' -d ' + fname_manual_gmseg + ' -thinning 1 -o ' + fname_hd + ' -v ' + str(self.param.verbose))
 
         # get out of tmp dir to copy results to output folder
@@ -635,10 +644,10 @@ class SegmentGM:
             fname_gmseg = im_res_gmseg.absolutepath
             fname_wmseg = im_res_wmseg.absolutepath
 
-        #sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa'])
-        run('sct_process_segmentation -i ' + fname_gmseg + ' -p csa -ofolder gm_csa')
-        #sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa'])
-        run('sct_process_segmentation -i ' + fname_wmseg + ' -p csa -ofolder wm_csa')
+        sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa'])
+        # run('sct_process_segmentation -i ' + fname_gmseg + ' -p csa -ofolder gm_csa')
+        sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa'])
+        # run('sct_process_segmentation -i ' + fname_wmseg + ' -p csa -ofolder wm_csa')
 
         gm_csa = open('gm_csa/csa_per_slice.txt', 'r')
         wm_csa = open('wm_csa/csa_per_slice.txt', 'r')
@@ -680,10 +689,6 @@ class SegmentGM:
         os.chdir('..')
 
 
-########################################################################################################################
-# ------------------------------------------------------  MAIN ------------------------------------------------------- #
-########################################################################################################################
-
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
@@ -704,13 +709,13 @@ def main(args=None):
     param_seg.fname_seg = arguments["-s"]
 
     if '-vertfile' in arguments:
-        if sct.extract_fname(arguments['-vertfile'])[1].lower() == "none":
+        if extract_fname(arguments['-vertfile'])[1].lower() == "none":
             param_seg.fname_level = None
         elif os.path.isfile(arguments['-vertfile']):
             param_seg.fname_level = arguments['-vertfile']
         else:
             param_seg.fname_level = None
-            sct.printv('WARNING: -vertfile input file: "' + arguments['-vertfile'] + '" does not exist.\nSegmenting GM without using vertebral information', 1, 'warning')
+            printv('WARNING: -vertfile input file: "' + arguments['-vertfile'] + '" does not exist.\nSegmenting GM without using vertebral information', 1, 'warning')
     if '-denoising' in arguments:
         param_data.denoising = bool(int(arguments['-denoising']))
     if '-normalization' in arguments:
@@ -746,6 +751,7 @@ def main(args=None):
     end = time.time()
     t = end - start
     printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60, 1)) + ' sec', param.verbose, 'info')
+
 
 if __name__ == "__main__":
     main()
