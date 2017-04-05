@@ -1077,6 +1077,7 @@ class ClickViewerLabelVertebrae(ClickViewer):
         self.update_title_text('init')
         self.bool_ignore_warning_about_leaving=False
         self.help_web_adress='https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_label_vertebrae/attachment/label_vertebrae_viewer.png'
+        self.windows[1].axes.set_title(' \n')
 
         """ Create Buttons"""
         self.create_button_redo()
@@ -1200,7 +1201,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
         self.list_current_wanted_labels=self.control_list_wanted_label(first_label,last_label)
         self.update_title_text(str(self.current_dot_number))
         self.help_web_adress='https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_register_to_template/attachment/sct_register_to_template.png'
-
+        self.windows[1].axes.set_title(' \n')
 
         """ Create Buttons"""
         self.create_button_redo()
