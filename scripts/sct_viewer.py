@@ -1303,8 +1303,7 @@ class ClickViewerRegisterToTemplate(ClickViewer):
             plt._setp(title_obj,color='k')
 
         elif(key=='redo_done'):
-            title_obj = self.windows[0].axes.set_title( 'Previous dot erased \n'
-                                                        'Please click at intervertebral disc C2-C3 \n')
+            title_obj = self.windows[0].axes.set_title( 'Previous dot erased \n')
             plt._setp(title_obj,color='k')
 
         elif(key=='cant_go_higher'):
@@ -1671,20 +1670,20 @@ class ClickViewerGroundTruth(ClickViewer):
             plt._setp(title_obj,color='g')
 
         elif(key=='warning_cannot_mean_fewer_slices'):
-            title_obj = self.windows[0].axes.set_title( 'You can\'t mean fewer slices. \n')
+            title_obj = self.windows[0].axes.set_title( 'You can\'t average fewer slices. \n')
             plt._setp(title_obj,color='r')
 
         elif(key=='warning_cannot_mean_more_slices'):
-            title_obj = self.windows[0].axes.set_title( 'You can\'t mean more slices. \n')
+            title_obj = self.windows[0].axes.set_title( 'You can\'t average more slices. \n')
             plt._setp(title_obj,color='r')
 
         elif(key=='new_number_of_slice_to_mean'):
             if(self.number_of_slices_to_mean > 1 ):
                 title_obj = self.windows[0].axes.set_title( 'The main picture is now the \n'
-                                                            'mean of ' + str(self.number_of_slices_to_mean) + ' slices. \n')
+                                                            'average of ' + str(self.number_of_slices_to_mean) + ' slices. \n')
             else:
                 title_obj = self.windows[0].axes.set_title( 'The main picture is no more \n'
-                                                            'the mean of several slices. \n')
+                                                            'the average of several slices. \n')
             plt._setp(title_obj,color='k')
 
         elif(key=='warning_averaging_excedes_data_shape'):
@@ -1694,7 +1693,7 @@ class ClickViewerGroundTruth(ClickViewer):
 
         elif(key=='reset_average_parameters'):
             title_obj = self.windows[0].axes.set_title( 'You have reseted the parameters\n'
-                                                        'The main picture is the mean of ' + str(self.number_of_slices_to_mean) +' slices.\n')
+                                                        'The main picture is the average of ' + str(self.number_of_slices_to_mean) +' slices.\n')
             plt._setp(title_obj,color='k')
 
         else:
@@ -1892,8 +1891,8 @@ class ClickViewerGroundTruth(ClickViewer):
     def create_button_mean_more(self):
         ax = plt.axes([0.08, 0.90, 0.15, 0.075])
         self.dic_axis_buttons['mean_more']=ax
-        self.button_choose_auto_manual = Button(ax, 'Mean more \n '
-                                                    'slices')
+        self.button_choose_auto_manual = Button(ax, 'Average \n '
+                                                    'more slices')
         self.fig.canvas.mpl_connect('button_press_event', self.press_mean_more)
 
     def press_mean_more(self,event):
@@ -1908,8 +1907,8 @@ class ClickViewerGroundTruth(ClickViewer):
     def create_button_mean_less(self):
         ax = plt.axes([0.25, 0.90, 0.15, 0.075])
         self.dic_axis_buttons['mean_less']=ax
-        self.button_choose_auto_manual = Button(ax, 'Mean fewer \n '
-                                                    'slices')
+        self.button_choose_auto_manual = Button(ax, 'Average \n '
+                                                    'fewer slices')
         self.fig.canvas.mpl_connect('button_press_event', self.press_mean_less)
 
     def press_mean_less(self,event):
@@ -1924,7 +1923,8 @@ class ClickViewerGroundTruth(ClickViewer):
     def create_button_reset_mean(self):
         ax = plt.axes([0.12, 0.82, 0.24, 0.075])
         self.dic_axis_buttons['reset_mean']=ax
-        self.button_choose_auto_manual = Button(ax, 'Reset mean settings')
+        self.button_choose_auto_manual = Button(ax, 'Reset \n'
+                                                    ' average settings')
         self.fig.canvas.mpl_connect('button_press_event', self.press_reset_settings)
 
     def press_reset_settings(self, event):
