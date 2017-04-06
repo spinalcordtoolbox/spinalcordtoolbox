@@ -840,7 +840,6 @@ class ClickViewerPropseg(ClickViewer):
         self.bool_enable_custom_points = False
         self.help_web_adress= 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
 
-
     def create_button_skip(self):
         ax = plt.axes([0.59, 0.90, 0.1, 0.075])
         self.dic_axis_buttons['skip']=ax
@@ -884,13 +883,13 @@ class ClickViewerPropseg(ClickViewer):
 
         elif(key=='way_custom_start'):
             title_obj = self.windows[0].axes.set_title('You have chosen Manual Mode\n '
-                                                       'All previous data has been erased\n'
-                                                       'Please choose the slices on the small picture\n')
+                                                       'All previous data have been erased\n'
+                                                       'Please choose the slices on the left pannel\n')
             plt.setp(title_obj, color='k')
 
         elif(key=='way_auto_start'):
             title_obj = self.windows[0].axes.set_title('You have chosen Auto Mode \n '
-                                                       'All previous data has been erased \n '
+                                                       'All previous data have been erased \n '
                                                        'Please select a new point on slice \n ')
             plt._setp(title_obj,color='k')
 
