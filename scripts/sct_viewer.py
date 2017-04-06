@@ -1505,8 +1505,7 @@ class ClickViewerGroundTruth(ClickViewer):
                  orientation_subplot=orientation_subplot,
                  input_type=input_type)
 
-        self.windows[1].axes.set_title('Select the center slice \n '
-                                       'for the averaging. \n')
+
 
         if self.check_first_label(first_label):
             self.first_label=self.correct_label_choice(first_label)
@@ -1519,7 +1518,7 @@ class ClickViewerGroundTruth(ClickViewer):
         self.number_of_dots_final = len(self.dic_message_labels)
         self.dic_translate_labels=self.define_translate_dic()
         self.update_title_text(str(self.current_dot_number))
-
+        self.update_title_text('new_number_of_slice_to_mean')
 
         """ Create Buttons"""
         self.create_button_redo()
@@ -1670,20 +1669,20 @@ class ClickViewerGroundTruth(ClickViewer):
             plt._setp(title_obj,color='g')
 
         elif(key=='warning_cannot_mean_fewer_slices'):
-            title_obj = self.windows[0].axes.set_title( 'You can\'t average fewer slices. \n')
+            title_obj = self.windows[1].axes.set_title( 'You can\'t average\n fewer slices. \n')
             plt._setp(title_obj,color='r')
 
         elif(key=='warning_cannot_mean_more_slices'):
-            title_obj = self.windows[0].axes.set_title( 'You can\'t average more slices. \n')
+            title_obj = self.windows[1].axes.set_title( 'You can\'t average\n more slices. \n')
             plt._setp(title_obj,color='r')
 
         elif(key=='new_number_of_slice_to_mean'):
             if(self.number_of_slices_to_mean > 1 ):
-                title_obj = self.windows[0].axes.set_title( 'The main picture is now the \n'
-                                                            'average of ' + str(self.number_of_slices_to_mean) + ' slices. \n')
+                title_obj = self.windows[1].axes.set_title( 'Select sagital slice \n'
+                                                            'Averaging across ' + str(self.number_of_slices_to_mean) + ' slices. \n')
             else:
-                title_obj = self.windows[0].axes.set_title( 'The main picture is no more \n'
-                                                            'the average of several slices. \n')
+                title_obj = self.windows[1].axes.set_title( 'The main picture does not \n'
+                                                            'average slices. \n')
             plt._setp(title_obj,color='k')
 
         elif(key=='warning_averaging_excedes_data_shape'):
