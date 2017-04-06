@@ -10,15 +10,17 @@ def launch_main_window():
     return (w,system)
 
 def create_header(w):
-    header_layout=QtGui.QVBoxLayout()
-    lb_status=QtGui.QLabel('Hi there!')
-    header_layout.addWidget(lb_status)
-    
-    w.setLayout(header_layout)
+    layout_header=QtGui.QVBoxLayout()
+    lb_status=QtGui.QLabel('Label Alerte')
+    lb_warning=QtGui.QLabel('Label Warning')
+    layout_header.addWidget(lb_status)
+    layout_header.addWidget(lb_warning)
+    w.setLayout(layout_header)
+    return(lb_status,lb_warning)
 
 
 
 
 (w,system)=launch_main_window()
-create_header(w)
+(lb_status,lb_warning)=create_header(w)
 sys.exit(system.exec_())
