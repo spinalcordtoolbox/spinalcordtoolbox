@@ -951,7 +951,7 @@ class ClickViewerPropseg(ClickViewer):
         target_point = self.set_custom_target_points(event)
         if self.check_point_is_valid(target_point):
             self.list_points.append(target_point)
-            point = [self.current_point.x, self.current_point.y, self.current_point.z]
+            point = [target_point.x,target_point.y,target_point.z]
             self.add_dot_to_current_slice(plot, point)
 
     def save_target_point_not_custom_way(self,event,plot):
@@ -1044,6 +1044,7 @@ class ClickViewerPropseg(ClickViewer):
         point = self.list_points[-1]
         self.windows[1].update_slice([point.x, point.y, point.z], data_update=False)
         self.windows[0].update_slice(point.x)
+        self.current_point=Coordinate([point.x, point.y, point.z])
         self.draw_points(self.windows[0], point.x)
         return point
 
