@@ -45,16 +45,48 @@ def launch_main_window():
     w.show()
     return (w,system)
 
+def add_layout_main(w):
+    layout_main=QtGui.QVBoxLayout()
+    layout_main.setAlignment(QtCore.Qt.AlignTop)
+    w.setLayout(layout_main)
+    return layout_main
+
+
 def add_header(w):
     header=Header()
-    w.setLayout(header.layout_header)
+    w.addLayout(header.layout_header)
     header.update_lb('start')
     return(header)
 
+def add_anat_views(layout_main):
+    layout_anat_view=QtGui.QVBoxLayout()
+    frame1 = QtGui.QLabel('Label Warning')
+    frame2 = QtGui.QLabel('Label Warning')
+    frame3 = QtGui.QLabel('Label Warning')
+    frame4 = QtGui.QLabel('Label Warning')
+    frame5 = QtGui.QLabel('Label Warning')
+
+    layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
+    layout_anat_view.addWidget(frame1)
+    layout_anat_view.addWidget(frame2)
+    layout_anat_view.addWidget(frame3)
+    layout_anat_view.addWidget(frame4)
+    layout_anat_view.addWidget(frame5)
 
 
-(w,system) = launch_main_window()
-header = add_header(w)
+    layout_main.addLayout(layout_anat_view)
+
+
+(window,system) = launch_main_window()
+
+layout_main = add_layout_main(window)
+header = add_header(layout_main)
+anat_view = add_anat_views(layout_main)
+
+
+window.setLayout(layout_main)
+
+
 sys.exit(system.exec_())
 
 
