@@ -79,6 +79,12 @@ class MainPannelCore(object):
 class MainPannel(MainPannelCore):
 
     def add_controller_pannel(self):
+        layout_title_and_controller=QtGui.QVBoxLayout()
+        lb_title = QtGui.QLabel('Label Choice')
+        lb_title.setAlignment(QtCore.Qt.AlignCenter)
+        lb_title.setContentsMargins(0,30,0,0)
+        layout_title_and_controller.addWidget(lb_title)
+
         layout_controller = QtGui.QHBoxLayout()
         layout_controller.setAlignment(QtCore.Qt.AlignTop)
         layout_controller.setAlignment(QtCore.Qt.AlignCenter)
@@ -100,7 +106,10 @@ class MainPannel(MainPannelCore):
         layout_controller.addWidget(s1)
         layout_controller.addWidget(s2)
         layout_controller.addWidget(l2)
-        self.layout_central.addLayout(layout_controller)
+
+        layout_title_and_controller.addLayout(layout_controller)
+
+        self.layout_central.addLayout(layout_title_and_controller)
 
     def __init__(self):
         super(MainPannel, self).__init__()
