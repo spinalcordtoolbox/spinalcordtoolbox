@@ -60,6 +60,10 @@ class MainPannelCore(object):
         layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
         layout_anat_view.setAlignment(QtCore.Qt.AlignRight)
 
+        self.lb_title_secondary_view = QtGui.QLabel('Secondary View')
+        self.lb_title_secondary_view.setAlignment(QtCore.Qt.AlignCenter)
+
+        layout_anat_view.addWidget(self.lb_title_secondary_view)
         layout_anat_view.addWidget(self.create_image())
         self.layout_central.addLayout(layout_anat_view)
 
@@ -118,8 +122,8 @@ class MainPannel(MainPannelCore):
         super(MainPannel, self).__init__()
 
         """ Left Pannel"""
-        #self.add_secondary_anat_view()
-        self.add_controller_pannel()
+        self.add_secondary_anat_view()
+        #self.add_controller_pannel()
         """ Right Pannel"""
         self.add_main_anat_view()
 
