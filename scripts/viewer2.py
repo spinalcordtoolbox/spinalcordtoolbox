@@ -60,18 +60,13 @@ def add_header(w):
 
 def add_anat_views(layout_main):
     layout_anat_view=QtGui.QVBoxLayout()
-    frame1 = QtGui.QLabel('Label Warning')
-    frame2 = QtGui.QLabel('Label Warning')
-    frame3 = QtGui.QLabel('Label Warning')
-    frame4 = QtGui.QLabel('Label Warning')
-    frame5 = QtGui.QLabel('Label Warning')
-
     layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
-    layout_anat_view.addWidget(frame1)
-    layout_anat_view.addWidget(frame2)
-    layout_anat_view.addWidget(frame3)
-    layout_anat_view.addWidget(frame4)
-    layout_anat_view.addWidget(frame5)
+
+    image_label=QtGui.QLabel('')
+    image_test=QtGui.QPixmap('/home/apopov/Documents/dev/sct/image_test.jpg')
+    image_label.setPixmap(image_test)
+    layout_anat_view.addWidget(image_label)
+
 
 
     layout_main.addLayout(layout_anat_view)
