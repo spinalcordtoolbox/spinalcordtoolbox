@@ -49,6 +49,9 @@ class MainPannelCore(object):
         layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
         layout_anat_view.setAlignment(QtCore.Qt.AlignRight)
 
+        self.lb_title_main_view = QtGui.QLabel('Main View')
+        self.lb_title_main_view.setAlignment(QtCore.Qt.AlignCenter)
+        layout_anat_view.addWidget(self.lb_title_main_view)
         layout_anat_view.addWidget(self.create_image())
         self.layout_central.addLayout(layout_anat_view)
 
