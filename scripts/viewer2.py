@@ -36,7 +36,6 @@ class Header(HeaderCore):
             self.lb_warning.setStyleSheet("color:red")
 
 
-
 def launch_main_window():
     system = QtGui.QApplication(sys.argv)
     w = QtGui.QWidget()
@@ -58,25 +57,25 @@ def add_header(w):
     header.update_lb('start')
     return(header)
 
-def add_anat_views(layout_main):
-    layout_anat_view=QtGui.QVBoxLayout()
-    layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
+def add_central_layout(layout_main):
+    layout_central=QtGui.QVBoxLayout()
 
+    layout_anat_view = QtGui.QHBoxLayout()
+    layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
     image_label=QtGui.QLabel('')
     image_test=QtGui.QPixmap('/home/apopov/Documents/dev/sct/image_test.jpg')
     image_label.setPixmap(image_test)
     layout_anat_view.addWidget(image_label)
 
-
-
-    layout_main.addLayout(layout_anat_view)
+    layout_central.addLayout(layout_anat_view)
+    layout_main.addLayout(layout_central)
 
 
 (window,system) = launch_main_window()
 
 layout_main = add_layout_main(window)
 header = add_header(layout_main)
-anat_view = add_anat_views(layout_main)
+layout_central = add_central_layout(layout_main)
 
 
 window.setLayout(layout_main)
