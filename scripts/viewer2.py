@@ -100,6 +100,25 @@ class MainPannel(MainPannelCore):
 
         self.merge_layouts()
 
+class ControlButtonsCore(object):
+    def __init__(self):
+        self.layout_buttons=QtGui.QHBoxLayout()
+        self.layout_buttons.setAlignment(QtCore.Qt.AlignRight)
+        self.add_help_button()
+        self.add_undo_button()
+        self.add_save_and_quit_button()
+
+    def add_save_and_quit_button(self):
+        btn_save_and_quit=QtGui.QPushButton('Save & Quit')
+        self.layout_buttons.addWidget(btn_save_and_quit)
+
+    def add_undo_button(self):
+        self.btn_undo=QtGui.QPushButton('Undo')
+        self.layout_buttons.addWidget(self.btn_undo)
+
+    def add_help_button(self):
+        self.btn_help=QtGui.QPushButton('Help')
+        self.layout_buttons.addWidget(self.btn_help)
 
 
 def launch_main_window():
@@ -123,8 +142,15 @@ def add_header(w):
     return(header)
 
 def add_main_pannel(layout_main):
-    mainPannel=MainPannel()
-    layout_main.addLayout(mainPannel.layout_global)
+    main_pannel=MainPannel()
+    layout_main.addLayout(main_pannel.layout_global)
+    return  main_pannel
+
+def add_control_buttons(layout_main):
+    control_buttons=ControlButtonsCore()
+    layout_main.addLayout(control_buttons.layout_buttons)
+    return control_buttons
+
 
 
 (window,system) = launch_main_window()
@@ -132,6 +158,8 @@ def add_main_pannel(layout_main):
 layout_main = add_layout_main(window)
 header = add_header(layout_main)
 main_pannel = add_main_pannel(layout_main)
+control_buttons=add_control_buttons(layout_main)
+
 
 
 window.setLayout(layout_main)
