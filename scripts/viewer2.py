@@ -1,5 +1,7 @@
 import sys
 import PyQt4.QtGui as QtGui
+import PyQt4.QtCore as QtCore
+
 
 def launch_main_window():
     system = QtGui.QApplication(sys.argv)
@@ -11,6 +13,7 @@ def launch_main_window():
 
 def create_header(w):
     layout_header=QtGui.QVBoxLayout()
+    layout_header.setAlignment(QtCore.Qt.AlignTop)
     lb_status=QtGui.QLabel('Label Alerte')
     lb_warning=QtGui.QLabel('Label Warning')
     layout_header.addWidget(lb_status)
