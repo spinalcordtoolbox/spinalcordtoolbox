@@ -58,6 +58,9 @@ class MainPannelCore(object):
         layout_anat_view.addWidget(self.create_image())
         self.layout_central.addLayout(layout_anat_view)
 
+    def add_controller_pannel(self):
+        pass
+
     def create_image(self):
         image_label = QtGui.QLabel('')
         image_test = QtGui.QPixmap('/home/apopov/Documents/dev/sct/image_test.jpg')
@@ -68,14 +71,36 @@ class MainPannelCore(object):
         self.layout_global.addLayout(self.layout_option_settings)
         self.layout_global.addLayout(self.layout_central)
 
+    def add_option_settings(self):
+        pass
+
 class MainPannel(MainPannelCore):
+
+    def add_controller_pannel(self):
+        layout_controller = QtGui.QHBoxLayout()
+        layout_controller.setAlignment(QtCore.Qt.AlignTop)
+        layout_controller.setAlignment(QtCore.Qt.AlignLeft)
+
+        s1=QtGui.QSlider()
+        s2 = QtGui.QSlider()
+
+        layout_controller.addWidget(s1)
+        layout_controller.addWidget(s2)
+        self.layout_central.addLayout(layout_controller)
+
 
     def __init__(self):
         super(MainPannel, self).__init__()
+
+        """ Left Pannel"""
+        #self.add_secondary_anat_view()
+        self.add_controller_pannel()
+        """ Right Pannel"""
         self.add_main_anat_view()
-        self.add_secondary_anat_view()
 
         self.merge_layouts()
+
+
 
 def launch_main_window():
     system = QtGui.QApplication(sys.argv)
