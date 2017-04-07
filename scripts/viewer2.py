@@ -11,7 +11,6 @@ class HeaderCore(object):
         self.add_lb_status()
         self.add_lb_warning()
 
-
     def add_lb_status(self):
         self.lb_status = QtGui.QLabel('Label Alerte')
         self.lb_status.setContentsMargins(10, 10, 10, 0)
@@ -82,15 +81,26 @@ class MainPannel(MainPannelCore):
     def add_controller_pannel(self):
         layout_controller = QtGui.QHBoxLayout()
         layout_controller.setAlignment(QtCore.Qt.AlignTop)
-        layout_controller.setAlignment(QtCore.Qt.AlignLeft)
+        layout_controller.setAlignment(QtCore.Qt.AlignCenter)
+
+        l1=QtGui.QLabel('1')
+        l1.setAlignment(QtCore.Qt.AlignCenter)
+        l1.setContentsMargins(0,0,35,0)
+        l2 = QtGui.QLabel('2')
+        l2.setAlignment(QtCore.Qt.AlignCenter)
+        l2.setContentsMargins(20, 0, 0, 0)
 
         s1=QtGui.QSlider()
         s2 = QtGui.QSlider()
 
+        s1.setMaximumHeight(250)
+        s2.setMaximumHeight(250)
+
+        layout_controller.addWidget(l1)
         layout_controller.addWidget(s1)
         layout_controller.addWidget(s2)
+        layout_controller.addWidget(l2)
         self.layout_central.addLayout(layout_controller)
-
 
     def __init__(self):
         super(MainPannel, self).__init__()
