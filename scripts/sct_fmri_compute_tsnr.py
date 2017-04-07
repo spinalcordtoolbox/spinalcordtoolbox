@@ -14,8 +14,8 @@
 
 import sys
 
-import sct_utils as sct
 import sct_maths
+import sct_utils as sct
 from msct_parser import Parser
 
 
