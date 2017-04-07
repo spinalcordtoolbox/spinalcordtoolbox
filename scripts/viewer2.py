@@ -37,6 +37,11 @@ class Header(HeaderCore):
 
 class MainPannelCore(object):
 
+    def __init__(self):
+        self.layout_global=QtGui.QVBoxLayout()
+        self.layout_option_settings = QtGui.QHBoxLayout()
+        self.layout_central = QtGui.QHBoxLayout()
+
     def add_main_anat_view(self):
         layout_anat_view = QtGui.QVBoxLayout()
         layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
@@ -59,16 +64,18 @@ class MainPannelCore(object):
         image_label.setPixmap(image_test)
         return image_label
 
+    def merge_layouts(self):
+        self.layout_global.addLayout(self.layout_option_settings)
+        self.layout_global.addLayout(self.layout_central)
+
 class MainPannel(MainPannelCore):
 
     def __init__(self):
-        self.layout_central = QtGui.QHBoxLayout()
+        super(MainPannel, self).__init__()
         self.add_main_anat_view()
         self.add_secondary_anat_view()
 
-
-
-
+        self.merge_layouts()
 
 def launch_main_window():
     system = QtGui.QApplication(sys.argv)
@@ -84,24 +91,22 @@ def add_layout_main(w):
     w.setLayout(layout_main)
     return layout_main
 
-
 def add_header(w):
     header=Header()
     w.addLayout(header.layout_header)
     header.update_lb('start')
     return(header)
 
-
-def add_central_layout(layout_main):
+def add_main_pannel(layout_main):
     mainPannel=MainPannel()
-    layout_main.addLayout(mainPannel.layout_central)
+    layout_main.addLayout(mainPannel.layout_global)
 
 
 (window,system) = launch_main_window()
 
 layout_main = add_layout_main(window)
 header = add_header(layout_main)
-layout_central = add_central_layout(layout_main)
+main_pannel = add_main_pannel(layout_main)
 
 
 window.setLayout(layout_main)
