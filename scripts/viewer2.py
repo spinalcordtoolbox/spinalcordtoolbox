@@ -133,15 +133,15 @@ def launch_main_window():
     w.show()
     return (w,system)
 
-def add_layout_main(w):
+def add_layout_main(window):
     layout_main=QtGui.QVBoxLayout()
     layout_main.setAlignment(QtCore.Qt.AlignTop)
-    w.setLayout(layout_main)
+    window.setLayout(layout_main)
     return layout_main
 
-def add_header(w):
+def add_header(layout_main):
     header=Header()
-    w.addLayout(header.layout_header)
+    layout_main.addLayout(header.layout_header)
     header.update_lb('start')
     return(header)
 
