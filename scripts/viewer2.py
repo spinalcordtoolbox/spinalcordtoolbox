@@ -7,25 +7,28 @@ import PyQt4.QtCore as QtCore
 class HeaderCore(object):
 
     def __init__(self):
-        self.define_lb_status()
-        self.define_lb_warning()
         self.define_layout_header()
+        self.add_lb_status()
+        self.add_lb_warning()
 
-    def define_lb_status(self):
+
+    def add_lb_status(self):
         self.lb_status = QtGui.QLabel('Label Alerte')
         self.lb_status.setContentsMargins(10, 10, 10, 0)
         self.lb_status.setAlignment(QtCore.Qt.AlignCenter)
+        self.layout_header.addWidget(self.lb_status)
 
-    def define_lb_warning(self):
+    def add_lb_warning(self):
         self.lb_warning = QtGui.QLabel('Label Warning')
         self.lb_warning.setContentsMargins(10, 10, 10, 10)
         self.lb_warning.setAlignment(QtCore.Qt.AlignCenter)
+        self.layout_header.addWidget(self.lb_warning)
 
     def define_layout_header(self):
         self.layout_header = QtGui.QVBoxLayout()
         self.layout_header.setAlignment(QtCore.Qt.AlignTop)
-        self.layout_header.addWidget(self.lb_status)
-        self.layout_header.addWidget(self.lb_warning)
+        self.layout_header.setContentsMargins(0,30,0,80)
+
 
 class Header(HeaderCore):
 
@@ -104,6 +107,7 @@ class ControlButtonsCore(object):
     def __init__(self):
         self.layout_buttons=QtGui.QHBoxLayout()
         self.layout_buttons.setAlignment(QtCore.Qt.AlignRight)
+        self.layout_buttons.setContentsMargins(10,80,15,160)
         self.add_help_button()
         self.add_undo_button()
         self.add_save_and_quit_button()
