@@ -17,7 +17,7 @@ with open(path.join(here, 'version.txt')) as f:
 
 setup(
     name='spinalcordtoolbox',
-    description='Library of analysis tools for the MRI of the spinal cord',
+    description='Library of analysis tools for MRI of the spinal cord',
     long_description=long_description,
     url='http://www.neuro.polymtl.ca/home',
     author='NeuroPoly Lab, Polytechnique Montreal',
@@ -36,7 +36,7 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
     ],
-    keywords='Image MRI spinal cord',
+    keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
     packages=find_packages(exclude=['dev', 'install']),
     install_requires=requirements,
     include_package_data=True,
