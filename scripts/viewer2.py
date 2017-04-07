@@ -35,6 +35,39 @@ class Header(HeaderCore):
             self.lb_warning.setText('header.lb_warning')
             self.lb_warning.setStyleSheet("color:red")
 
+class MainPannelCore(object):
+
+    def add_main_anat_view(self):
+        layout_anat_view = QtGui.QVBoxLayout()
+        layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
+        layout_anat_view.setAlignment(QtCore.Qt.AlignRight)
+
+        layout_anat_view.addWidget(self.create_image())
+        self.layout_central.addLayout(layout_anat_view)
+
+    def add_secondary_anat_view(self):
+        layout_anat_view = QtGui.QVBoxLayout()
+        layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
+        layout_anat_view.setAlignment(QtCore.Qt.AlignRight)
+
+        layout_anat_view.addWidget(self.create_image())
+        self.layout_central.addLayout(layout_anat_view)
+
+    def create_image(self):
+        image_label = QtGui.QLabel('')
+        image_test = QtGui.QPixmap('/home/apopov/Documents/dev/sct/image_test.jpg')
+        image_label.setPixmap(image_test)
+        return image_label
+
+class MainPannel(MainPannelCore):
+
+    def __init__(self):
+        self.layout_central = QtGui.QHBoxLayout()
+        self.add_main_anat_view()
+        self.add_secondary_anat_view()
+
+
+
 
 
 def launch_main_window():
@@ -58,34 +91,10 @@ def add_header(w):
     header.update_lb('start')
     return(header)
 
-def add_main_anat_view(layout_central):
-    layout_anat_view = QtGui.QVBoxLayout()
-    layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
-    layout_anat_view.setAlignment(QtCore.Qt.AlignRight)
-
-    layout_anat_view.addWidget(create_image())
-    layout_central.addLayout(layout_anat_view)
-
-def add_secondary_anat_view(layout_central):
-    layout_anat_view = QtGui.QVBoxLayout()
-    layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
-    layout_anat_view.setAlignment(QtCore.Qt.AlignRight)
-
-    layout_anat_view.addWidget(create_image())
-    layout_central.addLayout(layout_anat_view)
-
-def create_image():
-    image_label=QtGui.QLabel('')
-    image_test=QtGui.QPixmap('/home/apopov/Documents/dev/sct/image_test.jpg')
-    image_label.setPixmap(image_test)
-    return image_label
 
 def add_central_layout(layout_main):
-    layout_central=QtGui.QHBoxLayout()
-    add_main_anat_view(layout_central)
-    add_secondary_anat_view(layout_central)
-
-    layout_main.addLayout(layout_central)
+    mainPannel=MainPannel()
+    layout_main.addLayout(mainPannel.layout_central)
 
 
 (window,system) = launch_main_window()
