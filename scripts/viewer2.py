@@ -152,10 +152,10 @@ class ControlButtonsCore(object):
 class Window(object):
 
     def __init__(self):
-        (system, header, main_pannel, control_buttons)=self.set_layout()
-        sys.exit(system.exec_())
+        self.set_layout_and_launch_viewer()
 
-    def set_layout(self):
+
+    def set_layout_and_launch_viewer(self):
         def launch_main_window():
             system = QtGui.QApplication(sys.argv)
             w = QtGui.QWidget()
@@ -164,7 +164,7 @@ class Window(object):
             w.show()
             return (w, system)
 
-        def add_layout_main(, window):
+        def add_layout_main( window):
             layout_main = QtGui.QVBoxLayout()
             layout_main.setAlignment(QtCore.Qt.AlignTop)
             window.setLayout(layout_main)
@@ -188,14 +188,11 @@ class Window(object):
 
         (window, system) = launch_main_window()
         layout_main = add_layout_main(window)
-        header = add_header(layout_main)
-        main_pannel = add_main_pannel(layout_main)
-        control_buttons = add_control_buttons(layout_main)
+        self.header = add_header(layout_main)
+        self.main_pannel = add_main_pannel(layout_main)
+        self.control_buttons = add_control_buttons(layout_main)
         window.setLayout(layout_main)
-        return(system,header,main_pannel,control_buttons)
-
-
-
+        sys.exit(system.exec_())
 
 
 Window()
