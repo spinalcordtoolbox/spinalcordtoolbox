@@ -28,10 +28,9 @@ class HeaderCore(object):
         self.layout_header.setAlignment(QtCore.Qt.AlignTop)
         self.layout_header.setContentsMargins(0,30,0,80)
 
-
 class Header(HeaderCore):
 
-    def update_lb(self,key):
+    def update_text(self,key):
         if(key=='start'):
             self.lb_status.setText('header.lb_status')
             self.lb_warning.setText('header.lb_warning')
@@ -44,28 +43,28 @@ class MainPannelCore(object):
         self.layout_option_settings = QtGui.QHBoxLayout()
         self.layout_central = QtGui.QHBoxLayout()
 
-    def add_main_anat_view(self):
-        layout_anat_view = QtGui.QVBoxLayout()
-        layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
-        layout_anat_view.setAlignment(QtCore.Qt.AlignRight)
+    def add_main_view(self):
+        layout_view = QtGui.QVBoxLayout()
+        layout_view.setAlignment(QtCore.Qt.AlignTop)
+        layout_view.setAlignment(QtCore.Qt.AlignRight)
 
         self.lb_title_main_view = QtGui.QLabel('Main View')
         self.lb_title_main_view.setAlignment(QtCore.Qt.AlignCenter)
-        layout_anat_view.addWidget(self.lb_title_main_view)
-        layout_anat_view.addWidget(self.create_image())
-        self.layout_central.addLayout(layout_anat_view)
+        layout_view.addWidget(self.lb_title_main_view)
+        layout_view.addWidget(self.create_image())
+        self.layout_central.addLayout(layout_view)
 
-    def add_secondary_anat_view(self):
-        layout_anat_view = QtGui.QVBoxLayout()
-        layout_anat_view.setAlignment(QtCore.Qt.AlignTop)
-        layout_anat_view.setAlignment(QtCore.Qt.AlignRight)
+    def add_secondary_view(self):
+        layout_view = QtGui.QVBoxLayout()
+        layout_view.setAlignment(QtCore.Qt.AlignTop)
+        layout_view.setAlignment(QtCore.Qt.AlignRight)
 
         self.lb_title_secondary_view = QtGui.QLabel('Secondary View')
         self.lb_title_secondary_view.setAlignment(QtCore.Qt.AlignCenter)
 
-        layout_anat_view.addWidget(self.lb_title_secondary_view)
-        layout_anat_view.addWidget(self.create_image())
-        self.layout_central.addLayout(layout_anat_view)
+        layout_view.addWidget(self.lb_title_secondary_view)
+        layout_view.addWidget(self.create_image())
+        self.layout_central.addLayout(layout_view)
 
     def add_controller_pannel(self):
         pass
@@ -122,10 +121,10 @@ class MainPannel(MainPannelCore):
         super(MainPannel, self).__init__()
 
         """ Left Pannel"""
-        self.add_secondary_anat_view()
+        self.add_secondary_view()
         #self.add_controller_pannel()
         """ Right Pannel"""
-        self.add_main_anat_view()
+        self.add_main_view()
 
         self.merge_layouts()
 
@@ -150,7 +149,6 @@ class ControlButtonsCore(object):
         self.btn_help=QtGui.QPushButton('Help')
         self.layout_buttons.addWidget(self.btn_help)
 
-
 def launch_main_window():
     system = QtGui.QApplication(sys.argv)
     w = QtGui.QWidget()
@@ -168,7 +166,7 @@ def add_layout_main(window):
 def add_header(layout_main):
     header=Header()
     layout_main.addLayout(header.layout_header)
-    header.update_lb('start')
+    header.update_text('start')
     return(header)
 
 def add_main_pannel(layout_main):
