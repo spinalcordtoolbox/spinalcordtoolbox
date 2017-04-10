@@ -149,9 +149,16 @@ class ControlButtonsCore(object):
         self.btn_help=QtGui.QPushButton('Help')
         self.layout_buttons.addWidget(self.btn_help)
 
-class Window(object):
+class WindowCore(object):
 
     def __init__(self):
+        self.test=True
+
+
+class Window(WindowCore):
+
+    def __init__(self):
+        super(WindowCore,self).__init__()
         self.set_layout_and_launch_viewer()
 
 
