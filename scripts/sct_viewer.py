@@ -1987,6 +1987,7 @@ def get_parser():
 
     return parser
 
+
 class ParamImageVisualization(object):
     def __init__(self, id='0', mode='image', cmap='gray', interp='nearest', vmin='0', vmax='99', vmean='98', vmode='percentile', alpha='1.0'):
         self.id = id
@@ -2006,6 +2007,7 @@ class ParamImageVisualization(object):
                 sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
             objs = obj.split('=')
             setattr(self, objs[0], objs[1])
+
 
 class ParamMultiImageVisualization(object):
     """
