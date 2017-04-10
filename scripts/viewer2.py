@@ -371,32 +371,32 @@ class ControlButtonsCore(object):
 class WindowCore(object):
 
     def __init__(self,list_input, visualization_parameters=None):
-        self.images = self.keep_only_images(list_input)
-        self.im_params = visualization_parameters
+        #self.images = self.keep_only_images(list_input)
+        #self.im_params = visualization_parameters
 
         """ Initialisation of plot """
-        self.fig = plt.figure(figsize=(8, 8))
-        self.fig.subplots_adjust(bottom=0.1, left=0.1)
-        self.fig.patch.set_facecolor('lightgrey')
+        #self.fig = plt.figure(figsize=(8, 8))
+        #self.fig.subplots_adjust(bottom=0.1, left=0.1)
+        #self.fig.patch.set_facecolor('lightgrey')
 
         """ Pad the image so that it is square in axial view (useful for zooming) """
-        self.image_dim = self.images[0].data.shape
-        nx, ny, nz, nt, px, py, pz, pt = self.images[0].dim
-        self.im_spacing = [px, py, pz]
-        self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
-                             float(self.im_spacing[0]) / float(self.im_spacing[2]),
-                             float(self.im_spacing[0]) / float(self.im_spacing[1])]
-        self.offset = [0.0, 0.0, 0.0]
-        self.current_point = Coordinate([int(nx / 2), int(ny / 2), int(nz / 2)])
+        #self.image_dim = self.images[0].data.shape
+        #nx, ny, nz, nt, px, py, pz, pt = self.images[0].dim
+        #self.im_spacing = [px, py, pz]
+        #self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
+        #                     float(self.im_spacing[0]) / float(self.im_spacing[2]),
+        #                     float(self.im_spacing[0]) / float(self.im_spacing[1])]
+        #self.offset = [0.0, 0.0, 0.0]
+        #self.current_point = Coordinate([int(nx / 2), int(ny / 2), int(nz / 2)])
 
-        self.windows = []
-        self.press = [0, 0]
+        #self.windows = []
+        #self.press = [0, 0]
 
-        self.mean_intensity = []
-        self.std_intensity = []
+        #self.mean_intensity = []
+        #self.std_intensity = []
 
-        self.last_update = time()
-        self.update_freq = 1.0 / 15.0  # 10 Hz
+        #self.last_update = time()
+        #self.update_freq = 1.0 / 15.0  # 10 Hz
 
     def keep_only_images(self,list_input):
         # TODO: check same space
@@ -523,40 +523,36 @@ class Window(WindowCore):
 
         super(Window, self).__init__(list_images, visualization_parameters)
 
-        self.declaration_global_variables_general(orientation_subplot)
+        #self.declaration_global_variables_general(orientation_subplot)
 
-        self.compute_offset()
-        self.pad_data()
+        #self.compute_offset()
+        #self.pad_data()
 
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
-                                         int(self.images[0].data.shape[2] / 2)])
+        #self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
+        #                                 int(self.images[0].data.shape[2] / 2)])
 
-        """ Display axes, specific to viewer """
         #import matplotlib.gridspec as gridspec
         #gs = gridspec.GridSpec(1, 3)
 
-        """ Main plot on the right"""
         #ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
         #self.windows.append(
         #    SinglePlot(ax, self.images, self, view=self.orientation[self.primary_subplot], display_cross='',
         #               im_params=visualization_parameters))
         #self.set_main_plot()
 
-        """Smaller plot on the left"""
         #ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
         #self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot],
-                                       display_cross=self.set_display_cross(), im_params=visualization_parameters))
+                                       #display_cross=self.set_display_cross(), im_params=visualization_parameters))
         #self.windows[1].axes.set_title('Select the slice \n '
-                                       'to inspect. \n')
+                                       #'to inspect. \n')
 
-        """ Compute slices to display """
-        self.calculate_list_slices()
+        #self.calculate_list_slices()
+        #self.setup_intensity()
 
-        """ Variable to check if all slices have been processed """
-        self.setup_intensity()
+        #self.input_type = input_type
 
-        """ Manage closure of viewer"""
-        self.input_type = input_type
+
+
         self.set_layout_and_launch_viewer()
 
     def set_main_plot(self):
