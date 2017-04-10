@@ -152,45 +152,51 @@ class ControlButtonsCore(object):
 class Window(object):
 
     def __init__(self):
-        (window, system) = self.launch_main_window()
-
-        layout_main = self.add_layout_main(window)
-        header = self.add_header(layout_main)
-        main_pannel = self.add_main_pannel(layout_main)
-        control_buttons = self.add_control_buttons(layout_main)
-        window.setLayout(layout_main)
-
+        (system, header, main_pannel, control_buttons)=self.set_layout()
         sys.exit(system.exec_())
 
-    def launch_main_window(self):
-        system = QtGui.QApplication(sys.argv)
-        w = QtGui.QWidget()
-        w.resize(740, 850)
-        w.setWindowTitle('Hello world')
-        w.show()
-        return (w, system)
+    def set_layout(self):
+        def launch_main_window():
+            system = QtGui.QApplication(sys.argv)
+            w = QtGui.QWidget()
+            w.resize(740, 850)
+            w.setWindowTitle('Hello world')
+            w.show()
+            return (w, system)
 
-    def add_layout_main(self,window):
-        layout_main = QtGui.QVBoxLayout()
-        layout_main.setAlignment(QtCore.Qt.AlignTop)
+        def add_layout_main(, window):
+            layout_main = QtGui.QVBoxLayout()
+            layout_main.setAlignment(QtCore.Qt.AlignTop)
+            window.setLayout(layout_main)
+            return layout_main
+
+        def add_header(layout_main):
+            header = Header()
+            layout_main.addLayout(header.layout_header)
+            header.update_text('start')
+            return (header)
+
+        def add_main_pannel(layout_main):
+            main_pannel = MainPannel()
+            layout_main.addLayout(main_pannel.layout_global)
+            return main_pannel
+
+        def add_control_buttons(layout_main):
+            control_buttons = ControlButtonsCore()
+            layout_main.addLayout(control_buttons.layout_buttons)
+            return control_buttons
+
+        (window, system) = launch_main_window()
+        layout_main = add_layout_main(window)
+        header = add_header(layout_main)
+        main_pannel = add_main_pannel(layout_main)
+        control_buttons = add_control_buttons(layout_main)
         window.setLayout(layout_main)
-        return layout_main
+        return(system,header,main_pannel,control_buttons)
 
-    def add_header(self,layout_main):
-        header = Header()
-        layout_main.addLayout(header.layout_header)
-        header.update_text('start')
-        return (header)
 
-    def add_main_pannel(self,layout_main):
-        main_pannel = MainPannel()
-        layout_main.addLayout(main_pannel.layout_global)
-        return main_pannel
 
-    def add_control_buttons(self,layout_main):
-        control_buttons = ControlButtonsCore()
-        layout_main.addLayout(control_buttons.layout_buttons)
-        return control_buttons
+
 
 Window()
 
