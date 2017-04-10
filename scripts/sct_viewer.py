@@ -1999,13 +1999,8 @@ class ParamImageVisualization(object):
         self.vmode = vmode
         self.alpha = alpha
 
-    def update(self, params):
-        list_objects = params.split(',')
-        for obj in list_objects:
-            if len(obj) < 2:
-                sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
-            objs = obj.split('=')
-            setattr(self, objs[0], objs[1])
+
+
 
 class ParamMultiImageVisualization(object):
     """
