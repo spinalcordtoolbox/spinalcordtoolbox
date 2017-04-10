@@ -396,7 +396,6 @@ class WindowCore(object):
         self.std_intensity = []
 
         self.last_update = time()
-
         self.update_freq = 1.0 / 15.0  # 10 Hz
 
     def keep_only_images(self,list_input):
@@ -533,21 +532,21 @@ class Window(WindowCore):
                                          int(self.images[0].data.shape[2] / 2)])
 
         """ Display axes, specific to viewer """
-        import matplotlib.gridspec as gridspec
-        gs = gridspec.GridSpec(1, 3)
+        #import matplotlib.gridspec as gridspec
+        #gs = gridspec.GridSpec(1, 3)
 
         """ Main plot on the right"""
-        ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
-        self.windows.append(
-            SinglePlot(ax, self.images, self, view=self.orientation[self.primary_subplot], display_cross='',
-                       im_params=visualization_parameters))
-        self.set_main_plot()
+        #ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
+        #self.windows.append(
+        #    SinglePlot(ax, self.images, self, view=self.orientation[self.primary_subplot], display_cross='',
+        #               im_params=visualization_parameters))
+        #self.set_main_plot()
 
         """Smaller plot on the left"""
-        ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
-        self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot],
+        #ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
+        #self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot],
                                        display_cross=self.set_display_cross(), im_params=visualization_parameters))
-        self.windows[1].axes.set_title('Select the slice \n '
+        #self.windows[1].axes.set_title('Select the slice \n '
                                        'to inspect. \n')
 
         """ Compute slices to display """
