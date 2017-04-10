@@ -399,7 +399,6 @@ class WindowCore(object):
 
         self.update_freq = 1.0 / 15.0  # 10 Hz
 
-
     def keep_only_images(self,list_input):
         # TODO: check same space
         # TODO: check if at least one image
@@ -551,15 +550,6 @@ class Window(WindowCore):
         self.windows[1].axes.set_title('Select the slice \n '
                                        'to inspect. \n')
 
-        """ Connect buttons to user actions"""
-        for window in self.windows:
-            window.connect()
-
-        """ Create Buttons"""
-        self.create_button_save_and_quit()
-        self.create_button_redo()
-        self.create_button_help()
-
         """ Compute slices to display """
         self.calculate_list_slices()
 
@@ -567,7 +557,6 @@ class Window(WindowCore):
         self.setup_intensity()
 
         """ Manage closure of viewer"""
-
         self.input_type = input_type
         self.set_layout_and_launch_viewer()
 
