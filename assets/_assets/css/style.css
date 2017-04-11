@@ -1,0 +1,47 @@
+.header{
+	background: linear-gradient(to bottom, #606060, #D0D0D0);
+	color: white;
+}
+
+.footer{
+	background: linear-gradient(to top, #606060, #D0D0D0);
+	color: white;
+}
+
+.result-body{
+	background: #EAEAEA;
+	position: relative;
+	top: 0px;
+	left: 0px;
+	width: 80%;
+}
+
+.glyphicon-triangle-top{
+	font-size: 32px;
+}
+
+#mosaic-container {
+    width: 80%;
+}
+
+#sprite-img {
+    position: relative;
+    top: 0px;
+    left: 0px;
+    max-width: 100%;
+    height: auto;
+}
+
+@keyframes phase-in-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+#overlay-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: 100%;
+    height: auto;
+    animation: phase-in-out 2s infinite alternate ease-in-out;
+}
