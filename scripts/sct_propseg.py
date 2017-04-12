@@ -19,6 +19,7 @@ import shutil
 from scipy import ndimage as ndi
 import numpy as np
 from sct_image import orientation
+import nibabel as nib
 
 
 def check_and_correct_segmentation(fname_segmentation, fname_centerline, threshold_distance=5.0, remove_temp_files=1, verbose=0):
@@ -305,8 +306,11 @@ if __name__ == "__main__":
     fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
 
+    contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dmri': 't1'}
+    contrast_type_propseg = contrast_type_conversion[contrast_type]
+
     # Building the command
-    cmd = 'isct_propseg -i "%s" -t %s' % (fname_data, contrast_type)
+    cmd = 'isct_propseg -i "%s" -t %s' % (fname_data, contrast_type_propseg)
 
     if "-ofolder" in arguments:
         folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
@@ -354,9 +358,12 @@ if __name__ == "__main__":
 
     # Helping options
     use_viewer = None
+    use_optic = False
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
             use_viewer = "centerline"
+        elif str(arguments["-init-centerline"]) == "optic":
+            use_optic = True
         else:
             cmd += " -init-centerline " + str(arguments["-init-centerline"])
     if "-init" in arguments:
@@ -456,6 +463,61 @@ if __name__ == "__main__":
                 cmd += " -init-mask " + folder_output + mask_reoriented_filename
         else:
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
+
+    elif use_optic:
+        image_input_orientation = orientation(image_input, get=True, verbose=False)
+        path_tmp_optic = sct.tmp_create(verbose=verbose)
+
+        shutil.copy(fname_data, path_tmp_optic)
+        os.chdir(path_tmp_optic)
+
+        # reorient the input image to RPI
+        reoriented_image_filename = sct.add_suffix(file_data + ext_data, "_RPI")
+        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
+                    (file_data + ext_data, reoriented_image_filename)
+        sct.run(cmd_reorient, verbose=False)
+
+        # convert image data type to int16, as required by opencv (backend in OptiC)
+        reoriented_image_int_filename = sct.add_suffix(reoriented_image_filename, "_int16")
+        cmd_type = 'sct_image -i "%s" -o "%s" -type int16 -v 0' % \
+                    (reoriented_image_filename, reoriented_image_int_filename)
+        sct.run(cmd_type, verbose=False)
+
+        # convert .nii.gz to .img and .hdr files
+        path_data, file_data, ext_data = sct.extract_fname(reoriented_image_int_filename)
+        img_filename = file_data + '_imghdr'
+        img_hdr_filename = file_data + '_imghdr.img'
+        img = nib.load(reoriented_image_int_filename)
+        nib.save(img, img_hdr_filename)
+
+        # call the OptiC method to generate the spinal cord centerline
+        optic_filename = img_filename + '_optic'
+        optic_hdr_filename = img_filename + '_optic.hdr'
+        # get path of the toolbox
+        path_script = os.path.dirname(__file__)
+        path_sct = os.path.dirname(path_script)
+        path_classifier = path_sct + '/data/models/' + contrast_type + '_model.yml'
+        cmd_optic = 'spine_detect -ctype=dpdt -lambda=1.0 "%s" "%s" "%s"' % \
+                    (path_classifier, img_hdr_filename, optic_filename)
+        sct.run(cmd_optic, verbose=False)
+
+        # convert .img and .hdr files to .nii.gz
+        centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
+        img = nib.load(optic_hdr_filename)
+        nib.save(img, centerline_optic_filename)
+
+        # copy centerline to parent folder
+        shutil.copy(centerline_optic_filename, '..')
+
+        # update to PropSeg command line with the new centerline created by OptiC
+        cmd += " -init-centerline " + folder_output + centerline_optic_filename
+
+        # return to initial folder
+        os.chdir('..')
+
+        # delete temporary folder
+        if remove_temp_files:
+            shutil.rmtree(path_tmp_optic, ignore_errors=True)
 
     cmd += ' -centerline-binary'
     status, output = sct.run(cmd, verbose, error_exit='verbose')
