@@ -502,9 +502,15 @@ if __name__ == "__main__":
         sct.run(cmd_optic, verbose=False)
 
         # convert .img and .hdr files to .nii.gz
-        centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
+        centerline_optic_RPI_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic_RPI")
         img = nib.load(optic_hdr_filename)
-        nib.save(img, centerline_optic_filename)
+        nib.save(img, centerline_optic_RPI_filename)
+
+        # reorient the output image to initial orientation
+        centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
+        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
+                       (file_data + ext_data, centerline_optic_RPI_filename, centerline_optic_filename)
+        sct.run(cmd_reorient, verbose=False)
 
         # copy centerline to parent folder
         shutil.copy(centerline_optic_filename, '..')
