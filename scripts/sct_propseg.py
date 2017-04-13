@@ -10,14 +10,16 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-
-from msct_parser import Parser
-import sys
-import sct_utils as sct
+import datetime
+import json
 import os
 import shutil
-from scipy import ndimage as ndi
+import sys
+
 import numpy as np
+import sct_utils as sct
+from msct_parser import Parser
+from scipy import ndimage as ndi
 from sct_image import orientation
 import nibabel as nib
 
@@ -300,11 +302,16 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value='~/qc_data')
     return parser
 
 if __name__ == "__main__":
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    args = sys.argv[1:]
+    arguments = parser.parse(args)
 
     fname_input_data = arguments["-i"]
     fname_data = os.path.abspath(fname_input_data)
@@ -564,3 +571,21 @@ if __name__ == "__main__":
 
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+
+    if '-qc' in arguments:
+        qc_path = arguments['-qc']
+
+        import spinalcordtoolbox.reports.qc as qc
+        import spinalcordtoolbox.reports.slice as qcslice
+
+        param = qc.Params(fname_input_data, 'sct_propseg', args, 'Axial', qc_path)
+        report = qc.QcReport(param, '')
+
+
+        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
+        def test(qslice):
+            return qslice.mosaic()
+
+        test(qcslice.Axial(fname_input_data, fname_seg))
+        sct.printv('Sucessfully generate the QC results in %s' % param.qc_results)
+        sct.printv('Use "sct_qc -folder %s" to see the results on a browser' % qc_path)
