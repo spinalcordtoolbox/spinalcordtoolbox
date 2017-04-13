@@ -128,7 +128,10 @@ def get_parser():
                       mandatory=False,
                       default_value=param.verbose,
                       example=['0', '1', '2'])
-
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value='~/qc_data')
     return parser
 
 
@@ -138,7 +141,9 @@ def main():
     parser = get_parser()
     param = Param()
 
-    arguments = parser.parse(sys.argv[1:])
+    args = sys.argv[1:]
+
+    arguments = parser.parse(args)
 
     # get arguments
     fname_data = arguments['-i']
@@ -531,6 +536,23 @@ def main():
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
+
+
+    if '-qc' in arguments:
+        qc_path = arguments['-qc']
+
+        import spinalcordtoolbox.reports.qc as qc
+        import spinalcordtoolbox.reports.slice as qcslice
+
+        qc_param = qc.Params(fname_in, 'sct_register_to_template', args, 'Sagittal', qc_path)
+        report = qc.QcReport(qc_param, '')
+
+        @qc.QcImage(report, 'bicubic', [qc.QcImage.no_seg_seg])
+        def test(qslice):
+            return qslice.single()
+
+        fname_template2anat = path_output + 'template2anat' + ext_data
+        test(qcslice.SagittalTemplate2Anat(fname_data, fname_template2anat, fname_seg))
 
     # to view results
     sct.printv('\nTo view results, type:', verbose)
