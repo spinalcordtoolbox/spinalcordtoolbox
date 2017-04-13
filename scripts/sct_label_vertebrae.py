@@ -352,7 +352,7 @@ def main(args=None):
             return qslice.single()
 
         test(qcslice.Sagittal(fname_in, fname_seg))
-        sct.printv('Sucessfully generate the QC results in %s' % param.qc_results)
+        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
         sct.printv('Use "sct_qc -folder %s" to see the results on a browser' % qc_path)
 
     # to view results
