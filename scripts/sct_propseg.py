@@ -472,23 +472,23 @@ if __name__ == "__main__":
         shutil.copy(fname_data, path_tmp_optic)
         os.chdir(path_tmp_optic)
 
-        # reorient the input image to RPI
-        reoriented_image_filename = sct.add_suffix(file_data + ext_data, "_RPI")
-        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
-                    (file_data + ext_data, reoriented_image_filename)
-        sct.run(cmd_reorient, verbose=1)
-
         # convert image data type to int16, as required by opencv (backend in OptiC)
-        reoriented_image_int_filename = sct.add_suffix(reoriented_image_filename, "_int16")
+        image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
         cmd_type = 'sct_image -i "%s" -o "%s" -type int16 -v 0' % \
-                    (reoriented_image_filename, reoriented_image_int_filename)
+                   (file_data + ext_data, image_int_filename)
         sct.run(cmd_type, verbose=1)
 
+        # reorient the input image to RPI
+        reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
+        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
+                    (image_int_filename, reoriented_image_filename)
+        sct.run(cmd_reorient, verbose=1)
+
         # convert .nii.gz to .img and .hdr files
-        path_data, file_data, ext_data = sct.extract_fname(reoriented_image_int_filename)
+        path_data, file_data, ext_data = sct.extract_fname(reoriented_image_filename)
         img_filename = file_data + '_imghdr'
         img_hdr_filename = file_data + '_imghdr.img'
-        img = nib.load(reoriented_image_int_filename)
+        img = nib.load(reoriented_image_filename)
         nib.save(img, img_hdr_filename)
 
         # call the OptiC method to generate the spinal cord centerline
@@ -499,7 +499,7 @@ if __name__ == "__main__":
         path_sct = os.path.dirname(path_script)
         path_classifier = path_sct + '/data/models/' + contrast_type + '_model.yml'
         cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1.0 "%s" "%s" "%s"' % \
-                    (path_classifier, img_hdr_filename, optic_filename)
+                    (path_classifier, img_filename, optic_filename)
         sct.run(cmd_optic, verbose=1)
 
         # convert .img and .hdr files to .nii.gz
