@@ -36,7 +36,7 @@ def get_parser():
         mandatory=True,
         example=[
             'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
-            'gm_model', 'binaries_debian', 'binaries_centos', 'binaries_osx'
+            'gm_model', 'optic_models', 'binaries_debian', 'binaries_centos', 'binaries_osx'
         ])
     parser.add_option(
         name="-v",
