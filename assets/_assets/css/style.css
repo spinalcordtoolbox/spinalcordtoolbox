@@ -25,7 +25,7 @@
 }
 
 #sprite-img {
-    position: relative;
+    position: absolute;
     top: 0px;
     left: 0px;
     max-width: 100%;
@@ -43,5 +43,5 @@
     left: 0;
     max-width: 100%;
     height: auto;
-    animation: phase-in-out 2s infinite alternate ease-in-out;
+    animation: phase-in-out 1s infinite alternate ease-in-out;
 }
