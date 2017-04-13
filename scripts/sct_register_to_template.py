@@ -544,7 +544,7 @@ def main():
         import spinalcordtoolbox.reports.qc as qc
         import spinalcordtoolbox.reports.slice as qcslice
 
-        qc_param = qc.Params(fname_in, 'sct_register_to_template', args, 'Sagittal', qc_path)
+        qc_param = qc.Params(fname_data, 'sct_register_to_template', args, 'Sagittal', qc_path)
         report = qc.QcReport(qc_param, '')
 
         @qc.QcImage(report, 'bicubic', [qc.QcImage.no_seg_seg])
@@ -553,6 +553,8 @@ def main():
 
         fname_template2anat = path_output + 'template2anat' + ext_data
         test(qcslice.SagittalTemplate2Anat(fname_data, fname_template2anat, fname_seg))
+        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
+        sct.printv('Use "sct_qc -folder %s" to see the results on a browser' % qc_path)
 
     # to view results
     sct.printv('\nTo view results, type:', verbose)
