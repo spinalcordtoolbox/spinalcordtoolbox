@@ -239,7 +239,8 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name="-init-centerline",
                       type_value="image_nifti",
                       description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation.\nReplace filename by 'viewer' to use interactive viewer for providing centerline. Ex: -init-centerline viewer",
-                      mandatory=False)
+                      mandatory=False,
+                      list_no_image=['viewer', 'optic'])
     parser.add_option(name="-init",
                       type_value="float",
                       description="axial slice where the propagation starts, default is middle axial slice",
@@ -475,13 +476,13 @@ if __name__ == "__main__":
         reoriented_image_filename = sct.add_suffix(file_data + ext_data, "_RPI")
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
                     (file_data + ext_data, reoriented_image_filename)
-        sct.run(cmd_reorient, verbose=False)
+        sct.run(cmd_reorient, verbose=1)
 
         # convert image data type to int16, as required by opencv (backend in OptiC)
         reoriented_image_int_filename = sct.add_suffix(reoriented_image_filename, "_int16")
         cmd_type = 'sct_image -i "%s" -o "%s" -type int16 -v 0' % \
                     (reoriented_image_filename, reoriented_image_int_filename)
-        sct.run(cmd_type, verbose=False)
+        sct.run(cmd_type, verbose=1)
 
         # convert .nii.gz to .img and .hdr files
         path_data, file_data, ext_data = sct.extract_fname(reoriented_image_int_filename)
@@ -497,9 +498,9 @@ if __name__ == "__main__":
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
         path_classifier = path_sct + '/data/models/' + contrast_type + '_model.yml'
-        cmd_optic = 'spine_detect -ctype=dpdt -lambda=1.0 "%s" "%s" "%s"' % \
+        cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1.0 "%s" "%s" "%s"' % \
                     (path_classifier, img_hdr_filename, optic_filename)
-        sct.run(cmd_optic, verbose=False)
+        sct.run(cmd_optic, verbose=1)
 
         # convert .img and .hdr files to .nii.gz
         centerline_optic_RPI_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic_RPI")
@@ -510,7 +511,7 @@ if __name__ == "__main__":
         centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
                        (file_data + ext_data, centerline_optic_RPI_filename, centerline_optic_filename)
-        sct.run(cmd_reorient, verbose=False)
+        sct.run(cmd_reorient, verbose=1)
 
         # copy centerline to parent folder
         shutil.copy(centerline_optic_filename, '..')
