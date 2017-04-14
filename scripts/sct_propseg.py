@@ -164,7 +164,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
-                      example=['t1', 't2'])
+                      example=['t1', 't2', 't2s', 'dmri'])
     parser.usage.addSection("General options")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
