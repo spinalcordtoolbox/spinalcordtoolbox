@@ -478,31 +478,29 @@ if __name__ == "__main__":
                    (file_data + ext_data, image_int_filename)
         sct.run(cmd_type, verbose=1)
 
-        # reorient the input image to RPI
+        # reorient the input image to RPI + convert to .nii
         reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
+        img_filename = ''.join(sct.extract_fname(reoriented_image_filename)[:2])
+        reoriented_image_filename_nii = img_filename + '.nii'
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
-                    (image_int_filename, reoriented_image_filename)
+                    (image_int_filename, reoriented_image_filename_nii)
         sct.run(cmd_reorient, verbose=1)
 
-        # convert .nii.gz to .img and .hdr files
-        path_data, file_data, ext_data = sct.extract_fname(reoriented_image_filename)
-        img_filename = file_data + '_imghdr'
-        img_hdr_filename = file_data + '_imghdr.img'
-        img = nib.load(reoriented_image_filename)
-        nib.save(img, img_hdr_filename)
-
         # call the OptiC method to generate the spinal cord centerline
-        optic_filename = img_filename + '_optic'
-        optic_hdr_filename = img_filename + '_optic.hdr'
+        optic_input = os.getcwd() + '/' + img_filename
+        optic_filename = os.getcwd() + '/' + img_filename + '_optic'
         # get path of the toolbox
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
-        path_classifier = path_sct + '/data/models/' + contrast_type + '_model.yml'
-        cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1.0 "%s" "%s" "%s"' % \
-                    (path_classifier, img_filename, optic_filename)
+        path_classifier = path_sct + '/data/optic_models/' + contrast_type + '_model'
+        # path_classifier = path_sct + '/bin/' + contrast_type + '_model'
+        # os.chdir(path_sct + '/data/models')
+        cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
+                    (path_classifier, optic_input, optic_filename)
         sct.run(cmd_optic, verbose=1)
 
         # convert .img and .hdr files to .nii.gz
+        optic_hdr_filename = img_filename + '_optic_ctr.hdr'
         centerline_optic_RPI_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic_RPI")
         img = nib.load(optic_hdr_filename)
         nib.save(img, centerline_optic_RPI_filename)
@@ -510,7 +508,7 @@ if __name__ == "__main__":
         # reorient the output image to initial orientation
         centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
-                       (file_data + ext_data, centerline_optic_RPI_filename, centerline_optic_filename)
+                       (centerline_optic_RPI_filename, centerline_optic_filename, image_input_orientation)
         sct.run(cmd_reorient, verbose=1)
 
         # copy centerline to parent folder
