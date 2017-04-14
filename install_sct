@@ -426,7 +426,7 @@ fi
 
 
 ## Install the spinalcordtoolbox into conda
-python ${SCT_DIR}/setup.py develop
+pip install -e ${SCT_DIR}
 
 
 ## Install binaries
