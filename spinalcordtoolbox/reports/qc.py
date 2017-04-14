@@ -7,6 +7,7 @@ import subprocess
 import webbrowser
 
 import datetime
+import matplotlib
 import matplotlib.colorbar as colorbar
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
@@ -120,6 +121,7 @@ class QcImage(object):
                     ax.text(y, x, label, color=color, clip_on=True)
 
     def colorbar(self):
+        matplotlib.use('Agg')
         fig = plt.figure(figsize=(9, 1.5))
         ax = fig.add_axes([0.05, 0.80, 0.9, 0.15])
         colorbar.ColorbarBase(ax, cmap=self._seg_colormap, orientation='horizontal')
@@ -174,14 +176,17 @@ class QcImage(object):
         return wrapped_f
 
     def _save(self, img_path, format='png', bbox_inches='tight', pad_inches=0.00):
-        """
-        Saves the image
-        :param dir_path:     path of the folder where the image is saved
-        :param name:        name of the image file
-        :param format:      file extension name of the image
-        :param bbox_inches:
-        :param pad_inches:
-        :return:
+        """ Save the current figure into an image.
+
+        Parameters
+        ----------
+        img_path : str
+            path of the folder where the image is saved
+        format : str
+            image format
+        bbox_inches : str
+        pad_inches : float
+
         """
         logger.debug('Save image %s', img_path)
         plt.savefig(img_path,
@@ -193,22 +198,30 @@ class QcImage(object):
 
 
 class Params(object):
-    """Parses and stores the variables that can be provides as arguments in the Terminal
+    """Parses and stores the variables that will included into the QC details
 
-    These variables are used as parameters to define how some images should be generated
-    and how the report should be generated.
+    We derive the value of the contrast and subject name from the `input_file` path, 
+    by splitting it into `[subject]/[contrast]/input_file`
     """
 
     def __init__(self, input_file, command, args, orientation, dest_folder):
         """
         Parameters
         ----------
-        params_qc : str
-            arguments provided to the -param-qc parameter in the Terminal
+        input_file : str
+            the input nifti file name 
+        command : str
+            the command name
+        args : str
+            the command's arguments
+        orientation : str
+            The anatomical orientation
+        dest_folder : str
+            The absolute path of the QC root
         """
         abs_input_path = os.path.dirname(os.path.abspath(input_file))
-        abs_input_path, subject = os.path.split(abs_input_path)
-        _, contrast = os.path.split(abs_input_path)
+        abs_input_path, contrast = os.path.split(abs_input_path)
+        _, subject = os.path.split(abs_input_path)
 
         self.subject = subject
         self.contrast = contrast
