@@ -487,8 +487,8 @@ if __name__ == "__main__":
         sct.run(cmd_reorient, verbose=1)
 
         # call the OptiC method to generate the spinal cord centerline
-        optic_input = os.getcwd() + '/' + img_filename
-        optic_filename = os.getcwd() + '/' + img_filename + '_optic'
+        optic_input = img_filename
+        optic_filename = img_filename + '_optic'
         # get path of the toolbox
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
