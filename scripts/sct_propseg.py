@@ -512,7 +512,11 @@ if __name__ == "__main__":
         sct.run(cmd_reorient, verbose=1)
 
         # copy centerline to parent folder
-        shutil.copy(centerline_optic_filename, '..')
+        sct.printv('Copy output to ' + folder_output)
+        if os.path.isabs(folder_output):
+            shutil.copy(centerline_optic_filename, folder_output)
+        else:
+            shutil.copy(centerline_optic_filename, '../' + folder_output)
 
         # update to PropSeg command line with the new centerline created by OptiC
         cmd += " -init-centerline " + folder_output + centerline_optic_filename
