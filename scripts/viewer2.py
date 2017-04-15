@@ -260,10 +260,20 @@ class Header(HeaderCore):
 
 class MainPannelCore(object):
 
-    def __init__(self):
+    def __init__(self,
+                 images,
+                 im_params):
         self.layout_global=QtGui.QVBoxLayout()
         self.layout_option_settings = QtGui.QHBoxLayout()
         self.layout_central = QtGui.QHBoxLayout()
+        self.images=images
+        self.im_params=im_params
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
+        nx, ny, nz, nt, px, py, pz, pt = self.images[0].dim
+        self.im_spacing = [px, py, pz]
+        self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
+                             float(self.im_spacing[0]) / float(self.im_spacing[2]),
+                             float(self.im_spacing[0]) / float(self.im_spacing[1])]
 
     def add_main_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -271,14 +281,15 @@ class MainPannelCore(object):
         layout_view.setAlignment(QtCore.Qt.AlignRight)
 
         fig = plt.figure()
-        self.canvas = FigureCanvas(self.fig)
+        self.canvas = FigureCanvas(fig)
         layout_view.addWidget(self.canvas)
         self.layout_central.addLayout(layout_view)
 
-
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 3)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot=SinglePlot(axis, self.images, self, view=1, display_cross=display_cross, im_params=visualization_parameters)
+        self.main_plot=SinglePlot(axis, self.images, self, view=1, display_cross='', im_params=self.im_params)
 
 
     def add_secondary_view(self):
@@ -344,8 +355,8 @@ class MainPannel(MainPannelCore):
 
         self.layout_central.addLayout(layout_title_and_controller)
 
-    def __init__(self):
-        super(MainPannel, self).__init__()
+    def __init__(self,images,im_params):
+        super(MainPannel, self).__init__(images,im_params)
 
         """ Left Pannel"""
         self.add_secondary_view()
@@ -379,8 +390,8 @@ class ControlButtonsCore(object):
 class WindowCore(object):
 
     def __init__(self,list_input, visualization_parameters=None):
-        #self.images = self.keep_only_images(list_input)
-        #self.im_params = visualization_parameters
+        self.images = self.keep_only_images(list_input)
+        self.im_params = visualization_parameters
 
         """ Initialisation of plot """
         #self.fig = plt.figure(figsize=(8, 8))
@@ -860,7 +871,7 @@ class Window(WindowCore):
             return (header)
 
         def add_main_pannel(layout_main):
-            main_pannel = MainPannel()
+            main_pannel = MainPannel(self.images,self.im_params)
             layout_main.addLayout(main_pannel.layout_global)
             return main_pannel
 
