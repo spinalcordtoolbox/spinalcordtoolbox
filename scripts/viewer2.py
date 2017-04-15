@@ -55,13 +55,17 @@ class SinglePlot:
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
 
-        self.axes.set_axis_bgcolor('black')
-        self.axes.set_xticks([])
-        self.axes.set_yticks([])
+        self.remove_axis_number()
         self.connect_mpl_events()
 
         self.setup_intensity()
         self.draw_line(display_cross)
+
+    def remove_axis_number(self):
+        self.axes.set_axis_bgcolor('black')
+        self.axes.set_xticks([])
+        self.axes.set_yticks([])
+
 
     def connect_mpl_events(self):
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
@@ -69,7 +73,6 @@ class SinglePlot:
         self.canvas.mpl_connect('button_release_event',self.on_event_release)
         self.canvas.mpl_connect('scroll_event',self.on_event_scroll)
         self.canvas.mpl_connect('motion_notify_event',self.on_event_motion)
-        
 
     def draw_line(self,display_cross):
         self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
@@ -101,16 +104,6 @@ class SinglePlot:
                                      [[-10000, 10000], [self.viewer.current_point.y, self.viewer.current_point.y]]]
             self.aspect_ratio = self.viewer.aspect_ratio[2]
             return (image.data[:, :, int(self.image_dim[2] / 2)])
-
-    def connect(self):
-        """
-        connect to all the events we need
-        :return:
-        """
-        self.cidpress_click = self.figs[0].figure.canvas.mpl_connect('button_press_event', self.on_press)
-        self.cidscroll = self.figs[0].figure.canvas.mpl_connect('scroll_event', self.on_scroll)
-        self.cidrelease = self.figs[0].figure.canvas.mpl_connect('button_release_event', self.on_release)
-        self.cidmotion = self.figs[0].figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
     def refresh(self):
         self.figs[0].figure.canvas.draw()
