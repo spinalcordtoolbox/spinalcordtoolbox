@@ -32,7 +32,7 @@ class SinglePlot:
     """
     def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
         self.axes = ax
-        self.images = images  # this is a list of images
+        self.images = images
         self.viewer = viewer
         self.view = view
         self.display_cross = display_cross
@@ -57,12 +57,12 @@ class SinglePlot:
 
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.canvas.setFocus()
-        self.canvas.mpl_connect('button_press_event',self.on_press_key)
-        self.canvas.mpl_connect('scroll_event',self.on_scroll)
+        self.canvas.mpl_connect('button_release_event',self.on_event_release)
+        self.canvas.mpl_connect('scroll_event',self.on_event_scroll)
 
         self.draw_line(display_cross)
 
-    def on_press_key(self,event):
+    def on_press_key2(self,event):
         print ('you have this')
 
     def draw_line(self,display_cross):
@@ -143,7 +143,7 @@ class SinglePlot:
         if 'h' in self.display_cross:
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
-    def on_press(self, event):
+    def on_press_key(self, event):
         """
         when pressing on the screen, add point into a list, then change current slice
         if finished, close the window and send the result
@@ -159,7 +159,7 @@ class SinglePlot:
         self.figs[id_image].set_clim(min_intensity, max_intensity)
         self.figs[id_image].figure.canvas.draw()
 
-    def on_motion(self, event):
+    def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes:
             return self.viewer.on_motion(event, self)
 
@@ -169,12 +169,12 @@ class SinglePlot:
         else:
             return
 
-    def on_release(self, event):
-        if event.button == 1:
-            return self.viewer.on_release(event, self)
+    def on_event_release(self, event):
+        if event.button == 1: # left click
+            return self.on_event_release(event)
 
-        elif event.button == 3:
-            return self.viewer.change_intensity(event, self)
+        elif event.button == 3: # right click
+            return self.change_intensity(event)
 
         else:
             return
@@ -208,7 +208,7 @@ class SinglePlot:
             self.axes.set_ylim([y_center - y_top * y_scale_factor, y_center + y_bottom * y_scale_factor])
             self.figs[0].figure.canvas.draw()
 
-    def on_scroll(self, event):
+    def on_event_scroll(self, event):
         """
         when scrooling with the wheel, image is zoomed toward position on the screen
         :param event:
