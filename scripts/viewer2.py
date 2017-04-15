@@ -63,13 +63,9 @@ class SinglePlot:
         self.canvas.setFocus()
         self.canvas.mpl_connect('button_release_event',self.on_event_release)
         self.canvas.mpl_connect('scroll_event',self.on_event_scroll)
+        self.canvas.mpl_connect('motion_notify_event',self.on_event_motion)
         self.setup_intensity()
-
-
         self.draw_line(display_cross)
-
-    def on_press_key2(self,event):
-        print ('you have this')
 
     def draw_line(self,display_cross):
         self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
@@ -181,14 +177,10 @@ class SinglePlot:
             self.refresh()
 
     def on_event_motion(self, event):
-        if event.button == 1 and event.inaxes == self.axes:
-            return self.viewer.on_motion(event, self)
-
-        elif event.button == 3 and event.inaxes == self.axes:
-            return self.viewer.change_intensity(event, self)
-
-        else:
-            return
+        if event.button == 1 and event.inaxes == self.axes: #left click
+            pass
+        elif event.button == 3 and event.inaxes == self.axes: #right click
+            self.change_intensity(event)
 
     def on_event_release(self, event):
         if event.button == 1: # left click
