@@ -162,7 +162,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       example=['t1', 't2'])
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
+                      description="type of image contrast, if your contrast is not in the available options (t1, t2, t2s, dmri), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
                       mandatory=True,
                       example=['t1', 't2', 't2s', 'dmri'])
     parser.usage.addSection("General options")
@@ -238,9 +238,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
                       type_value="image_nifti",
-                      description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation.\nReplace filename by 'viewer' to use interactive viewer for providing centerline. Ex: -init-centerline viewer",
+                      description="filename of centerline to use for the propagation, "
+                                  "format .txt or .nii, see file structure in documentation."
+                                  "\nReplace filename by 'viewer' to use interactive viewer for providing centerline. "
+                                  "Ex: -init-centerline viewer",
                       mandatory=False,
-                      list_no_image=['viewer', 'optic'])
+                      list_no_image=['viewer', 'hough', 'optic'])
     parser.add_option(name="-init",
                       type_value="float",
                       description="axial slice where the propagation starts, default is middle axial slice",
@@ -359,12 +362,12 @@ if __name__ == "__main__":
 
     # Helping options
     use_viewer = None
-    use_optic = False
+    use_optic = True  # enabled by default
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
             use_viewer = "centerline"
-        elif str(arguments["-init-centerline"]) == "optic":
-            use_optic = True
+        elif str(arguments["-init-centerline"]) == "hough":
+            use_optic = False
         else:
             cmd += " -init-centerline " + str(arguments["-init-centerline"])
     if "-init" in arguments:
@@ -466,8 +469,9 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
 
     elif use_optic:
+        sct.printv('Detecting the spinal cord using OptiC', verbose=verbose)
         image_input_orientation = orientation(image_input, get=True, verbose=False)
-        path_tmp_optic = sct.tmp_create(verbose=verbose)
+        path_tmp_optic = sct.tmp_create(verbose=0)
 
         shutil.copy(fname_data, path_tmp_optic)
         os.chdir(path_tmp_optic)
@@ -476,7 +480,7 @@ if __name__ == "__main__":
         image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
         cmd_type = 'sct_image -i "%s" -o "%s" -type int16 -v 0' % \
                    (file_data + ext_data, image_int_filename)
-        sct.run(cmd_type, verbose=1)
+        sct.run(cmd_type, verbose=0)
 
         # reorient the input image to RPI + convert to .nii
         reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
@@ -484,7 +488,7 @@ if __name__ == "__main__":
         reoriented_image_filename_nii = img_filename + '.nii'
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
                     (image_int_filename, reoriented_image_filename_nii)
-        sct.run(cmd_reorient, verbose=1)
+        sct.run(cmd_reorient, verbose=0)
 
         # call the OptiC method to generate the spinal cord centerline
         optic_input = img_filename
@@ -497,7 +501,7 @@ if __name__ == "__main__":
         # os.chdir(path_sct + '/data/models')
         cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
                     (path_classifier, optic_input, optic_filename)
-        sct.run(cmd_optic, verbose=1)
+        sct.run(cmd_optic, verbose=0)
 
         # convert .img and .hdr files to .nii.gz
         optic_hdr_filename = img_filename + '_optic_ctr.hdr'
@@ -509,10 +513,10 @@ if __name__ == "__main__":
         centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
                        (centerline_optic_RPI_filename, centerline_optic_filename, image_input_orientation)
-        sct.run(cmd_reorient, verbose=1)
+        sct.run(cmd_reorient, verbose=0)
 
         # copy centerline to parent folder
-        sct.printv('Copy output to ' + folder_output)
+        sct.printv('Copy output to ' + folder_output, verbose=0)
         if os.path.isabs(folder_output):
             shutil.copy(centerline_optic_filename, folder_output)
         else:
@@ -528,6 +532,7 @@ if __name__ == "__main__":
         if remove_temp_files:
             shutil.rmtree(path_tmp_optic, ignore_errors=True)
 
+    # enabling centerline extraction by default
     cmd += ' -centerline-binary'
     status, output = sct.run(cmd, verbose, error_exit='verbose')
 
