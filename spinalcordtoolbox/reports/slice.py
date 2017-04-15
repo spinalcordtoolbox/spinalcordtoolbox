@@ -256,13 +256,13 @@ image_seg : msct_image.Image
         centers_x, centers_y = self.get_center()
 
         for i in range(dim):
-            x = int(round(centers_x[i]))
-            y = int(round(centers_y[i]))
+            x = int(centers_x[i])
+            y = int(centers_y[i])
 
             matrix0 = self.add_slice(matrix0, i, nb_column, dim,
-                                     self.get_slice(self.image.data, i))
+                                     self.crop(self.get_slice(self.image.data, i), x, y, size))
             matrix1 = self.add_slice(matrix1, i, nb_column, dim,
-                                     self.get_slice(self.image_seg.data, i))
+                                     self.crop(self.get_slice(self.image_seg.data, i), x, y, size))
 
         return matrix0, matrix1
 
