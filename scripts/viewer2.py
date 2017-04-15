@@ -58,14 +58,18 @@ class SinglePlot:
         self.axes.set_axis_bgcolor('black')
         self.axes.set_xticks([])
         self.axes.set_yticks([])
+        self.connect_mpl_events()
 
+        self.setup_intensity()
+        self.draw_line(display_cross)
+
+    def connect_mpl_events(self):
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.canvas.setFocus()
         self.canvas.mpl_connect('button_release_event',self.on_event_release)
         self.canvas.mpl_connect('scroll_event',self.on_event_scroll)
         self.canvas.mpl_connect('motion_notify_event',self.on_event_motion)
-        self.setup_intensity()
-        self.draw_line(display_cross)
+        
 
     def draw_line(self,display_cross):
         self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
@@ -185,12 +189,8 @@ class SinglePlot:
     def on_event_release(self, event):
         if event.button == 1: # left click
             pass
-
         elif event.button == 3: # right click
             self.change_intensity(event)
-
-        else:
-            pass
 
     def setup_intensity(self):
         for i, image in enumerate(self.images):
@@ -202,7 +202,6 @@ class SinglePlot:
 
             self.mean_intensity.append(mean_intensity)
             self.std_intensity.append(std_intensity)
-
 
     def update_xy_lim(self, x_center=None, y_center=None, x_scale_factor=1.0, y_scale_factor=1.0, zoom=True):
         # get the current x and y limits
