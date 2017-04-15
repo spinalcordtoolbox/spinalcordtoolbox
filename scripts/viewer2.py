@@ -297,10 +297,9 @@ class MainPannelCore(object):
 
         if not self.im_params:
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
-        gs = mpl.gridspec.GridSpec(1, 3)
+        gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
         self.main_plot=SinglePlot(axis, self.images, self, view=1, display_cross='', im_params=self.im_params,canvas=self.canvas)
-
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
