@@ -2,9 +2,7 @@
 import json
 import logging
 import os
-import shutil
 import subprocess
-import webbrowser
 
 import datetime
 import matplotlib
@@ -15,7 +13,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
 
-from spinalcordtoolbox.reports import report
 
 logging.basicConfig()
 logger = logging.getLogger(__file__)
@@ -333,36 +330,3 @@ class QcReport(object):
             results = json.load(open(self.qc_params.qc_results, 'r'))
         results.append(output)
         json.dump(results, open(self.qc_params.qc_results, "w"), indent=2)
-
-    def generate_html(self, report_dir, leaf_node_full_path):
-        """ Generate HTML report.
-
-        Parameters
-        ----------
-        report_dir : str
-            The path of the report
-        leaf_node_full_path :
-            ???
-        """
-        logger.debug('Generate QC HTML %s, %s', os.path.realpath(report_dir), os.path.realpath(leaf_node_full_path))
-
-        description = "{}.txt".format(self.description_base_name)
-        syntax = '{} {}'.format(self.contrast_type, os.path.basename(leaf_node_full_path))
-
-        logger.debug('Build report %s - %s', report_dir, self.tool_name)
-        sct_report = report.ReportGenerator(report_dir, self.tool_name)
-        logger.debug('Build report item %s - %s - %s - %s', report_dir, syntax, description, self.slice_name)
-        sct_report_item = report.ReportItem(report_dir, syntax, description, self.slice_name)
-        sct_report.append_item(sct_report_item)
-        self.copy_assets()
-        sct_report.refresh_index_file()
-
-        if self.qc_params.show_report:
-            url = 'file://{}'.format(os.path.realpath(os.path.join(report_dir, "index.html")))
-            webbrowser.open(url)
-
-    def copy_assets(self):
-        assets_dest = os.path.join(self.qc_params.destination_folder, 'assets')
-        if not os.path.exists(assets_dest):
-            logger.debug('Copy Assets from %s to %s', self.assets_folder, self.qc_params.destination_folder)
-            shutil.copytree(self.assets_folder, assets_dest)
