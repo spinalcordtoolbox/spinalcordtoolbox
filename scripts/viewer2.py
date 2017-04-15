@@ -42,6 +42,7 @@ class SinglePlot:
         self.aspect_ratio = None
         self.zoom_factor = 1.0
         self.canvas=canvas
+        self.last_update=time()
 
         self.mean_intensity = []
         self.std_intensity = []
@@ -160,8 +161,7 @@ class SinglePlot:
 
         return
 
-
-    def change_intensity(self, event, plot=None):
+    def change_intensity(self, event):
         def calc_min_max_intensities(x, y):
             xlim, ylim = self.axes.get_xlim(), self.axes.get_ylim()
             mean_intensity_factor = (x - xlim[0]) / float(xlim[1] - xlim[0])
@@ -169,10 +169,16 @@ class SinglePlot:
             mean_factor = self.mean_intensity[0] - (mean_intensity_factor - 0.5) * self.mean_intensity[0] * 3.0
             std_factor = self.std_intensity[0] + (std_intensity_factor - 0.5) * self.std_intensity[0] * 2.0
             return (mean_factor - std_factor, mean_factor + std_factor)
+        def check_time_last_update(last_update):
+            if time() - last_update < 1.0/15.0: # 10 Hz:
+                return False
+            else:
+                return True
 
-        self.last_update = time()
-        self.figs[0].set_clim(calc_min_max_intensities(event.xdata,event.ydata))
-        self.refresh()
+        if(check_time_last_update(self.last_update)):
+            self.last_update = time()
+            self.figs[0].set_clim(calc_min_max_intensities(event.xdata,event.ydata))
+            self.refresh()
 
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes:
@@ -186,10 +192,10 @@ class SinglePlot:
 
     def on_event_release(self, event):
         if event.button == 1: # left click
-            return self.on_event_release(event)
+            pass
 
         elif event.button == 3: # right click
-            return self.change_intensity(event)
+            self.change_intensity(event)
 
         else:
             pass
@@ -732,7 +738,8 @@ class Window(WindowCore):
                     window.update_slice(point, data_update=True)
                     self.draw_points(window, self.current_point.x)
         return
-
+        pass
+    '''
     def on_motion(self, event, plot=None):
         """
         This subplot refers to the secondary window. It captures event "motion"
@@ -759,6 +766,7 @@ class Window(WindowCore):
                     self.draw_points(window, self.current_point.x)
                     window.update_slice(point, data_update=True)
         return
+    '''
 
     def get_results(self):
         if self.list_points:
