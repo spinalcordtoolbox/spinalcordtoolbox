@@ -8,6 +8,7 @@ import webbrowser
 
 import datetime
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.colorbar as colorbar
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
@@ -121,7 +122,6 @@ class QcImage(object):
                     ax.text(y, x, label, color=color, clip_on=True)
 
     def colorbar(self):
-        matplotlib.use('Agg')
         fig = plt.figure(figsize=(9, 1.5))
         ax = fig.add_axes([0.05, 0.80, 0.9, 0.15])
         colorbar.ColorbarBase(ax, cmap=self._seg_colormap, orientation='horizontal')
