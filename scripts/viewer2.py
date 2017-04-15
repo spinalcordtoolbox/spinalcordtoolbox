@@ -226,31 +226,20 @@ class SinglePlot:
             self.figs[0].figure.canvas.draw()
 
     def on_event_scroll(self, event):
-        """
-        when scrooling with the wheel, image is zoomed toward position on the screen
-        :param event:
-        :return:
-        """
-        if event.inaxes == self.axes:
+        def calc_scale_factor(direction):
             base_scale = 0.5
-            xdata, ydata = event.xdata, event.ydata
+            if direction == 'up':  # deal with zoom in
+                return 1 / base_scale
+            elif direction == 'down':  # deal with zoom out
+                return base_scale
+            else:  # deal with something that should never happen
+                return 1
 
-            if event.button == 'up':
-                # deal with zoom in
-                scale_factor = 1 / base_scale
-            elif event.button == 'down':
-                # deal with zoom out
-                scale_factor = base_scale
-            else:
-                # deal with something that should never happen
-                scale_factor = 1.0
-                print event.button
-
-            self.update_xy_lim(x_center=xdata, y_center=ydata,
+        if event.inaxes == self.axes:
+            scale_factor=calc_scale_factor(event.button)
+            self.update_xy_lim(x_center=event.xdata, y_center=event.ydata,
                                x_scale_factor=scale_factor, y_scale_factor=scale_factor,
                                zoom=True)
-
-        return
 
 class HeaderCore(object):
 
