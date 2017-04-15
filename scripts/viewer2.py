@@ -30,7 +30,7 @@ class SinglePlot:
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, images, viewer, view=2, display_cross='hv', im_params=None):
+    def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
         self.axes = ax
         self.images = images  # this is a list of images
         self.viewer = viewer
@@ -40,7 +40,8 @@ class SinglePlot:
         self.figs = []
         self.cross_to_display = None
         self.aspect_ratio = None
-        self.zoom_factor = 25.0
+        self.zoom_factor = 1.0
+        self.canvas=canvas
 
         for i, image in enumerate(images):
             data_to_display = self.set_data_to_display(image)
@@ -54,7 +55,14 @@ class SinglePlot:
         self.axes.set_xticks([])
         self.axes.set_yticks([])
 
+        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.canvas.setFocus()
+        self.canvas.mpl_connect('button_press_event',self.on_press_key)
+
         self.draw_line(display_cross)
+
+    def on_press_key(self,event):
+        print ('you have this')
 
     def draw_line(self,display_cross):
         self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
@@ -282,9 +290,6 @@ class MainPannelCore(object):
 
         fig = plt.figure()
         self.canvas = FigureCanvas(fig)
-        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.canvas.setFocus()
-        self.canvas.mpl_connect('button_press_event',self.on_press_key)
 
         layout_view.addWidget(self.canvas)
         self.layout_central.addLayout(layout_view)
@@ -293,10 +298,8 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 3)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot=SinglePlot(axis, self.images, self, view=1, display_cross='', im_params=self.im_params)
+        self.main_plot=SinglePlot(axis, self.images, self, view=1, display_cross='', im_params=self.im_params,canvas=self.canvas)
 
-    def on_press_key(self,event):
-        print ('you pressed', event.key)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
