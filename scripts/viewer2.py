@@ -20,6 +20,9 @@ from copy import copy
 from msct_image import Image
 
 from matplotlib.widgets import Slider, Button, RadioButtons
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+
+
 
 import webbrowser
 
@@ -267,10 +270,9 @@ class MainPannelCore(object):
         layout_view.setAlignment(QtCore.Qt.AlignTop)
         layout_view.setAlignment(QtCore.Qt.AlignRight)
 
-        self.lb_title_main_view = QtGui.QLabel('Main View')
-        self.lb_title_main_view.setAlignment(QtCore.Qt.AlignCenter)
-        layout_view.addWidget(self.lb_title_main_view)
-        layout_view.addWidget(self.create_image())
+        self.figure = plt.figure()
+        self.canvas = FigureCanvas(self.figure)
+        layout_view.addWidget(self.canvas)
         self.layout_central.addLayout(layout_view)
 
     def add_secondary_view(self):
@@ -284,6 +286,7 @@ class MainPannelCore(object):
         layout_view.addWidget(self.lb_title_secondary_view)
         layout_view.addWidget(self.create_image())
         self.layout_central.addLayout(layout_view)
+
 
     def add_controller_pannel(self):
         pass
