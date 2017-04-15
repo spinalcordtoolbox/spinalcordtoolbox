@@ -42,6 +42,10 @@ class SinglePlot:
         self.aspect_ratio = None
         self.zoom_factor = 1.0
         self.canvas=canvas
+        self.press=[0,0]
+
+        self.mean_intensity = []
+        self.std_intensity = []
 
         for i, image in enumerate(images):
             data_to_display = self.set_data_to_display(image)
@@ -59,6 +63,8 @@ class SinglePlot:
         self.canvas.setFocus()
         self.canvas.mpl_connect('button_release_event',self.on_event_release)
         self.canvas.mpl_connect('scroll_event',self.on_event_scroll)
+        self.setup_intensity()
+
 
         self.draw_line(display_cross)
 
@@ -155,7 +161,21 @@ class SinglePlot:
 
         return
 
-    def change_intensity(self, min_intensity, max_intensity, id_image=0):
+    def change_intensity(self, event, plot=None):
+
+        self.press = event.xdata, event.ydata
+        self.last_update = time()
+
+        xlim, ylim = self.axes.get_xlim(), self.axes.get_ylim()
+        mean_intensity_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
+        std_intensity_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
+        mean_factor = self.mean_intensity[0] - (mean_intensity_factor - 0.5) * self.mean_intensity[0] * 3.0
+        std_factor = self.std_intensity[0] + (std_intensity_factor - 0.5) * self.std_intensity[0] * 2.0
+        min_intensity = mean_factor - std_factor
+        max_intensity = mean_factor + std_factor
+        self.change_intensity2(min_intensity, max_intensity)
+
+    def change_intensity2(self, min_intensity, max_intensity, id_image=0):
         self.figs[id_image].set_clim(min_intensity, max_intensity)
         self.figs[id_image].figure.canvas.draw()
 
@@ -178,6 +198,24 @@ class SinglePlot:
 
         else:
             return
+
+    def setup_intensity(self):
+        # TODO: change for segmentation images
+        for i, image in enumerate(self.images):
+            flattened_volume = image.flatten()
+            first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
+            last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
+            mean_intensity = percentile(flattened_volume[flattened_volume > 0], 98)
+            std_intensity = last_percentile - first_percentile
+
+            self.mean_intensity.append(mean_intensity)
+            self.std_intensity.append(std_intensity)
+
+            #min_intensity = mean_intensity - std_intensity
+            #max_intensity = mean_intensity + std_intensity
+
+            #for window in self.windows:
+                #window.figs[i].set_clim(min_intensity, max_intensity)
 
     def update_xy_lim(self, x_center=None, y_center=None, x_scale_factor=1.0, y_scale_factor=1.0, zoom=True):
         # get the current x and y limits
@@ -420,8 +458,8 @@ class WindowCore(object):
         #self.windows = []
         #self.press = [0, 0]
 
-        #self.mean_intensity = []
-        #self.std_intensity = []
+        self.mean_intensity = []
+        self.std_intensity = []
 
         #self.last_update = time()
         #self.update_freq = 1.0 / 15.0  # 10 Hz
@@ -455,62 +493,10 @@ class WindowCore(object):
                              'constant',
                              constant_values=(0, 0))
 
-    def setup_intensity(self):
-        # TODO: change for segmentation images
-        for i, image in enumerate(self.images):
-            if str(i) in self.im_params.images_parameters:
-                vmin = self.im_params.images_parameters[str(i)].vmin
-                vmax = self.im_params.images_parameters[str(i)].vmax
-                vmean = self.im_params.images_parameters[str(i)].vmean
-                if self.im_params.images_parameters[str(i)].vmode == 'percentile':
-                    flattened_volume = image.flatten()
-                    first_percentile = percentile(flattened_volume[flattened_volume > 0], int(vmin))
-                    last_percentile = percentile(flattened_volume[flattened_volume > 0], int(vmax))
-                    mean_intensity = percentile(flattened_volume[flattened_volume > 0], int(vmean))
-                    std_intensity = last_percentile - first_percentile
-                elif self.im_params.images_parameters[str(i)].vmode == 'mean-std':
-                    mean_intensity = (float(vmax) + float(vmin)) / 2.0
-                    std_intensity = (float(vmax) - float(vmin)) / 2.0
 
-            else:
-                flattened_volume = image.flatten()
-                first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
-                last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
-                mean_intensity = percentile(flattened_volume[flattened_volume > 0], 98)
-                std_intensity = last_percentile - first_percentile
-
-            self.mean_intensity.append(mean_intensity)
-            self.std_intensity.append(std_intensity)
-
-            min_intensity = mean_intensity - std_intensity
-            max_intensity = mean_intensity + std_intensity
-
-            for window in self.windows:
-                window.figs[i].set_clim(min_intensity, max_intensity)
 
     def is_point_in_image(self, target_point):
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
-
-    def change_intensity(self, event, plot=None):
-        if abs(event.xdata - self.press[0]) < 1 and abs(event.ydata - self.press[1]) < 1:
-            self.press = event.xdata, event.ydata
-            return
-
-        if time() - self.last_update <= self.update_freq:
-            return
-
-        self.last_update = time()
-
-        xlim, ylim = self.windows[0].axes.get_xlim(), self.windows[0].axes.get_ylim()
-        mean_intensity_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
-        std_intensity_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
-        mean_factor = self.mean_intensity[0] - (mean_intensity_factor - 0.5) * self.mean_intensity[0] * 3.0
-        std_factor = self.std_intensity[0] + (std_intensity_factor - 0.5) * self.std_intensity[0] * 2.0
-        min_intensity = mean_factor - std_factor
-        max_intensity = mean_factor + std_factor
-
-        for window in self.windows:
-            window.change_intensity(min_intensity, max_intensity)
 
     def get_event_coordinates(self, event, plot=None):
         point = None
@@ -575,7 +561,7 @@ class Window(WindowCore):
                                        #'to inspect. \n')
 
         #self.calculate_list_slices()
-        #self.setup_intensity()
+
 
         #self.input_type = input_type
 
