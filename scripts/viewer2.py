@@ -112,7 +112,7 @@ class SinglePlot:
         self.cidrelease = self.figs[0].figure.canvas.mpl_connect('button_release_event', self.on_release)
         self.cidmotion = self.figs[0].figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
-    def draw(self):
+    def refresh(self):
         self.figs[0].figure.canvas.draw()
 
     def update_slice(self, target, data_update=True):
@@ -165,7 +165,6 @@ class SinglePlot:
 
         self.press = event.xdata, event.ydata
         self.last_update = time()
-
         xlim, ylim = self.axes.get_xlim(), self.axes.get_ylim()
         mean_intensity_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
         std_intensity_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
@@ -173,11 +172,8 @@ class SinglePlot:
         std_factor = self.std_intensity[0] + (std_intensity_factor - 0.5) * self.std_intensity[0] * 2.0
         min_intensity = mean_factor - std_factor
         max_intensity = mean_factor + std_factor
-        self.change_intensity2(min_intensity, max_intensity)
-
-    def change_intensity2(self, min_intensity, max_intensity, id_image=0):
-        self.figs[id_image].set_clim(min_intensity, max_intensity)
-        self.figs[id_image].figure.canvas.draw()
+        self.figs[0].set_clim(min_intensity, max_intensity)
+        self.refresh()
 
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes:
@@ -197,10 +193,9 @@ class SinglePlot:
             return self.change_intensity(event)
 
         else:
-            return
+            pass
 
     def setup_intensity(self):
-        # TODO: change for segmentation images
         for i, image in enumerate(self.images):
             flattened_volume = image.flatten()
             first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
@@ -211,11 +206,6 @@ class SinglePlot:
             self.mean_intensity.append(mean_intensity)
             self.std_intensity.append(std_intensity)
 
-            #min_intensity = mean_intensity - std_intensity
-            #max_intensity = mean_intensity + std_intensity
-
-            #for window in self.windows:
-                #window.figs[i].set_clim(min_intensity, max_intensity)
 
     def update_xy_lim(self, x_center=None, y_center=None, x_scale_factor=1.0, y_scale_factor=1.0, zoom=True):
         # get the current x and y limits
