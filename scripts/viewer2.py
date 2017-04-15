@@ -40,14 +40,20 @@ class SinglePlot:
         self.figs = []
         self.cross_to_display = None
         self.aspect_ratio = None
-        self.zoom_factor = 1.0
         self.canvas=canvas
         self.last_update=time()
-
         self.mean_intensity = []
         self.std_intensity = []
 
-        for i, image in enumerate(images):
+        self.set_images_display_option(im_params)
+        self.remove_axis_number()
+        self.connect_mpl_events()
+
+        self.setup_intensity()
+        self.draw_line(display_cross)
+
+    def set_images_display_option(self,im_params):
+        for i, image in enumerate(self.images):
             data_to_display = self.set_data_to_display(image)
             (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,cm)
             my_cmap.set_under('b', alpha=0)
@@ -55,17 +61,10 @@ class SinglePlot:
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
 
-        self.remove_axis_number()
-        self.connect_mpl_events()
-
-        self.setup_intensity()
-        self.draw_line(display_cross)
-
     def remove_axis_number(self):
         self.axes.set_axis_bgcolor('black')
         self.axes.set_xticks([])
         self.axes.set_yticks([])
-
 
     def connect_mpl_events(self):
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
@@ -198,6 +197,7 @@ class SinglePlot:
 
     def update_xy_lim(self, x_center=None, y_center=None, x_scale_factor=1.0, y_scale_factor=1.0, zoom=True):
         # get the current x and y limits
+        zoom_factor = 1.0
         cur_xlim = self.axes.get_xlim()
         cur_ylim = self.axes.get_ylim()
 
@@ -214,8 +214,8 @@ class SinglePlot:
 
         if zoom:
             scale_factor = (x_scale_factor + y_scale_factor) / 2.0
-            if 0.005 < self.zoom_factor * scale_factor <= 3.0:
-                self.zoom_factor *= scale_factor
+            if 0.005 < zoom_factor * scale_factor <= 3.0:
+                zoom_factor *= scale_factor
 
                 self.axes.set_xlim([x_center - x_left * x_scale_factor, x_center + x_right * x_scale_factor])
                 self.axes.set_ylim([y_center - y_top * y_scale_factor, y_center + y_bottom * y_scale_factor])
