@@ -61,18 +61,6 @@ class SinglePlot:
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
 
-    def remove_axis_number(self):
-        self.axes.set_axis_bgcolor('black')
-        self.axes.set_xticks([])
-        self.axes.set_yticks([])
-
-    def connect_mpl_events(self):
-        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.canvas.setFocus()
-        self.canvas.mpl_connect('button_release_event',self.on_event_release)
-        self.canvas.mpl_connect('scroll_event',self.on_event_scroll)
-        self.canvas.mpl_connect('motion_notify_event',self.on_event_motion)
-
     def draw_line(self,display_cross):
         self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
         self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
@@ -80,12 +68,6 @@ class SinglePlot:
             self.axes.add_line(self.line_horizontal)
         if 'v' in display_cross:
             self.axes.add_line(self.line_vertical)
-
-    def set_image_parameters(self,im_params,i,cm):
-        if str(i) in im_params.images_parameters:
-            return(copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap)),im_params.images_parameters[str(i)].interp,float(im_params.images_parameters[str(i)].alpha))
-        else:
-            return (cm.get_cmap('gray'), 'nearest', 1.0)
 
     def set_data_to_display(self,image):
         if self.view == 1:
@@ -103,9 +85,6 @@ class SinglePlot:
                                      [[-10000, 10000], [self.viewer.current_point.y, self.viewer.current_point.y]]]
             self.aspect_ratio = self.viewer.aspect_ratio[2]
             return (image.data[:, :, int(self.image_dim[2] / 2)])
-
-    def refresh(self):
-        self.figs[0].figure.canvas.draw()
 
     def update_slice(self, target, data_update=True):
         """
@@ -141,17 +120,21 @@ class SinglePlot:
         if 'h' in self.display_cross:
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
-    def on_press_key(self, event):
-        """
-        when pressing on the screen, add point into a list, then change current slice
-        if finished, close the window and send the result
-        :param event:
-        :return:
-        """
-        if event.button == 1 and event.inaxes == self.axes:
-            self.viewer.on_press(event, self)
 
-        return
+
+    def set_image_parameters(self,im_params,i,cm):
+        if str(i) in im_params.images_parameters:
+            return(copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap)),im_params.images_parameters[str(i)].interp,float(im_params.images_parameters[str(i)].alpha))
+        else:
+            return (cm.get_cmap('gray'), 'nearest', 1.0)
+
+    def refresh(self):
+        self.figs[0].figure.canvas.draw()
+
+    def remove_axis_number(self):
+        self.axes.set_axis_bgcolor('black')
+        self.axes.set_xticks([])
+        self.axes.set_yticks([])
 
     def change_intensity(self, event):
         def calc_min_max_intensities(x, y):
@@ -171,18 +154,6 @@ class SinglePlot:
             self.last_update = time()
             self.figs[0].set_clim(calc_min_max_intensities(event.xdata,event.ydata))
             self.refresh()
-
-    def on_event_motion(self, event):
-        if event.button == 1 and event.inaxes == self.axes: #left click
-            pass
-        elif event.button == 3 and event.inaxes == self.axes: #right click
-            self.change_intensity(event)
-
-    def on_event_release(self, event):
-        if event.button == 1: # left click
-            pass
-        elif event.button == 3: # right click
-            self.change_intensity(event)
 
     def setup_intensity(self):
         for i, image in enumerate(self.images):
@@ -224,6 +195,25 @@ class SinglePlot:
             self.axes.set_xlim([x_center - x_left * x_scale_factor, x_center + x_right * x_scale_factor])
             self.axes.set_ylim([y_center - y_top * y_scale_factor, y_center + y_bottom * y_scale_factor])
             self.figs[0].figure.canvas.draw()
+
+    def connect_mpl_events(self):
+        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.canvas.setFocus()
+        self.canvas.mpl_connect('button_release_event',self.on_event_release)
+        self.canvas.mpl_connect('scroll_event',self.on_event_scroll)
+        self.canvas.mpl_connect('motion_notify_event',self.on_event_motion)
+
+    def on_event_motion(self, event):
+        if event.button == 1 and event.inaxes == self.axes: #left click
+            pass
+        elif event.button == 3 and event.inaxes == self.axes: #right click
+            self.change_intensity(event)
+
+    def on_event_release(self, event):
+        if event.button == 1: # left click
+            pass
+        elif event.button == 3: # right click
+            self.change_intensity(event)
 
     def on_event_scroll(self, event):
         def calc_scale_factor(direction):
