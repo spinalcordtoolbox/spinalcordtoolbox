@@ -40,7 +40,7 @@ class SinglePlot:
         self.figs = []
         self.cross_to_display = None
         self.aspect_ratio = None
-        self.zoom_factor = 1.0
+        self.zoom_factor = 25.0
 
         for i, image in enumerate(images):
             data_to_display = self.set_data_to_display(image)
@@ -282,6 +282,10 @@ class MainPannelCore(object):
 
         fig = plt.figure()
         self.canvas = FigureCanvas(fig)
+        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.canvas.setFocus()
+        self.canvas.mpl_connect('button_press_event',self.on_press_key)
+
         layout_view.addWidget(self.canvas)
         self.layout_central.addLayout(layout_view)
 
@@ -291,6 +295,8 @@ class MainPannelCore(object):
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
         self.main_plot=SinglePlot(axis, self.images, self, view=1, display_cross='', im_params=self.im_params)
 
+    def on_press_key(self,event):
+        print ('you pressed', event.key)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
