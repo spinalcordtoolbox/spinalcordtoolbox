@@ -270,10 +270,16 @@ class MainPannelCore(object):
         layout_view.setAlignment(QtCore.Qt.AlignTop)
         layout_view.setAlignment(QtCore.Qt.AlignRight)
 
-        self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
+        fig = plt.figure()
+        self.canvas = FigureCanvas(self.fig)
         layout_view.addWidget(self.canvas)
         self.layout_central.addLayout(layout_view)
+
+
+        gs = mpl.gridspec.GridSpec(1, 3)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.main_plot=SinglePlot(axis, self.images, self, view=1, display_cross=display_cross, im_params=visualization_parameters)
+
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -286,7 +292,6 @@ class MainPannelCore(object):
         layout_view.addWidget(self.lb_title_secondary_view)
         layout_view.addWidget(self.create_image())
         self.layout_central.addLayout(layout_view)
-
 
     def add_controller_pannel(self):
         pass
@@ -872,7 +877,6 @@ class Window(WindowCore):
         window.setLayout(layout_main)
         sys.exit(system.exec_())
 
-
 class ParamMultiImageVisualization(object):
     """
     This class contains a dictionary with the params of multiple images visualization
@@ -898,7 +902,6 @@ class ParamMultiImageVisualization(object):
         else:
             sct.printv("ERROR: parameters must contain 'id'", 1, 'error')
 
-
 class ParamImageVisualization(object):
     def __init__(self, id='0', mode='image', cmap='gray', interp='nearest', vmin='0', vmax='99', vmean='98', vmode='percentile', alpha='1.0'):
         self.id = id
@@ -918,6 +921,26 @@ class ParamImageVisualization(object):
                 sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
             objs = obj.split('=')
             setattr(self, objs[0], objs[1])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
