@@ -58,6 +58,7 @@ class SinglePlot:
         self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.canvas.setFocus()
         self.canvas.mpl_connect('button_press_event',self.on_press_key)
+        self.canvas.mpl_connect('scroll_event',self.on_scroll)
 
         self.draw_line(display_cross)
 
