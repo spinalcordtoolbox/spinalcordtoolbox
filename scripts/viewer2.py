@@ -42,7 +42,6 @@ class SinglePlot:
         self.aspect_ratio = None
         self.zoom_factor = 1.0
         self.canvas=canvas
-        self.press=[0,0]
 
         self.mean_intensity = []
         self.std_intensity = []
@@ -161,18 +160,18 @@ class SinglePlot:
 
         return
 
-    def change_intensity(self, event, plot=None):
 
-        self.press = event.xdata, event.ydata
+    def change_intensity(self, event, plot=None):
+        def calc_min_max_intensities(x, y):
+            xlim, ylim = self.axes.get_xlim(), self.axes.get_ylim()
+            mean_intensity_factor = (x - xlim[0]) / float(xlim[1] - xlim[0])
+            std_intensity_factor = (y - ylim[1]) / float(ylim[0] - ylim[1])
+            mean_factor = self.mean_intensity[0] - (mean_intensity_factor - 0.5) * self.mean_intensity[0] * 3.0
+            std_factor = self.std_intensity[0] + (std_intensity_factor - 0.5) * self.std_intensity[0] * 2.0
+            return (mean_factor - std_factor, mean_factor + std_factor)
+
         self.last_update = time()
-        xlim, ylim = self.axes.get_xlim(), self.axes.get_ylim()
-        mean_intensity_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
-        std_intensity_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
-        mean_factor = self.mean_intensity[0] - (mean_intensity_factor - 0.5) * self.mean_intensity[0] * 3.0
-        std_factor = self.std_intensity[0] + (std_intensity_factor - 0.5) * self.std_intensity[0] * 2.0
-        min_intensity = mean_factor - std_factor
-        max_intensity = mean_factor + std_factor
-        self.figs[0].set_clim(min_intensity, max_intensity)
+        self.figs[0].set_clim(calc_min_max_intensities(event.xdata,event.ydata))
         self.refresh()
 
     def on_event_motion(self, event):
