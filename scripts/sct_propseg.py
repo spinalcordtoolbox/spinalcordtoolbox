@@ -162,9 +162,9 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       example=['t1', 't2'])
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast, if your contrast is not in the available options (t1, t2, t2s, dmri), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
+                      description="type of image contrast, if your contrast is not in the available options (t1, t2, t2s, dwi), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
                       mandatory=True,
-                      example=['t1', 't2', 't2s', 'dmri'])
+                      example=['t1', 't2', 't2s', 'dwi'])
     parser.usage.addSection("General options")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -310,7 +310,7 @@ if __name__ == "__main__":
     fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
 
-    contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dmri': 't1'}
+    contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dwi': 't1'}
     contrast_type_propseg = contrast_type_conversion[contrast_type]
 
     # Building the command
