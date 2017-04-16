@@ -499,6 +499,7 @@ if __name__ == "__main__":
         path_classifier = path_sct + '/data/optic_models/' + contrast_type + '_model'
         # path_classifier = path_sct + '/bin/' + contrast_type + '_model'
         # os.chdir(path_sct + '/data/models')
+        os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
         cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
                     (path_classifier, optic_input, optic_filename)
         sct.run(cmd_optic, verbose=0)
