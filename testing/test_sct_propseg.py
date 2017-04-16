@@ -26,7 +26,7 @@ from msct_image import Image, compute_dice
 def test(path_data='', parameters=''):
 
     # initialization
-    verbose = 1
+    verbose = 0
     output = ''
 
     # check if isct_propseg compatibility
@@ -104,9 +104,9 @@ def test(path_data='', parameters=''):
              '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
-        status, o = sct.run(cmd, 2)
-    except SystemExit as e:
-        status, o = 1, 'ERROR: Function crashed!\n' + str(e)
+        status, o = sct.run(cmd, 0)
+    except:
+        status, o = 1, 'ERROR: Function crashed!'
     output += o
     duration = time.time() - time_start
 

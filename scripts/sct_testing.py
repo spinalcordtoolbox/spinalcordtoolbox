@@ -236,7 +236,6 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
         f = open(fname_log, mode)
     except Exception as ex:
         raise Exception('WARNING: Cannot open log file.')
-    print string_to_append
     f.write(string + string_to_append + '\n')
     f.close()
 
