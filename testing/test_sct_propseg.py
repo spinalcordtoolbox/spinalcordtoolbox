@@ -104,7 +104,7 @@ def test(path_data='', parameters=''):
              '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
-        status, o = sct.run(cmd, 0, raise_exception=True)
+        status, o = sct.run(cmd, 2)
     except SystemExit as e:
         status, o = 1, 'ERROR: Function crashed!\n' + str(e)
     output += o
