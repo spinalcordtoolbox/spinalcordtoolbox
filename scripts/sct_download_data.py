@@ -102,8 +102,6 @@ def main(args=None):
     sct.printv('\nRemove temporary file...', verbose)
     os.remove(tmp_file)
 
-    sct.printv('\nDone! Folder created: %s\n' % (dest_folder + data_name), verbose, 'info')
-
 
 def unzip(compressed, dest_folder, verbose):
     """Extract compressed file to the dest_folder"""
