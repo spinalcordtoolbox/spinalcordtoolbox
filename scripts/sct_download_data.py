@@ -71,8 +71,8 @@ def main(args=None):
         'MNI-Poly-AMU': 'https://osf.io/sh6h4/?action=download',
         'gm_model': 'https://osf.io/ugscu/?action=download',
         'optic_models': 'https://osf.io/g4fwn/?action=download',
-        'binaries_debian': 'https://osf.io/2pztn/?action=download',
-        'binaries_centos': 'https://osf.io/4wbgt/?action=download',
+        'binaries_debian': 'https://osf.io/a83jr/?action=download',
+        'binaries_centos': 'https://osf.io/sgy6x/?action=download',
         'binaries_osx': 'https://osf.io/rtzey/?action=download'
     }
 
