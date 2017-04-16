@@ -473,8 +473,6 @@ if __name__ == "__main__":
         image_input_orientation = orientation(image_input, get=True, verbose=False)
         path_tmp_optic = sct.tmp_create(verbose=0)
 
-        print path_tmp_optic
-
         shutil.copy(fname_data, path_tmp_optic)
         os.chdir(path_tmp_optic)
 
@@ -482,7 +480,7 @@ if __name__ == "__main__":
         image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
         cmd_type = 'sct_image -i "%s" -o "%s" -type int16 -v 0' % \
                    (file_data + ext_data, image_int_filename)
-        sct.run(cmd_type, verbose=1)
+        sct.run(cmd_type, verbose=0)
 
         # reorient the input image to RPI + convert to .nii
         reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
@@ -490,7 +488,7 @@ if __name__ == "__main__":
         reoriented_image_filename_nii = img_filename + '.nii'
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
                     (image_int_filename, reoriented_image_filename_nii)
-        sct.run(cmd_reorient, verbose=1)
+        sct.run(cmd_reorient, verbose=0)
 
         # call the OptiC method to generate the spinal cord centerline
         optic_input = img_filename
@@ -503,7 +501,7 @@ if __name__ == "__main__":
         # os.chdir(path_sct + '/data/models')
         cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
                     (path_classifier, optic_input, optic_filename)
-        sct.run(cmd_optic, verbose=1)
+        sct.run(cmd_optic, verbose=0)
 
         # convert .img and .hdr files to .nii.gz
         optic_hdr_filename = img_filename + '_optic_ctr.hdr'
@@ -515,10 +513,10 @@ if __name__ == "__main__":
         centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
                        (centerline_optic_RPI_filename, centerline_optic_filename, image_input_orientation)
-        sct.run(cmd_reorient, verbose=1)
+        sct.run(cmd_reorient, verbose=0)
 
         # copy centerline to parent folder
-        sct.printv('Copy output to ' + folder_output, verbose=1)
+        sct.printv('Copy output to ' + folder_output, verbose=0)
         if os.path.isabs(folder_output):
             shutil.copy(centerline_optic_filename, folder_output)
         else:
