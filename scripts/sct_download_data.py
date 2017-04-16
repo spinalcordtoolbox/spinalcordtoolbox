@@ -36,7 +36,7 @@ def get_parser():
         mandatory=True,
         example=[
             'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
-            'gm_model', 'binaries_debian', 'binaries_centos', 'binaries_osx'
+            'gm_model', 'optic_models', 'binaries_debian', 'binaries_centos', 'binaries_osx'
         ])
     parser.add_option(
         name="-v",
@@ -70,9 +70,10 @@ def main(args=None):
         'PAM50': 'https://osf.io/gdwn6/?action=download',
         'MNI-Poly-AMU': 'https://osf.io/sh6h4/?action=download',
         'gm_model': 'https://osf.io/ugscu/?action=download',
-        'binaries_debian': 'https://osf.io/2pztn/?action=download',
-        'binaries_centos': 'https://osf.io/4wbgt/?action=download',
-        'binaries_osx': 'https://osf.io/ceg8p/?action=download'
+        'optic_models': 'https://osf.io/g4fwn/?action=download',
+        'binaries_debian': 'https://osf.io/a83jr/?action=download',
+        'binaries_centos': 'https://osf.io/sgy6x/?action=download',
+        'binaries_osx': 'https://osf.io/rtzey/?action=download'
     }
 
     # Get parser info
@@ -101,7 +102,7 @@ def main(args=None):
     sct.printv('\nRemove temporary file...', verbose)
     os.remove(tmp_file)
 
-    sct.printv('\nDone! Folder created: %s\n' % (dest_folder + data_name), verbose, 'info')
+    sct.printv('Done!\n', verbose)
 
 
 def unzip(compressed, dest_folder, verbose):
