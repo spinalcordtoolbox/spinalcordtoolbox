@@ -105,8 +105,8 @@ def test(path_data='', parameters=''):
     time_start = time.time()
     try:
         status, o = sct.run(cmd, 0)
-    except:
-        status, o = 1, 'ERROR: Function crashed!'
+    except Exception as e:
+        status, o = 1, 'ERROR: Function crashed!\n' + str(e)
     output += o
     duration = time.time() - time_start
 
