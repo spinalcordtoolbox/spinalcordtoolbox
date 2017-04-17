@@ -44,6 +44,7 @@ class SinglePlot:
         self.last_update=time()
         self.mean_intensity = []
         self.std_intensity = []
+        self.im_params=im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
 
@@ -269,6 +270,7 @@ class SinglePlotSecond(SinglePlot):
         if event.button == 1 and event.inaxes == self.axes: #left click
             self.current_point=self.get_event_coordinates(event,3)
             self.set_data_to_display(self.images[0])
+            self.set_image_parameters(self.im_params)
             self.draw_line('h')
             self.refresh()
         elif event.button == 3 and event.inaxes == self.axes: #right click
