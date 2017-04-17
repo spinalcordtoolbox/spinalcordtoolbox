@@ -44,21 +44,19 @@ class SinglePlot:
         self.last_update=time()
         self.mean_intensity = []
         self.std_intensity = []
-        self.im_params=im_params
+        self.im_params = im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
-
-        self.set_images_display_option(im_params)
+        self.set_images_display_option(self.im_params)
         self.remove_axis_number()
         self.connect_mpl_events()
-
         self.setup_intensity()
         self.draw_line(display_cross)
 
     def set_images_display_option(self,im_params):
         for i, image in enumerate(self.images):
             data_to_display = self.set_data_to_display(image)
-            (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,cm)
+            (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,mpl.cm)
             my_cmap.set_under('b', alpha=0)
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
             self.figs[-1].set_cmap(my_cmap)
@@ -233,6 +231,7 @@ class SinglePlot:
                                zoom=True)
 
     def get_event_coordinates(self, event, axis):
+        point = None
         if axis == 1:
             point = Coordinate([self.current_point.x,
                                 int(round(event.ydata)),
@@ -247,7 +246,13 @@ class SinglePlot:
                                 self.current_point.z, 1])
         return point
 
-class SinglePlotSecond(SinglePlot):
+class SinglePlotSecond(SinglePlot,object):
+    #TODO : inheritance etrange
+
+    def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
+        super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params)
+        self.draw_line('h')
+        self.refresh()
 
     def set_data_to_display(self,image):
         if self.view == 1:
@@ -269,8 +274,8 @@ class SinglePlotSecond(SinglePlot):
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes: #left click
             self.current_point=self.get_event_coordinates(event,3)
-            self.set_data_to_display(self.images[0])
-            self.set_image_parameters(self.im_params)
+            self.set_images_display_option(self.im_params)
+            self.line_horizontal.remove()
             self.draw_line('h')
             self.refresh()
         elif event.button == 3 and event.inaxes == self.axes: #right click
@@ -280,8 +285,8 @@ class SinglePlotSecond(SinglePlot):
         if event.button == 1: # left click
             self.current_point=self.get_event_coordinates(event,3)
             self.set_data_to_display(self.images[0])
-            self.draw_line('h')
-            self.refresh()
+            #self.draw_line('h')
+            #self.refresh()
         elif event.button == 3: # right click
             self.change_intensity(event)
 
