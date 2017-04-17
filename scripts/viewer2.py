@@ -251,7 +251,7 @@ class SinglePlotSecond(SinglePlot,object):
 
     def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
         super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params)
-        self.draw_line('h')
+        self.draw_line('v')
         self.refresh()
 
     def set_data_to_display(self,image):
@@ -275,8 +275,8 @@ class SinglePlotSecond(SinglePlot,object):
         if event.button == 1 and event.inaxes == self.axes: #left click
             self.current_point=self.get_event_coordinates(event,3)
             self.set_images_display_option(self.im_params)
-            self.line_horizontal.remove()
-            self.draw_line('h')
+            self.line_vertical.remove()
+            self.draw_line('v')
             self.refresh()
         elif event.button == 3 and event.inaxes == self.axes: #right click
             self.change_intensity(event)
@@ -284,9 +284,10 @@ class SinglePlotSecond(SinglePlot,object):
     def on_event_release(self, event):
         if event.button == 1: # left click
             self.current_point=self.get_event_coordinates(event,3)
-            self.set_data_to_display(self.images[0])
-            #self.draw_line('h')
-            #self.refresh()
+            self.set_images_display_option(self.im_params)
+            self.line_vertical.remove()
+            self.draw_line('v')
+            self.refresh()
         elif event.button == 3: # right click
             self.change_intensity(event)
 
