@@ -643,17 +643,20 @@ class SpinalCordStraightener(object):
             hdr_warp_s.set_data_dtype('float32')
             hdr_warp.set_intent('vector', (), '')
             hdr_warp.set_data_dtype('float32')
-            img = Nifti1Image(data_warp_curved2straight, None, hdr_warp_s)
-            save(img, 'tmp.curve2straight.nii.gz')
-            sct.printv('\nDONE ! Warping field generated: tmp.curve2straight.nii.gz', verbose)
+            if self.curved2straight:
+                img = Nifti1Image(data_warp_curved2straight, None, hdr_warp_s)
+                save(img, 'tmp.curve2straight.nii.gz')
+                sct.printv('\nDONE ! Warping field generated: tmp.curve2straight.nii.gz', verbose)
 
-            img = Nifti1Image(data_warp_straight2curved, None, hdr_warp)
-            save(img, 'tmp.straight2curve.nii.gz')
-            sct.printv('\nDONE ! Warping field generated: tmp.straight2curve.nii.gz', verbose)
+            if self.straight2curved:
+                img = Nifti1Image(data_warp_straight2curved, None, hdr_warp)
+                save(img, 'tmp.straight2curve.nii.gz')
+                sct.printv('\nDONE ! Warping field generated: tmp.straight2curve.nii.gz', verbose)
 
-            # Apply transformation to input image
-            sct.printv('\nApply transformation to input image...', verbose)
-            sct.run('sct_apply_transfo -i data.nii -d ' + fname_ref + ' -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x ' + interpolation_warp, verbose)
+            if self.curved2straight:
+                # Apply transformation to input image
+                sct.printv('\nApply transformation to input image...', verbose)
+                sct.run('sct_apply_transfo -i data.nii -d ' + fname_ref + ' -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x ' + interpolation_warp, verbose)
 
             if self.accuracy_results:
                 time_accuracy_results = time.time()
@@ -705,17 +708,21 @@ class SpinalCordStraightener(object):
         # Generate output file (in current folder)
         # TODO: do not uncompress the warping field, it is too time consuming!
         sct.printv("\nGenerate output file (in current folder)...", verbose)
-        sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
-        sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
+        if self.curved2straight:
+            sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
+        if self.straight2curved:
+            sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
+
         # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
-        shutil.copy(path_tmp + '/tmp.anat_rigid_warp.nii.gz', self.path_output + 'straight_ref.nii.gz')
-        # move straightened input file
-        if fname_output == '':
-            fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
-                                                      self.path_output + file_anat + "_straight" + ext_anat, verbose)
-        else:
-            fname_straight = sct.generate_output_file(path_tmp + '/tmp.anat_rigid_warp.nii.gz',
-                                                      self.path_output + fname_output, verbose)  # straightened anatomic
+        if self.curved2straight:
+            shutil.copy(path_tmp + '/tmp.anat_rigid_warp.nii.gz', self.path_output + 'straight_ref.nii.gz')
+            # move straightened input file
+            if fname_output == '':
+                fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
+                                                          self.path_output + file_anat + "_straight" + ext_anat, verbose)
+            else:
+                fname_straight = sct.generate_output_file(path_tmp + '/tmp.anat_rigid_warp.nii.gz',
+                                                          self.path_output + fname_output, verbose)  # straightened anatomic
 
         # Remove temporary files
         if remove_temp_files:
@@ -735,11 +742,12 @@ class SpinalCordStraightener(object):
         if self.accuracy_results:
             sct.printv('    including ' + str(int(np.round(self.elapsed_time_accuracy))) + ' s spent computing '
                                                                                       'accuracy results', verbose)
-        sct.printv("\nTo view results, type:", verbose)
-        sct.printv("fslview " + fname_straight + " &\n", verbose, 'info')
+        if self.curved2straight:
+            sct.printv("\nTo view results, type:", verbose)
+            sct.printv("fslview " + fname_straight + " &\n", verbose, 'info')
 
         # output QC image
-        if qc:
+        if qc and self.curved2straight:
             from msct_image import Image
             Image(fname_straight).save_quality_control(plane='sagittal', n_slices=1, path_output=self.path_output)
 
