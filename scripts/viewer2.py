@@ -47,34 +47,37 @@ class SinglePlot:
         self.im_params = im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
-        self.show_image(self.im_params)
+        self.show_image(self.im_params,current_point=None)
         self.remove_axis_number()
         self.connect_mpl_events()
         self.setup_intensity()
 
-    def show_image(self,im_params):
+    def show_image(self,im_params,current_point):
+        if not current_point:
+            current_point=Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
+                                         int(self.images[0].data.shape[2] / 2)])
         for i, image in enumerate(self.images):
-            data_to_display = self.set_data_to_display(image)
+            data_to_display = self.set_data_to_display(image,current_point)
             (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,mpl.cm)
             my_cmap.set_under('b', alpha=0)
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
 
-    def set_data_to_display(self,image):
+    def set_data_to_display(self,image,current_point):
         if self.view == 1:
-            self.cross_to_display = [[[self.current_point.y, self.current_point.y], [-10000, 10000]],
-                                     [[-10000, 10000], [self.current_point.z, self.current_point.z]]]
+            self.cross_to_display = [[[current_point.y, current_point.y], [-10000, 10000]],
+                                     [[-10000, 10000], [current_point.z, current_point.z]]]
             self.aspect_ratio = self.viewer.aspect_ratio[0]
             return(image.data[int(self.image_dim[0] / 2), :, :] )
         elif self.view == 2:
-            self.cross_to_display = [[[self.current_point.x, self.current_point.x], [-10000, 10000]],
-                                     [[-10000, 10000], [self.current_point.z, self.current_point.z]]]
+            self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [current_point.z, current_point.z]]]
             self.aspect_ratio = self.viewer.aspect_ratio[1]
             return (image.data[:, int(self.image_dim[1] / 2), :])
         elif self.view == 3:
-            self.cross_to_display = [[[self.current_point.x, self.current_point.x], [-10000, 10000]],
-                                     [[-10000, 10000], [self.current_point.y, self.current_point.y]]]
+            self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [current_point.y, current_point.y]]]
             self.aspect_ratio = self.viewer.aspect_ratio[2]
             return (image.data[:, :, int(self.image_dim[2] / 2)])
 
@@ -257,7 +260,7 @@ class SinglePlotSecond(SinglePlot,object):
         self.line_vertical.remove()
         self.add_line('v')
 
-    def set_data_to_display(self,image):
+    def set_data_to_display(self,image,current_point=None):
         if self.view == 1:
             self.cross_to_display = [[[self.current_point.y, self.current_point.y], [-10000, 10000]],
                                      [[-10000, 10000], [self.current_point.z, self.current_point.z]]]
@@ -275,7 +278,7 @@ class SinglePlotSecond(SinglePlot,object):
             return (image.data[:, :, int(self.image_dim[2] / 2)])
 
     def refresh(self):
-        self.show_image(self.im_params)
+        self.show_image(self.im_params,self.current_point)
         self.figs[0].figure.canvas.draw()
 
     def on_event_motion(self, event):
@@ -428,13 +431,9 @@ class MainPannel(MainPannelCore):
     def __init__(self,images,im_params):
         super(MainPannel, self).__init__(images,im_params)
 
-        """ Left Pannel"""
         self.add_main_view()
         self.add_secondary_view()
         #self.add_controller_pannel()
-        """ Right Pannel"""
-
-
 
         self.merge_layouts()
 
