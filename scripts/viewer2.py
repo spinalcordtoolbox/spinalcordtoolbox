@@ -47,13 +47,12 @@ class SinglePlot:
         self.im_params = im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
-        self.set_images_display_option(self.im_params)
+        self.show_image(self.im_params)
         self.remove_axis_number()
         self.connect_mpl_events()
         self.setup_intensity()
-        self.draw_line(display_cross)
 
-    def set_images_display_option(self,im_params):
+    def show_image(self,im_params):
         for i, image in enumerate(self.images):
             data_to_display = self.set_data_to_display(image)
             (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,mpl.cm)
@@ -61,14 +60,6 @@ class SinglePlot:
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
-
-    def draw_line(self,display_cross):
-        if 'h' in display_cross:
-            self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
-            self.axes.add_line(self.line_horizontal)
-        if 'v' in display_cross:
-            self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
-            self.axes.add_line(self.line_vertical)
 
     def set_data_to_display(self,image):
         if self.view == 1:
@@ -251,8 +242,20 @@ class SinglePlotSecond(SinglePlot,object):
 
     def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
         super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params)
-        self.draw_line('v')
+        self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
         self.refresh()
+
+    def add_line(self,display_cross):
+        if 'h' in display_cross:
+            self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
+            self.axes.add_line(self.line_horizontal)
+        if 'v' in display_cross:
+            self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
+            self.axes.add_line(self.line_vertical)
+
+    def draw_line(self,display_cross):
+        self.line_vertical.remove()
+        self.add_line('v')
 
     def set_data_to_display(self,image):
         if self.view == 1:
@@ -271,11 +274,13 @@ class SinglePlotSecond(SinglePlot,object):
             self.aspect_ratio = self.viewer.aspect_ratio[2]
             return (image.data[:, :, int(self.image_dim[2] / 2)])
 
+    def refresh(self):
+        self.show_image(self.im_params)
+        self.figs[0].figure.canvas.draw()
+
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes: #left click
             self.current_point=self.get_event_coordinates(event,3)
-            self.set_images_display_option(self.im_params)
-            self.line_vertical.remove()
             self.draw_line('v')
             self.refresh()
         elif event.button == 3 and event.inaxes == self.axes: #right click
@@ -284,8 +289,6 @@ class SinglePlotSecond(SinglePlot,object):
     def on_event_release(self, event):
         if event.button == 1: # left click
             self.current_point=self.get_event_coordinates(event,3)
-            self.set_images_display_option(self.im_params)
-            self.line_vertical.remove()
             self.draw_line('v')
             self.refresh()
         elif event.button == 3: # right click
