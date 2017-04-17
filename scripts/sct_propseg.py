@@ -412,8 +412,6 @@ if __name__ == "__main__":
         #from sct_viewer import ClickViewer
         from viewer2 import  Window
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
-        if isinstance(image_input_reoriented, Image) :
-            print('bonjour')
         viewer = Window([image_input_reoriented])
         if use_viewer == "mask":
             viewer.input_type = 'mask'
