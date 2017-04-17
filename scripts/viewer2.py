@@ -81,8 +81,6 @@ class SinglePlot:
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
 
-
-
     def update_slice(self, target, data_update=True):
         """
         This function change the viewer to update the current slice
@@ -206,7 +204,7 @@ class SinglePlot:
 
     def on_event_release(self, event):
         if event.button == 1: # left click
-            pass
+            self.draw_dots(self.get_event_coordinates(event,1))
         elif event.button == 3: # right click
             self.change_intensity(event)
 
@@ -241,6 +239,16 @@ class SinglePlot:
                                 int(round(event.xdata)),
                                 self.current_point.z, 1])
         return point
+
+    def draw_dots(self, current_point):
+        self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
+        x_data, y_data = [], []
+        x_data.append(current_point.z)
+        y_data.append(current_point.y)
+        self.plot_points.set_xdata(x_data)
+        self.plot_points.set_ydata(y_data)
+        self.refresh()
+
 
 class SinglePlotSecond(SinglePlot,object):
     #TODO : inheritance etrange
@@ -293,8 +301,6 @@ class SinglePlotSecond(SinglePlot,object):
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
-
-
 
     def refresh(self):
         self.show_image(self.im_params,self.current_point)
