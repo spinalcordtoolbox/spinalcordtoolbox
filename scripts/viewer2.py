@@ -240,7 +240,7 @@ class SinglePlot:
 class SinglePlotSecond(SinglePlot,object):
     #TODO : inheritance etrange
 
-    def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
+    def __init__(self, ax, images, viewer,canvas,main_single_plot, view=2, display_cross='hv', im_params=None):
         super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params)
         self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
         self.refresh()
@@ -334,6 +334,7 @@ class MainPannelCore(object):
         self.layout_global=QtGui.QVBoxLayout()
         self.layout_option_settings = QtGui.QHBoxLayout()
         self.layout_central = QtGui.QHBoxLayout()
+        self.layout_central.setDirection(1)
         self.images=images
         self.im_params=im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
@@ -345,8 +346,6 @@ class MainPannelCore(object):
 
     def add_main_view(self):
         layout_view = QtGui.QVBoxLayout()
-        layout_view.setAlignment(QtCore.Qt.AlignTop)
-        layout_view.setAlignment(QtCore.Qt.AlignRight)
 
         fig = plt.figure()
         self.canvas_main = FigureCanvas(fig)
@@ -362,8 +361,6 @@ class MainPannelCore(object):
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
-        layout_view.setAlignment(QtCore.Qt.AlignTop)
-        layout_view.setAlignment(QtCore.Qt.AlignRight)
 
         fig = plt.figure()
         self.canvas_second = FigureCanvas(fig)
@@ -375,7 +372,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot=SinglePlotSecond(axis, self.images, self, view=3, display_cross='', im_params=self.im_params,canvas=self.canvas_second)
+        self.second_plot=SinglePlotSecond(axis, self.images, self, view=3, display_cross='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot)
 
     def add_controller_pannel(self):
         pass
@@ -432,10 +429,12 @@ class MainPannel(MainPannelCore):
         super(MainPannel, self).__init__(images,im_params)
 
         """ Left Pannel"""
+        self.add_main_view()
         self.add_secondary_view()
         #self.add_controller_pannel()
         """ Right Pannel"""
-        self.add_main_view()
+
+
 
         self.merge_layouts()
 
