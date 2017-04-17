@@ -120,8 +120,6 @@ class SinglePlot:
         if 'h' in self.display_cross:
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
-
-
     def set_image_parameters(self,im_params,i,cm):
         if str(i) in im_params.images_parameters:
             return(copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap)),im_params.images_parameters[str(i)].interp,float(im_params.images_parameters[str(i)].alpha))
@@ -286,28 +284,33 @@ class MainPannelCore(object):
         layout_view.setAlignment(QtCore.Qt.AlignRight)
 
         fig = plt.figure()
-        self.canvas = FigureCanvas(fig)
+        self.canvas_main = FigureCanvas(fig)
 
-        layout_view.addWidget(self.canvas)
+        layout_view.addWidget(self.canvas_main)
         self.layout_central.addLayout(layout_view)
 
         if not self.im_params:
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot=SinglePlot(axis, self.images, self, view=1, display_cross='', im_params=self.im_params,canvas=self.canvas)
+        self.main_plot=SinglePlot(axis, self.images, self, view=1, display_cross='', im_params=self.im_params,canvas=self.canvas_main)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
         layout_view.setAlignment(QtCore.Qt.AlignTop)
         layout_view.setAlignment(QtCore.Qt.AlignRight)
 
-        self.lb_title_secondary_view = QtGui.QLabel('Secondary View')
-        self.lb_title_secondary_view.setAlignment(QtCore.Qt.AlignCenter)
+        fig = plt.figure()
+        self.canvas_second = FigureCanvas(fig)
 
-        layout_view.addWidget(self.lb_title_secondary_view)
-        layout_view.addWidget(self.create_image())
+        layout_view.addWidget(self.canvas_second)
         self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.second_plot=SinglePlot(axis, self.images, self, view=1, display_cross='', im_params=self.im_params,canvas=self.canvas_second)
 
     def add_controller_pannel(self):
         pass
