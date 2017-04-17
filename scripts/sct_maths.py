@@ -67,6 +67,11 @@ def get_parser():
                       description='Average data across dimension.',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
+    parser.add_option(name='-rms',
+                      type_value='multiple_choice',
+                      description='Compute root-mean-squared across dimension.',
+                      mandatory=False,
+                      example=['x', 'y', 'z', 't'])
     parser.add_option(name='-std',
                       type_value='multiple_choice',
                       description='Compute STD across dimension.',
@@ -252,6 +257,13 @@ def main(args = None):
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
         data_out = mean(data, dim)
+
+    elif '-rms' in arguments:
+        from numpy import mean, sqrt, square
+        dim = dim_list.index(arguments['-rms'])
+        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., np.newaxis]
+        data_out = sqrt(mean(square(data.astype(float)), dim))
 
     elif '-std' in arguments:
         from numpy import std
