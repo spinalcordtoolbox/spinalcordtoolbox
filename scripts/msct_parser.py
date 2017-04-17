@@ -95,7 +95,8 @@ class Option:
     OPTION_PATH_OUTPUT = ["file_output", "folder_output"]
 
     # Constructor
-    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None, deprecated_rm=False, deprecated=False):
+    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0,
+                 deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -108,6 +109,7 @@ class Option:
         self.deprecated_by = deprecated_by
         self.deprecated_rm = deprecated_rm
         self.deprecated = deprecated
+        self.list_no_image = list_no_image
 
         # TODO: check if the option is correctly set
 
@@ -200,7 +202,7 @@ class Option:
         sct.printv("Check file existence...", 0)
         nii = False
         niigz = False
-        viewer = False
+        no_image = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
             if self.parser.check_file_exist:
@@ -216,8 +218,8 @@ class Option:
             else:
                 nii, niigz = False, True
             param_tmp = param[:-7]
-        elif param.lower() == "viewer":
-            viewer = True
+        elif param.lower() in self.list_no_image:
+            no_image = True
         else:
             sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
 
@@ -225,7 +227,7 @@ class Option:
             return param_tmp + '.nii'
         elif niigz:
             return param_tmp + '.nii.gz'
-        elif viewer:
+        elif no_image:
             return param
         else:
             sct.printv("ERROR: File " + param + " does not exist. Exiting", type='error')
@@ -267,9 +269,9 @@ class Parser:
         self.usage = Usage(self, file_name)
         self.check_file_exist = True
 
-    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False):
+    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None):
         order = len(self.options) + 1
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated)
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated, list_no_image)
 
     def parse(self, arguments, check_file_exist=True):
         # if you only want to parse a string and not checking for file existence, change flag check_file_exist
@@ -410,7 +412,12 @@ class Parser:
                                 option[i] = path_to_add + value
                             dictionary[key] = option
                         else:
-                            dictionary[key] = str(path_to_add) + str(option)
+                            # if the option contains an "no image file", do nothing
+                            if self.options[key].list_no_image is not None:
+                                if str(option) in self.options[key].list_no_image:
+                                    dictionary[key] = option
+                            else:
+                                dictionary[key] = str(path_to_add) + str(option)
             else:
                 sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
 
