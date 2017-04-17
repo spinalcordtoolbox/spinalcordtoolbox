@@ -469,6 +469,8 @@ else
   cmd="python ../scripts/sct_download_data.py -d PAM50"; echo ">> "$cmd; $cmd
   # Install GM model
   cmd="python ../scripts/sct_download_data.py -d gm_model"; echo ">> "$cmd; $cmd
+  # Install OptiC models
+  cmd="python ../scripts/sct_download_data.py -d optic_models"; echo ">> "$cmd; $cmd
 fi
 
 # Make sure sct scripts are executable
