@@ -62,11 +62,11 @@ class SinglePlot:
             self.figs[-1].set_interpolation(my_interpolation)
 
     def draw_line(self,display_cross):
-        self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
-        self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
         if 'h' in display_cross:
+            self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
             self.axes.add_line(self.line_horizontal)
         if 'v' in display_cross:
+            self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
             self.axes.add_line(self.line_vertical)
 
     def set_data_to_display(self,image):
@@ -229,6 +229,21 @@ class SinglePlot:
                                x_scale_factor=scale_factor, y_scale_factor=scale_factor,
                                zoom=True)
 
+class SinglePlotSecond(SinglePlot):
+    def on_event_motion(self, event):
+        if event.button == 1 and event.inaxes == self.axes: #left click
+            self.draw_line('h')
+            self.refresh()
+        elif event.button == 3 and event.inaxes == self.axes: #right click
+            self.change_intensity(event)
+
+    def on_event_release(self, event):
+        if event.button == 1: # left click
+            self.draw_line('h')
+            self.refresh()
+        elif event.button == 3: # right click
+            self.change_intensity(event)
+
 class HeaderCore(object):
 
     def __init__(self):
@@ -310,7 +325,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot=SinglePlot(axis, self.images, self, view=1, display_cross='', im_params=self.im_params,canvas=self.canvas_second)
+        self.second_plot=SinglePlotSecond(axis, self.images, self, view=3, display_cross='', im_params=self.im_params,canvas=self.canvas_second)
 
     def add_controller_pannel(self):
         pass
