@@ -503,7 +503,7 @@ class ClickViewer(Viewer):
         self.secondary_subplot = orientation_subplot[1]
 
         self.current_slice = 0
-        se  lf.number_of_slices = 0
+        self.number_of_slices = 0
         self.gap_inter_slice = 0
 
         self.compute_offset()

@@ -47,6 +47,8 @@ class SinglePlot:
         self.im_params = im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
+        self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
+
         self.show_image(self.im_params,current_point=None)
         self.remove_axis_number()
         self.connect_mpl_events()
@@ -241,12 +243,14 @@ class SinglePlot:
         return point
 
     def draw_dots(self, current_point):
-        self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         x_data, y_data = [], []
+        self.refresh()
         x_data.append(current_point.z)
         y_data.append(current_point.y)
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
+        print(x_data,y_data)
+        self.show_image(self.im_params,current_point)
         self.refresh()
 
 
@@ -764,17 +768,6 @@ class Window(WindowCore):
         else:
             self.update_title_text('ready_to_save_and_quit')
             return False
-
-    def draw_points(self, window, current_slice):
-        if window.view == self.orientation[self.primary_subplot]:
-            x_data, y_data = [], []
-            for pt in self.list_points:
-                if pt.x == current_slice:
-                    x_data.append(pt.z + self.offset[2])
-                    y_data.append(pt.y + self.offset[1])
-            self.plot_points.set_xdata(x_data)
-            self.plot_points.set_ydata(y_data)
-            self.fig.canvas.draw()
 
     def on_release(self, event, plot=None):
         """
