@@ -489,7 +489,12 @@ class ClickViewer(Viewer):
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
         super(ClickViewer, self).__init__(list_images, visualization_parameters)
 
-        self.declaration_global_variables_general(orientation_subplot)
+        self.primary_subplot = orientation_subplot[0]
+        self.secondary_subplot = orientation_subplot[1]
+
+        self.current_slice = 0
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
 
         self.compute_offset()
         self.pad_data()
