@@ -44,6 +44,8 @@ class SinglePlot:
         self.last_update=time()
         self.mean_intensity = []
         self.std_intensity = []
+        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
+                                         int(self.images[0].data.shape[2] / 2)])
 
         self.set_images_display_option(im_params)
         self.remove_axis_number()
@@ -71,18 +73,18 @@ class SinglePlot:
 
     def set_data_to_display(self,image):
         if self.view == 1:
-            self.cross_to_display = [[[self.viewer.current_point.y, self.viewer.current_point.y], [-10000, 10000]],
-                                     [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+            self.cross_to_display = [[[self.current_point.y, self.current_point.y], [-10000, 10000]],
+                                     [[-10000, 10000], [self.current_point.z, self.current_point.z]]]
             self.aspect_ratio = self.viewer.aspect_ratio[0]
-            return( image.data[int(self.image_dim[0] / 2), :, :] )
+            return(image.data[int(self.image_dim[0] / 2), :, :] )
         elif self.view == 2:
-            self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
-                                     [[-10000, 10000], [self.viewer.current_point.z, self.viewer.current_point.z]]]
+            self.cross_to_display = [[[self.current_point.x, self.current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [self.current_point.z, self.current_point.z]]]
             self.aspect_ratio = self.viewer.aspect_ratio[1]
             return (image.data[:, int(self.image_dim[1] / 2), :])
         elif self.view == 3:
-            self.cross_to_display = [[[self.viewer.current_point.x, self.viewer.current_point.x], [-10000, 10000]],
-                                     [[-10000, 10000], [self.viewer.current_point.y, self.viewer.current_point.y]]]
+            self.cross_to_display = [[[self.current_point.x, self.current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [self.current_point.y, self.current_point.y]]]
             self.aspect_ratio = self.viewer.aspect_ratio[2]
             return (image.data[:, :, int(self.image_dim[2] / 2)])
 
@@ -229,9 +231,44 @@ class SinglePlot:
                                x_scale_factor=scale_factor, y_scale_factor=scale_factor,
                                zoom=True)
 
+    def get_event_coordinates(self, event, axis):
+        if axis == 1:
+            point = Coordinate([self.current_point.x,
+                                int(round(event.ydata)),
+                                int(round(event.xdata)), 1])
+        elif axis == 2:
+            point = Coordinate([int(round(event.ydata)),
+                                self.current_point.y,
+                                int(round(event.xdata)), 1])
+        elif axis == 3:
+            point = Coordinate([int(round(event.ydata)),
+                                int(round(event.xdata)),
+                                self.current_point.z, 1])
+        return point
+
 class SinglePlotSecond(SinglePlot):
+
+    def set_data_to_display(self,image):
+        if self.view == 1:
+            self.cross_to_display = [[[self.current_point.y, self.current_point.y], [-10000, 10000]],
+                                     [[-10000, 10000], [self.current_point.z, self.current_point.z]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[0]
+            return( image.data[int(self.image_dim[0] / 2), :, :] )
+        elif self.view == 2:
+            self.cross_to_display = [[[self.current_point.x, self.current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [self.current_point.z, self.current_point.z]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[1]
+            return (image.data[:, int(self.image_dim[1] / 2), :])
+        elif self.view == 3:
+            self.cross_to_display = [[[self.current_point.x, self.current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [self.current_point.y, self.current_point.y]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[2]
+            return (image.data[:, :, int(self.image_dim[2] / 2)])
+
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes: #left click
+            self.current_point=self.get_event_coordinates(event,3)
+            self.set_data_to_display(self.images[0])
             self.draw_line('h')
             self.refresh()
         elif event.button == 3 and event.inaxes == self.axes: #right click
@@ -239,6 +276,8 @@ class SinglePlotSecond(SinglePlot):
 
     def on_event_release(self, event):
         if event.button == 1: # left click
+            self.current_point=self.get_event_coordinates(event,3)
+            self.set_data_to_display(self.images[0])
             self.draw_line('h')
             self.refresh()
         elif event.button == 3: # right click
