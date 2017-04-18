@@ -370,6 +370,7 @@ if __name__ == "__main__":
             use_optic = False
         else:
             cmd += " -init-centerline " + str(arguments["-init-centerline"])
+            use_optic = False
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
