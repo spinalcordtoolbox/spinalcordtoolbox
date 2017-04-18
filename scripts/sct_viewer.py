@@ -923,7 +923,7 @@ class ClickViewerPropseg(ClickViewer):
         self.number_of_slices = 0
         self.gap_inter_slice = 0
 
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
+        self.current_point = Coordinate([0, int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
         self.calculate_list_slices()
 
         self.draw_points(self.windows[0],self.current_point.x)
