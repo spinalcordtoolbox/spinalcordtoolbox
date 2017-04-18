@@ -320,10 +320,6 @@ if __name__ == "__main__":
         email = ''
     verbose = int(arguments["-v"])
 
-    if '-log' in arguments:
-        FORMAT = "%(levelname)7s --%(lineno)5s %(funcName)25s():  %(message)s"
-        logging.basicConfig(level=logging.DEBUG, format=FORMAT, stream=sys.stdout)
-
     # start timer
     start_time = time()
     # create single time variable for output names
