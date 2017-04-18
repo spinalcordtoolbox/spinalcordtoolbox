@@ -1057,7 +1057,8 @@ class ClickViewerPropseg(ClickViewer):
         else:
             self.update_title_text('way_custom_next_point')
             if self.list_points :
-                self.show_previous_slice_in_custom()
+                #self.show_previous_slice_in_custom() Option to jump to last slice when redoing in custom mode.
+                self.draw_points(self.windows[0], self.current_point.x)
             else:
                 self.draw_points(self.windows[0], self.current_point.x)
 
