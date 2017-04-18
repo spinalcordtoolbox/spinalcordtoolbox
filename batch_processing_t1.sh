@@ -37,7 +37,7 @@ echo "Started at: $(date +%x_%r)"
 # ===========================================================================================
 cd t1
 # Spinal cord segmentation
-sct_propseg -i t1.nii.gz -c t1
+sct_propseg -i t1.nii.gz -c t1 -qc
 # If segmentation leaks, you can try to smooth the cord and re-run the segmentation:
 #sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
 #sct_propseg -i t1_smooth.nii.gz -c t1 -init-centerline t1_seg.nii.gz
@@ -47,7 +47,7 @@ if [ $DISPLAY = true ]; then
   fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
-sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -c t1 -v 2
+sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -c t1 -v 2 -qc
 # Create labels at C2 and C5 vertebral levels
 sct_label_utils -i t1_seg_labeled.nii.gz -vert-body 2,5
 # Register to template
@@ -61,6 +61,9 @@ fi
 # compute average cross-sectional area and volume between C3 and C4 levels
 sct_process_segmentation -i t1_seg.nii.gz -p csa -vert 3:4
 # go back to root folder
+
+# to view quality control results
+sct_qc -view qc_data
 cd ..
 
 
