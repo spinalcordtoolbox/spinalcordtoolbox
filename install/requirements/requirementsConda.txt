@@ -9,3 +9,4 @@ xlutils==1.7.1
 pip==9.0.1
 requests==2.12.4
 cryptography==1.6
+mpi4py==2.0.0
