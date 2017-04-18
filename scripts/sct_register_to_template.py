@@ -170,11 +170,15 @@ def rewrite_arguments(arguments):
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
+    ''' Viewer Blocked
     first_label=int(arguments['-first'])
     last_label = int(arguments['-last'])
     init_template=correct_init_template(arguments['-init-template'])
-
     return (fname_data,fname_seg,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_template,first_label,last_label)
+    '''
+    return (fname_data,fname_seg,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose)
+
+
 
 def correct_init_template(s):
     if s=='viewer':
@@ -322,12 +326,18 @@ def main():
 
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
+    ''' Viewer Blocked
     (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,
      verbose, init_template, first_label, last_label)=rewrite_arguments(arguments)
+     '''
+    (fname_data, fname_seg, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,
+     verbose) = rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
+    ''' Viewer Blocked
     if(init_template):
         use_viewer_to_define_labels(fname_data,first_label=first_label,last_label=last_label)
+    '''
     # initialize other parameters
     # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
