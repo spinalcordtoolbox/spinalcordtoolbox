@@ -20,6 +20,7 @@ from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, roll
 from numpy.linalg import norm, inv
 import numpy as np
 
+
 class Point(object):
     def __init__(self):
         self.x = 0
@@ -39,6 +40,7 @@ class Point(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+
 class Coordinate(Point):
     def __init__(self, coord=None, mode='continuous'):
         super(Coordinate, self).__init__()
@@ -53,7 +55,7 @@ class Coordinate(Point):
             # coordinate as a string. Values delimited by a comma.
             coord = coord.split(',')
 
-        if len(coord) not in [3,4]:
+        if len(coord) not in [3, 4]:
             raise TypeError("Parameter must be a list with coordinates [x, y, z] or [x, y, z, value].")
 
         self.x = coord[0]
@@ -70,13 +72,13 @@ class Coordinate(Point):
             else:
                 float(self.x), float(self.y), float(self.z), float(self.value)
         except ValueError:
-            raise TypeError("All coordinates must be int and the value can be a float or a int. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
+            raise TypeError("All coordinates must be int and the value can be a float or a int. x=" + str(self.x) + ", y=" + str(self.y) + ", z=" + str(self.z) + ", value=" + str(self.value))
 
     def __repr__(self):
-        return "("+str(self.x)+", "+str(self.y)+", "+str(self.z)+", "+str(self.value)+")"
+        return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
 
     def __str__(self):
-        return "("+str(self.x)+", "+str(self.y)+", "+str(self.z)+", "+str(self.value)+")"
+        return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -109,7 +111,6 @@ class CoordinateValue(Coordinate):
     def __init__(self, coord=None, mode='index'):
         super(CoordinateValue, self).__init__(coord, mode)
 
-
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return float(self.value) == float(other.value)
@@ -129,9 +130,8 @@ class Centerline:
     A centerline is defined by its points and the derivatives of each point.
     When initialized, the lenght of the centerline is computed as well as the coordinate reference system of each plane.
     """
+
     def __init__(self, points_x, points_y, points_z, deriv_x, deriv_y, deriv_z):
-        from math import sqrt
-        #self.points = []
         self.derivatives = []
         self.length = 0.0
         self.progressive_length = [0.0]
@@ -163,7 +163,7 @@ class Centerline:
             self.length += distance
             self.progressive_length.append(distance)
             self.incremental_length.append(self.incremental_length[-1] + distance)
-        for i in range(self.number_of_points-1, 0, -1):
+        for i in range(self.number_of_points - 1, 0, -1):
             distance = sqrt((points_x[i] - points_x[i - 1]) ** 2 +
                             (points_y[i] - points_y[i - 1]) ** 2 +
                             (points_z[i] - points_z[i - 1]) ** 2)
@@ -390,7 +390,7 @@ class Centerline:
 
         progress_length = zeros(self.number_of_points)
         for i in range(self.number_of_points - 1):
-            progress_length[i+1] = progress_length[i] + self.progressive_length[i]
+            progress_length[i + 1] = progress_length[i] + self.progressive_length[i]
 
         label_reference = 'C1'
         if 'C1' not in self.index_disk:
@@ -452,7 +452,6 @@ class Centerline:
         square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
         return square.reshape((len(x_grid), len(x_grid)))
 
-
     def save_centerline(self, image, fname_output):
         labels_regions = {'PONS': 50, 'MO': 51,
                           'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
@@ -476,5 +475,35 @@ class Centerline:
         image_output.setFileName(fname_output)
         image_output.save(type='float32')
 
+    def average_coordinates_over_slices(self, image):
+        # extracting points information for each coordinates
+        P_x = np.array([point[0] for point in self.points])
+        P_y = np.array([point[1] for point in self.points])
+        P_z = np.array([point[2] for point in self.points])
+        P_z_vox = np.array([coord[2] for coord in image.transfo_phys2pix(self.points)])
+        P_x_d = np.array([deriv[0] for deriv in self.derivatives])
+        P_y_d = np.array([deriv[1] for deriv in self.derivatives])
+        P_z_d = np.array([deriv[2] for deriv in self.derivatives])
 
+        P_z_vox = np.array([int(np.round(P_z_vox[i])) for i in range(0, len(P_z_vox))])
+        # not perfect but works (if "enough" points), in order to deal with missing z slices
+        for i in range(min(P_z_vox), max(P_z_vox) + 1, 1):
+            if i not in P_z_vox:
+                P_x_temp = np.insert(P_x, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x[np.where(P_z_vox == i - 1)[-1][-1]] + P_x[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_y_temp = np.insert(P_y, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y[np.where(P_z_vox == i - 1)[-1][-1]] + P_y[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_z_temp = np.insert(P_z, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z[np.where(P_z_vox == i - 1)[-1][-1]] + P_z[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_x_d_temp = np.insert(P_x_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_x_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_y_d_temp = np.insert(P_y_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_y_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_z_d_temp = np.insert(P_z_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_z_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
+                P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
 
+        coord_mean = np.array([[np.mean(P_x[P_z_vox == i]), np.mean(P_y[P_z_vox == i]), np.mean(P_z[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
+        x_centerline_fit = coord_mean[:, :][:, 0]
+        y_centerline_fit = coord_mean[:, :][:, 1]
+        coord_mean_d = np.array([[np.mean(P_x_d[P_z_vox == i]), np.mean(P_y_d[P_z_vox == i]), np.mean(P_z_d[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
+        z_centerline = coord_mean[:, :][:, 2]
+        x_centerline_deriv = coord_mean_d[:, :][:, 0]
+        y_centerline_deriv = coord_mean_d[:, :][:, 1]
+        z_centerline_deriv = coord_mean_d[:, :][:, 2]
+
+        return x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv

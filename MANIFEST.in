@@ -1,0 +1,13 @@
+include LICENSE
+include setup*
+include README*
+include Changelog
+include abstract.png
+include version.txt
+include batch_processing*
+
+recursive-include testing *.py *.sh
+recursive-exclude testing __MACOSX
+
+recursive-include scripts *.py
+recursive-exclude scripts __MACOSX

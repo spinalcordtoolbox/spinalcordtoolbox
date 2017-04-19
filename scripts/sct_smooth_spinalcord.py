@@ -85,7 +85,7 @@ def main(args=None):
     # Initialization
     # fname_anat = ''
     # fname_centerline = ''
-    sigma = 3 # default value of the standard deviation for the Gaussian smoothing (in terms of number of voxels)
+    sigma = 3  # default value of the standard deviation for the Gaussian smoothing (in terms of number of voxels)
     # remove_temp_files = param.remove_temp_files
     # verbose = param.verbose
     start_time = time.time()
@@ -106,8 +106,8 @@ def main(args=None):
     print '\nCheck input arguments...'
     print '  Volume to smooth .................. ' + fname_anat
     print '  Centerline ........................ ' + fname_centerline
-    print '  Sigma (mm) ........................ '+str(sigma)
-    print '  Verbose ........................... '+str(verbose)
+    print '  Sigma (mm) ........................ ' + str(sigma)
+    print '  Verbose ........................... ' + str(verbose)
 
     # Check that input is 3D:
     from msct_image import Image
@@ -119,7 +119,7 @@ def main(args=None):
         dim = 2
     if dim == 4:
         sct.printv('WARNING: the input image is 4D, please split your image to 3D before smoothing spinalcord using :\n'
-                   'sct_image -i '+fname_anat+' -split t -o '+fname_anat, verbose, 'warning')
+                   'sct_image -i ' + fname_anat + ' -split t -o ' + fname_anat, verbose, 'warning')
         sct.printv('4D images not supported, aborting ...', verbose, 'error')
 
     # Extract path/file/extension
@@ -128,20 +128,20 @@ def main(args=None):
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S"), 1)
+    sct.run('mkdir ' + path_tmp, verbose)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('cp '+fname_anat+' '+path_tmp+'anat'+ext_anat, verbose)
-    sct.run('cp '+fname_centerline+' '+path_tmp+'centerline'+ext_centerline, verbose)
+    sct.run('cp ' + fname_anat + ' ' + path_tmp + 'anat' + ext_anat, verbose)
+    sct.run('cp ' + fname_centerline + ' ' + path_tmp + 'centerline' + ext_centerline, verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # convert to nii format
-    convert('anat'+ext_anat, 'anat.nii')
-    convert('centerline'+ext_centerline, 'centerline.nii')
+    convert('anat' + ext_anat, 'anat.nii')
+    convert('centerline' + ext_centerline, 'centerline.nii')
 
     # Change orientation of the input image into RPI
     print '\nOrient input volume to RPI orientation...'
@@ -169,7 +169,7 @@ def main(args=None):
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
-    sct.run('sct_maths -i anat_rpi_straight.nii -smooth 0,0,'+str(sigma)+' -o anat_rpi_straight_smooth.nii', verbose)
+    sct.run('sct_maths -i anat_rpi_straight.nii -smooth 0,0,' + str(sigma) + ' -o anat_rpi_straight_smooth.nii', verbose)
 
     # Apply the reversed warping field to get back the curved spinal cord
     print '\nApply the reversed warping field to get back the curved spinal cord...'
@@ -191,20 +191,20 @@ def main(args=None):
 
     # Generate output file
     print '\nGenerate output file...'
-    sct.generate_output_file(path_tmp+'/anat_rpi_straight_smooth_curved_nonzero.nii', file_anat+'_smooth'+ext_anat)
+    sct.generate_output_file(path_tmp + '/anat_rpi_straight_smooth_curved_nonzero.nii', file_anat + '_smooth' + ext_anat)
 
     # Remove temporary files
     if remove_temp_files == 1:
         print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp)
+        sct.run('rm -rf ' + path_tmp)
 
     # Display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
+    print '\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n'
 
     # to view results
     sct.printv('Done! To view results, type:', verbose)
-    sct.printv('fslview '+file_anat+' '+file_anat+'_smooth &\n', verbose, 'info')
+    sct.printv('fslview ' + file_anat + ' ' + file_anat + '_smooth &\n', verbose, 'info')
 
 
 # START PROGRAM

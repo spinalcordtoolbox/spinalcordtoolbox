@@ -22,8 +22,10 @@ import sct_utils as sct
 from msct_parser import Parser
 
 # DEFAULT PARAMETERS
+
+
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.fname_warp_final = 'warp_final.nii.gz'
@@ -43,8 +45,8 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz,-'+path_sct_data+'/mt/warp_template2mt.nii.gz'
-        fname_dest = path_sct_data+'/mt/mtr.nii.gz'
+        fname_warp_list = path_sct_data + '/t2/warp_template2anat.nii.gz,-' + path_sct_data + '/mt/warp_template2mt.nii.gz'
+        fname_dest = path_sct_data + '/mt/mtr.nii.gz'
         verbose = 1
     else:
         # Check input parameters
@@ -58,7 +60,6 @@ def main():
             fname_warp_final = arguments['-o']
         verbose = int(arguments['-v'])
 
-
     # Parse list of warping fields
     sct.printv('\nParse list of transformations...', verbose)
     use_inverse = []
@@ -70,8 +71,8 @@ def main():
             fname_warp_list[i] = fname_warp_list[i][1:]  # remove '-'
         else:
             use_inverse.append('')
-        sct.printv('  Transfo #'+str(i)+': '+use_inverse[i]+fname_warp_list[i], verbose)
-        fname_warp_list_invert.append(use_inverse[i]+fname_warp_list[i])
+        sct.printv('  Transfo #' + str(i) + ': ' + use_inverse[i] + fname_warp_list[i], verbose)
+        fname_warp_list_invert.append(use_inverse[i] + fname_warp_list[i])
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
@@ -89,17 +90,17 @@ def main():
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
     fname_warp_list_invert.reverse()
-    cmd = 'isct_ComposeMultiTransform 3 warp_final' + ext_out + ' -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
-    sct.printv('>> '+cmd, verbose)
+    cmd = 'isct_ComposeMultiTransform 3 warp_final' + ext_out + ' -R ' + fname_dest + ' ' + ' '.join(fname_warp_list_invert)
+    sct.printv('>> ' + cmd, verbose)
     status, output = getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):
-        sct.printv('ERROR: Warping field was not generated.\n'+output, 1, 'error')
+        sct.printv('ERROR: Warping field was not generated.\n' + output, 1, 'error')
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final' + ext_out, path_out+file_out+ext_out)
+    sct.generate_output_file('warp_final' + ext_out, path_out + file_out + ext_out)
 
     print ''
 
