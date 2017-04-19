@@ -253,12 +253,6 @@ class SegmentGM:
         printv('\nLabel fusion of model slices most similar to target slices...', self.param.verbose, 'normal')
         self.label_fusion(list_dic_indexes_by_slice)
 
-        ########## IN DEVELOPMENT ##########
-        # printv('\nz-regularization of the segementation...', self.param.verbose, 'normal')
-        # self.z_regularization_discard_model_slices(list_dic_indexes_by_slice)
-        # self.z_regularization_average_slices()
-        ########## -------------- ##########
-        #
         printv('\nWarp back segmentation into image space...', self.param.verbose, 'normal')
         self.warp_back_seg(path_warp)
 
@@ -445,106 +439,6 @@ class SegmentGM:
                 data_mean_wm[data_mean_wm < 0.5] = 0
             # store segmentation into target_im
             target_slice.set(gm_seg_m=data_mean_gm, wm_seg_m=data_mean_wm)
-
-    ########## IN DEVELOPMENT ##########
-    def z_regularization_discard_model_slices(self, list_dic_indexes_by_slice):
-        os.mkdir('model_slices_skel')
-        from sct_compute_hausdorff_distance import Thinning, HausdorffDistance
-        import copy
-        # compute skeleton for all model slices
-        for i, s in enumerate(self.model.slices):
-            im_model_slice_gm = Image(s.gm_seg_M, absolutepath='model_slices_skel/model_slice_'+str(i)+'.nii.gz')
-            im_model_slice_gm.save()
-            thin = Thinning(im_model_slice_gm)
-            s.gm_skel_M = thin.thinned_image.data
-            if s.gm_skel_M.shape[0]==1:
-                s.gm_skel_M = s.gm_skel_M.reshape(s.gm_skel_M.shape[1:])
-            Image(s.gm_skel_M, absolutepath='model_slices_skel/model_slice_' + str(i) + '_skel.nii.gz').save()
-
-        # compute skeleton for all target slices label fusion results
-        for target_slice in self.target_im:
-            im_target_slice_gm = Image(target_slice.gm_seg_M)
-            thin_target = Thinning(im_target_slice_gm)
-            target_slice.gm_skel_M = thin_target.thinned_image.data
-            if target_slice.gm_skel_M.shape[0] == 1:
-                target_slice.gm_skel_M = target_slice.gm_skel_M.reshape(target_slice.gm_skel_M.shape[1:])
-
-        # save model mean image
-        Image(self.model.mean_image, absolutepath='mean_model_image.nii.gz').save()
-        #
-        # find model slices to discard
-        list_k = range(len(self.target_im))
-        dic_slices_to_discard = {}
-        for k_target in list_k:
-            dic_shd_k_sup = {}
-            dic_shd_k_inf = {}
-
-            k_sup_exist = True if k_target != max(list_k) else False
-            k_inf_exist = True if k_target != min(list_k) else False
-            for j_model_slice in list_dic_indexes_by_slice[k_target]:
-                if  k_sup_exist:
-                    dist_k_sup = HausdorffDistance(self.target_im[k_target+1].gm_skel_M, self.model.slices[j_model_slice].gm_skel_M)
-                    dic_shd_k_sup[j_model_slice] = dist_k_sup.H
-                if k_inf_exist:
-                    dist_k_inf = HausdorffDistance(self.target_im[k_target - 1].gm_skel_M,self.model.slices[j_model_slice].gm_skel_M)
-                    dic_shd_k_inf[j_model_slice] = dist_k_inf.H
-            # keep models slices that have a sHD<95% of max sHD
-            percentile = 0.5
-
-            thr_hd_sup = max(dic_shd_k_sup.values()) * percentile if k_sup_exist else 0
-            thr_hd_inf = max(dic_shd_k_inf.values()) * percentile if k_inf_exist else 0
-            #
-            model_index_k_sup, shd_val_k_sup, model_index_k_inf, shd_val_k_inf = np.asarray(dic_shd_k_sup.keys()), np.asarray(dic_shd_k_sup.values()), np.asarray(dic_shd_k_inf.keys()), np.asarray(dic_shd_k_inf.values())
-            slices_to_discard = np.concatenate((model_index_k_sup[shd_val_k_sup>thr_hd_sup], model_index_k_inf[shd_val_k_inf>thr_hd_inf]))
-            dic_slices_to_discard[k_target] = list(set(slices_to_discard))
-        #
-        # remove model slices for each target slice
-        print 'Model slices to discard: ', dic_slices_to_discard
-        new_list_dic_indexes_by_slice = copy.deepcopy(list_dic_indexes_by_slice)
-        for k_target in list_k:
-            print 'slice ' + str(k_target) + ' :'
-            print '- selecetd model indices: ', list_dic_indexes_by_slice[k_target]
-            if len(list_dic_indexes_by_slice[k_target]) - len(dic_slices_to_discard[k_target]) >= 2:
-                for j_model_slice in dic_slices_to_discard[k_target]:
-                    poped = new_list_dic_indexes_by_slice[k_target].pop(new_list_dic_indexes_by_slice[k_target].index(j_model_slice))
-                    print '--- ', poped
-        # recompute label fusion result
-        self.label_fusion(new_list_dic_indexes_by_slice)
-
-    def z_regularization_average_slices(self):
-        list_new_gm = []
-        list_new_wm = []
-        for k, target_slice in enumerate(self.target_im):
-            # define slices
-            gm_k = target_slice.gm_seg_M
-            gm_inf = self.target_im[k - 1].gm_seg_M if k != 0 else np.zeros(gm_k.shape)
-            gm_sup = self.target_im[k + 1].gm_seg_M if k != len(self.target_im)-1 else np.zeros(gm_k.shape)
-
-            wm_k = target_slice.wm_seg_M
-            wm_inf = self.target_im[k - 1].wm_seg_M if k != 0 else np.zeros(wm_k.shape)
-            wm_sup = self.target_im[k + 1].wm_seg_M if k != len(self.target_im) - 1 else np.zeros(wm_k.shape)
-
-            # weights for the weighted average
-            weight_k = 2
-            weight_other_k = 1
-            n_other_slices = 2 if (k != 0 and  k != len(self.target_im)-1) else 1
-
-            # weighted average
-            new_gm = (weight_other_k * gm_inf + weight_k * gm_k + weight_other_k * gm_sup) / (weight_k + n_other_slices * weight_other_k)
-            new_wm = (weight_other_k * wm_inf + weight_k * wm_k + weight_other_k * wm_sup) / (weight_k + n_other_slices * weight_other_k)
-
-            Image(target_slice.im_M, absolutepath='slice' + str(k) + '_im.nii.gz').save()
-            Image(gm_k, absolutepath='slice'+str(k)+'_gm_original.nii.gz').save()
-            Image(wm_k, absolutepath='slice' + str(k) + '_wm_original.nii.gz').save()
-            Image(new_gm, absolutepath='slice' + str(k) + '_gm_new.nii.gz').save()
-            Image(new_wm, absolutepath='slice' + str(k) + '_wm_new.nii.gz').save()
-
-            list_new_gm.append(new_gm)
-            list_new_wm.append(new_wm)
-        # set slices new gm and wm once they all have been computed
-        for k, target_slice in enumerate(self.target_im):
-            target_slice.set(gm_seg_m=list_new_gm[k], wm_seg_m=list_new_wm[k])
-    ########## -------------- ##########
 
     def warp_back_seg(self, path_warp):
         # get 3D images from list of slices
@@ -752,9 +646,7 @@ class SegmentGM:
             fname_wmseg = im_res_wmseg.absolutepath
 
         sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa'])
-        # run('sct_process_segmentation -i ' + fname_gmseg + ' -p csa -ofolder gm_csa')
         sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa'])
-        # run('sct_process_segmentation -i ' + fname_wmseg + ' -p csa -ofolder wm_csa')
 
         gm_csa = open('gm_csa/csa_per_slice.txt', 'r')
         wm_csa = open('wm_csa/csa_per_slice.txt', 'r')
