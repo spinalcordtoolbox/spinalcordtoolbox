@@ -240,8 +240,9 @@ class SegmentGM:
         # register target image to model dictionary space
         path_warp = self.register_target()
 
-        printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
-        self.normalize_target()
+        if self.param_data.normalization:
+            printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
+            self.normalize_target()
 
         printv('\nProject target image into the model reduced space...', self.param.verbose, 'normal')
         self.project_target()
@@ -825,7 +826,7 @@ def main(args=None):
     if '-denoising' in arguments:
         param_data.denoising = bool(int(arguments['-denoising']))
     if '-normalization' in arguments:
-        param_data.normalization = arguments['-normalization']
+        param_data.normalization = bool(int(arguments['-normalization']))
     if '-p' in arguments:
         param_data.register_param = arguments['-p']
     if '-w-levels' in arguments:
