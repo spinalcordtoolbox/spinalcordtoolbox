@@ -16,13 +16,14 @@ import sys
 import tarfile
 import tempfile
 import zipfile
+import shutil
 
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 
 from msct_parser import Parser
-from sct_utils import printv
+import sct_utils as sct
 
 
 def get_parser():
@@ -35,7 +36,7 @@ def get_parser():
         mandatory=True,
         example=[
             'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
-            'gm_model', 'binaries_debian', 'binaries_centos', 'binaries_osx'
+            'gm_model', 'optic_models', 'binaries_debian', 'binaries_centos', 'binaries_osx'
         ])
     parser.add_option(
         name="-v",
@@ -64,14 +65,15 @@ def main(args=None):
 
     # initialization
     dict_url = {
-        'sct_example_data': 'https://osf.io/feuef/?action=download',
+        'sct_example_data': 'https://osf.io/4nnk3/?action=download',
         'sct_testing_data': 'https://osf.io/uqcz5/?action=download',
         'PAM50': 'https://osf.io/gdwn6/?action=download',
-        'MNI-Poly-AMU': 'https://osf.io/b26vh/?action=download',
+        'MNI-Poly-AMU': 'https://osf.io/sh6h4/?action=download',
         'gm_model': 'https://osf.io/ugscu/?action=download',
-        'binaries_debian': 'https://osf.io/2pztn/?action=download',
-        'binaries_centos': 'https://osf.io/4wbgt/?action=download',
-        'binaries_osx': 'https://osf.io/ceg8p/?action=download'
+        'optic_models': 'https://osf.io/g4fwn/?action=download',
+        'binaries_debian': 'https://osf.io/a83jr/?action=download',
+        'binaries_centos': 'https://osf.io/sgy6x/?action=download',
+        'binaries_osx': 'https://osf.io/rtzey/?action=download'
     }
 
     # Get parser info
@@ -79,34 +81,40 @@ def main(args=None):
     arguments = parser.parse(args)
     data_name = arguments['-d']
     verbose = int(arguments['-v'])
-    dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
+    dest_folder = sct.slash_at_the_end(arguments.get('-o', os.path.abspath(os.curdir)), 1)
 
     # Download data
     url = dict_url[data_name]
     try:
         tmp_file = download_data(url, verbose)
     except (KeyboardInterrupt):
-        printv('\nERROR: User canceled process.\n', 1, 'error')
+        sct.printv('\nERROR: User canceled process.\n', 1, 'error')
 
+    # Check if folder already exists
+    sct.printv('\nCheck if folder already exists...', verbose)
+    if os.path.isdir(data_name):
+        sct.printv('WARNING: Folder ' + data_name + ' already exists. Removing it...', 1, 'warning')
+        shutil.rmtree(data_name, ignore_errors=True)
+
+    # unzip
     unzip(tmp_file, dest_folder, verbose)
 
-    printv('Remove temporary file...\n', verbose)
+    sct.printv('\nRemove temporary file...', verbose)
     os.remove(tmp_file)
 
-    printv('Done! Folder created: %s\n' % dest_folder, verbose, 'info')
+    sct.printv('Done!\n', verbose)
 
 
 def unzip(compressed, dest_folder, verbose):
     """Extract compressed file to the dest_folder"""
-    printv('Copy binaries to %s\n' % dest_folder, verbose)
-    printv('Unzip dataset...\n', verbose)
+    sct.printv('\nUnzip data to: %s' % dest_folder, verbose)
     if compressed.endswith('zip'):
         try:
             zf = zipfile.ZipFile(compressed)
             zf.extractall(dest_folder)
             return
         except (zipfile.BadZipfile):
-            printv(
+            sct.printv(
                 'ERROR: ZIP package corrupted. Please try downloading again.',
                 verbose, 'error')
     elif compressed.endswith('tar.gz'):
@@ -115,10 +123,10 @@ def unzip(compressed, dest_folder, verbose):
             tar.extractall(path=dest_folder)
             return
         except tarfile.TarError:
-            printv('ERROR: ZIP package corrupted. Please try again.',
+            sct.printv('ERROR: ZIP package corrupted. Please try again.',
                    verbose, 'error')
     else:
-        printv('ERROR: The file %s is of wrong format' % compressed, verbose,
+        sct.printv('ERROR: The file %s is of wrong format' % compressed, verbose,
                'error')
 
 
@@ -136,7 +144,7 @@ def download_data(url, verbose):
 
     _, content = cgi.parse_header(response.headers['Content-Disposition'])
     tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-    printv('Downloading %s\n' % content['filename'], verbose)
+    sct.printv('\nDownloading %s...' % content['filename'], verbose)
 
     with open(tmp_path, 'wb') as tmp_file:
         total = int(response.headers.get('content-length', 1))
@@ -148,10 +156,10 @@ def download_data(url, verbose):
                     dl += len(chunk)
                     done = min(int(20 * dl / total), 20)
                     sys.stdout.write("\r[%s%s]" % ('=' * done,
-                                                   ' ' * (20-done)))
+                                                   ' ' * (20 - done)))
                     sys.stdout.flush()
 
-    printv('\nDownload complete %s' % content['filename'], verbose=verbose)
+    sct.printv('Download complete', verbose=verbose)
     return tmp_path
 
 

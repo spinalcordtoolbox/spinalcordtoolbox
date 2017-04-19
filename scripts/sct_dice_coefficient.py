@@ -76,25 +76,25 @@ if __name__ == "__main__":
 
     if '-bin' in arguments:
         fname_input1_bin = sct.add_suffix(fname_input1, '_bin')
-        sct.run('sct_maths -i '+fname_input1+' -bin 0 -o '+fname_input1_bin)
+        sct.run('sct_maths -i ' + fname_input1 + ' -bin 0 -o ' + fname_input1_bin)
         fname_input1 = fname_input1_bin
         fname_input2_bin = sct.add_suffix(fname_input2, '_bin')
-        sct.run('sct_maths -i '+fname_input2+' -bin 0 -o '+fname_input2_bin)
+        sct.run('sct_maths -i ' + fname_input2 + ' -bin 0 -o ' + fname_input2_bin)
         fname_input2 = fname_input2_bin
 
-    cmd = 'isct_dice_coefficient '+fname_input1+' '+fname_input2
+    cmd = 'isct_dice_coefficient ' + fname_input1 + ' ' + fname_input2
 
     if '-2d-slices' in arguments:
-        cmd += ' -2d-slices '+arguments['-2d-slices']
+        cmd += ' -2d-slices ' + arguments['-2d-slices']
     if '-b' in arguments:
         bounding_box = ' '.join(arguments['-b'])
-        cmd += ' -b '+bounding_box
+        cmd += ' -b ' + bounding_box
     if '-bmax' in arguments and arguments['-bmax'] == '1':
         cmd += ' -bmax'
     if '-bzmax' in arguments and arguments['-bzmax'] == '1':
         cmd += ' -bzmax'
     if '-o' in arguments:
-        cmd += ' -o '+arguments['-o']
+        cmd += ' -o ' + arguments['-o']
 
     verbose = arguments['-v']
     if verbose == '0':

@@ -13,7 +13,6 @@
 #########################################################################################
 
 
-
 import sys
 
 import numpy as np
@@ -31,7 +30,7 @@ def main():
 
     # Initialization
     size_data = 61
-    size_label = 1 # put zero for labels that are single points.
+    size_label = 1  # put zero for labels that are single points.
     dice_acceptable = 0.39  # computed DICE should be 0.931034
     test_passed = 0
     remove_temp_files = 1
@@ -39,7 +38,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hvr:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hvr:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -62,15 +61,15 @@ def main():
 
     # add labels for src image (curved).
     # Labels can be big (more than single point), because when applying NN interpolation, single points might disappear
-    data_src[20-size_label:20+size_label+1, 20-size_label:20+size_label+1, 10-size_label:10+size_label+1] = 1
-    data_src[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 30-size_label:30+size_label+1] = 2
-    data_src[20-size_label:20+size_label+1, 20-size_label:20+size_label+1, 50-size_label:50+size_label+1] = 3
+    data_src[20 - size_label:20 + size_label + 1, 20 - size_label:20 + size_label + 1, 10 - size_label:10 + size_label + 1] = 1
+    data_src[30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1] = 2
+    data_src[20 - size_label:20 + size_label + 1, 20 - size_label:20 + size_label + 1, 50 - size_label:50 + size_label + 1] = 3
 
     # add labels for dest image (straight).
     # Here, no need for big labels (bigger than single point) because these labels will not be re-interpolated.
-    data_dest[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 10-size_label:10+size_label+1] = 1
-    data_dest[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 30-size_label:30+size_label+1] = 2
-    data_dest[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 50-size_label:50+size_label+1] = 3
+    data_dest[30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1, 10 - size_label:10 + size_label + 1] = 1
+    data_dest[30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1] = 2
+    data_dest[30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1, 50 - size_label:50 + size_label + 1] = 3
 
     # save as nifti
     img_src = nib.Nifti1Image(data_src, np.eye(4))
@@ -104,9 +103,9 @@ def main():
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
     sct.run('sct_dice_coefficient -i data_dest.nii.gz -d data_src_reg.nii.gz -o dice.txt', verbose)
-    with open ("dice.txt", "r") as file_dice:
+    with open("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
-    printv('Dice coeff = '+str(dice)+' (should be above '+str(dice_acceptable)+')', verbose)
+    printv('Dice coeff = ' + str(dice) + ' (should be above ' + str(dice_acceptable) + ')', verbose)
 
     # Check if DICE coefficient is above acceptable value
     if dice > dice_acceptable:
@@ -118,7 +117,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         printv('\nDelete temporary files...', verbose)
-        sct.run('rm -rf '+ path_tmp, verbose)
+        sct.run('rm -rf ' + path_tmp, verbose)
 
     # output result for parent function
     if test_passed:
@@ -129,20 +128,18 @@ def main():
         sys.exit(1)
 
 
-
 # printv: enables to print or not, depending on verbose status
 #=======================================================================================================================
-def printv(string,verbose):
+def printv(string, verbose):
     if verbose:
         print(string)
-
 
 
 # Print usage
 # ==========================================================================================
 def usage():
     print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
+        '' + os.path.basename(__file__) + '\n' \
         '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
@@ -151,7 +148,7 @@ def usage():
         '  transform notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField..\n' \
         '\n' \
         'USAGE\n' \
-        '  '+os.path.basename(__file__)+'\n' \
+        '  ' + os.path.basename(__file__) + '\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         '  -h                         show this help\n' \
@@ -163,10 +160,8 @@ def usage():
     sys.exit(2)
 
 
-
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
     # call main function
     main()
-

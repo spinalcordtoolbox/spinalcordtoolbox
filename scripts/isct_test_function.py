@@ -116,6 +116,7 @@ def generate_data_list(folder_dataset, json_requirements=None, verbose=1):
 
     return data_subjects, subjects_dir
 
+
 def read_json(path_dir, json_requirements=None, fname_json='dataset_description.json'):
     path_dir = sct.slash_at_the_end(path_dir, slash=1)
     if fname_json not in os.listdir(path_dir) and json_requirements is not None:
@@ -123,7 +124,7 @@ def read_json(path_dir, json_requirements=None, fname_json='dataset_description.
     elif json_requirements is None:
         accept_subject = True
     else:
-        json_file = open(path_dir+fname_json)
+        json_file = open(path_dir + fname_json)
         dic_info = json.load(json_file)
         json_file.close()
         # pass keys and items to lower case
@@ -149,8 +150,8 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
     try:
         results_dataframe = pd.concat([result[2] for result in results])
         results_dataframe.loc[:, 'subject'] = pd.Series(subjects_name, index=results_dataframe.index)
-        results_dataframe.loc[:, 'script'] = pd.Series([function]*len(subjects_name), index=results_dataframe.index)
-        results_dataframe.loc[:, 'dataset'] = pd.Series([folder_dataset]*len(subjects_name), index=results_dataframe.index)
+        results_dataframe.loc[:, 'script'] = pd.Series([function] * len(subjects_name), index=results_dataframe.index)
+        results_dataframe.loc[:, 'dataset'] = pd.Series([folder_dataset] * len(subjects_name), index=results_dataframe.index)
         results_dataframe.loc[:, 'parameters'] = pd.Series([parameters] * len(subjects_name), index=results_dataframe.index)
         return results_dataframe
     except KeyboardInterrupt:
@@ -323,17 +324,17 @@ if __name__ == "__main__":
     start_time = time()
     # create single time variable for output names
     output_time = strftime("%y%m%d%H%M%S")
-    print 'Testing started on: '+strftime("%Y-%m-%d %H:%M:%S")
+    print 'Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S")
 
     # build log file name
     if create_log:
-        file_log = 'results_test_'+function_to_test+'_'+output_time
+        file_log = 'results_test_' + function_to_test + '_' + output_time
         orig_stdout = sys.stdout
-        fname_log = file_log+'.log'
+        fname_log = file_log + '.log'
         handle_log = file(fname_log, 'w')
         # redirect to log file
         sys.stdout = handle_log
-        print 'Testing started on: '+strftime("%Y-%m-%d %H:%M:%S")
+        print 'Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S")
 
     # get path of the toolbox
     path_script = os.path.dirname(__file__)
@@ -348,12 +349,12 @@ if __name__ == "__main__":
         sct_commit = 'unknown'
         sct_branch = 'unknown'
     else:
-        sct_branch = commands.getoutput('git branch --contains '+sct_commit).strip('* ')
+        sct_branch = commands.getoutput('git branch --contains ' + sct_commit).strip('* ')
     # with open (path_sct+"/version.txt", "r") as myfile:
     #     version_sct = myfile.read().replace('\n', '')
     # with open (path_sct+"/commit.txt", "r") as myfile:
     #     commit_sct = myfile.read().replace('\n', '')
-    print 'SCT commit/branch: '+sct_commit+'/'+sct_branch
+    print 'SCT commit/branch: ' + sct_commit + '/' + sct_branch
     os.chdir(path_curr)
 
     # check OS
@@ -362,7 +363,7 @@ if __name__ == "__main__":
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print 'OS: '+os_running+' ('+platform.platform()+')'
+    print 'OS: ' + os_running + ' (' + platform.platform() + ')'
 
     # check hostname
     print 'Hostname:', platform.node()
@@ -396,7 +397,7 @@ if __name__ == "__main__":
 
         # save panda structure
         if create_log:
-            results_subset.to_pickle(file_log+'.pickle')
+            results_subset.to_pickle(file_log + '.pickle')
 
         # mean
         results_mean = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
@@ -425,7 +426,7 @@ if __name__ == "__main__":
         # display general results
         print '\nGLOBAL RESULTS:'
         elapsed_time = time() - start_time
-        print 'Duration: ' + str(int(round(elapsed_time)))+'s'
+        print 'Duration: ' + str(int(round(elapsed_time))) + 's'
         # display results
         print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
         print 'Crashed: ' + str(count_crashed) + '/' + str(count_ran)
@@ -451,7 +452,7 @@ if __name__ == "__main__":
 
             n_plots = len(results_display.keys()) - 2
             sns.set_style("whitegrid")
-            fig, ax = plt.subplots(1, n_plots, gridspec_kw={'wspace': 1}, figsize=(n_plots*4, 15))
+            fig, ax = plt.subplots(1, n_plots, gridspec_kw={'wspace': 1}, figsize=(n_plots * 4, 15))
             i = 0
             ax_array = asarray(ax)
 
@@ -461,7 +462,7 @@ if __name__ == "__main__":
                         a = ax
                     else:
                         a = ax[i]
-                    data_passed = results_display[results_display['status']==0]
+                    data_passed = results_display[results_display['status'] == 0]
                     sns.violinplot(x='status', y=key, data=data_passed, ax=a, inner="quartile", cut=0,
                                    scale="count", color='lightgray')
                     sns.swarmplot(x='status', y=key, data=data_passed, ax=a, color='0.3', size=4)
@@ -475,7 +476,6 @@ if __name__ == "__main__":
                     a.set_ylabel('')
             plt.savefig('fig_' + file_log + '.png', bbox_inches='tight', pad_inches=0.5)
             plt.close()
-
 
     except Exception as err:
         if print_if_error:
@@ -493,5 +493,5 @@ if __name__ == "__main__":
     # send email
     if email:
         print 'Sending email...'
-        sct.send_email(email, passwd_from=passwd, subject=file_log, message=message, filename=file_log+'.log')
+        sct.send_email(email, passwd_from=passwd, subject=file_log, message=message, filename=file_log + '.log')
         print 'done!'

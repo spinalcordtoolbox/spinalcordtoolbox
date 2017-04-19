@@ -18,7 +18,7 @@ import sys
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.verbose = 1
 
@@ -28,10 +28,6 @@ class Param:
 def get_parser():
     # parser initialisation
     parser = Parser(__file__)
-
-    # initialize parameters
-    param = Param()
-    param_default = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -64,7 +60,7 @@ def convert(fname_in, fname_out, squeeze_data=True, type=None, verbose=1):
     """
     from msct_image import Image
     from sct_utils import printv
-    printv('sct_convert -i '+fname_in+' -o '+fname_out, verbose, 'code')
+    printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
     # Open file
     im = Image(fname_in)
     # Save file
@@ -93,7 +89,6 @@ def main(args = None):
     convert(fname_in, fname_out, squeeze_data=squeeze_data)
 
 
-
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
@@ -101,7 +96,6 @@ if __name__ == "__main__":
     param = Param()
     # call main function
     main()
-
 
 
 # import os
@@ -276,4 +270,3 @@ if __name__ == "__main__":
 #                 """
 #     # exit program
 #     sys.exit(2)
-
