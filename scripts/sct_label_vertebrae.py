@@ -351,7 +351,8 @@ def main(args=None):
         def test(qslice):
             return qslice.single()
 
-        test(qcslice.Sagittal(fname_in, fname_seg))
+        labeled_seg_file = path_output + file_seg + '_labeled' + ext_seg
+        test(qcslice.Sagittal(fname_in, labeled_seg_file))
         sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
         sct.printv('Use "sct_qc -folder %s" to see the results on a browser' % qc_path)
 

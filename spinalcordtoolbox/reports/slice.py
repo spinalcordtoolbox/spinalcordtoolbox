@@ -91,8 +91,13 @@ image_seg : msct_image.Image
         return
 
     @staticmethod
-    def crop(matrix, x, y, size):
-        """Crops the unnecessary parts of the image to keep only the essential image of the slice
+    def crop(matrix, x, y, width, height):
+        """Crops the matrix to width and heigth from the center
+
+        Select the size of the matrix if the calulated crop `width` or `height`
+        are larger then the size of the matrix.
+
+        TODO : Move this into the Axial class
 
         Parameters
         ----------
@@ -102,19 +107,31 @@ image_seg : msct_image.Image
             The center of the crop area in the x axis
         y : int
             The center of the crop area in the y axis
-        size : int
-            The length of the crop area
+        width : int
+            The width from the center
+        height : int
+            The height from the center
 
         Returns
         -------
         ndarray
             returns the cropped matrix
         """
-        start_row = x // 2 - ( size // 2)
-        end_row = start_row + size
+        if width * 2 > matrix.shape[0]:
+           width = matrix.shape[0] // 2
+        if height * 2 > matrix.shape[1]:
+            height = matrix.shape[1] // 2
 
-        start_col = y // 2 - ( size // 2 )
-        end_col = start_col + size
+        if x < width:
+            x = width
+        if y < height:
+            y = height
+
+        start_row = x - width
+        end_row = start_row + width * 2
+
+        start_col = y - height
+        end_col = start_col + height * 2
 
         return matrix[start_row:end_row, start_col:end_col]
 
@@ -122,6 +139,7 @@ image_seg : msct_image.Image
     def add_slice(matrix, i, column, size, patch):
         """Adds a slice to the Matrix containing all the slices
 
+        TODO : Move this to the Axial class
         Parameters
         ----------
         matrix : ndarray
@@ -135,17 +153,13 @@ image_seg : msct_image.Image
         ndarray
             returns the matrix with the additional slice
         """
-        start_col = (i % column) * patch.shape[1]
+        start_col = (i % column) * size * 2
         end_col = start_col + patch.shape[1]
 
-        start_row = int(i / column) * patch.shape[0]
+        start_row = int(i / column) * size * 2
         end_row = start_row + patch.shape[0]
-        try:
-            matrix[start_row:end_row, start_col:end_col] = patch
-        except ValueError as err:
-            logger.debug(matrix.shape)
-            logger.error(err)
-            raise err
+
+        matrix[start_row:end_row, start_col:end_col] = patch
         return matrix
 
     @staticmethod
@@ -216,7 +230,7 @@ image_seg : msct_image.Image
             raise err
         return centers_x, centers_y
 
-    def mosaic(self, nb_column=0, size=0):
+    def mosaic(self, nb_column=0, size=15):
         """Obtain matrices of the mosaics
 
         Calculates how many squares will fit in a row based on the column and the size
@@ -236,21 +250,13 @@ image_seg : msct_image.Image
         """
         dim = self.get_dim(self.image)
         if nb_column == 0:
-            nb_column = int(math.ceil(math.sqrt(dim)))
+            nb_column = 600 // (size * 2)
 
-        max_size = max(self.image.data.shape[:2])
-        if size == 0:
-            size = max_size
-        size = min(size, max_size)
-
-        logger.debug(size)
-        logger.debug(nb_column)
-        logger.debug(dim)
+        nb_row = math.ceil(dim // nb_column) + 1
 
         length, width = self.get_slice(self.image.data, 1).shape
 
-        matrix_sz = (int(length * nb_column), int(width * nb_column))
-        logger.debug(matrix_sz)
+        matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
         matrix0 = np.ones(matrix_sz)
         matrix1 = np.zeros(matrix_sz)
         centers_x, centers_y = self.get_center()
@@ -259,10 +265,10 @@ image_seg : msct_image.Image
             x = int(centers_x[i])
             y = int(centers_y[i])
 
-            matrix0 = self.add_slice(matrix0, i, nb_column, dim,
-                                     self.crop(self.get_slice(self.image.data, i), x, y, size))
-            matrix1 = self.add_slice(matrix1, i, nb_column, dim,
-                                     self.crop(self.get_slice(self.image_seg.data, i), x, y, size))
+            matrix0 = self.add_slice(matrix0, i, nb_column, size,
+                                     self.crop(self.get_slice(self.image.data, i), x, y, size, size))
+            matrix1 = self.add_slice(matrix1, i, nb_column, size,
+                                     self.crop(self.get_slice(self.image_seg.data, i), x, y, size, size))
 
         return matrix0, matrix1
 
