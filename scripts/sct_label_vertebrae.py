@@ -353,8 +353,9 @@ def main(args=None):
 
         labeled_seg_file = path_output + file_seg + '_labeled' + ext_seg
         test(qcslice.Sagittal(fname_in, labeled_seg_file))
-        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use "sct_qc -folder %s" to see the results on a browser' % qc_path)
+        sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
+        sct.printv('Use the following command to see the results in a browser')
+        sct.printv('sct_qc -folder %s' % qc_path, type='info')
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)

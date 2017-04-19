@@ -587,5 +587,6 @@ if __name__ == "__main__":
             return qslice.mosaic()
 
         test(qcslice.Axial(fname_input_data, fname_seg))
-        sct.printv('Sucessfully generate the QC results in %s' % param.qc_results)
-        sct.printv('Use "sct_qc -folder %s" to see the results on a browser' % qc_path)
+        sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
+        sct.printv('Use the following command to see the results in a browser')
+        sct.printv('sct_qc -folder %s' % qc_path, type='info')
