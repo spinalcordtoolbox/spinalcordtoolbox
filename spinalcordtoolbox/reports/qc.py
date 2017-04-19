@@ -4,6 +4,8 @@ import logging
 import os
 import subprocess
 
+import warnings
+warnings.filterwarnings("ignore")
 import datetime
 import matplotlib
 matplotlib.use('Agg')
