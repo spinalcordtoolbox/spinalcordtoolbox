@@ -36,6 +36,16 @@ $(document).ready(function(){
     $("#sprite-img").attr("src", list[index].background_img);
     $("#overlay-img").attr("src", list[index].overlay_img);
 
+    $(this).addClass('active').siblings().removeClass('active');
     console.log(list[index]);
+  });
+
+  $('html').keydown( function(evt) {
+    if (evt.which == 39) {
+      $('table tr.active').next().click();
+    }
+    if (evt.which == 37) {
+      $('table tr.active').prev().click();
+    }
   });
 });

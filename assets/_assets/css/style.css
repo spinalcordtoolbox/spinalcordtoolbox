@@ -22,6 +22,7 @@
 
 #mosaic-container {
     width: 80%;
+    margin-top: 7px;
 }
 
 #sprite-img {
@@ -43,5 +44,5 @@
     left: 0;
     max-width: 100%;
     height: auto;
-    animation: phase-in-out 1s infinite alternate ease-in-out;
+    animation: phase-in-out .5s infinite alternate ease-in-out;
 }
