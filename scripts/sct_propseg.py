@@ -428,10 +428,9 @@ if __name__ == "__main__":
         cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
         sct.run(cmd_image, verbose=False)
 
-        from sct_viewer import ClickViewer
+        from sct_viewer import ClickViewerPropseg
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
-        viewer = ClickViewer(image_input_reoriented)
-        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
+        viewer = ClickViewerPropseg(image_input_reoriented)
         if use_viewer == "mask":
             viewer.input_type = 'mask'
             viewer.number_of_slices = 3
@@ -474,7 +473,7 @@ if __name__ == "__main__":
             elif use_viewer == "mask":
                 cmd += " -init-mask " + folder_output + mask_reoriented_filename
         else:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
+            sct.printv('\nERROR: the viewer has been closed before entering any manual points. Please try again.', 1, type='error')
 
     elif use_optic:
         sct.printv('Detecting the spinal cord using OptiC', verbose=verbose)
