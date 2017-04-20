@@ -164,6 +164,10 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value=None,
                       description="display this help",
                       mandatory=False)
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=os.path.expanduser('~/qc_data'))
     return parser
 
 
@@ -333,6 +337,25 @@ def main(args=None):
     if remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
         sct.run('rm -rf ' + path_tmp)
+
+    if '-qc' in arguments:
+        qc_path = arguments['-qc']
+
+        import spinalcordtoolbox.reports.qc as qc
+        import spinalcordtoolbox.reports.slice as qcslice
+
+        qc_param = qc.Params(fname_in, 'sct_label_vertebrae', args, 'Sagittal', qc_path)
+        report = qc.QcReport(qc_param, '')
+
+        @qc.QcImage(report, 'none', [qc.QcImage.label_vertebrae, ])
+        def test(qslice):
+            return qslice.single()
+
+        labeled_seg_file = path_output + file_seg + '_labeled' + ext_seg
+        test(qcslice.Sagittal(fname_in, labeled_seg_file))
+        sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
+        sct.printv('Use the following command to see the results in a browser')
+        sct.printv('sct_qc -folder %s' % qc_path, type='info')
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)

@@ -37,18 +37,18 @@ echo "Started at: $(date +%x_%r)"
 # ===========================================================================================
 cd t2
 # Spinal cord segmentation
-sct_propseg -i t2.nii.gz -c t2
+sct_propseg -i t2.nii.gz -c t2 -qc ~/qc_batch_t2
 # Check results:
 if [ $DISPLAY = true ]; then
   fslview t2 -b 0,3000 t2_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
 # tips: here we use manual initialization of labeling by clicking at disc C2-C3
-sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2 -initc2
+sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2 -initc2 -qc ~/qc_batch_t2
 # Create labels at C2 and C5 vertebral levels
 sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 2,5
 # Register to template
-sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -c t2
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -c t2 -qc ~/qc_batch_t2
 # Warp template without the white matter atlas (we don't need it at this point)
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # check results
@@ -72,7 +72,7 @@ sct_create_mask -i mt1.nii.gz -p centerline,t2_seg_reg.nii.gz -size 45mm
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 sct_crop_image -i mt0.nii.gz -m mask_mt1.nii.gz -o mt0_crop.nii.gz
 # segment mt1
-sct_propseg -i mt1_crop.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz
+sct_propseg -i mt1_crop.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz -qc ~/qc_batch_t2
 # Check results
 if [ $DISPLAY = true ]; then
    fslview mt1_crop.nii.gz mt1_crop_seg.nii.gz -l Red -b 0,1 -t 0.7 &
@@ -127,7 +127,7 @@ sct_crop_image -i dmri.nii.gz -m mask_dmri_mean.nii.gz -o dmri_crop.nii.gz
 # motion correction
 sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
 # segmentation with propseg
-sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline t2_seg_reg.nii.gz
+sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline t2_seg_reg.nii.gz -qc ~/qc_batch_t2
 # check segmentation
 if [ $DISPLAY = true ]; then
   fslview dwi_moco_mean -b 0,1000 dwi_moco_mean_seg -l Red -t 0.5 &
