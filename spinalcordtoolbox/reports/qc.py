@@ -306,7 +306,7 @@ class QcReport(object):
         os.chdir(path_sct)
         sct_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
         if not sct_commit.isalnum():
-            logger.warn('Can not get GIT hash value')
+            logger.info('Can not get GIT hash value')
             sct_commit = 'unknown'
             sct_branch = 'unknown'
         else:
