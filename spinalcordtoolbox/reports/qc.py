@@ -231,8 +231,8 @@ class Params(object):
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S')
 
         self.qc_results = os.path.join(dest_folder, 'qc_results.json')
-        self.bkg_img_path = os.path.join(contrast, subject, command, self.mod_date, 'bkg_img.png')
-        self.overlay_img_path = os.path.join(contrast, subject, command, self.mod_date, 'overlay_img.png')
+        self.bkg_img_path = os.path.join(subject, contrast, command, self.mod_date, 'bkg_img.png')
+        self.overlay_img_path = os.path.join(subject, contrast, command, self.mod_date, 'overlay_img.png')
 
     def abs_bkg_img_path(self):
         return os.path.join(self.root_folder, self.bkg_img_path)
