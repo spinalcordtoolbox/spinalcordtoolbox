@@ -13,7 +13,6 @@
 #########################################################################################
 
 
-
 import sys
 import commands
 import getopt
@@ -22,7 +21,6 @@ import time
 import numpy as np
 import nibabel as nib
 import sct_utils as sct
-
 
 
 # main
@@ -39,7 +37,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hv:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hv:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -49,8 +47,8 @@ def main():
             verbose = int(arg)
 
     # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+ path_tmp, verbose)
+    path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
+    sct.run('mkdir ' + path_tmp, verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -61,11 +59,11 @@ def main():
 
     # add labels for src image (curved).
     # Labels can be big (more than single point), because when applying NN interpolation, single points might disappear
-    data_src[20-size_label:20+size_label+1, 20-size_label:20+size_label+1, 10-size_label:10+size_label+1] = 1
-    data_src[25-size_label:25+size_label+1, 25-size_label:25+size_label+1, 20-size_label:20+size_label+1] = 2
-    data_src[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 30-size_label:30+size_label+1] = 3
-    data_src[25-size_label:25+size_label+1, 25-size_label:25+size_label+1, 40-size_label:40+size_label+1] = 4
-    data_src[20-size_label:20+size_label+1, 20-size_label:20+size_label+1, 50-size_label:50+size_label+1] = 5
+    data_src[20 - size_label:20 + size_label + 1, 20 - size_label:20 + size_label + 1, 10 - size_label:10 + size_label + 1] = 1
+    data_src[25 - size_label:25 + size_label + 1, 25 - size_label:25 + size_label + 1, 20 - size_label:20 + size_label + 1] = 2
+    data_src[30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1] = 3
+    data_src[25 - size_label:25 + size_label + 1, 25 - size_label:25 + size_label + 1, 40 - size_label:40 + size_label + 1] = 4
+    data_src[20 - size_label:20 + size_label + 1, 20 - size_label:20 + size_label + 1, 50 - size_label:50 + size_label + 1] = 5
 
     points_moving = [[20, 20, 10],
                      [25, 25, 20],
@@ -75,11 +73,11 @@ def main():
 
     # add labels for dest image (straight).
     # Here, no need for big labels (bigger than single point) because these labels will not be re-interpolated.
-    data_dest[28-size_label:28+size_label+1, 28-size_label:28+size_label+1, 10-size_label:10+size_label+1] = 1
-    data_dest[29-size_label:29+size_label+1, 29-size_label:29+size_label+1, 20-size_label:20+size_label+1] = 2
-    data_dest[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 30-size_label:30+size_label+1] = 3
-    data_dest[29-size_label:29+size_label+1, 29-size_label:29+size_label+1, 40-size_label:40+size_label+1] = 4
-    data_dest[28-size_label:28+size_label+1, 28-size_label:28+size_label+1, 50-size_label:50+size_label+1] = 5
+    data_dest[28 - size_label:28 + size_label + 1, 28 - size_label:28 + size_label + 1, 10 - size_label:10 + size_label + 1] = 1
+    data_dest[29 - size_label:29 + size_label + 1, 29 - size_label:29 + size_label + 1, 20 - size_label:20 + size_label + 1] = 2
+    data_dest[30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1, 30 - size_label:30 + size_label + 1] = 3
+    data_dest[29 - size_label:29 + size_label + 1, 29 - size_label:29 + size_label + 1, 40 - size_label:40 + size_label + 1] = 4
+    data_dest[28 - size_label:28 + size_label + 1, 28 - size_label:28 + size_label + 1, 50 - size_label:50 + size_label + 1] = 5
 
     points_fixed = [[28, 28, 10],
                     [29, 29, 20],
@@ -126,7 +124,7 @@ def main():
     # Concatenate rigid and non-linear transformations...
     printv('\nConcatenate rigid and non-linear transformations...', verbose)
     cmd = 'isct_ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
-    printv('>> '+cmd, verbose)
+    printv('>> ' + cmd, verbose)
     commands.getstatusoutput(cmd)
 
     # Apply deformation to input image
@@ -136,9 +134,9 @@ def main():
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
     sct.run('sct_dice_coefficient data_dest.nii.gz data_src_warp.nii.gz -o dice.txt', verbose)
-    with open ("dice.txt", "r") as file_dice:
+    with open("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
-    printv('Dice coeff = '+str(dice), verbose)
+    printv('Dice coeff = ' + str(dice), verbose)
 
     # Check if DICE coefficient is above acceptable value
     if dice > dice_acceptable:
@@ -150,7 +148,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         printv('\nDelete temporary files...', verbose)
-        sct.run('rm -rf '+ path_tmp, verbose)
+        sct.run('rm -rf ' + path_tmp, verbose)
 
     # output result for parent function
     if test_passed:
@@ -161,20 +159,18 @@ def main():
         sys.exit(1)
 
 
-
 # printv: enables to print or not, depending on verbose status
 #=======================================================================================================================
-def printv(string,verbose):
+def printv(string, verbose):
     if verbose:
         print(string)
-
 
 
 # Print usage
 # ==========================================================================================
 def usage():
     print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
+        '' + os.path.basename(__file__) + '\n' \
         '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
@@ -183,7 +179,7 @@ def usage():
         '  transform notably when using isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField..\n' \
         '\n' \
         'USAGE\n' \
-        '  '+os.path.basename(__file__)+'\n' \
+        '  ' + os.path.basename(__file__) + '\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         '  -h                         show this help\n' \
@@ -194,10 +190,8 @@ def usage():
     sys.exit(2)
 
 
-
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
     # call main function
     main()
-

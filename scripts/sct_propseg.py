@@ -19,6 +19,7 @@ import shutil
 from scipy import ndimage as ndi
 import numpy as np
 from sct_image import orientation
+import nibabel as nib
 
 
 def check_and_correct_segmentation(fname_segmentation, fname_centerline, threshold_distance=5.0, remove_temp_files=1, verbose=0):
@@ -75,7 +76,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
     # for each slice of the segmentation, check if only one object is present. If not, remove the slice from segmentation.
     # If only one object (the spinal cord) is present in the slice, check if its center of mass is close to the centerline of isct_propseg.
     slices_to_remove = [False] * nz  # flag that decides if the slice must be removed
-    for i in range(minz_centerline, maxz_centerline+1):
+    for i in range(minz_centerline, maxz_centerline + 1):
         # extraction of slice
         slice = im_seg.data[:, :, i]
         distance = -1
@@ -84,7 +85,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
             slices_to_remove[i] = True
         elif nb_labels == 1:  # check if the centerline is coherent with the one from isct_propseg
             x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
-            slice_nearest_coord = min(key_centerline, key=lambda x:abs(x-i))
+            slice_nearest_coord = min(key_centerline, key=lambda x: abs(x - i))
             coord_nearest_coord = centerline[str(slice_nearest_coord)]
             distance = np.sqrt(((x_centerline - coord_nearest_coord[0]) * px) ** 2 +
                                ((y_centerline - coord_nearest_coord[1]) * py) ** 2 +
@@ -102,7 +103,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
             slices_to_remove[i] = True
         elif slices_to_remove[i]:
             slice_to_change = True
-            
+
     slice_to_change = False
     for i in range(mid_slice, 0, -1):
         if slice_to_change:
@@ -158,12 +159,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       mandatory=False,
                       deprecated=1,
                       deprecated_by="-c",
-                      example=['t1','t2'])
+                      example=['t1', 't2'])
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
+                      description="type of image contrast, if your contrast is not in the available options (t1, t2, t2s, dwi), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
                       mandatory=True,
-                      example=['t1','t2'])
+                      example=['t1', 't2', 't2s', 'dwi'])
     parser.usage.addSection("General options")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -237,8 +238,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
                       type_value="image_nifti",
-                      description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation.\nReplace filename by 'viewer' to use interactive viewer for providing centerline. Ex: -init-centerline viewer",
-                      mandatory=False)
+                      description="filename of centerline to use for the propagation, "
+                                  "format .txt or .nii, see file structure in documentation."
+                                  "\nReplace filename by 'viewer' to use interactive viewer for providing centerline. "
+                                  "Ex: -init-centerline viewer",
+                      mandatory=False,
+                      list_no_image=['viewer', 'hough', 'optic'])
     parser.add_option(name="-init",
                       type_value="float",
                       description="axial slice where the propagation starts, default is middle axial slice",
@@ -305,8 +310,11 @@ if __name__ == "__main__":
     fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
 
+    contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dwi': 't1'}
+    contrast_type_propseg = contrast_type_conversion[contrast_type]
+
     # Building the command
-    cmd = 'isct_propseg -i "%s" -t %s' % (fname_data, contrast_type)
+    cmd = 'isct_propseg -i "%s" -t %s' % (fname_data, contrast_type_propseg)
 
     if "-ofolder" in arguments:
         folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
@@ -354,11 +362,15 @@ if __name__ == "__main__":
 
     # Helping options
     use_viewer = None
+    use_optic = True  # enabled by default
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
             use_viewer = "centerline"
+        elif str(arguments["-init-centerline"]) == "hough":
+            use_optic = False
         else:
             cmd += " -init-centerline " + str(arguments["-init-centerline"])
+            use_optic = False
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
@@ -456,6 +468,72 @@ if __name__ == "__main__":
         else:
             sct.printv('\nERROR: the viewer has been closed before entering any manual points. Please try again.', 1, type='error')
 
+    elif use_optic:
+        sct.printv('Detecting the spinal cord using OptiC', verbose=verbose)
+        image_input_orientation = orientation(image_input, get=True, verbose=False)
+        path_tmp_optic = sct.tmp_create(verbose=0)
+
+        shutil.copy(fname_data, path_tmp_optic)
+        os.chdir(path_tmp_optic)
+
+        # convert image data type to int16, as required by opencv (backend in OptiC)
+        image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
+        cmd_type = 'sct_image -i "%s" -o "%s" -type int16 -v 0' % \
+                   (file_data + ext_data, image_int_filename)
+        sct.run(cmd_type, verbose=0)
+
+        # reorient the input image to RPI + convert to .nii
+        reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
+        img_filename = ''.join(sct.extract_fname(reoriented_image_filename)[:2])
+        reoriented_image_filename_nii = img_filename + '.nii'
+        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
+                    (image_int_filename, reoriented_image_filename_nii)
+        sct.run(cmd_reorient, verbose=0)
+
+        # call the OptiC method to generate the spinal cord centerline
+        optic_input = img_filename
+        optic_filename = img_filename + '_optic'
+        # get path of the toolbox
+        path_script = os.path.dirname(__file__)
+        path_sct = os.path.dirname(path_script)
+        path_classifier = path_sct + '/data/optic_models/' + contrast_type + '_model'
+        # path_classifier = path_sct + '/bin/' + contrast_type + '_model'
+        # os.chdir(path_sct + '/data/models')
+        os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
+        cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
+                    (path_classifier, optic_input, optic_filename)
+        sct.run(cmd_optic, verbose=0)
+
+        # convert .img and .hdr files to .nii.gz
+        optic_hdr_filename = img_filename + '_optic_ctr.hdr'
+        centerline_optic_RPI_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic_RPI")
+        img = nib.load(optic_hdr_filename)
+        nib.save(img, centerline_optic_RPI_filename)
+
+        # reorient the output image to initial orientation
+        centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
+        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
+                       (centerline_optic_RPI_filename, centerline_optic_filename, image_input_orientation)
+        sct.run(cmd_reorient, verbose=0)
+
+        # copy centerline to parent folder
+        sct.printv('Copy output to ' + folder_output, verbose=0)
+        if os.path.isabs(folder_output):
+            shutil.copy(centerline_optic_filename, folder_output)
+        else:
+            shutil.copy(centerline_optic_filename, '../' + folder_output)
+
+        # update to PropSeg command line with the new centerline created by OptiC
+        cmd += " -init-centerline " + folder_output + centerline_optic_filename
+
+        # return to initial folder
+        os.chdir('..')
+
+        # delete temporary folder
+        if remove_temp_files:
+            shutil.rmtree(path_tmp_optic, ignore_errors=True)
+
+    # enabling centerline extraction by default
     cmd += ' -centerline-binary'
     status, output = sct.run(cmd, verbose, error_exit='verbose')
 

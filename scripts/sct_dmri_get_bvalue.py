@@ -26,7 +26,7 @@ from msct_parser import Parser
 def main():
 
     # Initialization
-    GYRO = float(42.576 * 10 ** 6) # gyromagnetic ratio (in Hz.T^-1)
+    GYRO = float(42.576 * 10 ** 6)  # gyromagnetic ratio (in Hz.T^-1)
     gradamp = []
     bigdelta = []
     smalldelta = []
@@ -39,16 +39,17 @@ def main():
 
     # print arguments
     print '\nCheck parameters:'
-    print '  gradient amplitude ..... '+str(gradamp*1000)+' mT/m'
-    print '  big delta .............. '+str(bigdelta*1000)+' ms'
-    print '  small delta ............ '+str(smalldelta*1000)+' ms'
-    print '  gyromagnetic ratio ..... '+str(GYRO)+' Hz/T'
+    print '  gradient amplitude ..... ' + str(gradamp * 1000) + ' mT/m'
+    print '  big delta .............. ' + str(bigdelta * 1000) + ' ms'
+    print '  small delta ............ ' + str(smalldelta * 1000) + ' ms'
+    print '  gyromagnetic ratio ..... ' + str(GYRO) + ' Hz/T'
     print ''
 
-    bvalue = ( 2 * math.pi * GYRO * gradamp * smalldelta ) ** 2 * (bigdelta - smalldelta/3)
+    bvalue = (2 * math.pi * GYRO * gradamp * smalldelta) ** 2 * (bigdelta - smalldelta / 3)
 
-    print 'b-value = '+str(bvalue / 10**6)+' mm^2/s\n'
+    print 'b-value = ' + str(bvalue / 10**6) + ' mm^2/s\n'
     return bvalue
+
 
 def get_parser():
     # Initialize the parser

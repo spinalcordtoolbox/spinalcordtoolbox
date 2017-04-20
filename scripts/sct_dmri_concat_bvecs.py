@@ -17,6 +17,8 @@ from dipy.data.fetcher import read_bvals_bvecs
 
 # PARSER
 # ==========================================================================================
+
+
 def get_parser():
 
     # Initialize the parser
@@ -48,7 +50,7 @@ def main():
         fname_out = arguments["-o"]
     else:
         path_in, file_in, ext_in = extract_fname(fname_bvecs_list[0])
-        fname_out = path_in+'bvecs_concat'+ext_in
+        fname_out = path_in + 'bvecs_concat' + ext_in
 
     # # Open bvec files and collect values
     # nb_files = len(fname_bvecs_list)
@@ -82,7 +84,7 @@ def main():
     bvecs_concat = '\n'.join(str(v) for v in bvecs_all)
 
     # Write new bvec
-    new_f = open(fname_out,'w')
+    new_f = open(fname_out, 'w')
     new_f.write(bvecs_concat)
     new_f.close()
 
@@ -92,6 +94,3 @@ def main():
 if __name__ == "__main__":
     # call main function
     main()
-
-
-

@@ -20,7 +20,7 @@
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.create_log_file = 0
         self.complete_test = 0
@@ -97,12 +97,12 @@ def main():
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print 'OS: '+os_running+' ('+platform.platform()+')'
+    print 'OS: ' + os_running + ' (' + platform.platform() + ')'
 
     # Check number of CPU cores
     from multiprocessing import cpu_count
     status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: '+output
+    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: ' + output
 
     # check RAM
     sct.checkRAM(os_running, 0)
@@ -124,14 +124,14 @@ def main():
         if not (sct_commit.isalnum()):
             sct_commit = 'unknown'
             sct_branch = 'unknown'
-        print '  commit: '+sct_commit
-        print '  branch: '+sct_branch
+        print '  commit: ' + sct_commit
+        print '  branch: ' + sct_branch
     else:
         print 'Installation type: package'
         # fetch version
         with open(path_sct + '/version.txt', 'r') as myfile:
             version_sct = myfile.read().replace('\n', '')
-        print '  version: '+version_sct
+        print '  version: ' + version_sct
 
     os.chdir(path_curr)
 
@@ -149,11 +149,11 @@ def main():
         print_ok()
     else:
         print_fail()
-        print '  Python path: '+path_python
+        print '  Python path: ' + path_python
 
     # check if data folder is empty
     print_line('Check if data are installed')
-    if os.listdir(path_sct+"/data"):
+    if os.listdir(path_sct + "/data"):
         print_ok()
     else:
         print_fail()
@@ -170,7 +170,7 @@ def main():
             module = 'PyQt4'
         else:
             module = i
-        print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
+        print_line('Check if ' + i + ' (' + version_requirements.get(i) + ') is installed')
         try:
             module = importlib.import_module(module)
             # get version
@@ -187,7 +187,7 @@ def main():
                 print_ok()
             else:
                 print_warning()
-                print '  Detected version: '+version+'. Required version: '+version_requirements[i]
+                print '  Detected version: ' + version + '. Required version: ' + version_requirements[i]
         except ImportError:
             print_fail()
             install_software = 1
@@ -196,7 +196,7 @@ def main():
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
         module = i
-        print_line('Check if '+i+' ('+version_requirements_pip.get(i)+') is installed')
+        print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
         try:
             module = importlib.import_module(module)
             # get version
@@ -206,11 +206,10 @@ def main():
                 print_ok()
             else:
                 print_warning()
-                print '  Detected version: '+version+'. Required version: '+version_requirements_pip[i]
+                print '  Detected version: ' + version + '. Required version: ' + version_requirements_pip[i]
         except ImportError:
             print_fail()
             install_software = 1
-
 
     # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
     print_line('Check if numpy is installed')
@@ -266,7 +265,7 @@ def main():
         print output
         e = 1
     if complete_test:
-        print '>> '+cmd
+        print '>> ' + cmd
         print (status, output), '\n'
 
     # check if ANTs is compatible with OS
@@ -312,7 +311,7 @@ def main():
     if create_log_file:
         sys.stdout = orig_stdout
         handle_log.close()
-        print "File generated: "+file_log+'\n'
+        print "File generated: " + file_log + '\n'
     print ''
     sys.exit(e + install_software)
 
@@ -329,7 +328,7 @@ def print_line(string):
 # ==========================================================================================
 def make_dot_lines(string):
     if len(string) < 52:
-        dot_lines = '.'*(52 - len(string))
+        dot_lines = '.' * (52 - len(string))
         return dot_lines
     else:
         return ''
@@ -350,13 +349,13 @@ def print_fail():
 def add_bash_profile(string):
     from os.path import expanduser
     home = expanduser("~")
-    with open(home+"/.bash_profile", "a") as file_bash:
-        file_bash.write("\n"+string)
+    with open(home + "/.bash_profile", "a") as file_bash:
+        file_bash.write("\n" + string)
 
 
 def get_version_requirements():
     status, path_sct = sct.run('echo $SCT_DIR', 0)
-    file = open(path_sct+"/install/requirements/requirementsConda.txt")
+    file = open(path_sct + "/install/requirements/requirementsConda.txt")
     dict = {}
     while True:
         line = file.readline()
@@ -370,7 +369,7 @@ def get_version_requirements():
 
 def get_version_requirements_pip():
     status, path_sct = sct.run('echo $SCT_DIR', 0)
-    file = open(path_sct+"/install/requirements/requirementsPip.txt")
+    file = open(path_sct + "/install/requirements/requirementsPip.txt")
     dict = {}
     while True:
         line = file.readline()
@@ -384,7 +383,7 @@ def get_version_requirements_pip():
 
 
 def get_package_version(package_name):
-    cmd = "conda list "+package_name
+    cmd = "conda list " + package_name
     output = commands.getoutput(cmd)
     while True:
         line = output.split("\n")
@@ -393,7 +392,7 @@ def get_package_version(package_name):
                 vers = i.split(' ')
                 vers[:] = (value for value in vers if value != "")
                 return vers[1]
-        raise Exception("Could not find package: "+package_name)
+        raise Exception("Could not find package: " + package_name)
 
 
 def check_package_version(installed, required, package_name):

@@ -124,7 +124,7 @@ class ImageCropper(object):
         else:
             # Complete message
             sct.printv('\nDone! To view results, type:', self.verbose)
-            sct.printv("fslview "+self.output_filename+" &\n", self.verbose, 'info')
+            sct.printv("fslview " + self.output_filename + " &\n", self.verbose, 'info')
 
         return self.result
 
@@ -177,28 +177,28 @@ class ImageCropper(object):
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
         nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
-        sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+        sct.printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
         # check if 4D data
         if not nt == 1:
-            sct.printv('\nERROR in '+os.path.basename(__file__)+': Data should be 3D.\n', 1, 'error')
+            sct.printv('\nERROR in ' + os.path.basename(__file__) + ': Data should be 3D.\n', 1, 'error')
             sys.exit(2)
 
         # print arguments
         print '\nCheck parameters:'
-        print '  data ................... '+fname_data
+        print '  data ................... ' + fname_data
 
         # Extract path/file/extension
         path_data, file_data, ext_data = sct.extract_fname(fname_data)
-        path_out, file_out, ext_out = '', file_data+suffix_out, ext_data
+        path_out, file_out, ext_out = '', file_data + suffix_out, ext_data
 
         # create temporary folder
-        path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")+'/'
-        sct.run('mkdir '+path_tmp)
+        path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S") + '/'
+        sct.run('mkdir ' + path_tmp)
 
         # copy files into tmp folder
         from sct_convert import convert
         sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-        convert(fname_data, path_tmp+'data.nii')
+        convert(fname_data, path_tmp + 'data.nii')
 
         # go to tmp folder
         os.chdir(path_tmp)
@@ -211,7 +211,7 @@ class ImageCropper(object):
         sct.printv('\nGet image of medial slab...', verbose)
         image_array = nibabel.load('data_rpi.nii').get_data()
         nx, ny, nz = image_array.shape
-        scipy.misc.imsave('image.jpg', image_array[math.floor(nx/2), :, :])
+        scipy.misc.imsave('image.jpg', image_array[math.floor(nx / 2), :, :])
 
         # Display the image
         sct.printv('\nDisplay image and get cropping region...', verbose)
@@ -254,17 +254,18 @@ class ImageCropper(object):
         os.chdir('..')
 
         sct.printv('\nGenerate output files...', verbose)
-        sct.generate_output_file(path_tmp+'data_rpi_crop.nii', path_out+file_out+ext_out)
+        sct.generate_output_file(path_tmp + 'data_rpi_crop.nii', path_out + file_out + ext_out)
 
         # Remove temporary files
         if remove_temp_files == 1:
             print('\nRemove temporary files...')
-            sct.run('rm -rf '+path_tmp)
+            sct.run('rm -rf ' + path_tmp)
 
         # to view results
         print '\nDone! To view results, type:'
-        print 'fslview '+path_out+file_out+ext_out+' &'
+        print 'fslview ' + path_out + file_out + ext_out + ' &'
         print
+
 
 def get_parser():
         # Initialize parser
