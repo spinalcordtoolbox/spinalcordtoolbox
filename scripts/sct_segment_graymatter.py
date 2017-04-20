@@ -40,17 +40,25 @@ Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function
 
 '''
 
-from msct_multiatlas_seg import Param, ParamData, ParamModel, Model
-from msct_gmseg_utils import pre_processing, register_data, apply_transfo, normalize_slice, average_gm_wm, binarize
-from sct_utils import printv, tmp_create, extract_fname, add_suffix, slash_at_the_end, run
-import sct_image
-from sct_image import set_orientation
-from msct_image import Image
-from msct_parser import *
-import sct_maths, sct_register_multimodal
+import os
+import shutil
+import sys
+import time
 from math import exp
+
 import numpy as np
-import shutil, os, sys, time
+
+import sct_maths
+import sct_process_segmentation
+import sct_register_multimodal
+from msct_gmseg_utils import (apply_transfo, average_gm_wm, binarize,
+                              normalize_slice, pre_processing, register_data)
+from msct_image import Image
+from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
+from msct_parser import Parser
+from sct_image import set_orientation
+from sct_utils import (add_suffix, extract_fname, printv, run,
+                       slash_at_the_end, tmp_create)
 
 
 def get_parser():
@@ -178,8 +186,6 @@ def get_parser():
     return parser
 
 
-
-
 class ParamSeg:
     def __init__(self):
         self.fname_im = None
@@ -190,13 +196,13 @@ class ParamSeg:
         self.path_results = './'
 
         # param to compute similarities:
-        self.weight_level = 2.5 # gamma
-        self.weight_coord = 0.0065 # tau --> need to be validated for specific dataset
-        self.thr_similarity = 0.0005 # epsilon but on normalized to 1 similarities (by slice of dic and slice of target)
+        self.weight_level = 2.5  # gamma
+        self.weight_coord = 0.0065  # tau --> need to be validated for specific dataset
+        self.thr_similarity = 0.0005  # epsilon but on normalized to 1 similarities (by slice of dic and slice of target)
         # TODO = find the best thr
 
-        self.type_seg = 'prob' # 'prob' or 'bin'
-        self.ratio = '0' # '0', 'slice' or 'level'
+        self.type_seg = 'prob'  # 'prob' or 'bin'
+        self.ratio = '0'  # '0', 'slice' or 'level'
 
         self.qc = True
 
@@ -212,15 +218,14 @@ class SegmentGM:
         self.model = Model(param_model=self.param_model, param_data=self.param_data, param=self.param)
 
         # create tmp directory
-        self.tmp_dir = tmp_create(verbose=self.param.verbose) # path to tmp directory
+        self.tmp_dir = tmp_create(verbose=self.param.verbose)  # path to tmp directory
 
-        self.target_im = None # list of slices
-        self.info_preprocessing = None # dic containing {'orientation': 'xxx', 'im_sc_seg_rpi': im, 'interpolated_images': [list of im = interpolated image data per slice]}
+        self.target_im = None  # list of slices
+        self.info_preprocessing = None  # dic containing {'orientation': 'xxx', 'im_sc_seg_rpi': im, 'interpolated_images': [list of im = interpolated image data per slice]}
 
-        self.projected_target = None # list of coordinates of the target slices in the model reduced space
+        self.projected_target = None  # list of coordinates of the target slices in the model reduced space
         self.im_res_gmseg = None
         self.im_res_wmseg = None
-
 
     def segment(self):
         self.copy_data_to_tmp()
@@ -235,8 +240,9 @@ class SegmentGM:
         # register target image to model dictionary space
         path_warp = self.register_target()
 
-        printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
-        self.normalize_target()
+        if self.param_data.normalization:
+            printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
+            self.normalize_target()
 
         printv('\nProject target image into the model reduced space...', self.param.verbose, 'normal')
         self.project_target()
@@ -253,7 +259,7 @@ class SegmentGM:
         printv('\nPost-processing...', self.param.verbose, 'normal')
         self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
 
-        if (self.param_seg.path_results != './') and (not os.path.exists('../'+self.param_seg.path_results)):
+        if (self.param_seg.path_results != './') and (not os.path.exists('../' + self.param_seg.path_results)):
             # create output folder
             printv('\nCreate output folder ...', self.param.verbose, 'normal')
             os.chdir('..')
@@ -272,8 +278,8 @@ class SegmentGM:
         # go back to original directory
         os.chdir('..')
         printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
-        fname_res_gmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
-        fname_res_wmseg = self.param_seg.path_results+add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
+        fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
+        fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
 
         self.im_res_gmseg.setFileName(fname_res_gmseg)
         self.im_res_wmseg.setFileName(fname_res_wmseg)
@@ -294,16 +300,15 @@ class SegmentGM:
         if self.param_seg.qc:
             # output QC image
             printv('\nSave quality control images...', self.param.verbose, 'normal')
-            im = Image(self.tmp_dir+self.param_seg.fname_im)
+            im = Image(self.tmp_dir + self.param_seg.fname_im)
             im.save_quality_control(plane='axial', n_slices=5, seg=self.im_res_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.param_seg.path_results)
 
         printv('\nDone! To view results, type:', self.param.verbose)
-        printv('fslview '+self.param_seg.fname_im_original+' '+fname_res_gmseg+' -b '+b+' -l '+gm_col+' -t 0.7 '+fname_res_wmseg+' -b '+b+' -l '+wm_col+' -t 0.7  & \n', self.param.verbose, 'info')
+        printv('fslview ' + self.param_seg.fname_im_original + ' ' + fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col + ' -t 0.7 ' + fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', self.param.verbose, 'info')
 
         if self.param.rm_tmp:
             # remove tmp_dir
             shutil.rmtree(self.tmp_dir)
-
 
     def copy_data_to_tmp(self):
         # copy input image
@@ -355,8 +360,8 @@ class SegmentGM:
         # rename warping fields
         fname_src2dest_save = 'warp_target2dic.nii.gz'
         fname_dest2src_save = 'warp_dic2target.nii.gz'
-        shutil.move(path_warping_fields+fname_src2dest, path_warping_fields+fname_src2dest_save)
-        shutil.move(path_warping_fields+fname_dest2src, path_warping_fields+fname_dest2src_save)
+        shutil.move(path_warping_fields + fname_src2dest, path_warping_fields + fname_src2dest_save)
+        shutil.move(path_warping_fields + fname_dest2src, path_warping_fields + fname_dest2src_save)
         #
         for i, target_slice in enumerate(self.target_im):
             # set moved image for each slice
@@ -381,10 +386,10 @@ class SegmentGM:
         for target_slice in self.target_im:
             # get slice data in the good shape
             slice_data = target_slice.im_M.flatten()
-            slice_data = slice_data.reshape(1, -1) # data with single sample
+            slice_data = slice_data.reshape(1, -1)  # data with single sample
             # project slice data into the model
             slice_data_projected = self.model.fitted_model.transform(slice_data)
-            projected_target_slices.append(slice_data_projected)
+            projected_target_slices.append(slice_data_projected.reshape(-1, ))
         # store projected target slices
         self.projected_target = projected_target_slices
 
@@ -404,7 +409,7 @@ class SegmentGM:
                     similarity = exp(-self.param_seg.weight_coord * square_norm)
                 # add similarity to list
                 list_dic_similarities.append(similarity)
-            list_norm_similarities =  [float(s)/sum(list_dic_similarities) for s in list_dic_similarities]
+            list_norm_similarities = [float(s) / sum(list_dic_similarities) for s in list_dic_similarities]
             # select indexes of most similar slices
             list_dic_indexes = []
             for j, norm_sim in enumerate(list_norm_similarities):
@@ -441,7 +446,7 @@ class SegmentGM:
         im_src_gm = self.get_im_from_list(np.array([target_slice.gm_seg_M for target_slice in self.target_im]))
         im_src_wm = self.get_im_from_list(np.array([target_slice.wm_seg_M for target_slice in self.target_im]))
         #
-        fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1)+'warp_dic2target.nii.gz'
+        fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1) + 'warp_dic2target.nii.gz'
         interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
         # warp GM
         im_src_gm_reg = apply_transfo(im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
@@ -452,7 +457,7 @@ class SegmentGM:
             target_slice.set(gm_seg=im_src_gm_reg.data[i], wm_seg=im_src_wm_reg.data[i])
 
     def post_processing(self):
-        ## DO INTERPOLATION BACK TO ORIGINAL IMAGE
+        # DO INTERPOLATION BACK TO ORIGINAL IMAGE
         # get original SC segmentation oriented in RPI
         im_sc_seg_original_rpi = self.info_preprocessing['im_sc_seg_rpi'].copy()
         nx_ref, ny_ref, nz_ref, nt_ref, px_ref, py_ref, pz_ref, pt_ref = im_sc_seg_original_rpi.dim
@@ -465,7 +470,6 @@ class SegmentGM:
         im_res_wmseg.data = np.zeros(im_res_wmseg.data.shape)
 
         printv('  Interpolate result back into original space...', self.param.verbose, 'normal')
-
 
         for iz, im_iz_preprocessed in enumerate(self.info_preprocessing['interpolated_images']):
             # im gmseg for slice iz
@@ -528,7 +532,7 @@ class SegmentGM:
                 im_res_tot.data[:, :, iz] = im_res_slice_interp.data
         printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
 
-        ## PUT RES BACK IN ORIGINAL ORIENTATION
+        # PUT RES BACK IN ORIGINAL ORIENTATION
         im_res_gmseg.setFileName('res_gmseg.nii.gz')
         im_res_gmseg.save()
         im_res_gmseg = set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
@@ -549,7 +553,6 @@ class SegmentGM:
         os.chdir(tmp_dir_val)
         fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
         fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
-
 
         im_gmseg = self.im_res_gmseg.copy()
         im_wmseg = self.im_res_wmseg.copy()
@@ -572,10 +575,10 @@ class SegmentGM:
                              '-sub', fname_manual_gmseg,
                              '-o', fname_manual_wmseg])
 
-        ## compute DC:
+        # compute DC:
         try:
-            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg + ' -d ' + fname_gmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
-            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg + ' -d ' + fname_gmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put ref and res in the same space if needed
             fname_manual_gmseg_corrected = add_suffix(fname_manual_gmseg, '_reg')
@@ -594,10 +597,10 @@ class SegmentGM:
                                  '-bin', '0.1',
                                  '-o', fname_manual_wmseg_corrected])
             # recompute DC
-            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
-            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2',error_exit='warning', raise_exception=True)
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
         # save results to a text file
-        fname_dc = 'dice_coefficient_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        fname_dc = 'dice_coefficient_' + extract_fname(self.param_seg.fname_im)[1] + '.txt'
         file_dc = open(fname_dc, 'w')
 
         if self.param_seg.type_seg == 'prob':
@@ -609,13 +612,13 @@ class SegmentGM:
         file_dc.write(output_wm)
         file_dc.close()
 
-        ## compute HD and MD:
-        fname_hd = 'hausdorff_dist_' + sct.extract_fname(self.param_seg.fname_im)[1] + '.txt'
+        # compute HD and MD:
+        fname_hd = 'hausdorff_dist_' + extract_fname(self.param_seg.fname_im)[1] + '.txt'
         run('sct_compute_hausdorff_distance -i ' + fname_gmseg + ' -d ' + fname_manual_gmseg + ' -thinning 1 -o ' + fname_hd + ' -v ' + str(self.param.verbose))
 
         # get out of tmp dir to copy results to output folder
         os.chdir('../..')
-        shutil.copy(self.tmp_dir+tmp_dir_val+'/'+fname_dc, self.param_seg.path_results)
+        shutil.copy(self.tmp_dir + tmp_dir_val + '/' + fname_dc, self.param_seg.path_results)
         shutil.copy(self.tmp_dir + tmp_dir_val + '/' + fname_hd, self.param_seg.path_results)
 
         os.chdir(self.tmp_dir)
@@ -642,10 +645,8 @@ class SegmentGM:
             fname_gmseg = im_res_gmseg.absolutepath
             fname_wmseg = im_res_wmseg.absolutepath
 
-        #sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa'])
-        run('sct_process_segmentation -i ' + fname_gmseg + ' -p csa -ofolder gm_csa')
-        #sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa'])
-        run('sct_process_segmentation -i ' + fname_wmseg + ' -p csa -ofolder wm_csa')
+        sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa'])
+        sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa'])
 
         gm_csa = open('gm_csa/csa_per_slice.txt', 'r')
         wm_csa = open('wm_csa/csa_per_slice.txt', 'r')
@@ -654,7 +655,7 @@ class SegmentGM:
         gm_csa.close()
         wm_csa.close()
 
-        fname_ratio = 'ratio_by_'+type_ratio+'.txt'
+        fname_ratio = 'ratio_by_' + type_ratio + '.txt'
         file_ratio = open(fname_ratio, 'w')
 
         file_ratio.write(type_ratio + ', ratio GM/WM CSA\n')
@@ -682,16 +683,10 @@ class SegmentGM:
                     file_ratio.write(str(l) + ', ' + str(csa_gm / csa_wm) + '\n')
 
         file_ratio.close()
-        shutil.copy(fname_ratio, '../../'+self.param_seg.path_results+'/'+fname_ratio)
+        shutil.copy(fname_ratio, '../../' + self.param_seg.path_results + '/' + fname_ratio)
 
         os.chdir('..')
 
-
-
-
-########################################################################################################################
-# ------------------------------------------------------  MAIN ------------------------------------------------------- #
-########################################################################################################################
 
 def main(args=None):
     if args is None:
@@ -713,17 +708,17 @@ def main(args=None):
     param_seg.fname_seg = arguments["-s"]
 
     if '-vertfile' in arguments:
-        if sct.extract_fname(arguments['-vertfile'])[1].lower() == "none":
+        if extract_fname(arguments['-vertfile'])[1].lower() == "none":
             param_seg.fname_level = None
         elif os.path.isfile(arguments['-vertfile']):
             param_seg.fname_level = arguments['-vertfile']
         else:
             param_seg.fname_level = None
-            sct.printv('WARNING: -vertfile input file: "'+arguments['-vertfile']+'" does not exist.\nSegmenting GM without using vertebral information', 1, 'warning')
+            printv('WARNING: -vertfile input file: "' + arguments['-vertfile'] + '" does not exist.\nSegmenting GM without using vertebral information', 1, 'warning')
     if '-denoising' in arguments:
         param_data.denoising = bool(int(arguments['-denoising']))
     if '-normalization' in arguments:
-        param_data.normalization = arguments['-normalization']
+        param_data.normalization = bool(int(arguments['-normalization']))
     if '-p' in arguments:
         param_data.register_param = arguments['-p']
     if '-w-levels' in arguments:
@@ -735,26 +730,27 @@ def main(args=None):
     if '-model' in arguments:
         param_model.path_model_to_load = os.path.abspath(arguments['-model'])
     if '-res-type' in arguments:
-        param_seg.type_seg= arguments['-res-type']
+        param_seg.type_seg = arguments['-res-type']
     if '-ratio' in arguments:
         param_seg.ratio = arguments['-ratio']
     if '-ref' in arguments:
         param_seg.fname_manual_gmseg = arguments['-ref']
     if '-ofolder' in arguments:
-        param_seg.path_results= arguments['-ofolder']
+        param_seg.path_results = arguments['-ofolder']
     if '-qc' in arguments:
         param_seg.qc = bool(int(arguments['-qc']))
     if '-r' in arguments:
-        param.rm_tmp= bool(int(arguments['-r']))
+        param.rm_tmp = bool(int(arguments['-r']))
     if '-v' in arguments:
-        param.verbose= arguments['-v']
+        param.verbose = arguments['-v']
 
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
     start = time.time()
     seg_gm.segment()
     end = time.time()
     t = end - start
-    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60,1)) + ' sec', param.verbose, 'info')
+    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60, 1)) + ' sec', param.verbose, 'info')
+
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="_assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="_assets/css/bootstrap-table.min.css">
+  <link rel="stylesheet" type="text/css" href="_assets/css/style.css">
+  <title> </title>
+</head>
+
+<body>
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-qc-navbar" aria-expanded="false">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          <img src="_assets/imgs/sct_logo.png"
+            alt="SCT Logo">
+        </a>
+      </div>
+
+      <div class="collapse navbar-collapse" id="main-qc-navbar">
+        <ul class="nav navbar-nav navbar-left">
+          <li><p class="navbar-text" id="qc-organization"></p></li>
+          <li><p class="navbar-text" id="qc-header"></p></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="https://sourceforge.net/projects/spinalcordtoolbox/">About</a></li>
+        </ul>
+     </div>
+    </div>
+  </nav>
+
+
+  <div class="container">
+      <table id="table" class="table table-condensed"
+             data-toggle="table"
+             data-search="true"
+             data-url="qc_results.json">
+	        <thead>
+		          <tr>
+			            <th data-field="subject" data-sortable="true">Subject</th>
+			            <th data-field="moddate" data-sortable="true">Date</th>
+			            <th data-field="contrast" data-sortable="true">Contrast</th>
+			            <th data-field="command" data-sortable="true">Command</th>
+		          </tr>
+	        </thead>
+      </table>
+  </div>
+
+
+  <div class="container-fluid result-body" id="mosaic-container">
+    <img id="sprite-img"/>
+    <img id="overlay-img"/>
+  </div>
+
+  <footer>
+    <div class="footer">
+      <p id="copyright"></p>
+    </div>
+  </footer>
+</body>
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="_assets/js/jquery-3.1.0.min.js"></script>
+<script src="_assets/js/bootstrap.min.js"></script>
+<script src="_assets/js/bootstrap-table.min.js"></script>
+<script src="_assets/js/main.js"></script>
+
+</html>

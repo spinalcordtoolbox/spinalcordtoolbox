@@ -18,7 +18,6 @@ from msct_parser import Parser
 from msct_image import Image
 from sct_image import get_orientation, orientation
 import sct_utils as sct
-from os import rmdir, chdir
 import shutil
 
 
@@ -107,16 +106,16 @@ def main():
         path_tmp = sct.tmp_create()
         # change orientation and load data
         sct.printv('\nChange input image orientation and load it...', verbose)
-        input_im_rpi = orientation(input_im, ori='RPI', set=True, fname_out=path_tmp+'input_RPI.nii')
+        input_im_rpi = orientation(input_im, ori='RPI', set=True, fname_out=path_tmp + 'input_RPI.nii')
         input_data = input_im_rpi.data
         # Do the same for the mask
         sct.printv('\nChange mask orientation and load it...', verbose)
-        mask_im_rpi = orientation(Image(fname_mask), ori='RPI', set=True, fname_out=path_tmp+'mask_RPI.nii')
+        mask_im_rpi = orientation(Image(fname_mask), ori='RPI', set=True, fname_out=path_tmp + 'mask_RPI.nii')
         mask_data = mask_im_rpi.data
         # Do the same for vertebral labeling if present
         if vert_levels != 'None':
             sct.printv('\nChange vertebral labeling file orientation and load it...', verbose)
-            vert_label_im_rpi = orientation(Image(vert_label_fname), ori='RPI', set=True, fname_out=path_tmp+'vert_labeling_RPI.nii')
+            vert_label_im_rpi = orientation(Image(vert_label_fname), ori='RPI', set=True, fname_out=path_tmp + 'vert_labeling_RPI.nii')
             vert_labeling_data = vert_label_im_rpi.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
@@ -137,9 +136,9 @@ def main():
 
     # Remove slices that were not selected
     if slices_of_interest == 'None':
-        slices_of_interest = '0:'+str(mask_data.shape[2]-1)
+        slices_of_interest = '0:' + str(mask_data.shape[2] - 1)
     slices_boundary = slices_of_interest.split(':')
-    slices_of_interest_list = range(int(slices_boundary[0]), int(slices_boundary[1])+1)
+    slices_of_interest_list = range(int(slices_boundary[0]), int(slices_boundary[1]) + 1)
     # Crop
     input_data = input_data[:, :, slices_of_interest_list, :]
     mask_data = mask_data[:, :, slices_of_interest_list]
@@ -160,7 +159,7 @@ def main():
     elif method == 'diff':
         # if user did not select two volumes, then exit with error
         if not len(index_vol) == 2:
-            sct.printv('ERROR: '+str(len(index_vol))+' volumes were specified. Method "diff" should be used with exactly two volumes.', 1, 'error')
+            sct.printv('ERROR: ' + str(len(index_vol)) + ' volumes were specified. Method "diff" should be used with exactly two volumes.', 1, 'error')
         data_1 = input_data[:, :, :, index_vol[0]]
         data_2 = input_data[:, :, :, index_vol[1]]
         # compute voxel-average of voxelwise sum
@@ -169,11 +168,10 @@ def main():
         noise = np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi])) * np.sqrt(2)
 
     # compute SNR
-    SNR = signal/noise
+    SNR = signal / noise
 
     # Display result
-    sct.printv('\nSNR_'+method+' = '+str(SNR)+'\n', type='info')
-
+    sct.printv('\nSNR_' + method + ' = ' + str(SNR) + '\n', type='info')
 
 
 # START PROGRAM
