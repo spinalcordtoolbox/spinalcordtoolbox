@@ -167,7 +167,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value='~/qc_data')
+                      default_value=os.path.expanduser('~/qc_data'))
     return parser
 
 

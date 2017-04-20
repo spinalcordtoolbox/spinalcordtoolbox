@@ -131,7 +131,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value='~/qc_data')
+                      default_value=os.path.expanduser('~/qc_data'))
     return parser
 
 
