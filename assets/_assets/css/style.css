@@ -13,16 +13,11 @@
 	position: relative;
 	top: 0px;
 	left: 0px;
-	width: 80%;
+  margin-top: 7px;
 }
 
 .glyphicon-triangle-top{
 	font-size: 32px;
-}
-
-#mosaic-container {
-    width: 80%;
-    margin-top: 7px;
 }
 
 #sprite-img {
