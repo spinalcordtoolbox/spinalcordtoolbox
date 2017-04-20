@@ -440,11 +440,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
 
     # if manual mode, open viewer for user to click on C2/C3 disc
     if init_disc == [] and initc2 == 'manual':
-        from sct_viewer import ClickViewer
+        from sct_viewer import ClickViewerLabelVertebrae
         # reorient image to SAL to be compatible with viewer
         im_input_SAL = im_input.copy()
         im_input_SAL.change_orientation('SAL')
-        viewer = ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'], title='Please click at intervertebral disc C2-C3')
+        viewer = ClickViewerLabelVertebrae(im_input_SAL, orientation_subplot=['sag', 'ax'])
         viewer.number_of_slices = 1
         pz = 1
         viewer.gap_inter_slice = int(10 / pz)
