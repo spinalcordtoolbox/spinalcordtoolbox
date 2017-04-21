@@ -182,7 +182,6 @@ def main(args):
 
     # Initialization
     path_script = os.path.dirname(__file__)
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     processes = ['centerline', 'csa', 'length', 'shape']
     verbose = param.verbose
     start_time = time.time()
