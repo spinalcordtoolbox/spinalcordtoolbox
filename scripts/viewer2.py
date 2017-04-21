@@ -84,7 +84,9 @@ class SinglePlot(Observer):
         self.setup_intensity()
 
     def update(self, *args, **kwargs):
-        print('message recu : '.format(args,kwargs))
+        for arg in args:
+            target=arg
+        self.update_slice(target,True)
 
     def show_image(self,im_params,current_point):
         def set_data_to_display(image, current_point):
@@ -124,6 +126,7 @@ class SinglePlot(Observer):
         :param data_update: False if you don't want to update data
         :return:
         """
+        '''
         if isinstance(target, list):
             target_slice = target[self.view - 1]
             list_remaining_views = list([0, 1, 2])
@@ -132,18 +135,20 @@ class SinglePlot(Observer):
             self.cross_to_display[1][1] = [target[list_remaining_views[1]], target[list_remaining_views[1]]]
         else:
             target_slice = target
+        '''
 
-        if 0 <= target_slice < self.images[0].data.shape[int(self.view)-1]:
+        #if 0 <= target_slice < self.images[0].data.shape[int(self.view)-1]:
+        if True:
             if data_update:
-                for i, image in enumerate(self.images):
+                #for i, image in enumerate(self.images):
                     if(self.view==1):
-                        self.figs[i].set_data(image.data[target_slice, :, :])
+                        self.figs[-1].set_data(self.images[0].data[target.x, :, :])
                     elif(self.view==2):
-                        self.figs[i].set_data(image.data[:, target_slice, :])
+                        self.figs[-1].set_data(self.images[0].data[:, target.y, :])
                     elif(self.view==3):
-                        self.figs[i].set_data(image.data[:, :, target_slice])
-            self.set_line_to_display()
-        self.figs[0].figure.canvas.draw()
+                        self.figs[-1].set_data(self.images[0].data[:, :, target.z])
+            #self.set_line_to_display()
+        self.figs[-1].figure.canvas.draw()
 
     def set_line_to_display(self):
         if 'v' in self.display_cross:
@@ -309,9 +314,9 @@ class SinglePlotSecond(SinglePlot,Observer,object):
 
     def draw_line(self,display_cross):
         self.line_vertical.remove()
-        self.add_line('v')
+        self.add_line(display_cross)
         self.refresh()
-        self.observable.update_observers('Salut toi coco',display_cross)
+
 
     def show_image(self,im_params,current_point):
         def set_data_to_display(image, current_point=None):
@@ -349,9 +354,10 @@ class SinglePlotSecond(SinglePlot,Observer,object):
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes: #left click
             self.current_point=self.get_event_coordinates(event,3)
-            self.draw_line('v')
+            #self.draw_line('v')
             self.main_plot.show_image(self.im_params,self.current_point)
             self.main_plot.refresh()
+            self.observable.update_observers(self.current_point)
         elif event.button == 3 and event.inaxes == self.axes: #right click
             self.change_intensity(event)
 
