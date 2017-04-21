@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Example of commands to process multi-parametric data of the spinal cord
-# For information about acquisition parameters, see: https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf
+# For information about acquisition parameters, see: https://osf.io/wkdym/
 # N.B. The parameters are set for these type of data. With your data, parameters might be slightly different.
 #
 # To run without fslview output, type:
@@ -10,7 +10,7 @@
 # To prevent downloading sct_example_data and run from local folder, run:
 #   ./batch_processing.sh -nodownload
 #
-# tested with Spinal Cord Toolbox (jca_newExampleData/2b72ae043690e5ecf017fbeb3b855dd288212849)
+# tested with Spinal Cord Toolbox (jca-20170421-batchproc/7aeef321bd0b4ffed15e58f2b7f5a8b7d79c7e64)
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
@@ -149,7 +149,7 @@ fi
 # Compute DTI metrics
 # Tips: the flag -method "restore" allows you to estimate the tensor with robust fit (see help)
 sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
-# Compute FA within right and left lateral corticospinal tracts from slices 2 to 14 using maximum a posteriori
+# Compute FA within right and left lateral corticospinal tracts from slices 2 to 14 using weighted average method
 sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.txt
 cd ..
 
