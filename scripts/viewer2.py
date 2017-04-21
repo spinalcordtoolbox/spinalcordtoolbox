@@ -54,7 +54,7 @@ class Observable(object):
         for observer in self.observers:
             observer.update_observer(*args, **kwargs)
 
-class SinglePlot(Observer):
+class SinglePlot():
     """
         This class manages mouse events on one image.
     """
@@ -269,7 +269,7 @@ class SinglePlot(Observer):
         self.show_image(self.im_params,current_point)
         self.refresh()
 
-class SinglePlotMain(Observer):
+class SinglePlotMain(Observer,SinglePlot):
     """
         This class manages mouse events on one image.
     """
@@ -349,87 +349,6 @@ class SinglePlotMain(Observer):
         if 'h' in self.display_cross:
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
-    def set_image_parameters(self,im_params,i,cm):
-        if str(i) in im_params.images_parameters:
-            return(copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap)),im_params.images_parameters[str(i)].interp,float(im_params.images_parameters[str(i)].alpha))
-        else:
-            return (cm.get_cmap('gray'), 'nearest', 1.0)
-
-    def refresh(self):
-        self.figs[0].figure.canvas.draw()
-
-    def remove_axis_number(self):
-        self.axes.set_axis_bgcolor('black')
-        self.axes.set_xticks([])
-        self.axes.set_yticks([])
-
-    def change_intensity(self, event):
-        def calc_min_max_intensities(x, y):
-            xlim, ylim = self.axes.get_xlim(), self.axes.get_ylim()
-            mean_intensity_factor = (x - xlim[0]) / float(xlim[1] - xlim[0])
-            std_intensity_factor = (y - ylim[1]) / float(ylim[0] - ylim[1])
-            mean_factor = self.mean_intensity[0] - (mean_intensity_factor - 0.5) * self.mean_intensity[0] * 3.0
-            std_factor = self.std_intensity[0] + (std_intensity_factor - 0.5) * self.std_intensity[0] * 2.0
-            self.list_intensites=[mean_factor - std_factor, mean_factor + std_factor]
-            return (mean_factor - std_factor, mean_factor + std_factor)
-        def check_time_last_update(last_update):
-            if time() - last_update < 1.0/15.0: # 10 Hz:
-                return False
-            else:
-                return True
-        if(check_time_last_update(self.last_update)):
-            self.last_update = time()
-            self.figs[-1].set_clim(calc_min_max_intensities(event.xdata,event.ydata))
-            self.refresh()
-
-    def setup_intensity(self):
-        for i, image in enumerate(self.images):
-            flattened_volume = image.flatten()
-            first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
-            last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
-            mean_intensity = percentile(flattened_volume[flattened_volume > 0], 98)
-            std_intensity = last_percentile - first_percentile
-
-            self.mean_intensity.append(mean_intensity)
-            self.std_intensity.append(std_intensity)
-
-    def update_xy_lim(self, x_center=None, y_center=None, x_scale_factor=1.0, y_scale_factor=1.0, zoom=True):
-        # get the current x and y limits
-        zoom_factor = 1.0
-        cur_xlim = self.axes.get_xlim()
-        cur_ylim = self.axes.get_ylim()
-
-        if x_center is None:
-            x_center = (cur_xlim[1] - cur_xlim[0]) / 2.0
-        if y_center is None:
-            y_center = (cur_ylim[1] - cur_ylim[0]) / 2.0
-
-        # Get distance from the cursor to the edge of the figure frame
-        x_left = x_center - cur_xlim[0]
-        x_right = cur_xlim[1] - x_center
-        y_top = y_center - cur_ylim[0]
-        y_bottom = cur_ylim[1] - y_center
-
-        if zoom:
-            scale_factor = (x_scale_factor + y_scale_factor) / 2.0
-            if 0.005 < zoom_factor * scale_factor <= 3.0:
-                zoom_factor *= scale_factor
-
-                self.axes.set_xlim([x_center - x_left * x_scale_factor, x_center + x_right * x_scale_factor])
-                self.axes.set_ylim([y_center - y_top * y_scale_factor, y_center + y_bottom * y_scale_factor])
-                self.figs[0].figure.canvas.draw()
-        else:
-            self.axes.set_xlim([x_center - x_left * x_scale_factor, x_center + x_right * x_scale_factor])
-            self.axes.set_ylim([y_center - y_top * y_scale_factor, y_center + y_bottom * y_scale_factor])
-            self.figs[0].figure.canvas.draw()
-
-    def connect_mpl_events(self):
-        self.canvas.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.canvas.setFocus()
-        self.canvas.mpl_connect('button_release_event',self.on_event_release)
-        self.canvas.mpl_connect('scroll_event',self.on_event_scroll)
-        self.canvas.mpl_connect('motion_notify_event',self.on_event_motion)
-
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes: #left click
             pass
@@ -441,38 +360,6 @@ class SinglePlotMain(Observer):
             self.draw_dots(self.get_event_coordinates(event,1))
         elif event.button == 3: # right click
             self.change_intensity(event)
-
-    def on_event_scroll(self, event):
-        def calc_scale_factor(direction):
-            base_scale = 0.5
-            if direction == 'up':  # deal with zoom in
-                return 1 / base_scale
-            elif direction == 'down':  # deal with zoom out
-                return base_scale
-            else:  # deal with something that should never happen
-                return 1
-
-        if event.inaxes == self.axes:
-            scale_factor=calc_scale_factor(event.button)
-            self.update_xy_lim(x_center=event.xdata, y_center=event.ydata,
-                               x_scale_factor=scale_factor, y_scale_factor=scale_factor,
-                               zoom=True)
-
-    def get_event_coordinates(self, event, axis):
-        point = None
-        if axis == 1:
-            point = Coordinate([self.current_point.x,
-                                int(round(event.ydata)),
-                                int(round(event.xdata)), 1])
-        elif axis == 2:
-            point = Coordinate([int(round(event.ydata)),
-                                self.current_point.y,
-                                int(round(event.xdata)), 1])
-        elif axis == 3:
-            point = Coordinate([int(round(event.ydata)),
-                                int(round(event.xdata)),
-                                self.current_point.z, 1])
-        return point
 
     def draw_dots(self, current_point):
         x_data, y_data = [], []
