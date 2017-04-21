@@ -2,22 +2,30 @@
 
 ## v3.0.2 (2017-04-20)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.1...v3.0.2)
+
 **BUG**
+
  - Force the SCT environment to use only the python modules installed by SCT [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1266)
  - Fixing disabling options on straightening [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1255)
  - Fixed tSNR computation of the mean and std of the input image [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1245)
  - Increased the data type size from the default int16 to int32 to avoid overflow issues in sct_process_segmentation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1224)
  - Fixed data type issue in sct_process_segmentation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1223)
+
 **ENHANCEMENT**
+
  - Improvements to denoising on sct_segment_graymatter [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1265)
  - Extend the functionality of sct_viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1254)
  - Add OptiC for improved spinal cord detection [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1253)
  - Introduction spinalcordtoolbox python setup file [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1243)
+
 **FEATURE**
+
  - Add option -rms to perform root mean square (instead of mean) in sct_maths [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1256)
  - Introduce QC report generation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1251)
  - Introduce the QC html viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1250)
+
 **TESTING**
+
  - Introduce the QC html viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1250)
  - Introduce python package configuration file (setup.cfg) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1242)
 
