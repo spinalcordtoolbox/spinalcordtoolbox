@@ -44,6 +44,7 @@ class SinglePlot:
         self.last_update=time()
         self.mean_intensity = []
         self.std_intensity = []
+        self.list_intensites=[]
         self.im_params = im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
@@ -82,6 +83,8 @@ class SinglePlot:
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
             self.figs[-1].set_cmap(my_cmap)
             self.figs[-1].set_interpolation(my_interpolation)
+            if(self.list_intensites):
+                self.figs[-1].set_clim(self.list_intensites[0],self.list_intensites[1])
 
     def update_slice(self, target, data_update=True):
         """
@@ -138,16 +141,16 @@ class SinglePlot:
             std_intensity_factor = (y - ylim[1]) / float(ylim[0] - ylim[1])
             mean_factor = self.mean_intensity[0] - (mean_intensity_factor - 0.5) * self.mean_intensity[0] * 3.0
             std_factor = self.std_intensity[0] + (std_intensity_factor - 0.5) * self.std_intensity[0] * 2.0
+            self.list_intensites=[mean_factor - std_factor, mean_factor + std_factor]
             return (mean_factor - std_factor, mean_factor + std_factor)
         def check_time_last_update(last_update):
             if time() - last_update < 1.0/15.0: # 10 Hz:
                 return False
             else:
                 return True
-
         if(check_time_last_update(self.last_update)):
             self.last_update = time()
-            self.figs[0].set_clim(calc_min_max_intensities(event.xdata,event.ydata))
+            self.figs[-1].set_clim(calc_min_max_intensities(event.xdata,event.ydata))
             self.refresh()
 
     def setup_intensity(self):
@@ -249,10 +252,8 @@ class SinglePlot:
         y_data.append(current_point.y)
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
-        print(x_data,y_data)
         self.show_image(self.im_params,current_point)
         self.refresh()
-
 
 class SinglePlotSecond(SinglePlot,object):
     #TODO : inheritance etrange
