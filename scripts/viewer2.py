@@ -31,7 +31,7 @@ class Observer(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def update(self, *args, **kwargs):
+    def update_observer(self, *args, **kwargs):
         pass
 
 class Observable(object):
@@ -52,7 +52,7 @@ class Observable(object):
 
     def update_observers(self, *args, **kwargs):
         for observer in self.observers:
-            observer.update(*args, **kwargs)
+            observer.update_observer(*args, **kwargs)
 
 class SinglePlot(Observer):
     """
@@ -83,7 +83,7 @@ class SinglePlot(Observer):
         self.connect_mpl_events()
         self.setup_intensity()
 
-    def update(self, *args, **kwargs):
+    def update_observer(self, *args, **kwargs):
         for arg in args:
             target=arg
         self.update_slice(target)
