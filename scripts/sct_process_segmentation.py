@@ -311,7 +311,6 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
         pass
 
     else:
-
         # average spinal cord shape properties
         averaged_shape = dict()
         for property_name in property_list:
@@ -327,6 +326,9 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
 
         if verbose == 1:
             print df_shape_properties
+
+    # display info
+    sct.printv('\nDone! Results are save in the file: '+fname_output_csv, verbose, 'info')
 
 
 # compute the length of the spinal cord
