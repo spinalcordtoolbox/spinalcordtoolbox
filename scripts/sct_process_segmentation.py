@@ -73,7 +73,7 @@ def get_parser():
                                   '  - csa_per_slice.txt: a CSV text file with z (1st column), CSA in mm^2 (2nd column) and angle with respect to the I-S direction in degrees (3rd column),\n'
                                   '  - csa_per_slice.pickle: a pickle file with the same results as \"csa_per_slice.txt\" recorded in a DataFrame (panda structure) that can be reloaded afterwrds,\n'
                                   '  - and if you select the options -z or -vert, csa_mean and csa_volume: mean CSA and volume across the selected slices or vertebral levels is ouptut in CSV text files, an MS Excel files and a pickle files.\n'
-                                  '-shape: compute spinal shape properties, using scikit-image region measures, including:\n'
+                                  '- shape: compute spinal shape properties, using scikit-image region measures, including:\n'
                                   '  - AP and RL diameters\n'
                                   '  - ratio between AP and RL diameters\n'
                                   '  - spinal cord area\n'
@@ -286,6 +286,10 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
                                                                                      remove_temp_files=remove_temp_files,
                                                                                      verbose=verbose)
 
+    # Inform user that flags z or vert will be ignored.
+    if slices != '' or vert_levels != '':
+        sct.printv('\nWARNING: Process "shape" cannot be used with flag -z or -vert. This flag will be ignored.', verbose, 'warning')
+
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
     fname_output_csv = output_folder + file_data + '_shape.csv'
 
@@ -307,25 +311,21 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
         if label not in sorting_values and label not in rejected_values:
             sorting_values.append(label)
 
-    if slices != '' or vert_levels != '':
-        pass
+    # average spinal cord shape properties
+    averaged_shape = dict()
+    for property_name in property_list:
+        averaged_shape[property_name] = []
+        for label in sorting_values:
+            averaged_shape[property_name].append(np.mean([item for i, item in enumerate(shape_properties[property_name]) if shape_properties[sorting_mode][i] == label]))
 
-    else:
-        # average spinal cord shape properties
-        averaged_shape = dict()
-        for property_name in property_list:
-            averaged_shape[property_name] = []
-            for label in sorting_values:
-                averaged_shape[property_name].append(np.mean([item for i, item in enumerate(shape_properties[property_name]) if shape_properties[sorting_mode][i] == label]))
+    # save spinal cord shape properties
+    df_shape_properties = pd.DataFrame(averaged_shape, index=sorting_values)
+    df_shape_properties.sort_index(inplace=True)
+    pd.set_option('expand_frame_repr', True)
+    df_shape_properties.to_csv(fname_output_csv, sep=',')
 
-        # save spinal cord shape properties
-        df_shape_properties = pd.DataFrame(averaged_shape, index=sorting_values)
-        df_shape_properties.sort_index(inplace=True)
-        pd.set_option('expand_frame_repr', True)
-        df_shape_properties.to_csv(fname_output_csv, sep=',')
-
-        if verbose == 1:
-            print df_shape_properties
+    if verbose == 1:
+        print df_shape_properties
 
     # display info
     sct.printv('\nDone! Results are save in the file: '+fname_output_csv, verbose, 'info')
