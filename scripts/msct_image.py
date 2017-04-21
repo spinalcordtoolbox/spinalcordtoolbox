@@ -48,12 +48,12 @@ def striu2mat(striu):
     # cached case
     if n in _shearers:
         N, inds = _shearers[n]
-    else: # General case
-        N = ((-1+math.sqrt(8*n+1))/2.0)+1 # n+1 th root
+    else:  # General case
+        N = ((-1 + math.sqrt(8 * n + 1)) / 2.0) + 1  # n+1 th root
         if N != math.floor(N):
             raise ValueError('%d is a strange number of shear elements' %
                              n)
-        inds = np.triu(np.ones((N,N)), 1).astype(bool)
+        inds = np.triu(np.ones((N, N)), 1).astype(bool)
     M = np.eye(N)
     M[inds] = striu
     return M
@@ -83,16 +83,16 @@ def compose(T, R, Z, S=None):
     """
     n = len(T)
     R = np.asarray(R)
-    if R.shape != (n,n):
-        raise ValueError('Expecting shape (%d,%d) for rotations' % (n,n))
-    A = np.eye(n+1)
+    if R.shape != (n, n):
+        raise ValueError('Expecting shape (%d,%d) for rotations' % (n, n))
+    A = np.eye(n + 1)
     if S is not None:
         Smat = striu2mat(S)
         ZS = np.dot(np.diag(Z), Smat)
     else:
         ZS = np.diag(Z)
-    A[:n,:n] = np.dot(R, ZS)
-    A[:n,n] = T[:]
+    A[:n, :n] = np.dot(R, ZS)
+    A[:n, n] = T[:]
     return A
 
 
@@ -163,8 +163,8 @@ def decompose_affine_transform(A44):
     This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
     """
     A44 = np.asarray(A44)
-    T = A44[:-1,-1]
-    RZS = A44[:-1,:-1]
+    T = A44[:-1, -1]
+    RZS = A44[:-1, :-1]
     # compute scales and shears
     M0, M1, M2 = np.array(RZS).T
     # extract x scale and normalize
@@ -190,7 +190,7 @@ def decompose_affine_transform(A44):
     Rmat = np.array([M0, M1, M2]).T
     if np.linalg.det(Rmat) < 0:
         sx *= -1
-        Rmat[:,0] *= -1
+        Rmat[:, 0] *= -1
     return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])
 
 
@@ -198,6 +198,7 @@ class Image(object):
     """
 
     """
+
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
         from sct_utils import extract_fname
         from nibabel import Nifti1Header
@@ -286,7 +287,6 @@ class Image(object):
         self.dim = get_dimension(self.im_file)
         # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
         # self.dim = [nx, ny, nz]
-
 
     def setFileName(self, filename):
         """
@@ -408,7 +408,7 @@ class Image(object):
         img = Nifti1Image(self.data, None, self.hdr)
         fname_out = self.path + self.file_name + self.ext
         if path.isfile(fname_out):
-            printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
+            printv('WARNING: File ' + fname_out + ' already exists. Deleting it.', verbose, 'warning')
             remove(fname_out)
         # save file
         save(img, fname_out)
@@ -526,16 +526,16 @@ class Image(object):
         # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
         if data_array.shape != data_mask.shape:
             old_data_array = data_array
-            pad_1 = int((data_mask.shape[1] - old_data_array.shape[1])/2 + 1)
-            pad_2 = int((data_mask.shape[2] - old_data_array.shape[2])/2 + 1)
+            pad_1 = int((data_mask.shape[1] - old_data_array.shape[1]) / 2 + 1)
+            pad_2 = int((data_mask.shape[2] - old_data_array.shape[2]) / 2 + 1)
 
             data_array = np.zeros(data_mask.shape)
             for n_slice, data_slice in enumerate(data_array):
-                data_slice[pad_1:pad_1+old_data_array.shape[1], pad_2:pad_2+old_data_array.shape[2]] = old_data_array[n_slice]
+                data_slice[pad_1:pad_1 + old_data_array.shape[1], pad_2:pad_2 + old_data_array.shape[2]] = old_data_array[n_slice]
 
             for n_slice, data_slice in enumerate(data_array):
                 n_row_old_data_array = 0
-                for row in data_slice[pad_2:-pad_2-1]:
+                for row in data_slice[pad_2:-pad_2 - 1]:
                     row[pad_1:pad_1 + old_data_array.shape[1]] = old_data_array[n_slice, n_row_old_data_array]
                     n_row_old_data_array += 1
 
@@ -634,7 +634,6 @@ class Image(object):
 
         return perm, inversion
 
-
     def change_orientation(self, orientation='RPI', inversion_orient=False):
         """
         This function changes the orientation of the data by swapping the image axis.
@@ -689,9 +688,9 @@ class Image(object):
         dim_temp[0] = self.dim[[i for i, x in enumerate(perm) if x == 0][0]]  # nx
         dim_temp[1] = self.dim[[i for i, x in enumerate(perm) if x == 1][0]]  # ny
         dim_temp[2] = self.dim[[i for i, x in enumerate(perm) if x == 2][0]]  # nz
-        dim_temp[4] = self.dim[[i for i, x in enumerate(perm) if x == 0][0]+4]  # px
-        dim_temp[5] = self.dim[[i for i, x in enumerate(perm) if x == 1][0]+4]  # py
-        dim_temp[6] = self.dim[[i for i, x in enumerate(perm) if x == 2][0]+4]  # pz
+        dim_temp[4] = self.dim[[i for i, x in enumerate(perm) if x == 0][0] + 4]  # px
+        dim_temp[5] = self.dim[[i for i, x in enumerate(perm) if x == 1][0] + 4]  # py
+        dim_temp[6] = self.dim[[i for i, x in enumerate(perm) if x == 2][0] + 4]  # pz
         self.dim = tuple(dim_temp)
         # update orientation
         self.orientation = orientation
@@ -750,7 +749,7 @@ class Image(object):
 
             coordi_phys = np.concatenate((result_temp, coordi_phys), axis=0)
             coordi_phys_list = coordi_phys.tolist()
-            #print coordi_phys.shape
+            # print coordi_phys.shape
 
             return coordi_phys_list
         """
@@ -943,9 +942,9 @@ class Image(object):
         slice_seg = None
         if plane == 'sagittal':
             if index is None:
-                slice = copy_rpi.data[int(round(nx/2)), :, :]
+                slice = copy_rpi.data[int(round(nx / 2)), :, :]
                 if seg is not None:
-                    slice_seg = seg.data[int(round(nx/2)), :, :]
+                    slice_seg = seg.data[int(round(nx / 2)), :, :]
             else:
                 assert index < nx, 'Index larger than image dimension.'
                 slice = copy_rpi.data[index, :, :]
@@ -954,9 +953,9 @@ class Image(object):
 
         elif plane == 'coronal':
             if index is None:
-                slice = copy_rpi.data[:, int(round(ny/2)), :]
+                slice = copy_rpi.data[:, int(round(ny / 2)), :]
                 if seg is not None:
-                    slice_seg = seg.data[:, int(round(ny/2)), :]
+                    slice_seg = seg.data[:, int(round(ny / 2)), :]
             else:
                 assert index < ny, 'Index larger than image dimension.'
                 slice = copy_rpi.data[:, index, :]
@@ -965,9 +964,9 @@ class Image(object):
 
         elif plane == 'axial' or plane == 'transverse':
             if index is None:
-                slice = copy_rpi.data[:, :, int(round(nz/2))]
+                slice = copy_rpi.data[:, :, int(round(nz / 2))]
                 if seg is not None:
-                    slice_seg = seg.data[:, :, int(round(nz/2))]
+                    slice_seg = seg.data[:, :, int(round(nz / 2))]
             else:
                 assert index < nz, 'Index larger than image dimension.'
                 slice = copy_rpi.data[:, :, index]
@@ -1025,19 +1024,19 @@ class Image(object):
                 cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_red], N=256)
 
         n_lines = int(sqrt(len(slice_list)))
-        n_col = int(len(slice_list)/n_lines)
+        n_col = int(len(slice_list) / n_lines)
         n_lines += 1
 
         try:
-            fig = plt.figure(figsize=(n_lines*10, n_col*20))
+            fig = plt.figure(figsize=(n_lines * 10, n_col * 20))
             for i, slices in enumerate(slice_list):
                 slice_im, slice_seg = slices
-                plot = fig.add_subplot(n_lines, n_col, i+1)
+                plot = fig.add_subplot(n_lines, n_col, i + 1)
                 plot.imshow(slice_im, cmap=cm.gray, interpolation='nearest')
                 if index[i] is None:
                     title = 'mid slice'
                 else:
-                    title = 'slice '+str(index[i])
+                    title = 'slice ' + str(index[i])
                 plot.set_title(title)
                 if seg is not None:
                     slice_seg[slice_seg < thr] = 0
@@ -1078,16 +1077,16 @@ class Image(object):
         if n_slices > max_n_slices:
             index_list = range(max_n_slices)
         elif n_slices == 1:
-            index_list = [int(round(max_n_slices/2))]
+            index_list = [int(round(max_n_slices / 2))]
         else:
-            gap = max_n_slices/n_slices
-            index_list = [((i+1)*gap)-1 for i in range(n_slices)]
+            gap = max_n_slices / n_slices
+            index_list = [((i + 1) * gap) - 1 for i in range(n_slices)]
         index_list.sort()
         try:
-            filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list, format=format, path_output=path_output)
+            filename_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane', index=index_list, format=format, path_output=path_output)
             info_str = 'QC output image: ' + filename_image_png
             if seg is not None:
-                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
+                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
                 info_str += ' & ' + filename_gmseg_image_png
             printv(info_str, verbose, 'info')
         except RuntimeError, e:
@@ -1136,14 +1135,14 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
             image2_c.change_orientation('RPI')
             image2 = image2_c
 
-        zmin, zmax = 0, image1.data.shape[2]-1
+        zmin, zmax = 0, image1.data.shape[2] - 1
         if zboundaries:
             # compute Z-ROI for which both segmentations are present.
-            for z in range(zmin, zmax+1):  # going from inferior to superior
+            for z in range(zmin, zmax + 1):  # going from inferior to superior
                 if np.any(image1.data[:, :, z]) and np.any(image2.data[:, :, z]):
                     zmin = z
                     break
-            for z in range(zmax, zmin+1, -1):  # going from superior to inferior
+            for z in range(zmax, zmin + 1, -1):  # going from superior to inferior
                 if np.any(image1.data[:, :, z]) and np.any(image2.data[:, :, z]):
                     zmax = z
                     break
@@ -1168,12 +1167,13 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 
     return dice
 
+
 def find_zmin_zmax(fname):
     import sct_utils as sct
     # crop image
-    status, output = sct.run('sct_crop_image -i '+fname+' -dim 2 -bmax -o tmp.nii')
+    status, output = sct.run('sct_crop_image -i ' + fname + ' -dim 2 -bmax -o tmp.nii')
     # parse output
-    zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
+    zmin, zmax = output[output.find('Dimension 2: ') + 13:].split('\n')[0].split(' ')
     return int(zmin), int(zmax)
 
 
@@ -1275,7 +1275,6 @@ if __name__ == "__main__":
                       description="Image output name.",
                       mandatory=False,
                       example='im_out.nii.gz')
-
 
     arguments = parser.parse(sys.argv[1:])
 

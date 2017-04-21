@@ -135,9 +135,9 @@ def get_parser(paramreg=None):
                                   "  geometric: Geometric center of images\n"
                                   "  centermass: Center of mass of images\n"
                                   "  origin: Physical origin of images\n"
-                                  "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" +paramreg.steps['1'].poly + "\n"
-                                  "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +paramreg.steps['1'].smoothWarpXY + "\n"
-                                  "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" +paramreg.steps['1'].pca_eigenratio_th + "\n"
+                                  "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" + paramreg.steps['1'].poly + "\n"
+                                  "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" + paramreg.steps['1'].smoothWarpXY + "\n"
+                                  "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" + paramreg.steps['1'].pca_eigenratio_th + "\n"
                                   "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" + paramreg.steps['0'].dof + "\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
@@ -182,14 +182,16 @@ def get_parser(paramreg=None):
 # DEFAULT PARAMETERS
 
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.outSuffix  = "_reg"
         self.padding = 5
-        self.path_qc = os.path.abspath(os.curdir)+'/qc/'
+        self.path_qc = os.path.abspath(os.curdir) + '/qc/'
 
 # Parameters for registration
+
+
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
         self.step = step
@@ -220,10 +222,12 @@ class Paramreg(object):
             obj = object.split('=')
             setattr(self, obj[0], obj[1])
 
+
 class ParamregMultiStep:
     '''
     This class contains a dictionary with the params of multiple steps
     '''
+
     def __init__(self, listParam=[]):
         self.steps = dict()
         for stepParam in listParam:
@@ -247,7 +251,6 @@ class ParamregMultiStep:
         # parameters must contain 'type'
         if int(param_reg.step) != 0 and param_reg.type not in param_reg.type_list:
             sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
-
 
 
 # MAIN
@@ -327,16 +330,16 @@ def main(args=None):
 
     # print arguments
     print '\nInput parameters:'
-    print '  Source .............. '+fname_src
-    print '  Destination ......... '+fname_dest
-    print '  Init transfo ........ '+fname_initwarp
-    print '  Mask ................ '+fname_mask
-    print '  Output name ......... '+fname_output
+    print '  Source .............. ' + fname_src
+    print '  Destination ......... ' + fname_dest
+    print '  Init transfo ........ ' + fname_initwarp
+    print '  Mask ................ ' + fname_mask
+    print '  Output name ......... ' + fname_output
     # print '  Algorithm ........... '+paramreg.algo
     # print '  Number of iterations  '+paramreg.iter
     # print '  Metric .............. '+paramreg.metric
-    print '  Remove temp files ... '+str(remove_temp_files)
-    print '  Verbose ............. '+str(verbose)
+    print '  Remove temp files ... ' + str(remove_temp_files)
+    print '  Verbose ............. ' + str(verbose)
 
     # update param
     param.verbose = verbose
@@ -348,7 +351,6 @@ def main(args=None):
     sct.printv('\nCheck if input data are 3D...', verbose)
     sct.check_if_3d(fname_src)
     sct.check_if_3d(fname_dest)
-
 
     # Check if user selected type=seg, but did not input segmentation data
     if 'paramreg_user' in locals():
@@ -386,19 +388,19 @@ def main(args=None):
     # copy files to temporary folder
     from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    convert(fname_src, path_tmp+'src.nii')
-    convert(fname_dest, path_tmp+'dest.nii')
+    convert(fname_src, path_tmp + 'src.nii')
+    convert(fname_dest, path_tmp + 'dest.nii')
 
     if fname_src_seg:
-        convert(fname_src_seg, path_tmp+'src_seg.nii')
-        convert(fname_dest_seg, path_tmp+'dest_seg.nii')
+        convert(fname_src_seg, path_tmp + 'src_seg.nii')
+        convert(fname_dest_seg, path_tmp + 'dest_seg.nii')
 
     if fname_src_label:
-        convert(fname_src_label, path_tmp+'src_label.nii')
-        convert(fname_dest_label, path_tmp+'dest_label.nii')
+        convert(fname_src_label, path_tmp + 'src_label.nii')
+        convert(fname_dest_label, path_tmp + 'dest_label.nii')
 
     if fname_mask != '':
-        convert(fname_mask, path_tmp+'mask.nii.gz')
+        convert(fname_mask, path_tmp + 'mask.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -429,7 +431,7 @@ def main(args=None):
     # initial warping is specified, update list of warping fields and skip step=0
     if fname_initwarp:
         sct.printv('\nSkip step=0 and replace with initial transformations: ', param.verbose)
-        sct.printv('  '+fname_initwarp, param.verbose)
+        sct.printv('  ' + fname_initwarp, param.verbose)
         # sct.run('cp '+fname_initwarp+' warp_forward_0.nii.gz', verbose)
         warp_forward = [fname_initwarp]
         start_step = 1
@@ -443,7 +445,7 @@ def main(args=None):
 
     # loop across registration steps
     for i_step in range(start_step, len(paramreg.steps)):
-        sct.printv('\n--\nESTIMATE TRANSFORMATION FOR STEP #'+str(i_step), param.verbose)
+        sct.printv('\n--\nESTIMATE TRANSFORMATION FOR STEP #' + str(i_step), param.verbose)
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
             src = 'src.nii'
@@ -463,7 +465,7 @@ def main(args=None):
         # if step>0, apply warp_forward_concat to the src image to be used
         if i_step > 0:
             sct.printv('\nApply transformation from previous step', param.verbose)
-            sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
+            sct.run('sct_apply_transfo -i ' + src + ' -d ' + dest + ' -w ' + ','.join(warp_forward) + ' -o ' + sct.add_suffix(src, '_reg') + ' -x ' + interp_step, verbose)
             src = sct.add_suffix(src, '_reg')
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
@@ -472,14 +474,14 @@ def main(args=None):
 
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', verbose)
-    sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d dest.nii -o warp_src2dest.nii.gz', verbose)
-    sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d dest.nii -o warp_dest2src.nii.gz', verbose)
+    sct.run('sct_concat_transfo -w ' + ','.join(warp_forward) + ' -d dest.nii -o warp_src2dest.nii.gz', verbose)
+    sct.run('sct_concat_transfo -w ' + ','.join(warp_inverse) + ' -d dest.nii -o warp_dest2src.nii.gz', verbose)
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
-    sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2dest.nii.gz -x '+interp, verbose)
+    sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2dest.nii.gz -x ' + interp, verbose)
     sct.printv('\nApply transfo dest --> source...', verbose)
-    sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -x '+interp, verbose)
+    sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -x ' + interp, verbose)
 
     # come back to parent folder
     os.chdir('..')
@@ -487,30 +489,29 @@ def main(args=None):
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
     # generate: src_reg
-    fname_src2dest = sct.generate_output_file(path_tmp+'src_reg.nii', path_out+file_out+ext_out, verbose)
+    fname_src2dest = sct.generate_output_file(path_tmp + 'src_reg.nii', path_out + file_out + ext_out, verbose)
     # generate: forward warping field
     if fname_output_warp == '':
-        fname_output_warp = path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz'
-    sct.generate_output_file(path_tmp+'warp_src2dest.nii.gz', fname_output_warp, verbose)
+        fname_output_warp = path_out + 'warp_' + file_src + '2' + file_dest + '.nii.gz'
+    sct.generate_output_file(path_tmp + 'warp_src2dest.nii.gz', fname_output_warp, verbose)
     if generate_warpinv:
         # generate: dest_reg
-        fname_dest2src = sct.generate_output_file(path_tmp+'dest_reg.nii', path_out+file_out_inv+ext_dest, verbose)
+        fname_dest2src = sct.generate_output_file(path_tmp + 'dest_reg.nii', path_out + file_out_inv + ext_dest, verbose)
         # generate: inverse warping field
-        sct.generate_output_file(path_tmp+'warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
+        sct.generate_output_file(path_tmp + 'warp_dest2src.nii.gz', path_out + 'warp_' + file_dest + '2' + file_src + '.nii.gz', verbose)
 
     # Delete temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf '+path_tmp, verbose)
+        sct.run('rm -rf ' + path_tmp, verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
+    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
     sct.printv('\nTo view results, type:', verbose)
-    sct.printv('fslview '+fname_dest+' '+fname_src2dest+' &', verbose, 'info')
+    sct.printv('fslview ' + fname_dest + ' ' + fname_src2dest + ' &', verbose, 'info')
     if generate_warpinv:
-        sct.printv('fslview '+fname_src+' '+fname_dest2src+' &\n', verbose, 'info')
-
+        sct.printv('fslview ' + fname_src + ' ' + fname_dest2src + ' &\n', verbose, 'info')
 
 
 # register images
@@ -525,19 +526,19 @@ def register(src, dest, paramreg, param, i_step_str):
 
     # display arguments
     sct.printv('Registration parameters:', param.verbose)
-    sct.printv('  type ........... '+paramreg.steps[i_step_str].type, param.verbose)
-    sct.printv('  algo ........... '+paramreg.steps[i_step_str].algo, param.verbose)
-    sct.printv('  slicewise ...... '+paramreg.steps[i_step_str].slicewise, param.verbose)
-    sct.printv('  metric ......... '+paramreg.steps[i_step_str].metric, param.verbose)
-    sct.printv('  iter ........... '+paramreg.steps[i_step_str].iter, param.verbose)
-    sct.printv('  smooth ......... '+paramreg.steps[i_step_str].smooth, param.verbose)
-    sct.printv('  laplacian ...... '+paramreg.steps[i_step_str].laplacian, param.verbose)
-    sct.printv('  shrink ......... '+paramreg.steps[i_step_str].shrink, param.verbose)
-    sct.printv('  gradStep ....... '+paramreg.steps[i_step_str].gradStep, param.verbose)
-    sct.printv('  init ........... '+paramreg.steps[i_step_str].init, param.verbose)
-    sct.printv('  poly ........... '+paramreg.steps[i_step_str].poly, param.verbose)
-    sct.printv('  dof ............ '+paramreg.steps[i_step_str].dof, param.verbose)
-    sct.printv('  smoothWarpXY ... '+paramreg.steps[i_step_str].smoothWarpXY, param.verbose)
+    sct.printv('  type ........... ' + paramreg.steps[i_step_str].type, param.verbose)
+    sct.printv('  algo ........... ' + paramreg.steps[i_step_str].algo, param.verbose)
+    sct.printv('  slicewise ...... ' + paramreg.steps[i_step_str].slicewise, param.verbose)
+    sct.printv('  metric ......... ' + paramreg.steps[i_step_str].metric, param.verbose)
+    sct.printv('  iter ........... ' + paramreg.steps[i_step_str].iter, param.verbose)
+    sct.printv('  smooth ......... ' + paramreg.steps[i_step_str].smooth, param.verbose)
+    sct.printv('  laplacian ...... ' + paramreg.steps[i_step_str].laplacian, param.verbose)
+    sct.printv('  shrink ......... ' + paramreg.steps[i_step_str].shrink, param.verbose)
+    sct.printv('  gradStep ....... ' + paramreg.steps[i_step_str].gradStep, param.verbose)
+    sct.printv('  init ........... ' + paramreg.steps[i_step_str].init, param.verbose)
+    sct.printv('  poly ........... ' + paramreg.steps[i_step_str].poly, param.verbose)
+    sct.printv('  dof ............ ' + paramreg.steps[i_step_str].dof, param.verbose)
+    sct.printv('  smoothWarpXY ... ' + paramreg.steps[i_step_str].smoothWarpXY, param.verbose)
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
@@ -584,26 +585,26 @@ def register(src, dest, paramreg, param, i_step_str):
             zmax_total = min([zmax_src, zmax_dest])
             # crop data
             src_crop = sct.add_suffix(src, '_crop')
-            sct.run('sct_crop_image -i '+src+' -o '+src_crop+' -dim 2 -start '+str(zmin_total)+' -end '+str(zmax_total), param.verbose)
+            sct.run('sct_crop_image -i ' + src + ' -o ' + src_crop + ' -dim 2 -start ' + str(zmin_total) + ' -end ' + str(zmax_total), param.verbose)
             dest_crop = sct.add_suffix(dest, '_crop')
-            sct.run('sct_crop_image -i '+dest+' -o '+dest_crop+' -dim 2 -start '+str(zmin_total)+' -end '+str(zmax_total), param.verbose)
+            sct.run('sct_crop_image -i ' + dest + ' -o ' + dest_crop + ' -dim 2 -start ' + str(zmin_total) + ' -end ' + str(zmax_total), param.verbose)
             # update variables
             src = src_crop
             dest = dest_crop
-            scr_regStep = sct.add_suffix(src, '_regStep'+i_step_str)
+            scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
             # estimate transfo
             cmd = ('isct_antsSliceRegularizedRegistration '
-                   '-t Translation['+paramreg.steps[i_step_str].gradStep+'] '
-                   '-m '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+',Regular,0.2] '
-                   '-p '+paramreg.steps[i_step_str].poly+' '
-                   '-i '+paramreg.steps[i_step_str].iter+' '
-                   '-f '+paramreg.steps[i_step_str].shrink+' '
-                   '-s '+paramreg.steps[i_step_str].smooth+' '
+                   '-t Translation[' + paramreg.steps[i_step_str].gradStep + '] '
+                   '-m ' + paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2] '
+                   '-p ' + paramreg.steps[i_step_str].poly + ' '
+                   '-i ' + paramreg.steps[i_step_str].iter + ' '
+                   '-f ' + paramreg.steps[i_step_str].shrink + ' '
+                   '-s ' + paramreg.steps[i_step_str].smooth + ' '
                    '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
-                   '-o [step'+i_step_str+','+scr_regStep+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
-                   +masking)
-            warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
-            warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
+                   '-o [step' + i_step_str + ',' + scr_regStep + '] '  # here the warp name is stage10 because antsSliceReg add "Warp"
+                   + masking)
+            warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
+            warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
             # run command
             status, output = sct.run(cmd, param.verbose)
 
@@ -615,13 +616,13 @@ def register(src, dest, paramreg, param, i_step_str):
             # N.B. no need to pad if iter = 0
             if not paramreg.steps[i_step_str].iter == '0':
                 dest_pad = sct.add_suffix(dest, '_pad')
-                sct.run('sct_image -i '+dest+' -o '+dest_pad+' -pad 0,0,'+str(param.padding))
+                sct.run('sct_image -i ' + dest + ' -o ' + dest_pad + ' -pad 0,0,' + str(param.padding))
                 dest = dest_pad
             # apply Laplacian filter
             if not paramreg.steps[i_step_str].laplacian == '0':
                 sct.printv('\nApply Laplacian filter', param.verbose)
-                sct.run('sct_maths -i '+src+' -laplacian '+paramreg.steps[i_step_str].laplacian+','+paramreg.steps[i_step_str].laplacian+',0 -o '+sct.add_suffix(src, '_laplacian'))
-                sct.run('sct_maths -i '+dest+' -laplacian '+paramreg.steps[i_step_str].laplacian+','+paramreg.steps[i_step_str].laplacian+',0 -o '+sct.add_suffix(dest, '_laplacian'))
+                sct.run('sct_maths -i ' + src + ' -laplacian ' + paramreg.steps[i_step_str].laplacian + ',' + paramreg.steps[i_step_str].laplacian + ',0 -o ' + sct.add_suffix(src, '_laplacian'))
+                sct.run('sct_maths -i ' + dest + ' -laplacian ' + paramreg.steps[i_step_str].laplacian + ',' + paramreg.steps[i_step_str].laplacian + ',0 -o ' + sct.add_suffix(dest, '_laplacian'))
                 src = sct.add_suffix(src, '_laplacian')
                 dest = sct.add_suffix(dest, '_laplacian')
             # Estimate transformation
@@ -629,32 +630,32 @@ def register(src, dest, paramreg, param, i_step_str):
             scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
             cmd = ('isct_antsRegistration '
                    '--dimensionality 3 '
-                   '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep +
-                   ants_registration_params[paramreg.steps[i_step_str].algo.lower()]+'] '
-                   '--metric '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+'] '
-                   '--convergence '+paramreg.steps[i_step_str].iter+' '
-                   '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
-                   '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
+                   '--transform ' + paramreg.steps[i_step_str].algo + '[' + paramreg.steps[i_step_str].gradStep +
+                   ants_registration_params[paramreg.steps[i_step_str].algo.lower()] + '] '
+                   '--metric ' + paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + '] '
+                   '--convergence ' + paramreg.steps[i_step_str].iter + ' '
+                   '--shrink-factors ' + paramreg.steps[i_step_str].shrink + ' '
+                   '--smoothing-sigmas ' + paramreg.steps[i_step_str].smooth + 'mm '
                    '--restrict-deformation 1x1x0 '
-                   '--output [step'+i_step_str+','+scr_regStep+'] '
+                   '--output [step' + i_step_str + ',' + scr_regStep + '] '
                    '--interpolation BSpline[3] '
-                   +masking)
+                   + masking)
             # add verbose
             if param.verbose >= 1:
                 cmd += ' --verbose 1'
             # add init translation
             if not paramreg.steps[i_step_str].init == '':
                 init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
-                cmd += ' -r ['+dest+','+src+','+init_dict[paramreg.steps[i_step_str].init]+']'
+                cmd += ' -r [' + dest + ',' + src + ',' + init_dict[paramreg.steps[i_step_str].init] + ']'
             # run command
             status, output = sct.run(cmd, param.verbose)
             # get appropriate file name for transformation
             if paramreg.steps[i_step_str].algo in ['rigid', 'affine', 'translation']:
-                warp_forward_out = 'step'+i_step_str+'0GenericAffine.mat'
-                warp_inverse_out = '-step'+i_step_str+'0GenericAffine.mat'
+                warp_forward_out = 'step' + i_step_str + '0GenericAffine.mat'
+                warp_inverse_out = '-step' + i_step_str + '0GenericAffine.mat'
             else:
-                warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
-                warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
+                warp_forward_out = 'step' + i_step_str + '0Warp.nii.gz'
+                warp_inverse_out = 'step' + i_step_str + '0InverseWarp.nii.gz'
 
     # ANTS 2d
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params and paramreg.steps[i_step_str].slicewise == '1':
@@ -665,8 +666,8 @@ def register(src, dest, paramreg, param, i_step_str):
             if not paramreg.steps[i_step_str].shrink == '1':
                 sct.printv('\nWARNING: when using slicewise with SyN or BSplineSyN, shrink factor needs to be one. Forcing shrink=1.', 1, 'warning')
                 paramreg.steps[i_step_str].shrink = '1'
-            warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
-            warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
+            warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
+            warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
             register_slicewise(src,
                                dest,
                                paramreg=paramreg.steps[i_step_str],
@@ -681,23 +682,23 @@ def register(src, dest, paramreg, param, i_step_str):
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
         # if type=im, sends warning
         if paramreg.steps[i_step_str].type == 'im':
-            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' should be used with type=seg.\n', 1, 'warning')
+            sct.printv('\nWARNING: algo ' + paramreg.steps[i_step_str].algo + ' should be used with type=seg.\n', 1, 'warning')
         # if type=label, exit with error
         elif paramreg.steps[i_step_str].type == 'label':
             sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1, 'error')
         # check if user provided a mask-- if so, inform it will be ignored
         if not fname_mask == '':
-            sct.printv('\nWARNING: algo '+paramreg.steps[i_step_str].algo+' will ignore the provided mask.\n', 1, 'warning')
+            sct.printv('\nWARNING: algo ' + paramreg.steps[i_step_str].algo + ' will ignore the provided mask.\n', 1, 'warning')
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            sct.run('sct_maths -i '+src+' -smooth '+paramreg.steps[i_step_str].smooth+','+paramreg.steps[i_step_str].smooth+',0 -o '+sct.add_suffix(src, '_smooth'))
-            sct.run('sct_maths -i '+dest+' -smooth '+paramreg.steps[i_step_str].smooth+','+paramreg.steps[i_step_str].smooth+',0 -o '+sct.add_suffix(dest, '_smooth'))
+            sct.run('sct_maths -i ' + src + ' -smooth ' + paramreg.steps[i_step_str].smooth + ',' + paramreg.steps[i_step_str].smooth + ',0 -o ' + sct.add_suffix(src, '_smooth'))
+            sct.run('sct_maths -i ' + dest + ' -smooth ' + paramreg.steps[i_step_str].smooth + ',' + paramreg.steps[i_step_str].smooth + ',0 -o ' + sct.add_suffix(dest, '_smooth'))
             src = sct.add_suffix(src, '_smooth')
             dest = sct.add_suffix(dest, '_smooth')
         from msct_register import register_slicewise
-        warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
-        warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
+        warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
+        warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
         register_slicewise(src,
                            dest,
                            paramreg=paramreg.steps[i_step_str],
@@ -709,7 +710,7 @@ def register(src, dest, paramreg, param, i_step_str):
                            verbose=param.verbose)
 
     else:
-        sct.printv('\nERROR: algo '+paramreg.steps[i_step_str].algo+' does not exist. Exit program\n', 1, 'error')
+        sct.printv('\nERROR: algo ' + paramreg.steps[i_step_str].algo + ' does not exist. Exit program\n', 1, 'error')
 
     # landmark-based registration
     if paramreg.steps[i_step_str].type in ['label']:
@@ -727,32 +728,31 @@ def register(src, dest, paramreg, param, i_step_str):
 
     if not os.path.isfile(warp_forward_out):
         # no forward warping field for rigid and affine
-        sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n' + output +
+        sct.printv('\nERROR: file ' + warp_forward_out + ' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].type not in ['label']:
         # no inverse warping field for rigid and affine
-        sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n' + output +
+        sct.printv('\nERROR: file ' + warp_inverse_out + ' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
         if (paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].slicewise == '0'):
             # if ANTs is used with affine/rigid --> outputs .mat file
-            warp_forward = 'warp_forward_'+i_step_str+'.mat'
+            warp_forward = 'warp_forward_' + i_step_str + '.mat'
             os.rename(warp_forward_out, warp_forward)
-            warp_inverse = '-warp_forward_'+i_step_str+'.mat'
+            warp_inverse = '-warp_forward_' + i_step_str + '.mat'
         elif paramreg.steps[i_step_str].type in ['label']:
             # if label-based registration is used --> outputs .txt file
-            warp_forward = 'warp_forward_'+i_step_str+'.txt'
+            warp_forward = 'warp_forward_' + i_step_str + '.txt'
             os.rename(warp_forward_out, warp_forward)
-            warp_inverse = '-warp_forward_'+i_step_str+'.txt'
+            warp_inverse = '-warp_forward_' + i_step_str + '.txt'
         else:
-            warp_forward = 'warp_forward_'+i_step_str+'.nii.gz'
-            warp_inverse = 'warp_inverse_'+i_step_str+'.nii.gz'
+            warp_forward = 'warp_forward_' + i_step_str + '.nii.gz'
+            warp_inverse = 'warp_inverse_' + i_step_str + '.nii.gz'
             os.rename(warp_forward_out, warp_forward)
             os.rename(warp_inverse_out, warp_inverse)
 
     return warp_forward, warp_inverse
-
 
 
 # START PROGRAM
@@ -765,7 +765,7 @@ if __name__ == "__main__":
 # Convert deformation field to 4D volume (readable by fslview)
 # DONE: clean code below-- right now it does not work
 #===========
-#if convertDeformation:
+# if convertDeformation:
 #    print('\nConvert deformation field...')
 #    cmd = 'sct_image -i tmp.regWarp.nii -mcs  -o tmp.regWarp.nii'
 #    print(">> "+cmd)
