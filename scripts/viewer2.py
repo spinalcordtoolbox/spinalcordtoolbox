@@ -84,9 +84,7 @@ class SinglePlot():
         self.setup_intensity()
 
     def update_observer(self, *args, **kwargs):
-        for arg in args:
-            target=arg
-        self.update_slice(target)
+        pass
 
     def show_image(self,im_params,current_point):
         def set_data_to_display(image, current_point):
@@ -118,21 +116,6 @@ class SinglePlot():
             self.figs[-1].set_interpolation(my_interpolation)
             if(self.list_intensites):
                 self.figs[-1].set_clim(self.list_intensites[0],self.list_intensites[1])
-
-    def update_slice(self, target):
-        if (self.view == 1):
-            self.figs[-1].set_data(self.images[0].data[target.x, :, :])
-        elif (self.view == 2):
-            self.figs[-1].set_data(self.images[0].data[:, target.y, :])
-        elif (self.view == 3):
-            self.figs[-1].set_data(self.images[0].data[:, :, target.z])
-        self.figs[-1].figure.canvas.draw()
-
-    def set_line_to_display(self):
-        if 'v' in self.display_cross:
-            self.line_vertical.set_ydata(self.cross_to_display[0][0])
-        if 'h' in self.display_cross:
-            self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
     def set_image_parameters(self,im_params,i,cm):
         if str(i) in im_params.images_parameters:
@@ -219,13 +202,13 @@ class SinglePlot():
         if event.button == 1 and event.inaxes == self.axes: #left click
             pass
         elif event.button == 3 and event.inaxes == self.axes: #right click
-            self.change_intensity(event)
+            pass
 
     def on_event_release(self, event):
         if event.button == 1: # left click
-            self.draw_dots(self.get_event_coordinates(event,1))
+            pass
         elif event.button == 3: # right click
-            self.change_intensity(event)
+            pass
 
     def on_event_scroll(self, event):
         def calc_scale_factor(direction):
@@ -258,16 +241,6 @@ class SinglePlot():
                                 int(round(event.xdata)),
                                 self.current_point.z, 1])
         return point
-
-    def draw_dots(self, current_point):
-        x_data, y_data = [], []
-        self.refresh()
-        x_data.append(current_point.z)
-        y_data.append(current_point.y)
-        self.plot_points.set_xdata(x_data)
-        self.plot_points.set_ydata(y_data)
-        self.show_image(self.im_params,current_point)
-        self.refresh()
 
 class SinglePlotMain(Observer,SinglePlot):
     """
@@ -302,37 +275,6 @@ class SinglePlotMain(Observer,SinglePlot):
         for arg in args:
             target=arg
         self.update_slice(target)
-
-    def show_image(self,im_params,current_point):
-        def set_data_to_display(image, current_point):
-            if self.view == 1:
-                self.cross_to_display = [[[current_point.y, current_point.y], [-10000, 10000]],
-                                         [[-10000, 10000], [current_point.z, current_point.z]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[0]
-                return (image.data[int(self.image_dim[0] / 2), :, :])
-            elif self.view == 2:
-                self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
-                                         [[-10000, 10000], [current_point.z, current_point.z]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[1]
-                return (image.data[:, int(self.image_dim[1] / 2), :])
-            elif self.view == 3:
-                self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
-                                         [[-10000, 10000], [current_point.y, current_point.y]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[2]
-                return (image.data[:, :, int(self.image_dim[2] / 2)])
-
-        if not current_point:
-            current_point=Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
-                                         int(self.images[0].data.shape[2] / 2)])
-        for i, image in enumerate(self.images):
-            data_to_display = set_data_to_display(image,current_point)
-            (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,mpl.cm)
-            my_cmap.set_under('b', alpha=0)
-            self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
-            self.figs[-1].set_cmap(my_cmap)
-            self.figs[-1].set_interpolation(my_interpolation)
-            if(self.list_intensites):
-                self.figs[-1].set_clim(self.list_intensites[0],self.list_intensites[1])
 
     def update_slice(self, target):
         if (self.view == 1):
