@@ -154,7 +154,7 @@ sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.txt
 cd ..
 
 
-# display results (to easily compare integrity across SCT versions)
+# Display results (to easily compare integrity across SCT versions)
 # ----------
 echo "Ended at: $(date +%x_%r)"
 echo
@@ -165,3 +165,6 @@ echo "mt/CSA_WM:  " `grep -v '^#' mt/csa_wm/csa_mean.txt | grep -v '^$'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'right'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'left'`
 echo
+
+# Generate QC report
+sct_qc -folder ~/qc_batch_processing
