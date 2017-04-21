@@ -288,7 +288,7 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
 
     # Inform user that flags z or vert will be ignored.
     if slices != '' or vert_levels != '':
-        sct.printv('\nWARNING: Process "shape" cannot be used with flag -z or -vert. This flag will be ignored.', verbose, 'warning')
+        sct.printv('\nWARNING: Process "shape" cannot be used with flag -z or -vert. This flag will be ignored.\n', verbose, 'warning')
 
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
     fname_output_csv = output_folder + file_data + '_shape.csv'
