@@ -26,7 +26,35 @@ from abc import ABCMeta, abstractmethod
 
 import webbrowser
 
-class SinglePlot:
+
+class Observer(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def update(self, *args, **kwargs):
+        pass
+
+class Observable(object):
+    def __init__(self):
+        self.observers = []
+
+    def register(self, observer):
+        if not observer in self.observers:
+            self.observers.append(observer)
+
+    def unregister(self, observer):
+        if observer in self.observers:
+            self.observers.remove(observer)
+
+    def unregister_all(self):
+        if self.observers:
+            del self.observers[:]
+
+    def update_observers(self, *args, **kwargs):
+        for observer in self.observers:
+            observer.update(*args, **kwargs)
+
+class SinglePlot(Observer):
     """
         This class manages mouse events on one image.
     """
@@ -54,6 +82,9 @@ class SinglePlot:
         self.remove_axis_number()
         self.connect_mpl_events()
         self.setup_intensity()
+
+    def update(self, *args, **kwargs):
+        print('message recu : '.format(args,kwargs))
 
     def show_image(self,im_params,current_point):
         def set_data_to_display(image, current_point):
@@ -255,12 +286,15 @@ class SinglePlot:
         self.show_image(self.im_params,current_point)
         self.refresh()
 
-class SinglePlotSecond(SinglePlot,object):
+class SinglePlotSecond(SinglePlot,Observer,object):
     #TODO : inheritance etrange
 
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view=2, display_cross='hv', im_params=None):
         super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params)
         self.main_plot=main_single_plot
+
+        self.observable=Observable()
+        self.observable.register(main_single_plot)
 
         self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
         self.refresh()
@@ -277,6 +311,7 @@ class SinglePlotSecond(SinglePlot,object):
         self.line_vertical.remove()
         self.add_line('v')
         self.refresh()
+        self.observable.update_observers('Salut toi coco',display_cross)
 
     def show_image(self,im_params,current_point):
         def set_data_to_display(image, current_point=None):
@@ -920,7 +955,6 @@ class Window(WindowCore):
             control_buttons = ControlButtonsCore()
             layout_main.addLayout(control_buttons.layout_buttons)
             return control_buttons
-
         (window, system) = launch_main_window()
         layout_main = add_layout_main(window)
         self.header = add_header(layout_main)
@@ -928,6 +962,7 @@ class Window(WindowCore):
         self.control_buttons = add_control_buttons(layout_main)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
+
 
 class ParamMultiImageVisualization(object):
     """
@@ -975,32 +1010,6 @@ class ParamImageVisualization(object):
             setattr(self, objs[0], objs[1])
 
 
-class Observer(object):
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def update(self, *args, **kwargs):
-        pass
-
-class Observable(object):
-    def __init__(self):
-        self.observers = []
-
-    def register(self, observer):
-        if not observer in self.observers:
-            self.observers.append(observer)
-
-    def unregister(self, observer):
-        if observer in self.observers:
-            self.observers.remove(observer)
-
-    def unregister_all(self):
-        if self.observers:
-            del self.observers[:]
-
-    def update_observers(self, *args, **kwargs):
-        for observer in self.observers:
-            observer.update(*args, **kwargs)
 
 
 
