@@ -587,5 +587,5 @@ if __name__ == "__main__":
 
         test(qcslice.Axial(fname_input_data, fname_seg))
         sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
-        sct.printv('Use the following command to see the results in a browser')
+        sct.printv('Use the following command to see the results in a browser:')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
