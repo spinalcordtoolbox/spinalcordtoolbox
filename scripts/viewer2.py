@@ -86,7 +86,7 @@ class SinglePlot(Observer):
     def update(self, *args, **kwargs):
         for arg in args:
             target=arg
-        self.update_slice(target,True)
+        self.update_slice(target)
 
     def show_image(self,im_params,current_point):
         def set_data_to_display(image, current_point):
@@ -119,35 +119,13 @@ class SinglePlot(Observer):
             if(self.list_intensites):
                 self.figs[-1].set_clim(self.list_intensites[0],self.list_intensites[1])
 
-    def update_slice(self, target, data_update=True):
-        """
-        This function change the viewer to update the current slice
-        :param target: number of the slice to go on
-        :param data_update: False if you don't want to update data
-        :return:
-        """
-        '''
-        if isinstance(target, list):
-            target_slice = target[self.view - 1]
-            list_remaining_views = list([0, 1, 2])
-            list_remaining_views.remove(self.view - 1)
-            self.cross_to_display[0][0] = [target[list_remaining_views[0]], target[list_remaining_views[0]]]
-            self.cross_to_display[1][1] = [target[list_remaining_views[1]], target[list_remaining_views[1]]]
-        else:
-            target_slice = target
-        '''
-
-        #if 0 <= target_slice < self.images[0].data.shape[int(self.view)-1]:
-        if True:
-            if data_update:
-                #for i, image in enumerate(self.images):
-                    if(self.view==1):
-                        self.figs[-1].set_data(self.images[0].data[target.x, :, :])
-                    elif(self.view==2):
-                        self.figs[-1].set_data(self.images[0].data[:, target.y, :])
-                    elif(self.view==3):
-                        self.figs[-1].set_data(self.images[0].data[:, :, target.z])
-            #self.set_line_to_display()
+    def update_slice(self, target):
+        if (self.view == 1):
+            self.figs[-1].set_data(self.images[0].data[target.x, :, :])
+        elif (self.view == 2):
+            self.figs[-1].set_data(self.images[0].data[:, target.y, :])
+        elif (self.view == 3):
+            self.figs[-1].set_data(self.images[0].data[:, :, target.z])
         self.figs[-1].figure.canvas.draw()
 
     def set_line_to_display(self):
