@@ -48,6 +48,8 @@ function addtopath {
 if [ -z "${SCT_LOADED_ONCE}" ]; then
   # Do not needs to be reloaded on subsequent system calls
   export SCT_LOADED_ONCE="loaded"
+  # exclude ~/.local/lib/python (linux) or ~/Library/Python (OSX) libraries
+  export PYTHONNOUSERSITE=1
   # set at installation
   set_system_dependent_var
 
