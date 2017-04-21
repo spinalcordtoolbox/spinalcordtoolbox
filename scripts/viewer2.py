@@ -222,8 +222,8 @@ class SinglePlot():
         if event.inaxes == self.axes:
             scale_factor=calc_scale_factor(event.button)
             self.update_xy_lim(x_center=event.xdata, y_center=event.ydata,
-                               x_scale_factor=scale_factor, y_scale_factor=scale_factor,
-                               zoom=True)
+                                x_scale_factor=scale_factor, y_scale_factor=scale_factor,
+                                zoom=True)
 
     def get_event_coordinates(self, event, axis):
         point = None
@@ -241,34 +241,14 @@ class SinglePlot():
                                 self.current_point.z, 1])
         return point
 
-class SinglePlotMain(Observer,SinglePlot):
+class SinglePlotMain(SinglePlot,Observer):
     """
         This class manages mouse events on one image.
     """
     def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
-        self.axes = ax
-        self.images = images
-        self.viewer = viewer
-        self.view = view
-        self.display_cross = display_cross
-        self.image_dim = self.images[0].data.shape
-        self.figs = []
-        self.cross_to_display = None
-        self.aspect_ratio = None
-        self.canvas=canvas
-        self.last_update=time()
-        self.mean_intensity = []
-        self.std_intensity = []
-        self.list_intensites=[]
-        self.im_params = im_params
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
-                                         int(self.images[0].data.shape[2] / 2)])
+        super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params)
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
 
-        self.show_image(self.im_params,current_point=None)
-        self.remove_axis_number()
-        self.connect_mpl_events()
-        self.setup_intensity()
 
     def update_observer(self, *args, **kwargs):
         for arg in args:
@@ -389,6 +369,8 @@ class SinglePlotSecond(SinglePlot,Observer,object):
         elif event.button == 3: # right click
             self.change_intensity(event)
 
+
+
 class HeaderCore(object):
 
     def __init__(self):
@@ -420,6 +402,8 @@ class Header(HeaderCore):
             self.lb_status.setText('header.lb_status')
             self.lb_warning.setText('header.lb_warning')
             self.lb_warning.setStyleSheet("color:red")
+
+
 
 class MainPannelCore(object):
 
