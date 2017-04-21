@@ -76,7 +76,6 @@ class SinglePlot():
         self.im_params = im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
-        self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
 
         self.show_image(self.im_params,current_point=None)
         self.remove_axis_number()
