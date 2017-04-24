@@ -76,7 +76,6 @@ class SinglePlot():
         self.im_params = im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
-        self.dic_translate_view={'ax':1,'cor':2,'sag':3}
 
 
         self.remove_axis_number()
@@ -227,17 +226,17 @@ class SinglePlot():
                                 x_scale_factor=scale_factor, y_scale_factor=scale_factor,
                                 zoom=True)
 
-    def get_event_coordinates(self, event, axis):
+    def get_event_coordinates(self, event):
         point = None
-        if axis == 1:
+        if self.view == 'ax':
             point = Coordinate([self.current_point.x,
                                 int(round(event.ydata)),
                                 int(round(event.xdata)), 1])
-        elif axis == 2:
+        elif self.view == 'cor':
             point = Coordinate([int(round(event.ydata)),
                                 self.current_point.y,
                                 int(round(event.xdata)), 1])
-        elif axis == 3:
+        elif self.view == 'sag':
             point = Coordinate([int(round(event.ydata)),
                                 int(round(event.xdata)),
                                 self.current_point.z, 1])
@@ -352,7 +351,7 @@ class SinglePlotMain(SinglePlot,Observer):
 
     def on_event_release(self, event):
         if event.button == 1: # left click
-            self.draw_dots(self.get_event_coordinates(event,1))
+            self.draw_dots(self.get_event_coordinates(event))
         elif event.button == 3: # right click
             self.change_intensity(event)
 
@@ -400,7 +399,7 @@ class SinglePlotSecond(SinglePlot,Observer,object):
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes: #left click
             #TODO : self.current_point ?
-            self.current_point=self.get_event_coordinates(event,3)
+            self.current_point=self.get_event_coordinates(event)
             self.draw_line('v')
             self.main_plot.show_image(self.im_params,self.current_point)
             self.main_plot.refresh()
@@ -410,7 +409,7 @@ class SinglePlotSecond(SinglePlot,Observer,object):
 
     def on_event_release(self, event):
         if event.button == 1: # left click
-            self.current_point=self.get_event_coordinates(event,2)
+            self.current_point=self.get_event_coordinates(event)
             self.draw_line('v')
         elif event.button == 3: # right click
             self.change_intensity(event)
@@ -475,7 +474,7 @@ class Header(HeaderCore):
 
 
 class MainPannelCore(object):
-    
+
 
     def __init__(self,
                  images,
