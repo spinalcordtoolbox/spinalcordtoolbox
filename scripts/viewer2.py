@@ -308,7 +308,6 @@ class SinglePlot():
     def is_point_in_image(self, target_point):
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
 
-
 class SinglePlotMain(SinglePlot,Observer):
     """
         This class manages mouse events on one image.
@@ -602,7 +601,9 @@ class MainPannel(MainPannelCore):
         self.merge_layouts()
 
 class ControlButtonsCore(object):
-    def __init__(self):
+    def __init__(self,main_plot):
+        self.main_plot = main_plot
+
         self.layout_buttons=QtGui.QHBoxLayout()
         self.layout_buttons.setAlignment(QtCore.Qt.AlignRight)
         self.layout_buttons.setContentsMargins(10,80,15,160)
@@ -610,9 +611,11 @@ class ControlButtonsCore(object):
         self.add_undo_button()
         self.add_save_and_quit_button()
 
+
     def add_save_and_quit_button(self):
         btn_save_and_quit=QtGui.QPushButton('Save & Quit')
         self.layout_buttons.addWidget(btn_save_and_quit)
+        btn_save_and_quit.clicked.connect(self.press_save_and_quit)
 
     def add_undo_button(self):
         self.btn_undo=QtGui.QPushButton('Undo')
@@ -633,11 +636,11 @@ class ControlButtonsCore(object):
         if event.inaxes == self.dic_axis_buttons['help']:
             webbrowser.open(self.help_web_adress, new=0, autoraise=True)
 
-    def press_save_and_quit(self, event):
-        if event.inaxes == self.dic_axis_buttons['save_and_quit']:
-            self.save_data()
-            self.closed = True
-            plt.close('all')
+    def press_save_and_quit(self):
+        print(self.main_plot.list_points)
+        #self.save_data()
+        #self.closed = True
+        #plt.close('all')
 
     def press_redo(self, event):
         if event.inaxes == self.dic_axis_buttons['redo']:
@@ -788,9 +791,11 @@ class Window(WindowCore):
             return main_pannel
 
         def add_control_buttons(layout_main):
-            control_buttons = ControlButtonsCore()
+            control_buttons = ControlButtonsCore(self.main_pannel.main_plot)
             layout_main.addLayout(control_buttons.layout_buttons)
             return control_buttons
+
+
         (window, system) = launch_main_window()
         layout_main = add_layout_main(window)
         self.header = add_header(layout_main)
