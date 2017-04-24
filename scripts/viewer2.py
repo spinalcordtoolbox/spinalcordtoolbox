@@ -218,18 +218,21 @@ class SinglePlot():
     def get_event_coordinates(self, event):
         #TODO : point bizarre
         point = None
-        if self.view == 'ax':
-            point = Coordinate([self.current_point.x,
-                                int(round(event.ydata)),
-                                int(round(event.xdata)), 1])
-        elif self.view == 'cor':
-            point = Coordinate([int(round(event.ydata)),
-                                self.current_point.y,
-                                int(round(event.xdata)), 1])
-        elif self.view == 'sag':
-            point = Coordinate([int(round(event.ydata)),
-                                int(round(event.xdata)),
-                                self.current_point.z, 1])
+        try:
+            if self.view == 'ax':
+                point = Coordinate([self.current_point.x,
+                                    int(round(event.ydata)),
+                                    int(round(event.xdata)), 1])
+            elif self.view == 'cor':
+                point = Coordinate([int(round(event.ydata)),
+                                    self.current_point.y,
+                                    int(round(event.xdata)), 1])
+            elif self.view == 'sag':
+                point = Coordinate([int(round(event.ydata)),
+                                    int(round(event.xdata)),
+                                    self.current_point.z, 1])
+        except TypeError:
+            pass
         return point
 
     def calculate_list_slices(self, starting_slice=-1):
@@ -302,6 +305,10 @@ class SinglePlot():
                            int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
                            0]
 
+    def is_point_in_image(self, target_point):
+        return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
+
+
 class SinglePlotMain(SinglePlot,Observer):
     """
         This class manages mouse events on one image.
@@ -337,22 +344,25 @@ class SinglePlotMain(SinglePlot,Observer):
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
     def add_point_to_list_points(self,current_point):
-        self.list_points.append(current_point)
+        if current_point:
+            self.list_points.append(current_point)
 
     def on_event_motion(self, event):
-        if event.button == 1 and event.inaxes == self.axes: #left click
-            pass
-        elif event.button == 3 and event.inaxes == self.axes: #right click
-            self.change_intensity(event)
-            self.change_intensity_on_secondary_plot(event)
+        if self.get_event_coordinates(event):
+            if event.button == 1 and event.inaxes == self.axes:  # left click
+                pass
+            elif event.button == 3 and event.inaxes == self.axes:  # right click
+                self.change_intensity(event)
+                self.change_intensity_on_secondary_plot(event)
 
     def on_event_release(self, event):
-        if event.button == 1: # left click
-            self.add_point_to_list_points(self.get_event_coordinates(event))
-            self.draw_dots()
-        elif event.button == 3: # right click
-            self.change_intensity(event)
-            self.change_intensity_on_secondary_plot(event)
+        if self.get_event_coordinates(event):
+            if event.button == 1:  # left click
+                self.add_point_to_list_points(self.get_event_coordinates(event))
+                self.draw_dots()
+            elif event.button == 3:  # right click
+                self.change_intensity(event)
+                self.change_intensity_on_secondary_plot(event)
 
     def change_intensity_on_secondary_plot(self,event):
         if self.secondary_plot:
@@ -402,25 +412,27 @@ class SinglePlotSecond(SinglePlot,Observer,object):
         self.figs[0].figure.canvas.draw()
 
     def on_event_motion(self, event):
-        if event.button == 1 and event.inaxes == self.axes: #left click
-            #TODO : self.current_point ?
-            self.current_point=self.get_event_coordinates(event)
-            self.draw_line('v')
-            self.main_plot.show_image(self.im_params,self.current_point)
-            self.main_plot.refresh()
-            self.observable.update_observers(self.current_point)
-        elif event.button == 3 and event.inaxes == self.axes: #right click
-            self.change_intensity(event)
+        if self.get_event_coordinates(event):
+            if event.button == 1 and event.inaxes == self.axes:  # left click
+                # TODO : self.current_point ?
+                self.current_point = self.get_event_coordinates(event)
+                self.draw_line('v')
+                self.main_plot.show_image(self.im_params, self.current_point)
+                self.main_plot.refresh()
+                self.observable.update_observers(self.current_point)
+            elif event.button == 3 and event.inaxes == self.axes:  # right click
+                self.change_intensity(event)
 
     def on_event_release(self, event):
-        if event.button == 1: # left click
-            self.current_point=self.get_event_coordinates(event)
-            self.draw_line('v')
-            self.main_plot.show_image(self.im_params,self.current_point)
-            self.main_plot.refresh()
-            self.observable.update_observers(self.current_point)
-        elif event.button == 3: # right click
-            self.change_intensity(event)
+        if self.get_event_coordinates(event):
+            if event.button == 1:  # left click
+                self.current_point = self.get_event_coordinates(event)
+                self.draw_line('v')
+                self.main_plot.show_image(self.im_params, self.current_point)
+                self.main_plot.refresh()
+                self.observable.update_observers(self.current_point)
+            elif event.button == 3:  # right click
+                self.change_intensity(event)
 
 
 class HeaderCore(object):
