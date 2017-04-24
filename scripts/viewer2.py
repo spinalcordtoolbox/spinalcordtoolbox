@@ -603,6 +603,7 @@ class MainPannel(MainPannelCore):
 class ControlButtonsCore(object):
     def __init__(self,main_plot):
         self.main_plot = main_plot
+        self.help_web_adress='http://www.google.com'
 
         self.layout_buttons=QtGui.QHBoxLayout()
         self.layout_buttons.setAlignment(QtCore.Qt.AlignRight)
@@ -622,8 +623,9 @@ class ControlButtonsCore(object):
         self.layout_buttons.addWidget(self.btn_undo)
 
     def add_help_button(self):
-        self.btn_help=QtGui.QPushButton('Help')
-        self.layout_buttons.addWidget(self.btn_help)
+        btn_help=QtGui.QPushButton('Help')
+        self.layout_buttons.addWidget(btn_help)
+        btn_help.clicked.connect(self.press_help)
 
     def save_data(self):
         for coord in self.list_points:
@@ -633,8 +635,7 @@ class ControlButtonsCore(object):
                                                str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
 
     def press_help(self, event):
-        if event.inaxes == self.dic_axis_buttons['help']:
-            webbrowser.open(self.help_web_adress, new=0, autoraise=True)
+        webbrowser.open(self.help_web_adress, new=0, autoraise=True)
 
     def press_save_and_quit(self):
         print(self.main_plot.list_points)
