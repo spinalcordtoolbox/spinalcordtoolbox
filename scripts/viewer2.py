@@ -619,8 +619,9 @@ class ControlButtonsCore(object):
         btn_save_and_quit.clicked.connect(self.press_save_and_quit)
 
     def add_undo_button(self):
-        self.btn_undo=QtGui.QPushButton('Undo')
-        self.layout_buttons.addWidget(self.btn_undo)
+        btn_undo=QtGui.QPushButton('Undo')
+        self.layout_buttons.addWidget(btn_undo)
+        btn_undo.clicked.connect(self.press_undo)
 
     def add_help_button(self):
         btn_help=QtGui.QPushButton('Help')
@@ -634,7 +635,7 @@ class ControlButtonsCore(object):
             self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
                                                str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
 
-    def press_help(self, event):
+    def press_help(self):
         webbrowser.open(self.help_web_adress, new=0, autoraise=True)
 
     def press_save_and_quit(self):
@@ -643,15 +644,12 @@ class ControlButtonsCore(object):
         #self.closed = True
         #plt.close('all')
 
-    def press_redo(self, event):
-        if event.inaxes == self.dic_axis_buttons['redo']:
-            if self.current_slice > 0:
-                self.current_slice += -1
-                self.windows[0].update_slice(self.list_slices[self.current_slice])
-                self.remove_last_dot()
-                self.update_ui_after_redo()
-            else:
-                self.update_title_text('warning_redo_beyond_first_dot')
+    def press_undo(self):
+        if self.main_plot.list_points:
+            del self.main_plot.list_points[-1]
+            self.main_plot.draw_dots()
+        else:
+            pass
 
 
 class WindowCore(object):
