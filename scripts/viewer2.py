@@ -344,8 +344,7 @@ class SinglePlotMain(SinglePlot,Observer):
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
     def add_point_to_list_points(self,current_point):
-        if current_point:
-            self.list_points.append(current_point)
+        self.list_points.append(current_point)
 
     def on_event_motion(self, event):
         if self.get_event_coordinates(event):
