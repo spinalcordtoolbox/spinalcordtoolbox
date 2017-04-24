@@ -76,12 +76,12 @@ class SinglePlot():
         self.im_params = im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
+        self.list_points=[]
 
 
         self.remove_axis_number()
         self.connect_mpl_events()
         self.setup_intensity()
-
 
     def update_observer(self, *args, **kwargs):
         pass
@@ -322,7 +322,6 @@ class SinglePlotMain(SinglePlot,Observer):
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
 
-
     def update_observer(self, *args, **kwargs):
         for arg in args:
             target=arg
@@ -345,6 +344,9 @@ class SinglePlotMain(SinglePlot,Observer):
         if 'h' in self.display_cross:
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
+    def add_point_to_list_points(self,current_point):
+        self.list_points.append(current_point)
+
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes: #left click
             pass
@@ -353,6 +355,7 @@ class SinglePlotMain(SinglePlot,Observer):
 
     def on_event_release(self, event):
         if event.button == 1: # left click
+            self.add_point_to_list_points(self.get_event_coordinates(event))
             self.draw_dots(self.get_event_coordinates(event))
         elif event.button == 3: # right click
             self.change_intensity(event)
@@ -360,7 +363,7 @@ class SinglePlotMain(SinglePlot,Observer):
     def refresh(self):
         self.figs[-1].figure.canvas.draw()
 
-    def draw_dots(self, current_point):
+    def draw_dots(self,current_point):
         x_data, y_data = [], []
         x_data.append(current_point.z)
         y_data.append(current_point.y)
