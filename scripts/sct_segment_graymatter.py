@@ -240,8 +240,9 @@ class SegmentGM:
         # register target image to model dictionary space
         path_warp = self.register_target()
 
-        printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
-        self.normalize_target()
+        if self.param_data.normalization:
+            printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
+            self.normalize_target()
 
         printv('\nProject target image into the model reduced space...', self.param.verbose, 'normal')
         self.project_target()
@@ -388,7 +389,7 @@ class SegmentGM:
             slice_data = slice_data.reshape(1, -1)  # data with single sample
             # project slice data into the model
             slice_data_projected = self.model.fitted_model.transform(slice_data)
-            projected_target_slices.append(slice_data_projected)
+            projected_target_slices.append(slice_data_projected.reshape(-1, ))
         # store projected target slices
         self.projected_target = projected_target_slices
 
@@ -645,9 +646,7 @@ class SegmentGM:
             fname_wmseg = im_res_wmseg.absolutepath
 
         sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa'])
-        # run('sct_process_segmentation -i ' + fname_gmseg + ' -p csa -ofolder gm_csa')
         sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa'])
-        # run('sct_process_segmentation -i ' + fname_wmseg + ' -p csa -ofolder wm_csa')
 
         gm_csa = open('gm_csa/csa_per_slice.txt', 'r')
         wm_csa = open('wm_csa/csa_per_slice.txt', 'r')
@@ -719,7 +718,7 @@ def main(args=None):
     if '-denoising' in arguments:
         param_data.denoising = bool(int(arguments['-denoising']))
     if '-normalization' in arguments:
-        param_data.normalization = arguments['-normalization']
+        param_data.normalization = bool(int(arguments['-normalization']))
     if '-p' in arguments:
         param_data.register_param = arguments['-p']
     if '-w-levels' in arguments:

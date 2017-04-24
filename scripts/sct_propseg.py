@@ -10,14 +10,16 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-
-from msct_parser import Parser
-import sys
-import sct_utils as sct
+import datetime
+import json
 import os
 import shutil
-from scipy import ndimage as ndi
+import sys
+
 import numpy as np
+import sct_utils as sct
+from msct_parser import Parser
+from scipy import ndimage as ndi
 from sct_image import orientation
 import nibabel as nib
 
@@ -300,11 +302,16 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=os.path.expanduser('~/qc_data'))
     return parser
 
 if __name__ == "__main__":
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    args = sys.argv[1:]
+    arguments = parser.parse(args)
 
     fname_input_data = arguments["-i"]
     fname_data = os.path.abspath(fname_input_data)
@@ -421,10 +428,9 @@ if __name__ == "__main__":
         cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
         sct.run(cmd_image, verbose=False)
 
-        from sct_viewer import ClickViewer
+        from sct_viewer import ClickViewerPropseg
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
-        viewer = ClickViewer(image_input_reoriented)
-        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
+        viewer = ClickViewerPropseg(image_input_reoriented)
         if use_viewer == "mask":
             viewer.input_type = 'mask'
             viewer.number_of_slices = 3
@@ -467,7 +473,7 @@ if __name__ == "__main__":
             elif use_viewer == "mask":
                 cmd += " -init-mask " + folder_output + mask_reoriented_filename
         else:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
+            sct.printv('\nERROR: the viewer has been closed before entering any manual points. Please try again.', 1, type='error')
 
     elif use_optic:
         sct.printv('Detecting the spinal cord using OptiC', verbose=verbose)
@@ -564,3 +570,22 @@ if __name__ == "__main__":
 
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+
+    if '-qc' in arguments:
+        qc_path = arguments['-qc']
+
+        import spinalcordtoolbox.reports.qc as qc
+        import spinalcordtoolbox.reports.slice as qcslice
+
+        param = qc.Params(fname_input_data, 'sct_propseg', args, 'Axial', qc_path)
+        report = qc.QcReport(param, '')
+
+
+        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
+        def test(qslice):
+            return qslice.mosaic()
+
+        test(qcslice.Axial(fname_input_data, fname_seg))
+        sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
+        sct.printv('Use the following command to see the results in a browser:')
+        sct.printv('sct_qc -folder %s' % qc_path, type='info')
