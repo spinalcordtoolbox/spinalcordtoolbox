@@ -58,7 +58,7 @@ class SinglePlot():
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
+    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None):
         self.axes = ax
         self.images = images
         self.viewer = viewer
@@ -76,28 +76,30 @@ class SinglePlot():
         self.im_params = im_params
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
+        self.dic_translate_view={'ax':1,'cor':2,'sag':3}
 
 
         self.remove_axis_number()
         self.connect_mpl_events()
         self.setup_intensity()
 
+
     def update_observer(self, *args, **kwargs):
         pass
 
-    def show_image(self,im_params,current_point,view):
-        def set_data_to_display(image, current_point):
-            if view == 1:
+    def show_image(self,im_params,current_point):
+        def set_data_to_display(image, current_point,view):
+            if view == 'ax':
                 self.cross_to_display = [[[current_point.y, current_point.y], [-10000, 10000]],
                                          [[-10000, 10000], [current_point.z, current_point.z]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[0]
                 return (image.data[int(self.image_dim[0] / 2), :, :])
-            elif view == 2:
+            elif view == 'cor':
                 self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
                                          [[-10000, 10000], [current_point.z, current_point.z]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[1]
                 return (image.data[:, int(self.image_dim[1] / 2), :])
-            elif view == 3:
+            elif view == 'sag':
                 self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
                                          [[-10000, 10000], [current_point.y, current_point.y]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[2]
@@ -107,7 +109,7 @@ class SinglePlot():
             current_point=Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
         for i, image in enumerate(self.images):
-            data_to_display = set_data_to_display(image,current_point)
+            data_to_display = set_data_to_display(image,current_point,self.view)
             (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,mpl.cm)
             my_cmap.set_under('b', alpha=0)
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
@@ -316,10 +318,10 @@ class SinglePlotMain(SinglePlot,Observer):
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
+    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None):
         super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params)
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
-        self.show_image(self.im_params, current_point=None,view=1)
+        self.show_image(self.im_params, current_point=None)
 
 
     def update_observer(self, *args, **kwargs):
@@ -328,11 +330,11 @@ class SinglePlotMain(SinglePlot,Observer):
         self.update_slice(target)
 
     def update_slice(self, target):
-        if (self.view == 1):
+        if (self.view == 'ax'):
             self.figs[-1].set_data(self.images[0].data[target.x, :, :])
-        elif (self.view == 2):
+        elif (self.view == 'cor'):
             self.figs[-1].set_data(self.images[0].data[:, target.y, :])
-        elif (self.view == 3):
+        elif (self.view == 'sag'):
             self.figs[-1].set_data(self.images[0].data[:, :, target.z])
         self.figs[-1].figure.canvas.draw()
 
@@ -363,19 +365,19 @@ class SinglePlotMain(SinglePlot,Observer):
         y_data.append(current_point.y)
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
-        self.show_image(self.im_params,current_point,1)
+        self.show_image(self.im_params,current_point)
         self.refresh()
 
 class SinglePlotSecond(SinglePlot,Observer,object):
     #TODO : inheritance etrange
 
-    def __init__(self, ax, images, viewer,canvas,main_single_plot, view=2, display_cross='hv', im_params=None):
+    def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None):
         super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params)
         self.main_plot=main_single_plot
 
         self.observable=Observable()
         self.observable.register(main_single_plot)
-        self.show_image(self.im_params, current_point=None,view=3)
+        self.show_image(self.im_params, current_point=None)
         self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
 
     def add_line(self,display_cross):
@@ -392,14 +394,15 @@ class SinglePlotSecond(SinglePlot,Observer,object):
         self.refresh()
 
     def refresh(self):
-        self.show_image(self.im_params,self.current_point,3)
+        self.show_image(self.im_params,self.current_point)
         self.figs[0].figure.canvas.draw()
 
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes: #left click
+            #TODO : self.current_point ?
             self.current_point=self.get_event_coordinates(event,3)
             self.draw_line('v')
-            self.main_plot.show_image(self.im_params,self.current_point,3)
+            self.main_plot.show_image(self.im_params,self.current_point)
             self.main_plot.refresh()
             self.observable.update_observers(self.current_point)
         elif event.button == 3 and event.inaxes == self.axes: #right click
@@ -472,6 +475,7 @@ class Header(HeaderCore):
 
 
 class MainPannelCore(object):
+    
 
     def __init__(self,
                  images,
@@ -502,7 +506,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot=SinglePlotMain(axis, self.images, self, view=1, display_cross='', im_params=self.im_params,canvas=self.canvas_main)
+        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', display_cross='', im_params=self.im_params,canvas=self.canvas_main)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -517,7 +521,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot=SinglePlotSecond(axis, self.images, self, view=3, display_cross='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot)
+        self.second_plot=SinglePlotSecond(axis, self.images, self, view='sag', display_cross='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot)
 
     def add_controller_pannel(self):
         pass
