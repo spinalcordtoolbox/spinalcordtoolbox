@@ -601,8 +601,9 @@ class MainPannel(MainPannelCore):
         self.merge_layouts()
 
 class ControlButtonsCore(object):
-    def __init__(self,main_plot):
+    def __init__(self,main_plot,window):
         self.main_plot = main_plot
+        self.window=window
         self.help_web_adress='http://www.google.com'
 
         self.layout_buttons=QtGui.QHBoxLayout()
@@ -628,21 +629,21 @@ class ControlButtonsCore(object):
         self.layout_buttons.addWidget(btn_help)
         btn_help.clicked.connect(self.press_help)
 
-    def save_data(self):
-        for coord in self.list_points:
-            if self.list_points_useful_notation != '':
-                self.list_points_useful_notation += ':'
-            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
-                                               str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-
     def press_help(self):
         webbrowser.open(self.help_web_adress, new=0, autoraise=True)
 
     def press_save_and_quit(self):
-        print(self.main_plot.list_points)
-        #self.save_data()
-        #self.closed = True
-        #plt.close('all')
+        def rewrite_list_points(list_points):
+            list_points_useful_notation=''
+            for coord in list_points:
+                if list_points_useful_notation:
+                    list_points_useful_notation += ':'
+                list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
+                                              str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            return list_points_useful_notation
+
+        self.window.str_points_final=rewrite_list_points(self.main_plot.list_points)
+
 
     def press_undo(self):
         if self.main_plot.list_points:
@@ -657,6 +658,7 @@ class WindowCore(object):
     def __init__(self,list_input, visualization_parameters=None):
         self.images = self.keep_only_images(list_input)
         self.im_params = visualization_parameters
+        self.str_points_final=''
 
         """ Initialisation of plot """
         #self.fig = plt.figure(figsize=(8, 8))
@@ -789,8 +791,8 @@ class Window(WindowCore):
             layout_main.addLayout(main_pannel.layout_global)
             return main_pannel
 
-        def add_control_buttons(layout_main):
-            control_buttons = ControlButtonsCore(self.main_pannel.main_plot)
+        def add_control_buttons(layout_main,window):
+            control_buttons = ControlButtonsCore(self.main_pannel.main_plot,window)
             layout_main.addLayout(control_buttons.layout_buttons)
             return control_buttons
 
@@ -799,7 +801,7 @@ class Window(WindowCore):
         layout_main = add_layout_main(window)
         self.header = add_header(layout_main)
         self.main_pannel = add_main_pannel(layout_main)
-        self.control_buttons = add_control_buttons(layout_main)
+        self.control_buttons = add_control_buttons(layout_main,self)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
 
