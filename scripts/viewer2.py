@@ -227,6 +227,7 @@ class SinglePlot():
                                 zoom=True)
 
     def get_event_coordinates(self, event):
+        #TODO : point bizarre
         point = None
         if self.view == 'ax':
             point = Coordinate([self.current_point.x,
@@ -329,6 +330,7 @@ class SinglePlotMain(SinglePlot,Observer):
         self.current_slice = target.x
         self.current_point.x=self.current_slice
         self.update_slice()
+        self.draw_dots()
 
     def update_slice(self):
         if (self.view == 'ax'):
@@ -357,20 +359,22 @@ class SinglePlotMain(SinglePlot,Observer):
     def on_event_release(self, event):
         if event.button == 1: # left click
             self.add_point_to_list_points(self.get_event_coordinates(event))
-            self.draw_dots(self.get_event_coordinates(event))
+            self.draw_dots()
         elif event.button == 3: # right click
             self.change_intensity(event)
 
     def refresh(self):
         self.figs[-1].figure.canvas.draw()
 
-    def draw_dots(self,current_point):
+    def draw_dots(self):
         x_data, y_data = [], []
-        x_data.append(current_point.z)
-        y_data.append(current_point.y)
+        for ipoints in self.list_points:
+            if ipoints.x == self.current_slice:
+                x_data.append(ipoints.z)
+                y_data.append(ipoints.y)
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
-        self.show_image(self.im_params,current_point)
+        #self.show_image(self.im_params,Coordinate([self.current_slice,1, 1]))
         self.refresh()
 
 class SinglePlotSecond(SinglePlot,Observer,object):
