@@ -370,14 +370,22 @@ class SinglePlotMain(SinglePlot,Observer):
         self.figs[-1].figure.canvas.draw()
 
     def draw_dots(self):
+        def select_right_dimensions(ipoint,view):
+            if view =='ax':
+                return ipoints.z,ipoints.y
+            elif view=='cor':
+                return ipoints.x,ipoints.z
+            elif view == 'sag':
+                return ipoints.z,ipoints.y
+
         x_data, y_data = [], []
         for ipoints in self.list_points:
             if ipoints.x == self.current_slice:
-                x_data.append(ipoints.z)
-                y_data.append(ipoints.y)
+                x,y=select_right_dimensions(ipoints,self.view)
+                x_data.append(x)
+                y_data.append(y)
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
-        #self.show_image(self.im_params,Coordinate([self.current_slice,1, 1]))
         self.refresh()
 
 class SinglePlotSecond(SinglePlot,Observer,object):
@@ -491,8 +499,6 @@ class Header(HeaderCore):
 
 
 class MainPannelCore(object):
-
-
     def __init__(self,
                  images,
                  im_params):
@@ -613,7 +619,6 @@ class ControlButtonsCore(object):
         self.add_undo_button()
         self.add_save_and_quit_button()
 
-
     def add_save_and_quit_button(self):
         btn_save_and_quit=QtGui.QPushButton('Save & Quit')
         self.layout_buttons.addWidget(btn_save_and_quit)
@@ -651,7 +656,6 @@ class ControlButtonsCore(object):
             self.main_plot.draw_dots()
         else:
             pass
-
 
 class WindowCore(object):
 
