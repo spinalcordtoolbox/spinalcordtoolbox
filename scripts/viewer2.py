@@ -77,7 +77,7 @@ class SinglePlot():
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
 
-        self.show_image(self.im_params,current_point=None)
+
         self.remove_axis_number()
         self.connect_mpl_events()
         self.setup_intensity()
@@ -85,19 +85,19 @@ class SinglePlot():
     def update_observer(self, *args, **kwargs):
         pass
 
-    def show_image(self,im_params,current_point):
+    def show_image(self,im_params,current_point,view):
         def set_data_to_display(image, current_point):
-            if self.view == 1:
+            if view == 1:
                 self.cross_to_display = [[[current_point.y, current_point.y], [-10000, 10000]],
                                          [[-10000, 10000], [current_point.z, current_point.z]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[0]
                 return (image.data[int(self.image_dim[0] / 2), :, :])
-            elif self.view == 2:
+            elif view == 2:
                 self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
                                          [[-10000, 10000], [current_point.z, current_point.z]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[1]
                 return (image.data[:, int(self.image_dim[1] / 2), :])
-            elif self.view == 3:
+            elif view == 3:
                 self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
                                          [[-10000, 10000], [current_point.y, current_point.y]]]
                 self.aspect_ratio = self.viewer.aspect_ratio[2]
@@ -319,6 +319,7 @@ class SinglePlotMain(SinglePlot,Observer):
     def __init__(self, ax, images, viewer,canvas, view=2, display_cross='hv', im_params=None):
         super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params)
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
+        self.show_image(self.im_params, current_point=None,view=1)
 
 
     def update_observer(self, *args, **kwargs):
@@ -353,14 +354,16 @@ class SinglePlotMain(SinglePlot,Observer):
         elif event.button == 3: # right click
             self.change_intensity(event)
 
+    def refresh(self):
+        self.figs[-1].figure.canvas.draw()
+
     def draw_dots(self, current_point):
         x_data, y_data = [], []
-        self.refresh()
         x_data.append(current_point.z)
         y_data.append(current_point.y)
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
-        self.show_image(self.im_params,current_point)
+        self.show_image(self.im_params,current_point,1)
         self.refresh()
 
 class SinglePlotSecond(SinglePlot,Observer,object):
@@ -372,9 +375,8 @@ class SinglePlotSecond(SinglePlot,Observer,object):
 
         self.observable=Observable()
         self.observable.register(main_single_plot)
-
+        self.show_image(self.im_params, current_point=None,view=3)
         self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
-        self.refresh()
 
     def add_line(self,display_cross):
         if 'h' in display_cross:
@@ -389,45 +391,15 @@ class SinglePlotSecond(SinglePlot,Observer,object):
         self.add_line(display_cross)
         self.refresh()
 
-
-    def show_image(self,im_params,current_point):
-        def set_data_to_display(image, current_point=None):
-            if self.view == 1:
-                self.cross_to_display = [[[self.current_point.y, self.current_point.y], [-10000, 10000]],
-                                         [[-10000, 10000], [self.current_point.z, self.current_point.z]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[0]
-                return (image.data[int(self.image_dim[0] / 2), :, :])
-            elif self.view == 2:
-                self.cross_to_display = [[[self.current_point.x, self.current_point.x], [-10000, 10000]],
-                                         [[-10000, 10000], [self.current_point.z, self.current_point.z]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[1]
-                return (image.data[:, int(self.image_dim[1] / 2), :])
-            elif self.view == 3:
-                self.cross_to_display = [[[self.current_point.x, self.current_point.x], [-10000, 10000]],
-                                         [[-10000, 10000], [self.current_point.y, self.current_point.y]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[2]
-                return (image.data[:, :, int(self.image_dim[2] / 2)])
-
-        if not current_point:
-            current_point=Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
-                                         int(self.images[0].data.shape[2] / 2)])
-        for i, image in enumerate(self.images):
-            data_to_display = set_data_to_display(image,current_point)
-            (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,mpl.cm)
-            my_cmap.set_under('b', alpha=0)
-            self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
-            self.figs[-1].set_cmap(my_cmap)
-            self.figs[-1].set_interpolation(my_interpolation)
-
     def refresh(self):
-        self.show_image(self.im_params,self.current_point)
+        self.show_image(self.im_params,self.current_point,3)
         self.figs[0].figure.canvas.draw()
 
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes: #left click
-            self.current_point=self.get_event_coordinates(event,2)
+            self.current_point=self.get_event_coordinates(event,3)
             self.draw_line('v')
-            self.main_plot.show_image(self.im_params,self.current_point)
+            self.main_plot.show_image(self.im_params,self.current_point,3)
             self.main_plot.refresh()
             self.observable.update_observers(self.current_point)
         elif event.button == 3 and event.inaxes == self.axes: #right click
