@@ -198,18 +198,6 @@ class SinglePlot():
         self.canvas.mpl_connect('scroll_event',self.on_event_scroll)
         self.canvas.mpl_connect('motion_notify_event',self.on_event_motion)
 
-    def on_event_motion(self, event):
-        if event.button == 1 and event.inaxes == self.axes: #left click
-            pass
-        elif event.button == 3 and event.inaxes == self.axes: #right click
-            pass
-
-    def on_event_release(self, event):
-        if event.button == 1: # left click
-            pass
-        elif event.button == 3: # right click
-            pass
-
     def on_event_scroll(self, event):
         def calc_scale_factor(direction):
             base_scale = 0.5
@@ -421,6 +409,9 @@ class SinglePlotSecond(SinglePlot,Observer,object):
         if event.button == 1: # left click
             self.current_point=self.get_event_coordinates(event)
             self.draw_line('v')
+            self.main_plot.show_image(self.im_params,self.current_point)
+            self.main_plot.refresh()
+            self.observable.update_observers(self.current_point)
         elif event.button == 3: # right click
             self.change_intensity(event)
 
