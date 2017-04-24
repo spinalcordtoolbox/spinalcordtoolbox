@@ -86,29 +86,29 @@ class SinglePlot():
     def update_observer(self, *args, **kwargs):
         pass
 
-    def show_image(self,im_params,current_point):
-        def set_data_to_display(image, current_point,view):
-            if view == 'ax':
-                self.cross_to_display = [[[current_point.y, current_point.y], [-10000, 10000]],
-                                         [[-10000, 10000], [current_point.z, current_point.z]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[0]
-                return (image.data[int(self.image_dim[0] / 2), :, :])
-            elif view == 'cor':
-                self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
-                                         [[-10000, 10000], [current_point.z, current_point.z]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[1]
-                return (image.data[:, int(self.image_dim[1] / 2), :])
-            elif view == 'sag':
-                self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
-                                         [[-10000, 10000], [current_point.y, current_point.y]]]
-                self.aspect_ratio = self.viewer.aspect_ratio[2]
-                return (image.data[:, :, int(self.image_dim[2] / 2)])
+    def set_data_to_display(self,image, current_point,view):
+        if view == 'ax':
+            self.cross_to_display = [[[current_point.y, current_point.y], [-10000, 10000]],
+                                     [[-10000, 10000], [current_point.z, current_point.z]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[0]
+            return (image.data[current_point.x, :, :])
+        elif view == 'cor':
+            self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [current_point.z, current_point.z]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[1]
+            return (image.data[:, current_point.y, :])
+        elif view == 'sag':
+            self.cross_to_display = [[[current_point.x, current_point.x], [-10000, 10000]],
+                                     [[-10000, 10000], [current_point.y, current_point.y]]]
+            self.aspect_ratio = self.viewer.aspect_ratio[2]
+            return (image.data[:, :, current_point.z])
 
+    def show_image(self,im_params,current_point):
         if not current_point:
             current_point=Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
         for i, image in enumerate(self.images):
-            data_to_display = set_data_to_display(image,current_point,self.view)
+            data_to_display = self.set_data_to_display(image,current_point,self.view)
             (my_cmap,my_interpolation,my_alpha)=self.set_image_parameters(im_params,i,mpl.cm)
             my_cmap.set_under('b', alpha=0)
             self.figs.append(self.axes.imshow(data_to_display, aspect=self.aspect_ratio, alpha=my_alpha))
@@ -326,6 +326,8 @@ class SinglePlotMain(SinglePlot,Observer):
     def update_observer(self, *args, **kwargs):
         for arg in args:
             target=arg
+        self.current_point.x=target.x
+        #print(self.current_point)
         self.update_slice(target)
 
     def update_slice(self, target):
