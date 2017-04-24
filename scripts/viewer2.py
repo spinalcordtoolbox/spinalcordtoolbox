@@ -54,6 +54,7 @@ class Observable(object):
         for observer in self.observers:
             observer.update_observer(*args, **kwargs)
 
+
 class SinglePlot():
     """
         This class manages mouse events on one image.
@@ -301,13 +302,13 @@ class SinglePlot():
                            int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
                            0]
 
-
 class SinglePlotMain(SinglePlot,Observer):
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None):
+    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None, secondary_plot=None):
         super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params)
+        self.secondary_plot=None
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
         self.current_slice=self.current_point.x
@@ -343,6 +344,7 @@ class SinglePlotMain(SinglePlot,Observer):
             pass
         elif event.button == 3 and event.inaxes == self.axes: #right click
             self.change_intensity(event)
+            self.change_intensity_on_secondary_plot(event)
 
     def on_event_release(self, event):
         if event.button == 1: # left click
@@ -350,6 +352,11 @@ class SinglePlotMain(SinglePlot,Observer):
             self.draw_dots()
         elif event.button == 3: # right click
             self.change_intensity(event)
+            self.change_intensity_on_secondary_plot(event)
+
+    def change_intensity_on_secondary_plot(self,event):
+        if self.secondary_plot:
+            self.secondary_plot.change_intensity(event)
 
     def refresh(self):
         self.figs[-1].figure.canvas.draw()
@@ -473,7 +480,6 @@ class Header(HeaderCore):
             self.lb_warning.setStyleSheet("color:red")
 
 
-
 class MainPannelCore(object):
 
 
@@ -522,6 +528,7 @@ class MainPannelCore(object):
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
         self.second_plot=SinglePlotSecond(axis, self.images, self, view='sag', display_cross='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot)
+        self.main_plot.secondary_plot=self.second_plot
 
     def add_controller_pannel(self):
         pass
@@ -631,6 +638,7 @@ class ControlButtonsCore(object):
             else:
                 self.update_title_text('warning_redo_beyond_first_dot')
 
+
 class WindowCore(object):
 
     def __init__(self,list_input, visualization_parameters=None):
@@ -692,7 +700,6 @@ class WindowCore(object):
 
     def start(self):
         return self.list_points_useful_notation
-
 
 class Window(WindowCore):
     def __init__(self,
