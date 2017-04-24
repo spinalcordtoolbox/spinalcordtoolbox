@@ -241,6 +241,77 @@ class SinglePlot():
                                 self.current_point.z, 1])
         return point
 
+    def calculate_list_slices(self, starting_slice=-1):
+        if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
+
+            # if starting slice is not provided, middle slice is used
+            # starting slice must be an integer, in the range of the image [0, #slices]
+            if starting_slice == -1:
+                starting_slice = int(self.image_dim[self.orientation[self.primary_subplot] - 1] / 2)
+
+            first_slice = starting_slice - (self.number_of_slices / 2) * self.gap_inter_slice
+            last_slice = starting_slice + (self.number_of_slices / 2) * self.gap_inter_slice
+            if first_slice < 0:
+                first_slice = 0
+            if last_slice >= self.image_dim[self.orientation[self.primary_subplot] - 1]:
+                last_slice = self.image_dim[self.orientation[self.primary_subplot] - 1] - 1
+            self.list_slices = [int(item) for item in
+                                linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
+        elif self.number_of_slices != 0:
+            self.list_slices = [int(item) for item in
+                                linspace(0, self.image_dim[self.orientation[self.primary_subplot] - 1] - 1,
+                                         self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
+                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
+        elif self.gap_inter_slice != 0:
+            self.list_slices = list(
+                arange(0, self.image_dim[self.orientation[self.primary_subplot] - 1], self.gap_inter_slice))
+            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
+                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
+        else:
+            self.gap_inter_slice = int(
+                max([round(self.image_dim[self.orientation[self.primary_subplot] - 1] / 15.0), 1]))
+            self.number_of_slices = int(
+                round(self.image_dim[self.orientation[self.primary_subplot] - 1] / self.gap_inter_slice))
+            self.list_slices = [int(item) for item in
+                                linspace(0, self.image_dim[self.orientation[self.primary_subplot] - 1] - 1,
+                                         self.number_of_slices, endpoint=True)]
+            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
+                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
+
+        point = [self.current_point.x, self.current_point.y, self.current_point.z]
+        point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
+        for window in self.windows:
+            if window.view == self.orientation[self.secondary_subplot]:
+                window.update_slice(point, data_update=False)
+            else:
+                window.update_slice(point, data_update=True)
+
+    def compute_offset(self):
+        print(self.image_dim)
+        if self.primary_subplot == 'ax':
+            array_dim = [self.image_dim[1] * self.im_spacing[1], self.image_dim[2] * self.im_spacing[2]]
+            index_max = np.argmax(array_dim)
+            max_size = array_dim[index_max]
+            self.offset = [0,
+                           int(round((max_size - array_dim[0]) / self.im_spacing[1]) / 2),
+                           int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
+        elif self.primary_subplot == 'cor':
+            array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[2] * self.im_spacing[2]]
+            index_max = np.argmax(array_dim)
+            max_size = array_dim[index_max]
+            self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
+                           0,
+                           int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
+        elif self.primary_subplot == 'sag':
+            array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[1] * self.im_spacing[1]]
+            index_max = np.argmax(array_dim)
+            max_size = array_dim[index_max]
+            self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
+                           int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
+                           0]
+
+
 class SinglePlotMain(SinglePlot,Observer):
     """
         This class manages mouse events on one image.
@@ -370,7 +441,6 @@ class SinglePlotSecond(SinglePlot,Observer,object):
             self.change_intensity(event)
 
 
-
 class HeaderCore(object):
 
     def __init__(self):
@@ -395,8 +465,32 @@ class HeaderCore(object):
         self.layout_header.setAlignment(QtCore.Qt.AlignTop)
         self.layout_header.setContentsMargins(0,30,0,80)
 
-class Header(HeaderCore):
+    def update_title_text_general(self, key):
+        if (key == 'ready_to_save_and_quit'):
+            title_obj = self.windows[0].axes.set_title('You can save and quit. \n')
+            plt.setp(title_obj, color='g')
 
+        elif (key == 'warning_all_slices_are_done_already'):
+            title_obj = self.windows[0].axes.set_title('You have processed all slices \n'
+                                                       'If you made a mistake please use \'Redo\' \n'
+                                                       'Otherwise, you can save and quit. \n')
+            plt.setp(title_obj, color='g')
+
+        elif (key == 'warning_redo_beyond_first_dot'):
+            title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
+            plt.setp(title_obj, color='r')
+
+        elif (key == 'warning_skip_not_defined'):
+            title_obj = self.windows[0].axes.set_title('This option is not used in Manual Mode. \n')
+            plt.setp(title_obj, color='r')
+
+        elif (key == 'warning_selected_point_not_in_image'):
+            title_obj = self.windows[0].axes.set_title('The point you selected in not in the image. Please try again.')
+            plt.setp(title_obj, color='r')
+
+        self.windows[0].draw()
+
+class Header(HeaderCore):
     def update_text(self,key):
         if(key=='start'):
             self.lb_status.setText('header.lb_status')
@@ -534,6 +628,33 @@ class ControlButtonsCore(object):
         self.btn_help=QtGui.QPushButton('Help')
         self.layout_buttons.addWidget(self.btn_help)
 
+    def save_data(self):
+        for coord in self.list_points:
+            if self.list_points_useful_notation != '':
+                self.list_points_useful_notation += ':'
+            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
+                                               str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+
+    def press_help(self, event):
+        if event.inaxes == self.dic_axis_buttons['help']:
+            webbrowser.open(self.help_web_adress, new=0, autoraise=True)
+
+    def press_save_and_quit(self, event):
+        if event.inaxes == self.dic_axis_buttons['save_and_quit']:
+            self.save_data()
+            self.closed = True
+            plt.close('all')
+
+    def press_redo(self, event):
+        if event.inaxes == self.dic_axis_buttons['redo']:
+            if self.current_slice > 0:
+                self.current_slice += -1
+                self.windows[0].update_slice(self.list_slices[self.current_slice])
+                self.remove_last_dot()
+                self.update_ui_after_redo()
+            else:
+                self.update_title_text('warning_redo_beyond_first_dot')
+
 class WindowCore(object):
 
     def __init__(self,list_input, visualization_parameters=None):
@@ -593,33 +714,9 @@ class WindowCore(object):
                              'constant',
                              constant_values=(0, 0))
 
-
-
-    def is_point_in_image(self, target_point):
-        return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
-
-    def get_event_coordinates(self, event, plot=None):
-        point = None
-        if plot.view == 1:
-            point = Coordinate([self.current_point.x,
-                                int(round(event.ydata)),
-                                int(round(event.xdata)), 1])
-        elif plot.view == 2:
-            point = Coordinate([int(round(event.ydata)),
-                                self.current_point.y,
-                                int(round(event.xdata)), 1])
-        elif plot.view == 3:
-            point = Coordinate([int(round(event.ydata)),
-                                int(round(event.xdata)),
-                                self.current_point.z, 1])
-        return point
-
-    def draw(self):
-        for window in self.windows:
-            window.fig.figure.canvas.draw()
-
     def start(self):
-        plt.show()
+        return self.list_points_useful_notation
+
 
 class Window(WindowCore):
     def __init__(self,
@@ -636,36 +733,6 @@ class Window(WindowCore):
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
 
         super(Window, self).__init__(list_images, visualization_parameters)
-
-        #self.declaration_global_variables_general(orientation_subplot)
-
-        #self.compute_offset()
-        #self.pad_data()
-
-        #self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
-        #                                 int(self.images[0].data.shape[2] / 2)])
-
-        #import matplotlib.gridspec as gridspec
-        #gs = gridspec.GridSpec(1, 3)
-
-        #ax = self.fig.add_subplot(gs[0, 1:], axisbg='k')
-        #self.windows.append(
-        #    SinglePlot(ax, self.images, self, view=self.orientation[self.primary_subplot], display_cross='',
-        #               im_params=visualization_parameters))
-        #self.set_main_plot()
-
-        #ax = self.fig.add_subplot(gs[0, 0], axisbg='k')
-        #self.windows.append(SinglePlot(ax, self.images, self, view=self.orientation[self.secondary_subplot],
-                                       #display_cross=self.set_display_cross(), im_params=visualization_parameters))
-        #self.windows[1].axes.set_title('Select the slice \n '
-                                       #'to inspect. \n')
-
-        #self.calculate_list_slices()
-
-
-        #self.input_type = input_type
-
-
 
         self.set_layout_and_launch_viewer()
 
@@ -699,241 +766,6 @@ class Window(WindowCore):
 
         # compute slices to display
         self.list_slices = []
-
-    def set_display_cross(self):
-        if self.primary_subplot == 'ax':
-            return ('v')
-        else:
-            return ('h')
-
-    def calculate_list_slices(self, starting_slice=-1):
-        if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
-
-            # if starting slice is not provided, middle slice is used
-            # starting slice must be an integer, in the range of the image [0, #slices]
-            if starting_slice == -1:
-                starting_slice = int(self.image_dim[self.orientation[self.primary_subplot] - 1] / 2)
-
-            first_slice = starting_slice - (self.number_of_slices / 2) * self.gap_inter_slice
-            last_slice = starting_slice + (self.number_of_slices / 2) * self.gap_inter_slice
-            if first_slice < 0:
-                first_slice = 0
-            if last_slice >= self.image_dim[self.orientation[self.primary_subplot] - 1]:
-                last_slice = self.image_dim[self.orientation[self.primary_subplot] - 1] - 1
-            self.list_slices = [int(item) for item in
-                                linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
-        elif self.number_of_slices != 0:
-            self.list_slices = [int(item) for item in
-                                linspace(0, self.image_dim[self.orientation[self.primary_subplot] - 1] - 1,
-                                         self.number_of_slices, endpoint=True)]
-            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
-                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
-        elif self.gap_inter_slice != 0:
-            self.list_slices = list(
-                arange(0, self.image_dim[self.orientation[self.primary_subplot] - 1], self.gap_inter_slice))
-            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
-                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
-        else:
-            self.gap_inter_slice = int(
-                max([round(self.image_dim[self.orientation[self.primary_subplot] - 1] / 15.0), 1]))
-            self.number_of_slices = int(
-                round(self.image_dim[self.orientation[self.primary_subplot] - 1] / self.gap_inter_slice))
-            self.list_slices = [int(item) for item in
-                                linspace(0, self.image_dim[self.orientation[self.primary_subplot] - 1] - 1,
-                                         self.number_of_slices, endpoint=True)]
-            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
-                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
-
-        point = [self.current_point.x, self.current_point.y, self.current_point.z]
-        point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
-        for window in self.windows:
-            if window.view == self.orientation[self.secondary_subplot]:
-                window.update_slice(point, data_update=False)
-            else:
-                window.update_slice(point, data_update=True)
-
-    def compute_offset(self):
-        print(self.image_dim)
-        if self.primary_subplot == 'ax':
-            array_dim = [self.image_dim[1] * self.im_spacing[1], self.image_dim[2] * self.im_spacing[2]]
-            index_max = np.argmax(array_dim)
-            max_size = array_dim[index_max]
-            self.offset = [0,
-                           int(round((max_size - array_dim[0]) / self.im_spacing[1]) / 2),
-                           int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
-        elif self.primary_subplot == 'cor':
-            array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[2] * self.im_spacing[2]]
-            index_max = np.argmax(array_dim)
-            max_size = array_dim[index_max]
-            self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
-                           0,
-                           int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
-        elif self.primary_subplot == 'sag':
-            array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[1] * self.im_spacing[1]]
-            index_max = np.argmax(array_dim)
-            max_size = array_dim[index_max]
-            self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
-                           int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
-                           0]
-
-    def check_point_is_valid(self, target_point):
-        if (self.is_point_in_image(target_point)):
-            return True
-        else:
-            self.update_title_text_general('warning_selected_point_not_in_image')
-            return False
-
-    def update_title_text_general(self, key):
-        if (key == 'ready_to_save_and_quit'):
-            title_obj = self.windows[0].axes.set_title('You can save and quit. \n')
-            plt.setp(title_obj, color='g')
-
-        elif (key == 'warning_all_slices_are_done_already'):
-            title_obj = self.windows[0].axes.set_title('You have processed all slices \n'
-                                                       'If you made a mistake please use \'Redo\' \n'
-                                                       'Otherwise, you can save and quit. \n')
-            plt.setp(title_obj, color='g')
-
-        elif (key == 'warning_redo_beyond_first_dot'):
-            title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
-            plt.setp(title_obj, color='r')
-
-        elif (key == 'warning_skip_not_defined'):
-            title_obj = self.windows[0].axes.set_title('This option is not used in Manual Mode. \n')
-            plt.setp(title_obj, color='r')
-
-        elif (key == 'warning_selected_point_not_in_image'):
-            title_obj = self.windows[0].axes.set_title('The point you selected in not in the image. Please try again.')
-            plt.setp(title_obj, color='r')
-
-        self.windows[0].draw()
-
-    def is_there_next_slice(self):
-        if self.current_slice < len(self.list_slices):
-            return True
-        else:
-            self.update_title_text('ready_to_save_and_quit')
-            return False
-
-    def on_release(self, event, plot=None):
-        """
-        This subplot refers to the secondary window. It captures event "release"
-        :param event:
-        :param plot:
-        :return:
-        """
-        if event.button == 1 and event.inaxes == plot.axes and plot.view == self.orientation[self.secondary_subplot]:
-            point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
-            for window in self.windows:
-                if window is plot:
-                    window.update_slice(point, data_update=False)
-                else:
-                    window.update_slice(point, data_update=True)
-                    self.draw_points(window, self.current_point.x)
-        return
-        pass
-    '''
-    def on_motion(self, event, plot=None):
-        """
-        This subplot refers to the secondary window. It captures event "motion"
-        :param event:
-        :param plot:
-        :return:
-        """
-        if event.button == 1 and event.inaxes and plot.view == self.orientation[
-            self.secondary_subplot] and time() - self.last_update > self.update_freq:
-            is_in_axes = False
-            for window in self.windows:
-                if event.inaxes == window.axes:
-                    is_in_axes = True
-            if not is_in_axes:
-                return
-
-            self.last_update = time()
-            self.current_point = self.get_event_coordinates(event, plot)
-            point = [self.current_point.x, self.current_point.y, self.current_point.z]
-            for window in self.windows:
-                if window is plot:
-                    window.update_slice(point, data_update=False)
-                else:
-                    self.draw_points(window, self.current_point.x)
-                    window.update_slice(point, data_update=True)
-        return
-    '''
-
-    def get_results(self):
-        if self.list_points:
-            return self.list_points
-        else:
-            return None
-
-    def create_button_redo(self):
-        ax = plt.axes([0.70, 0.90, 0.1, 0.075])
-        self.dic_axis_buttons['redo'] = ax
-        button_help = Button(ax, 'Redo')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_redo)
-
-    def create_button_save_and_quit(self):
-        ax = plt.axes([0.81, 0.90, 0.1, 0.075])
-        self.dic_axis_buttons['save_and_quit'] = ax
-        button_help = Button(ax, 'Save &\n'
-                                 'Quit')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_save_and_quit)
-
-    def remove_last_dot(self):
-        if (len(self.list_points) > 1):
-            self.list_points = self.list_points[0:len(self.list_points) - 1]
-        else:
-            self.list_points = []
-
-    def save_data(self):
-        for coord in self.list_points:
-            if self.list_points_useful_notation != '':
-                self.list_points_useful_notation += ':'
-            self.list_points_useful_notation = self.list_points_useful_notation + str(coord.x) + ',' + \
-                                               str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-
-    def press_save_and_quit(self, event):
-        if event.inaxes == self.dic_axis_buttons['save_and_quit']:
-            self.save_data()
-            self.closed = True
-            plt.close('all')
-
-    def press_redo(self, event):
-        if event.inaxes == self.dic_axis_buttons['redo']:
-            if self.current_slice > 0:
-                self.current_slice += -1
-                self.windows[0].update_slice(self.list_slices[self.current_slice])
-                self.remove_last_dot()
-                self.update_ui_after_redo()
-            else:
-                self.update_title_text('warning_redo_beyond_first_dot')
-
-    def update_ui_after_redo(self):
-        self.update_title_text('redo_done')
-        self.draw_points(self.windows[0], self.current_point.z)
-
-    def start(self):
-        #super(ClickViewer, self).start()
-        return self.list_points_useful_notation
-
-    def are_all_slices_done(self):
-        if self.current_slice < len(self.list_slices):
-            return False
-        else:
-            self.update_title_text('warning_all_slices_are_done_already')
-            return True
-
-    def press_help(self, event):
-        if event.inaxes == self.dic_axis_buttons['help']:
-            webbrowser.open(self.help_web_adress, new=0, autoraise=True)
-
-    def create_button_help(self):
-        ax = plt.axes([0.81, 0.05, 0.1, 0.075])
-        self.dic_axis_buttons['help'] = ax
-        button_help = Button(ax, 'Help')
-        self.fig.canvas.mpl_connect('button_press_event', self.press_help)
 
     def set_layout_and_launch_viewer(self):
         def launch_main_window():
@@ -972,6 +804,8 @@ class Window(WindowCore):
         self.control_buttons = add_control_buttons(layout_main)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
+
+
 
 
 class ParamMultiImageVisualization(object):
