@@ -321,21 +321,22 @@ class SinglePlotMain(SinglePlot,Observer):
         super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params)
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
+        self.current_slice=self.current_point.x
 
     def update_observer(self, *args, **kwargs):
         for arg in args:
             target=arg
-        self.current_point.x=target.x
-        #print(self.current_point)
-        self.update_slice(target)
+        self.current_slice = target.x
+        self.current_point.x=self.current_slice
+        self.update_slice()
 
-    def update_slice(self, target):
+    def update_slice(self):
         if (self.view == 'ax'):
-            self.figs[-1].set_data(self.images[0].data[target.x, :, :])
+            self.figs[-1].set_data(self.images[0].data[self.current_slice, :, :])
         elif (self.view == 'cor'):
-            self.figs[-1].set_data(self.images[0].data[:, target.y, :])
+            self.figs[-1].set_data(self.images[0].data[:, self.current_slice, :])
         elif (self.view == 'sag'):
-            self.figs[-1].set_data(self.images[0].data[:, :, target.z])
+            self.figs[-1].set_data(self.images[0].data[:, :, self.current_slice])
         self.figs[-1].figure.canvas.draw()
 
     def set_line_to_display(self):
