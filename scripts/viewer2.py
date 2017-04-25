@@ -499,6 +499,9 @@ class Header(HeaderCore):
         elif(key=='warning_undo_while_no_point'):
             self.lb_warning.setText('Please place your first dot')
             self.lb_warning.setStyleSheet("color:red")
+        else:
+            pass
+            #self.update_title_text_general(key)
 
 
 
