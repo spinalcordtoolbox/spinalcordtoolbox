@@ -345,8 +345,14 @@ class SinglePlotMain(SinglePlot,Observer):
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
     def add_point_to_list_points(self,current_point):
-
-        self.list_points.append(current_point)
+        if len(self.list_points)<self.number_of_points:
+            self.list_points.append(current_point)
+            if len(self.list_points)==self.number_of_points:
+                self.header.update_text('ready_to_save_and_quit')
+            else:
+                self.header.update_text('update',len(self.list_points),self.number_of_points)
+        else:
+            self.header.update_text('warning_all_points_done_already')
 
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
@@ -467,12 +473,12 @@ class HeaderCore(object):
         self.layout_header.setAlignment(QtCore.Qt.AlignTop)
         self.layout_header.setContentsMargins(0,30,0,80)
 
-    def update_title_text_general(self, key):
+    def update_title_text_general(self, key,nbpt=0,nbfin=0):
         if(key=='ready_to_save_and_quit'):
             self.lb_status.setText('You can save and quit')
             self.lb_status.setStyleSheet("color:green")
-        elif(key=='warning_all_slices_are_done_already'):
-            self.lb_status.setText('You have processed all the slices. \n'
+        elif(key=='warning_all_points_done_already'):
+            self.lb_warning.setText('You have placed all needed points. \n'
                                    'If you made a mistake, you may use \'undo\'.')
             self.lb_warning.setStyleSheet("color:red")
         elif(key=='warning_undo_beyond_first_point'):
@@ -481,13 +487,16 @@ class HeaderCore(object):
         elif(key=='warning_selected_point_not_in_image'):
             self.lb_warning.setText('The point you selected in not in the image. Please try again.')
             self.lb_warning.setStyleSheet("color:red")
+        elif(key=='update'):
+            self.lb_status.setText('You have maid ' +str(nbpt)+ ' points out of ' + str(nbfin)+'.')
+            self.lb_status.setStyleSheet("color:black")
         else:
             self.lb_warning.setText(key + ' : Unknown key')
             self.lb_warning.setStyleSheet("color:red")
 
 
 class Header(HeaderCore):
-    def update_text(self,key):
+    def update_text(self,key,nbpt=0,nbfin=0):
         self.lb_warning.setText('\n')
         if(key=='welcome'):
             self.lb_status.setText('Please click in the the center of the center line. \n'
@@ -497,7 +506,7 @@ class Header(HeaderCore):
             self.lb_warning.setText('This option is not used in Manual Mode. \n')
             self.lb_warning.setStyleSheet("color:red")
         else:
-            self.update_title_text_general(key)
+            self.update_title_text_general(key,nbpt,nbfin)
 
 
 
@@ -659,6 +668,7 @@ class ControlButtonsCore(object):
         if self.main_plot.list_points:
             del self.main_plot.list_points[-1]
             self.main_plot.draw_dots()
+            self.header.update_text('update',len(self.main_plot.list_points),self.main_plot.number_of_points)
         else:
             self.header.update_text('warning_undo_beyond_first_point')
 
