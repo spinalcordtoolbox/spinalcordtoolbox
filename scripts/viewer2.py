@@ -27,35 +27,8 @@ from abc import ABCMeta, abstractmethod
 import webbrowser
 
 
-class Observer(object):
-    __metaclass__ = ABCMeta
 
-    @abstractmethod
-    def update_observer(self, *args, **kwargs):
-        pass
-
-class Observable(object):
-    def __init__(self):
-        self.observers = []
-
-    def register(self, observer):
-        if not observer in self.observers:
-            self.observers.append(observer)
-
-    def unregister(self, observer):
-        if observer in self.observers:
-            self.observers.remove(observer)
-
-    def unregister_all(self):
-        if self.observers:
-            del self.observers[:]
-
-    def update_observers(self, *args, **kwargs):
-        for observer in self.observers:
-            observer.update_observer(*args, **kwargs)
-
-
-class SinglePlot():
+class SinglePlot(object):
     """
         This class manages mouse events on one image.
     """
@@ -85,8 +58,6 @@ class SinglePlot():
         self.connect_mpl_events()
         self.setup_intensity()
 
-    def update_observer(self, *args, **kwargs):
-        pass
 
     def set_data_to_display(self,image, current_point,view):
         if view == 'ax':
@@ -309,7 +280,7 @@ class SinglePlot():
     def is_point_in_image(self, target_point):
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
 
-class SinglePlotMain(SinglePlot,Observer):
+class SinglePlotMain(SinglePlot):
     """
         This class manages mouse events on one image.
     """
@@ -321,15 +292,9 @@ class SinglePlotMain(SinglePlot,Observer):
         self.current_slice=self.current_point.x
         self.number_of_points=number_of_points
 
-    def update_observer(self, *args, **kwargs):
-        for arg in args:
-            target=arg
-        self.current_slice = target.x
-        self.current_point.x=self.current_slice
-        self.update_slice()
-        self.draw_dots()
-
-    def update_slice(self):
+    def update_slice(self,new_slice):
+        self.current_slice = new_slice
+        self.current_point.x=new_slice
         if (self.view == 'ax'):
             self.figs[-1].set_data(self.images[0].data[self.current_slice, :, :])
         elif (self.view == 'cor'):
@@ -395,15 +360,13 @@ class SinglePlotMain(SinglePlot,Observer):
         self.plot_points.set_ydata(y_data)
         self.refresh()
 
-class SinglePlotSecond(SinglePlot,Observer,object):
+class SinglePlotSecond(SinglePlot):
     #TODO : inheritance etrange
 
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None,header=None):
         super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params,header)
         self.main_plot=main_single_plot
 
-        self.observable=Observable()
-        self.observable.register(main_single_plot)
         self.show_image(self.im_params, current_point=None)
         self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
 
@@ -431,8 +394,9 @@ class SinglePlotSecond(SinglePlot,Observer,object):
                 self.current_point = self.get_event_coordinates(event)
                 self.draw_line('v')
                 self.main_plot.show_image(self.im_params, self.current_point)
-                self.main_plot.refresh()
-                self.observable.update_observers(self.current_point)
+                self.main_plot.update_slice(self.current_point.x)
+                self.main_plot.draw_dots()
+
         elif event.button == 3 and event.inaxes == self.axes:  # right click
             if self.get_event_coordinates(event):
                 self.change_intensity(event)
@@ -444,9 +408,9 @@ class SinglePlotSecond(SinglePlot,Observer,object):
                 self.draw_line('v')
                 self.main_plot.show_image(self.im_params, self.current_point)
                 self.main_plot.refresh()
-                self.observable.update_observers(self.current_point)
             elif event.button == 3:  # right click
                 self.change_intensity(event)
+
 
 
 class HeaderCore(object):
@@ -493,7 +457,6 @@ class HeaderCore(object):
         else:
             self.lb_warning.setText(key + ' : Unknown key')
             self.lb_warning.setStyleSheet("color:red")
-
 
 class Header(HeaderCore):
     def update_text(self,key,nbpt=0,nbfin=0):
