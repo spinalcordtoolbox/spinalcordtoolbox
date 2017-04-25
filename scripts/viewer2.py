@@ -59,7 +59,7 @@ class SinglePlot():
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None):
+    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None,header=None):
         self.axes = ax
         self.images = images
         self.viewer = viewer
@@ -78,6 +78,7 @@ class SinglePlot():
         self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
         self.list_points=[]
+        self.header=header
 
 
         self.remove_axis_number()
@@ -312,8 +313,8 @@ class SinglePlotMain(SinglePlot,Observer):
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None, secondary_plot=None):
-        super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params)
+    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None, secondary_plot=None,header=None):
+        super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params,header)
         self.secondary_plot=None
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
@@ -391,8 +392,8 @@ class SinglePlotMain(SinglePlot,Observer):
 class SinglePlotSecond(SinglePlot,Observer,object):
     #TODO : inheritance etrange
 
-    def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None):
-        super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params)
+    def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None,header=None):
+        super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params,header)
         self.main_plot=main_single_plot
 
         self.observable=Observable()
