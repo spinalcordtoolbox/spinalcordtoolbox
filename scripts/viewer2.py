@@ -29,9 +29,6 @@ import webbrowser
 
 
 class SinglePlot(object):
-    """
-        This class manages mouse events on one image.
-    """
     def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None,header=None):
         self.axes = ax
         self.images = images
@@ -281,9 +278,6 @@ class SinglePlot(object):
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
 
 class SinglePlotMain(SinglePlot):
-    """
-        This class manages mouse events on one image.
-    """
     def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None, secondary_plot=None,header=None,number_of_points=0):
         super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params,header)
         self.secondary_plot=None
@@ -361,8 +355,6 @@ class SinglePlotMain(SinglePlot):
         self.refresh()
 
 class SinglePlotSecond(SinglePlot):
-    #TODO : inheritance etrange
-
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None,header=None):
         super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params,header)
         self.main_plot=main_single_plot
@@ -390,7 +382,6 @@ class SinglePlotSecond(SinglePlot):
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes:  # left click
             if self.get_event_coordinates(event):
-                # TODO : self.current_position ?
                 self.current_position = self.get_event_coordinates(event)
                 self.draw_line('v')
                 self.main_plot.show_image(self.im_params, self.current_position)
