@@ -466,42 +466,36 @@ class HeaderCore(object):
         self.layout_header.setContentsMargins(0,30,0,80)
 
     def update_title_text_general(self, key):
-        if (key == 'ready_to_save_and_quit'):
-            title_obj = self.windows[0].axes.set_title('You can save and quit. \n')
-            plt.setp(title_obj, color='g')
+        if(key=='ready_to_save_and_quit'):
+            self.lb_status.setText('You can save and quit')
+            self.lb_status.setStyleSheet("color:green")
+        elif(key=='warning_all_slices_are_done_already'):
+            self.lb_status.setText('You have processed all the slices. \n'
+                                   'If you made a mistake, you may use \'undo\'.')
+            self.lb_warning.setStyleSheet("color:red")
+        elif(key=='warning_undo_beyond_first_point'):
+            self.lb_warning.setText('Please place your first dot\n')
+            self.lb_warning.setStyleSheet("color:red")
+        elif(key=='warning_selected_point_not_in_image'):
+            self.lb_warning.setText('The point you selected in not in the image. Please try again.')
+            self.lb_warning.setStyleSheet("color:red")
+        else:
+            self.lb_warning.setText(key + ' : Unknown key')
+            self.lb_warning.setStyleSheet("color:red")
 
-        elif (key == 'warning_all_slices_are_done_already'):
-            title_obj = self.windows[0].axes.set_title('You have processed all slices \n'
-                                                       'If you made a mistake please use \'Redo\' \n'
-                                                       'Otherwise, you can save and quit. \n')
-            plt.setp(title_obj, color='g')
-
-        elif (key == 'warning_redo_beyond_first_dot'):
-            title_obj = self.windows[0].axes.set_title('Please, place your first dot. \n')
-            plt.setp(title_obj, color='r')
-
-        elif (key == 'warning_skip_not_defined'):
-            title_obj = self.windows[0].axes.set_title('This option is not used in Manual Mode. \n')
-            plt.setp(title_obj, color='r')
-
-        elif (key == 'warning_selected_point_not_in_image'):
-            title_obj = self.windows[0].axes.set_title('The point you selected in not in the image. Please try again.')
-            plt.setp(title_obj, color='r')
-
-        self.windows[0].draw()
 
 class Header(HeaderCore):
     def update_text(self,key):
+        self.lb_warning.setText('\n')
         if(key=='welcome'):
             self.lb_status.setText('Please click in the the center of the center line. \n'
                                    'If it invisible, you may skip it')
-            self.lb_warning.setText('')
-        elif(key=='warning_undo_while_no_point'):
-            self.lb_warning.setText('Please place your first dot')
+            self.lb_warning.setText('\n')
+        elif(key=='warning_skip_not_defined'):
+            self.lb_warning.setText('This option is not used in Manual Mode. \n')
             self.lb_warning.setStyleSheet("color:red")
         else:
-            pass
-            #self.update_title_text_general(key)
+            self.update_title_text_general(key)
 
 
 
@@ -522,7 +516,6 @@ class MainPannelCore(object):
         self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[1])]
-        print(window.number_of_points)
 
     def add_main_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -664,7 +657,7 @@ class ControlButtonsCore(object):
             del self.main_plot.list_points[-1]
             self.main_plot.draw_dots()
         else:
-            self.header.update_text('warning_undo_while_no_point')
+            self.header.update_text('warning_undo_beyond_first_point')
 
 
 class WindowCore(object):
