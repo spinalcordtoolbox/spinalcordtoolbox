@@ -664,29 +664,8 @@ class WindowCore(object):
         self.im_params = visualization_parameters
         self.str_points_final=''
 
-        """ Initialisation of plot """
-        #self.fig = plt.figure(figsize=(8, 8))
-        #self.fig.subplots_adjust(bottom=0.1, left=0.1)
-        #self.fig.patch.set_facecolor('lightgrey')
-
-        """ Pad the image so that it is square in axial view (useful for zooming) """
-        #self.image_dim = self.images[0].data.shape
-        #nx, ny, nz, nt, px, py, pz, pt = self.images[0].dim
-        #self.im_spacing = [px, py, pz]
-        #self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
-        #                     float(self.im_spacing[0]) / float(self.im_spacing[2]),
-        #                     float(self.im_spacing[0]) / float(self.im_spacing[1])]
-        #self.offset = [0.0, 0.0, 0.0]
-        #self.current_point = Coordinate([int(nx / 2), int(ny / 2), int(nz / 2)])
-
-        #self.windows = []
-        #self.press = [0, 0]
-
         self.mean_intensity = []
         self.std_intensity = []
-
-        #self.last_update = time()
-        #self.update_freq = 1.0 / 15.0  # 10 Hz
 
     def keep_only_images(self,list_input):
         # TODO: check same space
