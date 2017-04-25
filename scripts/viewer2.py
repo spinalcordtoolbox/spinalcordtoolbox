@@ -508,7 +508,8 @@ class Header(HeaderCore):
 class MainPannelCore(object):
     def __init__(self,
                  images,
-                 im_params):
+                 im_params,window):
+        self.window=window
         self.layout_global=QtGui.QVBoxLayout()
         self.layout_option_settings = QtGui.QHBoxLayout()
         self.layout_central = QtGui.QHBoxLayout()
@@ -521,6 +522,7 @@ class MainPannelCore(object):
         self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[1])]
+        print(window.number_of_points)
 
     def add_main_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -604,8 +606,8 @@ class MainPannel(MainPannelCore):
 
         self.layout_central.addLayout(layout_title_and_controller)
 
-    def __init__(self,images,im_params):
-        super(MainPannel, self).__init__(images,im_params)
+    def __init__(self,images,im_params,window):
+        super(MainPannel, self).__init__(images,im_params,window)
 
         self.add_main_view()
         self.add_secondary_view()
@@ -722,7 +724,7 @@ class Window(WindowCore):
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
 
         super(Window, self).__init__(list_images, visualization_parameters)
-
+        self.number_of_points=10
         self.set_layout_and_launch_viewer()
 
     def set_main_plot(self):
@@ -777,8 +779,8 @@ class Window(WindowCore):
             header.update_text('welcome')
             return (header)
 
-        def add_main_pannel(layout_main):
-            main_pannel = MainPannel(self.images,self.im_params)
+        def add_main_pannel(layout_main,window):
+            main_pannel = MainPannel(self.images,self.im_params,window)
             layout_main.addLayout(main_pannel.layout_global)
             return main_pannel
 
@@ -791,7 +793,7 @@ class Window(WindowCore):
         (window, system) = launch_main_window()
         layout_main = add_layout_main(window)
         self.header = add_header(layout_main)
-        self.main_pannel = add_main_pannel(layout_main)
+        self.main_pannel = add_main_pannel(layout_main,self)
         self.control_buttons = add_control_buttons(layout_main,self)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
