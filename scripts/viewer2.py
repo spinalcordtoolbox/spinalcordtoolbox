@@ -48,7 +48,7 @@ class SinglePlot(object):
         self.std_intensity = []
         self.list_intensites=[]
         self.im_params = im_params
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
+        self.current_position = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
         self.list_points=[]
         self.header=header
@@ -192,17 +192,17 @@ class SinglePlot(object):
         point = None
         try:
             if self.view == 'ax':
-                point = Coordinate([self.current_point.x,
+                point = Coordinate([self.current_position.x,
                                     int(round(event.ydata)),
                                     int(round(event.xdata)), 1])
             elif self.view == 'cor':
                 point = Coordinate([int(round(event.ydata)),
-                                    self.current_point.y,
+                                    self.current_position.y,
                                     int(round(event.xdata)), 1])
             elif self.view == 'sag':
                 point = Coordinate([int(round(event.ydata)),
                                     int(round(event.xdata)),
-                                    self.current_point.z, 1])
+                                    self.current_position.z, 1])
         except TypeError:
             self.header.update_text('warning_selected_point_not_in_image')
         return point
@@ -245,7 +245,7 @@ class SinglePlot(object):
             if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
                 self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
 
-        point = [self.current_point.x, self.current_point.y, self.current_point.z]
+        point = [self.current_position.x, self.current_position.y, self.current_position.z]
         point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
         for window in self.windows:
             if window.view == self.orientation[self.secondary_subplot]:
@@ -289,12 +289,12 @@ class SinglePlotMain(SinglePlot):
         self.secondary_plot=None
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
-        self.current_slice=self.current_point.x
+        self.current_slice=self.current_position.x
         self.number_of_points=number_of_points
 
     def update_slice(self,new_slice):
         self.current_slice = new_slice
-        self.current_point.x=new_slice
+        self.current_position.x=new_slice
         if (self.view == 'ax'):
             self.figs[-1].set_data(self.images[0].data[self.current_slice, :, :])
         elif (self.view == 'cor'):
@@ -384,17 +384,17 @@ class SinglePlotSecond(SinglePlot):
         self.refresh()
 
     def refresh(self):
-        self.show_image(self.im_params,self.current_point)
+        self.show_image(self.im_params,self.current_position)
         self.figs[0].figure.canvas.draw()
 
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes:  # left click
             if self.get_event_coordinates(event):
-                # TODO : self.current_point ?
-                self.current_point = self.get_event_coordinates(event)
+                # TODO : self.current_position ?
+                self.current_position = self.get_event_coordinates(event)
                 self.draw_line('v')
-                self.main_plot.show_image(self.im_params, self.current_point)
-                self.main_plot.update_slice(self.current_point.x)
+                self.main_plot.show_image(self.im_params, self.current_position)
+                self.main_plot.update_slice(self.current_position.x)
                 self.main_plot.draw_dots()
 
         elif event.button == 3 and event.inaxes == self.axes:  # right click
@@ -404,9 +404,9 @@ class SinglePlotSecond(SinglePlot):
     def on_event_release(self, event):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
-                self.current_point = self.get_event_coordinates(event)
+                self.current_position = self.get_event_coordinates(event)
                 self.draw_line('v')
-                self.main_plot.show_image(self.im_params, self.current_point)
+                self.main_plot.show_image(self.im_params, self.current_position)
                 self.main_plot.refresh()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
@@ -485,7 +485,7 @@ class MainPannelCore(object):
         self.layout_central.setDirection(1)
         self.images=images
         self.im_params=im_params
-        self.current_point = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
+        self.current_position = Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2), int(self.images[0].data.shape[2] / 2)])
         nx, ny, nz, nt, px, py, pz, pt = self.images[0].dim
         self.im_spacing = [px, py, pz]
         self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
