@@ -211,6 +211,7 @@ def main():
     sct.check_file_exist(fname_template, verbose)
     sct.check_file_exist(fname_template_vertebral_labeling, verbose)
     sct.check_file_exist(fname_template_seg, verbose)
+    path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # print arguments
     sct.printv('\nCheck parameters:', verbose)
@@ -224,12 +225,12 @@ def main():
     sct.create_folder(param.path_qc)
 
     # check if data, segmentation and landmarks are in the same space
-    sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
-    path_data, file_data, ext_data = sct.extract_fname(fname_data)
-    if not sct.check_if_same_space(fname_data, fname_seg):
-        sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
-    if not sct.check_if_same_space(fname_data, fname_landmarks):
-        sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    # JULIEN 2017-04-25: removed because of issue #1168
+    # sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
+    # if not sct.check_if_same_space(fname_data, fname_seg):
+    #     sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    # if not sct.check_if_same_space(fname_data, fname_landmarks):
+    #     sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
 
     # check input labels
     labels = check_labels(fname_landmarks)
@@ -256,6 +257,16 @@ def main():
 
     # go to tmp folder
     os.chdir(path_tmp)
+
+    # copy header of anat to segmentation (issue #1168)
+    # from sct_image import copy_header
+    # im_data = Image(ftmp_data)
+    # im_seg = Image(ftmp_seg)
+    # copy_header(im_data, im_seg)
+    # im_seg.save()
+    # im_label = Image(ftmp_label)
+    # copy_header(im_data, im_label)
+    # im_label.save()
 
     # Generate labels from template vertebral labeling
     sct.printv('\nGenerate labels from template vertebral labeling', verbose)
