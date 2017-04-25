@@ -60,7 +60,13 @@ paramreg = ParamregMultiStep([step0, step1, step2])
 def get_parser():
     param = Param()
     parser = Parser(__file__)
-    parser.usage.set_description('Register anatomical image to the template.')
+    parser.usage.set_description('Register anatomical image to the template.\n\n'
+      'To register a subject to the template, try the default command:\n'
+      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n'
+      'If this default command does not produce satisfactory results, please see: https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
+      'To register the template to a subject, you need to use "-ref subject". Example below:\n'
+      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2'
+      )
     parser.add_option(name="-i",
                       type_value="file",
                       description="Anatomical image.",
