@@ -233,7 +233,7 @@ class SinglePlot():
                                     int(round(event.xdata)),
                                     self.current_point.z, 1])
         except TypeError:
-            pass
+            self.header.update_text('warning_selected_point_not_in_image')
         return point
 
     def calculate_list_slices(self, starting_slice=-1):
@@ -347,10 +347,8 @@ class SinglePlotMain(SinglePlot,Observer):
         self.list_points.append(current_point)
 
     def on_event_motion(self, event):
-        if self.get_event_coordinates(event):
-            if event.button == 1 and event.inaxes == self.axes:  # left click
-                pass
-            elif event.button == 3 and event.inaxes == self.axes:  # right click
+        if event.button == 3 and event.inaxes == self.axes:  # right click
+            if self.get_event_coordinates(event):
                 self.change_intensity(event)
                 self.change_intensity_on_secondary_plot(event)
 
@@ -419,15 +417,16 @@ class SinglePlotSecond(SinglePlot,Observer,object):
         self.figs[0].figure.canvas.draw()
 
     def on_event_motion(self, event):
-        if self.get_event_coordinates(event):
-            if event.button == 1 and event.inaxes == self.axes:  # left click
+        if event.button == 1 and event.inaxes == self.axes:  # left click
+            if self.get_event_coordinates(event):
                 # TODO : self.current_point ?
                 self.current_point = self.get_event_coordinates(event)
                 self.draw_line('v')
                 self.main_plot.show_image(self.im_params, self.current_point)
                 self.main_plot.refresh()
                 self.observable.update_observers(self.current_point)
-            elif event.button == 3 and event.inaxes == self.axes:  # right click
+        elif event.button == 3 and event.inaxes == self.axes:  # right click
+            if self.get_event_coordinates(event):
                 self.change_intensity(event)
 
     def on_event_release(self, event):
@@ -475,7 +474,7 @@ class HeaderCore(object):
                                    'If you made a mistake, you may use \'undo\'.')
             self.lb_warning.setStyleSheet("color:red")
         elif(key=='warning_undo_beyond_first_point'):
-            self.lb_warning.setText('Please place your first dot\n')
+            self.lb_warning.setText('Please place your first dot.')
             self.lb_warning.setStyleSheet("color:red")
         elif(key=='warning_selected_point_not_in_image'):
             self.lb_warning.setText('The point you selected in not in the image. Please try again.')
@@ -503,7 +502,8 @@ class Header(HeaderCore):
 class MainPannelCore(object):
     def __init__(self,
                  images,
-                 im_params,window):
+                 im_params,window,header):
+        self.header=header
         self.window=window
         self.layout_global=QtGui.QVBoxLayout()
         self.layout_option_settings = QtGui.QHBoxLayout()
@@ -531,7 +531,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', display_cross='', im_params=self.im_params,canvas=self.canvas_main)
+        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', display_cross='', im_params=self.im_params,canvas=self.canvas_main,header=self.header)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -546,7 +546,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot=SinglePlotSecond(axis, self.images, self, view='sag', display_cross='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot)
+        self.second_plot=SinglePlotSecond(axis, self.images, self, view='sag', display_cross='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot,header=self.header)
         self.main_plot.secondary_plot=self.second_plot
 
     def add_controller_pannel(self):
@@ -600,8 +600,8 @@ class MainPannel(MainPannelCore):
 
         self.layout_central.addLayout(layout_title_and_controller)
 
-    def __init__(self,images,im_params,window):
-        super(MainPannel, self).__init__(images,im_params,window)
+    def __init__(self,images,im_params,window,header):
+        super(MainPannel, self).__init__(images,im_params,window,header)
 
         self.add_main_view()
         self.add_secondary_view()
@@ -773,8 +773,8 @@ class Window(WindowCore):
             header.update_text('welcome')
             return (header)
 
-        def add_main_pannel(layout_main,window):
-            main_pannel = MainPannel(self.images,self.im_params,window)
+        def add_main_pannel(layout_main,window,header):
+            main_pannel = MainPannel(self.images,self.im_params,window,header)
             layout_main.addLayout(main_pannel.layout_global)
             return main_pannel
 
@@ -787,7 +787,7 @@ class Window(WindowCore):
         (window, system) = launch_main_window()
         layout_main = add_layout_main(window)
         self.header = add_header(layout_main)
-        self.main_pannel = add_main_pannel(layout_main,self)
+        self.main_pannel = add_main_pannel(layout_main,self,self.header)
         self.control_buttons = add_control_buttons(layout_main,self)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
