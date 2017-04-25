@@ -313,12 +313,13 @@ class SinglePlotMain(SinglePlot,Observer):
     """
         This class manages mouse events on one image.
     """
-    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None, secondary_plot=None,header=None):
+    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None, secondary_plot=None,header=None,number_of_points=0):
         super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params,header)
         self.secondary_plot=None
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
         self.current_slice=self.current_point.x
+        self.number_of_points=number_of_points
 
     def update_observer(self, *args, **kwargs):
         for arg in args:
@@ -344,6 +345,7 @@ class SinglePlotMain(SinglePlot,Observer):
             self.line_horizontal.set_xdata(self.cross_to_display[1][1])
 
     def add_point_to_list_points(self,current_point):
+
         self.list_points.append(current_point)
 
     def on_event_motion(self, event):
@@ -490,7 +492,7 @@ class Header(HeaderCore):
         if(key=='welcome'):
             self.lb_status.setText('Please click in the the center of the center line. \n'
                                    'If it invisible, you may skip it')
-            self.lb_warning.setText('\n')
+            self.lb_warning.setText(' \n')
         elif(key=='warning_skip_not_defined'):
             self.lb_warning.setText('This option is not used in Manual Mode. \n')
             self.lb_warning.setStyleSheet("color:red")
@@ -531,7 +533,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', display_cross='', im_params=self.im_params,canvas=self.canvas_main,header=self.header)
+        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', display_cross='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=5)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -718,7 +720,6 @@ class Window(WindowCore):
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
 
         super(Window, self).__init__(list_images, visualization_parameters)
-        self.number_of_points=10
         self.set_layout_and_launch_viewer()
 
     def set_main_plot(self):
