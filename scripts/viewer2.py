@@ -500,8 +500,8 @@ class Header(HeaderCore):
         self.lb_warning.setText('\n')
         if(key=='welcome'):
             self.lb_status.setText('Please click in the the center of the center line. \n'
-                                   'If it invisible, you may skip it')
-            self.lb_warning.setText(' \n')
+                                   'If it is invisible, you may skip it.')
+            self.lb_status.setStyleSheet("color:black")
         elif(key=='warning_skip_not_defined'):
             self.lb_warning.setText('This option is not used in Manual Mode. \n')
             self.lb_warning.setStyleSheet("color:red")
