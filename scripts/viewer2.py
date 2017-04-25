@@ -492,10 +492,14 @@ class HeaderCore(object):
 
 class Header(HeaderCore):
     def update_text(self,key):
-        if(key=='start'):
-            self.lb_status.setText('header.lb_status')
-            self.lb_warning.setText('header.lb_warning')
+        if(key=='welcome'):
+            self.lb_status.setText('Please click in the the center of the center line. \n'
+                                   'If it invisible, you may skip it')
+            self.lb_warning.setText('')
+        elif(key=='warning_undo_while_no_point'):
+            self.lb_warning.setText('Please place your first dot')
             self.lb_warning.setStyleSheet("color:red")
+
 
 
 class MainPannelCore(object):
@@ -607,10 +611,11 @@ class MainPannel(MainPannelCore):
         self.merge_layouts()
 
 class ControlButtonsCore(object):
-    def __init__(self,main_plot,window):
+    def __init__(self,main_plot,window,header):
         self.main_plot = main_plot
         self.window=window
         self.help_web_adress='http://www.google.com'
+        self.header=header
 
         self.layout_buttons=QtGui.QHBoxLayout()
         self.layout_buttons.setAlignment(QtCore.Qt.AlignRight)
@@ -649,13 +654,13 @@ class ControlButtonsCore(object):
 
         self.window.str_points_final=rewrite_list_points(self.main_plot.list_points)
 
-
     def press_undo(self):
         if self.main_plot.list_points:
             del self.main_plot.list_points[-1]
             self.main_plot.draw_dots()
         else:
-            pass
+            self.header.update_text('warning_undo_while_no_point')
+
 
 class WindowCore(object):
 
@@ -766,7 +771,7 @@ class Window(WindowCore):
         def add_header(layout_main):
             header = Header()
             layout_main.addLayout(header.layout_header)
-            header.update_text('start')
+            header.update_text('welcome')
             return (header)
 
         def add_main_pannel(layout_main):
@@ -775,7 +780,7 @@ class Window(WindowCore):
             return main_pannel
 
         def add_control_buttons(layout_main,window):
-            control_buttons = ControlButtonsCore(self.main_pannel.main_plot,window)
+            control_buttons = ControlButtonsCore(self.main_pannel.main_plot,window,self.header)
             layout_main.addLayout(control_buttons.layout_buttons)
             return control_buttons
 
