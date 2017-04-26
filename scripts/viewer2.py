@@ -331,6 +331,7 @@ class SinglePlotSecond(SinglePlot):
         super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, line_direction, im_params,header)
         self.main_plot=main_single_plot
         self.current_position=self.main_plot.current_position
+        self.list_previous_lines=[]
 
         self.show_image(self.im_params, current_point=None)
         self.current_line=self.add_line('v',self.current_position)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
@@ -357,8 +358,16 @@ class SinglePlotSecond(SinglePlot):
         self.current_line = self.add_line(line_direction, self.current_position)
         self.axes.add_line(self.current_line)
 
+    def draw_previous_lines(self,line_direction):
+        self.list_previous_lines=[]
+        for ipoint in self.main_plot.list_points:
+            self.list_previous_lines.append(self.add_line(line_direction, ipoint))
+            self.axes.add_line(self.list_previous_lines[-1])    
+        
+
     def draw_lines(self,line_direction):
         self.draw_current_line(line_direction)
+        self.draw_previous_lines(line_direction)
         self.refresh()
 
     def refresh(self):
