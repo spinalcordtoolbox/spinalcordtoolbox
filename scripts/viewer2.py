@@ -251,12 +251,6 @@ class SinglePlotMain(SinglePlot):
             self.figs[-1].set_data(self.images[0].data[:, :, self.current_position.z])
         self.figs[-1].figure.canvas.draw()
 
-    def set_line_to_display(self):
-        if 'v' in self.display_cross:
-            self.line_vertical.set_ydata(self.cross_to_display[0][0])
-        if 'h' in self.display_cross:
-            self.line_horizontal.set_xdata(self.cross_to_display[1][1])
-
     def add_point_to_list_points(self,current_point):
         if len(self.list_points)<self.number_of_points:
             self.list_points.append(current_point)
@@ -337,19 +331,29 @@ class SinglePlotSecond(SinglePlot):
         self.main_plot=main_single_plot
 
         self.show_image(self.im_params, current_point=None)
-        self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
+        self.current_line=self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
+        self.axes.add_line(self.current_line)
+        self.refresh()
 
     def add_line(self,display_cross):
-        if 'h' in display_cross:
-            self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
-            self.axes.add_line(self.line_horizontal)
-        if 'v' in display_cross:
-            self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
-            self.axes.add_line(self.line_vertical)
+        def calc_dic_line_coor(current_position, view):
+            if view == 'ax':
+                return {'h':[[current_position.y, current_position.y], [-10000, 10000]],
+                        'v':[[-10000, 10000], [current_position.z, current_position.z]]}
+            elif view == 'cor':
+                return  {'h':[[current_position.x, current_position.x], [-10000, 10000]],
+                         'v':[[-10000, 10000], [current_position.z, current_position.z]]}
+            elif view == 'sag':
+                return  {'h':[[current_position.x, current_position.x], [-10000, 10000]],
+                         'v':[[-10000, 10000], [current_position.y, current_position.y]]}
+        dic_line_coor=calc_dic_line_coor(self.current_position,self.view)
+        line = Line2D(dic_line_coor[display_cross][1], dic_line_coor[display_cross][0], color='white')
+        return line
 
     def draw_line(self,display_cross):
-        self.line_vertical.remove()
-        self.add_line(display_cross)
+        self.current_line.remove()
+        self.current_line=self.add_line(display_cross)
+        self.axes.add_line(self.current_line)
         self.refresh()
 
     def refresh(self):
