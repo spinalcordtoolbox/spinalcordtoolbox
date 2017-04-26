@@ -280,6 +280,7 @@ class SinglePlotMain(SinglePlot):
     def jump_to_new_slice(self):
         if len(self.list_points)<self.number_of_points:
             self.update_slice(Coordinate([self.list_slices[len(self.list_points)],self.current_position.y,self.current_position.z]))
+            self.secondary_plot.current_position=Coordinate([self.list_slices[len(self.list_points)],self.current_position.y,self.current_position.z])
             self.secondary_plot.draw_line('v')
 
     def change_intensity_on_secondary_plot(self,event):
@@ -329,6 +330,7 @@ class SinglePlotSecond(SinglePlot):
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None,header=None):
         super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params,header)
         self.main_plot=main_single_plot
+        self.current_position=self.main_plot.current_position
 
         self.show_image(self.im_params, current_point=None)
         self.current_line=self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
@@ -338,14 +340,14 @@ class SinglePlotSecond(SinglePlot):
     def add_line(self,display_cross):
         def calc_dic_line_coor(current_position, view):
             if view == 'ax':
-                return {'h':[[current_position.y, current_position.y], [-10000, 10000]],
-                        'v':[[-10000, 10000], [current_position.z, current_position.z]]}
+                return {'v':[[current_position.y, current_position.y], [-10000, 10000]],
+                        'h':[[-10000, 10000], [current_position.z, current_position.z]]}
             elif view == 'cor':
-                return  {'h':[[current_position.x, current_position.x], [-10000, 10000]],
-                         'v':[[-10000, 10000], [current_position.z, current_position.z]]}
+                return  {'v':[[current_position.x, current_position.x], [-10000, 10000]],
+                         'h':[[-10000, 10000], [current_position.z, current_position.z]]}
             elif view == 'sag':
-                return  {'h':[[current_position.x, current_position.x], [-10000, 10000]],
-                         'v':[[-10000, 10000], [current_position.y, current_position.y]]}
+                return  {'v':[[current_position.x, current_position.x], [-10000, 10000]],
+                         'h':[[-10000, 10000], [current_position.y, current_position.y]]}
         dic_line_coor=calc_dic_line_coor(self.current_position,self.view)
         line = Line2D(dic_line_coor[display_cross][1], dic_line_coor[display_cross][0], color='white')
         return line
