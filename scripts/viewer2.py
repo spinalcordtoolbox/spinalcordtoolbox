@@ -281,7 +281,7 @@ class SinglePlotMain(SinglePlot):
         if len(self.list_points)<self.number_of_points:
             self.update_slice(Coordinate([self.list_slices[len(self.list_points)],self.current_position.y,self.current_position.z]))
             self.secondary_plot.current_position=Coordinate([self.list_slices[len(self.list_points)],self.current_position.y,self.current_position.z])
-            self.secondary_plot.draw_line('v')
+            self.secondary_plot.draw_lines('v')
 
     def change_intensity_on_secondary_plot(self,event):
         if self.secondary_plot:
@@ -352,10 +352,13 @@ class SinglePlotSecond(SinglePlot):
         line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color='white')
         return line
 
-    def draw_line(self,line_direction):
+    def draw_current_line(self,line_direction):
         self.current_line.remove()
-        self.current_line=self.add_line(line_direction,self.current_position)
+        self.current_line = self.add_line(line_direction, self.current_position)
         self.axes.add_line(self.current_line)
+
+    def draw_lines(self,line_direction):
+        self.draw_current_line(line_direction)
         self.refresh()
 
     def refresh(self):
@@ -366,7 +369,7 @@ class SinglePlotSecond(SinglePlot):
         if event.button == 1 and event.inaxes == self.axes:  # left click
             if self.get_event_coordinates(event):
                 self.current_position = self.get_event_coordinates(event)
-                self.draw_line('v')
+                self.draw_lines('v')
                 self.main_plot.show_image(self.im_params, self.current_position)
                 self.main_plot.update_slice(self.current_position)
                 self.main_plot.draw_dots()
@@ -379,7 +382,7 @@ class SinglePlotSecond(SinglePlot):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
                 self.current_position = self.get_event_coordinates(event)
-                self.draw_line('v')
+                self.draw_lines('v')
                 self.main_plot.show_image(self.im_params, self.current_position)
                 self.main_plot.update_slice(self.current_position)
                 self.main_plot.refresh()
