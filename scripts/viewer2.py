@@ -346,6 +346,7 @@ class SinglePlotMain(SinglePlot):
     def switch_mode_seg(self):
         self.bool_is_mode_auto=not self.bool_is_mode_auto
         self.reset_data()
+        self.header.update_text('mode_switched')
 
     def reset_data(self):
         self.list_points=[]
@@ -496,8 +497,13 @@ class Header(HeaderCore):
         elif(key=='warning_skip_not_defined'):
             self.lb_warning.setText('This option is not used in Manual Mode. \n')
             self.lb_warning.setStyleSheet("color:red")
+        elif(key=='mode_switched'):
+            self.lb_status.setText('You have switched on an other segmentation mode. \n'
+                                   'All previous data have been erased.')
+            self.lb_status.setStyleSheet("color:black")
         else:
             self.update_title_text_general(key,nbpt,nbfin)
+
 
 
 class MainPannelCore(object):
