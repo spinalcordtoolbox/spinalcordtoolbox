@@ -288,9 +288,9 @@ class SinglePlotMain(SinglePlot):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event))
-                self.draw_dots()
                 if self.bool_is_mode_auto:
                     self.jump_to_new_slice()
+                self.draw_dots()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
                 self.change_intensity_on_secondary_plot(event)
@@ -411,12 +411,7 @@ class SinglePlotSecond(SinglePlot):
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes:  # left click
             if self.get_event_coordinates(event):
-                self.current_position = self.get_event_coordinates(event)
-                self.draw_lines('v')
-                self.main_plot.show_image(self.im_params, self.current_position)
-                self.main_plot.update_slice(self.current_position)
-                self.main_plot.draw_dots()
-
+                self.change_main_slice(event)
         elif event.button == 3 and event.inaxes == self.axes:  # right click
             if self.get_event_coordinates(event):
                 self.change_intensity(event)
@@ -425,15 +420,20 @@ class SinglePlotSecond(SinglePlot):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
                 if not self.main_plot.bool_is_mode_auto:
-                    self.current_position = self.get_event_coordinates(event)
-                    self.draw_lines('v')
-                    self.main_plot.show_image(self.im_params, self.current_position)
-                    self.main_plot.update_slice(self.current_position)
-                    self.main_plot.refresh()
+                    self.change_main_slice(event)
                 else:
                     self.main_plot.jump_to_new_slice()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
+
+    def change_main_slice(self,event):
+        self.current_position = self.get_event_coordinates(event)
+        self.draw_lines('v')
+        self.main_plot.show_image(self.im_params, self.current_position)
+        self.main_plot.update_slice(self.current_position)
+        self.main_plot.refresh()
+        self.main_plot.draw_dots()
+
 
 
 class HeaderCore(object):
