@@ -334,11 +334,11 @@ class SinglePlotSecond(SinglePlot):
         self.list_previous_lines=[]
 
         self.show_image(self.im_params, current_point=None)
-        self.current_line=self.add_line('v',self.current_position)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
+        self.current_line=self.calc_line('v',self.current_position)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
         self.axes.add_line(self.current_line)
         self.refresh()
 
-    def add_line(self,line_direction,line_position):
+    def calc_line(self,line_direction,line_position):
         def calc_dic_line_coor(current_position, view):
             if view == 'ax':
                 return {'v':[[current_position.y, current_position.y], [-10000, 10000]],
@@ -355,14 +355,14 @@ class SinglePlotSecond(SinglePlot):
 
     def draw_current_line(self,line_direction):
         self.current_line.remove()
-        self.current_line = self.add_line(line_direction, self.current_position)
+        self.current_line = self.calc_line(line_direction, self.current_position)
         self.axes.add_line(self.current_line)
 
     def draw_previous_lines(self,line_direction):
         self.list_previous_lines=[]
         for ipoint in self.main_plot.list_points:
-            self.list_previous_lines.append(self.add_line(line_direction, ipoint))
-            self.axes.add_line(self.list_previous_lines[-1])    
+            self.list_previous_lines.append(self.calc_line(line_direction, ipoint))
+            self.axes.add_line(self.list_previous_lines[-1])
         
 
     def draw_lines(self,line_direction):
