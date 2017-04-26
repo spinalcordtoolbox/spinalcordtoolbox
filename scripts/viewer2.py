@@ -273,7 +273,7 @@ class SinglePlotMain(SinglePlot):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event))
                 self.draw_dots()
-                #self.jump_to_new_slice()
+                self.jump_to_new_slice()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
                 self.change_intensity_on_secondary_plot(event)
@@ -328,6 +328,18 @@ class SinglePlotMain(SinglePlot):
 
     def switch_mode_seg(self):
         self.bool_is_mode_auto=not self.bool_is_mode_auto
+        self.reset_data()
+
+
+    def reset_data(self):
+        self.list_points=[]
+        self.current_position.x=0
+        self.update_slice(self.current_position)
+        self.draw_dots()
+        self.secondary_plot.current_position=self.current_position
+        self.secondary_plot.draw_lines('v')
+
+
 
 
 class SinglePlotSecond(SinglePlot):
