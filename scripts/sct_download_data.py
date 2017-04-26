@@ -159,7 +159,7 @@ def download_data(url, verbose):
                     sys.stdout.write("\r[%s%s] Total: %s MB" % ('=' * done, ' ' * (20 - done), "{:,}".format(total/1000)))
                     sys.stdout.flush()
 
-    sct.printv('Download complete', verbose=verbose)
+    sct.printv('\nDownload complete', verbose=verbose)
     return tmp_path
 
 
