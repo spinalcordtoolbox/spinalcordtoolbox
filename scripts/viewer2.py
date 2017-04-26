@@ -288,7 +288,7 @@ class SinglePlotMain(SinglePlot):
     def jump_to_new_slice(self):
         if len(self.list_points)<self.number_of_points:
             self.update_slice(self.list_slices[len(self.list_points)])
-
+            self.secondary_plot.draw_line('v', slice_coordinate=Coordinate(1, 1, self.current_slice))
 
     def change_intensity_on_secondary_plot(self,event):
         if self.secondary_plot:
@@ -323,9 +323,6 @@ class SinglePlotMain(SinglePlot):
             self.list_slices.append(ii*increment)
         self.list_slices.append(self.image_dim[0]-1)
 
-    def update_lines_on_second_plot(self):
-        current_slice=self.list_slices[len(self.list_points)]
-        self.secondary_plot.draw_line('v',slice_coordinate=Coordinate(1,1,current_slice))
 
 class SinglePlotSecond(SinglePlot):
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None,header=None):
@@ -357,7 +354,7 @@ class SinglePlotSecond(SinglePlot):
             self.line_vertical = Line2D(line_coordinate[0][1], line_coordinate[0][0], color=chosen_color)
             self.axes.add_line(self.line_vertical)
 
-    def draw_line(self,display_cross,slice_coordinate):
+    def draw_line(self,display_cross,slice_coordinate=-1):
         self.line_vertical.remove()
         self.add_line(display_cross,slice_coordinate,'white')
         self.refresh()
