@@ -253,14 +253,18 @@ class SinglePlotMain(SinglePlot):
         self.figs[-1].figure.canvas.draw()
 
     def add_point_to_list_points(self,current_point):
-        if len(self.list_points)<self.number_of_points:
-            self.list_points.append(current_point)
-            if len(self.list_points)==self.number_of_points:
-                self.header.update_text('ready_to_save_and_quit')
+        if self.bool_is_mode_auto:
+            if len(self.list_points) < self.number_of_points:
+                self.list_points.append(current_point)
+                if len(self.list_points) == self.number_of_points:
+                    self.header.update_text('ready_to_save_and_quit')
+                else:
+                    self.header.update_text('update', len(self.list_points), self.number_of_points)
             else:
-                self.header.update_text('update',len(self.list_points),self.number_of_points)
+                self.header.update_text('warning_all_points_done_already')
         else:
-            self.header.update_text('warning_all_points_done_already')
+            self.list_points.append(current_point)
+            self.header.update_text('update', len(self.list_points), self.number_of_points)
 
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
@@ -273,7 +277,8 @@ class SinglePlotMain(SinglePlot):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event))
                 self.draw_dots()
-                self.jump_to_new_slice()
+                if self.bool_is_mode_auto:
+                    self.jump_to_new_slice()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
                 self.change_intensity_on_secondary_plot(event)
@@ -330,17 +335,17 @@ class SinglePlotMain(SinglePlot):
         self.bool_is_mode_auto=not self.bool_is_mode_auto
         self.reset_data()
 
-
     def reset_data(self):
         self.list_points=[]
+        if self.bool_is_mode_auto:
+            self.number_of_points=7
+        else:
+            self.number_of_points=-1
         self.current_position.x=0
         self.update_slice(self.current_position)
         self.draw_dots()
         self.secondary_plot.current_position=self.current_position
         self.secondary_plot.draw_lines('v')
-
-
-
 
 class SinglePlotSecond(SinglePlot):
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, line_direction='hv', im_params=None,header=None):
@@ -440,7 +445,7 @@ class HeaderCore(object):
         self.layout_header.setAlignment(QtCore.Qt.AlignTop)
         self.layout_header.setContentsMargins(0,30,0,80)
 
-    def update_title_text_general(self, key,nbpt=0,nbfin=0):
+    def update_title_text_general(self, key,nbpt=-1,nbfin=-1):
         if(key=='ready_to_save_and_quit'):
             self.lb_status.setText('You can save and quit')
             self.lb_status.setStyleSheet("color:green")
@@ -455,14 +460,19 @@ class HeaderCore(object):
             self.lb_warning.setText('The point you selected in not in the image. Please try again.')
             self.lb_warning.setStyleSheet("color:red")
         elif(key=='update'):
-            self.lb_status.setText('You have maid ' +str(nbpt)+ ' points out of ' + str(nbfin)+'.')
-            self.lb_status.setStyleSheet("color:black")
+            if nbfin==-1:
+                self.lb_status.setText('You have maid ' + str(nbpt) + ' points.')
+                self.lb_status.setStyleSheet("color:black")
+            else:
+                self.lb_status.setText('You have maid ' + str(nbpt) + ' points out of ' + str(nbfin) + '.')
+                self.lb_status.setStyleSheet("color:black")
+
         else:
             self.lb_warning.setText(key + ' : Unknown key')
             self.lb_warning.setStyleSheet("color:red")
 
 class Header(HeaderCore):
-    def update_text(self,key,nbpt=0,nbfin=0):
+    def update_text(self,key,nbpt=-1,nbfin=-1):
         self.lb_warning.setText('\n')
         if(key=='welcome'):
             self.lb_status.setText('Please click in the the center of the center line. \n'
