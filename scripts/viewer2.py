@@ -320,7 +320,7 @@ class SinglePlotMain(SinglePlot):
 
     def calculate_list_slices(self):
         self.list_slices=[]
-        increment=int(self.image_dim[0]/self.number_of_points)
+        increment=int(self.image_dim[0]/(self.number_of_points-1))
         for ii in range (0,self.number_of_points-1):
             self.list_slices.append(ii*increment)
         self.list_slices.append(self.image_dim[0]-1)
@@ -359,6 +359,8 @@ class SinglePlotSecond(SinglePlot):
         self.axes.add_line(self.current_line)
 
     def draw_previous_lines(self,line_direction):
+        for iline in self.list_previous_lines:
+            iline.remove()
         self.list_previous_lines=[]
         for ipoint in self.main_plot.list_points:
             self.list_previous_lines.append(self.calc_line(line_direction, ipoint,line_color='red'))
@@ -491,7 +493,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=5)
+        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=7)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
