@@ -333,11 +333,11 @@ class SinglePlotSecond(SinglePlot):
         self.current_position=self.main_plot.current_position
 
         self.show_image(self.im_params, current_point=None)
-        self.current_line=self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
+        self.current_line=self.add_line('v',self.current_position)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
         self.axes.add_line(self.current_line)
         self.refresh()
 
-    def add_line(self,line_direction):
+    def add_line(self,line_direction,line_position):
         def calc_dic_line_coor(current_position, view):
             if view == 'ax':
                 return {'v':[[current_position.y, current_position.y], [-10000, 10000]],
@@ -348,13 +348,13 @@ class SinglePlotSecond(SinglePlot):
             elif view == 'sag':
                 return  {'v':[[current_position.x, current_position.x], [-10000, 10000]],
                          'h':[[-10000, 10000], [current_position.y, current_position.y]]}
-        dic_line_coor=calc_dic_line_coor(self.current_position,self.view)
+        dic_line_coor=calc_dic_line_coor(line_position,self.view)
         line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color='white')
         return line
 
     def draw_line(self,line_direction):
         self.current_line.remove()
-        self.current_line=self.add_line(line_direction)
+        self.current_line=self.add_line(line_direction,self.current_position)
         self.axes.add_line(self.current_line)
         self.refresh()
 
