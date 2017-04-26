@@ -273,7 +273,7 @@ class SinglePlotMain(SinglePlot):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event))
                 self.draw_dots()
-                self.jump_to_new_slice()
+                #self.jump_to_new_slice()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
                 self.change_intensity_on_secondary_plot(event)
