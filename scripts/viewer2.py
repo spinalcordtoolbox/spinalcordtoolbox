@@ -236,21 +236,19 @@ class SinglePlotMain(SinglePlot):
         self.secondary_plot=secondary_plot
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
-        self.current_slice=self.current_position.x
         self.number_of_points=number_of_points
         self.calculate_list_slices()
-        self.update_slice(self.list_slices[0])
+        self.update_slice(Coordinate([self.list_slices[0],self.current_position.y,self.current_position.z]))
         #print(self.list_slices)
 
-    def update_slice(self,new_slice):
-        self.current_slice = new_slice
-        self.current_position.x=new_slice
+    def update_slice(self,new_position):
+        self.current_position=new_position
         if (self.view == 'ax'):
-            self.figs[-1].set_data(self.images[0].data[self.current_slice, :, :])
+            self.figs[-1].set_data(self.images[0].data[self.current_position.x, :, :])
         elif (self.view == 'cor'):
-            self.figs[-1].set_data(self.images[0].data[:, self.current_slice, :])
+            self.figs[-1].set_data(self.images[0].data[:, self.current_position.y, :])
         elif (self.view == 'sag'):
-            self.figs[-1].set_data(self.images[0].data[:, :, self.current_slice])
+            self.figs[-1].set_data(self.images[0].data[:, :, self.current_position.z])
         self.figs[-1].figure.canvas.draw()
 
     def set_line_to_display(self):
@@ -287,7 +285,7 @@ class SinglePlotMain(SinglePlot):
 
     def jump_to_new_slice(self):
         if len(self.list_points)<self.number_of_points:
-            self.update_slice(self.list_slices[len(self.list_points)])
+            self.update_slice(Coordinate([self.list_slices[len(self.list_points)],self.current_position.y,self.current_position.z]))
             self.secondary_plot.draw_line('v')
 
     def change_intensity_on_secondary_plot(self,event):
@@ -304,11 +302,20 @@ class SinglePlotMain(SinglePlot):
             elif view=='cor':
                 return ipoints.x,ipoints.z
             elif view == 'sag':
-                return ipoints.z,ipoints.y
+                return ipoints.y,ipoints.x
+
+        def select_right_position_dim(current_position,view):
+            if view =='ax':
+                return current_position.x
+            elif view=='cor':
+                return current_position.y
+            elif view == 'sag':
+                return current_position.z
+
 
         x_data, y_data = [], []
         for ipoints in self.list_points:
-            if ipoints.x == self.current_slice:
+            if ipoints.x == select_right_position_dim(self.current_position,self.view):
                 x,y=select_right_dimensions(ipoints,self.view)
                 x_data.append(x)
                 y_data.append(y)
@@ -333,7 +340,6 @@ class SinglePlotSecond(SinglePlot):
         self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
 
     def add_line(self,display_cross):
-
         if 'h' in display_cross:
             self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
             self.axes.add_line(self.line_horizontal)
@@ -356,7 +362,7 @@ class SinglePlotSecond(SinglePlot):
                 self.current_position = self.get_event_coordinates(event)
                 self.draw_line('v')
                 self.main_plot.show_image(self.im_params, self.current_position)
-                self.main_plot.update_slice(self.current_position.x)
+                self.main_plot.update_slice(self.current_position)
                 self.main_plot.draw_dots()
 
         elif event.button == 3 and event.inaxes == self.axes:  # right click
@@ -369,6 +375,7 @@ class SinglePlotSecond(SinglePlot):
                 self.current_position = self.get_event_coordinates(event)
                 self.draw_line('v')
                 self.main_plot.show_image(self.im_params, self.current_position)
+                self.main_plot.update_slice(self.current_position)
                 self.main_plot.refresh()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
@@ -678,7 +685,6 @@ class Window(WindowCore):
         self.dic_axis_buttons = {}
         self.closed = False
 
-        self.current_slice = 0
         self.number_of_slices = 0
         self.gap_inter_slice = 0
 
