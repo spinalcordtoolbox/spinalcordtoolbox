@@ -338,7 +338,7 @@ class SinglePlotSecond(SinglePlot):
         self.axes.add_line(self.current_line)
         self.refresh()
 
-    def calc_line(self,line_direction,line_position):
+    def calc_line(self,line_direction,line_position,line_color='white'):
         def calc_dic_line_coor(current_position, view):
             if view == 'ax':
                 return {'v':[[current_position.y, current_position.y], [-10000, 10000]],
@@ -350,7 +350,7 @@ class SinglePlotSecond(SinglePlot):
                 return  {'v':[[current_position.x, current_position.x], [-10000, 10000]],
                          'h':[[-10000, 10000], [current_position.y, current_position.y]]}
         dic_line_coor=calc_dic_line_coor(line_position,self.view)
-        line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color='white')
+        line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color=line_color)
         return line
 
     def draw_current_line(self,line_direction):
@@ -361,9 +361,8 @@ class SinglePlotSecond(SinglePlot):
     def draw_previous_lines(self,line_direction):
         self.list_previous_lines=[]
         for ipoint in self.main_plot.list_points:
-            self.list_previous_lines.append(self.calc_line(line_direction, ipoint))
+            self.list_previous_lines.append(self.calc_line(line_direction, ipoint,line_color='red'))
             self.axes.add_line(self.list_previous_lines[-1])
-        
 
     def draw_lines(self,line_direction):
         self.draw_current_line(line_direction)
