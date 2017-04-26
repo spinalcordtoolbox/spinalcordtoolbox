@@ -74,7 +74,7 @@ class SinglePlot(object):
 
     def show_image(self,im_params,current_point):
         if not current_point:
-            current_point=Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
+            current_point=Coordinate([0, int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
         for i, image in enumerate(self.images):
             data_to_display = self.set_data_to_display(image,current_point,self.view)
@@ -233,14 +233,14 @@ class SinglePlot(object):
 class SinglePlotMain(SinglePlot):
     def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None, secondary_plot=None,header=None,number_of_points=0):
         super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params,header)
-        self.secondary_plot=None
+        self.secondary_plot=secondary_plot
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
         self.current_slice=self.current_position.x
         self.number_of_points=number_of_points
         self.calculate_list_slices()
         self.update_slice(self.list_slices[0])
-        print(self.list_slices)
+        #print(self.list_slices)
 
     def update_slice(self,new_slice):
         self.current_slice = new_slice
@@ -317,6 +317,9 @@ class SinglePlotMain(SinglePlot):
             self.list_slices.append(ii*increment)
         self.list_slices.append(self.image_dim[0]-1)
 
+    def update_lines_on_second_plot(self):
+        current_slice=self.list_slices[len(self.list_points)]
+        self.secondary_plot.draw_line('v',slice_coordinate=Coordinate(1,1,current_slice))
 
 class SinglePlotSecond(SinglePlot):
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None,header=None):
@@ -324,19 +327,33 @@ class SinglePlotSecond(SinglePlot):
         self.main_plot=main_single_plot
 
         self.show_image(self.im_params, current_point=None)
-        self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
+        self.add_line('v',self.current_position.x)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
 
-    def add_line(self,display_cross):
+    def add_line(self,display_cross,slice_coordinate,chosen_color='white'):
+        def calculate_line_coordinates(main_view,slice_coordinate):
+            slice_coordinate=Coordinate([slice_coordinate,1,1])
+            if main_view == 'ax':
+                line_coordinates = [[[slice_coordinate.y, slice_coordinate.y], [-10000, 10000]],
+                                         [[-10000, 10000], [slice_coordinate.z, slice_coordinate.z]]]
+            elif main_view == 'cor':
+                line_coordinates = [[[slice_coordinate.x, slice_coordinate.x], [-10000, 10000]],
+                                         [[-10000, 10000], [slice_coordinate.z, slice_coordinate.z]]]
+            elif main_view == 'sag':
+                line_coordinates = [[[slice_coordinate.x, slice_coordinate.x], [-10000, 10000]],
+                                         [[-10000, 10000], [slice_coordinate.y, slice_coordinate.y]]]
+            return line_coordinates
+
+        line_coordinate=calculate_line_coordinates(self.main_plot.view,slice_coordinate)
         if 'h' in display_cross:
-            self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
+            self.line_horizontal = Line2D(line_coordinate[1][1], line_coordinate[1][0], color=chosen_color)
             self.axes.add_line(self.line_horizontal)
         if 'v' in display_cross:
-            self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
+            self.line_vertical = Line2D(line_coordinate[0][1], line_coordinate[0][0], color=chosen_color)
             self.axes.add_line(self.line_vertical)
 
-    def draw_line(self,display_cross):
+    def draw_line(self,display_cross,slice_coordinate):
         self.line_vertical.remove()
-        self.add_line(display_cross)
+        self.add_line(display_cross,slice_coordinate,'white')
         self.refresh()
 
     def refresh(self):
