@@ -280,17 +280,13 @@ class SinglePlotMain(SinglePlot):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event))
                 self.draw_dots()
-                self.jump_to_next_slice()
+                self.jump_to_new_slice()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
                 self.change_intensity_on_secondary_plot(event)
 
-    def jump_to_next_slice(self):
+    def jump_to_new_slice(self):
         if len(self.list_points)<self.number_of_points:
-            self.update_slice(self.list_slices[len(self.list_points)])
-
-    def jump_to_previous_slice(self):
-        if len(self.list_points)>0:
             self.update_slice(self.list_slices[len(self.list_points)])
 
 
@@ -614,7 +610,7 @@ class ControlButtonsCore(object):
             del self.main_plot.list_points[-1]
             self.main_plot.draw_dots()
             self.header.update_text('update',len(self.main_plot.list_points),self.main_plot.number_of_points)
-            self.main_plot.jump_to_next_slice()
+            self.main_plot.jump_to_new_slice()
         else:
             self.header.update_text('warning_undo_beyond_first_point')
 
