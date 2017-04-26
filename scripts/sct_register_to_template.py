@@ -60,7 +60,13 @@ paramreg = ParamregMultiStep([step0, step1, step2])
 def get_parser():
     param = Param()
     parser = Parser(__file__)
-    parser.usage.set_description('Register anatomical image to the template.')
+    parser.usage.set_description('Register anatomical image to the template.\n\n'
+      'To register a subject to the template, try the default command:\n'
+      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n'
+      'If this default command does not produce satisfactory results, please see: https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
+      'To register the template to a subject, you need to use "-ref subject". Example below:\n'
+      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2'
+      )
     parser.add_option(name="-i",
                       type_value="file",
                       description="Anatomical image.",
@@ -205,6 +211,7 @@ def main():
     sct.check_file_exist(fname_template, verbose)
     sct.check_file_exist(fname_template_vertebral_labeling, verbose)
     sct.check_file_exist(fname_template_seg, verbose)
+    path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # print arguments
     sct.printv('\nCheck parameters:', verbose)
@@ -218,12 +225,12 @@ def main():
     sct.create_folder(param.path_qc)
 
     # check if data, segmentation and landmarks are in the same space
-    sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
-    path_data, file_data, ext_data = sct.extract_fname(fname_data)
-    if not sct.check_if_same_space(fname_data, fname_seg):
-        sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
-    if not sct.check_if_same_space(fname_data, fname_landmarks):
-        sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    # JULIEN 2017-04-25: removed because of issue #1168
+    # sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
+    # if not sct.check_if_same_space(fname_data, fname_seg):
+    #     sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    # if not sct.check_if_same_space(fname_data, fname_landmarks):
+    #     sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
 
     # check input labels
     labels = check_labels(fname_landmarks)
@@ -250,6 +257,16 @@ def main():
 
     # go to tmp folder
     os.chdir(path_tmp)
+
+    # copy header of anat to segmentation (issue #1168)
+    # from sct_image import copy_header
+    # im_data = Image(ftmp_data)
+    # im_seg = Image(ftmp_seg)
+    # copy_header(im_data, im_seg)
+    # im_seg.save()
+    # im_label = Image(ftmp_label)
+    # copy_header(im_data, im_label)
+    # im_label.save()
 
     # Generate labels from template vertebral labeling
     sct.printv('\nGenerate labels from template vertebral labeling', verbose)
