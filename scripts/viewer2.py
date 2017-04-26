@@ -617,6 +617,7 @@ class MainPannel(MainPannelCore):
         self.add_option_settings()
         self.merge_layouts()
 
+
 class ControlButtonsCore(object):
     def __init__(self,main_plot,window,header):
         self.main_plot = main_plot
@@ -627,6 +628,8 @@ class ControlButtonsCore(object):
         self.layout_buttons=QtGui.QHBoxLayout()
         self.layout_buttons.setAlignment(QtCore.Qt.AlignRight)
         self.layout_buttons.setContentsMargins(10,80,15,160)
+
+    def add_classical_buttons(self):
         self.add_help_button()
         self.add_undo_button()
         self.add_save_and_quit_button()
@@ -669,6 +672,22 @@ class ControlButtonsCore(object):
             self.main_plot.jump_to_new_slice()
         else:
             self.header.update_text('warning_undo_beyond_first_point')
+
+class ControlButtons(ControlButtonsCore):
+    def __init__(self,main_plot,window,header):
+        super(ControlButtons,self).__init__(main_plot,window,header)
+        self.add_skip_button()
+        self.add_classical_buttons()
+
+    def add_skip_button(self):
+        btn_skip=QtGui.QPushButton('Skip')
+        self.layout_buttons.addWidget(btn_skip)
+        btn_skip.clicked.connect(self.press_skip)
+
+    def press_skip(self):
+        self.main_plot.list_points.append(Coordinate([-1,-1,-1]))
+        self.header.update_text('update',len(self.main_plot.list_points),self.main_plot.number_of_points)
+        self.main_plot.jump_to_new_slice()
 
 
 class WindowCore(object):
@@ -787,7 +806,7 @@ class Window(WindowCore):
             return main_pannel
 
         def add_control_buttons(layout_main,window):
-            control_buttons = ControlButtonsCore(self.main_pannel.main_plot,window,self.header)
+            control_buttons = ControlButtons(self.main_pannel.main_plot,window,self.header)
             layout_main.addLayout(control_buttons.layout_buttons)
             return control_buttons
 
