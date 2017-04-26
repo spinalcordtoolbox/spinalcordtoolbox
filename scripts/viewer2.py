@@ -253,7 +253,7 @@ class SinglePlotMain(SinglePlot):
         self.figs[-1].figure.canvas.draw()
 
     def add_point_to_list_points(self,current_point):
-        if self.bool_is_mode_auto:
+        def add_point_auto(self):
             if len(self.list_points) < self.number_of_points:
                 self.list_points.append(current_point)
                 if len(self.list_points) == self.number_of_points:
@@ -262,9 +262,21 @@ class SinglePlotMain(SinglePlot):
                     self.header.update_text('update', len(self.list_points), self.number_of_points)
             else:
                 self.header.update_text('warning_all_points_done_already')
-        else:
-            self.list_points.append(current_point)
+        def add_point_custom(self):
+            bool_remplaced=False
+            for ipoint in self.list_points:
+                if ipoint.x==current_point.x:
+                    self.list_points.remove(ipoint)
+                    self.list_points.append(current_point)
+                    bool_remplaced=True
+            if not bool_remplaced:
+                self.list_points.append(current_point)
             self.header.update_text('update', len(self.list_points), self.number_of_points)
+
+        if self.bool_is_mode_auto:
+            add_point_auto(self)
+        else:
+            add_point_custom(self)
 
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
