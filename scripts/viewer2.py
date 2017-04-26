@@ -239,6 +239,7 @@ class SinglePlotMain(SinglePlot):
         self.number_of_points=number_of_points
         self.calculate_list_slices()
         self.update_slice(Coordinate([self.list_slices[0],self.current_position.y,self.current_position.z]))
+        self.bool_is_mode_auto=True
         #print(self.list_slices)
 
     def update_slice(self,new_position):
@@ -325,6 +326,9 @@ class SinglePlotMain(SinglePlot):
             self.list_slices.append(ii*increment)
         self.list_slices.append(self.image_dim[0]-1)
 
+    def switch_mode_seg(self):
+        self.bool_is_mode_auto=not self.bool_is_mode_auto
+
 
 class SinglePlotSecond(SinglePlot):
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, line_direction='hv', im_params=None,header=None):
@@ -400,7 +404,6 @@ class SinglePlotSecond(SinglePlot):
                 self.change_intensity(event)
 
 
-
 class HeaderCore(object):
 
     def __init__(self):
@@ -458,7 +461,6 @@ class Header(HeaderCore):
             self.lb_warning.setStyleSheet("color:red")
         else:
             self.update_title_text_general(key,nbpt,nbfin)
-
 
 
 class MainPannelCore(object):
@@ -525,7 +527,14 @@ class MainPannelCore(object):
         self.layout_global.addLayout(self.layout_central)
 
     def add_option_settings(self):
-        pass
+        self.rb_mode_auto=QtGui.QRadioButton('Mode Auto')
+        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
+        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
+        self.layout_option_settings.addWidget(self.rb_mode_auto)
+        self.layout_option_settings.addWidget(self.rb_mode_custom)
+        self.rb_mode_auto.setChecked(True)
+        self.rb_mode_auto.clicked.connect(self.main_plot.switch_mode_seg)
+        self.rb_mode_custom.clicked.connect(self.main_plot.switch_mode_seg)
 
 class MainPannel(MainPannelCore):
 
@@ -568,7 +577,7 @@ class MainPannel(MainPannelCore):
         self.add_main_view()
         self.add_secondary_view()
         #self.add_controller_pannel()
-
+        self.add_option_settings()
         self.merge_layouts()
 
 class ControlButtonsCore(object):
