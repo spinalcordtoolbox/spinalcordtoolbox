@@ -424,11 +424,14 @@ class SinglePlotSecond(SinglePlot):
     def on_event_release(self, event):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
-                self.current_position = self.get_event_coordinates(event)
-                self.draw_lines('v')
-                self.main_plot.show_image(self.im_params, self.current_position)
-                self.main_plot.update_slice(self.current_position)
-                self.main_plot.refresh()
+                if not self.main_plot.bool_is_mode_auto:
+                    self.current_position = self.get_event_coordinates(event)
+                    self.draw_lines('v')
+                    self.main_plot.show_image(self.im_params, self.current_position)
+                    self.main_plot.update_slice(self.current_position)
+                    self.main_plot.refresh()
+                else:
+                    self.main_plot.jump_to_new_slice()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
 
