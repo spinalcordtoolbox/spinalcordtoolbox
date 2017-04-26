@@ -288,7 +288,7 @@ class SinglePlotMain(SinglePlot):
     def jump_to_new_slice(self):
         if len(self.list_points)<self.number_of_points:
             self.update_slice(self.list_slices[len(self.list_points)])
-            self.secondary_plot.draw_line('v', slice_coordinate=Coordinate(1, 1, self.current_slice))
+            self.secondary_plot.draw_line('v')
 
     def change_intensity_on_secondary_plot(self,event):
         if self.secondary_plot:
@@ -330,33 +330,20 @@ class SinglePlotSecond(SinglePlot):
         self.main_plot=main_single_plot
 
         self.show_image(self.im_params, current_point=None)
-        self.add_line('v',self.current_position.x)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
+        self.add_line('v')  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
 
-    def add_line(self,display_cross,slice_coordinate,chosen_color='white'):
-        def calculate_line_coordinates(main_view,slice_coordinate):
-            slice_coordinate=Coordinate([slice_coordinate,1,1])
-            if main_view == 'ax':
-                line_coordinates = [[[slice_coordinate.y, slice_coordinate.y], [-10000, 10000]],
-                                         [[-10000, 10000], [slice_coordinate.z, slice_coordinate.z]]]
-            elif main_view == 'cor':
-                line_coordinates = [[[slice_coordinate.x, slice_coordinate.x], [-10000, 10000]],
-                                         [[-10000, 10000], [slice_coordinate.z, slice_coordinate.z]]]
-            elif main_view == 'sag':
-                line_coordinates = [[[slice_coordinate.x, slice_coordinate.x], [-10000, 10000]],
-                                         [[-10000, 10000], [slice_coordinate.y, slice_coordinate.y]]]
-            return line_coordinates
+    def add_line(self,display_cross):
 
-        line_coordinate=calculate_line_coordinates(self.main_plot.view,slice_coordinate)
         if 'h' in display_cross:
-            self.line_horizontal = Line2D(line_coordinate[1][1], line_coordinate[1][0], color=chosen_color)
+            self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
             self.axes.add_line(self.line_horizontal)
         if 'v' in display_cross:
-            self.line_vertical = Line2D(line_coordinate[0][1], line_coordinate[0][0], color=chosen_color)
+            self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
             self.axes.add_line(self.line_vertical)
 
-    def draw_line(self,display_cross,slice_coordinate=-1):
+    def draw_line(self,display_cross):
         self.line_vertical.remove()
-        self.add_line(display_cross,slice_coordinate,'white')
+        self.add_line(display_cross)
         self.refresh()
 
     def refresh(self):
