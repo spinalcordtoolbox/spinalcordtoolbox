@@ -74,7 +74,7 @@ class SinglePlot(object):
 
     def show_image(self,im_params,current_point):
         if not current_point:
-            current_point=Coordinate([0, int(self.images[0].data.shape[1] / 2),
+            current_point=Coordinate([int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
                                          int(self.images[0].data.shape[2] / 2)])
         for i, image in enumerate(self.images):
             data_to_display = self.set_data_to_display(image,current_point,self.view)
@@ -280,9 +280,15 @@ class SinglePlotMain(SinglePlot):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event))
                 self.draw_dots()
+                self.jump_to_next_slice()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
                 self.change_intensity_on_secondary_plot(event)
+
+    def jump_to_next_slice(self):
+        if len(self.list_points)<self.number_of_points:
+            self.update_slice(self.list_slices[len(self.list_points)])
+
 
     def change_intensity_on_secondary_plot(self,event):
         if self.secondary_plot:
