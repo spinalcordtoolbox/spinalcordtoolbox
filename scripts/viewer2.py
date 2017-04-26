@@ -29,12 +29,12 @@ import webbrowser
 
 
 class SinglePlot(object):
-    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None,header=None):
+    def __init__(self, ax, images, viewer,canvas, view, line_direction='hv', im_params=None,header=None):
         self.axes = ax
         self.images = images
         self.viewer = viewer
         self.view = view
-        self.display_cross = display_cross
+        self.line_direction = line_direction
         self.image_dim = self.images[0].data.shape
         self.figs = []
         self.cross_to_display = None
@@ -231,8 +231,8 @@ class SinglePlot(object):
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[1] and 0 <= target_point.z < self.image_dim[2]
 
 class SinglePlotMain(SinglePlot):
-    def __init__(self, ax, images, viewer,canvas, view, display_cross='hv', im_params=None, secondary_plot=None,header=None,number_of_points=0):
-        super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, display_cross, im_params,header)
+    def __init__(self, ax, images, viewer,canvas, view, line_direction='hv', im_params=None, secondary_plot=None,header=None,number_of_points=0):
+        super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params,header)
         self.secondary_plot=secondary_plot
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
@@ -327,8 +327,8 @@ class SinglePlotMain(SinglePlot):
 
 
 class SinglePlotSecond(SinglePlot):
-    def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None,header=None):
-        super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, display_cross, im_params,header)
+    def __init__(self, ax, images, viewer,canvas,main_single_plot, view, line_direction='hv', im_params=None,header=None):
+        super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, line_direction, im_params,header)
         self.main_plot=main_single_plot
         self.current_position=self.main_plot.current_position
 
@@ -337,7 +337,7 @@ class SinglePlotSecond(SinglePlot):
         self.axes.add_line(self.current_line)
         self.refresh()
 
-    def add_line(self,display_cross):
+    def add_line(self,line_direction):
         def calc_dic_line_coor(current_position, view):
             if view == 'ax':
                 return {'v':[[current_position.y, current_position.y], [-10000, 10000]],
@@ -349,12 +349,12 @@ class SinglePlotSecond(SinglePlot):
                 return  {'v':[[current_position.x, current_position.x], [-10000, 10000]],
                          'h':[[-10000, 10000], [current_position.y, current_position.y]]}
         dic_line_coor=calc_dic_line_coor(self.current_position,self.view)
-        line = Line2D(dic_line_coor[display_cross][1], dic_line_coor[display_cross][0], color='white')
+        line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color='white')
         return line
 
-    def draw_line(self,display_cross):
+    def draw_line(self,line_direction):
         self.current_line.remove()
-        self.current_line=self.add_line(display_cross)
+        self.current_line=self.add_line(line_direction)
         self.axes.add_line(self.current_line)
         self.refresh()
 
@@ -480,7 +480,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', display_cross='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=5)
+        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=5)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -495,7 +495,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot=SinglePlotSecond(axis, self.images, self, view='sag', display_cross='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot,header=self.header)
+        self.second_plot=SinglePlotSecond(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot,header=self.header)
         self.main_plot.secondary_plot=self.second_plot
 
     def add_controller_pannel(self):
