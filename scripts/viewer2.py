@@ -55,7 +55,6 @@ class SinglePlot(object):
         self.connect_mpl_events()
         self.setup_intensity()
 
-
     def set_data_to_display(self,image, current_point,view):
         if view == 'ax':
             self.cross_to_display = [[[current_point.y, current_point.y], [-10000, 10000]],
@@ -204,52 +203,6 @@ class SinglePlot(object):
             self.header.update_text('warning_selected_point_not_in_image')
         return point
 
-    def calculate_list_slices(self, starting_slice=-1):
-        if self.number_of_slices != 0 and self.gap_inter_slice != 0:  # mode multiple points with fixed gap
-
-            # if starting slice is not provided, middle slice is used
-            # starting slice must be an integer, in the range of the image [0, #slices]
-            if starting_slice == -1:
-                starting_slice = int(self.image_dim[self.orientation[self.primary_subplot] - 1] / 2)
-
-            first_slice = starting_slice - (self.number_of_slices / 2) * self.gap_inter_slice
-            last_slice = starting_slice + (self.number_of_slices / 2) * self.gap_inter_slice
-            if first_slice < 0:
-                first_slice = 0
-            if last_slice >= self.image_dim[self.orientation[self.primary_subplot] - 1]:
-                last_slice = self.image_dim[self.orientation[self.primary_subplot] - 1] - 1
-            self.list_slices = [int(item) for item in
-                                linspace(first_slice, last_slice, self.number_of_slices, endpoint=True)]
-        elif self.number_of_slices != 0:
-            self.list_slices = [int(item) for item in
-                                linspace(0, self.image_dim[self.orientation[self.primary_subplot] - 1] - 1,
-                                         self.number_of_slices, endpoint=True)]
-            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
-                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
-        elif self.gap_inter_slice != 0:
-            self.list_slices = list(
-                arange(0, self.image_dim[self.orientation[self.primary_subplot] - 1], self.gap_inter_slice))
-            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
-                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
-        else:
-            self.gap_inter_slice = int(
-                max([round(self.image_dim[self.orientation[self.primary_subplot] - 1] / 15.0), 1]))
-            self.number_of_slices = int(
-                round(self.image_dim[self.orientation[self.primary_subplot] - 1] / self.gap_inter_slice))
-            self.list_slices = [int(item) for item in
-                                linspace(0, self.image_dim[self.orientation[self.primary_subplot] - 1] - 1,
-                                         self.number_of_slices, endpoint=True)]
-            if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot] - 1] - 1:
-                self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot] - 1] - 1)
-
-        point = [self.current_position.x, self.current_position.y, self.current_position.z]
-        point[self.orientation[self.primary_subplot] - 1] = self.list_slices[self.current_slice]
-        for window in self.windows:
-            if window.view == self.orientation[self.secondary_subplot]:
-                window.update_slice(point, data_update=False)
-            else:
-                window.update_slice(point, data_update=True)
-
     def compute_offset(self):
         print(self.image_dim)
         if self.primary_subplot == 'ax':
@@ -285,6 +238,9 @@ class SinglePlotMain(SinglePlot):
         self.show_image(self.im_params, current_point=None)
         self.current_slice=self.current_position.x
         self.number_of_points=number_of_points
+        self.calculate_list_slices()
+        self.update_slice(self.list_slices[0])
+        print(self.list_slices)
 
     def update_slice(self,new_slice):
         self.current_slice = new_slice
@@ -353,6 +309,14 @@ class SinglePlotMain(SinglePlot):
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
         self.refresh()
+
+    def calculate_list_slices(self):
+        self.list_slices=[]
+        increment=int(self.image_dim[0]/self.number_of_points)
+        for ii in range (0,self.number_of_points-1):
+            self.list_slices.append(ii*increment)
+        self.list_slices.append(self.image_dim[0]-1)
+
 
 class SinglePlotSecond(SinglePlot):
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, display_cross='hv', im_params=None,header=None):
