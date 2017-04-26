@@ -153,14 +153,13 @@ def download_data(url, verbose):
         for chunk in response.iter_content(chunk_size=8192):
             if chunk:
                 tmp_file.write(chunk)
-                if verbose > 1:
+                if verbose > 0:
                     dl += len(chunk)
                     done = min(int(20 * dl / total), 20)
-                    sys.stdout.write("\r[%s%s]" % ('=' * done,
-                                                   ' ' * (20 - done)))
+                    sys.stdout.write("\r[%s%s] Total: %s MB" % ('=' * done, ' ' * (20 - done), "{:,}".format(total/1000)))
                     sys.stdout.flush()
 
-    sct.printv('Download complete', verbose=verbose)
+    sct.printv('\nDownload complete', verbose=verbose)
     return tmp_path
 
 
