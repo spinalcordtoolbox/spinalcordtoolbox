@@ -442,16 +442,12 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
         self.number_of_points=number_of_points
-        self.calculate_list_slices()
-        self.update_slice(Coordinate([self.list_slices[0],self.current_position.y,self.current_position.z]))
-        self.bool_is_mode_auto=True
-        #print(self.list_slices)
 
     def add_point_to_list_points(self,current_point):
         def add_point_custom(self):
             bool_remplaced=False
             for ipoint in self.list_points:
-                if ipoint.x==current_point.x:
+                if ipoint.z==current_point.z:
                     self.list_points.remove(ipoint)
                     self.list_points.append(current_point)
                     bool_remplaced=True
@@ -460,6 +456,7 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
             self.header.update_text('update', len(self.list_points), self.number_of_points)
 
         add_point_custom(self)
+        print(self.list_points)
 
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
@@ -505,13 +502,6 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
         self.refresh()
-
-    def calculate_list_slices(self):
-        self.list_slices=[]
-        increment=int(self.image_dim[0]/(self.number_of_points-1))
-        for ii in range (0,self.number_of_points-1):
-            self.list_slices.append(ii*increment)
-        self.list_slices.append(self.image_dim[0]-1)
 
 class SinglePlotSecondLabelVertebrae(SinglePlot):
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, line_direction='hv', im_params=None,header=None):
@@ -743,15 +733,6 @@ class MainPannelCore(object):
         self.layout_global.addLayout(self.layout_option_settings)
         self.layout_global.addLayout(self.layout_central)
 
-    def add_option_settings(self):
-        self.rb_mode_auto=QtGui.QRadioButton('Mode Auto')
-        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
-        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
-        self.layout_option_settings.addWidget(self.rb_mode_auto)
-        self.layout_option_settings.addWidget(self.rb_mode_custom)
-        self.rb_mode_auto.setChecked(True)
-        self.rb_mode_auto.clicked.connect(self.main_plot.switch_mode_seg)
-        self.rb_mode_custom.clicked.connect(self.main_plot.switch_mode_seg)
 
 class MainPannel(MainPannelCore):
 
@@ -829,6 +810,17 @@ class MainPannel(MainPannelCore):
         self.second_plot=SinglePlotSecond(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot,header=self.header)
         self.main_plot.secondary_plot=self.second_plot
 
+    def add_option_settings(self):
+        self.rb_mode_auto=QtGui.QRadioButton('Mode Auto')
+        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
+        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
+        self.layout_option_settings.addWidget(self.rb_mode_auto)
+        self.layout_option_settings.addWidget(self.rb_mode_custom)
+        self.rb_mode_auto.setChecked(True)
+        self.rb_mode_auto.clicked.connect(self.main_plot.switch_mode_seg)
+        self.rb_mode_custom.clicked.connect(self.main_plot.switch_mode_seg)
+
+
 class MainPannelLabelVertebrae(MainPannelCore):
 
     def add_controller_pannel(self):
@@ -869,7 +861,6 @@ class MainPannelLabelVertebrae(MainPannelCore):
 
         self.number_of_points=1
         self.add_main_view()
-        self.add_option_settings()
         self.merge_layouts()
         self.number_of_points=1
 
@@ -1073,7 +1064,7 @@ class Window(WindowCore):
             system = QtGui.QApplication(sys.argv)
             w = QtGui.QWidget()
             w.resize(740, 850)
-            w.setWindowTitle('Hello world')
+            w.setWindowTitle('Propseg Viewer')
             w.show()
             return (w, system)
 
@@ -1170,7 +1161,7 @@ class WindowLabelVertebrae(WindowCore):
         system = QtGui.QApplication(sys.argv)
         w = QtGui.QWidget()
         w.resize(740, 850)
-        w.setWindowTitle('Hello world')
+        w.setWindowTitle('Label Vertebrae Viewer')
         w.show()
         return (w, system)
 
