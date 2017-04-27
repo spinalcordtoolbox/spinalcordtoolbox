@@ -786,7 +786,6 @@ class MainPannel(MainPannelCore):
         self.rb_mode_custom.clicked.connect(self.main_plot.switch_mode_seg)
 
 class MainPannelLabelVertebrae(MainPannelCore):
-
     def __init__(self,images,im_params,window,header):
         super(MainPannelLabelVertebrae, self).__init__(images,im_params,window,header)
 
@@ -819,6 +818,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
                 self.main_plot.current_label=slider_real_value
             else:
                 self.header.update_text('warning_cannot_change_the_label')
+                self.slider_label.setValue(int(100*(slider_maximum-self.main_plot.current_label)/slider_maximum))
 
         layout_title_and_controller=QtGui.QVBoxLayout()
         lb_title = QtGui.QLabel('Label Choice')
@@ -839,6 +839,8 @@ class MainPannelLabelVertebrae(MainPannelCore):
         layout_controller.addWidget(self.slider_label)
         layout_title_and_controller.addLayout(layout_controller)
         self.layout_central.addLayout(layout_title_and_controller,1)
+
+
 
 class ControlButtonsCore(object):
     def __init__(self,main_plot,window,header):
@@ -932,6 +934,8 @@ class ControlButtonsLabelVertebrae(ControlButtonsCore):
             self.header.update_text('welcome',nbpt=str(self.main_plot.current_label))
         else:
             self.header.update_text('warning_undo_beyond_first_point')
+
+
 
 class WindowCore(object):
 
