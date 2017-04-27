@@ -662,10 +662,11 @@ class ControlButtonsCore(object):
         def rewrite_list_points(list_points):
             list_points_useful_notation=''
             for coord in list_points:
-                if list_points_useful_notation:
-                    list_points_useful_notation += ':'
-                list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
-                                              str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+                if coord.x != -1: #check either the point has been placed or skipped.
+                    if list_points_useful_notation:
+                        list_points_useful_notation += ':'
+                    list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
+                                                  str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
             return list_points_useful_notation
 
         self.window.str_points_final=rewrite_list_points(self.main_plot.list_points)
