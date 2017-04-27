@@ -183,22 +183,21 @@ class SinglePlot(object):
                                 x_scale_factor=scale_factor, y_scale_factor=scale_factor,
                                 zoom=True)
 
-    def get_event_coordinates(self, event):
-        #TODO : point bizarre
+    def get_event_coordinates(self, event,label=1):
         point = None
         try:
             if self.view == 'ax':
                 point = Coordinate([self.current_position.x,
                                     int(round(event.ydata)),
-                                    int(round(event.xdata)), 1])
+                                    int(round(event.xdata)), label])
             elif self.view == 'cor':
                 point = Coordinate([int(round(event.ydata)),
                                     self.current_position.y,
-                                    int(round(event.xdata)), 1])
+                                    int(round(event.xdata)), label])
             elif self.view == 'sag':
                 point = Coordinate([int(round(event.ydata)),
                                     int(round(event.xdata)),
-                                    self.current_position.z, 1])
+                                    self.current_position.z, label])
         except TypeError:
             self.header.update_text('warning_selected_point_not_in_image')
         return point
@@ -466,7 +465,7 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
     def on_event_release(self, event):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
-                self.add_point_to_list_points(self.get_event_coordinates(event))
+                self.add_point_to_list_points(self.get_event_coordinates(event,self.current_label))
                 self.draw_dots()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
@@ -638,7 +637,10 @@ class HeaderLabelVertebrae(HeaderCore):
     def update_text(self,key,nbpt=-1,nbfin=-1):
         self.lb_warning.setText('\n')
         if(key=='welcome'):
-            self.lb_status.setText(self.dic_message_labels[nbpt])
+            try:
+                self.lb_status.setText(self.dic_message_labels[nbpt])
+            except KeyError:
+                pass
             self.lb_status.setStyleSheet("color:black")
         elif(key=='warning_skip_not_defined'):
             self.lb_warning.setText('This option is not used in Manual Mode. \n')
@@ -809,7 +811,6 @@ class MainPannelLabelVertebrae(MainPannelCore):
                 self.main_plot.current_label=slider_real_value
             else:
                 self.header.update_text('warning_cannot_change_the_label')
-                self.slider_label.setValue(self.main_plot.current_label)
 
         layout_title_and_controller=QtGui.QVBoxLayout()
         lb_title = QtGui.QLabel('Label Choice')
