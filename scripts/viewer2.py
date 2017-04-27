@@ -435,6 +435,214 @@ class SinglePlotSecond(SinglePlot):
         self.main_plot.refresh()
         self.main_plot.draw_dots()
 
+class SinglePlotMainLabelVertebrae(SinglePlot):
+    def __init__(self, ax, images, viewer,canvas, view, line_direction='hv', im_params=None, secondary_plot=None,header=None,number_of_points=0):
+        super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params,header)
+        self.secondary_plot=secondary_plot
+        self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
+        self.show_image(self.im_params, current_point=None)
+        self.number_of_points=number_of_points
+        self.calculate_list_slices()
+        self.update_slice(Coordinate([self.list_slices[0],self.current_position.y,self.current_position.z]))
+        self.bool_is_mode_auto=True
+        #print(self.list_slices)
+
+    def update_slice(self,new_position):
+        self.current_position=new_position
+        if (self.view == 'ax'):
+            self.figs[-1].set_data(self.images[0].data[self.current_position.x, :, :])
+        elif (self.view == 'cor'):
+            self.figs[-1].set_data(self.images[0].data[:, self.current_position.y, :])
+        elif (self.view == 'sag'):
+            self.figs[-1].set_data(self.images[0].data[:, :, self.current_position.z])
+        self.figs[-1].figure.canvas.draw()
+
+    def add_point_to_list_points(self,current_point):
+        def add_point_auto(self):
+            if len(self.list_points) < self.number_of_points:
+                self.list_points.append(current_point)
+                if len(self.list_points) == self.number_of_points:
+                    self.header.update_text('ready_to_save_and_quit')
+                else:
+                    self.header.update_text('update', len(self.list_points), self.number_of_points)
+            else:
+                self.header.update_text('warning_all_points_done_already')
+        def add_point_custom(self):
+            bool_remplaced=False
+            for ipoint in self.list_points:
+                if ipoint.x==current_point.x:
+                    self.list_points.remove(ipoint)
+                    self.list_points.append(current_point)
+                    bool_remplaced=True
+            if not bool_remplaced:
+                self.list_points.append(current_point)
+            self.header.update_text('update', len(self.list_points), self.number_of_points)
+
+        if self.bool_is_mode_auto:
+            add_point_auto(self)
+        else:
+            add_point_custom(self)
+
+    def on_event_motion(self, event):
+        if event.button == 3 and event.inaxes == self.axes:  # right click
+            if self.get_event_coordinates(event):
+                self.change_intensity(event)
+                self.change_intensity_on_secondary_plot(event)
+
+    def on_event_release(self, event):
+        if self.get_event_coordinates(event):
+            if event.button == 1:  # left click
+                self.add_point_to_list_points(self.get_event_coordinates(event))
+                if self.bool_is_mode_auto:
+                    self.jump_to_new_slice()
+                self.draw_dots()
+            elif event.button == 3:  # right click
+                self.change_intensity(event)
+                self.change_intensity_on_secondary_plot(event)
+
+    def jump_to_new_slice(self):
+        if len(self.list_points)<self.number_of_points:
+            self.update_slice(Coordinate([self.list_slices[len(self.list_points)],self.current_position.y,self.current_position.z]))
+            self.secondary_plot.current_position=Coordinate([self.list_slices[len(self.list_points)],self.current_position.y,self.current_position.z])
+            self.secondary_plot.draw_lines('v')
+
+    def change_intensity_on_secondary_plot(self,event):
+        if self.secondary_plot:
+            self.secondary_plot.change_intensity(event)
+
+    def refresh(self):
+        self.figs[-1].figure.canvas.draw()
+
+    def draw_dots(self):
+        def select_right_dimensions(ipoint,view):
+            if view =='ax':
+                return ipoints.z,ipoints.y
+            elif view=='cor':
+                return ipoints.x,ipoints.z
+            elif view == 'sag':
+                return ipoints.y,ipoints.x
+
+        def select_right_position_dim(current_position,view):
+            if view =='ax':
+                return current_position.x
+            elif view=='cor':
+                return current_position.y
+            elif view == 'sag':
+                return current_position.z
+
+
+        x_data, y_data = [], []
+        for ipoints in self.list_points:
+            if ipoints.x == select_right_position_dim(self.current_position,self.view):
+                x,y=select_right_dimensions(ipoints,self.view)
+                x_data.append(x)
+                y_data.append(y)
+        self.plot_points.set_xdata(x_data)
+        self.plot_points.set_ydata(y_data)
+        self.refresh()
+
+    def calculate_list_slices(self):
+        self.list_slices=[]
+        increment=int(self.image_dim[0]/(self.number_of_points-1))
+        for ii in range (0,self.number_of_points-1):
+            self.list_slices.append(ii*increment)
+        self.list_slices.append(self.image_dim[0]-1)
+
+    def switch_mode_seg(self):
+        self.bool_is_mode_auto=not self.bool_is_mode_auto
+        self.reset_data()
+        self.header.update_text('mode_switched')
+
+    def reset_data(self):
+        self.list_points=[]
+        if self.bool_is_mode_auto:
+            self.number_of_points=7
+        else:
+            self.number_of_points=-1
+        self.current_position.x=0
+        self.update_slice(self.current_position)
+        self.draw_dots()
+        self.secondary_plot.current_position=self.current_position
+        self.secondary_plot.draw_lines('v')
+
+class SinglePlotSecondLabelVertebrae(SinglePlot):
+    def __init__(self, ax, images, viewer,canvas,main_single_plot, view, line_direction='hv', im_params=None,header=None):
+        super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, line_direction, im_params,header)
+        self.main_plot=main_single_plot
+        self.current_position=self.main_plot.current_position
+        self.list_previous_lines=[]
+
+        self.show_image(self.im_params, current_point=None)
+        self.current_line=self.calc_line('v',self.current_position)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
+        self.axes.add_line(self.current_line)
+        self.refresh()
+
+    def calc_line(self,line_direction,line_position,line_color='white'):
+        def calc_dic_line_coor(current_position, view):
+            if view == 'ax':
+                return {'v':[[current_position.y, current_position.y], [-10000, 10000]],
+                        'h':[[-10000, 10000], [current_position.z, current_position.z]]}
+            elif view == 'cor':
+                return  {'v':[[current_position.x, current_position.x], [-10000, 10000]],
+                         'h':[[-10000, 10000], [current_position.z, current_position.z]]}
+            elif view == 'sag':
+                return  {'v':[[current_position.x, current_position.x], [-10000, 10000]],
+                         'h':[[-10000, 10000], [current_position.y, current_position.y]]}
+        dic_line_coor=calc_dic_line_coor(line_position,self.view)
+        line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color=line_color)
+        return line
+
+    def draw_current_line(self,line_direction):
+        self.current_line.remove()
+        self.current_line = self.calc_line(line_direction, self.current_position)
+        self.axes.add_line(self.current_line)
+
+    def draw_previous_lines(self,line_direction):
+        for iline in self.list_previous_lines:
+            iline.remove()
+        self.list_previous_lines=[]
+        for ipoint in self.main_plot.list_points:
+            self.list_previous_lines.append(self.calc_line(line_direction, ipoint,line_color='red'))
+            self.axes.add_line(self.list_previous_lines[-1])
+
+    def draw_lines(self,line_direction):
+        self.draw_current_line(line_direction)
+        self.draw_previous_lines(line_direction)
+        self.refresh()
+
+    def refresh(self):
+        self.show_image(self.im_params,self.current_position)
+        self.figs[0].figure.canvas.draw()
+
+    def on_event_motion(self, event):
+        if event.button == 1 and event.inaxes == self.axes:  # left click
+            if self.get_event_coordinates(event):
+                self.change_main_slice(event)
+        elif event.button == 3 and event.inaxes == self.axes:  # right click
+            if self.get_event_coordinates(event):
+                self.change_intensity(event)
+
+    def on_event_release(self, event):
+        if self.get_event_coordinates(event):
+            if event.button == 1:  # left click
+                if not self.main_plot.bool_is_mode_auto:
+                    self.change_main_slice(event)
+                else:
+                    self.main_plot.jump_to_new_slice()
+            elif event.button == 3:  # right click
+                self.change_intensity(event)
+
+    def change_main_slice(self,event):
+        self.current_position = self.get_event_coordinates(event)
+        self.draw_lines('v')
+        self.main_plot.show_image(self.im_params, self.current_position)
+        self.main_plot.update_slice(self.current_position)
+        self.main_plot.refresh()
+        self.main_plot.draw_dots()
+
+
+
+
 
 
 class HeaderCore(object):
@@ -488,6 +696,23 @@ class HeaderCore(object):
             self.lb_warning.setStyleSheet("color:red")
 
 class Header(HeaderCore):
+    def update_text(self,key,nbpt=-1,nbfin=-1):
+        self.lb_warning.setText('\n')
+        if(key=='welcome'):
+            self.lb_status.setText('Please click in the the center of the center line. \n'
+                                   'If it is invisible, you may skip it.')
+            self.lb_status.setStyleSheet("color:black")
+        elif(key=='warning_skip_not_defined'):
+            self.lb_warning.setText('This option is not used in Manual Mode. \n')
+            self.lb_warning.setStyleSheet("color:red")
+        elif(key=='mode_switched'):
+            self.lb_status.setText('You have switched on an other segmentation mode. \n'
+                                   'All previous data have been erased.')
+            self.lb_status.setStyleSheet("color:black")
+        else:
+            self.update_title_text_general(key,nbpt,nbfin)
+
+class HeaderLabelVertebrae(HeaderCore):
     def update_text(self,key,nbpt=-1,nbfin=-1):
         self.lb_warning.setText('\n')
         if(key=='welcome'):
@@ -623,6 +848,51 @@ class MainPannel(MainPannelCore):
         self.add_option_settings()
         self.merge_layouts()
 
+class MainPannelLabelVertebrae(MainPannelCore):
+
+    def add_controller_pannel(self):
+        layout_title_and_controller=QtGui.QVBoxLayout()
+        lb_title = QtGui.QLabel('Label Choice')
+        lb_title.setAlignment(QtCore.Qt.AlignCenter)
+        lb_title.setContentsMargins(0,30,0,0)
+        layout_title_and_controller.addWidget(lb_title)
+
+        layout_controller = QtGui.QHBoxLayout()
+        layout_controller.setAlignment(QtCore.Qt.AlignTop)
+        layout_controller.setAlignment(QtCore.Qt.AlignCenter)
+
+        l1=QtGui.QLabel('1')
+        l1.setAlignment(QtCore.Qt.AlignCenter)
+        l1.setContentsMargins(0,0,35,0)
+        l2 = QtGui.QLabel('2')
+        l2.setAlignment(QtCore.Qt.AlignCenter)
+        l2.setContentsMargins(20, 0, 0, 0)
+
+        s1=QtGui.QSlider()
+        s2 = QtGui.QSlider()
+
+        s1.setMaximumHeight(250)
+        s2.setMaximumHeight(250)
+
+        layout_controller.addWidget(l1)
+        layout_controller.addWidget(s1)
+        layout_controller.addWidget(s2)
+        layout_controller.addWidget(l2)
+
+        layout_title_and_controller.addLayout(layout_controller)
+
+        self.layout_central.addLayout(layout_title_and_controller)
+
+    def __init__(self,images,im_params,window,header):
+        super(MainPannel, self).__init__(images,im_params,window,header)
+
+        self.add_main_view()
+        self.add_secondary_view()
+        #self.add_controller_pannel()
+        self.add_option_settings()
+        self.merge_layouts()
+
+
 
 class ControlButtonsCore(object):
     def __init__(self,main_plot,window,header):
@@ -695,6 +965,23 @@ class ControlButtons(ControlButtonsCore):
         self.main_plot.list_points.append(Coordinate([-1,-1,-1]))
         self.header.update_text('update',len(self.main_plot.list_points),self.main_plot.number_of_points)
         self.main_plot.jump_to_new_slice()
+
+class ControlButtonsLabelVertebrae(ControlButtonsCore):
+    def __init__(self,main_plot,window,header):
+        super(ControlButtons,self).__init__(main_plot,window,header)
+        self.add_skip_button()
+        self.add_classical_buttons()
+
+    def add_skip_button(self):
+        btn_skip=QtGui.QPushButton('Skip')
+        self.layout_buttons.addWidget(btn_skip)
+        btn_skip.clicked.connect(self.press_skip)
+
+    def press_skip(self):
+        self.main_plot.list_points.append(Coordinate([-1,-1,-1]))
+        self.header.update_text('update',len(self.main_plot.list_points),self.main_plot.number_of_points)
+        self.main_plot.jump_to_new_slice()
+
 
 
 class WindowCore(object):
@@ -826,6 +1113,92 @@ class Window(WindowCore):
         window.setLayout(layout_main)
         sys.exit(system.exec_())
 
+class WindowLabelVertebrae(WindowCore):
+    def __init__(self,
+                 list_images,
+                 visualization_parameters=None,
+                 orientation_subplot=['ax', 'sag'],
+                 input_type='centerline'):
+
+
+        # Ajust the input parameters into viewer objects.
+        if isinstance(list_images, Image):
+            list_images = [list_images]
+        if not visualization_parameters:
+            visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
+
+        super(Window, self).__init__(list_images, visualization_parameters)
+        self.set_layout_and_launch_viewer()
+
+    def set_main_plot(self):
+        self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
+        if self.primary_subplot == 'ax':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+        elif self.primary_subplot == 'cor':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[0], 0])
+        elif self.primary_subplot == 'sag':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[0]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+
+    def declaration_global_variables_general(self, orientation_subplot):
+        self.help_web_adress = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
+        self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
+        self.primary_subplot = orientation_subplot[0]
+        self.secondary_subplot = orientation_subplot[1]
+        self.dic_axis_buttons = {}
+        self.closed = False
+
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
+
+        # specialized for Click viewer
+        self.list_points = []
+        self.list_points_useful_notation = ''
+
+        # compute slices to display
+        self.list_slices = []
+
+    def set_layout_and_launch_viewer(self):
+        def launch_main_window():
+            system = QtGui.QApplication(sys.argv)
+            w = QtGui.QWidget()
+            w.resize(740, 850)
+            w.setWindowTitle('Hello world')
+            w.show()
+            return (w, system)
+
+        def add_layout_main( window):
+            layout_main = QtGui.QVBoxLayout()
+            layout_main.setAlignment(QtCore.Qt.AlignTop)
+            window.setLayout(layout_main)
+            return layout_main
+
+        def add_header(layout_main):
+            header = Header()
+            layout_main.addLayout(header.layout_header)
+            header.update_text('welcome')
+            return (header)
+
+        def add_main_pannel(layout_main,window,header):
+            main_pannel = MainPannel(self.images,self.im_params,window,header)
+            layout_main.addLayout(main_pannel.layout_global)
+            return main_pannel
+
+        def add_control_buttons(layout_main,window):
+            control_buttons = ControlButtons(self.main_pannel.main_plot,window,self.header)
+            layout_main.addLayout(control_buttons.layout_buttons)
+            return control_buttons
+
+
+        (window, system) = launch_main_window()
+        layout_main = add_layout_main(window)
+        self.header = add_header(layout_main)
+        self.main_pannel = add_main_pannel(layout_main,self,self.header)
+        self.control_buttons = add_control_buttons(layout_main,self)
+        window.setLayout(layout_main)
+        sys.exit(system.exec_())
 
 
 
