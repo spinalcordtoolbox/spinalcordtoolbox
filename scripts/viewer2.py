@@ -507,6 +507,71 @@ class HeaderCore(object):
         self.define_layout_header()
         self.add_lb_status()
         self.add_lb_warning()
+        self.dic_message_labels=self.define_dic_message_labels()
+
+    def define_dic_message_labels(self):
+        dic={'1':'Please click on anterior base \n'
+                 'of pontomedullary junction (label=50) \n',
+             '2': 'Please click on pontomedullary groove \n'
+                  ' (label=49) \n',
+
+             '3': 'Please click on top of C1 vertebrae \n'
+                  '(label=1) \n',
+             '4': 'Please click on posterior edge of  \n'
+                  'C2/C3 intervertebral disk (label=3) \n',
+             '5': 'Please click on posterior edge of  \n'
+                  'C3/C4 intervertebral disk (label=4) \n',
+             '6': 'Please click on posterior edge of  \n'
+                  'C4/C5 intervertebral disk (label=5) \n',
+             '7': 'Please click on posterior edge of  \n'
+                  'C5/C6 intervertebral disk (label=6) \n',
+             '8': 'Please click on posterior edge of  \n'
+                  'C6/C7 intervertebral disk (label=7) \n',
+             '9': 'Please click on posterior edge of  \n'
+                  'C7/T1 intervertebral disk (label=8) \n',
+
+             '10': 'Please click on posterior edge of  \n'
+                  'T1/T2 intervertebral disk (label=9) \n',
+             '11': 'Please click on posterior edge of  \n'
+                  'T2/T3 intervertebral disk (label=10) \n',
+             '12': 'Please click on posterior edge of  \n'
+                  'T3/T4 intervertebral disk (label=11) \n',
+             '13': 'Please click on posterior edge of  \n'
+                  'T4/T5 intervertebral disk (label=12) \n',
+             '14': 'Please click on posterior edge of  \n'
+                   'T5/T6 intervertebral disk (label=13) \n',
+             '15': 'Please click on posterior edge of  \n'
+                   'T6/T7 intervertebral disk (label=14) \n',
+             '16': 'Please click on posterior edge of  \n'
+                   'T7/T8 intervertebral disk (label=15) \n',
+             '17': 'Please click on posterior edge of  \n'
+                   'T8/T9 intervertebral disk (label=16) \n',
+             '18': 'Please click on posterior edge of  \n'
+                   'T9/T10 intervertebral disk (label=17) \n',
+             '19': 'Please click on posterior edge of  \n'
+                   'T10/T11 intervertebral disk (label=18) \n',
+             '20': 'Please click on posterior edge of  \n'
+                   'T11/T12 intervertebral disk (label=19) \n',
+             '21': 'Please click on posterior edge of  \n'
+                   'T12/L1 intervertebral disk (label=20) \n',
+
+             '22': 'Please click on posterior edge of  \n'
+                   'L1/L2 intervertebral disk (label=21) \n',
+             '23': 'Please click on posterior edge of  \n'
+                   'L2/L3 intervertebral disk (label=22) \n',
+             '24': 'Please click on posterior edge of  \n'
+                   'L3/L4 intervertebral disk (label=23) \n',
+             '25': 'Please click on posterior edge of  \n'
+                   'L4/S1 intervertebral disk (label=24) \n',
+
+             '26': 'Please click on posterior edge of  \n'
+                   'S1/S2 intervertebral disk (label=25) \n',
+             '27': 'Please click on posterior edge of  \n'
+                   'S2/S3 intervertebral disk (label=26) \n',
+
+             }
+        return dic
+
 
     def add_lb_status(self):
         self.lb_status = QtGui.QLabel('Label Alerte')
@@ -572,8 +637,7 @@ class HeaderLabelVertebrae(HeaderCore):
     def update_text(self,key,nbpt=-1,nbfin=-1):
         self.lb_warning.setText('\n')
         if(key=='welcome'):
-            self.lb_status.setText('Please click on posterior edge of  \n'
-                                   'C2/C3 intervertebral disk (label=3) \n')
+            self.lb_status.setText(self.dic_message_labels[nbpt])
             self.lb_status.setStyleSheet("color:black")
         elif(key=='warning_skip_not_defined'):
             self.lb_warning.setText('This option is not used in Manual Mode. \n')
@@ -736,12 +800,12 @@ class MainPannelLabelVertebrae(MainPannelCore):
         def update_slider_label():
             slider_real_value=int(slider_maximum*self.slider_label.value()/100)+1
             self.lb_slider.setText(str(slider_real_value))
+            self.header.update_text('welcome',str(slider_real_value))
 
         layout_title_and_controller=QtGui.QVBoxLayout()
         lb_title = QtGui.QLabel('Label Choice')
         lb_title.setAlignment(QtCore.Qt.AlignCenter)
         layout_title_and_controller.addWidget(lb_title)
-
         layout_controller = QtGui.QHBoxLayout()
         layout_controller.setAlignment(QtCore.Qt.AlignTop)
         layout_controller.setAlignment(QtCore.Qt.AlignCenter)
@@ -750,17 +814,17 @@ class MainPannelLabelVertebrae(MainPannelCore):
         self.lb_slider.setAlignment(QtCore.Qt.AlignCenter)
         self.lb_slider.setContentsMargins(0,0,35,0)
 
-        slider_maximum=35
+        slider_maximum=27   
+        init_label=4
         self.slider_label=QtGui.QSlider()
         self.slider_label.setMaximumHeight(250)
-        self.slider_label.setValue(0)
+        self.slider_label.setValue(init_label*100/slider_maximum)
         update_slider_label()
         self.slider_label.sliderMoved.connect(update_slider_label)
+
         layout_controller.addWidget(self.lb_slider)
         layout_controller.addWidget(self.slider_label)
-
         layout_title_and_controller.addLayout(layout_controller)
-
         self.layout_central.addLayout(layout_title_and_controller,1)
 
 class ControlButtonsCore(object):
@@ -1054,7 +1118,7 @@ class WindowLabelVertebrae(WindowCore):
     def add_header(self, layout_main):
         header = HeaderLabelVertebrae()
         layout_main.addLayout(header.layout_header)
-        header.update_text('welcome')
+        header.update_text('welcome',str(3))
         return (header)
 
     def add_main_pannel(self, layout_main,window,header):
