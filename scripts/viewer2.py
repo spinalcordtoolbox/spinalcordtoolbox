@@ -798,7 +798,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
 
     def add_controller_pannel(self):
         def update_slider_label():
-            slider_real_value=int(slider_maximum*self.slider_label.value()/100)+1
+            slider_real_value=slider_maximum-int(slider_maximum*self.slider_label.value()/100)
             self.lb_slider.setText(str(slider_real_value))
             self.header.update_text('welcome',str(slider_real_value))
 
@@ -815,7 +815,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
         self.lb_slider.setContentsMargins(0,0,35,0)
 
         slider_maximum=27   
-        init_label=4
+        init_label=slider_maximum-3
         self.slider_label=QtGui.QSlider()
         self.slider_label.setMaximumHeight(250)
         self.slider_label.setValue(init_label*100/slider_maximum)
@@ -1118,7 +1118,8 @@ class WindowLabelVertebrae(WindowCore):
     def add_header(self, layout_main):
         header = HeaderLabelVertebrae()
         layout_main.addLayout(header.layout_header)
-        header.update_text('welcome',str(3))
+        start_slice=4
+        header.update_text('welcome',str(start_slice))
         return (header)
 
     def add_main_pannel(self, layout_main,window,header):
