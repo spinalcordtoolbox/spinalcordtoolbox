@@ -637,11 +637,10 @@ class HeaderLabelVertebrae(HeaderCore):
     def update_text(self,key,nbpt=-1,nbfin=-1):
         self.lb_warning.setText('\n')
         if(key=='welcome'):
-            try:
-                self.lb_status.setText(self.dic_message_labels[nbpt])
-            except KeyError:
-                pass
+            self.lb_status.setText(self.dic_message_labels[nbpt])
             self.lb_status.setStyleSheet("color:black")
+
+
         elif(key=='warning_skip_not_defined'):
             self.lb_warning.setText('This option is not used in Manual Mode. \n')
             self.lb_warning.setStyleSheet("color:red")
@@ -917,6 +916,13 @@ class ControlButtonsLabelVertebrae(ControlButtonsCore):
         super(ControlButtonsLabelVertebrae,self).__init__(main_plot,window,header)
         self.add_classical_buttons()
 
+    def press_undo(self):
+        if self.main_plot.list_points:
+            del self.main_plot.list_points[-1]
+            self.main_plot.draw_dots()
+            self.header.update_text('welcome',nbpt=str(self.main_plot.current_label))
+        else:
+            self.header.update_text('warning_undo_beyond_first_point')
 
 
 class WindowCore(object):
