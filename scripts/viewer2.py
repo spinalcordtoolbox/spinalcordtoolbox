@@ -753,7 +753,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
         self.slider_label.setMaximumHeight(250)
         self.slider_label.setValue(0)
         update_slider_label()
-        #self.slider_label.setRange(0,10)
+        self.slider_label.setRange(0,10)
         #self.slider_label.setSingleStep(1)
         #self.slider_label.setTickInterval(1)
         self.slider_label.sliderMoved.connect(update_slider_label)
