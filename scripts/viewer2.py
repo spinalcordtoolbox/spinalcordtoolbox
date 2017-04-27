@@ -892,6 +892,36 @@ class MainPannelLabelVertebrae(MainPannelCore):
         self.add_option_settings()
         self.merge_layouts()
 
+    def add_main_view(self):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        self.canvas_main = FigureCanvas(fig)
+
+        layout_view.addWidget(self.canvas_main)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.main_plot=SinglePlotMainLabelVertebrae(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=7)
+
+    def add_secondary_view(self):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        self.canvas_second = FigureCanvas(fig)
+
+        layout_view.addWidget(self.canvas_second)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.second_plot=SinglePlotSecondLabelVertebrae(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot,header=self.header)
+        self.main_plot.secondary_plot=self.second_plot
 
 
 class ControlButtonsCore(object):
@@ -1186,18 +1216,18 @@ class WindowLabelVertebrae(WindowCore):
         return layout_main
 
     def add_header(self, layout_main):
-        header = Header()
+        header = HeaderLabelVertebrae()
         layout_main.addLayout(header.layout_header)
         header.update_text('welcome')
         return (header)
 
     def add_main_pannel(self, layout_main,window,header):
-        main_pannel = MainPannel(self.images, self.im_params, window, header)
+        main_pannel = MainPannelLabelVertebrae(self.images, self.im_params, window, header)
         layout_main.addLayout(main_pannel.layout_global)
         return main_pannel
 
     def add_control_buttons(self, layout_main,window):
-        control_buttons = ControlButtons(self.main_pannel.main_plot, window, self.header)
+        control_buttons = ControlButtonsLabelVertebrae(self.main_pannel.main_plot, window, self.header)
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
 
