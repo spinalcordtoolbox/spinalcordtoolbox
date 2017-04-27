@@ -501,7 +501,6 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
 
 
 
-
 class HeaderCore(object):
 
     def __init__(self):
@@ -644,9 +643,6 @@ class MainPannelCore(object):
         self.second_plot=SinglePlotSecond(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot,header=self.header)
         self.main_plot.secondary_plot=self.second_plot
 
-    def add_controller_pannel(self):
-        pass
-
     def create_image(self):
         image_label = QtGui.QLabel('')
         image_test = QtGui.QPixmap('/home/apopov/Documents/dev/sct/image_test.jpg')
@@ -658,39 +654,6 @@ class MainPannelCore(object):
         self.layout_global.addLayout(self.layout_central)
 
 class MainPannel(MainPannelCore):
-
-    def add_controller_pannel(self):
-        layout_title_and_controller=QtGui.QVBoxLayout()
-        lb_title = QtGui.QLabel('Label Choice')
-        lb_title.setAlignment(QtCore.Qt.AlignCenter)
-        lb_title.setContentsMargins(0,30,0,0)
-        layout_title_and_controller.addWidget(lb_title)
-
-        layout_controller = QtGui.QHBoxLayout()
-        layout_controller.setAlignment(QtCore.Qt.AlignTop)
-        layout_controller.setAlignment(QtCore.Qt.AlignCenter)
-
-        l1=QtGui.QLabel('1')
-        l1.setAlignment(QtCore.Qt.AlignCenter)
-        l1.setContentsMargins(0,0,35,0)
-        l2 = QtGui.QLabel('2')
-        l2.setAlignment(QtCore.Qt.AlignCenter)
-        l2.setContentsMargins(20, 0, 0, 0)
-
-        s1=QtGui.QSlider()
-        s2 = QtGui.QSlider()
-
-        s1.setMaximumHeight(250)
-        s2.setMaximumHeight(250)
-
-        layout_controller.addWidget(l1)
-        layout_controller.addWidget(s1)
-        layout_controller.addWidget(s2)
-        layout_controller.addWidget(l2)
-
-        layout_title_and_controller.addLayout(layout_controller)
-
-        self.layout_central.addLayout(layout_title_and_controller)
 
     def __init__(self,images,im_params,window,header):
         super(MainPannel, self).__init__(images,im_params,window,header)
@@ -783,6 +746,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
 
         self.number_of_points=1
         self.add_main_view()
+        self.add_controller_pannel()
         self.merge_layouts()
         self.number_of_points=1
 
@@ -801,6 +765,38 @@ class MainPannelLabelVertebrae(MainPannelCore):
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
         self.main_plot=SinglePlotMainLabelVertebrae(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=self.number_of_points)
 
+    def add_controller_pannel(self):
+        layout_title_and_controller=QtGui.QVBoxLayout()
+        lb_title = QtGui.QLabel('Label Choice')
+        lb_title.setAlignment(QtCore.Qt.AlignCenter)
+        lb_title.setContentsMargins(0,30,0,0)
+        layout_title_and_controller.addWidget(lb_title)
+
+        layout_controller = QtGui.QHBoxLayout()
+        layout_controller.setAlignment(QtCore.Qt.AlignTop)
+        layout_controller.setAlignment(QtCore.Qt.AlignCenter)
+
+        l1=QtGui.QLabel('1')
+        l1.setAlignment(QtCore.Qt.AlignCenter)
+        l1.setContentsMargins(0,0,35,0)
+        l2 = QtGui.QLabel('2')
+        l2.setAlignment(QtCore.Qt.AlignCenter)
+        l2.setContentsMargins(20, 0, 0, 0)
+
+        s1=QtGui.QSlider()
+        s2 = QtGui.QSlider()
+
+        s1.setMaximumHeight(250)
+        s2.setMaximumHeight(250)
+
+        layout_controller.addWidget(l1)
+        layout_controller.addWidget(s1)
+        layout_controller.addWidget(s2)
+        layout_controller.addWidget(l2)
+
+        layout_title_and_controller.addLayout(layout_controller)
+
+        self.layout_central.addLayout(layout_title_and_controller)
 
 class ControlButtonsCore(object):
     def __init__(self,main_plot,window,header):
@@ -886,6 +882,8 @@ class ControlButtonsLabelVertebrae(ControlButtonsCore):
     def __init__(self,main_plot,window,header):
         super(ControlButtonsLabelVertebrae,self).__init__(main_plot,window,header)
         self.add_classical_buttons()
+
+
 
 class WindowCore(object):
 
