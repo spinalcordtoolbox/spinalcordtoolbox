@@ -328,7 +328,7 @@ class SinglePlotMain(SinglePlot):
 
         x_data, y_data = [], []
         for ipoints in self.list_points:
-            if ipoints.x == select_right_position_dim(self.current_position,self.view):
+            if select_right_position_dim(ipoints,self.view) == select_right_position_dim(self.current_position,self.view):
                 x,y=select_right_dimensions(ipoints,self.view)
                 x_data.append(x)
                 y_data.append(y)
