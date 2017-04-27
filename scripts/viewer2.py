@@ -437,7 +437,7 @@ class SinglePlotSecond(SinglePlot):
 
 class SinglePlotMainLabelVertebrae(SinglePlot):
     def __init__(self, ax, images, viewer,canvas, view, line_direction='hv', im_params=None, secondary_plot=None,header=None,number_of_points=0):
-        super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params,header)
+        super(SinglePlotMainLabelVertebrae, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params,header)
         self.secondary_plot=secondary_plot
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
@@ -567,7 +567,7 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
 
 class SinglePlotSecondLabelVertebrae(SinglePlot):
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, line_direction='hv', im_params=None,header=None):
-        super(SinglePlotSecond,self).__init__(ax, images, viewer,canvas, view, line_direction, im_params,header)
+        super(SinglePlotSecondLabelVertebrae,self).__init__(ax, images, viewer,canvas, view, line_direction, im_params,header)
         self.main_plot=main_single_plot
         self.current_position=self.main_plot.current_position
         self.list_previous_lines=[]
@@ -884,7 +884,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
         self.layout_central.addLayout(layout_title_and_controller)
 
     def __init__(self,images,im_params,window,header):
-        super(MainPannel, self).__init__(images,im_params,window,header)
+        super(MainPannelLabelVertebrae, self).__init__(images,im_params,window,header)
 
         self.add_main_view()
         self.add_secondary_view()
@@ -968,7 +968,7 @@ class ControlButtons(ControlButtonsCore):
 
 class ControlButtonsLabelVertebrae(ControlButtonsCore):
     def __init__(self,main_plot,window,header):
-        super(ControlButtons,self).__init__(main_plot,window,header)
+        super(ControlButtonsLabelVertebrae,self).__init__(main_plot,window,header)
         self.add_skip_button()
         self.add_classical_buttons()
 
@@ -1127,7 +1127,7 @@ class WindowLabelVertebrae(WindowCore):
         if not visualization_parameters:
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
 
-        super(Window, self).__init__(list_images, visualization_parameters)
+        super(WindowLabelVertebrae, self).__init__(list_images, visualization_parameters)
         self.set_layout_and_launch_viewer()
 
     def set_main_plot(self):
@@ -1160,45 +1160,46 @@ class WindowLabelVertebrae(WindowCore):
         # compute slices to display
         self.list_slices = []
 
+
+
     def set_layout_and_launch_viewer(self):
-        def launch_main_window():
-            system = QtGui.QApplication(sys.argv)
-            w = QtGui.QWidget()
-            w.resize(740, 850)
-            w.setWindowTitle('Hello world')
-            w.show()
-            return (w, system)
-
-        def add_layout_main( window):
-            layout_main = QtGui.QVBoxLayout()
-            layout_main.setAlignment(QtCore.Qt.AlignTop)
-            window.setLayout(layout_main)
-            return layout_main
-
-        def add_header(layout_main):
-            header = Header()
-            layout_main.addLayout(header.layout_header)
-            header.update_text('welcome')
-            return (header)
-
-        def add_main_pannel(layout_main,window,header):
-            main_pannel = MainPannel(self.images,self.im_params,window,header)
-            layout_main.addLayout(main_pannel.layout_global)
-            return main_pannel
-
-        def add_control_buttons(layout_main,window):
-            control_buttons = ControlButtons(self.main_pannel.main_plot,window,self.header)
-            layout_main.addLayout(control_buttons.layout_buttons)
-            return control_buttons
-
-
-        (window, system) = launch_main_window()
-        layout_main = add_layout_main(window)
-        self.header = add_header(layout_main)
-        self.main_pannel = add_main_pannel(layout_main,self,self.header)
-        self.control_buttons = add_control_buttons(layout_main,self)
+        (window, system) = self.launch_main_window()
+        layout_main = self.add_layout_main(window)
+        self.header = self.add_header(layout_main)
+        self.main_pannel = self.add_main_pannel(layout_main,self,self.header)
+        self.control_buttons = self.add_control_buttons(layout_main,self)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
+
+    def launch_main_window(self):
+        system = QtGui.QApplication(sys.argv)
+        w = QtGui.QWidget()
+        w.resize(740, 850)
+        w.setWindowTitle('Hello world')
+        w.show()
+        return (w, system)
+
+    def add_layout_main(self, window):
+        layout_main = QtGui.QVBoxLayout()
+        layout_main.setAlignment(QtCore.Qt.AlignTop)
+        window.setLayout(layout_main)
+        return layout_main
+
+    def add_header(self, layout_main):
+        header = Header()
+        layout_main.addLayout(header.layout_header)
+        header.update_text('welcome')
+        return (header)
+
+    def add_main_pannel(self, layout_main,window,header):
+        main_pannel = MainPannel(self.images, self.im_params, window, header)
+        layout_main.addLayout(main_pannel.layout_global)
+        return main_pannel
+
+    def add_control_buttons(self, layout_main,window):
+        control_buttons = ControlButtons(self.main_pannel.main_plot, window, self.header)
+        layout_main.addLayout(control_buttons.layout_buttons)
+        return control_buttons
 
 
 
