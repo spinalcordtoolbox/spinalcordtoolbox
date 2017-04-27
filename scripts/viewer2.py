@@ -49,11 +49,21 @@ class SinglePlot(object):
                                          int(self.images[0].data.shape[2] / 2)])
         self.list_points=[]
         self.header=header
+        self.dic_translate_label=self.define_translate_dic()
 
 
         self.remove_axis_number()
         self.connect_mpl_events()
         self.setup_intensity()
+
+    def define_translate_dic(self):
+        dic={'1':50,
+             '2':49,
+             '3':1,
+             '4':3,}
+        for ii in range (5,27):
+            dic[str(ii)]=ii-1
+        return dic
 
     def set_data_to_display(self,image, current_point,view):
         if view == 'ax':
@@ -189,15 +199,15 @@ class SinglePlot(object):
             if self.view == 'ax':
                 point = Coordinate([self.current_position.x,
                                     int(round(event.ydata)),
-                                    int(round(event.xdata)), label])
+                                    int(round(event.xdata)), self.dic_translate_label[str(label)]])
             elif self.view == 'cor':
                 point = Coordinate([int(round(event.ydata)),
                                     self.current_position.y,
-                                    int(round(event.xdata)), label])
+                                    int(round(event.xdata)), self.dic_translate_label[str(label)]])
             elif self.view == 'sag':
                 point = Coordinate([int(round(event.ydata)),
                                     int(round(event.xdata)),
-                                    self.current_position.z, label])
+                                    self.current_position.z, self.dic_translate_label[str(label)]])
         except TypeError:
             self.header.update_text('warning_selected_point_not_in_image')
         return point
@@ -466,6 +476,7 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event,self.current_label))
+                print(self.list_points)
                 self.draw_dots()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
@@ -488,7 +499,6 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
                 return current_position.y
             elif view == 'sag':
                 return current_position.z
-
         x_data, y_data = [], []
         for ipoints in self.list_points:
             if select_right_position_dim(ipoints,self.view) == select_right_position_dim(self.current_position,self.view):
@@ -639,7 +649,6 @@ class HeaderLabelVertebrae(HeaderCore):
         if(key=='welcome'):
             self.lb_status.setText(self.dic_message_labels[nbpt])
             self.lb_status.setStyleSheet("color:black")
-
 
         elif(key=='warning_skip_not_defined'):
             self.lb_warning.setText('This option is not used in Manual Mode. \n')
@@ -923,7 +932,6 @@ class ControlButtonsLabelVertebrae(ControlButtonsCore):
             self.header.update_text('welcome',nbpt=str(self.main_plot.current_label))
         else:
             self.header.update_text('warning_undo_beyond_first_point')
-
 
 class WindowCore(object):
 
