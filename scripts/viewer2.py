@@ -495,90 +495,13 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
 
         x_data, y_data = [], []
         for ipoints in self.list_points:
-            if ipoints.x == select_right_position_dim(self.current_position,self.view):
+            if ipoints.z == select_right_position_dim(self.current_position,self.view):
                 x,y=select_right_dimensions(ipoints,self.view)
                 x_data.append(x)
                 y_data.append(y)
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
         self.refresh()
-
-class SinglePlotSecondLabelVertebrae(SinglePlot):
-    def __init__(self, ax, images, viewer,canvas,main_single_plot, view, line_direction='hv', im_params=None,header=None):
-        super(SinglePlotSecondLabelVertebrae,self).__init__(ax, images, viewer,canvas, view, line_direction, im_params,header)
-        self.main_plot=main_single_plot
-        self.current_position=self.main_plot.current_position
-        self.list_previous_lines=[]
-
-        self.show_image(self.im_params, current_point=None)
-        self.current_line=self.calc_line('v',self.current_position)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
-        self.axes.add_line(self.current_line)
-        self.refresh()
-
-    def calc_line(self,line_direction,line_position,line_color='white'):
-        def calc_dic_line_coor(current_position, view):
-            if view == 'ax':
-                return {'v':[[current_position.y, current_position.y], [-10000, 10000]],
-                        'h':[[-10000, 10000], [current_position.z, current_position.z]]}
-            elif view == 'cor':
-                return  {'v':[[current_position.x, current_position.x], [-10000, 10000]],
-                         'h':[[-10000, 10000], [current_position.z, current_position.z]]}
-            elif view == 'sag':
-                return  {'v':[[current_position.x, current_position.x], [-10000, 10000]],
-                         'h':[[-10000, 10000], [current_position.y, current_position.y]]}
-        dic_line_coor=calc_dic_line_coor(line_position,self.view)
-        line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color=line_color)
-        return line
-
-    def draw_current_line(self,line_direction):
-        self.current_line.remove()
-        self.current_line = self.calc_line(line_direction, self.current_position)
-        self.axes.add_line(self.current_line)
-
-    def draw_previous_lines(self,line_direction):
-        for iline in self.list_previous_lines:
-            iline.remove()
-        self.list_previous_lines=[]
-        for ipoint in self.main_plot.list_points:
-            self.list_previous_lines.append(self.calc_line(line_direction, ipoint,line_color='red'))
-            self.axes.add_line(self.list_previous_lines[-1])
-
-    def draw_lines(self,line_direction):
-        self.draw_current_line(line_direction)
-        self.draw_previous_lines(line_direction)
-        self.refresh()
-
-    def refresh(self):
-        self.show_image(self.im_params,self.current_position)
-        self.figs[0].figure.canvas.draw()
-
-    def on_event_motion(self, event):
-        if event.button == 1 and event.inaxes == self.axes:  # left click
-            if self.get_event_coordinates(event):
-                self.change_main_slice(event)
-        elif event.button == 3 and event.inaxes == self.axes:  # right click
-            if self.get_event_coordinates(event):
-                self.change_intensity(event)
-
-    def on_event_release(self, event):
-        if self.get_event_coordinates(event):
-            if event.button == 1:  # left click
-                if not self.main_plot.bool_is_mode_auto:
-                    self.change_main_slice(event)
-                else:
-                    self.main_plot.jump_to_new_slice()
-            elif event.button == 3:  # right click
-                self.change_intensity(event)
-
-    def change_main_slice(self,event):
-        self.current_position = self.get_event_coordinates(event)
-        self.draw_lines('v')
-        self.main_plot.show_image(self.im_params, self.current_position)
-        self.main_plot.update_slice(self.current_position)
-        self.main_plot.refresh()
-        self.main_plot.draw_dots()
-
-
 
 
 
