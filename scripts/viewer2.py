@@ -828,13 +828,15 @@ class MainPannelLabelVertebrae(MainPannelCore):
         layout_controller.setAlignment(QtCore.Qt.AlignTop)
         layout_controller.setAlignment(QtCore.Qt.AlignCenter)
 
-        slider_maximum=27   
+        slider_maximum=26
         init_label=slider_maximum-3
         self.slider_label=QtGui.QSlider()
         self.slider_label.setMaximumHeight(250)
         self.slider_label.setValue(init_label*100/slider_maximum)
         update_slider_label()
         self.slider_label.sliderMoved.connect(update_slider_label)
+        self.slider_label.sliderPressed.connect(update_slider_label)
+        self.slider_label.sliderReleased.connect(update_slider_label)
 
         layout_controller.addWidget(self.slider_label)
         layout_title_and_controller.addLayout(layout_controller)
