@@ -733,6 +733,9 @@ class MainPannelLabelVertebrae(MainPannelCore):
         self.main_plot=SinglePlotMainLabelVertebrae(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=self.number_of_points)
 
     def add_controller_pannel(self):
+        def update_slider_label():
+            self.lb_slider.setText(str(int(10*self.slider_label.value()/100)))
+
         layout_title_and_controller=QtGui.QVBoxLayout()
         lb_title = QtGui.QLabel('Label Choice')
         lb_title.setAlignment(QtCore.Qt.AlignCenter)
@@ -742,18 +745,20 @@ class MainPannelLabelVertebrae(MainPannelCore):
         layout_controller.setAlignment(QtCore.Qt.AlignTop)
         layout_controller.setAlignment(QtCore.Qt.AlignCenter)
 
-        l1=QtGui.QLabel('1')
-        l1.setAlignment(QtCore.Qt.AlignCenter)
-        l1.setContentsMargins(0,0,35,0)
+        self.lb_slider=QtGui.QLabel()
+        self.lb_slider.setAlignment(QtCore.Qt.AlignCenter)
+        self.lb_slider.setContentsMargins(0,0,35,0)
 
-        s1=QtGui.QSlider()
-        s1.setMaximumHeight(250)
-        s1.setRange(1,35)
-        s1.setTickInterval(1)
-        s1.setTickPosition(4)
-
-        layout_controller.addWidget(l1)
-        layout_controller.addWidget(s1)
+        self.slider_label=QtGui.QSlider()
+        self.slider_label.setMaximumHeight(250)
+        self.slider_label.setValue(0)
+        update_slider_label()
+        #self.slider_label.setRange(0,10)
+        #self.slider_label.setSingleStep(1)
+        #self.slider_label.setTickInterval(1)
+        self.slider_label.sliderMoved.connect(update_slider_label)
+        layout_controller.addWidget(self.lb_slider)
+        layout_controller.addWidget(self.slider_label)
 
         layout_title_and_controller.addLayout(layout_controller)
 
