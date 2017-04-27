@@ -748,6 +748,9 @@ class MainPannelLabelVertebrae(MainPannelCore):
 
         s1=QtGui.QSlider()
         s1.setMaximumHeight(250)
+        s1.setRange(1,35)
+        s1.setTickInterval(1)
+        s1.setTickPosition(4)
 
         layout_controller.addWidget(l1)
         layout_controller.addWidget(s1)
