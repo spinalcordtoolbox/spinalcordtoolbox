@@ -442,6 +442,7 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
         self.number_of_points=number_of_points
+        self.current_label=3
 
     def add_point_to_list_points(self,current_point):
         def add_point_custom(self):
@@ -651,6 +652,10 @@ class HeaderLabelVertebrae(HeaderCore):
                 self.update_text('ready_to_save_and_quit')
             else:
                 self.update_text('welcome')
+        elif(key=='warning_cannot_change_the_label'):
+            self.lb_warning.setText('You cannot change the label once you have placed a point. \n'
+                                    'Please \'undo\' first.')
+            self.lb_warning.setStyleSheet("color:red")
         else:
             self.update_title_text_general(key,nbpt,nbfin)
 
@@ -798,9 +803,13 @@ class MainPannelLabelVertebrae(MainPannelCore):
 
     def add_controller_pannel(self):
         def update_slider_label():
-            slider_real_value=slider_maximum-int(slider_maximum*self.slider_label.value()/100)
-            self.lb_slider.setText(str(slider_real_value))
-            self.header.update_text('welcome',str(slider_real_value))
+            if not self.main_plot.list_points:
+                slider_real_value=slider_maximum-int(slider_maximum*self.slider_label.value()/100)
+                self.header.update_text('welcome',str(slider_real_value))
+                self.main_plot.current_label=slider_real_value
+            else:
+                self.header.update_text('warning_cannot_change_the_label')
+                self.slider_label.setValue(self.main_plot.current_label)
 
         layout_title_and_controller=QtGui.QVBoxLayout()
         lb_title = QtGui.QLabel('Label Choice')
@@ -810,10 +819,6 @@ class MainPannelLabelVertebrae(MainPannelCore):
         layout_controller.setAlignment(QtCore.Qt.AlignTop)
         layout_controller.setAlignment(QtCore.Qt.AlignCenter)
 
-        self.lb_slider=QtGui.QLabel()
-        self.lb_slider.setAlignment(QtCore.Qt.AlignCenter)
-        self.lb_slider.setContentsMargins(0,0,35,0)
-
         slider_maximum=27   
         init_label=slider_maximum-3
         self.slider_label=QtGui.QSlider()
@@ -822,7 +827,6 @@ class MainPannelLabelVertebrae(MainPannelCore):
         update_slider_label()
         self.slider_label.sliderMoved.connect(update_slider_label)
 
-        layout_controller.addWidget(self.lb_slider)
         layout_controller.addWidget(self.slider_label)
         layout_title_and_controller.addLayout(layout_controller)
         self.layout_central.addLayout(layout_title_and_controller,1)
