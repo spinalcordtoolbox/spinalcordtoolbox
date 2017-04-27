@@ -708,39 +708,6 @@ class MainPannel(MainPannelCore):
 
 class MainPannelLabelVertebrae(MainPannelCore):
 
-    def add_controller_pannel(self):
-        layout_title_and_controller=QtGui.QVBoxLayout()
-        lb_title = QtGui.QLabel('Label Choice')
-        lb_title.setAlignment(QtCore.Qt.AlignCenter)
-        lb_title.setContentsMargins(0,30,0,0)
-        layout_title_and_controller.addWidget(lb_title)
-
-        layout_controller = QtGui.QHBoxLayout()
-        layout_controller.setAlignment(QtCore.Qt.AlignTop)
-        layout_controller.setAlignment(QtCore.Qt.AlignCenter)
-
-        l1=QtGui.QLabel('1')
-        l1.setAlignment(QtCore.Qt.AlignCenter)
-        l1.setContentsMargins(0,0,35,0)
-        l2 = QtGui.QLabel('2')
-        l2.setAlignment(QtCore.Qt.AlignCenter)
-        l2.setContentsMargins(20, 0, 0, 0)
-
-        s1=QtGui.QSlider()
-        s2 = QtGui.QSlider()
-
-        s1.setMaximumHeight(250)
-        s2.setMaximumHeight(250)
-
-        layout_controller.addWidget(l1)
-        layout_controller.addWidget(s1)
-        layout_controller.addWidget(s2)
-        layout_controller.addWidget(l2)
-
-        layout_title_and_controller.addLayout(layout_controller)
-
-        self.layout_central.addLayout(layout_title_and_controller)
-
     def __init__(self,images,im_params,window,header):
         super(MainPannelLabelVertebrae, self).__init__(images,im_params,window,header)
 
@@ -757,7 +724,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
         self.canvas_main = FigureCanvas(fig)
 
         layout_view.addWidget(self.canvas_main)
-        self.layout_central.addLayout(layout_view)
+        self.layout_central.addLayout(layout_view,1)
 
         if not self.im_params:
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
@@ -769,7 +736,6 @@ class MainPannelLabelVertebrae(MainPannelCore):
         layout_title_and_controller=QtGui.QVBoxLayout()
         lb_title = QtGui.QLabel('Label Choice')
         lb_title.setAlignment(QtCore.Qt.AlignCenter)
-        lb_title.setContentsMargins(0,30,0,0)
         layout_title_and_controller.addWidget(lb_title)
 
         layout_controller = QtGui.QHBoxLayout()
@@ -779,24 +745,16 @@ class MainPannelLabelVertebrae(MainPannelCore):
         l1=QtGui.QLabel('1')
         l1.setAlignment(QtCore.Qt.AlignCenter)
         l1.setContentsMargins(0,0,35,0)
-        l2 = QtGui.QLabel('2')
-        l2.setAlignment(QtCore.Qt.AlignCenter)
-        l2.setContentsMargins(20, 0, 0, 0)
 
         s1=QtGui.QSlider()
-        s2 = QtGui.QSlider()
-
         s1.setMaximumHeight(250)
-        s2.setMaximumHeight(250)
 
         layout_controller.addWidget(l1)
         layout_controller.addWidget(s1)
-        layout_controller.addWidget(s2)
-        layout_controller.addWidget(l2)
 
         layout_title_and_controller.addLayout(layout_controller)
 
-        self.layout_central.addLayout(layout_title_and_controller)
+        self.layout_central.addLayout(layout_title_and_controller,1)
 
 class ControlButtonsCore(object):
     def __init__(self,main_plot,window,header):
