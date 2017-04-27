@@ -447,26 +447,7 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
         self.bool_is_mode_auto=True
         #print(self.list_slices)
 
-    def update_slice(self,new_position):
-        self.current_position=new_position
-        if (self.view == 'ax'):
-            self.figs[-1].set_data(self.images[0].data[self.current_position.x, :, :])
-        elif (self.view == 'cor'):
-            self.figs[-1].set_data(self.images[0].data[:, self.current_position.y, :])
-        elif (self.view == 'sag'):
-            self.figs[-1].set_data(self.images[0].data[:, :, self.current_position.z])
-        self.figs[-1].figure.canvas.draw()
-
     def add_point_to_list_points(self,current_point):
-        def add_point_auto(self):
-            if len(self.list_points) < self.number_of_points:
-                self.list_points.append(current_point)
-                if len(self.list_points) == self.number_of_points:
-                    self.header.update_text('ready_to_save_and_quit')
-                else:
-                    self.header.update_text('update', len(self.list_points), self.number_of_points)
-            else:
-                self.header.update_text('warning_all_points_done_already')
         def add_point_custom(self):
             bool_remplaced=False
             for ipoint in self.list_points:
@@ -478,10 +459,7 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
                 self.list_points.append(current_point)
             self.header.update_text('update', len(self.list_points), self.number_of_points)
 
-        if self.bool_is_mode_auto:
-            add_point_auto(self)
-        else:
-            add_point_custom(self)
+        add_point_custom(self)
 
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
@@ -493,22 +471,9 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event))
-                if self.bool_is_mode_auto:
-                    self.jump_to_new_slice()
                 self.draw_dots()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
-                self.change_intensity_on_secondary_plot(event)
-
-    def jump_to_new_slice(self):
-        if len(self.list_points)<self.number_of_points:
-            self.update_slice(Coordinate([self.list_slices[len(self.list_points)],self.current_position.y,self.current_position.z]))
-            self.secondary_plot.current_position=Coordinate([self.list_slices[len(self.list_points)],self.current_position.y,self.current_position.z])
-            self.secondary_plot.draw_lines('v')
-
-    def change_intensity_on_secondary_plot(self,event):
-        if self.secondary_plot:
-            self.secondary_plot.change_intensity(event)
 
     def refresh(self):
         self.figs[-1].figure.canvas.draw()
@@ -547,23 +512,6 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
         for ii in range (0,self.number_of_points-1):
             self.list_slices.append(ii*increment)
         self.list_slices.append(self.image_dim[0]-1)
-
-    def switch_mode_seg(self):
-        self.bool_is_mode_auto=not self.bool_is_mode_auto
-        self.reset_data()
-        self.header.update_text('mode_switched')
-
-    def reset_data(self):
-        self.list_points=[]
-        if self.bool_is_mode_auto:
-            self.number_of_points=7
-        else:
-            self.number_of_points=-1
-        self.current_position.x=0
-        self.update_slice(self.current_position)
-        self.draw_dots()
-        self.secondary_plot.current_position=self.current_position
-        self.secondary_plot.draw_lines('v')
 
 class SinglePlotSecondLabelVertebrae(SinglePlot):
     def __init__(self, ax, images, viewer,canvas,main_single_plot, view, line_direction='hv', im_params=None,header=None):
@@ -716,8 +664,8 @@ class HeaderLabelVertebrae(HeaderCore):
     def update_text(self,key,nbpt=-1,nbfin=-1):
         self.lb_warning.setText('\n')
         if(key=='welcome'):
-            self.lb_status.setText('Please click in the the center of the center line. \n'
-                                   'If it is invisible, you may skip it.')
+            self.lb_status.setText('Please click on posterior edge of  \n'
+                                   'C2/C3 intervertebral disk (label=3) \n')
             self.lb_status.setStyleSheet("color:black")
         elif(key=='warning_skip_not_defined'):
             self.lb_warning.setText('This option is not used in Manual Mode. \n')
@@ -749,6 +697,7 @@ class MainPannelCore(object):
         self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[2]),
                              float(self.im_spacing[0]) / float(self.im_spacing[1])]
+        self.number_of_points=-1
 
     def add_main_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -842,11 +791,43 @@ class MainPannel(MainPannelCore):
     def __init__(self,images,im_params,window,header):
         super(MainPannel, self).__init__(images,im_params,window,header)
 
+        self.number_of_points=12
         self.add_main_view()
         self.add_secondary_view()
         #self.add_controller_pannel()
         self.add_option_settings()
         self.merge_layouts()
+
+    def add_main_view(self):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        self.canvas_main = FigureCanvas(fig)
+
+        layout_view.addWidget(self.canvas_main)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.main_plot=SinglePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=self.number_of_points)
+
+    def add_secondary_view(self):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        self.canvas_second = FigureCanvas(fig)
+
+        layout_view.addWidget(self.canvas_second)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.second_plot=SinglePlotSecond(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot,header=self.header)
+        self.main_plot.secondary_plot=self.second_plot
 
 class MainPannelLabelVertebrae(MainPannelCore):
 
@@ -886,11 +867,11 @@ class MainPannelLabelVertebrae(MainPannelCore):
     def __init__(self,images,im_params,window,header):
         super(MainPannelLabelVertebrae, self).__init__(images,im_params,window,header)
 
+        self.number_of_points=1
         self.add_main_view()
-        self.add_secondary_view()
-        #self.add_controller_pannel()
         self.add_option_settings()
         self.merge_layouts()
+        self.number_of_points=1
 
     def add_main_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -905,23 +886,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot=SinglePlotMainLabelVertebrae(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=7)
-
-    def add_secondary_view(self):
-        layout_view = QtGui.QVBoxLayout()
-
-        fig = plt.figure()
-        self.canvas_second = FigureCanvas(fig)
-
-        layout_view.addWidget(self.canvas_second)
-        self.layout_central.addLayout(layout_view)
-
-        if not self.im_params:
-            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
-        gs = mpl.gridspec.GridSpec(1, 1)
-        axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot=SinglePlotSecondLabelVertebrae(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,canvas=self.canvas_second,main_single_plot=self.main_plot,header=self.header)
-        self.main_plot.secondary_plot=self.second_plot
+        self.main_plot=SinglePlotMainLabelVertebrae(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,canvas=self.canvas_main,header=self.header,number_of_points=self.number_of_points)
 
 
 class ControlButtonsCore(object):
