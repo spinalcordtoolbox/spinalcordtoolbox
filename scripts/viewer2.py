@@ -456,13 +456,11 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
             self.header.update_text('update', len(self.list_points), self.number_of_points)
 
         add_point_custom(self)
-        print(self.list_points)
 
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
             if self.get_event_coordinates(event):
                 self.change_intensity(event)
-                self.change_intensity_on_secondary_plot(event)
 
     def on_event_release(self, event):
         if self.get_event_coordinates(event):
@@ -483,7 +481,6 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
                 return ipoints.x,ipoints.z
             elif view == 'sag':
                 return ipoints.y,ipoints.x
-
         def select_right_position_dim(current_position,view):
             if view =='ax':
                 return current_position.x
@@ -491,7 +488,6 @@ class SinglePlotMainLabelVertebrae(SinglePlot):
                 return current_position.y
             elif view == 'sag':
                 return current_position.z
-
 
         x_data, y_data = [], []
         for ipoints in self.list_points:
@@ -587,6 +583,11 @@ class HeaderLabelVertebrae(HeaderCore):
             self.lb_status.setText('You have switched on an other segmentation mode. \n'
                                    'All previous data have been erased.')
             self.lb_status.setStyleSheet("color:black")
+        elif(key=='update'):
+            if nbpt:
+                self.update_text('ready_to_save_and_quit')
+            else:
+                self.update_text('welcome')
         else:
             self.update_title_text_general(key,nbpt,nbfin)
 
@@ -655,7 +656,6 @@ class MainPannelCore(object):
     def merge_layouts(self):
         self.layout_global.addLayout(self.layout_option_settings)
         self.layout_global.addLayout(self.layout_central)
-
 
 class MainPannel(MainPannelCore):
 
@@ -742,7 +742,6 @@ class MainPannel(MainPannelCore):
         self.rb_mode_auto.setChecked(True)
         self.rb_mode_auto.clicked.connect(self.main_plot.switch_mode_seg)
         self.rb_mode_custom.clicked.connect(self.main_plot.switch_mode_seg)
-
 
 class MainPannelLabelVertebrae(MainPannelCore):
 
@@ -855,7 +854,6 @@ class ControlButtonsCore(object):
             del self.main_plot.list_points[-1]
             self.main_plot.draw_dots()
             self.header.update_text('update',len(self.main_plot.list_points),self.main_plot.number_of_points)
-            self.main_plot.jump_to_new_slice()
         else:
             self.header.update_text('warning_undo_beyond_first_point')
 
@@ -870,6 +868,15 @@ class ControlButtons(ControlButtonsCore):
         self.layout_buttons.addWidget(btn_skip)
         btn_skip.clicked.connect(self.press_skip)
 
+    def press_undo(self):
+        if self.main_plot.list_points:
+            del self.main_plot.list_points[-1]
+            self.main_plot.draw_dots()
+            self.header.update_text('update',len(self.main_plot.list_points),self.main_plot.number_of_points)
+            self.main_plot.jump_to_new_slice()
+        else:
+            self.header.update_text('warning_undo_beyond_first_point')
+
     def press_skip(self):
         self.main_plot.list_points.append(Coordinate([-1,-1,-1]))
         self.header.update_text('update',len(self.main_plot.list_points),self.main_plot.number_of_points)
@@ -878,20 +885,7 @@ class ControlButtons(ControlButtonsCore):
 class ControlButtonsLabelVertebrae(ControlButtonsCore):
     def __init__(self,main_plot,window,header):
         super(ControlButtonsLabelVertebrae,self).__init__(main_plot,window,header)
-        self.add_skip_button()
         self.add_classical_buttons()
-
-    def add_skip_button(self):
-        btn_skip=QtGui.QPushButton('Skip')
-        self.layout_buttons.addWidget(btn_skip)
-        btn_skip.clicked.connect(self.press_skip)
-
-    def press_skip(self):
-        self.main_plot.list_points.append(Coordinate([-1,-1,-1]))
-        self.header.update_text('update',len(self.main_plot.list_points),self.main_plot.number_of_points)
-        self.main_plot.jump_to_new_slice()
-
-
 
 class WindowCore(object):
 
