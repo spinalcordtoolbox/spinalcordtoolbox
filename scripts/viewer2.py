@@ -734,7 +734,8 @@ class MainPannelLabelVertebrae(MainPannelCore):
 
     def add_controller_pannel(self):
         def update_slider_label():
-            self.lb_slider.setText(str(int(10*self.slider_label.value()/100)))
+            slider_real_value=int(slider_maximum*self.slider_label.value()/100)+1
+            self.lb_slider.setText(str(slider_real_value))
 
         layout_title_and_controller=QtGui.QVBoxLayout()
         lb_title = QtGui.QLabel('Label Choice')
@@ -749,13 +750,11 @@ class MainPannelLabelVertebrae(MainPannelCore):
         self.lb_slider.setAlignment(QtCore.Qt.AlignCenter)
         self.lb_slider.setContentsMargins(0,0,35,0)
 
+        slider_maximum=35
         self.slider_label=QtGui.QSlider()
         self.slider_label.setMaximumHeight(250)
         self.slider_label.setValue(0)
         update_slider_label()
-        self.slider_label.setRange(0,10)
-        #self.slider_label.setSingleStep(1)
-        #self.slider_label.setTickInterval(1)
         self.slider_label.sliderMoved.connect(update_slider_label)
         layout_controller.addWidget(self.lb_slider)
         layout_controller.addWidget(self.slider_label)
