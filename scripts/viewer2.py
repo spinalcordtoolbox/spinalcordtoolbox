@@ -17,6 +17,10 @@ from numpy import pad, percentile
 
 
 class ImagePlot(object):
+    """
+    Core class for displaying pictures.
+    Defines the data to display, image parameters, on_scroll event, manages intensity and manages the click (in or out the picture,...).
+    """
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, header=None):
         self.axes = ax
         self.images = images
@@ -234,6 +238,11 @@ class ImagePlot(object):
 
 
 class ImagePlotMain(ImagePlot):
+    """
+    Inherites ImagePlot
+    Class used for displaying the main (right) picture in Propseg Viewer
+    Defines the action on mouse events, draw dots, and manages the list of results : list_points.
+    """
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, secondary_plot=None,
                  header=None, number_of_points=0):
         super(ImagePlotMain, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
@@ -369,6 +378,11 @@ class ImagePlotMain(ImagePlot):
 
 
 class ImagePlotSecond(ImagePlot):
+    """
+    Inherites ImagePlot
+    Class used for displaying the secondary (left) picture in Propseg Viewer
+    Defines the action on mouse events, draw lines and update the slice on the main picture.
+    """
     def __init__(self, ax, images, viewer, canvas, main_single_plot, view, line_direction='hv', im_params=None,
                  header=None):
         super(ImagePlotSecond, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
@@ -448,6 +462,11 @@ class ImagePlotSecond(ImagePlot):
 
 
 class ImagePlotMainLabelVertebrae(ImagePlot):
+    """
+    Inherites ImagePlot
+    Class used for displaying the main (right) picture in Label Vertebrae Viewer
+    Defines the action on mouse events, draw dots, and manages the list of results : list_points.
+    """
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, secondary_plot=None,
                  header=None, number_of_points=0):
         super(ImagePlotMainLabelVertebrae, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params,
@@ -519,6 +538,10 @@ class ImagePlotMainLabelVertebrae(ImagePlot):
 
 
 class HeaderCore(object):
+    """
+    Core Class for Header
+    Defines Layouts and some basic messages.
+    """
     def __init__(self):
         self.define_layout_header()
         self.add_lb_status()
@@ -633,6 +656,11 @@ class HeaderCore(object):
 
 
 class Header(HeaderCore):
+    """
+    Inherites HeaderCore
+    Class that defines header in Propseg Viewer
+    Defines specific messages to display.
+    """
     def update_text(self, key, nbpt=-1, nbfin=-1):
         self.lb_warning.setText('\n')
         if (key == 'welcome'):
@@ -651,6 +679,11 @@ class Header(HeaderCore):
 
 
 class HeaderLabelVertebrae(HeaderCore):
+    """
+    Inherites HeaderCore
+    Class that defines header in Label Vertebrae Viewer
+    Defines specific messages to display.
+    """
     def update_text(self, key, nbpt=-1, nbfin=-1):
         self.lb_warning.setText('\n')
         if (key == 'welcome'):
@@ -678,6 +711,11 @@ class HeaderLabelVertebrae(HeaderCore):
 
 
 class MainPannelCore(object):
+    """
+    Class core that defines the layout of the Main pannel.
+    Defines layout and manages their merging.
+    Provides an example of how to call Main Image Plot and Secondary Image Plot.
+    """
     def __init__(self,
                  images,
                  im_params, window, header):
@@ -745,6 +783,10 @@ class MainPannelCore(object):
 
 
 class MainPannel(MainPannelCore):
+    """
+    Inherites MainPannelCore
+    Class that defines specific main image plot and secondary image plot for Propseg Viewer.
+    """
     def __init__(self, images, im_params, window, header):
         super(MainPannel, self).__init__(images, im_params, window, header)
 
@@ -802,6 +844,10 @@ class MainPannel(MainPannelCore):
 
 
 class MainPannelLabelVertebrae(MainPannelCore):
+    """
+    Inherites MainPannelCore
+    Class that defines specific main image plot and controller pannel for Label Vertebrae Viewer.
+    """
     def __init__(self, images, im_params, window, header):
         super(MainPannelLabelVertebrae, self).__init__(images, im_params, window, header)
 
@@ -862,6 +908,10 @@ class MainPannelLabelVertebrae(MainPannelCore):
 
 
 class ControlButtonsCore(object):
+    """
+    Core class for displaying and managing basic action buttons : help, undo and save & quit.
+    Manages the layout, the adding of basic buttons and the associated functions.
+    """
     def __init__(self, main_plot, window, header):
         self.main_plot = main_plot
         self.window = window
@@ -918,6 +968,10 @@ class ControlButtonsCore(object):
 
 
 class ControlButtons(ControlButtonsCore):
+    """
+    Inherites ControlButtonsCore
+    Class that displays specific button for Propseg Viewer : Skip
+    """
     def __init__(self, main_plot, window, header):
         super(ControlButtons, self).__init__(main_plot, window, header)
         self.add_skip_button()
@@ -944,6 +998,10 @@ class ControlButtons(ControlButtonsCore):
 
 
 class ControlButtonsLabelVertebrae(ControlButtonsCore):
+    """
+    Inherites ControlButtonsCore
+    Class that could manage specific buttons for Label Vertebrae.
+    """
     def __init__(self, main_plot, window, header):
         super(ControlButtonsLabelVertebrae, self).__init__(main_plot, window, header)
         self.add_classical_buttons()
@@ -958,6 +1016,10 @@ class ControlButtonsLabelVertebrae(ControlButtonsCore):
 
 
 class WindowCore(object):
+    """
+    Core Class that manages the qt window.
+    Defines some core function to display images.
+    """
     def __init__(self, list_input, visualization_parameters=None):
         self.images = self.keep_only_images(list_input)
         self.im_params = visualization_parameters
@@ -1001,6 +1063,10 @@ class WindowCore(object):
 
 
 class Window(WindowCore):
+    """
+    Inherites Window Core.
+    Defines global variables and sets layout in the whole Propseg Viewer.
+    """
     def __init__(self,
                  list_images,
                  visualization_parameters=None,
@@ -1087,6 +1153,10 @@ class Window(WindowCore):
 
 
 class WindowLabelVertebrae(WindowCore):
+    """
+    Inherites Window Core.
+    Defines global variables and sets layout in the whole Label Vertebrae Viewer.
+    """
     def __init__(self,
                  list_images,
                  visualization_parameters=None,
