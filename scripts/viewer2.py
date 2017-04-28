@@ -509,7 +509,20 @@ class ImagePlotMainLabelVertebrae(ImagePlot):
         self.figs[-1].figure.canvas.draw()
 
     def draw_dots(self):
+        """
+        Draw dots on selected points on the main picture
+
+        Warning : the picture in main plot image is the projection of a 3D image.
+        That is why, we have to carefully determinate which coordinates are x or y, to properly draw the dot.
+        """
         def select_right_dimensions(ipoint, view):
+            """
+            Selects coordinates to diplay the dot right.
+
+            Returns
+            x (int) and y (int) to use as input to draw dot.
+
+            """
             if view == 'ax':
                 return ipoints.z, ipoints.y
             elif view == 'cor':
