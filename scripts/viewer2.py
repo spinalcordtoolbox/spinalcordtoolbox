@@ -16,7 +16,7 @@ from msct_types import *
 from numpy import pad, percentile
 
 
-class SinglePlot(object):
+class ImagePlot(object):
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, header=None):
         self.axes = ax
         self.images = images
@@ -233,10 +233,10 @@ class SinglePlot(object):
             1] and 0 <= target_point.z < self.image_dim[2]
 
 
-class SinglePlotMain(SinglePlot):
+class ImagePlotMain(ImagePlot):
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, secondary_plot=None,
                  header=None, number_of_points=0):
-        super(SinglePlotMain, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
+        super(ImagePlotMain, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
         self.secondary_plot = secondary_plot
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
@@ -368,10 +368,10 @@ class SinglePlotMain(SinglePlot):
         self.secondary_plot.draw_lines('v')
 
 
-class SinglePlotSecond(SinglePlot):
+class ImagePlotSecond(ImagePlot):
     def __init__(self, ax, images, viewer, canvas, main_single_plot, view, line_direction='hv', im_params=None,
                  header=None):
-        super(SinglePlotSecond, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
+        super(ImagePlotSecond, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
         self.main_plot = main_single_plot
         self.current_position = self.main_plot.current_position
         self.list_previous_lines = []
@@ -447,10 +447,10 @@ class SinglePlotSecond(SinglePlot):
         self.main_plot.draw_dots()
 
 
-class SinglePlotMainLabelVertebrae(SinglePlot):
+class ImagePlotMainLabelVertebrae(ImagePlot):
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, secondary_plot=None,
                  header=None, number_of_points=0):
-        super(SinglePlotMainLabelVertebrae, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params,
+        super(ImagePlotMainLabelVertebrae, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params,
                                                            header)
         self.secondary_plot = secondary_plot
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
@@ -712,7 +712,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot = SinglePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
+        self.main_plot = ImagePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
                                         canvas=self.canvas_main, header=self.header, number_of_points=7)
 
     def add_secondary_view(self):
@@ -728,7 +728,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot = SinglePlotSecond(axis, self.images, self, view='sag', line_direction='',
+        self.second_plot = ImagePlotSecond(axis, self.images, self, view='sag', line_direction='',
                                             im_params=self.im_params, canvas=self.canvas_second,
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
@@ -768,7 +768,7 @@ class MainPannel(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot = SinglePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
+        self.main_plot = ImagePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
                                         canvas=self.canvas_main, header=self.header,
                                         number_of_points=self.number_of_points)
 
@@ -785,7 +785,7 @@ class MainPannel(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot = SinglePlotSecond(axis, self.images, self, view='sag', line_direction='',
+        self.second_plot = ImagePlotSecond(axis, self.images, self, view='sag', line_direction='',
                                             im_params=self.im_params, canvas=self.canvas_second,
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
@@ -824,7 +824,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot = SinglePlotMainLabelVertebrae(axis, self.images, self, view='sag', line_direction='',
+        self.main_plot = ImagePlotMainLabelVertebrae(axis, self.images, self, view='sag', line_direction='',
                                                       im_params=self.im_params, canvas=self.canvas_main,
                                                       header=self.header, number_of_points=self.number_of_points)
 
