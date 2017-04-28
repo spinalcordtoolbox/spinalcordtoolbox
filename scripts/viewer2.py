@@ -453,8 +453,14 @@ class ImagePlotSecond(ImagePlot):
                 self.change_intensity(event)
 
     def change_main_slice(self, event):
+        '''
+        When the user chosees a new slice, this function :
+        - updates the variable self.current_position in ImagePlotSecond
+        - updates the slice to display in ImagePlotMain.
+        '''
         self.current_position = self.get_event_coordinates(event)
         self.draw_lines('v')
+
         self.main_plot.show_image(self.im_params, self.current_position)
         self.main_plot.update_slice(self.current_position)
         self.main_plot.refresh()
