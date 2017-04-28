@@ -433,16 +433,37 @@ class Centerline:
             print l_points[i], dist_points_rel[i]
         """
 
-    def get_closest_to_relative_position(self, vertebral_level, relative_position):
-        indexes_vert = np.argwhere(np.array(self.l_points) == vertebral_level)
-        if len(indexes_vert) == 0:
-            return None
+    def get_closest_to_relative_position(self, vertebral_level, relative_position, mode='levels'):
+        """
+        
+        Args:
+            vertebral_level: 
+            relative_position: 
+                if mode is 'levels', it is the relative position [0, 1] from upper disk
+                if mode is 'length', it is the relative position [mm] from C1 top
+            mode: {'levels', 'length'}
 
-        # find closest
-        arr_dist_rel = np.array(self.dist_points_rel)
-        idx = np.argmin(np.abs(arr_dist_rel[indexes_vert] - relative_position))
+        Returns:
 
-        return indexes_vert[idx]
+        """
+        if mode == 'levels':
+            indexes_vert = np.argwhere(np.array(self.l_points) == vertebral_level)
+            if len(indexes_vert) == 0:
+                return None
+            # find closest
+            arr_dist_rel = np.array(self.dist_points_rel)
+            idx = np.argmin(np.abs(arr_dist_rel[indexes_vert] - relative_position))
+            result = indexes_vert[idx]
+        elif mode == 'length':
+            result = np.argmin(np.abs(np.array(self.dist_points) - relative_position))
+            #if len(result) == 0:
+            #    result = None
+        else:
+            raise ValueError("Mode must be either 'levels' or 'length'.")
+
+        if isinstance(result, list):
+            result = result[0]
+        return result
 
     def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
@@ -507,3 +528,5 @@ class Centerline:
         z_centerline_deriv = coord_mean_d[:, :][:, 2]
 
         return x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
+
+

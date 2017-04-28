@@ -551,26 +551,33 @@ class SpinalCordStraightener(object):
             plt.grid(True)
             plt.show()
             """
+            alignment_mode = 'length'
 
             lookup_curved2straight = range(centerline.number_of_points)
             if self.disks_input_filename != "":
                 # create look-up table curved to straight
                 for index in range(centerline.number_of_points):
                     disk_label = centerline.l_points[index]
-                    relative_position = centerline.dist_points_rel[index]
-                    idx_closest = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)
+                    if alignment_mode == 'length':
+                        relative_position = centerline.dist_points[index]
+                    else:
+                        relative_position = centerline.dist_points_rel[index]
+                    idx_closest = centerline_straight.get_closest_to_relative_position(disk_label, relative_position, mode=alignment_mode)
                     if idx_closest is not None:
-                        lookup_curved2straight[index] = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)[0]
+                        lookup_curved2straight[index] = idx_closest
             lookup_curved2straight = np.array(lookup_curved2straight)
 
             lookup_straight2curved = range(centerline_straight.number_of_points)
             if self.disks_input_filename != "":
                 for index in range(centerline_straight.number_of_points):
                     disk_label = centerline_straight.l_points[index]
-                    relative_position = centerline_straight.dist_points_rel[index]
-                    idx_closest = centerline.get_closest_to_relative_position(disk_label, relative_position)
+                    if alignment_mode == 'length':
+                        relative_position = centerline_straight.dist_points[index]
+                    else:
+                        relative_position = centerline_straight.dist_points_rel[index]
+                    idx_closest = centerline.get_closest_to_relative_position(disk_label, relative_position, mode=alignment_mode)
                     if idx_closest is not None:
-                        lookup_straight2curved[index] = centerline.get_closest_to_relative_position(disk_label, relative_position)[0]
+                        lookup_straight2curved[index] = idx_closest
             lookup_straight2curved = np.array(lookup_straight2curved)
 
             # Create volumes containing curved and straight warping fields
@@ -585,7 +592,7 @@ class SpinalCordStraightener(object):
 
             if self.curved2straight:
                 for u in range(nz_s):
-                    # print u+1, '/', nz_s
+                    print u+1, '/', nz_s
                     x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u + 1]
                     indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
                     physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)

@@ -351,8 +351,28 @@ timer['T2_push_into_templace_space'] = TimeObject(number_of_subjects=len(SUBJECT
 timer['T2_average_levels'] = TimeObject(number_of_subjects=1)
 timer['T2_align'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
 
+"""
+        ['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
+        ['AM', folder_data_marseille+'/AM/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/AM/01_0100_compo-t2-spine'],
+        ['ED', folder_data_marseille+'/ED/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-101', folder_data_marseille+'/ED/01_0008_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-65'],
+        ['errsm_03', folder_data_errsm+'/errsm_03/32-SPINE_all/echo_2.09', folder_data_errsm+'/errsm_03/38-SPINE_all_space']
+        
+"""
+
+SUBJECTS_LIST = [
+
+    ['errsm_11', folder_data_errsm + '/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_11/09-SPINE_T2'],
+    ['errsm_21', folder_data_errsm + '/errsm_21/27-SPINE_T1/echo_2.09', folder_data_errsm + '/errsm_21/30-SPINE_T2']
+
+]
 
 def main():
+
+
+    compare_csa('T1', 'data_RPI_crop_seg.nii.gz')
+    sys.exit(1)
+
+
     timer['Total'].start()
 
 
@@ -804,6 +824,103 @@ def average_centerline(contrast):
     image_disks.save(type='uint8')
 
 
+def compute_csa(fname_segmentation, fname_disks='labels_vertebral_crop.nii.gz'):
+    labels_regions = {'PONS': 50, 'MO': 51,
+                      'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
+                      'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16,
+                      'T10': 17, 'T11': 18, 'T12': 19,
+                      'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
+                      'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
+                      'Co': 30}
+
+    # compute csa on the input segmentation
+    # this function create a csv file (csa_per_slice.txt) containing csa for each slice in the image
+    sct.run('sct_process_segmentation '
+            '-i ' + fname_segmentation + ' '
+            '-p csa')
+
+    # read csv file to extract csa per slice
+    csa_file = open('csa_per_slice.txt', 'r')
+    csa = csa_file.read()
+    csa_file.close()
+    csa_lines = csa.split('\n')[1:-1]
+    z_values, csa_values = [], []
+    for l in csa_lines:
+        s = l.split(',')
+        z_values.append(int(s[0]))
+        csa_values.append(float(s[1]))
+
+    # compute a lookup table with continuous vertebral levels and slice position
+    from sct_straighten_spinalcord import smooth_centerline
+    from msct_image import Image
+    im = Image(fname_disks)
+    coord = im.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+    coord_physical = []
+    for c in coord:
+        c_p = im.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+        c_p.append(c.value)
+        coord_physical.append(c_p)
+
+    number_of_points_in_centerline = 4000
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+        'generated_centerline.nii.gz',
+        algo_fitting='nurbs',
+        verbose=0, nurbs_pts_number=number_of_points_in_centerline, all_slices=False, phys_coordinates=True,
+        remove_outliers=True)
+    from msct_types import Centerline
+    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,
+                            y_centerline_deriv,
+                            z_centerline_deriv)
+
+    centerline.compute_vertebral_distribution(coord_physical)
+    x, y, z, xd, yd, zd = centerline.average_coordinates_over_slices(im)
+    coordinates = []
+    for i in range(len(z)):
+        nearest_index = centerline.find_nearest_indexes([[x[i], y[i], z[i]]])[0]
+        disk_label = centerline.l_points[nearest_index]
+        relative_position = centerline.dist_points_rel[nearest_index]
+        if disk_label != 0:
+            coordinates.append(float(labels_regions[disk_label]) + relative_position)
+
+    # concatenate results
+    result_levels, result_csa = [], []
+    import numpy as np
+    z_pix = [int(im.transfo_phys2pix([[x[k], y[k], z[k]]])[0][2]) for k in range(len(z))]
+    for i, zi in enumerate(z_values):
+        try:
+            corresponding_values = z_pix.index(int(zi))
+        except ValueError as e:
+            print 'got exception'
+            continue
+
+        if coordinates[corresponding_values] <= 30:
+            result_levels.append(coordinates[corresponding_values])
+            result_csa.append(csa_values[i])
+
+    #print result_levels, result_csa
+    plt.plot(result_levels, result_csa)
+    plt.show()
+
+    return result_levels, result_csa
+
+
+def compare_csa(contrast, fname_segmentation, fname_disks='labels_vertebral_crop.nii.gz'):
+    list_csa = []
+
+    for i in range(0, len(SUBJECTS_LIST)):
+        subject = SUBJECTS_LIST[i][0]
+        print '\nGo to output folder ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast
+        os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
+
+        levels, csa = compute_csa(fname_segmentation, fname_disks)
+        list_csa.append([subject, levels, csa])
+
+    plt.figure()
+    for subject in list_csa:
+        plt.plot(subject[1], subject[2])
+    plt.show()
+
+
 def straighten_all_subjects(contrast):
     # straightening of each subject on the new template
     for i in range(0, len(SUBJECTS_LIST)):
@@ -812,8 +929,11 @@ def straighten_all_subjects(contrast):
         # go to output folder
         print '\nGo to output folder ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast
         os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
-        sct.run('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -s generated_centerline.nii.gz -disks-input labels_vertebral_crop.nii.gz '
-                '-ref /Users/benjamindeleener/code/sct/dev/template_creation/template_centerline.nii.gz'
+        sct.run('sct_straighten_spinalcord'
+                ' -i data_RPI_crop_normalized.nii.gz'
+                ' -s generated_centerline.nii.gz'
+                ' -disks-input labels_vertebral_crop.nii.gz'
+                ' -ref /Users/benjamindeleener/code/sct/dev/template_creation/template_centerline.nii.gz'
                 ' -disks-ref /Users/benjamindeleener/code/sct/dev/template_creation/template_disks.nii.gz'
                 ' -disable-straight2curved', verbose=1)
 
