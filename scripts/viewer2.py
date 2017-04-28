@@ -771,12 +771,6 @@ class MainPannelCore(object):
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
 
-    def create_image(self):
-        image_label = QtGui.QLabel('')
-        image_test = QtGui.QPixmap('/home/apopov/Documents/dev/sct/image_test.jpg')
-        image_label.setPixmap(image_test)
-        return image_label
-
     def merge_layouts(self):
         self.layout_global.addLayout(self.layout_option_settings)
         self.layout_global.addLayout(self.layout_central)
