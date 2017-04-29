@@ -21,6 +21,7 @@ import shutil
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
+from tqdm import tqdm
 
 from msct_parser import Parser
 import sct_utils as sct
@@ -149,15 +150,15 @@ def download_data(url, verbose):
 
     with open(tmp_path, 'wb') as tmp_file:
         total = int(response.headers.get('content-length', 1))
-        dl = 0
+        tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
+                        desc="Status", ascii=True)
+
         for chunk in response.iter_content(chunk_size=8192):
             if chunk:
                 tmp_file.write(chunk)
                 if verbose > 0:
-                    dl += len(chunk)
-                    done = min(int(20 * dl / total), 20)
-                    sys.stdout.write("\r[%s%s] Total: %s MB" % ('=' * done, ' ' * (20 - done), "{:,}".format(total/1000)))
-                    sys.stdout.flush()
+                    dl_chunk = len(chunk)
+                    tqdm_bar.update(dl_chunk)
 
     sct.printv('\nDownload complete', verbose=verbose)
     return tmp_path
