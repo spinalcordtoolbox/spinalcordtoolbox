@@ -1992,6 +1992,7 @@ def get_parser():
 
     return parser
 
+
 class ParamImageVisualization(object):
     def __init__(self, id='0', mode='image', cmap='gray', interp='nearest', vmin='0', vmax='99', vmean='98', vmode='percentile', alpha='1.0'):
         self.id = id
@@ -2003,6 +2004,7 @@ class ParamImageVisualization(object):
         self.vmean = vmean
         self.vmode = vmode
         self.alpha = alpha
+
 
 
 
