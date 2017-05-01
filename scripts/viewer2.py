@@ -260,7 +260,7 @@ class ImagePlot(object):
             1] and 0 <= target_point.z < self.image_dim[2]
 
 
-class ImagePlotMain(ImagePlot):
+class ImagePlotMainPropseg(ImagePlot):
     """
     Inherites ImagePlot
     Class used for displaying the main (right) picture in Propseg Viewer
@@ -268,7 +268,7 @@ class ImagePlotMain(ImagePlot):
     """
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, secondary_plot=None,
                  header=None, number_of_points=0):
-        super(ImagePlotMain, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
+        super(ImagePlotMainPropseg, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
         self.secondary_plot = secondary_plot
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
@@ -422,7 +422,7 @@ class ImagePlotMain(ImagePlot):
         self.secondary_plot.draw_lines('v')
 
 
-class ImagePlotSecond(ImagePlot):
+class ImagePlotSecondPropseg(ImagePlot):
     """
     Inherites ImagePlot
     Class used for displaying the secondary (left) picture in Propseg Viewer
@@ -430,7 +430,7 @@ class ImagePlotSecond(ImagePlot):
     """
     def __init__(self, ax, images, viewer, canvas, main_single_plot, view, line_direction='hv', im_params=None,
                  header=None):
-        super(ImagePlotSecond, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
+        super(ImagePlotSecondPropseg, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
         self.main_plot = main_single_plot
         self.current_position = self.main_plot.current_position
         self.list_previous_lines = []
@@ -736,7 +736,7 @@ class HeaderCore(object):
             self.lb_warning.setStyleSheet("color:red")
 
 
-class Header(HeaderCore):
+class HeaderPropseg(HeaderCore):
     """
     Inherites HeaderCore
     Class that defines header in Propseg Viewer
@@ -831,7 +831,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot = ImagePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
+        self.main_plot = ImagePlotMainPropseg(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
                                         canvas=self.canvas_main, header=self.header, number_of_points=7)
 
     def add_secondary_view(self):
@@ -847,7 +847,7 @@ class MainPannelCore(object):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot = ImagePlotSecond(axis, self.images, self, view='sag', line_direction='',
+        self.second_plot = ImagePlotSecondPropseg(axis, self.images, self, view='sag', line_direction='',
                                             im_params=self.im_params, canvas=self.canvas_second,
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
@@ -857,13 +857,13 @@ class MainPannelCore(object):
         self.layout_global.addLayout(self.layout_central)
 
 
-class MainPannel(MainPannelCore):
+class MainPannelPropseg(MainPannelCore):
     """
     Inherites MainPannelCore
     Class that defines specific main image plot and secondary image plot for Propseg Viewer.
     """
     def __init__(self, images, im_params, window, header):
-        super(MainPannel, self).__init__(images, im_params, window, header)
+        super(MainPannelPropseg, self).__init__(images, im_params, window, header)
 
         self.number_of_points = 12
         self.add_main_view()
@@ -885,7 +885,7 @@ class MainPannel(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot = ImagePlotMain(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
+        self.main_plot = ImagePlotMainPropseg(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
                                         canvas=self.canvas_main, header=self.header,
                                         number_of_points=self.number_of_points)
 
@@ -902,7 +902,7 @@ class MainPannel(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot = ImagePlotSecond(axis, self.images, self, view='sag', line_direction='',
+        self.second_plot = ImagePlotSecondPropseg(axis, self.images, self, view='sag', line_direction='',
                                             im_params=self.im_params, canvas=self.canvas_second,
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
@@ -1042,13 +1042,13 @@ class ControlButtonsCore(object):
             self.header.update_text('warning_undo_beyond_first_point')
 
 
-class ControlButtons(ControlButtonsCore):
+class ControlButtonsPropseg(ControlButtonsCore):
     """
     Inherites ControlButtonsCore
     Class that displays specific button for Propseg Viewer : Skip
     """
     def __init__(self, main_plot, window, header):
-        super(ControlButtons, self).__init__(main_plot, window, header)
+        super(ControlButtonsPropseg, self).__init__(main_plot, window, header)
         self.add_skip_button()
         self.add_classical_buttons()
 
@@ -1134,7 +1134,7 @@ class WindowCore(object):
                              constant_values=(0, 0))
 
 
-class Window(WindowCore):
+class WindowPropseg(WindowCore):
     """
     Inherites Window Core.
     Defines global variables and sets layout in the whole Propseg Viewer.
@@ -1151,7 +1151,7 @@ class Window(WindowCore):
         if not visualization_parameters:
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
 
-        super(Window, self).__init__(list_images, visualization_parameters)
+        super(WindowPropseg, self).__init__(list_images, visualization_parameters)
         self.set_layout_and_launch_viewer()
 
     def set_main_plot(self):
@@ -1208,18 +1208,18 @@ class Window(WindowCore):
         return layout_main
 
     def add_header(self,layout_main):
-        header = Header()
+        header = HeaderPropseg()
         layout_main.addLayout(header.layout_header)
         header.update_text('welcome')
         return (header)
 
     def add_main_pannel(self,layout_main, window, header):
-        main_pannel = MainPannel(self.images, self.im_params, window, header)
+        main_pannel = MainPannelPropseg(self.images, self.im_params, window, header)
         layout_main.addLayout(main_pannel.layout_global)
         return main_pannel
 
     def add_control_buttons(self,layout_main, window):
-        control_buttons = ControlButtons(self.main_pannel.main_plot, window, self.header)
+        control_buttons = ControlButtonsPropseg(self.main_pannel.main_plot, window, self.header)
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
 

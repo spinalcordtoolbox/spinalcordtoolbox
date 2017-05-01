@@ -429,9 +429,9 @@ if __name__ == "__main__":
         sct.run(cmd_image, verbose=False)
 
         #from sct_viewer import ClickViewer
-        from viewer2 import  Window
+        from viewer2 import  WindowPropseg
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
-        viewer = Window([image_input_reoriented])
+        viewer = WindowPropseg([image_input_reoriented])
         if use_viewer == "mask":
             viewer.input_type = 'mask'
             viewer.number_of_slices = 3
