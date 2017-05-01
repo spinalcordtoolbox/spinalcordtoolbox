@@ -49,6 +49,14 @@ class ImagePlot(object):
         self.setup_intensity()
 
     def define_translate_dic(self):
+        """
+        Defines dictionnary to translate the software labels which range is [1;27] into anatomical labels which range is:
+        {50;49} U {1} U [3,26]
+
+        Returns
+        -------
+        dic        dictionnary
+        """
         dic = {'1': 50,
                '2': 49,
                '3': 1,
@@ -96,15 +104,16 @@ class ImagePlot(object):
         else:
             return (cm.get_cmap('gray'), 'nearest', 1.0)
 
-    def refresh(self):
-        self.figs[0].figure.canvas.draw()
-
     def remove_axis_number(self):
         self.axes.set_axis_bgcolor('black')
         self.axes.set_xticks([])
         self.axes.set_yticks([])
 
     def change_intensity(self, event):
+        """
+        Functions that deal with the change of intensity in the image.
+        """
+
         def calc_min_max_intensities(x, y):
             xlim, ylim = self.axes.get_xlim(), self.axes.get_ylim()
             mean_intensity_factor = (x - xlim[0]) / float(xlim[1] - xlim[0])
@@ -126,6 +135,9 @@ class ImagePlot(object):
             self.refresh()
 
     def setup_intensity(self):
+        """
+        Defines the default intensity
+        """
         for i, image in enumerate(self.images):
             flattened_volume = image.flatten()
             first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
@@ -190,6 +202,17 @@ class ImagePlot(object):
                                zoom=True)
 
     def get_event_coordinates(self, event, label=1):
+        """
+        Parameters
+        ----------
+        event           event we must get the coordinates of
+        label           label of the dot
+
+        Returns
+        -------
+        point           Coordinate( [ event.x , event.y , event.z , label ] )
+
+        """
         point = None
         try:
             if self.view == 'ax':
@@ -266,6 +289,16 @@ class ImagePlotMain(ImagePlot):
         self.figs[-1].figure.canvas.draw()
 
     def add_point_to_list_points(self, current_point):
+        """
+        Manages the adding of a point to self.list_points :
+            - Auto way : checks if there is a next point
+            - Manual way : remplaces the dot that has already be made on the slice.
+
+        Parameters
+        ----------
+        current_point Coordinate
+        """
+
         def add_point_auto(self):
             if len(self.list_points) < self.number_of_points:
                 self.list_points.append(current_point)
@@ -318,6 +351,9 @@ class ImagePlotMain(ImagePlot):
             self.secondary_plot.draw_lines('v')
 
     def change_intensity_on_secondary_plot(self, event):
+        """
+        Updates the intensity on the secondary plot according to the intensity of the first.
+        """
         if self.secondary_plot:
             self.secondary_plot.change_intensity(event)
 
@@ -325,6 +361,12 @@ class ImagePlotMain(ImagePlot):
         self.figs[-1].figure.canvas.draw()
 
     def draw_dots(self):
+        """
+        Draw dots on selected points on the main picture
+
+        Warning : the picture in main plot image is the projection of a 3D image.
+        That is why, we have to carefully determinate which coordinates are x or y, to properly draw the dot.
+        """
         def select_right_dimensions(ipoint, view):
             if view == 'ax':
                 return ipoints.z, ipoints.y
@@ -365,6 +407,9 @@ class ImagePlotMain(ImagePlot):
         self.header.update_text('mode_switched')
 
     def reset_data(self):
+        """
+        Resets all the data when user switches mode, ie Manual Mode => Auto Mode or Auto Mode => Manual Mode.
+        """
         self.list_points = []
         if self.bool_is_mode_auto:
             self.number_of_points = 7
@@ -397,6 +442,20 @@ class ImagePlotSecond(ImagePlot):
         self.refresh()
 
     def calc_line(self, line_direction, line_position, line_color='white'):
+        """
+        Creates a line according to coordinate line_position and direnction line_direction.
+
+        Parameters
+        ----------
+        line_direction      {'h','v'}
+        line_position       Coordinate
+        line_color          {'white','red'}
+
+        Returns
+        -------
+        line                matplotlit.line2D
+
+        """
         def calc_dic_line_coor(current_position, view):
             if view == 'ax':
                 return {'v': [[current_position.y, current_position.y], [-10000, 10000]],
@@ -426,6 +485,9 @@ class ImagePlotSecond(ImagePlot):
             self.axes.add_line(self.list_previous_lines[-1])
 
     def draw_lines(self, line_direction):
+        """
+        Global function that manages the drawing of all the lines on the secondary image.
+        """
         self.draw_current_line(line_direction)
         self.draw_previous_lines(line_direction)
         self.refresh()
