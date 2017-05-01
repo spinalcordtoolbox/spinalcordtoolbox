@@ -1133,9 +1133,6 @@ class WindowCore(object):
                              'constant',
                              constant_values=(0, 0))
 
-    def start(self):
-        return self.list_points_useful_notation
-
 
 class Window(WindowCore):
     """
@@ -1188,43 +1185,43 @@ class Window(WindowCore):
         self.list_slices = []
 
     def set_layout_and_launch_viewer(self):
-        def launch_main_window():
-            system = QtGui.QApplication(sys.argv)
-            w = QtGui.QWidget()
-            w.resize(740, 850)
-            w.setWindowTitle('Propseg Viewer')
-            w.show()
-            return (w, system)
-
-        def add_layout_main(window):
-            layout_main = QtGui.QVBoxLayout()
-            layout_main.setAlignment(QtCore.Qt.AlignTop)
-            window.setLayout(layout_main)
-            return layout_main
-
-        def add_header(layout_main):
-            header = Header()
-            layout_main.addLayout(header.layout_header)
-            header.update_text('welcome')
-            return (header)
-
-        def add_main_pannel(layout_main, window, header):
-            main_pannel = MainPannel(self.images, self.im_params, window, header)
-            layout_main.addLayout(main_pannel.layout_global)
-            return main_pannel
-
-        def add_control_buttons(layout_main, window):
-            control_buttons = ControlButtons(self.main_pannel.main_plot, window, self.header)
-            layout_main.addLayout(control_buttons.layout_buttons)
-            return control_buttons
-
-        (window, system) = launch_main_window()
-        layout_main = add_layout_main(window)
-        self.header = add_header(layout_main)
-        self.main_pannel = add_main_pannel(layout_main, self, self.header)
-        self.control_buttons = add_control_buttons(layout_main, self)
+        (window, system) = self.launch_main_window()
+        layout_main = self.add_layout_main(window)
+        self.header = self.add_header(layout_main)
+        self.main_pannel = self.add_main_pannel(layout_main, self, self.header)
+        self.control_buttons = self.add_control_buttons(layout_main, self)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
+
+    def launch_main_window(self):
+        system = QtGui.QApplication(sys.argv)
+        w = QtGui.QWidget()
+        w.resize(740, 850)
+        w.setWindowTitle('Propseg Viewer')
+        w.show()
+        return (w, system)
+
+    def add_layout_main(self,window):
+        layout_main = QtGui.QVBoxLayout()
+        layout_main.setAlignment(QtCore.Qt.AlignTop)
+        window.setLayout(layout_main)
+        return layout_main
+
+    def add_header(self,layout_main):
+        header = Header()
+        layout_main.addLayout(header.layout_header)
+        header.update_text('welcome')
+        return (header)
+
+    def add_main_pannel(self,layout_main, window, header):
+        main_pannel = MainPannel(self.images, self.im_params, window, header)
+        layout_main.addLayout(main_pannel.layout_global)
+        return main_pannel
+
+    def add_control_buttons(self,layout_main, window):
+        control_buttons = ControlButtons(self.main_pannel.main_plot, window, self.header)
+        layout_main.addLayout(control_buttons.layout_buttons)
+        return control_buttons
 
 
 class WindowLabelVertebrae(WindowCore):
