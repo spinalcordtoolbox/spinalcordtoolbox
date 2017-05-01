@@ -18,12 +18,16 @@ from msct_image import Image
 from sct_utils import printv, extract_fname
 
 ALMOST_ZERO = 0.000000001
+
+
 class Param:
     def __init__(self):
         self.verbose = '1'
 
 # PARSER
 # ==========================================================================================
+
+
 def get_parser():
     param = Param()
 
@@ -61,6 +65,11 @@ def get_parser():
     parser.add_option(name='-mean',
                       type_value='multiple_choice',
                       description='Average data across dimension.',
+                      mandatory=False,
+                      example=['x', 'y', 'z', 't'])
+    parser.add_option(name='-rms',
+                      type_value='multiple_choice',
+                      description='Compute root-mean-squared across dimension.',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
     parser.add_option(name='-std',
@@ -227,7 +236,7 @@ def main(args = None):
         elif len(sigmas) != len(data.shape):
             printv(parser.usage.generate(error='ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
-        sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
+        sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
         data_out = laplacian(data, sigmas)
 
@@ -245,14 +254,21 @@ def main(args = None):
     elif '-mean' in arguments:
         from numpy import mean
         dim = dim_list.index(arguments['-mean'])
-        if dim+1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
         data_out = mean(data, dim)
+
+    elif '-rms' in arguments:
+        from numpy import mean, sqrt, square
+        dim = dim_list.index(arguments['-rms'])
+        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., np.newaxis]
+        data_out = sqrt(mean(square(data.astype(float)), dim))
 
     elif '-std' in arguments:
         from numpy import std
         dim = dim_list.index(arguments['-std'])
-        if dim+1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
         data_out = std(data, dim)
 
@@ -263,7 +279,7 @@ def main(args = None):
         elif len(sigmas) != len(data.shape):
             printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
-        sigmas = [sigmas[i] / dim[i+4] for i in range(3)]
+        sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
         data_out = smooth(data, sigmas)
 
@@ -285,7 +301,7 @@ def main(args = None):
         data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
 
     elif '-symmetrize' in arguments:
-        data_out = (data + data[range(data.shape[0]-1, -1, -1), :, :]) / float(2)
+        data_out = (data + data[range(data.shape[0] - 1, -1, -1), :, :]) / float(2)
 
     elif '-mi' in arguments:
         # input 1 = from flag -i --> im
@@ -305,7 +321,6 @@ def main(args = None):
         im_2 = Image(arguments['-corr'])
         compute_similarity(im.data, im_2.data, fname_out, metric='corr', verbose=verbose)
         data_out = None
-
 
     # if no flag is set
     else:
@@ -347,9 +362,10 @@ def main(args = None):
     # display message
     if data_out is not None:
         printv('\nDone! To view results, type:', verbose)
-        printv('fslview '+fname_out+' &\n', verbose, 'info')
+        printv('fslview ' + fname_out + ' &\n', verbose, 'info')
     else:
-        printv('\nDone! File created: '+fname_out, verbose, 'info')
+        printv('\nDone! File created: ' + fname_out, verbose, 'info')
+
 
 def otsu(data, nbins):
     from skimage.filters import threshold_otsu
@@ -434,7 +450,7 @@ def get_data(list_fname):
     # check that every images have same shape
     for i in range(1, len(nii)):
         if not np.shape(nii[i].data) == np.shape(data0):
-            printv('\nWARNING: shape('+list_fname[i]+')='+str(np.shape(nii[i].data))+' incompatible with shape('+list_fname[0]+')='+str(np.shape(data0)), 1, 'warning')
+            printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(nii[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data0)), 1, 'warning')
             printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
             data = concatenate_along_4th_dimension(data, nii[i].data)
@@ -486,7 +502,7 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     from numpy import asarray
     data_in = asarray(data_in)
 
-    block_radius_max = min(data_in.shape)-1
+    block_radius_max = min(data_in.shape) - 1
     block_radius = block_radius_max if block_radius > block_radius_max else block_radius
 
     sigma = estimate_sigma(data_in)
@@ -513,6 +529,7 @@ def laplacian(data, sigmas):
     return gaussian_laplace(data.astype(float), sigmas)
     # from scipy.ndimage.filters import laplace
     # return laplace(data.astype(float))
+
 
 def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
     '''
@@ -553,15 +570,15 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
         plt.title('Similarity: ' + metric_full + ' = ' + str(res))
         plt.savefig('fig_similarity.png')
 
-    printv('\n'+ metric_full +': ' + str(res), verbose, 'info')
+    printv('\n' + metric_full + ': ' + str(res), verbose, 'info')
 
     path_out, filename_out, ext_out = extract_fname(fname_out)
     if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
-        printv('ERROR: the output file should a text file or a pickle file. Received extension: '+ext_out, 1, 'error')
+        printv('ERROR: the output file should a text file or a pickle file. Received extension: ' + ext_out, 1, 'error')
 
     elif ext_out == '.txt':
         file_out = open(fname_out, 'w')
-        file_out.write(metric_full+': \n'+str(res))
+        file_out.write(metric_full + ': \n' + str(res))
         file_out.close()
 
     else:
@@ -570,6 +587,7 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
             pickle.dump(res, gzip.open(fname_out, 'wb'), protocol=2)
         else:
             pickle.dump(res, open(fname_out, 'w'), protocol=2)
+
 
 def mutual_information(x, y, nbins=32, normalized=False):
     """
@@ -587,6 +605,7 @@ def mutual_information(x, y, nbins=32, normalized=False):
         mi = sklearn.metrics.mutual_info_score(None, None, contingency=c_xy)
     # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
     return mi
+
 
 def correlation(x, y, type='pearson'):
     """
@@ -683,7 +702,6 @@ def correlation(x, y, type='pearson'):
 
     # k-means clustering
     # from sklearn.cluster import KMeans
-
 
 
 # START PROGRAM

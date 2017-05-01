@@ -135,7 +135,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
         mask = nii_mask.data
 
     # fit tensor model
-    printv('Computing tensor using "'+method+'" method...', param.verbose)
+    printv('Computing tensor using "' + method + '" method...', param.verbose)
     import dipy.reconst.dti as dti
     if method == 'standard':
         tenmodel = dti.TensorModel(gtab)
@@ -157,22 +157,22 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     # FA
     from dipy.reconst.dti import fractional_anisotropy
     nii.data = fractional_anisotropy(tenfit.evals)
-    nii.setFileName(prefix+'FA.nii.gz')
+    nii.setFileName(prefix + 'FA.nii.gz')
     nii.save('float32')
     # MD
     from dipy.reconst.dti import mean_diffusivity
     nii.data = mean_diffusivity(tenfit.evals)
-    nii.setFileName(prefix+'MD.nii.gz')
+    nii.setFileName(prefix + 'MD.nii.gz')
     nii.save('float32')
     # RD
     from dipy.reconst.dti import radial_diffusivity
     nii.data = radial_diffusivity(tenfit.evals)
-    nii.setFileName(prefix+'RD.nii.gz')
+    nii.setFileName(prefix + 'RD.nii.gz')
     nii.save('float32')
     # AD
     from dipy.reconst.dti import axial_diffusivity
     nii.data = axial_diffusivity(tenfit.evals)
-    nii.setFileName(prefix+'AD.nii.gz')
+    nii.setFileName(prefix + 'AD.nii.gz')
     nii.save('float32')
 
     return True

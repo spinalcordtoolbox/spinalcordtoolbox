@@ -125,7 +125,7 @@ class PCA:
         if self.verbose == 2:
             import matplotlib.pyplot as plt
             eig_val = [pair[0] for pair in self.eig_pairs]
-            eig_val = 100*np.asarray(eig_val)/float(np.sum(eig_val))
+            eig_val = 100 * np.asarray(eig_val) / float(np.sum(eig_val))
             n = 100
             index = range(n)
             eig_val_to_plot = np.cumsum(eig_val[:n])
@@ -134,7 +134,7 @@ class PCA:
             plt.bar(index, eig_val_to_plot, width, color='b')
             plt.axvline(len(self.kept_eigenval), color='r')
             plt.ylabel('Eigenvalues (in %)')
-            plt.axis([-1, n, 0, max(eig_val_to_plot)+10])
+            plt.axis([-1, n, 0, max(eig_val_to_plot) + 10])
             plt.plot()
             plt.show()
 
@@ -156,7 +156,7 @@ class PCA:
         """
         mean_im = []
         for row in self.dataset:
-            m = sum(row)/self.J
+            m = sum(row) / self.J
             mean_im.append(m)
         mean_im = np.array([mean_im]).T
         return mean_im
@@ -171,7 +171,7 @@ class PCA:
         """
         covariance_matrix = np.zeros((self.N, self.N))
         for j in range(0, self.J):
-            covariance_matrix += float(1)/self.J*(self.dataset[:, j].reshape(self.N, 1) - self.mean_data_vect)\
+            covariance_matrix += float(1) / self.J * (self.dataset[:, j].reshape(self.N, 1) - self.mean_data_vect)\
                 .dot((self.dataset[:, j].reshape(self.N, 1) - self.mean_data_vect).T)
         return covariance_matrix
 
@@ -224,7 +224,7 @@ class PCA:
                 kept_eigenvalues.append(eig[0])
                 first = 0
             else:
-                if (sum(kept_eigenvalues) + eig[0])/s <= self.k:
+                if (sum(kept_eigenvalues) + eig[0]) / s <= self.k:
                     kept_eigenvalues.append(eig[0])
                     kept_modes = np.hstack((kept_modes, np.asarray(eig[1]).reshape(self.N, 1)))
                 else:
@@ -309,7 +309,7 @@ class PCA:
 
             # dimensions of the subfigure
             x = int(sqrt(len(self.kept_eigenval)))
-            y = int(len(self.kept_eigenval)/x)
+            y = int(len(self.kept_eigenval) / x)
             x += 1
             a = fig.add_subplot(x, y, i_fig + 1)
             a.set_title('Mode {}'.format(i_fig))
@@ -361,7 +361,7 @@ class PCA:
         im_mean.set_interpolation('nearest')
         im_mean.set_cmap('gray')
 
-        plus_vect = mean_vect + eigen_value*eigen_vector
+        plus_vect = mean_vect + eigen_value * eigen_vector
         plot_plus = fig.add_subplot(1, 5, 4)
         plot_plus.set_title('Mean + 1 lambda * eigen vector')
         im_plus = plot_plus.imshow(plus_vect.reshape(n, n).astype(np.float))
@@ -403,9 +403,9 @@ class PCA:
         else:
             im_dir = 'mode_images_without_target'
         if im_dir not in os.listdir('.'):
-            sct.run('mkdir ./'+im_dir)
+            sct.run('mkdir ./' + im_dir)
         if nb_modes is None:
-            nb_modes = int(round(len(self.kept_eigenval)/3))
+            nb_modes = int(round(len(self.kept_eigenval) / 3))
 
         elif len(self.kept_eigenval) < nb_modes:
             print "Can't plot {} modes, not enough modes kept. " \
@@ -461,7 +461,7 @@ class PCA:
                               + ' modes in total)')
                     plt.xlabel('Mode ' + str(i))
                     plt.ylabel('Mode ' + str(j))
-                    plt.savefig(im_dir+'/modes_' + str(i) + '_' + str(j) + '.png')
+                    plt.savefig(im_dir + '/modes_' + str(i) + '_' + str(j) + '.png')
                     if not first:
                         plt.close()
                     else:

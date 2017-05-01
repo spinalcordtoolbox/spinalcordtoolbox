@@ -15,7 +15,7 @@ sys.path.append(path_sct + '/scripts')
 
 # DEFAULT PARAMETERS
 class Param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
@@ -53,7 +53,8 @@ def main(file_to_denoise, param, output_file_name) :
         print 'Applying Non-local mean filter...'
         if param.parameter == 'Rician':
             den = nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
-        else : den = nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
+        else :
+            den = nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
     else:
         # # Process for manual detecting of background
         mask = data > noise_threshold
@@ -62,12 +63,12 @@ def main(file_to_denoise, param, output_file_name) :
         print 'Applying Non-local mean filter...'
         if param.parameter == 'Rician':
             den = nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
-        else: den = nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
+        else:
+            den = nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
 
     t = time()
     print("total time", time() - t)
     print("vol size", den.shape)
-
 
     axial_middle = data.shape[2] / 2
 
@@ -93,14 +94,15 @@ def main(file_to_denoise, param, output_file_name) :
 
         plt.show()
 
-    #Save files
+    # Save files
     img_denoise = nib.Nifti1Image(den, None, hdr_0)
     img_diff = nib.Nifti1Image(diff_3d, None, hdr_0)
     if output_file_name != None :
-        output_file_name =output_file_name
-    else: output_file_name = file + '_denoised' + ext
-    nib.save(img_denoise,output_file_name)
-    nib.save(img_diff, file + '_difference' +ext)
+        output_file_name = output_file_name
+    else:
+        output_file_name = file + '_denoised' + ext
+    nib.save(img_denoise, output_file_name)
+    nib.save(img_diff, file + '_difference' + ext)
 
 
 #=======================================================================================================================
@@ -108,7 +110,6 @@ def main(file_to_denoise, param, output_file_name) :
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -122,7 +123,7 @@ if __name__ == "__main__":
                       type_value="multiple_choice",
                       description="Type of supposed noise: Rician or Gaussian. Default is Rician.",
                       mandatory=False,
-                      example=["Rician","Gaussian"],
+                      example=["Rician", "Gaussian"],
                       default_value="Rician")
     parser.add_option(name="-d",
                       type_value="int",
@@ -141,7 +142,7 @@ if __name__ == "__main__":
                       type_value="multiple_choice",
                       description="Remove temporary files. Specify 0 to get access to temporary files.",
                       mandatory=False,
-                      example=['0','1'],
+                      example=['0', '1'],
                       default_value="1")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -158,16 +159,18 @@ if __name__ == "__main__":
 
     if "-i" in arguments:
         file_to_denoise = arguments["-i"]
-    else: file_to_denoise = None
+    else:
+        file_to_denoise = None
     if "-o" in arguments:
         output_file_name = arguments["-o"]
-    else: output_file_name = None
+    else:
+        output_file_name = None
     if "-std" in arguments:
         std_noise = float(arguments['-std'])
 
     param = Param()
     param.verbose = verbose
-    param.remove_temp_files =remove_temp_files
+    param.remove_temp_files = remove_temp_files
     param.parameter = parameter
 
     main(file_to_denoise, param, output_file_name)

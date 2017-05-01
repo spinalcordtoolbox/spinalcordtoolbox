@@ -48,28 +48,28 @@ def moco(param):
 
     # print arguments
     sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  Input file ............'+file_data, param.verbose)
-    sct.printv('  Reference file ........'+file_target, param.verbose)
-    sct.printv('  Polynomial degree .....'+param.param[0], param.verbose)
-    sct.printv('  Smoothing kernel ......'+param.param[1], param.verbose)
-    sct.printv('  Gradient step .........'+param.param[2], param.verbose)
-    sct.printv('  Metric ................'+param.param[3], param.verbose)
-    sct.printv('  Todo ..................'+todo, param.verbose)
-    sct.printv('  Mask  .................'+param.fname_mask, param.verbose)
-    sct.printv('  Output mat folder .....'+folder_mat, param.verbose)
+    sct.printv('  Input file ............' + file_data, param.verbose)
+    sct.printv('  Reference file ........' + file_target, param.verbose)
+    sct.printv('  Polynomial degree .....' + param.param[0], param.verbose)
+    sct.printv('  Smoothing kernel ......' + param.param[1], param.verbose)
+    sct.printv('  Gradient step .........' + param.param[2], param.verbose)
+    sct.printv('  Metric ................' + param.param[3], param.verbose)
+    sct.printv('  Todo ..................' + todo, param.verbose)
+    sct.printv('  Mask  .................' + param.fname_mask, param.verbose)
+    sct.printv('  Output mat folder .....' + folder_mat, param.verbose)
 
     # create folder for mat files
     sct.create_folder(folder_mat)
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    data_im = Image(file_data+ext)
+    data_im = Image(file_data + ext)
     nx, ny, nz, nt, px, py, pz, pt = data_im.dim
-    sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
+    sct.printv(('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt)), verbose)
 
     # copy file_target to a temporary file
     sct.printv('\nCopy file_target to a temporary file...', verbose)
-    sct.run('cp '+file_target+ext+' target.nii')
+    sct.run('cp ' + file_target + ext + ' target.nii')
     file_target = 'target'
 
     # Split data along T dimension
@@ -93,7 +93,7 @@ def moco(param):
         it = index[indice_index]
         file_data_splitT_num.append(file_data_splitT + str(it).zfill(4))
         file_data_splitT_moco_num.append(file_data + suffix + '_T' + str(it).zfill(4))
-        sct.printv(('\nVolume '+str((it))+'/'+str(nt-1)+':'), verbose)
+        sct.printv(('\nVolume ' + str((it)) + '/' + str(nt - 1) + ':'), verbose)
         file_mat[it] = folder_mat + 'mat.T' + str(it)
 
         # run 3D registration
@@ -102,30 +102,30 @@ def moco(param):
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
         if param.iterative_averaging and indice_index < 10 and failed_transfo[it] == 0:
-            sct.run('sct_maths -i '+file_target+ext+' -mul '+str(indice_index+1)+' -o '+file_target+ext)
-            sct.run('sct_maths -i '+file_target+ext+' -add '+file_data_splitT_moco_num[it]+ext+' -o '+file_target+ext)
-            sct.run('sct_maths -i '+file_target+ext+' -div '+str(indice_index+2)+' -o '+file_target+ext)
+            sct.run('sct_maths -i ' + file_target + ext + ' -mul ' + str(indice_index + 1) + ' -o ' + file_target + ext)
+            sct.run('sct_maths -i ' + file_target + ext + ' -add ' + file_data_splitT_moco_num[it] + ext + ' -o ' + file_target + ext)
+            sct.run('sct_maths -i ' + file_target + ext + ' -div ' + str(indice_index + 2) + ' -o ' + file_target + ext)
 
     # Replace failed transformation with the closest good one
     sct.printv(('\nReplace failed transformations...'), verbose)
     fT = [i for i, j in enumerate(failed_transfo) if j == 1]
     gT = [i for i, j in enumerate(failed_transfo) if j == 0]
     for it in range(len(fT)):
-        abs_dist = [abs(gT[i]-fT[it]) for i in range(len(gT))]
+        abs_dist = [abs(gT[i] - fT[it]) for i in range(len(gT))]
         if not abs_dist == []:
             index_good = abs_dist.index(min(abs_dist))
-            sct.printv('  transfo #'+str(fT[it])+' --> use transfo #'+str(gT[index_good]), verbose)
+            sct.printv('  transfo #' + str(fT[it]) + ' --> use transfo #' + str(gT[index_good]), verbose)
             # copy transformation
-            sct.run('cp '+file_mat[gT[index_good]]+'Warp.nii.gz'+' '+file_mat[fT[it]]+'Warp.nii.gz')
+            sct.run('cp ' + file_mat[gT[index_good]] + 'Warp.nii.gz' + ' ' + file_mat[fT[it]] + 'Warp.nii.gz')
             # apply transformation
-            sct.run('sct_apply_transfo -i '+file_data_splitT_num[fT[it]]+'.nii -d '+file_target+'.nii -w '+file_mat[fT[it]]+'Warp.nii.gz'+' -o '+file_data_splitT_moco_num[fT[it]]+'.nii'+' -x '+param.interp, verbose)
+            sct.run('sct_apply_transfo -i ' + file_data_splitT_num[fT[it]] + '.nii -d ' + file_target + '.nii -w ' + file_mat[fT[it]] + 'Warp.nii.gz' + ' -o ' + file_data_splitT_moco_num[fT[it]] + '.nii' + ' -x ' + param.interp, verbose)
         else:
             # exit program if no transformation exists.
-            sct.printv('\nERROR in '+os.path.basename(__file__)+': No good transformation exist. Exit program.\n', verbose, 'error')
+            sct.printv('\nERROR in ' + os.path.basename(__file__) + ': No good transformation exist. Exit program.\n', verbose, 'error')
             sys.exit(2)
 
     # Merge data along T
-    file_data_moco = file_data+suffix
+    file_data_moco = file_data + suffix
     if todo != 'estimate':
         sct.printv('\nMerge data back along T...', verbose)
         from sct_image import concat_data
@@ -140,7 +140,7 @@ def moco(param):
 
     # delete file target.nii (to avoid conflict if this function is run another time)
     sct.printv('\nRemove temporary file...', verbose)
-    #os.remove('target.nii')
+    # os.remove('target.nii')
     sct.run('rm target.nii')
 
 
@@ -161,24 +161,24 @@ def register(param, file_src, file_dest, file_mat, file_out):
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
         cmd = 'isct_antsSliceRegularizedRegistration' \
-              ' -p '+param.param[0]+ \
-              ' --transform Translation['+param.param[2]+']' \
-              ' --metric '+param.param[3]+'['+file_dest+'.nii, '+file_src+'.nii, 1, '+metric_radius+', Regular, 0.2]' \
+              ' -p ' + param.param[0] + \
+              ' --transform Translation[' + param.param[2] + ']' \
+              ' --metric ' + param.param[3] + '[' + file_dest + '.nii, ' + file_src + '.nii, 1, ' + metric_radius + ', Regular, 0.2]' \
               ' --iterations 5' \
               ' --shrinkFactors 1' \
-              ' --smoothingSigmas '+param.param[1]+ \
-              ' --output ['+file_mat+','+file_out+'.nii]' \
-              +sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
+              ' --smoothingSigmas ' + param.param[1] + \
+              ' --output [' + file_mat + ',' + file_out + '.nii]' \
+              + sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
         if not param.fname_mask == '':
-            cmd += ' -x '+param.fname_mask
+            cmd += ' -x ' + param.fname_mask
     if param.todo == 'apply':
-        cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'Warp.nii.gz'+' -o '+file_out+'.nii'+' -x '+param.interp
+        cmd = 'sct_apply_transfo -i ' + file_src + '.nii -d ' + file_dest + '.nii -w ' + file_mat + 'Warp.nii.gz' + ' -o ' + file_out + '.nii' + ' -x ' + param.interp
     status, output = sct.run(cmd, param.verbose)
 
     # check if output file exists
-    if not os.path.isfile(file_out+'.nii'):
+    if not os.path.isfile(file_out + '.nii'):
         # sct.printv(output, verbose, 'error')
-        sct.printv('WARNING in '+os.path.basename(__file__)+': Improper calculation of mutual information. Either the mask you provided is too small, or the subject moved a lot. If you see too many messages like this try with a bigger mask. Using previous transformation for this volume.', param.verbose, 'warning')
+        sct.printv('WARNING in ' + os.path.basename(__file__) + ': Improper calculation of mutual information. Either the mask you provided is too small, or the subject moved a lot. If you see too many messages like this try with a bigger mask. Using previous transformation for this volume.', param.verbose, 'warning')
         failed_transfo = 1
 
     # return status of failure
@@ -207,28 +207,29 @@ def register(param, file_src, file_dest, file_mat, file_out):
 #=======================================================================================================================
 # spline
 #=======================================================================================================================
-def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
+def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
     # append path that contains scripts, to be able to load modules
     sys.path.append(path_sct + '/scripts')
     import sct_utils as sct
 
-    sct.printv('\n\n\n------------------------------------------------------------------------------',verbose)
-    sct.printv('Spline Regularization along T: Smoothing Patient Motion...',verbose)
+    sct.printv('\n\n\n------------------------------------------------------------------------------', verbose)
+    sct.printv('Spline Regularization along T: Smoothing Patient Motion...', verbose)
 
     file_mat = [[[] for i in range(nz)] for i in range(nt)]
     for it in range(nt):
         for iz in range(nz):
             file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz) + '.txt'
 
-    #Copying the existing Matrices to another folder
+    # Copying the existing Matrices to another folder
     old_mat = folder_mat + 'old/'
-    if not os.path.exists(old_mat): os.makedirs(old_mat)
+    if not os.path.exists(old_mat):
+        os.makedirs(old_mat)
     cmd = 'cp ' + folder_mat + '*.txt ' + old_mat
     status, output = sct.run(cmd, verbose)
 
-    sct.printv('\nloading matrices...',verbose)
+    sct.printv('\nloading matrices...', verbose)
     X = [[[] for i in range(nt)] for i in range(nz)]
     Y = [[[] for i in range(nt)] for i in range(nz)]
     X_smooth = [[[] for i in range(nt)] for i in range(nz)]
@@ -239,11 +240,11 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
             Matrix = np.loadtxt(file)
             file.close()
 
-            X[iz][it] = Matrix[0,3]
-            Y[iz][it] = Matrix[1,3]
+            X[iz][it] = Matrix[0, 3]
+            Y[iz][it] = Matrix[1, 3]
 
     # Generate motion splines
-    sct.printv('\nGenerate motion splines...',verbose)
+    sct.printv('\nGenerate motion splines...', verbose)
     T = np.arange(nt)
     if graph:
         import pylab as pl
@@ -261,12 +262,12 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
         X_smooth[iz][:] = spline(T)
 
         if graph:
-            pl.plot(T,X_smooth[iz][:],label='spline_smoothing')
-            pl.plot(T,X[iz][:],marker='*',linestyle='None',label='original_val')
-            if len(index_b0)!=0:
+            pl.plot(T, X_smooth[iz][:], label='spline_smoothing')
+            pl.plot(T, X[iz][:], marker='*', linestyle='None', label='original_val')
+            if len(index_b0) != 0:
                 T_b0 = [T[i_b0] for i_b0 in index_b0]
                 X_b0 = [X[iz][i_b0] for i_b0 in index_b0]
-                pl.plot(T_b0,X_b0,marker='D',linestyle='None',color='k',label='b=0')
+                pl.plot(T_b0, X_b0, marker='D', linestyle='None', color='k', label='b=0')
             pl.title('X')
             pl.grid()
             pl.legend()
@@ -283,34 +284,34 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
         Y_smooth[iz][:] = spline(T)
 
         if graph:
-            pl.plot(T,Y_smooth[iz][:],label='spline_smoothing')
-            pl.plot(T,Y[iz][:],marker='*', linestyle='None',label='original_val')
-            if len(index_b0)!=0:
+            pl.plot(T, Y_smooth[iz][:], label='spline_smoothing')
+            pl.plot(T, Y[iz][:], marker='*', linestyle='None', label='original_val')
+            if len(index_b0) != 0:
                 T_b0 = [T[i_b0] for i_b0 in index_b0]
                 Y_b0 = [Y[iz][i_b0] for i_b0 in index_b0]
-                pl.plot(T_b0,Y_b0,marker='D',linestyle='None',color='k',label='b=0')
+                pl.plot(T_b0, Y_b0, marker='D', linestyle='None', color='k', label='b=0')
             pl.title('Y')
             pl.grid()
             pl.legend()
             pl.show()
 
-    #Storing the final Matrices
-    sct.printv('\nStoring the final Matrices...',verbose)
+    # Storing the final Matrices
+    sct.printv('\nStoring the final Matrices...', verbose)
     for iz in range(nz):
         for it in range(nt):
             file =  open(file_mat[it][iz])
             Matrix = np.loadtxt(file)
             file.close()
 
-            Matrix[0,3] = X_smooth[iz][it]
-            Matrix[1,3] = Y_smooth[iz][it]
+            Matrix[0, 3] = X_smooth[iz][it]
+            Matrix[1, 3] = Y_smooth[iz][it]
 
-            file =  open(file_mat[it][iz],'w')
+            file =  open(file_mat[it][iz], 'w')
             np.savetxt(file_mat[it][iz], Matrix, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
     sct.printv('\n...Done. Patient motion has been smoothed', verbose)
-    sct.printv('------------------------------------------------------------------------------\n',verbose)
+    sct.printv('------------------------------------------------------------------------------\n', verbose)
 
 
 #=======================================================================================================================
@@ -325,7 +326,7 @@ def combine_matrix(param):
 
     sct.printv('\nCombine matrices...', param.verbose)
     # list all mat files in source mat folder
-    m2c_fnames = [ fname for fname in os.listdir(param.mat_2_combine) if os.path.isfile(os.path.join(param.mat_2_combine, fname)) ]
+    m2c_fnames = [fname for fname in os.listdir(param.mat_2_combine) if os.path.isfile(os.path.join(param.mat_2_combine, fname))]
     # loop across files
     for fname in m2c_fnames:
         if os.path.isfile(os.path.join(param.mat_final, fname)):

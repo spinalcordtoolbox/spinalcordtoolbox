@@ -39,7 +39,7 @@ ALMOST_ZERO = 0.000001
 class Param:
     def __init__(self):
         self.method = 'wath'
-        self.path_label = path_sct+'/data/PAM50/atlas/'
+        self.path_label = path_sct + '/data/PAM50/atlas/'
         self.verbose = 1
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
@@ -48,7 +48,7 @@ class Param:
         self.file_info_label = 'info_label.txt'
         # self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
-                          '10'] # STD of the assumed gaussian-distributed noise
+                          '10']  # STD of the assumed gaussian-distributed noise
 
 
 def get_parser():
@@ -69,7 +69,7 @@ def get_parser():
                       description='Folder containing WM tract labels, or single label file.',
                       mandatory=False,
                       default_value='./label/atlas',
-                      example=path_sct+'/data/atlas')
+                      example=path_sct + '/data/atlas')
     parser.add_option(name='-l',
                       type_value='str',
                       description='Label IDs to extract the metric from. Default = all labels. Separate labels with ",". To select a group of consecutive labels use ":". Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is computed using all tracts, but only values of the selected tracts are reported.',
@@ -110,7 +110,7 @@ bin: binarize mask (threshold=0.5)""",
                       default_value=0)
     parser.add_option(name='-o',
                       type_value='file_output',
-                      description="""File name (including the file extension) of the output result file collecting the metric estimation results. \nThree file types are available: a CSV text file (extension .txt), a MS Excel file (extension .xls) and a pickle file (extension .pickle). Default: """+param_default.fname_output,
+                      description="""File name (including the file extension) of the output result file collecting the metric estimation results. \nThree file types are available: a CSV text file (extension .txt), a MS Excel file (extension .xls) and a pickle file (extension .pickle). Default: """ + param_default.fname_output,
                       mandatory=False,
                       default_value=param_default.fname_output)
     parser.add_option(name='-output-map',
@@ -183,7 +183,7 @@ bin: binarize mask (threshold=0.5)""",
 
     str_section = """\n
 To list white matter atlas labels:
-""" + os.path.basename(__file__) + """ -f """+path_sct+"""/data/atlas
+""" + os.path.basename(__file__) + """ -f """ + path_sct + """/data/atlas
 
 To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
 """ + os.path.basename(__file__) + """ -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
@@ -227,7 +227,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         single_label = 0
         path_label = sct.slash_at_the_end(path_label, 1)
     else:
-        sct.printv('\nERROR: '+path_label+' does not exist.', 1, 'error')
+        sct.printv('\nERROR: ' + path_label + ' does not exist.', 1, 'error')
 
     # adjust file names and parameters for old MNI-Poly-AMU template
     if not single_label:
@@ -262,19 +262,20 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # print parameters
     print '\nChecked parameters:'
-    print '  data ...................... '+fname_data
-    print '  label ..................... '+path_label
-    print '  method .................... '+method
-    print '  slices of interest ........ '+slices_of_interest
-    print '  vertebral levels .......... '+vertebral_levels
-    print '  vertebral labeling file.... '+fname_vertebral_labeling
-    print '  advanced parameters ....... '+str(adv_param)+'\n'
+    print '  data ...................... ' + fname_data
+    print '  path to label ............. ' + path_label
+    print '  label ..................... ' + labels_user
+    print '  method .................... ' + method
+    print '  slices of interest ........ ' + slices_of_interest
+    print '  vertebral levels .......... ' + vertebral_levels
+    print '  vertebral labeling file.... ' + fname_vertebral_labeling
+    print '  advanced parameters ....... ' + str(adv_param) + '\n'
 
     # parse labels according to the file info_label.txt
     if not single_label:
         indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
         # check syntax of labels asked by user
-        labels_id_user = check_labels(indiv_labels_ids+combined_labels_ids, parse_label_ID_groups([labels_user])[0])
+        labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_label_ID_groups([labels_user])[0])
     else:
         indiv_labels_ids = [0]
         labels_id_user = [0]
@@ -303,7 +304,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         sct.printv('\nChange labels orientation into RPI and load them...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(nb_labels):
-            im_label = Image(path_label+indiv_labels_files[i_label])
+            im_label = Image(path_label + indiv_labels_files[i_label])
             im_label.change_orientation(orientation='RPI')
             labels[i_label] = im_label.data
         # if the "normalization" option is wanted,
@@ -326,7 +327,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         sct.printv('\nLoad labels...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(0, nb_labels):
-            labels[i_label] = Image(path_label+indiv_labels_files[i_label]).data
+            labels[i_label] = Image(path_label + indiv_labels_files[i_label]).data
         # if the "normalization" option is wanted,
         if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
@@ -392,13 +393,13 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     for i_label_user in labels_id_user:
         if i_label_user <= max(indiv_labels_ids):
             index = indiv_labels_ids.index(i_label_user)
-            sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ' ['+str(round(indiv_labels_fract_vol[index], 2))+']:    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
+            sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ' [' + str(round(indiv_labels_fract_vol[index], 2)) + ']:    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
         elif i_label_user > max(indiv_labels_ids):
             index = combined_labels_ids.index(i_label_user)
-            sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ' ['+str(round(combined_labels_fract_vol[index], 2))+']:    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
+            sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ' [' + str(round(combined_labels_fract_vol[index], 2)) + ']:    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
     if label_to_fix:
         fixed_label = [label_to_fix[0], label_to_fix_name, label_to_fix[1]]
-        sct.printv('\n*'+fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
+        sct.printv('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
 
     # section = ''
     # if labels_id_user[0] <= max(indiv_labels_ids):
@@ -451,7 +452,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
             labels = np.delete(labels, list_ids_LOI)  # remove the labels selected by user
             labels_tmp[0] = sum_combined_labels  # put the sum of the labels selected by user in first position of the tmp variable
             for i_label in range(1, len(labels_tmp)):
-                labels_tmp[i_label] = labels[i_label-1]  # fill the temporary array with the values of the non-selected labels
+                labels_tmp[i_label] = labels[i_label - 1]  # fill the temporary array with the values of the non-selected labels
             labels = labels_tmp  # replace the initial labels value by the updated ones (with the summed labels)
             del labels_tmp  # delete the temporary labels
 
@@ -469,7 +470,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
                 metric_normalizing_label = estimate_metric_within_tract(data[..., z], normalizing_label_slice, method, 0)
                 # estimate the metric mean in the normalizing label for the slice z
                 if metric_normalizing_label[0][0] != 0:
-                    data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
+                    data[..., z] = data[..., z] / metric_normalizing_label[0][0]  # divide all the slice z by this value
 
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
             metric_norm_label, metric_std_norm_label = estimate_metric_within_tract(data, normalizing_label, method, param_default.verbose)  # mean and std are lists
@@ -499,19 +500,18 @@ def read_label_file(path_info_label, file_info_label):
     indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = [], [], [], [], [], [], []
 
     # file name of info_label.txt
-    fname_label = path_info_label+file_info_label
+    fname_label = path_info_label + file_info_label
 
     # Read file
     try:
         f = open(fname_label)
     except IOError:
-        sct.printv('\nWARNING: Cannot open '+fname_label, 1, 'warning')
+        sct.printv('\nWARNING: Cannot open ' + fname_label, 1, 'warning')
         # raise
     else:
         # Extract all lines in file.txt
         lines = [line for line in f.readlines() if line.strip()]
-        lines[-1] += ' ' # To fix an error that could occur at the last line (deletion of the last character of the .txt file)
-
+        lines[-1] += ' '  # To fix an error that could occur at the last line (deletion of the last character of the .txt file)
 
         # Check if the White matter atlas was provided by the user
         # look at first line
@@ -545,7 +545,7 @@ def read_label_file(path_info_label, file_info_label):
 
         # check if all files listed are present in folder. If not, ERROR.
         for file in indiv_labels_files:
-            sct.check_file_exist(path_info_label+file)
+            sct.check_file_exist(path_info_label + file)
 
         # Close file.txt
         f.close()
@@ -574,7 +574,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
     vertebral_levels_available = np.array(list(set(data_vertebral_labeling[data_vertebral_labeling > 0])))
 
     # Check if the vertebral levels selected are available
-    warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
+    warning = []  # list of strings gathering the potential following warning(s) to be written in the output .txt file
     min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
     max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
     if vert_levels_list[0] < min_vert_level_available:
@@ -582,7 +582,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         warning.append('WARNING: the bottom vertebral level you selected is lower than the lowest level available --> '
                        'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
                        # warning to write it later in the .txt output file
-        sct.printv('WARNING: the bottom vertebral level you selected is lower than the lowest level available \n--> Selected the lowest vertebral level available: '+ str(int(vert_levels_list[0])), type='warning')
+        sct.printv('WARNING: the bottom vertebral level you selected is lower than the lowest level available \n--> Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])), type='warning')
 
     if vert_levels_list[1] > max_vert_level_available:
         vert_levels_list[1] = max_vert_level_available
@@ -590,7 +590,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
                        'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
         # warning to write it later in the .txt output file
 
-        sct.printv('WARNING: the top vertebral level you selected is higher than the highest level available \n--> Selected the highest vertebral level available: '+str(int(vert_levels_list[1])), type='warning')
+        sct.printv('WARNING: the top vertebral level you selected is higher than the highest level available \n--> Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])), type='warning')
 
     if vert_levels_list[0] not in vertebral_levels_available:
         distance = vertebral_levels_available - vert_levels_list[0]  # relative distance
@@ -600,7 +600,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         # of the initial list corresponding to this minimal distance
         warning.append('WARNING: the bottom vertebral level you selected is not available --> Selected the nearest '
                        'inferior level available: ' + str(int(vert_levels_list[0])))
-        sct.printv('WARNING: the bottom vertebral level you selected is not available \n--> Selected the nearest inferior level available: '+str(int(vert_levels_list[0])), type='warning') # record the
+        sct.printv('WARNING: the bottom vertebral level you selected is not available \n--> Selected the nearest inferior level available: ' + str(int(vert_levels_list[0])), type='warning')  # record the
         # warning to write it later in the .txt output file
 
     if vert_levels_list[1] not in vertebral_levels_available:
@@ -667,11 +667,11 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         slice_max = slice_max_top
 
     # display info
-    sct.printv('    '+str(slice_min)+':'+str(slice_max), verbose)
+    sct.printv('    ' + str(slice_min) + ':' + str(slice_max), verbose)
 
     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1
     # to the top slice
-    return str(slice_min)+':'+str(slice_max), vert_levels_list, warning
+    return str(slice_min) + ':' + str(slice_max), vert_levels_list, warning
 
 
 def remove_slices(data_to_crop, slices_of_interest):
@@ -685,7 +685,7 @@ def remove_slices(data_to_crop, slices_of_interest):
         # if only one slice (z) was selected, consider as z:z
         if len(slices_range) == 1:
             slices_range = [slices_range[0], slices_range[0]]
-        slices_list = [i for i in range(slices_range[0], slices_range[1]+1)]
+        slices_list = [i for i in range(slices_range[0], slices_range[1] + 1)]
 
     # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
     data_cropped = data_to_crop[..., slices_list]
@@ -696,7 +696,7 @@ def remove_slices(data_to_crop, slices_of_interest):
 def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None, fixed_label=None):
     """Save results in the output type selected by user."""
 
-    sct.printv('\nSaving results in: '+fname_output+' ...')
+    sct.printv('\nSaving results in: ' + fname_output + ' ...')
 
     # define vertebral levels and slices fields
     if actual_vert:
@@ -726,23 +726,23 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
         # WRITE HEADER:
         # Write date and time
-        fid_metric.write('# Date - Time: '+ time.strftime('%Y/%m/%d - %H:%M:%S'))
+        fid_metric.write('# Date - Time: ' + time.strftime('%Y/%m/%d - %H:%M:%S'))
         # Write metric data file path
-        fid_metric.write('\n'+'# Metric file: '+ os.path.abspath(fname_data))
+        fid_metric.write('\n' + '# Metric file: ' + os.path.abspath(fname_data))
         # If it's the case, write the label used to normalize the metric estimation:
         if fname_normalizing_label:
-            fid_metric.write('\n'+'# Label used to normalize the metric estimation slice-by-slice: '+fname_normalizing_label)
+            fid_metric.write('\n' + '# Label used to normalize the metric estimation slice-by-slice: ' + fname_normalizing_label)
         # Write method used for the metric estimation
-        fid_metric.write('\n'+'# Extraction method: '+method)
+        fid_metric.write('\n' + '# Extraction method: ' + method)
 
         # Write selected vertebral levels
-        fid_metric.write('\n# Vertebral levels: '+vertebral_levels_field)
+        fid_metric.write('\n# Vertebral levels: ' + vertebral_levels_field)
 
         # Write selected slices
-        fid_metric.write('\n'+'# Slices (z): '+slices_of_interest_field)
+        fid_metric.write('\n' + '# Slices (z): ' + slices_of_interest_field)
 
         # label headers
-        fid_metric.write('%s' % ('\n'+'# ID, label name, total fractional volume of the label (in number of voxels), metric value, metric stdev within label\n\n'))
+        fid_metric.write('%s' % ('\n' + '# ID, label name, total fractional volume of the label (in number of voxels), metric value, metric stdev within label\n\n'))
 
         # WRITE RESULTS
         labels_id_user.sort()
@@ -766,7 +766,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
                 fid_metric.write('%i, %s, %f, %f, %f\n' % (combined_labels_ids[index], combined_labels_names[index], combined_labels_fract_vol[index], combined_labels_value[index], combined_labels_std[index]))
 
         if fixed_label:
-            fid_metric.write('\n*'+fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)')
+            fid_metric.write('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)')
 
         # Close file .txt
         fid_metric.close()
@@ -776,7 +776,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
 
         # if the user asked for no overwriting but the specified output file does not exist yet
         if (not overwrite) and (not os.path.isfile(fname_output)):
-            sct.printv('WARNING: You asked to edit the pre-existing file \"'+fname_output+'\" but this file does not exist. It will be created.', type='warning')
+            sct.printv('WARNING: You asked to edit the pre-existing file \"' + fname_output + '\" but this file does not exist. It will be created.', type='warning')
             overwrite = 1
 
         if not overwrite:
@@ -924,10 +924,10 @@ def check_method(method, fname_normalizing_label, normalization_method):
     #     sct.printv(parser.usage.generate(error='ERROR: Method "' + method + '" is not correct. See help. Exit program.\n'))
 
     if normalization_method and not fname_normalizing_label:
-        sct.printv(parser.usage.generate(error='ERROR: You selected a normalization method ('+ str(normalization_method)+ ') but you didn\'t selected any label to be used for the normalization.'))
+        sct.printv(parser.usage.generate(error='ERROR: You selected a normalization method (' + str(normalization_method) + ') but you didn\'t selected any label to be used for the normalization.'))
 
     if fname_normalizing_label and normalization_method != 'sbs' and normalization_method != 'whole':
-        sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:'+str(normalization_method)))
+        sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:' + str(normalization_method)))
 
 
 def check_labels(indiv_labels_ids, selected_labels):
@@ -937,7 +937,6 @@ def check_labels(indiv_labels_ids, selected_labels):
 
     # convert strings to int
     list_ids_of_labels_of_interest = map(int, indiv_labels_ids)
-
 
     # if selected_labels:
     #     # Check if label chosen is in the right format
@@ -962,8 +961,7 @@ def check_labels(indiv_labels_ids, selected_labels):
 
         # Check if the selected labels are in the available labels ids
         if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
-            sct.printv('\nERROR: At least one of the selected labels ('+str(list_ids_of_labels_of_interest)+') is not available according to the label list from the text file in the atlas folder. Exit program.\n\n', type='error')
-
+            sct.printv('\nERROR: At least one of the selected labels (' + str(list_ids_of_labels_of_interest) + ') is not available according to the label list from the text file in the atlas folder. Exit program.\n\n', type='error')
 
     return list_ids_of_labels_of_interest
 
@@ -1005,7 +1003,7 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     W = np.diag(data_weight_1d)  # weight matrix
 
     # Display number of non-zero values
-    sct.printv('  Number of non-null voxels: '+str(nb_vox), verbose=verbose)
+    sct.printv('  Number of non-null voxels: ' + str(nb_vox), verbose=verbose)
 
     # initialization
     metric_mean = np.empty([nb_labels], dtype=object)
@@ -1081,10 +1079,10 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
         # define the problem: y is the measurements vector (to which weights are applied, to each voxel) and x is the linear relation between the measurements y and the true metric value to be estimated beta
         y = np.dot(W, data1d)  # [nb_vox x 1]
         x = np.dot(W, labels2d.T)  # [nb_vox x nb_labels]
-        beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
+        beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))  # beta = (Xt . X)-1 . Xt . y
         #beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
         #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
-        #print beta, residuals, rank, singular_value
+        # print beta, residuals, rank, singular_value
         for i_label in range(0, nb_labels):
             metric_mean[i_label] = beta[i_label]
             metric_std[i_label] = 0  # need to assign a value for writing output file
@@ -1136,7 +1134,7 @@ def get_clustered_labels(clusters_all_labels, labels, indiv_labels_ids, labels_u
             clusters_all_labels = list(np.delete(np.asarray(clusters_all_labels), matching_cluster_label_id_unique))
             clusters_all_labels.insert(matching_cluster_label_id_unique[0], merged_cluster)
     nb_clusters = len(clusters_all_labels)
-    sct.printv('  Number of clusters: '+str(nb_clusters), verbose=verbose)
+    sct.printv('  Number of clusters: ' + str(nb_clusters), verbose=verbose)
 
     # sum labels within each cluster
     clustered_labels = np.empty([nb_clusters], dtype=object)  # labels(nb_labels_total, x, y, z)
@@ -1179,7 +1177,7 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_n
     # remove the value from the data
     label_to_fix_index = indiv_labels_ids.index(label_to_fix_ID)
     label_to_fix_fract_vol = labels[label_to_fix_index]
-    data = data - label_to_fix_fract_vol*label_to_fix_value
+    data = data - label_to_fix_fract_vol * label_to_fix_value
 
     # remove the label to fix from the labels lists
     labels = np.delete(labels, label_to_fix_index, 0)
@@ -1200,7 +1198,6 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_n
     return data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user, label_to_fix_name, label_to_fix_fract_vol
 
 
-
 def parse_label_ID_groups(list_ID):
     """From a list of unparsed labels string, returns a list of list enumarating the label IDs combinations as integers.
     Example: ['0:5','8,10','12'] ==> [[0,1,2,3,4,5],[8,10],[12]]"""
@@ -1209,7 +1206,7 @@ def parse_label_ID_groups(list_ID):
     for i_group in range(len(list_ID)):
         if ':' in list_ID[i_group]:
             group_split = list_ID[i_group].split(':')
-            group = sorted(range(int(group_split[0]), int(group_split[1])+1))
+            group = sorted(range(int(group_split[0]), int(group_split[1]) + 1))
         elif ',' in list_ID[i_group]:
             group = [int(x) for x in list_ID[i_group].split(',')]
         elif not list_ID[i_group]:
@@ -1223,7 +1220,6 @@ def parse_label_ID_groups(list_ID):
         list_all_label_IDs.append(group_new)
 
     return list_all_label_IDs
-
 
 
 def remove_label_from_group(list_label_groups, label_ID):
@@ -1241,7 +1237,6 @@ def remove_label_from_group(list_label_groups, label_ID):
 def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_labels_value, slices_list, label_to_fix, label_to_fix_fract_vol):
     """Produces a map where each label is assigned the metric value estimated previously based on their fractional volumes."""
 
-
     sct.printv('\nGenerate metric value map based on each label fractional volumes: ' + fname_output_metric_map + '...')
 
     # initialize metric value map with zeros
@@ -1250,10 +1245,10 @@ def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_l
 
     # assign to each label the corresponding estimated metric value
     for i_label in range(len(labels)):
-        metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + labels[i_label]*indiv_labels_value[i_label]
+        metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + labels[i_label] * indiv_labels_value[i_label]
 
     if label_to_fix:
-        metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + label_to_fix_fract_vol*float(label_to_fix[1])
+        metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + label_to_fix_fract_vol * float(label_to_fix[1])
 
     # save metric value map
     metric_map.setFileName(fname_output_metric_map)

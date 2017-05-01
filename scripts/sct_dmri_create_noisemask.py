@@ -18,8 +18,9 @@ from dipy.denoise.noise_estimate import piesno
 
 # PARSER
 # ==========================================================================================
-def get_parser():
 
+
+def get_parser():
     """
     :return: Returns the parser with the command line documentation contained in it.
     """
@@ -52,7 +53,9 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(fname_in, freedom_degree,file_output):
+
+
+def main(fname_in, freedom_degree, file_output):
 
     img = nib.load(fname_in)
     data = img.get_data()
@@ -78,4 +81,4 @@ if __name__ == '__main__':
     else:
         file_output = 'noise_mask.nii.gz'
 
-    main(fname_in, freedom_degree,file_output)
+    main(fname_in, freedom_degree, file_output)

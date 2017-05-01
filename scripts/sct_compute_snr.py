@@ -16,9 +16,9 @@ import sys
 import numpy as np
 from msct_parser import Parser
 from msct_image import Image
-from sct_image import get_orientation_3d, set_orientation
+from sct_image import get_orientation, orientation
 import sct_utils as sct
-from os import rmdir, chdir
+import shutil
 
 
 # PARSER
@@ -30,7 +30,7 @@ def get_parser():
     parser.usage.set_description('Compute SNR in a given ROI using methods described in [Dietrich et al., Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils, parallel imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].')
     parser.add_option(name="-i",
                       type_value='image_nifti',
-                      description="Input images to compute the SNR on. Must be concatenated in time. Typically, 2 or 3 b0s concatenated in time (depending on the method used).",
+                      description="4D data to compute the SNR on (along the 4th dimension).",
                       mandatory=True,
                       example="b0s.nii.gz")
     parser.add_option(name="-m",
@@ -42,15 +42,15 @@ def get_parser():
                       type_value='multiple_choice',
                       description='Method to use to compute the SNR:\n'
                       '- diff: Substract two volumes (defined by -vol) and estimate noise variance over space.\n'
-                      '- mult: Use all volumes (or those defined by -vol) to estimate noise variance over time.',
+                      '- mult: Estimate noise variance over time across volumes specified with -vol.',
                       mandatory=False,
                       default_value='diff',
                       example=['diff', 'mult'])
     parser.add_option(name='-vol',
                       type_value=[[','], 'int'],
-                      description='List of volume numbers to use for computing SNR, separated with ",". Example: 0,1',
+                      description='List of volume numbers to use for computing SNR, separated with ",". Example: 0,31. To select all volumes in series set to -1.',
                       mandatory=False,
-                      default_value=[0, 1])
+                      default_value=[-1])
     parser.add_option(name="-vertfile",
                       type_value='image_nifti',
                       description='File name of the vertebral labeling registered to the input images.',
@@ -98,7 +98,7 @@ def main():
 
     # Check if data are in RPI
     input_im = Image(fname_data)
-    input_orient = get_orientation_3d(input_im)
+    input_orient = get_orientation(input_im)
 
     # If orientation is not RPI, change to RPI
     if input_orient != 'RPI':
@@ -106,20 +106,20 @@ def main():
         path_tmp = sct.tmp_create()
         # change orientation and load data
         sct.printv('\nChange input image orientation and load it...', verbose)
-        input_im_rpi = set_orientation(input_im, 'RPI', fname_out=path_tmp+'input_RPI.nii')
+        input_im_rpi = orientation(input_im, ori='RPI', set=True, fname_out=path_tmp + 'input_RPI.nii')
         input_data = input_im_rpi.data
         # Do the same for the mask
         sct.printv('\nChange mask orientation and load it...', verbose)
-        mask_im_rpi = set_orientation(Image(fname_mask), 'RPI', fname_out=path_tmp+'mask_RPI.nii')
+        mask_im_rpi = orientation(Image(fname_mask), ori='RPI', set=True, fname_out=path_tmp + 'mask_RPI.nii')
         mask_data = mask_im_rpi.data
         # Do the same for vertebral labeling if present
         if vert_levels != 'None':
             sct.printv('\nChange vertebral labeling file orientation and load it...', verbose)
-            vert_label_im_rpi = set_orientation(Image(vert_label_fname), 'RPI', fname_out=path_tmp+'vert_labeling_RPI.nii')
+            vert_label_im_rpi = orientation(Image(vert_label_fname), ori='RPI', set=True, fname_out=path_tmp + 'vert_labeling_RPI.nii')
             vert_labeling_data = vert_label_im_rpi.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
-        rmdir(path_tmp)
+        shutil.rmtree(path_tmp, True)
     else:
         # Load data
         sct.printv('\nLoad data...', verbose)
@@ -136,31 +136,42 @@ def main():
 
     # Remove slices that were not selected
     if slices_of_interest == 'None':
-        slices_of_interest = '0:'+str(mask_data.shape[2]-1)
+        slices_of_interest = '0:' + str(mask_data.shape[2] - 1)
     slices_boundary = slices_of_interest.split(':')
-    slices_of_interest_list = range(int(slices_boundary[0]), int(slices_boundary[1])+1)
+    slices_of_interest_list = range(int(slices_boundary[0]), int(slices_boundary[1]) + 1)
     # Crop
     input_data = input_data[:, :, slices_of_interest_list, :]
     mask_data = mask_data[:, :, slices_of_interest_list]
 
+    # if user selected all slices (-vol -1), then assign index_vol
+    if index_vol[0] == -1:
+        index_vol = range(0, input_data.shape[3], 1)
+
     # Get signal and noise
     indexes_roi = np.where(mask_data == 1)
     if method == 'mult':
-        signal = np.mean(input_data[indexes_roi])
-        std_input_temporal = np.std(input_data, 3)
-        noise = np.mean(std_input_temporal[indexes_roi])
+        # get voxels in ROI to obtain a (x*y*z)*t 2D matrix
+        input_data_in_roi = input_data[indexes_roi]
+        # compute signal and STD across by averaging across time
+        signal = np.mean(input_data_in_roi[:, index_vol])
+        std_input_temporal = np.std(input_data_in_roi[:, index_vol], 1)
+        noise = np.mean(std_input_temporal)
     elif method == 'diff':
+        # if user did not select two volumes, then exit with error
+        if not len(index_vol) == 2:
+            sct.printv('ERROR: ' + str(len(index_vol)) + ' volumes were specified. Method "diff" should be used with exactly two volumes.', 1, 'error')
         data_1 = input_data[:, :, :, index_vol[0]]
         data_2 = input_data[:, :, :, index_vol[1]]
+        # compute voxel-average of voxelwise sum
         signal = np.mean(np.add(data_1[indexes_roi], data_2[indexes_roi]))
-        noise = np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi]))
+        # compute voxel-STD of voxelwise substraction, multiplied by sqrt(2) as described in equation 7 of Dietrich et al.
+        noise = np.std(np.subtract(data_1[indexes_roi], data_2[indexes_roi])) * np.sqrt(2)
 
     # compute SNR
-    SNR = signal/noise
+    SNR = signal / noise
 
     # Display result
-    sct.printv('\nSNR_'+method+' = '+str(SNR)+'\n', type='info')
-
+    sct.printv('\nSNR_' + method + ' = ' + str(SNR) + '\n', type='info')
 
 
 # START PROGRAM

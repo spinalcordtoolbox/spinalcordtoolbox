@@ -19,8 +19,10 @@ from msct_parser import Parser
 from msct_image import Image
 
 # DEFAULT PARAMETERS
+
+
 class param:
-    ## The constructor
+    # The constructor
     def __init__(self):
         self.debug = 0
 

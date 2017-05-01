@@ -43,7 +43,7 @@ class Param:
         self.param = ['2',  # degree of polynomial function for moco
                       '2',  # smoothing sigma in mm
                       '1',  # gradientStep
-                      'MeanSquares'] # metric: MI,MeanSquares
+                      'MeanSquares']  # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
         self.min_norm = 0.001
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
@@ -67,14 +67,14 @@ def main(path_out, param_user):
     if param.debug:
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data+'/fmri/fmri.nii.gz'
+        param.fname_data = path_sct_data + '/fmri/fmri.nii.gz'
         #param.fname_mask = path_sct_data+'/fmri/fmri.nii.gz'
         param.verbose = 1
         param.group_size = 3
         #param_user = '2,1,0.5'
 
     sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  input file ............'+param.fname_data, param.verbose)
+    sct.printv('  input file ............' + param.fname_data, param.verbose)
 
     # Get full path
     param.fname_data = os.path.abspath(param.fname_data)
@@ -86,12 +86,12 @@ def main(path_out, param_user):
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, param.verbose)
+    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S"), 1)
+    sct.run('mkdir ' + path_tmp, param.verbose)
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(param.fname_data, path_tmp+'fmri.nii')
+    convert(param.fname_data, path_tmp + 'fmri.nii')
     # sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
     #
     # go to tmp folder
@@ -110,24 +110,24 @@ def main(path_out, param_user):
     path_out = sct.slash_at_the_end(path_out, 1)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
-    if os.path.isfile(path_tmp+'fmri'+param.suffix+'.nii'):
-        print path_tmp+'fmri'+param.suffix+'.nii'
-        print path_out+file_data+param.suffix+ext_data
-    sct.generate_output_file(path_tmp+'fmri'+param.suffix+'.nii', path_out+file_data+param.suffix+ext_data, param.verbose)
-    sct.generate_output_file(path_tmp+'fmri'+param.suffix+'_mean.nii', path_out+file_data+param.suffix+'_mean'+ext_data, param.verbose)
+    if os.path.isfile(path_tmp + 'fmri' + param.suffix + '.nii'):
+        print path_tmp + 'fmri' + param.suffix + '.nii'
+        print path_out + file_data + param.suffix + ext_data
+    sct.generate_output_file(path_tmp + 'fmri' + param.suffix + '.nii', path_out + file_data + param.suffix + ext_data, param.verbose)
+    sct.generate_output_file(path_tmp + 'fmri' + param.suffix + '_mean.nii', path_out + file_data + param.suffix + '_mean' + ext_data, param.verbose)
 
     # Delete temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nDelete temporary files...', param.verbose)
-        sct.run('rm -rf '+path_tmp, param.verbose)
+        sct.run('rm -rf ' + path_tmp, param.verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', param.verbose)
+    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
-    #To view results
+    # To view results
     sct.printv('\nTo view results, type:', param.verbose)
-    sct.printv('fslview -m ortho,ortho '+param.path_out+file_data+param.suffix+' '+file_data+' &\n', param.verbose, 'info')
+    sct.printv('fslview -m ortho,ortho ' + param.path_out + file_data + param.suffix + ' ' + file_data + ' &\n', param.verbose, 'info')
 
 
 #=======================================================================================================================
@@ -143,7 +143,7 @@ def fmri_moco(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+'.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = Image(file_data + '.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
     # Split into T dimension
@@ -157,22 +157,22 @@ def fmri_moco(param):
     index_fmri = range(0, nt)
 
     # Number of groups
-    nb_groups = int(math.floor(nt/param.group_size))
+    nb_groups = int(math.floor(nt / param.group_size))
 
     # Generate groups indexes
     group_indexes = []
     for iGroup in range(nb_groups):
-        group_indexes.append(index_fmri[(iGroup*param.group_size):((iGroup+1)*param.group_size)])
+        group_indexes.append(index_fmri[(iGroup * param.group_size):((iGroup + 1) * param.group_size)])
 
     # add the remaining images to the last DWI group
     nb_remaining = nt%param.group_size  # number of remaining images
     if nb_remaining > 0:
         nb_groups += 1
-        group_indexes.append(index_fmri[len(index_fmri)-nb_remaining:len(index_fmri)])
+        group_indexes.append(index_fmri[len(index_fmri) - nb_remaining:len(index_fmri)])
 
     # groups
     for iGroup in range(nb_groups):
-        sct.printv('\nGroup: ' +str((iGroup+1))+'/'+str(nb_groups), param.verbose)
+        sct.printv('\nGroup: ' + str((iGroup + 1)) + '/' + str(nb_groups), param.verbose)
 
         # get index
         index_fmri_i = group_indexes[iGroup]
@@ -195,7 +195,7 @@ def fmri_moco(param):
         # Average Images
         sct.printv('Average volumes...', param.verbose)
         file_data_mean = file_data + '_mean_' + str(iGroup)
-        sct.run('sct_maths -i '+file_data_merge_i+'.nii -o '+file_data_mean+'.nii -mean t')
+        sct.run('sct_maths -i ' + file_data_merge_i + '.nii -o ' + file_data_mean + '.nii -mean t')
         # if not average_data_across_dimension(file_data_merge_i+'.nii', file_data_mean+'.nii', 3):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
@@ -213,7 +213,6 @@ def fmri_moco(param):
     im_mean_concat = concat_data(im_mean_list, 3)
     im_mean_concat.setFileName(file_data_groups_means_merge + ext_data)
     im_mean_concat.save()
-
 
     # Estimate moco on dwi groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -238,14 +237,14 @@ def fmri_moco(param):
             #     for iz in range(nz):
             #         sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+ext_mat, param.verbose)
             # else:
-            sct.run('cp '+'mat_groups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][data])+ext_mat, param.verbose)
+            sct.run('cp ' + 'mat_groups/' + 'mat.T' + str(iGroup) + ext_mat + ' ' + mat_final + 'mat.T' + str(group_indexes[iGroup][data]) + ext_mat, param.verbose)
 
     # Apply moco on all fmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Apply moco', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = 'fmri'
-    param_moco.file_target = file_data+'_mean_'+str(0)
+    param_moco.file_target = file_data + '_mean_' + str(0)
     param_moco.path_out = ''
     param_moco.mat_moco = mat_final
     param_moco.todo = 'apply'
@@ -300,7 +299,7 @@ def get_parser():
 4) metric: {MI,MeanSquares}.
    If you find very large deformations, switching to MeanSquares can help.""",
                       mandatory=False,
-                      example=param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3])
+                      example=param_default.param[0] + ',' + param_default.param[1] + ',' + param_default.param[2] + ',' + param_default.param[3])
     parser.add_option(name="-p",
                       type_value=None,
                       description="""ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.

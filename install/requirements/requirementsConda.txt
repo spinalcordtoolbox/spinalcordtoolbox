@@ -6,4 +6,6 @@ pandas==0.18.1
 xlwt==1.0.0
 xlrd==0.9.4
 xlutils==1.7.1
-pip==8.1.2
+pip==9.0.1
+requests==2.12.4
+cryptography==1.6

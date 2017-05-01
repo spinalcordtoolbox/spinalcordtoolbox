@@ -63,8 +63,8 @@ def main(args=None):
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data+'/mt/mt1.nii.gz'
-        param.process = 'point,'+path_sct_data+'/mt/mt1_point.nii.gz' #'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
+        param.fname_data = path_sct_data + '/mt/mt1.nii.gz'
+        param.process = 'point,' + path_sct_data + '/mt/mt1_point.nii.gz'  # 'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
         param.shape = 'cylinder'
         param.size = '20'
         param.remove_tmp_files = 1
@@ -79,7 +79,7 @@ def main(args=None):
         if '-p' in arguments:
             param.process = arguments['-p']
             if param.process[0] not in param.process_list:
-                sct.printv(parser.usage.generate(error='ERROR: Process '+param.process[0]+' is not recognized.'))
+                sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
         if '-size' in arguments:
             param.size = arguments['-size']
         if '-f' in arguments:
@@ -115,7 +115,7 @@ def create_mask():
 
     # Get output folder and file name
     if param.fname_out == '':
-        param.fname_out = param.file_prefix+file_data+ext_data
+        param.fname_out = param.file_prefix + file_data + ext_data
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
@@ -125,15 +125,15 @@ def create_mask():
 
     sct.printv('\nCheck orientation...', param.verbose)
     orientation_input = get_orientation(Image(param.fname_data))
-    sct.printv('.. '+orientation_input, param.verbose)
+    sct.printv('.. ' + orientation_input, param.verbose)
     reorient_coordinates = False
 
     # copy input data to tmp folder
-    convert(param.fname_data, path_tmp+'data.nii')
+    convert(param.fname_data, path_tmp + 'data.nii')
     if method_type == 'centerline':
-        convert(method_val, path_tmp+'centerline.nii.gz')
+        convert(method_val, path_tmp + 'centerline.nii.gz')
     if method_type == 'point':
-        convert(method_val, path_tmp+'point.nii.gz')
+        convert(method_val, path_tmp + 'point.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -157,13 +157,13 @@ def create_mask():
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image('data_RPI.nii').dim
-    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
+    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
-        sct.printv('WARNING in '+os.path.basename(__file__)+': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
+        sct.printv('WARNING in ' + os.path.basename(__file__) + ': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
         # extract first volume to have 3d reference
         nii = Image('data_RPI.nii')
-        data3d = nii.data[:,:,:,0]
+        data3d = nii.data[:, :, :, 0]
         nii.data = data3d
         nii.save()
 
@@ -179,11 +179,11 @@ def create_mask():
         # TODO: change this way to remove dependence to sct.run. ProcessLabels.display_voxel returns list of coordinates
         status, output = sct.run('sct_label_utils -i point_RPI.nii.gz -display', param.verbose)
         # parse to get coordinate
-        coord = output[output.find('Position=')+10:-17].split(',')
+        coord = output[output.find('Position=') + 10:-17].split(',')
 
     if method_type == 'center':
         # set coordinate at center of FOV
-        coord = round(float(nx)/2), round(float(ny)/2)
+        coord = round(float(nx) / 2), round(float(ny) / 2)
 
     if method_type == 'centerline':
         # get name of centerline from user argument
@@ -224,7 +224,7 @@ def create_mask():
             mask2d = create_mask2d(center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(mask2d, None, hdr)
-            nibabel.save(img, (file_mask+str(iz)+'.nii'))
+            nibabel.save(img, (file_mask + str(iz) + '.nii'))
     # merge along Z
     # cmd = 'fslmerge -z mask '
 
@@ -267,16 +267,16 @@ def create_mask():
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp+'mask.nii.gz', param.fname_out)
+    sct.generate_output_file(path_tmp + 'mask.nii.gz', param.fname_out)
 
     # Remove temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf '+path_tmp, param.verbose, error_exit='warning')
+        sct.run('rm -rf ' + path_tmp, param.verbose, error_exit='warning')
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview '+param.fname_data+' '+param.fname_out+' -l Red -t 0.5 &', param.verbose, 'info')
+    sct.printv('fslview ' + param.fname_data + ' ' + param.fname_out + ' -l Red -t 0.5 &', param.verbose, 'info')
     print
 
 
@@ -285,17 +285,17 @@ def create_mask():
 def create_line(fname, coord, nz):
 
     # duplicate volume (assumes input file is nifti)
-    sct.run('cp '+fname+' line.nii', param.verbose)
+    sct.run('cp ' + fname + ' line.nii', param.verbose)
 
     # set all voxels to zero
     sct.run('sct_maths -i line.nii -mul 0 -o line.nii', param.verbose)
 
     cmd = 'sct_label_utils -i line.nii -o line.nii -create-add '
     for iz in range(nz):
-        if iz == nz-1:
-            cmd += str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1'
+        if iz == nz - 1:
+            cmd += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1'
         else:
-            cmd += str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1:'
+            cmd += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1:'
 
     sct.run(cmd, param.verbose)
 
@@ -331,11 +331,11 @@ def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
         mask2d[int(xc - radius):int(xc + radius) + 1, int(yc - radius):int(yc + radius) + 1] = 1
 
     elif shape == 'cylinder':
-        mask2d = ((xx+offset[0]-xc)**2 + (yy+offset[1]-yc)**2 <= radius**2)*1
+        mask2d = ((xx + offset[0] - xc)**2 + (yy + offset[1] - yc)**2 <= radius**2) * 1
 
     elif shape == 'gaussian':
         sigma = float(radius)
-        mask2d = numpy.exp(-(((xx+offset[0]-xc)**2)/(2*(sigma**2)) + ((yy+offset[1]-yc)**2)/(2*(sigma**2))))
+        mask2d = numpy.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) + ((yy + offset[1] - yc)**2) / (2 * (sigma**2))))
 
     # import matplotlib.pyplot as plt
     # plt.imshow(mask2d)
