@@ -78,15 +78,9 @@ def main(args=None):
 
     # path_data = param.path_data
     function_to_test = param.function_to_test
-    # function_to_avoid = param.function_to_avoid
-    remove_tmp_file = param.remove_tmp_file
 
     start_time = time.time()
 
-    # # download data
-    # if param.download:
-    #     downloaddata()
-    #
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
@@ -99,19 +93,15 @@ def main(args=None):
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.tmp_create()
-    # param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    # sct.create_folder(param.path_tmp)
     os.chdir(param.path_tmp)
 
     # get list of all scripts to test
     functions = fill_functions()
+    if not function_to_test in functions:
+        sct.printv('Function "%s" is not part of the list of testing functions' % function_to_test, type='warning')
 
     # loop across all functions and test them
-    status = []
-    [status.append(test_function(f)) for f in functions if function_to_test == f]
-    if not status:
-        for f in functions:
-            status.append(test_function(f))
+    status = [test_function(f) for f in functions if function_to_test == f]
     print 'status: ' + str(status)
 
     # display elapsed time
@@ -141,41 +131,42 @@ def downloaddata():
 # list of all functions to test
 # ==========================================================================================
 def fill_functions():
-    functions = []
-    functions.append('sct_apply_transfo')
-    # functions.append('sct_check_atlas_integrity')
-    functions.append('sct_compute_mtr')
-    functions.append('sct_concat_transfo')
-    functions.append('sct_convert')
-    # functions.append('sct_convert_binary_to_trilinear')  # not useful
-    functions.append('sct_create_mask')
-    functions.append('sct_crop_image')
-    functions.append('sct_dmri_compute_dti')
-    functions.append('sct_dmri_create_noisemask')
-    functions.append('sct_dmri_get_bvalue')
-    functions.append('sct_dmri_transpose_bvecs')
-    functions.append('sct_dmri_moco')
-    functions.append('sct_dmri_separate_b0_and_dwi')
-    functions.append('sct_documentation')
-    functions.append('sct_extract_metric')
-    # functions.append('sct_flatten_sagittal')
-    functions.append('sct_fmri_compute_tsnr')
-    functions.append('sct_fmri_moco')
-    # functions.append('sct_get_centerline')
-    functions.append('sct_image')
-    functions.append('sct_label_utils')
-    functions.append('sct_label_vertebrae')
-    functions.append('sct_maths')
-    functions.append('sct_process_segmentation')
-    functions.append('sct_propseg')
-    functions.append('sct_register_graymatter')
-    functions.append('sct_register_multimodal')
-    functions.append('sct_register_to_template')
-    functions.append('sct_resample')
-    functions.append('sct_segment_graymatter')
-    functions.append('sct_smooth_spinalcord')
-    functions.append('sct_straighten_spinalcord')
-    functions.append('sct_warp_template')
+    functions = [
+        'sct_apply_transfo',
+        # 'sct_check_atlas_integrity',
+        'sct_compute_mtr',
+        'sct_concat_transfo',
+        'sct_convert',
+        # 'sct_convert_binary_to_trilinear',  # not useful
+        'sct_create_mask',
+        'sct_crop_image',
+        'sct_dmri_compute_dti',
+        'sct_dmri_create_noisemask',
+        'sct_dmri_get_bvalue',
+        'sct_dmri_transpose_bvecs',
+        'sct_dmri_moco',
+        'sct_dmri_separate_b0_and_dwi',
+        'sct_documentation',
+        'sct_extract_metric',
+        # 'sct_flatten_sagittal',
+        'sct_fmri_compute_tsnr',
+        'sct_fmri_moco',
+        # 'sct_get_centerline',
+        'sct_image',
+        'sct_label_utils',
+        'sct_label_vertebrae',
+        'sct_maths',
+        'sct_process_segmentation',
+        'sct_propseg',
+        'sct_register_graymatter',
+        'sct_register_multimodal',
+        'sct_register_to_template',
+        'sct_resample',
+        'sct_segment_graymatter',
+        'sct_smooth_spinalcord',
+        'sct_straighten_spinalcord',
+        'sct_warp_template',
+    ]
     return functions
 
 
