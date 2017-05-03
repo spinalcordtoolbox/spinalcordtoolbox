@@ -625,9 +625,10 @@ class ImagePlotMainGroundTruth(ImagePlot):
     Defines the action on mouse events, draw dots, and manages the list of results : list_points.
     """
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, secondary_plot=None,
-                 header=None, number_of_points=0):
+                 header=None, number_of_points=0,first_label=1):
         super(ImagePlotMainGroundTruth, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
         self.secondary_plot = secondary_plot
+        self.first_label=first_label
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
         self.number_of_points = number_of_points
@@ -1243,9 +1244,10 @@ class MainPannelGroundTruth(MainPannelCore):
     Inherites MainPannelCore
     Class that defines specific main image plot and secondary image plot for Propseg Viewer.
     """
-    def __init__(self, images, im_params, window, header):
+    def __init__(self, images, im_params, window, header,first_label=1):
         super(MainPannelGroundTruth, self).__init__(images, im_params, window, header)
         self.number_of_points = 26
+        self.first_label=first_label
         self.add_main_view()
         self.add_secondary_view()
         self.merge_layouts()
@@ -1265,7 +1267,7 @@ class MainPannelGroundTruth(MainPannelCore):
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
         self.main_plot = ImagePlotMainGroundTruth(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,
                                         canvas=self.canvas_main, header=self.header,
-                                        number_of_points=self.number_of_points)
+                                        number_of_points=self.number_of_points,first_slice=self.first_label)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -1731,7 +1733,7 @@ class WindowGroundTruth(WindowCore):
         return (header)
 
     def add_main_pannel(self,layout_main, window, header):
-        main_pannel = MainPannelGroundTruth(self.images, self.im_params, window, header)
+        main_pannel = MainPannelGroundTruth(self.images, self.im_params, window, header,first_label=self.first_label)
         layout_main.addLayout(main_pannel.layout_global)
         return main_pannel
 
