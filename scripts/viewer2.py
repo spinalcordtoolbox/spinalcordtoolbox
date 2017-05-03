@@ -845,8 +845,8 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         """
         Global function that manages the drawing of all the lines on the secondary image.
         """
-        self.draw_current_line()
         self.draw_previous_lines()
+        self.draw_current_line()
         self.refresh()
 
     def refresh(self):
