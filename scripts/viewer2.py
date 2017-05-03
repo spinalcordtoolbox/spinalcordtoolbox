@@ -791,6 +791,29 @@ class HeaderLabelVertebrae(HeaderCore):
             self.update_title_text_general(key, nbpt, nbfin)
 
 
+class HeaderGroundTruth(HeaderCore):
+    """
+    Inherites HeaderCore
+    Class that defines header in Propseg Viewer
+    Defines specific messages to display.
+    """
+    def update_text(self, key, nbpt=-1, nbfin=-1):
+        self.lb_warning.setText('\n')
+        if (key == 'welcome'):
+            self.lb_status.setText('Please click in the the center of the center line. \n'
+                                   'If it is invisible, you may skip it.')
+            self.lb_status.setStyleSheet("color:black")
+        elif (key == 'warning_skip_not_defined'):
+            self.lb_warning.setText('This option is not used in Manual Mode. \n')
+            self.lb_warning.setStyleSheet("color:red")
+        elif (key == 'mode_switched'):
+            self.lb_status.setText('You have switched on an other segmentation mode. \n'
+                                   'All previous data have been erased.')
+            self.lb_status.setStyleSheet("color:black")
+        else:
+            self.update_title_text_general(key, nbpt, nbfin)
+
+
 class MainPannelCore(object):
     """
     Class core that defines the layout of the Main pannel.
@@ -982,6 +1005,67 @@ class MainPannelLabelVertebrae(MainPannelCore):
         self.layout_central.addLayout(layout_title_and_controller, 1)
 
 
+class MainPannelGroundTruth(MainPannelCore):
+    """
+    Inherites MainPannelCore
+    Class that defines specific main image plot and secondary image plot for Propseg Viewer.
+    """
+    def __init__(self, images, im_params, window, header):
+        super(MainPannelPropseg, self).__init__(images, im_params, window, header)
+
+        self.number_of_points = 12
+        self.add_main_view()
+        self.add_secondary_view()
+        # self.add_controller_pannel()
+        self.add_option_settings()
+        self.merge_layouts()
+
+    def add_main_view(self):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        self.canvas_main = FigureCanvas(fig)
+
+        layout_view.addWidget(self.canvas_main)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.main_plot = ImagePlotMainPropseg(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
+                                        canvas=self.canvas_main, header=self.header,
+                                        number_of_points=self.number_of_points)
+
+    def add_secondary_view(self):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        self.canvas_second = FigureCanvas(fig)
+
+        layout_view.addWidget(self.canvas_second)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.second_plot = ImagePlotSecondPropseg(axis, self.images, self, view='sag', line_direction='',
+                                            im_params=self.im_params, canvas=self.canvas_second,
+                                            main_single_plot=self.main_plot, header=self.header)
+        self.main_plot.secondary_plot = self.second_plot
+
+    def add_option_settings(self):
+        self.rb_mode_auto = QtGui.QRadioButton('Mode Auto')
+        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
+        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
+        self.layout_option_settings.addWidget(self.rb_mode_auto)
+        self.layout_option_settings.addWidget(self.rb_mode_custom)
+        self.rb_mode_auto.setChecked(True)
+        self.rb_mode_auto.clicked.connect(self.main_plot.switch_mode_seg)
+        self.rb_mode_custom.clicked.connect(self.main_plot.switch_mode_seg)
+
+
 class ControlButtonsCore(object):
     """
     Core class for displaying and managing basic action buttons : help, undo and save & quit.
@@ -1088,6 +1172,36 @@ class ControlButtonsLabelVertebrae(ControlButtonsCore):
             self.header.update_text('welcome', nbpt=str(self.main_plot.current_label))
         else:
             self.header.update_text('warning_undo_beyond_first_point')
+
+
+class ControlButtonsGroundTruth(ControlButtonsCore):
+    """
+    Inherites ControlButtonsCore
+    Class that displays specific button for Propseg Viewer : Skip
+    """
+    def __init__(self, main_plot, window, header):
+        super(ControlButtonsPropseg, self).__init__(main_plot, window, header)
+        self.add_skip_button()
+        self.add_classical_buttons()
+
+    def add_skip_button(self):
+        btn_skip = QtGui.QPushButton('Skip')
+        self.layout_buttons.addWidget(btn_skip)
+        btn_skip.clicked.connect(self.press_skip)
+
+    def press_undo(self):
+        if self.main_plot.list_points:
+            del self.main_plot.list_points[-1]
+            self.main_plot.draw_dots()
+            self.header.update_text('update', len(self.main_plot.list_points), self.main_plot.number_of_points)
+            self.main_plot.jump_to_new_slice()
+        else:
+            self.header.update_text('warning_undo_beyond_first_point')
+
+    def press_skip(self):
+        self.main_plot.list_points.append(Coordinate([-1, -1, -1]))
+        self.header.update_text('update', len(self.main_plot.list_points), self.main_plot.number_of_points)
+        self.main_plot.jump_to_new_slice()
 
 
 class WindowCore(object):
@@ -1311,6 +1425,96 @@ class WindowLabelVertebrae(WindowCore):
 
     def add_control_buttons(self, layout_main, window):
         control_buttons = ControlButtonsLabelVertebrae(self.main_pannel.main_plot, window, self.header)
+        layout_main.addLayout(control_buttons.layout_buttons)
+        return control_buttons
+
+
+class WindowGroundTruth(WindowCore):
+    """
+    Inherites Window Core.
+    Defines global variables and sets layout in the whole Propseg Viewer.
+    """
+    def __init__(self,
+                 list_images,
+                 visualization_parameters=None,
+                 orientation_subplot=['ax', 'sag'],
+                 input_type='centerline'):
+
+        # Ajust the input parameters into viewer objects.
+        if isinstance(list_images, Image):
+            list_images = [list_images]
+        if not visualization_parameters:
+            visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
+
+        super(WindowPropseg, self).__init__(list_images, visualization_parameters)
+        self.set_layout_and_launch_viewer()
+
+    def set_main_plot(self):
+        self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
+        if self.primary_subplot == 'ax':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+        elif self.primary_subplot == 'cor':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[0], 0])
+        elif self.primary_subplot == 'sag':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[0]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+
+    def declaration_global_variables_general(self, orientation_subplot):
+        self.help_web_adress = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
+        self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
+        self.primary_subplot = orientation_subplot[0]
+        self.secondary_subplot = orientation_subplot[1]
+        self.dic_axis_buttons = {}
+        self.closed = False
+
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
+
+        # specialized for Click viewer
+        self.list_points = []
+        self.list_points_useful_notation = ''
+
+        # compute slices to display
+        self.list_slices = []
+
+    def set_layout_and_launch_viewer(self):
+        (window, system) = self.launch_main_window()
+        layout_main = self.add_layout_main(window)
+        self.header = self.add_header(layout_main)
+        self.main_pannel = self.add_main_pannel(layout_main, self, self.header)
+        self.control_buttons = self.add_control_buttons(layout_main, self)
+        window.setLayout(layout_main)
+        sys.exit(system.exec_())
+
+    def launch_main_window(self):
+        system = QtGui.QApplication(sys.argv)
+        w = QtGui.QWidget()
+        w.resize(740, 850)
+        w.setWindowTitle('Propseg Viewer')
+        w.show()
+        return (w, system)
+
+    def add_layout_main(self,window):
+        layout_main = QtGui.QVBoxLayout()
+        layout_main.setAlignment(QtCore.Qt.AlignTop)
+        window.setLayout(layout_main)
+        return layout_main
+
+    def add_header(self,layout_main):
+        header = HeaderPropseg()
+        layout_main.addLayout(header.layout_header)
+        header.update_text('welcome')
+        return (header)
+
+    def add_main_pannel(self,layout_main, window, header):
+        main_pannel = MainPannelPropseg(self.images, self.im_params, window, header)
+        layout_main.addLayout(main_pannel.layout_global)
+        return main_pannel
+
+    def add_control_buttons(self,layout_main, window):
+        control_buttons = ControlButtonsPropseg(self.main_pannel.main_plot, window, self.header)
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
 
