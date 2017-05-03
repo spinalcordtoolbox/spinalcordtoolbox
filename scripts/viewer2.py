@@ -633,7 +633,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
         self.number_of_points = number_of_points
         self.calculate_list_slices()
         self.update_slice(Coordinate([self.list_slices[0], self.current_position.y, self.current_position.z]))
-        self.bool_is_mode_auto = True
         # print(self.list_slices)
 
     def update_slice(self, new_position):
@@ -675,20 +674,10 @@ class ImagePlotMainGroundTruth(ImagePlot):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event))
-                if self.bool_is_mode_auto:
-                    self.jump_to_new_slice()
                 self.draw_dots()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
                 self.change_intensity_on_secondary_plot(event)
-
-    def jump_to_new_slice(self):
-        if len(self.list_points) < self.number_of_points:
-            self.update_slice(
-                Coordinate([self.list_slices[len(self.list_points)], self.current_position.y, self.current_position.z]))
-            self.secondary_plot.current_position = Coordinate(
-                [self.list_slices[len(self.list_points)], self.current_position.y, self.current_position.z])
-            self.secondary_plot.draw_lines()
 
     def change_intensity_on_secondary_plot(self, event):
         """
@@ -699,6 +688,21 @@ class ImagePlotMainGroundTruth(ImagePlot):
 
     def refresh(self):
         self.figs[-1].figure.canvas.draw()
+
+    def calc_list_points_on_slice(self):
+        def select_right_position_dim(current_position, view):
+            if view == 'ax':
+                return current_position.x
+            elif view == 'cor':
+                return current_position.y
+            elif view == 'sag':
+                return current_position.z
+
+        list_points_on_slice=[]
+        for ipoints in self.list_points:
+            if select_right_position_dim(ipoints, self.view) == select_right_position_dim(self.current_position,self.view):
+                list_points_on_slice.append(ipoints)
+        return list_points_on_slice
 
     def draw_dots(self):
         """
@@ -724,12 +728,11 @@ class ImagePlotMainGroundTruth(ImagePlot):
                 return current_position.z
 
         x_data, y_data = [], []
-        for ipoints in self.list_points:
-            if select_right_position_dim(ipoints, self.view) == select_right_position_dim(self.current_position,
-                                                                                          self.view):
-                x, y = select_right_dimensions(ipoints, self.view)
-                x_data.append(x)
-                y_data.append(y)
+        list_points_on_slice=self.calc_list_points_on_slice()
+        for ipoints in list_points_on_slice:
+            x, y = select_right_dimensions(ipoints, self.view)
+            x_data.append(x)
+            y_data.append(y)
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
         self.refresh()
@@ -1254,8 +1257,6 @@ class MainPannelGroundTruth(MainPannelCore):
         self.number_of_points = 12
         self.add_main_view()
         self.add_secondary_view()
-        # self.add_controller_pannel()
-        self.add_option_settings()
         self.merge_layouts()
 
     def add_main_view(self):
