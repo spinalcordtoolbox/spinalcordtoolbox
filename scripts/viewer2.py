@@ -618,6 +618,276 @@ class ImagePlotMainLabelVertebrae(ImagePlot):
         self.refresh()
 
 
+class ImagePlotMainGroundTruth(ImagePlot):
+    """
+    Inherites ImagePlot
+    Class used for displaying the main (right) picture in Propseg Viewer
+    Defines the action on mouse events, draw dots, and manages the list of results : list_points.
+    """
+    def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, secondary_plot=None,
+                 header=None, number_of_points=0):
+        super(ImagePlotMainGroundTruth, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
+        self.secondary_plot = secondary_plot
+        self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
+        self.show_image(self.im_params, current_point=None)
+        self.number_of_points = number_of_points
+        self.calculate_list_slices()
+        self.update_slice(Coordinate([self.list_slices[0], self.current_position.y, self.current_position.z]))
+        self.bool_is_mode_auto = True
+        # print(self.list_slices)
+
+    def update_slice(self, new_position):
+        self.current_position = new_position
+        if (self.view == 'ax'):
+            self.figs[-1].set_data(self.images[0].data[self.current_position.x, :, :])
+        elif (self.view == 'cor'):
+            self.figs[-1].set_data(self.images[0].data[:, self.current_position.y, :])
+        elif (self.view == 'sag'):
+            self.figs[-1].set_data(self.images[0].data[:, :, self.current_position.z])
+        self.figs[-1].figure.canvas.draw()
+
+    def add_point_to_list_points(self, current_point):
+        """
+        Manages the adding of a point to self.list_points :
+            - Auto way : checks if there is a next point
+            - Manual way : remplaces the dot that has already be made on the slice.
+
+        Parameters
+        ----------
+        current_point Coordinate
+        """
+
+        def add_point_auto(self):
+            if len(self.list_points) < self.number_of_points:
+                self.list_points.append(current_point)
+                if len(self.list_points) == self.number_of_points:
+                    self.header.update_text('ready_to_save_and_quit')
+                else:
+                    self.header.update_text('update', len(self.list_points), self.number_of_points)
+            else:
+                self.header.update_text('warning_all_points_done_already')
+
+        def add_point_custom(self):
+            bool_remplaced = False
+            for ipoint in self.list_points:
+                if ipoint.x == current_point.x:
+                    self.list_points.remove(ipoint)
+                    self.list_points.append(current_point)
+                    bool_remplaced = True
+            if not bool_remplaced:
+                self.list_points.append(current_point)
+            self.header.update_text('update', len(self.list_points), self.number_of_points)
+
+        if self.bool_is_mode_auto:
+            add_point_auto(self)
+        else:
+            add_point_custom(self)
+
+    def on_event_motion(self, event):
+        if event.button == 3 and event.inaxes == self.axes:  # right click
+            if self.get_event_coordinates(event):
+                self.change_intensity(event)
+                self.change_intensity_on_secondary_plot(event)
+
+    def on_event_release(self, event):
+        if self.get_event_coordinates(event):
+            if event.button == 1:  # left click
+                self.add_point_to_list_points(self.get_event_coordinates(event))
+                if self.bool_is_mode_auto:
+                    self.jump_to_new_slice()
+                self.draw_dots()
+            elif event.button == 3:  # right click
+                self.change_intensity(event)
+                self.change_intensity_on_secondary_plot(event)
+
+    def jump_to_new_slice(self):
+        if len(self.list_points) < self.number_of_points:
+            self.update_slice(
+                Coordinate([self.list_slices[len(self.list_points)], self.current_position.y, self.current_position.z]))
+            self.secondary_plot.current_position = Coordinate(
+                [self.list_slices[len(self.list_points)], self.current_position.y, self.current_position.z])
+            self.secondary_plot.draw_lines('v')
+
+    def change_intensity_on_secondary_plot(self, event):
+        """
+        Updates the intensity on the secondary plot according to the intensity of the first.
+        """
+        if self.secondary_plot:
+            self.secondary_plot.change_intensity(event)
+
+    def refresh(self):
+        self.figs[-1].figure.canvas.draw()
+
+    def draw_dots(self):
+        """
+        Draw dots on selected points on the main picture
+
+        Warning : the picture in main plot image is the projection of a 3D image.
+        That is why, we have to carefully determinate which coordinates are x or y, to properly draw the dot.
+        """
+        def select_right_dimensions(ipoint, view):
+            if view == 'ax':
+                return ipoints.z, ipoints.y
+            elif view == 'cor':
+                return ipoints.x, ipoints.z
+            elif view == 'sag':
+                return ipoints.y, ipoints.x
+
+        def select_right_position_dim(current_position, view):
+            if view == 'ax':
+                return current_position.x
+            elif view == 'cor':
+                return current_position.y
+            elif view == 'sag':
+                return current_position.z
+
+        x_data, y_data = [], []
+        for ipoints in self.list_points:
+            if select_right_position_dim(ipoints, self.view) == select_right_position_dim(self.current_position,
+                                                                                          self.view):
+                x, y = select_right_dimensions(ipoints, self.view)
+                x_data.append(x)
+                y_data.append(y)
+        self.plot_points.set_xdata(x_data)
+        self.plot_points.set_ydata(y_data)
+        self.refresh()
+
+    def calculate_list_slices(self):
+        self.list_slices = []
+        increment = int(self.image_dim[0] / (self.number_of_points - 1))
+        for ii in range(0, self.number_of_points - 1):
+            self.list_slices.append(ii * increment)
+        self.list_slices.append(self.image_dim[0] - 1)
+
+    def switch_mode_seg(self):
+        self.bool_is_mode_auto = not self.bool_is_mode_auto
+        self.reset_data()
+        self.header.update_text('mode_switched')
+
+    def reset_data(self):
+        """
+        Resets all the data when user switches mode, ie Manual Mode => Auto Mode or Auto Mode => Manual Mode.
+        """
+        self.list_points = []
+        if self.bool_is_mode_auto:
+            self.number_of_points = 7
+        else:
+            self.number_of_points = -1
+        self.current_position.x = 0
+        self.update_slice(self.current_position)
+        self.draw_dots()
+        self.secondary_plot.current_position = self.current_position
+        self.secondary_plot.draw_lines('v')
+
+
+class ImagePlotSecondGroundTruth(ImagePlot):
+    """
+    Inherites ImagePlot
+    Class used for displaying the secondary (left) picture in Propseg Viewer
+    Defines the action on mouse events, draw lines and update the slice on the main picture.
+    """
+    def __init__(self, ax, images, viewer, canvas, main_single_plot, view, line_direction='hv', im_params=None,
+                 header=None):
+        super(ImagePlotSecondGroundTruth, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
+        self.main_plot = main_single_plot
+        self.current_position = self.main_plot.current_position
+        self.list_previous_lines = []
+
+        self.show_image(self.im_params, current_point=None)
+        self.current_line = self.calc_line('v',
+                                           self.current_position)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
+        self.axes.add_line(self.current_line)
+        self.refresh()
+
+    def calc_line(self, line_direction, line_position, line_color='white'):
+        """
+        Creates a line according to coordinate line_position and direnction line_direction.
+
+        Parameters
+        ----------
+        line_direction      {'h','v'}
+        line_position       Coordinate
+        line_color          {'white','red'}
+
+        Returns
+        -------
+        line                matplotlit.line2D
+
+        """
+        def calc_dic_line_coor(current_position, view):
+            if view == 'ax':
+                return {'v': [[current_position.y, current_position.y], [-10000, 10000]],
+                        'h': [[-10000, 10000], [current_position.z, current_position.z]]}
+            elif view == 'cor':
+                return {'v': [[current_position.x, current_position.x], [-10000, 10000]],
+                        'h': [[-10000, 10000], [current_position.z, current_position.z]]}
+            elif view == 'sag':
+                return {'v': [[current_position.x, current_position.x], [-10000, 10000]],
+                        'h': [[-10000, 10000], [current_position.y, current_position.y]]}
+
+        dic_line_coor = calc_dic_line_coor(line_position, self.view)
+        line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color=line_color)
+        return line
+
+    def draw_current_line(self, line_direction):
+        self.current_line.remove()
+        self.current_line = self.calc_line(line_direction, self.current_position)
+        self.axes.add_line(self.current_line)
+
+    def draw_previous_lines(self, line_direction):
+        for iline in self.list_previous_lines:
+            iline.remove()
+        self.list_previous_lines = []
+        for ipoint in self.main_plot.list_points:
+            self.list_previous_lines.append(self.calc_line(line_direction, ipoint, line_color='red'))
+            self.axes.add_line(self.list_previous_lines[-1])
+
+    def draw_lines(self, line_direction):
+        """
+        Global function that manages the drawing of all the lines on the secondary image.
+        """
+        self.draw_current_line(line_direction)
+        self.draw_previous_lines(line_direction)
+        self.refresh()
+
+    def refresh(self):
+        self.show_image(self.im_params, self.current_position)
+        self.figs[0].figure.canvas.draw()
+
+    def on_event_motion(self, event):
+        if event.button == 1 and event.inaxes == self.axes:  # left click
+            if self.get_event_coordinates(event):
+                self.change_main_slice(event)
+        elif event.button == 3 and event.inaxes == self.axes:  # right click
+            if self.get_event_coordinates(event):
+                self.change_intensity(event)
+
+    def on_event_release(self, event):
+        if self.get_event_coordinates(event):
+            if event.button == 1:  # left click
+                if not self.main_plot.bool_is_mode_auto:
+                    self.change_main_slice(event)
+                else:
+                    self.main_plot.jump_to_new_slice()
+            elif event.button == 3:  # right click
+                self.change_intensity(event)
+
+    def change_main_slice(self, event):
+        '''
+        When the user chosees a new slice, this function :
+        - updates the variable self.current_position in ImagePlotSecond
+        - updates the slice to display in ImagePlotMain.
+        '''
+        self.current_position = self.get_event_coordinates(event)
+        self.draw_lines('v')
+
+        self.main_plot.show_image(self.im_params, self.current_position)
+        self.main_plot.update_slice(self.current_position)
+        self.main_plot.refresh()
+        self.main_plot.draw_dots()
+
+
+
 class HeaderCore(object):
     """
     Core Class for Header
@@ -1011,7 +1281,7 @@ class MainPannelGroundTruth(MainPannelCore):
     Class that defines specific main image plot and secondary image plot for Propseg Viewer.
     """
     def __init__(self, images, im_params, window, header):
-        super(MainPannelPropseg, self).__init__(images, im_params, window, header)
+        super(MainPannelGroundTruth, self).__init__(images, im_params, window, header)
 
         self.number_of_points = 12
         self.add_main_view()
@@ -1033,7 +1303,7 @@ class MainPannelGroundTruth(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot = ImagePlotMainPropseg(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
+        self.main_plot = ImagePlotMainGroundTruth(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
                                         canvas=self.canvas_main, header=self.header,
                                         number_of_points=self.number_of_points)
 
@@ -1050,7 +1320,7 @@ class MainPannelGroundTruth(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot = ImagePlotSecondPropseg(axis, self.images, self, view='sag', line_direction='',
+        self.second_plot = ImagePlotSecondGroundTruth(axis, self.images, self, view='sag', line_direction='',
                                             im_params=self.im_params, canvas=self.canvas_second,
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
@@ -1180,7 +1450,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
     Class that displays specific button for Propseg Viewer : Skip
     """
     def __init__(self, main_plot, window, header):
-        super(ControlButtonsPropseg, self).__init__(main_plot, window, header)
+        super(ControlButtonsGroundTruth, self).__init__(main_plot, window, header)
         self.add_skip_button()
         self.add_classical_buttons()
 
@@ -1446,7 +1716,7 @@ class WindowGroundTruth(WindowCore):
         if not visualization_parameters:
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
 
-        super(WindowPropseg, self).__init__(list_images, visualization_parameters)
+        super(WindowGroundTruth, self).__init__(list_images, visualization_parameters)
         self.set_layout_and_launch_viewer()
 
     def set_main_plot(self):
