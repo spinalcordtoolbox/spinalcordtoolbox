@@ -302,16 +302,14 @@ def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
     fname_data, reoriented_image_filename)
     sct.run(cmd_image, verbose=False)
 
-
+    from viewer2 import WindowPropseg
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = ClickViewerGroundTruth(im_input_SAL, first_label,orientation_subplot=['sag', 'ax'])
-    set_viewer_parameters(viewer,nb_of_slices_to_mean)
+    viewer = WindowPropseg(im_input_SAL)
 
-    mask_points = viewer.start()
-    if not mask_points and viewer.closed:
-        mask_points = viewer.list_points_useful_notation
-    make_labels_image_from_list_points(mask_points,reoriented_image_filename,image_input_orientation)
-
+    #mask_points = viewer.start()
+    #if not mask_points and viewer.closed:
+    #    mask_points = viewer.list_points_useful_notation
+    #make_labels_image_from_list_points(mask_points,reoriented_image_filename,image_input_orientation)
 
 
 # MAIN
