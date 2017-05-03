@@ -656,32 +656,15 @@ class ImagePlotMainGroundTruth(ImagePlot):
         ----------
         current_point Coordinate
         """
-
-        def add_point_auto(self):
-            if len(self.list_points) < self.number_of_points:
-                self.list_points.append(current_point)
-                if len(self.list_points) == self.number_of_points:
-                    self.header.update_text('ready_to_save_and_quit')
-                else:
-                    self.header.update_text('update', len(self.list_points), self.number_of_points)
+        if len(self.list_points) < self.number_of_points:
+            self.list_points.append(current_point)
+            if len(self.list_points) == self.number_of_points:
+                self.header.update_text('ready_to_save_and_quit')
             else:
-                self.header.update_text('warning_all_points_done_already')
-
-        def add_point_custom(self):
-            bool_remplaced = False
-            for ipoint in self.list_points:
-                if ipoint.x == current_point.x:
-                    self.list_points.remove(ipoint)
-                    self.list_points.append(current_point)
-                    bool_remplaced = True
-            if not bool_remplaced:
-                self.list_points.append(current_point)
-            self.header.update_text('update', len(self.list_points), self.number_of_points)
-
-        if self.bool_is_mode_auto:
-            add_point_auto(self)
+                self.header.update_text('update', str(len(self.list_points)))
         else:
-            add_point_custom(self)
+            self.header.update_text('warning_all_points_done_already')
+
 
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
@@ -1036,14 +1019,6 @@ class HeaderLabelVertebrae(HeaderCore):
         if (key == 'welcome'):
             self.lb_status.setText(self.dic_message_labels[nbpt])
             self.lb_status.setStyleSheet("color:black")
-
-        elif (key == 'warning_skip_not_defined'):
-            self.lb_warning.setText('This option is not used in Manual Mode. \n')
-            self.lb_warning.setStyleSheet("color:red")
-        elif (key == 'mode_switched'):
-            self.lb_status.setText('You have switched on an other segmentation mode. \n'
-                                   'All previous data have been erased.')
-            self.lb_status.setStyleSheet("color:black")
         elif (key == 'update'):
             if nbpt:
                 self.update_text('ready_to_save_and_quit')
@@ -1066,16 +1041,14 @@ class HeaderGroundTruth(HeaderCore):
     def update_text(self, key, nbpt=-1, nbfin=-1):
         self.lb_warning.setText('\n')
         if (key == 'welcome'):
-            self.lb_status.setText('Please click in the the center of the center line. \n'
-                                   'If it is invisible, you may skip it.')
+            self.lb_status.setText(self.dic_message_labels[nbpt])
             self.lb_status.setStyleSheet("color:black")
-        elif (key == 'warning_skip_not_defined'):
-            self.lb_warning.setText('This option is not used in Manual Mode. \n')
-            self.lb_warning.setStyleSheet("color:red")
-        elif (key == 'mode_switched'):
-            self.lb_status.setText('You have switched on an other segmentation mode. \n'
-                                   'All previous data have been erased.')
-            self.lb_status.setStyleSheet("color:black")
+        elif(key=='update'):
+            if nbpt!='0':
+                self.lb_status.setText(self.dic_message_labels[nbpt])
+                self.lb_status.setStyleSheet("color:black")
+            else:
+                self.update_text('warning_undo_beyond_first_point')
         else:
             self.update_title_text_general(key, nbpt, nbfin)
 
@@ -1459,7 +1432,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         if self.main_plot.list_points:
             del self.main_plot.list_points[-1]
             self.main_plot.draw_dots()
-            self.header.update_text('update', len(self.main_plot.list_points), self.main_plot.number_of_points)
+            self.header.update_text('update', str(len(self.main_plot.list_points)), self.main_plot.number_of_points)
             self.main_plot.jump_to_new_slice()
         else:
             self.header.update_text('warning_undo_beyond_first_point')
@@ -1771,7 +1744,7 @@ class WindowGroundTruth(WindowCore):
     def add_header(self,layout_main):
         header = HeaderGroundTruth()
         layout_main.addLayout(header.layout_header)
-        header.update_text('welcome')
+        header.update_text('welcome',nbpt='1')
         return (header)
 
     def add_main_pannel(self,layout_main, window, header):
