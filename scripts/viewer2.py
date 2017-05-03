@@ -1303,7 +1303,7 @@ class MainPannelGroundTruth(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot = ImagePlotMainGroundTruth(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
+        self.main_plot = ImagePlotMainGroundTruth(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,
                                         canvas=self.canvas_main, header=self.header,
                                         number_of_points=self.number_of_points)
 
@@ -1320,7 +1320,7 @@ class MainPannelGroundTruth(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot = ImagePlotSecondGroundTruth(axis, self.images, self, view='sag', line_direction='',
+        self.second_plot = ImagePlotSecondGroundTruth(axis, self.images, self, view='cor', line_direction='',
                                             im_params=self.im_params, canvas=self.canvas_second,
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
@@ -1762,7 +1762,7 @@ class WindowGroundTruth(WindowCore):
         system = QtGui.QApplication(sys.argv)
         w = QtGui.QWidget()
         w.resize(740, 850)
-        w.setWindowTitle('Propseg Viewer')
+        w.setWindowTitle('Ground Truth Viewer')
         w.show()
         return (w, system)
 
@@ -1773,18 +1773,18 @@ class WindowGroundTruth(WindowCore):
         return layout_main
 
     def add_header(self,layout_main):
-        header = HeaderPropseg()
+        header = HeaderGroundTruth()
         layout_main.addLayout(header.layout_header)
         header.update_text('welcome')
         return (header)
 
     def add_main_pannel(self,layout_main, window, header):
-        main_pannel = MainPannelPropseg(self.images, self.im_params, window, header)
+        main_pannel = MainPannelGroundTruth(self.images, self.im_params, window, header)
         layout_main.addLayout(main_pannel.layout_global)
         return main_pannel
 
     def add_control_buttons(self,layout_main, window):
-        control_buttons = ControlButtonsPropseg(self.main_pannel.main_plot, window, self.header)
+        control_buttons = ControlButtonsGroundTruth(self.main_pannel.main_plot, window, self.header)
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
 
