@@ -706,7 +706,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
                 Coordinate([self.list_slices[len(self.list_points)], self.current_position.y, self.current_position.z]))
             self.secondary_plot.current_position = Coordinate(
                 [self.list_slices[len(self.list_points)], self.current_position.y, self.current_position.z])
-            self.secondary_plot.draw_lines('v')
+            self.secondary_plot.draw_lines(self.secondary_plot.line_direction)
 
     def change_intensity_on_secondary_plot(self, event):
         """
@@ -865,10 +865,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
     def on_event_release(self, event):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
-                if not self.main_plot.bool_is_mode_auto:
-                    self.change_main_slice(event)
-                else:
-                    self.main_plot.jump_to_new_slice()
+                pass
             elif event.button == 3:  # right click
                 self.change_intensity(event)
 
@@ -879,7 +876,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         - updates the slice to display in ImagePlotMain.
         '''
         self.current_position = self.get_event_coordinates(event)
-        self.draw_lines('v')
+        self.draw_lines(self.line_direction)
 
         self.main_plot.show_image(self.im_params, self.current_position)
         self.main_plot.update_slice(self.current_position)
@@ -1320,7 +1317,7 @@ class MainPannelGroundTruth(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot = ImagePlotSecondGroundTruth(axis, self.images, self, view='cor', line_direction='',
+        self.second_plot = ImagePlotSecondGroundTruth(axis, self.images, self, view='cor', line_direction='h',
                                             im_params=self.im_params, canvas=self.canvas_second,
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
