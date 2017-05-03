@@ -706,7 +706,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
                 Coordinate([self.list_slices[len(self.list_points)], self.current_position.y, self.current_position.z]))
             self.secondary_plot.current_position = Coordinate(
                 [self.list_slices[len(self.list_points)], self.current_position.y, self.current_position.z])
-            self.secondary_plot.draw_lines(self.secondary_plot.line_direction)
+            self.secondary_plot.draw_lines()
 
     def change_intensity_on_secondary_plot(self, event):
         """
@@ -794,12 +794,11 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         self.list_previous_lines = []
 
         self.show_image(self.im_params, current_point=None)
-        self.current_line = self.calc_line('v',
-                                           self.current_position)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
+        self.current_line = self.calc_line(self.current_position)  # add_line is used in stead of draw_line because in draw_line we also remove the previous line.
         self.axes.add_line(self.current_line)
         self.refresh()
 
-    def calc_line(self, line_direction, line_position, line_color='white'):
+    def calc_line(self, line_position, line_color='white'):
         """
         Creates a line according to coordinate line_position and direnction line_direction.
 
@@ -826,28 +825,28 @@ class ImagePlotSecondGroundTruth(ImagePlot):
                         'h': [[-10000, 10000], [current_position.y, current_position.y]]}
 
         dic_line_coor = calc_dic_line_coor(line_position, self.view)
-        line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color=line_color)
+        line = Line2D(dic_line_coor[self.line_direction][1], dic_line_coor[self.line_direction][0], color=line_color)
         return line
 
-    def draw_current_line(self, line_direction):
+    def draw_current_line(self):
         self.current_line.remove()
-        self.current_line = self.calc_line(line_direction, self.current_position)
+        self.current_line = self.calc_line(self.current_position)
         self.axes.add_line(self.current_line)
 
-    def draw_previous_lines(self, line_direction):
+    def draw_previous_lines(self):
         for iline in self.list_previous_lines:
             iline.remove()
         self.list_previous_lines = []
         for ipoint in self.main_plot.list_points:
-            self.list_previous_lines.append(self.calc_line(line_direction, ipoint, line_color='red'))
+            self.list_previous_lines.append(self.calc_line(ipoint, line_color='red'))
             self.axes.add_line(self.list_previous_lines[-1])
 
-    def draw_lines(self, line_direction):
+    def draw_lines(self):
         """
         Global function that manages the drawing of all the lines on the secondary image.
         """
-        self.draw_current_line(line_direction)
-        self.draw_previous_lines(line_direction)
+        self.draw_current_line()
+        self.draw_previous_lines()
         self.refresh()
 
     def refresh(self):
@@ -876,7 +875,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         - updates the slice to display in ImagePlotMain.
         '''
         self.current_position = self.get_event_coordinates(event)
-        self.draw_lines(self.line_direction)
+        self.draw_lines()
 
         self.main_plot.show_image(self.im_params, self.current_position)
         self.main_plot.update_slice(self.current_position)
