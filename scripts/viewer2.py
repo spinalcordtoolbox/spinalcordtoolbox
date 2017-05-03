@@ -815,14 +815,14 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         """
         def calc_dic_line_coor(current_position, view):
             if view == 'ax':
-                return {'v': [[current_position.y, current_position.y], [-10000, 10000]],
-                        'h': [[-10000, 10000], [current_position.z, current_position.z]]}
+                return {'h': [[current_position.y, current_position.y], [-10000, 10000]],
+                        'v': [[-10000, 10000], [current_position.z, current_position.z]]}
             elif view == 'cor':
-                return {'v': [[current_position.x, current_position.x], [-10000, 10000]],
-                        'h': [[-10000, 10000], [current_position.z, current_position.z]]}
+                return {'h': [[current_position.x, current_position.x], [-10000, 10000]],
+                        'v': [[-10000, 10000], [current_position.z, current_position.z]]}
             elif view == 'sag':
-                return {'v': [[current_position.x, current_position.x], [-10000, 10000]],
-                        'h': [[-10000, 10000], [current_position.y, current_position.y]]}
+                return {'h': [[current_position.x, current_position.x], [-10000, 10000]],
+                        'v': [[-10000, 10000], [current_position.y, current_position.y]]}
 
         dic_line_coor = calc_dic_line_coor(line_position, self.view)
         line = Line2D(dic_line_coor[self.line_direction][1], dic_line_coor[self.line_direction][0], color=line_color)
@@ -1316,7 +1316,7 @@ class MainPannelGroundTruth(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.second_plot = ImagePlotSecondGroundTruth(axis, self.images, self, view='cor', line_direction='h',
+        self.second_plot = ImagePlotSecondGroundTruth(axis, self.images, self, view='cor', line_direction='v',
                                             im_params=self.im_params, canvas=self.canvas_second,
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
