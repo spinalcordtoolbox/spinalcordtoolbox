@@ -302,9 +302,9 @@ def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
     fname_data, reoriented_image_filename)
     sct.run(cmd_image, verbose=False)
 
-    from viewer2 import WindowPropseg
+    from viewer2 import WindowGroundTruth
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = WindowPropseg(im_input_SAL)
+    viewer = WindowGroundTruth(im_input_SAL)
 
     #mask_points = viewer.start()
     #if not mask_points and viewer.closed:
