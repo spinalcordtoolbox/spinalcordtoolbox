@@ -633,7 +633,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
         self.number_of_points = number_of_points
         self.calculate_list_slices()
         self.update_slice(Coordinate([self.list_slices[0], self.current_position.y, self.current_position.z]))
-        # print(self.list_slices)
 
     def update_slice(self, new_position):
         self.current_position = new_position
@@ -655,12 +654,13 @@ class ImagePlotMainGroundTruth(ImagePlot):
         ----------
         current_point Coordinate
         """
-        if len(self.list_points) < self.number_of_points:
+        list_points_on_slice=self.calc_list_points_on_slice()
+        if len(list_points_on_slice) < self.number_of_points:
             self.list_points.append(current_point)
-            if len(self.list_points) == self.number_of_points:
+            if list_points_on_slice == self.number_of_points:
                 self.header.update_text('ready_to_save_and_quit')
             else:
-                self.header.update_text('update', str(len(self.list_points)))
+                self.header.update_text('update', str(len(list_points_on_slice)))
         else:
             self.header.update_text('warning_all_points_done_already')
 
@@ -718,14 +718,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
                 return ipoints.x, ipoints.z
             elif view == 'sag':
                 return ipoints.y, ipoints.x
-
-        def select_right_position_dim(current_position, view):
-            if view == 'ax':
-                return current_position.x
-            elif view == 'cor':
-                return current_position.y
-            elif view == 'sag':
-                return current_position.z
 
         x_data, y_data = [], []
         list_points_on_slice=self.calc_list_points_on_slice()
