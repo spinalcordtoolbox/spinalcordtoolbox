@@ -1245,8 +1245,7 @@ class MainPannelGroundTruth(MainPannelCore):
     """
     def __init__(self, images, im_params, window, header):
         super(MainPannelGroundTruth, self).__init__(images, im_params, window, header)
-
-        self.number_of_points = 12
+        self.number_of_points = 26
         self.add_main_view()
         self.add_secondary_view()
         self.merge_layouts()
@@ -1658,10 +1657,12 @@ class WindowGroundTruth(WindowCore):
     def __init__(self,
                  list_images,
                  visualization_parameters=None,
+                 first_label=1,
                  orientation_subplot=['ax', 'sag'],
                  input_type='centerline'):
 
         # Ajust the input parameters into viewer objects.
+        self.first_label=first_label
         if isinstance(list_images, Image):
             list_images = [list_images]
         if not visualization_parameters:
