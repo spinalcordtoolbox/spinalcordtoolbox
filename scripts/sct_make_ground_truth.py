@@ -304,7 +304,7 @@ def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
 
     from viewer2 import WindowGroundTruth
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = WindowGroundTruth(im_input_SAL,5)
+    viewer = WindowGroundTruth(im_input_SAL,first_label=5)
 
     #mask_points = viewer.start()
     #if not mask_points and viewer.closed:
