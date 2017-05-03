@@ -665,7 +665,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
         else:
             self.header.update_text('warning_all_points_done_already')
 
-
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
             if self.get_event_coordinates(event):
@@ -1293,16 +1292,6 @@ class MainPannelGroundTruth(MainPannelCore):
                                             im_params=self.im_params, canvas=self.canvas_second,
                                             main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
-
-    def add_option_settings(self):
-        self.rb_mode_auto = QtGui.QRadioButton('Mode Auto')
-        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
-        self.rb_mode_custom = QtGui.QRadioButton('Mode Custom')
-        self.layout_option_settings.addWidget(self.rb_mode_auto)
-        self.layout_option_settings.addWidget(self.rb_mode_custom)
-        self.rb_mode_auto.setChecked(True)
-        self.rb_mode_auto.clicked.connect(self.main_plot.switch_mode_seg)
-        self.rb_mode_custom.clicked.connect(self.main_plot.switch_mode_seg)
 
 
 class ControlButtonsCore(object):
