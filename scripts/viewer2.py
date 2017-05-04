@@ -657,7 +657,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
         """
         list_points_on_slice=self.calc_list_points_on_slice()
         if len(list_points_on_slice) < self.number_of_points:
-            self.list_points.append(current_point)
+            self.list_points.append(Coordinate([current_point.x,current_point.y,current_point.z,len(self.calc_list_points_on_slice())+1]))
             if list_points_on_slice == self.number_of_points:
                 self.header.update_text('ready_to_save_and_quit')
             else:
@@ -1451,11 +1451,11 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
 
 
     def press_undo(self):
-        if self.main_plot.list_points:
-            del self.main_plot.list_points[-1]
+        list_points_on_slice=self.main_plot.calc_list_points_on_slice()
+        if list_points_on_slice:
+            self.main_plot.list_points.remove(self.find_point_with_max_label(list_points_on_slice))
             self.main_plot.draw_dots()
             self.header.update_text('update', str(len(self.main_plot.calc_list_points_on_slice())), self.main_plot.number_of_points)
-            self.main_plot.jump_to_new_slice()
         else:
             self.header.update_text('warning_undo_beyond_first_point')
 
