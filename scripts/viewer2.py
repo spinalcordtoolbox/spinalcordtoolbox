@@ -657,15 +657,13 @@ class ImagePlotMainGroundTruth(ImagePlot):
         current_point Coordinate
         """
         list_points_on_slice=self.calc_list_points_on_slice()
-
         if len(list_points_on_slice) < self.number_of_points:
-            print(0)
             self.list_points.append(Coordinate([current_point.x,current_point.y,current_point.z,len(self.calc_list_points_on_slice())+1]))
             list_points_on_slice = self.calc_list_points_on_slice()
             if len(list_points_on_slice) == self.number_of_points:
                 self.header.update_text('ready_to_save_and_quit')
             else:
-                self.header.update_text('update', str(len(list_points_on_slice)))
+                self.header.update_text('update', str(len(list_points_on_slice)+1))
         else:
             self.header.update_text('warning_all_points_done_already')
         print (list_points_on_slice)
