@@ -789,7 +789,10 @@ class ImagePlotMainGroundTruth(ImagePlot):
             dic[str(ii)]=ii+1
         return dic[value_to_translate]
 
-
+    def save_current_image(self):
+        image_array=self.set_data_to_display(self.images, self.current_position, self.view)
+        import scipy.misc
+        scipy.misc.imsave('outfile.jpg', image_array)
 
 class ImagePlotSecondGroundTruth(ImagePlot):
     """
@@ -1483,7 +1486,6 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             return list_points_to_keep
 
         list_points_on_slice=self.main_plot.calc_list_points_on_slice()
-        print(self.main_plot.list_points)
         if len(list_points_on_slice)>0:
             self.main_plot.list_points=redundant_removal(self.main_plot.list_points,self.find_point_with_max_label(list_points_on_slice))
             self.main_plot.draw_dots()
@@ -1495,6 +1497,10 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         self.main_plot.list_points.append(Coordinate([-1, -1, -1]))
         self.header.update_text('update', len(self.main_plot.list_points), self.main_plot.number_of_points)
         self.main_plot.jump_to_new_slice()
+
+    def press_save_and_quit(self):
+        super(ControlButtonsGroundTruth,self).press_save_and_quit()
+        self.main_plot.save_current_image()
 
 
 class WindowCore(object):
