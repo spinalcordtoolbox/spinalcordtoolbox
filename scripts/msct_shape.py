@@ -352,7 +352,7 @@ def prepare_data():
     import isct_test_function
     import json
     json_requirements = 'gm_model=0'
-    data_subjects, subjects_name = isct_test_function.generate_data_list(folder_dataset, json_requirements=json_requirements)
+    data_subjects, subjects_name = sct_pipeline.generate_data_list(folder_dataset, json_requirements=json_requirements)
 
     fname_seg_images = []
     fname_disks_images = []

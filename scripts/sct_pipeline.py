@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""
 #########################################################################################
 #
 # This function allows to run a function on a large dataset with a set of parameters.
@@ -33,10 +34,14 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+usage:
+
+    isct_test_function  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8 
+
+"""
 import commands
 import copy_reg
 import json
-import logging
 import os
 import platform
 import signal
@@ -107,9 +112,9 @@ def generate_data_list(folder_dataset, json_requirements=None, verbose=1):
 
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
-        if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
-            if read_json(folder_dataset + subject_dir, json_requirements=json_requirements):
-                data_subjects.append(folder_dataset + subject_dir + '/')
+        if not subject_dir.startswith('.') and os.path.isdir(os.path.join(folder_dataset, subject_dir)):
+            if read_json(os.path.join(folder_dataset, subject_dir), json_requirements=json_requirements):
+                data_subjects.append(os.path.join(folder_dataset, subject_dir))
                 subjects_dir.append(subject_dir)
 
     if not data_subjects:
@@ -265,7 +270,7 @@ def get_parser():
                       description="Number of CPU used for testing. 0: no multiprocessing. If not provided, "
                                   "it uses all the available cores.",
                       mandatory=False,
-                      default_value=0,
+                      default_value=1,
                       example='42')
 
     parser.add_option(name="-log",
