@@ -1454,12 +1454,23 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         for ipoints in list_points_on_slice:
             if ipoints.value>point_max.value:
                 point_max=ipoints
+        print(point_max)
         return point_max
 
     def press_undo(self):
+        def redundant_removal(list_points,point_to_remove):
+            list_points_to_keep=[]
+            for ipoints in list_points:
+                if ipoints.x==point_to_remove.x and ipoints.y==point_to_remove.y and ipoints.z==point_to_remove.z and ipoints.value==point_to_remove.value:
+                    pass
+                else:
+                    list_points_to_keep.append(ipoints)
+            return list_points_to_keep
+
         list_points_on_slice=self.main_plot.calc_list_points_on_slice()
+        print(self.main_plot.list_points)
         if len(list_points_on_slice)>0:
-            self.main_plot.list_points.remove(self.find_point_with_max_label(list_points_on_slice))
+            self.main_plot.list_points=redundant_removal(self.main_plot.list_points,self.find_point_with_max_label(list_points_on_slice))
             self.main_plot.draw_dots()
             self.header.update_text('update', str(len(self.main_plot.calc_list_points_on_slice())+1), self.main_plot.number_of_points)
         else:
