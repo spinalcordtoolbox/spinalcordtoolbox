@@ -27,8 +27,6 @@ import shutil
 ########################################################################################################################
 #                                   CLASS SLICE
 ########################################################################################################################
-
-
 class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
@@ -152,17 +150,24 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         im_sc_seg_rpi_crop = crop_sc_seg.crop()
         # denoising
         from sct_maths import denoise_nlmeans
-        block_radius = int(im_target_rpi_crop.data.shape[2] / 2) if im_target_rpi_crop.data.shape[2] < 10 else 5
-        data_denoised = denoise_nlmeans(im_target_rpi_crop.data, block_radius = block_radius)
+        block_radius = 3
+        block_radius = int(im_target_rpi_crop.data.shape[2] / 2) if im_target_rpi_crop.data.shape[2] < (block_radius*2) else block_radius
+        patch_radius = block_radius -1
+        data_denoised = denoise_nlmeans(im_target_rpi_crop.data, block_radius=block_radius, patch_radius=patch_radius)
         im_target_rpi_crop.data = data_denoised
+
+        im_target_rpi = im_target_rpi_crop
+        im_sc_seg_rpi = im_sc_seg_rpi_crop
+    else:
+        fname_mask = None
 
     # interpolate image to reference square image (resample and square crop centered on SC)
     printv('  Interpolate data to the model space...', verbose, 'normal')
-    list_im_slices = interpolate_im_to_ref(im_target_rpi_crop, im_sc_seg_rpi_crop, new_res=new_res, sq_size_size_mm=square_size_size_mm)
-    original_info['interpolated_images'] = list_im_slices  # list of images (not Slice() objects)
+    list_im_slices = interpolate_im_to_ref(im_target_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
+    original_info['interpolated_images'] = list_im_slices # list of images (not Slice() objects)
 
     printv('  Mask data using the spinal cord segmentation...', verbose, 'normal')
-    list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi_crop, im_sc_seg_rpi_crop, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=1)
+    list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=1)
     for i in range(len(list_im_slices)):
         # list_im_slices[i].data[list_sc_seg_slices[i].data == 0] = 0
         list_sc_seg_slices[i] = binarize(list_sc_seg_slices[i], thr_min=0.5, thr_max=1)
@@ -186,7 +191,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # load manual gmseg if there is one (model data)
     if fname_manual_gmseg is not None:
         printv('\n\tLoad manual GM segmentation(s) ...', verbose, 'normal')
-        list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=for_model)
+        list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=for_model, fname_mask=fname_mask)
 
     os.chdir('..')
     if rm_tmp:
@@ -362,7 +367,7 @@ def load_level(list_slices_target, fname_level):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=False):
+def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=False, fname_mask=None):
     if isinstance(list_fname_manual_gmseg, str):
         # consider fname_manual_gmseg as a list of file names to allow multiple manual GM segmentation
         list_fname_manual_gmseg = [list_fname_manual_gmseg]
@@ -379,6 +384,13 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
 
         # reorient to RPI
         im_manual_gmseg = set_orientation(im_manual_gmseg, 'RPI')
+
+        if fname_mask is not None:
+            fname_gmseg_crop = add_suffix(im_manual_gmseg.absolutepath, '_pre_crop')
+            crop_im = ImageCropper(input_file=im_manual_gmseg.absolutepath, output_file=fname_gmseg_crop,
+                                   mask=fname_mask)
+            im_manual_gmseg_crop = crop_im.crop()
+            im_manual_gmseg = im_manual_gmseg_crop
 
         # assert gmseg has the right number of slices
         assert im_manual_gmseg.data.shape[2] == len(list_slices_target), 'ERROR: the manual GM segmentation has not the same number of slices than the image.'

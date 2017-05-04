@@ -2,3 +2,4 @@ nipy==0.4.0
 nibabel==2.1.0
 dipy==0.11.0
 distribute2mpi==0.2.5
+tqdm==4.11.2

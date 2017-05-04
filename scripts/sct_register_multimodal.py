@@ -131,7 +131,7 @@ def get_parser(paramreg=None):
                                   "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" + paramreg.steps['1'].smooth + "\n"
                                   "laplacian: <int> Laplacian filter. Default=" + paramreg.steps['1'].laplacian + "\n"
                                   "gradStep: <float> Gradient step. Default=" + paramreg.steps['1'].gradStep + "\n"
-                                  "init: <int> Initial translation alignment based on:\n"
+                                  "init: Initial translation alignment based on:\n"
                                   "  geometric: Geometric center of images\n"
                                   "  centermass: Center of mass of images\n"
                                   "  origin: Physical origin of images\n"
