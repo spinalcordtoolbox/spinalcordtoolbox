@@ -1080,11 +1080,8 @@ class HeaderGroundTruth(HeaderCore):
             self.lb_status.setText(self.dic_message_labels[nbpt])
             self.lb_status.setStyleSheet("color:black")
         elif(key=='update'):
-            if nbpt!='0':
-                self.lb_status.setText(self.dic_message_labels[nbpt])
-                self.lb_status.setStyleSheet("color:black")
-            else:
-                self.update_text('warning_undo_beyond_first_point')
+            self.lb_status.setText(self.dic_message_labels[nbpt])
+            self.lb_status.setStyleSheet("color:black")
         else:
             self.update_title_text_general(key, nbpt, nbfin)
 
@@ -1461,13 +1458,12 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
 
     def press_undo(self):
         list_points_on_slice=self.main_plot.calc_list_points_on_slice()
-        if list_points_on_slice:
+        if len(list_points_on_slice)>0:
             self.main_plot.list_points.remove(self.find_point_with_max_label(list_points_on_slice))
             self.main_plot.draw_dots()
-            self.header.update_text('update', str(len(self.main_plot.calc_list_points_on_slice())), self.main_plot.number_of_points)
+            self.header.update_text('update', str(len(self.main_plot.calc_list_points_on_slice())+1), self.main_plot.number_of_points)
         else:
             self.header.update_text('warning_undo_beyond_first_point')
-        print(list_points_on_slice)
 
     def press_skip(self):
         self.main_plot.list_points.append(Coordinate([-1, -1, -1]))
