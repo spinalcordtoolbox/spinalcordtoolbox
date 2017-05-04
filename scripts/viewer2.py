@@ -1459,6 +1459,21 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
 
     def press_undo(self):
         def redundant_removal(list_points,point_to_remove):
+            """
+            Function that does manually the removal of the point we want to remove.
+            Its necessary as the usual comparaison of Coordinates does not take into account the Coordinate.value value,
+            which is necessary to distinguish between the points that are filled in automatically in mainPlot.fill_first_labels.
+
+            Parameters
+            ----------
+            list_points         : current self.list_points
+            point_to_remove     : point we are about to undo
+
+            Returns
+            -------
+            list_points_to_keep : new list_points without the point to remove.
+
+            """
             list_points_to_keep=[]
             for ipoints in list_points:
                 if ipoints.x==point_to_remove.x and ipoints.y==point_to_remove.y and ipoints.z==point_to_remove.z and ipoints.value==point_to_remove.value:
