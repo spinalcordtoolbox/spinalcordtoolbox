@@ -757,6 +757,12 @@ class ImagePlotMainGroundTruth(ImagePlot):
         self.secondary_plot.current_position = self.current_position
         self.secondary_plot.draw_lines('v')
 
+    def fill_first_labels(self):
+        for ilabels in range (0,self.first_label):
+            self.list_points.append(Coordinate([-1,-1,self.current_position.z,ilabels]))
+
+
+
 
 class ImagePlotSecondGroundTruth(ImagePlot):
     """
@@ -834,7 +840,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
     def on_event_motion(self, event):
         if event.button == 1 and event.inaxes == self.axes:  # left click
             if self.get_event_coordinates(event):
-                self.change_main_slice(event)
+                self.change_main_slice(event,bool_fill_first_labels=False)
         elif event.button == 3 and event.inaxes == self.axes:  # right click
             if self.get_event_coordinates(event):
                 self.change_intensity(event)
@@ -842,11 +848,11 @@ class ImagePlotSecondGroundTruth(ImagePlot):
     def on_event_release(self, event):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
-                self.change_main_slice(event)
+                self.change_main_slice(event,bool_fill_first_labels=True)
             elif event.button == 3:  # right click
                 self.change_intensity(event)
 
-    def change_main_slice(self, event):
+    def change_main_slice(self, event,bool_fill_first_labels):
         '''
         When the user chosees a new slice, this function :
         - updates the variable self.current_position in ImagePlotSecond
@@ -859,6 +865,9 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         self.main_plot.update_slice(self.current_position)
         self.main_plot.refresh()
         self.main_plot.draw_dots()
+        if bool_fill_first_labels:
+            self.main_plot.fill_first_labels()
+        self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())))
 
 
 
@@ -1415,7 +1424,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         if self.main_plot.list_points:
             del self.main_plot.list_points[-1]
             self.main_plot.draw_dots()
-            self.header.update_text('update', str(len(self.main_plot.list_points)), self.main_plot.number_of_points)
+            self.header.update_text('update', str(len(self.main_plot.calc_list_points_on_slice())), self.main_plot.number_of_points)
             self.main_plot.jump_to_new_slice()
         else:
             self.header.update_text('warning_undo_beyond_first_point')
