@@ -635,6 +635,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
         self.calculate_list_slices()
         self.update_slice(Coordinate([self.list_slices[0], self.current_position.y, self.current_position.z]))
         self.fill_first_labels()
+        self.header.update_text('update',str(len(self.calc_list_points_on_slice())))
 
     def update_slice(self, new_position):
         self.current_position = new_position
@@ -762,7 +763,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
 
     def fill_first_labels(self):
         if not self.calc_list_points_on_slice():
-            for ilabels in range (0,self.first_label):
+            for ilabels in range (1,self.first_label):
                 self.list_points.append(Coordinate([-1,-1,self.current_position.z,ilabels]))
 
     def check_if_selected_points_on_slice(self):
