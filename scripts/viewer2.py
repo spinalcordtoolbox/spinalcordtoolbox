@@ -635,7 +635,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
         self.calculate_list_slices()
         self.update_slice(Coordinate([self.list_slices[0], self.current_position.y, self.current_position.z]))
         self.fill_first_labels()
-        self.header.update_text('update',str(len(self.calc_list_points_on_slice())))
+        self.header.update_text('update',str(len(self.calc_list_points_on_slice())+1))
 
     def update_slice(self, new_position):
         self.current_position = new_position
