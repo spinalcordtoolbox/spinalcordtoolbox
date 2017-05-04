@@ -878,7 +878,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
 
         if not self.main_plot.check_if_selected_points_on_slice():
             self.main_plot.delete_all_points_on_slice()
-        
+
         self.current_position = self.get_event_coordinates(event)
         self.draw_lines()
 
@@ -1441,6 +1441,14 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         btn_skip = QtGui.QPushButton('Skip')
         self.layout_buttons.addWidget(btn_skip)
         btn_skip.clicked.connect(self.press_skip)
+
+    def find_point_with_max_label(self,list_points_on_slice):
+        point_max=list_points_on_slice[0]
+        for ipoints in list_points_on_slice:
+            if ipoints.value>point_max.value:
+                point_max=ipoints
+        return point_max
+
 
     def press_undo(self):
         if self.main_plot.list_points:
