@@ -657,14 +657,18 @@ class ImagePlotMainGroundTruth(ImagePlot):
         current_point Coordinate
         """
         list_points_on_slice=self.calc_list_points_on_slice()
+
         if len(list_points_on_slice) < self.number_of_points:
+            print(0)
             self.list_points.append(Coordinate([current_point.x,current_point.y,current_point.z,len(self.calc_list_points_on_slice())+1]))
-            if list_points_on_slice == self.number_of_points:
+            list_points_on_slice = self.calc_list_points_on_slice()
+            if len(list_points_on_slice) == self.number_of_points:
                 self.header.update_text('ready_to_save_and_quit')
             else:
                 self.header.update_text('update', str(len(list_points_on_slice)))
         else:
             self.header.update_text('warning_all_points_done_already')
+        print (list_points_on_slice)
 
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
@@ -776,10 +780,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
         previous_slice=self.calc_list_points_on_slice()
         for ipoints in previous_slice:
             self.list_points.remove(ipoints)
-
-
-
-
 
 
 class ImagePlotSecondGroundTruth(ImagePlot):
@@ -1450,7 +1450,6 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                 point_max=ipoints
         return point_max
 
-
     def press_undo(self):
         list_points_on_slice=self.main_plot.calc_list_points_on_slice()
         if list_points_on_slice:
@@ -1459,6 +1458,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             self.header.update_text('update', str(len(self.main_plot.calc_list_points_on_slice())), self.main_plot.number_of_points)
         else:
             self.header.update_text('warning_undo_beyond_first_point')
+        print(list_points_on_slice)
 
     def press_skip(self):
         self.main_plot.list_points.append(Coordinate([-1, -1, -1]))
