@@ -790,9 +790,17 @@ class ImagePlotMainGroundTruth(ImagePlot):
         return dic[value_to_translate]
 
     def save_current_image(self):
-        image_array=self.set_data_to_display(self.images, self.current_position, self.view)
+        self.calc_list_different_slices_in_list_point()
+        image_array=self.set_data_to_display(self.images[0], self.current_position, self.view)
         import scipy.misc
         scipy.misc.imsave('outfile.jpg', image_array)
+
+    def calc_list_different_slices_in_list_point(self):
+        list_slices=[]
+        for ipoints in self.list_points:
+            if not ipoints.z in list_slices:
+                list_slices.append(ipoints.z)
+        print list_slices
 
 class ImagePlotSecondGroundTruth(ImagePlot):
     """
