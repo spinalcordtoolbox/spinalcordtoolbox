@@ -762,6 +762,21 @@ class ImagePlotMainGroundTruth(ImagePlot):
             for ilabels in range (0,self.first_label):
                 self.list_points.append(Coordinate([-1,-1,self.current_position.z,ilabels]))
 
+    def check_if_selected_points_on_slice(self):
+        bool_selected_points=False
+        previous_slice=self.calc_list_points_on_slice()
+        for ipoints in previous_slice:
+            if ipoints.x!=-1:
+                bool_selected_points=True
+                return bool_selected_points
+
+    def delete_all_points_on_slice(self):
+        previous_slice=self.calc_list_points_on_slice()
+        for ipoints in previous_slice:
+            self.list_points.remove(ipoints)
+
+
+
 
 
 
