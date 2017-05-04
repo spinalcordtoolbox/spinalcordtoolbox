@@ -1267,7 +1267,7 @@ class MainPannelGroundTruth(MainPannelCore):
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
         self.main_plot = ImagePlotMainGroundTruth(axis, self.images, self, view='sag', line_direction='', im_params=self.im_params,
                                         canvas=self.canvas_main, header=self.header,
-                                        number_of_points=self.number_of_points,first_slice=self.first_label)
+                                        number_of_points=self.number_of_points,first_label=self.first_label)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
