@@ -802,6 +802,8 @@ class ImagePlotMainGroundTruth(ImagePlot):
             save_specific_slice_as_png(self,islice)
 
 
+
+
 class ImagePlotSecondGroundTruth(ImagePlot):
     """
     Inherites ImagePlot
@@ -911,7 +913,6 @@ class ImagePlotSecondGroundTruth(ImagePlot):
             self.main_plot.fill_first_labels()
         if self.main_plot.calc_list_points_on_slice():
             self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())))
-
 
 
 class HeaderCore(object):
@@ -1505,9 +1506,27 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         self.header.update_text('update', len(self.main_plot.list_points), self.main_plot.number_of_points)
         self.main_plot.jump_to_new_slice()
 
+    def save_all_labels_as_txt(self):
+        def calc_list_different_slices_in_list_point(list_points):
+            list_slices = []
+            for ipoints in list_points:
+                if ipoints.x != -1 and not ipoints.z in list_slices:
+                    list_slices.append(ipoints.z)
+            return list_slices
+        def write_txt_file(list_slice,list_points):
+            text_file = open("Output.txt", "w")
+            text_file.write("Purchase Amount: %s")
+            text_file.close()
+
+        list_slices=calc_list_different_slices_in_list_point(self.main_plot.list_points)
+        write_txt_file(list_slices,self.main_plot.list_points)
+
+
     def press_save_and_quit(self):
-        super(ControlButtonsGroundTruth,self).press_save_and_quit()
+
         self.main_plot.save_all_labelled_slices_as_png()
+        self.save_all_labels_as_txt()
+
 
 
 class WindowCore(object):
