@@ -842,7 +842,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
     def on_event_release(self, event):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
-                pass
+                self.change_main_slice(event)
             elif event.button == 3:  # right click
                 self.change_intensity(event)
 
