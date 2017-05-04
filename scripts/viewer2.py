@@ -758,8 +758,9 @@ class ImagePlotMainGroundTruth(ImagePlot):
         self.secondary_plot.draw_lines('v')
 
     def fill_first_labels(self):
-        for ilabels in range (0,self.first_label):
-            self.list_points.append(Coordinate([-1,-1,self.current_position.z,ilabels]))
+        if not self.calc_list_points_on_slice():
+            for ilabels in range (0,self.first_label):
+                self.list_points.append(Coordinate([-1,-1,self.current_position.z,ilabels]))
 
 
 
@@ -867,7 +868,8 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         self.main_plot.draw_dots()
         if bool_fill_first_labels:
             self.main_plot.fill_first_labels()
-        self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())))
+        if self.main_plot.calc_list_points_on_slice():
+            self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())))
 
 
 
