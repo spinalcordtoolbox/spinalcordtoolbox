@@ -769,6 +769,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
             if ipoints.x!=-1:
                 bool_selected_points=True
                 return bool_selected_points
+        return bool_selected_points
 
     def delete_all_points_on_slice(self):
         previous_slice=self.calc_list_points_on_slice()
@@ -874,6 +875,10 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         - updates the variable self.current_position in ImagePlotSecond
         - updates the slice to display in ImagePlotMain.
         '''
+
+        if not self.main_plot.check_if_selected_points_on_slice():
+            self.main_plot.delete_all_points_on_slice()
+        
         self.current_position = self.get_event_coordinates(event)
         self.draw_lines()
 
