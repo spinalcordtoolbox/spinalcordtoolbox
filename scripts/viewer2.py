@@ -628,7 +628,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
                  header=None, number_of_points=0,first_label=1):
         super(ImagePlotMainGroundTruth, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
         self.secondary_plot = secondary_plot
-        self.first_label=first_label
+        self.first_label=self.translate_labels_num_into_list_point_length(str(first_label))
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
         self.number_of_points = number_of_points
@@ -779,6 +779,16 @@ class ImagePlotMainGroundTruth(ImagePlot):
         previous_slice=self.calc_list_points_on_slice()
         for ipoints in previous_slice:
             self.list_points.remove(ipoints)
+
+    def translate_labels_num_into_list_point_length(self,value_to_translate):
+        dic={'50':1,
+             '49':2,
+             '1':3,
+             '3':4,}
+        for ii in range (4,27):
+            dic[str(ii)]=ii+1
+        return dic[value_to_translate]
+
 
 
 class ImagePlotSecondGroundTruth(ImagePlot):
