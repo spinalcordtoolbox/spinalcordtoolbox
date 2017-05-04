@@ -232,7 +232,6 @@ class ImagePlot(object):
         return point
 
     def compute_offset(self):
-        print(self.image_dim)
         if self.primary_subplot == 'ax':
             array_dim = [self.image_dim[1] * self.im_spacing[1], self.image_dim[2] * self.im_spacing[2]]
             index_max = np.argmax(array_dim)
@@ -276,7 +275,6 @@ class ImagePlotMainPropseg(ImagePlot):
         self.calculate_list_slices()
         self.update_slice(Coordinate([self.list_slices[0], self.current_position.y, self.current_position.z]))
         self.bool_is_mode_auto = True
-        # print(self.list_slices)
 
     def update_slice(self, new_position):
         self.current_position = new_position
@@ -568,7 +566,6 @@ class ImagePlotMainLabelVertebrae(ImagePlot):
         if self.get_event_coordinates(event):
             if event.button == 1:  # left click
                 self.add_point_to_list_points(self.get_event_coordinates(event, self.current_label))
-                print(self.list_points)
                 self.draw_dots()
             elif event.button == 3:  # right click
                 self.change_intensity(event)
@@ -667,7 +664,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
                 self.header.update_text('update', str(len(list_points_on_slice)+1))
         else:
             self.header.update_text('warning_all_points_done_already')
-        print (list_points_on_slice)
 
     def on_event_motion(self, event):
         if event.button == 3 and event.inaxes == self.axes:  # right click
@@ -789,18 +785,22 @@ class ImagePlotMainGroundTruth(ImagePlot):
             dic[str(ii)]=ii+1
         return dic[value_to_translate]
 
-    def save_current_image(self):
-        self.calc_list_different_slices_in_list_point()
-        image_array=self.set_data_to_display(self.images[0], self.current_position, self.view)
-        import scipy.misc
-        scipy.misc.imsave('outfile.jpg', image_array)
+    def save_all_labelled_slices_as_png(self):
+        def save_specific_slice_as_png(self,num_slice):
+            image_array = self.set_data_to_display(self.images[0], Coordinate([-1, -1, num_slice]), self.view)
+            import scipy.misc
+            scipy.misc.imsave('labelled_slice_'+str(num_slice)+'.png', image_array)
+        def calc_list_different_slices_in_list_point(list_points):
+            list_slices = []
+            for ipoints in list_points:
+                if ipoints.x != -1 and not ipoints.z in list_slices:
+                    list_slices.append(ipoints.z)
+            return list_slices
 
-    def calc_list_different_slices_in_list_point(self):
-        list_slices=[]
-        for ipoints in self.list_points:
-            if ipoints.x!=-1 and not ipoints.z in list_slices :
-                list_slices.append(ipoints.z)
-        print list_slices
+        list_slice=calc_list_different_slices_in_list_point(self.list_points)
+        for islice in list_slice:
+            save_specific_slice_as_png(self,islice)
+
 
 class ImagePlotSecondGroundTruth(ImagePlot):
     """
@@ -1465,7 +1465,6 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         for ipoints in list_points_on_slice:
             if ipoints.value>point_max.value:
                 point_max=ipoints
-        print(point_max)
         return point_max
 
     def press_undo(self):
@@ -1508,7 +1507,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
 
     def press_save_and_quit(self):
         super(ControlButtonsGroundTruth,self).press_save_and_quit()
-        self.main_plot.save_current_image()
+        self.main_plot.save_all_labelled_slices_as_png()
 
 
 class WindowCore(object):
