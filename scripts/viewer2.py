@@ -798,7 +798,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
     def calc_list_different_slices_in_list_point(self):
         list_slices=[]
         for ipoints in self.list_points:
-            if not ipoints.z in list_slices:
+            if ipoints.x!=-1 and not ipoints.z in list_slices :
                 list_slices.append(ipoints.z)
         print list_slices
 
