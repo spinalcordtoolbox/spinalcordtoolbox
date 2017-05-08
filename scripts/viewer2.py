@@ -1459,10 +1459,20 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         btn_save.clicked.connect(self.press_save)
 
     def find_point_with_max_label(self,list_points_on_slice):
+        def translate_num_labels(lab):
+            if lab==50:
+                return -1
+            elif lab==49:
+                return 0
+            else:
+                return lab
+
         point_max=list_points_on_slice[0]
         for ipoints in list_points_on_slice:
-            if ipoints.value>point_max.value:
-                point_max=ipoints
+            ipvalue = translate_num_labels(ipoints.value)
+            mvalue = translate_num_labels(point_max.value)
+            if ipvalue>mvalue:
+                point_max = ipoints
         return point_max
 
     def press_undo(self):
