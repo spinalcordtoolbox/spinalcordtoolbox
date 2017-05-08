@@ -110,8 +110,14 @@ def get_parser():
     return parser
 
 def rewrite_arguments(arguments):
+    def rewrite_output_path(arguments):
+        if '-o' in arguments:
+            return arguments['-o']
+        else:
+            return ''
+
     fname_data = arguments['-i']
-    output_path=arguments['-o']
+    output_path=rewrite_output_path(arguments)
     first_label=arguments['-first']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
