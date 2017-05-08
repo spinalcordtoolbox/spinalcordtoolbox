@@ -1809,7 +1809,9 @@ class WindowGroundTruth(WindowCore):
     def __init__(self,
                  list_images,
                  visualization_parameters=None,
-                 first_label=1):
+                 first_label=1,
+                 file_name='',
+                 output_name=''):
 
         # Ajust the input parameters into viewer objects.
         self.first_label=int(first_label)
