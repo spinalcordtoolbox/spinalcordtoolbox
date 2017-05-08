@@ -118,7 +118,7 @@ image_seg : msct_image.Image
             returns the cropped matrix
         """
         if width * 2 > matrix.shape[0]:
-           width = matrix.shape[0] // 2
+            width = matrix.shape[0] // 2
         if height * 2 > matrix.shape[1]:
             height = matrix.shape[1] // 2
 

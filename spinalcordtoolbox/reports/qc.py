@@ -5,10 +5,8 @@ import os
 import subprocess
 
 import warnings
-
-import shutil
-
 warnings.filterwarnings("ignore")
+
 import datetime
 import matplotlib
 matplotlib.use('Agg')
@@ -202,7 +200,7 @@ class QcImage(object):
 class Params(object):
     """Parses and stores the variables that will included into the QC details
 
-    We derive the value of the contrast and subject name from the `input_file` path, 
+    We derive the value of the contrast and subject name from the `input_file` path,
     by splitting it into `[subject]/[contrast]/input_file`
     """
 
@@ -211,7 +209,7 @@ class Params(object):
         Parameters
         ----------
         input_file : str
-            the input nifti file name 
+            the input nifti file name
         command : str
             the command name
         args : str
@@ -294,12 +292,8 @@ class QcReport(object):
 
         Parameters
         ----------
-        unparsed_args : list of str
-            the commands used in the Terminal of the process
         description : str
             quick description of current usage of the process
-        sct_commit : str
-            commit version of the code being currently used to generate the images
         """
         # get path of the toolbox
         path_script = os.path.dirname(__file__)

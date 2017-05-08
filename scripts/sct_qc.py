@@ -14,6 +14,8 @@ from SimpleHTTPServer import SimpleHTTPRequestHandler
 from msct_parser import Parser
 from sct_utils import printv
 
+import spinalcordtoolbox.reports as reports
+
 
 def get_parser():
     parser = Parser(__file__)
@@ -27,8 +29,7 @@ def get_parser():
 
 
 def _copy_assets(dest_path):
-    home_dir = os.path.dirname(os.path.dirname(__file__))
-    assets_path = os.path.join(home_dir, 'assets')
+    assets_path = os.path.join(reports.__path__[0], 'assets')
 
     shutil.copy2(os.path.join(assets_path, 'index.html'), dest_path)
 
