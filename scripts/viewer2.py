@@ -729,8 +729,9 @@ class ImagePlotMainGroundTruth(ImagePlot):
         list_points_on_slice=self.calc_list_points_on_slice()
         for ipoints in list_points_on_slice:
             x, y = select_right_dimensions(ipoints, self.view)
-            x_data.append(x)
-            y_data.append(y)
+            if x!=-1 and y!=-1:
+                x_data.append(x)
+                y_data.append(y)
         self.plot_points.set_xdata(x_data)
         self.plot_points.set_ydata(y_data)
         self.refresh()
