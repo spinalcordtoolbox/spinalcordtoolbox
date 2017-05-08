@@ -1546,7 +1546,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         for ikey in list(dic_label_to_write_complete.keys()):
             text_file = open(self.window.file_name+"_labels_slice_num_" + ikey + ".txt", "w")
             text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
-        if text_file:
+        if list(dic_label_to_write_complete.keys()):
             text_file.close()
 
     def save_all_labelled_slices_as_png(self):
