@@ -1432,15 +1432,22 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
     Inherites ControlButtonsCore
     Class that displays specific button for Propseg Viewer : Skip
     """
-    def __init__(self, main_plot, window, header):
+    def __init__(self, main_plot, window, header,window_widget):
         super(ControlButtonsGroundTruth, self).__init__(main_plot, window, header)
         self.add_skip_button()
+        self.add_save_button()
         self.add_classical_buttons()
+        self.window_widget=window_widget
 
     def add_skip_button(self):
         btn_skip = QtGui.QPushButton('Skip')
         self.layout_buttons.addWidget(btn_skip)
         btn_skip.clicked.connect(self.press_skip)
+
+    def add_save_button(self):
+        btn_save = QtGui.QPushButton('Save')
+        self.layout_buttons.addWidget(btn_save)
+        btn_save.clicked.connect(self.press_save)
 
     def find_point_with_max_label(self,list_points_on_slice):
         point_max=list_points_on_slice[0]
@@ -1517,7 +1524,8 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         for ikey in list(dic_label_to_write_complete.keys()):
             text_file = open("labels_slice_num_" + ikey + ".txt", "w")
             text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
-        text_file.close()
+        if text_file:
+            text_file.close()
 
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
@@ -1535,11 +1543,14 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         for islice in list_slice:
             save_specific_slice_as_png(self,islice)
 
-
+    def press_save(self):
+        self.save_all_labelled_slices_as_png()
+        self.save_all_labels_as_txt()
 
     def press_save_and_quit(self):
         self.save_all_labelled_slices_as_png()
         self.save_all_labels_as_txt()
+        self.window_widget.close()
 
 
 
@@ -1790,6 +1801,7 @@ class WindowGroundTruth(WindowCore):
         super(WindowGroundTruth, self).__init__(list_images, visualization_parameters)
         self.set_layout_and_launch_viewer()
 
+
     def set_main_plot(self):
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
         if self.primary_subplot == 'ax':
@@ -1825,7 +1837,7 @@ class WindowGroundTruth(WindowCore):
         layout_main = self.add_layout_main(window)
         self.header = self.add_header(layout_main)
         self.main_pannel = self.add_main_pannel(layout_main, self, self.header)
-        self.control_buttons = self.add_control_buttons(layout_main, self)
+        self.control_buttons = self.add_control_buttons(layout_main, self,window_widget=window)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
 
@@ -1854,8 +1866,8 @@ class WindowGroundTruth(WindowCore):
         layout_main.addLayout(main_pannel.layout_global)
         return main_pannel
 
-    def add_control_buttons(self,layout_main, window):
-        control_buttons = ControlButtonsGroundTruth(self.main_pannel.main_plot, window, self.header)
+    def add_control_buttons(self,layout_main, window,window_widget):
+        control_buttons = ControlButtonsGroundTruth(self.main_pannel.main_plot, window, self.header,window_widget)
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
 
