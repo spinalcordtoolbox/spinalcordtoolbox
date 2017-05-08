@@ -1814,7 +1814,9 @@ class WindowGroundTruth(WindowCore):
                  output_path=''):
 
         # Ajust the input parameters into viewer objects.
-        self.file_name=self.clean_file_name(file_name)
+        self.file_name=self.choose_and_clean_file_name(file_name,output_path)
+        print ('file_name')
+        print self.file_name
         self.first_label=int(first_label)
         if isinstance(list_images, Image):
             list_images = [list_images]
@@ -1824,8 +1826,11 @@ class WindowGroundTruth(WindowCore):
         super(WindowGroundTruth, self).__init__(list_images, visualization_parameters)
         self.set_layout_and_launch_viewer()
 
-    def clean_file_name(self,file_name):
-        return file_name.replace('.nii.gz','')
+    def choose_and_clean_file_name(self,file_name,output_path):
+        if not output_path:
+            return file_name.replace('.nii.gz','')
+        else:
+            return output_path
 
     def set_main_plot(self):
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
