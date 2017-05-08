@@ -1490,9 +1490,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             self.header.update_text('warning_undo_beyond_first_point')
 
     def press_skip(self):
-        self.main_plot.list_points.append(Coordinate([-1, -1, -1]))
-        self.header.update_text('update', len(self.main_plot.list_points), self.main_plot.number_of_points)
-        self.main_plot.jump_to_new_slice()
+        self.main_plot.add_point_to_list_points(Coordinate([-1,-1,self.main_plot.current_position.z,len(self.main_plot.calc_list_points_on_slice())+1]))
 
     def save_all_labels_as_txt(self):
         def calc_list_different_slices_in_list_point(list_points):
