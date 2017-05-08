@@ -1521,14 +1521,15 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                     if ipoints.z==islice:
                         list_labels_to_write.append(ipoints)
                 dic_label_to_write[str(islice)]=list_labels_to_write
+            return dic_label_to_write
 
 
         list_slices=calc_list_different_slices_in_list_point(self.main_plot.list_points)
         dic_label_to_write=calc_dic_labels_to_write(list_slices,self.main_plot.list_points)
-        print(dic_label_to_write)
 
-        text_file = open("labels_slice_num" + str(+".txt", "w"))
-        text_file.write("Purchase Amount: %s")
+        for ikey in list(dic_label_to_write.keys()):
+            text_file = open("labels_slice_num_" + ikey + ".txt", "w")
+            text_file.write("Purchase Amount: %s")
         text_file.close()
 
 
