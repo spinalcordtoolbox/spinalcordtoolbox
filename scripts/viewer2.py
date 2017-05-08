@@ -1361,11 +1361,10 @@ class ControlButtonsCore(object):
     def rewrite_list_points(self,list_points):
         list_points_useful_notation = ''
         for coord in list_points:
-            if coord.x != -1:  # check either the point has been placed or skipped.
-                if list_points_useful_notation:
-                    list_points_useful_notation += ':'
-                list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
-                                              str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            if list_points_useful_notation:
+                list_points_useful_notation += ':'
+            list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
+                                          str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         return list_points_useful_notation
 
     def press_save_and_quit(self):
@@ -1504,13 +1503,20 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                         list_labels_to_write.append(ipoints)
                 dic_label_to_write[str(islice)]=list_labels_to_write
             return dic_label_to_write
+        def fill_dic_list_points_with_missing_labels(dic_labels):
+            for ikey in list(dic_labels.keys()):
+                for imissing_labels in range(len(dic_labels[ikey]),27):
+                    dic_labels[ikey].append(Coordinate([-1,-1,int(ikey),imissing_labels]))
+            return dic_labels
 
         list_slices=calc_list_different_slices_in_list_point(self.main_plot.list_points)
-        dic_label_to_write=calc_dic_labels_to_write(list_slices,self.main_plot.list_points)
+        dic_label_to_write_uncomplete=calc_dic_labels_to_write(list_slices,self.main_plot.list_points)
+        dic_label_to_write_complete=fill_dic_list_points_with_missing_labels(dic_label_to_write_uncomplete)
 
-        for ikey in list(dic_label_to_write.keys()):
+
+        for ikey in list(dic_label_to_write_complete.keys()):
             text_file = open("labels_slice_num_" + ikey + ".txt", "w")
-            text_file.write(self.rewrite_list_points(dic_label_to_write[ikey]))
+            text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
         text_file.close()
 
     def save_all_labelled_slices_as_png(self):
