@@ -111,13 +111,13 @@ def get_parser():
 
 def rewrite_arguments(arguments):
     fname_data = arguments['-i']
-    path_output=arguments['-o']
+    output_path=arguments['-o']
     first_label=arguments['-first']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
 
-    return (fname_data,path_output,ref,remove_temp_files,verbose,first_label)
+    return (fname_data,output_path,ref,remove_temp_files,verbose,first_label)
 
 def correct_init_labels(s):
     if s=='viewer':
@@ -240,7 +240,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_ground_truth.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
         sct.run('rm -rf ' + 'labels.nii.gz')
 
-def use_viewer_to_define_labels(fname_data,first_label,path_output):
+def use_viewer_to_define_labels(fname_data,first_label,output_path):
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -256,7 +256,7 @@ def use_viewer_to_define_labels(fname_data,first_label,path_output):
 
     from viewer2 import WindowGroundTruth
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = WindowGroundTruth(im_input_SAL,first_label=first_label,file_name=fname_data)
+    viewer = WindowGroundTruth(im_input_SAL,first_label=first_label,file_name=fname_data,output_path=output_path)
 
     #mask_points = viewer.start()
     #if not mask_points and viewer.closed:
@@ -272,10 +272,10 @@ def main():
 
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
-    (fname_data, path_output, ref, remove_temp_files, verbose, first_label)=rewrite_arguments(arguments)
+    (fname_data, output_path, ref, remove_temp_files, verbose, first_label)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
-    use_viewer_to_define_labels(fname_data,first_label,path_output=path_output)
+    use_viewer_to_define_labels(fname_data,first_label,output_path=output_path)
 
 
 # Resample labels

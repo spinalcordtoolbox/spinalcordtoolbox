@@ -1811,7 +1811,7 @@ class WindowGroundTruth(WindowCore):
                  visualization_parameters=None,
                  first_label=1,
                  file_name='',
-                 output_name=''):
+                 output_path=''):
 
         # Ajust the input parameters into viewer objects.
         self.file_name=self.clean_file_name(file_name)
