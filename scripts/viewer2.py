@@ -785,24 +785,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
             dic[str(ii)]=ii+1
         return dic[value_to_translate]
 
-    def save_all_labelled_slices_as_png(self):
-        def save_specific_slice_as_png(self,num_slice):
-            image_array = self.set_data_to_display(self.images[0], Coordinate([-1, -1, num_slice]), self.view)
-            import scipy.misc
-            scipy.misc.imsave('labelled_slice_'+str(num_slice)+'.png', image_array)
-        def calc_list_different_slices_in_list_point(list_points):
-            list_slices = []
-            for ipoints in list_points:
-                if ipoints.x != -1 and not ipoints.z in list_slices:
-                    list_slices.append(ipoints.z)
-            return list_slices
-
-        list_slice=calc_list_different_slices_in_list_point(self.list_points)
-        for islice in list_slice:
-            save_specific_slice_as_png(self,islice)
-
-
-
 
 class ImagePlotSecondGroundTruth(ImagePlot):
     """
@@ -1531,9 +1513,26 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             text_file.write(self.rewrite_list_points(dic_label_to_write[ikey]))
         text_file.close()
 
-    def press_save_and_quit(self):
+    def save_all_labelled_slices_as_png(self):
+        def save_specific_slice_as_png(self,num_slice):
+            image_array = self.main_plot.set_data_to_display(self.main_plot.images[0], Coordinate([-1, -1, num_slice]), self.main_plot.view)
+            import scipy.misc
+            scipy.misc.imsave('labelled_slice_'+str(num_slice)+'.png', image_array)
+        def calc_list_different_slices_in_list_point(list_points):
+            list_slices = []
+            for ipoints in list_points:
+                if ipoints.x != -1 and not ipoints.z in list_slices:
+                    list_slices.append(ipoints.z)
+            return list_slices
 
-        self.main_plot.save_all_labelled_slices_as_png()
+        list_slice=calc_list_different_slices_in_list_point(self.main_plot.list_points)
+        for islice in list_slice:
+            save_specific_slice_as_png(self,islice)
+
+
+
+    def press_save_and_quit(self):
+        self.save_all_labelled_slices_as_png()
         self.save_all_labels_as_txt()
 
 
