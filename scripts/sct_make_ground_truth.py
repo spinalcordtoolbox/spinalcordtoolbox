@@ -111,10 +111,7 @@ def get_parser():
 
 def rewrite_arguments(arguments):
     fname_data = arguments['-i']
-    if '-ofolder' in arguments:
-        path_output = arguments['-ofolder']
-    else:
-        path_output = ''
+    path_output = arguments['-ofolder']
     first_label=arguments['-first']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
@@ -243,7 +240,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_ground_truth.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
         sct.run('rm -rf ' + 'labels.nii.gz')
 
-def use_viewer_to_define_labels(fname_data,first_label):
+def use_viewer_to_define_labels(fname_data,first_label,path_output):
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -278,7 +275,7 @@ def main():
     (fname_data, path_output, ref, remove_temp_files, verbose, first_label)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
-    use_viewer_to_define_labels(fname_data,first_label)
+    use_viewer_to_define_labels(fname_data,first_label,path_output=path_output)
 
 
 # Resample labels
