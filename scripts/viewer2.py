@@ -1814,7 +1814,7 @@ class WindowGroundTruth(WindowCore):
                  input_type='centerline'):
 
         # Ajust the input parameters into viewer objects.
-        self.first_label=first_label
+        self.first_label=int(first_label)
         if isinstance(list_images, Image):
             list_images = [list_images]
         if not visualization_parameters:
