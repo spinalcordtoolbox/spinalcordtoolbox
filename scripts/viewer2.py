@@ -1809,9 +1809,7 @@ class WindowGroundTruth(WindowCore):
     def __init__(self,
                  list_images,
                  visualization_parameters=None,
-                 first_label=1,
-                 orientation_subplot=['ax', 'sag'],
-                 input_type='centerline'):
+                 first_label=1):
 
         # Ajust the input parameters into viewer objects.
         self.first_label=int(first_label)
@@ -1822,7 +1820,6 @@ class WindowGroundTruth(WindowCore):
 
         super(WindowGroundTruth, self).__init__(list_images, visualization_parameters)
         self.set_layout_and_launch_viewer()
-
 
     def set_main_plot(self):
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
