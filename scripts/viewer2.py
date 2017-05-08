@@ -634,6 +634,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
         self.fill_first_labels()
         self.header.update_text('update',str(len(self.calc_list_points_on_slice())+1))
 
+
     def update_slice(self, new_position):
         self.current_position = new_position
         if (self.view == 'ax'):
@@ -656,7 +657,11 @@ class ImagePlotMainGroundTruth(ImagePlot):
         """
         list_points_on_slice=self.calc_list_points_on_slice()
         if len(list_points_on_slice) < self.number_of_points:
-            self.list_points.append(Coordinate([current_point.x,current_point.y,current_point.z,len(self.calc_list_points_on_slice())+1]))
+            self.list_points.append(Coordinate([current_point.x,
+                                                current_point.y,
+                                                current_point.z,
+                                                self.dic_translate_label[str(len(self.calc_list_points_on_slice())+1)]
+                                                ]))
             list_points_on_slice = self.calc_list_points_on_slice()
             if len(list_points_on_slice) == self.number_of_points:
                 self.header.update_text('ready_to_save_and_quit')
@@ -760,7 +765,11 @@ class ImagePlotMainGroundTruth(ImagePlot):
     def fill_first_labels(self):
         if not self.calc_list_points_on_slice():
             for ilabels in range (1,self.first_label):
-                self.list_points.append(Coordinate([-1,-1,self.current_position.z,ilabels]))
+                self.list_points.append(Coordinate([-1,
+                                                    -1,
+                                                    self.current_position.z,
+                                                    self.dic_translate_label[str(ilabels)]
+                                                    ]))
 
     def check_if_selected_points_on_slice(self):
         bool_selected_points=False
@@ -1490,7 +1499,11 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             self.header.update_text('warning_undo_beyond_first_point')
 
     def press_skip(self):
-        self.main_plot.add_point_to_list_points(Coordinate([-1,-1,self.main_plot.current_position.z,len(self.main_plot.calc_list_points_on_slice())+1]))
+        self.main_plot.add_point_to_list_points(Coordinate([-1,
+                                                            -1,
+                                                            self.main_plot.current_position.z,
+                                                            self.main_plot.dic_translate_label[str(len(self.main_plot.calc_list_points_on_slice())+1)]
+                                                            ])) #pas necessaire
 
     def save_all_labels_as_txt(self):
         def calc_list_different_slices_in_list_point(list_points):
