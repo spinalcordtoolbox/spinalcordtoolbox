@@ -70,8 +70,8 @@ def get_parser():
                       description="Anatomical image.",
                       mandatory=True,
                       example="anat.nii.gz")
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
+    parser.add_option(name="-o",
+                      type_value="str",
                       description="Output folder.",
                       mandatory=False,
                       default_value='')
@@ -111,7 +111,7 @@ def get_parser():
 
 def rewrite_arguments(arguments):
     fname_data = arguments['-i']
-    path_output = arguments['-ofolder']
+    path_output=arguments['-o']
     first_label=arguments['-first']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
