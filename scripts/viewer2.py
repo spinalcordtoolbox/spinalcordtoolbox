@@ -1376,18 +1376,18 @@ class ControlButtonsCore(object):
     def press_help(self):
         webbrowser.open(self.help_web_adress, new=0, autoraise=True)
 
-    def press_save_and_quit(self):
-        def rewrite_list_points(list_points):
-            list_points_useful_notation = ''
-            for coord in list_points:
-                if coord.x != -1:  # check either the point has been placed or skipped.
-                    if list_points_useful_notation:
-                        list_points_useful_notation += ':'
-                    list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
-                                                  str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-            return list_points_useful_notation
+    def rewrite_list_points(self,list_points):
+        list_points_useful_notation = ''
+        for coord in list_points:
+            if coord.x != -1:  # check either the point has been placed or skipped.
+                if list_points_useful_notation:
+                    list_points_useful_notation += ':'
+                list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
+                                              str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+        return list_points_useful_notation
 
-        self.window.str_points_final = rewrite_list_points(self.main_plot.list_points)
+    def press_save_and_quit(self):
+        self.window.str_points_final = self.rewrite_list_points(self.main_plot.list_points)
 
     def press_undo(self):
         if self.main_plot.list_points:
@@ -1523,16 +1523,13 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                 dic_label_to_write[str(islice)]=list_labels_to_write
             return dic_label_to_write
 
-
         list_slices=calc_list_different_slices_in_list_point(self.main_plot.list_points)
         dic_label_to_write=calc_dic_labels_to_write(list_slices,self.main_plot.list_points)
 
         for ikey in list(dic_label_to_write.keys()):
             text_file = open("labels_slice_num_" + ikey + ".txt", "w")
-            text_file.write("Purchase Amount: %s")
+            text_file.write(self.rewrite_list_points(dic_label_to_write[ikey]))
         text_file.close()
-
-
 
     def press_save_and_quit(self):
 
