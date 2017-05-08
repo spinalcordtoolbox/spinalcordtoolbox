@@ -1448,6 +1448,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         self.add_save_button()
         self.add_classical_buttons()
         self.window_widget=window_widget
+        print(self.window.file_name)
 
     def add_skip_button(self):
         btn_skip = QtGui.QPushButton('Skip')
@@ -1814,8 +1815,7 @@ class WindowGroundTruth(WindowCore):
                  output_name=''):
 
         # Ajust the input parameters into viewer objects.
-        self.file_name=file_name
-        print(self.file_name)
+        self.file_name=self.clean_file_name(file_name)
         self.first_label=int(first_label)
         if isinstance(list_images, Image):
             list_images = [list_images]
@@ -1824,6 +1824,9 @@ class WindowGroundTruth(WindowCore):
 
         super(WindowGroundTruth, self).__init__(list_images, visualization_parameters)
         self.set_layout_and_launch_viewer()
+
+    def clean_file_name(self,file_name):
+        return file_name.replace('.nii.gz','')
 
     def set_main_plot(self):
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
