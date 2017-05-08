@@ -259,7 +259,7 @@ def use_viewer_to_define_labels(fname_data,first_label):
 
     from viewer2 import WindowGroundTruth
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = WindowGroundTruth(im_input_SAL,first_label=first_label)
+    viewer = WindowGroundTruth(im_input_SAL,first_label=first_label,file_name=fname_data)
 
     #mask_points = viewer.start()
     #if not mask_points and viewer.closed:
