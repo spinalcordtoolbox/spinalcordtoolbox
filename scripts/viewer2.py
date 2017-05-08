@@ -1815,8 +1815,6 @@ class WindowGroundTruth(WindowCore):
 
         # Ajust the input parameters into viewer objects.
         self.file_name=self.choose_and_clean_file_name(file_name,output_path)
-        print ('file_name')
-        print self.file_name
         self.first_label=int(first_label)
         if isinstance(list_images, Image):
             list_images = [list_images]
