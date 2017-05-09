@@ -72,7 +72,7 @@ def get_parser():
                       example="anat.nii.gz")
     parser.add_option(name="-o",
                       type_value="str",
-                      description="Output folder.",
+                      description="Prefix for output files.",
                       mandatory=False,
                       default_value='')
     parser.add_option(name='-ref',
