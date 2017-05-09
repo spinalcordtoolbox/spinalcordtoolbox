@@ -1,5 +1,25 @@
 # CHANGES TO RELEASE
 
+## v3.0.3 (2017-04-26)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.2...v3.0.3)
+
+**BUG**
+
+ - Fixes case if data image, segmentation and labels are not in the same space [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1292)
+ - Fix the handling of the path of the QC report. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1285)
+ - Change the format of the SCT version. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1284)
+ - changed the DISPLAY variable due to conflicts with FSLView in batch_processing.sh [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1281)
+
+**INSTALLATION**
+
+ - Added course_hawaii17 into the list of available dataset from sct_download_data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1291)
+ - Incorrect variable when installing SCT in a different directory [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1289)
+
+**DOCUMENTATION**
+
+ - Added description with examples in the register_to_template command (#1262) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1287)
+ - Fixed typo in register_multimodal command [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1276)
+
 ## v3.0.2 (2017-04-20)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.1...v3.0.2)
 

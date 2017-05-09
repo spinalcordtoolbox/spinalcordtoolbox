@@ -14,10 +14,10 @@
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
-  DISPLAY=false
+  DISPLAYQC=false
   echo "Display mode turned off."
 else
-  DISPLAY=true
+  DISPLAYQC=true
 fi
 
 # Check if users wants to use his own data
@@ -39,7 +39,7 @@ cd t2
 # Spinal cord segmentation
 sct_propseg -i t2.nii.gz -c t2 -qc ~/qc_batch_processing
 # Check results:
-if [ $DISPLAY = true ]; then
+if [ $DISPLAYQC = true ]; then
   fslview t2 -b 0,3000 t2_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
@@ -52,7 +52,7 @@ sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -c t2 -q
 # Warp template without the white matter atlas (we don't need it at this point)
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # check results
-if [ $DISPLAY = true ]; then
+if [ $DISPLAYQC = true ]; then
   fslview t2.nii.gz -b 0,3000 label/template/PAM50_t2.nii.gz -b 0,4000 label/template/PAM50_levels.nii.gz -l MGH-Cortical -t 0.5 label/template/PAM50_gm.nii.gz -l Red-Yellow -b 0.5,1 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.5,1 &
 fi
 # Compute average cross-sectional area and volume between C2 and C3 levels
@@ -76,7 +76,7 @@ sct_crop_image -i mt0.nii.gz -m mask_mt1.nii.gz -o mt0_crop.nii.gz
 # segment mt1
 sct_propseg -i mt1_crop.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz -qc ~/qc_batch_processing
 # Check results
-if [ $DISPLAY = true ]; then
+if [ $DISPLAYQC = true ]; then
    fslview mt1_crop.nii.gz mt1_crop_seg.nii.gz -l Red -b 0,1 -t 0.7 &
 fi
 # Create close mask around spinal cord (for more accurate registration results)
@@ -85,7 +85,7 @@ sct_create_mask -i mt1_crop.nii.gz -p centerline,mt1_crop_seg.nii.gz -size 35mm 
 # Tips: here we only use rigid transformation because both images have very similar sequence parameters. We don't want to use SyN/BSplineSyN to avoid introducing spurious deformations.
 sct_register_multimodal -i mt0_crop.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC -m mask_mt1_crop.nii.gz -x spline
 # Check results
-if [ $DISPLAY = true ]; then
+if [ $DISPLAYQC = true ]; then
    fslview mt1_crop.nii.gz mt0_crop_reg.nii.gz &
 fi
 # Register template to mt1
@@ -103,7 +103,7 @@ mv warp_PAM50_t22mt1_crop_reg_gm.nii.gz warp_template2mt.nii.gz
 # warp template (this time corrected for internal structure)
 sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # Check registration result
-if [ $DISPLAY = true ]; then
+if [ $DISPLAYQC = true ]; then
    fslview mt0_crop_reg.nii.gz label/template/PAM50_gm.nii.gz -l Red-Yellow -b 0.5,1 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.5,1 &
 fi
 # Compute mtr
@@ -131,7 +131,7 @@ sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
 # segmentation with propseg
 sct_propseg -i dwi_moco_mean.nii.gz -c dwi -init-centerline t2_seg_reg.nii.gz -qc ~/qc_batch_processing
 # check segmentation
-if [ $DISPLAY = true ]; then
+if [ $DISPLAYQC = true ]; then
   fslview dwi_moco_mean -b 0,1000 dwi_moco_mean_seg -l Red -t 0.5 &
 fi
 # Register template to dwi
@@ -143,7 +143,7 @@ mv warp_PAM50_t12dwi_moco_mean.nii.gz warp_template2dmri.nii.gz
 # Warp template and white matter atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # Visualize white matter template and lateral CST on DWI
-if [ $DISPLAY = true ]; then
+if [ $DISPLAYQC = true ]; then
   fslview dwi_moco_mean -b 0,1000 label/template/PAM50_wm.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/PAM50_atlas_04.nii.gz -b 0.2,1 -l Red label/atlas/PAM50_atlas_05.nii.gz -b 0.2,1 -l Yellow &
 fi
 # Compute DTI metrics

@@ -5,6 +5,9 @@ import os
 import subprocess
 
 import warnings
+
+import shutil
+
 warnings.filterwarnings("ignore")
 import datetime
 import matplotlib
@@ -301,22 +304,18 @@ class QcReport(object):
         # get path of the toolbox
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
+        with open(os.path.join(path_sct, '..', 'version.txt')) as file_handle:
+            sct_version = file_handle.read().strip()
 
-        path_curr = os.path.abspath(os.curdir)
-        os.chdir(path_sct)
-        sct_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-        if not sct_commit.isalnum():
-            logger.info('Can not get GIT hash value')
-            sct_commit = 'unknown'
-            sct_branch = 'unknown'
-        else:
-            sct_branch = subprocess.check_output(['git', 'branch', '--contains', sct_commit]).strip('* ')
-        logger.info('Version: %s, Branch %s', sct_commit, sct_branch)
-        os.chdir(path_curr)
+        try:
+            cmd = 'git log -n 1 --pretty=format:"%H"'.split()
+            git_hash = subprocess.check_output(cmd).strip('"')
+        except subprocess.CalledProcessError:
+            git_hash = "N/A"
 
         output = {
             'command': self.qc_params.command,
-            'version': sct_commit,
+            'version': "{}({})".format(sct_version, git_hash),
             'args': ' '.join(self.qc_params.args),
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
