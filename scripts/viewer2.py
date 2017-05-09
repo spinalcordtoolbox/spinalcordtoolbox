@@ -61,7 +61,7 @@ class ImagePlot(object):
                '2': 49,
                '3': 1,
                '4': 3, }
-        for ii in range(5, 27):
+        for ii in range(5, 30):             # does not matter if the dictionnary is a bit too long. The number of possible labels is still 27.
             dic[str(ii)] = ii - 1
         return dic
 
@@ -748,21 +748,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
         self.reset_data()
         self.header.update_text('mode_switched')
 
-    def reset_data(self):
-        """
-        Resets all the data when user switches mode, ie Manual Mode => Auto Mode or Auto Mode => Manual Mode.
-        """
-        self.list_points = []
-        if self.bool_is_mode_auto:
-            self.number_of_points = 7
-        else:
-            self.number_of_points = -1
-        self.current_position.x = 0
-        self.update_slice(self.current_position)
-        self.draw_dots()
-        self.secondary_plot.current_position = self.current_position
-        self.secondary_plot.draw_lines('v')
-
     def fill_first_labels(self):
         if not self.calc_list_points_on_slice():
             for ilabels in range (1,self.first_label):
@@ -1288,7 +1273,7 @@ class MainPannelGroundTruth(MainPannelCore):
     """
     def __init__(self, images, im_params, window, header,first_label=1):
         super(MainPannelGroundTruth, self).__init__(images, im_params, window, header)
-        self.number_of_points = 26
+        self.number_of_points = 27
         self.first_label=first_label
         self.add_main_view()
         self.add_secondary_view()
