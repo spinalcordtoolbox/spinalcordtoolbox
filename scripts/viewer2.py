@@ -1923,6 +1923,7 @@ class WindowGroundTruth(WindowCore):
                 dic_labels[str(ii)]=Coordinate([-1,-1,-1,ii])
             return dic_labels
         def complete_dic_labels(dic_labels,list_coordinates):
+            max_label=-5
             for coordinates in list_coordinates:
                 list_pos=[]
                 pos=''
@@ -1933,7 +1934,27 @@ class WindowGroundTruth(WindowCore):
                     else:
                         pos+=char
                 list_pos.append(pos)
+
+                if int(list_pos[3])==50:
+                    current_label=-1
+                elif int(list_pos[3])==49:
+                    current_label=0
+                else:
+                    current_label=int(list_pos[3])
+
+                if current_label>max_label:
+                    max_label=current_label
+
                 dic_labels[list_pos[3]]=Coordinate([int(list_pos[0]),int(list_pos[1]),int(list_pos[2]),int(list_pos[3])])
+
+                for ikey in list(dic_labels.keys()):
+                    if ikey=='49':
+                        if max_label==-1:
+                            del dic_labels[ikey]
+                    else:
+                        if max_label>int(ikey):
+                            del dic_labels[ikey]
+
             return dic_labels
 
         list_txt=get_txt_files_in_output_directory(self.file_name)
@@ -1945,6 +1966,7 @@ class WindowGroundTruth(WindowCore):
                 self.main_pannel.main_plot.list_points.append(dic_labels[ikey])
         self.main_pannel.main_plot.draw_dots()
         self.main_pannel.second_plot.draw_lines()
+        self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())))
 
 
 
