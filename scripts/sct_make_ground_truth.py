@@ -139,7 +139,7 @@ def rewrite_arguments(arguments):
     bool_save_as_png=rewrite_save_as(arguments)
 
 
-    return (fname_data,output_path,ref,remove_temp_files,verbose,first_label,nb_pts,bool_save_as_png)
+    return (fname_data,output_path,ref,remove_temp_files,verbose,first_label,bool_save_as_png)
 
 def correct_init_labels(s):
     if s=='viewer':
@@ -300,7 +300,7 @@ def main():
 
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
-    (fname_data, output_path, ref, remove_temp_files, verbose, first_label,nb_pts,bool_save_as_png)=rewrite_arguments(arguments)
+    (fname_data, output_path, ref, remove_temp_files, verbose, first_label,bool_save_as_png)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
     use_viewer_to_define_labels(fname_data,first_label,output_path=output_path,bool_save_as_png=bool_save_as_png)

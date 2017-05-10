@@ -1603,6 +1603,18 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         self.press_save()
         self.window_widget.close()
 
+    def rewrite_list_points(self,list_points):
+        list_points_useful_notation = ''
+        for coord in list_points:
+            if coord.x!=-1:
+                if list_points_useful_notation:
+                    list_points_useful_notation += ':'
+                list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
+                                              str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+
+        return list_points_useful_notation
+
+
 
 class WindowCore(object):
     """
