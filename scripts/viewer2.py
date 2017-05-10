@@ -1568,7 +1568,6 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         self.window_widget.close()
 
 
-
 class WindowCore(object):
     """
     Core Class that manages the qt window.
@@ -1885,6 +1884,7 @@ class WindowGroundTruth(WindowCore):
     def add_main_pannel(self,layout_main, window, header):
         main_pannel = MainPannelGroundTruth(self.images, self.im_params, window, header,first_label=self.first_label)
         layout_main.addLayout(main_pannel.layout_global)
+        self.import_existing_labels()
         return main_pannel
 
     def add_control_buttons(self,layout_main, window,window_widget):
@@ -1892,7 +1892,18 @@ class WindowGroundTruth(WindowCore):
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
 
+    def import_existing_labels(self):
+        def get_files_in_output_directory(output_file_name):
+            name_file_output = output_file_name + '_ground_truth/'
+            if os.path.exists(name_file_output):
+                return os.listdir(name_file_output)
+            else:
+                return []
 
+        list_files=get_files_in_output_directory(self.file_name)
+        print list_files
+
+        
 class ParamMultiImageVisualization(object):
     """
     This class contains a dictionary with the params of multiple images visualization
