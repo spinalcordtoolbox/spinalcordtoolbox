@@ -1529,7 +1529,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
 
 
         for ikey in list(dic_label_to_write_complete.keys()):
-            text_file = open(self.window.file_name+"_labels_slice_num_" + ikey + ".txt", "w")
+            text_file = open(self.window.file_name+"_labels_slice_" + ikey + ".txt", "w")
             text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
         if list(dic_label_to_write_complete.keys()):
             text_file.close()
@@ -1538,7 +1538,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         def save_specific_slice_as_png(self,num_slice):
             image_array = self.main_plot.set_data_to_display(self.main_plot.images[0], Coordinate([-1, -1, num_slice]), self.main_plot.view)
             import scipy.misc
-            scipy.misc.imsave(self.window.file_name+'_labelled_slice_'+str(num_slice)+'.png', image_array)
+            scipy.misc.imsave(self.window.file_name+'_image_slice_'+str(num_slice)+'.png', image_array)
         def calc_list_different_slices_in_list_point(list_points):
             list_slices = []
             for ipoints in list_points:
