@@ -1857,6 +1857,7 @@ class WindowGroundTruth(WindowCore):
         layout_main = self.add_layout_main(window)
         self.header = self.add_header(layout_main)
         self.main_pannel = self.add_main_pannel(layout_main, self, self.header)
+        self.import_existing_labels()
         self.control_buttons = self.add_control_buttons(layout_main, self,window_widget=window)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
@@ -1884,7 +1885,6 @@ class WindowGroundTruth(WindowCore):
     def add_main_pannel(self,layout_main, window, header):
         main_pannel = MainPannelGroundTruth(self.images, self.im_params, window, header,first_label=self.first_label)
         layout_main.addLayout(main_pannel.layout_global)
-        self.import_existing_labels()
         return main_pannel
 
     def add_control_buttons(self,layout_main, window,window_widget):
@@ -1911,7 +1911,6 @@ class WindowGroundTruth(WindowCore):
                     else:
                         coordinates+=char
                 list_coordinates.append(coordinates)
-            print list_coordinates
             return list_coordinates
         def make_dic_labels():
             dic_labels={'50':Coordinate([-1,-1,-1,50]),
@@ -1942,8 +1941,11 @@ class WindowGroundTruth(WindowCore):
             dic_labels=make_dic_labels()
             list_coordinates=extract_coordinates(self.file_name,ilabels)
             dic_labels=complete_dic_labels(dic_labels,list_coordinates)
-            print(dic_labels)
-    
+            for ikey in list(dic_labels.keys()):
+                self.main_pannel.main_plot.list_points.append(dic_labels[ikey])
+        self.main_pannel.main_plot.draw_dots()
+        self.main_pannel.second_plot.draw_lines()
+
 
 
 class ParamMultiImageVisualization(object):
