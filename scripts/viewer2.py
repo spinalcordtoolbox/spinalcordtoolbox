@@ -1430,10 +1430,12 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
     """
     def __init__(self, main_plot, window, header,window_widget):
         super(ControlButtonsGroundTruth, self).__init__(main_plot, window, header)
+        self.add_save_options()
         self.add_skip_button()
         self.add_save_button()
         self.add_classical_buttons()
         self.window_widget=window_widget
+        self.bool_save_png_txt=True
 
     def add_skip_button(self):
         btn_skip = QtGui.QPushButton('Skip')
@@ -1444,6 +1446,19 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         btn_save = QtGui.QPushButton('Save')
         self.layout_buttons.addWidget(btn_save)
         btn_save.clicked.connect(self.press_save)
+
+    def add_save_options(self):
+        self.rm_png_txt = QtGui.QRadioButton('txt and png')
+        self.rm_niftii = QtGui.QRadioButton('niftii')
+        self.layout_buttons.addWidget(self.rm_png_txt)
+        self.layout_buttons.addWidget(self.rm_niftii)
+        self.rm_png_txt.setChecked(True)
+        self.rm_png_txt.clicked.connect(self.switch_save_format)
+        self.rm_niftii.clicked.connect(self.switch_save_format)
+
+    def switch_save_format(self):
+        self.bool_save_png_txt=not self.bool_save_png_txt
+        print(self.bool_save_png_txt)
 
     def find_point_with_max_label(self,list_points_on_slice):
         def translate_num_labels(lab):
@@ -1975,7 +1990,6 @@ class WindowGroundTruth(WindowCore):
             self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())))
             sct.printv('Output file you have chosen contained results of a previous labelling.\n'
                        'This data has been imported',type='info')
-
 
 
 class ParamMultiImageVisualization(object):
