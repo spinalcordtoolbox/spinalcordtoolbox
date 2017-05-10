@@ -623,7 +623,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
     Defines the action on mouse events, draw dots, and manages the list of results : list_points.
     """
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, secondary_plot=None,
-                 header=None, number_of_points=0,first_label=1,nb_pts_before_auto_leave=-1):
+                 header=None, number_of_points=0,first_label=1):
         super(ImagePlotMainGroundTruth, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
         self.secondary_plot = secondary_plot
         self.first_label=self.translate_labels_num_into_list_point_length(str(first_label))
@@ -634,7 +634,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
         self.update_slice(Coordinate([self.list_slices[0], self.current_position.y, self.current_position.z]))
         self.fill_first_labels()
         self.header.update_text('update',str(len(self.calc_list_points_on_slice())+1))
-        self.nb_pts_before_auto_leave=nb_pts_before_auto_leave
 
 
     def update_slice(self, new_position):
@@ -1273,10 +1272,9 @@ class MainPannelGroundTruth(MainPannelCore):
     Inherites MainPannelCore
     Class that defines specific main image plot and secondary image plot for Propseg Viewer.
     """
-    def __init__(self, images, im_params, window, header,first_label=1,nb_pts_before_auto_leave=-1):
+    def __init__(self, images, im_params, window, header,first_label=1):
         super(MainPannelGroundTruth, self).__init__(images, im_params, window, header)
         self.number_of_points = 27
-        self.nb_pts_before_auto_leave=nb_pts_before_auto_leave
         self.first_label=first_label
         self.add_main_view()
         self.add_secondary_view()
@@ -1304,8 +1302,7 @@ class MainPannelGroundTruth(MainPannelCore):
                                                   canvas=self.canvas_main,
                                                   header=self.header,
                                                   number_of_points=self.number_of_points,
-                                                  first_label=self.first_label,
-                                                  nb_pts_before_auto_leave=self.nb_pts_before_auto_leave)
+                                                  first_label=self.first_label)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -1844,12 +1841,10 @@ class WindowGroundTruth(WindowCore):
                  file_name='',
                  output_path='',
                  dic_save_niftii={},
-                 nb_pts=-1,
                  bool_save_as_png=True):
 
         # Ajust the input parameters into viewer objects.
         self.bool_save_as_png=bool_save_as_png
-        self.nb_pts_before_auto_leave=nb_pts
         self.file_name=self.choose_and_clean_file_name(file_name,output_path)
         self.first_label=int(first_label)
         self.dic_save_niftii=dic_save_niftii
@@ -1929,7 +1924,7 @@ class WindowGroundTruth(WindowCore):
         return (header)
 
     def add_main_pannel(self,layout_main, window, header):
-        main_pannel = MainPannelGroundTruth(self.images, self.im_params, window, header,first_label=self.first_label,nb_pts_before_auto_leave=self.nb_pts_before_auto_leave)
+        main_pannel = MainPannelGroundTruth(self.images, self.im_params, window, header,first_label=self.first_label)
         layout_main.addLayout(main_pannel.layout_global)
         return main_pannel
 
