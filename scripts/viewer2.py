@@ -1486,8 +1486,6 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                 else:
                     list_points_to_keep.append(ipoints)
             return list_points_to_keep
-
-
         list_points_on_slice=self.main_plot.calc_list_points_on_slice()
         if len(list_points_on_slice)>0:
             self.main_plot.list_points=redundant_removal(self.main_plot.list_points,self.find_point_with_max_label(list_points_on_slice))
@@ -1495,7 +1493,6 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             self.header.update_text('update', str(len(self.main_plot.calc_list_points_on_slice())+1), self.main_plot.number_of_points)
         else:
             self.header.update_text('warning_undo_beyond_first_point')
-
 
     def press_skip(self):
         self.main_plot.add_point_to_list_points(Coordinate([-1,
@@ -1974,7 +1971,8 @@ class WindowGroundTruth(WindowCore):
                 self.main_pannel.main_plot.list_points.append(dic_labels[ikey])
         self.main_pannel.main_plot.draw_dots()
         self.main_pannel.second_plot.draw_lines()
-        self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())))
+        if self.main_pannel.main_plot.calc_list_points_on_slice():
+            self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())))
 
 
 
