@@ -1487,6 +1487,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                     list_points_to_keep.append(ipoints)
             return list_points_to_keep
 
+
         list_points_on_slice=self.main_plot.calc_list_points_on_slice()
         if len(list_points_on_slice)>0:
             self.main_plot.list_points=redundant_removal(self.main_plot.list_points,self.find_point_with_max_label(list_points_on_slice))
@@ -1494,6 +1495,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             self.header.update_text('update', str(len(self.main_plot.calc_list_points_on_slice())+1), self.main_plot.number_of_points)
         else:
             self.header.update_text('warning_undo_beyond_first_point')
+
 
     def press_skip(self):
         self.main_plot.add_point_to_list_points(Coordinate([-1,
@@ -1940,7 +1942,7 @@ class WindowGroundTruth(WindowCore):
                         if max_label==-1:
                             del dic_labels[ikey]
                     else:
-                        if max_label>int(ikey):
+                        if max_label<int(ikey) and ikey!='50':
                             del dic_labels[ikey]
                 return dic_labels
             def turn_string_coord_into_list_coord(coordinates):
@@ -1954,11 +1956,11 @@ class WindowGroundTruth(WindowCore):
                         pos+=char
                 list_pos.append(pos)
                 return list_pos
-
             max_label=-5
             for coordinates in list_coordinates:
                 list_pos=turn_string_coord_into_list_coord(coordinates)
-                max_label=update_max_label(list_pos[3],max_label)
+                if list_pos[0]!='-1':
+                    max_label=update_max_label(list_pos[3],max_label)
                 dic_labels[list_pos[3]]=Coordinate([int(list_pos[0]),int(list_pos[1]),int(list_pos[2]),int(list_pos[3])])
                 dic_labels=remove_points_beyond_last_selected_label(dic_labels,max_label)
             return dic_labels
