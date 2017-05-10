@@ -97,11 +97,13 @@ def main(args=None):
 
     # get list of all scripts to test
     functions = fill_functions()
-    if not function_to_test in functions:
-        sct.printv('Function "%s" is not part of the list of testing functions' % function_to_test, type='warning')
-
-    # loop across all functions and test them
-    status = [test_function(f) for f in functions if function_to_test == f]
+    if function_to_test:
+        if not function_to_test in functions:
+            sct.printv('Function "%s" is not part of the list of testing functions' % function_to_test, type='warning')
+        # loop across all functions and test them
+        status = [test_function(f) for f in functions if function_to_test == f]
+    else:
+        status = [test_function(f) for f in functions]
     print 'status: ' + str(status)
 
     # display elapsed time
