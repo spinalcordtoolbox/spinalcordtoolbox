@@ -2,6 +2,7 @@ import sys
 import webbrowser
 from copy import copy
 from time import time
+import os
 
 import PyQt4.QtCore as QtCore
 import PyQt4.QtGui as QtGui
@@ -1527,18 +1528,19 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         dic_label_to_write_uncomplete=calc_dic_labels_to_write(list_slices,self.main_plot.list_points)
         dic_label_to_write_complete=fill_dic_list_points_with_missing_labels(dic_label_to_write_uncomplete)
 
-
+        name_file_output = self.window.file_name + '_ground_truth/'
         for ikey in list(dic_label_to_write_complete.keys()):
-            text_file = open(self.window.file_name+"_labels_slice_" + ikey + ".txt", "w")
+            text_file = open(name_file_output+self.window.file_name+"_labels_slice_" + ikey + ".txt", "w")
             text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
         if list(dic_label_to_write_complete.keys()):
             text_file.close()
 
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
+            name_file_output=self.window.file_name+'_ground_truth/'
             image_array = self.main_plot.set_data_to_display(self.main_plot.images[0], Coordinate([-1, -1, num_slice]), self.main_plot.view)
             import scipy.misc
-            scipy.misc.imsave(self.window.file_name+'_image_slice_'+str(num_slice)+'.png', image_array)
+            scipy.misc.imsave(name_file_output+self.window.file_name+'_image_slice_'+str(num_slice)+'.png', image_array)
         def calc_list_different_slices_in_list_point(list_points):
             list_slices = []
             for ipoints in list_points:
@@ -1550,11 +1552,17 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         for islice in list_slice:
             save_specific_slice_as_png(self,islice)
 
+    def make_output_file(self):
+        if not os.path.exists(self.window.file_name+'_ground_truth'):
+            sct.run('mkdir ' + self.window.file_name+'_ground_truth')
+
     def press_save(self):
+        self.make_output_file()
         self.save_all_labelled_slices_as_png()
         self.save_all_labels_as_txt()
 
     def press_save_and_quit(self):
+        self.make_output_file()
         self.save_all_labelled_slices_as_png()
         self.save_all_labels_as_txt()
         self.window_widget.close()
