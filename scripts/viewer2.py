@@ -1571,14 +1571,13 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             sct.run('mkdir ' + self.window.file_name+'_ground_truth')
 
     def press_save(self):
-        self.make_output_file()
-        self.save_all_labelled_slices_as_png()
-        self.save_all_labels_as_txt()
+        if self.bool_save_png_txt:
+            self.make_output_file()
+            self.save_all_labelled_slices_as_png()
+            self.save_all_labels_as_txt()
 
     def press_save_and_quit(self):
-        self.make_output_file()
-        self.save_all_labelled_slices_as_png()
-        self.save_all_labels_as_txt()
+        self.press_save()
         self.window_widget.close()
 
 
