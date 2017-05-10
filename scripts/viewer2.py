@@ -1923,8 +1923,27 @@ class WindowGroundTruth(WindowCore):
                 dic_labels[str(ii)]=Coordinate([-1,-1,-1,ii])
             return dic_labels
         def complete_dic_labels(dic_labels,list_coordinates):
-            max_label=-5
-            for coordinates in list_coordinates:
+            def update_max_label(current_label,max_label):
+                if int(current_label)==50:
+                    current_label=-1
+                elif int(current_label)==49:
+                    current_label=0
+                else:
+                    current_label=int(current_label)
+
+                if current_label>max_label:
+                    max_label=current_label
+                return max_label
+            def remove_points_beyond_last_selected_label(dic_labels,max_label):
+                for ikey in list(dic_labels.keys()):
+                    if ikey=='49':
+                        if max_label==-1:
+                            del dic_labels[ikey]
+                    else:
+                        if max_label>int(ikey):
+                            del dic_labels[ikey]
+                return dic_labels
+            def turn_string_coord_into_list_coord(coordinates):
                 list_pos=[]
                 pos=''
                 for char in coordinates:
@@ -1934,27 +1953,14 @@ class WindowGroundTruth(WindowCore):
                     else:
                         pos+=char
                 list_pos.append(pos)
+                return list_pos
 
-                if int(list_pos[3])==50:
-                    current_label=-1
-                elif int(list_pos[3])==49:
-                    current_label=0
-                else:
-                    current_label=int(list_pos[3])
-
-                if current_label>max_label:
-                    max_label=current_label
-
+            max_label=-5
+            for coordinates in list_coordinates:
+                list_pos=turn_string_coord_into_list_coord(coordinates)
+                max_label=update_max_label(list_pos[3],max_label)
                 dic_labels[list_pos[3]]=Coordinate([int(list_pos[0]),int(list_pos[1]),int(list_pos[2]),int(list_pos[3])])
-
-                for ikey in list(dic_labels.keys()):
-                    if ikey=='49':
-                        if max_label==-1:
-                            del dic_labels[ikey]
-                    else:
-                        if max_label>int(ikey):
-                            del dic_labels[ikey]
-
+                dic_labels=remove_points_beyond_last_selected_label(dic_labels,max_label)
             return dic_labels
 
         list_txt=get_txt_files_in_output_directory(self.file_name)
