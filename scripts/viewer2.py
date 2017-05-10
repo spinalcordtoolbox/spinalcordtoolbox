@@ -1893,17 +1893,16 @@ class WindowGroundTruth(WindowCore):
         return control_buttons
 
     def import_existing_labels(self):
-        def get_files_in_output_directory(output_file_name):
+        def get_txt_files_in_output_directory(output_file_name):
             name_file_output = output_file_name + '_ground_truth/'
             if os.path.exists(name_file_output):
-                return os.listdir(name_file_output)
+                return list(filter(lambda x: '.txt' in x,os.listdir(name_file_output)))
             else:
                 return []
 
-        list_files=get_files_in_output_directory(self.file_name)
+        list_files=get_txt_files_in_output_directory(self.file_name)
         print list_files
 
-        
 class ParamMultiImageVisualization(object):
     """
     This class contains a dictionary with the params of multiple images visualization
