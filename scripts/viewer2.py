@@ -1973,6 +1973,8 @@ class WindowGroundTruth(WindowCore):
         self.main_pannel.second_plot.draw_lines()
         if self.main_pannel.main_plot.calc_list_points_on_slice():
             self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())))
+            sct.printv('Output file you have chosen contained results of a previous labelling.\n'
+                       'This data has been imported',type='info')
 
 
 
