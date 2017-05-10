@@ -1934,15 +1934,16 @@ class WindowGroundTruth(WindowCore):
                     else:
                         pos+=char
                 list_pos.append(pos)
-                return list_pos
-
+                dic_labels[list_pos[3]]=Coordinate([int(list_pos[0]),int(list_pos[1]),int(list_pos[2]),int(list_pos[3])])
+            return dic_labels
 
         list_txt=get_txt_files_in_output_directory(self.file_name)
         for ilabels in list_txt:
             dic_labels=make_dic_labels()
             list_coordinates=extract_coordinates(self.file_name,ilabels)
-            complete_dic_labels(dic_labels,list_coordinates)
-
+            dic_labels=complete_dic_labels(dic_labels,list_coordinates)
+            print(dic_labels)
+    
 
 
 class ParamMultiImageVisualization(object):
