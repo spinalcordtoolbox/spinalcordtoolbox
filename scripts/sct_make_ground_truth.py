@@ -87,12 +87,6 @@ def get_parser():
                       mandatory=False,
                       default_value=50,
                       example= 50)
-    parser.add_option(name='-nb-pts',
-                      type_value='int',
-                      description='Number of points you want to make before auto leave \n'
-                                  'Warning : the window will close as soon as you made the number of points you requested \n',
-                      default_value=-1,
-                      example= 2)
     parser.add_option(name='-save-as',
                       type_value='multiple_choice',
                       description='Define how you wish to save labels',
@@ -142,7 +136,6 @@ def rewrite_arguments(arguments):
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
-    nb_pts=int(arguments['-nb-pts'])
     bool_save_as_png=rewrite_save_as(arguments)
 
 
@@ -269,7 +262,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + output_file_name + '_ground_truth.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=True)
         sct.run('rm -rf ' + 'labels.nii.gz')
 
-def use_viewer_to_define_labels(fname_data,first_label,output_path,nb_pts,bool_save_as_png):
+def use_viewer_to_define_labels(fname_data,first_label,output_path,bool_save_as_png):
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -291,7 +284,6 @@ def use_viewer_to_define_labels(fname_data,first_label,output_path,nb_pts,bool_s
                                dic_save_niftii={'save_function':make_labels_image_from_list_points,
                                                 'reoriented_image_filename':reoriented_image_filename,
                                                 'image_input_orientation':image_input_orientation},
-                               nb_pts=nb_pts,
                                bool_save_as_png=bool_save_as_png)
 
     #mask_points = viewer.start()
@@ -311,7 +303,7 @@ def main():
     (fname_data, output_path, ref, remove_temp_files, verbose, first_label,nb_pts,bool_save_as_png)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
-    use_viewer_to_define_labels(fname_data,first_label,output_path=output_path,nb_pts=nb_pts,bool_save_as_png=bool_save_as_png)
+    use_viewer_to_define_labels(fname_data,first_label,output_path=output_path,bool_save_as_png=bool_save_as_png)
 
 
 # Resample labels
