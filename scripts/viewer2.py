@@ -1826,7 +1826,8 @@ class WindowGroundTruth(WindowCore):
                  first_label=1,
                  file_name='',
                  output_path='',
-                 dic_save_niftii={}):
+                 dic_save_niftii={},
+                 nb_pts=-1):
 
         # Ajust the input parameters into viewer objects.
         self.file_name=self.choose_and_clean_file_name(file_name,output_path)

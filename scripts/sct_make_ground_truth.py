@@ -87,6 +87,12 @@ def get_parser():
                       mandatory=False,
                       default_value=50,
                       example= 50)
+    parser.add_option(name='-nb-pts',
+                      type_value='int',
+                      description='Number of points you want to make before auto leave \n'
+                                  'Warning : the window will close as soon as you made the number of points you requested \n',
+                      default_value=-1,
+                      example= 2)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -122,8 +128,9 @@ def rewrite_arguments(arguments):
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
+    nb_pts=int(arguments['-nb-pts'])
 
-    return (fname_data,output_path,ref,remove_temp_files,verbose,first_label)
+    return (fname_data,output_path,ref,remove_temp_files,verbose,first_label,nb_pts)
 
 def correct_init_labels(s):
     if s=='viewer':
@@ -250,7 +257,7 @@ def save_niftii(mask_points,reoriented_image_filename,image_input_orientation):
     print(mask_points)
     make_labels_image_from_list_points(mask_points, reoriented_image_filename, image_input_orientation)
 
-def use_viewer_to_define_labels(fname_data,first_label,output_path):
+def use_viewer_to_define_labels(fname_data,first_label,output_path,nb_pts):
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -271,7 +278,8 @@ def use_viewer_to_define_labels(fname_data,first_label,output_path):
                                output_path=output_path,
                                dic_save_niftii={'save_function':save_niftii,
                                                 'reoriented_image_filename':reoriented_image_filename,
-                                                'image_input_orientation':image_input_orientation})
+                                                'image_input_orientation':image_input_orientation},
+                               nb_pts=nb_pts)
 
     #mask_points = viewer.start()
     #if not mask_points and viewer.closed:
@@ -287,10 +295,10 @@ def main():
 
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
-    (fname_data, output_path, ref, remove_temp_files, verbose, first_label)=rewrite_arguments(arguments)
+    (fname_data, output_path, ref, remove_temp_files, verbose, first_label,nb_pts)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
-    use_viewer_to_define_labels(fname_data,first_label,output_path=output_path)
+    use_viewer_to_define_labels(fname_data,first_label,output_path=output_path,nb_pts=nb_pts)
 
 
 # Resample labels
