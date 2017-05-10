@@ -1899,7 +1899,6 @@ class WindowGroundTruth(WindowCore):
                 return list(filter(lambda x: '.txt' in x,os.listdir(name_file_output)))
             else:
                 return []
-
         def extract_coordinates(output_file_name,txt_file):
             file=open(output_file_name+'_ground_truth/'+txt_file,"r")
             list_coordinates = []
@@ -1911,12 +1910,22 @@ class WindowGroundTruth(WindowCore):
                         coordinates=''
                     else:
                         coordinates+=char
-            print(list_coordinates)
-
+            return list_coordinates
+        def make_dic_labels():
+            dic_labels={'50':Coordinate([-1,-1,-1,50]),
+                        '49': Coordinate([-1, -1, -1, 49]),
+                        '1': Coordinate([-1, -1, -1, 1]),
+                        '3': Coordinate([-1, -1, -1, 3]),
+                        '4': Coordinate([-1, -1, -1, 4]),
+                        }
+            for ii in range (5,28):
+                dic_labels[str(ii)]=Coordinate([-1,-1,-1,ii])
+            return dic_labels
 
         list_txt=get_txt_files_in_output_directory(self.file_name)
         for ilabels in list_txt:
-            extract_coordinates(self.file_name,ilabels)
+            list_coordinates=extract_coordinates(self.file_name,ilabels)
+            print make_dic_labels()
 
 
 
