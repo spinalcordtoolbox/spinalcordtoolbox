@@ -1589,7 +1589,8 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         else:
             self.dic_save_niftii['save_function'](self.rewrite_list_points(self.main_plot.list_points),
                                                   self.dic_save_niftii['reoriented_image_filename'],
-                                                  self.dic_save_niftii['image_input_orientation'])
+                                                  self.dic_save_niftii['image_input_orientation'],
+                                                  self.window.file_name)
 
     def press_save_and_quit(self):
         self.press_save()
