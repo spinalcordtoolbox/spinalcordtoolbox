@@ -1910,6 +1910,8 @@ class WindowGroundTruth(WindowCore):
                         coordinates=''
                     else:
                         coordinates+=char
+                list_coordinates.append(coordinates)
+            print list_coordinates
             return list_coordinates
         def make_dic_labels():
             dic_labels={'50':Coordinate([-1,-1,-1,50]),
@@ -1921,11 +1923,26 @@ class WindowGroundTruth(WindowCore):
             for ii in range (5,28):
                 dic_labels[str(ii)]=Coordinate([-1,-1,-1,ii])
             return dic_labels
+        def complete_dic_labels(dic_labels,list_coordinates):
+            for coordinates in list_coordinates:
+                list_pos=[]
+                pos=''
+                #print(coordinates)
+                for char in coordinates:
+                    if char ==',':
+                        list_pos.append(pos)
+                        pos=''
+                    else:
+                        pos+=char
+                list_pos.append(pos)
+                return list_pos
+
 
         list_txt=get_txt_files_in_output_directory(self.file_name)
         for ilabels in list_txt:
+            dic_labels=make_dic_labels()
             list_coordinates=extract_coordinates(self.file_name,ilabels)
-            print make_dic_labels()
+            complete_dic_labels(dic_labels,list_coordinates)
 
 
 
