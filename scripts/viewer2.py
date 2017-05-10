@@ -1433,15 +1433,17 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                  window,
                  header,
                  window_widget,
-                 dic_save_niftii={}):
+                 dic_save_niftii={},
+                 bool_save_as_png=True):
         super(ControlButtonsGroundTruth, self).__init__(main_plot, window, header)
+        self.bool_save_png_txt=bool_save_as_png
+        self.dic_save_niftii=dic_save_niftii
+        self.window_widget=window_widget
+
         self.add_save_options()
         self.add_skip_button()
         self.add_save_button()
         self.add_classical_buttons()
-        self.window_widget=window_widget
-        self.bool_save_png_txt=True
-        self.dic_save_niftii=dic_save_niftii
 
     def add_skip_button(self):
         btn_skip = QtGui.QPushButton('Skip')
@@ -1458,7 +1460,11 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         self.rm_niftii = QtGui.QRadioButton('niftii')
         self.layout_buttons.addWidget(self.rm_png_txt)
         self.layout_buttons.addWidget(self.rm_niftii)
-        self.rm_png_txt.setChecked(True)
+
+        if self.bool_save_png_txt:
+            self.rm_png_txt.setChecked(True)
+        else:
+            self.rm_niftii.setChecked(True)
         self.rm_png_txt.clicked.connect(self.switch_save_format)
         self.rm_niftii.clicked.connect(self.switch_save_format)
 
@@ -1831,6 +1837,7 @@ class WindowGroundTruth(WindowCore):
                  bool_save_as_png=True):
 
         # Ajust the input parameters into viewer objects.
+        self.bool_save_as_png=bool_save_as_png
         self.file_name=self.choose_and_clean_file_name(file_name,output_path)
         self.first_label=int(first_label)
         self.dic_save_niftii=dic_save_niftii
@@ -1838,6 +1845,7 @@ class WindowGroundTruth(WindowCore):
             list_images = [list_images]
         if not visualization_parameters:
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
+
 
         super(WindowGroundTruth, self).__init__(list_images, visualization_parameters)
         self.set_layout_and_launch_viewer()
@@ -1914,7 +1922,12 @@ class WindowGroundTruth(WindowCore):
         return main_pannel
 
     def add_control_buttons(self,layout_main, window,window_widget):
-        control_buttons = ControlButtonsGroundTruth(self.main_pannel.main_plot, window, self.header,window_widget,dic_save_niftii=self.dic_save_niftii)
+        control_buttons = ControlButtonsGroundTruth(self.main_pannel.main_plot,
+                                                    window,
+                                                    self.header,
+                                                    window_widget,
+                                                    dic_save_niftii=self.dic_save_niftii,
+                                                    bool_save_as_png=self.bool_save_as_png)
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
 
