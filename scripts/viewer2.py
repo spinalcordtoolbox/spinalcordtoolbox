@@ -1920,14 +1920,13 @@ class WindowGroundTruth(WindowCore):
                         '3': Coordinate([-1, -1, -1, 3]),
                         '4': Coordinate([-1, -1, -1, 4]),
                         }
-            for ii in range (5,28):
+            for ii in range (5,27):
                 dic_labels[str(ii)]=Coordinate([-1,-1,-1,ii])
             return dic_labels
         def complete_dic_labels(dic_labels,list_coordinates):
             for coordinates in list_coordinates:
                 list_pos=[]
                 pos=''
-                #print(coordinates)
                 for char in coordinates:
                     if char ==',':
                         list_pos.append(pos)
