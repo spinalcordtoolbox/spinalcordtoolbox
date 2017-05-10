@@ -1900,8 +1900,25 @@ class WindowGroundTruth(WindowCore):
             else:
                 return []
 
-        list_files=get_txt_files_in_output_directory(self.file_name)
-        print list_files
+        def extract_coordinates(output_file_name,txt_file):
+            file=open(output_file_name+'_ground_truth/'+txt_file,"r")
+            list_coordinates = []
+            for line in file:
+                coordinates=''
+                for char in line:
+                    if char==':':
+                        list_coordinates.append(coordinates)
+                        coordinates=''
+                    else:
+                        coordinates+=char
+            print(list_coordinates)
+
+
+        list_txt=get_txt_files_in_output_directory(self.file_name)
+        for ilabels in list_txt:
+            extract_coordinates(self.file_name,ilabels)
+
+
 
 class ParamMultiImageVisualization(object):
     """
