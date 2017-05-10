@@ -1428,7 +1428,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
     Inherites ControlButtonsCore
     Class that displays specific button for Propseg Viewer : Skip
     """
-    def __init__(self, main_plot, window, header,window_widget):
+    def __init__(self, main_plot, window, header,window_widget,function_save_niftii=None):
         super(ControlButtonsGroundTruth, self).__init__(main_plot, window, header)
         self.add_save_options()
         self.add_skip_button()
@@ -1436,6 +1436,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         self.add_classical_buttons()
         self.window_widget=window_widget
         self.bool_save_png_txt=True
+        self.save_niftii=function_save_niftii
 
     def add_skip_button(self):
         btn_skip = QtGui.QPushButton('Skip')
@@ -1458,7 +1459,6 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
 
     def switch_save_format(self):
         self.bool_save_png_txt=not self.bool_save_png_txt
-        print(self.bool_save_png_txt)
 
     def find_point_with_max_label(self,list_points_on_slice):
         def translate_num_labels(lab):
@@ -1575,6 +1575,8 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             self.make_output_file()
             self.save_all_labelled_slices_as_png()
             self.save_all_labels_as_txt()
+        else:
+            self.save_niftii('Bonjour bonjour')
 
     def press_save_and_quit(self):
         self.press_save()
@@ -1816,11 +1818,13 @@ class WindowGroundTruth(WindowCore):
                  visualization_parameters=None,
                  first_label=1,
                  file_name='',
-                 output_path=''):
+                 output_path='',
+                 function_save_niftii=None):
 
         # Ajust the input parameters into viewer objects.
         self.file_name=self.choose_and_clean_file_name(file_name,output_path)
         self.first_label=int(first_label)
+        self.function_save_niftii=function_save_niftii
         if isinstance(list_images, Image):
             list_images = [list_images]
         if not visualization_parameters:
@@ -1901,7 +1905,7 @@ class WindowGroundTruth(WindowCore):
         return main_pannel
 
     def add_control_buttons(self,layout_main, window,window_widget):
-        control_buttons = ControlButtonsGroundTruth(self.main_pannel.main_plot, window, self.header,window_widget)
+        control_buttons = ControlButtonsGroundTruth(self.main_pannel.main_plot, window, self.header,window_widget,function_save_niftii=self.function_save_niftii)
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
 
