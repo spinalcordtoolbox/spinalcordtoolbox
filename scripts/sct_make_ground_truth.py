@@ -246,6 +246,9 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_ground_truth.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
         sct.run('rm -rf ' + 'labels.nii.gz')
 
+def save_niftii(mess):
+    print(mess)
+
 def use_viewer_to_define_labels(fname_data,first_label,output_path):
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
@@ -262,7 +265,7 @@ def use_viewer_to_define_labels(fname_data,first_label,output_path):
 
     from viewer2 import WindowGroundTruth
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = WindowGroundTruth(im_input_SAL,first_label=first_label,file_name=fname_data,output_path=output_path)
+    viewer = WindowGroundTruth(im_input_SAL,first_label=first_label,file_name=fname_data,output_path=output_path,function_save_niftii=save_niftii)
 
     #mask_points = viewer.start()
     #if not mask_points and viewer.closed:
