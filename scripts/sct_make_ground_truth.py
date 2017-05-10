@@ -93,6 +93,11 @@ def get_parser():
                                   'Warning : the window will close as soon as you made the number of points you requested \n',
                       default_value=-1,
                       example= 2)
+    parser.add_option(name='-save-as',
+                      type_value='multiple_choice',
+                      description='Define how you wish to save labels',
+                      default_value='png_txt',
+                      example= ['png_txt', 'niftii'])
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -121,6 +126,15 @@ def rewrite_arguments(arguments):
             return arguments['-o']
         else:
             return ''
+    def rewrite_save_as(arguments):
+        s=arguments['-save-as']
+        if s=='png_txt':
+            return True
+        elif s=='niftii':
+            return False
+        else:
+            return True
+
 
     fname_data = arguments['-i']
     output_path=rewrite_output_path(arguments)
@@ -129,8 +143,10 @@ def rewrite_arguments(arguments):
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
     nb_pts=int(arguments['-nb-pts'])
+    bool_save_as_png=rewrite_save_as(arguments)
 
-    return (fname_data,output_path,ref,remove_temp_files,verbose,first_label,nb_pts)
+
+    return (fname_data,output_path,ref,remove_temp_files,verbose,first_label,nb_pts,bool_save_as_png)
 
 def correct_init_labels(s):
     if s=='viewer':
@@ -257,7 +273,7 @@ def save_niftii(mask_points,reoriented_image_filename,image_input_orientation):
     print(mask_points)
     make_labels_image_from_list_points(mask_points, reoriented_image_filename, image_input_orientation)
 
-def use_viewer_to_define_labels(fname_data,first_label,output_path,nb_pts):
+def use_viewer_to_define_labels(fname_data,first_label,output_path,nb_pts,bool_save_as_png):
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -279,7 +295,8 @@ def use_viewer_to_define_labels(fname_data,first_label,output_path,nb_pts):
                                dic_save_niftii={'save_function':save_niftii,
                                                 'reoriented_image_filename':reoriented_image_filename,
                                                 'image_input_orientation':image_input_orientation},
-                               nb_pts=nb_pts)
+                               nb_pts=nb_pts,
+                               bool_save_as_png=bool_save_as_png)
 
     #mask_points = viewer.start()
     #if not mask_points and viewer.closed:
@@ -295,10 +312,10 @@ def main():
 
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
-    (fname_data, output_path, ref, remove_temp_files, verbose, first_label,nb_pts)=rewrite_arguments(arguments)
+    (fname_data, output_path, ref, remove_temp_files, verbose, first_label,nb_pts,bool_save_as_png)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
-    use_viewer_to_define_labels(fname_data,first_label,output_path=output_path,nb_pts=nb_pts)
+    use_viewer_to_define_labels(fname_data,first_label,output_path=output_path,nb_pts=nb_pts,bool_save_as_png=bool_save_as_png)
 
 
 # Resample labels

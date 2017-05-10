@@ -1827,7 +1827,8 @@ class WindowGroundTruth(WindowCore):
                  file_name='',
                  output_path='',
                  dic_save_niftii={},
-                 nb_pts=-1):
+                 nb_pts=-1,
+                 bool_save_as_png=True):
 
         # Ajust the input parameters into viewer objects.
         self.file_name=self.choose_and_clean_file_name(file_name,output_path)
