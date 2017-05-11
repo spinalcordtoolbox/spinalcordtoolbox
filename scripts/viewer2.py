@@ -1560,19 +1560,28 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         dic_label_to_write_uncomplete=calc_dic_labels_to_write(list_slices,self.main_plot.list_points)
         dic_label_to_write_complete=fill_dic_list_points_with_missing_labels(dic_label_to_write_uncomplete)
 
-        name_file_output = self.window.file_name + '_ground_truth/'
+        file_path = self.window.file_name + '_ground_truth/'
         for ikey in list(dic_label_to_write_complete.keys()):
-            text_file = open(name_file_output+self.window.file_name+"_labels_slice_" + ikey + ".txt", "w")
+            text_file = open(file_path+self.get_file_name_without_path(self.window.file_name)+"_labels_slice_" + ikey + ".txt", "w")
             text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
         if list(dic_label_to_write_complete.keys()):
             text_file.close()
 
+    def get_file_name_without_path(selfs,s):
+        char=s[-1]
+        r=''
+        while s!='/' and s:
+            r+=char
+            s=s[:-1]
+            char=s[-1]
+        return s[::-1]
+
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
-            name_file_output=self.window.file_name+'_ground_truth/'
+            file_path=self.window.file_name+'_ground_truth/'
             image_array = self.main_plot.set_data_to_display(self.main_plot.images[0], Coordinate([-1, -1, num_slice]), self.main_plot.view)
             import scipy.misc
-            scipy.misc.imsave(name_file_output+self.window.file_name+'_image_slice_'+str(num_slice)+'.png', image_array)
+            scipy.misc.imsave(file_path+self.get_file_name_without_path(self.window.file_name)+'_image_slice_'+str(num_slice)+'.png', image_array)
         def calc_list_different_slices_in_list_point(list_points):
             list_slices = []
             for ipoints in list_points:
