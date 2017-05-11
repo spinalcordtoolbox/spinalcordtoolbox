@@ -1561,20 +1561,20 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         dic_label_to_write_complete=fill_dic_list_points_with_missing_labels(dic_label_to_write_uncomplete)
 
         file_path = self.manage_output_files_paths()
+        (file_name,r) = self.get_file_name_without_path(self.window.file_name)
         for ikey in list(dic_label_to_write_complete.keys()):
-            text_file = open(file_path+self.get_file_name_without_path(self.window.file_name)+"_labels_slice_" + ikey + ".txt", "w")
+            text_file = open(file_path+file_name+"_labels_slice_" + ikey + ".txt", "w")
             text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
         if list(dic_label_to_write_complete.keys()):
             text_file.close()
 
     def get_file_name_without_path(selfs,s):
-        char=s[-1]
         r=''
-        while char!='/' and s!='':
+        while s!='' and s[-1]!='/':
             char = s[-1]
             r+=char
             s = s[:-1]
-        return r[::-1]
+        return (r[::-1],s)
 
     def manage_output_files_paths(self):
         if self.window.output_name:
@@ -1585,9 +1585,10 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
             file_path=self.manage_output_files_paths()
+            (file_name,r)=self.get_file_name_without_path(self.window.file_name)
             image_array = self.main_plot.set_data_to_display(self.main_plot.images[0], Coordinate([-1, -1, num_slice]), self.main_plot.view)
             import scipy.misc
-            scipy.misc.imsave(file_path+self.get_file_name_without_path(self.window.file_name)+'_image_slice_'+str(num_slice)+'.png', image_array)
+            scipy.misc.imsave(file_path+file_name+'_image_slice_'+str(num_slice)+'.png', image_array)
         def calc_list_different_slices_in_list_point(list_points):
             list_slices = []
             for ipoints in list_points:
@@ -1609,10 +1610,17 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             self.save_all_labelled_slices_as_png()
             self.save_all_labels_as_txt()
         else:
+            if self.window.output_name:
+                (f,clean_path)=self.get_file_name_without_path(self.window.file_name)
+                file_name=clean_path+self.window.output_name
+            else:
+                file_name=self.window.file_name+'_ground_truth'
+            file_name+='.nii.gz'
+
             self.dic_save_niftii['save_function'](self.rewrite_list_points(self.main_plot.list_points),
                                                   self.dic_save_niftii['reoriented_image_filename'],
                                                   self.dic_save_niftii['image_input_orientation'],
-                                                  self.window.file_name)
+                                                  file_name)
 
     def press_save_and_quit(self):
         self.press_save()
