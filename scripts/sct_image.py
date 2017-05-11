@@ -45,12 +45,12 @@ def get_parser():
     parser.usage.addSection('\nBasic image operations:')
     parser.add_option(name="-pad",
                       type_value="str",
-                      description='Pad 3d image. Specify padding as: "x,y,z" (in voxel)',
+                      description='Pad 3D image. Specify padding as: "x,y,z" (in voxel)',
                       mandatory=False,
                       example='0,0,1')
     parser.add_option(name="-pad-asym",
                       type_value="str",
-                      description='Pad 3d image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel)',
+                      description='Pad 3D image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel)',
                       mandatory=False,
                       example='0,0,5,10,1,1')
     parser.add_option(name="-copy-header",
@@ -140,18 +140,37 @@ def main(args = None):
 
     # run command
     if "-pad" in arguments:
-        # TODO: check input is 3d
         im_in = Image(fname_in[0])
-        padx, pady, padz = arguments["-pad"].split(',')
-        padx, pady, padz = int(padx), int(pady), int(padz)
-        im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady, pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
+        ndims = len(im_in.getDataShape())
+        if ndims != 3:
+            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            return
 
+        pad_arguments = arguments["-pad"].split(',')
+        if len(pad_arguments) != 3:
+            printv('ERROR: you need to specify 3 padding values.', 1, 'error')
+
+        padx, pady, padz = pad_arguments
+        padx, pady, padz = int(padx), int(pady), int(padz)
+        im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady,
+                  pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
+        
     elif "-pad-asym" in arguments:
-        # TODO: check input is 3d
         im_in = Image(fname_in[0])
-        padxi, padxf, padyi, padyf, padzi, padzf = arguments["-pad-asym"].split(',')
-        padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
-        im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
+        ndims = len(im_in.getDataShape())
+        if ndims != 3:
+            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            return
+
+        pad_arguments = arguments["-pad-asym"].split(',')
+        if len(pad_arguments) != 6:
+            printv('ERROR: you need to specify 6 padding values.', 1, 'error')
+
+        padxi, padxf, padyi, padyf, padzi, padzf = pad_arguments
+        padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), \
+            int(padyf), int(padzi), int(padzf)
+        im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi,
+                  pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
 
     elif "-copy-header" in arguments:
         im_in = Image(fname_in[0])
