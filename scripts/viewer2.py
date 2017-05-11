@@ -1570,11 +1570,11 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
     def get_file_name_without_path(selfs,s):
         char=s[-1]
         r=''
-        while s!='/' and s:
+        while char!='/' and s!='':
+            char = s[-1]
             r+=char
-            s=s[:-1]
-            char=s[-1]
-        return s[::-1]
+            s = s[:-1]
+        return r[::-1]
 
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
