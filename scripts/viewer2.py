@@ -1561,14 +1561,14 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         dic_label_to_write_complete=fill_dic_list_points_with_missing_labels(dic_label_to_write_uncomplete)
 
         file_path = self.manage_output_files_paths()
-        (file_name,r) = self.get_file_name_without_path(self.window.file_name)
+        (file_name,r) = self.seperate_file_name_and_path(self.window.file_name)
         for ikey in list(dic_label_to_write_complete.keys()):
             text_file = open(file_path+file_name+"_labels_slice_" + ikey + ".txt", "w")
             text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
         if list(dic_label_to_write_complete.keys()):
             text_file.close()
 
-    def get_file_name_without_path(selfs,s):
+    def seperate_file_name_and_path(selfs,s):
         r=''
         while s!='' and s[-1]!='/':
             char = s[-1]
@@ -1578,14 +1578,15 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
 
     def manage_output_files_paths(self):
         if self.window.output_name:
-            return self.window.file_name+'_'+self.window.output_name+'/'
+            (n,clean_path)=self.seperate_file_name_and_path(self.window.file_name)
+            return clean_path+self.window.output_name+'/'
         else:
             return self.window.file_name + '_ground_truth/'
 
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
             file_path=self.manage_output_files_paths()
-            (file_name,r)=self.get_file_name_without_path(self.window.file_name)
+            (file_name,r)=self.seperate_file_name_and_path(self.window.file_name)
             image_array = self.main_plot.set_data_to_display(self.main_plot.images[0], Coordinate([-1, -1, num_slice]), self.main_plot.view)
             import scipy.misc
             scipy.misc.imsave(file_path+file_name+'_image_slice_'+str(num_slice)+'.png', image_array)
@@ -1611,7 +1612,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             self.save_all_labels_as_txt()
         else:
             if self.window.output_name:
-                (f,clean_path)=self.get_file_name_without_path(self.window.file_name)
+                (f,clean_path)=self.seperate_file_name_and_path(self.window.file_name)
                 file_name=clean_path+self.window.output_name
             else:
                 file_name=self.window.file_name+'_ground_truth'
@@ -1970,19 +1971,35 @@ class WindowGroundTruth(WindowCore):
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
 
+    def seperate_file_name_and_path(selfs,s):
+        r=''
+        while s!='' and s[-1]!='/':
+            char = s[-1]
+            r+=char
+            s = s[:-1]
+        return (r[::-1],s)
+
     def import_existing_labels(self):
         def get_txt_files_in_output_directory(file_name,output_name):
             if output_name:
-                output_file_name=output_name
+                (n,path)=self.seperate_file_name_and_path(self.file_name)
+                output_file_name=path+output_name
             else:
                 output_file_name=file_name
-            name_file_output = output_file_name + '_ground_truth/'
-            if os.path.exists(name_file_output):
-                return list(filter(lambda x: '.txt' in x,os.listdir(name_file_output)))
+                output_file_name+='_ground_truth/'
+
+            if os.path.exists(output_file_name):
+                return (list(filter(lambda x: '.txt' in x,os.listdir(output_file_name))),output_file_name)
             else:
-                return []
-        def extract_coordinates(output_file_name,txt_file):
-            file=open(output_file_name+'_ground_truth/'+txt_file,"r")
+                return ([],output_file_name)
+        def extract_coordinates(output_file_name,txt_file,file_name,output_name):
+            if output_name:
+                (n,path)=self.seperate_file_name_and_path(self.file_name)
+                output_file_name=path+output_name+'/'
+            else:
+                output_file_name=file_name
+                output_file_name+='_ground_truth/'
+            file=open(output_file_name+txt_file,"r")
             list_coordinates = []
             for line in file:
                 coordinates=''
@@ -2045,10 +2062,10 @@ class WindowGroundTruth(WindowCore):
                 dic_labels=remove_points_beyond_last_selected_label(dic_labels,max_label)
             return dic_labels
 
-        list_txt=get_txt_files_in_output_directory(self.file_name,self.output_name)
+        list_txt,path=get_txt_files_in_output_directory(self.file_name,self.output_name)
         for ilabels in list_txt:
             dic_labels=make_dic_labels()
-            list_coordinates=extract_coordinates(self.file_name,ilabels)
+            list_coordinates=extract_coordinates(path,ilabels,self.file_name,self.output_name)
             dic_labels=complete_dic_labels(dic_labels,list_coordinates)
             for ikey in list(dic_labels.keys()):
                 self.main_pannel.main_plot.list_points.append(dic_labels[ikey])
