@@ -70,33 +70,11 @@ def get_parser():
                       description="Anatomical image.",
                       mandatory=True,
                       example="anat.nii.gz")
-    parser.add_option(name="-s",
-                      type_value="file",
-                      description="Spinal cord segmentation.",
-                      mandatory=False,
-                      example="anat_seg.nii.gz")
-    parser.add_option(name="-l",
-                      type_value="file",
-                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels\n",
-                      mandatory=False,
-                      default_value='labels_ground_truth.nii.gz',
-                      example="labels_ground_truth.nii.gz")
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="Output folder.",
+    parser.add_option(name="-o",
+                      type_value="str",
+                      description="Prefix for output files.",
                       mandatory=False,
                       default_value='')
-    parser.add_option(name="-t",
-                      type_value="folder",
-                      description="Path to template.",
-                      mandatory=False,
-                      default_value=param.path_template)
-    parser.add_option(name='-c',
-                      type_value='multiple_choice',
-                      description='Contrast to use for registration.',
-                      mandatory=False,
-                      default_value='t2',
-                      example=['t1', 't2', 't2s'])
     parser.add_option(name='-ref',
                       type_value='multiple_choice',
                       description='Reference for registration: template: subject->template, subject: template->subject.',
@@ -109,30 +87,11 @@ def get_parser():
                       mandatory=False,
                       default_value=50,
                       example= 50)
-    parser.add_option(name='-slice-to-mean',
-                      type_value='int',
-                      description='Define the number of slice you want to average.',
-                      mandatory=False,
-                      default_value=3,
-                      example=2)
-    parser.add_option(name="-param",
-                      type_value=[[':'], 'str'],
-                      description='Parameters for registration (see sct_register_multimodal). Default: \
-                      \n--\nstep=0\ntype=' + paramreg.steps['0'].type + '\ndof=' + paramreg.steps['0'].dof + '\
-                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\niter=' + paramreg.steps['1'].iter + '\nsmooth=' + paramreg.steps['1'].smooth + '\ngradStep=' + paramreg.steps['1'].gradStep + '\nslicewise=' + paramreg.steps['1'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['1'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th + '\
-                      \n--\nstep=2\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\niter=' + paramreg.steps['2'].iter + '\nsmooth=' + paramreg.steps['2'].smooth + '\ngradStep=' + paramreg.steps['2'].gradStep + '\nslicewise=' + paramreg.steps['2'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['2'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th,
-                      mandatory=False)
-    parser.add_option(name="-param-straighten",
-                      type_value='str',
-                      description="""Parameters for straightening (see sct_straighten_spinalcord).""",
-                      mandatory=False,
-                      default_value='')
-    parser.add_option(name="-init-labels",
-                      type_value="multiple_choice",
-                      description="You can create your own labels using a interactive viewer using option 'viewer",
-                      mandatory=False,
-                      default_value='none',
-                      example=['none', 'viewer'])
+    parser.add_option(name='-save-as',
+                      type_value='multiple_choice',
+                      description='Define how you wish to save labels',
+                      default_value='png_txt',
+                      example= ['png_txt', 'niftii'])
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -145,27 +104,42 @@ def get_parser():
                       mandatory=False,
                       default_value=param.verbose,
                       example=['0', '1', '2'])
+    parser.add_option(name="-param",
+                      type_value=[[':'], 'str'],
+                      description='Parameters for registration (see sct_register_multimodal). Default: \
+                      \n--\nstep=0\ntype=' + paramreg.steps['0'].type + '\ndof=' + paramreg.steps['0'].dof + '\
+                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\niter=' + paramreg.steps['1'].iter + '\nsmooth=' + paramreg.steps['1'].smooth + '\ngradStep=' + paramreg.steps['1'].gradStep + '\nslicewise=' + paramreg.steps['1'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['1'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th + '\
+                      \n--\nstep=2\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\niter=' + paramreg.steps['2'].iter + '\nsmooth=' + paramreg.steps['2'].smooth + '\ngradStep=' + paramreg.steps['2'].gradStep + '\nslicewise=' + paramreg.steps['2'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['2'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th,
+                      mandatory=False)
 
     return parser
 
 def rewrite_arguments(arguments):
+    def rewrite_output_path(arguments):
+        if '-o' in arguments:
+            return arguments['-o']
+        else:
+            return ''
+    def rewrite_save_as(arguments):
+        s=arguments['-save-as']
+        if s=='png_txt':
+            return True
+        elif s=='niftii':
+            return False
+        else:
+            return True
+
+
     fname_data = arguments['-i']
-    #fname_seg = arguments['-s']
-    fname_landmarks = arguments['-l']
-    if '-ofolder' in arguments:
-        path_output = arguments['-ofolder']
-    else:
-        path_output = ''
+    output_path=rewrite_output_path(arguments)
     first_label=arguments['-first']
-    path_template = sct.slash_at_the_end(arguments['-t'], 1)
-    contrast_template = arguments['-c']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
-    init_labels= correct_init_labels(arguments['-init-labels'])
-    nb_slice_to_mean=correct_nb_slice_to_mean(int(arguments['-slice-to-mean']))
+    bool_save_as_png=rewrite_save_as(arguments)
 
-    return (fname_data,fname_landmarks,path_output,path_template,contrast_template,ref,remove_temp_files,verbose,init_labels,first_label,nb_slice_to_mean)
+
+    return (fname_data,output_path,ref,remove_temp_files,verbose,first_label,bool_save_as_png)
 
 def correct_init_labels(s):
     if s=='viewer':
@@ -280,15 +254,15 @@ def check_mask_point_not_empty(mask_points):
                    type='error')
         return False
 
-def make_labels_image_from_list_points(mask_points,reoriented_image_filename,image_input_orientation):
+def make_labels_image_from_list_points(mask_points,reoriented_image_filename,image_input_orientation,output_file_name):
     if check_mask_point_not_empty(mask_points):
         import sct_image
         # create the mask containing either the three-points or centerline mask for initialization
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
-        sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_ground_truth.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
+        sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + output_file_name + ' -setorient ' + image_input_orientation + ' -v 0',verbose=True)
         sct.run('rm -rf ' + 'labels.nii.gz')
 
-def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
+def use_viewer_to_define_labels(fname_data,first_label,output_path,bool_save_as_png):
     from sct_viewer import ClickViewerGroundTruth
     from msct_image import Image
     import sct_image
@@ -304,7 +278,13 @@ def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
 
     from viewer2 import WindowGroundTruth
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = WindowGroundTruth(im_input_SAL,first_label=5)
+    viewer = WindowGroundTruth(im_input_SAL,first_label=first_label,
+                               file_name=fname_data,
+                               output_path=output_path,
+                               dic_save_niftii={'save_function':make_labels_image_from_list_points,
+                                                'reoriented_image_filename':reoriented_image_filename,
+                                                'image_input_orientation':image_input_orientation},
+                               bool_save_as_png=bool_save_as_png)
 
     #mask_points = viewer.start()
     #if not mask_points and viewer.closed:
@@ -320,14 +300,11 @@ def main():
 
     """ Rewrite arguments and set parameters"""
     arguments = parser.parse(sys.argv[1:])
-    (fname_data, fname_landmarks, path_output, path_template, contrast_template, ref, remove_temp_files,
-     verbose, init_labels, first_label,nb_slice_to_mean)=rewrite_arguments(arguments)
+    (fname_data, output_path, ref, remove_temp_files, verbose, first_label,bool_save_as_png)=rewrite_arguments(arguments)
     (param, paramreg)=write_paramaters(arguments,param,ref,verbose)
 
-    if(init_labels):
-        use_viewer_to_define_labels(fname_data,first_label,nb_slice_to_mean)
-    # initialize other parameters
-    # file_template_label = param.file_template_label
+    use_viewer_to_define_labels(fname_data,first_label,output_path=output_path,bool_save_as_png=bool_save_as_png)
+
 
 # Resample labels
 # ==========================================================================================
