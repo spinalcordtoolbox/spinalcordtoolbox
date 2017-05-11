@@ -1560,7 +1560,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         dic_label_to_write_uncomplete=calc_dic_labels_to_write(list_slices,self.main_plot.list_points)
         dic_label_to_write_complete=fill_dic_list_points_with_missing_labels(dic_label_to_write_uncomplete)
 
-        file_path = self.window.file_name + '_ground_truth/'
+        file_path = self.manage_output_files_paths()
         for ikey in list(dic_label_to_write_complete.keys()):
             text_file = open(file_path+self.get_file_name_without_path(self.window.file_name)+"_labels_slice_" + ikey + ".txt", "w")
             text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
@@ -1576,9 +1576,15 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             s = s[:-1]
         return r[::-1]
 
+    def manage_output_files_paths(self):
+        if self.window.output_name:
+            return self.window.file_name+'_'+self.window.output_name+'/'
+        else:
+            return self.window.file_name + '_ground_truth/'
+
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
-            file_path=self.window.file_name+'_ground_truth/'
+            file_path=self.manage_output_files_paths()
             image_array = self.main_plot.set_data_to_display(self.main_plot.images[0], Coordinate([-1, -1, num_slice]), self.main_plot.view)
             import scipy.misc
             scipy.misc.imsave(file_path+self.get_file_name_without_path(self.window.file_name)+'_image_slice_'+str(num_slice)+'.png', image_array)
@@ -1594,8 +1600,8 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
             save_specific_slice_as_png(self,islice)
 
     def make_output_file(self):
-        if not os.path.exists(self.window.file_name+'_ground_truth'):
-            sct.run('mkdir ' + self.window.file_name+'_ground_truth')
+        if not os.path.exists(self.manage_output_files_paths()):
+            sct.run('mkdir ' + self.manage_output_files_paths())
 
     def press_save(self):
         if self.bool_save_png_txt:
@@ -1866,7 +1872,7 @@ class WindowGroundTruth(WindowCore):
 
         # Ajust the input parameters into viewer objects.
         self.bool_save_as_png=bool_save_as_png
-        self.file_name=self.choose_and_clean_file_name(file_name,output_path)
+        (self.file_name,self.output_name)=self.choose_and_clean_file_name(file_name,output_path)
         self.first_label=int(first_label)
         self.dic_save_niftii=dic_save_niftii
         if isinstance(list_images, Image):
@@ -1879,10 +1885,7 @@ class WindowGroundTruth(WindowCore):
         self.set_layout_and_launch_viewer()
 
     def choose_and_clean_file_name(self,file_name,output_path):
-        if not output_path:
-            return file_name.replace('.nii.gz','')
-        else:
-            return output_path
+        return (file_name.replace('.nii.gz',''),output_path)
 
     def set_main_plot(self):
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
@@ -1960,7 +1963,11 @@ class WindowGroundTruth(WindowCore):
         return control_buttons
 
     def import_existing_labels(self):
-        def get_txt_files_in_output_directory(output_file_name):
+        def get_txt_files_in_output_directory(file_name,output_name):
+            if output_name:
+                output_file_name=output_name
+            else:
+                output_file_name=file_name
             name_file_output = output_file_name + '_ground_truth/'
             if os.path.exists(name_file_output):
                 return list(filter(lambda x: '.txt' in x,os.listdir(name_file_output)))
@@ -2030,7 +2037,7 @@ class WindowGroundTruth(WindowCore):
                 dic_labels=remove_points_beyond_last_selected_label(dic_labels,max_label)
             return dic_labels
 
-        list_txt=get_txt_files_in_output_directory(self.file_name)
+        list_txt=get_txt_files_in_output_directory(self.file_name,self.output_name)
         for ilabels in list_txt:
             dic_labels=make_dic_labels()
             list_coordinates=extract_coordinates(self.file_name,ilabels)
