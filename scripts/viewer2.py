@@ -627,12 +627,15 @@ class ImagePlotMainGroundTruth(ImagePlot):
         super(ImagePlotMainGroundTruth, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, header)
         self.secondary_plot = secondary_plot
         self.first_label=self.translate_labels_num_into_list_point_length(str(first_label))
+        print(self.first_label)
         self.plot_points, = self.axes.plot([], [], '.r', markersize=10)
         self.show_image(self.im_params, current_point=None)
         self.number_of_points = number_of_points
         self.calculate_list_slices()
         self.update_slice(Coordinate([self.list_slices[0], self.current_position.y, self.current_position.z]))
         self.fill_first_labels()
+        print(self.calc_list_points_on_slice())
+        print(str(len(self.calc_list_points_on_slice())+1))
         self.header.update_text('update',str(len(self.calc_list_points_on_slice())+1))
 
 
@@ -890,7 +893,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         if bool_fill_first_labels:
             self.main_plot.fill_first_labels()
         if self.main_plot.calc_list_points_on_slice():
-            self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())))
+            self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())+1))
 
 
 class HeaderCore(object):
@@ -2072,7 +2075,7 @@ class WindowGroundTruth(WindowCore):
         self.main_pannel.main_plot.draw_dots()
         self.main_pannel.second_plot.draw_lines()
         if self.main_pannel.main_plot.calc_list_points_on_slice():
-            self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())))
+            self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())+1))
             sct.printv('Output file you have chosen contained results of a previous labelling.\n'
                        'This data has been imported',type='info')
 
