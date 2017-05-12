@@ -279,37 +279,15 @@ class SegmentGM:
         # go back to original directory
         os.chdir('..')
         printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
-        fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
-        fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
+        self.fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
+        self.fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
 
-        self.im_res_gmseg.setFileName(fname_res_gmseg)
-        self.im_res_wmseg.setFileName(fname_res_wmseg)
+        self.im_res_gmseg.setFileName(self.fname_res_gmseg)
+        self.im_res_wmseg.setFileName(self.fname_res_wmseg)
 
         self.im_res_gmseg.save()
         self.im_res_wmseg.save()
 
-        # save quality control and print info
-        if self.param_seg.type_seg == 'bin':
-            wm_col = 'Red'
-            gm_col = 'Blue'
-            b = '0,1'
-        else:
-            wm_col = 'Blue-Lightblue'
-            gm_col = 'Red-Yellow'
-            b = '0.4,1'
-
-        if self.param_seg.qc:
-            # output QC image
-            printv('\nSave quality control images...', self.param.verbose, 'normal')
-            im = Image(self.tmp_dir + self.param_seg.fname_im)
-            im.save_quality_control(plane='axial', n_slices=5, seg=self.im_res_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.param_seg.path_results)
-
-        printv('\nDone! To view results, type:', self.param.verbose)
-        printv('fslview ' + self.param_seg.fname_im_original + ' ' + fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col + ' -t 0.7 ' + fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', self.param.verbose, 'info')
-
-        if self.param.rm_tmp:
-            # remove tmp_dir
-            shutil.rmtree(self.tmp_dir)
 
     def copy_data_to_tmp(self):
         # copy input image
@@ -736,13 +714,35 @@ def main(args=None):
     if '-v' in arguments:
         param.verbose = arguments['-v']
 
+    start_time = time.time()
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
-    start = time.time()
     seg_gm.segment()
-    end = time.time()
-    t = end - start
-    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60, 1)) + ' sec', param.verbose, 'info')
+    elapsed_time = time.time() - start_time
+    printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
+    # save quality control and print info
+    if param_seg.type_seg == 'bin':
+        wm_col = 'Red'
+        gm_col = 'Blue'
+        b = '0,1'
+    else:
+        wm_col = 'Blue-Lightblue'
+        gm_col = 'Red-Yellow'
+        b = '0.4,1'
+
+    if param_seg.qc:
+        # output QC image
+        printv('\nSave quality control images...', param.verbose, 'normal')
+        im = Image(seg_gm.tmp_dir + param_seg.fname_im)
+        im.save_quality_control(plane='axial', n_slices=5, seg=seg_gm.im_res_gmseg, thr=float(b.split(',')[0]),
+                                cmap_col='red-yellow', path_output=param_seg.path_results)
+
+    if param.rm_tmp:
+        # remove tmp_dir
+        shutil.rmtree(seg_gm.tmp_dir)
+
+    printv('\nDone! To view results, type:', param.verbose)
+    printv('fslview ' + param_seg.fname_im_original + ' ' + seg_gm.fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col + ' -t 0.7 ' + seg_gm.fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', param.verbose, 'info')
 
 if __name__ == "__main__":
     main()
