@@ -568,9 +568,6 @@ if __name__ == "__main__":
         if use_viewer:
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
-
     if '-qc' in arguments:
         qc_path = arguments['-qc']
 
@@ -589,3 +586,7 @@ if __name__ == "__main__":
         sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
         sct.printv('Use the following command to see the results in a browser:')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
+
+    sct.printv('\nDone! To view results, type:', verbose)
+    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+
