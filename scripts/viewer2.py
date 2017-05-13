@@ -985,7 +985,9 @@ class HeaderCore(object):
     def define_layout_header(self):
         self.layout_header = QtGui.QVBoxLayout()
         self.layout_header.setAlignment(QtCore.Qt.AlignTop)
-        self.layout_header.setContentsMargins(0, 30, 0, 80)
+        # Modified by Francisco (fperdigon88) in order to make bigger the image area
+        #self.layout_header.setContentsMargins(0, 30, 0, 80)
+        self.layout_header.setContentsMargins(10, 10, 10, 10)
 
     def update_title_text_general(self, key, nbpt=-1, nbfin=-1):
         if (key == 'ready_to_save_and_quit'):
@@ -1339,7 +1341,10 @@ class ControlButtonsCore(object):
 
         self.layout_buttons = QtGui.QHBoxLayout()
         self.layout_buttons.setAlignment(QtCore.Qt.AlignRight)
-        self.layout_buttons.setContentsMargins(10, 80, 15, 160)
+
+        # Modified by Francisco (fperdigon88) in order to make bigger the image area
+        #self.layout_buttons.setContentsMargins(10, 80, 15, 160)
+        self.layout_buttons.setContentsMargins(10, 10, 10, 10)
 
     def add_classical_buttons(self):
         self.add_help_button()
