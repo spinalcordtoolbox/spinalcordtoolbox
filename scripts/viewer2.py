@@ -1941,6 +1941,13 @@ class WindowGroundTruth(WindowCore):
         w = QtGui.QWidget()
         w.resize(740, 850)
         w.setWindowTitle('Ground Truth Viewer')
+
+        pic_adress=os.path.dirname(os.path.realpath(__file__)).replace('/scripts','/documentation/logo_sct.png')
+        #pic = QtGui.QLabel(w)
+        #pic.setGeometry(10, 10, 400, 100)
+        #pic.setPixmap(QtGui.QPixmap(pic_adress))
+        w.setWindowIcon(QtGui.QIcon(pic_adress))
+
         w.show()
         return (w, system)
 
