@@ -370,6 +370,7 @@ if __name__ == "__main__":
     # Helping options
     use_viewer = None
     use_optic = True  # enabled by default
+    init_option = None
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
             use_viewer = "centerline"
@@ -379,7 +380,8 @@ if __name__ == "__main__":
             cmd += " -init-centerline " + str(arguments["-init-centerline"])
             use_optic = False
     if "-init" in arguments:
-        cmd += " -init " + str(arguments["-init"])
+        init_option = float(arguments["-init"])
+        #cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
@@ -440,6 +442,7 @@ if __name__ == "__main__":
 
             if '-init' in arguments:
                 starting_slice = arguments['-init']
+                cmd += " -init " + str(arguments["-init"])
 
                 # starting_slice can be provided as a ratio of the number of slices
                 # we assume slice number/ratio is in RPI orientation, which is the inverse of the one used in viewer (SAL)
@@ -496,6 +499,13 @@ if __name__ == "__main__":
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
                     (image_int_filename, reoriented_image_filename_nii)
         sct.run(cmd_reorient, verbose=0)
+
+        image_rpi_init = Image(reoriented_image_filename_nii)
+        nxr, nyr, nzr, ntr, pxr, pyr, pzr, ptr = image_rpi_init.dim
+        if init_option is not None:
+            if init_option > 1:
+                init_option /= (nzr - 1)
+            cmd += " -init " + str(init_option)
 
         # call the OptiC method to generate the spinal cord centerline
         optic_input = img_filename
