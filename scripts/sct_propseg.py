@@ -306,7 +306,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=os.path.expanduser('~/qc_data'))
+    parser.add_option(name='-noqc',
+                      type_value=None,
+                      description='Prevent the generation of the QC report',
+                      mandatory=False)
     return parser
+
 
 if __name__ == "__main__":
     parser = get_parser()
@@ -578,7 +583,7 @@ if __name__ == "__main__":
         if use_viewer:
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
-    if '-qc' in arguments:
+    if '-qc' in arguments and not arguments.get('-noqc', False):
         qc_path = arguments['-qc']
 
         import spinalcordtoolbox.reports.qc as qc
@@ -586,7 +591,6 @@ if __name__ == "__main__":
 
         param = qc.Params(fname_input_data, 'sct_propseg', args, 'Axial', qc_path)
         report = qc.QcReport(param, '')
-
 
         @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
         def test(qslice):
