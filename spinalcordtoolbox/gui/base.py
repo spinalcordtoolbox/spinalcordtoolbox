@@ -257,3 +257,121 @@ class ImagePlot(object):
     def is_point_in_image(self, target_point):
         return 0 <= target_point.x < self.image_dim[0] and 0 <= target_point.y < self.image_dim[
             1] and 0 <= target_point.z < self.image_dim[2]
+
+
+class HeaderCore(object):
+    """
+    Core Class for Header
+    Defines Layouts and some basic messages.
+    """
+    def __init__(self):
+        self.define_layout_header()
+        self.add_lb_status()
+        self.add_lb_warning()
+        self.dic_message_labels = self.define_dic_message_labels()
+
+    def define_dic_message_labels(self):
+        dic = {'1': 'Please click on anterior base \n'
+                    'of pontomedullary junction (label=50) \n',
+               '2': 'Please click on pontomedullary groove \n'
+                    ' (label=49) \n',
+
+               '3': 'Please click on top of C1 vertebrae \n'
+                    '(label=1) \n',
+               '4': 'Please click on posterior edge of  \n'
+                    'C2/C3 intervertebral disk (label=3) \n',
+               '5': 'Please click on posterior edge of  \n'
+                    'C3/C4 intervertebral disk (label=4) \n',
+               '6': 'Please click on posterior edge of  \n'
+                    'C4/C5 intervertebral disk (label=5) \n',
+               '7': 'Please click on posterior edge of  \n'
+                    'C5/C6 intervertebral disk (label=6) \n',
+               '8': 'Please click on posterior edge of  \n'
+                    'C6/C7 intervertebral disk (label=7) \n',
+               '9': 'Please click on posterior edge of  \n'
+                    'C7/T1 intervertebral disk (label=8) \n',
+
+               '10': 'Please click on posterior edge of  \n'
+                     'T1/T2 intervertebral disk (label=9) \n',
+               '11': 'Please click on posterior edge of  \n'
+                     'T2/T3 intervertebral disk (label=10) \n',
+               '12': 'Please click on posterior edge of  \n'
+                     'T3/T4 intervertebral disk (label=11) \n',
+               '13': 'Please click on posterior edge of  \n'
+                     'T4/T5 intervertebral disk (label=12) \n',
+               '14': 'Please click on posterior edge of  \n'
+                     'T5/T6 intervertebral disk (label=13) \n',
+               '15': 'Please click on posterior edge of  \n'
+                     'T6/T7 intervertebral disk (label=14) \n',
+               '16': 'Please click on posterior edge of  \n'
+                     'T7/T8 intervertebral disk (label=15) \n',
+               '17': 'Please click on posterior edge of  \n'
+                     'T8/T9 intervertebral disk (label=16) \n',
+               '18': 'Please click on posterior edge of  \n'
+                     'T9/T10 intervertebral disk (label=17) \n',
+               '19': 'Please click on posterior edge of  \n'
+                     'T10/T11 intervertebral disk (label=18) \n',
+               '20': 'Please click on posterior edge of  \n'
+                     'T11/T12 intervertebral disk (label=19) \n',
+               '21': 'Please click on posterior edge of  \n'
+                     'T12/L1 intervertebral disk (label=20) \n',
+
+               '22': 'Please click on posterior edge of  \n'
+                     'L1/L2 intervertebral disk (label=21) \n',
+               '23': 'Please click on posterior edge of  \n'
+                     'L2/L3 intervertebral disk (label=22) \n',
+               '24': 'Please click on posterior edge of  \n'
+                     'L3/L4 intervertebral disk (label=23) \n',
+               '25': 'Please click on posterior edge of  \n'
+                     'L4/S1 intervertebral disk (label=24) \n',
+
+               '26': 'Please click on posterior edge of  \n'
+                     'S1/S2 intervertebral disk (label=25) \n',
+               '27': 'Please click on posterior edge of  \n'
+                     'S2/S3 intervertebral disk (label=26) \n',
+
+               }
+        return dic
+
+    def add_lb_status(self):
+        self.lb_status = QtGui.QLabel('Label Alerte')
+        self.lb_status.setContentsMargins(10, 10, 10, 0)
+        self.lb_status.setAlignment(QtCore.Qt.AlignCenter)
+        self.layout_header.addWidget(self.lb_status)
+
+    def add_lb_warning(self):
+        self.lb_warning = QtGui.QLabel('Label Warning')
+        self.lb_warning.setContentsMargins(10, 10, 10, 10)
+        self.lb_warning.setAlignment(QtCore.Qt.AlignCenter)
+        self.layout_header.addWidget(self.lb_warning)
+
+    def define_layout_header(self):
+        self.layout_header = QtGui.QVBoxLayout()
+        self.layout_header.setAlignment(QtCore.Qt.AlignTop)
+        self.layout_header.setContentsMargins(0, 30, 0, 80)
+
+    def update_title_text_general(self, key, nbpt=-1, nbfin=-1):
+        if (key == 'ready_to_save_and_quit'):
+            self.lb_status.setText('You can save and quit')
+            self.lb_status.setStyleSheet("color:green")
+        elif (key == 'warning_all_points_done_already'):
+            self.lb_warning.setText('You have placed all needed points. \n'
+                                    'If you made a mistake, you may use \'undo\'.')
+            self.lb_warning.setStyleSheet("color:red")
+        elif (key == 'warning_undo_beyond_first_point'):
+            self.lb_warning.setText('Please place your first dot.')
+            self.lb_warning.setStyleSheet("color:red")
+        elif (key == 'warning_selected_point_not_in_image'):
+            self.lb_warning.setText('The point you selected in not in the image. Please try again.')
+            self.lb_warning.setStyleSheet("color:red")
+        elif (key == 'update'):
+            if nbfin == -1:
+                self.lb_status.setText('You have maid ' + str(nbpt) + ' points.')
+                self.lb_status.setStyleSheet("color:black")
+            else:
+                self.lb_status.setText('You have maid ' + str(nbpt) + ' points out of ' + str(nbfin) + '.')
+                self.lb_status.setStyleSheet("color:black")
+
+        else:
+            self.lb_warning.setText(key + ' : Unknown key')
+            self.lb_warning.setStyleSheet("color:red")
