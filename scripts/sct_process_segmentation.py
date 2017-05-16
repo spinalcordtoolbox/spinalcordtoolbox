@@ -276,7 +276,8 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
                      'equivalent_diameter',
                      'ratio_minor_major',
                      'eccentricity',
-                     'solidity']
+                     'solidity',
+                     'symmetry']
 
     property_list, shape_properties = msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation,
                                                                                      property_list=property_list,
