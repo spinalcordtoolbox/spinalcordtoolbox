@@ -440,3 +440,105 @@ class MainPannelCore(object):
     def merge_layouts(self):
         self.layout_global.addLayout(self.layout_option_settings)
         self.layout_global.addLayout(self.layout_central)
+
+
+class ControlButtonsCore(object):
+    """
+    Core class for displaying and managing basic action buttons : help, undo and save & quit.
+    Manages the layout, the adding of basic buttons and the associated functions.
+    """
+    def __init__(self, main_plot, window, header):
+        self.main_plot = main_plot
+        self.window = window
+        self.help_web_adress = 'http://www.google.com'
+        self.header = header
+
+        self.layout_buttons = QtGui.QHBoxLayout()
+        self.layout_buttons.setAlignment(QtCore.Qt.AlignRight)
+        self.layout_buttons.setContentsMargins(10, 80, 15, 160)
+
+    def add_classical_buttons(self):
+        self.add_help_button()
+        self.add_undo_button()
+        self.add_save_and_quit_button()
+
+    def add_save_and_quit_button(self):
+        btn_save_and_quit = QtGui.QPushButton('Save & Quit')
+        self.layout_buttons.addWidget(btn_save_and_quit)
+        btn_save_and_quit.clicked.connect(self.press_save_and_quit)
+
+    def add_undo_button(self):
+        btn_undo = QtGui.QPushButton('Undo')
+        self.layout_buttons.addWidget(btn_undo)
+        btn_undo.clicked.connect(self.press_undo)
+
+    def add_help_button(self):
+        btn_help = QtGui.QPushButton('Help')
+        self.layout_buttons.addWidget(btn_help)
+        btn_help.clicked.connect(self.press_help)
+
+    def press_help(self):
+        webbrowser.open(self.help_web_adress, new=0, autoraise=True)
+
+    def rewrite_list_points(self,list_points):
+        list_points_useful_notation = ''
+        for coord in list_points:
+            if list_points_useful_notation:
+                list_points_useful_notation += ':'
+            list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
+                                          str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+        return list_points_useful_notation
+
+    def press_save_and_quit(self):
+        self.window.str_points_final = self.rewrite_list_points(self.main_plot.list_points)
+
+    def press_undo(self):
+        if self.main_plot.list_points:
+            del self.main_plot.list_points[-1]
+            self.main_plot.draw_dots()
+            self.header.update_text('update', len(self.main_plot.list_points), self.main_plot.number_of_points)
+        else:
+            self.header.update_text('warning_undo_beyond_first_point')
+
+class WindowCore(object):
+    """
+    Core Class that manages the qt window.
+    Defines some core function to display images.
+    """
+    def __init__(self, list_input, visualization_parameters=None):
+        self.images = self.keep_only_images(list_input)
+        self.im_params = visualization_parameters
+        self.str_points_final = ''
+
+        self.mean_intensity = []
+        self.std_intensity = []
+
+    def keep_only_images(self, list_input):
+        # TODO: check same space
+        # TODO: check if at least one image
+        from msct_image import Image
+        images = []
+        for im in list_input:
+            if isinstance(im, Image):
+                images.append(im)
+            else:
+                print "Error, one of the images is actually not an image..."
+        return images
+
+    def compute_offset(self):
+        array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[1] * self.im_spacing[1],
+                     self.image_dim[2] * self.im_spacing[2]]
+        index_max = np.argmax(array_dim)
+        max_size = array_dim[index_max]
+        self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
+                       int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
+                       int(round((max_size - array_dim[2]) / self.im_spacing[2]) / 2)]
+
+    def pad_data(self):
+        for image in self.images:
+            image.data = pad(image.data,
+                             ((self.offset[0], self.offset[0]),
+                              (self.offset[1], self.offset[1]),
+                              (self.offset[2], self.offset[2])),
+                             'constant',
+                             constant_values=(0, 0))
