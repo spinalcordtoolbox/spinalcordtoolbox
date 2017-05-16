@@ -138,6 +138,10 @@ def get_parser():
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=os.path.expanduser('~/qc_data'))
+    parser.add_option(name='-noqc',
+                      type_value=None,
+                      description='Prevent the generation of the QC report',
+                      mandatory=False)
     return parser
 
 
@@ -554,8 +558,7 @@ def main():
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
 
-
-    if '-qc' in arguments:
+    if '-qc' in arguments and not arguments.get('-noqc', False):
         qc_path = arguments['-qc']
 
         import spinalcordtoolbox.reports.qc as qc
