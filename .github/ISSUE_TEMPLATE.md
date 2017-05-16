@@ -6,7 +6,7 @@
 
 ### Description
 
-[Description of the issue]
+Description of the issue and use the labels to add additional context.
 
 ### Steps to Reproduce
 
@@ -14,16 +14,24 @@
 2. [Second Step]
 3. [and so on...]
 
-**Expected behavior:** [What you expect to happen]
+**Expected behavior:**
 
-**Actual behavior:** [What actually happens]
+What you expect to happen
 
-**Reproduces how often:** [What percentage of the time does it reproduce?]
+**Actual behavior:**
+
+What actually happens
+
+**Reproduces how often:**
+
+What percentage of the time does it reproduce?
 
 ### Versions
 
 The version is found in `version.txt`.
 
+If it is a dev version, include the result of `git rev-parse --short HEAD`.
+
 ### Additional Information
 
-Screenshots, error logs and output files that add details to the issue.
+Screen-shots, error logs and output files.

@@ -7,7 +7,7 @@
 
 ### Description of the Change
 
-[Explain the approach and possible drawback(s)]
+Explain the approach and possible drawback(s). Use labels to add context.
 
 ### Steps and Constraints
 
