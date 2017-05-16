@@ -375,3 +375,68 @@ class HeaderCore(object):
         else:
             self.lb_warning.setText(key + ' : Unknown key')
             self.lb_warning.setStyleSheet("color:red")
+
+class MainPannelCore(object):
+    """
+    Class core that defines the layout of the Main pannel.
+    Defines layout and manages their merging.
+    Provides an example of how to call Main Image Plot and Secondary Image Plot.
+    """
+    def __init__(self,
+                 images,
+                 im_params, window, header):
+        self.header = header
+        self.window = window
+        self.layout_global = QtGui.QVBoxLayout()
+        self.layout_option_settings = QtGui.QHBoxLayout()
+        self.layout_central = QtGui.QHBoxLayout()
+        self.layout_central.setDirection(1)
+        self.images = images
+        self.im_params = im_params
+        self.current_position = Coordinate(
+            [int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
+             int(self.images[0].data.shape[2] / 2)])
+        nx, ny, nz, nt, px, py, pz, pt = self.images[0].dim
+        self.im_spacing = [px, py, pz]
+        self.aspect_ratio = [float(self.im_spacing[1]) / float(self.im_spacing[2]),
+                             float(self.im_spacing[0]) / float(self.im_spacing[2]),
+                             float(self.im_spacing[0]) / float(self.im_spacing[1])]
+        self.number_of_points = -1
+
+    def add_main_view(self):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        self.canvas_main = FigureCanvas(fig)
+
+        layout_view.addWidget(self.canvas_main)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.main_plot = ImagePlotMainPropseg(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
+                                        canvas=self.canvas_main, header=self.header, number_of_points=7)
+
+    def add_secondary_view(self):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        self.canvas_second = FigureCanvas(fig)
+
+        layout_view.addWidget(self.canvas_second)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.second_plot = ImagePlotSecondPropseg(axis, self.images, self, view='sag', line_direction='',
+                                            im_params=self.im_params, canvas=self.canvas_second,
+                                            main_single_plot=self.main_plot, header=self.header)
+        self.main_plot.secondary_plot = self.second_plot
+
+    def merge_layouts(self):
+        self.layout_global.addLayout(self.layout_option_settings)
+        self.layout_global.addLayout(self.layout_central)
