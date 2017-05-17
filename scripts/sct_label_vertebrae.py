@@ -106,7 +106,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       mandatory=False)
     parser.add_option(name="-label_man",
                       type_value='int',
-                      description='Initialize by clicking on C2-C3 disc using interactive window.',
+                      description='Choose the label you want to initialize with, through an interactive window.',
                       mandatory=False)
     parser.add_option(name="-initfile",
                       type_value='file',
