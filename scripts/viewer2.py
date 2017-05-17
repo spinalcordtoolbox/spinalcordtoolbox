@@ -1240,6 +1240,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
                 slider_real_value = slider_maximum - int(slider_maximum * self.slider_label.value() / 100)
                 self.header.update_text('welcome', str(slider_real_value))
                 self.main_plot.current_label = slider_real_value
+                lb_title.setText('Label #' + str(self.main_plot.dic_translate_label[str(slider_real_value)]))
             else:
                 self.header.update_text('warning_cannot_change_the_label')
                 self.slider_label.setValue(int(100 * (slider_maximum - self.main_plot.current_label) / slider_maximum))
