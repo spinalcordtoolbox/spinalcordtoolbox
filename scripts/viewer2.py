@@ -1336,7 +1336,7 @@ class ControlButtonsCore(object):
 
         self.layout_buttons = QtGui.QHBoxLayout()
         self.layout_buttons.setAlignment(QtCore.Qt.AlignRight)
-        self.layout_buttons.setContentsMargins(10, 80, 15, 160)
+        self.layout_buttons.setContentsMargins(10, 80, 15, 0)
 
     def add_classical_buttons(self):
         self.add_help_button()
