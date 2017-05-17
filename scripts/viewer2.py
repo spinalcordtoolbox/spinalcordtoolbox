@@ -1000,10 +1000,10 @@ class HeaderCore(object):
             self.lb_warning.setStyleSheet("color:red")
         elif (key == 'update'):
             if nbfin == -1:
-                self.lb_status.setText('You have maid ' + str(nbpt) + ' points.')
+                self.lb_status.setText('You have made ' + str(nbpt) + ' points.')
                 self.lb_status.setStyleSheet("color:black")
             else:
-                self.lb_status.setText('You have maid ' + str(nbpt) + ' points out of ' + str(nbfin) + '.')
+                self.lb_status.setText('You have made ' + str(nbpt) + ' points out of ' + str(nbfin) + '.')
                 self.lb_status.setStyleSheet("color:black")
 
         else:
