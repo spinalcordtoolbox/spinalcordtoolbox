@@ -1748,6 +1748,9 @@ class WindowPropseg(WindowCore):
         w = QtGui.QWidget()
         w.resize(740, 850)
         w.setWindowTitle('Propseg Viewer')
+
+        w.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.realpath(__file__)).replace('/scripts','/documentation/logo_sct.png')))
+
         w.show()
         return (w, system)
 
@@ -1838,6 +1841,9 @@ class WindowLabelVertebrae(WindowCore):
         w = QtGui.QWidget()
         w.resize(740, 850)
         w.setWindowTitle('Label Vertebrae Viewer')
+
+        w.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.realpath(__file__)).replace('/scripts','/documentation/logo_sct.png')))
+
         w.show()
         return (w, system)
 
@@ -1942,11 +1948,7 @@ class WindowGroundTruth(WindowCore):
         w.resize(740, 850)
         w.setWindowTitle('Ground Truth Viewer')
 
-        pic_adress=os.path.dirname(os.path.realpath(__file__)).replace('/scripts','/documentation/logo_sct.png')
-        #pic = QtGui.QLabel(w)
-        #pic.setGeometry(10, 10, 400, 100)
-        #pic.setPixmap(QtGui.QPixmap(pic_adress))
-        w.setWindowIcon(QtGui.QIcon(pic_adress))
+        w.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.realpath(__file__)).replace('/scripts','/documentation/logo_sct.png')))
 
         w.show()
         return (w, system)
