@@ -42,28 +42,28 @@ class ImagePlot(object):
              int(self.images[0].data.shape[2] / 2)])
         self.list_points = []
         self.header = header
-        self.dic_translate_label = self.define_translate_dic()
+        self.dict_translate_label = self.define_translate_dict()
 
         self.remove_axis_number()
         self.connect_mpl_events()
         self.setup_intensity()
 
-    def define_translate_dic(self):
+    def define_translate_dict(self):
         """
         Defines dictionnary to translate the software labels which range is [1;27] into anatomical labels which range is:
         {50;49} U {1} U [3,26]
 
         Returns
         -------
-        dic        dictionnary
+        dict        dictionnary
         """
-        dic = {'1': 50,
+        dict = {'1': 50,
                '2': 49,
                '3': 1,
                '4': 3, }
         for ii in range(5, 30):             # does not matter if the dictionnary is a bit too long. The number of possible labels is still 27.
-            dic[str(ii)] = ii - 1
-        return dic
+            dict[str(ii)] = ii - 1
+        return dict
 
     def set_data_to_display(self, image, current_point, view):
         if view == 'ax':
@@ -218,15 +218,15 @@ class ImagePlot(object):
             if self.view == 'ax':
                 point = Coordinate([self.current_position.x,
                                     int(round(event.ydata)),
-                                    int(round(event.xdata)), self.dic_translate_label[str(label)]])
+                                    int(round(event.xdata)), self.dict_translate_label[str(label)]])
             elif self.view == 'cor':
                 point = Coordinate([int(round(event.ydata)),
                                     self.current_position.y,
-                                    int(round(event.xdata)), self.dic_translate_label[str(label)]])
+                                    int(round(event.xdata)), self.dict_translate_label[str(label)]])
             elif self.view == 'sag':
                 point = Coordinate([int(round(event.ydata)),
                                     int(round(event.xdata)),
-                                    self.current_position.z, self.dic_translate_label[str(label)]])
+                                    self.current_position.z, self.dict_translate_label[str(label)]])
         except TypeError:
             self.header.update_text('warning_selected_point_not_in_image')
         return point
@@ -268,10 +268,10 @@ class HeaderCore(object):
         self.define_layout_header()
         self.add_lb_status()
         self.add_lb_warning()
-        self.dic_message_labels = self.define_dic_message_labels()
+        self.dict_message_labels = self.define_dict_message_labels()
 
-    def define_dic_message_labels(self):
-        dic = {'1': 'Please click on anterior base \n'
+    def define_dict_message_labels(self):
+        dict = {'1': 'Please click on anterior base \n'
                     'of pontomedullary junction (label=50) \n',
                '2': 'Please click on pontomedullary groove \n'
                     ' (label=49) \n',
@@ -331,7 +331,7 @@ class HeaderCore(object):
                      'S2/S3 intervertebral disk (label=26) \n',
 
                }
-        return dic
+        return dict
 
     def add_lb_status(self):
         self.lb_status = QtGui.QLabel('Label Alerte')
