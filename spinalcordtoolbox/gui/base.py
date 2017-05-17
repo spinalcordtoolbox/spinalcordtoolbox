@@ -334,7 +334,7 @@ class HeaderCore(object):
         return dict
 
     def add_lb_status(self):
-        self.lb_status = QtGui.QLabel('Label Alerte')
+        self.lb_status = QtGui.QLabel('Label Status')
         self.lb_status.setContentsMargins(10, 10, 10, 0)
         self.lb_status.setAlignment(QtCore.Qt.AlignCenter)
         self.layout_header.addWidget(self.lb_status)
