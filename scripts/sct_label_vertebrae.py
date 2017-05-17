@@ -478,7 +478,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         viewer.calculate_list_slices()
         viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_label_vertebrae/attachment/label_vertebrae_viewer.png'
         '''
-        viewer = WindowLabelVertebrae(im_input_SAL)
+        viewer = WindowLabelVertebrae(im_input_SAL,wanted_label=label_man)
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
         if mask_points:
