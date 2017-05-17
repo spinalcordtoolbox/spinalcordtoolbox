@@ -982,7 +982,7 @@ class HeaderCore(object):
     def define_layout_header(self):
         self.layout_header = QtGui.QVBoxLayout()
         self.layout_header.setAlignment(QtCore.Qt.AlignTop)
-        self.layout_header.setContentsMargins(0, 30, 0, 80)
+        self.layout_header.setContentsMargins(0, 20, 0, 0)
 
     def update_title_text_general(self, key, nbpt=-1, nbfin=-1):
         if (key == 'ready_to_save_and_quit'):
