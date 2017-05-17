@@ -1208,12 +1208,12 @@ class MainPannelLabelVertebrae(MainPannelCore):
     Inherites MainPannelCore
     Class that defines specific main image plot and controller pannel for Label Vertebrae Viewer.
     """
-    def __init__(self, images, im_params, window, header):
+    def __init__(self, images, im_params, window, header,wanted_label):
         super(MainPannelLabelVertebrae, self).__init__(images, im_params, window, header)
 
         self.number_of_points = 1
         self.add_main_view()
-        self.add_controller_pannel()
+        self.add_controller_pannel(wanted_label=wanted_label)
         self.merge_layouts()
         self.number_of_points = 1
 
@@ -1234,7 +1234,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
                                                       im_params=self.im_params, canvas=self.canvas_main,
                                                       header=self.header, number_of_points=self.number_of_points)
 
-    def add_controller_pannel(self):
+    def add_controller_pannel(self,wanted_label):
         def update_slider_label():
             if not self.main_plot.list_points:
                 slider_real_value = slider_maximum - int(slider_maximum * self.slider_label.value() / 100)
@@ -1254,7 +1254,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
         layout_controller.setAlignment(QtCore.Qt.AlignCenter)
 
         slider_maximum = 26
-        init_label = slider_maximum - 3
+        init_label = slider_maximum - wanted_label
         self.slider_label = QtGui.QSlider()
         self.slider_label.setMaximumHeight(250)
         self.slider_label.setValue(init_label * 100 / slider_maximum)
@@ -1787,7 +1787,8 @@ class WindowLabelVertebrae(WindowCore):
                  list_images,
                  visualization_parameters=None,
                  orientation_subplot=['ax', 'sag'],
-                 input_type='centerline'):
+                 input_type='centerline',
+                 wanted_label=12):
 
         # Ajust the input parameters into viewer objects.
         if isinstance(list_images, Image):
@@ -1796,7 +1797,7 @@ class WindowLabelVertebrae(WindowCore):
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
 
         super(WindowLabelVertebrae, self).__init__(list_images, visualization_parameters)
-        self.set_layout_and_launch_viewer()
+        self.set_layout_and_launch_viewer(wanted_label=wanted_label)
 
     def set_main_plot(self):
         self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
@@ -1828,11 +1829,11 @@ class WindowLabelVertebrae(WindowCore):
         # compute slices to display
         self.list_slices = []
 
-    def set_layout_and_launch_viewer(self):
+    def set_layout_and_launch_viewer(self,wanted_label):
         (window, system) = self.launch_main_window()
         layout_main = self.add_layout_main(window)
         self.header = self.add_header(layout_main)
-        self.main_pannel = self.add_main_pannel(layout_main, self, self.header)
+        self.main_pannel = self.add_main_pannel(layout_main, self, self.header,wanted_label=wanted_label)
         self.control_buttons = self.add_control_buttons(layout_main, self)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
@@ -1861,8 +1862,8 @@ class WindowLabelVertebrae(WindowCore):
         header.update_text('welcome', str(start_slice))
         return (header)
 
-    def add_main_pannel(self, layout_main, window, header):
-        main_pannel = MainPannelLabelVertebrae(self.images, self.im_params, window, header)
+    def add_main_pannel(self, layout_main, window, header,wanted_label):
+        main_pannel = MainPannelLabelVertebrae(self.images, self.im_params, window, header,wanted_label=wanted_label)
         layout_main.addLayout(main_pannel.layout_global)
         return main_pannel
 
