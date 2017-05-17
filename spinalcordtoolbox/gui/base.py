@@ -55,7 +55,8 @@ class ImagePlot(object):
 
         Returns
         -------
-        dict        dictionnary
+        dict        Dictionnary that links the label position, from top to down, to the label definition according to
+                    https://github.com/neuropoly/spinalcordtoolbox/issues/1205
         """
         dict = {'1': 50,
                '2': 49,
@@ -376,6 +377,7 @@ class HeaderCore(object):
             self.lb_warning.setText(key + ' : Unknown key')
             self.lb_warning.setStyleSheet("color:red")
 
+
 class MainPannelCore(object):
     """
     Class core that defines the layout of the Main pannel.
@@ -499,6 +501,7 @@ class ControlButtonsCore(object):
             self.header.update_text('update', len(self.main_plot.list_points), self.main_plot.number_of_points)
         else:
             self.header.update_text('warning_undo_beyond_first_point')
+
 
 class WindowCore(object):
     """
