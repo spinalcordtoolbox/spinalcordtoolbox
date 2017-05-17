@@ -105,7 +105,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       description='Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
                       mandatory=False)
     parser.add_option(name="-label_man",
-                      type_value=None,
+                      type_value='int',
                       description='Initialize by clicking on C2-C3 disc using interactive window.',
                       mandatory=False)
     parser.add_option(name="-initfile",
@@ -178,7 +178,7 @@ def main(args=None):
     # initializations
     initz = ''
     initcenter = ''
-    label_man = 'auto'
+    label_man = -1
     param = Param()
 
     # check user arguments
@@ -216,7 +216,9 @@ def main(args=None):
             if arg_initfile[i] == '-initcenter':
                 initcenter = int(arg_initfile[i + 1])
     if '-label_man' in arguments:
-        label_man = 'manual'
+        label_man = int(arguments['-label_man'])
+    else:
+        label_man= -1
     if '-param' in arguments:
         param.update(arguments['-param'][0])
     verbose = int(arguments['-v'])
@@ -364,7 +366,7 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', label_man='auto', path_output='../'):
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', label_man=-1, path_output='../'):
     """
     Find intervertebral discs in straightened image using template matching
     :param fname:
@@ -454,7 +456,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     sct.printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # if automatic mode, find C2/C3 disc
-    if init_disc == [] and label_man == 'auto':
+    if init_disc == [] and label_man == -1:
         sct.printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
@@ -462,7 +464,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
-    if init_disc == [] and label_man == 'manual':
+    if init_disc == [] and label_man > 0:
         from sct_viewer import ClickViewerLabelVertebrae
         from viewer2 import WindowLabelVertebrae
         # reorient image to SAL to be compatible with viewer
