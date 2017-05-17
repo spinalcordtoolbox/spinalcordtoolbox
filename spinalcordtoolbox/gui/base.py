@@ -1,20 +1,17 @@
-import sys
 import webbrowser
 from copy import copy
 from time import time
-import os
 
-import PyQt4.QtCore as QtCore
-import PyQt4.QtGui as QtGui
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import sct_utils as sct
-from matplotlib import cm
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.lines import Line2D
-from msct_image import Image
-from msct_types import Coordinate
-from numpy import pad, percentile
+import numpy as np
+import PyQt4.QtCore as QtCore
+import PyQt4.QtGui as QtGui
+import scripts.sct_utils as sct
+from matplotlib.backends.backend_qt4agg import \
+    FigureCanvasQTAgg as FigureCanvas
+from scripts.msct_types import Coordinate
+
 
 class ImagePlot(object):
     """
@@ -22,6 +19,19 @@ class ImagePlot(object):
     Defines the data to display, image parameters, on_scroll event, manages intensity and manages the click (in or out the picture,...).
     """
     def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, header=None):
+        """
+        Parameters
+        ----------
+
+        :param ax:
+        :param images:
+        :param viewer:
+        :param canvas:
+        :param view:
+        :param line_direction:
+        :param im_params:
+        :param header:
+        """
         self.axes = ax
         self.images = images
         self.viewer = viewer
@@ -37,9 +47,9 @@ class ImagePlot(object):
         self.std_intensity = []
         self.list_intensites = []
         self.im_params = im_params
-        self.current_position = Coordinate(
-            [int(self.images[0].data.shape[0] / 2), int(self.images[0].data.shape[1] / 2),
-             int(self.images[0].data.shape[2] / 2)])
+        self.current_position = Coordinate([int(self.images[0].data.shape[0] / 2),
+                                            int(self.images[0].data.shape[1] / 2),
+                                            int(self.images[0].data.shape[2] / 2)])
         self.list_points = []
         self.header = header
         self.dict_translate_label = self.define_translate_dict()
@@ -50,19 +60,19 @@ class ImagePlot(object):
 
     def define_translate_dict(self):
         """
-        Defines dictionnary to translate the software labels which range is [1;27] into anatomical labels which range is:
+        Defines dictionary to translate the software labels which range is [1;27] into anatomical labels which range is:
         {50;49} U {1} U [3,26]
-
+        It does not matter if the dictionnary is a bit too long. The number of possible labels is still 27.
         Returns
         -------
-        dict        Dictionnary that links the label position, from top to down, to the label definition according to
+        dict        Dictionary that links the label position, from top to down, to the label definition according to
                     https://github.com/neuropoly/spinalcordtoolbox/issues/1205
         """
         dict = {'1': 50,
-               '2': 49,
-               '3': 1,
-               '4': 3, }
-        for ii in range(5, 30):             # does not matter if the dictionnary is a bit too long. The number of possible labels is still 27.
+                '2': 49,
+                '3': 1,
+                '4': 3}
+        for ii in range(5, 30):
             dict[str(ii)] = ii - 1
         return dict
 
@@ -141,9 +151,9 @@ class ImagePlot(object):
         """
         for i, image in enumerate(self.images):
             flattened_volume = image.flatten()
-            first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
-            last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
-            mean_intensity = percentile(flattened_volume[flattened_volume > 0], 98)
+            first_percentile = np.percentile(flattened_volume[flattened_volume > 0], 0)
+            last_percentile = np.percentile(flattened_volume[flattened_volume > 0], 99)
+            mean_intensity = np.percentile(flattened_volume[flattened_volume > 0], 98)
             std_intensity = last_percentile - first_percentile
 
             self.mean_intensity.append(mean_intensity)
@@ -272,66 +282,37 @@ class HeaderCore(object):
         self.dict_message_labels = self.define_dict_message_labels()
 
     def define_dict_message_labels(self):
-        dict = {'1': 'Please click on anterior base \n'
-                    'of pontomedullary junction (label=50) \n',
-               '2': 'Please click on pontomedullary groove \n'
-                    ' (label=49) \n',
+        dict = {'1': 'Please click on anterior base \n of pontomedullary junction (label=50) \n',
+                '2': 'Please click on pontomedullary groove \n (label=49) \n',
 
-               '3': 'Please click on top of C1 vertebrae \n'
-                    '(label=1) \n',
-               '4': 'Please click on posterior edge of  \n'
-                    'C2/C3 intervertebral disk (label=3) \n',
-               '5': 'Please click on posterior edge of  \n'
-                    'C3/C4 intervertebral disk (label=4) \n',
-               '6': 'Please click on posterior edge of  \n'
-                    'C4/C5 intervertebral disk (label=5) \n',
-               '7': 'Please click on posterior edge of  \n'
-                    'C5/C6 intervertebral disk (label=6) \n',
-               '8': 'Please click on posterior edge of  \n'
-                    'C6/C7 intervertebral disk (label=7) \n',
-               '9': 'Please click on posterior edge of  \n'
-                    'C7/T1 intervertebral disk (label=8) \n',
+                '3': 'Please click on top of C1 vertebrae \n (label=1) \n',
+                '4': 'Please click on posterior edge of \n C2/C3 intervertebral disk (label=3) \n',
+                '5': 'Please click on posterior edge of \n C3/C4 intervertebral disk (label=4) \n',
+                '6': 'Please click on posterior edge of \n C4/C5 intervertebral disk (label=5) \n',
+                '7': 'Please click on posterior edge of \n C5/C6 intervertebral disk (label=6) \n',
+                '8': 'Please click on posterior edge of \n C6/C7 intervertebral disk (label=7) \n',
+                '9': 'Please click on posterior edge of \n C7/T1 intervertebral disk (label=8) \n',
 
-               '10': 'Please click on posterior edge of  \n'
-                     'T1/T2 intervertebral disk (label=9) \n',
-               '11': 'Please click on posterior edge of  \n'
-                     'T2/T3 intervertebral disk (label=10) \n',
-               '12': 'Please click on posterior edge of  \n'
-                     'T3/T4 intervertebral disk (label=11) \n',
-               '13': 'Please click on posterior edge of  \n'
-                     'T4/T5 intervertebral disk (label=12) \n',
-               '14': 'Please click on posterior edge of  \n'
-                     'T5/T6 intervertebral disk (label=13) \n',
-               '15': 'Please click on posterior edge of  \n'
-                     'T6/T7 intervertebral disk (label=14) \n',
-               '16': 'Please click on posterior edge of  \n'
-                     'T7/T8 intervertebral disk (label=15) \n',
-               '17': 'Please click on posterior edge of  \n'
-                     'T8/T9 intervertebral disk (label=16) \n',
-               '18': 'Please click on posterior edge of  \n'
-                     'T9/T10 intervertebral disk (label=17) \n',
-               '19': 'Please click on posterior edge of  \n'
-                     'T10/T11 intervertebral disk (label=18) \n',
-               '20': 'Please click on posterior edge of  \n'
-                     'T11/T12 intervertebral disk (label=19) \n',
-               '21': 'Please click on posterior edge of  \n'
-                     'T12/L1 intervertebral disk (label=20) \n',
+                '10': 'Please click on posterior edge of \n T1/T2 intervertebral disk (label=9) \n',
+                '11': 'Please click on posterior edge of \n T2/T3 intervertebral disk (label=10) \n',
+                '12': 'Please click on posterior edge of \n T3/T4 intervertebral disk (label=11) \n',
+                '13': 'Please click on posterior edge of \n T4/T5 intervertebral disk (label=12) \n',
+                '14': 'Please click on posterior edge of \n T5/T6 intervertebral disk (label=13) \n',
+                '15': 'Please click on posterior edge of \n T6/T7 intervertebral disk (label=14) \n',
+                '16': 'Please click on posterior edge of \n T7/T8 intervertebral disk (label=15) \n',
+                '17': 'Please click on posterior edge of \n T8/T9 intervertebral disk (label=16) \n',
+                '18': 'Please click on posterior edge of \n T9/T10 intervertebral disk (label=17) \n',
+                '19': 'Please click on posterior edge of \n T10/T11 intervertebral disk (label=18) \n',
+                '20': 'Please click on posterior edge of \n T11/T12 intervertebral disk (label=19) \n',
+                '21': 'Please click on posterior edge of \n T12/L1 intervertebral disk (label=20) \n',
 
-               '22': 'Please click on posterior edge of  \n'
-                     'L1/L2 intervertebral disk (label=21) \n',
-               '23': 'Please click on posterior edge of  \n'
-                     'L2/L3 intervertebral disk (label=22) \n',
-               '24': 'Please click on posterior edge of  \n'
-                     'L3/L4 intervertebral disk (label=23) \n',
-               '25': 'Please click on posterior edge of  \n'
-                     'L4/S1 intervertebral disk (label=24) \n',
+                '22': 'Please click on posterior edge of \n L1/L2 intervertebral disk (label=21) \n',
+                '23': 'Please click on posterior edge of \n L2/L3 intervertebral disk (label=22) \n',
+                '24': 'Please click on posterior edge of \n L3/L4 intervertebral disk (label=23) \n',
+                '25': 'Please click on posterior edge of \n L4/S1 intervertebral disk (label=24) \n',
 
-               '26': 'Please click on posterior edge of  \n'
-                     'S1/S2 intervertebral disk (label=25) \n',
-               '27': 'Please click on posterior edge of  \n'
-                     'S2/S3 intervertebral disk (label=26) \n',
-
-               }
+                '26': 'Please click on posterior edge of \n S1/S2 intervertebral disk (label=25) \n',
+                '27': 'Please click on posterior edge of \n S2/S3 intervertebral disk (label=26) \n'}
         return dict
 
     def add_lb_status(self):
@@ -419,7 +400,7 @@ class MainPannelCore(object):
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
         self.main_plot = ImagePlotMainPropseg(axis, self.images, self, view='ax', line_direction='', im_params=self.im_params,
-                                        canvas=self.canvas_main, header=self.header, number_of_points=7)
+                                              canvas=self.canvas_main, header=self.header, number_of_points=7)
 
     def add_secondary_view(self):
         layout_view = QtGui.QVBoxLayout()
@@ -435,8 +416,8 @@ class MainPannelCore(object):
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
         self.second_plot = ImagePlotSecondPropseg(axis, self.images, self, view='sag', line_direction='',
-                                            im_params=self.im_params, canvas=self.canvas_second,
-                                            main_single_plot=self.main_plot, header=self.header)
+                                                  im_params=self.im_params, canvas=self.canvas_second,
+                                                  main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
 
     def merge_layouts(self):
@@ -482,13 +463,15 @@ class ControlButtonsCore(object):
     def press_help(self):
         webbrowser.open(self.help_web_adress, new=0, autoraise=True)
 
-    def rewrite_list_points(self,list_points):
+    def rewrite_list_points(self, list_points):
         list_points_useful_notation = ''
         for coord in list_points:
             if list_points_useful_notation:
                 list_points_useful_notation += ':'
-            list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
-                                          str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            list_points_useful_notation = list_points_useful_notation + ','.join([str(coord.x),
+                                                                                  str(coord.y),
+                                                                                  str(coord.z),
+                                                                                  str(coord.value)])
         return list_points_useful_notation
 
     def press_save_and_quit(self):
@@ -539,12 +522,12 @@ class WindowCore(object):
 
     def pad_data(self):
         for image in self.images:
-            image.data = pad(image.data,
-                             ((self.offset[0], self.offset[0]),
-                              (self.offset[1], self.offset[1]),
-                              (self.offset[2], self.offset[2])),
-                             'constant',
-                             constant_values=(0, 0))
+            image.data = np.pad(image.data,
+                                ((self.offset[0], self.offset[0]),
+                                 (self.offset[1], self.offset[1]),
+                                 (self.offset[2], self.offset[2])),
+                                'constant',
+                                constant_values=(0, 0))
 
 
 class ParamMultiImageVisualization(object):
