@@ -1333,12 +1333,12 @@ class MainPannelTest(MainPannelCore):
     Inherites MainPannelCore
     Class that defines specific main image plot and secondary image plot for Propseg Viewer.
     """
-    def __init__(self, images, im_params, window, header,first_label=1):
+    def __init__(self, images, im_params, window, header,first_label=1,wanted_average=3):
         super(MainPannelTest, self).__init__(images, im_params, window, header)
         self.number_of_points = 27
         self.first_label=first_label
         self.add_main_view()
-        self.add_controller_pannel()
+        self.add_controller_pannel(wanted_average=wanted_average)
         self.merge_layouts()
 
     def update_slider_average(self):
@@ -1355,7 +1355,7 @@ class MainPannelTest(MainPannelCore):
         real_label_value = 11 * self.slider_slice.value() / 100
         self.lb_slice.setText('Slice #' + str(real_label_value))
 
-    def add_controller_pannel(self):
+    def add_controller_pannel(self,wanted_average):
         def define_lb_title():
             #lb_title = QtGui.QLabel('Averages ' + str(3) + ' slices')
             lb_title = QtGui.QLabel('Control Pannel')
@@ -1409,8 +1409,9 @@ class MainPannelTest(MainPannelCore):
         define_lb_title()
 
         layout_controller=define_layout_controller()
+
         self.lb_average=define_lb_average()
-        self.slider_average=define_slider_average(wanted_average=9)
+        self.slider_average=define_slider_average(wanted_average=wanted_average)
         self.update_slider_average()
 
         self.lb_slice=define_lb_slice()
@@ -1420,7 +1421,6 @@ class MainPannelTest(MainPannelCore):
         layout_title_and_controller.addLayout(layout_controller)
 
         self.layout_central.addLayout(layout_title_and_controller)
-
 
     def merge_layouts(self):
         #self.layout_global.addLayout(self.layout_option_settings)
