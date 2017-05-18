@@ -1351,6 +1351,9 @@ class MainPannelTest(MainPannelCore):
         real_label_value = get_odd_number(11 * self.slider_average.value() / 100)
         self.lb_average.setText('Averages ' + str(real_label_value) + ' slices')
 
+    def update_slider_slice(self):
+        real_label_value = 11 * self.slider_slice.value() / 100
+        self.lb_slice.setText('Slice #' + str(real_label_value))
 
     def add_controller_pannel(self):
         def define_lb_title():
@@ -1364,6 +1367,11 @@ class MainPannelTest(MainPannelCore):
             layout_controller.setAlignment(QtCore.Qt.AlignTop)
             layout_controller.setAlignment(QtCore.Qt.AlignCenter)
             return layout_controller
+        def define_lb_average():
+            lb = QtGui.QLabel('Averages ' + str(5) + ' slices')
+            lb.setAlignment(QtCore.Qt.AlignCenter)
+            layout_controller.addWidget(lb)
+            return lb
         def define_slider_average(wanted_average=5):
             slider_maximum = 11
             slider_label = QtGui.QSlider(1)
@@ -1377,17 +1385,25 @@ class MainPannelTest(MainPannelCore):
             layout_controller.addWidget(slider_label)
 
             return slider_label
-        def define_lb_average():
-            lb = QtGui.QLabel('Averages ' + str(5) + ' slices')
-            lb.setAlignment(QtCore.Qt.AlignCenter)
-            layout_controller.addWidget(lb)
-            return lb
 
         def define_lb_slice():
-            lb = QtGui.QLabel('Slice #'+str(24))
+            lb = QtGui.QLabel('Slice #'+str(28))
             lb.setAlignment(QtCore.Qt.AlignCenter)
             layout_controller.addWidget(lb)
             return lb
+        def define_slider_slice(wanted_average=6):
+            slider_maximum = 11
+            sl = QtGui.QSlider(1)
+            sl.setMaximumHeight(250)
+            sl.setValue(wanted_average * 100 / slider_maximum)
+
+            sl.sliderMoved.connect(self.update_slider_slice)
+            sl.sliderPressed.connect(self.update_slider_slice)
+            sl.sliderReleased.connect(self.update_slider_slice)
+
+            layout_controller.addWidget(sl)
+
+            return sl
 
         layout_title_and_controller = QtGui.QVBoxLayout()
         define_lb_title()
@@ -1398,6 +1414,8 @@ class MainPannelTest(MainPannelCore):
         self.update_slider_average()
 
         self.lb_slice=define_lb_slice()
+        self.slider_slice=define_slider_slice()
+        self.update_slider_slice()
 
         layout_title_and_controller.addLayout(layout_controller)
 
@@ -1407,7 +1425,6 @@ class MainPannelTest(MainPannelCore):
     def merge_layouts(self):
         #self.layout_global.addLayout(self.layout_option_settings)
         self.layout_global.addLayout(self.layout_central)
-
 
     def add_main_view(self):
         layout_view = QtGui.QVBoxLayout()
