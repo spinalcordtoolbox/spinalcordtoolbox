@@ -661,13 +661,15 @@ class ImagePlotMainGroundTruth(ImagePlot):
             self.list_points.append(Coordinate([current_point.x,
                                                 current_point.y,
                                                 current_point.z,
-                                                self.dict_translate_label[str(len(self.calc_list_points_on_slice())+1)]
+                                                self.dict_translate_label[str(len(self.list_points)+1)]
+                                                #self.dict_translate_label[str(len(self.calc_list_points_on_slice())+1)]
                                                 ]))
             list_points_on_slice = self.calc_list_points_on_slice()
             if len(list_points_on_slice) == self.number_of_points:
                 self.header.update_text('ready_to_save_and_quit')
             else:
-                self.header.update_text('update', str(len(list_points_on_slice)+1))
+                self.header.update_text('update', str(len(self.list_points)+1))
+                print(self.list_points)
         else:
             self.header.update_text('warning_all_points_done_already')
 
@@ -888,7 +890,8 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         self.main_plot.refresh()
         self.main_plot.draw_dots()
         if bool_fill_first_labels:
-            self.main_plot.fill_first_labels()
+            pass
+            #self.main_plot.fill_first_labels()
         if self.main_plot.calc_list_points_on_slice():
             self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())+1))
 

@@ -279,7 +279,7 @@ def use_viewer_to_define_labels(fname_data,first_label,output_path,bool_save_as_
     from viewer2 import WindowGroundTruth
     from viewer2 import WindowTest
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
-    viewer = WindowTest(im_input_SAL,first_label=first_label,
+    viewer = WindowGroundTruth(im_input_SAL,first_label=first_label,
                                file_name=fname_data,
                                output_path=output_path,
                                dict_save_niftii={'save_function':make_labels_image_from_list_points,
