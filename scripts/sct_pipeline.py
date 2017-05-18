@@ -36,7 +36,7 @@
 #########################################################################################
 usage:
 
-    isct_test_function  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8 
+    sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8 
 
 """
 import commands
@@ -49,11 +49,14 @@ import sys
 import types
 from time import time, strftime
 
-import distribute2mpi
+if "SCT_MPI_MODE" in os.environ:
+    from distribute2mpi import MpiPool as Pool
+else:
+    from multiprocessing import Pool
 import pandas as pd
 
 import sct_utils as sct
-from msct_parser import Parser
+import msct_parser
 
 # get path of the toolbox
 # TODO: put it back below when working again (julien 2016-04-04)
@@ -112,9 +115,9 @@ def generate_data_list(folder_dataset, json_requirements=None, verbose=1):
 
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
-        if not subject_dir.startswith('.') and os.path.isdir(os.path.join(folder_dataset, subject_dir)):
-            if read_json(os.path.join(folder_dataset, subject_dir), json_requirements=json_requirements):
-                data_subjects.append(os.path.join(folder_dataset, subject_dir))
+        if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
+            if read_json(folder_dataset + subject_dir, json_requirements=json_requirements):
+                data_subjects.append(folder_dataset + subject_dir + '/')
                 subjects_dir.append(subject_dir)
 
     if not data_subjects:
@@ -210,7 +213,8 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
     import itertools
     data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
-    pool = distribute2mpi.MpiPool(n_proc=nb_cpu)
+    # Computing Pool for parallel process, distribute2mpi.MpiPool in MPI environment, multiprocessing.Pool otherwise
+    pool = Pool(nb_cpu)
 
     try:
         async_results = pool.map_async(function_launcher, data_and_params)
@@ -237,7 +241,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
 
 def get_parser():
     # Initialize parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description("")
