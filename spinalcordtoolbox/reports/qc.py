@@ -296,20 +296,15 @@ class QcReport(object):
             quick description of current usage of the process
         """
         # get path of the toolbox
-        path_script = os.path.dirname(__file__)
-        path_sct = os.path.dirname(path_script)
-        with open(os.path.join(path_sct, '..', 'version.txt')) as file_handle:
-            sct_version = file_handle.read().strip()
-
         try:
-            cmd = 'git log -n 1 --pretty=format:"%H"'.split()
+            cmd = 'git rev-parse --short HEAD'.split()
             git_hash = subprocess.check_output(cmd).strip('"')
         except subprocess.CalledProcessError:
             git_hash = "N/A"
 
         output = {
             'command': self.qc_params.command,
-            'version': "{}({})".format(sct_version, git_hash),
+            'version': git_hash,
             'args': ' '.join(self.qc_params.args),
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
