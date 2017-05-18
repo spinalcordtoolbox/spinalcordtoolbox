@@ -906,20 +906,22 @@ class ImagePlotTest(ImagePlotMainGroundTruth):
                 imMean[ii,jj]=np.mean(dataRacc[ii,jj,:])
         return imMean
     """
-    def calc_mean_slices(self):
-        import numpy as np
-        data=self.images[0].data
-        dataRacc=data[:,:,self.current_position.z-(12-1)/2:self.current_position.z+(12-1)/2+1]
-        imMean=np.empty([data.shape[0],data.shape[1]])
-        for ii in range (0,data.shape[0]):
-            for jj in range (0,data.shape[1]):
-                imMean[ii,jj]=np.mean(dataRacc[ii,jj,:])
-        return imMean
 
-    def show_image_mean(self):
+    def show_image_mean(self,nb_slice_to_average):
+        def calc_mean_slices(nb_slice_to_average):
+            import numpy as np
+            data = self.images[0].data
+            dataRacc = data[:, :, self.current_position.z - (nb_slice_to_average - 1) / 2:self.current_position.z + (nb_slice_to_average - 1) / 2 + 1]
+            imMean = np.empty([data.shape[0], data.shape[1]])
+            for ii in range(0, data.shape[0]):
+                for jj in range(0, data.shape[1]):
+                    imMean[ii, jj] = np.mean(dataRacc[ii, jj, :])
+            return imMean
+
         (my_cmap, my_interpolation, my_alpha) = (cm.get_cmap('gray'), 'nearest', 1.0)
-        self.figs.append(self.axes.imshow(self.calc_mean_slices(), aspect=self.aspect_ratio, alpha=my_alpha))
+        self.figs[-1]=self.axes.imshow(calc_mean_slices(nb_slice_to_average), aspect=self.aspect_ratio, alpha=my_alpha)
         self.figs[-1].set_cmap(my_cmap)
+        self.draw_dots()
 
 
 class HeaderCore(object):
@@ -1358,7 +1360,7 @@ class MainPannelTest(MainPannelCore):
     Inherites MainPannelCore
     Class that defines specific main image plot and secondary image plot for Propseg Viewer.
     """
-    def __init__(self, images, im_params, window, header,first_label=1,wanted_average=3):
+    def __init__(self, images, im_params, window, header,first_label=1,wanted_average=6):
         super(MainPannelTest, self).__init__(images, im_params, window, header)
         self.number_of_points = 27
         self.first_label=first_label
@@ -1375,10 +1377,12 @@ class MainPannelTest(MainPannelCore):
 
         real_label_value = get_odd_number(11 * self.slider_average.value() / 100)
         self.lb_average.setText('Averages ' + str(real_label_value) + ' slices')
-        self.main_plot.show_image_mean()
+        self.main_plot.show_image_mean(real_label_value)
 
     def update_slider_slice(self):
-        real_label_value = 11 * self.slider_slice.value() / 100
+        #print(self.main_plot.images[0].data.shape[2]/2)
+        #print(int(11 * self.slider_slice.value() / 100) - 6 )
+        real_label_value = self.main_plot.images[0].data.shape[2]/2 + ( int(11 * self.slider_slice.value() / 100) - 5 )
         self.lb_slice.setText('Slice #' + str(real_label_value))
 
     def add_controller_pannel(self,wanted_average):
@@ -1404,8 +1408,6 @@ class MainPannelTest(MainPannelCore):
             slider_label.setMaximumHeight(250)
             slider_label.setValue(wanted_average * 100 / slider_maximum)
 
-            slider_label.sliderMoved.connect(self.update_slider_average)
-            slider_label.sliderPressed.connect(self.update_slider_average)
             slider_label.sliderReleased.connect(self.update_slider_average)
 
             layout_controller.addWidget(slider_label)
@@ -1417,14 +1419,12 @@ class MainPannelTest(MainPannelCore):
             lb.setAlignment(QtCore.Qt.AlignCenter)
             layout_controller.addWidget(lb)
             return lb
-        def define_slider_slice(wanted_average=6):
+        def define_slider_slice(wanted_slice=6):
             slider_maximum = 11
             sl = QtGui.QSlider(1)
             sl.setMaximumHeight(250)
             sl.setValue(wanted_average * 100 / slider_maximum)
 
-            sl.sliderMoved.connect(self.update_slider_slice)
-            sl.sliderPressed.connect(self.update_slider_slice)
             sl.sliderReleased.connect(self.update_slider_slice)
 
             layout_controller.addWidget(sl)
