@@ -10,6 +10,7 @@ import PyQt4.QtGui as QtGui
 import scripts.sct_utils as sct
 from matplotlib.backends.backend_qt4agg import \
     FigureCanvasQTAgg as FigureCanvas
+from scripts.msct_image import Image
 from scripts.msct_types import Coordinate
 
 
@@ -386,7 +387,7 @@ class MainPannelCore(object):
                              float(self.im_spacing[0]) / float(self.im_spacing[1])]
         self.number_of_points = -1
 
-    def add_image_plot(self,image_plot_to_add,view,line_direction,number_of_points):
+    def add_image_plot(self, image_plot_to_add, view, line_direction, number_of_points):
         layout_view = QtGui.QVBoxLayout()
 
         fig = plt.figure()
@@ -399,7 +400,15 @@ class MainPannelCore(object):
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
 
-        return (layout_view,image_plot_to_add(axis,self.images,self,view=view,line_direction=line_direction,im_params=self.im_params,canvas=canvas,header=self.header,number_of_points=number_of_points))
+        return (layout_view, image_plot_to_add(axis,
+                                               self.images,
+                                               self,
+                                               view=view,
+                                               line_direction=line_direction,
+                                               im_params=self.im_params,
+                                               canvas=canvas,
+                                               header=self.header,
+                                               number_of_points=number_of_points))
 
     """
     def add_main_view(self):
@@ -518,19 +527,15 @@ class WindowCore(object):
         self.std_intensity = []
 
     def keep_only_images(self, list_input):
-        # TODO: check same space
-        # TODO: check if at least one image
-        from msct_image import Image
         images = []
         for im in list_input:
             if isinstance(im, Image):
                 images.append(im)
-            else:
-                print "Error, one of the images is actually not an image..."
         return images
 
     def compute_offset(self):
-        array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[1] * self.im_spacing[1],
+        array_dim = [self.image_dim[0] * self.im_spacing[0],
+                     self.image_dim[1] * self.im_spacing[1],
                      self.image_dim[2] * self.im_spacing[2]]
         index_max = np.argmax(array_dim)
         max_size = array_dim[index_max]
