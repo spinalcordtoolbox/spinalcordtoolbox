@@ -919,6 +919,7 @@ class ImagePlotTest(ImagePlotMainGroundTruth):
     def show_image_mean(self):
         (my_cmap, my_interpolation, my_alpha) = (cm.get_cmap('gray'), 'nearest', 1.0)
         self.figs.append(self.axes.imshow(self.calc_mean_slices(), aspect=self.aspect_ratio, alpha=my_alpha))
+        self.figs[-1].set_cmap(my_cmap)
 
 
 class HeaderCore(object):
