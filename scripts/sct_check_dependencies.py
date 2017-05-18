@@ -226,6 +226,13 @@ def main():
     except ImportError:
         print_fail()
         install_software = 1
+    print_line('Check if spinalcordtoolbox is installed')
+    try:
+        importlib.import_module('spinalcordtoolbox')
+        print_ok()
+    except ImportError:
+        print_fail()
+        install_software = 1
 
     # CHECK EXTERNAL MODULES:
 
