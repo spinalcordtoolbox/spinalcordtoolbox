@@ -893,6 +893,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
             self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())+1))
 
 
+
 class HeaderCore(object):
     """
     Core Class for Header
@@ -1899,6 +1900,221 @@ class WindowGroundTruth(WindowCore):
 
 
         super(WindowGroundTruth, self).__init__(list_images, visualization_parameters)
+        self.set_layout_and_launch_viewer()
+
+    def choose_and_clean_file_name(self,file_name,output_path):
+        return (file_name.replace('.nii.gz',''),output_path)
+
+    def set_main_plot(self):
+        self.plot_points, = self.windows[0].axes.plot([], [], '.r', markersize=10)
+        if self.primary_subplot == 'ax':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+        elif self.primary_subplot == 'cor':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[2]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[0], 0])
+        elif self.primary_subplot == 'sag':
+            self.windows[0].axes.set_xlim([0, self.images[0].data.shape[0]])
+            self.windows[0].axes.set_ylim([self.images[0].data.shape[1], 0])
+
+    def declaration_global_variables_general(self, orientation_subplot):
+        self.help_web_adress = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/'
+        self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
+        self.primary_subplot = orientation_subplot[0]
+        self.secondary_subplot = orientation_subplot[1]
+        self.dict_axis_buttons = {}
+        self.closed = False
+
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
+
+        # specialized for Click viewer
+        self.list_points = []
+        self.list_points_useful_notation = ''
+
+        # compute slices to display
+        self.list_slices = []
+
+    def set_layout_and_launch_viewer(self):
+        (window, system) = self.launch_main_window()
+        layout_main = self.add_layout_main(window)
+        self.header = self.add_header(layout_main)
+        self.main_pannel = self.add_main_pannel(layout_main, self, self.header)
+        self.import_existing_labels()
+        self.control_buttons = self.add_control_buttons(layout_main, self,window_widget=window)
+        window.setLayout(layout_main)
+        sys.exit(system.exec_())
+
+    def launch_main_window(self):
+        system = QtGui.QApplication(sys.argv)
+        w = QtGui.QWidget()
+        w.resize(740, 850)
+        w.setWindowTitle('Ground Truth Viewer')
+
+        w.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.realpath(__file__)).replace('/scripts','/documentation/logo_sct.png')))
+
+        w.show()
+        return (w, system)
+
+    def add_layout_main(self,window):
+        layout_main = QtGui.QVBoxLayout()
+        layout_main.setAlignment(QtCore.Qt.AlignTop)
+        window.setLayout(layout_main)
+        return layout_main
+
+    def add_header(self,layout_main):
+        header = HeaderGroundTruth()
+        layout_main.addLayout(header.layout_header)
+        header.update_text('welcome',nbpt='1')
+        return (header)
+
+    def add_main_pannel(self,layout_main, window, header):
+        main_pannel = MainPannelGroundTruth(self.images, self.im_params, window, header,first_label=self.first_label)
+        layout_main.addLayout(main_pannel.layout_global)
+        return main_pannel
+
+    def add_control_buttons(self,layout_main, window,window_widget):
+        control_buttons = ControlButtonsGroundTruth(self.main_pannel.main_plot,
+                                                    window,
+                                                    self.header,
+                                                    window_widget,
+                                                    dict_save_niftii=self.dict_save_niftii,
+                                                    bool_save_as_png=self.bool_save_as_png)
+        layout_main.addLayout(control_buttons.layout_buttons)
+        return control_buttons
+
+    def seperate_file_name_and_path(selfs,s):
+        r=''
+        while s!='' and s[-1]!='/':
+            char = s[-1]
+            r+=char
+            s = s[:-1]
+        return (r[::-1],s)
+
+    def import_existing_labels(self):
+        def get_txt_files_in_output_directory(file_name,output_name):
+            if output_name:
+                (n,path)=self.seperate_file_name_and_path(self.file_name)
+                output_file_name=path+output_name
+            else:
+                output_file_name=file_name
+                output_file_name+='_ground_truth/'
+
+            if os.path.exists(output_file_name):
+                return (list(filter(lambda x: '.txt' in x,os.listdir(output_file_name))),output_file_name)
+            else:
+                return ([],output_file_name)
+        def extract_coordinates(output_file_name,txt_file,file_name,output_name):
+            if output_name:
+                (n,path)=self.seperate_file_name_and_path(self.file_name)
+                output_file_name=path+output_name+'/'
+            else:
+                output_file_name=file_name
+                output_file_name+='_ground_truth/'
+            file=open(output_file_name+txt_file,"r")
+            list_coordinates = []
+            for line in file:
+                coordinates=''
+                for char in line:
+                    if char==':':
+                        list_coordinates.append(coordinates)
+                        coordinates=''
+                    else:
+                        coordinates+=char
+                list_coordinates.append(coordinates)
+            return list_coordinates
+        def make_dict_labels():
+            dict_labels={'50':Coordinate([-1,-1,-1,50]),
+                        '49': Coordinate([-1, -1, -1, 49]),
+                        '1': Coordinate([-1, -1, -1, 1]),
+                        '3': Coordinate([-1, -1, -1, 3]),
+                        '4': Coordinate([-1, -1, -1, 4]),
+                        }
+            for ii in range (5,27):
+                dict_labels[str(ii)]=Coordinate([-1,-1,-1,ii])
+            return dict_labels
+        def complete_dict_labels(dict_labels,list_coordinates):
+            def update_max_label(current_label,max_label):
+                if int(current_label)==50:
+                    current_label=-1
+                elif int(current_label)==49:
+                    current_label=0
+                else:
+                    current_label=int(current_label)
+
+                if current_label>max_label:
+                    max_label=current_label
+                return max_label
+            def remove_points_beyond_last_selected_label(dict_labels,max_label):
+                for ikey in list(dict_labels.keys()):
+                    if ikey=='49':
+                        if max_label==-1:
+                            del dict_labels[ikey]
+                    else:
+                        if max_label<int(ikey) and ikey!='50':
+                            del dict_labels[ikey]
+                return dict_labels
+            def turn_string_coord_into_list_coord(coordinates):
+                list_pos=[]
+                pos=''
+                for char in coordinates:
+                    if char ==',':
+                        list_pos.append(pos)
+                        pos=''
+                    else:
+                        pos+=char
+                list_pos.append(pos)
+                return list_pos
+            max_label=-5
+            for coordinates in list_coordinates:
+                list_pos=turn_string_coord_into_list_coord(coordinates)
+                if list_pos[0]!='-1':
+                    max_label=update_max_label(list_pos[3],max_label)
+                dict_labels[list_pos[3]]=Coordinate([int(list_pos[0]),int(list_pos[1]),int(list_pos[2]),int(list_pos[3])])
+                dict_labels=remove_points_beyond_last_selected_label(dict_labels,max_label)
+            return dict_labels
+
+        list_txt,path=get_txt_files_in_output_directory(self.file_name,self.output_name)
+        for ilabels in list_txt:
+            dict_labels=make_dict_labels()
+            list_coordinates=extract_coordinates(path,ilabels,self.file_name,self.output_name)
+            dict_labels=complete_dict_labels(dict_labels,list_coordinates)
+            for ikey in list(dict_labels.keys()):
+                self.main_pannel.main_plot.list_points.append(dict_labels[ikey])
+        self.main_pannel.main_plot.draw_dots()
+        self.main_pannel.second_plot.draw_lines()
+        if self.main_pannel.main_plot.calc_list_points_on_slice():
+            self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())+1))
+            sct.printv('Output file you have chosen contained results of a previous labelling.\n'
+                       'This data has been imported.',type='info')
+
+
+class WindowTest(WindowCore):
+    """
+    Inherites Window Core.
+    Defines global variables and sets layout in the whole Propseg Viewer.
+    """
+    def __init__(self,
+                 list_images,
+                 visualization_parameters=None,
+                 first_label=1,
+                 file_name='',
+                 output_path='',
+                 dict_save_niftii={},
+                 bool_save_as_png=True):
+
+        # Ajust the input parameters into viewer objects.
+        self.bool_save_as_png=bool_save_as_png
+        (self.file_name,self.output_name)=self.choose_and_clean_file_name(file_name,output_path)
+        self.first_label=int(first_label)
+        self.dict_save_niftii=dict_save_niftii
+        if isinstance(list_images, Image):
+            list_images = [list_images]
+        if not visualization_parameters:
+            visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
+
+
+        super(WindowTest, self).__init__(list_images, visualization_parameters)
         self.set_layout_and_launch_viewer()
 
     def choose_and_clean_file_name(self,file_name,output_path):
