@@ -1389,6 +1389,7 @@ class MainPannelTest(MainPannelCore):
         layout_controller=define_layout_controller()
         self.lb_average=define_lb_average()
         self.slider_average=define_slider_average(wanted_average=9)
+        self.update_slider_average()
         layout_title_and_controller.addLayout(layout_controller)
 
         self.layout_central.addLayout(layout_title_and_controller)
