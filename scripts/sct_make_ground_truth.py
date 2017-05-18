@@ -91,7 +91,7 @@ def get_parser():
                       type_value='multiple_choice',
                       description='Define how you wish to save labels',
                       default_value='png_txt',
-                      example= ['png_txt', 'niftii'])
+                      example= ['png_txt', 'niigz'])
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -124,7 +124,7 @@ def rewrite_arguments(arguments):
         s=arguments['-save-as']
         if s=='png_txt':
             return True
-        elif s=='niftii':
+        elif s=='niigz':
             return False
         else:
             return True
