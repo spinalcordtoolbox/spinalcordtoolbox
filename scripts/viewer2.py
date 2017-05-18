@@ -1338,48 +1338,57 @@ class MainPannelTest(MainPannelCore):
         self.number_of_points = 27
         self.first_label=first_label
         self.add_main_view()
-        self.add_controller_pannel(8)
+        self.add_controller_pannel()
         self.merge_layouts()
 
-    def add_controller_pannel(self,wanted_label):
-        def update_slider_label(self):
-            real_label_value=get_odd_number(11*self.slider_label.value()/100)
-            self.lb_title.setText('Averages ' + str(real_label_value) + ' slices')
+    def update_slider_average(self):
         def get_odd_number(i):
             if i%2:
                 return i
             else:
                 return i+1
 
+        real_label_value = get_odd_number(11 * self.slider_average.value() / 100)
+        self.lb_average.setText('Averages ' + str(real_label_value) + ' slices')
+
+
+    def add_controller_pannel(self):
         def define_lb_title():
-            lb_title = QtGui.QLabel('Averages ' + str(3) + ' slices')
+            #lb_title = QtGui.QLabel('Averages ' + str(3) + ' slices')
+            lb_title = QtGui.QLabel('Control Pannel')
             lb_title.setAlignment(QtCore.Qt.AlignCenter)
             layout_title_and_controller.addWidget(lb_title)
-            return lb_title
+
         def define_layout_controller():
             layout_controller = QtGui.QHBoxLayout()
             layout_controller.setAlignment(QtCore.Qt.AlignTop)
             layout_controller.setAlignment(QtCore.Qt.AlignCenter)
             return layout_controller
-        def define_slider(wanted_average=5):
+        def define_slider_average(wanted_average=5):
             slider_maximum = 11
             slider_label = QtGui.QSlider(1)
             slider_label.setMaximumHeight(250)
             slider_label.setValue(wanted_average * 100 / slider_maximum)
 
-            slider_label.sliderMoved.connect(update_slider_label)
-            slider_label.sliderPressed.connect(update_slider_label)
-            slider_label.sliderReleased.connect(update_slider_label)
+            slider_label.sliderMoved.connect(self.update_slider_average)
+            slider_label.sliderPressed.connect(self.update_slider_average)
+            slider_label.sliderReleased.connect(self.update_slider_average)
 
             layout_controller.addWidget(slider_label)
 
+            return slider_label
+        def define_lb_average():
+            lb = QtGui.QLabel('Averages ' + str(5) + ' slices')
+            lb.setAlignment(QtCore.Qt.AlignCenter)
+            layout_title_and_controller.addWidget(lb)
+            return lb
 
         layout_title_and_controller = QtGui.QVBoxLayout()
-
-        self.lb_title =define_lb_title()
+        define_lb_title()
 
         layout_controller=define_layout_controller()
-        self.slider_label=define_slider(wanted_average=9)
+        self.lb_average=define_lb_average()
+        self.slider_average=define_slider_average(wanted_average=9)
         layout_title_and_controller.addLayout(layout_controller)
 
         self.layout_central.addLayout(layout_title_and_controller)
