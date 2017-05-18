@@ -386,6 +386,22 @@ class MainPannelCore(object):
                              float(self.im_spacing[0]) / float(self.im_spacing[1])]
         self.number_of_points = -1
 
+    def add_image_plot(self,image_plot_to_add,view,line_direction,number_of_points):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        canvas = FigureCanvas(fig)
+        layout_view.addWidget(canvas)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+
+        return (layout_view,image_plot_to_add(axis,self.images,self,view=view,line_direction=line_direction,im_params=self.im_params,canvas=canvas,header=self.header,number_of_points=number_of_points))
+
+    """
     def add_main_view(self):
         layout_view = QtGui.QVBoxLayout()
 
@@ -419,6 +435,8 @@ class MainPannelCore(object):
                                                   im_params=self.im_params, canvas=self.canvas_second,
                                                   main_single_plot=self.main_plot, header=self.header)
         self.main_plot.secondary_plot = self.second_plot
+
+    """
 
     def merge_layouts(self):
         self.layout_global.addLayout(self.layout_option_settings)
