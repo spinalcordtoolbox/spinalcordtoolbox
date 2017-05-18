@@ -895,6 +895,28 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         if self.main_plot.calc_list_points_on_slice():
             self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())+1))
 
+class ImagePlotTest(ImagePlotMainGroundTruth):
+    """
+    def calc_mean_slices(self):
+        data=self.images[0].data
+        dataRacc=data[:,:,self.current_point.z-(self.number_of_slices_to_mean-1)/2:self.current_point.z+(self.number_of_slices_to_mean-1)/2+1]
+        imMean=np.empty([data.shape[0],data.shape[1]])
+        for ii in range (0,data.shape[0]):
+            for jj in range (0,data.shape[1]):
+                imMean[ii,jj]=np.mean(dataRacc[ii,jj,:])
+        return imMean
+    """
+    def calc_mean_slices(self):
+        data=self.images[0].data
+        dataRacc=data[:,:,self.current_position.z-(3-1)/2:self.current_position.z+(3-1)/2+1]
+        imMean=np.empty([data.shape[0],data.shape[1]])
+        for ii in range (0,data.shape[0]):
+            for jj in range (0,data.shape[1]):
+                imMean[ii,jj]=np.mean(dataRacc[ii,jj,:])
+        return imMean
+
+    def show_image_mean(self):
+        self.figs.append(self.axes.imshow(self.calc_mean_slices(), aspect=self.aspect_ratio, alpha=my_alpha))
 
 
 class HeaderCore(object):
@@ -1439,16 +1461,16 @@ class MainPannelTest(MainPannelCore):
             self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
         gs = mpl.gridspec.GridSpec(1, 1)
         axis = fig.add_subplot(gs[0, 0], axisbg='k')
-        self.main_plot = ImagePlotMainGroundTruth(axis,
-                                                  self.images,
-                                                  self,
-                                                  view='sag',
-                                                  line_direction='',
-                                                  im_params=self.im_params,
-                                                  canvas=self.canvas_main,
-                                                  header=self.header,
-                                                  number_of_points=self.number_of_points,
-                                                  first_label=self.first_label)
+        self.main_plot = ImagePlotTest(axis,
+                                       self.images,
+                                       self,
+                                       view='sag',
+                                       line_direction='',
+                                       im_params=self.im_params,
+                                       canvas=self.canvas_main,
+                                       header=self.header,
+                                       number_of_points=self.number_of_points,
+                                       first_label=self.first_label)
 
 
 class ControlButtonsCore(object):
