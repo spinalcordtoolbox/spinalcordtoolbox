@@ -281,7 +281,7 @@ def use_viewer_to_define_labels(fname_data,first_label,output_path,bool_save_as_
     viewer = WindowGroundTruth(im_input_SAL,first_label=first_label,
                                file_name=fname_data,
                                output_path=output_path,
-                               dic_save_niftii={'save_function':make_labels_image_from_list_points,
+                               dict_save_niftii={'save_function':make_labels_image_from_list_points,
                                                 'reoriented_image_filename':reoriented_image_filename,
                                                 'image_input_orientation':image_input_orientation},
                                bool_save_as_png=bool_save_as_png)
