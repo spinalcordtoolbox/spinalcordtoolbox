@@ -1384,6 +1384,8 @@ class MainPannelTest(MainPannelCore):
         #print(int(11 * self.slider_slice.value() / 100) - 6 )
         real_label_value = self.main_plot.images[0].data.shape[2]/2 + ( int(11 * self.slider_slice.value() / 100) - 5 )
         self.lb_slice.setText('Slice #' + str(real_label_value))
+        self.main_plot.update_slice(Coordinate([self.current_position.x,self.current_position.y,real_label_value]))
+        self.update_slider_average()
 
     def add_controller_pannel(self,wanted_average):
         def define_lb_title():
