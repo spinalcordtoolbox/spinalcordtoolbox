@@ -907,8 +907,9 @@ class ImagePlotTest(ImagePlotMainGroundTruth):
         return imMean
     """
     def calc_mean_slices(self):
+        import numpy as np
         data=self.images[0].data
-        dataRacc=data[:,:,self.current_position.z-(3-1)/2:self.current_position.z+(3-1)/2+1]
+        dataRacc=data[:,:,self.current_position.z-(12-1)/2:self.current_position.z+(12-1)/2+1]
         imMean=np.empty([data.shape[0],data.shape[1]])
         for ii in range (0,data.shape[0]):
             for jj in range (0,data.shape[1]):
@@ -916,6 +917,7 @@ class ImagePlotTest(ImagePlotMainGroundTruth):
         return imMean
 
     def show_image_mean(self):
+        (my_cmap, my_interpolation, my_alpha) = (cm.get_cmap('gray'), 'nearest', 1.0)
         self.figs.append(self.axes.imshow(self.calc_mean_slices(), aspect=self.aspect_ratio, alpha=my_alpha))
 
 
@@ -1372,6 +1374,7 @@ class MainPannelTest(MainPannelCore):
 
         real_label_value = get_odd_number(11 * self.slider_average.value() / 100)
         self.lb_average.setText('Averages ' + str(real_label_value) + ' slices')
+        self.main_plot.show_image_mean()
 
     def update_slider_slice(self):
         real_label_value = 11 * self.slider_slice.value() / 100
