@@ -1360,7 +1360,7 @@ class MainPannelTest(MainPannelCore):
             layout_title_and_controller.addWidget(lb_title)
 
         def define_layout_controller():
-            layout_controller = QtGui.QHBoxLayout()
+            layout_controller = QtGui.QVBoxLayout()
             layout_controller.setAlignment(QtCore.Qt.AlignTop)
             layout_controller.setAlignment(QtCore.Qt.AlignCenter)
             return layout_controller
@@ -1380,7 +1380,13 @@ class MainPannelTest(MainPannelCore):
         def define_lb_average():
             lb = QtGui.QLabel('Averages ' + str(5) + ' slices')
             lb.setAlignment(QtCore.Qt.AlignCenter)
-            layout_title_and_controller.addWidget(lb)
+            layout_controller.addWidget(lb)
+            return lb
+
+        def define_lb_slice():
+            lb = QtGui.QLabel('Slice #'+str(24))
+            lb.setAlignment(QtCore.Qt.AlignCenter)
+            layout_controller.addWidget(lb)
             return lb
 
         layout_title_and_controller = QtGui.QVBoxLayout()
@@ -1390,6 +1396,9 @@ class MainPannelTest(MainPannelCore):
         self.lb_average=define_lb_average()
         self.slider_average=define_slider_average(wanted_average=9)
         self.update_slider_average()
+
+        self.lb_slice=define_lb_slice()
+
         layout_title_and_controller.addLayout(layout_controller)
 
         self.layout_central.addLayout(layout_title_and_controller)
