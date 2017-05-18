@@ -1325,6 +1325,48 @@ class MainPannelGroundTruth(MainPannelCore):
         self.main_plot.secondary_plot = self.second_plot
 
 
+class MainPannelTest(MainPannelCore):
+    """
+    Inherites MainPannelCore
+    Class that defines specific main image plot and secondary image plot for Propseg Viewer.
+    """
+    def __init__(self, images, im_params, window, header,first_label=1):
+        super(MainPannelTest, self).__init__(images, im_params, window, header)
+        self.number_of_points = 27
+        self.first_label=first_label
+        self.add_main_view()
+        self.merge_layouts()
+
+    def merge_layouts(self):
+        #self.layout_global.addLayout(self.layout_option_settings)
+        self.layout_global.addLayout(self.layout_central)
+
+
+    def add_main_view(self):
+        layout_view = QtGui.QVBoxLayout()
+
+        fig = plt.figure()
+        self.canvas_main = FigureCanvas(fig)
+
+        layout_view.addWidget(self.canvas_main)
+        self.layout_central.addLayout(layout_view)
+
+        if not self.im_params:
+            self.im_params = ParamMultiImageVisualization([ParamImageVisualization()])
+        gs = mpl.gridspec.GridSpec(1, 1)
+        axis = fig.add_subplot(gs[0, 0], axisbg='k')
+        self.main_plot = ImagePlotMainGroundTruth(axis,
+                                                  self.images,
+                                                  self,
+                                                  view='sag',
+                                                  line_direction='',
+                                                  im_params=self.im_params,
+                                                  canvas=self.canvas_main,
+                                                  header=self.header,
+                                                  number_of_points=self.number_of_points,
+                                                  first_label=self.first_label)
+
+
 class ControlButtonsCore(object):
     """
     Core class for displaying and managing basic action buttons : help, undo and save & quit.
@@ -2155,7 +2197,7 @@ class WindowTest(WindowCore):
         layout_main = self.add_layout_main(window)
         self.header = self.add_header(layout_main)
         self.main_pannel = self.add_main_pannel(layout_main, self, self.header)
-        self.import_existing_labels()
+        #self.import_existing_labels()
         self.control_buttons = self.add_control_buttons(layout_main, self,window_widget=window)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
@@ -2184,7 +2226,7 @@ class WindowTest(WindowCore):
         return (header)
 
     def add_main_pannel(self,layout_main, window, header):
-        main_pannel = MainPannelGroundTruth(self.images, self.im_params, window, header,first_label=self.first_label)
+        main_pannel = MainPannelTest(self.images, self.im_params, window, header,first_label=self.first_label)
         layout_main.addLayout(main_pannel.layout_global)
         return main_pannel
 
