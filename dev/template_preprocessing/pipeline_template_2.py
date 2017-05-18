@@ -529,6 +529,7 @@ def average_centerline(contrast):
         im = Image('labels_vertebral_crop.nii.gz')
         coord = im.getNonZeroCoordinates(sorting='z', reverse_coord=True)
         coord_physical = []
+
         for c in coord:
             c_p = im.transfo_pix2phys([[c.x, c.y, c.z]])[0]
             c_p.append(c.value)
