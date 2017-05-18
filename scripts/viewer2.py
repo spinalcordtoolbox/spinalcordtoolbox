@@ -43,13 +43,13 @@ class ImagePlot(object):
              int(self.images[0].data.shape[2] / 2)])
         self.list_points = []
         self.header = header
-        self.dic_translate_label = self.define_translate_dic()
+        self.dict_translate_label = self.define_translate_dict()
 
         self.remove_axis_number()
         self.connect_mpl_events()
         self.setup_intensity()
 
-    def define_translate_dic(self):
+    def define_translate_dict(self):
         """
         Defines dictionnary to translate the software labels which range is [1;27] into anatomical labels which range is:
         {50;49} U {1} U [3,26]
@@ -58,13 +58,13 @@ class ImagePlot(object):
         -------
         dic        dictionnary
         """
-        dic = {'1': 50,
+        dict = {'1': 50,
                '2': 49,
                '3': 1,
                '4': 3, }
         for ii in range(5, 30):             # does not matter if the dictionnary is a bit too long. The number of possible labels is still 27.
-            dic[str(ii)] = ii - 1
-        return dic
+            dict[str(ii)] = ii - 1
+        return dict
 
     def set_data_to_display(self, image, current_point, view):
         if view == 'ax':
@@ -219,15 +219,15 @@ class ImagePlot(object):
             if self.view == 'ax':
                 point = Coordinate([self.current_position.x,
                                     int(round(event.ydata)),
-                                    int(round(event.xdata)), self.dic_translate_label[str(label)]])
+                                    int(round(event.xdata)), self.dict_translate_label[str(label)]])
             elif self.view == 'cor':
                 point = Coordinate([int(round(event.ydata)),
                                     self.current_position.y,
-                                    int(round(event.xdata)), self.dic_translate_label[str(label)]])
+                                    int(round(event.xdata)), self.dict_translate_label[str(label)]])
             elif self.view == 'sag':
                 point = Coordinate([int(round(event.ydata)),
                                     int(round(event.xdata)),
-                                    self.current_position.z, self.dic_translate_label[str(label)]])
+                                    self.current_position.z, self.dict_translate_label[str(label)]])
         except TypeError:
             self.header.update_text('warning_selected_point_not_in_image')
         return point
@@ -455,7 +455,7 @@ class ImagePlotSecondPropseg(ImagePlot):
         line                matplotlit.line2D
 
         """
-        def calc_dic_line_coor(current_position, view):
+        def calc_dict_line_coor(current_position, view):
             if view == 'ax':
                 return {'v': [[current_position.y, current_position.y], [-10000, 10000]],
                         'h': [[-10000, 10000], [current_position.z, current_position.z]]}
@@ -466,8 +466,8 @@ class ImagePlotSecondPropseg(ImagePlot):
                 return {'v': [[current_position.x, current_position.x], [-10000, 10000]],
                         'h': [[-10000, 10000], [current_position.y, current_position.y]]}
 
-        dic_line_coor = calc_dic_line_coor(line_position, self.view)
-        line = Line2D(dic_line_coor[line_direction][1], dic_line_coor[line_direction][0], color=line_color)
+        dict_line_coor = calc_dict_line_coor(line_position, self.view)
+        line = Line2D(dict_line_coor[line_direction][1], dict_line_coor[line_direction][0], color=line_color)
         return line
 
     def draw_current_line(self, line_direction):
@@ -661,7 +661,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
             self.list_points.append(Coordinate([current_point.x,
                                                 current_point.y,
                                                 current_point.z,
-                                                self.dic_translate_label[str(len(self.calc_list_points_on_slice())+1)]
+                                                self.dict_translate_label[str(len(self.calc_list_points_on_slice())+1)]
                                                 ]))
             list_points_on_slice = self.calc_list_points_on_slice()
             if len(list_points_on_slice) == self.number_of_points:
@@ -755,7 +755,7 @@ class ImagePlotMainGroundTruth(ImagePlot):
                 self.list_points.append(Coordinate([-1,
                                                     -1,
                                                     self.current_position.z,
-                                                    self.dic_translate_label[str(ilabels)]
+                                                    self.dict_translate_label[str(ilabels)]
                                                     ]))
 
     def check_if_selected_points_on_slice(self):
@@ -773,13 +773,13 @@ class ImagePlotMainGroundTruth(ImagePlot):
             self.list_points.remove(ipoints)
 
     def translate_labels_num_into_list_point_length(self,value_to_translate):
-        dic={'50':1,
+        dict={'50':1,
              '49':2,
              '1':3,
              '3':4,}
         for ii in range (4,27):
-            dic[str(ii)]=ii+1
-        return dic[value_to_translate]
+            dict[str(ii)]=ii+1
+        return dict[value_to_translate]
 
 
 class ImagePlotSecondGroundTruth(ImagePlot):
@@ -815,7 +815,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         line                matplotlit.line2D
 
         """
-        def calc_dic_line_coor(current_position, view):
+        def calc_dict_line_coor(current_position, view):
             if view == 'ax':
                 return {'h': [[current_position.y, current_position.y], [-10000, 10000]],
                         'v': [[-10000, 10000], [current_position.z, current_position.z]]}
@@ -826,8 +826,8 @@ class ImagePlotSecondGroundTruth(ImagePlot):
                 return {'h': [[current_position.x, current_position.x], [-10000, 10000]],
                         'v': [[-10000, 10000], [current_position.y, current_position.y]]}
 
-        dic_line_coor = calc_dic_line_coor(line_position, self.view)
-        line = Line2D(dic_line_coor[self.line_direction][1], dic_line_coor[self.line_direction][0], color=line_color)
+        dict_line_coor = calc_dict_line_coor(line_position, self.view)
+        line = Line2D(dict_line_coor[self.line_direction][1], dict_line_coor[self.line_direction][0], color=line_color)
         return line
 
     def draw_current_line(self):
@@ -902,10 +902,10 @@ class HeaderCore(object):
         self.define_layout_header()
         self.add_lb_status()
         self.add_lb_warning()
-        self.dic_message_labels = self.define_dic_message_labels()
+        self.dict_message_labels = self.define_dict_message_labels()
 
-    def define_dic_message_labels(self):
-        dic = {'1': 'Please click on anterior base \n'
+    def define_dict_message_labels(self):
+        dict = {'1': 'Please click on anterior base \n'
                     'of pontomedullary junction (label=50) \n',
                '2': 'Please click on pontomedullary groove \n'
                     ' (label=49) \n',
@@ -965,7 +965,7 @@ class HeaderCore(object):
                      'S2/S3 intervertebral disk (label=26) \n',
 
                }
-        return dic
+        return dict
 
     def add_lb_status(self):
         self.lb_status = QtGui.QLabel('Label Alerte')
@@ -1043,7 +1043,7 @@ class HeaderLabelVertebrae(HeaderCore):
     def update_text(self, key, nbpt=-1, nbfin=-1):
         self.lb_warning.setText('\n')
         if (key == 'welcome'):
-            self.lb_status.setText(self.dic_message_labels[nbpt])
+            self.lb_status.setText(self.dict_message_labels[nbpt])
             self.lb_status.setStyleSheet("color:black")
         elif (key == 'update'):
             if nbpt:
@@ -1067,10 +1067,10 @@ class HeaderGroundTruth(HeaderCore):
     def update_text(self, key, nbpt=-1, nbfin=-1):
         self.lb_warning.setText('\n')
         if (key == 'welcome'):
-            self.lb_status.setText(self.dic_message_labels[nbpt])
+            self.lb_status.setText(self.dict_message_labels[nbpt])
             self.lb_status.setStyleSheet("color:black")
         elif(key=='update'):
-            self.lb_status.setText(self.dic_message_labels[nbpt])
+            self.lb_status.setText(self.dict_message_labels[nbpt])
             self.lb_status.setStyleSheet("color:black")
         else:
             self.update_title_text_general(key, nbpt, nbfin)
@@ -1240,7 +1240,7 @@ class MainPannelLabelVertebrae(MainPannelCore):
                 slider_real_value = slider_maximum - int(slider_maximum * self.slider_label.value() / 100)
                 self.header.update_text('welcome', str(slider_real_value))
                 self.main_plot.current_label = slider_real_value
-                lb_title.setText('Label #' + str(self.main_plot.dic_translate_label[str(slider_real_value)]))
+                lb_title.setText('Label #' + str(self.main_plot.dict_translate_label[str(slider_real_value)]))
             else:
                 self.header.update_text('warning_cannot_change_the_label')
                 self.slider_label.setValue(int(100 * (slider_maximum - self.main_plot.current_label) / slider_maximum))
@@ -1441,11 +1441,11 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                  window,
                  header,
                  window_widget,
-                 dic_save_niftii={},
+                 dict_save_niftii={},
                  bool_save_as_png=True):
         super(ControlButtonsGroundTruth, self).__init__(main_plot, window, header)
         self.bool_save_png_txt=bool_save_as_png
-        self.dic_save_niftii=dic_save_niftii
+        self.dict_save_niftii=dict_save_niftii
         self.window_widget=window_widget
 
         self.add_save_options()
@@ -1532,7 +1532,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
         self.main_plot.add_point_to_list_points(Coordinate([-1,
                                                             -1,
                                                             self.main_plot.current_position.z,
-                                                            self.main_plot.dic_translate_label[str(len(self.main_plot.calc_list_points_on_slice())+1)]
+                                                            self.main_plot.dict_translate_label[str(len(self.main_plot.calc_list_points_on_slice())+1)]
                                                             ])) #pas necessaire
 
     def save_all_labels_as_txt(self):
@@ -1542,31 +1542,31 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                 if ipoints.x != -1 and not ipoints.z in list_slices:
                     list_slices.append(ipoints.z)
             return list_slices
-        def calc_dic_labels_to_write(list_slice,list_points):
-            dic_label_to_write={}
+        def calc_dict_labels_to_write(list_slice,list_points):
+            dict_label_to_write={}
             for islice in list_slice:
                 list_labels_to_write = []
                 for ipoints in list_points:
                     if ipoints.z==islice:
                         list_labels_to_write.append(ipoints)
-                dic_label_to_write[str(islice)]=list_labels_to_write
-            return dic_label_to_write
-        def fill_dic_list_points_with_missing_labels(dic_labels):
-            for ikey in list(dic_labels.keys()):
-                for imissing_labels in range(len(dic_labels[ikey]),27):
-                    dic_labels[ikey].append(Coordinate([-1,-1,int(ikey),imissing_labels]))
-            return dic_labels
+                dict_label_to_write[str(islice)]=list_labels_to_write
+            return dict_label_to_write
+        def fill_dict_list_points_with_missing_labels(dict_labels):
+            for ikey in list(dict_labels.keys()):
+                for imissing_labels in range(len(dict_labels[ikey]),27):
+                    dict_labels[ikey].append(Coordinate([-1,-1,int(ikey),imissing_labels]))
+            return dict_labels
 
         list_slices=calc_list_different_slices_in_list_point(self.main_plot.list_points)
-        dic_label_to_write_uncomplete=calc_dic_labels_to_write(list_slices,self.main_plot.list_points)
-        dic_label_to_write_complete=fill_dic_list_points_with_missing_labels(dic_label_to_write_uncomplete)
+        dict_label_to_write_uncomplete=calc_dict_labels_to_write(list_slices,self.main_plot.list_points)
+        dict_label_to_write_complete=fill_dict_list_points_with_missing_labels(dict_label_to_write_uncomplete)
 
         file_path = self.manage_output_files_paths()
         (file_name,r) = self.seperate_file_name_and_path(self.window.file_name)
-        for ikey in list(dic_label_to_write_complete.keys()):
+        for ikey in list(dict_label_to_write_complete.keys()):
             text_file = open(file_path+file_name+"_labels_slice_" + ikey + ".txt", "w")
-            text_file.write(self.rewrite_list_points(dic_label_to_write_complete[ikey]))
-        if list(dic_label_to_write_complete.keys()):
+            text_file.write(self.rewrite_list_points(dict_label_to_write_complete[ikey]))
+        if list(dict_label_to_write_complete.keys()):
             text_file.close()
 
     def seperate_file_name_and_path(selfs,s):
@@ -1619,9 +1619,9 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
                 file_name=self.window.file_name+'_ground_truth'
             file_name+='.nii.gz'
 
-            self.dic_save_niftii['save_function'](self.rewrite_list_points(self.main_plot.list_points),
-                                                  self.dic_save_niftii['reoriented_image_filename'],
-                                                  self.dic_save_niftii['image_input_orientation'],
+            self.dict_save_niftii['save_function'](self.rewrite_list_points(self.main_plot.list_points),
+                                                  self.dict_save_niftii['reoriented_image_filename'],
+                                                  self.dict_save_niftii['image_input_orientation'],
                                                   file_name)
 
     def press_save_and_quit(self):
@@ -1722,7 +1722,7 @@ class WindowPropseg(WindowCore):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         self.primary_subplot = orientation_subplot[0]
         self.secondary_subplot = orientation_subplot[1]
-        self.dic_axis_buttons = {}
+        self.dict_axis_buttons = {}
         self.closed = False
 
         self.number_of_slices = 0
@@ -1816,7 +1816,7 @@ class WindowLabelVertebrae(WindowCore):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         self.primary_subplot = orientation_subplot[0]
         self.secondary_subplot = orientation_subplot[1]
-        self.dic_axis_buttons = {}
+        self.dict_axis_buttons = {}
         self.closed = False
 
         self.number_of_slices = 0
@@ -1884,14 +1884,14 @@ class WindowGroundTruth(WindowCore):
                  first_label=1,
                  file_name='',
                  output_path='',
-                 dic_save_niftii={},
+                 dict_save_niftii={},
                  bool_save_as_png=True):
 
         # Ajust the input parameters into viewer objects.
         self.bool_save_as_png=bool_save_as_png
         (self.file_name,self.output_name)=self.choose_and_clean_file_name(file_name,output_path)
         self.first_label=int(first_label)
-        self.dic_save_niftii=dic_save_niftii
+        self.dict_save_niftii=dict_save_niftii
         if isinstance(list_images, Image):
             list_images = [list_images]
         if not visualization_parameters:
@@ -1921,7 +1921,7 @@ class WindowGroundTruth(WindowCore):
         self.orientation = {'ax': 1, 'cor': 2, 'sag': 3}
         self.primary_subplot = orientation_subplot[0]
         self.secondary_subplot = orientation_subplot[1]
-        self.dic_axis_buttons = {}
+        self.dict_axis_buttons = {}
         self.closed = False
 
         self.number_of_slices = 0
@@ -1977,7 +1977,7 @@ class WindowGroundTruth(WindowCore):
                                                     window,
                                                     self.header,
                                                     window_widget,
-                                                    dic_save_niftii=self.dic_save_niftii,
+                                                    dict_save_niftii=self.dict_save_niftii,
                                                     bool_save_as_png=self.bool_save_as_png)
         layout_main.addLayout(control_buttons.layout_buttons)
         return control_buttons
@@ -2022,17 +2022,17 @@ class WindowGroundTruth(WindowCore):
                         coordinates+=char
                 list_coordinates.append(coordinates)
             return list_coordinates
-        def make_dic_labels():
-            dic_labels={'50':Coordinate([-1,-1,-1,50]),
+        def make_dict_labels():
+            dict_labels={'50':Coordinate([-1,-1,-1,50]),
                         '49': Coordinate([-1, -1, -1, 49]),
                         '1': Coordinate([-1, -1, -1, 1]),
                         '3': Coordinate([-1, -1, -1, 3]),
                         '4': Coordinate([-1, -1, -1, 4]),
                         }
             for ii in range (5,27):
-                dic_labels[str(ii)]=Coordinate([-1,-1,-1,ii])
-            return dic_labels
-        def complete_dic_labels(dic_labels,list_coordinates):
+                dict_labels[str(ii)]=Coordinate([-1,-1,-1,ii])
+            return dict_labels
+        def complete_dict_labels(dict_labels,list_coordinates):
             def update_max_label(current_label,max_label):
                 if int(current_label)==50:
                     current_label=-1
@@ -2044,15 +2044,15 @@ class WindowGroundTruth(WindowCore):
                 if current_label>max_label:
                     max_label=current_label
                 return max_label
-            def remove_points_beyond_last_selected_label(dic_labels,max_label):
-                for ikey in list(dic_labels.keys()):
+            def remove_points_beyond_last_selected_label(dict_labels,max_label):
+                for ikey in list(dict_labels.keys()):
                     if ikey=='49':
                         if max_label==-1:
-                            del dic_labels[ikey]
+                            del dict_labels[ikey]
                     else:
                         if max_label<int(ikey) and ikey!='50':
-                            del dic_labels[ikey]
-                return dic_labels
+                            del dict_labels[ikey]
+                return dict_labels
             def turn_string_coord_into_list_coord(coordinates):
                 list_pos=[]
                 pos=''
@@ -2069,23 +2069,23 @@ class WindowGroundTruth(WindowCore):
                 list_pos=turn_string_coord_into_list_coord(coordinates)
                 if list_pos[0]!='-1':
                     max_label=update_max_label(list_pos[3],max_label)
-                dic_labels[list_pos[3]]=Coordinate([int(list_pos[0]),int(list_pos[1]),int(list_pos[2]),int(list_pos[3])])
-                dic_labels=remove_points_beyond_last_selected_label(dic_labels,max_label)
-            return dic_labels
+                dict_labels[list_pos[3]]=Coordinate([int(list_pos[0]),int(list_pos[1]),int(list_pos[2]),int(list_pos[3])])
+                dict_labels=remove_points_beyond_last_selected_label(dict_labels,max_label)
+            return dict_labels
 
         list_txt,path=get_txt_files_in_output_directory(self.file_name,self.output_name)
         for ilabels in list_txt:
-            dic_labels=make_dic_labels()
+            dict_labels=make_dict_labels()
             list_coordinates=extract_coordinates(path,ilabels,self.file_name,self.output_name)
-            dic_labels=complete_dic_labels(dic_labels,list_coordinates)
-            for ikey in list(dic_labels.keys()):
-                self.main_pannel.main_plot.list_points.append(dic_labels[ikey])
+            dict_labels=complete_dict_labels(dict_labels,list_coordinates)
+            for ikey in list(dict_labels.keys()):
+                self.main_pannel.main_plot.list_points.append(dict_labels[ikey])
         self.main_pannel.main_plot.draw_dots()
         self.main_pannel.second_plot.draw_lines()
         if self.main_pannel.main_plot.calc_list_points_on_slice():
             self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())+1))
             sct.printv('Output file you have chosen contained results of a previous labelling.\n'
-                       'This data has been imported',type='info')
+                       'This data has been imported.',type='info')
 
 
 class ParamMultiImageVisualization(object):
