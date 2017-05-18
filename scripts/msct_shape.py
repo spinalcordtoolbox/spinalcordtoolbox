@@ -80,10 +80,39 @@ def properties2d(image, resolution=None, verbose=1):
             major_l *= resolution[0]
             minor_l *= resolution[0]
 
+            size_grid = 8.0 / resolution[0]  # assuming the maximum spinal cord radius is 8 mm
+        else:
+            size_grid = int(2.4 * sc_region.major_axis_length)
+
         """
         import matplotlib.pyplot as plt
         plt.imshow(label_img)
-        plt.text(1, 1, orientation, color='white')
+        plt.text(1, 1, sc_region.orientation, color='white')
+        plt.show()
+        """
+
+        y0, x0 = sc_region.centroid
+        orientation = sc_region.orientation
+
+        resolution_grid = 0.25
+        x_grid, y_grid = np.mgrid[-size_grid:size_grid:resolution_grid, -size_grid:size_grid:resolution_grid]
+        coordinates_grid = np.array(zip(x_grid.ravel(), y_grid.ravel()))
+        coordinates_grid_image = np.array([[x0 + math.cos(orientation) * coordinates_grid[i, 0], y0 - math.sin(orientation) * coordinates_grid[i, 1]] for i in range(coordinates_grid.shape[0])])
+
+        from scipy.ndimage import map_coordinates
+        square = map_coordinates(image, coordinates_grid_image.T, output=np.float32, order=0, mode='constant', cval=0.0)
+        square_image = square.reshape((len(x_grid), len(x_grid)))
+
+        size_half = square_image.shape[1] / 2
+        left_image = square_image[:, :size_half]
+        right_image = np.fliplr(square_image[:, size_half:])
+
+        dice_symmetry = np.sum(left_image[right_image == 1]) * 2.0 / (np.sum(left_image) + np.sum(right_image))
+
+        """
+        import matplotlib.pyplot as plt
+        plt.imshow(square_image)
+        plt.text(3, 3, dice, color='white')
         plt.show()
         """
 
@@ -102,7 +131,8 @@ def properties2d(image, resolution=None, verbose=1):
                          'orientation': sc_region.orientation * 180.0 / math.pi,
                          'perimeter': sc_region.perimeter,
                          'ratio_minor_major': ratio_minor_major,
-                         'solidity': sc_region.solidity  # convexity measure
+                         'solidity': sc_region.solidity,  # convexity measure
+                         'symmetry': dice_symmetry
                          }
     else:
         sc_properties = None
@@ -207,7 +237,6 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
     image.save()
 
     # Initiating some variables
-    number_of_slices = image.data.shape[2]
     nx, ny, nz, nt, px, py, pz, pt = image.dim
     resolution = 0.5
     properties = {key: [] for key in property_list_local}
@@ -240,6 +269,9 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
             coord_physical.append(c_p)
         centerline.compute_vertebral_distribution(coord_physical)
 
+    sct.printv('Computing spinal cord shape along the spinal cord...')
+    timer_properties = sct.Timer(number_of_iteration=centerline.number_of_points)
+    timer_properties.start()
     # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
     for index in range(centerline.number_of_points):
         value_out = -5.0
@@ -263,6 +295,9 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
             properties['z_slice'].append(image.transfo_phys2pix([centerline.points[index]])[0][2])
             for property_name in property_list_local:
                 properties[property_name].append(sc_properties[property_name])
+
+        timer_properties.add_iteration()
+    timer_properties.stop()
 
     # Adding centerline to the properties for later use
     properties['centerline'] = centerline

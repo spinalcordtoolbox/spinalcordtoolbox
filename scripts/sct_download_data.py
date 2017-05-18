@@ -160,6 +160,8 @@ def download_data(url, verbose):
                     dl_chunk = len(chunk)
                     tqdm_bar.update(dl_chunk)
 
+        tqdm_bar.close()
+
     sct.printv('\nDownload complete', verbose=verbose)
     return tmp_path
 

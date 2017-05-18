@@ -306,7 +306,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=os.path.expanduser('~/qc_data'))
+    parser.add_option(name='-noqc',
+                      type_value=None,
+                      description='Prevent the generation of the QC report',
+                      mandatory=False)
     return parser
+
 
 if __name__ == "__main__":
     parser = get_parser()
@@ -370,6 +375,7 @@ if __name__ == "__main__":
     # Helping options
     use_viewer = None
     use_optic = True  # enabled by default
+    init_option = None
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
             use_viewer = "centerline"
@@ -379,7 +385,8 @@ if __name__ == "__main__":
             cmd += " -init-centerline " + str(arguments["-init-centerline"])
             use_optic = False
     if "-init" in arguments:
-        cmd += " -init " + str(arguments["-init"])
+        init_option = float(arguments["-init"])
+        #cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
@@ -440,6 +447,7 @@ if __name__ == "__main__":
 
             if '-init' in arguments:
                 starting_slice = arguments['-init']
+                cmd += " -init " + str(arguments["-init"])
 
                 # starting_slice can be provided as a ratio of the number of slices
                 # we assume slice number/ratio is in RPI orientation, which is the inverse of the one used in viewer (SAL)
@@ -496,6 +504,13 @@ if __name__ == "__main__":
         cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
                     (image_int_filename, reoriented_image_filename_nii)
         sct.run(cmd_reorient, verbose=0)
+
+        image_rpi_init = Image(reoriented_image_filename_nii)
+        nxr, nyr, nzr, ntr, pxr, pyr, pzr, ptr = image_rpi_init.dim
+        if init_option is not None:
+            if init_option > 1:
+                init_option /= (nzr - 1)
+            cmd += " -init " + str(init_option)
 
         # call the OptiC method to generate the spinal cord centerline
         optic_input = img_filename
@@ -568,10 +583,7 @@ if __name__ == "__main__":
         if use_viewer:
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
-
-    if '-qc' in arguments:
+    if '-qc' in arguments and not arguments.get('-noqc', False):
         qc_path = arguments['-qc']
 
         import spinalcordtoolbox.reports.qc as qc
@@ -579,7 +591,6 @@ if __name__ == "__main__":
 
         param = qc.Params(fname_input_data, 'sct_propseg', args, 'Axial', qc_path)
         report = qc.QcReport(param, '')
-
 
         @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
         def test(qslice):
@@ -589,3 +600,7 @@ if __name__ == "__main__":
         sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
         sct.printv('Use the following command to see the results in a browser:')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
+
+    sct.printv('\nDone! To view results, type:', verbose)
+    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+
