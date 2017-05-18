@@ -104,7 +104,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value='int',
                       description='Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
                       mandatory=False)
-    parser.add_option(name="-label_man",
+    parser.add_option(name="-label-man",
                       type_value='int',
                       description='Choose the label you want to initialize with, through an interactive window.',
                       mandatory=False)
@@ -215,8 +215,8 @@ def main(args=None):
                 initz = [int(x) for x in arg_initfile[i + 1].split(',')]
             if arg_initfile[i] == '-initcenter':
                 initcenter = int(arg_initfile[i + 1])
-    if '-label_man' in arguments:
-        label_man = int(arguments['-label_man'])
+    if '-label-man' in arguments:
+        label_man = int(arguments['-label-man'])
     else:
         label_man= -1
     if '-param' in arguments:
