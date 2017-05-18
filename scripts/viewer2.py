@@ -1342,35 +1342,38 @@ class MainPannelTest(MainPannelCore):
         self.merge_layouts()
 
     def add_controller_pannel(self,wanted_label):
-        """
         def update_slider_label():
-            if not self.main_plot.list_points:
-                slider_real_value = slider_maximum - int(slider_maximum * self.slider_label.value() / 100)
-                self.header.update_text('welcome', str(slider_real_value))
-                self.main_plot.current_label = slider_real_value
-                lb_title.setText('Label #' + str(self.main_plot.dict_translate_label[str(slider_real_value)]))
+            real_label_value=get_odd_number(11*self.slider_label.value()/100)
+            self.lb_title.setText('Averages ' + str(real_label_value) + ' slices')
+        def connect_slider(self):
+            self.slider_label.sliderMoved.connect(update_slider_label)
+            self.slider_label.sliderPressed.connect(update_slider_label)
+            self.slider_label.sliderReleased.connect(update_slider_label)
+        def get_odd_number(i):
+            if i%2:
+                return i
             else:
-                self.header.update_text('warning_cannot_change_the_label')
-                self.slider_label.setValue(int(100 * (slider_maximum - self.main_plot.current_label) / slider_maximum))
-        """
+                return i+1
+        def define_lb_title(self):
+            self.lb_title = QtGui.QLabel('Averages ' + str(3) + ' slices')
+            self.lb_title.setAlignment(QtCore.Qt.AlignCenter)
+            layout_title_and_controller.addWidget(self.lb_title)
+
         layout_title_and_controller = QtGui.QVBoxLayout()
-        lb_title = QtGui.QLabel('Label Choice')
-        lb_title.setAlignment(QtCore.Qt.AlignCenter)
-        layout_title_and_controller.addWidget(lb_title)
+        define_lb_title(self)
+
         layout_controller = QtGui.QHBoxLayout()
         layout_controller.setAlignment(QtCore.Qt.AlignTop)
         layout_controller.setAlignment(QtCore.Qt.AlignCenter)
 
         slider_maximum = 26
         init_label = slider_maximum - wanted_label
-        self.slider_label = QtGui.QSlider()
+        self.slider_label = QtGui.QSlider(1)
         self.slider_label.setMaximumHeight(250)
-        #self.slider_label.setValue(init_label * 100 / slider_maximum)
+        self.slider_label.setValue(5*init_label * 100 / 11)
         #update_slider_label()
-        #self.slider_label.sliderMoved.connect(update_slider_label)
-        #self.slider_label.sliderPressed.connect(update_slider_label)
-        #self.slider_label.sliderReleased.connect(update_slider_label)
 
+        connect_slider(self)
         layout_controller.addWidget(self.slider_label)
         layout_title_and_controller.addLayout(layout_controller)
         self.layout_central.addLayout(layout_title_and_controller)
