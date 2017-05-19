@@ -907,7 +907,13 @@ class ImagePlotTest(ImagePlotMainGroundTruth):
         return imMean
     """
 
-    def show_image_mean(self,nb_slice_to_average=25):
+    def __init__(self, ax, images, viewer, canvas, view, line_direction='hv', im_params=None, secondary_plot=None,
+                 header=None, number_of_points=0, first_label=1):
+        super(ImagePlotTest, self).__init__(ax, images, viewer, canvas, view, line_direction, im_params, secondary_plot,
+                 header, number_of_points, first_label)
+        self.nb_slice_to_average=3
+
+    def show_image_mean(self,nb_slice_to_average=3):
         def calc_mean_slices(nb_slice_to_average):
             import numpy as np
             data = self.images[0].data
@@ -1379,7 +1385,9 @@ class MainPannelTest(MainPannelCore):
 
         real_label_value = get_odd_number(11 * self.slider_average.value() / 100)
         self.lb_average.setText('Averages ' + str(real_label_value) + ' slices')
+        self.main_plot.nb_slice_to_average=real_label_value
         self.main_plot.show_image_mean(real_label_value)
+
 
     def update_slider_slice(self):
         #print(self.main_plot.images[0].data.shape[2]/2)
@@ -1961,46 +1969,18 @@ class ControlButtonsTest(ControlButtonsCore):
 
     def save_average_slice(self):
         contrast,patient_name=self.extract_information_from_title(self.window.file_name)
-        image_array = self.main_plot.show_image_mean()
+        image_array = self.main_plot.show_image_mean(nb_slice_to_average=self.main_plot.nb_slice_to_average)
         import scipy.misc
         scipy.misc.imsave(self.output_name_file+ patient_name +'_'+ contrast +'_gt'+'.png', image_array)
-
-    def manage_output_files_paths(self):
-        if self.window.output_name:
-            (n,clean_path)=self.seperate_file_name_and_path(self.window.file_name)
-            return clean_path+self.window.output_name+'/'
-        else:
-            return self.window.file_name + '_ground_truth/'
-
-    def save_all_labelled_slices_as_png(self):
-        def save_specific_slice_as_png(self,num_slice):
-            file_path=self.manage_output_files_paths()
-            (file_name,r)=self.seperate_file_name_and_path(self.window.file_name)
-            image_array = self.main_plot.set_data_to_display(self.main_plot.images[0], Coordinate([-1, -1, num_slice]), self.main_plot.view)
-            import scipy.misc
-            scipy.misc.imsave(file_path+file_name+'_image_slice_'+str(num_slice)+'.png', image_array)
-        def calc_list_different_slices_in_list_point(list_points):
-            list_slices = []
-            for ipoints in list_points:
-                if ipoints.x != -1 and not ipoints.z in list_slices:
-                    list_slices.append(ipoints.z)
-            return list_slices
-
-        list_slice=calc_list_different_slices_in_list_point(self.main_plot.list_points)
-        for islice in list_slice:
-            save_specific_slice_as_png(self,islice)
 
     def make_output_file(self):
         if not os.path.exists(self.output_name_file):
             sct.run('mkdir ' + self.output_name_file)
 
     def press_save(self):
-        self.extract_information_from_title(self.window.file_name)
         self.make_output_file()
         self.save_average_slice()
         self.save_txt_file()
-        #self.save_all_labelled_slices_as_png()
-        #self.save_all_labels_as_txt()
 
     def press_save_and_quit(self):
         self.press_save()
