@@ -908,7 +908,7 @@ class ImagePlotTest(ImagePlotMainGroundTruth):
         return imMean
     """
 
-    def show_image_mean(self,nb_slice_to_average):
+    def show_image_mean(self,nb_slice_to_average=25):
         def calc_mean_slices(nb_slice_to_average):
             import numpy as np
             data = self.images[0].data
@@ -920,9 +920,11 @@ class ImagePlotTest(ImagePlotMainGroundTruth):
             return imMean
 
         (my_cmap, my_interpolation, my_alpha) = (cm.get_cmap('gray'), 'nearest', 1.0)
-        self.figs[-1]=self.axes.imshow(calc_mean_slices(nb_slice_to_average), aspect=self.aspect_ratio, alpha=my_alpha)
+        image_averaged=calc_mean_slices(nb_slice_to_average)
+        self.figs[-1]=self.axes.imshow(image_averaged, aspect=self.aspect_ratio, alpha=my_alpha)
         self.figs[-1].set_cmap(my_cmap)
         self.draw_dots()
+        return image_averaged
 
 
 class HeaderCore(object):
@@ -1825,7 +1827,7 @@ class ControlButtonsTest(ControlButtonsCore):
     def add_save_button(self):
         btn_save = QtGui.QPushButton('Save')
         self.layout_buttons.addWidget(btn_save)
-        btn_save.clicked.connect(self.press_save)
+        btn_save.clicked.connect(self.save_average_slice)
 
     def add_save_options(self):
         self.rm_png_txt = QtGui.QRadioButton('txt and png')
@@ -1947,6 +1949,12 @@ class ControlButtonsTest(ControlButtonsCore):
             return clean_path+self.window.output_name+'/'
         else:
             return self.window.file_name + '_ground_truth/'
+
+    def save_average_slice(self):
+        image_array = self.main_plot.show_image_mean()
+        import scipy.misc
+        scipy.misc.imsave('average2.png', image_array)
+
 
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
