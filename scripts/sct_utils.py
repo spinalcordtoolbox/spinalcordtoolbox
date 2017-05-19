@@ -85,6 +85,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
+        # Watch out for deadlock!!!
         output = process.stdout.readline()
         if output == '' and process.poll() is not None:
             break

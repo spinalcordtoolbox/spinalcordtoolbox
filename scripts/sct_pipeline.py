@@ -217,10 +217,14 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
     pool = Pool(nb_cpu)
 
     try:
+        compute_time = time()
         async_results = pool.map_async(function_launcher, data_and_params)
         pool.close()
         pool.join()  # waiting for all the jobs to be done
-        results = process_results(async_results.get(), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        compute_time = time() - compute_time
+        all_results = async_results.get()
+        results = process_results(all_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+
     except KeyboardInterrupt:
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
@@ -236,7 +240,28 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
         # raise Exception
         # sys.exit(2)
 
-    return results
+    return {'results': results, "compute_time": compute_time}
+
+
+class ForkStdoutToFile(object):
+    def __init__(self, filename="{}.log".format(__file__)):
+        self.terminal = sys.stdout
+        self.log = open(filename, "a")
+        self.filename = filename
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def close(self):
+        self.log.close()
+
+    def read(self):
+        with open("test.txt", "r") as fp:
+            fp.read()
+
+    def send_email(self,email, passwd_from=None, subject="file_log"):
+        sct.send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=self.filename)
 
 
 def get_parser():
@@ -313,7 +338,6 @@ if __name__ == "__main__":
     dataset = arguments["-d"]
     dataset = sct.slash_at_the_end(dataset, slash=1)
     parameters = ''
-    message = ''  # terminal printout and email message
     if "-p" in arguments:
         parameters = arguments["-p"]
     json_requirements = None
@@ -325,6 +349,7 @@ if __name__ == "__main__":
     create_log = int(arguments['-log'])
     if '-email' in arguments:
         email, passwd = arguments['-email'].split(',')
+        create_log = True
     else:
         email = ''
     verbose = int(arguments["-v"])
@@ -333,17 +358,15 @@ if __name__ == "__main__":
     start_time = time()
     # create single time variable for output names
     output_time = strftime("%y%m%d%H%M%S")
-    print 'Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S")
 
     # build log file name
     if create_log:
         file_log = 'results_test_' + function_to_test + '_' + output_time
         orig_stdout = sys.stdout
         fname_log = file_log + '.log'
-        handle_log = file(fname_log, 'w')
-        # redirect to log file
+        handle_log = ForkStdoutToFile(fname_log)
         sys.stdout = handle_log
-        print 'Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S")
+    print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
     # get path of the toolbox
     path_script = os.path.dirname(__file__)
@@ -391,7 +414,9 @@ if __name__ == "__main__":
         if create_log:
             sys.stdout = orig_stdout
 
-        results = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
+        tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
+        results = tests_ret['results']
+        compute_time = tests_ret['compute_time']
 
         # after testing, redirect to log file
         if create_log:
@@ -434,8 +459,8 @@ if __name__ == "__main__":
         print 'Dataset: ' + dataset
         # display general results
         print '\nGLOBAL RESULTS:'
-        elapsed_time = time() - start_time
-        print 'Duration: ' + str(int(round(elapsed_time))) + 's'
+
+        print 'Duration: ' + str(int(round(compute_time))) + 's'
         # display results
         print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
         print 'Crashed: ' + str(count_crashed) + '/' + str(count_ran)
@@ -492,15 +517,11 @@ if __name__ == "__main__":
 
     # stop file redirection
     if create_log:
-        sys.stdout.close()
+        handle_log.close()
         sys.stdout = orig_stdout
-        # display log file to Terminal
-        handle_log = file(fname_log, 'r')
-        message = handle_log.read()
-        print message
 
     # send email
     if email:
         print 'Sending email...'
-        sct.send_email(email, passwd_from=passwd, subject=file_log, message=message, filename=file_log + '.log')
+        handle_log.send_email(passwd_from=passwd, subject=file_log)
         print 'done!'
