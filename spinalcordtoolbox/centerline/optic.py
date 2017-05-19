@@ -8,20 +8,32 @@ from sct_image import orientation
 from msct_image import Image
 
 
-def generate_centerline(image_fname, init_option, contrast_type,
-                        optic_models_path, remove_temp_files=False,
-                        verbose=0):
+def detect_centerline(image_fname, init_option, contrast_type,
+                        optic_models_path, folder_output,
+                        remove_temp_files=False, verbose=0):
+    """This method will use the OptiC to detect the centerline.
+
+    :param image_fname: The input image filename.
+    :param init_option: Axial slice where the propagation starts.
+    :param contrast_type: The contrast type.
+    :param optic_models_path: The path with the Optic model files.
+    :param folder_output: The OptiC output folder.
+    :param remove_temp_files: Remove the temporary created files.
+    :param verbose: Adjusts the verbosity of the logging.
+
+    :returns: The OptiC output filename.
+    """
 
     image_input = Image(image_fname)
     path_data, file_data, ext_data = sct.extract_fname(image_fname)
 
     sct.printv('Detecting the spinal cord using OptiC', verbose=verbose)
-    image_input_orientation = orientation(image_input, get=True, verbose=False)
-    path_tmp_optic = sct.tmp_create(verbose=0)
+    image_input_orientation = orientation(image_input, get=True,
+                                          verbose=False)
 
-    print "Path:", path_tmp_optic
-    shutil.copy(image_fname, path_tmp_optic)
-    os.chdir(path_tmp_optic)
+    temp_folder = sct.TempFolder()
+    temp_folder.copy_from(image_fname)
+    temp_folder.chdir()
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
     image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
@@ -51,37 +63,39 @@ def generate_centerline(image_fname, init_option, contrast_type,
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
     cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
                 (optic_models_path, optic_input, optic_filename)
-
-    print cmd_optic
     sct.run(cmd_optic, verbose=0)
 
     # convert .img and .hdr files to .nii.gz
     optic_hdr_filename = img_filename + '_optic_ctr.hdr'
-    centerline_optic_RPI_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic_RPI")
+    centerline_optic_RPI_filename = sct.add_suffix(file_data + ext_data,
+                                                   "_centerline_optic_RPI")
     img = nib.load(optic_hdr_filename)
     nib.save(img, centerline_optic_RPI_filename)
 
     # reorient the output image to initial orientation
-    centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
+    centerline_optic_filename = sct.add_suffix(file_data + ext_data,
+                                               "_centerline_optic")
     cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
-                   (centerline_optic_RPI_filename, centerline_optic_filename, image_input_orientation)
+                   (centerline_optic_RPI_filename,
+                    centerline_optic_filename,
+                    image_input_orientation)
     sct.run(cmd_reorient, verbose=0)
 
     # copy centerline to parent folder
-    #sct.printv('Copy output to ' + folder_output, verbose=0)
-    #if os.path.isabs(folder_output):
-    #    shutil.copy(centerline_optic_filename, folder_output)
-    #else:
-    #    shutil.copy(centerline_optic_filename, '../' + folder_output)
-
-    # update to PropSeg command line with the new centerline created by OptiC
-    #cmd += " -init-centerline " + folder_output + centerline_optic_filename
+    sct.printv('Copy output to ' + folder_output, verbose=0)
+    if os.path.isabs(folder_output):
+        shutil.copy(centerline_optic_filename, folder_output)
+    else:
+        dst_path = os.path.join("../", folder_output)
+        shutil.copy(centerline_optic_filename,
+                    '../' + folder_output)
 
     # return to initial folder
     os.chdir('..')
 
     # delete temporary folder
     if remove_temp_files:
-        shutil.rmtree(path_tmp_optic, ignore_errors=True)
+        temp_folder.cleanup()
 
-    return  centerline_optic_filename
+    return os.path.join(folder_output,
+                        centerline_optic_filename)

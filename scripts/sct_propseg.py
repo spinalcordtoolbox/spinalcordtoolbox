@@ -485,17 +485,20 @@ if __name__ == "__main__":
         else:
             sct.printv('\nERROR: the viewer has been closed before entering any manual points. Please try again.', 1, type='error')
 
+    # If using OptiC, enabled by default
     elif use_optic:
-        # get path of the toolbox
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
-        path_classifier = path_sct + '/data/optic_models/' + contrast_type + '_model'
+        path_classifier = os.path.join(path_sct,
+                                       'data/optic_models',
+                                       '{}_model'.format(contrast_type))
 
-        optic_filename = optic.generate_centerline(fname_data, init_option,
-                                                   contrast_type, path_classifier,
-                                                   verbose=verbose)
-        print optic_filename
-        sys.exit(0)
+        optic_filename = optic.detect_centerline(fname_data, init_option,
+                                                 contrast_type, path_classifier,
+                                                 folder_output, remove_temp_files,
+                                                 verbose=verbose)
+
+        cmd += " -init-centerline {}".format(optic_filename)
 
     # enabling centerline extraction by default
     cmd += ' -centerline-binary'
