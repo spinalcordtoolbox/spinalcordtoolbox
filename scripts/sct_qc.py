@@ -5,6 +5,9 @@
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # About the license: see the file LICENSE.TXT
 
+"""Simple local http server to serve QC reports
+"""
+
 import os
 import shutil
 import sys
@@ -64,4 +67,7 @@ if __name__ == "__main__":
     printv('http://127.0.0.1:8888', type='info')
     printv('Copy and paste the address into your web browser')
     printv('Press "Ctrl" + "C" to stop sct_qc')
-    httpd.serve_forever()
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        printv('QC viewer stopped')
