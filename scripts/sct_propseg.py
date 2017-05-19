@@ -23,6 +23,8 @@ from scipy import ndimage as ndi
 from sct_image import orientation
 import nibabel as nib
 
+from spinalcordtoolbox.centerline import optic
+
 
 def check_and_correct_segmentation(fname_segmentation, fname_centerline, threshold_distance=5.0, remove_temp_files=1, verbose=0):
     """
@@ -484,76 +486,16 @@ if __name__ == "__main__":
             sct.printv('\nERROR: the viewer has been closed before entering any manual points. Please try again.', 1, type='error')
 
     elif use_optic:
-        sct.printv('Detecting the spinal cord using OptiC', verbose=verbose)
-        image_input_orientation = orientation(image_input, get=True, verbose=False)
-        path_tmp_optic = sct.tmp_create(verbose=0)
-
-        shutil.copy(fname_data, path_tmp_optic)
-        os.chdir(path_tmp_optic)
-
-        # convert image data type to int16, as required by opencv (backend in OptiC)
-        image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
-        cmd_type = 'sct_image -i "%s" -o "%s" -type int16 -v 0' % \
-                   (file_data + ext_data, image_int_filename)
-        sct.run(cmd_type, verbose=0)
-
-        # reorient the input image to RPI + convert to .nii
-        reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
-        img_filename = ''.join(sct.extract_fname(reoriented_image_filename)[:2])
-        reoriented_image_filename_nii = img_filename + '.nii'
-        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
-                    (image_int_filename, reoriented_image_filename_nii)
-        sct.run(cmd_reorient, verbose=0)
-
-        image_rpi_init = Image(reoriented_image_filename_nii)
-        nxr, nyr, nzr, ntr, pxr, pyr, pzr, ptr = image_rpi_init.dim
-        if init_option is not None:
-            if init_option > 1:
-                init_option /= (nzr - 1)
-            cmd += " -init " + str(init_option)
-
-        # call the OptiC method to generate the spinal cord centerline
-        optic_input = img_filename
-        optic_filename = img_filename + '_optic'
         # get path of the toolbox
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
         path_classifier = path_sct + '/data/optic_models/' + contrast_type + '_model'
-        # path_classifier = path_sct + '/bin/' + contrast_type + '_model'
-        # os.chdir(path_sct + '/data/models')
-        os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-        cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
-                    (path_classifier, optic_input, optic_filename)
-        sct.run(cmd_optic, verbose=0)
 
-        # convert .img and .hdr files to .nii.gz
-        optic_hdr_filename = img_filename + '_optic_ctr.hdr'
-        centerline_optic_RPI_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic_RPI")
-        img = nib.load(optic_hdr_filename)
-        nib.save(img, centerline_optic_RPI_filename)
-
-        # reorient the output image to initial orientation
-        centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
-        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
-                       (centerline_optic_RPI_filename, centerline_optic_filename, image_input_orientation)
-        sct.run(cmd_reorient, verbose=0)
-
-        # copy centerline to parent folder
-        sct.printv('Copy output to ' + folder_output, verbose=0)
-        if os.path.isabs(folder_output):
-            shutil.copy(centerline_optic_filename, folder_output)
-        else:
-            shutil.copy(centerline_optic_filename, '../' + folder_output)
-
-        # update to PropSeg command line with the new centerline created by OptiC
-        cmd += " -init-centerline " + folder_output + centerline_optic_filename
-
-        # return to initial folder
-        os.chdir('..')
-
-        # delete temporary folder
-        if remove_temp_files:
-            shutil.rmtree(path_tmp_optic, ignore_errors=True)
+        optic_filename = optic.generate_centerline(fname_data, init_option,
+                                                   contrast_type, path_classifier,
+                                                   verbose=verbose)
+        print optic_filename
+        sys.exit(0)
 
     # enabling centerline extraction by default
     cmd += ' -centerline-binary'
