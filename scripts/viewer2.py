@@ -669,7 +669,6 @@ class ImagePlotMainGroundTruth(ImagePlot):
                 self.header.update_text('ready_to_save_and_quit')
             else:
                 self.header.update_text('update', str(len(self.list_points)+1))
-                print(self.list_points)
         else:
             self.header.update_text('warning_all_points_done_already')
 
@@ -1938,15 +1937,16 @@ class ControlButtonsTest(ControlButtonsCore):
             text_file.close()
 
     def save_txt_file(self):
-        print(self.window.file_name)
-        text_file = open(self.output_name_file+ "average.txt", "w")
+        contrast,patient_name=self.extract_information_from_title(self.window.file_name)
+        text_file = open(self.output_name_file+ patient_name + '_' + contrast +'_gt' + ".txt", "w")
         text_file.write(self.rewrite_list_points(self.main_plot.list_points))
         text_file.close()
 
     def extract_information_from_title(self,name):
         (file_name,adress)=self.seperate_file_name_and_path(name)
-        (contrast,adress=self.seperate_file_name_and_path(adress)
+        (contrast,adress)=self.seperate_file_name_and_path(adress)
         (patient_name,adress)=self.seperate_file_name_and_path(adress)
+        return(contrast,patient_name)
 
 
     def seperate_file_name_and_path(selfs,s):
@@ -1960,9 +1960,10 @@ class ControlButtonsTest(ControlButtonsCore):
         return (r[::-1],s)
 
     def save_average_slice(self):
+        contrast,patient_name=self.extract_information_from_title(self.window.file_name)
         image_array = self.main_plot.show_image_mean()
         import scipy.misc
-        scipy.misc.imsave(self.output_name_file+'average.png', image_array)
+        scipy.misc.imsave(self.output_name_file+ patient_name +'_'+ contrast +'_gt'+'.png', image_array)
 
     def manage_output_files_paths(self):
         if self.window.output_name:
@@ -1994,6 +1995,7 @@ class ControlButtonsTest(ControlButtonsCore):
             sct.run('mkdir ' + self.output_name_file)
 
     def press_save(self):
+        self.extract_information_from_title(self.window.file_name)
         self.make_output_file()
         self.save_average_slice()
         self.save_txt_file()
