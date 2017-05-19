@@ -189,9 +189,9 @@ class ImagePlot(object):
     def on_event_scroll(self, event):
         def calc_scale_factor(direction):
             base_scale = 0.5
-            if direction == 'up':  # deal with zoom in
+            if direction == 'down':  # deal with zoom in
                 return 1 / base_scale
-            elif direction == 'down':  # deal with zoom out
+            elif direction == 'up':  # deal with zoom out
                 return base_scale
             else:  # deal with something that should never happen
                 return 1
@@ -1402,15 +1402,13 @@ class MainPannelTest(MainPannelCore):
         #print(self.main_plot.images[0].data.shape[2]/2)
         #print(int(11 * self.slider_slice.value() / 100) - 6 )
         real_label_value = self.main_plot.images[0].data.shape[2]/2 + ( int(11 * self.slider_slice.value() / 100) - 5 )
-        self.lb_slice.setText('Slice #' + str(real_label_value))
+        self.lb_slice.setText('Slice #' + str(int(11 * self.slider_slice.value() / 100) - 5))
         self.main_plot.update_slice(Coordinate([self.current_position.x,self.current_position.y,real_label_value]))
         self.update_slider_average()
 
     def update_slider_slice_title(self):
         real_label_value = self.main_plot.images[0].data.shape[2]/2 + ( int(11 * self.slider_slice.value() / 100) - 5 )
-        self.lb_slice.setText('Slice #' + str(real_label_value))
-
-
+        self.lb_slice.setText('Slice #' + str(int(11 * self.slider_slice.value() / 100) - 5))
 
     def add_controller_pannel(self,wanted_average):
         def define_lb_title():
@@ -1974,7 +1972,6 @@ class ControlButtonsTest(ControlButtonsCore):
         (patient_name,adress)=self.seperate_file_name_and_path(adress)
         return(contrast,patient_name)
 
-
     def seperate_file_name_and_path(selfs,s):
         r=''
         if s[-1]=='/':
@@ -1995,10 +1992,20 @@ class ControlButtonsTest(ControlButtonsCore):
         if not os.path.exists(self.output_name_file):
             sct.run('mkdir ' + self.output_name_file)
 
+    def save_niftii(self):
+        contrast,patient_name=self.extract_information_from_title(self.window.file_name)
+        file_name = self.output_name_file+ patient_name +'_'+ contrast +'_gt'+'.nii.gz'
+        self.dict_save_niftii['save_function'](self.rewrite_list_points(self.main_plot.list_points),
+                                               self.dict_save_niftii['reoriented_image_filename'],
+                                               self.dict_save_niftii['image_input_orientation'],
+                                               file_name)
+
     def press_save(self):
         self.make_output_file()
         self.save_average_slice()
         self.save_txt_file()
+        self.save_niftii()
+
 
     def press_save_and_quit(self):
         self.press_save()
