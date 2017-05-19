@@ -1936,6 +1936,12 @@ class ControlButtonsTest(ControlButtonsCore):
         if list(dict_label_to_write_complete.keys()):
             text_file.close()
 
+    def save_txt_file(self):
+        text_file = open(self.output_name_file+ "average.txt", "w")
+        text_file.write(self.rewrite_list_points(self.main_plot.list_points))
+        text_file.close()
+
+
     def seperate_file_name_and_path(selfs,s):
         r=''
         while s!='' and s[-1]!='/':
@@ -1974,6 +1980,7 @@ class ControlButtonsTest(ControlButtonsCore):
     def press_save(self):
         self.make_output_file()
         self.save_average_slice()
+        self.save_txt_file()
         #self.save_all_labelled_slices_as_png()
         #self.save_all_labels_as_txt()
 
