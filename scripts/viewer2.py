@@ -895,6 +895,7 @@ class ImagePlotSecondGroundTruth(ImagePlot):
         if self.main_plot.calc_list_points_on_slice():
             self.header.update_text('update',str(len(self.main_plot.calc_list_points_on_slice())+1))
 
+
 class ImagePlotTest(ImagePlotMainGroundTruth):
     """
     def calc_mean_slices(self):
@@ -1794,6 +1795,213 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
 
         return list_points_useful_notation
 
+class ControlButtonsTest(ControlButtonsCore):
+    """
+    Inherites ControlButtonsCore
+    Class that displays specific button for Propseg Viewer : Skip
+    """
+    def __init__(self,
+                 main_plot,
+                 window,
+                 header,
+                 window_widget,
+                 dict_save_niftii={},
+                 bool_save_as_png=True):
+        super(ControlButtonsTest, self).__init__(main_plot, window, header)
+        self.bool_save_png_txt=bool_save_as_png
+        self.dict_save_niftii=dict_save_niftii
+        self.window_widget=window_widget
+
+        self.add_save_options()
+        self.add_skip_button()
+        self.add_save_button()
+        self.add_classical_buttons()
+
+    def add_skip_button(self):
+        btn_skip = QtGui.QPushButton('Skip')
+        self.layout_buttons.addWidget(btn_skip)
+        btn_skip.clicked.connect(self.press_skip)
+
+    def add_save_button(self):
+        btn_save = QtGui.QPushButton('Save')
+        self.layout_buttons.addWidget(btn_save)
+        btn_save.clicked.connect(self.press_save)
+
+    def add_save_options(self):
+        self.rm_png_txt = QtGui.QRadioButton('txt and png')
+        self.rm_niftii = QtGui.QRadioButton('niftii')
+        self.layout_buttons.addWidget(self.rm_png_txt)
+        self.layout_buttons.addWidget(self.rm_niftii)
+
+        if self.bool_save_png_txt:
+            self.rm_png_txt.setChecked(True)
+        else:
+            self.rm_niftii.setChecked(True)
+        self.rm_png_txt.clicked.connect(self.switch_save_format)
+        self.rm_niftii.clicked.connect(self.switch_save_format)
+
+    def switch_save_format(self):
+        self.bool_save_png_txt=not self.bool_save_png_txt
+
+    def find_point_with_max_label(self,list_points_on_slice):
+        def translate_num_labels(lab):
+            if lab==50:
+                return -1
+            elif lab==49:
+                return 0
+            else:
+                return lab
+
+        point_max=list_points_on_slice[0]
+        for ipoints in list_points_on_slice:
+            ipvalue = translate_num_labels(ipoints.value)
+            mvalue = translate_num_labels(point_max.value)
+            if ipvalue>mvalue:
+                point_max = ipoints
+        return point_max
+
+    def press_undo(self):
+        def redundant_removal(list_points,point_to_remove):
+            """
+            Function that does manually the removal of the point we want to remove.
+            Its necessary as the usual comparaison of Coordinates does not take into account the Coordinate.value value,
+            which is necessary to distinguish between the points that are filled in automatically in mainPlot.fill_first_labels.
+
+            Parameters
+            ----------
+            list_points         : current self.list_points
+            point_to_remove     : point we are about to undo
+
+            Returns
+            -------
+            list_points_to_keep : new list_points without the point to remove.
+
+            """
+            list_points_to_keep=[]
+            for ipoints in list_points:
+                if ipoints.x==point_to_remove.x and ipoints.y==point_to_remove.y and ipoints.z==point_to_remove.z and ipoints.value==point_to_remove.value:
+                    pass
+                else:
+                    list_points_to_keep.append(ipoints)
+            return list_points_to_keep
+        list_points_on_slice=self.main_plot.calc_list_points_on_slice()
+        if len(list_points_on_slice)>0:
+            self.main_plot.list_points=redundant_removal(self.main_plot.list_points,self.find_point_with_max_label(list_points_on_slice))
+            self.main_plot.draw_dots()
+            self.header.update_text('update', str(len(self.main_plot.calc_list_points_on_slice())+1), self.main_plot.number_of_points)
+        else:
+            self.header.update_text('warning_undo_beyond_first_point')
+
+    def press_skip(self):
+        self.main_plot.add_point_to_list_points(Coordinate([-1,
+                                                            -1,
+                                                            self.main_plot.current_position.z,
+                                                            self.main_plot.dict_translate_label[str(len(self.main_plot.calc_list_points_on_slice())+1)]
+                                                            ])) #pas necessaire
+
+    def save_all_labels_as_txt(self):
+        def calc_list_different_slices_in_list_point(list_points):
+            list_slices = []
+            for ipoints in list_points:
+                if ipoints.x != -1 and not ipoints.z in list_slices:
+                    list_slices.append(ipoints.z)
+            return list_slices
+        def calc_dict_labels_to_write(list_slice,list_points):
+            dict_label_to_write={}
+            for islice in list_slice:
+                list_labels_to_write = []
+                for ipoints in list_points:
+                    if ipoints.z==islice:
+                        list_labels_to_write.append(ipoints)
+                dict_label_to_write[str(islice)]=list_labels_to_write
+            return dict_label_to_write
+        def fill_dict_list_points_with_missing_labels(dict_labels):
+            for ikey in list(dict_labels.keys()):
+                for imissing_labels in range(len(dict_labels[ikey]),27):
+                    dict_labels[ikey].append(Coordinate([-1,-1,int(ikey),imissing_labels]))
+            return dict_labels
+
+        list_slices=calc_list_different_slices_in_list_point(self.main_plot.list_points)
+        dict_label_to_write_uncomplete=calc_dict_labels_to_write(list_slices,self.main_plot.list_points)
+        dict_label_to_write_complete=fill_dict_list_points_with_missing_labels(dict_label_to_write_uncomplete)
+
+        file_path = self.manage_output_files_paths()
+        (file_name,r) = self.seperate_file_name_and_path(self.window.file_name)
+        for ikey in list(dict_label_to_write_complete.keys()):
+            text_file = open(file_path+file_name+"_labels_slice_" + ikey + ".txt", "w")
+            text_file.write(self.rewrite_list_points(dict_label_to_write_complete[ikey]))
+        if list(dict_label_to_write_complete.keys()):
+            text_file.close()
+
+    def seperate_file_name_and_path(selfs,s):
+        r=''
+        while s!='' and s[-1]!='/':
+            char = s[-1]
+            r+=char
+            s = s[:-1]
+        return (r[::-1],s)
+
+    def manage_output_files_paths(self):
+        if self.window.output_name:
+            (n,clean_path)=self.seperate_file_name_and_path(self.window.file_name)
+            return clean_path+self.window.output_name+'/'
+        else:
+            return self.window.file_name + '_ground_truth/'
+
+    def save_all_labelled_slices_as_png(self):
+        def save_specific_slice_as_png(self,num_slice):
+            file_path=self.manage_output_files_paths()
+            (file_name,r)=self.seperate_file_name_and_path(self.window.file_name)
+            image_array = self.main_plot.set_data_to_display(self.main_plot.images[0], Coordinate([-1, -1, num_slice]), self.main_plot.view)
+            import scipy.misc
+            scipy.misc.imsave(file_path+file_name+'_image_slice_'+str(num_slice)+'.png', image_array)
+        def calc_list_different_slices_in_list_point(list_points):
+            list_slices = []
+            for ipoints in list_points:
+                if ipoints.x != -1 and not ipoints.z in list_slices:
+                    list_slices.append(ipoints.z)
+            return list_slices
+
+        list_slice=calc_list_different_slices_in_list_point(self.main_plot.list_points)
+        for islice in list_slice:
+            save_specific_slice_as_png(self,islice)
+
+    def make_output_file(self):
+        if not os.path.exists(self.manage_output_files_paths()):
+            sct.run('mkdir ' + self.manage_output_files_paths())
+
+    def press_save(self):
+        if self.bool_save_png_txt:
+            self.make_output_file()
+            self.save_all_labelled_slices_as_png()
+            self.save_all_labels_as_txt()
+        else:
+            if self.window.output_name:
+                (f,clean_path)=self.seperate_file_name_and_path(self.window.file_name)
+                file_name=clean_path+self.window.output_name
+            else:
+                file_name=self.window.file_name+'_ground_truth'
+            file_name+='.nii.gz'
+
+            self.dict_save_niftii['save_function'](self.rewrite_list_points(self.main_plot.list_points),
+                                                  self.dict_save_niftii['reoriented_image_filename'],
+                                                  self.dict_save_niftii['image_input_orientation'],
+                                                  file_name)
+
+    def press_save_and_quit(self):
+        self.press_save()
+        self.window_widget.close()
+
+    def rewrite_list_points(self,list_points):
+        list_points_useful_notation = ''
+        for coord in list_points:
+            if coord.x!=-1:
+                if list_points_useful_notation:
+                    list_points_useful_notation += ':'
+                list_points_useful_notation = list_points_useful_notation + str(coord.x) + ',' + \
+                                              str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+
+        return list_points_useful_notation
 
 
 class WindowCore(object):
@@ -2343,7 +2551,7 @@ class WindowTest(WindowCore):
         return main_pannel
 
     def add_control_buttons(self,layout_main, window,window_widget):
-        control_buttons = ControlButtonsGroundTruth(self.main_pannel.main_plot,
+        control_buttons = ControlButtonsTest(self.main_pannel.main_plot,
                                                     window,
                                                     self.header,
                                                     window_widget,
