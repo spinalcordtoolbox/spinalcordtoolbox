@@ -1388,6 +1388,15 @@ class MainPannelTest(MainPannelCore):
         self.main_plot.nb_slice_to_average=real_label_value
         self.main_plot.show_image_mean(real_label_value)
 
+    def update_slider_average_title(self):
+        def get_odd_number(i):
+            if i%2:
+                return i
+            else:
+                return i+1
+
+        real_label_value = get_odd_number(11 * self.slider_average.value() / 100)
+        self.lb_average.setText('Averages ' + str(real_label_value) + ' slices')
 
     def update_slider_slice(self):
         #print(self.main_plot.images[0].data.shape[2]/2)
@@ -1396,6 +1405,12 @@ class MainPannelTest(MainPannelCore):
         self.lb_slice.setText('Slice #' + str(real_label_value))
         self.main_plot.update_slice(Coordinate([self.current_position.x,self.current_position.y,real_label_value]))
         self.update_slider_average()
+
+    def update_slider_slice_title(self):
+        real_label_value = self.main_plot.images[0].data.shape[2]/2 + ( int(11 * self.slider_slice.value() / 100) - 5 )
+        self.lb_slice.setText('Slice #' + str(real_label_value))
+
+
 
     def add_controller_pannel(self,wanted_average):
         def define_lb_title():
@@ -1416,15 +1431,17 @@ class MainPannelTest(MainPannelCore):
             return lb
         def define_slider_average(wanted_average=5):
             slider_maximum = 11
-            slider_label = QtGui.QSlider(1)
-            slider_label.setMaximumHeight(250)
-            slider_label.setValue(wanted_average * 100 / slider_maximum)
+            sl = QtGui.QSlider(1)
+            sl.setMaximumHeight(250)
+            sl.setValue(wanted_average * 100 / slider_maximum)
 
-            slider_label.sliderReleased.connect(self.update_slider_average)
+            sl.sliderReleased.connect(self.update_slider_average)
+            sl.sliderMoved.connect(self.update_slider_average_title)
 
-            layout_controller.addWidget(slider_label)
 
-            return slider_label
+            layout_controller.addWidget(sl)
+
+            return sl
 
         def define_lb_slice():
             lb = QtGui.QLabel('Slice #'+str(28))
@@ -1438,6 +1455,7 @@ class MainPannelTest(MainPannelCore):
             sl.setValue(wanted_average * 100 / slider_maximum)
 
             sl.sliderReleased.connect(self.update_slider_slice)
+            sl.sliderMoved.connect(self.update_slider_slice_title)
 
             layout_controller.addWidget(sl)
 
