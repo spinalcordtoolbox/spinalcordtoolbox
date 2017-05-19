@@ -16,6 +16,7 @@
 import errno
 import sys
 import time
+import random
 
 import os
 import commands
@@ -394,6 +395,32 @@ def tmp_create(verbose=1):
         if not os.path.isdir(path_tmp):
             raise
     return path_tmp
+
+
+class TempFolder(object):
+    """This class will create a temporary folder."""
+
+    def __init__(self, verbose=0):
+        self.path_tmp = tmp_create(verbose)
+
+    def chdir(self):
+        """This method will change the working directory to the temporary folder."""
+        os.chdir(self.path_tmp)
+
+    def get_path(self):
+        """Return the temporary folder path."""
+        return self.path_tmp
+
+    def copy_from(self, filename):
+        """This method will copy a specified file to the temporary folder.
+
+        :param filename: The filename to copy into the folder.
+        """
+        shutil.copy(filename, self.path_tmp)
+
+    def cleanup(self):
+        """Remove the created folder and its contents."""
+        shutil.rmtree(self.path_tmp, ignore_errors=True)
 
 
 def delete_tmp_files_and_folders(path=''):
