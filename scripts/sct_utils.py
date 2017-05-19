@@ -16,7 +16,6 @@
 import errno
 import sys
 import time
-import random
 
 import os
 import commands
