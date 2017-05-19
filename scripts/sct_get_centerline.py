@@ -3,13 +3,11 @@
 import os
 import sys
 
-import click
-
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
 
-    
+
 def run_main():
     parser = Parser(__file__)
     parser.usage.set_description("""This program will use the OptiC method to detect the spinal cord centerline.""")
@@ -95,7 +93,7 @@ def run_main():
     optic_filename = optic.detect_centerline(fname_data, init_option, contrast_type, 
                                              optic_models_path, folder_output,
                                              remove_temp_files, verbose)
-   
+
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview " + fname_input_data + " " + optic_filename + " -l Red -b 0,1 -t 0.7 &\n",
                verbose, 'info')
