@@ -1797,6 +1797,7 @@ class ControlButtonsGroundTruth(ControlButtonsCore):
 
         return list_points_useful_notation
 
+
 class ControlButtonsTest(ControlButtonsCore):
     """
     Inherites ControlButtonsCore
@@ -1937,13 +1938,21 @@ class ControlButtonsTest(ControlButtonsCore):
             text_file.close()
 
     def save_txt_file(self):
+        print(self.window.file_name)
         text_file = open(self.output_name_file+ "average.txt", "w")
         text_file.write(self.rewrite_list_points(self.main_plot.list_points))
         text_file.close()
 
+    def extract_information_from_title(self,name):
+        (file_name,adress)=self.seperate_file_name_and_path(name)
+        (contrast,adress=self.seperate_file_name_and_path(adress)
+        (patient_name,adress)=self.seperate_file_name_and_path(adress)
+
 
     def seperate_file_name_and_path(selfs,s):
         r=''
+        if s[-1]=='/':
+            s=s[:-1]
         while s!='' and s[-1]!='/':
             char = s[-1]
             r+=char
@@ -1954,6 +1963,13 @@ class ControlButtonsTest(ControlButtonsCore):
         image_array = self.main_plot.show_image_mean()
         import scipy.misc
         scipy.misc.imsave(self.output_name_file+'average.png', image_array)
+
+    def manage_output_files_paths(self):
+        if self.window.output_name:
+            (n,clean_path)=self.seperate_file_name_and_path(self.window.file_name)
+            return clean_path+self.window.output_name+'/'
+        else:
+            return self.window.file_name + '_ground_truth/'
 
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
