@@ -1813,6 +1813,7 @@ class ControlButtonsTest(ControlButtonsCore):
         self.bool_save_png_txt=bool_save_as_png
         self.dict_save_niftii=dict_save_niftii
         self.window_widget=window_widget
+        self.output_name_file='dl_label_vertebrae_gt/'
 
         self.add_save_options()
         self.add_skip_button()
@@ -1827,7 +1828,7 @@ class ControlButtonsTest(ControlButtonsCore):
     def add_save_button(self):
         btn_save = QtGui.QPushButton('Save')
         self.layout_buttons.addWidget(btn_save)
-        btn_save.clicked.connect(self.save_average_slice)
+        btn_save.clicked.connect(self.press_save)
 
     def add_save_options(self):
         self.rm_png_txt = QtGui.QRadioButton('txt and png')
@@ -1943,18 +1944,10 @@ class ControlButtonsTest(ControlButtonsCore):
             s = s[:-1]
         return (r[::-1],s)
 
-    def manage_output_files_paths(self):
-        if self.window.output_name:
-            (n,clean_path)=self.seperate_file_name_and_path(self.window.file_name)
-            return clean_path+self.window.output_name+'/'
-        else:
-            return self.window.file_name + '_ground_truth/'
-
     def save_average_slice(self):
         image_array = self.main_plot.show_image_mean()
         import scipy.misc
-        scipy.misc.imsave('average2.png', image_array)
-
+        scipy.misc.imsave(self.output_name_file+'average.png', image_array)
 
     def save_all_labelled_slices_as_png(self):
         def save_specific_slice_as_png(self,num_slice):
@@ -1975,26 +1968,14 @@ class ControlButtonsTest(ControlButtonsCore):
             save_specific_slice_as_png(self,islice)
 
     def make_output_file(self):
-        if not os.path.exists(self.manage_output_files_paths()):
-            sct.run('mkdir ' + self.manage_output_files_paths())
+        if not os.path.exists(self.output_name_file):
+            sct.run('mkdir ' + self.output_name_file)
 
     def press_save(self):
-        if self.bool_save_png_txt:
-            self.make_output_file()
-            self.save_all_labelled_slices_as_png()
-            self.save_all_labels_as_txt()
-        else:
-            if self.window.output_name:
-                (f,clean_path)=self.seperate_file_name_and_path(self.window.file_name)
-                file_name=clean_path+self.window.output_name
-            else:
-                file_name=self.window.file_name+'_ground_truth'
-            file_name+='.nii.gz'
-
-            self.dict_save_niftii['save_function'](self.rewrite_list_points(self.main_plot.list_points),
-                                                  self.dict_save_niftii['reoriented_image_filename'],
-                                                  self.dict_save_niftii['image_input_orientation'],
-                                                  file_name)
+        self.make_output_file()
+        self.save_average_slice()
+        #self.save_all_labelled_slices_as_png()
+        #self.save_all_labels_as_txt()
 
     def press_save_and_quit(self):
         self.press_save()
