@@ -2006,7 +2006,6 @@ class ControlButtonsTest(ControlButtonsCore):
         self.save_txt_file()
         self.save_niftii()
 
-
     def press_save_and_quit(self):
         self.press_save()
         self.window_widget.close()
@@ -2536,7 +2535,7 @@ class WindowTest(WindowCore):
         layout_main = self.add_layout_main(window)
         self.header = self.add_header(layout_main)
         self.main_pannel = self.add_main_pannel(layout_main, self, self.header)
-        #self.import_existing_labels()
+        self.import_existing_labels()
         self.control_buttons = self.add_control_buttons(layout_main, self,window_widget=window)
         window.setLayout(layout_main)
         sys.exit(system.exec_())
@@ -2588,16 +2587,25 @@ class WindowTest(WindowCore):
         return (r[::-1],s)
 
     def import_existing_labels(self):
+        def extract_information_from_title(name):
+            (file_name, adress) = seperate_file_name_and_path(name)
+            (contrast, adress) = seperate_file_name_and_path(adress)
+            (patient_name, adress) = seperate_file_name_and_path(adress)
+            return (contrast, patient_name)
+        def seperate_file_name_and_path(s):
+            r = ''
+            if s[-1] == '/':
+                s = s[:-1]
+            while s != '' and s[-1] != '/':
+                char = s[-1]
+                r += char
+                s = s[:-1]
+            return (r[::-1], s)
         def get_txt_files_in_output_directory(file_name,output_name):
-            if output_name:
-                (n,path)=self.seperate_file_name_and_path(self.file_name)
-                output_file_name=path+output_name
-            else:
-                output_file_name=file_name
-                output_file_name+='_ground_truth/'
-
-            if os.path.exists(output_file_name):
-                return (list(filter(lambda x: '.txt' in x,os.listdir(output_file_name))),output_file_name)
+            output_file_name='dl_label_vertebrae_gt/'
+            (contrast, patient_name)=extract_information_from_title(file_name)
+            if os.path.exists(output_file_name+patient_name+'_'+contrast+'_gt.txt'):
+                return ([output_file_name+patient_name+'_'+contrast+'_gt.txt'],output_file_name)
             else:
                 return ([],output_file_name)
         def extract_coordinates(output_file_name,txt_file,file_name,output_name):
@@ -2607,7 +2615,7 @@ class WindowTest(WindowCore):
             else:
                 output_file_name=file_name
                 output_file_name+='_ground_truth/'
-            file=open(output_file_name+txt_file,"r")
+            file=open(txt_file,"r")
             list_coordinates = []
             for line in file:
                 coordinates=''
@@ -2678,7 +2686,6 @@ class WindowTest(WindowCore):
             for ikey in list(dict_labels.keys()):
                 self.main_pannel.main_plot.list_points.append(dict_labels[ikey])
         self.main_pannel.main_plot.draw_dots()
-        self.main_pannel.second_plot.draw_lines()
         if self.main_pannel.main_plot.calc_list_points_on_slice():
             self.header.update_text('update',str(len(self.main_pannel.main_plot.calc_list_points_on_slice())+1))
             sct.printv('Output file you have chosen contained results of a previous labelling.\n'
