@@ -567,12 +567,12 @@ def main():
         qc_param = qc.Params(fname_data, 'sct_register_to_template', args, 'Sagittal', qc_path)
         report = qc.QcReport(qc_param, '')
 
-        @qc.QcImage(report, 'bicubic', [qc.QcImage.no_seg_seg])
+        @qc.QcImage(report, 'none', [qc.QcImage.no_seg_seg])
         def test(qslice):
             return qslice.single()
 
         fname_template2anat = path_output + 'template2anat' + ext_data
-        test(qcslice.SagittalTemplate2Anat(fname_data, fname_template2anat, fname_seg))
+        test(qcslice.SagittalTemplate2Anat(Image(fname_data), Image(fname_template2anat), Image(fname_seg)))
         sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
         sct.printv('Use the following command to see the results in a browser')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')

@@ -596,11 +596,10 @@ if __name__ == "__main__":
         def test(qslice):
             return qslice.mosaic()
 
-        test(qcslice.Axial(fname_input_data, fname_seg))
+        test(qcslice.Axial(Image(fname_input_data), Image(fname_seg)))
         sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
         sct.printv('Use the following command to see the results in a browser:')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
 
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
-
