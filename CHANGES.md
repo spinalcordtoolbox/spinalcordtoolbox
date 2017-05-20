@@ -1,5 +1,29 @@
 # CHANGES TO RELEASE
 
+## v3.0.4 (2017-05-19)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.3...v3.0.4)
+
+**BUG**
+
+ - Normalize the init value to between 0 and 1 for propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1324)
+ - Moved the QC assets into the spinalcordtoolbox package [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1311)
+ - Improved the formatting of the changelog generator [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1303)
+ - Show remaining time status for downloads [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1299)
+
+**ENHANCEMENT**
+
+ - Added the command parameter `-noqc` [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1313)
+ - Add dimension sanity checking for input file padding op [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1304)
+
+ - **FEATURE**
+
+ - Introducing spinal cord shape symmetry [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1332)
+
+ - **TESTING**
+
+ - Validate the function name in sct_testing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1305)
+ - Fix regression bug in sct_testing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1310)
+
 ## v3.0.3 (2017-04-26)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.2...v3.0.3)
 
@@ -103,7 +127,7 @@
 - BUG: **sct_register_graymatter**: fixed empty inverse warping field (#1068)
 - OPT: **sct_label_vertebrae**: now outputing verbose=2 pics in ofolder (#1094)
 - OPT: **sct_straighten_spinalcord**: fixed Reduce required RAM (#979)
-- OPT: **sct_straighten_spinalcord**: removes accuracy computation by default (#1075) 
+- OPT: **sct_straighten_spinalcord**: removes accuracy computation by default (#1075)
 - OPT: **sct_propseg**: improve robustness towards exception (#207)
 - OPT: **isct_test_function**: send email when finished (#1081)
 - OPT: **isct_test_function**: removed color tags on log entries  (#1035)
@@ -252,7 +276,7 @@
   - N.B. flag "-m" has been replaced by "-s"
 - OPT: **sct_register_multimodal**: allows more flexibility by imposing only one stage. Several stages can be run sequentially and then transformations can be concatenated.
   - N.B. flags "-s" and "-t" were replaced with "-iseg" and "-dseg" respectively
-- OPT: **sct_extract_metric**: 
+- OPT: **sct_extract_metric**:
   - new methods for extraction: maximum likelihood and maximum a posteriori, which take into account partial volume effect
   - now possible to specify global regions for extraction with flag -l: wm, gm, sc
   - now possible to include a bunch of labels using ":". Example: 2:29

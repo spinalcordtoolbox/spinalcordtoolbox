@@ -396,6 +396,40 @@ def tmp_create(verbose=1):
     return path_tmp
 
 
+class TempFolder(object):
+    """This class will create a temporary folder."""
+
+    def __init__(self, verbose=0):
+        self.path_tmp = tmp_create(verbose)
+        self.previous_path = None
+
+    def chdir(self):
+        """This method will change the working directory to the temporary folder."""
+        self.previous_path = os.getcwd()
+        os.chdir(self.path_tmp)
+
+    def chdir_undo(self):
+        """This method will return to the previous working directory, the directory
+        that was the state before calling the chdir() method."""
+        if self.previous_path is not None:
+            os.chdir(self.previous_path)
+
+    def get_path(self):
+        """Return the temporary folder path."""
+        return self.path_tmp
+
+    def copy_from(self, filename):
+        """This method will copy a specified file to the temporary folder.
+
+        :param filename: The filename to copy into the folder.
+        """
+        shutil.copy(filename, self.path_tmp)
+
+    def cleanup(self):
+        """Remove the created folder and its contents."""
+        shutil.rmtree(self.path_tmp, ignore_errors=True)
+
+
 def delete_tmp_files_and_folders(path=''):
     """
     This function removes all files that starts with 'tmp.' in the path specified as input. If no path are provided,

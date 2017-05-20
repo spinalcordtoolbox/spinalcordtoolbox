@@ -426,6 +426,14 @@ class Image(object):
             slices.append(slc.flatten())
         return slices
 
+    def getDataShape(self):
+        """Return the data shape.
+
+        :returns: the data shape from the header. 
+        """
+        data_shape = self.hdr.get_data_shape()
+        return data_shape
+
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
         """
         This function return all the non-zero coordinates that the image contains.
