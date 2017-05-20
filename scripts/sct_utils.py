@@ -401,10 +401,18 @@ class TempFolder(object):
 
     def __init__(self, verbose=0):
         self.path_tmp = tmp_create(verbose)
+        self.previous_path = None
 
     def chdir(self):
         """This method will change the working directory to the temporary folder."""
+        self.previous_path = os.getcwd()
         os.chdir(self.path_tmp)
+
+    def chdir_undo(self):
+        """This method will return to the previous working directory, the directory
+        that was the state before calling the chdir() method."""
+        if self.previous_path is not None:
+            os.chdir(self.previous_path)
 
     def get_path(self):
         """Return the temporary folder path."""

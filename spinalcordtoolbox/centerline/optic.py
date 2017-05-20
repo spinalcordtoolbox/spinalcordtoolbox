@@ -9,8 +9,8 @@ from msct_image import Image
 
 
 def detect_centerline(image_fname, init_option, contrast_type,
-                        optic_models_path, folder_output,
-                        remove_temp_files=False, verbose=0):
+                      optic_models_path, folder_output,
+                      remove_temp_files=False, verbose=0):
     """This method will use the OptiC to detect the centerline.
 
     :param image_fname: The input image filename.
@@ -91,7 +91,7 @@ def detect_centerline(image_fname, init_option, contrast_type,
                     '../' + folder_output)
 
     # return to initial folder
-    os.chdir('..')
+    temp_folder.chdir_undo()
 
     # delete temporary folder
     if remove_temp_files:
