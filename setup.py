@@ -13,10 +13,11 @@ with open(path.join(here, './install/requirements/requirementsPip.txt')) as f:
     requirements = f.read().splitlines()
 
 with open(path.join(here, 'version.txt')) as f:
-    version = f.read().split()
+    version = f.read().strip()
 
 setup(
     name='spinalcordtoolbox',
+    version=version,
     description='Library of analysis tools for MRI of the spinal cord',
     long_description=long_description,
     url='http://www.neuro.polymtl.ca/home',
@@ -37,12 +38,13 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
-    packages=find_packages(exclude=['dev', 'install']),
+    packages=find_packages(exclude=['scripts', 'dev', 'dev.*', 'install', 'testing']),
+    package_data={},
     install_requires=requirements,
     include_package_data=True,
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
-    entry_points={'console_scripts': ['sct=spinalcordtoolbox.qc.serve:spinalcordtoolbox'], },
+    # entry_points={'console_scripts': ['sct=spinalcordtoolbox.qc.serve:spinalcordtoolbox'], },
 )
