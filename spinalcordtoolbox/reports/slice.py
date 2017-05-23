@@ -8,7 +8,6 @@ import math
 import numpy as np
 from scipy import ndimage
 
-import scripts.msct_image as msct_image
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +33,13 @@ image_seg : msct_image.Image
         """
         Parameters
         ----------
-        image_name : str
+        image_name : msct_image.Image
             Input 3D MRI to be separated into slices.
-        seg_image_name : str
+        seg_image_name : msct_image.Image
             Output name for the 3D MRI to be produced.
         """
-        self.image = msct_image.Image(image_name)
-        self.image_seg = msct_image.Image(seg_image_name)
+        self.image = image_name
+        self.image_seg = seg_image_name
         self.image.change_orientation('SAL')
         self.image_seg.change_orientation('SAL')
 
@@ -118,7 +117,7 @@ image_seg : msct_image.Image
             returns the cropped matrix
         """
         if width * 2 > matrix.shape[0]:
-           width = matrix.shape[0] // 2
+            width = matrix.shape[0] // 2
         if height * 2 > matrix.shape[1]:
             height = matrix.shape[1] // 2
 
@@ -347,7 +346,7 @@ class AxialTemplate2Anat(AxialTemplate):
     """The axial template to anat representation of a slice"""
     def __init__(self, image_name, template2anat_image_name, seg_image_name):
         super(AxialTemplate2Anat, self).__init__(image_name, template2anat_image_name)
-        self.image_seg2 = msct_image.Image(seg_image_name)  # transformed input the one segmented
+        self.image_seg2 = seg_image_name  # transformed input the one segmented
         self.image_seg2.change_orientation('SAL')  # reorient to SAL
 
     def get_center(self):
@@ -410,7 +409,7 @@ class SagittalTemplate2Anat(Sagittal):
 
     def __init__(self, image_name, template2anat_name, seg_image_name):
         super(SagittalTemplate2Anat, self).__init__(image_name, template2anat_name)
-        self.image_seg2 = msct_image.Image(seg_image_name)  # transformed input the one segmented
+        self.image_seg2 = seg_image_name  # transformed input the one segmented
         self.image_seg2.change_orientation('SAL')  # reorient to SAL
 
     def get_center(self):

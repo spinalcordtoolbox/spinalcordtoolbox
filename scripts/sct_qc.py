@@ -5,6 +5,9 @@
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # About the license: see the file LICENSE.TXT
 
+"""Simple local http server to serve QC reports
+"""
+
 import os
 import shutil
 import sys
@@ -13,6 +16,8 @@ from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 from msct_parser import Parser
 from sct_utils import printv
+
+import spinalcordtoolbox.reports as reports
 
 
 def get_parser():
@@ -27,8 +32,7 @@ def get_parser():
 
 
 def _copy_assets(dest_path):
-    home_dir = os.path.dirname(os.path.dirname(__file__))
-    assets_path = os.path.join(home_dir, 'assets')
+    assets_path = os.path.join(reports.__path__[0], 'assets')
 
     shutil.copy2(os.path.join(assets_path, 'index.html'), dest_path)
 
@@ -63,4 +67,7 @@ if __name__ == "__main__":
     printv('http://127.0.0.1:8888', type='info')
     printv('Copy and paste the address into your web browser')
     printv('Press "Ctrl" + "C" to stop sct_qc')
-    httpd.serve_forever()
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        printv('QC viewer stopped')
