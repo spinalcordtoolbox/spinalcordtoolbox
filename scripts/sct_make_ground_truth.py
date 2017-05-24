@@ -259,8 +259,8 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         import sct_image
         # create the mask containing either the three-points or centerline mask for initialization
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
-        sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + output_file_name + ' -setorient ' + image_input_orientation + ' -v 0',verbose=True)
-        sct.run('rm -rf ' + 'labels.nii.gz')
+        sct.run('sct_image -i ' + os.getcwd()+'/labels.nii.gz'+ ' -o ' + output_file_name + ' -setorient ' + image_input_orientation + ' -v 0',verbose=True)
+        sct.run('rm -rf ' + os.getcwd()+'/labels.nii.gz')
 
 def use_viewer_to_define_labels(fname_data,first_label,output_path,bool_save_as_png):
     from sct_viewer import ClickViewerGroundTruth
@@ -269,8 +269,10 @@ def use_viewer_to_define_labels(fname_data,first_label,output_path,bool_save_as_
 
     image_input = Image(fname_data)
 
+    import os
+    dir_path= os.getcwd()
     image_input_orientation = sct_image.orientation(image_input, get=True, verbose=False)
-    reoriented_image_filename = 'reoriented_image_source.nii.gz'
+    reoriented_image_filename = dir_path+'/reoriented_image_source.nii.gz'
     path_tmp_viewer = sct.tmp_create(verbose=False)
     cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (
     fname_data, reoriented_image_filename)
