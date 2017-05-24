@@ -18,10 +18,8 @@
 # TODO: address the case when there is more than one max correlation
 
 import sys
-# import commands
 import os
 import shutil
-# from glob import glob
 import numpy as np
 from sct_maths import mutual_information
 from msct_parser import Parser
@@ -168,6 +166,10 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=os.path.expanduser('~/qc_data'))
+    parser.add_option(name='-noqc',
+                      type_value=None,
+                      description='Prevent the generation of the QC report',
+                      mandatory=False)
     return parser
 
 
@@ -226,14 +228,9 @@ def main(args=None):
     denoise = int(arguments['-denoise'])
     laplacian = int(arguments['-laplacian'])
 
-    # if verbose, import matplotlib
-    # if verbose == 2:
-        # import matplotlib.pyplot as plt
-
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
     path_tmp = sct.tmp_create(verbose=verbose)
-    # path_tmp = '/Users/julien/Dropbox/documents/processing/20160813_wang/t12/tmp.160814213032_725693/'
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)
@@ -338,9 +335,9 @@ def main(args=None):
     # Remove temporary files
     if remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf ' + path_tmp)
+        shutil.rmtree(path_tmp, ignore_errors=True)
 
-    if '-qc' in arguments:
+    if '-qc' in arguments and not arguments.get('-noqc', False):
         qc_path = arguments['-qc']
 
         import spinalcordtoolbox.reports.qc as qc
@@ -354,7 +351,7 @@ def main(args=None):
             return qslice.single()
 
         labeled_seg_file = path_output + file_seg + '_labeled' + ext_seg
-        test(qcslice.Sagittal(fname_in, labeled_seg_file))
+        test(qcslice.Sagittal(Image(fname_in), Image(labeled_seg_file)))
         sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
         sct.printv('Use the following command to see the results in a browser:')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
