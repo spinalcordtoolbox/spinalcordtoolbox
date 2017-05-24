@@ -26,11 +26,20 @@ What actually happens
 
 What percentage of the time does it reproduce?
 
-### Versions
+### State of spinalcordtoolbox
 
-The version is found in `version.txt`.
+Include the first 3 lines printed when running the command.
+Example:
 
-If it is a dev version, include the result of `git rev-parse --short HEAD`.
+```
+$ sct_qc
+
+--
+Spinal Cord Toolbox (github-templates/a63f51caa065655ad1b926901adf7ef144d2cc2b)
+Running /Users/geper/devel/spinalcordtoolbox/scripts/sct_qc.py
+
+...
+```
 
 ### Additional Information
 
