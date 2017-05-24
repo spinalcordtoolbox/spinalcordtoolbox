@@ -273,7 +273,7 @@ def use_viewer_to_define_labels(fname_data,first_label,output_path,bool_save_as_
     dir_path= os.getcwd()
     image_input_orientation = sct_image.orientation(image_input, get=True, verbose=False)
     reoriented_image_filename = dir_path+'/reoriented_image_source.nii.gz'
-    path_tmp_viewer = sct.tmp_create(verbose=False)
+    #path_tmp_viewer = sct.tmp_create(verbose=False)
     cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (
     fname_data, reoriented_image_filename)
     sct.run(cmd_image, verbose=False)
