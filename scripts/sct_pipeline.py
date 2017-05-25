@@ -243,39 +243,6 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
     return {'results': results, "compute_time": compute_time}
 
 
-class ForkStdoutToFile(object):
-    def __init__(self, filename="{}.log".format(__file__)):
-        self.terminal = sys.stdout
-        self.log = open(filename, "a")
-        self.filename = filename
-        sys.stdout = self
-
-    def __del__(self):
-        self.pause()
-        self.close()
-
-    def pause(self):
-        sys.stdout = self.terminal
-
-    def restart(self):
-        sys.stdout = self
-
-    def write(self, message):
-        self.terminal.write(message)
-        self.log.write(message)
-
-    def close(self):
-        self.log.close()
-
-    def read(self):
-        with open("test.txt", "r") as fp:
-            fp.read()
-
-    def send_email(self, email, passwd_from=None, subject="file_log"):
-        self.close()
-        sct.send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=self.filename)
-
-
 def get_parser():
     # Initialize parser
     parser = msct_parser.Parser(__file__)
@@ -375,7 +342,7 @@ if __name__ == "__main__":
     if create_log:
         file_log = 'results_test_' + function_to_test + '_' + output_time
         fname_log = file_log + '.log'
-        handle_log = ForkStdoutToFile(fname_log)
+        handle_log = sct.ForkStdoutToFile(fname_log)
     print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
     # get path of the toolbox
@@ -528,7 +495,6 @@ if __name__ == "__main__":
     # stop file redirection
     # send email
     if email:
-        handle_log.close()
         print 'Sending email...'
         handle_log.send_email(passwd_from=passwd, subject=file_log)
         print 'done!'
