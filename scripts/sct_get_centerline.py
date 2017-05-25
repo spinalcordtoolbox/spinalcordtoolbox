@@ -24,11 +24,6 @@ def run_main():
                       mandatory=True,
                       example=['t1', 't2', 't2s', 'dwi'])
 
-    parser.add_option(name="-init",
-                      type_value="float",
-                      description="axial slice where the propagation starts.",
-                      mandatory=False)
-
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="output folder.",
@@ -60,11 +55,6 @@ def run_main():
     # Contrast type
     contrast_type = arguments["-c"]
 
-    # Init option
-    init_option = None
-    if "-init" in arguments:
-        init_option = float(arguments["-init"])
-
     # Output folder
     if "-ofolder" in arguments:
         folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
@@ -90,9 +80,9 @@ def run_main():
                                    '{}_model'.format(contrast_type))
 
     # Execute OptiC binary
-    optic_filename = optic.detect_centerline(fname_data, init_option, contrast_type, 
-                                             optic_models_path, folder_output,
-                                             remove_temp_files, verbose)
+    _, optic_filename = optic.detect_centerline(fname_data, contrast_type, 
+                                                optic_models_path, folder_output,
+                                                remove_temp_files, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview " + fname_input_data + " " + optic_filename + " -l Red -b 0,1 -t 0.7 &\n",
