@@ -8,9 +8,9 @@ from sct_image import orientation
 from msct_image import Image
 
 
-def detect_centerline(image_fname, init_option, contrast_type,
+def detect_centerline(image_fname, contrast_type,
                       optic_models_path, folder_output,
-                      remove_temp_files=False, verbose=0):
+                      remove_temp_files=False, init_option=None, verbose=0):
     """This method will use the OptiC to detect the centerline.
 
     :param image_fname: The input image filename.
@@ -54,7 +54,6 @@ def detect_centerline(image_fname, init_option, contrast_type,
     if init_option is not None:
         if init_option > 1:
             init_option /= (nzr - 1)
-        cmd += " -init " + str(init_option)
 
     # call the OptiC method to generate the spinal cord centerline
     optic_input = img_filename
@@ -97,5 +96,5 @@ def detect_centerline(image_fname, init_option, contrast_type,
     if remove_temp_files:
         temp_folder.cleanup()
 
-    return os.path.join(folder_output,
-                        centerline_optic_filename)
+    return init_option, os.path.join(folder_output,
+                                     centerline_optic_filename)
