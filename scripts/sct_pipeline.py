@@ -248,6 +248,17 @@ class ForkStdoutToFile(object):
         self.terminal = sys.stdout
         self.log = open(filename, "a")
         self.filename = filename
+        sys.stdout = self
+
+    def __del__(self):
+        self.pause()
+        self.close()
+
+    def pause(self):
+        sys.stdout = self.terminal
+
+    def restart(self):
+        sys.stdout = self
 
     def write(self, message):
         self.terminal.write(message)
@@ -260,7 +271,8 @@ class ForkStdoutToFile(object):
         with open("test.txt", "r") as fp:
             fp.read()
 
-    def send_email(self,email, passwd_from=None, subject="file_log"):
+    def send_email(self, email, passwd_from=None, subject="file_log"):
+        self.close()
         sct.send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=self.filename)
 
 
@@ -362,10 +374,8 @@ if __name__ == "__main__":
     # build log file name
     if create_log:
         file_log = 'results_test_' + function_to_test + '_' + output_time
-        orig_stdout = sys.stdout
         fname_log = file_log + '.log'
         handle_log = ForkStdoutToFile(fname_log)
-        sys.stdout = handle_log
     print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
     # get path of the toolbox
@@ -412,7 +422,7 @@ if __name__ == "__main__":
     try:
         # during testing, redirect to standard output to avoid stacking error messages in the general log
         if create_log:
-            sys.stdout = orig_stdout
+            handle_log.pause()
 
         tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
         results = tests_ret['results']
@@ -420,7 +430,7 @@ if __name__ == "__main__":
 
         # after testing, redirect to log file
         if create_log:
-            sys.stdout = handle_log
+            handle_log.restart()
 
         # build results
         pd.set_option('display.max_rows', 500)
@@ -516,12 +526,9 @@ if __name__ == "__main__":
             print err
 
     # stop file redirection
-    if create_log:
-        handle_log.close()
-        sys.stdout = orig_stdout
-
     # send email
     if email:
+        handle_log.close()
         print 'Sending email...'
         handle_log.send_email(passwd_from=passwd, subject=file_log)
         print 'done!'
