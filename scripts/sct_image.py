@@ -10,11 +10,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, os
-from numpy import concatenate, shape, newaxis
-from msct_parser import Parser
+import os
+import sys
+
 from msct_image import Image, get_dimension
-from sct_utils import printv, add_suffix, extract_fname, run, tmp_create
+from msct_parser import Parser
+from numpy import newaxis, shape
+from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
 
 
 class Param:
@@ -112,9 +114,7 @@ def get_parser():
     return parser
 
 
-# MAIN
-# ==========================================================================================
-def main(args = None):
+def main(args=None):
     dim_list = ['x', 'y', 'z', 't']
 
     if not args:
@@ -154,7 +154,7 @@ def main(args = None):
         padx, pady, padz = int(padx), int(pady), int(padz)
         im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady,
                   pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
-        
+
     elif "-pad-asym" in arguments:
         im_in = Image(fname_in[0])
         ndims = len(im_in.getDataShape())
@@ -193,7 +193,7 @@ def main(args = None):
     elif '-type' in arguments:
         output_type = arguments['-type']
         im_in = Image(fname_in[0])
-        im_out = [im_in]  #TODO: adapt to fname_in
+        im_out = [im_in]  # TODO: adapt to fname_in
 
     elif "-getorient" in arguments:
         im_in = Image(fname_in[0])
@@ -358,7 +358,7 @@ def concat_data(fname_in_list, dim, pixdim=None):
     :return im_out: concatenated image
     """
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
-    from numpy import concatenate, expand_dims, squeeze
+    from numpy import concatenate, expand_dims
 
     dat_list = []
     data_concat_list = []
@@ -415,8 +415,7 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     fname_dest: 3d destination file (used to copy header information)
     :return: none
     """
-    from numpy import zeros, reshape
-    from msct_image import get_dimension
+    from numpy import zeros
     import nibabel as nib
 
     # get dimensions
@@ -460,7 +459,6 @@ def multicomponent_split(im):
     :param im:
     :return:
     """
-    from numpy import reshape
     data = im.data
     assert len(data.shape) == 5
     data_out = []
@@ -480,7 +478,7 @@ def multicomponent_split(im):
 
 
 def multicomponent_merge(fname_list):
-    from numpy import zeros, reshape
+    from numpy import zeros
     # WARNING: output multicomponent is not optimal yet, some issues may be related to the use of this function
 
     im_0 = Image(fname_list[0])
@@ -612,8 +610,6 @@ def get_orientation(im):
     return ori
 
 
-# get_orientation
-# ==========================================================================================
 def get_orientation_3d(im, filename=False):
     """
     Get orientation from 3D data
@@ -635,8 +631,6 @@ def get_orientation_3d(im, filename=False):
     return orientation
 
 
-# set_orientation
-# ==========================================================================================
 def set_orientation(im, orientation, data_inversion=False, filename=False, fname_out=''):
     """
     Set orientation on image
@@ -662,7 +656,7 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
             im_out = fname_out
         else:
             fname_in = im.absolutepath
-            if fname_in not in os.listdir('.'):
+            if not os.path.exists(fname_in):
                 im.save()
             run('isct_orientation3d -i ' + im.absolutepath + ' -orientation ' + orientation + ' -o ' + fname_out, 0)
             im_out = Image(fname_out)
@@ -713,8 +707,6 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         run('rm -rf ' + tmp_dir, error_exit='warning')
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     # # initialize parameters
     param = Param()
