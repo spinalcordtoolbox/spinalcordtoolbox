@@ -558,13 +558,6 @@ class Centerline:
         return square.reshape((len(x_grid), len(x_grid)))
 
     def save_centerline(self, image, fname_output):
-        labels_regions = {'PONS': 50, 'MO': 51,
-                          'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
-                          'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16,
-                          'T10': 17, 'T11': 18, 'T12': 19,
-                          'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
-                          'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
-                          'Co': 30}
         image_output = image.copy()
         image_output.data = image_output.data.astype(np.float32)
         image_output.data *= 0.0
@@ -573,9 +566,9 @@ class Centerline:
             current_label = self.l_points[i]
             current_coord = self.points[i]
             current_dist_rel = self.dist_points_rel[i]
-            if current_label in labels_regions:
+            if current_label in self.labels_regions:
                 coord_pix = image.transfo_phys2pix([current_coord])[0]
-                image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(labels_regions[current_label]) + current_dist_rel
+                image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(self.labels_regions[current_label]) + current_dist_rel
 
         image_output.setFileName(fname_output)
         image_output.save(type='float32')
