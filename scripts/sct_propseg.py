@@ -574,6 +574,7 @@ if __name__ == "__main__":
 
     if '-qc' in arguments:
         qc_path = arguments['-qc']
+        """
 
         import spinalcordtoolbox.reports.qc as qc
         import spinalcordtoolbox.reports.slice as qcslice
@@ -590,3 +591,4 @@ if __name__ == "__main__":
         sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
         sct.printv('Use the following command to see the results in a browser:')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
+        """
