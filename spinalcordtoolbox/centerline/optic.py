@@ -7,10 +7,13 @@ import sct_utils as sct
 from sct_image import orientation
 from msct_image import Image
 
+from datetime import datetime
+from string import Template
+
 
 def detect_centerline(image_fname, contrast_type,
                       optic_models_path, folder_output,
-                      remove_temp_files=False, init_option=None, verbose=0):
+                      remove_temp_files=False, init_option=None, output_roi=False, verbose=0):
     """This method will use the OptiC to detect the centerline.
 
     :param image_fname: The input image filename.
@@ -72,8 +75,7 @@ def detect_centerline(image_fname, contrast_type,
     nib.save(img, centerline_optic_RPI_filename)
 
     # reorient the output image to initial orientation
-    centerline_optic_filename = sct.add_suffix(file_data + ext_data,
-                                               "_centerline_optic")
+    centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
     cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
                    (centerline_optic_RPI_filename,
                     centerline_optic_filename,
@@ -85,9 +87,44 @@ def detect_centerline(image_fname, contrast_type,
     if os.path.isabs(folder_output):
         shutil.copy(centerline_optic_filename, folder_output)
     else:
-        dst_path = os.path.join("../", folder_output)
-        shutil.copy(centerline_optic_filename,
-                    '../' + folder_output)
+        shutil.copy(centerline_optic_filename, '../' + folder_output)
+
+    if output_roi:
+        print 'test'
+        date_now = datetime.now()
+        ROI_TEMPLATE = 'Begin Marker ROI\n' \
+                       '  Build version="7.0_33"\n' \
+                       '  Annotation=""\n' \
+                       '  Colour=0\n' \
+                       '  Image source="{fname_segmentation}"\n' \
+                       '  Created  "{creation_date}" by Operator ID="SCT"\n' \
+                       '  Slice={slice_num}\n' \
+                       '  Begin Shape\n' \
+                       '    X={position_x}; Y={position_y}\n' \
+                       '  End Shape\n' \
+                       'End Marker ROI\n'
+
+        im = Image(centerline_optic_RPI_filename)
+        nx, ny, nz, nt, px, py, pz, pt = im.dim
+        coord_phys_center = im.transfo_pix2phys([[(nx - 1) / 2.0, (ny - 1) / 2.0, (nz - 1) / 2.0]])[0]
+        coordinates_centerline = im.getNonZeroCoordinates(sorting='z')
+
+        centerline_optic_filename_roi = file_data + '_centerline_optic.roi'
+        f = open(centerline_optic_filename_roi, "w")
+        sct.printv('\nWriting ROI file...', verbose)
+
+        for coord in coordinates_centerline:
+            coord_phys = im.transfo_pix2phys([[coord.x, coord.y, coord.z]])[0]
+            f.write(ROI_TEMPLATE.format(fname_segmentation=image_fname,
+                                        creation_date=date_now.strftime("%d %B %Y %H:%M:%S.%f %Z"),
+                                        slice_num=coord.z + 1,
+                                        position_x=coord_phys_center[0] - coord_phys[0],
+                                        position_y=coord_phys_center[1] - coord_phys[1]))
+
+        f.close()
+
+        shutil.copy(reoriented_image_filename_nii, '../' + folder_output)
+        shutil.copy(centerline_optic_filename_roi, '../' + folder_output)
 
     # return to initial folder
     temp_folder.chdir_undo()
