@@ -90,7 +90,6 @@ def detect_centerline(image_fname, contrast_type,
         shutil.copy(centerline_optic_filename, '../' + folder_output)
 
     if output_roi:
-        print 'test'
         date_now = datetime.now()
         ROI_TEMPLATE = 'Begin Marker ROI\n' \
                        '  Build version="7.0_33"\n' \
