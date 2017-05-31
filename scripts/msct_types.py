@@ -19,6 +19,7 @@ from math import sqrt
 from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
 import numpy as np
+from scipy.spatial import cKDTree
 
 
 class Point(object):
@@ -130,21 +131,86 @@ class Centerline:
     A centerline is defined by its points and the derivatives of each point.
     When initialized, the lenght of the centerline is computed as well as the coordinate reference system of each plane.
     """
+    labels_regions = {'PMJ': 50, 'PMG': 49,
+                      'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
+                      'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16,
+                      'T10': 17, 'T11': 18, 'T12': 19,
+                      'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
+                      'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
+                      'Co': 30}
 
-    def __init__(self, points_x, points_y, points_z, deriv_x, deriv_y, deriv_z):
-        self.derivatives = []
+    convert_vertlabel2disklabel = {'PMJ': 'PMJ', 'PMG': 'PMG',
+                                   'C1': 'PMG-C1', 'C2': 'C1-C2', 'C3': 'C2-C3', 'C4': 'C3-C4', 'C5': 'C4-C5',
+                                   'C6': 'C5-C6', 'C7': 'C6-C7',
+                                   'T1': 'C7-T1', 'T2': 'T1-T2', 'T3': 'T2-T3', 'T4': 'T3-T4', 'T5': 'T4-T5',
+                                   'T6': 'T5-T6', 'T7': 'T6-T7', 'T8': 'T7-T8', 'T9': 'T8-T9',
+                                   'T10': 'T9-T10', 'T11': 'T10-T11', 'T12': 'T11-T12',
+                                   'L1': 'T12-L1', 'L2': 'L1-L2', 'L3': 'L2-L3', 'L4': 'L3-L4', 'L5': 'L4-L5',
+                                   'S1': 'L5-S1', 'S2': 'S1-S2', 'S3': 'S2-S3', 'S4': 'S3-S4', 'S5': 'S4-S5',
+                                   'Co': 'S5-Co'}
+
+    regions_labels = {'50': 'PMJ', '49': 'PMG',
+                      '1': 'C1', '2': 'C2', '3': 'C3', '4': 'C4', '5': 'C5', '6': 'C6', '7': 'C7',
+                      '8': 'T1', '9': 'T2', '10': 'T3', '11': 'T4', '12': 'T5', '13': 'T6', '14': 'T7',
+                      '15': 'T8', '16': 'T9', '17': 'T10', '18': 'T11', '19': 'T12',
+                      '20': 'L1', '21': 'L2', '22': 'L3', '23': 'L4', '24': 'L5',
+                      '25': 'S1', '26': 'S2', '27': 'S3', '28': 'S4', '29': 'S5',
+                      '30': 'Co'}
+
+    average_vert_length = {'PMJ': 30.0, 'PMG': 15.0, 'C1': 0.0,
+                           'C2': 20.176514191661337, 'C3': 17.022090519403065, 'C4': 17.842111671016056,
+                           'C5': 16.800356992319429, 'C6': 16.019212889311383, 'C7': 15.715854192723905,
+                           'T1': 16.84466163681078, 'T2': 19.865049296865475, 'T3': 21.550165130933905,
+                           'T4': 21.761237991438083, 'T5': 22.633281372803687, 'T6': 23.801974227738132,
+                           'T7': 24.358357813758332, 'T8': 25.200266294477885, 'T9': 25.315272064638506,
+                           'T10': 25.501856729317133, 'T11': 27.619238824308123, 'T12': 29.465119270009946,
+                            'L1': 31.89272719870084, 'L2': 33.511890474486449, 'L3': 35.721413718617441}
+
+    """
+    {'T10': ['T10', 25.543101799896391, 2.0015883550878457], 'T11': ['T11', 27.192970855618441, 1.9996136135271434], 'T12': ['T12', 29.559890137292335, 2.0204112073304121], 'PMG': ['PMG', 12.429867526011929, 2.9899172582983007], 'C3': ['C3', 18.229087873095388, 1.3299710200291315], 'C2': ['C2', 18.859365127066937, 1.5764843286826156], 'C1': ['C1', 0.0, 0.0], 'C7': ['C7', 15.543004729447034, 1.5597730786882851], 'C6': ['C6', 15.967482996580138, 1.4698898678270345], 'PMJ': ['PMJ', 11.38265467206886, 1.5641456310519117], 'C4': ['C4', 17.486130819790912, 1.5888243108648978], 'T8': ['T8', 25.649136105105754, 4.6835454011234718], 'T9': ['T9', 25.581999112288241, 1.9565018840832449], 'T6': ['T6', 23.539740893750668, 1.9073272889977211], 'T7': ['T7', 24.388589291326571, 1.828160893366733], 'T4': ['T4', 22.076131620822075, 1.726133989579701], 'T5': ['T5', 22.402770293433733, 2.0157113843189087], 'T2': ['T2', 19.800131846755267, 1.7600195442391204], 'T3': ['T3', 21.287064228802027, 1.8123109081532691], 'T1': ['T1', 16.525065003339993, 1.6130238001641826], 'L2': ['L2', 34.382300279977912, 2.378543023223767], 'L3': ['L3', 34.804841812064133, 2.7878124182683481], 'L1': ['L1', 32.02934490161379, 2.7697447948338381], 'C5': ['C5', 16.878263370935201, 1.6952832966782569]}
+    """
+
+    list_labels = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+    potential_list_labels = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                             23, 24, 25, 26, 27, 28, 29, 30]
+
+    def __init__(self, points_x=None, points_y=None, points_z=None, deriv_x=None, deriv_y=None, deriv_z=None, fname=None):
+        # initialization of variables
         self.length = 0.0
         self.progressive_length = [0.0]
         self.progressive_length_inverse = [0.0]
         self.incremental_length = [0.0]
         self.incremental_length_inverse = [0.0]
 
-        self.points = array(zip(points_x, points_y, points_z))
-        self.derivatives = array(zip(deriv_x, deriv_y, deriv_z))
+        # variables used for vertebral distribution
+        self.first_label, self.last_label = None, None
+        self.disks_levels = None
+        self.label_reference = None
+
+        self.compute_init_distribution = False
+
+        if fname is not None:
+            # Load centerline data from file
+            centerline_file = np.load(fname)
+
+            self.points = centerline_file['points']
+            self.derivatives = centerline_file['derivatives']
+
+            if 'disks_levels' in centerline_file:
+                self.disks_levels = centerline_file['disks_levels']
+                self.label_reference = centerline_file['label_reference']
+                self.compute_init_distribution = True
+        else:
+            # Load centerline data from points and derivatives in parameters
+            if points_x is None or points_y is None or points_z is None or deriv_x is None or deriv_y is None or deriv_z is None:
+                raise ValueError('Data must be provided to centerline to be initialized')
+            self.points = array(zip(points_x, points_y, points_z))
+            self.derivatives = array(zip(deriv_x, deriv_y, deriv_z))
+
         self.number_of_points = len(self.points)
 
+        # computation of centerline features, based on points and derivatives
         self.compute_length(points_x, points_y, points_z)
-
         self.coordinate_system = [self.compute_coordinate_system(index) for index in range(0, self.number_of_points)]
         self.plans_parameters = [self.get_plan_parameters(index) for index in range(0, self.number_of_points)]
 
@@ -152,46 +218,11 @@ class Centerline:
         self.inverse_matrices = stack([item[5] for item in self.coordinate_system])
         self.offset_plans = array([item[3] for item in self.plans_parameters])
 
-        from scipy.spatial import cKDTree
+        # initialization of KDTree for enabling computation of nearest points in centerline
         self.tree_points = cKDTree(dstack([points_x, points_y, points_z])[0])
 
-        self.first_label, self.last_label = None, None
-
-        self.labels_regions = {'PMJ': 50, 'PMG': 49,
-                               'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
-                               'T1': 8, 'T2': 9, 'T3': 10, 'T4': 11, 'T5': 12, 'T6': 13, 'T7': 14, 'T8': 15, 'T9': 16,
-                               'T10': 17, 'T11': 18, 'T12': 19,
-                               'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
-                               'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
-                               'Co': 30}
-        self.convert_vertlabel2disklabel = {'PMJ': 'PMJ', 'PMG': 'PMG',
-                                            'C1': 'PMG-C1', 'C2': 'C1-C2', 'C3': 'C2-C3', 'C4': 'C3-C4', 'C5': 'C4-C5',
-                                            'C6': 'C5-C6', 'C7': 'C6-C7',
-                                            'T1': 'C7-T1', 'T2': 'T1-T2', 'T3': 'T2-T3', 'T4': 'T3-T4', 'T5': 'T4-T5',
-                                            'T6': 'T5-T6', 'T7': 'T6-T7', 'T8': 'T7-T8', 'T9': 'T8-T9',
-                                            'T10': 'T9-T10', 'T11': 'T10-T11', 'T12': 'T11-T12',
-                                            'L1': 'T12-L1', 'L2': 'L1-L2', 'L3': 'L2-L3', 'L4': 'L3-L4', 'L5': 'L4-L5',
-                                            'S1': 'L5-S1', 'S2': 'S1-S2', 'S3': 'S2-S3', 'S4': 'S3-S4', 'S5': 'S4-S5',
-                                            'Co': 'S5-Co'}
-        self.regions_labels = {'50': 'PMJ', '49': 'PMG',
-                               '1': 'C1', '2': 'C2', '3': 'C3', '4': 'C4', '5': 'C5', '6': 'C6', '7': 'C7',
-                               '8': 'T1', '9': 'T2', '10': 'T3', '11': 'T4', '12': 'T5', '13': 'T6', '14': 'T7',
-                               '15': 'T8', '16': 'T9', '17': 'T10', '18': 'T11', '19': 'T12',
-                               '20': 'L1', '21': 'L2', '22': 'L3', '23': 'L4', '24': 'L5',
-                               '25': 'S1', '26': 'S2', '27': 'S3', '28': 'S4', '29': 'S5',
-                               '30': 'Co'}
-
-        self.average_vert_length = {'PMJ': 30.0, 'PMG': 15.0, 'C1': 0.0,
-                               'C2': 20.176514191661337, 'C3': 17.022090519403065, 'C4': 17.842111671016056,
-                               'C5': 16.800356992319429, 'C6': 16.019212889311383, 'C7': 15.715854192723905,
-                               'T1': 16.84466163681078, 'T2': 19.865049296865475, 'T3': 21.550165130933905,
-                               'T4': 21.761237991438083, 'T5': 22.633281372803687, 'T6': 23.801974227738132,
-                               'T7': 24.358357813758332, 'T8': 25.200266294477885, 'T9': 25.315272064638506,
-                               'T10': 25.501856729317133, 'T11': 27.619238824308123, 'T12': 29.465119270009946,
-                               'L1': 31.89272719870084, 'L2': 33.511890474486449, 'L3': 35.721413718617441}
-
-        self.list_labels = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
-        self.potential_list_labels = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+        if self.compute_init_distribution:
+            self.compute_vertebral_distribution(disks_levels=self.disks_levels, label_reference=self.label_reference)
 
     def compute_length(self, points_x, points_y, points_z):
         for i in range(0, self.number_of_points - 1):
@@ -360,25 +391,21 @@ class Centerline:
 
     def compute_vertebral_distribution(self, disks_levels, label_reference='C1'):
         """
+        This function computes the vertebral distribution along the centerline, based on the position of
+        intervertebral disks in space. A reference label can be provided (default is top of C1) so that relative
+        distances are computed from this reference.
 
         Parameters
         ----------
-        vertebral_levels: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]
-        the value correspond to the vertebral (disk) level label
+        disks_levels: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]
+                        the value correspond to the intervertebral disk label
 
-        Returns
-        -------
+        label_reference: reference label from which relative position will be computed.
+                        Must be on of self.labels_regions
 
         """
-
-        average_vert_dist = {'PMJ': -30.0, 'PMG': -15.0, 'C1': 0.0,
-                             'C2': 20.176514191661337, 'C3': 37.198604711064405, 'C4': 55.040716382080461,
-                             'C5': 71.841073374399883, 'C6': 87.860286263711259, 'C7': 103.57614045643517,
-                             'T1': 120.42080209324595, 'T2': 140.28585139011142, 'T3': 161.83601652104534,
-                             'T4': 183.59725451248343, 'T5': 206.23053588528711, 'T6': 230.03251011302524,
-                             'T7': 254.39086792678359, 'T8': 279.59113422126148, 'T9': 304.9064062859,
-                             'T10': 330.40826301521713, 'T11': 358.02750183952526, 'T12': 387.49262110953521,
-                             'L1': 419.38534830823608, 'L2': 452.89723878272252, 'L3': 488.61865250133997}
+        self.disks_levels = disks_levels
+        self.label_reference = label_reference
 
         # special case for C2, which might not be present because it is difficult to identify
         is_C2_here = False
@@ -399,6 +426,7 @@ class Centerline:
         self.dist_points_rel = [0] * self.number_of_points
         self.index_disk, index_disk_inv = {}, []
 
+        # extracting each level based on position and computing ts nearest point along the centerline
         first_label, last_label = None, None
         for level in disks_levels:
             if level[3] in self.list_labels:
@@ -557,21 +585,29 @@ class Centerline:
         square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
         return square.reshape((len(x_grid), len(x_grid)))
 
-    def save_centerline(self, image, fname_output):
-        image_output = image.copy()
-        image_output.data = image_output.data.astype(np.float32)
-        image_output.data *= 0.0
+    def save_centerline(self, image=None, fname_output=''):
+        if image is not None:
+            image_output = image.copy()
+            image_output.data = image_output.data.astype(np.float32)
+            image_output.data *= 0.0
 
-        for i in range(self.number_of_points):
-            current_label = self.l_points[i]
-            current_coord = self.points[i]
-            current_dist_rel = self.dist_points_rel[i]
-            if current_label in self.labels_regions:
-                coord_pix = image.transfo_phys2pix([current_coord])[0]
-                image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(self.labels_regions[current_label]) + current_dist_rel
+            for i in range(self.number_of_points):
+                current_label = self.l_points[i]
+                current_coord = self.points[i]
+                current_dist_rel = self.dist_points_rel[i]
+                if current_label in self.labels_regions:
+                    coord_pix = image.transfo_phys2pix([current_coord])[0]
+                    image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(self.labels_regions[current_label]) + current_dist_rel
 
-        image_output.setFileName(fname_output)
-        image_output.save(type='float32')
+            image_output.setFileName(fname_output)
+            image_output.save(type='float32')
+        else:
+            # save a .centerline file containing the centerline
+            if self.disks_levels is None:
+                np.savez(fname_output, points=self.points, derivatives=self.derivatives)
+            else:
+                np.savez(fname_output, points=self.points, derivatives=self.derivatives,
+                         disks_levels=self.disks_levels, label_reference=self.label_reference)
 
     def average_coordinates_over_slices(self, image):
         # extracting points information for each coordinates
