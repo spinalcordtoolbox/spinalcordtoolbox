@@ -595,25 +595,6 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
                                                 folder_output='./',
                                                 verbose=verbose)
 
-    """
-    from datetime import datetime
-    date_now = datetime.now()
-    common_text_start = 'Begin Marker ROI\n  Build version="7.0_33"\n  Annotation=""\n  Colour=0\n  Image source="' + fname_segmentation + '"\n  Created  "' + date_now.strftime("%d %B %Y %H:%M:%S.%f %Z") + '" by Operator ID="SCT"\n'
-    common_text_end = 'End Marker ROI\n'
-
-    f = open('centerline.roi', "w")
-    sct.printv('\nWrite ROI file...', verbose)
-    for i in range(min_z_index, max_z_index + 1):
-        coord_phys_center = im_seg.transfo_pix2phys([[(nx-1) / 2.0, (ny-1) / 2.0, int(i)]])[0]
-        coord_phys = im_seg.transfo_pix2phys([[x_centerline_voxel[i - min_z_index], y_centerline_voxel[i - min_z_index], int(i)]])[0]
-        f.write(common_text_start)
-        # JIM coordinate system is centered at the center of the image (per slice) and X and Y are inversed
-        text = '  Slice=' + str(int(i+1)) + '\n  Begin Shape\n    X=' + str(coord_phys_center[0] - coord_phys[0]) + '; Y=' + str(coord_phys_center[1] - coord_phys[1]) + '\n  End Shape\n'
-        f.write(text)
-        f.write(common_text_end)
-    f.close()
-    """
-
     # come back to parent folder
     os.chdir('..')
 
