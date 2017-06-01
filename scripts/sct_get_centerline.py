@@ -31,6 +31,13 @@ def run_main():
                       example="My_Output_Folder/",
                       default_value="")
 
+    parser.add_option(name="-roi",
+                      type_value="multiple_choice",
+                      description="outputs a ROI file, compatible with JIM software.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
+
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="remove temporary files.",
@@ -66,6 +73,11 @@ def run_main():
     if "-r" in arguments:
         remove_temp_files = bool(arguments["-r"])
 
+    # Outputs a ROI file
+    output_roi = False
+    if "-roi" in arguments:
+        output_roi = bool(arguments["-roi"])
+
     # Verbosity
     verbose = 0
     if "-v" in arguments:
@@ -80,9 +92,13 @@ def run_main():
                                    '{}_model'.format(contrast_type))
 
     # Execute OptiC binary
-    _, optic_filename = optic.detect_centerline(fname_data, contrast_type, 
-                                                optic_models_path, folder_output,
-                                                remove_temp_files, verbose)
+    _, optic_filename = optic.detect_centerline(image_fname=fname_data,
+                                                contrast_type=contrast_type,
+                                                optic_models_path=optic_models_path,
+                                                folder_output=folder_output,
+                                                remove_temp_files=remove_temp_files,
+                                                output_roi=output_roi,
+                                                verbose=verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview " + fname_input_data + " " + optic_filename + " -l Red -b 0,1 -t 0.7 &\n",
