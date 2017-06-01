@@ -225,6 +225,7 @@ class Centerline:
         self.tree_points = cKDTree(dstack([points_x, points_y, points_z])[0])
 
         if self.compute_init_distribution:
+            print self.disks_levels, self.label_reference
             self.compute_vertebral_distribution(disks_levels=self.disks_levels, label_reference=self.label_reference)
 
     def compute_length(self):
@@ -429,13 +430,14 @@ class Centerline:
         self.dist_points_rel = [0] * self.number_of_points
         self.index_disk, index_disk_inv = {}, []
 
-        # extracting each level based on position and computing ts nearest point along the centerline
+        # extracting each level based on position and computing its nearest point along the centerline
         first_label, last_label = None, None
         for level in disks_levels:
             if level[3] in self.list_labels:
                 coord_level = [level[0], level[1], level[2]]
                 disk = self.regions_labels[str(int(level[3]))]
                 nearest_index = self.find_nearest_index(coord_level)
+                print nearest_index
                 labels_points[nearest_index] = disk + '-0.0'
                 self.index_disk[disk] = nearest_index
                 index_disk_inv.append([nearest_index, disk])
@@ -639,29 +641,56 @@ class Centerline:
 
         return x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
-    def display(self):
+    def display(self, mode='absolute'):
+        """
+
+        Args:
+            mode: {absolute, relative}
+
+        Returns:
+
+        """
+
         import matplotlib.pyplot as plt
 
         plt.figure(1)
-        # ax = plt.subplot(211)
-        plt.subplot(211)
-        position_C1 = self.points[self.index_disk['C1']]
-        plt.plot([coord[2] - position_C1[2] for coord in self.points],
-                 [coord[0] - position_C1[0] for coord in self.points])
-        for label_disk in self.labels_regions:
-            if label_disk in self.index_disk:
-                point = self.points[self.index_disk[label_disk]]
-                plt.scatter(point[2] - position_C1[2], point[0] - position_C1[0], s=5)
+        ax = plt.subplot(211)
 
+        if mode is 'absolute':
+            plt.plot([coord[2] for coord in self.points], [coord[0] for coord in self.points])
+        else:
+            print self.index_disk
+            position_reference = self.points[self.index_disk[self.label_reference]]
+            print self.label_reference, type(self.label_reference), self.labels_regions[self.label_reference]
+            print self.index_disk[self.label_reference], position_reference
+            plt.plot([coord[2] - position_reference[2] for coord in self.points],
+                     [coord[0] - position_reference[0] for coord in self.points])
+            for label_disk in self.labels_regions:
+                if label_disk in self.index_disk:
+                    point = self.points[self.index_disk[label_disk]]
+                    plt.scatter(point[2] - position_reference[2], point[0] - position_reference[0], s=5)
+
+        plt.grid()
         plt.title("X")
-        # ax.set_aspect('equal')
+        #ax.set_aspect('equal')
         plt.xlabel('z')
         plt.ylabel('x')
-        plt.subplot(212)
-        position_C1 = self.points[self.index_disk['C1']]
-        plt.plot([coord[2] - position_C1[2] for coord in self.points],
-                 [coord[1] - position_C1[1] for coord in self.points])
-        for label_disk in self.labels_regions:
-            if label_disk in self.index_disk:
-                point = self.points[self.index_disk[label_disk]]
-                plt.scatter(point[2] - position_C1[2], point[1] - position_C1[1], s=5)
+        ax = plt.subplot(212)
+
+        if mode is 'absolute':
+            plt.plot([coord[2] for coord in self.points], [coord[1] for coord in self.points])
+        else:
+            position_reference = self.points[self.index_disk[self.label_reference]]
+            plt.plot([coord[2] - position_reference[2] for coord in self.points],
+                     [coord[1] - position_reference[1] for coord in self.points])
+            for label_disk in self.labels_regions:
+                if label_disk in self.index_disk:
+                    point = self.points[self.index_disk[label_disk]]
+                    plt.scatter(point[2] - position_reference[2], point[1] - position_reference[1], s=5)
+
+        plt.grid()
+        plt.title("Y")
+        #ax.set_aspect('equal')
+        plt.xlabel('z')
+        plt.ylabel('y')
+        plt.show()

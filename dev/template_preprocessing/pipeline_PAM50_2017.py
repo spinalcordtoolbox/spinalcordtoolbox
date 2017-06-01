@@ -707,6 +707,8 @@ def compute_csa(fname_segmentation, fname_disks, fname_centerline_image, force_c
         centerline.compute_vertebral_distribution(coord_physical)
         centerline.save_centerline(fname_output='centerline')
 
+    centerline.display(mode='relative')
+
     x, y, z, xd, yd, zd = centerline.average_coordinates_over_slices(im)
     coordinates = []
     for i in range(len(z)):
