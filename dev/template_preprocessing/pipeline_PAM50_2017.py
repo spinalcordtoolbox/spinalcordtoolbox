@@ -4,7 +4,7 @@ import shutil
 import os
 import sct_utils as sct
 import numpy as np
-import SimpleITK as sitk
+#import SimpleITK as sitk
 import matplotlib.pyplot as plt
 
 import matplotlib.cm as cmx
@@ -105,7 +105,28 @@ Potentiellement a retirer
 
                 
                 
+               
                 
+                
+"""
+
+list_subjects =[
+                'ALT',
+                'AM',
+                'AP',
+                'ED',
+                'FR',
+                'GB',
+                'HB',
+                'JW',
+                'MLL',
+                'MT',
+                'PA',
+                'T045',
+                'T047',
+                'VC',
+                'VG',
+                'VP',
                 'errsm_03',
                 'errsm_04',
                 'errsm_05',
@@ -140,26 +161,6 @@ Potentiellement a retirer
                 'pain_pilot_7',
                 'sct_001',
                 'sct_002'
-                
-"""
-
-list_subjects =[
-                'ALT',
-                'AM',
-                'AP',
-                'ED',
-                'FR',
-                'GB',
-                'HB',
-                'JW',
-                'MLL',
-                'MT',
-                'PA',
-                'T045',
-                'T047',
-                'VC',
-                'VG',
-                'VP'
 
                 ]
 
@@ -295,18 +296,9 @@ def clean_segmentation(contrast):
         remove_file(folder + contrast + '_centerline_optic.nii.gz')
 
 
-
-
-
 def average_centerline(contrast):
-    centerline_icbm152 = compute_ICBM152_centerline()
-
-
     number_of_points_in_centerline = 4000
-    height_of_template_space = 1100
-    x_size_of_template_space = 201
-    y_size_of_template_space = 201
-    spacing = 0.5
+
 
     list_dist_disks = []
     list_centerline = []
@@ -326,24 +318,11 @@ def average_centerline(contrast):
         coord = im.getNonZeroCoordinates(sorting='z', reverse_coord=True)
         coord_physical = []
 
-
-        C1_position, C2_position, C3_position = None, None, None
         for c in coord:
             if c.value <= 22 or c.value in [49, 50]:  # 22 corresponds to L2
                 c_p = im.transfo_pix2phys([[c.x, c.y, c.z]])[0]
                 c_p.append(c.value)
                 coord_physical.append(c_p)
-            #if c.value == 1:
-            #    C1_position = c
-            #elif c.value == 3:
-            #    C3_position = c
-        """
-        # add C2 average position
-        if C2_position is None:
-            c_p = im.transfo_pix2phys([[(C1_position.x + C3_position.x) / 2.0, (C1_position.y + C3_position.y) / 2.0, (C1_position.z + C3_position.z) / 2.0]])[0]
-            c_p.append(2)
-            coord_physical.append(c_p)
-        """
 
         x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
             contrast + '_centerline_manual.nii.gz', algo_fitting='nurbs',
@@ -357,6 +336,14 @@ def average_centerline(contrast):
         list_dist_disks.append(centerline.distance_from_C1label)
         list_centerline.append(centerline)
         timer_centerline.add_iteration()
+
+
+    #def generate_average_centerline():
+    centerline_icbm152 = compute_ICBM152_centerline()
+    height_of_template_space = 1100
+    x_size_of_template_space = 201
+    y_size_of_template_space = 201
+    spacing = 0.5
 
     import numpy as np
 
@@ -442,9 +429,9 @@ def average_centerline(contrast):
                 relative_position = 1.0 - relative_position
             list_coordinates = [[]] * len(list_centerline)
             for k, centerline in enumerate(list_centerline):
-                idx_closest = centerline.get_closest_to_relative_position(disk_label, relative_position)
+                idx_closest = centerline.get_closest_to_absolute_position(disk_label, relative_position)
                 if idx_closest is not None:
-                    coordinate_closest = centerline.get_point_from_index(idx_closest[0])
+                    coordinate_closest = centerline.get_point_from_index(idx_closest)
                     list_coordinates[k] = coordinate_closest.tolist()
                 else:
                     list_coordinates[k] = [np.nan, np.nan, np.nan]
@@ -501,13 +488,6 @@ def average_centerline(contrast):
             plt.scatter(point[2] - position_C1[2], point[0] - position_C1[0], marker='*', color='green', s=25)
 
     plt.grid()
-    MO_array = [[points_average_centerline[i][0], points_average_centerline[i][1], points_average_centerline[i][2]]
-                for i in range(len(points_average_centerline)) if label_points[i] == 'PMG']
-    PONS_array = [
-        [points_average_centerline[i][0], points_average_centerline[i][1], points_average_centerline[i][2]] for i in
-        range(len(points_average_centerline)) if label_points[i] == 'PMJ']
-    # plt.plot([coord[2] for coord in MO_array], [coord[0] for coord in MO_array], 'mo')
-    # plt.plot([coord[2] for coord in PONS_array], [coord[0] for coord in PONS_array], 'ko')
 
     color = iter(cm.rainbow(np.linspace(0, 1, len(list_centerline))))
 
@@ -832,6 +812,18 @@ def straighten_all_subjects(contrast):
         timer_straightening.add_iteration()
     timer_straightening.stop()
 
+
+def normalize_intensity(contrast):
+    timer_normalize = sct.Timer(len(list_subjects))
+    timer_normalize.start()
+    for subject_name in list_subjects:
+        folder_output = path_data_new + subject_name + '/' + contrast + '/'
+
+
+        timer_normalize.add_iteration()
+    timer_normalize.stop()
+
+
 #clean_segmentation('t1')
 #multisegment_spinalcord('t1')
 #generate_centerline('t1')
@@ -840,6 +832,8 @@ def straighten_all_subjects(contrast):
 
 #compare_csa(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz', fname_disks='t1_ground_truth.nii.gz', fname_centerline='t1_centerline_manual.nii.gz')
 #compute_spinalcord_length(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz')
+
+normalize_intensity(contrast='t1')
 
 
 def smooth_cubicsplines(x, y):
@@ -906,7 +900,7 @@ def smooth_kde(x, y):
     log_dens = kde.score_samples(obs_wave)
     return np.exp(log_dens)
 
-
+"""
 import json
 with open(PATH_OUTPUT + 'csa.txt') as data_file:
     results_csa = json.load(data_file)
@@ -934,7 +928,7 @@ for i, subject in enumerate(results_csa):
     plt.plot(x, y_smooth)
 plt.legend([subject for subject in results_csa])
 plt.show()
-
+"""
 
 
 
