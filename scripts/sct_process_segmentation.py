@@ -31,6 +31,7 @@ from msct_parser import Parser
 import msct_shape
 import pandas as pd
 from msct_types import Centerline
+from spinalcordtoolbox.centerline import optic
 
 
 class Param:
@@ -590,6 +591,11 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     file_results.close()
 
     # create a .roi file
+    fname_roi_centerline = optic.centerline2roi(fname_image='centerline_RPI.nii.gz',
+                                                folder_output='./',
+                                                verbose=verbose)
+
+    """
     from datetime import datetime
     date_now = datetime.now()
     common_text_start = 'Begin Marker ROI\n  Build version="7.0_33"\n  Annotation=""\n  Colour=0\n  Image source="' + fname_segmentation + '"\n  Created  "' + date_now.strftime("%d %B %Y %H:%M:%S.%f %Z") + '" by Operator ID="SCT"\n'
@@ -606,6 +612,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         f.write(text)
         f.write(common_text_end)
     f.close()
+    """
 
     # come back to parent folder
     os.chdir('..')
@@ -614,7 +621,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp + 'centerline.nii.gz', file_data + '_centerline.nii.gz')
     sct.generate_output_file(path_tmp + 'centerline.txt', file_data + '_centerline.txt')
-    sct.generate_output_file(path_tmp + 'centerline.roi', file_data + '_centerline.roi')
+    sct.generate_output_file(path_tmp + fname_roi_centerline, file_data + '_centerline.roi')
 
     # Remove temporary files
     if remove_temp_files:

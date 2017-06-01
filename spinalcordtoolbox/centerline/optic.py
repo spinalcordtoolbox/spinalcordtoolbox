@@ -11,6 +11,58 @@ from datetime import datetime
 from string import Template
 
 
+def centerline2roi(fname_image, folder_output='./', verbose=0):
+    """
+    Tis method converts a binary centerline image to a .roi centerline file
+
+    Args:
+        fname_image: filename of the binary centerline image, in RPI orientation
+        folder_output: path to output folder where to copy .roi centerline
+        verbose: adjusts the verbosity of the logging.
+
+    Returns: filename of the .roi centerline that has been created
+
+    """
+    path_data, file_data, ext_data = sct.extract_fname(fname_image)
+    fname_output = file_data + '.roi'
+
+    date_now = datetime.now()
+    ROI_TEMPLATE = 'Begin Marker ROI\n' \
+                   '  Build version="7.0_33"\n' \
+                   '  Annotation=""\n' \
+                   '  Colour=0\n' \
+                   '  Image source="{fname_segmentation}"\n' \
+                   '  Created  "{creation_date}" by Operator ID="SCT"\n' \
+                   '  Slice={slice_num}\n' \
+                   '  Begin Shape\n' \
+                   '    X={position_x}; Y={position_y}\n' \
+                   '  End Shape\n' \
+                   'End Marker ROI\n'
+
+    im = Image(fname_image)
+    nx, ny, nz, nt, px, py, pz, pt = im.dim
+    coord_phys_center = im.transfo_pix2phys([[(nx - 1) / 2.0, (ny - 1) / 2.0, (nz - 1) / 2.0]])[0]
+    coordinates_centerline = im.getNonZeroCoordinates(sorting='z')
+
+    f = open(fname_output, "w")
+    sct.printv('\nWriting ROI file...', verbose)
+
+    for coord in coordinates_centerline:
+        coord_phys = im.transfo_pix2phys([[coord.x, coord.y, coord.z]])[0]
+        f.write(ROI_TEMPLATE.format(fname_segmentation=fname_image,
+                                    creation_date=date_now.strftime("%d %B %Y %H:%M:%S.%f %Z"),
+                                    slice_num=coord.z + 1,
+                                    position_x=coord_phys_center[0] - coord_phys[0],
+                                    position_y=coord_phys_center[1] - coord_phys[1]))
+
+    f.close()
+
+    if os.path.abspath(folder_output) != os.getcwd():
+        shutil.copy(fname_output, folder_output)
+
+    return fname_output
+
+
 def detect_centerline(image_fname, contrast_type,
                       optic_models_path, folder_output,
                       remove_temp_files=False, init_option=None, output_roi=False, verbose=0):
@@ -83,47 +135,19 @@ def detect_centerline(image_fname, contrast_type,
     sct.run(cmd_reorient, verbose=0)
 
     # copy centerline to parent folder
+    folder_output_from_temp = folder_output
+    if not os.path.isabs(folder_output):
+        folder_output_from_temp = '../' + folder_output
+
     sct.printv('Copy output to ' + folder_output, verbose=0)
-    if os.path.isabs(folder_output):
-        shutil.copy(centerline_optic_filename, folder_output)
-    else:
-        shutil.copy(centerline_optic_filename, '../' + folder_output)
+    shutil.copy(centerline_optic_filename, folder_output_from_temp)
 
     if output_roi:
-        date_now = datetime.now()
-        ROI_TEMPLATE = 'Begin Marker ROI\n' \
-                       '  Build version="7.0_33"\n' \
-                       '  Annotation=""\n' \
-                       '  Colour=0\n' \
-                       '  Image source="{fname_segmentation}"\n' \
-                       '  Created  "{creation_date}" by Operator ID="SCT"\n' \
-                       '  Slice={slice_num}\n' \
-                       '  Begin Shape\n' \
-                       '    X={position_x}; Y={position_y}\n' \
-                       '  End Shape\n' \
-                       'End Marker ROI\n'
+        fname_roi_centerline = centerline2roi(fname_image=centerline_optic_RPI_filename,
+                                              folder_output=folder_output_from_temp,
+                                              verbose=verbose)
 
-        im = Image(centerline_optic_RPI_filename)
-        nx, ny, nz, nt, px, py, pz, pt = im.dim
-        coord_phys_center = im.transfo_pix2phys([[(nx - 1) / 2.0, (ny - 1) / 2.0, (nz - 1) / 2.0]])[0]
-        coordinates_centerline = im.getNonZeroCoordinates(sorting='z')
-
-        centerline_optic_filename_roi = file_data + '_centerline_optic.roi'
-        f = open(centerline_optic_filename_roi, "w")
-        sct.printv('\nWriting ROI file...', verbose)
-
-        for coord in coordinates_centerline:
-            coord_phys = im.transfo_pix2phys([[coord.x, coord.y, coord.z]])[0]
-            f.write(ROI_TEMPLATE.format(fname_segmentation=image_fname,
-                                        creation_date=date_now.strftime("%d %B %Y %H:%M:%S.%f %Z"),
-                                        slice_num=coord.z + 1,
-                                        position_x=coord_phys_center[0] - coord_phys[0],
-                                        position_y=coord_phys_center[1] - coord_phys[1]))
-
-        f.close()
-
-        shutil.copy(reoriented_image_filename_nii, '../' + folder_output)
-        shutil.copy(centerline_optic_filename_roi, '../' + folder_output)
+        shutil.copy(reoriented_image_filename_nii, folder_output_from_temp)
 
     # return to initial folder
     temp_folder.chdir_undo()
@@ -132,5 +156,4 @@ def detect_centerline(image_fname, contrast_type,
     if remove_temp_files:
         temp_folder.cleanup()
 
-    return init_option, os.path.join(folder_output,
-                                     centerline_optic_filename)
+    return init_option, os.path.join(folder_output, centerline_optic_filename)
