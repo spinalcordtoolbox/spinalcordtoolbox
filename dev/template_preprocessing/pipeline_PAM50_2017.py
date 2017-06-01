@@ -682,7 +682,7 @@ def compute_csa(fname_segmentation, fname_disks, fname_centerline_image, force_c
 
     im = Image(fname_disks)
 
-    fname_centerline = 'centerline.sct.npz'
+    fname_centerline = 'centerline.npz'
     if os.path.isfile(fname_centerline):
         centerline = Centerline(fname=fname_centerline)
     else:
@@ -705,8 +705,7 @@ def compute_csa(fname_segmentation, fname_disks, fname_centerline_image, force_c
                                 x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         centerline.compute_vertebral_distribution(coord_physical)
-        centerline.save_centerline(fname_output='centerline.sct')
-
+        centerline.save_centerline(fname_output='centerline')
 
     x, y, z, xd, yd, zd = centerline.average_coordinates_over_slices(im)
     coordinates = []
@@ -714,15 +713,16 @@ def compute_csa(fname_segmentation, fname_disks, fname_centerline_image, force_c
         nearest_index = centerline.find_nearest_indexes([[x[i], y[i], z[i]]])[0]
         disk_label = centerline.l_points[nearest_index]
         relative_position = centerline.dist_points_rel[nearest_index]
+        print [x[i], y[i], z[i]], nearest_index, disk_label
         if disk_label != 0:
             if centerline.labels_regions[disk_label] > centerline.last_label and centerline.labels_regions[disk_label] not in [49, 50]:
-                print disk_label, centerline.labels_regions[disk_label]
                 coordinates.append(float(labels_regions[disk_label]) + relative_position / centerline.average_vert_length[disk_label])
             else:
                 coordinates.append(float(labels_regions[disk_label]) + relative_position)
 
     # concatenate results
     result_levels, result_csa = [], []
+    print coordinates
     z_pix = [int(im.transfo_phys2pix([[x[k], y[k], z[k]]])[0][2]) for k in range(len(z))]
     for i, zi in enumerate(z_values):
         try:
@@ -730,6 +730,8 @@ def compute_csa(fname_segmentation, fname_disks, fname_centerline_image, force_c
         except ValueError as e:
             print 'got exception'
             continue
+
+        print zi, corresponding_values
 
         if coordinates[corresponding_values] <= 26:
             result_levels.append(coordinates[corresponding_values])

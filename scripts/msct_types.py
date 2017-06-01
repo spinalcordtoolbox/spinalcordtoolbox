@@ -519,12 +519,6 @@ class Centerline:
                         else:
                             self.dist_points_rel[i] = (self.dist_points[i] - self.dist_points[self.index_disk[current_label]]) / self.average_vert_length[current_label]
 
-        """
-        for i in range(self.number_of_points):
-            print self.l_points[i], self.dist_points_rel[i]
-        """
-
-
     def get_closest_to_relative_position(self, vertebral_level, relative_position, mode='levels'):
         """
         Args:
@@ -645,4 +639,29 @@ class Centerline:
 
         return x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
+    def display(self):
+        import matplotlib.pyplot as plt
 
+        plt.figure(1)
+        # ax = plt.subplot(211)
+        plt.subplot(211)
+        position_C1 = self.points[self.index_disk['C1']]
+        plt.plot([coord[2] - position_C1[2] for coord in self.points],
+                 [coord[0] - position_C1[0] for coord in self.points])
+        for label_disk in self.labels_regions:
+            if label_disk in self.index_disk:
+                point = self.points[self.index_disk[label_disk]]
+                plt.scatter(point[2] - position_C1[2], point[0] - position_C1[0], s=5)
+
+        plt.title("X")
+        # ax.set_aspect('equal')
+        plt.xlabel('z')
+        plt.ylabel('x')
+        plt.subplot(212)
+        position_C1 = self.points[self.index_disk['C1']]
+        plt.plot([coord[2] - position_C1[2] for coord in self.points],
+                 [coord[1] - position_C1[1] for coord in self.points])
+        for label_disk in self.labels_regions:
+            if label_disk in self.index_disk:
+                point = self.points[self.index_disk[label_disk]]
+                plt.scatter(point[2] - position_C1[2], point[1] - position_C1[1], s=5)
