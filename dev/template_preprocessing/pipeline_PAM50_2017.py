@@ -11,6 +11,11 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 
 import numpy
+from msct_types import Centerline
+from sct_straighten_spinalcord import smooth_centerline
+from msct_image import Image
+
+
 def smooth(x, window_len=11, window='hanning'):
     """smooth the data using a window with requested size.
 
@@ -66,6 +71,7 @@ def smooth(x, window_len=11, window='hanning'):
     y = numpy.convolve(w / w.sum(), s, mode='same')
     return y
 
+
 def get_cmap(N):
     '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
     RGB color.'''
@@ -74,6 +80,7 @@ def get_cmap(N):
     def map_index_to_rgb_color(index):
         return scalar_map.to_rgba(index)
     return map_index_to_rgb_color
+
 
 labels_regions = {'PMJ': 50, 'PMG': 49,
                   'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
@@ -104,14 +111,7 @@ Potentiellement a retirer
 - JD (ne couvre pas toute la moelle)
 
                 
-                
-               
-                
-                
-"""
-
-list_subjects =[
-                'ALT',
+              'ALT',
                 'AM',
                 'AP',
                 'ED',
@@ -160,7 +160,13 @@ list_subjects =[
                 'pain_pilot_4',
                 'pain_pilot_7',
                 'sct_001',
-                'sct_002'
+                'sct_002'  
+               
+                
+                
+"""
+
+list_subjects =['pain_pilot_2'
 
                 ]
 
@@ -284,6 +290,7 @@ def remove_file(filename):
         os.remove(filename)
     except OSError:
         pass
+
 
 def clean_segmentation(contrast):
     for subject_name in list_subjects:
@@ -652,15 +659,18 @@ def average_centerline(contrast):
     image_disks.save(type='uint8')
 
 
-def compute_csa(fname_segmentation, fname_disks, fname_centerline):
+def compute_csa(fname_segmentation, fname_disks, fname_centerline_image, force_csa_computation=False):
     # compute csa on the input segmentation
     # this function create a csv file (csa_per_slice.txt) containing csa for each slice in the image
-    sct.run('sct_process_segmentation '
-            '-i ' + fname_segmentation + ' '
-            '-p csa')
+
+    fname_csa = 'csa_per_slice.txt'
+    if not os.path.isfile(fname_csa) or force_csa_computation:
+        sct.run('sct_process_segmentation '
+                '-i ' + fname_segmentation + ' '
+                '-p csa')
 
     # read csv file to extract csa per slice
-    csa_file = open('csa_per_slice.txt', 'r')
+    csa_file = open(fname_csa, 'r')
     csa = csa_file.read()
     csa_file.close()
     csa_lines = csa.split('\n')[1:-1]
@@ -670,28 +680,34 @@ def compute_csa(fname_segmentation, fname_disks, fname_centerline):
         z_values.append(int(s[0]))
         csa_values.append(float(s[1]))
 
-    # compute a lookup table with continuous vertebral levels and slice position
-    from sct_straighten_spinalcord import smooth_centerline
-    from msct_image import Image
     im = Image(fname_disks)
-    coord = im.getNonZeroCoordinates(sorting='z', reverse_coord=True)
-    coord_physical = []
-    for c in coord:
-        c_p = im.transfo_pix2phys([[c.x, c.y, c.z]])[0]
-        c_p.append(c.value)
-        coord_physical.append(c_p)
 
-    number_of_points_in_centerline = 4000
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-        fname_centerline,
-        algo_fitting='nurbs',
-        verbose=0, nurbs_pts_number=number_of_points_in_centerline, all_slices=False, phys_coordinates=True,
-        remove_outliers=True)
-    from msct_types import Centerline
-    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
-                            x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+    fname_centerline = 'centerline.sct.npz'
+    if os.path.isfile(fname_centerline):
+        centerline = Centerline(fname=fname_centerline)
+    else:
+        # compute a lookup table with continuous vertebral levels and slice position
+        coord = im.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+        coord_physical = []
+        for c in coord:
+            c_p = im.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+            c_p.append(c.value)
+            coord_physical.append(c_p)
 
-    centerline.compute_vertebral_distribution(coord_physical)
+        number_of_points_in_centerline = 4000
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+            fname_centerline_image,
+            algo_fitting='nurbs',
+            verbose=0, nurbs_pts_number=number_of_points_in_centerline, all_slices=False, phys_coordinates=True,
+            remove_outliers=True)
+
+        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
+                                x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+        centerline.compute_vertebral_distribution(coord_physical)
+        centerline.save_centerline(fname_output='centerline.sct')
+
+
     x, y, z, xd, yd, zd = centerline.average_coordinates_over_slices(im)
     coordinates = []
     for i in range(len(z)):
@@ -726,7 +742,7 @@ def compute_csa(fname_segmentation, fname_disks, fname_centerline):
     return result_levels, result_csa
 
 
-def compare_csa(contrast, fname_segmentation, fname_disks, fname_centerline):
+def compare_csa(contrast, fname_segmentation, fname_disks, fname_centerline_image):
     timer_csa = sct.Timer(len(list_subjects))
     timer_csa.start()
 
@@ -738,7 +754,7 @@ def compare_csa(contrast, fname_segmentation, fname_disks, fname_centerline):
         print '\nComparing CSA ' + folder_output
         os.chdir(folder_output)
 
-        levels, csa = compute_csa(fname_segmentation, fname_disks, fname_centerline)
+        levels, csa = compute_csa(fname_segmentation, fname_disks, fname_centerline_image)
         results_csa[subject_name] = [levels, csa]
         timer_csa.add_iteration()
     timer_csa.stop()
@@ -753,7 +769,6 @@ def compare_csa(contrast, fname_segmentation, fname_disks, fname_centerline):
         plt.plot(results_csa[subject][0], results_csa[subject][1])
     plt.legend([subject for subject in results_csa])
     plt.show()
-
 
 
 def compute_spinalcord_length(contrast, fname_segmentation):
@@ -788,6 +803,7 @@ def compute_spinalcord_length(contrast, fname_segmentation):
     import json
     with open(PATH_OUTPUT + 'length.txt', 'w') as outfile:
         json.dump(results, outfile)
+
 
 def straighten_all_subjects(contrast):
     # straightening of each subject on the new template
@@ -830,85 +846,20 @@ def normalize_intensity(contrast):
 #average_centerline('t1')
 #straighten_all_subjects('t1')
 
-#compare_csa(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz', fname_disks='t1_ground_truth.nii.gz', fname_centerline='t1_centerline_manual.nii.gz')
+compare_csa(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz', fname_disks='t1_ground_truth.nii.gz', fname_centerline_image='t1_centerline_manual.nii.gz')
 #compute_spinalcord_length(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz')
 
-normalize_intensity(contrast='t1')
-
-
-def smooth_cubicsplines(x, y):
-    from scipy.interpolate import CubicSpline
-    cs = CubicSpline(x, y, bc_type='natural')
-    return [cs(xi) for xi in x]
-
-def smooth_UnivariateSpline(x, y):
-    from scipy.interpolate import UnivariateSpline
-
-    def moving_average(series, sigma=5):
-        from scipy.signal import gaussian
-        from scipy.ndimage import filters
-        b = gaussian(39, sigma)
-        average = filters.convolve1d(series, b / b.sum())
-        var = filters.convolve1d(np.power(series - average, 2), b / b.sum())
-        return average, var
-
-    _, var = moving_average(y)
-    sp = UnivariateSpline(x, y, w=1 / np.sqrt(var))
-    return [sp(xi) for xi in x]
-
-def smooth_spline(x, y):
-    from scipy.interpolate import splrep, splev
-    tck = splrep(x, y)
-    return splev(x, tck)
-
-def smooth_gmm(x, y):
-    from sklearn.mixture import GMM
-    x_gmm, y_gmm = np.array(x), np.array(y)
-    y_gmm = y_gmm.reshape(len(y_gmm), 1)
-    x_gmm = x_gmm.reshape(len(x_gmm), 1)
-
-    model = GMM(20).fit(y_gmm)
-    return -model.score_samples(x_gmm)
-
-def smooth_kde(x, y):
-    # Get the data
-    obs_wave, obs_flux = np.array(x), np.array(y)
-
-    # Center the x data in zero and normalized the y data to the area of the curve
-    #n_wave = obs_wave - obs_wave[np.argmax(obs_flux)]
-    n_flux = obs_flux / sum(obs_flux)
-
-    # Generate a distribution of points matcthing the curve
-    line_distribution = np.random.choice(a=obs_wave, size=100000, p=n_flux)
-    number_points = len(line_distribution)
-
-    """
-    from sklearn.mixture import GaussianMixture
-    gmm = GaussianMixture(n_components=30)
-    gmm.fit(np.reshape(line_distribution, (number_points, 1)))
-
-    from scipy.stats import norm
-    gauss_mixt = np.array([p * norm.pdf(obs_wave, mu, sd) for mu, sd, p in zip(gmm.means_.flatten(), np.sqrt(gmm.covariances_.flatten()), gmm.weights_)])
-    gauss_mixt_t = np.sum(gauss_mixt, axis=0)
-    
-    return gauss_mixt_t
-    """
-
-    from sklearn.neighbors import KernelDensity
-
-    kde = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(line_distribution)
-    log_dens = kde.score_samples(obs_wave)
-    return np.exp(log_dens)
+#normalize_intensity(contrast='t1')
 
 """
 import json
 with open(PATH_OUTPUT + 'csa.txt') as data_file:
     results_csa = json.load(data_file)
 
-
+import matplotlib.pyplot as plt
 plt.figure()
 for i, subject in enumerate(results_csa):
-    ax = plt.subplot(4, 4, i+1)
+    ax = plt.subplot(10, 5, i+1)
     x, y = results_csa[subject][0][::-1], results_csa[subject][1][::-1]
     y_smooth = y
     #y_smooth = smooth_UnivariateSpline(x, y)
@@ -928,8 +879,8 @@ for i, subject in enumerate(results_csa):
     plt.plot(x, y_smooth)
 plt.legend([subject for subject in results_csa])
 plt.show()
-"""
 
+"""
 
 
 """

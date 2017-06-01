@@ -197,8 +197,11 @@ class Centerline:
             self.derivatives = centerline_file['derivatives']
 
             if 'disks_levels' in centerline_file:
-                self.disks_levels = centerline_file['disks_levels']
-                self.label_reference = centerline_file['label_reference']
+                self.disks_levels = centerline_file['disks_levels'].tolist()
+                # convertion of levels to int for future use
+                for i in range(len(self.disks_levels)):
+                    self.disks_levels[i][3] = int(self.disks_levels[i][3])
+                self.label_reference = str(centerline_file['label_reference'])
                 self.compute_init_distribution = True
         else:
             # Load centerline data from points and derivatives in parameters
@@ -210,7 +213,7 @@ class Centerline:
         self.number_of_points = len(self.points)
 
         # computation of centerline features, based on points and derivatives
-        self.compute_length(points_x, points_y, points_z)
+        self.compute_length()
         self.coordinate_system = [self.compute_coordinate_system(index) for index in range(0, self.number_of_points)]
         self.plans_parameters = [self.get_plan_parameters(index) for index in range(0, self.number_of_points)]
 
@@ -224,18 +227,18 @@ class Centerline:
         if self.compute_init_distribution:
             self.compute_vertebral_distribution(disks_levels=self.disks_levels, label_reference=self.label_reference)
 
-    def compute_length(self, points_x, points_y, points_z):
+    def compute_length(self):
         for i in range(0, self.number_of_points - 1):
-            distance = sqrt((points_x[i] - points_x[i + 1]) ** 2 +
-                            (points_y[i] - points_y[i + 1]) ** 2 +
-                            (points_z[i] - points_z[i + 1]) ** 2)
+            distance = sqrt((self.points[i][0] - self.points[i + 1][0]) ** 2 +
+                            (self.points[i][0] - self.points[i + 1][0]) ** 2 +
+                            (self.points[i][0] - self.points[i + 1][0]) ** 2)
             self.length += distance
             self.progressive_length.append(distance)
             self.incremental_length.append(self.incremental_length[-1] + distance)
         for i in range(self.number_of_points - 1, 0, -1):
-            distance = sqrt((points_x[i] - points_x[i - 1]) ** 2 +
-                            (points_y[i] - points_y[i - 1]) ** 2 +
-                            (points_z[i] - points_z[i - 1]) ** 2)
+            distance = sqrt((self.points[i][0] - self.points[i - 1][0]) ** 2 +
+                            (self.points[i][0] - self.points[i - 1][0]) ** 2 +
+                            (self.points[i][0] - self.points[i - 1][0]) ** 2)
             self.progressive_length_inverse.append(distance)
             self.incremental_length_inverse.append(self.incremental_length_inverse[-1] + distance)
 
@@ -431,14 +434,14 @@ class Centerline:
         for level in disks_levels:
             if level[3] in self.list_labels:
                 coord_level = [level[0], level[1], level[2]]
-                disk = self.regions_labels[str(level[3])]
+                disk = self.regions_labels[str(int(level[3]))]
                 nearest_index = self.find_nearest_index(coord_level)
                 labels_points[nearest_index] = disk + '-0.0'
                 self.index_disk[disk] = nearest_index
                 index_disk_inv.append([nearest_index, disk])
 
                 # Finding minimum and maximum label, based on list_labels, which is ordered from top to bottom.
-                index_label = self.list_labels.index(level[3])
+                index_label = self.list_labels.index(int(level[3]))
                 if first_label is None:
                     first_label = index_label
                 if index_label < first_label:
@@ -585,7 +588,7 @@ class Centerline:
         square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
         return square.reshape((len(x_grid), len(x_grid)))
 
-    def save_centerline(self, image=None, fname_output=''):
+    def save_centerline(self, image=None, fname_output='centerline.sct'):
         if image is not None:
             image_output = image.copy()
             image_output.data = image_output.data.astype(np.float32)
