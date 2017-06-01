@@ -147,6 +147,8 @@ def detect_centerline(image_fname, contrast_type,
                                               folder_output=folder_output_from_temp,
                                               verbose=verbose)
 
+        # Note: the .roi file is defined in RPI orientation. To be used, it must be applied on the original image with
+        # a RPI orientation. For this reason, this script also outputs the input image in RPI orientation
         shutil.copy(reoriented_image_filename_nii, folder_output_from_temp)
 
     # return to initial folder
