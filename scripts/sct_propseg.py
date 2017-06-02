@@ -43,6 +43,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     from sct_convert import convert
     convert(fname_segmentation, path_tmp + 'tmp.segmentation.nii.gz', squeeze_data=False, verbose=0)
     convert(fname_centerline, path_tmp + 'tmp.centerline.nii.gz', squeeze_data=False, verbose=0)
+    fname_seg_absolute = os.path.abspath(fname_segmentation)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -123,7 +124,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_seg.save()
 
     # replacing old segmentation with the corrected one
-    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_segmentation, verbose)
+    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_seg_absolute, verbose)
 
     os.chdir('..')
 
