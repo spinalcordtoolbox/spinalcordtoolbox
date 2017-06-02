@@ -166,8 +166,57 @@ Potentiellement a retirer
                 
 """
 
-list_subjects =['pain_pilot_2'
-
+list_subjects =[
+                'ALT',
+                'AM',
+                'AP',
+                'ED',
+                'FR',
+                'GB',
+                'HB',
+                'JW',
+                'MLL',
+                'MT',
+                'PA',
+                'T045',
+                'T047',
+                'VC',
+                'VG',
+                'VP',
+                'errsm_03',
+                'errsm_04',
+                'errsm_05',
+                'errsm_09',
+                'errsm_10',
+                'errsm_11',
+                'errsm_12',
+                'errsm_13',
+                'errsm_14',
+                'errsm_16',
+                'errsm_17',
+                'errsm_18',
+                'errsm_20',
+                'errsm_21',
+                'errsm_23',
+                'errsm_24',
+                'errsm_25',
+                'errsm_30',
+                'errsm_31',
+                'errsm_32',
+                'errsm_33',
+                'errsm_34',
+                'errsm_35',
+                'errsm_36',
+                'errsm_37',
+                'errsm_43',
+                'errsm_44',
+                'pain_pilot_1',
+                'pain_pilot_2',
+                'pain_pilot_3',
+                'pain_pilot_4',
+                'pain_pilot_7',
+                'sct_001',
+                'sct_002'
                 ]
 
 PATH_OUTPUT = '/Users/benjamindeleener/data/PAM50_2017/output/'
@@ -707,36 +756,13 @@ def compute_csa(fname_segmentation, fname_disks, fname_centerline_image, force_c
         centerline.compute_vertebral_distribution(coord_physical)
         centerline.save_centerline(fname_output='centerline')
 
-    centerline.display(mode='relative')
+    #centerline.display(mode='relative')
+    lookuptable_coordinates = centerline.get_lookup_coordinates(im)
 
-    x, y, z, xd, yd, zd = centerline.average_coordinates_over_slices(im)
-    coordinates = []
-    for i in range(len(z)):
-        nearest_index = centerline.find_nearest_indexes([[x[i], y[i], z[i]]])[0]
-        disk_label = centerline.l_points[nearest_index]
-        relative_position = centerline.dist_points_rel[nearest_index]
-        print [x[i], y[i], z[i]], nearest_index, disk_label
-        if disk_label != 0:
-            if centerline.labels_regions[disk_label] > centerline.last_label and centerline.labels_regions[disk_label] not in [49, 50]:
-                coordinates.append(float(labels_regions[disk_label]) + relative_position / centerline.average_vert_length[disk_label])
-            else:
-                coordinates.append(float(labels_regions[disk_label]) + relative_position)
-
-    # concatenate results
     result_levels, result_csa = [], []
-    print coordinates
-    z_pix = [int(im.transfo_phys2pix([[x[k], y[k], z[k]]])[0][2]) for k in range(len(z))]
     for i, zi in enumerate(z_values):
-        try:
-            corresponding_values = z_pix.index(int(zi))
-        except ValueError as e:
-            print 'got exception'
-            continue
-
-        print zi, corresponding_values
-
-        if coordinates[corresponding_values] <= 26:
-            result_levels.append(coordinates[corresponding_values])
+        if lookuptable_coordinates[zi] is not None and lookuptable_coordinates[zi] < 30:
+            result_levels.append(lookuptable_coordinates[zi])
             result_csa.append(csa_values[i])
 
     #print result_levels, result_csa
@@ -763,7 +789,6 @@ def compare_csa(contrast, fname_segmentation, fname_disks, fname_centerline_imag
         timer_csa.add_iteration()
     timer_csa.stop()
 
-    print results_csa
     import json
     with open(PATH_OUTPUT + 'csa.txt', 'w') as outfile:
         json.dump(results_csa, outfile)
@@ -833,15 +858,150 @@ def straighten_all_subjects(contrast):
     timer_straightening.stop()
 
 
-def normalize_intensity(contrast):
+def normalize_intensity(contrast, fname_disks, fname_centerline_image):
     timer_normalize = sct.Timer(len(list_subjects))
     timer_normalize.start()
-    for subject_name in list_subjects:
-        folder_output = path_data_new + subject_name + '/' + contrast + '/'
 
+    average_length = 10
+    smooth_window = 20
+
+    results_intensity = {}
+    slices_subjects = {}
+    average_intensity = 0.0
+
+    for subject_name in list_subjects:
+        #folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        #fname_image = contrast + '.nii.gz'
+
+        folder_output = PATH_OUTPUT + 'final/'
+        fname_image = subject_name + '_' + contrast + '.nii.gz'
+
+        print '\nExtracting intensity ' + folder_output
+        os.chdir(folder_output)
+        image_input = Image(fname_image)
+        nx, ny, nz, nt, px, py, pz, pt = image_input.dim
+
+        fname_centerline = 'centerline.npz'
+        if os.path.isfile(fname_centerline):
+            centerline = Centerline(fname=fname_centerline)
+        else:
+            # compute a lookup table with continuous vertebral levels and slice position
+            image_disks = Image(fname_disks)
+            coord = image_disks.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+            coord_physical = []
+            for c in coord:
+                c_p = image_input.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+                c_p.append(c.value)
+                coord_physical.append(c_p)
+
+            number_of_points_in_centerline = 4000
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+                fname_centerline_image,
+                algo_fitting='nurbs',
+                verbose=0, nurbs_pts_number=number_of_points_in_centerline, all_slices=False, phys_coordinates=True,
+                remove_outliers=True)
+
+            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
+                                    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+            centerline.compute_vertebral_distribution(coord_physical)
+            centerline.save_centerline(fname_output='centerline')
+
+        #centerline.display(mode='relative')
+
+        x, y, z, xd, yd, zd = centerline.average_coordinates_over_slices(image_input)
+        lookuptable_coordinates = centerline.get_lookup_coordinates(image_input)
+
+        slices, levels, intensities = [], [], []
+        for i in range(len(z)):
+            coord_z = image_input.transfo_phys2pix([[x[i], y[i], z[i]]])[0]
+            if 0 <= coord_z[2] < nz and lookuptable_coordinates[coord_z[2]] is not None and lookuptable_coordinates[coord_z[2]] < 30 and lookuptable_coordinates[coord_z[2]] not in levels:
+                slices.append(coord_z[2])
+                levels.append(lookuptable_coordinates[coord_z[2]])
+                #intensities.append(image_input.data[coord_z[0], coord_z[1], coord_z[2]])
+                intensities.append(np.mean(image_input.data[coord_z[0]-1:coord_z[0]+2, coord_z[1]-1:coord_z[1]+2, coord_z[2]]))
+
+        intensities = intensities[::-1]
+        y = [np.mean(intensities[0:average_length])] * smooth_window + intensities + [np.mean(intensities[-average_length:])] * smooth_window
+        intensities = smooth(np.array(y), window_len=smooth_window)[smooth_window:-smooth_window]
+        results_intensity[subject_name] = [levels[::-1], intensities]
+        slices_subjects[subject_name] = slices
+
+        average_intensity += np.mean(intensities)
 
         timer_normalize.add_iteration()
     timer_normalize.stop()
+
+    average_intensity /= float(len(list_subjects))
+    print 'Average intensity =', average_intensity
+
+    timer_normalize = sct.Timer(len(list_subjects))
+    timer_normalize.start()
+    for subject_name in list_subjects:
+        #folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        #fname_image = contrast + '.nii.gz'
+
+        folder_output = PATH_OUTPUT + 'final/'
+        fname_image = subject_name + '_' + contrast + '.nii.gz'
+
+        print '\nExtracting intensity ' + folder_output
+        os.chdir(folder_output)
+        image_input = Image(fname_image)
+        image_output = image_input.copy()
+        image_output.data += average_intensity - np.mean(results_intensity[subject_name][1])
+        image_output.setFileName(subject_name + '_' + contrast + '_norm.nii.gz')
+        image_output.save()
+
+        timer_normalize.add_iteration()
+    timer_normalize.stop()
+
+    #import json
+    #with open(PATH_OUTPUT + 'intensity_profiles.txt', 'w') as outfile:
+    #    json.dump(results_intensity, outfile)
+
+    from msct_nurbs import NURBS
+
+    plt.figure()
+    for subject in results_intensity:
+        """
+        data = [[y_smooth[n], results_intensity[subject][0][n]] for n in range(len(results_intensity[subject][1]))]
+        nurbs = NURBS(precision=200, liste=data, nbControl=nbControl, verbose=1,
+                      twodim=True, all_slices=False,
+                      weights=False, maxControlPoints=25)
+        P = nurbs.getCourbe2D()
+        levels_fit = P[1]
+        intensities_fit = P[0]
+        #plt.plot(levels_fit, intensities_fit)
+        """
+        plt.plot(results_intensity[subject][0], results_intensity[subject][1] + average_intensity - np.mean(results_intensity[subject][1]))
+
+    plt.legend([subject for subject in results_intensity])
+    plt.show()
+
+
+def warp_segmentation(contrast):
+    for subject_name in list_subjects:
+        folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        image_destination = PATH_OUTPUT + 'final/' + subject_name + '_' + contrast + '.nii.gz'
+        folder_output_mnc = PATH_OUTPUT + 'mnc/'
+        fname_image = 't1_seg_manual.nii.gz'
+
+        print '\nWarping segmentation ' + folder_output
+        os.chdir(folder_output)
+
+        sct.run('sct_apply_transfo -i ' + fname_image + ' -w warp_curve2straight.nii.gz -d ' + image_destination + ' -x nn -o ' + subject_name + '_' + contrast + '_seg_straight.nii.gz')
+
+        sct.run('nii2mnc ' + subject_name + '_' + contrast + '_seg_straight.nii.gz' + ' ' + folder_output_mnc + subject_name + '_' + contrast + '_seg.mnc')
+
+
+
+def convert_nii2mnc(contrast):
+    for subject_name in list_subjects:
+        folder_output = PATH_OUTPUT + 'mnc/'
+        fname_image = subject_name + '_' + contrast + '_norm.nii.gz'
+        fname_im_output = subject_name + '_' + contrast + '.mnc'
+
+        sct.run('nii2mnc ' + PATH_OUTPUT + 'final/' + fname_image + ' ' + folder_output + fname_im_output)
 
 
 #clean_segmentation('t1')
@@ -850,10 +1010,20 @@ def normalize_intensity(contrast):
 #average_centerline('t1')
 #straighten_all_subjects('t1')
 
-compare_csa(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz', fname_disks='t1_ground_truth.nii.gz', fname_centerline_image='t1_centerline_manual.nii.gz')
+#compare_csa(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz', fname_disks='t1_ground_truth.nii.gz', fname_centerline_image='t1_centerline_manual.nii.gz')
 #compute_spinalcord_length(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz')
 
-#normalize_intensity(contrast='t1')
+#normalize_intensity(contrast='t1', fname_disks=PATH_OUTPUT + 'template_disks.nii.gz', fname_centerline_image=PATH_OUTPUT + 'template_centerline.nii.gz')
+#convert_nii2mnc(contrast='t1')
+#warp_segmentation('t1')
+
+
+#folder = '/mnt/parallel_scratch_mp2_wipe_on_august_2017/jcohen/bedelb/template_generation_t1/data/'
+folder = '/gs/project/rrp-355-aa/data/'
+contrast = 't1'
+for subject_name in list_subjects:
+    print folder + subject_name + '_' + contrast + '.mnc,' + folder + subject_name + '_' + contrast + '_seg.mnc'
+
 
 """
 import json
