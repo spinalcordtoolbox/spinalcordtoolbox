@@ -222,10 +222,9 @@ class Centerline:
         self.offset_plans = array([item[3] for item in self.plans_parameters])
 
         # initialization of KDTree for enabling computation of nearest points in centerline
-        self.tree_points = cKDTree(dstack([points_x, points_y, points_z])[0])
+        self.tree_points = cKDTree(self.points)
 
         if self.compute_init_distribution:
-            print self.disks_levels, self.label_reference
             self.compute_vertebral_distribution(disks_levels=self.disks_levels, label_reference=self.label_reference)
 
     def compute_length(self):
@@ -437,7 +436,6 @@ class Centerline:
                 coord_level = [level[0], level[1], level[2]]
                 disk = self.regions_labels[str(int(level[3]))]
                 nearest_index = self.find_nearest_index(coord_level)
-                print nearest_index
                 labels_points[nearest_index] = disk + '-0.0'
                 self.index_disk[disk] = nearest_index
                 index_disk_inv.append([nearest_index, disk])
@@ -622,13 +620,21 @@ class Centerline:
         # not perfect but works (if "enough" points), in order to deal with missing z slices
         for i in range(min(P_z_vox), max(P_z_vox) + 1, 1):
             if i not in P_z_vox:
-                P_x_temp = np.insert(P_x, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x[np.where(P_z_vox == i - 1)[-1][-1]] + P_x[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-                P_y_temp = np.insert(P_y, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y[np.where(P_z_vox == i - 1)[-1][-1]] + P_y[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-                P_z_temp = np.insert(P_z, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z[np.where(P_z_vox == i - 1)[-1][-1]] + P_z[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-                P_x_d_temp = np.insert(P_x_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_x_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-                P_y_d_temp = np.insert(P_y_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_y_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-                P_z_d_temp = np.insert(P_z_d, np.where(P_z_vox == i - 1)[-1][-1] + 1, (P_z_d[np.where(P_z_vox == i - 1)[-1][-1]] + P_z_d[np.where(P_z_vox == i - 1)[-1][-1] + 1]) / 2)
-                P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
+                from bisect import bisect_right
+                idx_closest = bisect_right(P_z_vox, i)
+                z_min, z_max = P_z_vox[idx_closest - 1], P_z_vox[idx_closest]
+                if z_min == z_max:
+                    weight_min = weight_max = 0.5
+                else:
+                    weight_min, weight_max = abs((z_min - i) / (z_max - z_min)), abs((z_max - i) / (z_max - z_min))
+                P_x_temp = np.insert(P_x, idx_closest, weight_min * P_x[idx_closest - 1] + weight_max * P_x[idx_closest])
+                P_y_temp = np.insert(P_y, idx_closest, weight_min * P_y[idx_closest - 1] + weight_max * P_y[idx_closest])
+                P_z_temp = np.insert(P_z, idx_closest, weight_min * P_z[idx_closest - 1] + weight_max * P_z[idx_closest])
+                P_x_d_temp = np.insert(P_x_d, idx_closest, weight_min * P_x_d[idx_closest - 1] + weight_max * P_x_d[idx_closest])
+                P_y_d_temp = np.insert(P_y_d, idx_closest, weight_min * P_y_d[idx_closest - 1] + weight_max * P_y_d[idx_closest])
+                P_z_d_temp = np.insert(P_z_d, idx_closest, weight_min * P_z_d[idx_closest - 1] + weight_max * P_z_d[idx_closest])
+                P_z_vox_temp = np.insert(P_z_vox, idx_closest, i)
+                P_x, P_y, P_z, P_x_d, P_y_d, P_z_d, P_z_vox = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp, P_z_vox_temp
 
         coord_mean = np.array([[np.mean(P_x[P_z_vox == i]), np.mean(P_y[P_z_vox == i]), np.mean(P_z[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
         x_centerline_fit = coord_mean[:, :][:, 0]
@@ -643,12 +649,12 @@ class Centerline:
 
     def display(self, mode='absolute'):
         """
-
+        This function display the centerline using matplotlib. Two modes are available: absolute and relative.
+        The absolute mode display the absolute position of centerline points.
+        The relative mode display the centerline position relative to the reference label (default is C1). This mode
+        requires the computation of vertebral distribution beforehand.
         Args:
-            mode: {absolute, relative}
-
-        Returns:
-
+            mode: {absolute, relative} see description of function for details
         """
 
         import matplotlib.pyplot as plt
@@ -659,10 +665,7 @@ class Centerline:
         if mode is 'absolute':
             plt.plot([coord[2] for coord in self.points], [coord[0] for coord in self.points])
         else:
-            print self.index_disk
             position_reference = self.points[self.index_disk[self.label_reference]]
-            print self.label_reference, type(self.label_reference), self.labels_regions[self.label_reference]
-            print self.index_disk[self.label_reference], position_reference
             plt.plot([coord[2] - position_reference[2] for coord in self.points],
                      [coord[0] - position_reference[0] for coord in self.points])
             for label_disk in self.labels_regions:
@@ -694,3 +697,30 @@ class Centerline:
         plt.xlabel('z')
         plt.ylabel('y')
         plt.show()
+
+    def get_lookup_coordinates(self, reference_image):
+        nx, ny, nz, nt, px, py, pz, pt = reference_image.dim
+
+        x, y, z, xd, yd, zd = self.average_coordinates_over_slices(reference_image)
+        z_cov, coordinates = [], []
+        for i in range(len(z)):
+            nearest_index = self.find_nearest_indexes([[x[i], y[i], z[i]]])[0]
+            disk_label = self.l_points[nearest_index]
+            relative_position = self.dist_points_rel[nearest_index]
+            if disk_label != 0:
+                z_cov.append(int(reference_image.transfo_phys2pix([[x[i], y[i], z[i]]])[0][2]))
+                if self.labels_regions[disk_label] > self.last_label and self.labels_regions[disk_label] not in [49, 50]:
+                    coordinates.append(float(self.labels_regions[disk_label]) + relative_position / self.average_vert_length[disk_label])
+                else:
+                    coordinates.append(float(self.labels_regions[disk_label]) + relative_position)
+
+        # concatenate results
+        lookuptable_coordinates = []
+        for zi in range(nz):
+            if zi in z_cov:
+                corresponding_values = z_cov.index(zi)
+                lookuptable_coordinates.append(coordinates[corresponding_values])
+            else:
+                lookuptable_coordinates.append(None)
+
+        return lookuptable_coordinates
