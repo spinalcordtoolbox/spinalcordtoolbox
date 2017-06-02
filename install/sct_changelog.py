@@ -64,8 +64,7 @@ if __name__ == '__main__':
 
     lines = [
         '## {} ({})'.format(title, datetime.date.today()),
-        '[View detailed changelog](%s)' % detailed_changelog(title),
-        ''
+        '[View detailed changelog](%s)' % detailed_changelog(title)
     ]
 
     changelog_pr = set()
@@ -73,10 +72,10 @@ if __name__ == '__main__':
         pulls = search(milestone['title'], label)
         items = pulls.get('items')
         if items:
-            lines.append('**{}**\n'.format(label.upper()))
+            lines.append('**{}**'.format(label.upper()))
             changelog_pr = changelog_pr.union(set([x['html_url'] for x in items]))
-            items = [" - %s [View pull request](%s)" % (x['title'], x['html_url']) for x in pulls.get('items') ]
-            lines.extend(items)
+            items = [" - (%s) %s [View pull request](%s)" % (x['id'], x['title'], x['html_url']) for x in pulls.get('items') ]
+            lines.append(items)
 
     logging.info('Total pull request in changelog: %d', len(changelog_pr))
     all_pr = set([x['html_url'] for x in search(milestone['title'])['items']])

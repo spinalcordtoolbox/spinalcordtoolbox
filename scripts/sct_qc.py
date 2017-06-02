@@ -54,13 +54,10 @@ if __name__ == "__main__":
                ' This is not a proper QC folder', type='error')
         sys.exit(-1)
 
-    qc_path = os.path.realpath(qc_path)
+    os.chdir(qc_path)
     _copy_assets(qc_path)
 
-    os.chdir(qc_path)
     httpd = HTTPServer(('', 8888), SimpleHTTPRequestHandler)
-    printv('QC viewer started on:')
-    printv('http://127.0.0.1:8888', type='info')
-    printv('Copy and paste the address into your web browser')
+    printv('QC viewer started on http://127.0.0.1:8888')
     printv('Press "Ctrl" + "C" to stop sct_qc')
     httpd.serve_forever()

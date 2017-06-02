@@ -21,7 +21,6 @@ import shutil
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
-from tqdm import tqdm
 
 from msct_parser import Parser
 import sct_utils as sct
@@ -37,7 +36,7 @@ def get_parser():
         mandatory=True,
         example=[
             'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
-            'gm_model', 'optic_models', 'binaries_debian', 'binaries_centos', 'binaries_osx', 'course_hawaii17'
+            'gm_model', 'optic_models', 'binaries_debian', 'binaries_centos', 'binaries_osx'
         ])
     parser.add_option(
         name="-v",
@@ -74,8 +73,7 @@ def main(args=None):
         'optic_models': 'https://osf.io/g4fwn/?action=download',
         'binaries_debian': 'https://osf.io/a83jr/?action=download',
         'binaries_centos': 'https://osf.io/sgy6x/?action=download',
-        'binaries_osx': 'https://osf.io/rtzey/?action=download',
-        'course_hawaii17': 'https://osf.io/6exht/?action=download'
+        'binaries_osx': 'https://osf.io/rtzey/?action=download'
     }
 
     # Get parser info
@@ -150,19 +148,18 @@ def download_data(url, verbose):
 
     with open(tmp_path, 'wb') as tmp_file:
         total = int(response.headers.get('content-length', 1))
-        tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
-                        desc="Status", ascii=True)
-
+        dl = 0
         for chunk in response.iter_content(chunk_size=8192):
             if chunk:
                 tmp_file.write(chunk)
-                if verbose > 0:
-                    dl_chunk = len(chunk)
-                    tqdm_bar.update(dl_chunk)
+                if verbose > 1:
+                    dl += len(chunk)
+                    done = min(int(20 * dl / total), 20)
+                    sys.stdout.write("\r[%s%s]" % ('=' * done,
+                                                   ' ' * (20 - done)))
+                    sys.stdout.flush()
 
-        tqdm_bar.close()
-
-    sct.printv('\nDownload complete', verbose=verbose)
+    sct.printv('Download complete', verbose=verbose)
     return tmp_path
 
 

@@ -4,37 +4,12 @@
 
 ![Spinal Cord Toolbox overview](abstract.png "Spinal Cord Toolbox overview")
 
-For the past 25 years, the field of neuroimaging has witnessed the
-development of several software packages for processing multi-parametric
-magnetic resonance imaging (mpMRI) to study the brain. These software packages
-are now routinely used by researchers and clinicians, and have contributed to
-important breakthroughs for the understanding of brain anatomy and function.
-However, no software package exists to process mpMRI data of the spinal cord.
-Despite the numerous clinical needs for such advanced mpMRI protocols (multiple
-sclerosis, spinal cord injury, cervical spondylotic myelopathy, etc.),
-researchers have been developing specific tools that, while necessary, do not
-provide an integrative framework that is compatible with most usages and that is
-capable of reaching the community at large. This hinders cross-validation and
-the possibility to perform multi-center studies.
-
-Spinal Cord Toolbox (SCT), a comprehensive -source software dedicated to the
-processing and analysis of spinal cord **MRI** data. **SCT** builds on
-previously-validated methods and includes state-of-the-art **MRI** templates and
-atlases of the spinal cord, algorithms to segment and register new data to the
-templates, and motion correction methods for diffusion and functional time
-series. **SCT** is tailored towards standardization and automation of the
-processing pipeline, versatility, modularity, and it follows guidelines of
-software development and distribution. Preliminary applications of **SCT** cover
-a variety of studies, from cross-sectional area measures in large databases of
-patients, to the precise quantification of mpMRI metrics in specific spinal
-pathways. We anticipate that **SCT** will bring together the spinal cord
-neuroimaging community by establishing standard templates and analysis
-procedures.
-
+The Spinal Cord Toolbox (SCT) is a comprehensive and open-source library of analysis tools for MRI of the spinal cord. SCT features standard templates & atlases of the spinal cord, gray matter and white matter tracts as well as state-of-the-art segmentation, registration and atlas-based analysis methods. SCT is open-source, includes extensive testing framework, documentation and ongoing support via active forum. SCT allows robust and reproducible multi-center studies and analysis of large datasets.
 
 - [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
-- [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
+- [Getting started with T1 as anatomical data](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing_t1.sh)
+- [Getting started with T2 as anatomical data](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing_t2.sh)
 - [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
 
 ## References
@@ -81,30 +56,6 @@ procedures.
 - [Taso et al. Anteroposterior compression of the spinal cord leading to cervical myelopathy: a finite element analysis. Comput Methods Biomech Biomed Engin 2015](http://www.tandfonline.com/doi/full/10.1080/10255842.2015.1069625)
 - [De Leener et al. Segmentation of the human spinal cord. MAGMA. 2016](https://www.ncbi.nlm.nih.gov/pubmed/26724926)
 - [Cohen-Adad et al. Functional Magnetic Resonance Imaging of the Spinal Cord: Current Status and Future Developments. Semin Ultrasound CT MR. 2016](http://www.sciencedirect.com/science/article/pii/S088721711630049X)
-
-## Citing spinalcordtoolbox
-
-When citing spinalcordtoolbox in academic papers and thesis, please use this BibTeX entry:
-
-    @article{DeLeener201724,
-    title = "SCT: Spinal Cord Toolbox, an open-source software for processing spinal cord \{MRI\} data ",
-    journal = "NeuroImage ",
-    volume = "145, Part A",
-    number = "",
-    pages = "24 - 43",
-    year = "2017",
-    note = "",
-    issn = "1053-8119",
-    doi = "https://doi.org/10.1016/j.neuroimage.2016.10.009",
-    url = "http://www.sciencedirect.com/science/article/pii/S1053811916305560",
-    author = "Benjamin De Leener and Simon Lévy and Sara M. Dupont and Vladimir S. Fonov and Nikola Stikov and D. Louis Collins and Virginie Callot and Julien Cohen-Adad",
-    keywords = "Spinal cord",
-    keywords = "MRI",
-    keywords = "Software",
-    keywords = "Template",
-    keywords = "Atlas",
-    keywords = "Open-source ",
-    }
 
 ## License
 

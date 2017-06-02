@@ -11,22 +11,31 @@ $(document).ready(function(){
     ele.style.marginLeft = "10px";
   }
 
+  function build_canvas(qc_details) {
+
+  }
+
+  function build_trials_menu(qc_details) {
+    var tpl_items = qc_details.trials.map(x=>`<li><a href="#"> ${x.title} </a></li>`).join('');
+    document.getElementById("trials-menu-list").innerHTML = tpl_items;
+  }
+
+//  $.getJSON('index.json').done(function(data) {
+//    qc_details = data;
+//    current_qc = qc_details.trials;
+//    document.title = qc_details.title;
+//    $("#qc-organization")[0].innerText = qc_details.organization;
+//    $("#qc-header")[0].innerText = qc_details.header;
+//    build_trials_menu(qc_details);
+//    build_canvas(qc_details);
+//  });
+
   $("table").on("click", "tr", function() {
     var index = $(this).index();
     var list = $("table").bootstrapTable('getData');
-    var item = list[index];
-    $("#sprite-img").attr("src", item.background_img).removeClass().addClass(item.orientation);
-    $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.orientation);
-    $(this).addClass('active').siblings().removeClass('active');
-    console.log(list[index]);
-  });
+    $("#sprite-img").attr("src", list[index].background_img);
+    $("#overlay-img").attr("src", list[index].overlay_img);
 
-  $('html').keydown( function(evt) {
-    if (evt.which == 39) {
-      $('table tr.active').next().click();
-    }
-    if (evt.which == 37) {
-      $('table tr.active').prev().click();
-    }
+    console.log(list[index]);
   });
 });

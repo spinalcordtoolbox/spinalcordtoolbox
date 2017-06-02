@@ -42,11 +42,11 @@ class Param:
     # The constructor
     def __init__(self):
         # self.path_template = path_sct+'/data/template/'
-        self.shift_AP_label_man = 35
-        self.size_AP_label_man = 9  #15
-        self.shift_IS_label_man = 15  #15
-        self.size_IS_label_man = 30  #30
-        self.size_RL_label_man = 1  #
+        self.shift_AP_initc2 = 35
+        self.size_AP_initc2 = 9  #15
+        self.shift_IS_initc2 = 15  #15
+        self.size_IS_initc2 = 30  #30
+        self.size_RL_initc2 = 1  #
         self.shift_AP = 32  #0#32  # shift the centerline towards the spine (in voxel).
         self.size_AP = 11  #41#11  # window size in AP direction (=y) (in voxel)
         self.size_RL = 1  #1 # window size in RL direction (=x) (in voxel)
@@ -104,9 +104,9 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value='int',
                       description='Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
                       mandatory=False)
-    parser.add_option(name="-label-man",
-                      type_value='int',
-                      description='Choose the label you want to initialize with, through an interactive window.',
+    parser.add_option(name="-initc2",
+                      type_value=None,
+                      description='Initialize by clicking on C2-C3 disc using interactive window.',
                       mandatory=False)
     parser.add_option(name="-initfile",
                       type_value='file',
@@ -138,11 +138,11 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
     parser.add_option(name="-param",
                       type_value=[[','], 'str'],
                       description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-                                  "shift_AP_label_man [mm]: AP shift for finding C2 disc. Default=" + str(param_default.shift_AP_label_man) + ".\n"
-                                  "size_AP_label_man [mm]: AP window size finding C2 disc. Default=" + str(param_default.size_AP_label_man) + ".\n"
-                                  "shift_IS_label_man [mm]: IS shift for finding C2 disc. Default=" + str(param_default.shift_IS_label_man) + ".\n"
-                                  "size_IS_label_man [mm]: IS window size finding C2 disc. Default=" + str(param_default.size_IS_label_man) + ".\n"
-                                  "size_RL_label_man [mm]: RL shift for size finding C2 disc. Default=" + str(param_default.size_RL_label_man) + ".\n"
+                                  "shift_AP_initc2 [mm]: AP shift for finding C2 disc. Default=" + str(param_default.shift_AP_initc2) + ".\n"
+                                  "size_AP_initc2 [mm]: AP window size finding C2 disc. Default=" + str(param_default.size_AP_initc2) + ".\n"
+                                  "shift_IS_initc2 [mm]: IS shift for finding C2 disc. Default=" + str(param_default.shift_IS_initc2) + ".\n"
+                                  "size_IS_initc2 [mm]: IS window size finding C2 disc. Default=" + str(param_default.size_IS_initc2) + ".\n"
+                                  "size_RL_initc2 [mm]: RL shift for size finding C2 disc. Default=" + str(param_default.size_RL_initc2) + ".\n"
                                   "shift_AP [mm]: AP shift of centerline for disc search. Default=" + str(param_default.shift_AP) + ".\n"
                                   "size_AP [mm]: AP window size for disc search. Default=" + str(param_default.size_AP) + ".\n"
                                   "size_RL [mm]: RL window size for disc search. Default=" + str(param_default.size_RL) + ".\n"
@@ -164,10 +164,6 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value=None,
                       description="display this help",
                       mandatory=False)
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
     return parser
 
 
@@ -178,7 +174,7 @@ def main(args=None):
     # initializations
     initz = ''
     initcenter = ''
-    label_man = -1
+    initc2 = 'auto'
     param = Param()
 
     # check user arguments
@@ -215,10 +211,8 @@ def main(args=None):
                 initz = [int(x) for x in arg_initfile[i + 1].split(',')]
             if arg_initfile[i] == '-initcenter':
                 initcenter = int(arg_initfile[i + 1])
-    if '-label-man' in arguments:
-        label_man = int(arguments['-label-man'])
-    else:
-        label_man= -1
+    if '-initc2' in arguments:
+        initc2 = 'manual'
     if '-param' in arguments:
         param.update(arguments['-param'][0])
     verbose = int(arguments['-v'])
@@ -308,7 +302,7 @@ def main(args=None):
         sct.run('sct_maths -i data_straightr.nii -laplacian 1 -o data_straightr.nii', verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, label_man=label_man, path_output=path_output)
+    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2, path_output=path_output)
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
@@ -340,25 +334,6 @@ def main(args=None):
         sct.printv('\nRemove temporary files...', verbose)
         sct.run('rm -rf ' + path_tmp)
 
-    if '-qc' in arguments:
-        qc_path = arguments['-qc']
-
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        qc_param = qc.Params(fname_in, 'sct_label_vertebrae', args, 'Sagittal', qc_path)
-        report = qc.QcReport(qc_param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.label_vertebrae, ])
-        def test(qslice):
-            return qslice.single()
-
-        labeled_seg_file = path_output + file_seg + '_labeled' + ext_seg
-        test(qcslice.Sagittal(fname_in, labeled_seg_file))
-        sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use the following command to see the results in a browser:')
-        sct.printv('sct_qc -folder %s' % qc_path, type='info')
-
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv('fslview ' + fname_in + ' ' + path_output + file_seg + '_labeled' + ' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
@@ -366,7 +341,7 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', label_man=-1, path_output='../'):
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', initc2='auto', path_output='../'):
     """
     Find intervertebral discs in straightened image using template matching
     :param fname:
@@ -456,29 +431,25 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
     sct.printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # if automatic mode, find C2/C3 disc
-    if init_disc == [] and label_man == -1:
+    if init_disc == [] and initc2 == 'auto':
         sct.printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_label_man, y=yc, yshift=param.shift_AP_label_man, ysize=param.size_AP_label_man, z=0, zshift=param.shift_IS_label_man, zsize=param.size_IS_label_man, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True, path_output=path_output)
+        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_initc2, y=yc, yshift=param.shift_AP_initc2, ysize=param.size_AP_initc2, z=0, zshift=param.shift_IS_initc2, zsize=param.size_IS_initc2, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_weighting=True, path_output=path_output)
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
-    if init_disc == [] and label_man > 0:
-        from sct_viewer import ClickViewerLabelVertebrae
-        from viewer2 import WindowLabelVertebrae
+    if init_disc == [] and initc2 == 'manual':
+        from sct_viewer import ClickViewer
         # reorient image to SAL to be compatible with viewer
         im_input_SAL = im_input.copy()
         im_input_SAL.change_orientation('SAL')
-        '''
-        viewer = ClickViewerLabelVertebrae(im_input_SAL, orientation_subplot=['sag', 'ax'])
+        viewer = ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'], title='Please click at intervertebral disc C2-C3')
         viewer.number_of_slices = 1
         pz = 1
         viewer.gap_inter_slice = int(10 / pz)
         viewer.calculate_list_slices()
         viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_label_vertebrae/attachment/label_vertebrae_viewer.png'
-        '''
-        viewer = WindowLabelVertebrae(im_input_SAL,wanted_label=label_man)
         # start the viewer that ask the user to enter a few points along the spinal cord
         mask_points = viewer.start()
         if mask_points:
