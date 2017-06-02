@@ -44,6 +44,7 @@ import os
 import shutil
 import sys
 import time
+import copy
 from math import exp
 
 import numpy as np
@@ -277,37 +278,15 @@ class SegmentGM:
         # go back to original directory
         os.chdir('..')
         printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
-        fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
-        fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
+        self.fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
+        self.fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
 
-        self.im_res_gmseg.setFileName(fname_res_gmseg)
-        self.im_res_wmseg.setFileName(fname_res_wmseg)
+        self.im_res_gmseg.setFileName(self.fname_res_gmseg)
+        self.im_res_wmseg.setFileName(self.fname_res_wmseg)
 
         self.im_res_gmseg.save()
         self.im_res_wmseg.save()
 
-        # save quality control and print info
-        if self.param_seg.type_seg == 'bin':
-            wm_col = 'Red'
-            gm_col = 'Blue'
-            b = '0,1'
-        else:
-            wm_col = 'Blue-Lightblue'
-            gm_col = 'Red-Yellow'
-            b = '0.4,1'
-
-        if self.param_seg.qc:
-            # output QC image
-            printv('\nSave quality control images...', self.param.verbose, 'normal')
-            im = Image(self.tmp_dir + self.param_seg.fname_im)
-            im.save_quality_control(plane='axial', n_slices=5, seg=self.im_res_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.param_seg.path_results)
-
-        printv('\nDone! To view results, type:', self.param.verbose)
-        printv('fslview ' + self.param_seg.fname_im_original + ' ' + fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col + ' -t 0.7 ' + fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', self.param.verbose, 'info')
-
-        if self.param.rm_tmp:
-            # remove tmp_dir
-            shutil.rmtree(self.tmp_dir)
 
     def copy_data_to_tmp(self):
         # copy input image
@@ -424,36 +403,32 @@ class SegmentGM:
             # get list of slices corresponding to the indexes
             list_dic_slices = [self.model.slices[j] for j in list_dic_indexes_by_slice[target_slice.id]]
             # average slices GM and WM
+            # WM is not used anymore here, but the average_gm_wm() function is used in other parts of the code that need both the GM and WM averages
             data_mean_gm, data_mean_wm = average_gm_wm(list_dic_slices)
             # set negative values to 0
             data_mean_gm[data_mean_gm < 0] = 0
-            data_mean_wm[data_mean_wm < 0] = 0
 
             if self.param_seg.type_seg == 'bin':
                 # binarize GM seg
                 data_mean_gm[data_mean_gm >= 0.5] = 1
                 data_mean_gm[data_mean_gm < 0.5] = 0
-                # binarize WM seg
-                data_mean_wm[data_mean_wm >= 0.5] = 1
-                data_mean_wm[data_mean_wm < 0.5] = 0
+
             # store segmentation into target_im
-            target_slice.set(gm_seg_m=data_mean_gm, wm_seg_m=data_mean_wm)
+            target_slice.set(gm_seg_m=data_mean_gm)
 
     def warp_back_seg(self, path_warp):
         # get 3D images from list of slices
         im_dest = self.get_im_from_list(np.array([target_slice.im for target_slice in self.target_im]))
         im_src_gm = self.get_im_from_list(np.array([target_slice.gm_seg_M for target_slice in self.target_im]))
-        im_src_wm = self.get_im_from_list(np.array([target_slice.wm_seg_M for target_slice in self.target_im]))
         #
         fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1) + 'warp_dic2target.nii.gz'
         interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
         # warp GM
         im_src_gm_reg = apply_transfo(im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
-        # warp WM
-        im_src_wm_reg = apply_transfo(im_src_wm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
+
         for i, target_slice in enumerate(self.target_im):
-            # set GM and WM for each slice
-            target_slice.set(gm_seg=im_src_gm_reg.data[i], wm_seg=im_src_wm_reg.data[i])
+            # set GM for each slice
+            target_slice.set(gm_seg=im_src_gm_reg.data[i])
 
     def post_processing(self):
         # DO INTERPOLATION BACK TO ORIGINAL IMAGE
@@ -464,9 +439,6 @@ class SegmentGM:
         # create res GM seg image
         im_res_gmseg = im_sc_seg_original_rpi.copy()
         im_res_gmseg.data = np.zeros(im_res_gmseg.data.shape)
-        # create res WM seg image
-        im_res_wmseg = im_sc_seg_original_rpi.copy()
-        im_res_wmseg.data = np.zeros(im_res_wmseg.data.shape)
 
         printv('  Interpolate result back into original space...', self.param.verbose, 'normal')
 
@@ -476,59 +448,54 @@ class SegmentGM:
             im_gmseg.data = np.zeros(im_gmseg.data.shape)
             im_gmseg.data = self.target_im[iz].gm_seg
 
-            # im wmseg for slice iz
-            im_wmseg = im_iz_preprocessed.copy()
-            im_wmseg.data = np.zeros(im_wmseg.data.shape)
-            im_wmseg.data = self.target_im[iz].wm_seg
+            im_res_slice, im_res_tot = (im_gmseg, im_res_gmseg)
+            # get reference image for this slice
+            # (use only one slice to accelerate interpolation)
+            im_ref = im_sc_seg_original_rpi.copy()
+            im_ref.data = im_ref.data[:, :, iz]
+            im_ref.dim = (nx_ref, ny_ref, 1, nt_ref, px_ref, py_ref, pz_ref, pt_ref)
+            # correct reference header for this slice
+            [[x_0_ref, y_0_ref, z_0_ref]] = im_ref.transfo_pix2phys(coordi=[[0, 0, iz]])
+            im_ref.hdr.as_analyze_map()['qoffset_x'] = x_0_ref
+            im_ref.hdr.as_analyze_map()['qoffset_y'] = y_0_ref
+            im_ref.hdr.as_analyze_map()['qoffset_z'] = z_0_ref
+            im_ref.hdr.set_sform(im_ref.hdr.get_qform())
+            im_ref.hdr.set_qform(im_ref.hdr.get_qform())
 
-            for im_res_slice, im_res_tot in [(im_gmseg, im_res_gmseg), (im_wmseg, im_res_wmseg)]:
-                # get reference image for this slice
-                # (use only one slice to accelerate interpolation)
-                im_ref = im_sc_seg_original_rpi.copy()
-                im_ref.data = im_ref.data[:, :, iz]
-                im_ref.dim = (nx_ref, ny_ref, 1, nt_ref, px_ref, py_ref, pz_ref, pt_ref)
-                # correct reference header for this slice
-                [[x_0_ref, y_0_ref, z_0_ref]] = im_ref.transfo_pix2phys(coordi=[[0, 0, iz]])
-                im_ref.hdr.as_analyze_map()['qoffset_x'] = x_0_ref
-                im_ref.hdr.as_analyze_map()['qoffset_y'] = y_0_ref
-                im_ref.hdr.as_analyze_map()['qoffset_z'] = z_0_ref
-                im_ref.hdr.set_sform(im_ref.hdr.get_qform())
-                im_ref.hdr.set_qform(im_ref.hdr.get_qform())
+            # set im_res_slice header with im_sc_seg_original_rpi origin
+            im_res_slice.hdr.as_analyze_map()['qoffset_x'] = x_0_ref
+            im_res_slice.hdr.as_analyze_map()['qoffset_y'] = y_0_ref
+            im_res_slice.hdr.as_analyze_map()['qoffset_z'] = z_0_ref
+            im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
+            im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
 
-                # set im_res_slice header with im_sc_seg_original_rpi origin
-                im_res_slice.hdr.as_analyze_map()['qoffset_x'] = x_0_ref
-                im_res_slice.hdr.as_analyze_map()['qoffset_y'] = y_0_ref
-                im_res_slice.hdr.as_analyze_map()['qoffset_z'] = z_0_ref
-                im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
-                im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
+            # get physical coordinates of center of sc
+            x_seg, y_seg = (im_sc_seg_original_rpi.data[:, :, iz] > 0).nonzero()
+            x_center, y_center = np.mean(x_seg), np.mean(y_seg)
+            [[x_center_phys, y_center_phys, z_center_phys]] = im_sc_seg_original_rpi.transfo_pix2phys(coordi=[[x_center, y_center, iz]])
 
-                # get physical coordinates of center of sc
-                x_seg, y_seg = (im_sc_seg_original_rpi.data[:, :, iz] > 0).nonzero()
-                x_center, y_center = np.mean(x_seg), np.mean(y_seg)
-                [[x_center_phys, y_center_phys, z_center_phys]] = im_sc_seg_original_rpi.transfo_pix2phys(coordi=[[x_center, y_center, iz]])
+            # get physical coordinates of center of square WITH im_res_slice WITH SAME ORIGIN AS im_sc_seg_original_rpi
+            sq_size_pix = int(self.param_data.square_size_size_mm / self.param_data.axial_res)
+            [[x_square_center_phys, y_square_center_phys, z_square_center_phys]] = im_res_slice.transfo_pix2phys(
+                coordi=[[int(sq_size_pix / 2), int(sq_size_pix / 2), 0]])
 
-                # get physical coordinates of center of square WITH im_res_slice WITH SAME ORIGIN AS im_sc_seg_original_rpi
-                sq_size_pix = int(self.param_data.square_size_size_mm / self.param_data.axial_res)
-                [[x_square_center_phys, y_square_center_phys, z_square_center_phys]] = im_res_slice.transfo_pix2phys(
-                    coordi=[[int(sq_size_pix / 2), int(sq_size_pix / 2), 0]])
+            # set im_res_slice header by adding center of SC and center of square (in the correct space) to origin
+            im_res_slice.hdr.as_analyze_map()['qoffset_x'] += x_center_phys - x_square_center_phys
+            im_res_slice.hdr.as_analyze_map()['qoffset_y'] += y_center_phys - y_square_center_phys
+            im_res_slice.hdr.as_analyze_map()['qoffset_z'] += z_center_phys
+            im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
+            im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
 
-                # set im_res_slice header by adding center of SC and center of square (in the correct space) to origin
-                im_res_slice.hdr.as_analyze_map()['qoffset_x'] += x_center_phys - x_square_center_phys
-                im_res_slice.hdr.as_analyze_map()['qoffset_y'] += y_center_phys - y_square_center_phys
-                im_res_slice.hdr.as_analyze_map()['qoffset_z'] += z_center_phys
-                im_res_slice.hdr.set_sform(im_res_slice.hdr.get_qform())
-                im_res_slice.hdr.set_qform(im_res_slice.hdr.get_qform())
-
-                # reshape data
-                im_res_slice.data = im_res_slice.data.reshape((sq_size_pix, sq_size_pix, 1))
-                # interpolate to reference image
-                interp = 0 if self.param_seg.type_seg == 'bin' else 1
-                im_res_slice_interp = im_res_slice.interpolate_from_image(im_ref, interpolation_mode=interp, border='nearest')
-                # set correct slice of total image with this slice
-                if len(im_res_slice_interp.data.shape) == 3:
-                    shape_x, shape_y, shape_z = im_res_slice_interp.data.shape
-                    im_res_slice_interp.data = im_res_slice_interp.data.reshape((shape_x, shape_y))
-                im_res_tot.data[:, :, iz] = im_res_slice_interp.data
+            # reshape data
+            im_res_slice.data = im_res_slice.data.reshape((sq_size_pix, sq_size_pix, 1))
+            # interpolate to reference image
+            interp = 0 if self.param_seg.type_seg == 'bin' else 1
+            im_res_slice_interp = im_res_slice.interpolate_from_image(im_ref, interpolation_mode=interp, border='nearest')
+            # set correct slice of total image with this slice
+            if len(im_res_slice_interp.data.shape) == 3:
+                shape_x, shape_y, shape_z = im_res_slice_interp.data.shape
+                im_res_slice_interp.data = im_res_slice_interp.data.reshape((shape_x, shape_y))
+            im_res_tot.data[:, :, iz] = im_res_slice_interp.data
         printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
 
         # PUT RES BACK IN ORIGINAL ORIENTATION
@@ -536,6 +503,9 @@ class SegmentGM:
         im_res_gmseg.save()
         im_res_gmseg = set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
 
+        # create res WM seg image
+        im_res_wmseg = im_sc_seg_original_rpi.copy()
+        im_res_wmseg.data = im_res_wmseg.data - im_res_gmseg.data
         im_res_wmseg.setFileName('res_wmseg.nii.gz')
         im_res_wmseg.save()
         im_res_wmseg = set_orientation(im_res_wmseg, self.info_preprocessing['orientation'])
@@ -745,13 +715,35 @@ def main(args=None):
     if '-v' in arguments:
         param.verbose = arguments['-v']
 
+    start_time = time.time()
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
-    start = time.time()
     seg_gm.segment()
-    end = time.time()
-    t = end - start
-    printv('Done in ' + str(int(round(t / 60))) + ' min, ' + str(round(t % 60, 1)) + ' sec', param.verbose, 'info')
+    elapsed_time = time.time() - start_time
+    printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
+    # save quality control and print info
+    if param_seg.type_seg == 'bin':
+        wm_col = 'Red'
+        gm_col = 'Blue'
+        b = '0,1'
+    else:
+        wm_col = 'Blue-Lightblue'
+        gm_col = 'Red-Yellow'
+        b = '0.4,1'
+
+    if param_seg.qc:
+        # output QC image
+        printv('\nSave quality control images...', param.verbose, 'normal')
+        im = Image(seg_gm.tmp_dir + param_seg.fname_im)
+        im.save_quality_control(plane='axial', n_slices=5, seg=seg_gm.im_res_gmseg, thr=float(b.split(',')[0]),
+                                cmap_col='red-yellow', path_output=param_seg.path_results)
+
+    if param.rm_tmp:
+        # remove tmp_dir
+        shutil.rmtree(seg_gm.tmp_dir)
+
+    printv('\nDone! To view results, type:', param.verbose)
+    printv('fslview ' + param_seg.fname_im_original + ' ' + seg_gm.fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col + ' -t 0.7 ' + seg_gm.fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', param.verbose, 'info')
 
 if __name__ == "__main__":
     main()

@@ -509,9 +509,9 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
     sct.printv('\nTo view results, type:', verbose)
-    sct.printv('fslview ' + fname_dest + ' ' + fname_src2dest + ' &', verbose, 'info')
     if generate_warpinv:
-        sct.printv('fslview ' + fname_src + ' ' + fname_dest2src + ' &\n', verbose, 'info')
+        sct.printv('fslview ' + fname_src + ' ' + fname_dest2src + ' &', verbose, 'info')
+    sct.printv('fslview ' + fname_dest + ' ' + fname_src2dest + ' &\n', verbose, 'info')
 
 
 # register images

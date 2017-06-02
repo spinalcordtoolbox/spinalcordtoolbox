@@ -31,6 +31,7 @@ from msct_parser import Parser
 import msct_shape
 import pandas as pd
 from msct_types import Centerline
+from spinalcordtoolbox.centerline import optic
 
 
 class Param:
@@ -278,7 +279,8 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
                      'equivalent_diameter',
                      'ratio_minor_major',
                      'eccentricity',
-                     'solidity']
+                     'solidity',
+                     'symmetry']
 
     property_list, shape_properties = msct_shape.compute_properties_along_centerline(fname_seg_image=fname_segmentation,
                                                                                      property_list=property_list,
@@ -588,6 +590,11 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         file_results.write(str(int(i)) + ' ' + str(x_centerline_voxel[i - min_z_index]) + ' ' + str(y_centerline_voxel[i - min_z_index]) + '\n')
     file_results.close()
 
+    # create a .roi file
+    fname_roi_centerline = optic.centerline2roi(fname_image='centerline_RPI.nii.gz',
+                                                folder_output='./',
+                                                verbose=verbose)
+
     # come back to parent folder
     os.chdir('..')
 
@@ -595,6 +602,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp + 'centerline.nii.gz', file_data + '_centerline.nii.gz')
     sct.generate_output_file(path_tmp + 'centerline.txt', file_data + '_centerline.txt')
+    sct.generate_output_file(path_tmp + fname_roi_centerline, file_data + '_centerline.roi')
 
     # Remove temporary files
     if remove_temp_files:

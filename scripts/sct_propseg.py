@@ -21,6 +21,8 @@ import numpy as np
 from sct_image import orientation
 import nibabel as nib
 
+from spinalcordtoolbox.centerline import optic
+
 
 def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0, remove_temp_files=1, verbose=0):
     """
@@ -300,11 +302,21 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
                       mandatory=False)
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=os.path.expanduser('~/qc_data'))
+    parser.add_option(name='-noqc',
+                      type_value=None,
+                      description='Prevent the generation of the QC report',
+                      mandatory=False)
     return parser
+
 
 if __name__ == "__main__":
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    args = sys.argv[1:]
+    arguments = parser.parse(args)
 
     fname_input_data = arguments["-i"]
     fname_data = os.path.abspath(fname_input_data)
@@ -363,6 +375,7 @@ if __name__ == "__main__":
     # Helping options
     use_viewer = None
     use_optic = True  # enabled by default
+    init_option = None
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
             use_viewer = "centerline"
@@ -372,7 +385,8 @@ if __name__ == "__main__":
             cmd += " -init-centerline " + str(arguments["-init-centerline"])
             use_optic = False
     if "-init" in arguments:
-        cmd += " -init " + str(arguments["-init"])
+        init_option = float(arguments["-init"])
+        #cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
@@ -421,10 +435,9 @@ if __name__ == "__main__":
         cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
         sct.run(cmd_image, verbose=False)
 
-        from sct_viewer import ClickViewer
+        from sct_viewer import ClickViewerPropseg
         image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
-        viewer = ClickViewer(image_input_reoriented)
-        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
+        viewer = ClickViewerPropseg(image_input_reoriented)
         if use_viewer == "mask":
             viewer.input_type = 'mask'
             viewer.number_of_slices = 3
@@ -434,6 +447,7 @@ if __name__ == "__main__":
 
             if '-init' in arguments:
                 starting_slice = arguments['-init']
+                cmd += " -init " + str(arguments["-init"])
 
                 # starting_slice can be provided as a ratio of the number of slices
                 # we assume slice number/ratio is in RPI orientation, which is the inverse of the one used in viewer (SAL)
@@ -469,70 +483,22 @@ if __name__ == "__main__":
         else:
             sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
 
+    # If using OptiC, enabled by default
     elif use_optic:
-        sct.printv('Detecting the spinal cord using OptiC', verbose=verbose)
-        image_input_orientation = orientation(image_input, get=True, verbose=False)
-        path_tmp_optic = sct.tmp_create(verbose=0)
-
-        shutil.copy(fname_data, path_tmp_optic)
-        os.chdir(path_tmp_optic)
-
-        # convert image data type to int16, as required by opencv (backend in OptiC)
-        image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
-        cmd_type = 'sct_image -i "%s" -o "%s" -type int16 -v 0' % \
-                   (file_data + ext_data, image_int_filename)
-        sct.run(cmd_type, verbose=0)
-
-        # reorient the input image to RPI + convert to .nii
-        reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
-        img_filename = ''.join(sct.extract_fname(reoriented_image_filename)[:2])
-        reoriented_image_filename_nii = img_filename + '.nii'
-        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % \
-                    (image_int_filename, reoriented_image_filename_nii)
-        sct.run(cmd_reorient, verbose=0)
-
-        # call the OptiC method to generate the spinal cord centerline
-        optic_input = img_filename
-        optic_filename = img_filename + '_optic'
-        # get path of the toolbox
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
-        path_classifier = path_sct + '/data/optic_models/' + contrast_type + '_model'
-        # path_classifier = path_sct + '/bin/' + contrast_type + '_model'
-        # os.chdir(path_sct + '/data/models')
-        os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-        cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
-                    (path_classifier, optic_input, optic_filename)
-        sct.run(cmd_optic, verbose=0)
+        path_classifier = os.path.join(path_sct,
+                                       'data/optic_models',
+                                       '{}_model'.format(contrast_type))
 
-        # convert .img and .hdr files to .nii.gz
-        optic_hdr_filename = img_filename + '_optic_ctr.hdr'
-        centerline_optic_RPI_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic_RPI")
-        img = nib.load(optic_hdr_filename)
-        nib.save(img, centerline_optic_RPI_filename)
+        init_option_optic, optic_filename = optic.detect_centerline(fname_data,
+                                                                    contrast_type, path_classifier,
+                                                                    folder_output, remove_temp_files,
+                                                                    init_option, verbose=verbose)
+        if init_option is not None:
+            cmd += " -init " + str(init_option_optic)
 
-        # reorient the output image to initial orientation
-        centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
-        cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
-                       (centerline_optic_RPI_filename, centerline_optic_filename, image_input_orientation)
-        sct.run(cmd_reorient, verbose=0)
-
-        # copy centerline to parent folder
-        sct.printv('Copy output to ' + folder_output, verbose=0)
-        if os.path.isabs(folder_output):
-            shutil.copy(centerline_optic_filename, folder_output)
-        else:
-            shutil.copy(centerline_optic_filename, '../' + folder_output)
-
-        # update to PropSeg command line with the new centerline created by OptiC
-        cmd += " -init-centerline " + folder_output + centerline_optic_filename
-
-        # return to initial folder
-        os.chdir('..')
-
-        # delete temporary folder
-        if remove_temp_files:
-            shutil.rmtree(path_tmp_optic, ignore_errors=True)
+        cmd += " -init-centerline {}".format(optic_filename)
 
     # enabling centerline extraction by default
     cmd += ' -centerline-binary'
@@ -562,13 +528,8 @@ if __name__ == "__main__":
         if use_viewer:
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
-<<<<<<< HEAD
-
-    if '-qc' in arguments:
+    if '-qc' in arguments and not arguments.get('-noqc', False):
         qc_path = arguments['-qc']
-        """
 
         import spinalcordtoolbox.reports.qc as qc
         import spinalcordtoolbox.reports.slice as qcslice
@@ -576,15 +537,14 @@ if __name__ == "__main__":
         param = qc.Params(fname_input_data, 'sct_propseg', args, 'Axial', qc_path)
         report = qc.QcReport(param, '')
 
-
         @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
         def test(qslice):
             return qslice.mosaic()
 
-        test(qcslice.Axial(fname_input_data, fname_seg))
+        test(qcslice.Axial(Image(fname_input_data), Image(fname_seg)))
         sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
         sct.printv('Use the following command to see the results in a browser:')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
-        """
-=======
->>>>>>> parent of 8e5ec64... Merge branch 'viewerQt' into bdl_PAM50
+
+    sct.printv('\nDone! To view results, type:', verbose)
+    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')

@@ -60,7 +60,13 @@ paramreg = ParamregMultiStep([step0, step1, step2])
 def get_parser():
     param = Param()
     parser = Parser(__file__)
-    parser.usage.set_description('Register anatomical image to the template.')
+    parser.usage.set_description('Register anatomical image to the template.\n\n'
+      'To register a subject to the template, try the default command:\n'
+      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n'
+      'If this default command does not produce satisfactory results, please see: https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
+      'To register the template to a subject, you need to use "-ref subject". Example below:\n'
+      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2'
+      )
     parser.add_option(name="-i",
                       type_value="file",
                       description="Anatomical image.",
@@ -128,7 +134,14 @@ def get_parser():
                       mandatory=False,
                       default_value=param.verbose,
                       example=['0', '1', '2'])
-
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=os.path.expanduser('~/qc_data'))
+    parser.add_option(name='-noqc',
+                      type_value=None,
+                      description='Prevent the generation of the QC report',
+                      mandatory=False)
     return parser
 
 
@@ -138,7 +151,9 @@ def main():
     parser = get_parser()
     param = Param()
 
-    arguments = parser.parse(sys.argv[1:])
+    args = sys.argv[1:]
+
+    arguments = parser.parse(args)
 
     # get arguments
     fname_data = arguments['-i']
@@ -200,6 +215,7 @@ def main():
     sct.check_file_exist(fname_template, verbose)
     sct.check_file_exist(fname_template_vertebral_labeling, verbose)
     sct.check_file_exist(fname_template_seg, verbose)
+    path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # print arguments
     sct.printv('\nCheck parameters:', verbose)
@@ -213,12 +229,12 @@ def main():
     sct.create_folder(param.path_qc)
 
     # check if data, segmentation and landmarks are in the same space
-    sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
-    path_data, file_data, ext_data = sct.extract_fname(fname_data)
-    if not sct.check_if_same_space(fname_data, fname_seg):
-        sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
-    if not sct.check_if_same_space(fname_data, fname_landmarks):
-        sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    # JULIEN 2017-04-25: removed because of issue #1168
+    # sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
+    # if not sct.check_if_same_space(fname_data, fname_seg):
+    #     sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
+    # if not sct.check_if_same_space(fname_data, fname_landmarks):
+    #     sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
 
     # check input labels
     labels = check_labels(fname_landmarks)
@@ -531,6 +547,25 @@ def main():
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
+
+    if '-qc' in arguments and not arguments.get('-noqc', False):
+        qc_path = arguments['-qc']
+
+        import spinalcordtoolbox.reports.qc as qc
+        import spinalcordtoolbox.reports.slice as qcslice
+
+        qc_param = qc.Params(fname_data, 'sct_register_to_template', args, 'Sagittal', qc_path)
+        report = qc.QcReport(qc_param, '')
+
+        @qc.QcImage(report, 'none', [qc.QcImage.no_seg_seg])
+        def test(qslice):
+            return qslice.single()
+
+        fname_template2anat = path_output + 'template2anat' + ext_data
+        test(qcslice.SagittalTemplate2Anat(Image(fname_data), Image(fname_template2anat), Image(fname_seg)))
+        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
+        sct.printv('Use the following command to see the results in a browser')
+        sct.printv('sct_qc -folder %s' % qc_path, type='info')
 
     # to view results
     sct.printv('\nTo view results, type:', verbose)

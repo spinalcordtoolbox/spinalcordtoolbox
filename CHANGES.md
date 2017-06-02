@@ -1,47 +1,120 @@
 # CHANGES TO RELEASE
 
-##Release 3.0.1 (2017-03-22)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.0...v3.0.1)
-### %FEATURE
- - (216042066) Merge multiple source images onto destination space. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1220)
+## v3.0.4 (2017-05-19)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.3...v3.0.4)
 
-## Release 3.0.0 (2017-03-15)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta32...None)
+**BUG**
+
+ - Normalize the init value to between 0 and 1 for propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1324)
+ - Moved the QC assets into the spinalcordtoolbox package [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1311)
+ - Improved the formatting of the changelog generator [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1303)
+ - Show remaining time status for downloads [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1299)
+
+**ENHANCEMENT**
+
+ - Added the command parameter `-noqc` [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1313)
+ - Add dimension sanity checking for input file padding op [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1304)
+
+ - **FEATURE**
+
+ - Introducing spinal cord shape symmetry [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1332)
+
+ - **TESTING**
+
+ - Validate the function name in sct_testing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1305)
+ - Fix regression bug in sct_testing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1310)
+
+## v3.0.3 (2017-04-26)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.2...v3.0.3)
+
+**BUG**
+
+ - Fixes case if data image, segmentation and labels are not in the same space [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1292)
+ - Fix the handling of the path of the QC report. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1285)
+ - Change the format of the SCT version. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1284)
+ - changed the DISPLAY variable due to conflicts with FSLView in batch_processing.sh [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1281)
+
+**INSTALLATION**
+
+ - Added course_hawaii17 into the list of available dataset from sct_download_data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1291)
+ - Incorrect variable when installing SCT in a different directory [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1289)
+
+**DOCUMENTATION**
+
+ - Added description with examples in the register_to_template command (#1262) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1287)
+ - Fixed typo in register_multimodal command [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1276)
+
+## v3.0.2 (2017-04-20)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.1...v3.0.2)
+
+**BUG**
+
+ - Force the SCT environment to use only the python modules installed by SCT [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1266)
+ - Fixing disabling options on straightening [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1255)
+ - Fixed tSNR computation of the mean and std of the input image [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1245)
+ - Increased the data type size from the default int16 to int32 to avoid overflow issues in sct_process_segmentation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1224)
+ - Fixed data type issue in sct_process_segmentation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1223)
+
+**ENHANCEMENT**
+
+ - Improvements to denoising on sct_segment_graymatter [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1265)
+ - Extend the functionality of sct_viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1254)
+ - Add OptiC for improved spinal cord detection [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1253)
+ - Introduction spinalcordtoolbox python setup file [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1243)
+
+**FEATURE**
+
+ - Add option -rms to perform root mean square (instead of mean) in sct_maths [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1256)
+ - Introduce QC report generation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1251)
+ - Introduce the QC html viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1250)
+
+**TESTING**
+
+ - Introduce the QC html viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1250)
+ - Introduce python package configuration file (setup.cfg) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1242)
+
+## v3.0.1 (2017-03-22)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.0...v3.0.1)
+### FEATURE
+ - Merge multiple source images onto destination space. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1220)
+
+## v3.0.0 (2017-03-15)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta32...v3.0.0)
 ### BUG
- - (213911156) Modifying the type of coordinates for vertebral matching [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1206)
- - (212577204) Removing discontinuities at edges on segmentation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1196)
- - (211176555) BUG: computing centreline using physical coordinates instead of voxel… [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1189)
- - (208537967) Fix issue #1172: -vertfile as an optional parameter [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1173)
- - (207979967) Improvements to the viewer of sct_propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1169)
- - (207253627) Removed confusion with command variables when using PropSeg viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1161)
- - (207088109) Patch sct_register_to_template with -ref subject [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1158)
- - (204162354) zero voxels no more included when computing MI + new flag to compute normalized MI [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1136)
+ - Modifying the type of coordinates for vertebral matching [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1206)
+ - Removing discontinuities at edges on segmentation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1196)
+ - BUG: computing centreline using physical coordinates instead of voxel… [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1189)
+ - Fix issue #1172: -vertfile as an optional parameter [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1173)
+ - Improvements to the viewer of sct_propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1169)
+ - Removed confusion with command variables when using PropSeg viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1161)
+ - Patch sct_register_to_template with -ref subject [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1158)
+ - zero voxels no more included when computing MI + new flag to compute normalized MI [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1136)
 ### ENHANCEMENT
- - (210324462) Changed default threshold_distance from 2.5 to 10 to avoid edge effect [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1183)
- - (209209738) Adapt sct_create_mask and sct_label_utils to 2D data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1180)
- - (207979967) Improvements to the viewer of sct_propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1169)
+ - Changed default threshold_distance from 2.5 to 10 to avoid edge effect [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1183)
+ - Adapt sct_create_mask and sct_label_utils to 2D data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1180)
+ - Improvements to the viewer of sct_propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1169)
 ### TESTING
- - (210884964) OPT: display mean and std instead of mean twice [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1187)
+ - OPT: display mean and std instead of mean twice [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1187)
 
 ## 3.0_beta32 (2017-02-10)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0_beta31...v3.0_beta32)
 ### BUG
- - (#206218460) BUG: install_sct: fixed PATH issue (#1153): closed at 2017-02-08 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1154)
- - (#205166212) BUG: compute_snr: fixed variable name: closed at 2017-02-03 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1148)
- - (#204452335) Changed the algorithm to fetch the download filename: closed at 2017-02-03 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1146)
- - (#204170506) Copy header of input file to ensure qform is unchanged: closed at 2017-01-31 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1137)
- - (#204162354) zero voxels no more included when computing MI + new flag to compute normalized MI: closed at 2017-02-01 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1136)
- - (#204130142) Downloading the binaries using the python module instead of CURL: closed at 2017-01-30 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1134)
- - (#204122317) [sct_segment_graymatter] correct background value: closed at 2017-01-31 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1133)
- - (#201383821) Fixing indexes issue on Travis OSX: closed at 2017-01-17 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1115)
- - (#201307094) REF: display spinal cord length when required (full spinal cord): closed at 2017-01-17 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1112)
- - (#201032802) Adding rules for in-segmentation errors: closed at 2017-01-17 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1110)
+ - BUG: install_sct: fixed PATH issue (#1153): closed at 2017-02-08 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1154)
+ - BUG: compute_snr: fixed variable name: closed at 2017-02-03 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1148)
+ - Changed the algorithm to fetch the download filename: closed at 2017-02-03 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1146)
+ - Copy header of input file to ensure qform is unchanged: closed at 2017-01-31 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1137)
+ - zero voxels no more included when computing MI + new flag to compute normalized MI: closed at 2017-02-01 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1136)
+ - Downloading the binaries using the python module instead of CURL: closed at 2017-01-30 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1134)
+ - [sct_segment_graymatter] correct background value: closed at 2017-01-31 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1133)
+ - Fixing indexes issue on Travis OSX: closed at 2017-01-17 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1115)
+ - REF: display spinal cord length when required (full spinal cord): closed at 2017-01-17 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1112)
+ - Adding rules for in-segmentation errors: closed at 2017-01-17 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1110)
 ### ENHANCEMENT
- - (#205619801) Generate a changelog from GitHub: closed at 2017-02-10 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1152)
- - (#204651349) OPT: maths: visu only produced if verbose=2: closed at 2017-02-02 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1147)
+ - Generate a changelog from GitHub: closed at 2017-02-10 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1152)
+ - OPT: maths: visu only produced if verbose=2: closed at 2017-02-02 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1147)
 ### TESTING
- - (#204441260) Add message to user when spinal cord is not detected and verbose improvement for testing: closed at 2017-02-01 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1145)
- - (#201891816) Display results of isct_test_function: closed at 2017-01-20 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1117)
+ - Add message to user when spinal cord is not detected and verbose improvement for testing: closed at 2017-02-01 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1145)
+ - Display results of isct_test_function: closed at 2017-01-20 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1117)
 
 ## 3.0_beta31 (2017-01-16)
 - BUG: **sct_process_segmentation** display spinal cord length when required (full spinal cord) (#1112)
@@ -54,7 +127,7 @@
 - BUG: **sct_register_graymatter**: fixed empty inverse warping field (#1068)
 - OPT: **sct_label_vertebrae**: now outputing verbose=2 pics in ofolder (#1094)
 - OPT: **sct_straighten_spinalcord**: fixed Reduce required RAM (#979)
-- OPT: **sct_straighten_spinalcord**: removes accuracy computation by default (#1075) 
+- OPT: **sct_straighten_spinalcord**: removes accuracy computation by default (#1075)
 - OPT: **sct_propseg**: improve robustness towards exception (#207)
 - OPT: **isct_test_function**: send email when finished (#1081)
 - OPT: **isct_test_function**: removed color tags on log entries  (#1035)
@@ -203,7 +276,7 @@
   - N.B. flag "-m" has been replaced by "-s"
 - OPT: **sct_register_multimodal**: allows more flexibility by imposing only one stage. Several stages can be run sequentially and then transformations can be concatenated.
   - N.B. flags "-s" and "-t" were replaced with "-iseg" and "-dseg" respectively
-- OPT: **sct_extract_metric**: 
+- OPT: **sct_extract_metric**:
   - new methods for extraction: maximum likelihood and maximum a posteriori, which take into account partial volume effect
   - now possible to specify global regions for extraction with flag -l: wm, gm, sc
   - now possible to include a bunch of labels using ":". Example: 2:29
