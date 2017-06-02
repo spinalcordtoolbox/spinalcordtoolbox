@@ -230,15 +230,15 @@ class Centerline:
     def compute_length(self):
         for i in range(0, self.number_of_points - 1):
             distance = sqrt((self.points[i][0] - self.points[i + 1][0]) ** 2 +
-                            (self.points[i][0] - self.points[i + 1][0]) ** 2 +
-                            (self.points[i][0] - self.points[i + 1][0]) ** 2)
+                            (self.points[i][1] - self.points[i + 1][1]) ** 2 +
+                            (self.points[i][2] - self.points[i + 1][2]) ** 2)
             self.length += distance
             self.progressive_length.append(distance)
             self.incremental_length.append(self.incremental_length[-1] + distance)
         for i in range(self.number_of_points - 1, 0, -1):
             distance = sqrt((self.points[i][0] - self.points[i - 1][0]) ** 2 +
-                            (self.points[i][0] - self.points[i - 1][0]) ** 2 +
-                            (self.points[i][0] - self.points[i - 1][0]) ** 2)
+                            (self.points[i][1] - self.points[i - 1][1]) ** 2 +
+                            (self.points[i][2] - self.points[i - 1][2]) ** 2)
             self.progressive_length_inverse.append(distance)
             self.incremental_length_inverse.append(self.incremental_length_inverse[-1] + distance)
 
