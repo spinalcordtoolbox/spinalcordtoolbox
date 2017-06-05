@@ -1837,7 +1837,7 @@ class ControlButtonsTest(ControlButtonsCore):
         self.bool_save_png_txt=bool_save_as_png
         self.dict_save_niftii=dict_save_niftii
         self.window_widget=window_widget
-        self.output_name_file='dl_label_vertebrae_gt/'
+        self.output_name_file=os.getcwd()+'/dl_label_vertebrae_gt/'
 
         self.add_save_options()
         self.add_skip_button()
