@@ -994,6 +994,17 @@ def warp_segmentation(contrast):
         sct.run('nii2mnc ' + subject_name + '_' + contrast + '_seg_straight.nii.gz' + ' ' + folder_output_mnc + subject_name + '_' + contrast + '_seg.mnc')
 
 
+def create_mask_template():
+    subject_name = list_subjects[0]
+    template = Image(PATH_OUTPUT + 'final/' + subject_name + '_t1.nii.gz')
+    template.data *= 0.0
+    template.data += 1.0
+    template.setFileName(PATH_OUTPUT + 'final/template_mask.nii.gz')
+    template.save()
+
+    folder_output = PATH_OUTPUT + 'mnc/'
+    sct.run('nii2mnc ' + PATH_OUTPUT + 'final/template_mask.nii.gz ' + ' ' + folder_output + 'template_mask.mnc')
+
 
 def convert_nii2mnc(contrast):
     for subject_name in list_subjects:
@@ -1002,6 +1013,9 @@ def convert_nii2mnc(contrast):
         fname_im_output = subject_name + '_' + contrast + '.mnc'
 
         sct.run('nii2mnc ' + PATH_OUTPUT + 'final/' + fname_image + ' ' + folder_output + fname_im_output)
+
+
+
 
 
 #clean_segmentation('t1')
@@ -1017,12 +1031,13 @@ def convert_nii2mnc(contrast):
 #convert_nii2mnc(contrast='t1')
 #warp_segmentation('t1')
 
-
+#create_mask_template()
 #folder = '/mnt/parallel_scratch_mp2_wipe_on_august_2017/jcohen/bedelb/template_generation_t1/data/'
 folder = '/gs/project/rrp-355-aa/data/'
 contrast = 't1'
 for subject_name in list_subjects:
-    print folder + subject_name + '_' + contrast + '.mnc,' + folder + subject_name + '_' + contrast + '_seg.mnc'
+    #print folder + subject_name + '_' + contrast + '.mnc,' + folder + subject_name + '_' + contrast + '_seg.mnc'
+    print folder + subject_name + '_' + contrast + '.mnc,' + folder + 'template_mask.mnc'
 
 
 """
