@@ -278,7 +278,6 @@ def get_parser():
                       description="Number of CPU used for testing. 0: no multiprocessing. If not provided, "
                                   "it uses all the available cores.",
                       mandatory=False,
-                      default_value=1,
                       example='42')
 
     parser.add_option(name="-log",
