@@ -494,10 +494,12 @@ if __name__ == "__main__":
                                        'data/optic_models',
                                        '{}_model'.format(contrast_type))
 
-        optic_filename = optic.detect_centerline(fname_data, init_option,
-                                                 contrast_type, path_classifier,
-                                                 folder_output, remove_temp_files,
-                                                 verbose=verbose)
+        init_option_optic, optic_filename = optic.detect_centerline(fname_data,
+                                                                    contrast_type, path_classifier,
+                                                                    folder_output, remove_temp_files,
+                                                                    init_option, verbose=verbose)
+        if init_option is not None:
+            cmd += " -init " + str(init_option_optic)
 
         cmd += " -init-centerline {}".format(optic_filename)
 
