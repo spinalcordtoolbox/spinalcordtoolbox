@@ -398,12 +398,8 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
-  # reinstall numpy at the end to prevent a conda bug
-  if [[ $OS == linux ]]; then
-    # Fix Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so or libmkl_def.so.
-    # on certain linux distribution
-    conda install -fy numpy
-  fi
+  # reinstall numpy at the end to prevent some bugs
+  conda install -fy numpy=1.12.1
 
 fi
 
