@@ -400,7 +400,7 @@ else
   fi
   # reinstall numpy at the end to prevent some bugs
   conda install -fy numpy=1.12.1
-
+  conda install -y -c conda-forge pyside=1.2.4
 fi
 
 
