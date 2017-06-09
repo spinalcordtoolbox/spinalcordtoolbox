@@ -1,5 +1,16 @@
 # CHANGES TO RELEASE
 
+## v3.0.5 (2017-06-09)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.4...v3.0.5)
+
+**BUG**
+
+ - Fixing an issue introduced with the sct_get_centerline. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1338)
+
+**FEATURE**
+
+ - Introduce a pipeline to use the HPC architecture [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1260)
+
 ## v3.0.4 (2017-05-19)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.3...v3.0.4)
 
