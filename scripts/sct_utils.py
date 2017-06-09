@@ -85,6 +85,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
+        # Watch out for deadlock!!!
         output = process.stdout.readline()
         if output == '' and process.poll() is not None:
             break
@@ -231,6 +232,48 @@ class Timer:
         else:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
+
+class ForkStdoutToFile(object):
+    """Use to redirect stdout to file
+    Default mode is to send stdout to file AND to terminal
+
+    """
+    def __init__(self, filename="{}.log".format(__file__), to_file_only=False):
+        self.terminal = sys.stdout
+        self.log = open(filename, "a")
+        self.filename = filename
+        self.to_file_only = False
+        sys.stdout = self
+
+    def __del__(self):
+        self.pause()
+        self.close()
+
+    def pause(self):
+        sys.stdout = self.terminal
+
+    def restart(self):
+        sys.stdout = self
+
+    def write(self, message):
+        if not self.to_file_only:
+            self.terminal.write(message)
+        self.log.write(message)
+
+    def close(self):
+        self.log.close()
+
+    def read(self):
+        with open(self.filename, "r") as fp:
+            fp.read()
+
+    def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
+        self.close()
+        if attachment:
+            filename = self.filename
+        else:
+            filename = None
+        send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
 
 #=======================================================================================================================
 # extract_fname

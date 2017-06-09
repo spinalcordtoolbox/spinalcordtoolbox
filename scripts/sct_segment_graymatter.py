@@ -203,6 +203,7 @@ class ParamSeg:
         # TODO = find the best thr
 
         self.type_seg = 'prob'  # 'prob' or 'bin'
+        self.thr_bin = 0.5
         self.ratio = '0'  # '0', 'slice' or 'level'
 
         self.qc = True
@@ -409,11 +410,6 @@ class SegmentGM:
             # set negative values to 0
             data_mean_gm[data_mean_gm < 0] = 0
 
-            if self.param_seg.type_seg == 'bin':
-                # binarize GM seg
-                data_mean_gm[data_mean_gm >= 0.5] = 1
-                data_mean_gm[data_mean_gm < 0.5] = 0
-
             # store segmentation into target_im
             target_slice.set(gm_seg_m=data_mean_gm)
 
@@ -423,7 +419,7 @@ class SegmentGM:
         im_src_gm = self.get_im_from_list(np.array([target_slice.gm_seg_M for target_slice in self.target_im]))
         #
         fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1) + 'warp_dic2target.nii.gz'
-        interpolation = 'nn' if self.param_seg.type_seg == 'bin' else 'linear'
+        interpolation = 'linear'
         # warp GM
         im_src_gm_reg = apply_transfo(im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
 
@@ -490,25 +486,37 @@ class SegmentGM:
             # reshape data
             im_res_slice.data = im_res_slice.data.reshape((sq_size_pix, sq_size_pix, 1))
             # interpolate to reference image
-            interp = 0 if self.param_seg.type_seg == 'bin' else 1
+            interp = 1
             im_res_slice_interp = im_res_slice.interpolate_from_image(im_ref, interpolation_mode=interp, border='nearest')
             # set correct slice of total image with this slice
             if len(im_res_slice_interp.data.shape) == 3:
                 shape_x, shape_y, shape_z = im_res_slice_interp.data.shape
                 im_res_slice_interp.data = im_res_slice_interp.data.reshape((shape_x, shape_y))
             im_res_tot.data[:, :, iz] = im_res_slice_interp.data
-        printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
 
-        # PUT RES BACK IN ORIGINAL ORIENTATION
-        im_res_gmseg.setFileName('res_gmseg.nii.gz')
-        im_res_gmseg.save()
-        im_res_gmseg = set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
+        if self.param_seg.type_seg == 'bin':
+            # binarize GM seg
+            data_gm = im_res_gmseg.data
+            data_gm[data_gm >= self.param_seg.thr_bin] = 1
+            data_gm[data_gm < self.param_seg.thr_bin] = 0
+            im_res_gmseg.data = data_gm
 
-        # create res WM seg image
+        # create res WM seg image from GM and SC
         im_res_wmseg = im_sc_seg_original_rpi.copy()
         im_res_wmseg.data = im_res_wmseg.data - im_res_gmseg.data
-        im_res_wmseg.setFileName('res_wmseg.nii.gz')
+
+        # Put res back in original orientation
+        printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
+        fname_gmseg = 'res_gmseg.nii.gz'
+        fname_wmseg = 'res_wmseg.nii.gz'
+
+        im_res_gmseg.setFileName(fname_gmseg)
+        im_res_gmseg.save()
+
+        im_res_wmseg.setFileName(fname_wmseg)
         im_res_wmseg.save()
+
+        im_res_gmseg = set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
         im_res_wmseg = set_orientation(im_res_wmseg, self.info_preprocessing['orientation'])
 
         return im_res_gmseg, im_res_wmseg
