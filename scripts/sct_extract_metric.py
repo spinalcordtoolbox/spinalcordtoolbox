@@ -370,7 +370,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         if fname_mask_weight:  # if the flag -mask-weighted was specified,
             im_weight.data, slices_list = remove_slices(im_weight.data, slices_of_interest)
     else:
-        slices_list = range(0, nz)
+        slices_list = np.arange(nz).tolist()
 
     # parse clusters used for a priori (map method)
     clusters_all_labels = parse_label_ID_groups(ml_clusters)
