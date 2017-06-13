@@ -255,7 +255,8 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name="-init-mask",
                       type_value="image_nifti",
                       description="mask containing three center of the spinal cord, used to initiate the propagation.\nReplace filename by 'viewer' to use interactive viewer for providing mask. Ex: -init-mask viewer",
-                      mandatory=False)
+                      mandatory=False,
+                      list_no_image=['viewer'])
     parser.add_option(name="-mask-correction",
                       type_value="image_nifti",
                       description="mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and CSF or in the presence of artefacts/pathologies.",
