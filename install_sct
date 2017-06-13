@@ -384,6 +384,7 @@ else
   echo -e "\nInstalling Python dependencies..."
   # N.B. the flag --ignore-installed is required because locally install
   # package are skip
+  conda config --add channels conda-forge
   conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
   e_status=$?
   if [ ${e_status} != 0 ] ; then
@@ -399,8 +400,7 @@ else
     exit $e_status
   fi
   # reinstall numpy at the end to prevent some bugs
-  conda install -fy numpy=1.12.1
-
+  # conda install -fy numpy=1.12.1
 fi
 
 
