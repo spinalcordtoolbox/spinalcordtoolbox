@@ -138,14 +138,12 @@ download ()
 # Usage of this script
 usage()
 {
-  echo -e "\nUsage: $0 [-d ] [-m ] [-b]" 1>&2;
-  echo -e "\tWe only recommend the flags -d, -m and -b for developers"
+  echo -e "\nUsage: $0 [-d ] [-m ] [-b] [--mpi]" 1>&2;
   echo -e "\nOPTION"
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
-  echo -e "\n\t-o \v Use the the file form the offline installer (no internet connection required)"
-
+  echo -e "\n\t--mpi,-p \v Will use the MPI interface to run pipelines (Linux support only)"
 }
 
 
@@ -153,7 +151,18 @@ usage()
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
 
-while getopts ":dmhbo" opt; do
+# Transform  long option "--long" into short option  "-l"
+for arg in "$@"; do
+  shift
+  case "$arg" in
+    "--mpi") set -- "$@" "-p" ;;
+    *)       set -- "$@" "$arg"
+  esac
+done
+
+
+
+while getopts ":dmhbp" opt; do
   case $opt in
     d)
       echo " data directory will not be (re)-installed"
@@ -167,9 +176,9 @@ while getopts ":dmhbo" opt; do
       echo " SCT binaries will not be (re)-installed "
       NO_SCT_BIN_INSTALL=yes
       ;;
-    o)
-      echo " Using the offline folder for installation"
-      OFFLINE_INSTALL=yes
+    p)
+      echo " Multiprocessing using MPI activated"
+      export SCT_MPI_MODE=yes
       ;;
     h)
       usage
@@ -190,7 +199,6 @@ else
   echo "The install_sct script must be execute from the source directory"
   exit 1
 fi
-
 # Get installation type (from git or from package)
 if [ -d ".git" ]; then
   # folder .git exist, therefore it is a git installation
@@ -343,33 +351,8 @@ cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run 
 ## INSTALL PYTHON
 if [ ${NO_CONDA_INSTALL} ]; then
   echo "python/ will not be (re)-install"
-elif [ ${OFFLINE_INSTALL} ]; then
-
-  echo "Offline install"
-
-  cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-  # Install Python conda
-  echo -e "\nInstalling conda..."
-  cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-
-  cmd="bash ${SCT_SOURCE}/offline/miniconda_${OS}.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
-  ret_code_conda=$?
-  if [[ $ret_code_conda != 0 ]]; then
-    echo -e Conda did not installed properly with return code $ret_code_conda
-    exit $ret_code_conda
-  else
-    echo -e Conda installation successful
-  fi
-
+  # activate miniconda
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-
-  tar -C ${TMP_DIR} -zxvf ${SCT_SOURCE}/offline/wheels_${OS}.tar.gz
-  dipy_whl=`ls ${TMP_DIR}/dipy*.whl`
-  ornlm_whl=`ls ${TMP_DIR}/ornlm*.whl`
-
-  conda install --yes --no-deps ${SCT_SOURCE}/offline/pkgs_${OS}/*
-  pip install --no-deps --ignore-installed ${dipy_whl} ${ornlm_whl} ${SCT_SOURCE}/offline/*none*.whl
-
 else
   # Install Python conda
   echo -e "\nInstalling conda..."
@@ -415,12 +398,8 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
-  # reinstall numpy at the end to prevent a conda bug
-  if [[ $OS == linux ]]; then
-    # Fix Intel MKL FATAL ERROR: Cannot load libmkl_avx2.so or libmkl_def.so.
-    # on certain linux distribution
-    conda install -fy numpy
-  fi
+  # reinstall numpy at the end to prevent some bugs
+  conda install -fy numpy=1.12.1
 
 fi
 
@@ -432,8 +411,6 @@ pip install ${SCT_SOURCE}
 ## Install binaries
 if [ ${NO_SCT_BIN_INSTALL} ]; then
     echo "SCT binaries will not be (re)-install"
-elif [ ${OFFLINE_INSTALL} ]; then
-    cmd="tar -C ${SCT_DIR}/${BIN_DIR} -zxvf ${SCT_SOURCE}/offline/sct_binaries_${OS}.tar.gz"; echo ">> "$cmd; $cmd
 else
     echo -e "\nInstalling binaries..."
     cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
@@ -453,9 +430,6 @@ echo -e "All requirements installed!"
 # INSTALL DATA
 if [ ${NO_DATA_INSTALL} ]; then
   echo "data/ will not be (re)-install"
-elif [ ${OFFLINE_INSTALL} ]; then
-  echo "Offline install"
-  cmd="tar -C ${SCT_DIR} -zxvf ${SCT_SOURCE}/offline/data.tar.gz"; echo ">> "$cmd; $cmd
 else
   # forcing activation if python is not reinstalled
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
