@@ -1,5 +1,23 @@
 # CHANGES TO RELEASE
 
+## v3.0.5 (2017-06-09)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.4...v3.0.5)
+
+**BUG**
+
+ - Force numpy 1.12.1 on osx and linux [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1352)
+ - Use a different function to identify if a file exists [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1341)
+ - Fixing an issue introduced with the sct_get_centerline. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1338)
+
+**ENHANCEMENT**
+
+ - Binarize GM seg after warping back result to original space [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1347)
+ - Generation of centerline as ROI [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1344)
+
+**FEATURE**
+
+ - Introduce a pipeline to use the HPC architecture [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1260)
+
 ## v3.0.4 (2017-05-19)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.3...v3.0.4)
 
