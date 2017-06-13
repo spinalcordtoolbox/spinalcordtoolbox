@@ -1,5 +1,4 @@
-matplotlib==1.5.1
-pyqt==4.11.4
+pyside==1.2.4
 scikit-learn==0.17.1
 scikit-image==0.12.3
 pandas==0.18.1
@@ -10,3 +9,4 @@ pip==9.0.1
 requests==2.12.4
 cryptography==1.6
 mpi4py==2.0.0
+matplotlib==1.5.3
