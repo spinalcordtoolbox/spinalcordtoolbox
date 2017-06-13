@@ -19,7 +19,7 @@ import numpy as np
 import sct_maths
 from msct_image import Image
 from msct_parser import Parser
-from sct_image import set_orientation
+from sct_image import set_orientation, get_orientation
 from sct_utils import (add_suffix, extract_fname, printv, run,
                        slash_at_the_end, tmp_create)
 
@@ -48,7 +48,7 @@ def get_parser():
                                   "distance: List of pixel pair distance offsets. Default=1\n"
                                   "angle: List of pixel pair angles in degrees. Default=0\n",
                       mandatory=False,
-                      example="prop='energy':distance=1:angles=0")
+                      example="prop=energy:distance=1:angles=0")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
@@ -70,25 +70,137 @@ def get_parser():
 
     return parser
 
-class SegmentGM:
-    def __init__(self, param_seg=None, param_model=None, param_data=None, param=None):
-        self.param_seg = param_seg if param_seg is not None else ParamSeg()
-        self.param_model = param_model if param_model is not None else ParamModel()
-        self.param_data = param_data if param_data is not None else ParamData()
-        self.param = param if param is not None else Param()
+class ExtractGLCM:
+  def __init__(self, param=None, param_glcm=None):
+    self.param = param if param is not None else Param()
+    self.param_glcm = param_glcm if param_glcm is not None else ParamGLCM()
 
-        # create model:
-        self.model = Model(param_model=self.param_model, param_data=self.param_data, param=self.param)
+    # create tmp directory
+    self.tmp_dir = tmp_create(verbose=self.param.verbose)  # path to tmp directory
 
-        # create tmp directory
-        self.tmp_dir = tmp_create(verbose=self.param.verbose)  # path to tmp directory
+    self.dct_metric = {}
+    for m in self.param_glcm.prop.split(','):
+      self.dct_metric[m] = None
 
-        self.target_im = None  # list of slices
-        self.info_preprocessing = None  # dic containing {'orientation': 'xxx', 'im_sc_seg_rpi': im, 'interpolated_images': [list of im = interpolated image data per slice]}
+    self.dct_im = {'im': None, 'seg': None}
 
-        self.projected_target = None  # list of coordinates of the target slices in the model reduced space
-        self.im_res_gmseg = None
-        self.im_res_wmseg = None
+  def extract(self):
+    # self.copy_data_to_tmp()
+    # # go to tmp directory
+    # os.chdir(self.tmp_dir)
+
+    # init output images
+    self.init_metric_im()
+    
+    # extract img and seg slices in a dict
+    self.extract_slices()
+
+  def extract_slices(self):
+    im = Image(self.param.fname_im) if get_orientation(Image(self.param.fname_im)) == 'RPI' else set_orientation(Image(self.param.fname_im), 'RPI')
+    seg = Image(self.param.fname_seg) if get_orientation(Image(self.param.fname_seg)) == 'RPI' else set_orientation(Image(self.param.fname_seg), 'RPI')
+    
+    self.dct_im['im'] = [im.data[:,:,z] for z in range(im.dim[2])]
+    self.dct_im['seg'] = [seg.data[:,:,z] for z in range(im.dim[2])]
+
+  def init_metric_im(self):
+
+    for m in self.dct_metric:
+      nb_channel = len(self.param_glcm.distance.split(','))*len(self.param_glcm.angle.split(','))
+
+      im_tmp = Image(self.param.fname_im) if get_orientation(Image(self.param.fname_im)) == 'RPI' else set_orientation(Image(self.param.fname_im), 'RPI')
+      im_2save = im_tmp.copy()
+      im_2save.data = np.zeros((im_2save.dim[0], im_2save.dim[1], im_2save.dim[2], nb_channel))
+      im_2save.dim = tuple([im_2save.dim[d] if d!=3 else nb_channel for d in range(len(im_2save.dim))])
+      
+      self.dct_metric[m] = im_2save
+
+#######################
+    #     for i in range(energy.shape[0]):
+    #         for j in range(energy.shape[1]):
+    #             if i <1 or j <1:
+    #                 continue
+    #             if i > (energy.shape[0] - 2) or j > (energy.shape[1] - 2):
+    #                 continue
+    #             if False in np.unique(wm[i-1: i+2, j-1 : j+2]):
+    #                 continue
+
+    #             glcm_window = img[i-1: i+2, j-1 : j+2]
+                
+    #             glcm_window = glcm_window.astype(np.uint8)
+    #             glcm = greycomatrix(glcm_window, [1], [0],  symmetric = True, normed = True)
+
+    #             for t, t_stg in zip([energy, contrast, dissimilarity, homogeneity, ASM, correlation], texture_stg):
+    #                 t[i,j]= greycoprops(glcm, t_stg)
+#######################
+
+
+        # self.target_im, self.info_preprocessing = pre_processing(self.param_seg.fname_im, self.param_seg.fname_seg, self.param_seg.fname_level, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm, denoising=self.param_data.denoising, verbose=self.param.verbose, rm_tmp=self.param.rm_tmp)
+
+        # printv('\nRegister target image to model data...', self.param.verbose, 'normal')
+        # # register target image to model dictionary space
+        # path_warp = self.register_target()
+
+        # if self.param_data.normalization:
+        #     printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
+        #     self.normalize_target()
+
+        # printv('\nProject target image into the model reduced space...', self.param.verbose, 'normal')
+        # self.project_target()
+
+        # printv('\nCompute similarities between target slices and model slices using model reduced space...', self.param.verbose, 'normal')
+        # list_dic_indexes_by_slice = self.compute_similarities()
+
+        # printv('\nLabel fusion of model slices most similar to target slices...', self.param.verbose, 'normal')
+        # self.label_fusion(list_dic_indexes_by_slice)
+
+        # printv('\nWarp back segmentation into image space...', self.param.verbose, 'normal')
+        # self.warp_back_seg(path_warp)
+
+        # printv('\nPost-processing...', self.param.verbose, 'normal')
+        # self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
+
+        # if (self.param_seg.path_results != './') and (not os.path.exists('../' + self.param_seg.path_results)):
+        #     # create output folder
+        #     printv('\nCreate output folder ...', self.param.verbose, 'normal')
+        #     os.chdir('..')
+        #     os.mkdir(self.param_seg.path_results)
+        #     os.chdir(self.tmp_dir)
+
+        # if self.param_seg.fname_manual_gmseg is not None:
+        #     # compute validation metrics
+        #     printv('\nCompute validation metrics...', self.param.verbose, 'normal')
+        #     self.validation()
+
+        # if self.param_seg.ratio is not '0':
+        #     printv('\nCompute GM/WM CSA ratio...', self.param.verbose, 'normal')
+        #     self.compute_ratio()
+
+        # # go back to original directory
+        # os.chdir('..')
+        # printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
+        # self.fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
+        # self.fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
+
+        # self.im_res_gmseg.setFileName(self.fname_res_gmseg)
+        # self.im_res_wmseg.setFileName(self.fname_res_wmseg)
+
+        # self.im_res_gmseg.save()
+        # self.im_res_wmseg.save()
+
+  def copy_data_to_tmp(self):
+    # copy input image
+    if self.param.fname_im is not None:
+      shutil.copy(self.param.fname_im, self.tmp_dir)
+      self.param.fname_im = ''.join(extract_fname(self.param.fname_im)[1:])
+    else:
+      printv('ERROR: No input image', self.param.verbose, 'error')
+
+    # copy seg image
+    if self.param.fname_seg is not None:
+      shutil.copy(self.param.fname_seg, self.tmp_dir)
+      self.param.fname_seg = ''.join(extract_fname(self.param.fname_seg)[1:])
+    else:
+      printv('ERROR: No segmentation image', self.param.verbose, 'error')
 
 class Param:
   def __init__(self):
@@ -140,7 +252,9 @@ def main(args=None):
   if '-param' in arguments:
     param_glcm.update(arguments['-param'])
 
-  print param_glcm.angle
+  glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
+  glcm.extract()
+
     
 if __name__ == "__main__":
     main()
