@@ -18,34 +18,6 @@ from msct_image import Image
 
 def smooth(x, window_len=11, window='hanning'):
     """smooth the data using a window with requested size.
-
-    This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal 
-    (with the window size) in both ends so that transient parts are minimized
-    in the begining and end part of the output signal.
-
-    input:
-        x: the input signal 
-        window_len: the dimension of the smoothing window; should be an odd integer
-        window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-            flat window will produce a moving average smoothing.
-
-    output:
-        the smoothed signal
-
-    example:
-
-    t=linspace(-2,2,0.1)
-    x=sin(t)+randn(len(t))*0.1
-    y=smooth(x)
-
-    see also: 
-
-    numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
-    scipy.signal.lfilter
-
-    TODO: the window parameter could be the window itself if an array instead of a string
-    NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
     """
 
     if x.ndim != 1:
@@ -61,15 +33,13 @@ def smooth(x, window_len=11, window='hanning'):
         raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
 
     s = numpy.r_[x[window_len - 1:0:-1], x, x[-2:-window_len - 1:-1]]
-    s = x
-    # print(len(s))
     if window == 'flat':  # moving average
         w = numpy.ones(window_len, 'd')
     else:
         w = eval('numpy.' + window + '(window_len)')
 
     y = numpy.convolve(w / w.sum(), s, mode='same')
-    return y
+    return y[window_len - 1:-window_len+1]
 
 
 def get_cmap(N):
@@ -166,8 +136,7 @@ Potentiellement a retirer
                 
 """
 
-list_subjects =[
-                'ALT',
+list_subjects =['ALT',
                 'AM',
                 'AP',
                 'ED',
@@ -979,6 +948,74 @@ def normalize_intensity(contrast, fname_disks, fname_centerline_image):
     plt.show()
 
 
+def normalize_intensity_template():
+    fname_template_image = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1_12.nii'
+    fname_template_centerline_image = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_centerline_man.nii.gz'
+    fname_template_centerline = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/centerline.npz'
+    path_segmentations = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/seg/'
+
+
+    # open centerline from template
+    number_of_points_in_centerline = 4000
+    if os.path.isfile(fname_template_centerline):
+        centerline_template = Centerline(fname=fname_template_centerline)
+    else:
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+            fname_template_centerline_image, algo_fitting='nurbs', verbose=0,
+            nurbs_pts_number=number_of_points_in_centerline,
+            all_slices=False, phys_coordinates=True, remove_outliers=True)
+        centerline_template = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
+                                         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+        centerline_template.save_centerline(fname_output=fname_template_centerline)
+
+    image_template = Image(fname_template_image)
+    nx, ny, nz, nt, px, py, pz, pt = image_template.dim
+    x, y, z, xd, yd, zd = centerline_template.average_coordinates_over_slices(image_template)
+    z_values, intensities = [], []
+
+    for i in range(len(z)):
+        coord_z = image_template.transfo_phys2pix([[x[i], y[i], z[i]]])[0]
+        z_values.append(coord_z[2])
+        intensities.append(np.mean(image_template.data[coord_z[0] - 1:coord_z[0] + 2, coord_z[1] - 1:coord_z[1] + 2, coord_z[2]]))
+
+    min_z, max_z = min(z_values), max(z_values)
+    from copy import copy
+    intensities_temp = copy(intensities)
+    z_values_temp = copy(z_values)
+    for cz in range(nz):
+        if cz not in z_values:
+            z_values_temp.append(cz)
+            if cz < min_z:
+                intensities_temp.append(intensities[z_values.index(min_z)])
+            elif cz > max_z:
+                intensities_temp.append(intensities[z_values.index(max_z)])
+            else:
+                print 'error...', cz
+
+    print intensities[z_values.index(min_z)], intensities[z_values.index(max_z)]
+    intensities = intensities_temp
+    z_values = z_values_temp
+
+    arr_int = [[z_values[i], intensities[i]] for i in range(len(z_values))]
+    arr_int.sort(key=lambda x: x[0])
+
+    intensities = [c[1] for c in arr_int]
+    int_smooth = smooth(np.array(intensities), window_len=50)
+    mean_int = np.mean(int_smooth)
+    mean_int = 500.0
+    plt.figure()
+    plt.plot(intensities)
+    plt.plot(int_smooth)
+    plt.show()
+
+    image_template_new = image_template.copy()
+    for i in range(nz):
+        image_template_new.data[:, :, i] *= mean_int / int_smooth[i]
+    image_template_new.setFileName('/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1.nii')
+    image_template_new.save()
+
+
 def warp_segmentation(contrast):
     for subject_name in list_subjects:
         folder_output = path_data_new + subject_name + '/' + contrast + '/'
@@ -1015,7 +1052,329 @@ def convert_nii2mnc(contrast):
         sct.run('nii2mnc ' + PATH_OUTPUT + 'final/' + fname_image + ' ' + folder_output + fname_im_output)
 
 
+def compute_vertebral_levels(contrast):
+    import pandas as pd
+    levels_per_subject = {}
 
+    timer_levels = sct.Timer(len(list_subjects))
+    timer_levels.start()
+
+    centerlines = {}
+
+    for subject_name in list_subjects:
+        #folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        #fname_image = contrast + '.nii.gz'
+
+        folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        fname_image = contrast + '.nii.gz'
+
+        print '\nExtracting lengths ' + folder_output
+        os.chdir(folder_output)
+        #image_input = Image(fname_image)
+        #nx, ny, nz, nt, px, py, pz, pt = image_input.dim
+
+        fname_centerline = 'centerline.npz'
+        centerline = Centerline(fname=fname_centerline)
+        centerline.compute_vertebral_distribution(disks_levels=centerline.disks_levels, label_reference='PMJ')
+        centerlines[subject_name] = centerline
+
+        levels, labels = [], []
+        for label in centerline.labels_regions:
+            if label in centerline.index_disk:
+                levels.append(centerline.dist_points[centerline.index_disk[label]])
+                labels.append(label)
+
+        levels_series = pd.Series(levels, index=labels)
+        levels_per_subject[subject_name] = levels_series
+
+        timer_levels.add_iteration()
+    timer_levels.stop()
+
+    df_levels = pd.DataFrame(levels_per_subject)
+    df_levels.to_csv('/Users/benjamindeleener/data/PAM50_2017/output/levels.txt')
+
+    df_levels2 = df_levels.T
+    del df_levels2['C2']
+    print df_levels2.describe()
+    df_levels = df_levels2.T
+
+    C4C5_levels = df_levels2['C5']
+    T11T12_levels = df_levels2['T12']
+
+    import matplotlib.mlab as mlab
+    plt.figure()
+    #plt.subplot(2, 1, 1)
+    for index, row in df_levels.iterrows():
+        mu = row.mean()
+        if mu != 0:
+            sigma = row.std()
+            variance = sigma**2
+            print row.name, mu, sigma
+            x = np.linspace(mu - 3 * variance, mu + 3 * variance, 5*variance)
+            plt.plot(x, mlab.normpdf(x, mu, sigma))
+    plt.xlim(0, 600)
+    plt.show()
+
+    plt.figure()
+    #plt.subplot(2, 1, 2)
+    import csv
+    with open(PATH_OUTPUT + 'enlargements.txt') as data_file:
+        results_enlargements = csv.reader(data_file, delimiter=' ')
+        names, cervical, lumbar = [], [], []
+        for row in results_enlargements:
+            names.append(row[0])
+
+            # cervical
+            label_level = centerlines[row[0]].regions_labels[str(int(float(row[1])))]
+            closest = centerlines[row[0]].get_closest_to_absolute_position(vertebral_level=label_level, relative_position=float(row[1])-int(float(row[1])))
+            cervical.append(centerlines[row[0]].dist_points[closest])
+
+            # lumbar
+            label_level = centerlines[row[0]].regions_labels[str(int(float(row[2])))]
+            closest = centerlines[row[0]].get_closest_to_absolute_position(vertebral_level=label_level, relative_position=float(row[2])-int(float(row[2])))
+            lumbar.append(centerlines[row[0]].dist_points[closest])
+        cervical_series = pd.Series(cervical, index=names)
+        lumbar_series = pd.Series(lumbar, index=names)
+
+    mu_cervical = cervical_series.mean()
+    sigma_cervical = cervical_series.std()
+    variance_cervical = sigma_cervical**2
+    mu_lumbar = lumbar_series.mean()
+    sigma_lumbar = lumbar_series.std()
+    variance_lumbar = sigma_lumbar**2
+    x = np.linspace(mu_cervical - 3 * variance_cervical, mu_cervical + 3 * variance_cervical, 5 * variance_cervical)
+    plt.plot(x, mlab.normpdf(x, mu_cervical, sigma_cervical))
+    x = np.linspace(mu_lumbar - 3 * variance_lumbar, mu_lumbar + 3 * variance_lumbar, 5 * variance_lumbar)
+    plt.plot(x, mlab.normpdf(x, mu_lumbar, sigma_lumbar))
+    print 'cervical enlargement', mu_cervical, sigma_cervical
+    print 'lumbar enlargement', mu_lumbar, sigma_lumbar
+
+    plt.xlim(0, 600)
+    plt.show()
+
+    # correlation between enlargements
+    df_enl = pd.DataFrame({'cervical': cervical_series, 'lumbar': lumbar_series})
+    print df_enl
+
+    from scipy.stats.stats import pearsonr
+    import seaborn
+
+    corrcoef, pvalue_corr = pearsonr(cervical, lumbar)
+    print 'correlation enlargements', corrcoef, pvalue_corr
+    plt.figure()
+    seaborn.set_style("whitegrid")
+    #scat1 = seaborn.regplot(x='cervical', y='lumbar', fit_reg=True, data=df_enl)
+    plt.plot(cervical, lumbar, 'o')
+    plt.xlabel('Cervical enlargement position from PMJ')
+    plt.ylabel('Lumbar enlargement position from PMJ')
+    plt.show()
+
+    # correlation between enlargements and vertebral levels
+    # cervical enlargement and C4-C5 intervertebral disk
+    df_cervical = pd.DataFrame({'cervical': cervical_series, 'C4-C5': C4C5_levels})
+    corrcoef, pvalue_corr = pearsonr(np.array(cervical_series.tolist()), np.array(C4C5_levels.tolist()))
+    print 'correlation cervical vs C4-C5', corrcoef, pvalue_corr
+    plt.figure()
+    seaborn.set_style("whitegrid")
+    #scat1 = seaborn.regplot(x='cervical', y='C4-C5', fit_reg=True, data=df_cervical)
+    plt.plot(cervical_series.tolist(), C4C5_levels.tolist(), 'o')
+    plt.xlabel('Distance between PMJ and cervical enlargement [mm]')
+    plt.ylabel('Distance between PMJ and C4-C5 intervertebral disk [mm]')
+    plt.show()
+
+    # lumbar enlargement and T12-L1 intervertebral disk
+    df_lumbar = pd.DataFrame({'lumbar': lumbar_series, 'T11-T12': T11T12_levels})
+    corrcoef, pvalue_corr = pearsonr(lumbar_series.tolist(), T11T12_levels.tolist())
+    print 'correlation lumbar vs T11-T12', corrcoef, pvalue_corr
+    plt.figure()
+    seaborn.set_style("whitegrid")
+    #scat1 = seaborn.regplot(x='lumbar', y='T11-T12', fit_reg=True, data=df_lumbar)
+    plt.plot(lumbar_series.tolist(), T11T12_levels.tolist(), 'o')
+    plt.xlabel('Distance between PMJ and lumbar enlargement [mm]')
+    plt.ylabel('Distance between PMJ and T11-T12 intervertebral disk [mm]')
+    plt.show()
+
+
+def display_csa_length():
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    df_levels = pd.read_csv('/Users/benjamindeleener/data/PAM50_2017/output/levels.txt', index_col=0)
+    df_levels['avg'] = df_levels.mean(axis=1)
+    df_levels['std'] = df_levels.std(axis=1)
+    levels_position = []
+    for index, row in df_levels['avg'].iteritems():
+        levels_position.append([labels_regions[index], row])
+    levels_position.sort(key=lambda x: x[1])
+    print levels_position
+    from scipy.interpolate import interp1d
+    x_l = [l[0] for l in levels_position]
+    y_l = [l[1] for l in levels_position]
+    f = interp1d(x_l, y_l)
+
+    labels = [regions_labels[str(l[0])] for l in levels_position]
+
+    import json
+    with open(PATH_OUTPUT + 'csa.txt') as data_file:
+        results_csa = json.load(data_file)
+
+    plt.figure()
+    for i, subject in enumerate(results_csa):
+        ax = plt.subplot(10, 5, i + 1)
+        x, y = results_csa[subject][0], results_csa[subject][1]
+        #y_smooth = y
+        y_smooth = smooth(np.array(results_csa[subject][1]), window_len=20)
+        plt.plot(f(x), y_smooth)
+        plt.title(subject)
+        plt.xlim((0, 550))
+        plt.xticks(y_l, labels, rotation='horizontal')
+    plt.show()
+
+    path_template = path_data_new + 'output/PAM50/'
+    levels_template, csa_template = compute_csa(path_template + 'PAM50_seg.nii.gz',
+                                                path_template + 'PAM50_disks.nii.gz',
+                                                path_template + 'PAM50_centerline.nii.gz')
+
+    plt.figure()
+    for i, subject in enumerate(results_csa):
+        x, y = results_csa[subject][0], results_csa[subject][1]
+        #y_smooth = y
+        y_smooth = smooth(np.array(results_csa[subject][1]), window_len=20)
+        plt.plot(f(x), y_smooth)
+    #plt.legend([subject for subject in results_csa])
+    plt.xticks(y_l, labels, rotation='horizontal')
+    plt.xlim((levels_position[2][1], 500))
+    plt.grid()
+    plt.show()
+
+    # AVERAGE CSA
+    number_points = 1000
+    x_new = np.linspace(levels_position[2][1], 500, num=number_points)
+    csa_average = []
+    for i, subject in enumerate(results_csa):
+        x, y = results_csa[subject][0], results_csa[subject][1]
+        f_average = interp1d(f(x), y, bounds_error=False, fill_value=0.0)
+        csa_average.append(f_average(x_new))
+
+    mean = np.mean(csa_average, axis=0)
+    std = np.std(csa_average, axis=0)
+
+    plt.figure()
+    plt.plot(x_new, mean)
+    plt.fill_between(x_new, mean + std, mean - std, facecolor='blue', alpha=0.5)
+
+    plt.plot(f(levels_template), csa_template, 'g', linewidth=1)
+
+    plt.xticks(y_l, labels, rotation='horizontal')
+    plt.xlim((levels_position[2][1], 500))
+    plt.grid()
+    plt.show()
+
+    interp_mean = interp1d(x_new, mean, bounds_error=False, fill_value=0.0)
+    interp_std = interp1d(x_new, std, bounds_error=False, fill_value=0.0)
+    for i, l in enumerate(y_l):
+        print labels[i] + ' ' + str(round(interp_mean(l), 2)) + ' +- ' + str(round(interp_std(l), 2))
+
+    # LENGTH of SPINAL CORD AND VERTEBRAL LEVELS
+    with open(PATH_OUTPUT + 'length.txt') as data_file:
+        results_length = json.load(data_file)
+
+
+def select_enlargements():
+    import json
+    with open(PATH_OUTPUT + 'csa.txt') as data_file:
+        results_csa = json.load(data_file)
+
+    import matplotlib.pyplot as plt
+    for i, subject in enumerate(results_csa):
+        def onclick(event):
+            print subject, event.xdata, event.ydata
+
+        fig = plt.figure()
+        x, y = results_csa[subject][0], results_csa[subject][1]
+        # y_smooth = y
+        y_smooth = smooth(np.array(results_csa[subject][1]), window_len=20)
+        plt.plot(x, y_smooth)
+        plt.title(subject)
+        plt.xlim((0, 26))
+        cid = fig.canvas.mpl_connect('button_press_event', onclick)
+        plt.show()
+
+
+def validate_centerline():
+    import pandas as pd
+    contrast = 't1'
+    results = {}
+    results_array = []
+    result_mean = []
+    result_max = []
+
+    fname_template_centerline_image = '/Users/benjamindeleener/data/PAM50_2017/output/template_centerline.nii.gz'
+    fname_template_centerline = '/Users/benjamindeleener/data/PAM50_2017/output/final/centerline.npz'
+    path_segmentations = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/seg/'
+
+    folder_output = path_segmentations
+    print '\nValidate centerlines ' + folder_output
+    os.chdir(folder_output)
+
+    # open centerline from template
+    number_of_points_in_centerline = 4000
+    if os.path.isfile(fname_template_centerline):
+        centerline_template = Centerline(fname=fname_template_centerline)
+    else:
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+            fname_template_centerline_image, algo_fitting='nurbs', verbose=0, nurbs_pts_number=number_of_points_in_centerline,
+            all_slices=False, phys_coordinates=True, remove_outliers=True)
+        centerline_template = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
+                                         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+        centerline_template.save_centerline(fname_output=fname_template_centerline)
+
+
+
+    for subject_name in list_subjects:
+        fname_image = subject_name + '_' + contrast + '_seg_t.nii.gz'
+
+        fname_centerline = subject_name + '_centerline.npz'
+        if os.path.isfile(fname_centerline):
+            centerline = Centerline(fname=fname_centerline)
+        else:
+
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+                fname_image, algo_fitting='nurbs', verbose=0, nurbs_pts_number=number_of_points_in_centerline,
+                all_slices=False, phys_coordinates=True, remove_outliers=True)
+
+            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
+                                    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+            centerline.save_centerline(fname_output=subject_name + '_centerline')
+
+        mse, mean, std, max, distances = centerline.compare_centerline(other=centerline_template, reference_image=Image(fname_image))
+        results[subject_name] = distances
+        results_array.append(distances)
+        result_mean.append(mean)
+        result_max.append(max)
+        print subject_name, mse, mean, std, max
+
+    import seaborn as sns
+    sns.set_style("whitegrid")
+    plt.figure()
+    ax = sns.violinplot(data=results_array)
+    plt.ylim(0, 2)
+    plt.show()
+
+    print str(round(np.average(result_mean), 2)) + ' +- ' + str(round(np.std(result_mean), 2))
+    print str(round(np.average(result_max), 2)) + ' +- ' + str(round(np.std(result_max), 2))
+
+def convert_segmentations():
+    path_data = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/out/'
+    path_out = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/seg/'
+    fname_template = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1.nii'
+    #for subject_name in list_subjects:
+    #    sct.run('mnc2nii ' + path_data + subject_name + '_t1_seg_d.mnc ' + path_data + subject_name + '_t1_seg_d.nii ')
+
+    for subject_name in list_subjects:
+        sct.run('sct_crop_image -i ' + path_data + subject_name + '_t1_seg_d.nii -o ' + path_out + subject_name + '_t1_seg_t.nii.gz -b 0 -start 0 -end 1047 -dim 2')
+        #sct.run('fslview -m single,single ' + fname_template + ' ' + path_data + subject_name + '_t1_seg_d.nii -l Red -b 0,0.00001')
 
 
 #clean_segmentation('t1')
@@ -1032,44 +1391,24 @@ def convert_nii2mnc(contrast):
 #warp_segmentation('t1')
 
 #create_mask_template()
+
+"""
 #folder = '/mnt/parallel_scratch_mp2_wipe_on_august_2017/jcohen/bedelb/template_generation_t1/data/'
 folder = '/gs/project/rrp-355-aa/data/'
 contrast = 't1'
 for subject_name in list_subjects:
     #print folder + subject_name + '_' + contrast + '.mnc,' + folder + subject_name + '_' + contrast + '_seg.mnc'
     print folder + subject_name + '_' + contrast + '.mnc,' + folder + 'template_mask.mnc'
-
-
 """
-import json
-with open(PATH_OUTPUT + 'csa.txt') as data_file:
-    results_csa = json.load(data_file)
 
-import matplotlib.pyplot as plt
-plt.figure()
-for i, subject in enumerate(results_csa):
-    ax = plt.subplot(10, 5, i+1)
-    x, y = results_csa[subject][0][::-1], results_csa[subject][1][::-1]
-    y_smooth = y
-    #y_smooth = smooth_UnivariateSpline(x, y)
-    #y_smooth = smooth(np.array(results_csa[subject][1]), window_len=30)
-    #y_smooth = smooth_kde(x, y)
-    plt.plot(x, y_smooth)
-    plt.title(subject)
-plt.show()
+#display_csa_length()
+#compute_vertebral_levels(contrast='t1')
+#select_enlargements()
+validate_centerline()
+#normalize_intensity_template()
+#convert_segmentations()
 
-plt.figure()
-for i, subject in enumerate(results_csa):
-    x, y = results_csa[subject][0][::-1], results_csa[subject][1][::-1]
-    y_smooth = y
-    #y_smooth = smooth_UnivariateSpline(x, y)
-    #y_smooth = smooth(np.array(results_csa[subject][1]), window_len=40)
-    #y_smooth = smooth_kde(x, y)
-    plt.plot(x, y_smooth)
-plt.legend([subject for subject in results_csa])
-plt.show()
 
-"""
 
 
 """

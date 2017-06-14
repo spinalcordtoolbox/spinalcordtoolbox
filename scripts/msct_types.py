@@ -724,3 +724,48 @@ class Centerline:
                 lookuptable_coordinates.append(None)
 
         return lookuptable_coordinates
+
+    def compare_centerline(self, other, reference_image=None):
+        """
+        This function compute the mean square error and the maximum distance between two centerlines.
+        If a reference image is provided, the distance metrics are computed on each slices where the both centerlines
+        are present.
+        Args:
+            other: Centerline object
+            reference_image: Image object
+
+        Returns:
+            mse, mean, std, max
+        """
+        distances = []
+        mse = 0.0
+        count_mean = 0
+
+        if reference_image is not None:
+            x, y, z, xd, yd, zd = self.average_coordinates_over_slices(reference_image)
+            xo, yo, zo, xdo, ydo, zdo = other.average_coordinates_over_slices(reference_image)
+
+            z_self = [reference_image.transfo_phys2pix([[x[i], y[i], z[i]]])[0][2] for i in range(len(z))]
+            z_other = [reference_image.transfo_phys2pix([[xo[i], yo[i], zo[i]]])[0][2] for i in range(len(zo))]
+            min_other, max_other = np.min(z_other), np.max(z_other)
+
+            for index in range(len(z)):
+                slice = z_self[index]
+
+                if min_other <= slice <= max_other:
+                    index_other = other.find_nearest_index([x[index], y[index], z[index]])
+                    coord_other = other.points[index_other]
+                    distance = (x[index] - coord_other[0])**2 + (y[index] - coord_other[1])**2 + (z[index] - coord_other[2])**2
+                    distances.append(sqrt(distance))
+                    mse += distance
+                    count_mean += 1
+
+        else:
+            raise ValueError('Computation of centerline validation metrics without reference images is not yet '
+                             'available. Please provide a reference image.')
+
+        mse = sqrt(mse / float(count_mean))
+        mean = np.mean(distances)
+        std = np.std(distances)
+        max = np.max(distances)
+        return mse, mean, std, max, distances
