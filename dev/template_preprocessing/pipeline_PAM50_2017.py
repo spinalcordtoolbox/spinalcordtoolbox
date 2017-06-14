@@ -136,16 +136,7 @@ Potentiellement a retirer
                 
 """
 
-list_subjects =['ALT',
-                'AM',
-                'AP',
-                'ED',
-                'FR',
-                'GB',
-                'HB',
-                'JW',
-                'MLL',
-                'MT',
+list_subjects =[
                 'PA',
                 'T045',
                 'T047',
@@ -1404,14 +1395,20 @@ for subject_name in list_subjects:
 #display_csa_length()
 #compute_vertebral_levels(contrast='t1')
 #select_enlargements()
-validate_centerline()
+#validate_centerline()
 #normalize_intensity_template()
 #convert_segmentations()
 
-
+for subject_name in list_subjects:
+    fname_seg = '/Users/benjamindeleener/data/PAM50_2017/' + subject_name + '/t2/t2_seg.nii.gz'
+    fname_out = '/Users/benjamindeleener/data/PAM50_2017/' + subject_name + '/t2/'
+    sct.run('sct_process_segmentation -i ' + fname_seg + ' -p centerline -ofolder ' + fname_out)
 
 
 """
+sct_process_segmentation -i t2_seg.nii.gz -p centerline
+fslview -m single,single t2.nii.gz -b 0,700 t2_seg_centerline.nii.gz -l Red &
+
 sct_make_ground_truth.py -i t1.nii.gz -save-as niigz
 Produce centerline along spinal cord (above and below segmentation) called {contrast}_centerline_manual.nii.gz
 """
