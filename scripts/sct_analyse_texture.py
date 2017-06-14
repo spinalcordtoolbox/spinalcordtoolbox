@@ -15,13 +15,27 @@ import os
 import shutil
 import sys
 import numpy as np
+import itertools
+from math import radians
+from skimage.feature import greycomatrix, greycoprops
 
 import sct_maths
 from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
 from sct_utils import (add_suffix, extract_fname, printv, run,
-                       slash_at_the_end, tmp_create)
+                       slash_at_the_end, tmp_create, Timer)
+
+'''
+TODO:
+  - securiser le parser
+  - optimiser le temps de calcul --> tous les angles en meme temps?
+  - facon de save
+  - Test difference sym et normed
+  - arranger la doc
+  - report github
+'''
+
 
 def get_parser():
     # Initialize the parser
@@ -30,7 +44,7 @@ def get_parser():
                                  ' It calculates the texture properties of a grey level co-occurence matrix (GLCM).'
                                  ' The textures features are those defined in the sckit-image implementation:\n'
                                  ' http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops\n'
-                                 ' This function outputs one nifti file per texture metric (contrast, dissimilarity, homogeneity, ASM, energy, correlation).')
+                                 ' This function outputs one nifti file per texture metric (contrast, dissimilarity, homogeneity, ASM, energy, correlation) and per orientation in the folder ./texture/')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Image to analyse",
@@ -38,29 +52,23 @@ def get_parser():
                       example='t2.nii.gz')
     parser.add_option(name="-s",
                       type_value="file",
-                      description="Spinal cord segmentation",
+                      description="Image mask",
                       mandatory=True,
                       example='t2_seg.nii.gz')
     parser.add_option(name="-param",
                       type_value="str",
                       description="Parameters for extraction. Separate arguments with \":\".\n"
-                                  "prop: texture property/ies of a GLCM. Default='contrast,dissimilarity,homogeneity,energy,correlation,ASM'\n"
-                                  "distance: List of pixel pair distance offsets. Default=1\n"
-                                  "angle: List of pixel pair angles in degrees. Default=0\n",
+                                  "prop: <list_stg> list of GLCM texture property. Default="+ParamGLCM().prop+"\n"
+                                  "distance: <int> distance offset. Default="+str(ParamGLCM().distance)+"\n"
+                                  "angle: <list_int> list of angles in degrees. Default="+",".join([str(a) for a in ParamGLCM().angle])+"\n",
                       mandatory=False,
-                      example="prop=energy:distance=1:angles=0")
+                      example="prop=energy:distance=1:angle=0,90")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
                       mandatory=False,
                       default_value=Param().path_results,
                       example='texture_analysis_results/')
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value=str(int(Param().rm_tmp)),
-                      example=['0', '1'])
     parser.add_option(name="-v",
                       type_value='multiple_choice',
                       description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -75,25 +83,36 @@ class ExtractGLCM:
     self.param = param if param is not None else Param()
     self.param_glcm = param_glcm if param_glcm is not None else ParamGLCM()
 
-    # create tmp directory
-    self.tmp_dir = tmp_create(verbose=self.param.verbose)  # path to tmp directory
-
     self.dct_metric = {}
-    for m in self.param_glcm.prop.split(','):
-      self.dct_metric[m] = None
+    for m in list(itertools.product(self.param_glcm.prop.split(','), self.param_glcm.angle.split(','))):
+      text_name = m[0] if m[0].upper()!='asm'.upper() else m[0].upper()
+      metric_name = text_name+'_'+str(self.param_glcm.distance)+'_'+str(m[1])
+      self.dct_metric[metric_name] = None
 
     self.dct_im = {'im': None, 'seg': None}
 
+    self.orientation = get_orientation(Image(self.param.fname_im))
+
   def extract(self):
-    # self.copy_data_to_tmp()
-    # # go to tmp directory
-    # os.chdir(self.tmp_dir)
 
     # init output images
     self.init_metric_im()
     
     # extract img and seg slices in a dict
     self.extract_slices()
+
+    # compute texture
+    self.compute_texture()
+
+    # reorient data
+    if get_orientation(Image(self.param.fname_im)) != 'RPI':
+      self.reorient_data()
+
+    # save data
+    fname_out_lst = self.save_data_to_ofolder()
+
+    printv('\nDone! To view results, type:', self.param.verbose)
+    printv('fslview ' + self.param.fname_im + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', self.param.verbose, 'info')
 
   def extract_slices(self):
     im = Image(self.param.fname_im) if get_orientation(Image(self.param.fname_im)) == 'RPI' else set_orientation(Image(self.param.fname_im), 'RPI')
@@ -102,105 +121,77 @@ class ExtractGLCM:
     self.dct_im['im'] = [im.data[:,:,z] for z in range(im.dim[2])]
     self.dct_im['seg'] = [seg.data[:,:,z] for z in range(im.dim[2])]
 
+    del im, seg
+
   def init_metric_im(self):
 
+    im_tmp = Image(self.param.fname_im) if get_orientation(Image(self.param.fname_im)) == 'RPI' else set_orientation(Image(self.param.fname_im), 'RPI')
+
     for m in self.dct_metric:
-      nb_channel = len(self.param_glcm.distance.split(','))*len(self.param_glcm.angle.split(','))
-
-      im_tmp = Image(self.param.fname_im) if get_orientation(Image(self.param.fname_im)) == 'RPI' else set_orientation(Image(self.param.fname_im), 'RPI')
       im_2save = im_tmp.copy()
-      im_2save.data = np.zeros((im_2save.dim[0], im_2save.dim[1], im_2save.dim[2], nb_channel))
-      im_2save.dim = tuple([im_2save.dim[d] if d!=3 else nb_channel for d in range(len(im_2save.dim))])
-      
+      im_2save.changeType(type='float64')
+      im_2save.data *= 0
       self.dct_metric[m] = im_2save
+      del im_2save
 
-#######################
-    #     for i in range(energy.shape[0]):
-    #         for j in range(energy.shape[1]):
-    #             if i <1 or j <1:
-    #                 continue
-    #             if i > (energy.shape[0] - 2) or j > (energy.shape[1] - 2):
-    #                 continue
-    #             if False in np.unique(wm[i-1: i+2, j-1 : j+2]):
-    #                 continue
+    del im_tmp
 
-    #             glcm_window = img[i-1: i+2, j-1 : j+2]
-                
-    #             glcm_window = glcm_window.astype(np.uint8)
-    #             glcm = greycomatrix(glcm_window, [1], [0],  symmetric = True, normed = True)
+  def compute_texture(self):
 
-    #             for t, t_stg in zip([energy, contrast, dissimilarity, homogeneity, ASM, correlation], texture_stg):
-    #                 t[i,j]= greycoprops(glcm, t_stg)
-#######################
+    offset = int(self.param_glcm.distance)
 
+    printv('\nCompute texture...', self.param.verbose, 'normal')
 
-        # self.target_im, self.info_preprocessing = pre_processing(self.param_seg.fname_im, self.param_seg.fname_seg, self.param_seg.fname_level, new_res=self.param_data.axial_res, square_size_size_mm=self.param_data.square_size_size_mm, denoising=self.param_data.denoising, verbose=self.param.verbose, rm_tmp=self.param.rm_tmp)
+    timer_texture = Timer(number_of_iteration=len(self.dct_im['im']))
+    timer_texture.start()
 
-        # printv('\nRegister target image to model data...', self.param.verbose, 'normal')
-        # # register target image to model dictionary space
-        # path_warp = self.register_target()
+    for im_z, seg_z,z in zip(self.dct_im['im'],self.dct_im['seg'],range(len(self.dct_im['im']))):
+      for im_x in range(im_z.shape[0]):
+        for im_y in range(im_z.shape[1]):
+          if im_x < offset or im_y < offset:
+              continue
+          if im_x > (im_z.shape[0] - offset-1) or im_y > (im_z.shape[1] - offset-1):
+              continue
+          if False in np.unique(seg_z[im_x-offset : im_x+offset+1, im_y-offset : im_y+offset+1]):
+              continue
 
-        # if self.param_data.normalization:
-        #     printv('\nNormalize intensity of target image...', self.param.verbose, 'normal')
-        #     self.normalize_target()
+          glcm_window = im_z[im_x-offset : im_x+offset+1, im_y-offset : im_y+offset+1]
+        
+          glcm_window = glcm_window.astype(np.uint8)
 
-        # printv('\nProject target image into the model reduced space...', self.param.verbose, 'normal')
-        # self.project_target()
+          dct_glcm = {}
+          for a in self.param_glcm.angle.split(','):
+            dct_glcm[a] = greycomatrix(glcm_window, [self.param_glcm.distance], [radians(int(a))],  symmetric = self.param_glcm.symmetric, normed = self.param_glcm.normed)
+          
+          for m in self.dct_metric:
+            self.dct_metric[m].data[im_x,im_y,z] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
 
-        # printv('\nCompute similarities between target slices and model slices using model reduced space...', self.param.verbose, 'normal')
-        # list_dic_indexes_by_slice = self.compute_similarities()
+      print '\nHEY'
+      for m in self.dct_metric:
+        print m
+        print np.mean(self.dct_metric[m].data[:,:,z])
+      timer_texture.add_iteration()
+    
+    timer_texture.stop()
 
-        # printv('\nLabel fusion of model slices most similar to target slices...', self.param.verbose, 'normal')
-        # self.label_fusion(list_dic_indexes_by_slice)
+  def reorient_data():
+    for m in self.dct_metric:
+      self.dct_metric[m] = set_orientation(Image(self.dct_metric[m]), self.orientation)
 
-        # printv('\nWarp back segmentation into image space...', self.param.verbose, 'normal')
-        # self.warp_back_seg(path_warp)
+  def save_data_to_ofolder(self):
 
-        # printv('\nPost-processing...', self.param.verbose, 'normal')
-        # self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
+    output_folder = slash_at_the_end(self.param.path_results) + '/texture/'
+    if not os.path.isdir(output_folder):
+      os.makedirs(output_folder)
 
-        # if (self.param_seg.path_results != './') and (not os.path.exists('../' + self.param_seg.path_results)):
-        #     # create output folder
-        #     printv('\nCreate output folder ...', self.param.verbose, 'normal')
-        #     os.chdir('..')
-        #     os.mkdir(self.param_seg.path_results)
-        #     os.chdir(self.tmp_dir)
+    fname_out = []
+    for m in self.dct_metric:
+      fname_texture_cur = output_folder + add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_'+m)  
+      self.dct_metric[m].setFileName(fname_texture_cur)
+      self.dct_metric[m].save()
+      fname_out.append(fname_texture_cur)
 
-        # if self.param_seg.fname_manual_gmseg is not None:
-        #     # compute validation metrics
-        #     printv('\nCompute validation metrics...', self.param.verbose, 'normal')
-        #     self.validation()
-
-        # if self.param_seg.ratio is not '0':
-        #     printv('\nCompute GM/WM CSA ratio...', self.param.verbose, 'normal')
-        #     self.compute_ratio()
-
-        # # go back to original directory
-        # os.chdir('..')
-        # printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
-        # self.fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
-        # self.fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
-
-        # self.im_res_gmseg.setFileName(self.fname_res_gmseg)
-        # self.im_res_wmseg.setFileName(self.fname_res_wmseg)
-
-        # self.im_res_gmseg.save()
-        # self.im_res_wmseg.save()
-
-  def copy_data_to_tmp(self):
-    # copy input image
-    if self.param.fname_im is not None:
-      shutil.copy(self.param.fname_im, self.tmp_dir)
-      self.param.fname_im = ''.join(extract_fname(self.param.fname_im)[1:])
-    else:
-      printv('ERROR: No input image', self.param.verbose, 'error')
-
-    # copy seg image
-    if self.param.fname_seg is not None:
-      shutil.copy(self.param.fname_seg, self.tmp_dir)
-      self.param.fname_seg = ''.join(extract_fname(self.param.fname_seg)[1:])
-    else:
-      printv('ERROR: No segmentation image', self.param.verbose, 'error')
+    return fname_out
 
 class Param:
   def __init__(self):
@@ -208,7 +199,6 @@ class Param:
     self.fname_seg = None
     self.path_results = './'
 
-    self.rm_tmp = '1'
     self.verbose = '0'
 
 class ParamGLCM(object):
@@ -217,8 +207,8 @@ class ParamGLCM(object):
     self.normed = True  # If True, normalize each matrix P[:, :, d, theta] by dividing by the total number of accumulated co-occurrences for the given offset. 
                         # The elements of the resulting matrix sum to 1.
     self.prop = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM'
-    self.distance = [1]
-    self.angle = [0]
+    self.distance = 1
+    self.angle = '0,45,90,135'
 
   # update constructor with user's parameters
   def update(self, param_user):
@@ -245,8 +235,6 @@ def main(args=None):
 
   if '-ofolder' in arguments:
     param.path_results = arguments['-ofolder']
-  if '-r' in arguments:
-    param.rm_tmp = bool(int(arguments['-r']))
   if '-v' in arguments:
     param.verbose = bool(int(arguments['-v']))
   if '-param' in arguments:
@@ -254,7 +242,6 @@ def main(args=None):
 
   glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
   glcm.extract()
-
     
 if __name__ == "__main__":
     main()
