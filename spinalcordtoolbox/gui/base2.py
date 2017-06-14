@@ -5,13 +5,12 @@ import logging
 import matplotlib as mpl
 
 mpl.use('Qt4Agg')
-mpl.rcParams['backend.qt4'] = 'PySide'
 
-from matplotlib.backends.backend_qt4agg import FigureCanvas
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 import numpy as np
-from PySide import QtCore, QtGui
+from PyQt4 import QtCore, QtGui
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +51,22 @@ class AnatomicalParams(object):
         self.alpha = alpha
 
 
+class CrossHair(object):
+    def __init__(self, ax):
+        self.ax = ax
+        self.lx = ax.axhline(color='m')
+        self.ly = ax.axvline(color='m')
+
+        self.txt = ax.text(.7, .9, '', transform=ax.transAxes)
+
+    def refresh(self, event):
+        x, y = event.xdata, event.ydata
+        self.lx.set_ydata(y)
+        self.ly.set_xdata(x)
+
+        self.txt.set_text('%1.2f, %1.2f' % (x, y))
+
+
 class AnatomicalCanvas(FigureCanvas):
     """Base canvas for anatomical views
 
@@ -63,12 +78,13 @@ class AnatomicalCanvas(FigureCanvas):
     """
     point_selected_signal = QtCore.Signal(int, int, int)
 
-    def __init__(self, param, img, width=8, height=8, dpi=100):
-        self.img = img
+    def __init__(self, param, image, width=8, height=8, dpi=100):
+        self.image = image
         self.param = param
-        self._x = self.img.data.shape[0] // 2
-        self._y = self.img.data.shape[1] // 2
-        self._z = self.img.data.shape[2] // 2
+        shape = image.data.shape
+        self._x = shape[0] // 2
+        self._y = shape[1] // 2
+        self._z = shape[2] // 2
 
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         super(AnatomicalCanvas, self).__init__(self.fig)
@@ -110,33 +126,35 @@ class AnatomicalCanvas(FigureCanvas):
 class SagittalCanvas(AnatomicalCanvas):
     def __init__(self, param, img, width=8, height=8, dpi=100):
         super(SagittalCanvas, self).__init__(param, img, width, height, dpi)
-        self._init_ui(self.img.data[:, :, self._z])
+        self._init_ui(self.image.data[:, :, self._z])
+        self.crosshair = CrossHair(self.axes)
 
-    def add_point(self, x, y, z):
+    def add_point(self, x, y, _):
         self.x_points.append(x)
         self.y_points.append(y)
         self.plot_points[0].set_xdata(self.x_points)
         self.plot_points[0].set_ydata(self.y_points)
 
     def update_plot(self):
-        data = self.img.data[:, :, self._z]
+        data = self.image.data[:, :, self._z]
         self.view.set_array(data)
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0:
             self.point_selected_signal.emit(event.xdata, event.ydata, self._z)
+            self.crosshair.refresh(event)
 
 
 class CorrinalCanvas(AnatomicalCanvas):
     def __init__(self, param, img, width=8, height=8, dpi=100):
         super(CorrinalCanvas, self).__init__(param, img, width, height, dpi)
-        self._init_ui(self.img.data[:, self._y, :])
+        self._init_ui(self.image.data[:, self._y, :])
 
     def add_point(self, x, y, z):
         pass
 
     def update_plot(self):
-        data = self.img.data[:, self._y, :]
+        data = self.image.data[:, self._y, :]
         self.view.set_array(data)
 
     def on_update(self, event):
@@ -147,13 +165,13 @@ class CorrinalCanvas(AnatomicalCanvas):
 class AxialCanvas(AnatomicalCanvas):
     def __init__(self, param, img, width=8, height=8, dpi=100):
         super(AxialCanvas, self).__init__(param, img, width, height, dpi)
-        self._init_ui(self.img.data[self._x, :, :])
+        self._init_ui(self.image.data[self._x, :, :])
 
     def add_point(self, x, y, z):
         pass
 
     def update_plot(self):
-        data = self.img.data[self._x, :, :]
+        data = self.image.data[self._x, :, :]
         self.view.set_array(data)
 
     def on_update(self, event):
