@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-#PBS -l procs=101  # This will reserve 100 processors for your computation
-                   #  + 1 for orchestration -> need a minimum of a 100 subjects
+#PBS -l procs=101  # This will reserve 101 processors for your computation
+                   #  including 1 for orchestration -> need a minimum of a 100 subjects
 
 #PBS -l walltime=03:00:00   # After 3 hours the computation will be shut down
 
 #PBS -N MY_NAME # Name given to you job in the queuing system
 
-#PBS -A rrp-355-01 # Neuropoly project number on guillimin
+#PBS -A rrp-355-aa # Neuropoly project number on guillimin
 
 
 # Source the SCT where it is installed
