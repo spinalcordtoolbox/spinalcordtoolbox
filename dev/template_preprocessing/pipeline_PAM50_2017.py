@@ -136,7 +136,16 @@ Potentiellement a retirer
                 
 """
 
-list_subjects =[
+list_subjects =['ALT',
+                'AM',
+                'AP',
+                'ED',
+                'FR',
+                'GB',
+                'HB',
+                'JW',
+                'MLL',
+                'MT',
                 'PA',
                 'T045',
                 'T047',
@@ -1293,11 +1302,10 @@ def select_enlargements():
 
 def validate_centerline():
     import pandas as pd
-    contrast = 't1'
     results = {}
     results_array = []
-    result_mean = []
-    result_max = []
+    result_mean_t1, result_mean_t2 = [], []
+    result_max_t1, result_max_t2 = [], []
 
     fname_template_centerline_image = '/Users/benjamindeleener/data/PAM50_2017/output/template_centerline.nii.gz'
     fname_template_centerline = '/Users/benjamindeleener/data/PAM50_2017/output/final/centerline.npz'
@@ -1320,41 +1328,48 @@ def validate_centerline():
 
         centerline_template.save_centerline(fname_output=fname_template_centerline)
 
+    results_centerline = pd.DataFrame()
+    for contrast in ['t1', 't2']:
+        for subject_name in list_subjects:
+            fname_image = subject_name + '_' + contrast + '_seg_t.nii.gz'
 
+            fname_centerline = subject_name + '_centerline.npz'
+            if os.path.isfile(fname_centerline):
+                centerline = Centerline(fname=fname_centerline)
+            else:
 
-    for subject_name in list_subjects:
-        fname_image = subject_name + '_' + contrast + '_seg_t.nii.gz'
+                x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+                    fname_image, algo_fitting='nurbs', verbose=0, nurbs_pts_number=number_of_points_in_centerline,
+                    all_slices=False, phys_coordinates=True, remove_outliers=True)
 
-        fname_centerline = subject_name + '_centerline.npz'
-        if os.path.isfile(fname_centerline):
-            centerline = Centerline(fname=fname_centerline)
-        else:
+                centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
+                                        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-                fname_image, algo_fitting='nurbs', verbose=0, nurbs_pts_number=number_of_points_in_centerline,
-                all_slices=False, phys_coordinates=True, remove_outliers=True)
+                centerline.save_centerline(fname_output=subject_name + '_centerline')
 
-            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
-                                    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
-
-            centerline.save_centerline(fname_output=subject_name + '_centerline')
-
-        mse, mean, std, max, distances = centerline.compare_centerline(other=centerline_template, reference_image=Image(fname_image))
-        results[subject_name] = distances
-        results_array.append(distances)
-        result_mean.append(mean)
-        result_max.append(max)
-        print subject_name, mse, mean, std, max
+            mse, mean, std, max, distances = centerline.compare_centerline(other=centerline_template, reference_image=Image(fname_image))
+            results_centerline.append(pd.DataFrame([[d, subject_name, contrast] for d in distances], columns=['distance', 'subject', 'contrast']))
+            results[subject_name] = distances
+            results_array.append(distances)
+            if contrast == 't1':
+                result_mean_t1.append(mean)
+                result_max_t1.append(max)
+            else:
+                result_mean_t2.append(mean)
+                result_max_t2.append(max)
+            print subject_name, mse, mean, std, max
 
     import seaborn as sns
     sns.set_style("whitegrid")
     plt.figure()
-    ax = sns.violinplot(data=results_array)
+    ax = sns.violinplot(x='subject', y='distance', hue='contrast', data=results_centerline)
     plt.ylim(0, 2)
     plt.show()
 
-    print str(round(np.average(result_mean), 2)) + ' +- ' + str(round(np.std(result_mean), 2))
-    print str(round(np.average(result_max), 2)) + ' +- ' + str(round(np.std(result_max), 2))
+    print 'T1 mean =', str(round(np.average(result_mean_t1), 2)) + ' +- ' + str(round(np.std(result_mean_t1), 2))
+    print 'T1 max =', str(round(np.average(result_max_t1), 2)) + ' +- ' + str(round(np.std(result_max_t1), 2))
+    print 'T2 mean =', str(round(np.average(result_mean_t2), 2)) + ' +- ' + str(round(np.std(result_mean_t2), 2))
+    print 'T2 max =', str(round(np.average(result_max_t2), 2)) + ' +- ' + str(round(np.std(result_max_t2), 2))
 
 def convert_segmentations():
     path_data = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/out/'
@@ -1372,7 +1387,7 @@ def convert_segmentations():
 #multisegment_spinalcord('t1')
 #generate_centerline('t1')
 #average_centerline('t1')
-#straighten_all_subjects('t1')
+straighten_all_subjects('t2')
 
 #compare_csa(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz', fname_disks='t1_ground_truth.nii.gz', fname_centerline_image='t1_centerline_manual.nii.gz')
 #compute_spinalcord_length(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz')
@@ -1399,11 +1414,12 @@ for subject_name in list_subjects:
 #normalize_intensity_template()
 #convert_segmentations()
 
+"""
 for subject_name in list_subjects:
     fname_seg = '/Users/benjamindeleener/data/PAM50_2017/' + subject_name + '/t2/t2_seg.nii.gz'
     fname_out = '/Users/benjamindeleener/data/PAM50_2017/' + subject_name + '/t2/'
     sct.run('sct_process_segmentation -i ' + fname_seg + ' -p centerline -ofolder ' + fname_out)
-
+"""
 
 """
 sct_process_segmentation -i t2_seg.nii.gz -p centerline
