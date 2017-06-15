@@ -52,19 +52,21 @@ class AnatomicalParams(object):
 
 
 class CrossHair(object):
+    """A mix-in class that draws cross-hairs on the canvas"""
     def __init__(self, ax):
         self.ax = ax
         self.lx = ax.axhline(color='m')
         self.ly = ax.axvline(color='m')
 
-        self.txt = ax.text(.7, .9, '', transform=ax.transAxes)
+        self.txt = ax.text(1, 1, '', transform=ax.transAxes)
 
     def refresh(self, event):
         x, y = event.xdata, event.ydata
-        self.lx.set_ydata(y)
-        self.ly.set_xdata(x)
+        if x and y:
+            self.lx.set_ydata(y)
+            self.ly.set_xdata(x)
 
-        self.txt.set_text('%1.2f, %1.2f' % (x, y))
+            self.txt.set_text('%1.2f, %1.2f' % (x, y))
 
 
 class AnatomicalCanvas(FigureCanvas):
@@ -78,10 +80,10 @@ class AnatomicalCanvas(FigureCanvas):
     """
     point_selected_signal = QtCore.Signal(int, int, int)
 
-    def __init__(self, param, image, width=8, height=8, dpi=100):
-        self.image = image
-        self.param = param
-        shape = image.data.shape
+    def __init__(self, parent, width=8, height=8, dpi=100):
+        self.image = parent.image
+        self.params = parent.params
+        shape = parent.image.data.shape
         self._x = shape[0] // 2
         self._y = shape[1] // 2
         self._z = shape[2] // 2
@@ -105,12 +107,16 @@ class AnatomicalCanvas(FigureCanvas):
                                           markersize=10)
         self.fig.canvas.mpl_connect('button_release_event', self.on_update)
         self.view = self.axes.imshow(data,
-                                     aspect=self.param.aspect,
-                                     cmap=self.param.cmap,
-                                     interpolation=self.param.interp,
-                                     vmin=self.param.vmin,
-                                     vmax=self.param.vmax,
-                                     alpha=self.param.alpha)
+                                     aspect=self.params.aspect,
+                                     cmap=self.params.cmap,
+                                     interpolation=self.params.interp,
+                                     vmin=self.params.vmin,
+                                     vmax=self.params.vmax,
+                                     alpha=self.params.alpha)
+
+    def _init_crosshair(self):
+        self.crosshairs = CrossHair(self.axes)
+        self.fig.canvas.mpl_connect('motion_notify_event', self.crosshairs.refresh)
 
     def __repr__(self):
         return '{}: {}, {}, {}'.format(self.__class__, self._x, self._y, self._z)
@@ -124,10 +130,10 @@ class AnatomicalCanvas(FigureCanvas):
 
 
 class SagittalCanvas(AnatomicalCanvas):
-    def __init__(self, param, img, width=8, height=8, dpi=100):
-        super(SagittalCanvas, self).__init__(param, img, width, height, dpi)
+    def __init__(self, parent, width=8, height=8, dpi=100):
+        super(SagittalCanvas, self).__init__(parent, width, height, dpi)
         self._init_ui(self.image.data[:, :, self._z])
-        self.crosshair = CrossHair(self.axes)
+        self._init_crosshair()
 
     def add_point(self, x, y, _):
         self.x_points.append(x)
@@ -142,13 +148,13 @@ class SagittalCanvas(AnatomicalCanvas):
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0:
             self.point_selected_signal.emit(event.xdata, event.ydata, self._z)
-            self.crosshair.refresh(event)
 
 
 class CorrinalCanvas(AnatomicalCanvas):
-    def __init__(self, param, img, width=8, height=8, dpi=100):
-        super(CorrinalCanvas, self).__init__(param, img, width, height, dpi)
+    def __init__(self, parent, width=8, height=8, dpi=100):
+        super(CorrinalCanvas, self).__init__(parent, width, height, dpi)
         self._init_ui(self.image.data[:, self._y, :])
+        self._init_crosshair()
 
     def add_point(self, x, y, z):
         pass
@@ -163,9 +169,10 @@ class CorrinalCanvas(AnatomicalCanvas):
 
 
 class AxialCanvas(AnatomicalCanvas):
-    def __init__(self, param, img, width=8, height=8, dpi=100):
-        super(AxialCanvas, self).__init__(param, img, width, height, dpi)
+    def __init__(self, parent, width=8, height=8, dpi=100):
+        super(AxialCanvas, self).__init__(parent, width, height, dpi)
         self._init_ui(self.image.data[self._x, :, :])
+        self._init_crosshair()
 
     def add_point(self, x, y, z):
         pass
@@ -191,49 +198,49 @@ class AnatomicalToolbar(NavigationToolbar):
 
 class BaseDialog(QtGui.QDialog):
     update_canvas_signal = QtCore.Signal(int, int, int)
+    _hovering_point = (0, 0, 0)
+    _selected_points = []
 
-    def __init__(self, params, img, overlay=None):
+    def __init__(self, params, image, overlay=None):
         super(BaseDialog, self).__init__()
-
         self.params = params
-        self.img = img
+        self.image = image
         self.overlay = overlay
-        self._selected_points = []
         self._align_image()
-        self._initUI()
+        self._init_ui()
 
     def _align_image(self):
         x, y, z, t, dx, dy, dz, dt = img.dim
         self.params.aspect = dx / dy
         self.params.offset = x * dx
-        clip = np.percentile(self.img.data, (self.params.min, self.params.max))
+        clip = np.percentile(self.image.data, (self.params.min, self.params.max))
         self.params.vmin, self.params.vmax = clip
-        shape = self.img.data.shape
+        shape = self.image.data.shape
         dimension = [shape[0] * dx, shape[1] * dy, shape[2] * dz]
         max_size = max(dimension)
         self.x_offset = int(round(max_size - dimension[0]) / dx / 2)
         self.y_offset = int(round(max_size - dimension[1]) / dy / 2)
         self.z_offset = int(round(max_size - dimension[2]) / dz / 2)
-        self.img.data = np.pad(self.img.data,
-                               ((self.x_offset, self.x_offset),
-                                (self.y_offset, self.y_offset),
-                                (self.z_offset, self.z_offset)),
-                               'constant',
-                               constant_values=(0, 0))
+        self.image.data = np.pad(self.image.data,
+                                 ((self.x_offset, self.x_offset),
+                                  (self.y_offset, self.y_offset),
+                                  (self.z_offset, self.z_offset)),
+                                 'constant',
+                                 constant_values=(0, 0))
 
-    def _initUI(self):
+    def _init_ui(self):
         self.resize(600, 800)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         layout = QtGui.QVBoxLayout(self)
 
-        self._initHeaderUI(layout)
-        self._initMainUI(layout)
-        self._initSliders(layout)
-        self._initToolbar(layout)
-        self._initFooter(layout)
+        self._init_header(layout)
+        self._init_canvas(layout)
+        self._init_controls(layout)
+        self._init_toolbar(layout)
+        self._init_footer(layout)
         self.setFocus()
 
-    def _initHeaderUI(self, parent):
+    def _init_header(self, parent):
         self.lb_status = QtGui.QLabel('Label Status')
         self.lb_status.setStyleSheet("color:black")
         self.lb_status.setAlignment(QtCore.Qt.AlignCenter)
@@ -245,37 +252,7 @@ class BaseDialog(QtGui.QDialog):
         parent.addWidget(self.lb_warning)
         parent.addItem(QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding))
 
-    def _initMainUI(self, parent):
-        self.canvases = []
-        for obj in [SagittalCanvas, AxialCanvas, CorrinalCanvas]:
-            canvas = obj(self.params, self.img)
-            parent.addWidget(canvas)
-            canvas.point_selected_signal.connect(self.update_points)
-            self.update_canvas_signal.connect(canvas.on_update_plot)
-            self.canvases.append(canvas)
-
-    def _initSliders(self, parent):
-        self.sliders = []
-        for x in self.img.data.shape:
-            slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-            slider.setMaximum(x)
-            slider.setTickPosition(QtGui.QSlider.TicksAbove)
-            slider.singleStep()
-            parent.addWidget(slider)
-            self.sliders.append(slider)
-
-        self.sliders[2].valueChanged.connect(self.update_z_axis)
-        self.sliders[1].valueChanged.connect(self.update_y_axis)
-        self.sliders[0].valueChanged.connect(self.update_x_axis)
-        self.sliders[0].setValue(self.canvases[0]._x)
-        self.sliders[1].setValue(self.canvases[0]._y)
-        self.sliders[2].setValue(self.canvases[0]._z)
-
-    def _initToolbar(self, parent):
-        self.toolbar = AnatomicalToolbar(self.canvases[0], self)
-        parent.addWidget(self.toolbar)
-
-    def _initFooter(self, parent):
+    def _init_footer(self, parent):
         ctrl_layout = QtGui.QHBoxLayout()
 
         btn_save_and_quit = QtGui.QPushButton('Save & Quit')
@@ -293,6 +270,15 @@ class BaseDialog(QtGui.QDialog):
 
         parent.addLayout(ctrl_layout)
 
+    @property
+    def point(self):
+        return self._selected_points[0]
+
+    @point.setter
+    def point(self, new_x, new_y, new_z):
+        self._selected_points.append((new_x, new_y, new_z))
+        self.update_x_axis.emit(new_x, new_y, new_z)
+
     @QtCore.Slot(str)
     def update_status(self, msg):
         self.lb_status.setText(msg)
@@ -306,29 +292,26 @@ class BaseDialog(QtGui.QDialog):
     @QtCore.Slot(int, int, int)
     def update_points(self, x, y, z):
         self.update_status('{}, {}, {}'.format(x, y, z))
+        self._hovering_point = (x, y, z)
         self._selected_points.append((x, y, z))
         self.update_canvas_signal.emit(x, y, z)
 
     @QtCore.Slot(int)
     def update_x_axis(self, x):
-        _z = self.canvases[0]._z
-        _y = self.canvases[0]._y
+        _, _y, _z = self._hovering_point
         self.update_points(x, _y, _z)
 
     @QtCore.Slot(int)
     def update_y_axis(self, y):
-        _z = self.canvases[0]._z
-        _x = self.canvases[0]._x
+        _x, _, _z = self._hovering_point
         self.update_points(_x, y, _z)
 
     @QtCore.Slot(int)
     def update_z_axis(self, z):
-        _x = self.canvases[0]._x
-        _y = self.canvases[0]._y
+        _x, _y, _ = self._hovering_point
         self.update_points(_x, _y, z)
 
     def press_save_and_quit(self):
-        self.data = None
         self.close()
 
     def press_help(self):
@@ -338,14 +321,59 @@ class BaseDialog(QtGui.QDialog):
     def press_undo(self):
         try:
             dump = self._selected_points.pop()
-            self.update_status("Undo point ({})".format(dump))
+            logger.debug('{}'.format(dump))
         except IndexError:
             self.update_warning("There's no points to undo")
-        logger.debug('{}'.format(dump))
+
+
+class BaseControler(QtCore.QObject):
+    _points = []
+
+    def __init__(self, dialog):
+        self.dialog = dialog
+
+    @QtCore.Slot(int)
+    def onPointChanged(self, value):
+        logger.debug(value)
 
 
 class TestDialog(BaseDialog):
-    pass
+    def __init__(self, params, img, overlay=None):
+        super(TestDialog, self).__init__(params, img, overlay)
+        self.controler = BaseControler(self)
+        self.canvases = []
+        self.sliders = []
+
+    def _init_canvas(self, parent):
+        self.canvases = []
+        for obj in [SagittalCanvas, AxialCanvas, CorrinalCanvas]:
+            canvas = obj(self)
+            parent.addWidget(canvas)
+            canvas.point_selected_signal.connect(self.update_points)
+            self.update_canvas_signal.connect(canvas.on_update_plot)
+            self.canvases.append(canvas)
+
+    def _init_controls(self, parent):
+        self.sliders = []
+        for x in self.image.data.shape:
+            slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+            slider.setMaximum(x)
+            slider.setTickPosition(QtGui.QSlider.TicksAbove)
+            slider.setTickInterval(1)
+            slider.singleStep()
+            parent.addWidget(slider)
+            self.sliders.append(slider)
+
+        self.sliders[2].valueChanged.connect(self.update_z_axis)
+        self.sliders[1].valueChanged.connect(self.update_y_axis)
+        self.sliders[0].valueChanged.connect(self.update_x_axis)
+        self.sliders[0].setValue(self.canvases[0]._x)
+        self.sliders[1].setValue(self.canvases[0]._y)
+        self.sliders[2].setValue(self.canvases[0]._z)
+
+    def _init_toolbar(self, parent):
+        self.toolbar = AnatomicalToolbar(self.canvases[0], self)
+        parent.addWidget(self.toolbar)
 
 
 if __name__ == '__main__':
@@ -357,7 +385,7 @@ if __name__ == '__main__':
 
     app = QtGui.QApplication(sys.argv)
     params = AnatomicalParams()
-    img = Image('/Users/geper_admin/sct_testing_data/t2/t2.nii.gz')
+    img = Image('/Users/geper_admin/sct_example_data/t2/t2.nii.gz')
     img.change_orientation('SAL')
     base_win = TestDialog(params, img)
     base_win.show()
