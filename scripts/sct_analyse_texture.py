@@ -25,13 +25,13 @@ from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
 from sct_utils import (add_suffix, extract_fname, printv, run, check_folder_exist,
-                       slash_at_the_end, Timer, get_absolute_path)
+                       slash_at_the_end, Timer, get_absolute_path, tmp_create)
 
 '''
 TODO:
-  - securiser le parser SARA
-  - optimiser le temps de calcul --> tous les angles en meme temps?
-  - facon de save SARA
+  - tester sur non RPI
+  - tester sur dim sag
+  - optimiser le temps de calcul: croper autour de la moelle
   - report github
 '''
 
@@ -43,7 +43,7 @@ def get_parser():
                                  ' It calculates the texture properties of a grey level co-occurence matrix (GLCM).'
                                  ' The textures features are those defined in the sckit-image implementation:\n'
                                  ' http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops\n'
-                                 ' This function outputs one nifti file per texture metric (contrast, dissimilarity, homogeneity, ASM, energy, correlation) and per orientation in the folder ./texture/')
+                                 ' This function outputs one nifti file per texture metric (contrast, dissimilarity, homogeneity, ASM, energy, correlation) and per orientation called fnameIn_property_distance_angle.nii.gz, in the folder ./texture/')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Image to analyse",
@@ -79,7 +79,13 @@ def get_parser():
                       description="Output folder",
                       mandatory=False,
                       default_value=Param().path_results,
-                      example='/my_texture/') # %%%%%
+                      example='/my_texture/')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="Remove temporary files.",
+                      mandatory=False,
+                      default_value=str(int(Param().rm_tmp)),
+                      example=['0', '1'])
     parser.add_option(name="-v",
                       type_value='multiple_choice',
                       description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -94,6 +100,9 @@ class ExtractGLCM:
     self.param = param if param is not None else Param()
     self.param_glcm = param_glcm if param_glcm is not None else ParamGLCM()
 
+    # create tmp directory
+    self.tmp_dir = tmp_create(verbose=self.param.verbose)  # path to tmp directory
+
     if self.param.dim == 'ax':
       self.orientation_extraction = 'RPI'
     elif self.param.dim == 'sag':
@@ -101,12 +110,11 @@ class ExtractGLCM:
     else:
       self.orientation_extraction = 'IRP'
 
-    # dct_metric{'property_distance_angle': Image}
-    self.dct_metric = {}
+    # metric_lst=['property_distance_angle']
+    self.metric_lst = []
     for m in list(itertools.product(self.param_glcm.prop.split(','), self.param_glcm.angle.split(','))):
       text_name = m[0] if m[0].upper()!='asm'.upper() else m[0].upper()
-      metric_name = text_name+'_'+str(self.param_glcm.distance)+'_'+str(m[1])
-      self.dct_metric[metric_name] = None
+      self.metric_lst.append(text_name+'_'+str(self.param_glcm.distance)+'_'+str(m[1]))
 
     # dct_im_seg{'im': list_of_axial_slice, 'seg': list_of_axial_masked_slice}
     self.dct_im_seg = {'im': None, 'seg': None}
@@ -114,45 +122,72 @@ class ExtractGLCM:
     # to re-orient the data at the end if needed
     self.orientation_im = get_orientation(Image(self.param.fname_im))
 
+    self.fname_metric_lst = {}
+
   def extract(self):
+    self.ifolder2tmp()
 
     # fill self.dct_metric --> for each key_metric: create an Image with zero values
-    self.init_dct_metric()
+    self.init_metric_im()
     
     # fill self.dct_im_seg --> extract axial slices from self.param.fname_im and self.param.fname_seg
     self.extract_slices()
 
     # compute texture
-    # self.compute_texture()
+    self.compute_texture()
 
     # reorient data
     if self.orientation_im != self.orientation_extraction:
       self.reorient_data()
 
-    # save data
-    fname_out_lst = self.save_data_to_ofolder()
-
     # mean across angles
     if self.param.mean:
-      self.mean_angle(fname_out_lst)
+      self.mean_angle()
 
-    printv('\nDone! To view results, type:', self.param.verbose)
-    printv('fslview ' + self.param.fname_im + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', self.param.verbose, 'info')
+    # save results to ofolder
+    self.tmp2ofolder()
 
+    return [self.param.path_results+self.fname_metric_lst[f] for f in self.fname_metric_lst]
 
-  def mean_angle(self, fname_lst):
+  def tmp2ofolder(self):
 
-    im_metric_lst = list(set(['_'.join(f.split('_')[:-1])+'_' for f in fname_lst]))
+    printv('\nSave resulting files...', self.param.verbose, 'normal')
+    for f in self.fname_metric_lst: # Copy from tmp folder to ofolder
+      shutil.copy(self.fname_metric_lst[f], self.param.path_results+self.fname_metric_lst[f])
+
+    os.chdir('..') # go back to original directory
+
+  def ifolder2tmp(self):
+    # copy input image
+    if self.param.fname_im is not None:
+      shutil.copy(self.param.fname_im, self.tmp_dir)
+      self.param.fname_im = ''.join(extract_fname(self.param.fname_im)[1:])
+    else:
+      printv('ERROR: No input image', self.param.verbose, 'error')
+
+    # copy masked image
+    if self.param.fname_seg is not None:
+      shutil.copy(self.param.fname_seg, self.tmp_dir)
+      self.param.fname_seg = ''.join(extract_fname(self.param.fname_seg)[1:])
+    else:
+      printv('ERROR: No mask image', self.param.verbose, 'error')
+
+    os.chdir(self.tmp_dir) # go to tmp directory
+
+  def mean_angle(self):
+
+    im_metric_lst = list(set([self.fname_metric_lst[f].split('_'+str(self.param_glcm.distance)+'_')[0]+'_' for f in self.fname_metric_lst]))
 
     printv('\nMean across angles...', self.param.verbose, 'normal')
     for im_m in im_metric_lst:     # Loop across GLCM texture properties
       # List images to mean
-      im2mean_lst = [im_m+a+extract_fname(self.param.fname_im)[2] for a in self.param_glcm.angle.split(',')]
+      im2mean_lst = [im_m+str(self.param_glcm.distance)+'_'+a+extract_fname(self.param.fname_im)[2] for a in self.param_glcm.angle.split(',')]
       
       # Average across angles and save it as wrk_folder/property_distance_mean.extension
       fname_out = im_m+'mean'+extract_fname(self.param.fname_im)[2]
       run('sct_image -i '+','.join(im2mean_lst)+' -concat t -o '+fname_out, error_exit='warning', raise_exception=True)
       run('sct_maths -i '+fname_out+' -mean t -o '+fname_out, error_exit='warning', raise_exception=True)
+      self.fname_metric_lst[im_m+'mean']=fname_out
 
   def extract_slices(self):
 
@@ -161,22 +196,24 @@ class ExtractGLCM:
       im, seg = Image(self.param.fname_im), Image(self.param.fname_seg)
     else:
       im, seg = set_orientation(Image(self.param.fname_im), self.orientation_extraction), set_orientation(Image(self.param.fname_seg), self.orientation_extraction)
-    
+
     # extract axial slices in self.dct_im_seg
     self.dct_im_seg['im'], self.dct_im_seg['seg'] = [im.data[:,:,z] for z in range(im.dim[2])], [seg.data[:,:,z] for z in range(im.dim[2])]
 
-  def init_dct_metric(self):
+  def init_metric_im(self):
 
     # open image and re-orient it to RPI if needed
     im_tmp = Image(self.param.fname_im) if self.orientation_im == self.orientation_extraction else set_orientation(Image(self.param.fname_im), self.orientation_extraction)
 
     # create Image objects with zeros values for each output image needed
-    for m in self.dct_metric:
+    for m in self.metric_lst:
       im_2save = im_tmp.copy()
       im_2save.changeType(type='float64')
       im_2save.data *= 0
-      self.dct_metric[m] = im_2save
-      del im_2save
+      fname_out = add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_'+m)
+      im_2save.setFileName(fname_out)
+      im_2save.save()
+      self.fname_metric_lst[m] = fname_out 
 
   def compute_texture(self):
 
@@ -184,8 +221,12 @@ class ExtractGLCM:
 
     printv('\nCompute texture metrics...', self.param.verbose, 'normal')
 
-    tqdm_bar = tqdm(total=len(self.dct_im_seg['im']), unit='B', unit_scale=True,
-                        desc="Status", ascii=True)
+    dct_metric = {}
+    for m in self.metric_lst:
+      dct_metric[m] = Image(self.fname_metric_lst[m])
+
+    timer = Timer(number_of_iteration=len(self.dct_im_seg['im']))
+    timer.start()
 
     for im_z, seg_z,zz in zip(self.dct_im_seg['im'],self.dct_im_seg['seg'],range(len(self.dct_im_seg['im']))):
       for xx in range(im_z.shape[0]):
@@ -200,41 +241,40 @@ class ExtractGLCM:
           glcm_window = im_z[xx-offset : xx+offset+1, yy-offset : yy+offset+1]
           glcm_window = glcm_window.astype(np.uint8)
 
-          dct_glcm = {}  # %%%%% --> optimize the way to compute: all angle at the same time OR in a loop + investigate symmetric and normed param
+          dct_glcm = {}
           for a in self.param_glcm.angle.split(','): # compute the GLCM for self.param_glcm.distance and for each self.param_glcm.angle
             dct_glcm[a] = greycomatrix(glcm_window, [self.param_glcm.distance], [radians(int(a))],  symmetric = self.param_glcm.symmetric, normed = self.param_glcm.normed)
-          
-          for m in self.dct_metric: # compute the GLCM property (m.split('_')[0]) of the voxel xx,yy,zz
-            self.dct_metric[m].data[xx,yy,zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
 
-      tqdm_bar.update(1)
+          for m in self.metric_lst: # compute the GLCM property (m.split('_')[0]) of the voxel xx,yy,zz
+            dct_metric[m].data[xx,yy,zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
+            # im_cur = Image(self.fname_metric_lst[m])
+            # im_cur.data[xx,yy,zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
+
+      timer.add_iteration()
     
-    tqdm_bar.close()
+    timer.stop()
+
+    for m in self.metric_lst:
+      dct_metric[m].setFileName(self.fname_metric_lst[m])
+      dct_metric[m].save()
+
 
   def reorient_data(self):
-    for m in self.dct_metric:
-      self.dct_metric[m] = set_orientation(Image(self.dct_metric[m]), self.orientation_im)
-
-  def save_data_to_ofolder(self):
-
-    # save each output image with the following template_name: property_distance_angle.nii.gz
-    fname_out_lst = []
-    for m in self.dct_metric:
-      fname_texture_cur = self.param.path_results + add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_'+m)  
-      self.dct_metric[m].setFileName(fname_texture_cur)
-      self.dct_metric[m].save()
-      fname_out_lst.append(fname_texture_cur)
-
-    return fname_out_lst
+    for f in self.fname_metric_lst:
+      im = Image(self.fname_metric_lst[f])
+      im = set_orientation(im, self.orientation_im)
+      im.setFileName(self.fname_metric_lst[f])
+      im.save() 
 
 class Param:
   def __init__(self):
     self.fname_im = None
     self.fname_seg = None
     self.path_results = './texture/'
-    self.verbose = '0'
+    self.verbose = '1'
     self.mean = '0'
     self.dim = 'ax'
+    self.rm_tmp = True
 
 class ParamGLCM(object):
   def __init__(self, symmetric=True, normed=True, prop='contrast,dissimilarity,homogeneity,energy,correlation,ASM', distance='1', angle='0'):
@@ -266,6 +306,7 @@ def main(args=None):
 
   # set param arguments ad inputted by user
   param.fname_im = arguments["-i"]
+  print param.fname_im
   param.fname_seg = arguments["-s"]
 
   if '-ofolder' in arguments:
@@ -279,6 +320,8 @@ def main(args=None):
     param.mean = bool(int(arguments['-mean']))
   if '-dim' in arguments:
     param.dim = arguments['-dim']
+  if '-r' in arguments:
+    param.rm_tmp = bool(int(arguments['-r']))
   if '-v' in arguments:
     param.verbose = bool(int(arguments['-v']))
   if '-param' in arguments:
@@ -287,7 +330,15 @@ def main(args=None):
   # create the GLCM constructor
   glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
   # run the extraction
-  glcm.extract()
+  fname_out_lst = glcm.extract()
+
+  # remove tmp_dir
+  if param.rm_tmp:
+    shutil.rmtree(glcm.tmp_dir)
+        
+  printv('\nDone! To view results, type:', param.verbose)
+  printv('fslview ' + arguments["-i"] + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
+
     
 if __name__ == "__main__":
     main()
