@@ -928,28 +928,29 @@ def normalize_intensity(contrast, fname_disks, fname_centerline_image):
     #with open(PATH_OUTPUT + 'intensity_profiles.txt', 'w') as outfile:
     #    json.dump(results_intensity, outfile)
 
-    from msct_nurbs import NURBS
+    #from msct_nurbs import NURBS
 
-    plt.figure()
-    for subject in results_intensity:
-        """
-        data = [[y_smooth[n], results_intensity[subject][0][n]] for n in range(len(results_intensity[subject][1]))]
-        nurbs = NURBS(precision=200, liste=data, nbControl=nbControl, verbose=1,
-                      twodim=True, all_slices=False,
-                      weights=False, maxControlPoints=25)
-        P = nurbs.getCourbe2D()
-        levels_fit = P[1]
-        intensities_fit = P[0]
-        #plt.plot(levels_fit, intensities_fit)
-        """
-        plt.plot(results_intensity[subject][0], results_intensity[subject][1] + average_intensity - np.mean(results_intensity[subject][1]))
+    #plt.figure()
+    #for subject in results_intensity:
+    """
+    data = [[y_smooth[n], results_intensity[subject][0][n]] for n in range(len(results_intensity[subject][1]))]
+    nurbs = NURBS(precision=200, liste=data, nbControl=nbControl, verbose=1,
+                  twodim=True, all_slices=False,
+                  weights=False, maxControlPoints=25)
+    P = nurbs.getCourbe2D()
+    levels_fit = P[1]
+    intensities_fit = P[0]
+    #plt.plot(levels_fit, intensities_fit)
+    """
+    #    plt.plot(results_intensity[subject][0], results_intensity[subject][1] + average_intensity - np.mean(results_intensity[subject][1]))
 
-    plt.legend([subject for subject in results_intensity])
-    plt.show()
+    #plt.legend([subject for subject in results_intensity])
+    #plt.show()
 
 
 def normalize_intensity_template():
-    fname_template_image = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1_12.nii'
+    #fname_template_image = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1_12.nii'  # t1
+    fname_template_image = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/avg_t2.nii'  # t2
     fname_template_centerline_image = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_centerline_man.nii.gz'
     fname_template_centerline = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/centerline.npz'
     path_segmentations = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/seg/'
@@ -1012,7 +1013,8 @@ def normalize_intensity_template():
     image_template_new = image_template.copy()
     for i in range(nz):
         image_template_new.data[:, :, i] *= mean_int / int_smooth[i]
-    image_template_new.setFileName('/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1.nii')
+    #image_template_new.setFileName('/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1.nii.gz')
+    image_template_new.setFileName('/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t2.nii.gz')
     image_template_new.save()
 
 
@@ -1209,7 +1211,7 @@ def display_csa_length():
     from scipy.interpolate import interp1d
     x_l = [l[0] for l in levels_position]
     y_l = [l[1] for l in levels_position]
-    f = interp1d(x_l, y_l)
+    f = interp1d(x_l, y_l, fill_value=0.0)
 
     labels = [regions_labels[str(l[0])] for l in levels_position]
 
@@ -1234,8 +1236,74 @@ def display_csa_length():
                                                 path_template + 'PAM50_disks.nii.gz',
                                                 path_template + 'PAM50_centerline.nii.gz')
 
+    enlargements = {'FR': [4.65782333434, 17.8022309316],
+'JW': [ 5.64666867651, 19.3457943925],
+'VC': [ 4.99547784142, 19.2252034971],
+'HB': [ 4.56135061803, 18.1640036177],
+'pain_pilot_7': [ 4.73017787157, 19.4181489298],
+'pain_pilot_4': [ 4.60958697618, 19.0804944227],
+'pain_pilot_2': [ 4.82665058788, 19.6834488996],
+'pain_pilot_3': [ 5.33313234851, 19.5387398251],
+'pain_pilot_1': [ 5.2366596322, 18.6946035574],
+'MT': [ 4.99547784142, 19.490503467],
+'ED': [ 5.26077781128, 19.5146216461],
+'errsm_23': [ 4.34428700633, 19.4181489298],
+'errsm_20': [ 4.34428700633, 19.2493216762],
+'PA': [ 4.29605064818, 19.2252034971],
+'errsm_09': [ 4.41664154356, 19.7558034368],
+'errsm_24': [ 4.68194151342, 19.3699125716],
+'errsm_25': [ 4.97135966235, 18.7187217365],
+'errsm_04': [ 4.89900512511, 18.863430811],
+'errsm_05': [ 4.82665058788, 19.5146216461],
+'errsm_03': [ 5.04371419958, 19.1287307808],
+'T045': [ 4.00663249925, 19.5628580042],
+'errsm_43': [ 4.44075972264, 19.0563762436],
+'errsm_44': [ 4.22369611094, 18.7187217365],
+'VG': [ 4.29605064818, 18.9599035273],
+'errsm_21': [ 4.75429605065, 19.8763943322],
+'errsm_18': [ 4.85076876696, 19.3940307507],
+'AM': [ 4.56135061803, 19.0081398854],
+'MLL': [ 4.392523364494, 19.68344889965],
+'VP': [ 4.29605064818, 18.9599035273],
+'AP': [ 5.0195960205, 19.3699125716],
+'GB': [ 4.70605969249, 18.6222490202],
+'sct_001': [ 4.65782333434, 19.3699125716],
+'sct_002': [ 4.56135061803, 18.9116671691],
+'T047': [ 4.53723243895, 18.9116671691],
+'errsm_35': [ 4.53723243895, 18.8875489901],
+'errsm_34': [ 4.73017787157, 19.6110943624],
+'errsm_37': [ 4.82665058788, 19.1287307808],
+'errsm_36': [ 4.00663249925, 17.1269219174],
+'errsm_31': [ 5.18842327404, 17.7057582153],
+'errsm_30': [ 4.68194151342, 19.8763943322],
+'errsm_33': [ 4.44075972264, 18.1398854386],
+'errsm_32': [ 4.32016882725, 19.9246306904],
+'errsm_17': [ 4.65782333434, 19.1287307808],
+'errsm_16': [ 4.85076876696, 19.6593307205],
+'ALT': [ 4.70605969249, 19.4422671088],
+'errsm_14': [ 4.22369611094, 18.1398854386],
+'errsm_13': [ 4.63370515526, 19.6834488996],
+'errsm_12': [5.11606873681, 19.2975580344],
+'errsm_11': [4.271932469, 19.1287307808],
+'errsm_10': [4.51311425987, 19.5146216461]}
+
+    position_cervical = []
+    position_lumbar = []
+    csa_cervical = []
+    csa_lumbar = []
+
     plt.figure()
     for i, subject in enumerate(results_csa):
+        index_min_cervical = np.argmin(abs(np.array(results_csa[subject][0]) - enlargements[subject][0]))
+        index_min_lumbar = np.argmin(abs(np.array(results_csa[subject][0]) - enlargements[subject][1]))
+        print subject, index_min_cervical, index_min_lumbar
+        print enlargements[subject][0], results_csa[subject][0][index_min_cervical], f(results_csa[subject][0][index_min_cervical])
+        print enlargements[subject][1], results_csa[subject][0][index_min_lumbar], f(results_csa[subject][0][index_min_lumbar])
+
+        csa_cervical.append(results_csa[subject][1][index_min_cervical])
+        position_cervical.append(f(results_csa[subject][0][index_min_cervical]))
+        csa_lumbar.append(results_csa[subject][1][index_min_lumbar])
+        position_lumbar.append(f(results_csa[subject][0][index_min_lumbar]))
         x, y = results_csa[subject][0], results_csa[subject][1]
         #y_smooth = y
         y_smooth = smooth(np.array(results_csa[subject][1]), window_len=20)
@@ -1245,6 +1313,9 @@ def display_csa_length():
     plt.xlim((levels_position[2][1], 500))
     plt.grid()
     plt.show()
+
+    print 'cervical', np.mean(csa_cervical), np.std(csa_cervical), np.mean(position_cervical), np.std(position_cervical)
+    print 'lumbar', np.mean(csa_lumbar), np.std(csa_lumbar), np.mean(position_lumbar), np.std(position_lumbar)
 
     # AVERAGE CSA
     number_points = 1000
@@ -1274,10 +1345,6 @@ def display_csa_length():
     for i, l in enumerate(y_l):
         print labels[i] + ' ' + str(round(interp_mean(l), 2)) + ' +- ' + str(round(interp_std(l), 2))
 
-    # LENGTH of SPINAL CORD AND VERTEBRAL LEVELS
-    with open(PATH_OUTPUT + 'length.txt') as data_file:
-        results_length = json.load(data_file)
-
 
 def select_enlargements():
     import json
@@ -1302,98 +1369,160 @@ def select_enlargements():
 
 def validate_centerline():
     import pandas as pd
-    results = {}
-    results_array = []
-    result_mean_t1, result_mean_t2 = [], []
-    result_max_t1, result_max_t2 = [], []
 
-    fname_template_centerline_image = '/Users/benjamindeleener/data/PAM50_2017/output/template_centerline.nii.gz'
-    fname_template_centerline = '/Users/benjamindeleener/data/PAM50_2017/output/final/centerline.npz'
-    path_segmentations = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/seg/'
+    compute = False
+    if compute:
+        results = {}
+        results_array = []
+        result_mean_t1, result_mean_t2 = [], []
+        result_max_t1, result_max_t2 = [], []
 
-    folder_output = path_segmentations
-    print '\nValidate centerlines ' + folder_output
-    os.chdir(folder_output)
+        fname_template_centerline_image = '/Users/benjamindeleener/data/PAM50_2017/output/template_centerline.nii.gz'
+        fname_template_centerline = '/Users/benjamindeleener/data/PAM50_2017/output/final/centerline.npz'
+        path_segmentations = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/seg/'
 
-    # open centerline from template
-    number_of_points_in_centerline = 4000
-    if os.path.isfile(fname_template_centerline):
-        centerline_template = Centerline(fname=fname_template_centerline)
+        folder_output = path_segmentations
+        print '\nValidate centerlines ' + folder_output
+        os.chdir(folder_output)
+
+        # open centerline from template
+        number_of_points_in_centerline = 4000
+        if os.path.isfile(fname_template_centerline):
+            centerline_template = Centerline(fname=fname_template_centerline)
+        else:
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+                fname_template_centerline_image, algo_fitting='nurbs', verbose=0, nurbs_pts_number=number_of_points_in_centerline,
+                all_slices=False, phys_coordinates=True, remove_outliers=True)
+            centerline_template = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
+                                             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+            centerline_template.save_centerline(fname_output=fname_template_centerline)
+
+        results_centerline = pd.DataFrame()
+        for contrast in ['t2', 't1']:
+            for subject_name in list_subjects:
+                fname_image = subject_name + '_' + contrast + '_seg_t.nii.gz'
+
+                fname_centerline = subject_name + '_' + contrast + '_centerline.npz'
+                if os.path.isfile(fname_centerline):
+                    centerline = Centerline(fname=fname_centerline)
+                else:
+
+                    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+                        fname_image, algo_fitting='nurbs', verbose=0, nurbs_pts_number=number_of_points_in_centerline,
+                        all_slices=False, phys_coordinates=True, remove_outliers=True)
+
+                    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
+                                            x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+                    centerline.save_centerline(fname_output=subject_name + '_' + contrast + '_centerline')
+
+                mse, mean, std, max, distances = centerline.compare_centerline(other=centerline_template, reference_image=Image(fname_image))
+                df_sub = pd.DataFrame([[d, subject_name, contrast] for d in distances], columns=['distance', 'subject', 'contrast'])
+                if results_centerline.empty:
+                    results_centerline = df_sub
+                else:
+                    results_centerline = pd.concat([results_centerline, df_sub])
+                results[subject_name] = distances
+                results_array.append(distances)
+                if contrast == 't1':
+                    result_mean_t1.append(mean)
+                    result_max_t1.append(max)
+                else:
+                    result_mean_t2.append(mean)
+                    result_max_t2.append(max)
+                print subject_name, mse, mean, std, max
+
+        print 'T1 mean =', str(round(np.average(result_mean_t1), 2)) + ' +- ' + str(round(np.std(result_mean_t1), 2))
+        print 'T1 max =', str(round(np.average(result_max_t1), 2)) + ' +- ' + str(round(np.std(result_max_t1), 2))
+        print 'T2 mean =', str(round(np.average(result_mean_t2), 2)) + ' +- ' + str(round(np.std(result_mean_t2), 2))
+        print 'T2 max =', str(round(np.average(result_max_t2), 2)) + ' +- ' + str(round(np.std(result_max_t2), 2))
+
+        results_mean_max = pd.DataFrame({'mean_t1': result_mean_t1, 'max_t1': result_max_t1,
+                                         'mean_t2': result_mean_t2, 'max_t2': result_max_t2},
+                                        index=list_subjects)
+        results_mean_max.to_pickle('/Users/benjamindeleener/data/PAM50_2017/output/PAM50/accuracy_centerline_mean_max.pkl')
+        results_centerline.to_pickle('/Users/benjamindeleener/data/PAM50_2017/output/PAM50/accuracy_centerline.pkl')
     else:
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-            fname_template_centerline_image, algo_fitting='nurbs', verbose=0, nurbs_pts_number=number_of_points_in_centerline,
-            all_slices=False, phys_coordinates=True, remove_outliers=True)
-        centerline_template = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
-                                         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+        results_mean_max = pd.read_pickle('/Users/benjamindeleener/data/PAM50_2017/output/PAM50/accuracy_centerline_mean_max.pkl')
+        results_centerline = pd.read_pickle('/Users/benjamindeleener/data/PAM50_2017/output/PAM50/accuracy_centerline.pkl')
 
-        centerline_template.save_centerline(fname_output=fname_template_centerline)
-
-    results_centerline = pd.DataFrame()
-    for contrast in ['t1', 't2']:
-        for subject_name in list_subjects:
-            fname_image = subject_name + '_' + contrast + '_seg_t.nii.gz'
-
-            fname_centerline = subject_name + '_centerline.npz'
-            if os.path.isfile(fname_centerline):
-                centerline = Centerline(fname=fname_centerline)
-            else:
-
-                x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-                    fname_image, algo_fitting='nurbs', verbose=0, nurbs_pts_number=number_of_points_in_centerline,
-                    all_slices=False, phys_coordinates=True, remove_outliers=True)
-
-                centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
-                                        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
-
-                centerline.save_centerline(fname_output=subject_name + '_centerline')
-
-            mse, mean, std, max, distances = centerline.compare_centerline(other=centerline_template, reference_image=Image(fname_image))
-            results_centerline.append(pd.DataFrame([[d, subject_name, contrast] for d in distances], columns=['distance', 'subject', 'contrast']))
-            results[subject_name] = distances
-            results_array.append(distances)
-            if contrast == 't1':
-                result_mean_t1.append(mean)
-                result_max_t1.append(max)
-            else:
-                result_mean_t2.append(mean)
-                result_max_t2.append(max)
-            print subject_name, mse, mean, std, max
 
     import seaborn as sns
     sns.set_style("whitegrid")
+    """
     plt.figure()
-    ax = sns.violinplot(x='subject', y='distance', hue='contrast', data=results_centerline)
+    plt.subplot(5, 1, 1)
+    data_subplot = results_centerline.loc[results_centerline['subject'].isin(list_subjects[0:10])]
+    ax = sns.violinplot(x='subject', y='distance', hue='contrast', data=data_subplot, palette="muted", split=True)
+    plt.subplot(5, 1, 2)
+    data_subplot = results_centerline.loc[results_centerline['subject'].isin(list_subjects[10:20])]
+    ax = sns.violinplot(x='subject', y='distance', hue='contrast', data=data_subplot, palette="muted", split=True)
+    plt.subplot(5, 1, 3)
+    data_subplot = results_centerline.loc[results_centerline['subject'].isin(list_subjects[20:30])]
+    ax = sns.violinplot(x='subject', y='distance', hue='contrast', data=data_subplot, palette="muted", split=True)
+    plt.subplot(5, 1, 4)
+    data_subplot = results_centerline.loc[results_centerline['subject'].isin(list_subjects[30:40])]
+    ax = sns.violinplot(x='subject', y='distance', hue='contrast', data=data_subplot, palette="muted", split=True)
+    plt.subplot(5, 1, 5)
+    data_subplot = results_centerline.loc[results_centerline['subject'].isin(list_subjects[40:])]
+    ax = sns.violinplot(x='subject', y='distance', hue='contrast', data=data_subplot, palette="muted", split=True)
     plt.ylim(0, 2)
     plt.show()
+    """
 
-    print 'T1 mean =', str(round(np.average(result_mean_t1), 2)) + ' +- ' + str(round(np.std(result_mean_t1), 2))
-    print 'T1 max =', str(round(np.average(result_max_t1), 2)) + ' +- ' + str(round(np.std(result_max_t1), 2))
-    print 'T2 mean =', str(round(np.average(result_mean_t2), 2)) + ' +- ' + str(round(np.std(result_mean_t2), 2))
-    print 'T2 max =', str(round(np.average(result_max_t2), 2)) + ' +- ' + str(round(np.std(result_max_t2), 2))
+    print results_mean_max.describe()
+
+    plt.figure()
+    plt.subplot(1, 2, 1)
+    print results_mean_max
+    data_subplot = results_mean_max[['mean_t1', 'mean_t2']]
+    ax = sns.violinplot(data=data_subplot, palette="muted")
+    plt.ylim(0, 0.75)
+    plt.subplot(1, 2, 2)
+    data_subplot = results_mean_max[['max_t1', 'max_t2']]
+    ax = sns.violinplot(data=data_subplot, palette="muted")
+    plt.ylim(0, 2.5)
+    plt.show()
+
 
 def convert_segmentations():
     path_data = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/out/'
     path_out = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/seg/'
     fname_template = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1.nii'
-    #for subject_name in list_subjects:
-    #    sct.run('mnc2nii ' + path_data + subject_name + '_t1_seg_d.mnc ' + path_data + subject_name + '_t1_seg_d.nii ')
+    for subject_name in list_subjects:
+        #sct.run('mnc2nii ' + path_data + subject_name + '_t1_seg_d.mnc ' + path_data + subject_name + '_t1_seg_d.nii ')
+        sct.run('mnc2nii ' + path_data + subject_name + '_t1_seg_d.mnc ' + path_data + subject_name + '_t1_seg_d.nii ')
 
     for subject_name in list_subjects:
         sct.run('sct_crop_image -i ' + path_data + subject_name + '_t1_seg_d.nii -o ' + path_out + subject_name + '_t1_seg_t.nii.gz -b 0 -start 0 -end 1047 -dim 2')
         #sct.run('fslview -m single,single ' + fname_template + ' ' + path_data + subject_name + '_t1_seg_d.nii -l Red -b 0,0.00001')
 
 
+def warp_centerline():
+    path_data = '/Users/benjamindeleener/data/PAM50_2017/'
+    path_out = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/seg/'
+    contrast = 't1'
+    image_destination = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1.nii'
+    for subject_name in list_subjects:
+        path_subject = path_data + subject_name + '/' + contrast + '/'
+        fname_centerline = path_subject + contrast + '_centerline_manual.nii.gz'
+        sct.run('sct_apply_transfo -i ' + fname_centerline + ' -w ' + path_subject + 'warp_curve2straight.nii.gz -d ' + image_destination + ' -x nn -o ' + path_out + subject_name + '_' + contrast + '_centerline_straight.nii.gz')
+        sct.run('sct_crop_image -i ' + path_out + subject_name + '_' + contrast + '_centerline_straight.nii.gz -o ' + path_out + subject_name + '_' + contrast + '_seg_t.nii.gz -b 0 -start 200 -end 1047 -dim 2')
+        sct.run('rm -f ' + path_out + subject_name + '_' + contrast + '_centerline_straight.nii.gz')
+
+
 #clean_segmentation('t1')
 #multisegment_spinalcord('t1')
 #generate_centerline('t1')
 #average_centerline('t1')
-straighten_all_subjects('t2')
+#straighten_all_subjects('t2')
 
 #compare_csa(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz', fname_disks='t1_ground_truth.nii.gz', fname_centerline_image='t1_centerline_manual.nii.gz')
 #compute_spinalcord_length(contrast='t1', fname_segmentation='t1_seg_manual.nii.gz')
 
-#normalize_intensity(contrast='t1', fname_disks=PATH_OUTPUT + 'template_disks.nii.gz', fname_centerline_image=PATH_OUTPUT + 'template_centerline.nii.gz')
-#convert_nii2mnc(contrast='t1')
+#normalize_intensity(contrast='t2', fname_disks=PATH_OUTPUT + 'template_disks.nii.gz', fname_centerline_image=PATH_OUTPUT + 'template_centerline.nii.gz')
+#convert_nii2mnc(contrast='t2')
 #warp_segmentation('t1')
 
 #create_mask_template()
@@ -1407,12 +1536,13 @@ for subject_name in list_subjects:
     print folder + subject_name + '_' + contrast + '.mnc,' + folder + 'template_mask.mnc'
 """
 
-#display_csa_length()
+display_csa_length()
 #compute_vertebral_levels(contrast='t1')
 #select_enlargements()
 #validate_centerline()
 #normalize_intensity_template()
 #convert_segmentations()
+#warp_centerline()
 
 """
 for subject_name in list_subjects:
