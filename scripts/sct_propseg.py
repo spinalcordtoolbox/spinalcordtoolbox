@@ -255,7 +255,8 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name="-init-mask",
                       type_value="image_nifti",
                       description="mask containing three center of the spinal cord, used to initiate the propagation.\nReplace filename by 'viewer' to use interactive viewer for providing mask. Ex: -init-mask viewer",
-                      mandatory=False)
+                      mandatory=False,
+                      list_no_image=['viewer'])
     parser.add_option(name="-mask-correction",
                       type_value="image_nifti",
                       description="mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and CSF or in the presence of artefacts/pathologies.",
@@ -493,10 +494,12 @@ if __name__ == "__main__":
                                        'data/optic_models',
                                        '{}_model'.format(contrast_type))
 
-        optic_filename = optic.detect_centerline(fname_data, init_option,
-                                                 contrast_type, path_classifier,
-                                                 folder_output, remove_temp_files,
-                                                 verbose=verbose)
+        init_option_optic, optic_filename = optic.detect_centerline(fname_data,
+                                                                    contrast_type, path_classifier,
+                                                                    folder_output, remove_temp_files,
+                                                                    init_option, verbose=verbose)
+        if init_option is not None:
+            cmd += " -init " + str(init_option_optic)
 
         cmd += " -init-centerline {}".format(optic_filename)
 
