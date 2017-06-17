@@ -882,58 +882,59 @@ def main(args=None):
         args = sys.argv[1:]
 
     parser = get_parser()
+    arguments = parser.parse(args)
 
     # assigning variables to arguments
-    input_filename = args["-i"]
-    centerline_file = args["-s"]
+    input_filename = arguments["-i"]
+    centerline_file = arguments["-s"]
 
     sc_straight = SpinalCordStraightener(input_filename, centerline_file)
 
-    if "-ref" in args:
+    if "-ref" in arguments:
         sc_straight.use_straight_reference = True
-        sc_straight.centerline_reference_filename = str(args["-ref"])
+        sc_straight.centerline_reference_filename = str(arguments["-ref"])
 
-    if "-disks-input" in args:
+    if "-disks-input" in arguments:
         if not sc_straight.use_straight_reference:
             sct.printv('Warning: disks position are not yet taken into account if reference is not provided.')
         else:
-            sc_straight.disks_input_filename = str(args["-disks-input"])
+            sc_straight.disks_input_filename = str(arguments["-disks-input"])
             sc_straight.precision = 4.0
-    if "-disks-ref" in args:
+    if "-disks-ref" in arguments:
         if not sc_straight.use_straight_reference:
             sct.printv('Warning: disks position are not yet taken into account if reference is not provided.')
         else:
-            sc_straight.disks_ref_filename = str(args["-disks-ref"])
+            sc_straight.disks_ref_filename = str(arguments["-disks-ref"])
             sc_straight.precision = 4.0
 
     # Handling optional arguments
-    if "-r" in args:
-        sc_straight.remove_temp_files = int(args["-r"])
-    if "-x" in args:
-        sc_straight.interpolation_warp = str(args["-x"])
-    if "-o" in args:
-        sc_straight.output_filename = str(args["-o"])
-    if '-ofolder' in args:
-        sc_straight.path_output = args['-ofolder']
+    if "-r" in arguments:
+        sc_straight.remove_temp_files = int(arguments["-r"])
+    if "-x" in arguments:
+        sc_straight.interpolation_warp = str(arguments["-x"])
+    if "-o" in arguments:
+        sc_straight.output_filename = str(arguments["-o"])
+    if '-ofolder' in arguments:
+        sc_straight.path_output = arguments['-ofolder']
     else:
         sc_straight.path_output = './'
-    if "-v" in args:
-        sc_straight.verbose = int(args["-v"])
-    # if "-cpu-nb" in args:
-    #     sc_straight.cpu_number = int(args["-cpu-nb"])
-    if '-qc' in args:
-        sc_straight.qc = int(args['-qc'])
+    if "-v" in arguments:
+        sc_straight.verbose = int(arguments["-v"])
+    # if "-cpu-nb" in arguments:
+    #     sc_straight.cpu_number = int(arguments["-cpu-nb"])
+    if '-qc' in arguments:
+        sc_straight.qc = int(arguments['-qc'])
 
-    if '-disable-straight2curved' in args:
+    if '-disable-straight2curved' in arguments:
         sc_straight.straight2curved = False
-    if '-disable-curved2straight' in args:
+    if '-disable-curved2straight' in arguments:
         sc_straight.curved2straight = False
 
-    if '-resample' in args:
-        sc_straight.resample_factor = args['-resample']
+    if '-resample' in arguments:
+        sc_straight.resample_factor = arguments['-resample']
 
-    if "-param" in args:
-        params_user = args['-param']
+    if "-param" in arguments:
+        params_user = arguments['-param']
         # update registration parameters
         for param in params_user:
             param_split = param.split('=')
