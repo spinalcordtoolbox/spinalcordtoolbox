@@ -230,9 +230,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                         pca_eigenratio = pca_src[iz].explained_variance_ratio_
                         plt.title('src')
                     elif isub == 222:
-                        plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10,
-                                    color='steelblue',
-                                    alpha=0.5)
+                        plt.scatter([coord_src_rot[i, 0] for i in range(len(coord_src_rot))], [coord_src_rot[i, 1] for i in range(len(coord_src_rot))], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
                         pcaaxis = pca_dest[iz].components_.T
                         pca_eigenratio = pca_dest[iz].explained_variance_ratio_
                         plt.title('src_rot')
@@ -243,8 +241,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                         pca_eigenratio = pca_dest[iz].explained_variance_ratio_
                         plt.title('dest')
                     elif isub == 224:
-                        plt.scatter(coord_dest_rot[:, 0], coord_dest_rot[:, 1], s=5, marker='o', zorder=10, color='red',
-                                    alpha=0.5)
+                        plt.scatter([coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))], [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))], s=5, marker='o', zorder=10, color='red', alpha=0.5)
                         pcaaxis = pca_src[iz].components_.T
                         pca_eigenratio = pca_src[iz].explained_variance_ratio_
                         plt.title('dest_rot')
@@ -257,7 +254,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     plt.axis([-3, 3, -3, 3])
                     plt.gca().set_aspect('equal', adjustable='box')
                 except Exception as e:
-                    sct.printv('WARNING: '+str(e), 1, 'warning')
+                    raise Exception
+                    # sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
+                    # sct.printv('WARNING: '+str(e), 1, 'warning')
 
                     # plt.axis('equal')
             plt.savefig(path_qc + 'register2d_centermassrot_pca_z' + str(iz) + '.png')
