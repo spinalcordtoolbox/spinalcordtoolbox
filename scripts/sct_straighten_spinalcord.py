@@ -875,7 +875,12 @@ def get_parser():
     return parser
 
 
-if __name__ == "__main__":
+# MAIN
+# ==========================================================================================
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
@@ -948,3 +953,10 @@ if __name__ == "__main__":
                 sc_straight.template_orientation = int(param_split[1])
 
     sc_straight.straighten()
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    # call main function
+    main()
