@@ -40,7 +40,7 @@ def get_parser():
                                  ' It calculates the texture properties of a grey level co-occurence matrix (GLCM).'
                                  ' The textures features are those defined in the sckit-image implementation:\n'
                                  ' http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops\n'
-                                 ' This function outputs one nifti file per texture metric (contrast, dissimilarity, homogeneity, ASM, energy, correlation) and per orientation called fnameIn_property_distance_angle.nii.gz, in the folder ./texture/')
+                                 ' This function outputs one nifti file per texture metric (contrast, dissimilarity, homogeneity, ASM, energy, correlation) and per orientation called fnameIn_property_distance_angle.nii.gz')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Image to analyse",
@@ -276,7 +276,7 @@ class Param:
     self.rm_tmp = True
 
 class ParamGLCM(object):
-  def __init__(self, symmetric=True, normed=True, prop='contrast,dissimilarity,homogeneity,energy,correlation,ASM', distance='1', angle='0'):
+  def __init__(self, symmetric=True, normed=True, prop='contrast,dissimilarity,homogeneity,energy,correlation,ASM', distance='1', angle='0,45,90,135', mean='0'):
     self.symmetric = True  # If True, the output matrix P[:, :, d, theta] is symmetric.
     self.normed = True  # If True, normalize each matrix P[:, :, d, theta] by dividing by the total number of accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
     self.prop = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM' # The property formulae are detailed here: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops
@@ -305,7 +305,6 @@ def main(args=None):
 
   # set param arguments ad inputted by user
   param.fname_im = arguments["-i"]
-  print param.fname_im
   param.fname_seg = arguments["-s"]
 
   if '-ofolder' in arguments:
