@@ -31,6 +31,7 @@ from sct_utils import (add_suffix, extract_fname, printv, run,
 TODO:
   - volume
   - if texture ou image input: prop.max_intensity, prop.mean_intensity, prop.min_intensity
+  - compute_ref_feature --> attention texture errode --> erroder aussi mask?
 '''
 
 
@@ -78,7 +79,14 @@ class AnalyzeLeion:
 
     self.fname_label = None
 
-    self.data_pd = pd.DataFrame(data={'label': None, 'volume': None},index=range(0))
+    data_dct = {}
+    column_lst = ['label', 'volume', ]
+    if self.param.fname_ref is not None:
+      for feature in ['mean', 'std']:
+        column_lst.append(feature+'_'+extract_fname(self.param.fname_ref)[1])
+    for column in column_lst:
+      data_dct[column] = None
+    self.data_pd = pd.DataFrame(data=data_dct,index=range(0),columns=column_lst)
 
   def analyze(self):
     self.ifolder2tmp()
@@ -91,6 +99,25 @@ class AnalyzeLeion:
 
     # Compute lesion volume
     self.compute_volume()
+
+    # Compute mean, median, min, max value in each labeled lesion
+    if self.param.fname_ref is not None:
+      self.compute_ref_feature()
+
+  def compute_ref_feature(self):
+    printv('\nCompute reference image features...', self.param.verbose, 'normal')
+    im_label_data, im_ref_data = Image(self.fname_label).data, Image(self.param.fname_ref).data
+
+    for lesion_label in [l for l in np.unique(im_label_data.data) if l]:
+      im_label_data_cur = im_label_data == lesion_label
+      mean_cur, std_cur  = np.mean(im_ref_data[np.where(im_label_data_cur)]), np.std(im_ref_data[np.where(im_label_data_cur)])
+
+      label_idx = self.data_pd[self.data_pd.label==lesion_label].index
+      self.data_pd.loc[label_idx, 'mean_'+extract_fname(self.param.fname_ref)[1]] = mean_cur
+      self.data_pd.loc[label_idx, 'std_'+extract_fname(self.param.fname_ref)[1]] = std_cur
+      printv('Mean+/-std of lesion #'+str(lesion_label)+' in '+extract_fname(self.param.fname_ref)[1]+' file: '+str(round(mean_cur,2))+'+/-'+str(round(std_cur,2)), type='info')
+    
+    print self.data_pd
 
   def compute_volume(self):
     printv('\nCompute lesion volumes...', self.param.verbose, 'normal')
@@ -117,7 +144,6 @@ class AnalyzeLeion:
     im_2save.save()
 
     self.data_pd['label'] = [l for l in np.unique(im_2save.data) if l]
-    print self.data_pd
 
   def binarize(self):
     im = Image(self.param.fname_im)
@@ -138,7 +164,12 @@ class AnalyzeLeion:
       self.param.fname_im = ''.join(extract_fname(self.param.fname_im)[1:])
     else:
       printv('ERROR: No input image', self.param.verbose, 'error')
-    
+
+    # copy ref image
+    if self.param.fname_ref is not None:
+      shutil.copy(self.param.fname_ref, self.tmp_dir)
+      self.param.fname_ref = ''.join(extract_fname(self.param.fname_ref)[1:])
+
     os.chdir(self.tmp_dir) # go to tmp directory
 
 class Param:
