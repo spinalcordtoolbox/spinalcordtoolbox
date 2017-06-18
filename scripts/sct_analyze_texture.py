@@ -18,21 +18,18 @@ import numpy as np
 import itertools
 from math import radians
 from skimage.feature import greycomatrix, greycoprops
-from tqdm import tqdm
 
-import sct_maths
+# import sct_maths
 from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
-from sct_utils import (add_suffix, extract_fname, printv, run, check_folder_exist,
-                       slash_at_the_end, Timer, get_absolute_path, tmp_create)
+from sct_utils import (add_suffix, extract_fname, printv, run,
+                       slash_at_the_end, Timer, tmp_create)
 
 '''
 TODO:
-  - tester sur non RPI
-  - tester sur dim sag
   - optimiser le temps de calcul: croper autour de la moelle
-  - report github
+  - tester sct_extract_metric
 '''
 
 
@@ -231,7 +228,9 @@ class ExtractGLCM:
     for im_z, seg_z,zz in zip(self.dct_im_seg['im'],self.dct_im_seg['seg'],range(len(self.dct_im_seg['im']))):
       for xx in range(im_z.shape[0]):
         for yy in range(im_z.shape[1]):
-          if xx < offset or yy < offset:  # %%%%% --> to add in parser security
+          if not seg_z[xx, yy]:
+            continue
+          if xx < offset or yy < offset:
               continue
           if xx > (im_z.shape[0] - offset-1) or yy > (im_z.shape[1] - offset-1):
               continue # to check if the whole glcm_window is in the axial_slice
