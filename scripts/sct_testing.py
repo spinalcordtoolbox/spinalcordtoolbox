@@ -134,6 +134,7 @@ def downloaddata():
 # ==========================================================================================
 def fill_functions():
     functions = [
+        'sct_analyze_texture',
         'sct_apply_transfo',
         # 'sct_check_atlas_integrity',
         'sct_compute_mtr',

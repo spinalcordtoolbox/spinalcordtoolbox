@@ -148,11 +148,11 @@ class ExtractGLCM:
 
   def tmp2ofolder(self):
 
+    os.chdir('..') # go back to original directory
+
     printv('\nSave resulting files...', self.param.verbose, 'normal')
     for f in self.fname_metric_lst: # Copy from tmp folder to ofolder
-      shutil.copy(self.fname_metric_lst[f], self.param.path_results+self.fname_metric_lst[f])
-
-    os.chdir('..') # go back to original directory
+      shutil.copy(self.tmp_dir+self.fname_metric_lst[f], self.param.path_results+self.fname_metric_lst[f])
 
   def ifolder2tmp(self):
     # copy input image
@@ -181,10 +181,10 @@ class ExtractGLCM:
       im2mean_lst = [im_m+str(self.param_glcm.distance)+'_'+a+extract_fname(self.param.fname_im)[2] for a in self.param_glcm.angle.split(',')]
       
       # Average across angles and save it as wrk_folder/property_distance_mean.extension
-      fname_out = im_m+'mean'+extract_fname(self.param.fname_im)[2]
+      fname_out = im_m+str(self.param_glcm.distance)+'_mean'+extract_fname(self.param.fname_im)[2]
       run('sct_image -i '+','.join(im2mean_lst)+' -concat t -o '+fname_out, error_exit='warning', raise_exception=True)
       run('sct_maths -i '+fname_out+' -mean t -o '+fname_out, error_exit='warning', raise_exception=True)
-      self.fname_metric_lst[im_m+'mean']=fname_out
+      self.fname_metric_lst[im_m+str(self.param_glcm.distance)+'_mean']=fname_out
 
   def extract_slices(self):
 
@@ -246,8 +246,6 @@ class ExtractGLCM:
 
           for m in self.metric_lst: # compute the GLCM property (m.split('_')[0]) of the voxel xx,yy,zz
             dct_metric[m].data[xx,yy,zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
-            # im_cur = Image(self.fname_metric_lst[m])
-            # im_cur.data[xx,yy,zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
 
       timer.add_iteration()
     

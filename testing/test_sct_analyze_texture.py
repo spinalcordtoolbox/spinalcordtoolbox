@@ -21,21 +21,14 @@ import os.path
 import time, random
 from copy import deepcopy
 from msct_image import Image, compute_dice
-
+import numpy as np
 
 def test(path_data='', parameters=''):
 
     # initialization
     verbose = 0
     output = ''
-
-    # # check if isct_propseg compatibility
-    # status_isct_propseg, output_isct_propseg = commands.getstatusoutput('isct_propseg')
-    # isct_propseg_version = output_isct_propseg.split('\n')[0]
-    # if isct_propseg_version != 'sct_propseg - Version 1.1 (2015-03-24)':
-    #     status = 99
-    #     output += '\nERROR: isct_propseg does not seem to be compatible with your system or is no up-to-date... Please contact SCT administrators.'
-    #     return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
+    difference_threshold = 0.95
 
     # parameters
     if not parameters:
@@ -46,6 +39,17 @@ def test(path_data='', parameters=''):
         parser = sct_analyze_texture.get_parser()
         dict_param = parser.parse(parameters.split(), check_file_exist=False)
         dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
+
+        # add output 
+        subject_folder = path_data.split('/')
+        if subject_folder[-1] == '' and len(subject_folder) > 1:
+            subject_folder = subject_folder[-2]
+        else:
+            subject_folder = subject_folder[-1]
+        path_output = sct.slash_at_the_end('sct_analyze_texture_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
+        dict_param_with_path['-ofolder'] = path_output
+        sct.create_folder(path_output)
+        # param_with_path += ' -ofolder ' + path_output
         param_with_path = parser.dictionary_to_string(dict_param_with_path)
     # in case not all mandatory flags are filled
     except SyntaxError as err:
@@ -53,16 +57,22 @@ def test(path_data='', parameters=''):
         status = 1
         output = err
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-
-    import time, random
-    subject_folder = path_data.split('/')
-    if subject_folder[-1] == '' and len(subject_folder) > 1:
-        subject_folder = subject_folder[-2]
+    
+    # Extract contrast
+    contrast = ''
+    input_filename = ''
+    if dict_param['-i'][0] == '/':
+        dict_param['-i'] = dict_param['-i'][1:]
+    input_split = dict_param['-i'].split('/')
+    if len(input_split) == 2:
+        contrast = input_split[0]
+        input_filename = input_split[1]
     else:
-        subject_folder = subject_folder[-1]
-    path_output = sct.slash_at_the_end('sct_analyze_texture_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
-    param_with_path += ' -ofolder ' + path_output
-    sct.create_folder(path_output)
+        input_filename = input_split[0]
+    if not contrast:  # if no contrast folder, send error.
+        status = 1
+        output += '\nERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
+        return status, output, DataFrame(data={'status': status, 'output': output, 'texture_difference': float('nan')}, index=[path_data])
 
     # log file
     import sys
@@ -79,7 +89,7 @@ def test(path_data='', parameters=''):
         output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(
-            data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
+            data={'status': status, 'output': output, 'texture_difference': float('nan')}, index=[path_data])
 
     # run command
     cmd = 'sct_analyze_texture ' + param_with_path
@@ -94,8 +104,23 @@ def test(path_data='', parameters=''):
     output += o
     duration = time.time() - time_start
 
+    # extract name of one texture file: inputname_contrast_1_mean.nii.gz
+    # where inputname is the filename of the input image
+    texture_test_filename = path_output + sct.add_suffix(input_filename, '_contrast_1_mean')
+    texture_ref_filename = path_data + contrast + '/' + sct.add_suffix(input_filename, '_contrast_1_mean_ref')
+
+    # if command ran without error, test integrity
+    if status == 0:
+        # Substract generated image and image from database
+        diff_im = Image(texture_test_filename).data - Image(texture_ref_filename).data
+        cmpt_diff_vox = np.count_nonzero(diff_im)
+        cmpt_tot_vox = np.count_nonzero(Image(texture_ref_filename).data)
+        difference_vox = float(cmpt_tot_vox-cmpt_diff_vox)/cmpt_tot_vox
+        if difference_vox < difference_threshold:
+            status = 99
+
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'duration [s]': duration}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'texture_difference': difference_vox, 'duration [s]': duration}, index=[path_data])
 
     sys.stdout.close()
     sys.stdout = stdout_orig
