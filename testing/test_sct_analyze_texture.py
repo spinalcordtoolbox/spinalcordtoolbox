@@ -1,15 +1,12 @@
 #!/usr/bin/env python
-#########################################################################################
-#
+
 # Test function sct_analyze_texture
 #
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Charley
 # modified: 2017/06/18
 #
 # About the license: see the file LICENSE.TXT
-#########################################################################################
 
 import sct_utils as sct
 import commands
@@ -49,7 +46,6 @@ def test(path_data='', parameters=''):
         path_output = sct.slash_at_the_end('sct_analyze_texture_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
         dict_param_with_path['-ofolder'] = path_output
         sct.create_folder(path_output)
-        # param_with_path += ' -ofolder ' + path_output
         param_with_path = parser.dictionary_to_string(dict_param_with_path)
     # in case not all mandatory flags are filled
     except SyntaxError as err:

@@ -1,15 +1,12 @@
 #!/usr/bin/env python
-#######################################################################################################################
-#
+
 # Analyse texture
 #
-# ----------------------------------------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Charley
 # Modified: 2017-06-13
 #
 # About the license: see the file LICENSE.TXT
-########################################################################################################################
 
 import os
 import shutil
@@ -19,19 +16,11 @@ import itertools
 from math import radians
 from skimage.feature import greycomatrix, greycoprops
 
-# import sct_maths
 from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
 from sct_utils import (add_suffix, extract_fname, printv, run,
                        slash_at_the_end, Timer, tmp_create)
-
-'''
-TODO:
-  - optimiser le temps de calcul: croper autour de la moelle
-  - tester sct_extract_metric
-'''
-
 
 def get_parser():
     # Initialize the parser
@@ -40,7 +29,7 @@ def get_parser():
                                  ' It calculates the texture properties of a grey level co-occurence matrix (GLCM).'
                                  ' The textures features are those defined in the sckit-image implementation:\n'
                                  ' http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops\n'
-                                 ' This function outputs one nifti file per texture metric (contrast, dissimilarity, homogeneity, ASM, energy, correlation) and per orientation called fnameIn_property_distance_angle.nii.gz')
+                                 ' This function outputs one nifti file per texture metric ('+ParamGLCM().prop+') and per orientation called fnameIn_property_distance_angle.nii.gz')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Image to analyse",
@@ -335,6 +324,5 @@ def main(args=None):
   printv('\nDone! To view results, type:', param.verbose)
   printv('fslview ' + arguments["-i"] + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
 
-    
 if __name__ == "__main__":
     main()
