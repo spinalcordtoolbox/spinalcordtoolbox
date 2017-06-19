@@ -13,7 +13,7 @@ import shutil
 import sys
 import numpy as np
 import itertools
-from math import radians, pi
+from math import radians, pi, sqrt
 from skimage.measure import label, regionprops
 import pandas as pd
 
@@ -23,10 +23,13 @@ from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
 from sct_utils import (add_suffix, extract_fname, printv, run,
                        slash_at_the_end, Timer, tmp_create)
+from sct_straighten_spinalcord import smooth_centerline
+from msct_types import Centerline
+
 
 '''
 TODO:
-  - nominal diameter
+  - correction angle
 '''
 
 
@@ -39,6 +42,11 @@ def get_parser():
                       description="Lesion mask to analyse",
                       mandatory=True,
                       example='t2_lesion.nii.gz')
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="Spinal cord centerline or segmentation file for angle correction",
+                      mandatory=False,
+                      example='t2_seg.nii.gz')
     parser.add_option(name="-ref",
                       type_value="file",
                       description="Reference image for feature extraction",
@@ -75,7 +83,7 @@ class AnalyzeLeion:
     self.fname_label = None
 
     data_dct = {}
-    column_lst = ['label', 'volume', 'equivalent_diameter', 'SI lenght']
+    column_lst = ['label', 'volume', 'si_length', 'ax_nominal_diameter']
     if self.param.fname_ref is not None:
       for feature in ['mean', 'std']:
         column_lst.append(feature+'_'+extract_fname(self.param.fname_ref)[1])
@@ -85,23 +93,24 @@ class AnalyzeLeion:
 
     self.orientation = None
 
+    self.angles = None
+
   def analyze(self):
     self.ifolder2tmp()
 
     # Orient input image(s) to RPI
     self.orient_rpi()
+
     # Binarize the input image if needed
     self.binarize()
 
     # Label connected regions of the masked image
     self.label_lesion()
 
-    # # Compute lesion volume
-    # self.compute_volume()
+    # Compute angle for CSA correction
+    self.angle_correction()
 
-    # # Compute nominal diameter
-    # self.compute_equivalent_diameter()
-
+    # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
     self.measure_without_ref_atlas()
 
     # Compute (S-I) length
@@ -129,52 +138,32 @@ class AnalyzeLeion:
     
     print self.data_pd
 
-  def compute_equivalent_diameter(self):
-    printv('\nCompute lesion equivalent diameter...', self.param.verbose, 'normal')
-    im = Image(self.fname_label)
-    im_data = im.data
-    px, py, pz = im.dim[3:6]
+  def _measure_volume(self, im_data, p_lst):
 
-    for lesion_label in [l for l in np.unique(im_data) if l]:
-      im_data_cur = im_data == lesion_label
-      
-      label_idx = self.data_pd[self.data_pd.label==lesion_label].index
-      volume_cur = self.data_pd.loc[label_idx, 'volume'].values[0]
-      equivalent_diam_cur = (6.0*volume_cur/(pi))**(1./3)
-      self.data_pd.loc[label_idx, 'equivalent_diameter'] = equivalent_diam_cur
-      printv('Equivalent diameter of lesion #'+str(lesion_label)+' : '+str(round(equivalent_diam_cur,2))+' mm', type='info')
-
-  def measure_equivalent_diameter(self, lesion_label):
-
-    label_idx = self.data_pd[self.data_pd.label==lesion_label].index
-    volume_cur = self.data_pd.loc[label_idx, 'volume'].values[0]
-    equivalent_diam_cur = (6.0*volume_cur/(pi))**(1./3)
-    self.data_pd.loc[label_idx, 'equivalent_diameter'] = equivalent_diam_cur
-    printv('Equivalent diameter of lesion #'+str(lesion_label)+' : '+str(round(equivalent_diam_cur,2))+' mm', type='info')
-
-  def compute_volume(self):
-    printv('\nCompute lesion volumes...', self.param.verbose, 'normal')
-    im = Image(self.fname_label)
-    im_data = im.data
-    px, py, pz = im.dim[3:6]
-
-    for lesion_label in [l for l in np.unique(im.data) if l]:
-      volume_cur = 0.0
-      im_data_cur = im_data == lesion_label
-      for zz in range(im.dim[2]):
-        volume_cur += np.sum(im_data_cur[:,:,zz]) * px * py * pz
-      
-      self.data_pd.loc[self.data_pd[self.data_pd.label==lesion_label].index, 'volume'] = volume_cur
-      printv('Volume of lesion #'+str(lesion_label)+' : '+str(round(volume_cur,2))+' mm^3', type='info')
-      
-  def measure_volume(self, im_data, lesion_label, p_lst):
     volume_cur = 0.0
     for zz in range(im_data.shape[2]):
-      volume_cur += np.sum(im_data[:,:,zz]) * p_lst[0] * p_lst[1] * p_lst[2]
+      volume_cur += np.sum(im_data[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2]
     
-    self.data_pd.loc[self.data_pd[self.data_pd.label==lesion_label].index, 'volume'] = volume_cur
-    printv('Volume of lesion #'+str(lesion_label)+' : '+str(round(volume_cur,2))+' mm^3', type='info')
+    printv('  Volume : '+str(round(volume_cur,2))+' mm^3', type='info')
+    return volume_cur
+
+  def _measure_length(self, im_data, p_z):
+
+    length_cur = np.sum([np.cos(self.angles[zz]) * p_z for zz in list(np.unique(np.where(im_data)[2]))])
+
+    printv('  (S-I) length : '+str(round(length_cur,2))+' mm', type='info')
+    return length_cur
+
+  def _measure_diameter(self, im_data, p_lst):
     
+    area_lst = []
+    for zz in range(im_data.shape[2]):
+      area_lst.append(np.sum(im_data[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1])
+    diameter_cur = sqrt(max(area_lst)/(4*pi))
+    
+    printv('  Max. axial nominal diameter : '+str(round(diameter_cur,2))+' mm', type='info')
+    return diameter_cur
+
   def measure_without_ref_atlas(self):
     im = Image(self.fname_label)
     im_data = im.data
@@ -182,10 +171,53 @@ class AnalyzeLeion:
 
     for lesion_label in [l for l in np.unique(im.data) if l]:
       im_data_cur = im_data == lesion_label
-      printv('\nMeasure on lesion #'+str(lesion_label)+'...', self.param.verbose, 'normal')
+      printv('\nMeasures on lesion #'+str(lesion_label)+'...', self.param.verbose, 'normal')
 
-      self.measure_volume(im_data_cur, lesion_label, p_lst)
-      self.measure_equivalent_diameter(lesion_label)
+      label_idx = self.data_pd[self.data_pd.label==lesion_label].index
+      self.data_pd.loc[label_idx, 'volume'] = self._measure_volume(im_data_cur, p_lst)
+      self.data_pd.loc[label_idx, 'si_length'] = self._measure_length(im_data_cur, p_lst[2])
+      self.data_pd.loc[label_idx, 'ax_nominal_diameter'] = self._measure_diameter(im_data_cur, p_lst)
+
+  def _normalize(self, vect):
+      norm = np.linalg.norm(vect)
+      return vect / norm
+
+  def angle_correction(self):
+
+    if self.param.fname_seg is not None:
+      im_seg = Image(self.param.fname_seg)
+      data_seg = im_seg.data
+      X, Y, Z = (data_seg > 0).nonzero()
+      min_z_index, max_z_index = min(Z), max(Z)
+
+      # fit centerline, smooth it and return the first derivative (in physical space)
+      x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.param.fname_seg, algo_fitting='hanning', type_window='hanning', window_length=80, nurbs_pts_number=3000, phys_coordinates=True, verbose=self.param.verbose, all_slices=False)
+      centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+      # average centerline coordinates over slices of the image
+      x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)[3:]
+
+      # compute Z axis of the image, in physical coordinate
+      axis_Z = im_seg.get_directions()[2]
+
+      # Empty arrays in which angle for each z slice will be stored
+      self.angles = np.zeros(im_seg.dim[2])
+
+      # for iz in xrange(min_z_index, max_z_index + 1):
+      for zz in range(im_seg.dim[2]):
+        if zz >= min_z_index and zz <= max_z_index:
+          # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
+          try: # normalize the tangent vector to the centerline (i.e. its derivative)
+            tangent_vect = self._normalize(np.array([x_centerline_deriv_rescorr[zz], y_centerline_deriv_rescorr[zz], z_centerline_deriv_rescorr[zz]]))
+
+          except IndexError:
+            sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
+
+          # compute the angle between the normal vector of the plane and the vector z
+          self.angles[zz] = np.arccos(np.vdot(tangent_vect, axis_Z))
+
+    else:
+      self.angles = np.zeros(Image(self.param.fname_im).dim[2])
 
   def label_lesion(self):
     printv('\nLabel connected regions of the masked image...', self.param.verbose, 'normal')
@@ -224,6 +256,8 @@ class AnalyzeLeion:
     self.orientation = get_orientation(Image(self.param.fname_im))
 
     self.orient(self.param.fname_im, 'RPI')
+    if self.param.fname_seg is not None:
+      self.orient(self.param.fname_seg, 'RPI')
     if self.param.fname_ref is not None:
       self.orient(self.param.fname_ref, 'RPI')
 
@@ -235,6 +269,11 @@ class AnalyzeLeion:
     else:
       printv('ERROR: No input image', self.param.verbose, 'error')
 
+    # copy seg image
+    if self.param.fname_seg is not None:
+      shutil.copy(self.param.fname_seg, self.tmp_dir)
+      self.param.fname_seg = ''.join(extract_fname(self.param.fname_seg)[1:])
+
     # copy ref image
     if self.param.fname_ref is not None:
       shutil.copy(self.param.fname_ref, self.tmp_dir)
@@ -245,6 +284,7 @@ class AnalyzeLeion:
 class Param:
   def __init__(self):
     self.fname_im = None
+    self.fname_seg = None
     self.fname_ref = None
     self.path_results = './'
     self.verbose = '1'
@@ -264,6 +304,8 @@ def main(args=None):
   # set param arguments ad inputted by user
   param.fname_im = arguments["-i"]
 
+  if '-s' in arguments:
+    param.fname_seg = arguments["-s"]
   if '-ref' in arguments:
     param.fname_ref = arguments["-ref"]
 
