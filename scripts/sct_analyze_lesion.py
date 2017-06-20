@@ -141,18 +141,20 @@ class AnalyzeLeion:
     if self.param.fname_ref is not None:
       self.measure_within_im()
 
-    # # Compute lesion volumes across vertebrae
-    # if self.param.path_template is not None:
-    #   if os.path.isfile(self.path_levels):
-    #     self.measure_with_t_vert()
-    #   else:
-    #     printv('WARNING: the file '+self.path_levels+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
+    self.reorient()
 
+    # save results to ofolder
+    self.tmp2ofolder()
 
-
-    # print self.data_template_pd
-    print self.data_pd
     self.show_total_results()
+
+  def tmp2ofolder(self):
+
+    os.chdir('..') # go back to original directory
+
+    printv('\nSave labeled file...', self.param.verbose, 'normal')
+    shutil.copy(self.tmp_dir+self.fname_label, self.param.path_results+self.fname_label)
+    print self.tmp_dir+self.fname_label, self.param.path_results+self.fname_label
 
   def show_total_results(self):
     
@@ -162,48 +164,11 @@ class AnalyzeLeion:
     printv('  Nominal Diameter = '+str(round(np.mean(self.data_pd['ax_nominal_diameter [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['ax_nominal_diameter [mm]']),2))+' mm', self.param.verbose, type='info')
 
     if 'GM [%]' in self.data_pd:
-      print np.mean(self.data_pd['WM [%]']), np.mean(self.data_pd['GM [%]'])
       printv('  Proportion of lesions in WM / GM = '+str(round(np.mean(self.data_pd['WM [%]']),2))+'% / '+str(round(np.mean(self.data_pd['GM [%]']),2))+'%', self.param.verbose, type='info')
 
 
     printv('\nTotal volume = '+str(round(np.sum(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, 'info')
     printv('Lesion count = '+str(len(self.data_pd['volume [mm3]'])), self.param.verbose, 'info')
-
-
-  def _measure_gm_wm_ratio(self, im_lesion, im_template_lst, vox_tot, idx_pd):
-    printv('\nCompute lesions ratio GM/WM...', self.param.verbose, 'normal')
-
-    for idx,area_name,im_cur in zip(range(idx_pd,idx_pd+3), ['GM', 'WM'], im_template_lst):
-      vox_cur = np.count_nonzero(im_lesion.data[np.where(im_cur.data > 0.4)])
-      print vox_cur, vox_tot, area_name
-
-      self.data_template_pd.loc[idx, 'area'] = area_name
-      self.data_template_pd.loc[idx, 'ratio'] = vox_cur * 100.0 / vox_tot
-
-  # def _measure_vertebra_ratio(self, im_lesion, im_vert, vox_tot):
-  #   printv('\nCompute lesions ratio across vertebrae...', self.param.verbose, 'normal')
-
-  #   vert_lst = [v for v in list(np.unique(im_vert)) if v]
-
-  #   for vv,vert in enumerate(vert_lst):
-  #     v_idx = vv+1
-  #     im_lesion_vert = np.copy(im_lesion)
-  #     im_lesion_vert[np.where(im_vert!=vert)]=0
-  #     vox_cur = np.count_nonzero(im_lesion_vert)
-
-  #     self.data_template_pd.loc[vv, 'area'] = 'C'+str(int(vert)) if vert < 8 else 'T'+str(int(vert-7))
-  #     self.data_template_pd.loc[vv, 'vol_les_vi/vol_les_tot'] = vox_cur * 100.0 / vox_tot
-  #     if len(list(np.where(im_lesion_vert)[2])):
-  #       self.data_template_pd.loc[vv, 'vol_les_vi'] = np.sum(self.volumes[min(np.where(im_lesion_vert)[2]):max(np.where(im_lesion_vert)[2])+1])
-  #     else:
-  #       self.data_template_pd.loc[vv, 'vol_les_vi'] = 0.0
-
-  #   self.data_template_pd.loc[vv+1, 'area'] = ' '
-  #   self.data_template_pd.loc[vv+1, 'vol_les_vi'] = np.nan
-  #   self.data_template_pd.loc[vv+1, 'vol_les_vi/vol_les_tot'] = np.nan
-
-  #   return vv+2
-
 
   def measure_within_im(self):
     printv('\nCompute reference image features...', self.param.verbose, 'normal')
@@ -391,16 +356,24 @@ class AnalyzeLeion:
     im.setFileName(fname)
     im.save() 
 
+  def reorient(self):
+    if not self.orientation == 'RPI':
+      printv('\nOrient output image to initial orientation...', self.param.verbose, 'normal')
+
+      self.orient(self.param.label, 'RPI')
+
   def orient_rpi(self):
-    printv('\nOrient input image(s) to RPI orientation...', self.param.verbose, 'normal')
 
     self.orientation = get_orientation(Image(self.param.fname_im))
 
-    self.orient(self.param.fname_im, 'RPI')
-    if self.param.fname_seg is not None:
-      self.orient(self.param.fname_seg, 'RPI')
-    if self.param.fname_ref is not None:
-      self.orient(self.param.fname_ref, 'RPI')
+    if not self.orientation == 'RPI':
+      printv('\nOrient input image(s) to RPI orientation...', self.param.verbose, 'normal')
+
+      self.orient(self.param.fname_im, 'RPI')
+      if self.param.fname_seg is not None:
+        self.orient(self.param.fname_seg, 'RPI')
+      if self.param.fname_ref is not None:
+        self.orient(self.param.fname_ref, 'RPI')
 
   def ifolder2tmp(self):
     # copy input image
