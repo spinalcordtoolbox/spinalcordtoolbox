@@ -157,12 +157,17 @@ class AnalyzeLeion:
   def show_total_results(self):
     
     printv('\n\nAveraged measures...', self.param.verbose, 'normal')
-    printv('  Volume='+str(round(np.mean(self.data_pd['volume [mm3]']),2))+'+/-'+str(round(np.std(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, type='info')
-    printv('  (S-I) Length='+str(round(np.mean(self.data_pd['si_length [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['si_length [mm]']),2))+' mm', self.param.verbose, type='info')
-    printv('  Nominal Diameter='+str(round(np.mean(self.data_pd['ax_nominal_diameter [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['ax_nominal_diameter [mm]']),2))+' mm', self.param.verbose, type='info')
+    printv('  Volume = '+str(round(np.mean(self.data_pd['volume [mm3]']),2))+'+/-'+str(round(np.std(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, type='info')
+    printv('  (S-I) Length = '+str(round(np.mean(self.data_pd['si_length [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['si_length [mm]']),2))+' mm', self.param.verbose, type='info')
+    printv('  Nominal Diameter = '+str(round(np.mean(self.data_pd['ax_nominal_diameter [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['ax_nominal_diameter [mm]']),2))+' mm', self.param.verbose, type='info')
 
-    printv('\nTotal volume='+str(round(np.sum(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, 'info')
-    printv('Lesion count='+str(len(self.data_pd['volume [mm3]'])), self.param.verbose, 'info')
+    if 'GM [%]' in self.data_pd:
+      print np.mean(self.data_pd['WM [%]']), np.mean(self.data_pd['GM [%]'])
+      printv('  Proportion of lesions in WM / GM = '+str(round(np.mean(self.data_pd['WM [%]']),2))+'% / '+str(round(np.mean(self.data_pd['GM [%]']),2))+'%', self.param.verbose, type='info')
+
+
+    printv('\nTotal volume = '+str(round(np.sum(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, 'info')
+    printv('Lesion count = '+str(len(self.data_pd['volume [mm3]'])), self.param.verbose, 'info')
 
 
   def _measure_gm_wm_ratio(self, im_lesion, im_template_lst, vox_tot, idx_pd):
@@ -214,9 +219,19 @@ class AnalyzeLeion:
       self.data_pd.loc[label_idx, 'std_'+extract_fname(self.param.fname_ref)[1]] = std_cur
       printv('Mean+/-std of lesion #'+str(lesion_label)+' in '+extract_fname(self.param.fname_ref)[1]+' file: '+str(round(mean_cur,2))+'+/-'+str(round(std_cur,2)), self.param.verbose, type='info')
 
+
+  def _measure_tracts(self, im_lesion, im_tract, idx, p_lst, tract_name):
+
+    im_lesion[np.where(im_tract==0)]=0
+    vol_cur = np.sum([np.sum(im_lesion[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
+
+    self.data_pd.loc[idx, tract_name+' [%]'] = vol_cur*100.0/np.sum(self.volumes[:,idx-1])
+    printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in '+tract_name+' : '+str(round(self.data_pd.loc[idx, tract_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.param.verbose, type='info')
+  
+
   def _measure_vert(self, im_lesion, im_vert, p_lst, idx):
 
-    printv('  Vertebral coverage: ', self.param.verbose, type='info')
+    printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in vertebrae... ', self.param.verbose, type='info')
 
     for vert_label in self.vert_lst:
       im_vert_cur, im_lesion_cur = np.copy(im_vert), np.copy(im_lesion)
@@ -270,6 +285,20 @@ class AnalyzeLeion:
         im_vert_data = None
         printv('WARNING: the file '+self.path_levels+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
 
+      if os.path.isfile(self.path_gm):
+        im_gm_data = Image(self.path_gm).data
+        im_gm_data = im_gm_data > 0.5
+      else:
+        im_gm_data = None
+        printv('WARNING: the file '+self.path_gm+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
+      
+      if os.path.isfile(self.path_wm):
+        im_wm_data = Image(self.path_wm).data
+        im_wm_data = im_wm_data >= 0.5
+      else:
+        im_wm_data = None
+        printv('WARNING: the file '+self.path_wm+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
+
     self.volumes = np.zeros((im_lesion.dim[2],len(label_lst)))
     
     for lesion_label in label_lst:
@@ -280,8 +309,15 @@ class AnalyzeLeion:
       self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
       self._measure_length(im_lesion_data_cur, p_lst, label_idx)
       self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
+
       if im_vert_data is not None:
         self._measure_vert(im_lesion_data_cur, im_vert_data, p_lst, label_idx)
+
+      if im_gm_data is not None:
+        self._measure_tracts(np.copy(im_lesion_data_cur), im_gm_data, label_idx, p_lst, 'GM')
+
+      if im_wm_data is not None:
+        self._measure_tracts(np.copy(im_lesion_data_cur), im_wm_data, label_idx, p_lst, 'WM')
 
   def _normalize(self, vect):
       norm = np.linalg.norm(vect)
