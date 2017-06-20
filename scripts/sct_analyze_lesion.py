@@ -29,6 +29,10 @@ from msct_types import Centerline
 
 '''
 TODO:
+  - list vert pour chaque lesion
+  - list tract pour chaque lesion
+  - ajouter col "count"
+  - 
   - vertebra --> volume?
   - wm et gm --> comment thresholder
   - donner un volume et pas de percentage
@@ -58,16 +62,12 @@ def get_parser():
                       description="Reference image for feature extraction",
                       mandatory=False,
                       example='t2.nii.gz')
-    parser.add_option(name="-atlas",
+    parser.add_option(name="-t",
                       type_value="str",
-                      description="Folder containing the atlas registered to the anatomical image",
+                      description="Path to folder containing the atlas/template registered to the anatomical image",
                       mandatory=False,
-                      example="./label/atlas")
-    parser.add_option(name="-template",
-                      type_value="str",
-                      description="Folder containing the template registered to the anatomical image",
-                      mandatory=False,
-                      example="./label/template")
+                      default_value=Param().path_template,
+                      example="./label")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
@@ -99,7 +99,7 @@ class AnalyzeLeion:
     self.fname_label = None
 
     data_dct = {}
-    column_lst = ['label', 'volume', 'si_length', 'ax_nominal_diameter']
+    column_lst = ['label', 'volume [mm3]', 'si_length [mm]', 'ax_nominal_diameter [mm]']
     if self.param.fname_ref is not None:
       for feature in ['mean', 'std']:
         column_lst.append(feature+'_'+extract_fname(self.param.fname_ref)[1])
@@ -111,11 +111,12 @@ class AnalyzeLeion:
 
     self.angles = None
 
-    if self.param.path_template is not None:
-      self.data_template_pd = pd.DataFrame(data={'area': None, 'ratio':None},
-                                  index=range(0), columns=['area', 'ratio'])
-    else:
-      self.data_template_pd = None
+    self.volumes = None
+
+    self.path_levels = self.param.path_template+'template/PAM50_levels.nii.gz'
+    self.path_gm = self.param.path_template+'template/PAM50_gm.nii.gz'
+    self.path_wm = self.param.path_template+'template/PAM50_wm.nii.gz'
+    self.vert_lst = None
 
   def analyze(self):
     self.ifolder2tmp()
@@ -133,21 +134,36 @@ class AnalyzeLeion:
     self.angle_correction()
 
     # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
-    self.measure_without_ref_registration()
+    # if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
+    self.measure()
 
-    # # Compute mean, median, min, max value in each labeled lesion
-    # if self.param.fname_ref is not None:
-    #   self.compute_ref_feature()
+    # Compute mean, median, min, max value in each labeled lesion
+    if self.param.fname_ref is not None:
+      self.measure_within_im()
 
-    # Compute ratio vol_lesion_vertbra / vol_lesion_tot
-    if self.param.path_template is not None:
-      self.measure_template_ratio()
-
-    # # Compute ratio vol_lesion_gm / vol_lesion_tot and vol_lesion_wm / vol_lesion_tot
+    # # Compute lesion volumes across vertebrae
     # if self.param.path_template is not None:
-    #   self.measure_gm_wm_ratio()
+    #   if os.path.isfile(self.path_levels):
+    #     self.measure_with_t_vert()
+    #   else:
+    #     printv('WARNING: the file '+self.path_levels+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
 
-    print self.data_template_pd
+
+
+    # print self.data_template_pd
+    print self.data_pd
+    self.show_total_results()
+
+  def show_total_results(self):
+    
+    printv('\n\nAveraged measures...', self.param.verbose, 'normal')
+    printv('  Volume='+str(round(np.mean(self.data_pd['volume [mm3]']),2))+'+/-'+str(round(np.std(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, type='info')
+    printv('  (S-I) Length='+str(round(np.mean(self.data_pd['si_length [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['si_length [mm]']),2))+' mm', self.param.verbose, type='info')
+    printv('  Nominal Diameter='+str(round(np.mean(self.data_pd['ax_nominal_diameter [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['ax_nominal_diameter [mm]']),2))+' mm', self.param.verbose, type='info')
+
+    printv('\nTotal volume='+str(round(np.sum(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, 'info')
+    printv('Lesion count='+str(len(self.data_pd['volume [mm3]'])), self.param.verbose, 'info')
+
 
   def _measure_gm_wm_ratio(self, im_lesion, im_template_lst, vox_tot, idx_pd):
     printv('\nCompute lesions ratio GM/WM...', self.param.verbose, 'normal')
@@ -159,43 +175,36 @@ class AnalyzeLeion:
       self.data_template_pd.loc[idx, 'area'] = area_name
       self.data_template_pd.loc[idx, 'ratio'] = vox_cur * 100.0 / vox_tot
 
-  def _measure_vertebra_ratio(self, im_lesion, im_vert, vox_tot):
-    printv('\nCompute lesions ratio across vertebrae...', self.param.verbose, 'normal')
+  # def _measure_vertebra_ratio(self, im_lesion, im_vert, vox_tot):
+  #   printv('\nCompute lesions ratio across vertebrae...', self.param.verbose, 'normal')
 
-    vert_lst = [v for v in list(np.unique(im_vert.data)) if v]
+  #   vert_lst = [v for v in list(np.unique(im_vert)) if v]
 
-    for vv,vert in enumerate(vert_lst):
-      v_idx = vv+1
-      vox_cur = np.count_nonzero(im_lesion.data[np.where(im_vert.data==vv)])
+  #   for vv,vert in enumerate(vert_lst):
+  #     v_idx = vv+1
+  #     im_lesion_vert = np.copy(im_lesion)
+  #     im_lesion_vert[np.where(im_vert!=vert)]=0
+  #     vox_cur = np.count_nonzero(im_lesion_vert)
 
-      self.data_template_pd.loc[vv, 'area'] = 'C'+str(v_idx) if v_idx < 8 else 'T'+str(v_idx-7)
-      self.data_template_pd.loc[vv, 'ratio'] = vox_cur * 100.0 / vox_tot
+  #     self.data_template_pd.loc[vv, 'area'] = 'C'+str(int(vert)) if vert < 8 else 'T'+str(int(vert-7))
+  #     self.data_template_pd.loc[vv, 'vol_les_vi/vol_les_tot'] = vox_cur * 100.0 / vox_tot
+  #     if len(list(np.where(im_lesion_vert)[2])):
+  #       self.data_template_pd.loc[vv, 'vol_les_vi'] = np.sum(self.volumes[min(np.where(im_lesion_vert)[2]):max(np.where(im_lesion_vert)[2])+1])
+  #     else:
+  #       self.data_template_pd.loc[vv, 'vol_les_vi'] = 0.0
 
-    self.data_template_pd.loc[vv+1, 'area'] = ' '
-    self.data_template_pd.loc[vv+1, 'ratio'] = np.nan
+  #   self.data_template_pd.loc[vv+1, 'area'] = ' '
+  #   self.data_template_pd.loc[vv+1, 'vol_les_vi'] = np.nan
+  #   self.data_template_pd.loc[vv+1, 'vol_les_vi/vol_les_tot'] = np.nan
 
-    return vv+2
-
-  def measure_template_ratio(self):
-
-    im_lesion = Image(self.param.fname_im)
-
-    # vol_tot = np.sum(self.data_pd['volume'].values.tolist())
-    vox_tot = np.count_nonzero(im_lesion.data)
-
-    im_vert = Image(self.param.path_template+'PAM50_levels.nii.gz')
-    idx_pd = self._measure_vertebra_ratio(im_lesion, im_vert, vox_tot)
-    
-    im_gm = Image(self.param.path_template+'PAM50_gm.nii.gz')
-    im_wm = Image(self.param.path_template+'PAM50_wm.nii.gz')
-    self._measure_gm_wm_ratio(im_lesion, [im_gm, im_wm], vox_tot, idx_pd)
+  #   return vv+2
 
 
-  def compute_ref_feature(self):
+  def measure_within_im(self):
     printv('\nCompute reference image features...', self.param.verbose, 'normal')
     im_label_data, im_ref_data = Image(self.fname_label).data, Image(self.param.fname_ref).data
 
-    for lesion_label in [l for l in np.unique(im_label_data.data) if l]:
+    for lesion_label in [l for l in np.unique(im_label_data) if l]:
       im_label_data_cur = im_label_data == lesion_label
       im_label_data_cur[np.where(im_ref_data==0)] = 0 # if the ref object is eroded compared to the labeled object
       mean_cur, std_cur  = np.mean(im_ref_data[np.where(im_label_data_cur)]), np.std(im_ref_data[np.where(im_label_data_cur)])
@@ -203,47 +212,76 @@ class AnalyzeLeion:
       label_idx = self.data_pd[self.data_pd.label==lesion_label].index
       self.data_pd.loc[label_idx, 'mean_'+extract_fname(self.param.fname_ref)[1]] = mean_cur
       self.data_pd.loc[label_idx, 'std_'+extract_fname(self.param.fname_ref)[1]] = std_cur
-      printv('Mean+/-std of lesion #'+str(lesion_label)+' in '+extract_fname(self.param.fname_ref)[1]+' file: '+str(round(mean_cur,2))+'+/-'+str(round(std_cur,2)), type='info')
-    
-  def _measure_volume(self, im_data, p_lst):
+      printv('Mean+/-std of lesion #'+str(lesion_label)+' in '+extract_fname(self.param.fname_ref)[1]+' file: '+str(round(mean_cur,2))+'+/-'+str(round(std_cur,2)), self.param.verbose, type='info')
 
-    volume_cur = 0.0
+  def _measure_vert(self, im_lesion, im_vert, p_lst, idx):
+
+    printv('  Vertebral coverage: ', self.param.verbose, type='info')
+
+    for vert_label in self.vert_lst:
+      im_vert_cur, im_lesion_cur = np.copy(im_vert), np.copy(im_lesion)
+      im_vert_cur[np.where(im_vert!=vert_label)]=0
+      im_lesion_cur[np.where(im_vert_cur==0)]=0
+      vol_cur = np.sum([np.sum(im_lesion_cur[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
+
+      vert_name = 'C'+str(int(vert_label)) if vert_label < 8 else 'T'+str(int(vert_label-7))
+      self.data_pd.loc[idx, vert_name+' [%]'] = vol_cur*100.0/np.sum(self.volumes[:,idx-1])
+      if vol_cur:
+        printv('    - '+vert_name+' : '+str(round(self.data_pd.loc[idx, vert_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.param.verbose, type='info')
+  
+  def _measure_volume(self, im_data, p_lst, idx):
+
     for zz in range(im_data.shape[2]):
-      volume_cur += np.sum(im_data[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2]
-    
-    printv('  Volume : '+str(round(volume_cur,2))+' mm^3', type='info')
-    return volume_cur
+      self.volumes[zz,idx-1] = np.sum(im_data[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2]
 
-  def _measure_length(self, im_data, p_z):
+    vol_tot_cur = np.sum(self.volumes[:,idx-1])
+    self.data_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
+    printv('  Volume : '+str(round(vol_tot_cur,2))+' mm^3', self.param.verbose, type='info')
 
-    length_cur = np.sum([np.cos(self.angles[zz]) * p_z for zz in list(np.unique(np.where(im_data)[2]))])
+  def _measure_length(self, im_data, p_lst, idx):
 
-    printv('  (S-I) length : '+str(round(length_cur,2))+' mm', type='info')
-    return length_cur
+    length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in list(np.unique(np.where(im_data)[2]))])
 
-  def _measure_diameter(self, im_data, p_lst):
+    self.data_pd.loc[idx, 'si_length [mm]'] = length_cur
+    printv('  (S-I) length : '+str(round(length_cur,2))+' mm', self.param.verbose, type='info')
+
+  def _measure_diameter(self, im_data, p_lst, idx):
     
     area_lst = []
     for zz in range(im_data.shape[2]):
       area_lst.append(np.sum(im_data[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1])
     diameter_cur = sqrt(max(area_lst)/(4*pi))
     
-    printv('  Max. axial nominal diameter : '+str(round(diameter_cur,2))+' mm', type='info')
-    return diameter_cur
+    self.data_pd.loc[idx, 'ax_nominal_diameter [mm]'] = diameter_cur
+    printv('  Max. axial nominal diameter : '+str(round(diameter_cur,2))+' mm', self.param.verbose, type='info')
 
-  def measure_without_ref_registration(self):
-    im = Image(self.fname_label)
-    im_data = im.data
-    p_lst = im.dim[3:6]    
+  def measure(self):
+    im_lesion = Image(self.fname_label)
+    im_lesion_data = im_lesion.data
+    p_lst = im_lesion.dim[3:6]
 
-    for lesion_label in [l for l in np.unique(im.data) if l]:
-      im_data_cur = im_data == lesion_label
+    label_lst = [l for l in np.unique(im_lesion_data) if l]
+
+    if self.param.path_template is not None:
+      if os.path.isfile(self.path_levels):
+        im_vert_data = Image(self.path_levels).data
+        self.vert_lst = [v for v in np.unique(im_vert_data) if v]
+      else:
+        im_vert_data = None
+        printv('WARNING: the file '+self.path_levels+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
+
+    self.volumes = np.zeros((im_lesion.dim[2],len(label_lst)))
+    
+    for lesion_label in label_lst:
+      im_lesion_data_cur = im_lesion_data == lesion_label
       printv('\nMeasures on lesion #'+str(lesion_label)+'...', self.param.verbose, 'normal')
 
       label_idx = self.data_pd[self.data_pd.label==lesion_label].index
-      self.data_pd.loc[label_idx, 'volume'] = self._measure_volume(im_data_cur, p_lst)
-      self.data_pd.loc[label_idx, 'si_length'] = self._measure_length(im_data_cur, p_lst[2])
-      self.data_pd.loc[label_idx, 'ax_nominal_diameter'] = self._measure_diameter(im_data_cur, p_lst)
+      self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
+      self._measure_length(im_lesion_data_cur, p_lst, label_idx)
+      self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
+      if im_vert_data is not None:
+        self._measure_vert(im_lesion_data_cur, im_vert_data, p_lst, label_idx)
 
   def _normalize(self, vect):
       norm = np.linalg.norm(vect)
@@ -278,7 +316,7 @@ class AnalyzeLeion:
             tangent_vect = self._normalize(np.array([x_centerline_deriv_rescorr[zz], y_centerline_deriv_rescorr[zz], z_centerline_deriv_rescorr[zz]]))
 
           except IndexError:
-            sct.printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
+            printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
 
           # compute the angle between the normal vector of the plane and the vector z
           self.angles[zz] = np.arccos(np.vdot(tangent_vect, axis_Z))
@@ -354,8 +392,7 @@ class Param:
     self.fname_seg = None
     self.fname_ref = None
     self.path_results = './'
-    # self.path_atlas = None
-    self.path_template = None
+    self.path_template = './label'
     self.verbose = '1'
     self.rm_tmp = True
 
@@ -378,15 +415,10 @@ def main(args=None):
   if '-im' in arguments:
     param.fname_ref = arguments["-im"]
 
-  # if '-atlas_folder' in arguments:
-  #   param.path_atlas = slash_at_the_end(arguments["-atlas_folder"], slash=1)
-  # if not os.path.isdir(param.path_atlas) and os.path.exists(param.path_atlas):
-  #   sct.printv("ERROR output directory %s is not a valid directory" % param.path_atlas, 1, 'error')
-
-  if '-template' in arguments:
-    param.path_template = slash_at_the_end(arguments["-template"], slash=1)
-  if not os.path.isdir(param.path_template) and os.path.exists(param.path_template):
-    sct.printv("ERROR output directory %s is not a valid directory" % param.path_template, 1, 'error')
+  if '-t' in arguments:
+    param.path_template = slash_at_the_end(arguments["-t"], slash=1)
+    if not os.path.isdir(param.path_template) and os.path.exists(param.path_template):
+      sct.printv("ERROR output directory %s is not a valid directory" % param.path_template, 1, 'error')
 
   if '-ofolder' in arguments:
     param.path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
