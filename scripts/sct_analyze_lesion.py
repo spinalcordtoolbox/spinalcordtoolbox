@@ -22,14 +22,18 @@ from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
 from sct_utils import (add_suffix, extract_fname, printv, run,
-                       slash_at_the_end, Timer, tmp_create)
+                       slash_at_the_end, Timer, tmp_create, get_absolute_path)
 from sct_straighten_spinalcord import smooth_centerline
 from msct_types import Centerline
 
 
 '''
 TODO:
-  - correction angle
+  - vertebra --> volume?
+  - wm et gm --> comment thresholder
+  - donner un volume et pas de percentage
+  - comment input atlas et template
+  - comment presenter les resultats
 '''
 
 
@@ -52,6 +56,16 @@ def get_parser():
                       description="Reference image for feature extraction",
                       mandatory=False,
                       example='t2.nii.gz')
+    parser.add_option(name="-atlas_folder",
+                      type_value="str",
+                      description="Folder containing the atlas registered to the anatomical image",
+                      mandatory=False,
+                      example="./label/atlas")
+    parser.add_option(name="-template_folder",
+                      type_value="str",
+                      description="Folder containing the template registered to the anatomical image",
+                      mandatory=False,
+                      example="./label/template")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
@@ -95,6 +109,12 @@ class AnalyzeLeion:
 
     self.angles = None
 
+    if self.param.path_template is not None:
+      self.data_template_pd = pd.DataFrame(data={'area': None, 'ratio':None},
+                                  index=range(0), columns=['area', 'ratio'])
+    else:
+      self.data_template_pd = None
+
   def analyze(self):
     self.ifolder2tmp()
 
@@ -111,16 +131,63 @@ class AnalyzeLeion:
     self.angle_correction()
 
     # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
-    self.measure_without_ref_atlas()
-
-    # Compute (S-I) length
-
+    self.measure_without_ref_registration()
 
     # # Compute mean, median, min, max value in each labeled lesion
     # if self.param.fname_ref is not None:
     #   self.compute_ref_feature()
 
-    print self.data_pd
+    # Compute ratio vol_lesion_vertbra / vol_lesion_tot
+    if self.param.path_template is not None:
+      self.measure_template_ratio()
+
+    # # Compute ratio vol_lesion_gm / vol_lesion_tot and vol_lesion_wm / vol_lesion_tot
+    # if self.param.path_template is not None:
+    #   self.measure_gm_wm_ratio()
+
+    print self.data_template_pd
+
+  def _measure_gm_wm_ratio(self, im_lesion, im_template_lst, vox_tot, idx_pd):
+    printv('\nCompute lesions ratio GM/WM...', self.param.verbose, 'normal')
+
+    for idx,area_name,im_cur in zip(range(idx_pd,idx_pd+3), ['GM', 'WM'], im_template_lst):
+      vox_cur = np.count_nonzero(im_lesion.data[np.where(im_cur.data > 0.4)])
+      print vox_cur, vox_tot, area_name
+
+      self.data_template_pd.loc[idx, 'area'] = area_name
+      self.data_template_pd.loc[idx, 'ratio'] = vox_cur * 100.0 / vox_tot
+
+  def _measure_vertebra_ratio(self, im_lesion, im_vert, vox_tot):
+    printv('\nCompute lesions ratio across vertebrae...', self.param.verbose, 'normal')
+
+    vert_lst = [v for v in list(np.unique(im_vert.data)) if v]
+
+    for vv,vert in enumerate(vert_lst):
+      v_idx = vv+1
+      vox_cur = np.count_nonzero(im_lesion.data[np.where(im_vert.data==vv)])
+
+      self.data_template_pd.loc[vv, 'area'] = 'C'+str(v_idx) if v_idx < 8 else 'T'+str(v_idx-7)
+      self.data_template_pd.loc[vv, 'ratio'] = vox_cur * 100.0 / vox_tot
+
+    self.data_template_pd.loc[vv+1, 'area'] = ' '
+    self.data_template_pd.loc[vv+1, 'ratio'] = np.nan
+
+    return vv+2
+
+  def measure_template_ratio(self):
+
+    im_lesion = Image(self.param.fname_im)
+
+    # vol_tot = np.sum(self.data_pd['volume'].values.tolist())
+    vox_tot = np.count_nonzero(im_lesion.data)
+
+    im_vert = Image(self.param.path_template+'PAM50_levels.nii.gz')
+    idx_pd = self._measure_vertebra_ratio(im_lesion, im_vert, vox_tot)
+    
+    im_gm = Image(self.param.path_template+'PAM50_gm.nii.gz')
+    im_wm = Image(self.param.path_template+'PAM50_wm.nii.gz')
+    self._measure_gm_wm_ratio(im_lesion, [im_gm, im_wm], vox_tot, idx_pd)
+
 
   def compute_ref_feature(self):
     printv('\nCompute reference image features...', self.param.verbose, 'normal')
@@ -136,8 +203,6 @@ class AnalyzeLeion:
       self.data_pd.loc[label_idx, 'std_'+extract_fname(self.param.fname_ref)[1]] = std_cur
       printv('Mean+/-std of lesion #'+str(lesion_label)+' in '+extract_fname(self.param.fname_ref)[1]+' file: '+str(round(mean_cur,2))+'+/-'+str(round(std_cur,2)), type='info')
     
-    print self.data_pd
-
   def _measure_volume(self, im_data, p_lst):
 
     volume_cur = 0.0
@@ -164,7 +229,7 @@ class AnalyzeLeion:
     printv('  Max. axial nominal diameter : '+str(round(diameter_cur,2))+' mm', type='info')
     return diameter_cur
 
-  def measure_without_ref_atlas(self):
+  def measure_without_ref_registration(self):
     im = Image(self.fname_label)
     im_data = im.data
     p_lst = im.dim[3:6]    
@@ -287,6 +352,8 @@ class Param:
     self.fname_seg = None
     self.fname_ref = None
     self.path_results = './'
+    # self.path_atlas = None
+    self.path_template = None
     self.verbose = '1'
     self.rm_tmp = True
 
@@ -309,12 +376,22 @@ def main(args=None):
   if '-ref' in arguments:
     param.fname_ref = arguments["-ref"]
 
+  # if '-atlas_folder' in arguments:
+  #   param.path_atlas = slash_at_the_end(arguments["-atlas_folder"], slash=1)
+  # if not os.path.isdir(param.path_atlas) and os.path.exists(param.path_atlas):
+  #   sct.printv("ERROR output directory %s is not a valid directory" % param.path_atlas, 1, 'error')
+
+  if '-template_folder' in arguments:
+    param.path_template = slash_at_the_end(arguments["-template_folder"], slash=1)
+  if not os.path.isdir(param.path_template) and os.path.exists(param.path_template):
+    sct.printv("ERROR output directory %s is not a valid directory" % param.path_template, 1, 'error')
+
   if '-ofolder' in arguments:
     param.path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
   if not os.path.isdir(param.path_results) and os.path.exists(param.path_results):
-      sct.printv("ERROR output directory %s is not a valid directory" % param.path_results, 1, 'error')
+    sct.printv("ERROR output directory %s is not a valid directory" % param.path_results, 1, 'error')
   if not os.path.exists(param.path_results):
-      os.makedirs(param.path_results)
+    os.makedirs(param.path_results)
 
   if '-r' in arguments:
     param.rm_tmp = bool(int(arguments['-r']))
