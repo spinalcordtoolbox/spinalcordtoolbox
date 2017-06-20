@@ -40,28 +40,30 @@ TODO:
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('TODO')
-    parser.add_option(name="-i",
+    parser.usage.set_description('Extraction of measures from a lesion mask: volume and size of each lesion.'
+                                    '\nIf a reference image is provided, it computes the averaged value of this image within each lesion.'
+                                    '\nIf a registered template is provided, it computes the partial volume of lesion in (1) each vertebral level, (2) GM and WM (3) ...')
+    parser.add_option(name="-lesion",
                       type_value="file",
                       description="Lesion mask to analyse",
                       mandatory=True,
                       example='t2_lesion.nii.gz')
-    parser.add_option(name="-s",
+    parser.add_option(name="-sc",
                       type_value="file",
                       description="Spinal cord centerline or segmentation file for angle correction",
                       mandatory=False,
                       example='t2_seg.nii.gz')
-    parser.add_option(name="-ref",
+    parser.add_option(name="-im",
                       type_value="file",
                       description="Reference image for feature extraction",
                       mandatory=False,
                       example='t2.nii.gz')
-    parser.add_option(name="-atlas_folder",
+    parser.add_option(name="-atlas",
                       type_value="str",
                       description="Folder containing the atlas registered to the anatomical image",
                       mandatory=False,
                       example="./label/atlas")
-    parser.add_option(name="-template_folder",
+    parser.add_option(name="-template",
                       type_value="str",
                       description="Folder containing the template registered to the anatomical image",
                       mandatory=False,
@@ -369,20 +371,20 @@ def main(args=None):
   arguments = parser.parse(args)
 
   # set param arguments ad inputted by user
-  param.fname_im = arguments["-i"]
+  param.fname_im = arguments["-lesion"]
 
-  if '-s' in arguments:
-    param.fname_seg = arguments["-s"]
-  if '-ref' in arguments:
-    param.fname_ref = arguments["-ref"]
+  if '-sc' in arguments:
+    param.fname_seg = arguments["-sc"]
+  if '-im' in arguments:
+    param.fname_ref = arguments["-im"]
 
   # if '-atlas_folder' in arguments:
   #   param.path_atlas = slash_at_the_end(arguments["-atlas_folder"], slash=1)
   # if not os.path.isdir(param.path_atlas) and os.path.exists(param.path_atlas):
   #   sct.printv("ERROR output directory %s is not a valid directory" % param.path_atlas, 1, 'error')
 
-  if '-template_folder' in arguments:
-    param.path_template = slash_at_the_end(arguments["-template_folder"], slash=1)
+  if '-template' in arguments:
+    param.path_template = slash_at_the_end(arguments["-template"], slash=1)
   if not os.path.isdir(param.path_template) and os.path.exists(param.path_template):
     sct.printv("ERROR output directory %s is not a valid directory" % param.path_template, 1, 'error')
 
