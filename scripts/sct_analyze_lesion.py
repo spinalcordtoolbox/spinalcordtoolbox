@@ -31,7 +31,6 @@ from msct_types import Centerline
 TODO:
   - thresdhold a 0.5
   - PVE
-  - output pkl
   - report github
 '''
 
@@ -41,7 +40,7 @@ def get_parser():
     parser = Parser(__file__)
     parser.usage.set_description('Extraction of measures from a lesion mask: volume and size of each lesion.'
                                     '\nIf a reference image is provided, it computes the averaged value of this image within each lesion.'
-                                    '\nIf a registered template is provided, it computes the partial volume of lesion in (1) each vertebral level, (2) GM and WM (3) ...')
+                                    '\nIf a registered template is provided, it computes the proportion of lesion (1) in each vertebral level, (2) in GM and WM (3) ...')
     parser.add_option(name="-lesion",
                       type_value="file",
                       description="Lesion mask to analyse",
@@ -54,7 +53,7 @@ def get_parser():
                       example='t2_seg.nii.gz')
     parser.add_option(name="-im",
                       type_value="file",
-                      description="Reference image for feature extraction",
+                      description="Reference image for extraction of averaged values within lesions",
                       mandatory=False,
                       example='t2.nii.gz')
     parser.add_option(name="-t",
@@ -139,8 +138,10 @@ class AnalyzeLeion:
     if self.param.fname_ref is not None:
       self.measure_within_im()
 
+    # reorient data if needed
     self.reorient()
 
+    # print averaged results
     self.show_total_results()
 
     # save results in excel and pickle files
@@ -159,6 +160,8 @@ class AnalyzeLeion:
       shutil.copy(self.tmp_dir+file, self.param.path_results+file)
 
   def show_total_results(self):
+    print ' '
+    print self.data_pd
     
     printv('\n\nAveraged measures...', self.param.verbose, 'normal')
     printv('  Volume = '+str(round(np.mean(self.data_pd['volume [mm3]']),2))+'+/-'+str(round(np.std(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, type='info')
@@ -211,6 +214,8 @@ class AnalyzeLeion:
 
     for vert_label in self.vert_lst:
       im_vert_cur, im_lesion_cur = np.copy(im_vert), np.copy(im_lesion)
+      # if self.param.fname_seg is not None:
+      #   im_vert_cur = np.copy(Image(self.param.fname_seg).data)
       im_vert_cur[np.where(im_vert!=vert_label)]=0
       im_lesion_cur[np.where(im_vert_cur==0)]=0
       vol_cur = np.sum([np.sum(im_lesion_cur[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
@@ -276,7 +281,7 @@ class AnalyzeLeion:
         printv('WARNING: the file '+self.path_wm+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
 
     self.volumes = np.zeros((im_lesion.dim[2],len(label_lst)))
-    
+
     for lesion_label in label_lst:
       im_lesion_data_cur = im_lesion_data == lesion_label
       printv('\nMeasures on lesion #'+str(lesion_label)+'...', self.param.verbose, 'normal')
@@ -457,6 +462,15 @@ def main(args=None):
   # run the analyze
   lesion_obj.analyze()
 
+  # remove tmp_dir
+  if param.rm_tmp:
+    shutil.rmtree(lesion_obj.tmp_dir)
+        
+  printv('\nDone! To view the labeled lesion file (one value per lesion), type:', param.verbose)
+  if param.fname_ref is not None:
+    printv('fslview ' + param.path_results + param.fname_ref + ' ' + param.path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
+  else:
+    printv('fslview ' + param.path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')    
     
 if __name__ == "__main__":
     main()
