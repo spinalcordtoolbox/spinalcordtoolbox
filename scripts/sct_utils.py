@@ -240,7 +240,7 @@ class ForkStdoutToFile(object):
     """
     def __init__(self, filename="{}.log".format(__file__), to_file_only=False):
         self.terminal = sys.stdout
-        self.log = open(filename, "a")
+        self.log_file = open(filename, "a")
         self.filename = filename
         self.to_file_only = False
         sys.stdout = self
@@ -258,10 +258,16 @@ class ForkStdoutToFile(object):
     def write(self, message):
         if not self.to_file_only:
             self.terminal.write(message)
-        self.log.write(message)
+        self.log_file.write(message)
+
+    def flush(self):
+        if not self.to_file_only:
+            self.terminal.flush()
+        self.log_file.flush()
+
 
     def close(self):
-        self.log.close()
+        self.log_file.close()
 
     def read(self):
         with open(self.filename, "r") as fp:
