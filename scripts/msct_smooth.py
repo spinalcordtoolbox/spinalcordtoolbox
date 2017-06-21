@@ -269,7 +269,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     from msct_nurbs import NURBS
 
     twodim = False
-    if z == None:
+    if z is None:
         twodim = True
 
     """x.reverse()
