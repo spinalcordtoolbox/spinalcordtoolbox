@@ -114,6 +114,7 @@ class AnalyzeLeion:
     self.vert_lst = None
 
     self.excel_name = None
+    self.pickle_name = None
 
   def analyze(self):
     self.ifolder2tmp()
@@ -140,19 +141,21 @@ class AnalyzeLeion:
 
     self.reorient()
 
+    self.show_total_results()
+
+    # save results in excel and pickle files
     self.pack_measures()
 
     # save results to ofolder
     self.tmp2ofolder()
 
-    self.show_total_results()
 
   def tmp2ofolder(self):
 
     os.chdir('..') # go back to original directory
 
     printv('\nSave results files...', self.param.verbose, 'normal')
-    for file in [self.fname_label, self.excel_name]:
+    for file in [self.fname_label, self.excel_name, self.pickle_name]:
       shutil.copy(self.tmp_dir+file, self.param.path_results+file)
 
   def show_total_results(self):
@@ -171,8 +174,12 @@ class AnalyzeLeion:
 
   def pack_measures(self):
 
-    self.excel_name = extract_fname(self.param.fname_im)[1]+'.xlsx'
+    self.excel_name = extract_fname(self.param.fname_im)[1]+'_analysis.xlsx'
     self.data_pd.to_excel(self.excel_name, index=False)
+
+    self.pickle_name = extract_fname(self.param.fname_im)[1]+'_analysis.pkl'
+    self.data_pd.columns = [c.split(' ')[0] for c in self.data_pd.columns]
+    self.data_pd.to_pickle(self.pickle_name)
 
   def measure_within_im(self):
     printv('\nCompute reference image features...', self.param.verbose, 'normal')
