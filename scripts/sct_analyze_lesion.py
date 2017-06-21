@@ -29,15 +29,10 @@ from msct_types import Centerline
 
 '''
 TODO:
-  - list vert pour chaque lesion
-  - list tract pour chaque lesion
-  - ajouter col "count"
-  - 
-  - vertebra --> volume?
-  - wm et gm --> comment thresholder
-  - donner un volume et pas de percentage
-  - comment input atlas et template
-  - comment presenter les resultats
+  - thresdhold a 0.5
+  - PVE
+  - output pkl
+  - report github
 '''
 
 
@@ -118,6 +113,8 @@ class AnalyzeLeion:
     self.path_wm = self.param.path_template+'template/PAM50_wm.nii.gz'
     self.vert_lst = None
 
+    self.excel_name = None
+
   def analyze(self):
     self.ifolder2tmp()
 
@@ -143,6 +140,8 @@ class AnalyzeLeion:
 
     self.reorient()
 
+    self.pack_measures()
+
     # save results to ofolder
     self.tmp2ofolder()
 
@@ -152,9 +151,9 @@ class AnalyzeLeion:
 
     os.chdir('..') # go back to original directory
 
-    printv('\nSave labeled file...', self.param.verbose, 'normal')
-    shutil.copy(self.tmp_dir+self.fname_label, self.param.path_results+self.fname_label)
-    print self.tmp_dir+self.fname_label, self.param.path_results+self.fname_label
+    printv('\nSave results files...', self.param.verbose, 'normal')
+    for file in [self.fname_label, self.excel_name]:
+      shutil.copy(self.tmp_dir+file, self.param.path_results+file)
 
   def show_total_results(self):
     
@@ -169,6 +168,11 @@ class AnalyzeLeion:
 
     printv('\nTotal volume = '+str(round(np.sum(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, 'info')
     printv('Lesion count = '+str(len(self.data_pd['volume [mm3]'])), self.param.verbose, 'info')
+
+  def pack_measures(self):
+
+    self.excel_name = extract_fname(self.param.fname_im)[1]+'.xlsx'
+    self.data_pd.to_excel(self.excel_name, index=False)
 
   def measure_within_im(self):
     printv('\nCompute reference image features...', self.param.verbose, 'normal')
