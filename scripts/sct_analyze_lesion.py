@@ -49,7 +49,7 @@ def get_parser():
                       description="Lesion mask to analyze",
                       mandatory=True,
                       example='t2_lesion.nii.gz')
-    parser.add_option(name="-sc",
+    parser.add_option(name="-s",
                       type_value="file",
                       description="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice.",
                       mandatory=False,
@@ -205,7 +205,7 @@ class AnalyzeLeion:
   def _measure_tracts(self, im_lesion, im_tract, idx, p_lst, tract_name):
 
     im_lesion[np.where(im_tract==0)]=0
-    vol_cur = np.sum([np.sum(im_lesion[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
+    vol_cur = np.sum([np.sum(im_lesion[:,:,zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
 
     self.data_pd.loc[idx, tract_name+' [%]'] = vol_cur*100.0/np.sum(self.volumes[:,idx-1])
     printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in '+tract_name+' : '+str(round(self.data_pd.loc[idx, tract_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.param.verbose, type='info')
@@ -220,7 +220,7 @@ class AnalyzeLeion:
       im_vert_cur, im_lesion_cur = np.copy(im_vert), np.copy(im_lesion)
       im_vert_cur[np.where(im_vert!=vert_label)]=0
       im_lesion_cur[np.where(im_vert_cur==0)]=0
-      vol_cur = np.sum([np.sum(im_lesion_cur[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
+      vol_cur = np.sum([np.sum(im_lesion_cur[:,:,zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
 
       vert_name = 'C'+str(int(vert_label)) if vert_label < 8 else 'T'+str(int(vert_label-7))
       self.data_pd.loc[idx, vert_name+' [%]'] = vol_cur*100.0/np.sum(self.volumes[:,idx-1])
@@ -234,7 +234,7 @@ class AnalyzeLeion:
   def _measure_volume(self, im_data, p_lst, idx):
 
     for zz in range(im_data.shape[2]):
-      self.volumes[zz,idx-1] = np.sum(im_data[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2]
+      self.volumes[zz,idx-1] = np.sum(im_data[:,:,zz]) * p_lst[0] * p_lst[1] * p_lst[2]
 
     vol_tot_cur = np.sum(self.volumes[:,idx-1])
     self.data_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
