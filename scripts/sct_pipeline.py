@@ -48,13 +48,11 @@ import signal
 import sys
 import types
 from time import time, strftime
-
 if "SCT_MPI_MODE" in os.environ:
     from distribute2mpi import MpiPool as Pool
 else:
     from multiprocessing import Pool
 import pandas as pd
-
 import sct_utils as sct
 import msct_parser
 
@@ -289,10 +287,13 @@ def get_parser():
                       default_value='1')
 
     parser.add_option(name='-email',
-                      type_value='str',
-                      description='Email address to send results followed by SMTP passwd (separate with comma).',
+                      type_value=[[','], 'str'],
+                      description='Email information to send results. Fields are assigned with "=" and are separated with ",":\
+                      email_to: address to send email to\
+                      email_from: address to send email from (for SMTP server)\
+                      passwd_from: password for SMTP server',
                       mandatory=False,
-                      default_value='')
+                      default_value='email_from=spinalcordtoolbox@gmail.com')
 
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -308,6 +309,9 @@ def get_parser():
 # Start program
 # ====================================================================================================
 if __name__ == "__main__":
+
+    # initialization
+    addr_from = 'spinalcordtoolbox@gmail.com'
 
     # get parameters
     print_if_error = False  # print error message if function crashes (could be messy)
@@ -327,10 +331,18 @@ if __name__ == "__main__":
         nb_cpu = arguments["-cpu-nb"]
     create_log = int(arguments['-log'])
     if '-email' in arguments:
-        email, passwd = arguments['-email'].split(',')
         create_log = True
+        send_email = True
+        # loop across fields
+        for i in arguments['-email']:
+            if 'addr_to' in i:
+                addr_to = i.split('=')[1]
+            if 'addr_from' in i:
+                addr_from = i.split('=')[1]
+            if 'passwd_from' in i:
+                passwd_from = i.split('=')[1]
     else:
-        email = ''
+        send_email = False
     verbose = int(arguments["-v"])
 
     # start timer
@@ -493,12 +505,16 @@ if __name__ == "__main__":
             print err
 
     # stop file redirection
-    message = handle_log.read()
+    # message = handle_log.read()
     handle_log.close()
 
     # send email
-    if email:
+    if send_email:
         print 'Sending email...'
-        sct.send_email(addr_to=email, addr_from='spinalcordtoolbox@gmail.com', passwd_from=passwd, subject=file_log, message=message, filename=fname_log)
+        # open log file and read content
+        with open(fname_log, "r") as fp:
+            message = fp.read()
+        # send email
+        sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log)
         # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
         print 'Email sent!'
