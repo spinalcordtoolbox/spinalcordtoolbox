@@ -29,7 +29,7 @@ def get_parser():
                                  ' It calculates the texture properties of a grey level co-occurence matrix (GLCM).'
                                  ' The textures features are those defined in the sckit-image implementation:\n'
                                  ' http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops\n'
-                                 ' This function outputs one nifti file per texture metric ('+ParamGLCM().prop+') and per orientation called fnameInput_property_distance_angle.nii.gz.\n'
+                                 ' This function outputs one nifti file per texture metric ('+ParamGLCM().feature+') and per orientation called fnameInput_property_distance_angle.nii.gz.\n'
                                  ' Also, a file averaging each metric across the angles, called fnameInput_property_distance_mean.nii.gz, is output.')
     parser.add_option(name="-i",
                       type_value="file",
@@ -43,7 +43,7 @@ def get_parser():
                       example='t2_seg.nii.gz')
     parser.add_option(name="-feature",
                       type_value="list_str",
-                      description="List of GLCM texture features (separate arguments with \",\"): "+ParamGLCM().prop,
+                      description="List of GLCM texture features (separate arguments with \",\"): "+ParamGLCM().feature,
                       mandatory=False,
                       default_value=ParamGLCM().feature,
                       example="energy,contrast")
@@ -58,7 +58,7 @@ def get_parser():
                       description="List of angles for GLCM computation, in degrees (suggested distance values between 0 and 179)",
                       mandatory=False,
                       default_value=ParamGLCM().angle,
-                      example=0,90)
+                      example='0,90')
     parser.add_option(name="-dim",
                       type_value='multiple_choice',
                       description="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices.",
@@ -263,7 +263,6 @@ class Param:
     self.fname_seg = None
     self.path_results = './texture/'
     self.verbose = '1'
-    self.mean = '0'
     self.dim = 'ax'
     self.rm_tmp = True
 
@@ -271,17 +270,9 @@ class ParamGLCM(object):
   def __init__(self, symmetric=True, normed=True, prop='contrast,dissimilarity,homogeneity,energy,correlation,ASM', distance='1', angle='0,45,90,135', mean='0'):
     self.symmetric = True  # If True, the output matrix P[:, :, d, theta] is symmetric.
     self.normed = True  # If True, normalize each matrix P[:, :, d, theta] by dividing by the total number of accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
-    self.prop = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM' # The property formulae are detailed here: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops
+    self.feature = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM' # The property formulae are detailed here: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops
     self.distance = 1 # Size of the window: distance = 1 --> a reference pixel and its immediate neighbour
     self.angle = '0,45,90,135' # Rotation angles for co-occurrence matrix
-    self.mean = '0' # Output or not a file averaging each metric across the angles
-
-  # update constructor with user's parameters
-  def update(self, param_user):
-    param_lst = param_user.split(':')
-    for param in param_lst:
-      obj = param.split('=')
-      setattr(self, obj[0], obj[1])
 
 def main(args=None):
   if args is None:
@@ -297,7 +288,7 @@ def main(args=None):
 
   # set param arguments ad inputted by user
   param.fname_im = arguments["-i"]
-  param.fname_seg = arguments["-s"]
+  param.fname_seg = arguments["-m"]
 
   if '-ofolder' in arguments:
     param.path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
@@ -306,16 +297,19 @@ def main(args=None):
   if not os.path.exists(param.path_results):
       os.makedirs(param.path_results)
 
-  if '-mean' in arguments:
-    param.mean = bool(int(arguments['-mean']))
+  if '-feature' in arguments:
+    param_glcm.feature = arguments['-feature']
+  if '-distance' in arguments:
+    param_glcm.distance = int(arguments['-distance'])
+  if '-angle' in arguments:
+    param_glcm.angle = arguments['-angle']
+
   if '-dim' in arguments:
     param.dim = arguments['-dim']
   if '-r' in arguments:
     param.rm_tmp = bool(int(arguments['-r']))
   if '-v' in arguments:
     param.verbose = bool(int(arguments['-v']))
-  if '-param' in arguments:
-    param_glcm.update(arguments['-param'])
 
   # create the GLCM constructor
   glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
