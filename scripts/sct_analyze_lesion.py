@@ -355,6 +355,7 @@ class AnalyzeLeion:
     im_2save.save()
 
     self.data_pd['label'] = [l for l in np.unique(im_2save.data) if l]
+    printv('Lesion count = '+str(len(self.data_pd['label'])), self.param.verbose, 'info')
 
   def binarize(self):
     im = Image(self.param.fname_im)
