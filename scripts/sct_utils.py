@@ -265,16 +265,15 @@ class ForkStdoutToFile(object):
             self.terminal.flush()
         self.log_file.flush()
 
-
     def close(self):
         self.log_file.close()
+        sys.stdout = self.terminal
 
     def read(self):
         with open(self.filename, "r") as fp:
             fp.read()
 
     def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
-        self.close()
         if attachment:
             filename = self.filename
         else:
