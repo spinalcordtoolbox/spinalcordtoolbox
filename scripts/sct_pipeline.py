@@ -493,8 +493,10 @@ if __name__ == "__main__":
             print err
 
     # stop file redirection
+    handle_log.close()
+
     # send email
     if email:
         print 'Sending email...'
         handle_log.send_email(email=email, passwd_from=passwd, attachment=True)
-        print 'done!'
+        # print 'done!'
