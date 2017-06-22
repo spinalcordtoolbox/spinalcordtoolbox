@@ -42,8 +42,8 @@ def get_parser():
                       mandatory=True,
                       example='t2_seg.nii.gz')
     parser.add_option(name="-feature",
-                      type_value="list_str",
-                      description="List of GLCM texture features (separate arguments with \",\"): "+ParamGLCM().feature,
+                      type_value="str",
+                      description="List of GLCM texture features (separate arguments with \",\")",
                       mandatory=False,
                       default_value=ParamGLCM().feature,
                       example="energy,contrast")
@@ -54,8 +54,8 @@ def get_parser():
                       default_value=ParamGLCM().distance,
                       example=1)
     parser.add_option(name="-angle",
-                      type_value="list_int",
-                      description="List of angles for GLCM computation, in degrees (suggested distance values between 0 and 179)",
+                      type_value="str",
+                      description="List of angles for GLCM computation, separate arguments with \",\", in degrees (suggested distance values between 0 and 179)",
                       mandatory=False,
                       default_value=ParamGLCM().angle,
                       example='0,90')
@@ -311,17 +311,17 @@ def main(args=None):
   if '-v' in arguments:
     param.verbose = bool(int(arguments['-v']))
 
-  # create the GLCM constructor
-  glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
-  # run the extraction
-  fname_out_lst = glcm.extract()
+  # # create the GLCM constructor
+  # glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
+  # # run the extraction
+  # fname_out_lst = glcm.extract()
 
-  # remove tmp_dir
-  if param.rm_tmp:
-    shutil.rmtree(glcm.tmp_dir)
+  # # remove tmp_dir
+  # if param.rm_tmp:
+  #   shutil.rmtree(glcm.tmp_dir)
         
-  printv('\nDone! To view results, type:', param.verbose)
-  printv('fslview ' + arguments["-i"] + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
+  # printv('\nDone! To view results, type:', param.verbose)
+  # printv('fslview ' + arguments["-i"] + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
 
 if __name__ == "__main__":
     main()
