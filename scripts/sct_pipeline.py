@@ -289,11 +289,11 @@ def get_parser():
     parser.add_option(name='-email',
                       type_value=[[','], 'str'],
                       description='Email information to send results. Fields are assigned with "=" and are separated with ",":\
-                      email_to: address to send email to\
-                      email_from: address to send email from (for SMTP server)\
-                      passwd_from: password for SMTP server',
+\nemail_to: address to send email to\
+\nemail_from: address to send email from (default value is: spinalcordtoolbox@gmail.com)\
+\npasswd_from: password for email_from',
                       mandatory=False,
-                      default_value='email_from=spinalcordtoolbox@gmail.com')
+                      default_value='')
 
     parser.add_option(name="-v",
                       type_value="multiple_choice",
