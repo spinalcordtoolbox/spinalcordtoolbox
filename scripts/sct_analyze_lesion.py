@@ -29,7 +29,7 @@ from msct_types import Centerline
 
 '''
 TODO:
-  - thresdhold a 0.5
+  - Suggestion Sara: Ne mettre qu'un seul message pour SUM!= 100 (avec un OR)
   - PVE
 '''
 
@@ -215,19 +215,22 @@ class AnalyzeLeion:
 
     printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in vertebrae... ', self.param.verbose, type='info')
 
+    sum_vert = 0.0
     for vert_label in self.vert_lst:
       im_vert_cur, im_lesion_cur = np.copy(im_vert), np.copy(im_lesion)
-      # if self.param.fname_seg is not None:
-      #   im_vert_cur = np.copy(Image(self.param.fname_seg).data)
       im_vert_cur[np.where(im_vert!=vert_label)]=0
       im_lesion_cur[np.where(im_vert_cur==0)]=0
       vol_cur = np.sum([np.sum(im_lesion_cur[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
 
       vert_name = 'C'+str(int(vert_label)) if vert_label < 8 else 'T'+str(int(vert_label-7))
       self.data_pd.loc[idx, vert_name+' [%]'] = vol_cur*100.0/np.sum(self.volumes[:,idx-1])
+      sum_vert += self.data_pd.loc[idx, vert_name+' [%]'].values[0]
       if vol_cur:
         printv('    - '+vert_name+' : '+str(round(self.data_pd.loc[idx, vert_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.param.verbose, type='info')
-  
+
+    if int(sum_vert)!=100:
+      printv('WARNING: The proportion of lesion in each vertebral levels does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.', type='warning')
+
   def _measure_volume(self, im_data, p_lst, idx):
 
     for zz in range(im_data.shape[2]):
@@ -302,6 +305,12 @@ class AnalyzeLeion:
 
       if im_wm_data is not None:
         self._measure_tracts(np.copy(im_lesion_data_cur), im_wm_data, label_idx, p_lst, 'WM')
+
+      # May be fixed with PVE
+      # Suggestion Sara: Ne mettre qu'un seul message: avec un OR
+      if int(self.data_pd.loc[label_idx, 'GM [%]'].values[0]+self.data_pd.loc[label_idx, 'WM [%]'].values[0]):
+        printv('WARNING: The proportion of lesion in GM and WM does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.', type='warning')
+
 
   def _normalize(self, vect):
       norm = np.linalg.norm(vect)
