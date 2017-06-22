@@ -96,7 +96,7 @@ class AnalyzeLeion:
     self.fname_label = None
 
     data_dct = {}
-    column_lst = ['label', 'volume [mm3]', 'si_length [mm]', 'ax_nominal_diameter [mm]']
+    column_lst = ['label', 'volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
     if self.param.fname_ref is not None:
       for feature in ['mean', 'std']:
         column_lst.append(feature+'_'+extract_fname(self.param.fname_ref)[1])
@@ -159,6 +159,10 @@ class AnalyzeLeion:
     os.chdir('..') # go back to original directory
 
     printv('\nSave results files...', self.param.verbose, 'normal')
+    printv('\n... measures saved in the files:', self.param.verbose, 'normal')
+    printv('\n  - '+self.param.path_results+self.excel_name, self.param.verbose, 'normal')
+    printv('\n  - '+self.param.path_results+self.pickle_name, self.param.verbose, 'normal')
+
     for file in [self.fname_label, self.excel_name, self.pickle_name]:
       shutil.copy(self.tmp_dir+file, self.param.path_results+file)
 
@@ -168,8 +172,8 @@ class AnalyzeLeion:
     
     printv('\n\nAveraged measures...', self.param.verbose, 'normal')
     printv('  Volume = '+str(round(np.mean(self.data_pd['volume [mm3]']),2))+'+/-'+str(round(np.std(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, type='info')
-    printv('  (S-I) Length = '+str(round(np.mean(self.data_pd['si_length [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['si_length [mm]']),2))+' mm', self.param.verbose, type='info')
-    printv('  Nominal Diameter = '+str(round(np.mean(self.data_pd['ax_nominal_diameter [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['ax_nominal_diameter [mm]']),2))+' mm', self.param.verbose, type='info')
+    printv('  (S-I) Length = '+str(round(np.mean(self.data_pd['length [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['length [mm]']),2))+' mm', self.param.verbose, type='info')
+    printv('  Equivalent Diameter = '+str(round(np.mean(self.data_pd['max_equivalent_diameter [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['max_equivalent_diameter [mm]']),2))+' mm', self.param.verbose, type='info')
 
     if 'GM [%]' in self.data_pd:
       printv('  Proportion of lesions in WM / GM = '+str(round(np.mean(self.data_pd['WM [%]']),2))+'% / '+str(round(np.mean(self.data_pd['GM [%]']),2))+'%', self.param.verbose, type='info')
@@ -180,10 +184,10 @@ class AnalyzeLeion:
 
   def pack_measures(self):
 
-    self.excel_name = extract_fname(self.param.fname_im)[1]+'_analysis.xlsx'
+    self.excel_name = extract_fname(self.param.fname_im)[1]+'_analyzis.xlsx'
     self.data_pd.to_excel(self.excel_name, index=False)
 
-    self.pickle_name = extract_fname(self.param.fname_im)[1]+'_analysis.pkl'
+    self.pickle_name = extract_fname(self.param.fname_im)[1]+'_analyzis.pkl'
     self.data_pd.columns = [c.split(' ')[0] for c in self.data_pd.columns]
     self.data_pd.to_pickle(self.pickle_name)
 
@@ -244,7 +248,7 @@ class AnalyzeLeion:
 
     length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in list(np.unique(np.where(im_data)[2]))])
 
-    self.data_pd.loc[idx, 'si_length [mm]'] = length_cur
+    self.data_pd.loc[idx, 'length [mm]'] = length_cur
     printv('  (S-I) length : '+str(round(length_cur,2))+' mm', self.param.verbose, type='info')
 
   def _measure_diameter(self, im_data, p_lst, idx):
@@ -254,8 +258,8 @@ class AnalyzeLeion:
       area_lst.append(np.sum(im_data[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1])
     diameter_cur = sqrt(max(area_lst)/(4*pi))
     
-    self.data_pd.loc[idx, 'ax_nominal_diameter [mm]'] = diameter_cur
-    printv('  Max. axial nominal diameter : '+str(round(diameter_cur,2))+' mm', self.param.verbose, type='info')
+    self.data_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
+    printv('  Max. equivalent diameter : '+str(round(diameter_cur,2))+' mm', self.param.verbose, type='info')
 
   def measure(self):
     im_lesion = Image(self.fname_label)
