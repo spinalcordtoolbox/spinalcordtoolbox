@@ -29,8 +29,8 @@ def get_parser():
                                  ' It calculates the texture properties of a grey level co-occurence matrix (GLCM).'
                                  ' The textures features are those defined in the sckit-image implementation:\n'
                                  ' http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops\n'
-                                 ' This function outputs one nifti file per texture metric ('+ParamGLCM().feature+') and per orientation called fnameInput_property_distance_angle.nii.gz.\n'
-                                 ' Also, a file averaging each metric across the angles, called fnameInput_property_distance_mean.nii.gz, is output.')
+                                 ' This function outputs one nifti file per texture metric ('+ParamGLCM().feature+') and per orientation called fnameInput_feature_distance_angle.nii.gz.\n'
+                                 ' Also, a file averaging each metric across the angles, called fnameInput_feature_distance_mean.nii.gz, is output.')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Image to analyze",
@@ -103,7 +103,7 @@ class ExtractGLCM:
 
     # metric_lst=['property_distance_angle']
     self.metric_lst = []
-    for m in list(itertools.product(self.param_glcm.prop.split(','), self.param_glcm.angle.split(','))):
+    for m in list(itertools.product(self.param_glcm.feature.split(','), self.param_glcm.angle.split(','))):
       text_name = m[0] if m[0].upper()!='asm'.upper() else m[0].upper()
       self.metric_lst.append(text_name+'_'+str(self.param_glcm.distance)+'_'+str(m[1]))
 
@@ -132,8 +132,7 @@ class ExtractGLCM:
       self.reorient_data()
 
     # mean across angles
-    if self.param.mean:
-      self.mean_angle()
+    self.mean_angle()
 
     # save results to ofolder
     self.tmp2ofolder()
@@ -174,7 +173,7 @@ class ExtractGLCM:
       # List images to mean
       im2mean_lst = [im_m+str(self.param_glcm.distance)+'_'+a+extract_fname(self.param.fname_im)[2] for a in self.param_glcm.angle.split(',')]
       
-      # Average across angles and save it as wrk_folder/property_distance_mean.extension
+      # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
       fname_out = im_m+str(self.param_glcm.distance)+'_mean'+extract_fname(self.param.fname_im)[2]
       run('sct_image -i '+','.join(im2mean_lst)+' -concat t -o '+fname_out, error_exit='warning', raise_exception=True)
       run('sct_maths -i '+fname_out+' -mean t -o '+fname_out, error_exit='warning', raise_exception=True)
@@ -267,7 +266,7 @@ class Param:
     self.rm_tmp = True
 
 class ParamGLCM(object):
-  def __init__(self, symmetric=True, normed=True, prop='contrast,dissimilarity,homogeneity,energy,correlation,ASM', distance='1', angle='0,45,90,135', mean='0'):
+  def __init__(self, symmetric=True, normed=True, feature='contrast,dissimilarity,homogeneity,energy,correlation,ASM', distance=1, angle='0,45,90,135'):
     self.symmetric = True  # If True, the output matrix P[:, :, d, theta] is symmetric.
     self.normed = True  # If True, normalize each matrix P[:, :, d, theta] by dividing by the total number of accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
     self.feature = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM' # The property formulae are detailed here: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops
@@ -311,17 +310,17 @@ def main(args=None):
   if '-v' in arguments:
     param.verbose = bool(int(arguments['-v']))
 
-  # # create the GLCM constructor
-  # glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
-  # # run the extraction
-  # fname_out_lst = glcm.extract()
+  # create the GLCM constructor
+  glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
+  # run the extraction
+  fname_out_lst = glcm.extract()
 
-  # # remove tmp_dir
-  # if param.rm_tmp:
-  #   shutil.rmtree(glcm.tmp_dir)
+  # remove tmp_dir
+  if param.rm_tmp:
+    shutil.rmtree(glcm.tmp_dir)
         
-  # printv('\nDone! To view results, type:', param.verbose)
-  # printv('fslview ' + arguments["-i"] + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
+  printv('\nDone! To view results, type:', param.verbose)
+  printv('fslview ' + arguments["-i"] + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
 
 if __name__ == "__main__":
     main()
