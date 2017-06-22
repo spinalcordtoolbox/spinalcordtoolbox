@@ -31,34 +31,37 @@ from msct_types import Centerline
 TODO:
   - thresdhold a 0.5
   - PVE
-  - report github
 '''
 
 
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Extraction of measures from a lesion mask: volume and size of each lesion.'
-                                    '\nIf a reference image is provided, it computes the averaged value of this image within each lesion.'
-                                    '\nIf a registered template is provided, it computes the proportion of lesion (1) in each vertebral level, (2) in GM and WM (3) ...')
-    parser.add_option(name="-lesion",
+    parser.usage.set_description('Extraction of measures from each lesion. The input is a lesion mask (binary file) identified with value=1 (background=0). The function then assigns an ID value for each lesion (1, 2, 3, etc.) and outputs morphometric measures for each lesion:'
+                                    '\n- volume [mm^3]'
+                                    '\n- length [mm]: length along the Superior-Inferior axis'
+                                    '\n- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as a circle in the axial cross-sectional plane orthogonal to the spinal cord'
+                                    '\nIf an image (e.g. T2w or T1w image, texture image) is provided, it computes the averaged value of this image within each lesion.'
+                                    '\nIf a registered template is provided, it computes the proportion of lesion in (1) each vertebral level, (2) GM and WM (3), ... compared to the total lesion load.'
+                                    '\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.')
+    parser.add_option(name="-m",
                       type_value="file",
-                      description="Lesion mask to analyse",
+                      description="Lesion mask to analyze",
                       mandatory=True,
                       example='t2_lesion.nii.gz')
     parser.add_option(name="-sc",
                       type_value="file",
-                      description="Spinal cord centerline or segmentation file for angle correction",
+                      description="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice.",
                       mandatory=False,
                       example='t2_seg.nii.gz')
-    parser.add_option(name="-im",
+    parser.add_option(name="-i",
                       type_value="file",
-                      description="Reference image for extraction of averaged values within lesions",
+                      description="Image from which to extract average values within lesions (e.g. T2w or T1w image, texture image).",
                       mandatory=False,
                       example='t2.nii.gz')
-    parser.add_option(name="-t",
+    parser.add_option(name="-f",
                       type_value="str",
-                      description="Path to folder containing the atlas/template registered to the anatomical image",
+                      description="Path to folder containing the atlas/template registered to the anatomical image.",
                       mandatory=False,
                       default_value=Param().path_template,
                       example="./label")
@@ -433,15 +436,15 @@ def main(args=None):
   arguments = parser.parse(args)
 
   # set param arguments ad inputted by user
-  param.fname_im = arguments["-lesion"]
+  param.fname_im = arguments["-m"]
 
-  if '-sc' in arguments:
-    param.fname_seg = arguments["-sc"]
-  if '-im' in arguments:
-    param.fname_ref = arguments["-im"]
+  if '-s' in arguments:
+    param.fname_seg = arguments["-s"]
+  if '-i' in arguments:
+    param.fname_ref = arguments["-i"]
 
-  if '-t' in arguments:
-    param.path_template = slash_at_the_end(arguments["-t"], slash=1)
+  if '-f' in arguments:
+    param.path_template = slash_at_the_end(arguments["-f"], slash=1)
     if not os.path.isdir(param.path_template) and os.path.exists(param.path_template):
       sct.printv("ERROR output directory %s is not a valid directory" % param.path_template, 1, 'error')
 
