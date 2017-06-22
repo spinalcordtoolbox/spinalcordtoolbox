@@ -496,5 +496,5 @@ if __name__ == "__main__":
     # send email
     if email:
         print 'Sending email...'
-        handle_log.send_email(passwd_from=passwd, subject=file_log)
+        handle_log.send_email(email=email, passwd_from=passwd, subject=file_log)
         print 'done!'
