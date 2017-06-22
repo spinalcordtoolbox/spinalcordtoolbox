@@ -203,6 +203,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
 
     # generate data list from folder containing
     data_subjects, subjects_name = generate_data_list(folder_dataset, json_requirements=json_requirements)
+    print "Number of subjects to process: " + str(len(data_subjects))
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -397,6 +398,10 @@ if __name__ == "__main__":
     # check RAM
     sct.checkRAM(os_running, 0)
 
+    # display command
+    print '\nCommand: "' + function_to_test + ' ' + parameters
+    print 'Dataset: ' + dataset
+
     # test function
     try:
         # during testing, redirect to standard output to avoid stacking error messages in the general log
@@ -444,8 +449,6 @@ if __name__ == "__main__":
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
         results_display = results_display.set_index('subject').reset_index()
 
-        print '\nCommand: "' + function_to_test + ' ' + parameters
-        print 'Dataset: ' + dataset
         # display general results
         print '\nGLOBAL RESULTS:'
 
@@ -510,11 +513,11 @@ if __name__ == "__main__":
 
     # send email
     if send_email:
-        print 'Sending email...'
+        print '\nSending email...'
         # open log file and read content
         with open(fname_log, "r") as fp:
             message = fp.read()
         # send email
         sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log)
         # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
-        print 'Email sent!'
+        print 'Email sent!\n'
