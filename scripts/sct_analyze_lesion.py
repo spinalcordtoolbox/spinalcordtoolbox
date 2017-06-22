@@ -228,7 +228,7 @@ class AnalyzeLeion:
       if vol_cur:
         printv('    - '+vert_name+' : '+str(round(self.data_pd.loc[idx, vert_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.param.verbose, type='info')
 
-    if int(sum_vert)!=100:
+    if np.ceil(sum_vert)!=100:
       printv('WARNING: The proportion of lesion in each vertebral levels does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.', type='warning')
 
   def _measure_volume(self, im_data, p_lst, idx):
@@ -308,7 +308,7 @@ class AnalyzeLeion:
 
       # May be fixed with PVE
       # Suggestion Sara: Ne mettre qu'un seul message: avec un OR
-      if int(self.data_pd.loc[label_idx, 'GM [%]'].values[0]+self.data_pd.loc[label_idx, 'WM [%]'].values[0]):
+      if np.ceil(self.data_pd.loc[label_idx, 'GM [%]'].values[0]+self.data_pd.loc[label_idx, 'WM [%]'].values[0]):
         printv('WARNING: The proportion of lesion in GM and WM does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.', type='warning')
 
 
