@@ -493,10 +493,12 @@ if __name__ == "__main__":
             print err
 
     # stop file redirection
+    message = handle_log.read()
     handle_log.close()
 
     # send email
     if email:
         print 'Sending email...'
-        handle_log.send_email(email=email, passwd_from=passwd, attachment=True)
-        # print 'done!'
+        sct.send_email(addr_to=email, addr_from='spinalcordtoolbox@gmail.com', passwd_from=passwd, subject=file_log, message=message, filename=fname_log)
+        # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
+        print 'Email sent!'

@@ -273,12 +273,12 @@ class ForkStdoutToFile(object):
         with open(self.filename, "r") as fp:
             fp.read()
 
-    def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
-        if attachment:
-            filename = self.filename
-        else:
-            filename = None
-        send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
+    # def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
+    #     if attachment:
+    #         filename = self.filename
+    #     else:
+    #         filename = None
+    #     send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
 
 #=======================================================================================================================
 # extract_fname
@@ -638,7 +638,7 @@ def printv(string, verbose=1, type='normal'):
 #=======================================================================================================================
 # send email
 #=======================================================================================================================
-def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None):
+def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None):
     import smtplib
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMEText import MIMEText
