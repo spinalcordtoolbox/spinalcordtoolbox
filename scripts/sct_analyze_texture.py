@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Charley
-# Modified: 2017-06-13
+# Modified: 2017-06-22
 #
 # About the license: see the file LICENSE.TXT
 
@@ -29,31 +29,36 @@ def get_parser():
                                  ' It calculates the texture properties of a grey level co-occurence matrix (GLCM).'
                                  ' The textures features are those defined in the sckit-image implementation:\n'
                                  ' http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops\n'
-                                 ' This function outputs one nifti file per texture metric ('+ParamGLCM().prop+') and per orientation called fnameIn_property_distance_angle.nii.gz')
+                                 ' This function outputs one nifti file per texture metric ('+ParamGLCM().prop+') and per orientation called fnameInput_property_distance_angle.nii.gz.\n'
+                                 ' Also, a file averaging each metric across the angles, called fnameInput_property_distance_mean.nii.gz, is output.')
     parser.add_option(name="-i",
                       type_value="file",
-                      description="Image to analyse",
+                      description="Image to analyze",
                       mandatory=True,
                       example='t2.nii.gz')
-    parser.add_option(name="-s",
+    parser.add_option(name="-m",
                       type_value="file",
-                      description="Image mask",
+                      description="Image mask (e.g., lesion, spinal cord)",
                       mandatory=True,
                       example='t2_seg.nii.gz')
-    parser.add_option(name="-param",
-                      type_value="str",
-                      description="Parameters for extraction. Separate arguments with \":\".\n"
-                                  "prop: <list_str> list of GLCM texture properties: "+ParamGLCM().prop+".\n Default="+ParamGLCM().prop+"\n"
-                                  "distance: <int> distance offset in pixel (suggested distance values between 1 and 5).\n Default="+str(ParamGLCM().distance)+"\n"
-                                  "angle: <list_int> list of angles in degrees (suggested distance values between 0 and 179).\n Default="+ParamGLCM().angle+"\n",
+    parser.add_option(name="-feature",
+                      type_value="list_str",
+                      description="List of GLCM texture features (separate arguments with \",\"): "+ParamGLCM().prop,
                       mandatory=False,
-                      example="prop=energy:distance=1:angle=0,90:mean=0")
-    parser.add_option(name="-mean",
-                      type_value='multiple_choice',
-                      description="1: Output a file averaging each metric across the angles",
+                      default_value=ParamGLCM().feature,
+                      example="energy,contrast")
+    parser.add_option(name="-distance",
+                      type_value="int",
+                      description="Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5)",
                       mandatory=False,
-                      default_value=int(Param().mean),
-                      example=['0', '1'])
+                      default_value=ParamGLCM().distance,
+                      example=1)
+    parser.add_option(name="-angle",
+                      type_value="list_int",
+                      description="List of angles for GLCM computation, in degrees (suggested distance values between 0 and 179)",
+                      mandatory=False,
+                      default_value=ParamGLCM().angle,
+                      example=0,90)
     parser.add_option(name="-dim",
                       type_value='multiple_choice',
                       description="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices.",
