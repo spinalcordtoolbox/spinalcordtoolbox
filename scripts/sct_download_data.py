@@ -67,7 +67,7 @@ def main(args=None):
     # initialization
     dict_url = {
         'sct_example_data': 'https://osf.io/4nnk3/?action=download',
-        'sct_testing_data': 'https://osf.io/uqcz5/?action=download',
+        'sct_testing_data': 'https://osf.io/zrbs7/?action=download',
         'PAM50': 'https://osf.io/gdwn6/?action=download',
         'MNI-Poly-AMU': 'https://osf.io/sh6h4/?action=download',
         'gm_model': 'https://osf.io/ugscu/?action=download',
@@ -125,11 +125,9 @@ def unzip(compressed, dest_folder, verbose):
             tar.extractall(path=dest_folder)
             return
         except tarfile.TarError:
-            sct.printv('ERROR: ZIP package corrupted. Please try again.',
-                   verbose, 'error')
+            sct.printv('ERROR: ZIP package corrupted. Please try again.', verbose, 'error')
     else:
-        sct.printv('ERROR: The file %s is of wrong format' % compressed, verbose,
-               'error')
+        sct.printv('ERROR: The file %s is of wrong format' % compressed, verbose, 'error')
 
 
 def download_data(url, verbose):
