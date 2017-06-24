@@ -14,6 +14,8 @@ import numpy as np
 from PyQt4 import QtCore, QtGui
 
 logger = logging.getLogger(__name__)
+
+
 """Base classes for creating GUI objects to create manually selected points.
 
     Example
@@ -28,9 +30,8 @@ logger = logging.getLogger(__name__)
 class AnatomicalParams(object):
     """The base parameter object for GUI configuration
     """
-
-    def __init__(self, cmap='gray', aspect='auto', interp='nearest', vmin=5.,
-                 vmax=95., vmode='percentile', alpha=1.0):
+    def __init__(self, cmap='gray', aspect=1.0, interp='nearest', vmin=5., vmax=95.,
+                 vmode='percentile', alpha=1.0):
         """
 
         Parameters
@@ -318,6 +319,13 @@ class BaseControler(object):
 
     def __init__(self, dialog):
         self.dialog = dialog
+
+    def press_undo(self):
+        try:
+            dump = self._selected_points.pop()
+            logger.debug('{}'.format(dump))
+        except IndexError:
+            self.update_warning("There's no points to undo")
 
     @QtCore.Slot(int)
     def onPointChanged(self, value):
