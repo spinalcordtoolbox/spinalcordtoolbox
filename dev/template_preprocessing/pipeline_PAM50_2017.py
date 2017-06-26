@@ -1145,9 +1145,9 @@ def compute_vertebral_levels(contrast):
     sigma_lumbar = lumbar_series.std()
     variance_lumbar = sigma_lumbar**2
     x = np.linspace(mu_cervical - 3 * variance_cervical, mu_cervical + 3 * variance_cervical, 5 * variance_cervical)
-    plt.plot(x, mlab.normpdf(x, mu_cervical, sigma_cervical))
+    plt.plot(x, mlab.normpdf(x, mu_cervical, sigma_cervical), 'r')
     x = np.linspace(mu_lumbar - 3 * variance_lumbar, mu_lumbar + 3 * variance_lumbar, 5 * variance_lumbar)
-    plt.plot(x, mlab.normpdf(x, mu_lumbar, sigma_lumbar))
+    plt.plot(x, mlab.normpdf(x, mu_lumbar, sigma_lumbar), 'r')
     print 'cervical enlargement', mu_cervical, sigma_cervical
     print 'lumbar enlargement', mu_lumbar, sigma_lumbar
 
@@ -1330,10 +1330,11 @@ def display_csa_length():
     std = np.std(csa_average, axis=0)
 
     plt.figure()
-    plt.plot(x_new, mean)
-    plt.fill_between(x_new, mean + std, mean - std, facecolor='blue', alpha=0.5)
+    plt.plot(x_new, mean, color='b', linewidth=3)
+    plt.fill_between(x_new, mean + std, mean - std, facecolor='blue', alpha=0.2)
 
-    plt.plot(f(levels_template), csa_template, 'g', linewidth=1)
+    csa_smooth = smooth(np.array(csa_template), window_len=10)
+    plt.plot(f(levels_template), csa_smooth, color='r', linewidth=3)
 
     plt.xticks(y_l, labels, rotation='horizontal')
     plt.xlim((levels_position[2][1], 500))
