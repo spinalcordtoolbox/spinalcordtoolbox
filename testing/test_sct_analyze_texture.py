@@ -29,7 +29,7 @@ def test(path_data='', parameters=''):
 
     # parameters
     if not parameters:
-        parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz'
+        parameters = '-i t2/t2.nii.gz -m t2/t2_seg.nii.gz'
 
     # retrieve flags
     try:
@@ -80,7 +80,7 @@ def test(path_data='', parameters=''):
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i']) and
-            os.path.isfile(dict_param_with_path['-s'])):
+            os.path.isfile(dict_param_with_path['-m'])):
         status = 200
         output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         write_to_log_file(fname_log, output, 'w')
