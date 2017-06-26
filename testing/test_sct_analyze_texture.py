@@ -114,9 +114,11 @@ def test(path_data='', parameters=''):
         difference_vox = float(cmpt_tot_vox-cmpt_diff_vox)/cmpt_tot_vox
         if difference_vox < difference_threshold:
             status = 99
+    else:
+        difference_vox = 0.0
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'texture_difference': difference_vox, 'duration [s]': duration}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'texture_similarity': difference_vox, 'duration [s]': duration}, index=[path_data])
 
     sys.stdout.close()
     sys.stdout = stdout_orig
