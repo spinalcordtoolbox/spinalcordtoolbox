@@ -1,86 +1,134 @@
 from __future__ import absolute_import
+from __future__ import division
+
 import logging
+import numpy as np
+from PyQt4 import QtCore, QtGui
 
 from spinalcordtoolbox.gui import base2 as base
-
-from PyQt4 import QtCore
-from PyQt4 import QtGui
-from copy import copy
 
 
 logger = logging.getLogger(__name__)
 
 
-class PropSegController(object):
-    points = []
+class PropSegController(base.BaseController):
     slices = []
-    MODES = {'AUTO': 'Auto Mode',
-             'CUSTOM': 'Custom Mode'}
+    mode = 'AUTO'
+    _slice = 0
+    _interval = 15
+    _dialog = None
+    MODES = ['AUTO', 'CUSTOM']
+    _overlay_image = None
 
-    def __init__(self, ui_dialog, init_values=None):
-        self.dialog = ui_dialog
-        if isinstance(init_values, list):
-            self.points.extend(init_values)
+    def __init__(self, image, params, init_values=None):
+        super(PropSegController, self).__init__(image, params, init_values)
+        if self.image.dim[0] < self._interval:
+            self._interval = 1
+        self._max_points = self.image.dim[0] / self._interval
+        self.init_x = self._slice
+        self.init_y = self.image.dim[1] // 2
+        self.init_z = self.image.dim[2] // 2
 
-        elif init_values:
-            self.points.append(init_values)
-
-        self.init_points = copy(self.points)
-
-    @staticmethod
-    def valid_point(x, y, z):
-        if x > 0 and y > 0 and z > 0:
+    def valid_point(self, x, y, z):
+        dim = self.image.dim
+        if 0 <= x < dim[0] and 0 <= y < dim[1] and 0 <= z < dim[2]:
             return True
+        return False
 
     def skip_slice(self):
-        self.points = self.points
-
-    def undo_point(self):
-        logger.debug('Undo pressed')
-        if self.points:
-            self.points.pop()
+        logger.debug('Advance slice from {} to {}'.format(self._slice, self._interval + self._slice))
+        self._slice += self._interval
+        if self._slice >= self.image.dim[0]:
+            self._dialog.update_warning('Reached the maximum superior / inferior axis length')
         else:
-            self.dialog.update_warning('There is no points selected to undo')
+            self._dialog.set_slice(self._slice, self.init_y, self.init_z)
 
-    def reset(self):
-        self.points = copy(self.init_points)
+    def on_undo(self):
+        """Remove the last point selected and refresh the UI"""
+        if self.points:
+            point = self.points[-1]
+            self.points = self.points[:-1]
+            self._slice -= self._interval
+            if self.valid_point(self._slice, self.init_y, self.init_z):
+                self._dialog.set_slice(self._slice, self.init_y, self.init_z)
+            logger.debug('Point removed {}'.format(point))
+        else:
+            self._dialog.update_warning('There is no points selected to undo')
+
+    def _print_point(self, point):
+        max_x = self.image.dim[0]
+        return '{} {} {}'.format(max_x - point[0], point[1], point[2])
 
     def select_point(self, x, y, z):
-        logger.debug('Point Selected %d, %d, %d', x, y, z)
-        self.dialog.update_status('Point Selected {}, {}, {}'.format(x, y, z))
+        logger.debug('Point Selected {}'.format(self._print_point((x, y, z))))
+        self._dialog.update_status('Point Selected {}'.format(self._print_point((x, y, z))))
         if self.valid_point(x, y, z):
             self.points.append((x, y, z, 1))
-            # self.dialog.refresh_dialog()
+            if self.mode == 'AUTO':
+                self._slice += self._interval
+                if self.valid_point(self._slice, y, z):
+                    self._dialog.set_slice(self._slice, self.init_y, self.init_z)
+                else:
+                    self._dialog.update_warning('Reached the maximum superior / inferior axis length')
+
+            else:
+                self._dialog.set_slice(x, y, z)
 
     def select_slice(self, x, y, z):
         if self.mode == 'CUSTOM':
-            logger.debug('Slice Selected %d, %d, %d', x, y, z)
-            self.dialog.update_status('Slice Selected {}, {}, {}'.format(x, y, z))
+            logger.info('Slice Selected {}'.format(self._print_point((x, y, z))))
+            self._dialog.update_status('Slice Selected {}'.format(self._print_point((x, y, z))))
+            self._dialog.set_slice(x, y, z)
+
+    def save_quit(self):
+        self._overlay_image = self.image.copy()
+        self._overlay_image.data *= 0
+        for point in self.points:
+            self._overlay_image.data[point[0], point[1], point[2]] = 1
+
+        self._overlay_image.change_orientation(self.params.orientation)
+        self._dialog.close()
+
+    def as_string(self):
+        if not self._overlay_image:
+            raise IOError('There is no information to save')
+        output = []
+        xs, ys, zs = np.where(self._overlay_image.data)
+        for x, y, z in zip(xs, ys, zs):
+            output.append('{},{},{},{}'.format(x, y, z, 1))
+        return ':'.join(output)
+
+    def as_niftii(self, file_name=None):
+        if not self._overlay_image:
+            raise IOError('There is no information to save')
+        if not file_name:
+            file_name = 'manual_propseg.nii.gz'
+        print(np.where(self._overlay_image.data))
+        self._overlay_image.setFileName(file_name)
+        self._overlay_image.save()
 
 
 class PropSeg(base.BaseDialog):
     def __init__(self, *args, **kwargs):
-        self.controller = PropSegController(self)
         super(PropSeg, self).__init__(*args, **kwargs)
         self.main_canvas.setFocusPolicy(QtCore.Qt.StrongFocus)
 
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
         self.second_canvas = base.SagittalCanvas(self)
-        self.second_canvas.plot_hslices(self.controller.points)
+        self.second_canvas.plot_hslices()
         layout.addWidget(self.second_canvas)
 
         self.main_canvas = base.AxialCanvas(self, interactive=True)
-        self.main_canvas.plot_points(self.controller.points)
+        self.main_canvas.plot_points(self._controller.points)
         layout.addWidget(self.main_canvas)
 
-        self.main_canvas.point_selected_signal.connect(self.controller.select_point)
-        self.second_canvas.point_selected_signal.connect(self.controller.select_slice)
-        self.update_canvas_signal.connect(self.main_canvas.on_refresh_slice)
+        self.main_canvas.point_selected_signal.connect(self._controller.select_point)
+        self.second_canvas.point_selected_signal.connect(self._controller.select_slice)
 
         parent.addLayout(layout)
 
-        self.main_canvas.point_selected_signal.connect(self.add_point)
+        self.main_canvas.point_selected_signal.connect(self.on_selecting_point)
 
     def _init_controls(self, parent):
         group = QtGui.QGroupBox()
@@ -106,22 +154,27 @@ class PropSeg(base.BaseDialog):
         skip = QtGui.QPushButton('Skip')
         ctrl_layout.insertWidget(2, skip)
 
-        skip.clicked.connect(self.controller.skip_slice)
-        self.btn_undo.clicked.connect(self.controller.undo_point)
+        skip.clicked.connect(self._controller.skip_slice)
+        self.btn_undo.clicked.connect(self._controller.on_undo)
+        self.btn_ok.clicked.connect(self._controller.save_quit)
 
     @QtCore.Slot(int, int, int)
-    def add_point(self, x, y, z):
+    def on_selecting_point(self, x, y, z):
+        """Capture a signal when a point is selected"""
         self.update_canvas_signal.emit(x, y, z)
+
+    def set_slice(self, x=0, y=0, z=0):
+        self.main_canvas.on_refresh_slice(x, y, z)
+        self.second_canvas.on_refresh_slice(x, y, z)
 
     def _toggle_mode(self):
         widget = self.sender()
-        if widget.mode in self.controller.MODES.keys() and widget.isChecked():
-            self.controller.mode = widget.mode
+        if widget.mode in self._controller.MODES and widget.isChecked():
+            self._controller.mode = widget.mode
 
 
 if __name__ == '__main__':
     import sys
-    import logging
     from scripts.msct_image import Image
 
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -129,7 +182,13 @@ if __name__ == '__main__':
 
     params = base.AnatomicalParams()
     img = Image('/Users/geper_admin/sct_example_data/t2/t2.nii.gz')
+    params.orientation = img.orientation
+    print(params.orientation)
     img.change_orientation('SAL')
-    base_win = PropSeg(params, img)
+    controller = PropSegController(img, params)
+    controller.align_image()
+    base_win = PropSeg(controller)
     base_win.show()
     app.exec_()
+    print(base_win._controller.as_string())
+    base_win._controller.as_niftii()

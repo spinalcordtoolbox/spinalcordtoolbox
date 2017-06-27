@@ -1,5 +1,8 @@
 from __future__ import division
 from __future__ import absolute_import
+
+import webbrowser
+from copy import copy
 import logging
 
 import matplotlib as mpl
@@ -65,13 +68,14 @@ class AnatomicalCanvas(FigureCanvas):
     point_selected_signal = QtCore.Signal(int, int, int)
 
     def __init__(self, parent, width=8, height=8, dpi=100, interactive=False):
+        self._parent = parent
         self.image = parent.image
         self.params = parent.params
         self.interactive = interactive
-        shape = parent.image.data.shape
-        self._x = shape[0] // 2
-        self._y = shape[1] // 2
-        self._z = shape[2] // 2
+
+        self._x = self._parent._controller.init_x
+        self._y = self._parent._controller.init_y
+        self._z = self._parent._controller.init_z
 
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         super(AnatomicalCanvas, self).__init__(self.fig)
@@ -102,7 +106,7 @@ class AnatomicalCanvas(FigureCanvas):
 
     @QtCore.Slot(int, int, int)
     def on_refresh_slice(self, x, y, z):
-        logger.debug((x, y, z))
+        logger.debug('Current slice {}'.format((x, y, z)))
         self._x, self._y, self._z = x, y, z
         self.refresh_slice()
         self.view.figure.canvas.draw()
@@ -112,19 +116,23 @@ class SagittalCanvas(AnatomicalCanvas):
     def __init__(self, *args, **kwargs):
         super(SagittalCanvas, self).__init__(*args, **kwargs)
         self._init_ui(self.image.data[:, :, self._z])
+        self._slices = {}
 
     def refresh_slice(self):
+        logging.debug(self._z)
         data = self.image.data[:, :, self._z]
         self.view.set_array(data)
 
+        if self._hslices:
+            self.plot_hslices()
+
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
-            self.point_selected_signal.emit(
-                int(event.xdata), int(event.ydata), self._z)
+            self.point_selected_signal.emit(int(event.ydata), int(event.xdata), self._z)
 
-    def plot_points(self, points):
-        if points:
-            points = [x for x in points if self._z == x[2]]
+    def plot_points(self):
+        if self._parent._controller.points:
+            points = [x for x in self._parent._controller.points if self._z == x[2]]
             cols = zip(*points)
             if not self.points:
                 self.points, = self.axes.plot(cols[0], cols[1], '.r', markersize=10)
@@ -133,10 +141,12 @@ class SagittalCanvas(AnatomicalCanvas):
                 self.points.set_ydata(cols[1])
                 self.view.figure.canvas.draw()
 
-    def plot_hslices(self, points):
-        slices = [x[2] for x in points]
+    def plot_hslices(self):
+        self._hslices = True
+        slices = [x[0] for x in self._parent._controller.points]
         for x in slices:
-            self.axes.axhline(x, color='w')
+            if x not in self._slices:
+                self._slices[x] = self.axes.axhline(x, color='w')
 
 
 class CorrinalCanvas(AnatomicalCanvas):
@@ -164,7 +174,7 @@ class AxialCanvas(AnatomicalCanvas):
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
-            self.point_selected_signal.emit(self._x, event.xdata, event.ydata)
+            self.point_selected_signal.emit(self._x, event.ydata, event.xdata)
 
     def plot_points(self, points):
         if points:
@@ -188,35 +198,22 @@ class BaseDialog(QtGui.QDialog):
     update_canvas_signal = QtCore.Signal(int, int, int)
     _hovering_point = (0, 0, 0)
     _selected_points = []
+    _help_web_address = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
 
-    def __init__(self, params, image, overlay=None):
+    def __init__(self, controller):
+        """
+
+        Parameters
+        ----------
+        controller : BaseController
+            The logical object that controls the state of the UI
+        """
         super(BaseDialog, self).__init__()
-        self.params = params
-        self.image = image
-        self.overlay = overlay
-        self._align_image()
+        self.params = controller.params
+        self._controller = controller
+        self.image = controller.image
+        self._controller._dialog = self
         self._init_ui()
-
-    def _align_image(self):
-        x, y, z, t, dx, dy, dz, dt = self.image.dim
-        self.params.aspect = dx / dy
-        self.params.offset = x * dx
-        clip = np.percentile(self.image.data, (self.params.min,
-                                               self.params.max))
-        self.params.vmin, self.params.vmax = clip
-        shape = self.image.data.shape
-        dimension = [shape[0] * dx, shape[1] * dy, shape[2] * dz]
-        max_size = max(dimension)
-        self.x_offset = int(round(max_size - dimension[0]) / dx / 2)
-        self.y_offset = int(round(max_size - dimension[1]) / dy / 2)
-        self.z_offset = int(round(max_size - dimension[2]) / dz / 2)
-        self.image.data = np.pad(
-            self.image.data,
-            ((self.x_offset, self.x_offset),
-             (self.y_offset, self.y_offset),
-             (self.z_offset, self.z_offset)),
-            'constant',
-            constant_values=(0, 0))
 
     def _init_ui(self):
         self.resize(800, 600)
@@ -249,16 +246,6 @@ class BaseDialog(QtGui.QDialog):
                               QtGui.QSizePolicy.Expanding))
 
     def _init_footer(self, parent):
-        """
-
-        Parameters
-        ----------
-        parent : QtGui.QLayout
-
-        Returns
-        -------
-
-        """
         ctrl_layout = QtGui.QHBoxLayout()
 
         self.btn_ok = QtGui.QPushButton('Save and Quit')
@@ -283,15 +270,6 @@ class BaseDialog(QtGui.QDialog):
         self.activateWindow()
         self.raise_()
 
-    @property
-    def point(self):
-        return self._selected_points[0]
-
-    @point.setter
-    def point(self, new_x, new_y, new_z):
-        self._selected_points.append((new_x, new_y, new_z))
-        self.update_x_axis.emit(new_x, new_y, new_z)
-
     @QtCore.Slot(str)
     def update_status(self, msg):
         self.lb_status.setText(msg)
@@ -310,74 +288,35 @@ class BaseDialog(QtGui.QDialog):
         self.update_canvas_signal.emit(x, y, z)
 
     def press_help(self):
-        pass
-        # webbrowser.open(self.help_web_adress, new=0, autoraise=True)
+        webbrowser.open(self._help_web_address, new=0, autoraise=True)
 
 
-class BaseControler(object):
+class BaseController(object):
     _points = []
+    points = []
 
-    def __init__(self, dialog):
-        self.dialog = dialog
+    def __init__(self, image, params, init_values=None):
+        self.image = image
+        self.params = params
 
-    def press_undo(self):
-        try:
-            dump = self._selected_points.pop()
-            logger.debug('{}'.format(dump))
-        except IndexError:
-            self.update_warning("There's no points to undo")
+        if isinstance(init_values, list):
+            self.points.extend(init_values)
 
-    @QtCore.Slot(int)
-    def onPointChanged(self, value):
-        logger.debug(value)
+        elif init_values:
+            self.points.append(init_values)
 
+        self.init_points = copy(self.points)
 
-class TestDialog(BaseDialog):
-    def __init__(self, params, img, overlay=None):
-        super(TestDialog, self).__init__(params, img, overlay)
-        self.controler = BaseControler(self)
-        self.canvases = []
-        self.sliders = []
-
-    def _init_canvas(self, parent):
-        self.canvases = []
-        for obj in [SagittalCanvas, AxialCanvas, CorrinalCanvas]:
-            canvas = obj(self)
-            parent.addWidget(canvas)
-            canvas.point_selected_signal.connect(self.update_points)
-            self.update_canvas_signal.connect(canvas.on_refresh_slice)
-            self.canvases.append(canvas)
-
-    def _init_controls(self, parent):
-        self.sliders = []
-        for x in self.image.data.shape:
-            slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-            slider.setMaximum(x)
-            slider.setTickPosition(QtGui.QSlider.TicksAbove)
-            slider.setTickInterval(1)
-            slider.singleStep()
-            parent.addWidget(slider)
-            self.sliders.append(slider)
-
-        self.sliders[2].valueChanged.connect(self.update_z_axis)
-        self.sliders[1].valueChanged.connect(self.update_y_axis)
-        self.sliders[0].valueChanged.connect(self.update_x_axis)
-        self.sliders[0].setValue(self.canvases[0]._x)
-        self.sliders[1].setValue(self.canvases[0]._y)
-        self.sliders[2].setValue(self.canvases[0]._z)
-
-
-if __name__ == '__main__':
-    import sys
-
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-
-    from scripts.msct_image import Image
-
-    app = QtGui.QApplication(sys.argv)
-    params = AnatomicalParams()
-    img = Image('/Users/geper_admin/sct_example_data/t2/t2.nii.gz')
-    img.change_orientation('SAL')
-    base_win = TestDialog(params, img)
-    base_win.show()
-    app.exec_()
+    def align_image(self):
+        x, y, z, t, dx, dy, dz, dt = self.image.dim
+        self.params.aspect = dx / dy
+        self.params.offset = x * dx
+        clip = np.percentile(self.image.data, (self.params.min,
+                                               self.params.max))
+        self.params.vmin, self.params.vmax = clip
+        shape = self.image.data.shape
+        dimension = [shape[0] * dx, shape[1] * dy, shape[2] * dz]
+        max_size = max(dimension)
+        self.x_offset = int(round(max_size - dimension[0]) / dx / 2)
+        self.y_offset = int(round(max_size - dimension[1]) / dy / 2)
+        self.z_offset = int(round(max_size - dimension[2]) / dz / 2)
