@@ -41,13 +41,13 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
 
     im = Image(fname_image)
     nx, ny, nz, nt, px, py, pz, pt = im.dim
-    coord_phys_center = im.transfo_pix2phys([[(nx - 1) / 2.0, (ny - 1) / 2.0, (nz - 1) / 2.0]])[0]
     coordinates_centerline = im.getNonZeroCoordinates(sorting='z')
 
     f = open(fname_output, "w")
     sct.printv('\nWriting ROI file...', verbose)
 
     for coord in coordinates_centerline:
+        coord_phys_center = im.transfo_pix2phys([[(nx - 1) / 2.0, (ny - 1) / 2.0, coord.z]])[0]
         coord_phys = im.transfo_pix2phys([[coord.x, coord.y, coord.z]])[0]
         f.write(ROI_TEMPLATE.format(fname_segmentation=fname_image,
                                     creation_date=date_now.strftime("%d %B %Y %H:%M:%S.%f %Z"),
