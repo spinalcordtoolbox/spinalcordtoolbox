@@ -107,7 +107,7 @@ class ExtractGLCM:
         # metric_lst=['property_distance_angle']
         self.metric_lst = []
         for m in list(itertools.product(self.param_glcm.feature.split(','), self.param_glcm.angle.split(','))):
-            text_name = m[0].upper()
+            text_name = m[0] if m[0].upper() != 'asm'.upper() else m[0].upper()
             self.metric_lst.append(text_name + '_' + str(self.param_glcm.distance) + '_' + str(m[1]))
 
         # dct_im_seg{'im': list_of_axial_slice, 'seg': list_of_axial_masked_slice}
@@ -244,8 +244,8 @@ class ExtractGLCM:
                                                    symmetric=self.param_glcm.symmetric,
                                                    normed=self.param_glcm.normed)
 
-                        for m in self.metric_lst:  # compute the GLCM property (m.split('_')[0]) of the voxel xx,yy,zz
-                            dct_metric[m].data[xx, yy, zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
+                    for m in self.metric_lst:  # compute the GLCM property (m.split('_')[0]) of the voxel xx,yy,zz
+                        dct_metric[m].data[xx, yy, zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
 
             timer.add_iteration()
 
