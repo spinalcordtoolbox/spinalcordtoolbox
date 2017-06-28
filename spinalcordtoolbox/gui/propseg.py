@@ -54,9 +54,9 @@ class PropSegController(base.BaseController):
         if self.points:
             point = self.points[-1]
             self.points = self.points[:-1]
-            self._slice -= self._interval
-            if self.valid_point(self._slice, self.init_y, self.init_z):
-                self._dialog.set_slice(self._slice, self.init_y, self.init_z)
+            self._slice = point[0]
+            if self.valid_point(point[0], point[1], point[2]):
+                self._dialog.set_slice(point[0], point[1], point[2])
             logger.debug('Point removed {}'.format(point))
         else:
             self._dialog.update_warning('There is no points selected to undo')
@@ -167,7 +167,6 @@ class PropSeg(base.BaseDialog):
         self.btn_ok.clicked.connect(self._controller.save_quit)
 
     def set_slice(self, x=0, y=0, z=0):
-
         self.main_canvas.on_refresh_slice(x, y, z)
         self.second_canvas.on_refresh_slice(x, y, z)
 
