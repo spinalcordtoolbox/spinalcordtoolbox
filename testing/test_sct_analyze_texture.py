@@ -8,22 +8,22 @@
 #
 # About the license: see the file LICENSE.TXT
 
-import sct_utils as sct
-import commands
-import sct_analyze_texture
-from sct_testing import write_to_log_file
-from msct_parser import Parser
-from pandas import DataFrame
 import os.path
-import time, random
+import random
+import time
 from copy import deepcopy
-from msct_image import Image, compute_dice
+
 import numpy as np
+import sct_analyze_texture
+import sct_utils as sct
+from msct_image import Image
+from pandas import DataFrame
+from sct_testing import write_to_log_file
+
 
 def test(path_data='', parameters=''):
 
     # initialization
-    verbose = 0
     output = ''
     difference_threshold = 0.95
 
@@ -37,7 +37,7 @@ def test(path_data='', parameters=''):
         dict_param = parser.parse(parameters.split(), check_file_exist=False)
         dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
 
-        # add output 
+        # add output
         subject_folder = path_data.split('/')
         if subject_folder[-1] == '' and len(subject_folder) > 1:
             subject_folder = subject_folder[-2]
@@ -53,7 +53,7 @@ def test(path_data='', parameters=''):
         status = 1
         output = err
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-    
+
     # Extract contrast
     contrast = ''
     input_filename = ''
@@ -90,8 +90,8 @@ def test(path_data='', parameters=''):
     # run command
     cmd = 'sct_analyze_texture ' + param_with_path
     output += '\n====================================================================================================\n'\
-             + cmd + \
-             '\n====================================================================================================\n\n'  # copy command
+              + cmd + \
+              '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
         status, o = sct.run(cmd, 0)
@@ -111,7 +111,7 @@ def test(path_data='', parameters=''):
         diff_im = Image(texture_test_filename).data - Image(texture_ref_filename).data
         cmpt_diff_vox = np.count_nonzero(diff_im)
         cmpt_tot_vox = np.count_nonzero(Image(texture_ref_filename).data)
-        difference_vox = float(cmpt_tot_vox-cmpt_diff_vox)/cmpt_tot_vox
+        difference_vox = float(cmpt_tot_vox - cmpt_diff_vox) / cmpt_tot_vox
         if difference_vox < difference_threshold:
             status = 99
     else:
