@@ -75,9 +75,7 @@ def main():
 
     # redirect to log file
     if create_log_file:
-        orig_stdout = sys.stdout
-        handle_log = file(file_log, 'w')
-        sys.stdout = handle_log
+        handle_log = sct.ForkStdoutToFile(file_log)
 
     # complete test
     if complete_test:
@@ -307,11 +305,6 @@ def main():
         print_fail()
         print sys.exc_info()
 
-    # close log file
-    if create_log_file:
-        sys.stdout = orig_stdout
-        handle_log.close()
-        print "File generated: " + file_log + '\n'
     print ''
     sys.exit(e + install_software)
 
@@ -319,7 +312,6 @@ def main():
 # print without carriage return
 # ==========================================================================================
 def print_line(string):
-    import sys
     sys.stdout.write(string + make_dot_lines(string))
     sys.stdout.flush()
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""
 #########################################################################################
 #
 # This function allows to run a function on a large dataset with a set of parameters.
@@ -33,19 +34,29 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import sys
+usage:
+
+    sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8 
+
+"""
 import commands
+import copy_reg
+import json
+import os
 import platform
 import signal
-from time import time, strftime
-from msct_parser import Parser
-import sct_utils as sct
-import os
-import copy_reg
+import sys
 import types
-import pandas as pd
-import json
+from time import time, strftime
 
+if "SCT_MPI_MODE" in os.environ:
+    from distribute2mpi import MpiPool as Pool
+else:
+    from multiprocessing import Pool
+import pandas as pd
+
+import sct_utils as sct
+import msct_parser
 
 # get path of the toolbox
 # TODO: put it back below when working again (julien 2016-04-04)
@@ -165,7 +176,7 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
 def function_launcher(args):
     import importlib
     # append local script to PYTHONPATH for import
-    sys.path.append(os.path.abspath(os.curdir))
+    sys.path.append('{}/testing'.format(os.getenv('SCT_DIR')))
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
     try:
         output = script_to_be_run.test(*args[1:])
@@ -198,20 +209,22 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
-    from multiprocessing import Pool
-
     # create datasets with parameters
     import itertools
     data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
-    pool = Pool(processes=nb_cpu, initializer=init_worker)
+    # Computing Pool for parallel process, distribute2mpi.MpiPool in MPI environment, multiprocessing.Pool otherwise
+    pool = Pool(nb_cpu)
 
     try:
-        async_results = pool.map_async(function_launcher, data_and_params).get(9999999)
-        # results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        compute_time = time()
+        async_results = pool.map_async(function_launcher, data_and_params)
         pool.close()
         pool.join()  # waiting for all the jobs to be done
-        results = process_results(async_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        compute_time = time() - compute_time
+        all_results = async_results.get()
+        results = process_results(all_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+
     except KeyboardInterrupt:
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
@@ -227,12 +240,12 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
         # raise Exception
         # sys.exit(2)
 
-    return results
+    return {'results': results, "compute_time": compute_time}
 
 
 def get_parser():
     # Initialize parser
-    parser = Parser(__file__)
+    parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
     parser.usage.set_description("")
@@ -265,7 +278,7 @@ def get_parser():
                       description="Number of CPU used for testing. 0: no multiprocessing. If not provided, "
                                   "it uses all the available cores.",
                       mandatory=False,
-                      default_value=0,
+                      default_value=1,
                       example='42')
 
     parser.add_option(name="-log",
@@ -304,7 +317,6 @@ if __name__ == "__main__":
     dataset = arguments["-d"]
     dataset = sct.slash_at_the_end(dataset, slash=1)
     parameters = ''
-    message = ''  # terminal printout and email message
     if "-p" in arguments:
         parameters = arguments["-p"]
     json_requirements = None
@@ -316,6 +328,7 @@ if __name__ == "__main__":
     create_log = int(arguments['-log'])
     if '-email' in arguments:
         email, passwd = arguments['-email'].split(',')
+        create_log = True
     else:
         email = ''
     verbose = int(arguments["-v"])
@@ -324,17 +337,13 @@ if __name__ == "__main__":
     start_time = time()
     # create single time variable for output names
     output_time = strftime("%y%m%d%H%M%S")
-    print 'Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S")
 
     # build log file name
     if create_log:
         file_log = 'results_test_' + function_to_test + '_' + output_time
-        orig_stdout = sys.stdout
         fname_log = file_log + '.log'
-        handle_log = file(fname_log, 'w')
-        # redirect to log file
-        sys.stdout = handle_log
-        print 'Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S")
+        handle_log = sct.ForkStdoutToFile(fname_log)
+    print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
     # get path of the toolbox
     path_script = os.path.dirname(__file__)
@@ -380,13 +389,15 @@ if __name__ == "__main__":
     try:
         # during testing, redirect to standard output to avoid stacking error messages in the general log
         if create_log:
-            sys.stdout = orig_stdout
+            handle_log.pause()
 
-        results = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
+        tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
+        results = tests_ret['results']
+        compute_time = tests_ret['compute_time']
 
         # after testing, redirect to log file
         if create_log:
-            sys.stdout = handle_log
+            handle_log.restart()
 
         # build results
         pd.set_option('display.max_rows', 500)
@@ -425,8 +436,8 @@ if __name__ == "__main__":
         print 'Dataset: ' + dataset
         # display general results
         print '\nGLOBAL RESULTS:'
-        elapsed_time = time() - start_time
-        print 'Duration: ' + str(int(round(elapsed_time))) + 's'
+
+        print 'Duration: ' + str(int(round(compute_time))) + 's'
         # display results
         print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
         print 'Crashed: ' + str(count_crashed) + '/' + str(count_ran)
@@ -443,7 +454,7 @@ if __name__ == "__main__":
         # print detailed results
         print '\nDETAILED RESULTS:'
         print results_display.to_string()
-        print 'Status: 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing'
+        print 'Status Legend - 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing'
 
         if verbose == 2:
             import seaborn as sns
@@ -482,16 +493,8 @@ if __name__ == "__main__":
             print err
 
     # stop file redirection
-    if create_log:
-        sys.stdout.close()
-        sys.stdout = orig_stdout
-        # display log file to Terminal
-        handle_log = file(fname_log, 'r')
-        message = handle_log.read()
-        print message
-
     # send email
     if email:
         print 'Sending email...'
-        sct.send_email(email, passwd_from=passwd, subject=file_log, message=message, filename=file_log + '.log')
+        handle_log.send_email(passwd_from=passwd, subject=file_log)
         print 'done!'
