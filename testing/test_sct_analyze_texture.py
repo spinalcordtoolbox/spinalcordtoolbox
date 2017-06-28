@@ -29,7 +29,7 @@ def test(path_data='', parameters=''):
 
     # parameters
     if not parameters:
-        parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz'
+        parameters = '-i t2/t2.nii.gz -m t2/t2_seg.nii.gz'
 
     # retrieve flags
     try:
@@ -80,7 +80,7 @@ def test(path_data='', parameters=''):
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i']) and
-            os.path.isfile(dict_param_with_path['-s'])):
+            os.path.isfile(dict_param_with_path['-m'])):
         status = 200
         output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         write_to_log_file(fname_log, output, 'w')
@@ -114,9 +114,11 @@ def test(path_data='', parameters=''):
         difference_vox = float(cmpt_tot_vox-cmpt_diff_vox)/cmpt_tot_vox
         if difference_vox < difference_threshold:
             status = 99
+    else:
+        difference_vox = 0.0
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'texture_difference': difference_vox, 'duration [s]': duration}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'texture_similarity': difference_vox, 'duration [s]': duration}, index=[path_data])
 
     sys.stdout.close()
     sys.stdout = stdout_orig
