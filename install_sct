@@ -349,6 +349,7 @@ cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run 
 # Copy binaries
 
 ## INSTALL PYTHON
+unset PYTHONPATH
 if [ ${NO_CONDA_INSTALL} ]; then
   echo "python/ will not be (re)-install"
   # activate miniconda
@@ -400,13 +401,7 @@ else
   fi
   # reinstall numpy at the end to prevent some bugs
   conda install -fy numpy=1.12.1
-
 fi
-
-
-## Install the spinalcordtoolbox into conda
-pip install ${SCT_SOURCE}
-
 
 ## Install binaries
 if [ ${NO_SCT_BIN_INSTALL} ]; then
