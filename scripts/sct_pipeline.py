@@ -48,13 +48,11 @@ import signal
 import sys
 import types
 from time import time, strftime
-
 if "SCT_MPI_MODE" in os.environ:
     from distribute2mpi import MpiPool as Pool
 else:
     from multiprocessing import Pool
 import pandas as pd
-
 import sct_utils as sct
 import msct_parser
 
@@ -205,6 +203,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
 
     # generate data list from folder containing
     data_subjects, subjects_name = generate_data_list(folder_dataset, json_requirements=json_requirements)
+    print "Number of subjects to process: " + str(len(data_subjects))
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -278,6 +277,7 @@ def get_parser():
                       description="Number of CPU used for testing. 0: no multiprocessing. If not provided, "
                                   "it uses all the available cores.",
                       mandatory=False,
+                      default_value=1,
                       example='42')
 
     parser.add_option(name="-log",
@@ -288,8 +288,11 @@ def get_parser():
                       default_value='1')
 
     parser.add_option(name='-email',
-                      type_value='str',
-                      description='Email address to send results followed by SMTP passwd (separate with comma).',
+                      type_value=[[','], 'str'],
+                      description='Email information to send results. Fields are assigned with "=" and are separated with ",":\
+\nemail_to: address to send email to\
+\nemail_from: address to send email from (default value is: spinalcordtoolbox@gmail.com)\
+\npasswd_from: password for email_from',
                       mandatory=False,
                       default_value='')
 
@@ -307,6 +310,9 @@ def get_parser():
 # Start program
 # ====================================================================================================
 if __name__ == "__main__":
+
+    # initialization
+    addr_from = 'spinalcordtoolbox@gmail.com'
 
     # get parameters
     print_if_error = False  # print error message if function crashes (could be messy)
@@ -326,10 +332,18 @@ if __name__ == "__main__":
         nb_cpu = arguments["-cpu-nb"]
     create_log = int(arguments['-log'])
     if '-email' in arguments:
-        email, passwd = arguments['-email'].split(',')
         create_log = True
+        send_email = True
+        # loop across fields
+        for i in arguments['-email']:
+            if 'addr_to' in i:
+                addr_to = i.split('=')[1]
+            if 'addr_from' in i:
+                addr_from = i.split('=')[1]
+            if 'passwd_from' in i:
+                passwd_from = i.split('=')[1]
     else:
-        email = ''
+        send_email = False
     verbose = int(arguments["-v"])
 
     # start timer
@@ -384,6 +398,10 @@ if __name__ == "__main__":
     # check RAM
     sct.checkRAM(os_running, 0)
 
+    # display command
+    print '\nCommand: "' + function_to_test + ' ' + parameters
+    print 'Dataset: ' + dataset
+
     # test function
     try:
         # during testing, redirect to standard output to avoid stacking error messages in the general log
@@ -431,8 +449,6 @@ if __name__ == "__main__":
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
         results_display = results_display.set_index('subject').reset_index()
 
-        print '\nCommand: "' + function_to_test + ' ' + parameters
-        print 'Dataset: ' + dataset
         # display general results
         print '\nGLOBAL RESULTS:'
 
@@ -492,8 +508,16 @@ if __name__ == "__main__":
             print err
 
     # stop file redirection
+    # message = handle_log.read()
+    handle_log.close()
+
     # send email
-    if email:
-        print 'Sending email...'
-        handle_log.send_email(passwd_from=passwd, subject=file_log)
-        print 'done!'
+    if send_email:
+        print '\nSending email...'
+        # open log file and read content
+        with open(fname_log, "r") as fp:
+            message = fp.read()
+        # send email
+        sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log)
+        # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
+        print 'Email sent!\n'
