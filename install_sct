@@ -355,6 +355,7 @@ if [ ${NO_CONDA_INSTALL} ]; then
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
 else
   # Install Python conda
+  unset PYTHONPATH
   echo -e "\nInstalling conda..."
   cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
