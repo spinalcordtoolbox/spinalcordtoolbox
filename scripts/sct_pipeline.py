@@ -315,7 +315,8 @@ def get_parser():
     parser.add_option(name="-spec",
                       type_value="str",
                       description="Specification on center, study, [...] to select the testing dataset\n"
-                                  "Syntax:  center=unf,twh:study=errsm:gm_model=0:contrast=t2,t2s",
+                                  "Syntax:  field_1=val1,val2:field_2=val3:field_3=val4,val5",
+                      example="center=unf,twh:gm_model=0:contrasts=t2,t2s",
                       mandatory=False)
 
     parser.add_option(name="-file-spec",
