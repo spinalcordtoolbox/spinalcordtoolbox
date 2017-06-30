@@ -216,6 +216,8 @@ class SpinalCordStraightener(object):
         self.elapsed_time = 0.0
         self.elapsed_time_accuracy = 0.0
 
+        self.template_orientation = 0
+
     def straighten(self):
         # Initialization
         fname_anat = self.input_filename
@@ -496,18 +498,21 @@ class SpinalCordStraightener(object):
                 #hdr_warp_s.structarr['srow_x'][-1] = origin[0]
                 #hdr_warp_s.structarr['srow_y'][-1] = origin[1]
                 #hdr_warp_s.structarr['srow_z'][-1] = origin[2]
-                """hdr_warp_s.structarr['quatern_b'] = 0.0
-                hdr_warp_s.structarr['quatern_c'] = 1.0
-                hdr_warp_s.structarr['quatern_d'] = 0.0
-                hdr_warp_s.structarr['srow_x'][0] = -px_s
-                hdr_warp_s.structarr['srow_x'][1] = 0.0
-                hdr_warp_s.structarr['srow_x'][2] = 0.0
-                hdr_warp_s.structarr['srow_y'][0] = 0.0
-                hdr_warp_s.structarr['srow_y'][1] = py_s
-                hdr_warp_s.structarr['srow_y'][2] = 0.0
-                hdr_warp_s.structarr['srow_z'][0] = 0.0
-                hdr_warp_s.structarr['srow_z'][1] = 0.0
-                hdr_warp_s.structarr['srow_z'][2] = pz_s"""
+
+                if self.template_orientation == 1:
+                    hdr_warp_s.structarr['quatern_b'] = 0.0
+                    hdr_warp_s.structarr['quatern_c'] = 1.0
+                    hdr_warp_s.structarr['quatern_d'] = 0.0
+                    hdr_warp_s.structarr['srow_x'][0] = -px_s
+                    hdr_warp_s.structarr['srow_x'][1] = 0.0
+                    hdr_warp_s.structarr['srow_x'][2] = 0.0
+                    hdr_warp_s.structarr['srow_y'][0] = 0.0
+                    hdr_warp_s.structarr['srow_y'][1] = py_s
+                    hdr_warp_s.structarr['srow_y'][2] = 0.0
+                    hdr_warp_s.structarr['srow_z'][0] = 0.0
+                    hdr_warp_s.structarr['srow_z'][1] = 0.0
+                    hdr_warp_s.structarr['srow_z'][2] = pz_s
+
                 image_centerline_straight.hdr = hdr_warp_s
                 image_centerline_straight.compute_transform_matrix()
                 image_centerline_straight.save()
@@ -886,7 +891,8 @@ def get_parser():
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
                                   "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
                                   "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
-                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0",
+                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
+                                  "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
                       mandatory=False,
                       example="algo_fitting=nurbs")
     parser.add_option(name="-params",
@@ -908,9 +914,14 @@ def get_parser():
     return parser
 
 
-if __name__ == "__main__":
+# MAIN
+# ==========================================================================================
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     # assigning variables to arguments
     input_filename = arguments["-i"]
@@ -977,5 +988,14 @@ if __name__ == "__main__":
                 sc_straight.threshold_distance = float(param_split[1])
             if param_split[0] == 'accuracy_results':
                 sc_straight.accuracy_results = int(param_split[1])
+            if param_split[0] == 'template_orientation':
+                sc_straight.template_orientation = int(param_split[1])
 
     sc_straight.straighten()
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    # call main function
+    main()
