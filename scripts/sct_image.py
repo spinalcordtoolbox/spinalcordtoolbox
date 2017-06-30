@@ -276,7 +276,9 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
         new_shape = list(im.data.shape)
         new_shape.append(1)
         im.data = im.data.reshape(new_shape)
-    padded_data = zeros((nx + pad_x_i + pad_x_f, ny + pad_y_i + pad_y_f, nz + pad_z_i + pad_z_f))
+
+    # initialize padded_data, with same type as im.data
+    padded_data = zeros((nx + pad_x_i + pad_x_f, ny + pad_y_i + pad_y_f, nz + pad_z_i + pad_z_f), dtype=im.data.dtype)
 
     if pad_x_f == 0:
         pad_x_f = None

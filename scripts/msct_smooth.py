@@ -263,13 +263,13 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
 #=======================================================================================================================
 # 3D B-Spline function, sct_nurbs
 #=======================================================================================================================
-def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1, verbose=1, all_slices=True):
+def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1, verbose=1, all_slices=True, path_qc='../'):
 
     from math import log
     from msct_nurbs import NURBS
 
     twodim = False
-    if z == None:
+    if z is None:
         twodim = True
 
     """x.reverse()
@@ -326,6 +326,8 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
         if not twodim:
             PC_z = [p[2] for p in PC]
 
+        import matplotlib
+        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
         if not twodim:
             plt.figure(1)
@@ -357,6 +359,8 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             plt.xlabel('y')
             plt.ylabel('x')
             plt.show()
+        plt.savefig(path_qc+'b_spline_nurbs.png')
+        plt.close()
 
     if not twodim:
         return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv, nurbs.error_curve_that_last_worked
