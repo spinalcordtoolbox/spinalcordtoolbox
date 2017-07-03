@@ -131,6 +131,7 @@ def get_parser(paramreg=None):
                                   "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" + paramreg.steps['1'].smooth + "\n"
                                   "laplacian: <int> Laplacian filter. Default=" + paramreg.steps['1'].laplacian + "\n"
                                   "gradStep: <float> Gradient step. Default=" + paramreg.steps['1'].gradStep + "\n"
+                                  "deformation: ?x?x?: Restrict deformation (for ANTs algo). Replace ? by 0 (no deformation) or 1 (deformation). Default=" + paramreg.steps['1'].deformation + "\n"
                                   "init: Initial translation alignment based on:\n"
                                   "  geometric: Geometric center of images\n"
                                   "  centermass: Center of mass of images\n"
@@ -193,7 +194,7 @@ class Param:
 
 
 class Paramreg(object):
-    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
+    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -203,6 +204,7 @@ class Paramreg(object):
         self.smooth = smooth
         self.laplacian = laplacian
         self.gradStep = gradStep
+        self.deformation = deformation
         self.slicewise = slicewise
         self.init = init
         self.poly = poly  # only for algo=slicereg
@@ -535,6 +537,7 @@ def register(src, dest, paramreg, param, i_step_str):
     sct.printv('  laplacian ...... ' + paramreg.steps[i_step_str].laplacian, param.verbose)
     sct.printv('  shrink ......... ' + paramreg.steps[i_step_str].shrink, param.verbose)
     sct.printv('  gradStep ....... ' + paramreg.steps[i_step_str].gradStep, param.verbose)
+    sct.printv('  deformation .... ' + paramreg.steps[i_step_str].deformation, param.verbose)
     sct.printv('  init ........... ' + paramreg.steps[i_step_str].init, param.verbose)
     sct.printv('  poly ........... ' + paramreg.steps[i_step_str].poly, param.verbose)
     sct.printv('  dof ............ ' + paramreg.steps[i_step_str].dof, param.verbose)
@@ -636,13 +639,11 @@ def register(src, dest, paramreg, param, i_step_str):
                    '--convergence ' + paramreg.steps[i_step_str].iter + ' '
                    '--shrink-factors ' + paramreg.steps[i_step_str].shrink + ' '
                    '--smoothing-sigmas ' + paramreg.steps[i_step_str].smooth + 'mm '
-                   '--restrict-deformation 1x1x0 '
+                   '--restrict-deformation ' + paramreg.steps[i_step_str].deformation + ' '
                    '--output [step' + i_step_str + ',' + scr_regStep + '] '
                    '--interpolation BSpline[3] '
+                   '--verbose 1'
                    + masking)
-            # add verbose
-            if param.verbose >= 1:
-                cmd += ' --verbose 1'
             # add init translation
             if not paramreg.steps[i_step_str].init == '':
                 init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}

@@ -3,7 +3,6 @@ from __future__ import division
 
 import logging
 import webbrowser
-from copy import copy
 
 import matplotlib as mpl
 
@@ -144,6 +143,8 @@ class BaseDialog(QtGui.QDialog):
         ctrl_layout.addWidget(self.btn_ok)
 
         self.btn_help.clicked.connect(self.press_help)
+        self.btn_undo.clicked.connect(self._controller.on_undo)
+        self.btn_ok.clicked.connect(self._controller.save_quit)
 
         parent.addLayout(ctrl_layout)
         return ctrl_layout
@@ -155,7 +156,7 @@ class BaseDialog(QtGui.QDialog):
         self.raise_()
 
     def update_status(self, msg):
-        """
+        """Print the message into the dialog's status widget and clear the warning widget
 
         Parameters
         ----------
@@ -186,17 +187,14 @@ class BaseController(object):
     _overlay_image = None
     _dialog = None
 
-    def __init__(self, image, params, init_values=None):
+    def __init__(self, image, params, init_values=None, max_points=0):
         self.image = image
         self.params = params
 
-        if isinstance(init_values, list):
-            self.points.extend(init_values)
+        if init_values:
+            self._overlay_image = init_values.data
 
-        elif init_values:
-            self.points.append(init_values)
-
-        self.init_points = copy(self.points)
+        self.max_points = max_points
 
     def align_image(self):
         self.orientation = self.image.orientation
@@ -229,6 +227,18 @@ class BaseController(object):
 
         self._overlay_image.change_orientation(self.orientation)
         self._dialog.close()
+
+    def on_undo(self):
+        """Remove the last point selected and refresh the UI"""
+        if self.points:
+            point = self.points[-1]
+            self.points = self.points[:-1]
+            self._slice = point[0]
+            if self.valid_point(point[0], point[1], point[2]):
+                self._dialog.set_slice(point[0], point[1], point[2])
+            logger.debug('Point removed {}'.format(point))
+        else:
+            self._dialog.update_warning('There is no points selected to undo')
 
     def as_string(self):
         if not self._overlay_image:

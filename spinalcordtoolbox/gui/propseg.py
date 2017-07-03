@@ -18,8 +18,8 @@ class PropSegController(base.BaseController):
     _interval = 15
     MODES = ['AUTO', 'CUSTOM']
 
-    def __init__(self, image, params, init_values=None):
-        super(PropSegController, self).__init__(image, params, init_values)
+    def __init__(self, image, params, init_values=None, max_points=0):
+        super(PropSegController, self).__init__(image, params, init_values, max_points)
 
     def align_image(self):
         super(PropSegController, self).align_image()
@@ -40,18 +40,6 @@ class PropSegController(base.BaseController):
                 self._dialog.update_warning('Reached the maximum superior / inferior axis length')
             else:
                 self._dialog.set_slice(self._slice, self.init_y, self.init_z)
-
-    def on_undo(self):
-        """Remove the last point selected and refresh the UI"""
-        if self.points:
-            point = self.points[-1]
-            self.points = self.points[:-1]
-            self._slice = point[0]
-            if self.valid_point(point[0], point[1], point[2]):
-                self._dialog.set_slice(point[0], point[1], point[2])
-            logger.debug('Point removed {}'.format(point))
-        else:
-            self._dialog.update_warning('There is no points selected to undo')
 
     def select_point(self, x, y, z):
         logger.debug('Point Selected {}'.format(self._print_point((x, y, z))))
@@ -87,7 +75,7 @@ class PropSeg(base.BaseDialog):
         layout.addWidget(self.second_canvas)
 
         self.main_canvas = widgets.AxialCanvas(self, interactive=True)
-        self.main_canvas.plot_points(self._controller.points)
+        self.main_canvas.plot_points()
         layout.addWidget(self.main_canvas)
 
         self.main_canvas.point_selected_signal.connect(self._controller.select_point)
@@ -122,8 +110,6 @@ class PropSeg(base.BaseDialog):
         ctrl_layout.insertWidget(2, skip)
 
         skip.clicked.connect(self._controller.skip_slice)
-        self.btn_undo.clicked.connect(self._controller.on_undo)
-        self.btn_ok.clicked.connect(self._controller.save_quit)
 
     def set_slice(self, x=0, y=0, z=0):
         self.main_canvas.on_refresh_slice(x, y, z)
@@ -144,12 +130,15 @@ if __name__ == '__main__':
 
     try:
         file_name = sys.argv[1]
+        overlay_name = sys.argv[2]
     except Exception:
         file_name = '/Users/geper_admin/sct_example_data/t2/t2.nii.gz'
+        overlay_name = '/Users/geper_admin/manual_propseg.nii.gz'
 
     params = base.AnatomicalParams()
     img = Image(file_name)
-    controller = PropSegController(img, params)
+    overlay = Image(overlay_name)
+    controller = PropSegController(img, params, overlay)
     controller.align_image()
     base_win = PropSeg(controller)
     base_win.show()

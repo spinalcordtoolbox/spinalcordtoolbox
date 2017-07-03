@@ -45,6 +45,7 @@ class VertebraeWidget(QtGui.QWidget):
 
     def __init__(self, parent):
         super(VertebraeWidget, self).__init__(parent)
+        self.parent = parent
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
         font = QtGui.QFont()
@@ -65,10 +66,13 @@ class VertebraeWidget(QtGui.QWidget):
 
     def on_select_label(self):
         label = self.sender()
-        # state = label.checkState()
-        if self._selected_label:
+        if self._selected_label and self._selected_label.checkState() == QtCore.Qt.PartiallyChecked:
             self._selected_label.setCheckState(QtCore.Qt.Unchecked)
         self._selected_label = label
+
+    def on_refresh(self):
+        for point in self.parent._controller.points:
+            self._check_boxes[point[3]].setCheckState(QtCore.Qt.Checked)
 
 
 class AnatomicalCanvas(FigureCanvas):
@@ -182,6 +186,17 @@ class CorrinalCanvas(AnatomicalCanvas):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
             self.point_selected_signal.emit(event.xdata, self._y, event.ydata)
 
+    def plot_points(self):
+        if self._parent._controller.points:
+            points = [x for x in self._parent._controller.points if self._y == x[0]]
+            cols = zip(*points)
+            if not self.points:
+                self.points = self.axes.plot(cols[1], cols[2], '.r', markersize=10)
+            else:
+                self.points.set_xdata(cols[0])
+                self.points.set_ydata(cols[1])
+                self.view.figure.canvas.draw()
+
 
 class AxialCanvas(AnatomicalCanvas):
     def __init__(self, parent, width=4, height=8, dpi=100, interactive=False):
@@ -196,12 +211,16 @@ class AxialCanvas(AnatomicalCanvas):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
             self.point_selected_signal.emit(self._x, event.ydata, event.xdata)
 
-    def plot_points(self, points):
+    def plot_points(self):
         if self._parent._controller.points:
             points = [x for x in self._parent._controller.points if self._x == x[0]]
             cols = zip(*points)
             if not self.points:
                 self.points = self.axes.plot(cols[1], cols[2], '.r', markersize=10)
+            else:
+                self.points.set_xdata(cols[0])
+                self.points.set_ydata(cols[1])
+                self.view.figure.canvas.draw()
 
 
 class AnatomicalToolbar(NavigationToolbar):
