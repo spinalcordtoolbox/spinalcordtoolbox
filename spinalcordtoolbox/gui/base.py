@@ -183,6 +183,8 @@ class BaseDialog(QtGui.QDialog):
 class BaseController(object):
     points = []
     orientation = None
+    _overlay_image = None
+    _dialog = None
 
     def __init__(self, image, params, init_values=None):
         self.image = image
@@ -208,3 +210,42 @@ class BaseController(object):
         self.init_x = x // 2
         self.init_y = y // 2
         self.init_z = z // 2
+
+    def _print_point(self, point):
+        max_x = self.image.dim[0]
+        return '{} {} {}'.format(max_x - point[0], point[1], point[2])
+
+    def valid_point(self, x, y, z):
+        dim = self.image.dim
+        if 0 <= x < dim[0] and 0 <= y < dim[1] and 0 <= z < dim[2]:
+            return True
+        return False
+
+    def save_quit(self):
+        self._overlay_image = self.image.copy()
+        self._overlay_image.data *= 0
+        for point in self.points:
+            self._overlay_image.data[point[0], point[1], point[2]] = 1
+
+        self._overlay_image.change_orientation(self.orientation)
+        self._dialog.close()
+
+    def as_string(self):
+        if not self._overlay_image:
+            logger.warning('There is no information to save')
+            return ''
+        output = []
+        xs, ys, zs = np.where(self._overlay_image.data)
+        for x, y, z in zip(xs, ys, zs):
+            output.append('{},{},{},{}'.format(x, y, z, 1))
+        return ':'.join(output)
+
+    def as_niftii(self, file_name=None):
+        if not self._overlay_image:
+            logger.warning('There is no information to save')
+            raise IOError('There is no information to save')
+        if not file_name:
+            file_name = 'manual_propseg.nii.gz'
+        print(np.where(self._overlay_image.data))
+        self._overlay_image.setFileName(file_name)
+        self._overlay_image.save()
