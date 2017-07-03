@@ -639,10 +639,8 @@ def register(src, dest, paramreg, param, i_step_str):
                    '--restrict-deformation 1x1x0 '
                    '--output [step' + i_step_str + ',' + scr_regStep + '] '
                    '--interpolation BSpline[3] '
+                   '--verbose 1'
                    + masking)
-            # add verbose
-            if param.verbose >= 1:
-                cmd += ' --verbose 1'
             # add init translation
             if not paramreg.steps[i_step_str].init == '':
                 init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
