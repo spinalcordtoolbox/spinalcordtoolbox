@@ -639,7 +639,7 @@ def register(src, dest, paramreg, param, i_step_str):
                    '--convergence ' + paramreg.steps[i_step_str].iter + ' '
                    '--shrink-factors ' + paramreg.steps[i_step_str].shrink + ' '
                    '--smoothing-sigmas ' + paramreg.steps[i_step_str].smooth + 'mm '
-                   '--restrict-deformation' + paramreg.steps[i_step_str].deformation + ' '
+                   '--restrict-deformation ' + paramreg.steps[i_step_str].deformation + ' '
                    '--output [step' + i_step_str + ',' + scr_regStep + '] '
                    '--interpolation BSpline[3] '
                    '--verbose 1'
