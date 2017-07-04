@@ -642,7 +642,7 @@ def register(src, dest, paramreg, param, i_step_str):
                    '--restrict-deformation ' + paramreg.steps[i_step_str].deformation + ' '
                    '--output [step' + i_step_str + ',' + scr_regStep + '] '
                    '--interpolation BSpline[3] '
-                   '--verbose 1'
+                   '--verbose 1 '
                    + masking)
             # add init translation
             if not paramreg.steps[i_step_str].init == '':
