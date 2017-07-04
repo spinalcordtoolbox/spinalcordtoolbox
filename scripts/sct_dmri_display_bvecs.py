@@ -105,11 +105,12 @@ def main():
     ax.set_zlim3d(-1, 1)
     plt.title('3D view (use mouse to rotate)')
     plt.axis('off')
-    plt.show()
+    # plt.draw()
 
     # Save image
     print "Saving figure: bvecs.png\n"
     plt.savefig('bvecs.png')
+    plt.show()
 
 
 # START PROGRAM
