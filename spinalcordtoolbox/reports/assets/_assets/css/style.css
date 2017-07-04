@@ -45,3 +45,7 @@
     width: 100%;
     left: 0px;
 }
+
+a.next {
+    float: right;
+}

@@ -222,40 +222,43 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 # plt.figure
                 plt.subplot(isub)
                 # ax = matplotlib.pyplot.axis()
-                if isub == 221:
-                    plt.scatter(coord_src[iz][:, 0], coord_src[iz][:, 1], s=5, marker='o', zorder=10, color='steelblue',
-                                alpha=0.5)
-                    pcaaxis = pca_src[iz].components_.T
-                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                    plt.title('src')
-                elif isub == 222:
-                    plt.scatter(coord_src_rot[:, 0], coord_src_rot[:, 1], s=5, marker='o', zorder=10,
-                                color='steelblue',
-                                alpha=0.5)
-                    pcaaxis = pca_dest[iz].components_.T
-                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                    plt.title('src_rot')
-                elif isub == 223:
-                    plt.scatter(coord_dest[iz][:, 0], coord_dest[iz][:, 1], s=5, marker='o', zorder=10, color='red',
-                                alpha=0.5)
-                    pcaaxis = pca_dest[iz].components_.T
-                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                    plt.title('dest')
-                elif isub == 224:
-                    plt.scatter(coord_dest_rot[:, 0], coord_dest_rot[:, 1], s=5, marker='o', zorder=10, color='red',
-                                alpha=0.5)
-                    pcaaxis = pca_src[iz].components_.T
-                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                    plt.title('dest_rot')
-                plt.text(-2.5, -2, 'eigenvectors:', horizontalalignment='left', verticalalignment='bottom')
-                plt.text(-2.5, -2.8, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
-                plt.text(-2.5, 2.5, 'eigenval_ratio:', horizontalalignment='left', verticalalignment='bottom')
-                plt.text(-2.5, 2, str(pca_eigenratio), horizontalalignment='left', verticalalignment='bottom')
-                plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
-                plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
-                plt.axis([-3, 3, -3, 3])
-                plt.gca().set_aspect('equal', adjustable='box')
-                # plt.axis('equal')
+                try:
+                    if isub == 221:
+                        plt.scatter(coord_src[iz][:, 0], coord_src[iz][:, 1], s=5, marker='o', zorder=10, color='steelblue',
+                                    alpha=0.5)
+                        pcaaxis = pca_src[iz].components_.T
+                        pca_eigenratio = pca_src[iz].explained_variance_ratio_
+                        plt.title('src')
+                    elif isub == 222:
+                        plt.scatter([coord_src_rot[i, 0] for i in range(len(coord_src_rot))], [coord_src_rot[i, 1] for i in range(len(coord_src_rot))], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                        pcaaxis = pca_dest[iz].components_.T
+                        pca_eigenratio = pca_dest[iz].explained_variance_ratio_
+                        plt.title('src_rot')
+                    elif isub == 223:
+                        plt.scatter(coord_dest[iz][:, 0], coord_dest[iz][:, 1], s=5, marker='o', zorder=10, color='red',
+                                    alpha=0.5)
+                        pcaaxis = pca_dest[iz].components_.T
+                        pca_eigenratio = pca_dest[iz].explained_variance_ratio_
+                        plt.title('dest')
+                    elif isub == 224:
+                        plt.scatter([coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))], [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))], s=5, marker='o', zorder=10, color='red', alpha=0.5)
+                        pcaaxis = pca_src[iz].components_.T
+                        pca_eigenratio = pca_src[iz].explained_variance_ratio_
+                        plt.title('dest_rot')
+                    plt.text(-2.5, -2, 'eigenvectors:', horizontalalignment='left', verticalalignment='bottom')
+                    plt.text(-2.5, -2.8, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
+                    plt.text(-2.5, 2.5, 'eigenval_ratio:', horizontalalignment='left', verticalalignment='bottom')
+                    plt.text(-2.5, 2, str(pca_eigenratio), horizontalalignment='left', verticalalignment='bottom')
+                    plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
+                    plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
+                    plt.axis([-3, 3, -3, 3])
+                    plt.gca().set_aspect('equal', adjustable='box')
+                except Exception as e:
+                    raise Exception
+                    # sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
+                    # sct.printv('WARNING: '+str(e), 1, 'warning')
+
+                    # plt.axis('equal')
             plt.savefig(path_qc + 'register2d_centermassrot_pca_z' + str(iz) + '.png')
             plt.close()
 
@@ -636,6 +639,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                '--smoothing-sigmas ' + str(paramreg.smooth) + 'mm '
                '--output [' + prefix_warp2d + ',src_Z' + num + '_reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
+               '--verbose 1 '
                + masking)
         # add init translation
         if not paramreg.init == '':

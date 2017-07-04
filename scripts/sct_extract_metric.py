@@ -369,6 +369,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             normalizing_label[0], slices_list = remove_slices(normalizing_label[0], slices_of_interest)
         if fname_mask_weight:  # if the flag -mask-weighted was specified,
             im_weight.data, slices_list = remove_slices(im_weight.data, slices_of_interest)
+    else:
+        slices_list = np.arange(nz).tolist()
 
     # parse clusters used for a priori (map method)
     clusters_all_labels = parse_label_ID_groups(ml_clusters)
@@ -483,8 +485,8 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
         metric_in_labels, metric_std_in_labels = np.divide(metric_in_labels, metric_norm_label), np.divide(metric_std_in_labels, metric_std_norm_label)
 
     if combined_labels_id_group:
-        metric_in_labels = metric_in_labels[0]
-        metric_std_in_labels = metric_std_in_labels[0]
+        metric_in_labels = np.asarray([metric_in_labels[0]])
+        metric_std_in_labels = np.asarray([metric_std_in_labels[0]])
 
     # compute fractional volume for each label
     fract_vol_per_label = np.zeros(metric_in_labels.size, dtype=float)
