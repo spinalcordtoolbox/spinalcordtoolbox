@@ -485,8 +485,8 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
         metric_in_labels, metric_std_in_labels = np.divide(metric_in_labels, metric_norm_label), np.divide(metric_std_in_labels, metric_std_norm_label)
 
     if combined_labels_id_group:
-        metric_in_labels = metric_in_labels[0]
-        metric_std_in_labels = metric_std_in_labels[0]
+        metric_in_labels = np.asarray([metric_in_labels[0]])
+        metric_std_in_labels = np.asarray([metric_std_in_labels[0]])
 
     # compute fractional volume for each label
     fract_vol_per_label = np.zeros(metric_in_labels.size, dtype=float)
