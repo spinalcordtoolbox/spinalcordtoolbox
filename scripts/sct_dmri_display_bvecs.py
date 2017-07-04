@@ -58,9 +58,33 @@ def main():
     # Read bvecs
     bvecs = read_bvals_bvecs(fname_bvecs, None)
     bvecs = bvecs[0]
+    x, y, z = bvecs[0], bvecs[1], bvecs[2]
+
+    # Get total number of directions
+    n_dir = len(x)
+
+    # Get effective number of directions
+    bvecs_eff = []
+    n_b0 = 0
+    for i in range(0, n_dir):
+        add_direction = True
+        # check if b=0
+        if abs(x[i]) < bzero and abs(x[i]) < bzero and abs(x[i]) < bzero:
+            n_b0 += 1
+            add_direction = False
+        else:
+            # loop across bvecs_eff
+            for j in range(0, len(bvecs_eff)):
+                # if bvalue already present, then do not add to bvecs_eff
+                if bvecs_eff[j] == [x[i], y[i], z[i]]:
+                    add_direction = False
+        if add_direction:
+            bvecs_eff.append([x[i], y[i], z[i]])
+    n_dir_eff = len(bvecs_eff)
 
     # Display scatter plot
     fig = plt.figure(facecolor='white', figsize=(9, 8))
+    fig.suptitle('Number of b=0: '+str(n_b0)+', Number of b!=0: '+str(n_dir-n_b0)+', Number of effective directions (without duplicates): '+str(n_dir_eff))
     # plt.ion()
 
     # Display three views
@@ -71,8 +95,8 @@ def main():
     # 3D
     ax = fig.add_subplot(224, projection='3d')
     # ax.auto_scale_xyz([-1, 1], [-1, 1], [-1, 1])
-    for i in range(0, len(bvecs[0][:])):
-        x, y, z = bvecs[0], bvecs[1], bvecs[2]
+    for i in range(0, n_dir):
+        # x, y, z = bvecs[0], bvecs[1], bvecs[2]
         # if b=0, do not plot
         if not(abs(x[i]) < bzero and abs(x[i]) < bzero and abs(x[i]) < bzero):
             ax.scatter(x[i], y[i], z[i])
