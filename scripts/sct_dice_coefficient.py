@@ -5,15 +5,17 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Sara Dupont
-# Modified: 2015-05-20
+# Modified: 2017-07-05 (charley)
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 import sys
+import shutil
+import os
 
 from msct_parser import Parser
 import sct_utils as sct
-
+from msct_image import Image
 
 def get_parser():
     parser = Parser(__file__)
@@ -58,6 +60,12 @@ def get_parser():
                       description='Output file with DC results (.txt)',
                       mandatory=False,
                       example='dice_coeff.txt')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="Remove temporary files.",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
     parser.add_option(name='-v',
                       type_value='multiple_choice',
                       description='Verbose.',
@@ -73,6 +81,19 @@ if __name__ == "__main__":
 
     fname_input1 = arguments['-i']
     fname_input2 = arguments['-d']
+
+    verbose = arguments['-v']
+    if verbose == '0':
+        cmd += ' -v '
+
+    tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
+
+    # copy input files to tmp directory
+    for fname in [fname_input1, fname_input2]:
+        shutil.copy(fname, tmp_dir)
+        fname_im = ''.join(sct.extract_fname(fname)[1:])
+
+    os.chdir(tmp_dir) # go to tmp directory
 
     if '-bin' in arguments:
         fname_input1_bin = sct.add_suffix(fname_input1, '_bin')
@@ -94,17 +115,45 @@ if __name__ == "__main__":
     if '-bzmax' in arguments and arguments['-bzmax'] == '1':
         cmd += ' -bzmax'
     if '-o' in arguments:
-        cmd += ' -o ' + arguments['-o']
+        path_output, fname_output, ext = sct.extract_fname(arguments['-o'])
+        cmd += ' -o ' + fname_output + ext
 
-    verbose = arguments['-v']
-    if verbose == '0':
-        cmd += ' -v '
+    if '-r' in arguments:
+        rm_tmp = bool(int(arguments['-r']))
 
-    # Computation of Dice coefficient using Python implementation.
-    # commented for now as it does not cover all the feature of isct_dice_coefficient
-    #from msct_image import Image, compute_dice
-    #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
-    #sct.printv('Dice (python-based) = ' + str(dice), verbose)
+    # # Computation of Dice coefficient using Python implementation.
+    # # commented for now as it does not cover all the feature of isct_dice_coefficient
+    # #from msct_image import Image, compute_dice
+    # #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
+    # #sct.printv('Dice (python-based) = ' + str(dice), verbose)
 
-    status, output = sct.run(cmd, verbose)
+    try:
+        status, output = sct.run(cmd, verbose)
+    except:
+        # put im_1 into im_2
+        sct.run('sct_register_multimodal -i ' + fname_input1 + ' -d ' + fname_input2 + ' -identity 1')
+        fname_input1 = sct.add_suffix(fname_input1, '_reg')
+        
+        # copy header of im_1 to im_2
+        im_1, im_2 = Image(fname_input1), Image(fname_input2)
+        im_2_cor = im_1.copy()
+        im_2_cor.data = im_2.data
+        im_2_cor.setFileName(fname_input2)
+        im_2_cor.absolutepath =  fname_input2 # Neeeded?
+        im_2_cor.save()
+
+        # update the cmd
+        cmd = ' '.join([elt for sublist in [[cmd.split(' ')[0],fname_input1,fname_input2],cmd.split(' ')[3:]] for elt in sublist])
+        status, output = sct.run(cmd, verbose)
+
+    os.chdir('..') # go back to original directory
+
+    # copy output file into original directory
+    if '-o' in arguments:
+        shutil.copy(tmp_dir+fname_output+ext, path_output+fname_output+ext)
+
+    # remove tmp_dir
+    if rm_tmp:
+        shutil.rmtree(tmp_dir)    
+
     sct.printv(output, verbose)
