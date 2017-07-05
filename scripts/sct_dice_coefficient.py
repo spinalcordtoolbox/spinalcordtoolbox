@@ -87,11 +87,14 @@ if __name__ == "__main__":
         cmd += ' -v '
 
     tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
+    tmp_dir = os.path.abspath(tmp_dir)
 
     # copy input files to tmp directory
-    for fname in [fname_input1, fname_input2]:
-        shutil.copy(fname, tmp_dir)
-        fname_im = ''.join(sct.extract_fname(fname)[1:])
+    # for fname in [fname_input1, fname_input2]:
+    shutil.copy(fname_input1, tmp_dir)
+    shutil.copy(fname_input2, tmp_dir)
+    fname_input1 = ''.join(sct.extract_fname(fname_input1)[1:])
+    fname_input2 = ''.join(sct.extract_fname(fname_input2)[1:])
 
     os.chdir(tmp_dir) # go to tmp directory
 
@@ -131,6 +134,7 @@ if __name__ == "__main__":
         status, output = sct.run(cmd, verbose)
     except:
         # put im_1 into im_2
+        os.chdir(tmp_dir)  # go to tmp directory
         sct.run('sct_register_multimodal -i ' + fname_input1 + ' -d ' + fname_input2 + ' -identity 1')
         fname_input1 = sct.add_suffix(fname_input1, '_reg')
         
