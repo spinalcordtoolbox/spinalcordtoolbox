@@ -21,6 +21,7 @@
  - Made error message more explicit if crash occurs [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1387)
  - Insert previous and next buttons in the qc reports page [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1358)
  - integrate new class for multiple stdout inside sct_check_dependencies [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1342)
+
 **DOCUMENTATION**
 
  - Update README.md [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1346)
