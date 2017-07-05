@@ -5,6 +5,7 @@
 
 **BUG**
 
+ - Catch the OSError exception thrown when the git command is missing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1396)
  - BUG: register_multimodal: fixed typo when calling isct_antsRegistration [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1392)
  - BUG: fix bug when slice is empty [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1390)
  - Ignore using user packages when install with conda and pip [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1384)
