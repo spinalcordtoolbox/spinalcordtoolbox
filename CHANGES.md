@@ -1,5 +1,37 @@
 # CHANGES TO RELEASE
 
+## v3.0.6 (2017-07-04)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.5...v3.0.6)
+
+**BUG**
+
+ - Catch the OSError exception thrown when the git command is missing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1396)
+ - BUG: register_multimodal: fixed typo when calling isct_antsRegistration [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1392)
+ - BUG: fix bug when slice is empty [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1390)
+ - Ignore using user packages when install with conda and pip [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1384)
+ - Fix referential for JIM centerline [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1377)
+ - image/pad: now copy input data type (fixes issue 1362) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1363)
+ - Use a pythonic way to compare a variable as  None [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1361)
+ - The init-mask accepts "viewer" as a value [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1357)
+ - Fixed unassigned variable in case -z or -vert is not used [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1354)
+
+**ENHANCEMENT**
+
+ - Restrict deformation for ANTs algo [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1388)
+ - Made error message more explicit if crash occurs [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1387)
+ - Insert previous and next buttons in the qc reports page [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1358)
+ - integrate new class for multiple stdout inside sct_check_dependencies [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1342)
+**DOCUMENTATION**
+
+ - Update README.md [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1346)
+
+**INSTALLATION**
+
+ - Ignore using user packages when install with conda and pip [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1384)
+ - Update sct testing data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1370)
+ - Added the dependency psutil in the conda requirements [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1359)
+ - Added egg files in the list of gitignore [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1355)
+
 ## v3.0.5 (2017-06-09)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.4...v3.0.5)
 
