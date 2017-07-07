@@ -21,6 +21,16 @@ $(document).ready(function(){
     console.log(list[index]);
   });
 
+  $('#prev-img').click( function(event) {
+    $('table tr.active').prev().click();
+    event.preventDefault();
+  });
+
+  $('#next-img').click( function(event) {
+    $('table tr.active').next().click();
+    event.preventDefault();
+  });
+
   $('html').keydown( function(evt) {
     if (evt.which == 39) {
       $('table tr.active').next().click();
