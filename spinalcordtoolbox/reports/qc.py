@@ -292,14 +292,14 @@ class QcReport(object):
 
         Parameters
         ----------
-        description : str
-            quick description of current usage of the process
+        dimension : (int, int)
+            The dimension of the image frame
         """
         # get path of the toolbox
         try:
             cmd = 'git rev-parse --short HEAD'.split()
             git_hash = subprocess.check_output(cmd).strip('"')
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, OSError):
             git_hash = "N/A"
 
         output = {

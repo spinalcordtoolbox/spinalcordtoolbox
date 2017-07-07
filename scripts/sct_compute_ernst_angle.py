@@ -73,11 +73,12 @@ def get_parser():
     parser.add_option(name="-t1",
                       type_value="float",
                       description="T1 value (in ms).",
-                      mandatory=True,
+                      mandatory=False,
+                      default_value=850.0,
                       example='800')
     parser.add_option(name="-b",
                       type_value=[[','], 'float'],
-                      description="Boundaries for the TR parameter (in ms).",
+                      description="Boundaries TR parameter (in ms) in case -v 2 is used.",
                       mandatory=False,
                       example='500,3500')
     parser.add_option(name="-tr",
