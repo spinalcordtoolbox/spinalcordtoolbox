@@ -454,7 +454,7 @@ def get_parser():
 
     parser.usage.addSection('\nOUTPUT OTIONS')
     parser.add_option(name="-winv",
-                      type_value="file_output",
+                      type_value="file",
                       description="Warping field: image -> template.",
                       mandatory=False,
                       example='warp_t2star2teplate.nii.gz')
