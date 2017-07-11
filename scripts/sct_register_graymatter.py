@@ -441,9 +441,15 @@ def get_parser():
                       default_value='label/')
     parser.add_option(name="-w",
                       type_value="file",
-                      description="Warping field: template -> image",
+                      description="Warping field: [template -> anat]",
                       mandatory=True,
                       example='warp_template2t2star.nii.gz')
+    parser.add_option(name="-winv",
+                      type_value="file",
+                      description="Input the inverse warping field [anat -> template] if you need to output the corrected inverse warping field.",
+                      mandatory=False,
+                      example='warp_t2star2template.nii.gz')
+
 
     parser.add_option(name="-param",
                       type_value="str",
@@ -453,11 +459,6 @@ def get_parser():
                       example='step=1,algo=slicereg,metric=MeanSquares,step=2,algo=syn,metric=MeanSquares,iter=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1')
 
     parser.usage.addSection('\nOUTPUT OTIONS')
-    parser.add_option(name="-winv",
-                      type_value="file",
-                      description="Warping field: image -> template.",
-                      mandatory=False,
-                      example='warp_t2star2teplate.nii.gz')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Path to an output folder",
