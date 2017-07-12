@@ -416,9 +416,9 @@ def get_parser():
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('  Motion correction of dMRI data. Some robust features include:\n'
+    parser.usage.set_description('  Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (http://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n'
                                  '- group-wise (-g)\n'
-                                 '- slice-wise regularized along z using polynomial function (-p). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'
+                                 '- slice-wise regularized along z using polynomial function (-param). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'
                                  '- masking (-m)\n'
                                  '- iterative averaging of target volume\n')
     parser.add_option(name='-i',
