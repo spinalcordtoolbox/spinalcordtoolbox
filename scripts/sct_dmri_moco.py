@@ -55,7 +55,7 @@ class Param:
         self.fname_mask = ''
         self.mat_final = ''
         self.todo = ''
-        self.group_size = 1  # number of images averaged for 'dwi' method.
+        self.group_size = 3  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
@@ -64,7 +64,7 @@ class Param:
         self.param = ['2',  # degree of polynomial function for moco
                       '2',  # smoothing sigma in mm
                       '1',  # gradientStep
-                      'MeanSquares']  # metric: MI,MeanSquares
+                      'MI']  # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
         self.run_eddy = 0
         self.mat_eddy = ''
