@@ -321,7 +321,7 @@ def get_parser():
 
     parser.add_option(name="-file-subj",
                       type_value="file",
-                      description="Path to the excel spreadsheet containing the subjects information (center, study, subject ID, demographics, ...).",
+                      description="Excel spreadsheet containing the subjects information (center, study, subject ID, demographics, ...).",
                       default_value='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx',
                       mandatory=False)
 
