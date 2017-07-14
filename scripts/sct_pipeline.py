@@ -312,16 +312,16 @@ def get_parser():
                       deprecated_rm=True,
                       mandatory=False)
 
-    parser.add_option(name="-spec",
+    parser.add_option(name="-subj",
                       type_value="str",
-                      description="Specification on center, study, [...] to select the testing dataset\n"
+                      description="Choose the subjects to process based on center, study, [...] to select the testing dataset\n"
                                   "Syntax:  field_1=val1,val2:field_2=val3:field_3=val4,val5",
                       example="center=unf,twh:gm_model=0:contrasts=t2,t2s",
                       mandatory=False)
 
-    parser.add_option(name="-file-spec",
+    parser.add_option(name="-file-subj",
                       type_value="file",
-                      description="",
+                      description="Path to the excel spreadsheet containing the subjects information (center, study, subject ID, demographics, ...).",
                       default_value='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx',
                       mandatory=False)
 
