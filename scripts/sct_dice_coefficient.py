@@ -16,6 +16,7 @@ import os
 from msct_parser import Parser
 import sct_utils as sct
 from msct_image import Image
+from sct_image import copy_header
 
 def get_parser():
     parser = Parser(__file__)
@@ -106,6 +107,11 @@ if __name__ == "__main__":
         sct.run('sct_maths -i ' + fname_input2 + ' -bin 0 -o ' + fname_input2_bin)
         fname_input2 = fname_input2_bin
 
+    # copy header of im_1 to im_2
+    im_1, im_2 = Image(fname_input1), Image(fname_input2)
+    im_2_cor = copy_header(im_1, im_2)
+    im_2_cor.save()
+
     cmd = 'isct_dice_coefficient ' + fname_input1 + ' ' + fname_input2
 
     if '-2d-slices' in arguments:
@@ -130,31 +136,13 @@ if __name__ == "__main__":
     # #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
     # #sct.printv('Dice (python-based) = ' + str(dice), verbose)
 
-    try:
-        status, output = sct.run(cmd, verbose)
-    except:
-        # put im_1 into im_2
-        os.chdir(tmp_dir)  # go to tmp directory
-        sct.run('sct_register_multimodal -i ' + fname_input1 + ' -d ' + fname_input2 + ' -identity 1')
-        fname_input1 = sct.add_suffix(fname_input1, '_reg')
-        
-        # copy header of im_1 to im_2
-        im_1, im_2 = Image(fname_input1), Image(fname_input2)
-        im_2_cor = im_1.copy()
-        im_2_cor.data = im_2.data
-        im_2_cor.setFileName(fname_input2)
-        im_2_cor.absolutepath =  fname_input2 # Neeeded?
-        im_2_cor.save()
-
-        # update the cmd
-        cmd = ' '.join([elt for sublist in [[cmd.split(' ')[0],fname_input1,fname_input2],cmd.split(' ')[3:]] for elt in sublist])
-        status, output = sct.run(cmd, verbose)
+    status, output = sct.run(cmd, verbose)
 
     os.chdir('..') # go back to original directory
 
     # copy output file into original directory
     if '-o' in arguments:
-        shutil.copy(tmp_dir+fname_output+ext, path_output+fname_output+ext)
+        shutil.copy(tmp_dir+'/'+fname_output+ext, path_output+fname_output+ext)
 
     # remove tmp_dir
     if rm_tmp:
