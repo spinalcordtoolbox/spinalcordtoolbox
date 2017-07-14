@@ -55,7 +55,7 @@ class Param:
         self.fname_mask = ''
         self.mat_final = ''
         self.todo = ''
-        self.group_size = 1  # number of images averaged for 'dwi' method.
+        self.group_size = 3  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
@@ -64,7 +64,7 @@ class Param:
         self.param = ['2',  # degree of polynomial function for moco
                       '2',  # smoothing sigma in mm
                       '1',  # gradientStep
-                      'MeanSquares']  # metric: MI,MeanSquares
+                      'MI']  # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
         self.run_eddy = 0
         self.mat_eddy = ''
@@ -416,9 +416,9 @@ def get_parser():
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('  Motion correction of dMRI data. Some robust features include:\n'
+    parser.usage.set_description('  Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (http://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n'
                                  '- group-wise (-g)\n'
-                                 '- slice-wise regularized along z using polynomial function (-p). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'
+                                 '- slice-wise regularized along z using polynomial function (-param). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'
                                  '- masking (-m)\n'
                                  '- iterative averaging of target volume\n')
     parser.add_option(name='-i',
