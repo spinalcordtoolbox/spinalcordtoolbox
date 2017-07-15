@@ -47,6 +47,7 @@ import platform
 import signal
 import sys
 import types
+import copy
 from time import time, strftime
 if "SCT_MPI_MODE" in os.environ:
     from distribute2mpi import MpiPool as Pool
@@ -103,7 +104,7 @@ def _unpickle_method(func_name, obj, cls):
 copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
 
 
-def generate_data_list(folder_dataset, json_requirements=None, verbose=1):
+def generate_data_list(folder_dataset, verbose=1):
     """
     Construction of the data list from the data set
     This function return a list of directory (in folder_dataset) in which the contrast is present.
@@ -114,9 +115,8 @@ def generate_data_list(folder_dataset, json_requirements=None, verbose=1):
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
         if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
-            if read_json(folder_dataset + subject_dir, json_requirements=json_requirements):
-                data_subjects.append(folder_dataset + subject_dir + '/')
-                subjects_dir.append(subject_dir)
+            data_subjects.append(folder_dataset + subject_dir + '/')
+            subjects_dir.append(subject_dir)
 
     if not data_subjects:
         sct.printv('ERROR: No subject data were found in ' + folder_dataset + '. '
@@ -125,34 +125,69 @@ def generate_data_list(folder_dataset, json_requirements=None, verbose=1):
 
     return data_subjects, subjects_dir
 
-
-def read_json(path_dir, json_requirements=None, fname_json='dataset_description.json'):
-    path_dir = sct.slash_at_the_end(path_dir, slash=1)
-    if fname_json not in os.listdir(path_dir) and json_requirements is not None:
-        accept_subject = False
-    elif json_requirements is None:
-        accept_subject = True
+def read_database(folder_dataset, specifications=None, path_data_base='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx', verbose=1):
+    # create empty list to return
+    data_subjects, subjects_dir = [], []
+    folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
+    ## read data base file and import to panda data frame
+    if 'xl' in path_data_base.split('.')[-1]:
+        sct.printv('reading XLS', verbose, 'normal')
+        data_base = pd.read_excel(path_data_base)
+    elif path_data_base.split('.')[-1] == 'csv':
+        sct.printv('reading CSV', verbose, 'normal')
+        data_base = pd.read_csv(path_data_base)
     else:
-        json_file = open(path_dir + fname_json)
-        dic_info = json.load(json_file)
-        json_file.close()
-        # pass keys and items to lower case
-        dic_info = dict((k.lower(), v.lower()) for k, v in dic_info.iteritems())
-        # if no condition is not verified, accept subject
-        accept_subject = True
-        # read requirements:
-        list_conditions = json_requirements.split(',')
-        for condition in list_conditions:
-            key, val = condition.split('=')
-            key, val = key.lower(), val.lower()
-            # if key do not exist, do not accept subject
-            if key not in dic_info.keys():
-                accept_subject = False
-            # if value for this key is not the one required, do not accept subject
-            elif dic_info[key] != val:
-                accept_subject = False
-
-    return accept_subject
+        sct.printv('ERROR: File '+path_data_base+' is in an incorrect format. Covered format are: .xls, .xlsx, .csv', verbose, 'error')
+    #
+    ## correct some values and clean panda data base
+    # convert columns to int
+    to_int = ['gm_model', 'PAM50', 'MS_mapping']
+    for key in to_int:
+        data_base[key].fillna(0.0).astype(int)
+    #
+    for key in data_base.keys():
+        # remove 'unnamed' columns
+        if 'Unnamed' in key:
+            data_base = data_base.drop(key, axis=1)
+        # duplicate columns with lower case names and with space in names
+        else:
+            data_base[key.lower()] = data_base[key]
+            data_base['_'.join(key.split(' '))] = data_base[key]
+    #
+    ## parse specifications
+    ## specification format: "center=unf,twh:pathology=hc:sc_seg=t2"
+    list_fields = specifications.split(':')
+    dict_spec = {}
+    for f in list_fields:
+        field, value = f.split('=')
+        dict_spec[field] = value.split(',')
+    #
+    ## select subjects from specification
+    # type of field for which the subject should be selected if the field CONTAINS the requested value (as opposed to the field is equal to the requested value)
+    list_field_multiple_choice = ['contrasts', 'sc seg', 'gm seg', 'lesion seg']
+    list_field_multiple_choice_tmp  = copy.deepcopy(list_field_multiple_choice)
+    for field in list_field_multiple_choice_tmp:
+        list_field_multiple_choice.append('_'.join(field.split(' ')))
+    #
+    data_selected = copy.deepcopy(data_base)
+    for field, list_val in dict_spec.items():
+        if field.lower() not in list_field_multiple_choice:
+            # select subject if field is equal to the requested value
+            data_selected = data_selected[data_selected[field].isin(list_val)]
+        else:
+            # select subject if field contains the requested value
+            data_selected = data_selected[data_selected[field].str.contains('|'.join(list_val)).fillna(False)]
+    #
+    ## create list of subjects
+    subjects_dir = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_selected['Center'], data_selected['Study'], data_selected['Subject'])]
+    # make sure folder exist in data
+    for subj in subjects_dir:
+        if not os.path.isdir(folder_dataset+subj):
+            subjects_dir.pop(subjects_dir.index(subj))
+        else:
+            data_subjects.append(sct.slash_at_the_end(folder_dataset+subj, slash=1))
+    #
+    return data_subjects, subjects_dir
 
 
 def process_results(results, subjects_name, function, folder_dataset, parameters):
@@ -194,7 +229,7 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_requirements=None, verbose=1):
+def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_specifications=None, path_data_base='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx', verbose=1):
     """
     Run a test function on the dataset using multiprocessing and save the results
     :return: results
@@ -202,7 +237,10 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
     """
 
     # generate data list from folder containing
-    data_subjects, subjects_name = generate_data_list(folder_dataset, json_requirements=json_requirements)
+    if data_specifications is None:
+        data_subjects, subjects_name = generate_data_list(folder_dataset)
+    else:
+        data_subjects, subjects_name = read_database(folder_dataset, specifications=data_specifications, path_data_base=path_data_base)
     print "Number of subjects to process: " + str(len(data_subjects))
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
@@ -270,6 +308,21 @@ def get_parser():
                       type_value="str",
                       description="Requirements on center, study, ... that must be satisfied by the json file of each tested subjects\n"
                                   "Syntax:  center=unf,study=errsm,gm_model=0",
+                      deprecated_by='-spec',
+                      deprecated_rm=True,
+                      mandatory=False)
+
+    parser.add_option(name="-subj",
+                      type_value="str",
+                      description="Choose the subjects to process based on center, study, [...] to select the testing dataset\n"
+                                  "Syntax:  field_1=val1,val2:field_2=val3:field_3=val4,val5",
+                      example="center=unf,twh:gm_model=0:contrasts=t2,t2s",
+                      mandatory=False)
+
+    parser.add_option(name="-file-subj",
+                      type_value="file",
+                      description="Excel spreadsheet containing the subjects information (center, study, subject ID, demographics, ...).",
+                      default_value='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx',
                       mandatory=False)
 
     parser.add_option(name="-cpu-nb",
@@ -324,9 +377,11 @@ if __name__ == "__main__":
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
-    json_requirements = None
-    if "-json" in arguments:
-        json_requirements = arguments["-json"]
+    data_specifications = None
+    if "-spec" in arguments:
+        data_specifications = arguments["-spec"]
+    if "-file-spec" in arguments:
+        path_data_specifications = arguments["-file-spec"]
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
@@ -408,7 +463,7 @@ if __name__ == "__main__":
         if create_log:
             handle_log.pause()
 
-        tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
+        tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, data_specifications, path_data_base=path_data_specifications, verbose=verbose)
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
 
