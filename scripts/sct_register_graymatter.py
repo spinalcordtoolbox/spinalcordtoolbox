@@ -449,7 +449,7 @@ def get_parser():
                       example='t2star_wmseg.nii.gz')
     parser.add_option(name="-t",
                       type_value="folder",
-                      description="Path to template (registered on target image)",
+                      description="Path to template (registered on target image) to select the GM and WM files from the template. Template files must be in path/template/ and include \"gm\" (resp. \"wm\") in the file name.",
                       mandatory=False,
                       default_value='label/')
     parser.add_option(name="-w",
