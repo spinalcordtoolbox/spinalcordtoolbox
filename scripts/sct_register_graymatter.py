@@ -52,9 +52,9 @@ class MultiLabelRegistration:
         if fname_template_gm is not None and fname_template_wm is not None:
             self.im_template_gm = Image(fname_template_gm)
             self.im_template_wm = Image(fname_template_wm)
-            if 'MNI-Poly-AMU' in fname_template_gm:
+            if fname_template_gm.split('/')[-1] == 'MNI-Poly-AMU_GM.nii.gz':
                 self.template = 'MNI-Poly-AMU'
-            elif 'PAM50' in fname_template_gm:
+            elif fname_template_gm.split('/')[-1] == 'PAM50_gm.nii.gz':
                 self.template = 'PAM50'
             else:
                 self.template = 'custom'
