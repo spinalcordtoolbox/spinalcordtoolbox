@@ -108,7 +108,7 @@ def main():
     # plt.draw()
 
     # Save image
-    print "Saving figure: bvecs.png\n"
+    sct.printv("Saving figure: bvecs.png\n")
     plt.savefig('bvecs.png')
     plt.show()
 

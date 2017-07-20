@@ -50,7 +50,7 @@ class Tsnr:
         # # sct.printv('\nMotion correct the fMRI data...', self.param.verbose, 'normal')
         # path_fmri, fname_fmri, ext_fmri = sct.extract_fname(self.fmri)
         # fname_fmri_moco = fname_fmri
-        # # print sct.slash_at_the_end(path_fmri) + fname_fmri
+        # # sct.printv(sct.slash_at_the_end(path_fmri) + fname_fmri)
         # # sct.run('mcflirt -in ' + sct.slash_at_the_end(path_fmri, 1) + fname_fmri + ' -out ' + fname_fmri_moco)
 
         # compute mean
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     param = Param()
 
     if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
     else:
         param_default = Param()
 

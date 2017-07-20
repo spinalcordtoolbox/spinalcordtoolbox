@@ -104,11 +104,11 @@ def main(args=None):
         status = [test_function(f) for f in functions if function_to_test == f]
     else:
         status = [test_function(f) for f in functions]
-    print 'status: ' + str(status)
+    sct.printv('status: ' + str(status))
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print 'Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n'
+    sct.printv('Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
 
     # remove temp files
     if param.remove_tmp_file:
@@ -118,7 +118,7 @@ def main(args=None):
     e = 0
     if sum(status) != 0:
         e = 1
-    print e
+    sct.printv(e)
 
     sys.exit(e)
 
@@ -172,9 +172,9 @@ def fill_functions():
     return functions
 
 
-# print without carriage return
+# sct.printv(without carriage return)
 # ==========================================================================================
-def print_line(string):
+def sct.printv(line(string):)
     import sys
     sys.stdout.write(string + make_dot_lines(string))
     sys.stdout.flush()
@@ -190,18 +190,18 @@ def make_dot_lines(string):
         return ''
 
 
-# print in color
+# sct.printv(in color)
 # ==========================================================================================
-def print_ok():
-    print "[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]"
+def sct.printv(ok():)
+    sct.printv("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
 
 
-def print_warning():
-    print "[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]"
+def sct.printv(warning():)
+    sct.printv("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
 
 
-def print_fail():
-    print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
+def sct.printv(fail():)
+    sct.printv("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
 # write to log file
@@ -249,7 +249,7 @@ def test_function(script_name):
     os.chdir(result_folder)
 
     # display script name
-    print_line('Checking ' + script_name)
+    sct.printv(line('Checking ' + script_name))
     # import function as a module
     script_tested = importlib.import_module(script_name)
     # test function
@@ -261,13 +261,13 @@ def test_function(script_name):
     write_to_log_file(fname_log, output, 'w')
     # manage status
     if status == 0:
-        print_ok()
+        sct.printv(ok())
     else:
         if status == 99:
-            print_warning()
+            sct.printv(warning())
         else:
-            print_fail()
-        print output
+            sct.printv(fail())
+        sct.printv(output)
     # go back to parent folder
     os.chdir('..')
 

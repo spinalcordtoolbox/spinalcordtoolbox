@@ -119,7 +119,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     from msct_image import Image
     nii = Image(fname_in)
     data = nii.data
-    print('data.shape (%d, %d, %d, %d)' % data.shape)
+    sct.printv('data.shape (%d, %d, %d, %d)' % data.shape))
 
     # open bvecs/bvals
     from dipy.io import read_bvals_bvecs

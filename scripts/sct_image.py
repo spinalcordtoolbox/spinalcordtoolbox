@@ -201,7 +201,7 @@ def main(args=None):
         im_out = None
 
     elif "-setorient" in arguments:
-        print fname_in[0]
+        sct.printv(fname_in[0])
         im_in = Image(fname_in[0])
         im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose, fname_out=fname_out)]
 
@@ -260,7 +260,7 @@ def main(args=None):
         printv('Created file(s):\n--> ' + str(fname_out) + '\n', verbose, 'info')
         # printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
-        print(orient)
+        sct.printv(orient))
     elif '-display-warp' in arguments:
         printv('Warping grid generated.\n', verbose, 'info')
     else:

@@ -128,17 +128,17 @@ def main():
         sys.exit(1)
 
 
-# printv: enables to print or not, depending on verbose status
+# printv: enables to sct.printv(or not, depending on verbose status)
 #=======================================================================================================================
 def printv(string, verbose):
     if verbose:
-        print(string)
+        sct.log.info(string)
 
 
-# Print usage
+# sct.printv(usage)
 # ==========================================================================================
 def usage():
-    print '\n' \
+    sct.printv('\n' \)
         '' + os.path.basename(__file__) + '\n' \
         '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \

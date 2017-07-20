@@ -41,7 +41,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     # Initialization
     start_time = time.time()
 
-    # print arguments
+    # sct.printv(arguments)
     sct.printv('\nInput parameters:', verbose)
     sct.printv('  input file ............' + fname_data, verbose)
     sct.printv('  bvecs file ............' + fname_bvecs, verbose)
@@ -90,7 +90,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     sct.printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
 
     # Identify b=0 and DWI images
-    print fname_bvals
+    sct.printv(fname_bvals)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, param.bval_min, verbose)
 
     # Split into T dimension
@@ -227,10 +227,10 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     return index_b0, index_dwi, nb_b0, nb_dwi
 
 
-# Print usage
+# sct.printv(usage)
 # ==========================================================================================
 def usage():
-    print """
+    sct.printv(""")
 """ + os.path.basename(__file__) + """
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>

@@ -430,7 +430,7 @@ class Centerline:
 
         """
         for i in range(self.number_of_points):
-            print l_points[i], dist_points_rel[i]
+            sct.printv(l_points[i], dist_points_rel[i])
         """
 
     def get_closest_to_relative_position(self, vertebral_level, relative_position):

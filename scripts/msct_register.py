@@ -190,7 +190,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        print str(iz) + '/' + str(nz) + '..',
+        sct.printv(str(iz) + '/' + str(nz) + '..',)
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -342,7 +342,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     # Loop across slices
     sct.printv('\nEstimate columnwise transformation...', verbose)
     for iz in range(0, nz):
-        print str(iz) + '/' + str(nz) + '..',
+        sct.printv(str(iz) + '/' + str(nz) + '..',)
 
         # PREPARE COORDINATES
         # ============================================================
@@ -711,8 +711,8 @@ def numerotation(nb):
         nb_output: the number of the slice for fslsplit (type: string)
     """
     if nb < 0:
-        print 'ERROR: the number is negative.'
-        sys.exit(status = 2)
+        sct.log.error('ERROR: the number is negative.')
+        sys.exit(status=2)
     elif -1 < nb < 10:
         nb_output = '000' + str(nb)
     elif 9 < nb < 100:
@@ -722,7 +722,7 @@ def numerotation(nb):
     elif 999 < nb < 10000:
         nb_output = str(nb)
     elif nb > 9999:
-        print 'ERROR: the number is superior to 9999.'
+        sct.log.error('ERROR: the number is superior to 9999.')
         sys.exit(status = 2)
     return nb_output
 
@@ -821,11 +821,11 @@ def angle_between(a, b):
     # from numpy import dot
     # import math
     arccosInput = np.dot(a, b) / np.linalg.norm(a) / np.linalg.norm(b)
-    # print arccosInput
+    # sct.printv(arccosInput)
     arccosInput = 1.0 if arccosInput > 1.0 else arccosInput
     arccosInput = -1.0 if arccosInput < -1.0 else arccosInput
     sign_angle = np.sign(np.cross(a, b))
-    # print sign_angle
+    # sct.printv(sign_angle)
     return sign_angle * acos(arccosInput)
 
     # @xl_func("numpy_row v1, numpy_row v2: float")

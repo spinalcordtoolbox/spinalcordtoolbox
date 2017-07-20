@@ -86,7 +86,7 @@ def main():
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.fname_bvecs == '':
-        print '\n\nAll mandatory arguments are not provided \n'
+        sct.printv('\n\nAll mandatory arguments are not provided \n')
         usage()
 
     if param.output_path == '':
@@ -107,12 +107,12 @@ def main():
 
     # Delete temporary files
     if param.delete_tmp_files == 1:
-        print '\nDelete temporary files...'
+        sct.printv('\nDelete temporary files...')
         sct.run('rm -rf ' + path_tmp, param.verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's'
+    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's')
 
 #=======================================================================================================================
 # Function eddy_correct
@@ -372,7 +372,7 @@ def eddy_correct(param):
 # usage
 #=======================================================================================================================
 def usage():
-    print '\n' \
+    sct.printv('\n' \)
         ' ' + os.path.basename(__file__) + '\n' \
         '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
@@ -394,7 +394,7 @@ def usage():
         '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
         '  -g {0,1}     Set value to 1 for plotting graphs. Default value is 0 \n' \
         '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
-        '  -v {0,1}     Set verbose=1 for printing text. Default value is 0 \n' \
+        '  -v {0,1}     Set verbose=1 for sct.printv(ng text. Default value is 0 \n' \)
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \

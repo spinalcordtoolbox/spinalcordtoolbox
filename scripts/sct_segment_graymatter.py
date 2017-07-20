@@ -728,7 +728,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
-    # save quality control and print info
+    # save quality control and sct.printv(info)
     if param_seg.type_seg == 'bin':
         wm_col = 'Red'
         gm_col = 'Blue'

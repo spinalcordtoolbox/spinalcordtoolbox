@@ -215,7 +215,7 @@ def function_launcher(args):
         output = script_to_be_run.test(*args[1:])
     except:
         import traceback
-        print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
+        sct.printv('%s: %s' % ('test_' + args[0], traceback.format_exc())))
         # output = (1, 'ERROR: Function crashed', 'No result')
         from pandas import DataFrame
         status_script = 1
@@ -241,7 +241,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
         data_subjects, subjects_name = generate_data_list(folder_dataset)
     else:
         data_subjects, subjects_name = read_database(folder_dataset, specifications=data_specifications, path_data_base=path_data_base)
-    print "Number of subjects to process: " + str(len(data_subjects))
+    sct.printv("Number of subjects to process: " + str(len(data_subjects)))
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -263,7 +263,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
         results = process_results(all_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
 
     except KeyboardInterrupt:
-        print "\nWarning: Caught KeyboardInterrupt, terminating workers"
+        sct.printv("\nWarning: Caught KeyboardInterrupt, terminating workers")
         pool.terminate()
         pool.join()
         # return
@@ -368,7 +368,7 @@ if __name__ == "__main__":
     addr_from = 'spinalcordtoolbox@gmail.com'
 
     # get parameters
-    print_if_error = False  # print error message if function crashes (could be messy)
+    sct.printv(if_error = False  # print error message if function crashes (could be messy))
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
@@ -411,7 +411,7 @@ if __name__ == "__main__":
         file_log = 'results_test_' + function_to_test + '_' + output_time
         fname_log = file_log + '.log'
         handle_log = sct.ForkStdoutToFile(fname_log)
-    print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
+    sct.printv('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S")))
 
     # get path of the toolbox
     path_script = os.path.dirname(__file__)
@@ -422,7 +422,7 @@ if __name__ == "__main__":
     os.chdir(path_sct)
     sct_commit = commands.getoutput('git rev-parse HEAD')
     if not sct_commit.isalnum():
-        print 'WARNING: Cannot retrieve SCT commit'
+        sct.printv('WARNING: Cannot retrieve SCT commit')
         sct_commit = 'unknown'
         sct_branch = 'unknown'
     else:
@@ -431,7 +431,7 @@ if __name__ == "__main__":
     #     version_sct = myfile.read().replace('\n', '')
     # with open (path_sct+"/commit.txt", "r") as myfile:
     #     commit_sct = myfile.read().replace('\n', '')
-    print 'SCT commit/branch: ' + sct_commit + '/' + sct_branch
+    sct.printv('SCT commit/branch: ' + sct_commit + '/' + sct_branch)
     os.chdir(path_curr)
 
     # check OS
@@ -440,22 +440,22 @@ if __name__ == "__main__":
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print 'OS: ' + os_running + ' (' + platform.platform() + ')'
+    sct.printv('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # check hostname
-    print 'Hostname:', platform.node()
+    sct.printv('Hostname:', platform.node())
 
     # Check number of CPU cores
     from multiprocessing import cpu_count
     # status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'CPU cores: ' + str(cpu_count())  # + ', Used by SCT: '+output
+    sct.printv('CPU cores: ' + str(cpu_count())  # + ', Used by SCT: '+output)
 
     # check RAM
     sct.checkRAM(os_running, 0)
 
     # display command
-    print '\nCommand: "' + function_to_test + ' ' + parameters
-    print 'Dataset: ' + dataset
+    sct.printv('\nCommand: "' + function_to_test + ' ' + parameters)
+    sct.printv('Dataset: ' + dataset)
 
     # test function
     try:
@@ -505,26 +505,26 @@ if __name__ == "__main__":
         results_display = results_display.set_index('subject').reset_index()
 
         # display general results
-        print '\nGLOBAL RESULTS:'
+        sct.printv('\nGLOBAL RESULTS:')
 
-        print 'Duration: ' + str(int(round(compute_time))) + 's'
+        sct.printv('Duration: ' + str(int(round(compute_time))) + 's')
         # display results
-        print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
-        print 'Crashed: ' + str(count_crashed) + '/' + str(count_ran)
+        sct.printv('Passed: ' + str(count_passed) + '/' + str(count_ran))
+        sct.printv('Crashed: ' + str(count_crashed) + '/' + str(count_ran))
         # build mean/std entries
         dict_mean = results_mean.to_dict()
         dict_mean.pop('status')
         dict_mean.pop('subject')
-        print 'Mean: ' + str(dict_mean)
+        sct.printv('Mean: ' + str(dict_mean))
         dict_std = results_std.to_dict()
         dict_std.pop('status')
         dict_std.pop('subject')
-        print 'STD: ' + str(dict_std)
+        sct.printv('STD: ' + str(dict_std))
 
-        # print detailed results
-        print '\nDETAILED RESULTS:'
-        print results_display.to_string()
-        print 'Status Legend - 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing'
+        # sct.printv(detailed results)
+        sct.printv('\nDETAILED RESULTS:')
+        sct.printv(results_display.to_string())
+        sct.printv('Status Legend - 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing')
 
         if verbose == 2:
             import seaborn as sns
@@ -559,8 +559,8 @@ if __name__ == "__main__":
             plt.close()
 
     except Exception as err:
-        if print_if_error:
-            print err
+        if sct.printv(if_error:)
+            sct.printv(err)
 
     # stop file redirection
     # message = handle_log.read()
@@ -568,11 +568,11 @@ if __name__ == "__main__":
 
     # send email
     if send_email:
-        print '\nSending email...'
+        sct.printv('\nSending email...')
         # open log file and read content
         with open(fname_log, "r") as fp:
             message = fp.read()
         # send email
         sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log)
         # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
-        print 'Email sent!\n'
+        sct.printv('Email sent!\n')

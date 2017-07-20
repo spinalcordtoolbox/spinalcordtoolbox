@@ -740,7 +740,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     for iz in zrange:
         # if pattern extends towards the top part of the image, then crop and pad with zeros
         if z + iz + zsize + 1 > nz:
-            # print 'iz='+str(iz)+': padding on top'
+            # sct.printv('iz='+str(iz)+': padding on top')
             padding_size = z + iz + zsize + 1 - nz
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
@@ -750,7 +750,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
                                   constant_values=0)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif z + iz - zsize < 0:
-            # print 'iz='+str(iz)+': padding at bottom'
+            # sct.printv('iz='+str(iz)+': padding at bottom')
             padding_size = abs(iz - zsize)
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
@@ -759,7 +759,7 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
                                   constant_values=0)
         else:
-            # print 'iz='+str(iz)+': no padding'
+            # sct.printv('iz='+str(iz)+': no padding')
             data_chunk3d = src[
                            x - xsize: x + xsize + 1,
                            y + yshift - ysize: y + yshift + ysize + 1,
@@ -879,7 +879,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
         else:
             # assign vertebral level (add one because iz is BELOW the disk)
             vertebral_level = list_disc_value[ind_above_iz] + 1
-            # print vertebral_level
+            # sct.printv(vertebral_level)
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
@@ -923,7 +923,7 @@ def label_discs(fname_seg_labeled, verbose=1):
             # if smaller than previous level, then labeled as a disc
             if vertebral_level < vertebral_level_previous:
                 # label disc
-                # print 'iz='+iz+', disc='+vertebral_level
+                # sct.printv('iz='+iz+', disc='+vertebral_level)
                 data_disc[cx, cy, iz] = vertebral_level
             # update variable
             vertebral_level_previous = vertebral_level

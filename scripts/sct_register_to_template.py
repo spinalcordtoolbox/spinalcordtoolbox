@@ -217,7 +217,7 @@ def main():
     sct.check_file_exist(fname_template_seg, verbose)
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    # print arguments
+    # sct.printv(arguments)
     sct.printv('\nCheck parameters:', verbose)
     sct.printv('  Data:                 ' + fname_data, verbose)
     sct.printv('  Landmarks:            ' + fname_landmarks, verbose)

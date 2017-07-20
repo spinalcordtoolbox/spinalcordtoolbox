@@ -380,12 +380,12 @@ class SpinalCordStraightener(object):
                               (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice]
 
             if verbose == 2:
-                print "Length of spinal cord = ", str(length_centerline)
-                print "Size of spinal cord in z direction = ", str(size_z_centerline)
-                print "Ratio length/size = ", str(factor_curved_straight)
-                print "Safe zone boundaries: "
-                print "Curved space = ", bound_curved
-                print "Straight space = ", bound_straight
+                sct.printv("Length of spinal cord = ", str(length_centerline))
+                sct.printv("Size of spinal cord in z direction = ", str(size_z_centerline))
+                sct.printv("Ratio length/size = ", str(factor_curved_straight))
+                sct.printv("Safe zone boundaries: ")
+                sct.printv("Curved space = ", bound_curved)
+                sct.printv("Straight space = ", bound_straight)
 
             # 4. compute and generate straight space
             # points along curved centerline are already regularly spaced.
@@ -586,11 +586,11 @@ class SpinalCordStraightener(object):
             # 5. compute transformations
             # Curved and straight images and the same dimensions, so we compute both warping fields at the same time.
             # b. determine which plane of spinal cord centreline it is included
-            # print nx * ny * nz, nx_s * ny_s * nz_s
+            # sct.printv(nx * ny * nz, nx_s * ny_s * nz_s)
 
             if self.curved2straight:
                 for u in range(nz_s):
-                    # print u+1, '/', nz_s
+                    # sct.printv(u+1, '/', nz_s)
                     x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u + 1]
                     indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
                     physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
@@ -611,7 +611,7 @@ class SpinalCordStraightener(object):
 
             if self.straight2curved:
                 for u in range(nz):
-                    # print u + 1, '/', nz
+                    # sct.printv(u + 1, '/', nz)
                     x, y, z = np.mgrid[0:nx, 0:ny, u:u + 1]
                     indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
                     physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)

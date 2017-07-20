@@ -18,6 +18,7 @@
 import numpy as np
 from scipy.ndimage import map_coordinates
 import math
+import sct_utils as sct
 
 
 def striu2mat(striu):
@@ -367,7 +368,7 @@ class Image(object):
                 elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
                     type = 'float64'
 
-        # print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
+        # sct.printv("The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")")
         # change type of data in both numpy array and nifti header
         from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64  # DON'T REMOVE THIS, IT IS MANDATORY FOR EVAL
         type_build = eval(type)
@@ -462,8 +463,7 @@ class Image(object):
                     X, Y, Z = (self.data > 0).nonzero()
                     list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
         except Exception, e:
-            print 'ERROR', e
-            printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
+            sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
             from msct_types import CoordinateValue
@@ -603,7 +603,7 @@ class Image(object):
             buffer = []
 
         new_data = np.asarray(new_data)
-        # print data_mask
+        # sct.printv(data_mask)
         self.data = new_data
         #self.dim = self.data.shape
 
@@ -685,7 +685,7 @@ class Image(object):
             # do nothing
             pass
         else:
-            print 'Error: wrong orientation'
+            sct.printv('Error: wrong orientation')
         # update dim
         # http://math.stackexchange.com/questions/122916/what-is-the-inverse-cycle-of-permutation
         # TODO: change permutations
@@ -757,7 +757,7 @@ class Image(object):
 
             coordi_phys = np.concatenate((result_temp, coordi_phys), axis=0)
             coordi_phys_list = coordi_phys.tolist()
-            # print coordi_phys.shape
+            # sct.printv(coordi_phys.shape)
 
             return coordi_phys_list
         """
@@ -1259,7 +1259,7 @@ def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
         # do nothing
         pass
     else:
-        print 'Error: wrong orientation'
+        sct.printv('Error: wrong orientation')
 
     return data
 
