@@ -215,7 +215,7 @@ def function_launcher(args):
         output = script_to_be_run.test(*args[1:])
     except:
         import traceback
-        sct.printv('%s: %s' % ('test_' + args[0], traceback.format_exc())))
+        sct.printv('%s: %s' % ('test_' + args[0], traceback.format_exc()))
         # output = (1, 'ERROR: Function crashed', 'No result')
         from pandas import DataFrame
         status_script = 1
@@ -368,7 +368,7 @@ if __name__ == "__main__":
     addr_from = 'spinalcordtoolbox@gmail.com'
 
     # get parameters
-    sct.printv(if_error = False  # print error message if function crashes (could be messy))
+    print_if_error = False  # print error message if function crashes (could be messy)
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
@@ -411,7 +411,7 @@ if __name__ == "__main__":
         file_log = 'results_test_' + function_to_test + '_' + output_time
         fname_log = file_log + '.log'
         handle_log = sct.ForkStdoutToFile(fname_log)
-    sct.printv('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S")))
+    sct.printv('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
     # get path of the toolbox
     path_script = os.path.dirname(__file__)
@@ -448,7 +448,7 @@ if __name__ == "__main__":
     # Check number of CPU cores
     from multiprocessing import cpu_count
     # status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    sct.printv('CPU cores: ' + str(cpu_count())  # + ', Used by SCT: '+output)
+    sct.printv('CPU cores: ' + str(cpu_count()))  # + ', Used by SCT: '+output
 
     # check RAM
     sct.checkRAM(os_running, 0)
@@ -559,7 +559,7 @@ if __name__ == "__main__":
             plt.close()
 
     except Exception as err:
-        if sct.printv(if_error:)
+        if print_if_error:
             sct.printv(err)
 
     # stop file redirection
