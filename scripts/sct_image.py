@@ -17,7 +17,7 @@ from msct_image import Image, get_dimension
 from msct_parser import Parser
 from numpy import newaxis, shape
 from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
-
+import sct_utils as sct
 
 class Param:
     def __init__(self):
@@ -260,7 +260,7 @@ def main(args=None):
         printv('Created file(s):\n--> ' + str(fname_out) + '\n', verbose, 'info')
         # printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
     elif "-getorient" in arguments:
-        sct.printv(orient))
+        sct.printv(orient)
     elif '-display-warp' in arguments:
         printv('Warping grid generated.\n', verbose, 'info')
     else:

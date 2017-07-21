@@ -27,6 +27,7 @@ import logging
 import glob
 import shutil
 
+
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
@@ -97,7 +98,7 @@ def add_suffix(fname, suffix):
 # Run UNIX command
 def run_old(cmd, verbose=1):
     if verbose:
-        sct.printv(bcolors.blue + cmd + bcolors.normal))
+        printv(bcolors.blue + cmd + bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
         printv('\nERROR! \n' + output + '\nExit program.\n', 1, 'error')
@@ -119,7 +120,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
             break
         if output:
             if verbose == 2:
-                sct.printv(output.strip())
+                printv(output.strip())
             output_final += output.strip() + '\n'
     status_output = process.returncode
     # process.stdin.close()
@@ -132,7 +133,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         printv(output_final[0:-1], 1, error_exit)
         # in case error_exit is not error (immediate exit), the line below can be run
         return status_output, output_final[0:-1]
-        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # sct.printv(name of parent function)
+        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # printv(name of parent function)
         # sys.exit()
         if raise_exception:
             raise Exception(output_final[0:-1])
@@ -148,16 +149,16 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
 def checkRAM(os, verbose=1):
     if (os == 'linux'):
         status, output = run('grep MemTotal /proc/meminfo', 0)
-        sct.printv('RAM: ' + output)
+        printv('RAM: ' + output)
         ram_split = output.split()
         ram_total = float(ram_split[1])
         status, output = run('free -m', 0)
-        sct.printv(output)
+        printv(output)
         return ram_total / 1024
 
     elif (os == 'osx'):
         status, output = run('hostinfo | grep memory', 0)
-        sct.printv('RAM: ' + output)
+        printv('RAM: ' + output)
         ram_split = output.split(' ')
         ram_total = float(ram_split[3])
 
@@ -188,11 +189,11 @@ def checkRAM(os, verbose=1):
             vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
 
         if verbose:
-            sct.printv('  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"] / 1024 / 1024))
-            sct.printv('  Active Memory:\t%d MB' % (vmStats["Pages active"] / 1024 / 1024))
-            sct.printv('  Inactive Memory:\t%d MB' % (vmStats["Pages inactive"] / 1024 / 1024))
-            sct.printv('  Free Memory:\t\t%d MB' % (vmStats["Pages free"] / 1024 / 1024))
-            # sct.printv('Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 ))
+            printv('  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"] / 1024 / 1024))
+            printv('  Active Memory:\t%d MB' % (vmStats["Pages active"] / 1024 / 1024))
+            printv('  Inactive Memory:\t%d MB' % (vmStats["Pages inactive"] / 1024 / 1024))
+            printv('  Free Memory:\t\t%d MB' % (vmStats["Pages free"] / 1024 / 1024))
+            # printv('Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 ))
 
         return ram_total
 
@@ -239,7 +240,7 @@ class Timer:
         printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
         self.is_started = False
 
-    def sct.printv(emainingTime(self):)
+    def printRemainingTime(self):
         remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
         time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
         remaining_time = remaining_iterations * time_one_iteration
@@ -251,7 +252,7 @@ class Timer:
         else:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
-    def sct.printv(otalTime(self):)
+    def printTotalTime(self):
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
@@ -598,7 +599,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
         printv('  WARNING: fname_in and fname_out are the same. Do nothing.', verbose, 'warning')
-        sct.printv('  File created: ' + path_out + file_out + ext_out)
+        printv('  File created: ' + path_out + file_out + ext_out)
         return path_out + file_out + ext_out
     # if fname_out already exists in nii or nii.gz format
     if os.path.isfile(path_out + file_out + ext_out):
@@ -632,7 +633,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     # display message
     printv('  File created: ' + path_out + file_out + ext_out, verbose)
     # if verbose:
-    #     sct.printv('  File created: '+path_out+file_out+ext_out)
+    #     printv('  File created: '+path_out+file_out+ext_out)
     return path_out + file_out + ext_out
 
 
@@ -643,7 +644,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
 def check_if_installed(cmd, name_software):
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
-        sct.printv('\nERROR: ' + name_software + ' is not installed.\nExit program.\n'))
+        printv('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
         sys.exit(2)
 
 
@@ -668,19 +669,20 @@ def check_if_same_space(fname_1, fname_2):
 
 
 def printv(string, verbose=1, type='normal'):
-    """enables to sct.printv(color coded messages, depending on verbose status """)
+    """enables to print (color coded messages, depending on verbose status) 
+    """
 
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
               'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
 
     if verbose:
-        # sct.printv(color only if the output is the terminal)
+        # printv(color only if the output is the terminal)
         if sys.stdout.isatty():
             color = colors.get(type, bcolors.normal)
             log.info(color + string + bcolors.normal)
-            # sct.printv(color + string + bcolors.normal))
+            # printv(color + string + bcolors.normal))
         else:
-            # sct.printv(string))
+            # printv(string))
             log.info(string)
 
     if type == 'error':
@@ -866,7 +868,7 @@ class Version(object):
         self.version_sct = version_sct
 
         if not isinstance(version_sct, basestring):
-            sct.printv(version_sct)
+            printv(version_sct)
             raise Exception('Version is not a string.')
 
         # detect beta, if it exist
@@ -1081,30 +1083,30 @@ class MsgUser(object):
     def message(cls, msg):
         if cls.__quiet:
             return
-        sct.printv(msg)
+        printv(msg)
 
     @classmethod
     def question(cls, msg):
-        sct.printv(msg,)
+        printv(msg,)
 
     @classmethod
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        sct.printv("".join((bcolors.magenta, "[Skipped] ", bcolors.normal, msg)))
+        printv("".join((bcolors.magenta, "[Skipped] ", bcolors.normal, msg)))
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        sct.printv("".join((bcolors.green, "[OK] ", bcolors.normal, msg)))
+        log.info("".join((bcolors.green, "[OK] ", bcolors.normal, msg)))
 
     @classmethod
     def failed(cls, msg):
-        sct.printv("".join((bcolors.red, "[FAILED] ", bcolors.normal, msg)))
+        log.error("".join((bcolors.red, "[FAILED] ", bcolors.normal, msg)))
 
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        sct.printv("".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg)))
+        log.warning("".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg)))

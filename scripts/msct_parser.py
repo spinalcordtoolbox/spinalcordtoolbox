@@ -152,7 +152,7 @@ class Option:
             the choices are listed in example variable
             """
             if param not in self.example:
-                self.parser.usage.error(self.name + " only takes " + self.parser.usage.sct.printv(list_with_brackets(self.example) + " as potential arguments."))
+                self.parser.usage.error(self.name + " only takes " + self.parser.usage.sct.print_list_with_brackets(self.example) + " as potential arguments.")
             return param
 
         elif isinstance(type_option, list):
@@ -283,7 +283,7 @@ class Parser:
 
         # check if help is asked by the user
         if "-h" in arguments:
-            sct.printv(self.usage.generate()))
+            sct.printv(self.usage.generate())
             exit(1)
 
         if "-sf" in arguments:
@@ -532,7 +532,7 @@ class Usage:
         if self.arguments[opt].type_value is None:
             type_value = ''
         elif self.arguments[opt].type_value == 'multiple_choice':
-            type_value = self.sct.printv(list_with_brackets(self.arguments[opt].example))
+            type_value = self.sct.print_list_with_brackets(self.arguments[opt].example)
         elif type(self.arguments[opt].type_value) is list:
             type_value = '<list of: ' + str(self.arguments[opt].type_value[1]) + '>'
         else:
@@ -575,7 +575,7 @@ class Usage:
             from sys import exit
             exit(0)
 
-    def sct.printv(list_with_brackets(self, l):)
+    def print_list_with_brackets(self, l):
         type_value = '{'
         for char in l:
             type_value += str(char) + ','
@@ -718,7 +718,7 @@ class DocSourceForge:
         if self.arguments[opt].type_value is None:
             type_value = ''
         elif self.arguments[opt].type_value == 'multiple_choice':
-            type_value = self.sct.printv(list_with_brackets(self.arguments[opt].example))
+            type_value = self.sct.print_list_with_brackets(self.arguments[opt].example)
         elif type(self.arguments[opt].type_value) is list:
             type_value = '<list>'
         else:
@@ -762,7 +762,7 @@ class DocSourceForge:
             from sys import exit
             exit(0)
 
-    def sct.printv(list_with_brackets(self, l):)
+    def print_list_with_brackets(self, l):
         type_value = '{'
         for char in l:
             type_value += str(char) + ','
