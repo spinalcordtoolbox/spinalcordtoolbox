@@ -32,7 +32,7 @@ import shutil
 # TODO: check if user has bash or t-schell for fsloutput definition
 
 """
-Basic logging setup for the sct logging
+Basic logging setup for the sct
 set SCT_LOG_LEVEL and SCT_LOG_FORMAT in ~/.sctrc to change the sct log
 format and level
 """
@@ -42,22 +42,55 @@ log = logging.getLogger('sct')
 log.setLevel(logging.DEBUG)
 # log = logging.getLogger()
 
-sh = logging.StreamHandler(sys.stdout)
+stream_handler = logging.StreamHandler(sys.stdout)
 if not LOG_FORMAT:
     formatter = logging.Formatter('%(message)s')  # sct.printv() emulator)
 else:
     formatter = logging.Formatter(LOG_FORMAT)
-sh.setFormatter(formatter)
+stream_handler.setFormatter(formatter)
 
-if LOG_LEVEL in logging._levelNames:
-    sh.setLevel(LOG_LEVEL)
-    log.addHandler(sh)
-elif LOG_LEVEL == 'DISABLE':
-    sh.setLevel(sys.maxint)
-else:
-    sh.setLevel(logging.INFO)
-    log.addHandler(sh)
+def start_stream_logger():
+    if LOG_LEVEL in logging._levelNames:
+        stream_handler.setLevel(LOG_LEVEL)
+        log.addHandler(stream_handler)
+    elif LOG_LEVEL == 'DISABLE':
+        stream_handler.setLevel(sys.maxint)
+    else:
+        stream_handler.setLevel(logging.INFO)
+        log.addHandler(stream_handler)
+# Default sct behavior is to have a stream logger
+start_stream_logger()
 
+
+def stop_stream_logger():
+    log.removeHandler(stream_handler)
+
+
+def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log_format=None, log_level=None):
+    """ convenience fct to add a file handle to the sct
+
+    :param filename: 
+    :param mode: 
+    :param log_format: 
+    :param log_level: 
+    :return: the file handler 
+    """
+    fh = logging.FileHandler(filename=filename, mode=mode)
+    if log_format is None:
+        formatter = logging.Formatter(
+            '"%(asctime)s - %(levelname)7s --%(lineno)5s %(funcName)25s():  %(message)s"')  # sct.printv() emulator)
+    else:
+        formatter = logging.Formatter(log_format)
+    if log_level:
+        fh.setLevel(log_level)
+    else:
+        fh.setLevel(logging.INFO)
+    log.addHandler(fh)
+    return fh
+
+
+def stop_handler(handler):
+    log.removeHandler(handler)
 
 # define class color
 class bcolors(object):
@@ -218,8 +251,9 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-        stdout.flush()
+        log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+        if log.handlers:
+            [h.flush() for h in log.handlers]
 
     def iterations_done(self, total_num_iterations_done):
         if total_num_iterations_done != 0:
@@ -230,8 +264,9 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            stdout.flush()
+            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+            if log.handlers:
+                [h.flush() for h in log.handlers]
 
     def stop(self):
         self.time_list.append(time.time() - self.start_timer)
@@ -247,8 +282,9 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            stdout.flush()
+            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+            if log.handlers:
+                [h.flush() for h in log.handlers]
         else:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
@@ -256,32 +292,11 @@ class Timer:
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
-            stdout.flush()
+            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            if log.handlers:
+                [h.flush() for h in log.handlers]
         else:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
-
-
-def add_file_logger(filename="{}.log".format(__file__), mode='a', log_format=None, log_level=None):
-    """ convenience fct to add a file handle to the sct
-    
-    :param filename: 
-    :param mode: 
-    :param log_format: 
-    :param log_level: 
-    :return: the file handler 
-    """
-    fh = logging.FileHandler(filename=filename, mode=mode)
-    if log_format is None:
-        formatter = logging.Formatter('"%(asctime)s - %(levelname)7s --%(lineno)5s %(funcName)25s():  %(message)s"')  # sct.printv() emulator)
-    else:
-        formatter = logging.Formatter(log_format)
-    if log_level:
-        fh.setLevel(log_level)
-    else:
-        fh.setLevel(logging.INFO)
-    log.addHandler(fh)
-    return fh
 
 
 def add_smtp_logger():
@@ -679,10 +694,8 @@ def printv(string, verbose=1, type='normal'):
         # printv(color only if the output is the terminal)
         if sys.stdout.isatty():
             color = colors.get(type, bcolors.normal)
-            log.info(color + string + bcolors.normal)
-            # printv(color + string + bcolors.normal))
+            log.info('{0}{1}{2}'.format(color, string, bcolors.normal))
         else:
-            # printv(string))
             log.info(string)
 
     if type == 'error':
