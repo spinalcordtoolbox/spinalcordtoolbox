@@ -19,7 +19,7 @@ import os
 import getopt
 import math
 from msct_parser import Parser
-
+import sct_utils as sct
 
 # main
 #=======================================================================================================================

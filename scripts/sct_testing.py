@@ -174,7 +174,7 @@ def fill_functions():
 
 # sct.printv(without carriage return)
 # ==========================================================================================
-def sct.printv(line(string):)
+def print_line(string):
     import sys
     sys.stdout.write(string + make_dot_lines(string))
     sys.stdout.flush()
@@ -192,16 +192,16 @@ def make_dot_lines(string):
 
 # sct.printv(in color)
 # ==========================================================================================
-def sct.printv(ok():)
-    sct.printv("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
+def print_ok():
+    sct.log.info("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
 
 
-def sct.printv(warning():)
-    sct.printv("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
+def print_warning():
+    sct.log.warning("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
 
 
-def sct.printv(fail():)
-    sct.printv("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
+def print_fail():
+    sct.log.error("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
 # write to log file
@@ -249,7 +249,7 @@ def test_function(script_name):
     os.chdir(result_folder)
 
     # display script name
-    sct.printv(line('Checking ' + script_name))
+    print_line('Checking ' + script_name)
     # import function as a module
     script_tested = importlib.import_module(script_name)
     # test function
@@ -261,12 +261,12 @@ def test_function(script_name):
     write_to_log_file(fname_log, output, 'w')
     # manage status
     if status == 0:
-        sct.printv(ok())
+        print_ok()
     else:
         if status == 99:
-            sct.printv(warning())
+            print_warning()
         else:
-            sct.printv(fail())
+            print_fail()
         sct.printv(output)
     # go back to parent folder
     os.chdir('..')

@@ -93,7 +93,7 @@ def main():
 
     # Remove temporary files
     if remove_tmp_files == 1:
-        sct.printv('\nRemove temporary files...'))
+        sct.printv('\nRemove temporary files...')
         sct.run('rm -rf ' + path_tmp)
 
     # to view results

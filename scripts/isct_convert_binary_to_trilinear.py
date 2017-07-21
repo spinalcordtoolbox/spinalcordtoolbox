@@ -87,14 +87,14 @@ def main():
     sct.printv('  smoothing sigma ........ ' + str(smoothing_sigma))
 
     # check existence of input files
-    sct.printv('\nCheck existence of input files...'))
+    sct.printv('\nCheck existence of input files...')
     sct.check_file_exist(fname_data, verbose)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # create temporary folder
-    sct.printv('\nCreate temporary folder...'))
+    sct.printv('\nCreate temporary folder...')
     path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
     sct.run('mkdir ' + path_tmp)
 
@@ -126,7 +126,7 @@ def main():
     os.chdir('..')
 
     # Generate output files
-    sct.printv('\nGenerate output files...'))
+    sct.printv('\nGenerate output files...')
     fname_out = sct.generate_output_file(path_tmp + '/data_up_smooth_down.nii', '' + file_data + suffix + ext_data)
 
     # Delete temporary files
@@ -146,30 +146,30 @@ def main():
 # sct.printv(usage)
 # ==========================================================================================
 def usage():
-    sct.printv('\n' \)
-        '' + os.path.basename(__file__) + '\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Convert binary spinal cord segmentation to trilinear-interpolated segmentation. Instead of simply\n' \
-        '  re-interpolating the image, this function oversamples the binary mask, smoothes along centerline\n' \
-        '  (to remove step-effects), then downsamples back to native resolution.\n' \
-        '\n' \
-        'USAGE\n' \
-        '  ' + os.path.basename(__file__) + ' -i <bin_seg>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <bin_seg>      binary segmentation of spinal cord\n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=' + str(param_default.smoothing_sigma) + '\n' \
-        '  -r {0,1}          remove temporary files. Default=' + str(param_default.remove_temp_files) + '\n' \
-        '  -v {0,1}          verbose. Default=' + str(param_default.verbose) + '\n' \
-        '  -h                help. Show this message\n' \
-        '\n'\
-        'EXAMPLE\n' \
-        '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n'
+    print('\n'
+        '' + os.path.basename(__file__) + '\n'
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n'
+        '\n'
+        'DESCRIPTION\n'
+        '  Convert binary spinal cord segmentation to trilinear-interpolated segmentation. Instead of simply\n'
+        '  re-interpolating the image, this function oversamples the binary mask, smoothes along centerline\n'
+        '  (to remove step-effects), then downsamples back to native resolution.\n'
+        '\n'
+        'USAGE\n'
+        '  ' + os.path.basename(__file__) + ' -i <bin_seg>\n'
+        '\n'
+        'MANDATORY ARGUMENTS\n'
+        '  -i <bin_seg>      binary segmentation of spinal cord\n'
+        '\n'
+        'OPTIONAL ARGUMENTS\n'
+        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=' + str(param_default.smoothing_sigma) + '\n'
+        '  -r {0,1}          remove temporary files. Default=' + str(param_default.remove_temp_files) + '\n'
+        '  -v {0,1}          verbose. Default=' + str(param_default.verbose) + '\n'
+        '  -h                help. Show this message\n' 
+        '\n'
+        'EXAMPLE\n' 
+        '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n')
 
     # exit program
     sys.exit(2)

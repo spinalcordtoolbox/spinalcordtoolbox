@@ -152,7 +152,7 @@ class Option:
             the choices are listed in example variable
             """
             if param not in self.example:
-                self.parser.usage.error(self.name + " only takes " + self.parser.usage.sct.print_list_with_brackets(self.example) + " as potential arguments.")
+                self.parser.usage.error(self.name + " only takes " + self.parser.usage.print_list_with_brackets(self.example) + " as potential arguments.")
             return param
 
         elif isinstance(type_option, list):
@@ -532,7 +532,7 @@ class Usage:
         if self.arguments[opt].type_value is None:
             type_value = ''
         elif self.arguments[opt].type_value == 'multiple_choice':
-            type_value = self.sct.print_list_with_brackets(self.arguments[opt].example)
+            type_value = self.print_list_with_brackets(self.arguments[opt].example)
         elif type(self.arguments[opt].type_value) is list:
             type_value = '<list of: ' + str(self.arguments[opt].type_value[1]) + '>'
         else:
@@ -718,7 +718,7 @@ class DocSourceForge:
         if self.arguments[opt].type_value is None:
             type_value = ''
         elif self.arguments[opt].type_value == 'multiple_choice':
-            type_value = self.sct.print_list_with_brackets(self.arguments[opt].example)
+            type_value = self.print_list_with_brackets(self.arguments[opt].example)
         elif type(self.arguments[opt].type_value) is list:
             type_value = '<list>'
         else:

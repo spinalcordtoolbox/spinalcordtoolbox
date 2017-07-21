@@ -127,8 +127,8 @@ def main():
 # usage
 #=======================================================================================================================
 def usage():
-    sct.printv(""")
-""" + os.path.basename(__file__) + """
+    print("""
+{0}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
@@ -136,7 +136,7 @@ DESCRIPTION
   Change the type of voxel in the image
 
 USAGE
-  """ + os.path.basename(__file__) + """ -i <data> -o <outputname> -t <type>
+  {0} -i <data> -o <outputname> -t <type>
 
 MANDATORY ARGUMENTS
   -i <data>         input image name
@@ -147,7 +147,7 @@ OPTIONAL ARGUMENTS
                     Available:  int8, int16, int32, int64,
                                 uint8, uint16, uint32, uint64,
                                 float16, float32, float64
-"""
+""".format(os.path.basename(__file__)))
 
     # exit program
     sys.exit(2)

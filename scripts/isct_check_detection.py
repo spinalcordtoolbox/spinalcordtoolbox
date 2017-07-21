@@ -94,7 +94,7 @@ def main():
 
 
 def usage():
-    sct.printv( 'USAGE: \n' \)
+    print( 'USAGE: \n' \
         'This script check if the point contained in inputdata is in the spinal cord segmentation.\n'\
         '  isct_check_detection -i <inputdata> -t <segmentationdata>\n' \
         '\n'\
@@ -104,7 +104,7 @@ def usage():
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
         '  -h           help. Show this message.\n' \
-        '\n'\)
+        '\n')
 
     sys.exit(2)
 

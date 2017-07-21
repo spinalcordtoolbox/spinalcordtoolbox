@@ -249,7 +249,7 @@ if __name__ == "__main__":
 # # sct.printv(usage)
 # # ==========================================================================================
 # def usage():
-#     sct.printv(""")
+#     print("""
 #         """+os.path.basename(__file__)+"""
 #             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #             Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>

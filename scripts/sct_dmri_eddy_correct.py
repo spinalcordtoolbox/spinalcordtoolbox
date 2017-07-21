@@ -356,7 +356,7 @@ def eddy_correct(param):
     if param.swapXY == 1:
         fname_data_final = fname_data
         sct.printv('\nSwap back X-Y dimensions', verbose)
-        cmd = fsloutput_temp + 'fslswapdim ' + fname_data_corr + ' -y -x -z ' + fname_data_final
+        cmd = fsloutput + 'fslswapdim ' + fname_data_corr + ' -y -x -z ' + fname_data_final
         status, output = sct.run(cmd, verbose)
     else:
         fname_data_final = fname_data_corr
@@ -372,33 +372,33 @@ def eddy_correct(param):
 # usage
 #=======================================================================================================================
 def usage():
-    sct.printv('\n' \)
-        ' ' + os.path.basename(__file__) + '\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        'Correct Eddy-current distortions using pairs of DW images acquired at reversed gradient polarities' \
-        '\nUSAGE: \n' \
-        '  ' + os.path.basename(__file__) + ' -i <filename> -b <bvecs_file>\n' \
-        '\n'\
-        'MANDATORY ARGUMENTS\n' \
-        '  -i           input_file \n' \
-        '  -b           bvecs file \n' \
-        '\n'\
-        'OPTIONAL ARGUMENTS\n' \
-        '  -o           Specify Output path.\n' \
-        '  -s           Set value to 0 for volume based correction. Default value is 1 i.e slicewise correction\n' \
-        '  -m           matrix folder \n' \
-        '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
-        '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
-        '  -g {0,1}     Set value to 1 for plotting graphs. Default value is 0 \n' \
-        '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
-        '  -v {0,1}     Set verbose=1 for sct.printv(ng text. Default value is 0 \n' \)
-        '  -h           help. Show this message.\n' \
-        '\n'\
-        'EXAMPLE:\n' \
-        '  ' + os.path.basename(__file__) + ' -i KS_HCP34.nii -b KS_HCP_bvec.txt \n'
+    print('\n'
+        ' ' + os.path.basename(__file__) + '\n'
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n'
+        '\n'
+        'DESCRIPTION\n'
+        'Correct Eddy-current distortions using pairs of DW images acquired at reversed gradient polarities'
+        '\nUSAGE: \n'
+        '  ' + os.path.basename(__file__) + ' -i <filename> -b <bvecs_file>\n'
+        '\n'
+        'MANDATORY ARGUMENTS\n'
+        '  -i           input_file \n'
+        '  -b           bvecs file \n'
+        '\n'
+        'OPTIONAL ARGUMENTS\n'
+        '  -o           Specify Output path.\n'
+        '  -s           Set value to 0 for volume based correction. Default value is 1 i.e slicewise correction\n'
+        '  -m           matrix folder \n'
+        '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n'
+        '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n'
+        '  -g {0,1}     Set value to 1 for plotting graphs. Default value is 0 \n'
+        '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n'
+        '  -v {0,1}     Set verbose=1 for sct.printv(ng text. Default value is 0 \n'
+        '  -h           help. Show this message.\n'
+        '\n'
+        'EXAMPLE:\n'
+        '  ' + os.path.basename(__file__) + ' -i KS_HCP34.nii -b KS_HCP_bvec.txt \n')
 
     # Exit Program
     sys.exit(2)

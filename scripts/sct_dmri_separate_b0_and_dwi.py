@@ -230,8 +230,8 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 # sct.printv(usage)
 # ==========================================================================================
 def usage():
-    sct.printv(""")
-""" + os.path.basename(__file__) + """
+    print("""
+{0}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
@@ -239,22 +239,23 @@ DESCRIPTION
   Separate b=0 and DW images from diffusion dataset.
 
 USAGE
-  """ + os.path.basename(__file__) + """ -i <dmri> -b <bvecs>
+  {0} -i <dmri> -b <bvecs>
 
 MANDATORY ARGUMENTS
   -i <dmri>        diffusion data
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -a {0,1}         average b=0 and DWI data. Default=""" + str(param_default.average) + """
+  -a {0,1}         average b=0 and DWI data. Default={1}
   -m <bvals>       bvals file. Used to identify low b-values (in case different from 0).
   -o <output>      output folder. Default = local folder.
-  -v {0,1}         verbose. Default=""" + str(param_default.verbose) + """
-  -r {0,1}         remove temporary files. Default=""" + str(param_default.remove_tmp_files) + """
+  -v {0,1}         verbose. Default={2}
+  -r {0,1}         remove temporary files. Default={3}
   -h               help. Show this message
 
 EXAMPLE
-  """ + os.path.basename(__file__) + """ -i dmri.nii.gz -b bvecs.txt -a 1\n"""
+  {0} -i dmri.nii.gz -b bvecs.txt -a 1\n""".format(
+        os.path.basename(__file__)), param_default.average, param_default.verbose, param_default.remove_tmp_files)
 
     # Exit Program
     sys.exit(2)
