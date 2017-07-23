@@ -20,70 +20,48 @@ from msct_parser import Parser
 #                        slash_at_the_end, Timer, tmp_create)
 
 
-# def get_parser():
-#     # Initialize the parser
-#     parser = Parser(__file__)
-#     parser.usage.set_description('Extraction of GLCM texture features from an image within a given mask.\n'
-#                                  ' It calculates the texture properties of a grey level co-occurence matrix (GLCM).'
-#                                  ' The textures features are those defined in the sckit-image implementation:\n'
-#                                  ' http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops\n'
-#                                  ' This function outputs one nifti file per texture metric (' + ParamGLCM().feature + ') and'
-#                                  ' per orientation called fnameInput_feature_distance_angle.nii.gz.\n'
-#                                  ' Also, a file averaging each metric across the angles, called fnameInput_feature_distance_mean.nii.gz, is output.')
-#     parser.add_option(name="-i",
-#                       type_value="file",
-#                       description="Image to analyze",
-#                       mandatory=True,
-#                       example='t2.nii.gz')
-#     parser.add_option(name="-m",
-#                       type_value="file",
-#                       description="Image mask (e.g., lesion, spinal cord)",
-#                       mandatory=True,
-#                       example='t2_seg.nii.gz')
-#     parser.add_option(name="-feature",
-#                       type_value="str",
-#                       description="List of GLCM texture features (separate arguments with \",\")",
-#                       mandatory=False,
-#                       default_value=ParamGLCM().feature,
-#                       example="energy,contrast")
-#     parser.add_option(name="-distance",
-#                       type_value="int",
-#                       description="Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5)",
-#                       mandatory=False,
-#                       default_value=ParamGLCM().distance,
-#                       example=1)
-#     parser.add_option(name="-angle",
-#                       type_value="str",
-#                       description="List of angles for GLCM computation, separate arguments with \",\", in degrees (suggested distance values between 0 and 179)",
-#                       mandatory=False,
-#                       default_value=ParamGLCM().angle,
-#                       example='0,90')
-#     parser.add_option(name="-dim",
-#                       type_value='multiple_choice',
-#                       description="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices.",
-#                       mandatory=False,
-#                       default_value=Param().dim,
-#                       example=['ax', 'sag', 'cor'])
-#     parser.add_option(name="-ofolder",
-#                       type_value="folder_creation",
-#                       description="Output folder",
-#                       mandatory=False,
-#                       default_value=Param().path_results,
-#                       example='/my_texture/')
-#     parser.add_option(name="-r",
-#                       type_value="multiple_choice",
-#                       description="Remove temporary files.",
-#                       mandatory=False,
-#                       default_value=str(int(Param().rm_tmp)),
-#                       example=['0', '1'])
-#     parser.add_option(name="-v",
-#                       type_value='multiple_choice',
-#                       description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-#                       mandatory=False,
-#                       example=['0', '1', '2'],
-#                       default_value=str(Param().verbose))
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Detection of the Ponto-Medullary Junction (PMJ).\n'
+                                 ' This method is machine-learning based and adapted for T1w-like or T2w-like images.\n'
+                                 ' If the PMJ is detected from the input image, a nifti mask with one voxel, with the value 50,\n'
+                                 ' located at the predicted PMJ level, is output ("*_pmj.nii.gz").\n'
+                                 ' If the PMJ is not detected, anything is output from this function.')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="input image.",
+                      mandatory=True,
+                      example="t2.nii.gz")
+    parser.add_option(name="-c",
+                      type_value="multiple_choice",
+                      description="type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
+                      mandatory=True,
+                      example=["t1", "t2"])
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="SC segmentation or SC centerline mask. To provide this mask could help the detection of the PMJ",
+                      mandatory=False,
+                      example="t2_seg.nii.gz")
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="Output folder",
+                      mandatory=False,
+                      example="My_Output_Folder/")
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="Remove temporary files.",
+                      mandatory=False,
+                      default_value="1",
+                      example=["0", "1"])
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=["0", "1", "2"],
+                      default_value="1")
 
-#     return parser
+    return parser
 
 
 # class ExtractGLCM:
@@ -297,22 +275,22 @@ def main(args=None):
     else:
         verbose = None
 
-    # Initialize DetectPMJ
-    detector = DetectPMJ(fname_im=fname_im, contrast=contrast, fname_seg=fname_seg, path_out=path_results, rm_tmp=rm_tmp, verbose=verbose)
-    # run the extraction
-    fname_out = detector.apply()
+    # # Initialize DetectPMJ
+    # detector = DetectPMJ(fname_im=fname_im, contrast=contrast, fname_seg=fname_seg, path_out=path_results, rm_tmp=rm_tmp, verbose=verbose)
+    # # run the extraction
+    # fname_out = detector.apply()
 
-    # remove tmp_dir
-    if param.rm_tmp:
-        shutil.rmtree(tmp_dir)
+    # # remove tmp_dir
+    # if rm_tmp:
+    #     shutil.rmtree(tmp_dir)
 
-    printv('\nDone! To view results, type:', param.verbose)
-    printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red -t 0.7 & \n', param.verbose, 'info')
+    # printv('\nDone! To view results, type:', verbose)
+    # printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red -t 0.7 & \n', verbose, 'info')
 
-    """
-      - reflechir si path_results doit etre mis à None si no isdir / no exists
-      - output a png with red dot --> cf GM seg
-    """
+    # """
+    #   - reflechir si path_results doit etre mis a None si no isdir
+    #   - output a png with red dot : cf GM seg
+    # """
 
 
 if __name__ == "__main__":
