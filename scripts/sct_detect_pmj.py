@@ -12,13 +12,14 @@ import os
 import shutil
 import sys
 import numpy as np
+from scipy.ndimage.measurements import center_of_mass
 
 from msct_image import Image
 from msct_parser import Parser
-# from sct_image import set_orientation, get_orientation
 # from sct_utils import (add_suffix, extract_fname, printv, run,
 #                        slash_at_the_end, Timer, tmp_create)
-
+from sct_utils import tmp_create, extract_fname, slash_at_the_end, add_suffix, printv, run
+from sct_image import get_orientation, set_orientation
 
 def get_parser():
     # Initialize the parser
@@ -63,38 +64,29 @@ def get_parser():
 
     return parser
 
+class DetectPMJ:
+    def __init__(self, fname_im, contrast, fname_seg, path_out, verbose):
 
-# class ExtractGLCM:
-#     def __init__(self, param=None, param_glcm=None):
-#         self.param = param if param is not None else Param()
-#         self.param_glcm = param_glcm if param_glcm is not None else ParamGLCM()
+        self.fname_im = fname_im
+        self.contrast = contrast
 
-#         # create tmp directory
-#         self.tmp_dir = tmp_create(verbose=self.param.verbose)  # path to tmp directory
+        self.fname_seg = fname_seg
 
-#         if self.param.dim == 'ax':
-#             self.orientation_extraction = 'RPI'
-#         elif self.param.dim == 'sag':
-#             self.orientation_extraction = 'IPR'
-#         else:
-#             self.orientation_extraction = 'IRP'
+        self.path_out = path_out if path_out is not None else './'
 
-#         # metric_lst=['property_distance_angle']
-#         self.metric_lst = []
-#         for m in list(itertools.product(self.param_glcm.feature.split(','), self.param_glcm.angle.split(','))):
-#             text_name = m[0] if m[0].upper() != 'asm'.upper() else m[0].upper()
-#             self.metric_lst.append(text_name + '_' + str(self.param_glcm.distance) + '_' + str(m[1]))
+        self.verbose = verbose if verbose is not None else '1'
 
-#         # dct_im_seg{'im': list_of_axial_slice, 'seg': list_of_axial_masked_slice}
-#         self.dct_im_seg = {'im': None, 'seg': None}
+        self.tmp_dir = tmp_create(verbose=self.verbose)  # path to tmp directory
 
-#         # to re-orient the data at the end if needed
-#         self.orientation_im = get_orientation(Image(self.param.fname_im))
+        # to re-orient the data at the end if needed
+        self.orientation_im = get_orientation(Image(self.fname_im))
 
-#         self.fname_metric_lst = {}
+    def apply(self):
+        self.ifolder2tmp()
 
-#     def extract(self):
-#         self.ifolder2tmp()
+        self.orient2pir()
+
+        self.extract_sagital_slice()
 
 #         # fill self.dct_metric --> for each key_metric: create an Image with zero values
 #         self.init_metric_im()
@@ -117,6 +109,50 @@ def get_parser():
 
 #         return [self.param.path_results + self.fname_metric_lst[f] for f in self.fname_metric_lst]
 
+    def extract_sagital_slice(self): # function to extract a 2D sagital slice, used to do the detection
+
+        fname_out = extract_fname(self.fname_im)[1] + '_midSag.nii'
+
+        if self.fname_seg is not None: # if the segmentation is provided, the 2D sagital slice is choosen accoding to the segmentation
+            img_seg = Image(self.fname_seg)
+            z_mid_slice = img_seg.data[:,int(img_seg.dim[1]/2),:]
+            x_out = int(center_of_mass(z_mid_slice)[1])
+            del img_seg
+        else: # if the segmentation is not provided, the 2D sagital slice is choosen as the mid-sagital slice of the input image
+            img = Image(self.fname_im)
+            x_out = int(img.dim[2]/2)
+            del img
+
+        run('sct_crop_image -i '+self.fname_im+' -start '+str(x_out)+' -end '+str(x_out)+' -dim 2 -o '+fname_out)
+
+    def orient2pir(self):
+        
+        if self.orientation_im != 'PIR': # open image and re-orient it to PIR if needed
+            im_tmp = Image(self.fname_im)
+            set_orientation(im_tmp, 'PIR', fname_out = ''.join(extract_fname(self.fname_im)[1:]))
+
+            if self.fname_seg is not None:
+                set_orientation(Image(self.fname_seg), 'PIR', fname_out = ''.join(extract_fname(self.fname_seg)[1:]))
+
+    def ifolder2tmp(self):
+        
+        if self.fname_im is not None: # copy input image
+            shutil.copy(self.fname_im, self.tmp_dir)
+            self.fname_im = ''.join(extract_fname(self.fname_im)[1:])
+        else:
+            printv('ERROR: No input image', self.verbose, 'error')
+
+        if self.fname_seg is not None: # copy segmentation image
+            shutil.copy(self.fname_seg, self.tmp_dir)
+            self.fname_seg = ''.join(extract_fname(self.fname_seg)[1:])
+        else:
+            printv('Warning: No segmentation image provided', self.verbose, 'warning')
+
+        os.chdir(self.tmp_dir)  # go to tmp directory
+
+
+
+
 #     def tmp2ofolder(self):
 
 #         os.chdir('..')  # go back to original directory
@@ -126,22 +162,7 @@ def get_parser():
 #             shutil.copy(self.tmp_dir + self.fname_metric_lst[f],
 #                         self.param.path_results + self.fname_metric_lst[f])
 
-#     def ifolder2tmp(self):
-#         # copy input image
-#         if self.param.fname_im is not None:
-#             shutil.copy(self.param.fname_im, self.tmp_dir)
-#             self.param.fname_im = ''.join(extract_fname(self.param.fname_im)[1:])
-#         else:
-#             printv('ERROR: No input image', self.param.verbose, 'error')
 
-#         # copy masked image
-#         if self.param.fname_seg is not None:
-#             shutil.copy(self.param.fname_seg, self.tmp_dir)
-#             self.param.fname_seg = ''.join(extract_fname(self.param.fname_seg)[1:])
-#         else:
-#             printv('ERROR: No mask image', self.param.verbose, 'error')
-
-#         os.chdir(self.tmp_dir)  # go to tmp directory
 
 #     def mean_angle(self):
 
@@ -251,20 +272,20 @@ def main(args=None):
 
     if '-s' in arguments:
         fname_seg = arguments['-s']
+        if not os.path.isfile(fname_seg):
+            fname_seg = None
+            printv('WARNING: -s input file: "' + arguments['-s'] + '" does not exist.\nDetecting PMJ without using segmentation information', 1, 'warning')
     else:
         fname_seg = None
-    if not os.path.isfile(fname_seg):
-        fname_seg = None
-        printv('WARNING: -s input file: "' + arguments['-s'] + '" does not exist.\nDetecting PMJ without using segmentation information', 1, 'warning')
 
     if '-ofolder' in arguments:
         path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
+        if not os.path.isdir(path_results) and os.path.exists(path_results):
+            printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
+        if not os.path.exists(path_results):
+            os.makedirs(path_results)
     else:
         path_results = None
-    if not os.path.isdir(path_results) and os.path.exists(path_results):
-        printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
-    if not os.path.exists(path_results):
-        os.makedirs(path_results)
 
     if '-r' in arguments:
         rm_tmp = bool(int(arguments['-r']))
@@ -275,10 +296,10 @@ def main(args=None):
     else:
         verbose = None
 
-    # # Initialize DetectPMJ
-    # detector = DetectPMJ(fname_im=fname_im, contrast=contrast, fname_seg=fname_seg, path_out=path_results, rm_tmp=rm_tmp, verbose=verbose)
-    # # run the extraction
-    # fname_out = detector.apply()
+    # Initialize DetectPMJ
+    detector = DetectPMJ(fname_im=fname_im, contrast=contrast, fname_seg=fname_seg, path_out=path_results, verbose=verbose)
+    # run the extraction
+    fname_out = detector.apply()
 
     # # remove tmp_dir
     # if rm_tmp:
