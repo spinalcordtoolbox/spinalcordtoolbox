@@ -13,11 +13,10 @@ import shutil
 import sys
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass
+import nibabel as nib
 
 from msct_image import Image
 from msct_parser import Parser
-# from sct_utils import (add_suffix, extract_fname, printv, run,
-#                        slash_at_the_end, Timer, tmp_create)
 from sct_utils import tmp_create, extract_fname, slash_at_the_end, add_suffix, printv, run
 from sct_image import get_orientation, set_orientation
 
@@ -72,21 +71,33 @@ class DetectPMJ:
 
         self.fname_seg = fname_seg
 
-        self.path_out = path_out if path_out is not None else './'
+        self.path_out = path_out
 
-        self.verbose = verbose if verbose is not None else '1'
+        self.verbose = verbose
 
         self.tmp_dir = tmp_create(verbose=self.verbose)  # path to tmp directory
 
         # to re-orient the data at the end if needed
         self.orientation_im = get_orientation(Image(self.fname_im))
 
+        self.slice2D_im = extract_fname(self.fname_im)[1] + '_midSag.nii'
+        self.slice2D_pmj = extract_fname(self.fname_im)[1] + '_midSag_pmj'
+
+        path_script = os.path.dirname(__file__)
+        path_sct = os.path.dirname(path_script)
+        self.pmj_model = os.path.abspath(os.path.join(path_sct,
+                                            'data/pmj_models',
+                                            '{}_model'.format(self.contrast)))
+
     def apply(self):
+
         self.ifolder2tmp()
 
         self.orient2pir()
 
         self.extract_sagital_slice()
+
+        self.detect()
 
 #         # fill self.dct_metric --> for each key_metric: create an Image with zero values
 #         self.init_metric_im()
@@ -109,9 +120,22 @@ class DetectPMJ:
 
 #         return [self.param.path_results + self.fname_metric_lst[f] for f in self.fname_metric_lst]
 
-    def extract_sagital_slice(self): # function to extract a 2D sagital slice, used to do the detection
 
-        fname_out = extract_fname(self.fname_im)[1] + '_midSag.nii'
+    def detect(self):
+
+        # os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
+        # cmd_pmj = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
+        #             (self.pmj_model, self.slice2D_im.split('.nii')[0], self.slice2D_pmj)
+        cmd_pmj = 'isct_spine_detect '+self.pmj_model+' '+self.slice2D_im.split('.nii')[0]+' '+self.slice2D_pmj
+        run(cmd_pmj, verbose=0)
+
+        # convert .img and .hdr files to .nii
+        img = nib.load(self.slice2D_pmj+'.hdr')
+        nib.save(img, self.slice2D_pmj+'.nii')
+        self.slice2D_pmj += '.nii'
+        print self.slice2D_pmj
+
+    def extract_sagital_slice(self): # function to extract a 2D sagital slice, used to do the detection
 
         if self.fname_seg is not None: # if the segmentation is provided, the 2D sagital slice is choosen accoding to the segmentation
             img_seg = Image(self.fname_seg)
@@ -123,7 +147,7 @@ class DetectPMJ:
             x_out = int(img.dim[2]/2)
             del img
 
-        run('sct_crop_image -i '+self.fname_im+' -start '+str(x_out)+' -end '+str(x_out)+' -dim 2 -o '+fname_out)
+        run('sct_crop_image -i '+self.fname_im+' -start '+str(x_out)+' -end '+str(x_out)+' -dim 2 -o '+self.slice2D_im)
 
     def orient2pir(self):
         
@@ -285,16 +309,17 @@ def main(args=None):
         if not os.path.exists(path_results):
             os.makedirs(path_results)
     else:
-        path_results = None
+        path_results = './'
 
     if '-r' in arguments:
         rm_tmp = bool(int(arguments['-r']))
     else:
-        rm_tmp = None
+        rm_tmp = True
+
     if '-v' in arguments:
-        verbose = bool(int(arguments['-v']))
+        verbose = int(arguments['-v'])
     else:
-        verbose = None
+        verbose = '1'
 
     # Initialize DetectPMJ
     detector = DetectPMJ(fname_im=fname_im, contrast=contrast, fname_seg=fname_seg, path_out=path_results, verbose=verbose)
@@ -309,8 +334,8 @@ def main(args=None):
     # printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red -t 0.7 & \n', verbose, 'info')
 
     # """
-    #   - reflechir si path_results doit etre mis a None si no isdir
     #   - output a png with red dot : cf GM seg
+    #   - remove abspath? self.pmj_model = os.path.abspath
     # """
 
 
