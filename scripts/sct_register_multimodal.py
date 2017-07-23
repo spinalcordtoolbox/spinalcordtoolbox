@@ -477,7 +477,7 @@ def main(args=None):
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', verbose)
     sct.run('sct_concat_transfo -w ' + ','.join(warp_forward) + ' -d dest.nii -o warp_src2dest.nii.gz', verbose)
-    sct.run('sct_concat_transfo -w ' + ','.join(warp_inverse) + ' -d dest.nii -o warp_dest2src.nii.gz', verbose)
+    sct.run('sct_concat_transfo -w ' + ','.join(warp_inverse) + ' -d src.nii -o warp_dest2src.nii.gz', verbose)
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
