@@ -1065,7 +1065,7 @@ class Image(object):
             printv(str(e), self.verbose, type='warning')
         return fname_png
 
-    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', path_output='./', verbose=1):
+    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', index_list=None, path_output='./', verbose=1):
         ori = self.change_orientation('RPI')
         if seg is not None:
             ori_seg = seg.change_orientation('RPI')
@@ -1082,14 +1082,16 @@ class Image(object):
             max_n_slices = None
             printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
 
-        if n_slices > max_n_slices:
-            index_list = range(max_n_slices)
-        elif n_slices == 1:
-            index_list = [int(round(max_n_slices / 2))]
-        else:
-            gap = max_n_slices / n_slices
-            index_list = [((i + 1) * gap) - 1 for i in range(n_slices)]
+        if index_list is None:
+            if n_slices > max_n_slices:
+                index_list = range(max_n_slices)
+            elif n_slices == 1:
+                index_list = [int(round(max_n_slices / 2))]
+            else:
+                gap = max_n_slices / n_slices
+                index_list = [((i + 1) * gap) - 1 for i in range(n_slices)]
         index_list.sort()
+
         try:
             filename_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane', index=index_list, format=format, path_output=path_output)
             info_str = 'QC output image: ' + filename_image_png
