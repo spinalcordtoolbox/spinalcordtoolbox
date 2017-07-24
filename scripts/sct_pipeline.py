@@ -41,7 +41,7 @@ usage:
 """
 import commands
 import copy_reg
-import json
+# import json
 import os
 import platform
 import signal
@@ -56,6 +56,7 @@ else:
 import pandas as pd
 import sct_utils as sct
 import msct_parser
+import glob
 
 # get path of the toolbox
 # TODO: put it back below when working again (julien 2016-04-04)
@@ -125,10 +126,29 @@ def generate_data_list(folder_dataset, verbose=1):
 
     return data_subjects, subjects_dir
 
-def read_database(folder_dataset, specifications=None, path_data_base='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx', verbose=1):
+
+def read_database(folder_dataset, specifications=None, path_data_base='', verbose=1):
+    """
+    Read subject database from xls/csv file.
+    Parameters
+    ----------
+    folder_dataset
+    specifications
+    path_data_base
+    verbose
+
+    Returns
+    -------
+
+    """
     # create empty list to return
     data_subjects, subjects_dir = [], []
     folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
+
+    # if path_data_base is empty, check if xls or xlsx file exist in the database directory.
+    if path_data_base == '':
+        path_data_base = glob.glob(folder_dataset)
+
     # TODO: if path_data_base is empty, check if xls or xlsx file exist in the database directory.
     # TODO: set default path_data_base to ''
     # read data base file and import to panda data frame
@@ -306,13 +326,13 @@ def get_parser():
                                   "Image paths must be contains in the arguments list.",
                       mandatory=False)
 
-    parser.add_option(name="-json",
-                      type_value="str",
-                      description="Requirements on center, study, ... that must be satisfied by the json file of each tested subjects\n"
-                                  "Syntax:  center=unf,study=errsm,gm_model=0",
-                      deprecated_by='-spec',
-                      deprecated_rm=True,
-                      mandatory=False)
+    # parser.add_option(name="-json",
+    #                   type_value="str",
+    #                   description="Requirements on center, study, ... that must be satisfied by the json file of each tested subjects\n"
+    #                               "Syntax:  center=unf,study=errsm,gm_model=0",
+    #                   deprecated_by='-spec',
+    #                   deprecated_rm=True,
+    #                   mandatory=False)
 
     parser.add_option(name="-subj",
                       type_value="str",
