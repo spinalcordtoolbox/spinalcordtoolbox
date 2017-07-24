@@ -113,20 +113,20 @@ def generate_data_list(folder_dataset, verbose=1):
     This function return a list of directory (in folder_dataset) in which the contrast is present.
     :return data:
     """
-    data_subjects, subjects_dir = [], []
+    list_subj = []
 
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
         if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
-            data_subjects.append(folder_dataset + subject_dir + '/')
-            subjects_dir.append(subject_dir)
+            # data_subjects.append(folder_dataset + subject_dir + '/')
+            list_subj.append(subject_dir)
 
-    if not data_subjects:
+    if not list_subj:
         sct.printv('ERROR: No subject data were found in ' + folder_dataset + '. '
                    'Please organize your data correctly or provide a correct dataset.',
                    verbose=verbose, type='error')
 
-    return data_subjects, subjects_dir
+    return list_subj
 
 
 def read_database(folder_dataset, specifications=None, fname_database='', verbose=1):
@@ -143,28 +143,30 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     -------
 
     """
-    # create empty list to return
-    data_subjects, subjects_dir = [], []
-    folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
+    # initialization
+    subj_selected = []
+
+    # data_subjects, subjects_dir = [], []
+    # folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
 
     # if fname_database is empty, check if xls or xlsx file exist in the database directory.
     if fname_database == '':
-        sct.printv('Looking for an XLS file describing the database...')
+        sct.printv('  Looking for an XLS file describing the database...')
         list_fname_database = glob.glob(folder_dataset+'*.xls*')
         if list_fname_database == []:
             sct.printv('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
-            return data_subjects, subjects_dir
+            return subj_selected
         elif len(list_fname_database) > 1:
             sct.printv('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
-            return data_subjects, subjects_dir
+            return subj_selected
         else:
             fname_database = list_fname_database[0]
-            sct.printv('  XLS file found: ' + fname_database, verbose)
+            # sct.printv('    XLS file found: ' + fname_database, verbose)
 
     # TODO: if fname_database is empty, check if xls or xlsx file exist in the database directory.
     # TODO: set default fname_database to ''
     # read data base file and import to panda data frame
-    sct.printv('Reading XLS: ' + fname_database, verbose, 'normal')
+    sct.printv('  Reading XLS: ' + fname_database, verbose, 'normal')
     try:
         data_base = pd.read_excel(fname_database)
     # elif fname_database.split('.')[-1] == 'csv':
@@ -199,7 +201,7 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     ## select subjects from specification
     # type of field for which the subject should be selected if the field CONTAINS the requested value (as opposed to the field is equal to the requested value)
     list_field_multiple_choice = ['contrasts', 'sc seg', 'gm seg', 'lesion seg']
-    list_field_multiple_choice_tmp  = copy.deepcopy(list_field_multiple_choice)
+    list_field_multiple_choice_tmp = copy.deepcopy(list_field_multiple_choice)
     for field in list_field_multiple_choice_tmp:
         list_field_multiple_choice.append('_'.join(field.split(' ')))
     #
@@ -212,16 +214,34 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
             # select subject if field contains the requested value
             data_selected = data_selected[data_selected[field].str.contains('|'.join(list_val)).fillna(False)]
     #
-    ## create list of subjects
-    subjects_dir = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_selected['Center'], data_selected['Study'], data_selected['Subject'])]
-    # make sure folder exist in data
-    for subj in subjects_dir:
-        if not os.path.isdir(folder_dataset+subj):
-            subjects_dir.pop(subjects_dir.index(subj))
+    ## retrieve list of subjects from database
+    database_subj = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_base['Center'], data_base['Study'], data_base['Subject'])]
+    ## retrieve list of subjects from database selected
+    database_subj_selected = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_selected['Center'], data_selected['Study'], data_selected['Subject'])]
+
+    # retrieve folders from folder_database
+    list_folder_dataset = [i for i in os.listdir(folder_dataset) if os.path.isdir(folder_dataset+i)]
+
+    # loop across folders
+    for ifolder in list_folder_dataset:
+        # check if folder is listed in database
+        if ifolder in database_subj:
+            # check if subject is selected
+            if ifolder in database_subj_selected:
+                subj_selected.append(ifolder)
+        # if not, report to user
         else:
-            data_subjects.append(sct.slash_at_the_end(folder_dataset+subj, slash=1))
+            sct.printv('WARNING: Subject '+ifolder+' is not listed in the database.', verbose, 'warning')
+
     #
-    return data_subjects, subjects_dir
+    # # make sure folder exist in data
+    # for subj in database_subj_selected:
+    #     if not os.path.isdir(folder_dataset+subj):
+    #         database_subj_selected.pop(database_subj_selected.index(subj))
+    #     else:
+    #         data_subjects.append(sct.slash_at_the_end(folder_dataset+subj, slash=1))
+    #
+    return subj_selected
 
 
 def process_results(results, subjects_name, function, folder_dataset, parameters):
@@ -272,15 +292,18 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
 
     # generate data list from folder containing
     if data_specifications is None:
-        data_subjects, subjects_name = generate_data_list(folder_dataset)
+        list_subj = generate_data_list(folder_dataset)
     else:
         print 'Selecting subjects using the following specifications: ' + data_specifications
-        data_subjects, subjects_name = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
-    print "  Number of subjects to process: " + str(len(data_subjects))
+        list_subj = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
+    print "  Number of subjects to process: " + str(len(list_subj))
 
     # if no subject to process, exit there
-    if len(data_subjects) == 0:
+    if len(list_subj) == 0:
         raise Exception('No subject to process. Exit function.')
+
+    # add full path to each subject
+    data_subjects = [folder_dataset + i for i in list_subj]
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -299,7 +322,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
         pool.join()  # waiting for all the jobs to be done
         compute_time = time() - compute_time
         all_results = async_results.get()
-        results = process_results(all_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        results = process_results(all_results, list_subj, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
 
     except KeyboardInterrupt:
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
