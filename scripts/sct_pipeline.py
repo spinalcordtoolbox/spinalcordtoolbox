@@ -146,28 +146,30 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
 
     # if fname_database is empty, check if xls or xlsx file exist in the database directory.
-    sct.printv('Looking for an XLS file describing the database...')
     if fname_database == '':
+        sct.printv('Looking for an XLS file describing the database...')
         list_fname_database = glob.glob(folder_dataset+'*.xls*')
     if list_fname_database == []:
-        sct.printv('WARNING: No XLS file found. Selecting all subjects and ignoring -sub field.', verbose, 'warning')
+        sct.printv('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
+        return data_subjects, subjects_dir
     elif len(list_fname_database) > 1:
-        sct.printv('WARNING: More than one XLS file found. Selecting all subjects and ignoring -sub field.', verbose, 'warning')
+        sct.printv('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
+        return data_subjects, subjects_dir
     else:
         fname_database = list_fname_database[0]
-        sct.printv('XLS file found: ' + fname_database, verbose)
+        sct.printv('  XLS file found: ' + fname_database, verbose)
 
     # TODO: if fname_database is empty, check if xls or xlsx file exist in the database directory.
     # TODO: set default fname_database to ''
     # read data base file and import to panda data frame
-    if 'xl' in fname_database.split('.')[-1]:
-        sct.printv('  Reading XLS: '+fname_database, verbose, 'normal')
+    sct.printv('Reading XLS: ' + fname_database, verbose, 'normal')
+    try:
         data_base = pd.read_excel(fname_database)
     # elif fname_database.split('.')[-1] == 'csv':
     #     sct.printv('  Reading CSV', verbose, 'normal')
     #     data_base = pd.read_csv(fname_database)
-    else:
-        sct.printv('ERROR: File '+fname_database+' is in an incorrect format. Covered formats are: .xls and .xlsx', verbose, 'error')
+    except:
+        sct.printv('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.', verbose, 'error')
     #
     # correct some values and clean panda data base
     # convert columns to int
@@ -272,6 +274,10 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
     else:
         data_subjects, subjects_name = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
     print "  Number of subjects to process: " + str(len(data_subjects))
+
+    # if no subject to process, exit there
+    if len(data_subjects) == 0:
+        raise Exception('No subject to process. Exit function.')
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
