@@ -356,7 +356,7 @@ def get_parser():
                       example="center=unf,twh:gm_model=0:contrasts=t2,t2s",
                       mandatory=False)
 
-    parser.add_option(name="-file-subj",
+    parser.add_option(name="-subj-file",
                       type_value="file",
                       description="Excel spreadsheet containing database information (center, study, subject, demographics, ...). If this field is empty, it will search for an xls file located in the database folder. If no xls file is present, all subjects will be selected.",
                       default_value='',
@@ -416,8 +416,8 @@ if __name__ == "__main__":
     data_specifications = None
     if "-subj" in arguments:
         data_specifications = arguments["-subj"]
-    if "-file-subj" in arguments:
-        fname_database = arguments["-file-subj"]
+    if "-subj-file" in arguments:
+        fname_database = arguments["-subj-file"]
     else:
         fname_database = ''  # if empty, it will look for xls file automatically in database folder
     nb_cpu = None
