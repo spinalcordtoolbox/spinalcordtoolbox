@@ -272,6 +272,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
     if data_specifications is None:
         data_subjects, subjects_name = generate_data_list(folder_dataset)
     else:
+        print 'Selecting subjects using the following specifications: ' + data_specifications
         data_subjects, subjects_name = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
     print "  Number of subjects to process: " + str(len(data_subjects))
 
