@@ -14,6 +14,7 @@ import sys
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
+import commands
 
 from msct_image import Image
 from msct_parser import Parser
@@ -83,11 +84,13 @@ class DetectPMJ:
         self.slice2D_im = extract_fname(self.fname_im)[1] + '_midSag.nii'
         self.slice2D_pmj = extract_fname(self.fname_im)[1] + '_midSag_pmj'
 
-        path_script = os.path.dirname(__file__)
-        path_sct = os.path.dirname(path_script)
-        self.pmj_model = os.path.abspath(os.path.join(path_sct,
+        self.pmj_model = os.path.join((commands.getoutput('$SCT_DIR')).split(': ')[1],
                                             'data/pmj_models',
-                                            '{}_model'.format(self.contrast)))
+                                            '{}_model'.format(self.contrast))
+
+        self.threshold = -0.75 if self.contrast=='t1' else 0.8
+
+        self.fname_out = extract_fname(self.fname_im)[1] + '_pmj.nii.gz'
 
     def apply(self):
 
@@ -99,55 +102,81 @@ class DetectPMJ:
 
         self.detect()
 
-#         # fill self.dct_metric --> for each key_metric: create an Image with zero values
-#         self.init_metric_im()
+        self.get_max_position()
 
-#         # fill self.dct_im_seg --> extract axial slices from self.param.fname_im and self.param.fname_seg
-#         self.extract_slices()
+        self.generate_mask_pmj()
 
-#         # compute texture
-#         self.compute_texture()
+        # save results to ofolder
+        return self.tmp2ofolder()
 
-#         # reorient data
-#         if self.orientation_im != self.orientation_extraction:
-#             self.reorient_data()
+    def tmp2ofolder(self):
 
-#         # mean across angles
-#         self.mean_angle()
+        os.chdir('..')  # go back to original directory
 
-#         # save results to ofolder
-#         self.tmp2ofolder()
+        if self.pa_coord != -1:
+            printv('\nSave resulting file...', self.verbose, 'normal')
+            shutil.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_out)),
+                            os.path.abspath(os.path.join(self.path_out, self.fname_out)))
 
-#         return [self.param.path_results + self.fname_metric_lst[f] for f in self.fname_metric_lst]
+            return os.path.join(self.path_out, self.fname_out), self.tmp_dir
+        
+        else:
+            return None, self.tmp_dir
 
+    def generate_mask_pmj(self):
+
+        if self.pa_coord != -1:
+            im = Image(''.join(extract_fname(self.fname_im)[1:]))
+            im_mask = im.copy()
+            im_mask.data *= 0
+
+            im_mask.data[self.pa_coord, self.is_coord, self.rl_coord] = 50
+
+            im_mask.setFileName(self.fname_out)
+
+            im_mask = set_orientation(im_mask, self.orientation_im, fname_out = self.fname_out)
+
+            im_mask.save()
+
+    def get_max_position(self):
+
+        img_pred = Image(self.slice2D_pmj)
+        
+        if True in np.unique(img_pred.data > self.threshold):
+            img_pred_maxValue = np.max(img_pred.data)
+            self.pa_coord, self.is_coord = np.where(img_pred.data==img_pred_maxValue)[0][0], np.where(img_pred.data==img_pred_maxValue)[1][0]
+
+        else:
+            self.pa_coord, self.is_coord = -1, -1
+
+        del img_pred
 
     def detect(self):
 
-        # os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-        # cmd_pmj = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
-        #             (self.pmj_model, self.slice2D_im.split('.nii')[0], self.slice2D_pmj)
-        cmd_pmj = 'isct_spine_detect '+self.pmj_model+' '+self.slice2D_im.split('.nii')[0]+' '+self.slice2D_pmj
+        os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
+        cmd_pmj = 'isct_spine_detect "%s" "%s" "%s"' % \
+                    (self.pmj_model, self.slice2D_im.split('.nii')[0], self.slice2D_pmj)
+
         run(cmd_pmj, verbose=0)
 
         # convert .img and .hdr files to .nii
-        img = nib.load(self.slice2D_pmj+'.hdr')
+        img = nib.load(self.slice2D_pmj+'_svm.hdr')
         nib.save(img, self.slice2D_pmj+'.nii')
         self.slice2D_pmj += '.nii'
-        print self.slice2D_pmj
 
     def extract_sagital_slice(self): # function to extract a 2D sagital slice, used to do the detection
 
         if self.fname_seg is not None: # if the segmentation is provided, the 2D sagital slice is choosen accoding to the segmentation
             img_seg = Image(self.fname_seg)
             z_mid_slice = img_seg.data[:,int(img_seg.dim[1]/2),:]
-            x_out = int(center_of_mass(z_mid_slice)[1])
+            self.rl_coord = int(center_of_mass(z_mid_slice)[1])
             del img_seg
         else: # if the segmentation is not provided, the 2D sagital slice is choosen as the mid-sagital slice of the input image
             img = Image(self.fname_im)
-            x_out = int(img.dim[2]/2)
+            self.rl_coord = int(img.dim[2]/2)
             del img
 
-        run('sct_crop_image -i '+self.fname_im+' -start '+str(x_out)+' -end '+str(x_out)+' -dim 2 -o '+self.slice2D_im)
+        run('sct_crop_image -i '+self.fname_im+' -start '+str(self.rl_coord)+' -end '+str(self.rl_coord)+' -dim 2 -o '+self.slice2D_im)
 
     def orient2pir(self):
         
@@ -173,114 +202,6 @@ class DetectPMJ:
             printv('Warning: No segmentation image provided', self.verbose, 'warning')
 
         os.chdir(self.tmp_dir)  # go to tmp directory
-
-
-
-
-#     def tmp2ofolder(self):
-
-#         os.chdir('..')  # go back to original directory
-
-#         printv('\nSave resulting files...', self.param.verbose, 'normal')
-#         for f in self.fname_metric_lst:  # Copy from tmp folder to ofolder
-#             shutil.copy(self.tmp_dir + self.fname_metric_lst[f],
-#                         self.param.path_results + self.fname_metric_lst[f])
-
-
-
-#     def mean_angle(self):
-
-#         im_metric_lst = [self.fname_metric_lst[f].split('_' + str(self.param_glcm.distance) + '_')[0] + '_' for f in self.fname_metric_lst]
-#         im_metric_lst = list(set(im_metric_lst))
-
-#         printv('\nMean across angles...', self.param.verbose, 'normal')
-#         extension = extract_fname(self.param.fname_im)[2]
-#         for im_m in im_metric_lst:     # Loop across GLCM texture properties
-#             # List images to mean
-#             im2mean_lst = [im_m + str(self.param_glcm.distance) + '_' + a + extension for a in self.param_glcm.angle.split(',')]
-
-#             # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
-#             fname_out = im_m + str(self.param_glcm.distance) + '_mean' + extension
-#             run('sct_image -i ' + ','.join(im2mean_lst) + ' -concat t -o ' + fname_out, error_exit='warning', raise_exception=True)
-#             run('sct_maths -i ' + fname_out + ' -mean t -o ' + fname_out, error_exit='warning', raise_exception=True)
-#             self.fname_metric_lst[im_m + str(self.param_glcm.distance) + '_mean'] = fname_out
-
-#     def extract_slices(self):
-#         # open image and re-orient it to RPI if needed
-#         im, seg = Image(self.param.fname_im), Image(self.param.fname_seg)
-#         if self.orientation_im != self.orientation_extraction:
-#             im, seg = set_orientation(im, self.orientation_extraction), set_orientation(seg, self.orientation_extraction)
-
-#         # extract axial slices in self.dct_im_seg
-#         self.dct_im_seg['im'], self.dct_im_seg['seg'] = [im.data[:, :, z] for z in range(im.dim[2])], [seg.data[:, :, z] for z in range(im.dim[2])]
-
-#     def init_metric_im(self):
-#         # open image and re-orient it to RPI if needed
-#         im_tmp = Image(self.param.fname_im)
-#         if self.orientation_im != self.orientation_extraction:
-#             im_tmp = set_orientation(im_tmp, self.orientation_extraction)
-
-#         # create Image objects with zeros values for each output image needed
-#         for m in self.metric_lst:
-#             im_2save = im_tmp.copy()
-#             im_2save.changeType(type='float64')
-#             im_2save.data *= 0
-#             fname_out = add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_' + m)
-#             im_2save.setFileName(fname_out)
-#             im_2save.save()
-#             self.fname_metric_lst[m] = fname_out
-
-#     def compute_texture(self):
-
-#         offset = int(self.param_glcm.distance)
-#         printv('\nCompute texture metrics...', self.param.verbose, 'normal')
-
-#         dct_metric = {}
-#         for m in self.metric_lst:
-#             dct_metric[m] = Image(self.fname_metric_lst[m])
-
-#         timer = Timer(number_of_iteration=len(self.dct_im_seg['im']))
-#         timer.start()
-
-#         for im_z, seg_z, zz in zip(self.dct_im_seg['im'], self.dct_im_seg['seg'], range(len(self.dct_im_seg['im']))):
-#             for xx in range(im_z.shape[0]):
-#                 for yy in range(im_z.shape[1]):
-#                     if not seg_z[xx, yy]:
-#                         continue
-#                     if xx < offset or yy < offset:
-#                         continue
-#                     if xx > (im_z.shape[0] - offset - 1) or yy > (im_z.shape[1] - offset - 1):
-#                         continue  # to check if the whole glcm_window is in the axial_slice
-#                     if False in np.unique(seg_z[xx - offset: xx + offset + 1, yy - offset: yy + offset + 1]):
-#                         continue  # to check if the whole glcm_window is in the mask of the axial_slice
-
-#                     glcm_window = im_z[xx - offset: xx + offset + 1, yy - offset: yy + offset + 1]
-#                     glcm_window = glcm_window.astype(np.uint8)
-
-#                     dct_glcm = {}
-#                     for a in self.param_glcm.angle.split(','):  # compute the GLCM for self.param_glcm.distance and for each self.param_glcm.angle
-#                         dct_glcm[a] = greycomatrix(glcm_window,
-#                                                    [self.param_glcm.distance], [radians(int(a))],
-#                                                    symmetric=self.param_glcm.symmetric,
-#                                                    normed=self.param_glcm.normed)
-
-#                     for m in self.metric_lst:  # compute the GLCM property (m.split('_')[0]) of the voxel xx,yy,zz
-#                         dct_metric[m].data[xx, yy, zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
-
-#             timer.add_iteration()
-
-#         timer.stop()
-
-#         for m in self.metric_lst:
-#             dct_metric[m].setFileName(self.fname_metric_lst[m])
-#             dct_metric[m].save()
-
-#     def reorient_data(self):
-#         for f in self.fname_metric_lst:
-#             im = Image(self.fname_metric_lst[f])
-#             im = set_orientation(im, self.orientation_im)
-#             im.setFileName(self.fname_metric_lst[f])
-#             im.save()
 
 def main(args=None):
     if args is None:
@@ -324,18 +245,18 @@ def main(args=None):
     # Initialize DetectPMJ
     detector = DetectPMJ(fname_im=fname_im, contrast=contrast, fname_seg=fname_seg, path_out=path_results, verbose=verbose)
     # run the extraction
-    fname_out = detector.apply()
+    fname_out, tmp_dir = detector.apply()
 
-    # # remove tmp_dir
-    # if rm_tmp:
-    #     shutil.rmtree(tmp_dir)
+    # remove tmp_dir
+    if rm_tmp:
+        shutil.rmtree(tmp_dir)
 
-    # printv('\nDone! To view results, type:', verbose)
-    # printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red -t 0.7 & \n', verbose, 'info')
+    if fname_out is not None:
+        printv('\nDone! To view results, type:', verbose)
+        printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red -t 0.7 & \n', verbose, 'info')
 
     # """
     #   - output a png with red dot : cf GM seg
-    #   - remove abspath? self.pmj_model = os.path.abspath
     # """
 
 
