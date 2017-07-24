@@ -616,6 +616,6 @@ if __name__ == "__main__":
         with open(fname_log, "r") as fp:
             message = fp.read()
         # send email
-        sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log)
+        sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log, html=True)
         # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
         print 'Email sent!\n'

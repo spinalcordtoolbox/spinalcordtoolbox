@@ -699,7 +699,7 @@ def printv(string, verbose=1, type='normal'):
 #=======================================================================================================================
 # send email
 #=======================================================================================================================
-def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None):
+def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None, html=False):
     import smtplib
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMEText import MIMEText
@@ -713,17 +713,30 @@ def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from=
     msg['Subject'] = subject  # "SUBJECT OF THE EMAIL"
     body = message  # "TEXT YOU WANT TO SEND"
 
-    # We must choose the body charset manually
-    for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
-        try:
-            body.encode(body_charset)
-        except UnicodeError:
-            pass
-        else:
-            break
+    # body in html format for monospaced formatting
+    body_html = """
+    <html><pre style="font: monospace"><body>
+    """+body+"""
+    </body></pre></html>
+    """
 
-    # msg.attach(MIMEText(body, 'plain'))
-    msg.attach(MIMEText(body.encode(body_charset), 'plain', body_charset))
+    # # We must choose the body charset manually
+    # for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+    #     try:
+    #         body.encode(body_charset)
+    #     except UnicodeError:
+    #         pass
+    #     else:
+    #         break
+
+    # msg.set_charset("utf-8")
+
+    if html:
+        msg.attach(MIMEText(body_html, 'html'))
+    else:
+        msg.attach(MIMEText(body, 'plain'))
+
+    # msg.attach(MIMEText(body.encode(body_charset), 'plain', body_charset))
 
     # filename = "NAME OF THE FILE WITH ITS EXTENSION"
     if filename:
