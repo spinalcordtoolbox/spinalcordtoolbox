@@ -26,38 +26,32 @@ from sct_utils import (add_suffix, extract_fname, printv, run,
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Extraction of GLCM texture features from an image within a given mask.\n'
-                                 ' It calculates the texture properties of a grey level co-occurence matrix (GLCM).'
-                                 ' The textures features are those defined in the sckit-image implementation:\n'
-                                 ' http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops\n'
-                                 ' This function outputs one nifti file per texture metric (' + ParamGLCM().feature + ') and'
-                                 ' per orientation called fnameInput_feature_distance_angle.nii.gz.\n'
-                                 ' Also, a file averaging each metric across the angles, called fnameInput_feature_distance_mean.nii.gz, is output.')
+    parser.usage.set_description('Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given mask. The textures features are those defined in the sckit-image implementation: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, called fnameInput_feature_distance_mean.nii.gz, is output.')
     parser.add_option(name="-i",
                       type_value="file",
-                      description="Image to analyze",
+                      description="Image to analyze.",
                       mandatory=True,
                       example='t2.nii.gz')
     parser.add_option(name="-m",
                       type_value="file",
-                      description="Image mask (e.g., lesion, spinal cord)",
+                      description="Image mask (e.g., lesion, spinal cord).",
                       mandatory=True,
                       example='t2_seg.nii.gz')
     parser.add_option(name="-feature",
                       type_value="str",
-                      description="List of GLCM texture features (separate arguments with \",\")",
+                      description="List of GLCM texture features (separate arguments with \",\").",
                       mandatory=False,
                       default_value=ParamGLCM().feature,
                       example="energy,contrast")
     parser.add_option(name="-distance",
                       type_value="int",
-                      description="Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5)",
+                      description="Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5).",
                       mandatory=False,
                       default_value=ParamGLCM().distance,
                       example=1)
     parser.add_option(name="-angle",
                       type_value="str",
-                      description="List of angles for GLCM computation, separate arguments with \",\", in degrees (suggested distance values between 0 and 179)",
+                      description="List of angles for GLCM computation, separate arguments with \",\", in degrees (suggested distance values between 0 and 179).",
                       mandatory=False,
                       default_value=ParamGLCM().angle,
                       example='0,90')
@@ -69,7 +63,7 @@ def get_parser():
                       example=['ax', 'sag', 'cor'])
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
-                      description="Output folder",
+                      description="Output folder.",
                       mandatory=False,
                       default_value=Param().path_results,
                       example='/my_texture/')
@@ -81,7 +75,7 @@ def get_parser():
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value='multiple_choice',
-                      description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      description="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value=str(Param().verbose))
