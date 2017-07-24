@@ -1,4 +1,4 @@
-nipy==0.4.0
+nipy==0.4.1
 nibabel==2.1.0
 dipy==0.11.0
 distribute2mpi==0.3.0
