@@ -56,7 +56,7 @@ def resample():
     :return:
     """
     import nipy
-    from nipy.algorithms.registration import resample
+    from nipy.algorithms.registration.resample import resample
     import numpy as np
 
     verbose = param.verbose
