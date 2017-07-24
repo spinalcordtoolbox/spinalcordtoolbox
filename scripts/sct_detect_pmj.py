@@ -78,102 +78,107 @@ class DetectPMJ:
 
         self.tmp_dir = tmp_create(verbose=self.verbose)  # path to tmp directory
 
-        # to re-orient the data at the end if needed
-        self.orientation_im = get_orientation(Image(self.fname_im))
+        self.orientation_im = get_orientation(Image(self.fname_im)) # to re-orient the data at the end
 
-        self.slice2D_im = extract_fname(self.fname_im)[1] + '_midSag.nii'
-        self.slice2D_pmj = extract_fname(self.fname_im)[1] + '_midSag_pmj'
+        self.slice2D_im = extract_fname(self.fname_im)[1] + '_midSag.nii'  # file used to do the detection, with only one slice
+        self.dection_map_pmj = extract_fname(self.fname_im)[1] + '_map_pmj' # file resulting from the detection
 
+        # path to the pmj detector
         self.pmj_model = os.path.join((commands.getoutput('$SCT_DIR')).split(': ')[1],
                                             'data/pmj_models',
                                             '{}_model'.format(self.contrast))
 
-        self.threshold = -0.75 if self.contrast=='t1' else 0.8
+        self.threshold = -0.75 if self.contrast=='t1' else 0.8 # detection map threshold, depends on the contrast
 
         self.fname_out = extract_fname(self.fname_im)[1] + '_pmj.nii.gz'
 
     def apply(self):
 
-        self.ifolder2tmp()
+        self.ifolder2tmp() # move data to the temp dir
 
-        self.orient2pir()
+        self.orient2pir() # orient data to PIR orientation
 
-        self.extract_sagital_slice()
+        self.extract_sagital_slice() # extract a sagital slice, used to do the detection
 
-        self.detect()
+        self.detect() # run the detection
 
-        self.get_max_position()
+        self.get_max_position() # get the max of the detection map
 
-        self.generate_mask_pmj()
+        self.generate_mask_pmj() # generate the mask with one voxel with value = 50 at the predicted PMJ position
 
-        # save results to ofolder
-        return self.tmp2ofolder()
+        fname_out2return = self.tmp2ofolder() # save results to ofolder
+
+        return fname_out2return, self.tmp_dir
 
     def tmp2ofolder(self):
 
         os.chdir('..')  # go back to original directory
 
-        if self.pa_coord != -1:
+        if self.pa_coord != -1: # If PMJ has been detected
             printv('\nSave resulting file...', self.verbose, 'normal')
             shutil.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_out)),
                             os.path.abspath(os.path.join(self.path_out, self.fname_out)))
 
-            return os.path.join(self.path_out, self.fname_out), self.tmp_dir
+            return os.path.join(self.path_out, self.fname_out)
         
         else:
             return None, self.tmp_dir
 
     def generate_mask_pmj(self):
 
-        if self.pa_coord != -1:
-            im = Image(''.join(extract_fname(self.fname_im)[1:]))
+        if self.pa_coord != -1: # If PMJ has been detected
+            im = Image(''.join(extract_fname(self.fname_im)[1:])) # image in PIR orientation
             im_mask = im.copy()
-            im_mask.data *= 0
+            im_mask.data *= 0 # empty mask
 
-            im_mask.data[self.pa_coord, self.is_coord, self.rl_coord] = 50
+            im_mask.data[self.pa_coord, self.is_coord, self.rl_coord] = 50 # voxel with value = 50
 
             im_mask.setFileName(self.fname_out)
 
-            im_mask = set_orientation(im_mask, self.orientation_im, fname_out = self.fname_out)
+            im_mask = set_orientation(im_mask, self.orientation_im, fname_out = self.fname_out) # reorient data
 
             im_mask.save()
 
     def get_max_position(self):
 
-        img_pred = Image(self.slice2D_pmj)
+        img_pred = Image(self.dection_map_pmj)
         
-        if True in np.unique(img_pred.data > self.threshold):
-            img_pred_maxValue = np.max(img_pred.data)
+        if True in np.unique(img_pred.data > self.threshold): # threshold the detection map
+            img_pred_maxValue = np.max(img_pred.data) # get the max of the detection map
             self.pa_coord, self.is_coord = np.where(img_pred.data==img_pred_maxValue)[0][0], np.where(img_pred.data==img_pred_maxValue)[1][0]
+            
+            printv('\nPonto-Medullary Junction detected', self.verbose, 'normal')
 
         else:
             self.pa_coord, self.is_coord = -1, -1
+            
+            printv('\nPonto-Medullary Junction not detected', self.verbose, 'normal')
 
         del img_pred
 
     def detect(self):
 
+        printv('\nRun PMJ detector', self.verbose, 'normal')
         os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
         cmd_pmj = 'isct_spine_detect "%s" "%s" "%s"' % \
-                    (self.pmj_model, self.slice2D_im.split('.nii')[0], self.slice2D_pmj)
-
+                    (self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj)
         run(cmd_pmj, verbose=0)
 
-        # convert .img and .hdr files to .nii
-        img = nib.load(self.slice2D_pmj+'_svm.hdr')
-        nib.save(img, self.slice2D_pmj+'.nii')
-        self.slice2D_pmj += '.nii'
+        img = nib.load(self.dection_map_pmj+'_svm.hdr') # convert .img and .hdr files to .nii
+        nib.save(img, self.dection_map_pmj+'.nii')
 
-    def extract_sagital_slice(self): # function to extract a 2D sagital slice, used to do the detection
+        self.dection_map_pmj += '.nii' # fname of the resulting detection map
+
+    def extract_sagital_slice(self):
 
         if self.fname_seg is not None: # if the segmentation is provided, the 2D sagital slice is choosen accoding to the segmentation
             img_seg = Image(self.fname_seg)
             z_mid_slice = img_seg.data[:,int(img_seg.dim[1]/2),:]
-            self.rl_coord = int(center_of_mass(z_mid_slice)[1])
+            self.rl_coord = int(center_of_mass(z_mid_slice)[1]) # Right_left coordinate
             del img_seg
         else: # if the segmentation is not provided, the 2D sagital slice is choosen as the mid-sagital slice of the input image
             img = Image(self.fname_im)
-            self.rl_coord = int(img.dim[2]/2)
+            self.rl_coord = int(img.dim[2]/2)  # Right_left coordinate
             del img
 
         run('sct_crop_image -i '+self.fname_im+' -start '+str(self.rl_coord)+' -end '+str(self.rl_coord)+' -dim 2 -o '+self.slice2D_im)
@@ -198,8 +203,6 @@ class DetectPMJ:
         if self.fname_seg is not None: # copy segmentation image
             shutil.copy(self.fname_seg, self.tmp_dir)
             self.fname_seg = ''.join(extract_fname(self.fname_seg)[1:])
-        else:
-            printv('Warning: No segmentation image provided', self.verbose, 'warning')
 
         os.chdir(self.tmp_dir)  # go to tmp directory
 
@@ -207,14 +210,15 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    # get parser
+    # Get parser
     parser = get_parser()
     arguments = parser.parse(args)
 
-    # set param arguments ad inputted by user
+    # Set param arguments ad inputted by user
     fname_im = arguments["-i"]
     contrast = arguments["-c"]
 
+    # Segmentation or Centerline line
     if '-s' in arguments:
         fname_seg = arguments['-s']
         if not os.path.isfile(fname_seg):
@@ -223,6 +227,7 @@ def main(args=None):
     else:
         fname_seg = None
 
+    # Output Folder
     if '-ofolder' in arguments:
         path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
         if not os.path.isdir(path_results) and os.path.exists(path_results):
@@ -232,6 +237,7 @@ def main(args=None):
     else:
         path_results = './'
 
+    # Remove temp folder
     if '-r' in arguments:
         rm_tmp = bool(int(arguments['-r']))
     else:
@@ -247,16 +253,18 @@ def main(args=None):
     # run the extraction
     fname_out, tmp_dir = detector.apply()
 
-    # remove tmp_dir
+    # Remove tmp_dir
     if rm_tmp:
         shutil.rmtree(tmp_dir)
 
+    # View results
     if fname_out is not None:
         printv('\nDone! To view results, type:', verbose)
         printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red -t 0.7 & \n', verbose, 'info')
 
     # """
     #   - output a png with red dot : cf GM seg
+    #   - output coord
     # """
 
 
