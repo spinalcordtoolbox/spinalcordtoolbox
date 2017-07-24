@@ -28,7 +28,7 @@ def get_parser():
                                  ' This method is machine-learning based and adapted for T1w-like or T2w-like images.\n'
                                  ' If the PMJ is detected from the input image, a nifti mask with one voxel, with the value 50,\n'
                                  ' located at the predicted PMJ level, is output ("*_pmj.nii.gz").\n'
-                                 ' If the PMJ is not detected, anything is output from this function.')
+                                 ' If the PMJ is not detected, nothing is output.')
     parser.add_option(name="-i",
                         type_value="file",
                         description="input image.",
@@ -41,7 +41,7 @@ def get_parser():
                         example=["t1", "t2"])
     parser.add_option(name="-s",
                         type_value="file",
-                        description="SC segmentation or SC centerline mask. To provide this mask could help the detection of the PMJ",
+                        description="SC segmentation or SC centerline mask. Provide this mask could help the detection of the PMJ",
                         mandatory=False,
                         example="t2_seg.nii.gz")
     parser.add_option(name="-ofolder",
@@ -100,6 +100,8 @@ class DetectPMJ:
 
         self.fname_out = extract_fname(self.fname_im)[1] + '_pmj.nii.gz'
 
+        self.fname_qc = 'qc_pmj.png'
+
     def apply(self):
 
         self.ifolder2tmp() # move data to the temp dir
@@ -126,8 +128,12 @@ class DetectPMJ:
 
         if self.pa_coord != -1: # If PMJ has been detected
             printv('\nSave resulting file...', self.verbose, 'normal')
-            shutil.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_out)),
-                            os.path.abspath(os.path.join(self.path_out, self.fname_out)))
+            shutil.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_qc)),
+                            os.path.abspath(os.path.join(self.path_out, self.fname_qc)))
+
+            if self.quality_control:
+                shutil.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_out)),
+                            os.path.abspath(os.path.join(self.path_out, self.fname_out)))                
 
             return os.path.join(self.path_out, self.fname_out)
         
@@ -148,6 +154,25 @@ class DetectPMJ:
         else:
             return None
 
+    def save_qc(self, slice_arr, coord_lst):
+
+        printv('\nSave quality control images...', self.verbose, 'normal')
+
+        import matplotlib.pyplot as plt
+        import matplotlib.patches as patches
+        import matplotlib.image as mpimg
+
+        fig,ax = plt.subplots(1)
+        ax.imshow(np.rot90(slice_arr), cmap='gray')
+
+        rect = patches.Rectangle((coord_lst[0]-10,slice_arr.shape[1]-coord_lst[1]-10),20,20,linewidth=2,edgecolor='g',facecolor='none')
+        ax.add_patch(rect)
+
+        plt.axis('off')
+        fig.savefig(self.fname_qc, bbox_inches='tight')
+
+        printv('\nQC output image: '+self.fname_qc, self.verbose, 'info')
+
     def generate_mask_pmj(self):
 
         if self.pa_coord != -1: # If PMJ has been detected
@@ -156,6 +181,9 @@ class DetectPMJ:
             im_mask.data *= 0 # empty mask
 
             im_mask.data[self.pa_coord, self.is_coord, self.rl_coord] = 50 # voxel with value = 50
+
+            if self.quality_control: # output QC image
+                self.save_qc(im.data[:, :, self.rl_coord], [self.pa_coord, self.is_coord])
 
             im_mask.setFileName(self.fname_out)
 
@@ -172,18 +200,6 @@ class DetectPMJ:
             self.pa_coord, self.is_coord = np.where(img_pred.data==img_pred_maxValue)[0][0], np.where(img_pred.data==img_pred_maxValue)[1][0]
             
             printv('\nPonto-Medullary Junction detected', self.verbose, 'normal')
-
-            if self.quality_control: # output QC image
-                printv('\nSave quality control images...', self.verbose, 'normal')
-
-                im = Image(''.join(extract_fname(self.fname_im)[1:]))
-                im_map = im.copy()
-                im_map.data *= 0 # empty mask
-                im_map.data[:, :, self.rl_coord] = img_pred.data
-
-                im.save_quality_control(plane='sagittal', n_slices=1, seg=im_map, thr=self.threshold, cmap_col='red-yellow', index_list=[self.rl_coord], path_output=os.path.abspath(self.path_out))
-                
-                del im
 
         else:
             self.pa_coord, self.is_coord = -1, -1
