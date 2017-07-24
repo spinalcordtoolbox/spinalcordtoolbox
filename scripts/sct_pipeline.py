@@ -368,7 +368,7 @@ if __name__ == "__main__":
     addr_from = 'spinalcordtoolbox@gmail.com'
 
     # get parameters
-    print_if_error = False  # print error message if function crashes (could be messy)
+    print_if_error = True  # print error message if function crashes (could be messy)
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
@@ -413,26 +413,31 @@ if __name__ == "__main__":
         handle_log = sct.ForkStdoutToFile(fname_log)
     print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
-    # get path of the toolbox
-    path_script = os.path.dirname(__file__)
-    path_sct = os.path.dirname(path_script)
 
-    # fetch true commit number and branch (do not use commit.txt which is wrong)
-    path_curr = os.path.abspath(os.curdir)
-    os.chdir(path_sct)
-    sct_commit = commands.getoutput('git rev-parse HEAD')
-    if not sct_commit.isalnum():
-        print 'WARNING: Cannot retrieve SCT commit'
-        sct_commit = 'unknown'
-        sct_branch = 'unknown'
-    else:
-        sct_branch = commands.getoutput('git branch --contains ' + sct_commit).strip('* ')
-    # with open (path_sct+"/version.txt", "r") as myfile:
-    #     version_sct = myfile.read().replace('\n', '')
-    # with open (path_sct+"/commit.txt", "r") as myfile:
-    #     commit_sct = myfile.read().replace('\n', '')
-    print 'SCT commit/branch: ' + sct_commit + '/' + sct_branch
-    os.chdir(path_curr)
+    # fetch SCT version
+    install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
+    print 'SCT version/commit/branch: ' + version_sct + '/' + sct_commit + '/' + sct_branch
+
+    # # get path of the toolbox
+    # path_script = os.path.dirname(__file__)
+    # path_sct = os.path.dirname(path_script)
+    #
+    # # fetch true commit number and branch (do not use commit.txt which is wrong)
+    # path_curr = os.path.abspath(os.curdir)
+    # os.chdir(path_sct)
+    # sct_commit = commands.getoutput('git rev-parse HEAD')
+    # if not sct_commit.isalnum():
+    #     print 'WARNING: Cannot retrieve SCT commit'
+    #     sct_commit = 'unknown'
+    #     sct_branch = 'unknown'
+    # else:
+    #     sct_branch = commands.getoutput('git branch --contains ' + sct_commit).strip('* ')
+    # # with open (path_sct+"/version.txt", "r") as myfile:
+    # #     version_sct = myfile.read().replace('\n', '')
+    # # with open (path_sct+"/commit.txt", "r") as myfile:
+    # #     commit_sct = myfile.read().replace('\n', '')
+    # print 'SCT commit/branch: ' + sct_commit + '/' + sct_branch
+    # os.chdir(path_curr)
 
     # check OS
     platform_running = sys.platform
