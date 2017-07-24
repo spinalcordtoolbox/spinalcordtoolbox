@@ -134,20 +134,17 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     Read subject database from xls file.
     Parameters
     ----------
-    folder_dataset
-    specifications
-    fname_database
-    verbose
+    folder_dataset: path to database
+    specifications: field-based specifications for subject selection
+    fname_database: fname of XLS file that contains database
+    verbose:
 
     Returns
     -------
-
+    subj_selected: list of subjects selected
     """
     # initialization
     subj_selected = []
-
-    # data_subjects, subjects_dir = [], []
-    # folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
 
     # if fname_database is empty, check if xls or xlsx file exist in the database directory.
     if fname_database == '':
@@ -163,15 +160,10 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
             fname_database = list_fname_database[0]
             # sct.printv('    XLS file found: ' + fname_database, verbose)
 
-    # TODO: if fname_database is empty, check if xls or xlsx file exist in the database directory.
-    # TODO: set default fname_database to ''
     # read data base file and import to panda data frame
     sct.printv('  Reading XLS: ' + fname_database, verbose, 'normal')
     try:
         data_base = pd.read_excel(fname_database)
-    # elif fname_database.split('.')[-1] == 'csv':
-    #     sct.printv('  Reading CSV', verbose, 'normal')
-    #     data_base = pd.read_csv(fname_database)
     except:
         sct.printv('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.', verbose, 'error')
     #
@@ -233,14 +225,6 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
         else:
             sct.printv('WARNING: Subject '+ifolder+' is not listed in the database.', verbose, 'warning')
 
-    #
-    # # make sure folder exist in data
-    # for subj in database_subj_selected:
-    #     if not os.path.isdir(folder_dataset+subj):
-    #         database_subj_selected.pop(database_subj_selected.index(subj))
-    #     else:
-    #         data_subjects.append(sct.slash_at_the_end(folder_dataset+subj, slash=1))
-    #
     return subj_selected
 
 
@@ -366,14 +350,6 @@ def get_parser():
                                   "Image paths must be contains in the arguments list.",
                       mandatory=False)
 
-    # parser.add_option(name="-json",
-    #                   type_value="str",
-    #                   description="Requirements on center, study, ... that must be satisfied by the json file of each tested subjects\n"
-    #                               "Syntax:  center=unf,study=errsm,gm_model=0",
-    #                   deprecated_by='-spec',
-    #                   deprecated_rm=True,
-    #                   mandatory=False)
-
     parser.add_option(name="-subj",
                       type_value="str",
                       description="Choose the subjects to process based on center, study, [...] to select the testing dataset\n"
@@ -480,27 +456,6 @@ if __name__ == "__main__":
     # fetch SCT version
     install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
     print 'SCT version/commit/branch: ' + version_sct + '/' + sct_commit + '/' + sct_branch
-
-    # # get path of the toolbox
-    # path_script = os.path.dirname(__file__)
-    # path_sct = os.path.dirname(path_script)
-    #
-    # # fetch true commit number and branch (do not use commit.txt which is wrong)
-    # path_curr = os.path.abspath(os.curdir)
-    # os.chdir(path_sct)
-    # sct_commit = commands.getoutput('git rev-parse HEAD')
-    # if not sct_commit.isalnum():
-    #     print 'WARNING: Cannot retrieve SCT commit'
-    #     sct_commit = 'unknown'
-    #     sct_branch = 'unknown'
-    # else:
-    #     sct_branch = commands.getoutput('git branch --contains ' + sct_commit).strip('* ')
-    # # with open (path_sct+"/version.txt", "r") as myfile:
-    # #     version_sct = myfile.read().replace('\n', '')
-    # # with open (path_sct+"/commit.txt", "r") as myfile:
-    # #     commit_sct = myfile.read().replace('\n', '')
-    # print 'SCT commit/branch: ' + sct_commit + '/' + sct_branch
-    # os.chdir(path_curr)
 
     # check OS
     platform_running = sys.platform
