@@ -113,6 +113,64 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         return status_output, output_final[0:-1]
 
 
+# =======================================================================================================================
+# Get SCT version
+# =======================================================================================================================
+def get_sct_version():
+
+    sct_commit = ''
+    sct_branch = ''
+
+    # get path of SCT
+    path_script = os.path.dirname(__file__)
+    path_sct = os.path.dirname(path_script)
+
+    # fetch true commit number and branch
+    path_curr = os.path.abspath(os.curdir)
+    os.chdir(path_sct)
+    # first, make sure there is a .git folder
+    if os.path.isdir('.git'):
+        install_type = 'git'
+        sct_commit = commands.getoutput('git rev-parse HEAD')
+        sct_branch = commands.getoutput('git branch | grep \*').strip('* ')
+        if not (sct_commit.isalnum()):
+            sct_commit = 'unknown'
+            sct_branch = 'unknown'
+        # print '  branch: ' + sct_branch
+    else:
+        install_type = 'package'
+    # fetch version
+    with open(path_sct + '/version.txt', 'r') as myfile:
+        version_sct = myfile.read().replace('\n', '')
+        # print '  version: ' + version_sct
+
+    # go back to previous dir
+    os.chdir(path_curr)
+    return install_type, sct_commit, sct_branch, version_sct
+
+#
+#
+#     # check if there is a .git repos
+#     if [-e ${SCT_DIR} /.git]; then
+#     # retrieve commit
+#     SCT_COMMIT = `git - -git - dir =${SCT_DIR} /.git
+#     rev - parse
+#     HEAD
+#     `
+#     # retrieve branch
+#     SCT_BRANCH = `git - -git - dir =${SCT_DIR} /.git
+#     branch | grep \ * | awk
+#     '{print $2}'
+#     `
+#     echo
+#     "Spinal Cord Toolbox ($SCT_BRANCH/$SCT_COMMIT)"
+#
+# else
+# echo
+# "Spinal Cord Toolbox (version: $SCT_VERSION)"
+# fi
+
+
 #=======================================================================================================================
 # check RAM usage
 # work only on Mac OSX
