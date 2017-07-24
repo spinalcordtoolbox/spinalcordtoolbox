@@ -36,9 +36,11 @@
 #########################################################################################
 usage:
 
-    sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8 
-
+    sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8
 """
+
+# TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
+
 import commands
 import copy_reg
 # import json
@@ -149,15 +151,15 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     if fname_database == '':
         sct.printv('Looking for an XLS file describing the database...')
         list_fname_database = glob.glob(folder_dataset+'*.xls*')
-    if list_fname_database == []:
-        sct.printv('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
-        return data_subjects, subjects_dir
-    elif len(list_fname_database) > 1:
-        sct.printv('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
-        return data_subjects, subjects_dir
-    else:
-        fname_database = list_fname_database[0]
-        sct.printv('  XLS file found: ' + fname_database, verbose)
+        if list_fname_database == []:
+            sct.printv('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
+            return data_subjects, subjects_dir
+        elif len(list_fname_database) > 1:
+            sct.printv('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
+            return data_subjects, subjects_dir
+        else:
+            fname_database = list_fname_database[0]
+            sct.printv('  XLS file found: ' + fname_database, verbose)
 
     # TODO: if fname_database is empty, check if xls or xlsx file exist in the database directory.
     # TODO: set default fname_database to ''
