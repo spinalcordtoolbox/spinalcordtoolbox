@@ -114,7 +114,7 @@ class DetectPMJ:
 
         self.generate_mask_pmj() # generate the mask with one voxel with value = 50 at the predicted PMJ position
 
-        pmj_coord_lst = self.get_pmj_coords() # return the coordinates of the predicted PMJ in the image space, in the original orientation
+        self.get_pmj_coords() # return the coordinates of the predicted PMJ in the image space, in the original orientation
 
         fname_out2return = self.tmp2ofolder() # save results to ofolder
 
@@ -132,17 +132,21 @@ class DetectPMJ:
             return os.path.join(self.path_out, self.fname_out)
         
         else:
-            return None, self.tmp_dir
+            return None
 
     def get_pmj_coords(self):
 
-        pmj_mask = Image(self.fname_out)
+        if self.pa_coord != -1: # If PMJ has been detected
+            pmj_mask = Image(self.fname_out)
 
-        printv('\tx_pmj = '+str(np.where(pmj_mask.data==50)[0][0]), self.verbose, 'normal')
-        printv('\ty_pmj = '+str(np.where(pmj_mask.data==50)[1][0]), self.verbose, 'normal')
-        printv('\tz_pmj = '+str(np.where(pmj_mask.data==50)[2][0]), self.verbose, 'normal')
+            printv('\tx_pmj = '+str(np.where(pmj_mask.data==50)[0][0]), self.verbose, 'normal')
+            printv('\ty_pmj = '+str(np.where(pmj_mask.data==50)[1][0]), self.verbose, 'normal')
+            printv('\tz_pmj = '+str(np.where(pmj_mask.data==50)[2][0]), self.verbose, 'normal')
 
-        return [np.where(pmj_mask.data==50)[0][0], np.where(pmj_mask.data==50)[1][0], np.where(pmj_mask.data==50)[2][0]]
+            return [np.where(pmj_mask.data==50)[0][0], np.where(pmj_mask.data==50)[1][0], np.where(pmj_mask.data==50)[2][0]]
+        
+        else:
+            return None
 
     def generate_mask_pmj(self):
 
@@ -169,6 +173,18 @@ class DetectPMJ:
             
             printv('\nPonto-Medullary Junction detected', self.verbose, 'normal')
 
+            if self.quality_control: # output QC image
+                printv('\nSave quality control images...', self.verbose, 'normal')
+
+                im = Image(''.join(extract_fname(self.fname_im)[1:]))
+                im_map = im.copy()
+                im_map.data *= 0 # empty mask
+                im_map.data[:, :, self.rl_coord] = img_pred.data
+
+                im.save_quality_control(plane='sagittal', n_slices=1, seg=im_map, thr=self.threshold, cmap_col='red-yellow', index_list=[self.rl_coord], path_output=os.path.abspath(self.path_out))
+                
+                del im
+
         else:
             self.pa_coord, self.is_coord = -1, -1
             
@@ -193,9 +209,14 @@ class DetectPMJ:
 
         if self.fname_seg is not None: # if the segmentation is provided, the 2D sagital slice is choosen accoding to the segmentation
             img_seg = Image(self.fname_seg)
-            z_mid_slice = img_seg.data[:,int(img_seg.dim[1]/2),:]
-            self.rl_coord = int(center_of_mass(z_mid_slice)[1]) # Right_left coordinate
+
+            z_mid_slice = img_seg.data[:,int(img_seg.dim[1]/2),:]            
+            if 1 in z_mid_slice: # if SC segmentation available at this slice
+                self.rl_coord = int(center_of_mass(z_mid_slice)[1]) # Right_left coordinate
+            else:
+                self.rl_coord = int(img_seg.dim[2]/2)
             del img_seg
+
         else: # if the segmentation is not provided, the 2D sagital slice is choosen as the mid-sagital slice of the input image
             img = Image(self.fname_im)
             self.rl_coord = int(img.dim[2]/2)  # Right_left coordinate
@@ -287,12 +308,6 @@ def main(args=None):
     if fname_out is not None:
         printv('\nDone! To view results, type:', verbose)
         printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red -t 0.7 & \n', verbose, 'info')
-
-    # """
-    #   - output a png with red dot : cf GM seg
-    #   - output coord
-    # """
-
 
 if __name__ == "__main__":
     main()
