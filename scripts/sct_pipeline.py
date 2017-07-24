@@ -129,17 +129,19 @@ def read_database(folder_dataset, specifications=None, path_data_base='/Volumes/
     # create empty list to return
     data_subjects, subjects_dir = [], []
     folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
-    ## read data base file and import to panda data frame
+    # TODO: if path_data_base is empty, check if xls or xlsx file exist in the database directory.
+    # TODO: set default path_data_base to ''
+    # read data base file and import to panda data frame
     if 'xl' in path_data_base.split('.')[-1]:
-        sct.printv('reading XLS', verbose, 'normal')
+        sct.printv('  Reading XLS: '+path_data_base, verbose, 'normal')
         data_base = pd.read_excel(path_data_base)
     elif path_data_base.split('.')[-1] == 'csv':
-        sct.printv('reading CSV', verbose, 'normal')
+        sct.printv('  Reading CSV', verbose, 'normal')
         data_base = pd.read_csv(path_data_base)
     else:
         sct.printv('ERROR: File '+path_data_base+' is in an incorrect format. Covered formats are: .xls, .xlsx, .csv', verbose, 'error')
     #
-    ## correct some values and clean panda data base
+    # correct some values and clean panda data base
     # convert columns to int
     to_int = ['gm_model', 'PAM50', 'MS_mapping']
     for key in to_int:
@@ -241,7 +243,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
         data_subjects, subjects_name = generate_data_list(folder_dataset)
     else:
         data_subjects, subjects_name = read_database(folder_dataset, specifications=data_specifications, path_data_base=path_data_base)
-    print "Number of subjects to process: " + str(len(data_subjects))
+    print "  Number of subjects to process: " + str(len(data_subjects))
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
