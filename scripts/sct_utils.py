@@ -713,7 +713,17 @@ def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from=
     msg['Subject'] = subject  # "SUBJECT OF THE EMAIL"
     body = message  # "TEXT YOU WANT TO SEND"
 
-    msg.attach(MIMEText(body, 'plain'))
+    # We must choose the body charset manually
+    for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+        try:
+            body.encode(body_charset)
+        except UnicodeError:
+            pass
+        else:
+            break
+
+    # msg.attach(MIMEText(body, 'plain'))
+    msg.attach(MIMEText(body.encode(body_charset), 'plain', body_charset))
 
     # filename = "NAME OF THE FILE WITH ITS EXTENSION"
     if filename:
@@ -724,6 +734,7 @@ def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from=
         part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
         msg.attach(part)
 
+    # send email
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
     server.login(addr_from, passwd_from)
