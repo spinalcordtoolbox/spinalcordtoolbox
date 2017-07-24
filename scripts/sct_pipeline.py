@@ -146,8 +146,16 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
 
     # if fname_database is empty, check if xls or xlsx file exist in the database directory.
+    sct.printv('Looking for an XLS file describing the database...')
     if fname_database == '':
-        fname_database = glob.glob(folder_dataset+'*.xsl*')
+        list_fname_database = glob.glob(folder_dataset+'*.xls*')
+    if list_fname_database == []:
+        sct.printv('WARNING: No XLS file found. Selecting all subjects and ignoring -sub field.', verbose, 'warning')
+    elif len(list_fname_database) > 1:
+        sct.printv('WARNING: More than one XLS file found. Selecting all subjects and ignoring -sub field.', verbose, 'warning')
+    else:
+        fname_database = list_fname_database[0]
+        sct.printv('XLS file found: ' + fname_database, verbose)
 
     # TODO: if fname_database is empty, check if xls or xlsx file exist in the database directory.
     # TODO: set default fname_database to ''
@@ -394,8 +402,7 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
-    dataset = arguments["-d"]
-    dataset = sct.slash_at_the_end(dataset, slash=1)
+    dataset = sct.slash_at_the_end(os.path.expanduser(arguments["-d"]), slash=1)
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
@@ -404,6 +411,8 @@ if __name__ == "__main__":
         data_specifications = arguments["-subj"]
     if "-file-subj" in arguments:
         fname_database = arguments["-file-subj"]
+    else:
+        fname_database = ''  # if empty, it will look for xls file automatically in database folder
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
