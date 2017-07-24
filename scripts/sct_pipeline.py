@@ -267,14 +267,19 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_specifications=None, fname_database='', verbose=1):
+def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
     """
-    Run a test function on the dataset using multiprocessing and save the results
-    :return: results
-    # results are organized as the following: tuple of (status, output, DataFrame with results)
-    """
+    Generate list of eligible subjects from folder and file containing database
+    Parameters
+    ----------
+    folder_dataset: path to database
+    data_specifications: field-based specifications for subject selection
+    fname_database: fname of XLS file that contains database
 
-    # generate data list from folder containing
+    Returns
+    -------
+    list_subj: list of subjects
+    """
     if data_specifications is None:
         list_subj = generate_data_list(folder_dataset)
     else:
@@ -282,9 +287,19 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
         list_subj = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
     print "  Number of subjects to process: " + str(len(list_subj))
 
-    # if no subject to process, exit there
+    # if no subject to process, raise exception
     if len(list_subj) == 0:
         raise Exception('No subject to process. Exit function.')
+
+    return list_subj
+
+
+def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None, verbose=1):
+    """
+    Run a test function on the dataset using multiprocessing and save the results
+    :return: results
+    # results are organized as the following: tuple of (status, output, DataFrame with results)
+    """
 
     # add full path to each subject
     data_subjects = [sct.slash_at_the_end(folder_dataset + i, 1) for i in list_subj]
@@ -410,7 +425,7 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
-    dataset = sct.slash_at_the_end(os.path.expanduser(arguments["-d"]), slash=1)
+    path_data = sct.slash_at_the_end(os.path.expanduser(arguments["-d"]), slash=1)
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
@@ -478,15 +493,20 @@ if __name__ == "__main__":
 
     # display command
     print '\nCommand: "' + function_to_test + ' ' + parameters
-    print 'Dataset: ' + dataset
+    print 'Dataset: ' + path_data
 
     # test function
     try:
+
+        # retrieve subjects list
+        list_subj = get_list_subj(path_data, data_specifications=data_specifications, fname_database=fname_database)
+
         # during testing, redirect to standard output to avoid stacking error messages in the general log
         if create_log:
             handle_log.pause()
 
-        tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, data_specifications, fname_database=fname_database, verbose=verbose)
+        # run function
+        tests_ret = run_function(function_to_test, path_data, list_subj, parameters='', nb_cpu=None, verbose=1)
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
 
