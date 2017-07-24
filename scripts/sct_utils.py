@@ -675,10 +675,13 @@ def printv(string, verbose=1, type='normal'):
 
     if verbose:
         # Print color only if the output is the terminal
-        if sys.stdout.isatty():
-            color = colors.get(type, bcolors.normal)
-            print(color + string + bcolors.normal)
-        else:
+        try:
+            if sys.stdout.isatty():
+                color = colors.get(type, bcolors.normal)
+                print(color + string + bcolors.normal)
+            else:
+                print(string)
+        except Exception as e:
             print(string)
 
     if type == 'error':
