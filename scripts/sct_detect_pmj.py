@@ -30,42 +30,48 @@ def get_parser():
                                  ' located at the predicted PMJ level, is output ("*_pmj.nii.gz").\n'
                                  ' If the PMJ is not detected, anything is output from this function.')
     parser.add_option(name="-i",
-                      type_value="file",
-                      description="input image.",
-                      mandatory=True,
-                      example="t2.nii.gz")
+                        type_value="file",
+                        description="input image.",
+                        mandatory=True,
+                        example="t2.nii.gz")
     parser.add_option(name="-c",
-                      type_value="multiple_choice",
-                      description="type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
-                      mandatory=True,
-                      example=["t1", "t2"])
+                        type_value="multiple_choice",
+                        description="type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
+                        mandatory=True,
+                        example=["t1", "t2"])
     parser.add_option(name="-s",
-                      type_value="file",
-                      description="SC segmentation or SC centerline mask. To provide this mask could help the detection of the PMJ",
-                      mandatory=False,
-                      example="t2_seg.nii.gz")
+                        type_value="file",
+                        description="SC segmentation or SC centerline mask. To provide this mask could help the detection of the PMJ",
+                        mandatory=False,
+                        example="t2_seg.nii.gz")
     parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="Output folder",
-                      mandatory=False,
-                      example="My_Output_Folder/")
+                        type_value="folder_creation",
+                        description="Output folder",
+                        mandatory=False,
+                        example="My_Output_Folder/")
+    parser.add_option(name="-qc",
+                        type_value="multiple_choice",
+                        description="Output png image for quality control.",
+                        mandatory=False,
+                        example=["0", "1"],
+                        default_value="0")
     parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="Remove temporary files.",
-                      mandatory=False,
-                      default_value="1",
-                      example=["0", "1"])
+                        type_value="multiple_choice",
+                        description="Remove temporary files.",
+                        mandatory=False,
+                        default_value="1",
+                        example=["0", "1"])
     parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=["0", "1", "2"],
-                      default_value="1")
+                        type_value='multiple_choice',
+                        description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
+                        mandatory=False,
+                        example=["0", "1", "2"],
+                        default_value="1")
 
     return parser
 
 class DetectPMJ:
-    def __init__(self, fname_im, contrast, fname_seg, path_out, verbose):
+    def __init__(self, fname_im, contrast, fname_seg, path_out, quality_control, verbose):
 
         self.fname_im = fname_im
         self.contrast = contrast
@@ -73,6 +79,8 @@ class DetectPMJ:
         self.fname_seg = fname_seg
 
         self.path_out = path_out
+
+        self.quality_control = quality_control
 
         self.verbose = verbose
 
@@ -106,6 +114,8 @@ class DetectPMJ:
 
         self.generate_mask_pmj() # generate the mask with one voxel with value = 50 at the predicted PMJ position
 
+        pmj_coord_lst = self.get_pmj_coords() # return the coordinates of the predicted PMJ in the image space, in the original orientation
+
         fname_out2return = self.tmp2ofolder() # save results to ofolder
 
         return fname_out2return, self.tmp_dir
@@ -123,6 +133,16 @@ class DetectPMJ:
         
         else:
             return None, self.tmp_dir
+
+    def get_pmj_coords(self):
+
+        pmj_mask = Image(self.fname_out)
+
+        printv('\tx_pmj = '+str(np.where(pmj_mask.data==50)[0][0]), self.verbose, 'normal')
+        printv('\ty_pmj = '+str(np.where(pmj_mask.data==50)[1][0]), self.verbose, 'normal')
+        printv('\tz_pmj = '+str(np.where(pmj_mask.data==50)[2][0]), self.verbose, 'normal')
+
+        return [np.where(pmj_mask.data==50)[0][0], np.where(pmj_mask.data==50)[1][0], np.where(pmj_mask.data==50)[2][0]]
 
     def generate_mask_pmj(self):
 
@@ -237,19 +257,25 @@ def main(args=None):
     else:
         path_results = './'
 
+    if '-qc' in arguments:
+        qc = bool(int(arguments['-qc']))
+    else:
+        qc = False
+
     # Remove temp folder
     if '-r' in arguments:
         rm_tmp = bool(int(arguments['-r']))
     else:
         rm_tmp = True
 
+    # Verbosity
     if '-v' in arguments:
         verbose = int(arguments['-v'])
     else:
         verbose = '1'
 
     # Initialize DetectPMJ
-    detector = DetectPMJ(fname_im=fname_im, contrast=contrast, fname_seg=fname_seg, path_out=path_results, verbose=verbose)
+    detector = DetectPMJ(fname_im=fname_im, contrast=contrast, fname_seg=fname_seg, path_out=path_results, quality_control=qc, verbose=verbose)
     # run the extraction
     fname_out, tmp_dir = detector.apply()
 
