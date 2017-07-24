@@ -127,14 +127,14 @@ def generate_data_list(folder_dataset, verbose=1):
     return data_subjects, subjects_dir
 
 
-def read_database(folder_dataset, specifications=None, path_data_base='', verbose=1):
+def read_database(folder_dataset, specifications=None, fname_database='', verbose=1):
     """
-    Read subject database from xls/csv file.
+    Read subject database from xls file.
     Parameters
     ----------
     folder_dataset
     specifications
-    path_data_base
+    fname_database
     verbose
 
     Returns
@@ -145,21 +145,21 @@ def read_database(folder_dataset, specifications=None, path_data_base='', verbos
     data_subjects, subjects_dir = [], []
     folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
 
-    # if path_data_base is empty, check if xls or xlsx file exist in the database directory.
-    if path_data_base == '':
-        path_data_base = glob.glob(folder_dataset)
+    # if fname_database is empty, check if xls or xlsx file exist in the database directory.
+    if fname_database == '':
+        fname_database = glob.glob(folder_dataset+'*.xsl*')
 
-    # TODO: if path_data_base is empty, check if xls or xlsx file exist in the database directory.
-    # TODO: set default path_data_base to ''
+    # TODO: if fname_database is empty, check if xls or xlsx file exist in the database directory.
+    # TODO: set default fname_database to ''
     # read data base file and import to panda data frame
-    if 'xl' in path_data_base.split('.')[-1]:
-        sct.printv('  Reading XLS: '+path_data_base, verbose, 'normal')
-        data_base = pd.read_excel(path_data_base)
-    elif path_data_base.split('.')[-1] == 'csv':
-        sct.printv('  Reading CSV', verbose, 'normal')
-        data_base = pd.read_csv(path_data_base)
+    if 'xl' in fname_database.split('.')[-1]:
+        sct.printv('  Reading XLS: '+fname_database, verbose, 'normal')
+        data_base = pd.read_excel(fname_database)
+    # elif fname_database.split('.')[-1] == 'csv':
+    #     sct.printv('  Reading CSV', verbose, 'normal')
+    #     data_base = pd.read_csv(fname_database)
     else:
-        sct.printv('ERROR: File '+path_data_base+' is in an incorrect format. Covered formats are: .xls, .xlsx, .csv', verbose, 'error')
+        sct.printv('ERROR: File '+fname_database+' is in an incorrect format. Covered formats are: .xls and .xlsx', verbose, 'error')
     #
     # correct some values and clean panda data base
     # convert columns to int
@@ -251,7 +251,7 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_specifications=None, path_data_base='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx', verbose=1):
+def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_specifications=None, fname_database='', verbose=1):
     """
     Run a test function on the dataset using multiprocessing and save the results
     :return: results
@@ -262,7 +262,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
     if data_specifications is None:
         data_subjects, subjects_name = generate_data_list(folder_dataset)
     else:
-        data_subjects, subjects_name = read_database(folder_dataset, specifications=data_specifications, path_data_base=path_data_base)
+        data_subjects, subjects_name = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
     print "  Number of subjects to process: " + str(len(data_subjects))
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
@@ -343,8 +343,8 @@ def get_parser():
 
     parser.add_option(name="-file-subj",
                       type_value="file",
-                      description="Excel spreadsheet containing the subjects information (center, study, subject ID, demographics, ...).",
-                      default_value='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx',
+                      description="Excel spreadsheet containing database information (center, study, subject, demographics, ...). If this field is empty, it will search for an xls file located in the database folder. If no xls file is present, all subjects will be selected.",
+                      default_value='',
                       mandatory=False)
 
     parser.add_option(name="-cpu-nb",
@@ -403,7 +403,7 @@ if __name__ == "__main__":
     if "-subj" in arguments:
         data_specifications = arguments["-subj"]
     if "-file-subj" in arguments:
-        path_data_specifications = arguments["-file-subj"]
+        fname_database = arguments["-file-subj"]
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
@@ -490,7 +490,7 @@ if __name__ == "__main__":
         if create_log:
             handle_log.pause()
 
-        tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, data_specifications, path_data_base=path_data_specifications, verbose=verbose)
+        tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, data_specifications, fname_database=fname_database, verbose=verbose)
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
 
