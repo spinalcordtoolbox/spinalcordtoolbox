@@ -378,10 +378,10 @@ if __name__ == "__main__":
     if "-p" in arguments:
         parameters = arguments["-p"]
     data_specifications = None
-    if "-spec" in arguments:
-        data_specifications = arguments["-spec"]
-    if "-file-spec" in arguments:
-        path_data_specifications = arguments["-file-spec"]
+    if "-subj" in arguments:
+        data_specifications = arguments["-subj"]
+    if "-file-subj" in arguments:
+        path_data_specifications = arguments["-file-subj"]
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
