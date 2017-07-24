@@ -137,7 +137,7 @@ def read_database(folder_dataset, specifications=None, path_data_base='/Volumes/
         sct.printv('reading CSV', verbose, 'normal')
         data_base = pd.read_csv(path_data_base)
     else:
-        sct.printv('ERROR: File '+path_data_base+' is in an incorrect format. Covered format are: .xls, .xlsx, .csv', verbose, 'error')
+        sct.printv('ERROR: File '+path_data_base+' is in an incorrect format. Covered formats are: .xls, .xlsx, .csv', verbose, 'error')
     #
     ## correct some values and clean panda data base
     # convert columns to int
