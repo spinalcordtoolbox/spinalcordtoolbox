@@ -36,12 +36,14 @@
 #########################################################################################
 usage:
 
-    sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8 
-
+    sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8
 """
+
+# TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
+
 import commands
 import copy_reg
-import json
+# import json
 import os
 import platform
 import signal
@@ -56,6 +58,7 @@ else:
 import pandas as pd
 import sct_utils as sct
 import msct_parser
+import glob
 
 # get path of the toolbox
 # TODO: put it back below when working again (julien 2016-04-04)
@@ -110,36 +113,61 @@ def generate_data_list(folder_dataset, verbose=1):
     This function return a list of directory (in folder_dataset) in which the contrast is present.
     :return data:
     """
-    data_subjects, subjects_dir = [], []
+    list_subj = []
 
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
         if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
-            data_subjects.append(folder_dataset + subject_dir + '/')
-            subjects_dir.append(subject_dir)
+            # data_subjects.append(folder_dataset + subject_dir + '/')
+            list_subj.append(subject_dir)
 
-    if not data_subjects:
+    if not list_subj:
         sct.printv('ERROR: No subject data were found in ' + folder_dataset + '. '
                    'Please organize your data correctly or provide a correct dataset.',
                    verbose=verbose, type='error')
 
-    return data_subjects, subjects_dir
+    return list_subj
 
-def read_database(folder_dataset, specifications=None, path_data_base='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx', verbose=1):
-    # create empty list to return
-    data_subjects, subjects_dir = [], []
-    folder_dataset = sct.slash_at_the_end(folder_dataset, slash=1)
-    ## read data base file and import to panda data frame
-    if 'xl' in path_data_base.split('.')[-1]:
-        sct.printv('reading XLS', verbose, 'normal')
-        data_base = pd.read_excel(path_data_base)
-    elif path_data_base.split('.')[-1] == 'csv':
-        sct.printv('reading CSV', verbose, 'normal')
-        data_base = pd.read_csv(path_data_base)
-    else:
-        sct.printv('ERROR: File '+path_data_base+' is in an incorrect format. Covered format are: .xls, .xlsx, .csv', verbose, 'error')
+
+def read_database(folder_dataset, specifications=None, fname_database='', verbose=1):
+    """
+    Read subject database from xls file.
+    Parameters
+    ----------
+    folder_dataset: path to database
+    specifications: field-based specifications for subject selection
+    fname_database: fname of XLS file that contains database
+    verbose:
+
+    Returns
+    -------
+    subj_selected: list of subjects selected
+    """
+    # initialization
+    subj_selected = []
+
+    # if fname_database is empty, check if xls or xlsx file exist in the database directory.
+    if fname_database == '':
+        sct.printv('  Looking for an XLS file describing the database...')
+        list_fname_database = glob.glob(folder_dataset+'*.xls*')
+        if list_fname_database == []:
+            sct.printv('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
+            return subj_selected
+        elif len(list_fname_database) > 1:
+            sct.printv('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
+            return subj_selected
+        else:
+            fname_database = list_fname_database[0]
+            # sct.printv('    XLS file found: ' + fname_database, verbose)
+
+    # read data base file and import to panda data frame
+    sct.printv('  Reading XLS: ' + fname_database, verbose, 'normal')
+    try:
+        data_base = pd.read_excel(fname_database)
+    except:
+        sct.printv('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.', verbose, 'error')
     #
-    ## correct some values and clean panda data base
+    # correct some values and clean panda data base
     # convert columns to int
     to_int = ['gm_model', 'PAM50', 'MS_mapping']
     for key in to_int:
@@ -165,7 +193,7 @@ def read_database(folder_dataset, specifications=None, path_data_base='/Volumes/
     ## select subjects from specification
     # type of field for which the subject should be selected if the field CONTAINS the requested value (as opposed to the field is equal to the requested value)
     list_field_multiple_choice = ['contrasts', 'sc seg', 'gm seg', 'lesion seg']
-    list_field_multiple_choice_tmp  = copy.deepcopy(list_field_multiple_choice)
+    list_field_multiple_choice_tmp = copy.deepcopy(list_field_multiple_choice)
     for field in list_field_multiple_choice_tmp:
         list_field_multiple_choice.append('_'.join(field.split(' ')))
     #
@@ -178,16 +206,26 @@ def read_database(folder_dataset, specifications=None, path_data_base='/Volumes/
             # select subject if field contains the requested value
             data_selected = data_selected[data_selected[field].str.contains('|'.join(list_val)).fillna(False)]
     #
-    ## create list of subjects
-    subjects_dir = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_selected['Center'], data_selected['Study'], data_selected['Subject'])]
-    # make sure folder exist in data
-    for subj in subjects_dir:
-        if not os.path.isdir(folder_dataset+subj):
-            subjects_dir.pop(subjects_dir.index(subj))
+    ## retrieve list of subjects from database
+    database_subj = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_base['Center'], data_base['Study'], data_base['Subject'])]
+    ## retrieve list of subjects from database selected
+    database_subj_selected = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_selected['Center'], data_selected['Study'], data_selected['Subject'])]
+
+    # retrieve folders from folder_database
+    list_folder_dataset = [i for i in os.listdir(folder_dataset) if os.path.isdir(folder_dataset+i)]
+
+    # loop across folders
+    for ifolder in list_folder_dataset:
+        # check if folder is listed in database
+        if ifolder in database_subj:
+            # check if subject is selected
+            if ifolder in database_subj_selected:
+                subj_selected.append(ifolder)
+        # if not, report to user
         else:
-            data_subjects.append(sct.slash_at_the_end(folder_dataset+subj, slash=1))
-    #
-    return data_subjects, subjects_dir
+            sct.printv('WARNING: Subject '+ifolder+' is not listed in the database.', verbose, 'warning')
+
+    return subj_selected
 
 
 def process_results(results, subjects_name, function, folder_dataset, parameters):
@@ -229,19 +267,42 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_specifications=None, path_data_base='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx', verbose=1):
+def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
+    """
+    Generate list of eligible subjects from folder and file containing database
+    Parameters
+    ----------
+    folder_dataset: path to database
+    data_specifications: field-based specifications for subject selection
+    fname_database: fname of XLS file that contains database
+
+    Returns
+    -------
+    list_subj: list of subjects
+    """
+    if data_specifications is None:
+        list_subj = generate_data_list(folder_dataset)
+    else:
+        print 'Selecting subjects using the following specifications: ' + data_specifications
+        list_subj = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
+    print "  Number of subjects to process: " + str(len(list_subj))
+
+    # if no subject to process, raise exception
+    if len(list_subj) == 0:
+        raise Exception('No subject to process. Exit function.')
+
+    return list_subj
+
+
+def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None, verbose=1):
     """
     Run a test function on the dataset using multiprocessing and save the results
     :return: results
     # results are organized as the following: tuple of (status, output, DataFrame with results)
     """
 
-    # generate data list from folder containing
-    if data_specifications is None:
-        data_subjects, subjects_name = generate_data_list(folder_dataset)
-    else:
-        data_subjects, subjects_name = read_database(folder_dataset, specifications=data_specifications, path_data_base=path_data_base)
-    print "Number of subjects to process: " + str(len(data_subjects))
+    # add full path to each subject
+    data_subjects = [sct.slash_at_the_end(folder_dataset + i, 1) for i in list_subj]
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -260,7 +321,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, data_spe
         pool.join()  # waiting for all the jobs to be done
         compute_time = time() - compute_time
         all_results = async_results.get()
-        results = process_results(all_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        results = process_results(all_results, list_subj, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
 
     except KeyboardInterrupt:
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
@@ -304,14 +365,6 @@ def get_parser():
                                   "Image paths must be contains in the arguments list.",
                       mandatory=False)
 
-    parser.add_option(name="-json",
-                      type_value="str",
-                      description="Requirements on center, study, ... that must be satisfied by the json file of each tested subjects\n"
-                                  "Syntax:  center=unf,study=errsm,gm_model=0",
-                      deprecated_by='-spec',
-                      deprecated_rm=True,
-                      mandatory=False)
-
     parser.add_option(name="-subj",
                       type_value="str",
                       description="Choose the subjects to process based on center, study, [...] to select the testing dataset\n"
@@ -319,10 +372,10 @@ def get_parser():
                       example="center=unf,twh:gm_model=0:contrasts=t2,t2s",
                       mandatory=False)
 
-    parser.add_option(name="-file-subj",
+    parser.add_option(name="-subj-file",
                       type_value="file",
-                      description="Excel spreadsheet containing the subjects information (center, study, subject ID, demographics, ...).",
-                      default_value='/Volumes/Public_JCA/sct_testing/large/_data_mri.xlsx',
+                      description="Excel spreadsheet containing database information (center, study, subject, demographics, ...). If this field is empty, it will search for an xls file located in the database folder. If no xls file is present, all subjects will be selected.",
+                      default_value='',
                       mandatory=False)
 
     parser.add_option(name="-cpu-nb",
@@ -368,20 +421,21 @@ if __name__ == "__main__":
     addr_from = 'spinalcordtoolbox@gmail.com'
 
     # get parameters
-    print_if_error = False  # print error message if function crashes (could be messy)
+    print_if_error = True  # print error message if function crashes (could be messy)
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
-    dataset = arguments["-d"]
-    dataset = sct.slash_at_the_end(dataset, slash=1)
+    path_data = sct.slash_at_the_end(os.path.expanduser(arguments["-d"]), slash=1)
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
     data_specifications = None
-    if "-spec" in arguments:
-        data_specifications = arguments["-spec"]
-    if "-file-spec" in arguments:
-        path_data_specifications = arguments["-file-spec"]
+    if "-subj" in arguments:
+        data_specifications = arguments["-subj"]
+    if "-subj-file" in arguments:
+        fname_database = arguments["-subj-file"]
+    else:
+        fname_database = ''  # if empty, it will look for xls file automatically in database folder
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
@@ -413,26 +467,10 @@ if __name__ == "__main__":
         handle_log = sct.ForkStdoutToFile(fname_log)
     print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
-    # get path of the toolbox
-    path_script = os.path.dirname(__file__)
-    path_sct = os.path.dirname(path_script)
 
-    # fetch true commit number and branch (do not use commit.txt which is wrong)
-    path_curr = os.path.abspath(os.curdir)
-    os.chdir(path_sct)
-    sct_commit = commands.getoutput('git rev-parse HEAD')
-    if not sct_commit.isalnum():
-        print 'WARNING: Cannot retrieve SCT commit'
-        sct_commit = 'unknown'
-        sct_branch = 'unknown'
-    else:
-        sct_branch = commands.getoutput('git branch --contains ' + sct_commit).strip('* ')
-    # with open (path_sct+"/version.txt", "r") as myfile:
-    #     version_sct = myfile.read().replace('\n', '')
-    # with open (path_sct+"/commit.txt", "r") as myfile:
-    #     commit_sct = myfile.read().replace('\n', '')
-    print 'SCT commit/branch: ' + sct_commit + '/' + sct_branch
-    os.chdir(path_curr)
+    # fetch SCT version
+    install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
+    print 'SCT version/commit/branch: ' + version_sct + '/' + sct_commit + '/' + sct_branch
 
     # check OS
     platform_running = sys.platform
@@ -455,15 +493,20 @@ if __name__ == "__main__":
 
     # display command
     print '\nCommand: "' + function_to_test + ' ' + parameters
-    print 'Dataset: ' + dataset
+    print 'Dataset: ' + path_data
 
     # test function
     try:
+
+        # retrieve subjects list
+        list_subj = get_list_subj(path_data, data_specifications=data_specifications, fname_database=fname_database)
+
         # during testing, redirect to standard output to avoid stacking error messages in the general log
         if create_log:
             handle_log.pause()
 
-        tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, data_specifications, path_data_base=path_data_specifications, verbose=verbose)
+        # run function
+        tests_ret = run_function(function_to_test, path_data, list_subj, parameters='', nb_cpu=None, verbose=1)
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
 
@@ -573,6 +616,6 @@ if __name__ == "__main__":
         with open(fname_log, "r") as fp:
             message = fp.read()
         # send email
-        sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log)
+        sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log, html=True)
         # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
         print 'Email sent!\n'
