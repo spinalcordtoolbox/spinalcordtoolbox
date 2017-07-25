@@ -20,6 +20,7 @@ import getopt
 from commands import getstatusoutput
 import sct_utils as sct
 from msct_parser import Parser
+from msct_image import Image
 
 # DEFAULT PARAMETERS
 
@@ -86,11 +87,17 @@ def main():
     else:
         path_out, file_out, ext_out = sct.extract_fname(fname_warp_final)
 
+    # Check dimension of data (cf. issue #1419)
+    dimensionality = '3'
+    im_warp = Image(fname_warp_list[0])
+    if im_warp.data.shape[2] in (0, 1):
+        dimensionality = '2'
+
     # Concatenate warping fields
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
     fname_warp_list_invert.reverse()
-    cmd = 'isct_ComposeMultiTransform 3 warp_final' + ext_out + ' -R ' + fname_dest + ' ' + ' '.join(fname_warp_list_invert)
+    cmd = 'isct_ComposeMultiTransform '+dimensionality+' warp_final' + ext_out + ' -R ' + fname_dest + ' ' + ' '.join(fname_warp_list_invert)
     sct.printv('>> ' + cmd, verbose)
     status, output = getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
 
