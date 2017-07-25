@@ -165,7 +165,7 @@ class DetectPMJ:
         fig,ax = plt.subplots(1)
         ax.imshow(np.rot90(slice_arr), cmap='gray')
 
-        rect = patches.Rectangle((coord_lst[0]-10,slice_arr.shape[1]-coord_lst[1]-10),20,20,linewidth=2,edgecolor='g',facecolor='none')
+        rect = patches.Rectangle((coord_lst[0]-10,slice_arr.shape[1]-coord_lst[1]-10),20,20,linewidth=2,edgecolor='lime',facecolor='none')
         ax.add_patch(rect)
 
         plt.axis('off')
