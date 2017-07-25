@@ -489,7 +489,12 @@ class ClickViewer(Viewer):
             visualization_parameters = ParamMultiImageVisualization([ParamImageVisualization()])
         super(ClickViewer, self).__init__(list_images, visualization_parameters)
 
-        self.declaration_global_variables_general(orientation_subplot)
+        self.primary_subplot = orientation_subplot[0]
+        self.secondary_subplot = orientation_subplot[1]
+
+        self.current_slice = 0
+        self.number_of_slices = 0
+        self.gap_inter_slice = 0
 
         self.compute_offset()
         self.pad_data()
@@ -1987,6 +1992,7 @@ def get_parser():
 
     return parser
 
+
 class ParamImageVisualization(object):
     def __init__(self, id='0', mode='image', cmap='gray', interp='nearest', vmin='0', vmax='99', vmean='98', vmode='percentile', alpha='1.0'):
         self.id = id
@@ -1999,13 +2005,9 @@ class ParamImageVisualization(object):
         self.vmode = vmode
         self.alpha = alpha
 
-    def update(self, params):
-        list_objects = params.split(',')
-        for obj in list_objects:
-            if len(obj) < 2:
-                sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
-            objs = obj.split('=')
-            setattr(self, objs[0], objs[1])
+
+
+
 
 class ParamMultiImageVisualization(object):
     """
