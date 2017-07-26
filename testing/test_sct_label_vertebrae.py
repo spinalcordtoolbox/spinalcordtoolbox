@@ -75,12 +75,12 @@ def test(path_data='', parameters=''):
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
 
     # Check if input files exist
-    if os.path.isfile(dict_param_with_path['-i']):
+    if not os.path.isfile(dict_param_with_path['-i']):
         status = 200
         output += '\nERROR: This file does not exist: ' + dict_param_with_path['-i']
         write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-    if os.path.isfile(dict_param_with_path['-s']):
+    if not os.path.isfile(dict_param_with_path['-s']):
         status = 200
         output += '\nERROR: This file does not exist: ' + dict_param_with_path['-s']
         write_to_log_file(fname_log, output, 'w')
