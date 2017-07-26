@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Charley
-# Modified: 2017-06-13
+# Modified: 2017-07-26
 #
 # About the license: see the file LICENSE.TXT
 
@@ -63,43 +63,47 @@ def get_parser():
                       type_value="str",
                       description="Path to folder containing the atlas/template registered to the anatomical image.",
                       mandatory=False,
-                      default_value=Param().path_template,
                       example="./label")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
                       mandatory=False,
-                      default_value=Param().path_results,
                       example='./')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
                       mandatory=False,
-                      default_value=str(int(Param().rm_tmp)),
+                      default_value='1',
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value='multiple_choice',
                       description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
                       mandatory=False,
                       example=['0', '1', '2'],
-                      default_value=str(Param().verbose))
+                      default_value='1')
 
     return parser
 
 class AnalyzeLeion:
-  def __init__(self, param=None):
-    self.param = param if param is not None else Param()
+  def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
+    
+    self.fname_mask = fname_mask
+    self.fname_sc = fname_sc
+    self.fname_ref = fname_ref
+    self.path_template = path_template
+    self.path_ofolder = path_ofolder
+    self.verbose = verbose
 
     # create tmp directory
-    self.tmp_dir = tmp_create(verbose=self.param.verbose)  # path to tmp directory
+    self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
 
     self.fname_label = None
 
     data_dct = {}
     column_lst = ['label', 'volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
-    if self.param.fname_ref is not None:
+    if self.fname_ref is not None:
       for feature in ['mean', 'std']:
-        column_lst.append(feature+'_'+extract_fname(self.param.fname_ref)[1])
+        column_lst.append(feature+'_'+extract_fname(self.fname_ref)[1])
     for column in column_lst:
       data_dct[column] = None
     self.data_pd = pd.DataFrame(data=data_dct,index=range(0),columns=column_lst)
@@ -110,9 +114,9 @@ class AnalyzeLeion:
 
     self.volumes = None
 
-    self.path_levels = self.param.path_template+'template/PAM50_levels.nii.gz'
-    self.path_gm = self.param.path_template+'template/PAM50_gm.nii.gz'
-    self.path_wm = self.param.path_template+'template/PAM50_wm.nii.gz'
+    self.path_levels = self.path_template+'template/PAM50_levels.nii.gz'
+    self.path_gm = self.path_template+'template/PAM50_gm.nii.gz'
+    self.path_wm = self.path_template+'template/PAM50_wm.nii.gz'
     self.vert_lst = None
 
     self.excel_name = None
@@ -428,66 +432,98 @@ class AnalyzeLeion:
 
     os.chdir(self.tmp_dir) # go to tmp directory
 
-class Param:
-  def __init__(self):
-    self.fname_im = None
-    self.fname_seg = None
-    self.fname_ref = None
-    self.path_results = './'
-    self.path_template = './label'
-    self.verbose = '1'
-    self.rm_tmp = True
+# class Param:
+#   def __init__(self):
+#     self.fname_im = None
+#     self.fname_seg = None
+#     self.fname_ref = None
+#     self.path_results = './'
+#     self.path_template = './label'
+#     self.verbose = '1'
+#     self.rm_tmp = True
 
 def main(args=None):
   if args is None:
     args = sys.argv[1:]
 
-  # create param object
-  param = Param()
+  # # create param object
+  # param = Param()
 
   # get parser
   parser = get_parser()
   arguments = parser.parse(args)
 
   # set param arguments ad inputted by user
-  param.fname_im = arguments["-m"]
+  fname_im = arguments["-m"]
 
+  # SC segmentation
   if '-s' in arguments:
-    param.fname_seg = arguments["-s"]
+    fname_seg = arguments["-s"]
+    if not os.path.isfile(fname_seg):
+      fname_seg = None
+      printv('WARNING: -s input file: "' + arguments['-s'] + '" does not exist.\n', 1, 'warning')
+  else:
+    fname_seg = None
+
+  # Reference image
   if '-i' in arguments:
-    param.fname_ref = arguments["-i"]
+    fname_ref = arguments["-i"]
+    if not os.path.isfile(fname_seg):
+      fname_ref = None
+      printv('WARNING: -i input file: "' + arguments['-i'] + '" does not exist.\n', 1, 'warning')
+  else:
+    fname_ref = None
 
+  # Path to template
   if '-f' in arguments:
-    param.path_template = slash_at_the_end(arguments["-f"], slash=1)
-    if not os.path.isdir(param.path_template) and os.path.exists(param.path_template):
-      sct.printv("ERROR output directory %s is not a valid directory" % param.path_template, 1, 'error')
+    path_template = slash_at_the_end(arguments["-f"], slash=1)
+    if not os.path.isdir(path_template) and os.path.exists(path_template):
+      path_template = None
+      sct.printv("ERROR output directory %s is not a valid directory" % path_template, 1, 'error')
+  else:
+    path_template = None
 
+   # Output Folder
   if '-ofolder' in arguments:
-    param.path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
-  if not os.path.isdir(param.path_results) and os.path.exists(param.path_results):
-    sct.printv("ERROR output directory %s is not a valid directory" % param.path_results, 1, 'error')
-  if not os.path.exists(param.path_results):
-    os.makedirs(param.path_results)
+    path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
+    if not os.path.isdir(path_results) and os.path.exists(path_results):
+      printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
+    if not os.path.exists(path_results):
+      os.makedirs(path_results)
+  else:
+    path_results = './'
 
+  # Remove temp folder
   if '-r' in arguments:
-    param.rm_tmp = bool(int(arguments['-r']))
+    rm_tmp = bool(int(arguments['-r']))
+  else:
+    rm_tmp = True
+
+  # Verbosity
   if '-v' in arguments:
-    param.verbose = bool(int(arguments['-v']))
+    verbose = int(arguments['-v'])
+  else:
+    verbose = '1'
 
   # create the Lesion constructor
-  lesion_obj = AnalyzeLeion(param=param)
-  # run the analyze
-  lesion_obj.analyze()
+  lesion_obj = AnalyzeLeion(fname_mask=fname_im, 
+                            fname_sc=fname_seg, 
+                            fname_ref=fname_ref, 
+                            path_template=path_template, 
+                            path_ofolder=path_results,
+                            verbose=verbose)
+  # # run the analyze
+  # lesion_obj.analyze()
 
-  # remove tmp_dir
-  if param.rm_tmp:
-    shutil.rmtree(lesion_obj.tmp_dir)
+  # # remove tmp_dir
+  # if param.rm_tmp:
+  #   shutil.rmtree(tmp_dir)
         
-  printv('\nDone! To view the labeled lesion file (one value per lesion), type:', param.verbose)
-  if param.fname_ref is not None:
-    printv('fslview ' + param.path_results + param.fname_ref + ' ' + param.path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
-  else:
-    printv('fslview ' + param.path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')    
+  # printv('\nDone! To view the labeled lesion file (one value per lesion), type:', param.verbose)
+  # if param.fname_ref is not None:
+  #   printv('fslview ' + path_results + fname_ref + ' ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
+  # else:
+  #   printv('fslview ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')    
     
 if __name__ == "__main__":
     main()
