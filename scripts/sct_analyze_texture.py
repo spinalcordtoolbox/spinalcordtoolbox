@@ -116,7 +116,7 @@ class ExtractGLCM:
         self.ifolder2tmp()
 
         # fill self.dct_metric --> for each key_metric: create an Image with zero values
-        self.init_metric_im()
+        # self.init_metric_im()
 
         # fill self.dct_im_seg --> extract axial slices from self.param.fname_im and self.param.fname_seg
         self.extract_slices()
@@ -188,30 +188,39 @@ class ExtractGLCM:
         # extract axial slices in self.dct_im_seg
         self.dct_im_seg['im'], self.dct_im_seg['seg'] = [im.data[:, :, z] for z in range(im.dim[2])], [seg.data[:, :, z] for z in range(im.dim[2])]
 
-    def init_metric_im(self):
-        # open image and re-orient it to RPI if needed
-        im_tmp = Image(self.param.fname_im)
-        if self.orientation_im != self.orientation_extraction:
-            im_tmp = set_orientation(im_tmp, self.orientation_extraction)
+    # def init_metric_im(self):
+    #     # open image and re-orient it to RPI if needed
+    #     im_tmp = Image(self.param.fname_im)
+    #     if self.orientation_im != self.orientation_extraction:
+    #         im_tmp = set_orientation(im_tmp, self.orientation_extraction)
 
-        # create Image objects with zeros values for each output image needed
-        for m in self.metric_lst:
-            im_2save = im_tmp.copy()
-            im_2save.changeType(type='float64')
-            im_2save.data *= 0
-            fname_out = add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_' + m)
-            im_2save.setFileName(fname_out)
-            im_2save.save()
-            self.fname_metric_lst[m] = fname_out
+    #     # create Image objects with zeros values for each output image needed
+    #     for m in self.metric_lst:
+    #         im_2save = im_tmp.copy()
+    #         im_2save.changeType(type='float64')
+    #         im_2save.data *= 0
+    #         fname_out = add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_' + m)
+    #         im_2save.setFileName(fname_out)
+    #         im_2save.save()
+    #         self.fname_metric_lst[m] = fname_out
 
     def compute_texture(self):
 
         offset = int(self.param_glcm.distance)
         printv('\nCompute texture metrics...', self.param.verbose, 'normal')
 
+        # open image and re-orient it to RPI if needed
+        im_tmp = Image(self.param.fname_im)
+        if self.orientation_im != self.orientation_extraction:
+            im_tmp = set_orientation(im_tmp, self.orientation_extraction)
+
         dct_metric = {}
         for m in self.metric_lst:
-            dct_metric[m] = Image(self.fname_metric_lst[m])
+            im_2save = im_tmp.copy()
+            im_2save.changeType(type='float64')
+            im_2save.data *= 0
+            dct_metric[m] = im_2save
+            # dct_metric[m] = Image(self.fname_metric_lst[m])
 
         timer = Timer(number_of_iteration=len(self.dct_im_seg['im']))
         timer.start()
@@ -246,12 +255,15 @@ class ExtractGLCM:
         timer.stop()
 
         for m in self.metric_lst:
-            dct_metric[m].setFileName(self.fname_metric_lst[m])
+            fname_out = add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_' + m)
+            dct_metric[m].setFileName(fname_out)
             dct_metric[m].save()
+            self.fname_metric_lst[m] = fname_out
 
     def reorient_data(self):
         for f in self.fname_metric_lst:
-            im = Image(self.fname_metric_lst[f])
+            os.rename(self.fname_metric_lst[f], add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_2reorient'))
+            im = Image(add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_2reorient'))
             im = set_orientation(im, self.orientation_im)
             im.setFileName(self.fname_metric_lst[f])
             im.save()
