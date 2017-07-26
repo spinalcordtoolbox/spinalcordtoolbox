@@ -80,7 +80,7 @@ def test(path_data='', parameters=''):
         output += '\nERROR: This file does not exist: ' + dict_param_with_path['-i']
         write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-    if os.path.isfile(dict_param_with_path['-s'])):
+    if os.path.isfile(dict_param_with_path['-s']):
         status = 200
         output += '\nERROR: This file does not exist: ' + dict_param_with_path['-s']
         write_to_log_file(fname_log, output, 'w')
