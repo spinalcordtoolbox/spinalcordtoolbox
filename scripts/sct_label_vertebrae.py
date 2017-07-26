@@ -330,24 +330,30 @@ def main(args=None):
         sct.printv('\nRemove temporary files...', verbose)
         shutil.rmtree(path_tmp, ignore_errors=True)
 
-    if '-qc' in arguments and not arguments.get('-noqc', False):
-        qc_path = arguments['-qc']
+    # Generate QC report
+    try:
+        if '-qc' in arguments and not arguments.get('-noqc', False):
+            qc_path = arguments['-qc']
 
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
+            import spinalcordtoolbox.reports.qc as qc
+            import spinalcordtoolbox.reports.slice as qcslice
 
-        qc_param = qc.Params(fname_in, 'sct_label_vertebrae', args, 'Sagittal', qc_path)
-        report = qc.QcReport(qc_param, '')
+            qc_param = qc.Params(fname_in, 'sct_label_vertebrae', args, 'Sagittal', qc_path)
+            report = qc.QcReport(qc_param, '')
 
-        @qc.QcImage(report, 'none', [qc.QcImage.label_vertebrae, ])
-        def test(qslice):
-            return qslice.single()
+            @qc.QcImage(report, 'none', [qc.QcImage.label_vertebrae, ])
+            def test(qslice):
+                return qslice.single()
 
-        labeled_seg_file = path_output + file_seg + '_labeled' + ext_seg
-        test(qcslice.Sagittal(Image(fname_in), Image(labeled_seg_file)))
-        sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use the following command to see the results in a browser:')
-        sct.printv('sct_qc -folder %s' % qc_path, type='info')
+            labeled_seg_file = path_output + file_seg + '_labeled' + ext_seg
+            test(qcslice.Sagittal(Image(fname_in), Image(labeled_seg_file)))
+            sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
+            sct.printv('Use the following command to see the results in a browser:')
+            sct.printv('sct_qc -folder %s' % qc_path, type='info')
+    except Exception as err:
+        sct.printv(err, verbose, 'warning')
+        sct.printv('WARNING: Cannot generate report.', verbose, 'warning')
+
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
