@@ -31,6 +31,7 @@ from msct_types import Centerline
 TODO:
   - Suggestion Sara: Ne mettre qu'un seul message pour SUM!= 100 (avec un OR)
   - PVE
+  - refactor _measure_vert
 '''
 
 
@@ -83,6 +84,43 @@ def get_parser():
                       default_value='1')
 
     return parser
+
+def relative_ROIvol_in_mask(im_mask, im_atlas_roi, im_template_vert=None, vert_level=None, verbose=1):
+  #
+  #   Goal:
+  #         This function computes the percentage of ROI occupied by binary mask
+  #         --> ie volume of the intersection between {im_mask and im_roi} divided by the volume of roi
+  #         If im_template_vert and vert are specified, the ROI is restricted to the given vert_level
+  #         The PVE is handled by the method 'weighted_average'
+  #
+  #   Inputs:
+  #           - im_mask - type=Image - binary mask (eg lesions)
+  #           - im_atlas_roi - type=Image - ROI in the same space as im_mask
+  #           - im_template_vert - type=Image - vertebral template in the same space as im_mask
+  #           - vert_level - type=int - vertebral level ID to restrict the ROI
+  #           - verbose
+  #
+  
+  p_lst = im_mask.dim[3:6]
+
+  im_mask_data = im_mask.data
+  im_atlas_roi_data = im_atlas_roi.data
+
+  if im_template_vert is not None and vert_level is not None:
+    im_vert_data = im_template_vert.data
+    im_atlas_roi_data[np.where(im_vert_data != vert_level)] = 0.0
+
+  im_mask_roi_data_wa = im_mask_data * im_atlas_roi_data
+
+  vol_tot_roi = np.sum(im_atlas_roi_data) * p_lst[0] * p_lst[1] * p_lst[2]
+  vol_mask_tot = np.sum(im_mask_data) * p_lst[0] * p_lst[1] * p_lst[2]
+  vol_mask_roi_wa = np.sum(im_mask_roi_data_wa) * p_lst[0] * p_lst[1] * p_lst[2]
+
+  printv('\tTotal volume of ROI = '+str(round(vol_tot_roi,2))+' mm^3', verbose, type='info')
+  printv('\tVolume of im_mask in ROI = '+str(round(vol_mask_roi_wa,2))+' mm^3', verbose, type='info')
+  printv('\tPercentage of ROI occupied by im_mask = '+str(round(vol_mask_roi_wa/vol_tot_roi,2)*100.0)+'%', verbose, type='info')
+
+  return vol_mask_roi_wa, vol_mask_roi_wa/vol_tot_roi
 
 class AnalyzeLeion:
   def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
@@ -216,13 +254,13 @@ class AnalyzeLeion:
       printv('Mean+/-std of lesion #'+str(lesion_label)+' in '+extract_fname(self.fname_ref)[1]+' file: '+str(round(mean_cur,2))+'+/-'+str(round(std_cur,2)), self.verbose, type='info')
 
 
-  def _measure_tracts(self, im_lesion, im_tract, idx, p_lst, tract_name):
+  # def _measure_tracts(self, im_lesion, im_tract, idx, p_lst, tract_name):
 
-    im_lesion[np.where(im_tract==0)]=0
-    vol_cur = np.sum([np.sum(im_lesion[:,:,zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
+  #   im_lesion[np.where(im_tract==0)]=0
+  #   vol_cur = np.sum([np.sum(im_lesion[:,:,zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
 
-    self.data_pd.loc[idx, tract_name+' [%]'] = vol_cur*100.0/np.sum(self.volumes[:,idx-1])
-    printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in '+tract_name+' : '+str(round(self.data_pd.loc[idx, tract_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.verbose, type='info')
+  #   self.data_pd.loc[idx, tract_name+' [%]'] = vol_cur*100.0/np.sum(self.volumes[:,idx-1])
+  #   printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in '+tract_name+' : '+str(round(self.data_pd.loc[idx, tract_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.verbose, type='info')
   
 
   def _measure_vert(self, im_lesion, im_vert, p_lst, idx):
@@ -302,6 +340,7 @@ class AnalyzeLeion:
 
     self.volumes = np.zeros((im_lesion.dim[2],len(label_lst)))
 
+    sum_gm_wm_lst = []
     for lesion_label in label_lst:
       im_lesion_data_cur = im_lesion_data == lesion_label
       printv('\nMeasures on lesion #'+str(lesion_label)+'...', self.verbose, 'normal')
@@ -311,8 +350,8 @@ class AnalyzeLeion:
       self._measure_length(im_lesion_data_cur, p_lst, label_idx)
       self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
 
-      # if im_vert_data is not None:
-      #   self._measure_vert(im_lesion_data_cur, im_vert_data, p_lst, label_idx)
+      if im_vert_data is not None:
+        self._measure_vert(im_lesion_data_cur, im_vert_data, p_lst, label_idx)
 
       # if im_gm_data is not None:
       #   self._measure_tracts(np.copy(im_lesion_data_cur), im_gm_data, label_idx, p_lst, 'GM')
@@ -320,10 +359,11 @@ class AnalyzeLeion:
       # if im_wm_data is not None:
       #   self._measure_tracts(np.copy(im_lesion_data_cur), im_wm_data, label_idx, p_lst, 'WM')
 
-      # # May be fixed with PVE
-      # # Suggestion Sara: Ne mettre qu'un seul message: avec un OR
-      # if np.ceil(self.data_pd.loc[label_idx, 'GM [%]'].values[0]+self.data_pd.loc[label_idx, 'WM [%]'].values[0]):
-      #   printv('WARNING: The proportion of lesion in GM and WM does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.', type='warning')
+      sum_gm_wm_lst.append(np.ceil(self.data_pd.loc[label_idx, 'GM [%]'].values[0]+self.data_pd.loc[label_idx, 'WM [%]'].values[0]))
+
+    print sum_gm_wm_lst
+    # if sum_gm_wm_lst:
+    #   printv('WARNING: The proportion of lesion in GM and WM does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.', type='warning')
 
 
   def _normalize(self, vect):
@@ -495,6 +535,8 @@ def main(args=None):
   else:
     verbose = '1'
 
+
+
   # create the Lesion constructor
   lesion_obj = AnalyzeLeion(fname_mask=fname_mask, 
                             fname_sc=fname_sc, 
@@ -502,12 +544,26 @@ def main(args=None):
                             path_template=path_template, 
                             path_ofolder=path_results,
                             verbose=verbose)
-  # run the analyze
-  lesion_obj.analyze()
+  print '\nROI=WM - vert=None'
+  relative_ROIvol_in_mask(Image(lesion_obj.fname_mask), Image(lesion_obj.path_wm), verbose=lesion_obj.verbose)
+  print '\nROI=WM - vert=5'
+  relative_ROIvol_in_mask(Image(lesion_obj.fname_mask), Image(lesion_obj.path_wm), Image(lesion_obj.path_levels),5, verbose=lesion_obj.verbose)
+  print '\nROI=WM - vert=3'
+  vol_wm_lesion, _ = relative_ROIvol_in_mask(Image(lesion_obj.fname_mask), Image(lesion_obj.path_wm), Image(lesion_obj.path_levels),3, verbose=lesion_obj.verbose)
+  print '\nROI=GM - vert=3'
+  vol_gm_lesion, _ = relative_ROIvol_in_mask(Image(lesion_obj.fname_mask), Image(lesion_obj.path_gm), Image(lesion_obj.path_levels),3, verbose=lesion_obj.verbose)
 
-  # remove tmp_dir
-  if rm_tmp:
-    shutil.rmtree(lesion_obj.tmp_dir)
+  print '\n'
+  vol_tot = vol_wm_lesion+vol_gm_lesion
+  print 'Proportion of lesion in GM = '+str(round(vol_gm_lesion/vol_tot,3))
+  print 'Proportion of lesion in WM = '+str(round(vol_wm_lesion/vol_tot,3))
+
+  # # run the analyze
+  # lesion_obj.analyze()
+
+  # # remove tmp_dir
+  # if rm_tmp:
+  #   shutil.rmtree(lesion_obj.tmp_dir)
         
   # printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
   # if fname_ref is not None:
