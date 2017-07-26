@@ -126,7 +126,7 @@ class AnalyzeLeion:
     self.ifolder2tmp()
 
     # Orient input image(s) to RPI
-    self.orient_rpi()
+    self.orient2rpi()
 
     # Binarize the input image if needed
     self.binarize()
@@ -142,7 +142,7 @@ class AnalyzeLeion:
     self.measure()
 
     # Compute mean, median, min, max value in each labeled lesion
-    if self.param.fname_ref is not None:
+    if self.fname_ref is not None:
       self.measure_within_im()
 
     # reorient data if needed
@@ -151,7 +151,7 @@ class AnalyzeLeion:
     # print averaged results
     self.show_total_results()
 
-    # save results in excel and pickle files
+    # # save results in excel and pickle files
     self.pack_measures()
 
     # save results to ofolder
@@ -162,42 +162,48 @@ class AnalyzeLeion:
 
     os.chdir('..') # go back to original directory
 
-    printv('\nSave results files...', self.param.verbose, 'normal')
-    printv('\n... measures saved in the files:', self.param.verbose, 'normal')
-    printv('\n  - '+self.param.path_results+self.excel_name, self.param.verbose, 'normal')
-    printv('\n  - '+self.param.path_results+self.pickle_name, self.param.verbose, 'normal')
+    printv('\nSave results files...', self.verbose, 'normal')
+    printv('\n... measures saved in the files:', self.verbose, 'normal')
+    printv('\n  - '+self.path_ofolder+self.excel_name, self.verbose, 'normal')
+    printv('\n  - '+self.path_ofolder+self.pickle_name, self.verbose, 'normal')
 
     for file in [self.fname_label, self.excel_name, self.pickle_name]:
-      shutil.copy(self.tmp_dir+file, self.param.path_results+file)
+      shutil.copy(self.tmp_dir+file, self.path_ofolder+file)
+
+  def pack_measures(self):
+
+    self.excel_name = extract_fname(self.fname_ref)[1]+'_analyzis.xlsx'
+    self.data_pd.to_excel(self.excel_name, index=False)
+
+    self.pickle_name = extract_fname(self.fname_ref)[1]+'_analyzis.pkl'
+    self.data_pd.columns = [c.split(' ')[0] for c in self.data_pd.columns]
+    self.data_pd.to_pickle(self.pickle_name)
 
   def show_total_results(self):
     print ' '
     print self.data_pd
     
-    printv('\n\nAveraged measures...', self.param.verbose, 'normal')
-    printv('  Volume = '+str(round(np.mean(self.data_pd['volume [mm3]']),2))+'+/-'+str(round(np.std(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, type='info')
-    printv('  (S-I) Length = '+str(round(np.mean(self.data_pd['length [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['length [mm]']),2))+' mm', self.param.verbose, type='info')
-    printv('  Equivalent Diameter = '+str(round(np.mean(self.data_pd['max_equivalent_diameter [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['max_equivalent_diameter [mm]']),2))+' mm', self.param.verbose, type='info')
+    printv('\n\nAveraged measures...', self.verbose, 'normal')
+    printv('  Volume = '+str(round(np.mean(self.data_pd['volume [mm3]']),2))+'+/-'+str(round(np.std(self.data_pd['volume [mm3]']),2))+' mm^3', self.verbose, type='info')
+    printv('  (S-I) Length = '+str(round(np.mean(self.data_pd['length [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['length [mm]']),2))+' mm', self.verbose, type='info')
+    printv('  Equivalent Diameter = '+str(round(np.mean(self.data_pd['max_equivalent_diameter [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['max_equivalent_diameter [mm]']),2))+' mm', self.verbose, type='info')
 
     if 'GM [%]' in self.data_pd:
-      printv('  Proportion of lesions in WM / GM = '+str(round(np.mean(self.data_pd['WM [%]']),2))+'% / '+str(round(np.mean(self.data_pd['GM [%]']),2))+'%', self.param.verbose, type='info')
+      printv('  Proportion of lesions in WM / GM = '+str(round(np.mean(self.data_pd['WM [%]']),2))+'% / '+str(round(np.mean(self.data_pd['GM [%]']),2))+'%', self.verbose, type='info')
 
 
-    printv('\nTotal volume = '+str(round(np.sum(self.data_pd['volume [mm3]']),2))+' mm^3', self.param.verbose, 'info')
-    printv('Lesion count = '+str(len(self.data_pd['volume [mm3]'])), self.param.verbose, 'info')
+    printv('\nTotal volume = '+str(round(np.sum(self.data_pd['volume [mm3]']),2))+' mm^3', self.verbose, 'info')
+    printv('Lesion count = '+str(len(self.data_pd['volume [mm3]'])), self.verbose, 'info')
 
-  def pack_measures(self):
+  def reorient(self):
+    if not self.orientation == 'RPI':
+      printv('\nOrient output image to initial orientation...', self.verbose, 'normal')
 
-    self.excel_name = extract_fname(self.param.fname_im)[1]+'_analyzis.xlsx'
-    self.data_pd.to_excel(self.excel_name, index=False)
-
-    self.pickle_name = extract_fname(self.param.fname_im)[1]+'_analyzis.pkl'
-    self.data_pd.columns = [c.split(' ')[0] for c in self.data_pd.columns]
-    self.data_pd.to_pickle(self.pickle_name)
+      self._orient(self.label, 'RPI')
 
   def measure_within_im(self):
-    printv('\nCompute reference image features...', self.param.verbose, 'normal')
-    im_label_data, im_ref_data = Image(self.fname_label).data, Image(self.param.fname_ref).data
+    printv('\nCompute reference image features...', self.verbose, 'normal')
+    im_label_data, im_ref_data = Image(self.fname_label).data, Image(self.fname_ref).data
 
     for lesion_label in [l for l in np.unique(im_label_data) if l]:
       im_label_data_cur = im_label_data == lesion_label
@@ -205,9 +211,9 @@ class AnalyzeLeion:
       mean_cur, std_cur  = np.mean(im_ref_data[np.where(im_label_data_cur)]), np.std(im_ref_data[np.where(im_label_data_cur)])
 
       label_idx = self.data_pd[self.data_pd.label==lesion_label].index
-      self.data_pd.loc[label_idx, 'mean_'+extract_fname(self.param.fname_ref)[1]] = mean_cur
-      self.data_pd.loc[label_idx, 'std_'+extract_fname(self.param.fname_ref)[1]] = std_cur
-      printv('Mean+/-std of lesion #'+str(lesion_label)+' in '+extract_fname(self.param.fname_ref)[1]+' file: '+str(round(mean_cur,2))+'+/-'+str(round(std_cur,2)), self.param.verbose, type='info')
+      self.data_pd.loc[label_idx, 'mean_'+extract_fname(self.fname_ref)[1]] = mean_cur
+      self.data_pd.loc[label_idx, 'std_'+extract_fname(self.fname_ref)[1]] = std_cur
+      printv('Mean+/-std of lesion #'+str(lesion_label)+' in '+extract_fname(self.fname_ref)[1]+' file: '+str(round(mean_cur,2))+'+/-'+str(round(std_cur,2)), self.verbose, type='info')
 
 
   def _measure_tracts(self, im_lesion, im_tract, idx, p_lst, tract_name):
@@ -216,12 +222,12 @@ class AnalyzeLeion:
     vol_cur = np.sum([np.sum(im_lesion[:,:,zz]) * p_lst[0] * p_lst[1] * p_lst[2] for zz in range(im_lesion.shape[2])])
 
     self.data_pd.loc[idx, tract_name+' [%]'] = vol_cur*100.0/np.sum(self.volumes[:,idx-1])
-    printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in '+tract_name+' : '+str(round(self.data_pd.loc[idx, tract_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.param.verbose, type='info')
+    printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in '+tract_name+' : '+str(round(self.data_pd.loc[idx, tract_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.verbose, type='info')
   
 
   def _measure_vert(self, im_lesion, im_vert, p_lst, idx):
 
-    printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in vertebrae... ', self.param.verbose, type='info')
+    printv('  Proportion of lesion #'+str(int(idx[0])+1)+' in vertebrae... ', self.verbose, type='info')
 
     sum_vert = 0.0
     for vert_label in self.vert_lst:
@@ -234,7 +240,7 @@ class AnalyzeLeion:
       self.data_pd.loc[idx, vert_name+' [%]'] = vol_cur*100.0/np.sum(self.volumes[:,idx-1])
       sum_vert += self.data_pd.loc[idx, vert_name+' [%]'].values[0]
       if vol_cur:
-        printv('    - '+vert_name+' : '+str(round(self.data_pd.loc[idx, vert_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.param.verbose, type='info')
+        printv('    - '+vert_name+' : '+str(round(self.data_pd.loc[idx, vert_name+' [%]'],2))+' % ('+str(round(vol_cur,2))+' mm^3)', self.verbose, type='info')
 
     if np.ceil(sum_vert)!=100:
       printv('WARNING: The proportion of lesion in each vertebral levels does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.', type='warning')
@@ -246,14 +252,14 @@ class AnalyzeLeion:
 
     vol_tot_cur = np.sum(self.volumes[:,idx-1])
     self.data_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
-    printv('  Volume : '+str(round(vol_tot_cur,2))+' mm^3', self.param.verbose, type='info')
+    printv('  Volume : '+str(round(vol_tot_cur,2))+' mm^3', self.verbose, type='info')
 
   def _measure_length(self, im_data, p_lst, idx):
 
     length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in list(np.unique(np.where(im_data)[2]))])
 
     self.data_pd.loc[idx, 'length [mm]'] = length_cur
-    printv('  (S-I) length : '+str(round(length_cur,2))+' mm', self.param.verbose, type='info')
+    printv('  (S-I) length : '+str(round(length_cur,2))+' mm', self.verbose, type='info')
 
   def _measure_diameter(self, im_data, p_lst, idx):
     
@@ -263,7 +269,7 @@ class AnalyzeLeion:
     diameter_cur = sqrt(max(area_lst)/(4*pi))
     
     self.data_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
-    printv('  Max. equivalent diameter : '+str(round(diameter_cur,2))+' mm', self.param.verbose, type='info')
+    printv('  Max. equivalent diameter : '+str(round(diameter_cur,2))+' mm', self.verbose, type='info')
 
   def measure(self):
     im_lesion = Image(self.fname_label)
@@ -272,52 +278,52 @@ class AnalyzeLeion:
 
     label_lst = [l for l in np.unique(im_lesion_data) if l]
 
-    if self.param.path_template is not None:
-      if os.path.isfile(self.path_levels):
-        im_vert_data = Image(self.path_levels).data
-        self.vert_lst = [v for v in np.unique(im_vert_data) if v]
-      else:
-        im_vert_data = None
-        printv('WARNING: the file '+self.path_levels+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
+    # if self.path_template is not None:
+    #   if os.path.isfile(self.path_levels):
+    #     im_vert_data = Image(self.path_levels).data
+    #     self.vert_lst = [v for v in np.unique(im_vert_data) if v]
+    #   else:
+    #     im_vert_data = None
+    #     printv('WARNING: the file '+self.path_levels+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
 
-      if os.path.isfile(self.path_gm):
-        im_gm_data = Image(self.path_gm).data
-        im_gm_data = im_gm_data > 0.5
-      else:
-        im_gm_data = None
-        printv('WARNING: the file '+self.path_gm+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
+    #   if os.path.isfile(self.path_gm):
+    #     im_gm_data = Image(self.path_gm).data
+    #     im_gm_data = im_gm_data > 0.5
+    #   else:
+    #     im_gm_data = None
+    #     printv('WARNING: the file '+self.path_gm+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
       
-      if os.path.isfile(self.path_wm):
-        im_wm_data = Image(self.path_wm).data
-        im_wm_data = im_wm_data >= 0.5
-      else:
-        im_wm_data = None
-        printv('WARNING: the file '+self.path_wm+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
+    #   if os.path.isfile(self.path_wm):
+    #     im_wm_data = Image(self.path_wm).data
+    #     im_wm_data = im_wm_data >= 0.5
+    #   else:
+    #     im_wm_data = None
+    #     printv('WARNING: the file '+self.path_wm+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
 
     self.volumes = np.zeros((im_lesion.dim[2],len(label_lst)))
 
     for lesion_label in label_lst:
       im_lesion_data_cur = im_lesion_data == lesion_label
-      printv('\nMeasures on lesion #'+str(lesion_label)+'...', self.param.verbose, 'normal')
+      printv('\nMeasures on lesion #'+str(lesion_label)+'...', self.verbose, 'normal')
 
       label_idx = self.data_pd[self.data_pd.label==lesion_label].index
       self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
       self._measure_length(im_lesion_data_cur, p_lst, label_idx)
       self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
 
-      if im_vert_data is not None:
-        self._measure_vert(im_lesion_data_cur, im_vert_data, p_lst, label_idx)
+      # if im_vert_data is not None:
+      #   self._measure_vert(im_lesion_data_cur, im_vert_data, p_lst, label_idx)
 
-      if im_gm_data is not None:
-        self._measure_tracts(np.copy(im_lesion_data_cur), im_gm_data, label_idx, p_lst, 'GM')
+      # if im_gm_data is not None:
+      #   self._measure_tracts(np.copy(im_lesion_data_cur), im_gm_data, label_idx, p_lst, 'GM')
 
-      if im_wm_data is not None:
-        self._measure_tracts(np.copy(im_lesion_data_cur), im_wm_data, label_idx, p_lst, 'WM')
+      # if im_wm_data is not None:
+      #   self._measure_tracts(np.copy(im_lesion_data_cur), im_wm_data, label_idx, p_lst, 'WM')
 
-      # May be fixed with PVE
-      # Suggestion Sara: Ne mettre qu'un seul message: avec un OR
-      if np.ceil(self.data_pd.loc[label_idx, 'GM [%]'].values[0]+self.data_pd.loc[label_idx, 'WM [%]'].values[0]):
-        printv('WARNING: The proportion of lesion in GM and WM does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.', type='warning')
+      # # May be fixed with PVE
+      # # Suggestion Sara: Ne mettre qu'un seul message: avec un OR
+      # if np.ceil(self.data_pd.loc[label_idx, 'GM [%]'].values[0]+self.data_pd.loc[label_idx, 'WM [%]'].values[0]):
+      #   printv('WARNING: The proportion of lesion in GM and WM does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.', type='warning')
 
 
   def _normalize(self, vect):
@@ -326,14 +332,14 @@ class AnalyzeLeion:
 
   def angle_correction(self):
 
-    if self.param.fname_seg is not None:
-      im_seg = Image(self.param.fname_seg)
+    if self.fname_sc is not None:
+      im_seg = Image(self.fname_sc)
       data_seg = im_seg.data
       X, Y, Z = (data_seg > 0).nonzero()
       min_z_index, max_z_index = min(Z), max(Z)
 
       # fit centerline, smooth it and return the first derivative (in physical space)
-      x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.param.fname_seg, algo_fitting='hanning', type_window='hanning', window_length=80, nurbs_pts_number=3000, phys_coordinates=True, verbose=self.param.verbose, all_slices=False)
+      x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.fname_sc, algo_fitting='hanning', type_window='hanning', window_length=80, nurbs_pts_number=3000, phys_coordinates=True, verbose=self.verbose, all_slices=False)
       centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
       # average centerline coordinates over slices of the image
@@ -359,88 +365,72 @@ class AnalyzeLeion:
           self.angles[zz] = np.arccos(np.vdot(tangent_vect, axis_Z))
 
     else:
-      self.angles = np.zeros(Image(self.param.fname_im).dim[2])
+      self.angles = np.zeros(Image(self.fname_mask).dim[2])
 
   def label_lesion(self):
-    printv('\nLabel connected regions of the masked image...', self.param.verbose, 'normal')
-    im = Image(self.param.fname_im)
+    printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
+    im = Image(self.fname_mask)
     im_2save = im.copy()
     im_2save.data = label(im.data, connectivity=2)
 
-    self.fname_label = add_suffix(self.param.fname_im, '_label')
+    self.fname_label = add_suffix(self.fname_mask, '_label')
     im_2save.setFileName(self.fname_label)
     im_2save.save()
 
     self.data_pd['label'] = [l for l in np.unique(im_2save.data) if l]
-    printv('Lesion count = '+str(len(self.data_pd['label'])), self.param.verbose, 'info')
+    printv('Lesion count = '+str(len(self.data_pd['label'])), self.verbose, 'info')
 
   def binarize(self):
-    im = Image(self.param.fname_im)
+    im = Image(self.fname_mask)
     if len(np.unique(im.data))>2: # if the image is not binarized
-      printv('\nBinarize lesion file...', self.param.verbose, 'normal')
+      printv('\nBinarize lesion file...', self.verbose, 'normal')
       im_2save = im.copy()
       im_2save.data = binarise(im.data)
-      im_2save.setFileName(self.param.fname_im)
+      im_2save.setFileName(self.fname_mask)
       im_2save.save()
 
     elif list(np.unique(im.data))==[0]:
-      printv('WARNING: Empty masked image', self.param.verbose, 'warning')
+      printv('WARNING: Empty masked image', self.verbose, 'warning')
 
-  def orient(self, fname, orientation):
+  def _orient(self, fname, orientation):
 
     im = Image(fname)
     im = set_orientation(im, orientation)
     im.setFileName(fname)
     im.save() 
 
-  def reorient(self):
-    if not self.orientation == 'RPI':
-      printv('\nOrient output image to initial orientation...', self.param.verbose, 'normal')
+  def orient2rpi(self):
 
-      self.orient(self.param.label, 'RPI')
-
-  def orient_rpi(self):
-
-    self.orientation = get_orientation(Image(self.param.fname_im))
+    self.orientation = get_orientation(Image(self.fname_mask))
 
     if not self.orientation == 'RPI':
-      printv('\nOrient input image(s) to RPI orientation...', self.param.verbose, 'normal')
+      printv('\nOrient input image(s) to RPI orientation...', self.verbose, 'normal')
 
-      self.orient(self.param.fname_im, 'RPI')
-      if self.param.fname_seg is not None:
-        self.orient(self.param.fname_seg, 'RPI')
-      if self.param.fname_ref is not None:
-        self.orient(self.param.fname_ref, 'RPI')
+      self._orient(self.fname_mask, 'RPI')
+      if self.fname_sc is not None:
+        self._orient(self.fname_sc, 'RPI')
+      if self.fname_ref is not None:
+        self._orient(self.fname_ref, 'RPI')
 
   def ifolder2tmp(self):
     # copy input image
-    if self.param.fname_im is not None:
-      shutil.copy(self.param.fname_im, self.tmp_dir)
-      self.param.fname_im = ''.join(extract_fname(self.param.fname_im)[1:])
+    if self.fname_mask is not None:
+      shutil.copy(self.fname_mask, self.tmp_dir)
+      self.fname_mask = ''.join(extract_fname(self.fname_mask)[1:])
     else:
-      printv('ERROR: No input image', self.param.verbose, 'error')
+      printv('ERROR: No input image', self.verbose, 'error')
 
     # copy seg image
-    if self.param.fname_seg is not None:
-      shutil.copy(self.param.fname_seg, self.tmp_dir)
-      self.param.fname_seg = ''.join(extract_fname(self.param.fname_seg)[1:])
+    if self.fname_sc is not None:
+      shutil.copy(self.fname_sc, self.tmp_dir)
+      self.fname_sc = ''.join(extract_fname(self.fname_sc)[1:])
 
     # copy ref image
-    if self.param.fname_ref is not None:
-      shutil.copy(self.param.fname_ref, self.tmp_dir)
-      self.param.fname_ref = ''.join(extract_fname(self.param.fname_ref)[1:])
+    if self.fname_ref is not None:
+      shutil.copy(self.fname_ref, self.tmp_dir)
+      self.fname_ref = ''.join(extract_fname(self.fname_ref)[1:])
 
     os.chdir(self.tmp_dir) # go to tmp directory
-
-# class Param:
-#   def __init__(self):
-#     self.fname_im = None
-#     self.fname_seg = None
-#     self.fname_ref = None
-#     self.path_results = './'
-#     self.path_template = './label'
-#     self.verbose = '1'
-#     self.rm_tmp = True
 
 def main(args=None):
   if args is None:
@@ -454,21 +444,21 @@ def main(args=None):
   arguments = parser.parse(args)
 
   # set param arguments ad inputted by user
-  fname_im = arguments["-m"]
+  fname_mask = arguments["-m"]
 
   # SC segmentation
   if '-s' in arguments:
-    fname_seg = arguments["-s"]
-    if not os.path.isfile(fname_seg):
-      fname_seg = None
+    fname_sc = arguments["-s"]
+    if not os.path.isfile(fname_sc):
+      fname_sc = None
       printv('WARNING: -s input file: "' + arguments['-s'] + '" does not exist.\n', 1, 'warning')
   else:
-    fname_seg = None
+    fname_sc = None
 
   # Reference image
   if '-i' in arguments:
     fname_ref = arguments["-i"]
-    if not os.path.isfile(fname_seg):
+    if not os.path.isfile(fname_sc):
       fname_ref = None
       printv('WARNING: -i input file: "' + arguments['-i'] + '" does not exist.\n', 1, 'warning')
   else:
@@ -506,22 +496,22 @@ def main(args=None):
     verbose = '1'
 
   # create the Lesion constructor
-  lesion_obj = AnalyzeLeion(fname_mask=fname_im, 
-                            fname_sc=fname_seg, 
+  lesion_obj = AnalyzeLeion(fname_mask=fname_mask, 
+                            fname_sc=fname_sc, 
                             fname_ref=fname_ref, 
                             path_template=path_template, 
                             path_ofolder=path_results,
                             verbose=verbose)
-  # # run the analyze
-  # lesion_obj.analyze()
+  # run the analyze
+  lesion_obj.analyze()
 
-  # # remove tmp_dir
-  # if param.rm_tmp:
-  #   shutil.rmtree(tmp_dir)
+  # remove tmp_dir
+  if rm_tmp:
+    shutil.rmtree(lesion_obj.tmp_dir)
         
-  # printv('\nDone! To view the labeled lesion file (one value per lesion), type:', param.verbose)
-  # if param.fname_ref is not None:
-  #   printv('fslview ' + path_results + fname_ref + ' ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
+  # printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
+  # if fname_ref is not None:
+  #   printv('fslview ' + path_results + fname_mask + ' ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
   # else:
   #   printv('fslview ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')    
     
