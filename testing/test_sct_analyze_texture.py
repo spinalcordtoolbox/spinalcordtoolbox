@@ -27,25 +27,43 @@ def test(path_data='', parameters=''):
     output = ''
     difference_threshold = 0.95
 
-    # parameters
-    if not parameters:
-        parameters = '-i t2/t2.nii.gz -m t2/t2_seg.nii.gz'
-
-    # retrieve flags
+    # create output folder
     try:
-        parser = sct_analyze_texture.get_parser()
-        dict_param = parser.parse(parameters.split(), check_file_exist=False)
-        dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
-
-        # add output
         subject_folder = path_data.split('/')
         if subject_folder[-1] == '' and len(subject_folder) > 1:
             subject_folder = subject_folder[-2]
         else:
             subject_folder = subject_folder[-1]
         path_output = sct.slash_at_the_end('sct_analyze_texture_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
+        sct.create_folder(path_output)   
+    # in case not all mandatory flags are filled
+    except SyntaxError as err:
+        print err
+        status = 1
+        output = err
+        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])       
+
+    # reduce the area of the mask input to speed up the test
+    mask_filename = path_data + 't2/t2_seg.nii.gz'
+    mask_filename_tmp = path_output + 't2_seg.nii.gz'
+    mask_img = Image(mask_filename)
+    mask_img.data[:,3:,:] = 0.0
+    mask_img.setFileName(mask_filename_tmp)
+    mask_img.save()
+
+    # parameters
+    if not parameters:
+        parameters = '-i t2/t2.nii.gz -m '+mask_filename_tmp
+
+    # retrieve flags
+    try:
+        parser = sct_analyze_texture.get_parser()
+        dict_param = parser.parse(parameters.split(), check_file_exist=False)
+        dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
         dict_param_with_path['-ofolder'] = path_output
-        sct.create_folder(path_output)
+        dict_param_with_path['-m'] = mask_filename_tmp
+        dict_param_with_path['-feature'] = 'contrast'
+        dict_param_with_path['-angle'] = '0'
         param_with_path = parser.dictionary_to_string(dict_param_with_path)
     # in case not all mandatory flags are filled
     except SyntaxError as err:
@@ -104,6 +122,13 @@ def test(path_data='', parameters=''):
     # where inputname is the filename of the input image
     texture_test_filename = path_output + sct.add_suffix(input_filename, '_contrast_1_mean')
     texture_ref_filename = path_data + contrast + '/' + sct.add_suffix(input_filename, '_contrast_1_mean_ref')
+    
+    # correct the GT
+    texture_ref_filename_tmp = path_output + sct.add_suffix(input_filename, '_contrast_1_mean_ref')
+    gt_img = Image(texture_ref_filename)
+    gt_img.data[:,3:,:] = 0.0
+    gt_img.setFileName(texture_ref_filename_tmp)
+    gt_img.save()
 
     # if command ran without error, test integrity
     if status == 0:
@@ -131,4 +156,4 @@ def test(path_data='', parameters=''):
 
 if __name__ == "__main__":
     # call main function
-    test()
+    test(path_data='/Users/chgroc/spinalcordtoolbox/testing/sct_testing_data/')
