@@ -50,7 +50,7 @@ class Param:
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
         self.shift_AP_visu = 15  #0#15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
-        self.gaussian_std = 999  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
+        self.gaussian_std = 1  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -59,7 +59,7 @@ class Param:
             if len(object) < 2:
                 sct.printv('ERROR: Wrong usage.', 1, type='error')
             obj = object.split('=')
-            setattr(self, obj[0], int(obj[1]))
+            setattr(self, obj[0], float(obj[1]))
 
 
 # PARSER
