@@ -508,7 +508,7 @@ if __name__ == "__main__":
             sct.stop_handler(file_handler)
 
         # run function
-        tests_ret = run_function(function_to_test, path_data, list_subj, parameters='', nb_cpu=None, verbose=1)
+        tests_ret = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=None, verbose=1)
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
 
