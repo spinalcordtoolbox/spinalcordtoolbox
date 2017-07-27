@@ -101,7 +101,7 @@ def test(path_data='', parameters=''):
     import sys
     fname_log = path_output + 'output.log'
 
-    sct.stop_stream_logger()
+    sct.pause_stream_logger()
     filehandler = sct.add_file_handler_to_logger(filename=fname_log, mode='w', log_format="%(message)s")
     #
     # stdout_log = file(fname_log, 'w')

@@ -464,7 +464,9 @@ if __name__ == "__main__":
     if create_log:
         file_log = 'results_test_' + function_to_test + '_' + output_time
         fname_log = file_log + '.log'
-        handle_log = sct.ForkStdoutToFile(fname_log)
+        # handle_log = sct.ForkStdoutToFile(fname_log)
+        file_handler = sct.add_file_handler_to_logger(fname_log)
+
     sct.printv('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
     # fetch SCT version
@@ -502,7 +504,8 @@ if __name__ == "__main__":
 
         # during testing, redirect to standard output to avoid stacking error messages in the general log
         if create_log:
-            handle_log.pause()
+            # handle_log.pause()
+            sct.stop_handler(file_handler)
 
         # run function
         tests_ret = run_function(function_to_test, path_data, list_subj, parameters='', nb_cpu=None, verbose=1)
@@ -511,7 +514,7 @@ if __name__ == "__main__":
 
         # after testing, redirect to log file
         if create_log:
-            handle_log.restart()
+            sct.log.addHandler(file_handler)
 
         # build results
         pd.set_option('display.max_rows', 500)
@@ -606,8 +609,9 @@ if __name__ == "__main__":
 
     # stop file redirection
     # message = handle_log.read()
-    handle_log.close()
-
+        if create_log:
+            file_handler.flush()
+            sct.stop_handler(file_handler)
     # send email
     if send_email:
         sct.printv('\nSending email...')

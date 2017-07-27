@@ -50,6 +50,10 @@ else:
 stream_handler.setFormatter(formatter)
 
 def start_stream_logger():
+    """ Log to terminal, by default the formating is like a print() call
+    
+    :return: 
+    """
     if LOG_LEVEL in logging._levelNames:
         stream_handler.setLevel(LOG_LEVEL)
         log.addHandler(stream_handler)
@@ -62,12 +66,16 @@ def start_stream_logger():
 start_stream_logger()
 
 
-def stop_stream_logger():
+def pause_stream_logger():
+    """ Pause the log to Terminal
+    
+    :return: 
+    """
     log.removeHandler(stream_handler)
 
 
 def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log_format=None, log_level=None):
-    """ convenience fct to add a file handle to the sct
+    """ Convenience fct to add a file handler to the sct log
 
     :param filename: 
     :param mode: 
@@ -90,6 +98,11 @@ def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log
 
 
 def stop_handler(handler):
+    """ Remore any handler from logs
+    
+    :param handler: 
+    :return: 
+    """
     log.removeHandler(handler)
 
 # define class color
@@ -355,15 +368,6 @@ class Timer:
                 [h.flush() for h in log.handlers]
         else:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
-
-
-def add_smtp_logger():
-    """Add a sream handle for emails
-    
-    :return: 
-    """
-    pass
-
 
 class ForkStdoutToFile(object):
     """Use to redirect stdout to file
