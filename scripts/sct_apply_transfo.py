@@ -167,7 +167,11 @@ class Transform:
             # Apply transformation
             sct.printv('\nApply transformation...', verbose)
             # print 'HOLA1'
-            sct.run('isct_antsApplyTransforms -d 3 -i ' + fname_src + ' -o ' + fname_out + ' -t ' + ' '.join(fname_warp_list_invert) + ' -r ' + fname_dest + interp, verbose)
+            if nz in [0, 1]:
+                dim = '2'
+            else:
+                dim = '3'
+            sct.run('isct_antsApplyTransforms -d '+dim+' -i ' + fname_src + ' -o ' + fname_out + ' -t ' + ' '.join(fname_warp_list_invert) + ' -r ' + fname_dest + interp, verbose)
 
         # if 4d, loop across the T dimension
         else:
