@@ -924,6 +924,9 @@ def label_vert(fname_seg, fname_label, verbose=1):
     for i in range(len(coord_label)):
         list_disc_z.insert(0, coord_label[i].z)
         list_disc_value.insert(0, coord_label[i].value)
+
+    list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
+    list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     # label segmentation
     from sct_label_vertebrae import label_segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
