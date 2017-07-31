@@ -132,7 +132,7 @@ def get_parser(paramreg=None):
                                   "laplacian: <int> Laplacian filter. Default=" + paramreg.steps['1'].laplacian + "\n"
                                   "gradStep: <float> Gradient step. Default=" + paramreg.steps['1'].gradStep + "\n"
                                   "deformation: ?x?x?: Restrict deformation (for ANTs algo). Replace ? by 0 (no deformation) or 1 (deformation). Default=" + paramreg.steps['1'].deformation + "\n"
-                                  "init: <int> Initial translation alignment based on:\n"
+                                  "init: Initial translation alignment based on:\n"
                                   "  geometric: Geometric center of images\n"
                                   "  centermass: Center of mass of images\n"
                                   "  origin: Physical origin of images\n"
