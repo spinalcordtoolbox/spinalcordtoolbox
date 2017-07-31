@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     os.chdir(qc_path)
     httpd = HTTPServer(('', 8888), SimpleHTTPRequestHandler)
-    printv('QC viewer started on:') + printv('QC viewer started on http://127.0.0.1:8888')
+    printv('QC viewer started on:')
     printv('http://127.0.0.1:8888', type='info')
     printv('Copy and paste the address into your web browser')
     printv('Press "Ctrl" + "C" to stop sct_qc')
