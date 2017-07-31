@@ -45,3 +45,7 @@
     height: auto;
     animation: phase-in-out 1s infinite alternate ease-in-out;
 }
+
+a.next {
+    float: right;
+}

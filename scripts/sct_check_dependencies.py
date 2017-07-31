@@ -111,34 +111,12 @@ def main():
         raise EnvironmentError("SCT_DIR, which is the path SCT install needs to be set")
     print ('SCT path: {0}'.format(path_sct))
 
-    # fetch true commit number and branch (do not use commit.txt which is wrong)
-    path_curr = os.path.abspath(os.curdir)
-    os.chdir(path_sct)
-    # first, make sure there is a .git folder
-    if os.path.isdir('.git'):
-        print 'Installation type: git'
-        sct_commit = commands.getoutput('git rev-parse HEAD')
-        sct_branch = commands.getoutput('git branch | grep \*').strip('* ')
-        if not (sct_commit.isalnum()):
-            sct_commit = 'unknown'
-            sct_branch = 'unknown'
-        print '  commit: ' + sct_commit
-        print '  branch: ' + sct_branch
-    else:
-        print 'Installation type: package'
-        # fetch version
-        with open(path_sct + '/version.txt', 'r') as myfile:
-            version_sct = myfile.read().replace('\n', '')
-        print '  version: ' + version_sct
-
-    os.chdir(path_curr)
-
-    # # fetch version of the toolbox
-    # with open (path_sct+"/version.txt", "r") as myfile:
-    #     version_sct = myfile.read().replace('\n', '')
-    # with open (path_sct+"/commit.txt", "r") as myfile:
-    #     commit_sct = myfile.read().replace('\n', '')
-    # print "SCT version: "+version_sct+'-'+commit_sct
+    # fetch SCT version
+    install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
+    print 'Installation type: git'
+    print '  version: ' + version_sct
+    print '  commit: ' + sct_commit
+    print '  branch: ' + sct_branch
 
     # check if Python path is within SCT path
     print_line('Check Python path')

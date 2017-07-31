@@ -639,6 +639,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                '--smoothing-sigmas ' + str(paramreg.smooth) + 'mm '
                '--output [' + prefix_warp2d + ',src_Z' + num + '_reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
+               '--verbose 1 '
                + masking)
         # add init translation
         if not paramreg.init == '':
