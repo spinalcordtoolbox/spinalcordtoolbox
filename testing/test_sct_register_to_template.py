@@ -159,6 +159,8 @@ def test(path_data='', parameters=''):
     # write log file
     write_to_log_file(fname_log, output, mode='r+', prepend=True)
 
+    sys.stdout = stdout_orig
+
     return status, output, results
 
 
