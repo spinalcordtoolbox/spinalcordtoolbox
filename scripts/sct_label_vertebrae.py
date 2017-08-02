@@ -142,7 +142,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                                   "size_AP [mm]: AP window size for disc search. Default=" + str(param_default.size_AP) + ".\n"
                                   "size_RL [mm]: RL window size for disc search. Default=" + str(param_default.size_RL) + ".\n"
                                   "size_IS [mm]: IS window size for disc search. Default=" + str(param_default.size_IS) + ".\n"
-                                  "gaussian_std: STD of the Gaussian function, centered at the most rostral point of the image, "
+                                  "gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the image, "
                                   "and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set "
                                   "between 0.1 (strong weighting) and 999 (no weighting). Default=" + str(param_default.gaussian_std) + ".\n",
                       mandatory=False)
