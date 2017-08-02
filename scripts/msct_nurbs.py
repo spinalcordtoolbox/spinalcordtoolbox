@@ -68,7 +68,7 @@ import numpy as np
 
 
 class NURBS():
-    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01, maxControlPoints=50, all_slices=True, twodim=False):
+    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01, maxControlPoints=50, all_slices=True, twodim=False, weights=True):
         """
         Ce constructeur initialise une NURBS et la construit.
         Si la variable sens est True : On construit la courbe en fonction des points de controle
@@ -122,17 +122,18 @@ class NURBS():
 
                 # compute weights based on curve density
                 w = [1.0] * len(P_x)
-                if not twodim:
-                    for i in range(1, len(P_x) - 1):
-                        dist_before = math.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2 + (P_z[i - 1] - P_z[i])**2)
-                        dist_after = math.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2 + (P_z[i] - P_z[i + 1])**2)
-                        w[i] = (dist_before + dist_after) / 2.0
-                else:
-                    for i in range(1, len(P_x) - 1):
-                        dist_before = math.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2)
-                        dist_after = math.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2)
-                        w[i] = (dist_before + dist_after) / 2.0
-                w[0], w[-1] = w[1], w[-2]
+                if weights:
+                    if not twodim:
+                        for i in range(1, len(P_x) - 1):
+                            dist_before = math.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2 + (P_z[i - 1] - P_z[i])**2)
+                            dist_after = math.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2 + (P_z[i] - P_z[i + 1])**2)
+                            w[i] = (dist_before + dist_after) / 2.0
+                    else:
+                        for i in range(1, len(P_x) - 1):
+                            dist_before = math.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2)
+                            dist_after = math.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2)
+                            w[i] = (dist_before + dist_after) / 2.0
+                    w[0], w[-1] = w[1], w[-2]
 
                 list_param_that_worked = []
                 last_error_curve = 0.0
