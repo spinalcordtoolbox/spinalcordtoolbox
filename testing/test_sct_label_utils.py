@@ -14,8 +14,10 @@
 # TODO: add test to other processes.
 
 import commands
+from pandas import DataFrame
+import time
 
-def test(data_path):
+def test(path_data='', parameters=''):
 
     # parameters
     folder_data = ['t2/']
@@ -24,19 +26,24 @@ def test(data_path):
     status = 0
     list_status = []
 
+    # start timer
+    time_start = time.time()
+
     # TEST CREATE
-    cmd = 'sct_label_utils -i ' + data_path + folder_data[0] + file_data[0] + ' -create 1,1,1,1:2,2,2,2'
+    cmd = 'sct_label_utils -i ' + path_data + folder_data[0] + file_data[0] + ' -create 1,1,1,1:2,2,2,2'
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
     list_status.append(s)
     output += o
 
     # TEST cubic-to-point
-    cmd = 'sct_label_utils -i ' + data_path + folder_data[0] + file_data[1] + ' -cubic-to-point -o test_centerofmass.nii.gz'
+    cmd = 'sct_label_utils -i ' + path_data + folder_data[0] + file_data[1] + ' -cubic-to-point -o test_centerofmass.nii.gz'
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
     list_status.append(s)
     output += o
+
+    duration = time.time() - time_start
 
     # Integrity testing
     if s == 0:
@@ -51,7 +58,11 @@ def test(data_path):
     if 99 in list_status:
         status = 99
 
-    return status, output
+    # transform results into Pandas structure
+    results = DataFrame(data={'status': status, 'output': output, 'duration [s]': duration}, index=[path_data])
+
+    # end test
+    return status, output, results
 
 
 if __name__ == "__main__":

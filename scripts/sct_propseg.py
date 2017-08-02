@@ -10,23 +10,21 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import datetime
-import json
+
+from msct_parser import Parser
+import sys
+import sct_utils as sct
 import os
 import shutil
-import sys
-
-import numpy as np
-import sct_utils as sct
-from msct_parser import Parser
 from scipy import ndimage as ndi
+import numpy as np
 from sct_image import orientation
 import nibabel as nib
 
 from spinalcordtoolbox.centerline import optic
 
 
-def check_and_correct_segmentation(fname_segmentation, fname_centerline, threshold_distance=5.0, remove_temp_files=1, verbose=0):
+def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0, remove_temp_files=1, verbose=0):
     """
     This function takes the outputs of isct_propseg (centerline and segmentation) and check if the centerline of the
     segmentation is coherent with the centerline provided by the isct_propseg, especially on the edges (related
@@ -45,6 +43,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
     from sct_convert import convert
     convert(fname_segmentation, path_tmp + 'tmp.segmentation.nii.gz', squeeze_data=False, verbose=0)
     convert(fname_centerline, path_tmp + 'tmp.centerline.nii.gz', squeeze_data=False, verbose=0)
+    fname_seg_absolute = os.path.abspath(fname_segmentation)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -125,7 +124,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, thresho
     im_seg.save()
 
     # replacing old segmentation with the corrected one
-    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ../' + fname_segmentation, verbose)
+    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_seg_absolute, verbose)
 
     os.chdir('..')
 
@@ -484,7 +483,7 @@ if __name__ == "__main__":
             elif use_viewer == "mask":
                 cmd += " -init-mask " + folder_output + mask_reoriented_filename
         else:
-            sct.printv('\nERROR: the viewer has been closed before entering any manual points. Please try again.', 1, type='error')
+            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
 
     # If using OptiC, enabled by default
     elif use_optic:
@@ -517,7 +516,7 @@ if __name__ == "__main__":
 
     # check consistency of segmentation
     fname_centerline = folder_output + file_data + '_centerline' + ext_data
-    check_and_correct_segmentation(fname_seg, fname_centerline, threshold_distance=3.0, remove_temp_files=remove_temp_files, verbose=verbose)
+    check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # copy header from input to segmentation to make sure qform is the same
     from sct_image import copy_header
