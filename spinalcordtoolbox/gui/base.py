@@ -73,7 +73,7 @@ class BaseDialog(QtGui.QDialog):
         self._controller.initialize_dialog()
 
     def _init_ui(self):
-        self.resize(800, 600)
+        self.resize(800, 800)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         layout = QtGui.QVBoxLayout(self)
 
@@ -113,9 +113,10 @@ class BaseDialog(QtGui.QDialog):
 
         parent.addWidget(self.lb_status)
         parent.addWidget(self.lb_warning)
-        parent.addItem(
-            QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum,
-                              QtGui.QSizePolicy.Expanding))
+        parent.addItem(QtGui.QSpacerItem(20,
+                                         40,
+                                         QtGui.QSizePolicy.Minimum,
+                                         QtGui.QSizePolicy.Expanding))
 
     def _init_footer(self, parent):
         """
@@ -142,12 +143,19 @@ class BaseDialog(QtGui.QDialog):
         ctrl_layout.addWidget(self.btn_undo)
         ctrl_layout.addWidget(self.btn_ok)
 
-        self.btn_help.clicked.connect(self.press_help)
-        self.btn_undo.clicked.connect(self._controller.on_undo)
-        self.btn_ok.clicked.connect(self._controller.save_quit)
+        self.btn_help.clicked.connect(self.on_help)
+        self.btn_undo.clicked.connect(self.on_undo)
+        self.btn_ok.clicked.connect(self.on_save_quit)
 
         parent.addLayout(ctrl_layout)
         return ctrl_layout
+
+    def on_save_quit(self):
+        self._controller.save()
+        self.close()
+
+    def on_undo(self):
+        self._controller.on_undo()
 
     def show(self):
         """Override the base class show to fix a bug found in MAC"""
@@ -177,7 +185,7 @@ class BaseDialog(QtGui.QDialog):
         self.lb_warning.setText(msg)
         self.lb_status.setText('')
 
-    def press_help(self):
+    def on_help(self):
         webbrowser.open(self._help_web_address, new=0, autoraise=True)
 
 
@@ -190,11 +198,10 @@ class BaseController(object):
     def __init__(self, image, params, init_values=None, max_points=0):
         self.image = image
         self.params = params
+        self._max_points = max_points
 
         if init_values:
-            self._overlay_image = init_values.data
-
-        self.max_points = max_points
+            self._overlay_image = init_values
 
     def align_image(self):
         self.orientation = self.image.orientation
@@ -202,12 +209,16 @@ class BaseController(object):
         x, y, z, t, dx, dy, dz, dt = self.image.dim
         self.params.aspect = dx / dy
         self.params.offset = x * dx
-        clip = np.percentile(self.image.data, (self.params.min,
-                                               self.params.max))
+        clip = np.percentile(self.image.data, (self.params.min, self.params.max))
         self.params.vmin, self.params.vmax = clip
+        self.reset_position()
+
+    def reset_position(self):
+        x, y, z, _, _, _, _, _ = self.image.dim
         self.init_x = x // 2
         self.init_y = y // 2
         self.init_z = z // 2
+        self.position = (self.init_x, self.init_y, self.init_z)
 
     def _print_point(self, point):
         max_x = self.image.dim[0]
@@ -219,14 +230,15 @@ class BaseController(object):
             return True
         return False
 
-    def save_quit(self):
-        self._overlay_image = self.image.copy()
-        self._overlay_image.data *= 0
+    def save(self):
+        if self._overlay_image is None:
+            self._overlay_image = self.image.copy()
+            self._overlay_image.data *= 0
+
         for point in self.points:
             self._overlay_image.data[point[0], point[1], point[2]] = 1
 
         self._overlay_image.change_orientation(self.orientation)
-        self._dialog.close()
 
     def on_undo(self):
         """Remove the last point selected and refresh the UI"""
@@ -241,7 +253,7 @@ class BaseController(object):
             self._dialog.update_warning('There is no points selected to undo')
 
     def as_string(self):
-        if not self._overlay_image:
+        if self._overlay_image is None:
             logger.warning('There is no information to save')
             return ''
         output = []
@@ -259,3 +271,14 @@ class BaseController(object):
         print(np.where(self._overlay_image.data))
         self._overlay_image.setFileName(file_name)
         self._overlay_image.save()
+
+    def __str__(self):
+        return 'Number of points '
+
+
+class TooManyPointsWarning(StopIteration):
+    message = 'Reached the maximum superior / inferior axis length'
+
+
+class InvalidActionWarning(ValueError):
+    pass

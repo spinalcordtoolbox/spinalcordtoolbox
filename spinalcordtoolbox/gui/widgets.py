@@ -106,7 +106,7 @@ class AnatomicalCanvas(FigureCanvas):
         FigureCanvas.updateGeometry(self)
 
     def _init_ui(self, data):
-        self.axes = self.fig.add_subplot(111)
+        self.axes = self.fig.add_axes([0, 0, 1, 1])
         self.axes.axis('off')
         self.axes.set_frame_on(True)
         self.fig.canvas.mpl_connect('button_release_event', self.on_update)
@@ -122,15 +122,17 @@ class AnatomicalCanvas(FigureCanvas):
         if self.interactive:
             self.cursor = Cursor(self.axes, useblit=True, color='red', linewidth=1)
 
-    def __repr__(self):
-        return '{}: {}, {}, {}'.format(self.__class__, self._x, self._y, self._z)
-
-    @QtCore.Slot(int, int, int)
     def on_refresh_slice(self, x, y, z):
         logger.debug('Current slice {}'.format((x, y, z)))
         self._x, self._y, self._z = x, y, z
         self.refresh_slice()
         self.view.figure.canvas.draw()
+
+    def __repr__(self):
+        return '{}: {}, {}, {}'.format(self.__class__, self._x, self._y, self._z)
+
+    def __str__(self):
+        return '{}: {}, {}'.format(self._x, self._y, self._z)
 
 
 class SagittalCanvas(AnatomicalCanvas):
@@ -139,7 +141,6 @@ class SagittalCanvas(AnatomicalCanvas):
         self._init_ui(self.image.data[:, :, self._z])
 
     def refresh_slice(self):
-        logging.debug(self._z)
         data = self.image.data[:, :, self._z]
         self.view.set_array(data)
 
