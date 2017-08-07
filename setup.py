@@ -38,7 +38,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
-    packages=find_packages(exclude=['scripts', 'dev', 'dev.*', 'install', 'testing']),
+    packages=find_packages(exclude=['dev', 'dev.*', 'install', 'testing']),
     package_data={},
     install_requires=requirements,
     include_package_data=True,
