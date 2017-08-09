@@ -155,7 +155,10 @@ class BaseDialog(QtGui.QDialog):
         self.close()
 
     def on_undo(self):
-        self._controller.on_undo()
+        try:
+            self._controller.undo()
+        except InvalidActionWarning as err:
+            self.update_warning(err)
 
     def show(self):
         """Override the base class show to fix a bug found in MAC"""
@@ -190,15 +193,16 @@ class BaseDialog(QtGui.QDialog):
 
 
 class BaseController(object):
-    points = []
     orientation = None
     _overlay_image = None
     _dialog = None
+    position = None
 
     def __init__(self, image, params, init_values=None, max_points=0):
         self.image = image
         self.params = params
         self._max_points = max_points
+        self.points = []
 
         if init_values:
             self._overlay_image = init_values
@@ -236,30 +240,30 @@ class BaseController(object):
             self._overlay_image.data *= 0
 
         for point in self.points:
-            self._overlay_image.data[point[0], point[1], point[2]] = 1
+            x, y, z, label = point
+            self._overlay_image.data[x, y, z] = label
 
         self._overlay_image.change_orientation(self.orientation)
 
-    def on_undo(self):
+    def undo(self):
         """Remove the last point selected and refresh the UI"""
         if self.points:
             point = self.points[-1]
             self.points = self.points[:-1]
             self._slice = point[0]
-            if self.valid_point(point[0], point[1], point[2]):
-                self._dialog.set_slice(point[0], point[1], point[2])
             logger.debug('Point removed {}'.format(point))
         else:
-            self._dialog.update_warning('There is no points selected to undo')
+            raise InvalidActionWarning('There is no points selected to undo')
 
     def as_string(self):
         if self._overlay_image is None:
             logger.warning('There is no information to save')
             return ''
         output = []
-        xs, ys, zs = np.where(self._overlay_image.data)
+        data = self._overlay_image.data
+        xs, ys, zs = np.where(data)
         for x, y, z in zip(xs, ys, zs):
-            output.append('{},{},{},{}'.format(x, y, z, 1))
+            output.append('{},{},{},{}'.format(x, y, z, data[x, y, z]))
         return ':'.join(output)
 
     def as_niftii(self, file_name=None):
@@ -281,4 +285,8 @@ class TooManyPointsWarning(StopIteration):
 
 
 class InvalidActionWarning(ValueError):
+    pass
+
+
+class MissingLabelWarning(ValueError):
     pass

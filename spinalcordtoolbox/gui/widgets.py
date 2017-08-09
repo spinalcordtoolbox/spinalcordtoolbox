@@ -7,6 +7,7 @@ from matplotlib.widgets import Cursor
 
 from PyQt4 import QtCore, QtGui
 
+from spinalcordtoolbox.gui.base import MissingLabelWarning
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,15 @@ class VertebraeWidget(QtGui.QWidget):
     def on_refresh(self):
         for point in self.parent._controller.points:
             self._check_boxes[point[3]].setCheckState(QtCore.Qt.Checked)
+
+    def selected_label(self, index):
+        self._check_boxes[index].setCheckState(QtCore.Qt.Checked)
+
+    @property
+    def label(self):
+        if self._selected_label:
+            return self._selected_label.label
+        raise MissingLabelWarning('No vertebrae was selected')
 
 
 class AnatomicalCanvas(FigureCanvas):

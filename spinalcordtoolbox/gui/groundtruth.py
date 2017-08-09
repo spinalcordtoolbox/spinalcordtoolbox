@@ -21,15 +21,20 @@ class GroundTruthController(base.BaseController):
         self._dialog.update_status('1. Select a label -> 2. Select a axial slice -> 3. Select a point in the corrinal plane')
 
     def select_point(self, x, y, z):
-        label = self._dialog.selected_label
-        logger.debug('Point Selected {}'.format(self._print_point((x, y, z))))
-        self._dialog.update_status('Point Selected {}'.format(self._print_point((x, y, z))))
-        if self.valid_point(x, y, z) and label:
-            self.points.append((x, y, z, label))
-            self._dialog.set_slice(x, y, z)
+        logger.debug('Point Selected {}'.format((x, y, z, self._label)))
+        if self.valid_point(x, y, z) and self._label:
+            self.points.append((x, y, z, self._label))
 
     def as_image(self):
         pass
+
+    @property
+    def label(self):
+        return self._label
+
+    @label.setter
+    def label(self, value):
+        self._label = value
 
 
 class GroundTruth(base.BaseDialog):

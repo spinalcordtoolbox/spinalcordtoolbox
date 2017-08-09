@@ -39,19 +39,18 @@ class PropSegController(base.BaseController):
                                                               self.INTERVAL + self._slice))
             self._slice += self.INTERVAL
             if self._slice >= self.image.dim[0]:
-                self._dialog.update_warning('Reached the maximum superior / inferior axis length')
-            else:
-                self._dialog.set_slice(self._slice, self.init_y, self.init_z)
+                self._slice -= self.INTERVAL
+                raise TooManyPointsWarning()
 
     def select_point(self, x, y, z):
-        logger.debug('Point Selected {}'.format((x, y, z)))
-
         if not self.valid_point(self._slice, y, z):
             raise ValueError('Invalid point selected {}'.format((self._slice, y, z)))
 
-        existing_points = [i for i in self.points if i[0] == self._slice]
+        logger.debug('Point Selected {}'.format((self._slice, y, z)))
+
+        existing_points = [i for i, j in enumerate(self.points) if j[0] == self._slice]
         if existing_points:
-            existing_points[0] = (self._slice, y, z, 1)
+            self.points[existing_points[0]] = (self._slice, y, z, 1)
         else:
             self.points.append((self._slice, y, z, 1))
         self.position = (self._slice, y, z)
