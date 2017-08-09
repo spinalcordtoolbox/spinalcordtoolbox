@@ -208,6 +208,7 @@ class BaseController(object):
             self._overlay_image = init_values
 
     def align_image(self):
+        logger.debug('Image orientation {}'.format(self.image.orientation))
         self.orientation = self.image.orientation
         self.image.change_orientation('SAL')
         x, y, z, t, dx, dy, dz, dt = self.image.dim
@@ -243,7 +244,8 @@ class BaseController(object):
             x, y, z, label = point
             self._overlay_image.data[x, y, z] = label
 
-        self._overlay_image.change_orientation(self.orientation)
+        if self.orientation != self._overlay_image.orientation:
+            self._overlay_image.change_orientation(self.orientation)
 
     def undo(self):
         """Remove the last point selected and refresh the UI"""
@@ -272,12 +274,9 @@ class BaseController(object):
             raise IOError('There is no information to save')
         if not file_name:
             file_name = 'manual_propseg.nii.gz'
-        print(np.where(self._overlay_image.data))
+        logger.debug('Data: {}'.format(np.where(self._overlay_image.data)))
         self._overlay_image.setFileName(file_name)
         self._overlay_image.save()
-
-    def __str__(self):
-        return 'Number of points '
 
 
 class TooManyPointsWarning(StopIteration):

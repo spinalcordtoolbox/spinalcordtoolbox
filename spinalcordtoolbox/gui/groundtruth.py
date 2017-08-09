@@ -75,7 +75,7 @@ class GroundTruth(base.BaseDialog):
 
     @property
     def selected_label(self):
-        return self.labels_checkboxes._selected_label.label
+        return self.labels_checkboxes._active_label.label
 
 
 if __name__ == '__main__':

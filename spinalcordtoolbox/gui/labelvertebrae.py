@@ -17,27 +17,19 @@ class LabelVertebraeController(base.BaseController):
     def __init__(self, image, params, init_values=None):
         super(LabelVertebraeController, self).__init__(image, params, init_values)
         self._label = 0
-        self._slice = 0
 
     def initialize_dialog(self):
         self._dialog.update_status('1. Select a label -> 2. Select a axial slice -> 3. Select a point in the corrinal plane')
 
-    def select_slice(self, x, y, z):
-        if not self.valid_point(x, y, z):
-            raise ValueError('Invalid slice selected {}'.format((x, y, z)))
-
-        logger.debug('Slice Selected {}'.format((x, y, z)))
-        self._slice = x
-
     def select_point(self, x, y, z, label):
-        if not self.valid_point(self._slice, y, z):
-            raise ValueError('Invalid point selected {}'.format((self._slice, y, z)))
+        if not self.valid_point(x, y, z):
+            raise ValueError('Invalid point selected {}'.format((x, y, z)))
 
         logger.debug('Point Selected {}'.format((x, y, z, label)))
         self._label = label
 
-        self.points.append((self._slice, y, z, self._label))
-        self.position = (self._slice, y, z)
+        self.points.append((x, y, z, self._label))
+        self.position = (x, y, z)
 
     @property
     def label(self):
@@ -55,7 +47,7 @@ class LabelVertebrae(base.BaseDialog):
 
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
-        self.sag = widgets.SagittalCanvas(self)
+        self.sag = widgets.SagittalCanvas(self, interactive=True)
         self.labels = widgets.VertebraeWidget(self)
         layout.addWidget(self.labels)
         layout.addWidget(self.sag)
@@ -83,9 +75,12 @@ class LabelVertebrae(base.BaseDialog):
 
     def select_point(self, x, y, z):
         try:
+            label = self.labels.label
             logger.debug('Point clicked {}'.format((x, y, z)))
-            self._controller.select_point(x, y, z, self.labels.label)
-            self.labels.selected_label(self.labels.label)
+            self._controller.select_point(x, y, z, label)
+            self.labels.selected_label(label)
+            message = 'Label {} selected {}'.format(label, (x, y, z))
+            self.update_status(message)
         except (TooManyPointsWarning, MissingLabelWarning) as warn:
             self.update_warning(warn.message)
 

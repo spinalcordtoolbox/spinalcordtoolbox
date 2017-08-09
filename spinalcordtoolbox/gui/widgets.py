@@ -41,7 +41,7 @@ class VertebraeWidget(QtGui.QWidget):
               (24, 'posterior edge of L4/S1 intervertebral disk (label=24)'),
               (25, 'posterior edge of S1/S2 intervertebral disk (label=25)'),
               (26, 'posterior edge of S2/S3 intervertebral disk (label=26)'))
-    _selected_label = None
+    _active_label = None
     _check_boxes = {}
 
     def __init__(self, parent):
@@ -63,25 +63,28 @@ class VertebraeWidget(QtGui.QWidget):
 
     def _init_data(self, labels):
         for label in labels:
-            self._selected_label[label].setCheckState(QtCore.Qt.Checked)
+            self._active_label[label].setCheckState(QtCore.Qt.Checked)
 
     def on_select_label(self):
         label = self.sender()
-        if self._selected_label and self._selected_label.checkState() == QtCore.Qt.PartiallyChecked:
-            self._selected_label.setCheckState(QtCore.Qt.Unchecked)
-        self._selected_label = label
+        if self._active_label and self._active_label.checkState() == QtCore.Qt.PartiallyChecked:
+            self._active_label.setCheckState(QtCore.Qt.Unchecked)
+        self._active_label = label
 
     def on_refresh(self):
         for point in self.parent._controller.points:
             self._check_boxes[point[3]].setCheckState(QtCore.Qt.Checked)
 
     def selected_label(self, index):
+        label = self._check_boxes[index]
+        if self._active_label == label:
+            self._active_label = None
         self._check_boxes[index].setCheckState(QtCore.Qt.Checked)
 
     @property
     def label(self):
-        if self._selected_label:
-            return self._selected_label.label
+        if self._active_label:
+            return self._active_label.label
         raise MissingLabelWarning('No vertebrae was selected')
 
 
