@@ -87,6 +87,7 @@ class LabelVertebrae(base.BaseDialog):
 
 if __name__ == '__main__':
     import sys
+    import os
     from scripts.msct_image import Image
 
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -101,7 +102,8 @@ if __name__ == '__main__':
 
     params = base.AnatomicalParams()
     img = Image(file_name)
-    overlay = Image(overlay_name)
+    if os.path.exists(overlay_name):
+        overlay = Image(overlay_name)
     controller = LabelVertebraeController(img, params)
     controller.align_image()
     base_win = LabelVertebrae(controller)

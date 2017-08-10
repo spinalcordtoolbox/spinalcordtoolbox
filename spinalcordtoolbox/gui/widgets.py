@@ -107,9 +107,7 @@ class AnatomicalCanvas(FigureCanvas):
         self.params = parent.params
         self.interactive = interactive
 
-        self._x = self._parent._controller.init_x
-        self._y = self._parent._controller.init_y
-        self._z = self._parent._controller.init_z
+        self._x, self._y, self._z = self._parent._controller.position
 
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         super(AnatomicalCanvas, self).__init__(self.fig)
@@ -135,12 +133,6 @@ class AnatomicalCanvas(FigureCanvas):
         if self.interactive:
             self.cursor = Cursor(self.axes, useblit=True, color='red', linewidth=1)
 
-    def on_refresh_slice(self, x, y, z):
-        logger.debug('Current slice {}'.format((x, y, z)))
-        self._x, self._y, self._z = x, y, z
-        self.refresh_slice()
-        self.view.figure.canvas.draw()
-
     def __repr__(self):
         return '{}: {}, {}, {}'.format(self.__class__, self._x, self._y, self._z)
 
@@ -152,28 +144,35 @@ class SagittalCanvas(AnatomicalCanvas):
     def __init__(self, *args, **kwargs):
         super(SagittalCanvas, self).__init__(*args, **kwargs)
         self._init_ui(self.image.data[:, :, self._z])
+        self.points, = self.axes.plot([], [], '.r', markersize=10)
 
-    def refresh_slice(self):
+    def refresh(self):
+        self._x, self._y, self._z = self._parent._controller.position
         data = self.image.data[:, :, self._z]
         self.view.set_array(data)
 
         if self._hslices:
             self.plot_hslices()
 
+        self.view.figure.canvas.draw()
+
+        self.plot_points()
+
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
             self.point_selected_signal.emit(int(event.ydata), int(event.xdata), self._z)
 
     def plot_points(self):
-        if self._parent._controller.points:
-            points = [x for x in self._parent._controller.points if self._z == x[2]]
-            cols = zip(*points)
-            if not self.points:
-                self.points, = self.axes.plot(cols[0], cols[1], '.r', markersize=10)
-            else:
-                self.points.set_xdata(cols[0])
-                self.points.set_ydata(cols[1])
-                self.view.figure.canvas.draw()
+        logger.debug('Plotting points {}'.format(self._parent._controller.points))
+        points = [x for x in self._parent._controller.points]
+        try:
+            xs, ys, zs, _ = zip(*points)
+            self.points.set_xdata(ys)
+            self.points.set_ydata(xs)
+        except ValueError:
+            self.points.set_xdata([])
+            self.points.set_ydata([])
+        self.view.figure.canvas.draw()
 
     def plot_hslices(self):
         self._hslices = True
@@ -186,15 +185,22 @@ class SagittalCanvas(AnatomicalCanvas):
         for x in slices:
             self._slices.append(self.axes.axhline(x, color='w'))
 
+    def on_refresh_slice(self, x, y, z):
+        super(SagittalCanvas, self).on_refresh_slice(x, y, z)
+        self.plot_points()
+
 
 class CorrinalCanvas(AnatomicalCanvas):
     def __init__(self, *args, **kwargs):
         super(CorrinalCanvas, self).__init__(*args, **kwargs)
         self._init_ui(self.image.data[:, self._y, :])
+        self.points = self.axes.plot([], [], '.r', markersize=10)
 
-    def refresh_slice(self):
+    def refresh(self):
+        self._x, self._y, self._z = self._parent._controller.position
         data = self.image.data[:, self._y, :]
         self.view.set_array(data)
+        self.view.figure.canvas.draw()
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
@@ -203,23 +209,27 @@ class CorrinalCanvas(AnatomicalCanvas):
     def plot_points(self):
         if self._parent._controller.points:
             points = [x for x in self._parent._controller.points if self._y == x[0]]
-            cols = zip(*points)
-            if not self.points:
-                self.points = self.axes.plot(cols[1], cols[2], '.r', markersize=10)
-            else:
-                self.points.set_xdata(cols[0])
-                self.points.set_ydata(cols[1])
-                self.view.figure.canvas.draw()
+            try:
+                xs, ys, zs, _ = zip(*points)
+                self.points.set_xdata(xs)
+                self.points.set_ydata(zs)
+            except ValueError:
+                self.points.set_xdata([])
+                self.points.set_ydata([])
+            self.view.figure.canvas.draw()
 
 
 class AxialCanvas(AnatomicalCanvas):
     def __init__(self, parent, width=4, height=8, dpi=100, interactive=False):
         super(AxialCanvas, self).__init__(parent, width, height, dpi, interactive)
         self._init_ui(self.image.data[self._x, :, :])
+        self.points = self.axes.plot([], [], '.r', markersize=10)
 
-    def refresh_slice(self):
+    def refresh(self):
+        self._x, self._y, self._z = self._parent._controller.position
         data = self.image.data[self._x, :, :]
         self.view.set_array(data)
+        self.view.figure.canvas.draw()
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
@@ -228,20 +238,19 @@ class AxialCanvas(AnatomicalCanvas):
     def plot_points(self):
         if self._parent._controller.points:
             points = [x for x in self._parent._controller.points if self._x == x[0]]
-            cols = zip(*points)
-            if not self.points:
-                self.points = self.axes.plot(cols[1], cols[2], '.r', markersize=10)
-            else:
-                self.points.set_xdata(cols[0])
-                self.points.set_ydata(cols[1])
-                self.view.figure.canvas.draw()
+            try:
+                xs, ys, zs, _ = zip(*points)
+                self.points.set_xdata(ys)
+                self.points.set_ydata(zs)
+            except ValueError:
+                self.points.set_xdata([])
+                self.points.set_ydata([])
+            self.view.figure.canvas.draw()
 
 
 class AnatomicalToolbar(NavigationToolbar):
     def __init__(self, canvas, parent):
-        self.toolitems = (('Pan', 'Pan axes with left mouse, zoom with right',
-                           'move', 'pan'), ('Back', 'Back to previous view',
-                                            'back', 'back'),
-                          ('Zoom', 'Zoom to rectangle', 'zoom_to_rect',
-                           'zoom'))
+        self.toolitems = (('Pan', 'Pan axes with left mouse, zoom with right', 'move', 'pan'),
+                          ('Back', 'Back to previous view', 'back', 'back'),
+                          ('Zoom', 'Zoom to rectangle', 'zoom_to_rect', 'zoom'))
         super(AnatomicalToolbar, self).__init__(canvas, parent)

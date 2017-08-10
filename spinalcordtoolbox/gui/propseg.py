@@ -29,9 +29,14 @@ class PropSegController(base.BaseController):
         if not self._max_points:
             self._max_points = self.image.dim[0] / self.INTERVAL
 
+    def reset_position(self):
+        super(PropSegController, self).reset_position()
+        if self.mode == 'AUTO':
+            self.position = (self._slice, self.position[1], self.position[2])
+
     def initialize_dialog(self):
         """Set the dialog with default data"""
-        self._dialog.update_status('Propergation segmentation manually ')
+        self._dialog.update_status('1. Select saggital slice -> 2. Select the Axial center of the spinalcord')
 
     def skip_slice(self):
         if self.mode == 'AUTO':
@@ -43,17 +48,20 @@ class PropSegController(base.BaseController):
                 raise TooManyPointsWarning()
 
     def select_point(self, x, y, z):
-        if not self.valid_point(self._slice, y, z):
-            raise ValueError('Invalid point selected {}'.format((self._slice, y, z)))
+        x = self._slice
+        if not self.valid_point(x, y, z):
+            raise ValueError('Invalid point selected {}'.format((x, y, z)))
 
-        logger.debug('Point Selected {}'.format((self._slice, y, z)))
+        logger.debug('Point Selected {}'.format((x, y, z)))
 
-        existing_points = [i for i, j in enumerate(self.points) if j[0] == self._slice]
+        existing_points = [i for i, j in enumerate(self.points) if j[0] == x]
         if existing_points:
-            self.points[existing_points[0]] = (self._slice, y, z, 1)
+            self.points[existing_points[0]] = (x, y, z, 1)
         else:
-            self.points.append((self._slice, y, z, 1))
-        self.position = (self._slice, y, z)
+            if len(self.points) >= self._max_points:
+                raise TooManyPointsWarning()
+            self.points.append((x, y, z, 1))
+        self.position = (x, y, z)
         self._next_slice()
 
     def _next_slice(self):
@@ -68,6 +76,7 @@ class PropSegController(base.BaseController):
             raise ValueError('Invalid slice selected {}'.format((x, y, z)))
 
         logger.debug('Slice Selected {}'.format((x, y, z)))
+        self.position = (x, self.position[1], self.position[2])
         self._slice = x
 
     @property
@@ -78,11 +87,11 @@ class PropSegController(base.BaseController):
     def mode(self, value):
         if value not in self.MODES:
             raise ValueError('Invalid mode %', value)
+
         if value != self._mode:
-            logger.debug('Mode changed %s', value)
-            self.points = []
-            self._slice = self
             self._mode = value
+            self.points = []
+            self.reset_position()
 
 
 class PropSeg(base.BaseDialog):
@@ -137,33 +146,33 @@ class PropSeg(base.BaseDialog):
         widget = self.sender()
         if widget.mode in self._controller.MODES and widget.isChecked() and widget.mode != self._controller.mode:
             self._controller.mode = widget.mode
-            self.main_canvas.reset()
-            self.second_canvas.reset()
+            self.main_canvas.refresh()
+            self.second_canvas.refresh()
+            self.update_status('Reset manual segmentation: Now in mode {}'.format(widget.mode))
 
     def on_select_slice(self, x, y, z):
         try:
             logger.debug('Slice clicked {}'.format((x, y, z)))
             self._controller.select_slice(x, y, z)
-            x, y, z = self._controller.position
-            self.main_canvas.on_refresh_slice(x, y, z)
-            self.second_canvas.on_refresh_slice(x, y, z)
-        except TooManyPointsWarning as err:
-            self.update_warning(err.message)
-        except InvalidActionWarning as err:
+            self.main_canvas.refresh()
+            self.second_canvas.refresh()
+            self.update_status('Sagittal slice seleted: {}'.format(self._controller._slice))
+        except (TooManyPointsWarning, InvalidActionWarning) as err:
             self.update_warning(err.message)
 
     def select_point(self, x, y, z):
         try:
             logger.debug('Point clicked {}'.format((x, y, z)))
             self._controller.select_point(x, y, z)
-            x, y, z = self._controller.position
-            self.main_canvas.on_refresh_slice(x, y, z)
-            self.second_canvas.on_refresh_slice(x, y, z)
-        except TooManyPointsWarning as warn:
+            self.main_canvas.refresh()
+            self.second_canvas.refresh()
+            self.update_status('Point {} selected: {}'.format(len(self._controller.points), self._controller.points))
+        except (TooManyPointsWarning, InvalidActionWarning) as warn:
             self.update_warning(warn)
 
 
 if __name__ == '__main__':
+    import os
     import sys
     from scripts.msct_image import Image
 
@@ -179,8 +188,9 @@ if __name__ == '__main__':
 
     params = base.AnatomicalParams()
     img = Image(file_name)
-    overlay = Image(overlay_name)
-    controller = PropSegController(img, params, None, 2)
+    if os.path.exists(overlay_name):
+        overlay = Image(overlay_name)
+    controller = PropSegController(img, params, None, 12)
     controller.align_image()
     base_win = PropSeg(controller)
     base_win.show()

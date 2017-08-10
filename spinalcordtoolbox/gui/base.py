@@ -225,10 +225,6 @@ class BaseController(object):
         self.init_z = z // 2
         self.position = (self.init_x, self.init_y, self.init_z)
 
-    def _print_point(self, point):
-        max_x = self.image.dim[0]
-        return '{} {} {}'.format(max_x - point[0], point[1], point[2])
-
     def valid_point(self, x, y, z):
         dim = self.image.dim
         if 0 <= x < dim[0] and 0 <= y < dim[1] and 0 <= z < dim[2]:
