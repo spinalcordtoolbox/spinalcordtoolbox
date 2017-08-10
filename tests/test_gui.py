@@ -29,7 +29,7 @@ class PropsegTestCase(unittest.TestCase):
 
     def test_auto_init(self):
         controller = self._init_auto()
-        assert controller.position == (160, 160, 32)
+        assert controller.position == (15, 160, 32)
         assert len(controller.points) == 0
 
     def test_custom_init(self):
@@ -108,12 +108,10 @@ class LabelVertebraeTestCase(unittest.TestCase):
     def test_select_t2_vertebrae(self):
         controller = labelvertebrae.LabelVertebraeController(self.image, self.params, self.overlay)
         controller.align_image()
-        expected = (111, 123, 36, 10)
-        input_slice = (111, 5, 5)
-        input_point = (3, 123, 36)
+        expected = (160, 123, 36, 10)
+        input_point = (3, 123, 36, 10)
 
         controller.label = 10
-        controller.select_slice(*input_slice)
         controller.select_point(*input_point)
 
         assert controller.points == [expected]

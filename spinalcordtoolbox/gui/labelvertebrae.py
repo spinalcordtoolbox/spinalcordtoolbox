@@ -17,9 +17,7 @@ class LabelVertebraeController(base.BaseController):
     def __init__(self, image, params, init_values=None):
         super(LabelVertebraeController, self).__init__(image, params, init_values)
         self._label = 0
-
-    def initialize_dialog(self):
-        self._dialog.update_status('1. Select a label -> 2. Select a axial slice -> 3. Select a point in the corrinal plane')
+        self._points = {}
 
     def select_point(self, x, y, z, label):
         if not self.valid_point(x, y, z):
@@ -43,7 +41,6 @@ class LabelVertebraeController(base.BaseController):
 class LabelVertebrae(base.BaseDialog):
     def __init__(self, *args, **kwargs):
         super(LabelVertebrae, self).__init__(*args, **kwargs)
-        # self.labels = controller.labels
 
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
@@ -56,17 +53,13 @@ class LabelVertebrae(base.BaseDialog):
         self.sag.point_selected_signal.connect(self.select_point)
 
     def _init_controls(self, parent):
-        self._label_controler(parent)
-
-    def _init_toolbar(self, parent):
-        pass
-
-    def _label_controler(self, parent):
         main_ctrl = QtGui.QWidget()
         layout = QtGui.QVBoxLayout()
         main_ctrl.setLayout(layout)
-
         parent.addWidget(main_ctrl)
+
+    def _init_toolbar(self, parent):
+        pass
 
     def _init_footer(self, parent):
         ctrl_layout = super(LabelVertebrae, self)._init_footer(parent)
@@ -101,10 +94,14 @@ if __name__ == '__main__':
         overlay_name = '/Users/geper_admin/manual_propseg.nii.gz'
 
     params = base.AnatomicalParams()
+    params.init_message = '1. Select a label -> 2. Select a point in the sagittal plane'
     img = Image(file_name)
     if os.path.exists(overlay_name):
         overlay = Image(overlay_name)
-    controller = LabelVertebraeController(img, params)
+    else:
+        overlay = Image(file_name)
+        overlay.file_name = overlay_name
+    controller = LabelVertebraeController(img, params, overlay)
     controller.align_image()
     base_win = LabelVertebrae(controller)
     base_win.show()

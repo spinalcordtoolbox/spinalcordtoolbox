@@ -17,16 +17,10 @@ class GroundTruthController(base.BaseController):
     def __init__(self, image, params, init_values=None):
         super(GroundTruthController, self).__init__(image, params, init_values)
 
-    def initialize_dialog(self):
-        self._dialog.update_status('1. Select a label -> 2. Select a axial slice -> 3. Select a point in the corrinal plane')
-
     def select_point(self, x, y, z):
         logger.debug('Point Selected {}'.format((x, y, z, self._label)))
         if self.valid_point(x, y, z) and self._label:
             self.points.append((x, y, z, self._label))
-
-    def as_image(self):
-        pass
 
     @property
     def label(self):
@@ -62,13 +56,6 @@ class GroundTruth(base.BaseDialog):
     def _init_controls(self, parent):
         pass
 
-    # def _init_footer(self, parent):
-    #     ctrl_layout = super(GroundTruth, self)._init_footer(parent)
-    #     skip = QtGui.QPushButton('Skip')
-    #     ctrl_layout.insertWidget(2, skip)
-    #
-    #     skip.clicked.connect(self._controller.skip_slice)
-
     def set_slice(self, x=0, y=0, z=0):
         self.sagittal_canvas.on_refresh_slice(x, y, z)
         self.labels_checkboxes.on_refresh()
@@ -79,20 +66,29 @@ class GroundTruth(base.BaseDialog):
 
 
 if __name__ == '__main__':
+    import os
     import sys
     from scripts.msct_image import Image
 
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     app = QtGui.QApplication(sys.argv)
 
+    try:
+        file_name = sys.argv[1]
+        overlay_name = sys.argv[2]
+    except Exception:
+        file_name = '/Users/geper_admin/sct_example_data/t2/t2.nii.gz'
+        overlay_name = '/Users/geper_admin/manual_propseg.nii.gz'
+
     params = base.AnatomicalParams()
-    img = Image('/Users/geper_admin/sct_example_data/t2/t2.nii.gz')
-    img.change_orientation('SAL')
+    params.init_message = '1. Select a label -> 2. Select a axial slice -> 3. Select a point in the corrinal plane'
+    img = Image(file_name)
+    if os.path.exists:
+        overlay = Image(overlay_name)
     controller = GroundTruthController(img, params)
     controller.align_image()
     base_win = GroundTruth(controller)
     base_win.show()
     app.exec_()
     print(base_win._controller.as_string())
-    base_win._controller.as_image()
     base_win._controller.as_niftii()

@@ -70,7 +70,6 @@ class BaseDialog(QtGui.QDialog):
         self.image = controller.image
         self._controller._dialog = self
         self._init_ui()
-        self._controller.initialize_dialog()
 
     def _init_ui(self):
         self.resize(800, 800)
@@ -117,6 +116,8 @@ class BaseDialog(QtGui.QDialog):
                                          40,
                                          QtGui.QSizePolicy.Minimum,
                                          QtGui.QSizePolicy.Expanding))
+        message = getattr(self.params, 'init_message', '')
+        self.update_status(message)
 
     def _init_footer(self, parent):
         """
@@ -232,9 +233,9 @@ class BaseController(object):
         return False
 
     def save(self):
-        if self._overlay_image is None:
-            self._overlay_image = self.image.copy()
-            self._overlay_image.data *= 0
+        self._overlay_image = self.image.copy()
+        self._overlay_image.data *= 0
+        logger.debug('Overlay shape {}'.format(self._overlay_image.data.shape))
 
         for point in self.points:
             x, y, z, label = point

@@ -34,10 +34,6 @@ class PropSegController(base.BaseController):
         if self.mode == 'AUTO':
             self.position = (self._slice, self.position[1], self.position[2])
 
-    def initialize_dialog(self):
-        """Set the dialog with default data"""
-        self._dialog.update_status('1. Select saggital slice -> 2. Select the Axial center of the spinalcord')
-
     def skip_slice(self):
         if self.mode == 'AUTO':
             logger.debug('Advance slice from {} to {}'.format(self._slice,
@@ -187,10 +183,14 @@ if __name__ == '__main__':
         overlay_name = '/Users/geper_admin/manual_propseg.nii.gz'
 
     params = base.AnatomicalParams()
+    params.init_message = '1. Select saggital slice -> 2. Select the Axial center of the spinalcord'
     img = Image(file_name)
     if os.path.exists(overlay_name):
         overlay = Image(overlay_name)
-    controller = PropSegController(img, params, None, 12)
+    else:
+        overlay = Image(img)
+        overlay.file_name = overlay_name
+    controller = PropSegController(img, params, overlay, 12)
     controller.align_image()
     base_win = PropSeg(controller)
     base_win.show()
