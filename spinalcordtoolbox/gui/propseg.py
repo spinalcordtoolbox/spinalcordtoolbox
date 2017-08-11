@@ -171,6 +171,11 @@ class PropSeg(base.BaseDialog):
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
             self.update_warning(warn.message)
 
+    def on_undo(self):
+        super(PropSeg, self).on_undo()
+        self.main_canvas.refresh()
+        self.second_canvas.refresh()
+
 
 if __name__ == '__main__':
     import os
@@ -201,4 +206,4 @@ if __name__ == '__main__':
     base_win.show()
     app.exec_()
     print(base_win._controller.as_string())
-    base_win._controller.as_niftii()
+    base_win._controller.as_niftii(overlay_name)

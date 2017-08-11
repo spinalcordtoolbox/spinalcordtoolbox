@@ -68,13 +68,19 @@ class LabelVertebrae(base.BaseDialog):
     def select_point(self, x, y, z):
         try:
             label = self.labels.label
-            logger.debug('Point clicked {}'.format((x, y, z)))
             self._controller.select_point(x, y, z, label)
             self.labels.selected_label(label)
+            self.sag.refresh()
             message = 'Label {} selected {}'.format(label, (x, y, z))
+            logger.debug(message)
             self.update_status(message)
         except (TooManyPointsWarning, MissingLabelWarning) as warn:
             self.update_warning(warn.message)
+
+    def on_undo(self):
+        super(LabelVertebrae, self).on_undo()
+        self.labels.refresh()
+        self.sag.refresh()
 
 
 if __name__ == '__main__':
@@ -94,8 +100,6 @@ if __name__ == '__main__':
 
     params = base.AnatomicalParams()
     params.init_message = '1. Select a label -> 2. Select a point in the sagittal plane'
-    params.start_label = 3
-    params.end_label = 20
     img = Image(file_name)
     if os.path.exists(overlay_name):
         overlay = Image(overlay_name)
@@ -108,4 +112,4 @@ if __name__ == '__main__':
     base_win.show()
     app.exec_()
     print(controller.as_string())
-    controller.as_niftii()
+    controller.as_niftii(overlay_name)

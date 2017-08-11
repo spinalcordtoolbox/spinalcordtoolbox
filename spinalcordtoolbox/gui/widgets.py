@@ -77,7 +77,11 @@ class VertebraeWidget(QtGui.QWidget):
             self._active_label.setCheckState(QtCore.Qt.Unchecked)
         self._active_label = label
 
-    def on_refresh(self):
+    def refresh(self):
+        for x in self._check_boxes.values():
+            x.setCheckState(QtCore.Qt.Unchecked)
+
+        logger.debug('refresh labels {}'.format(self.parent._controller.points))
         for point in self.parent._controller.points:
             self._check_boxes[point[3]].setCheckState(QtCore.Qt.Checked)
 

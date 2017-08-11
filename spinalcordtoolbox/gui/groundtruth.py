@@ -58,7 +58,7 @@ class GroundTruth(base.BaseDialog):
 
     def set_slice(self, x=0, y=0, z=0):
         self.sagittal_canvas.on_refresh_slice(x, y, z)
-        self.labels_checkboxes.on_refresh()
+        self.labels_checkboxes.refresh()
 
     @property
     def selected_label(self):

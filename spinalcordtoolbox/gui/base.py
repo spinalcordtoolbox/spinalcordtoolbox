@@ -43,6 +43,8 @@ class AnatomicalParams(object):
         self.max = vmax
         self.vmode = vmode
         self.alpha = alpha
+        self.start_label = 50
+        self.end_label = -1
 
 
 class BaseDialog(QtGui.QDialog):
@@ -159,7 +161,7 @@ class BaseDialog(QtGui.QDialog):
         try:
             self._controller.undo()
         except InvalidActionWarning as err:
-            self.update_warning(err)
+            self.update_warning(err.message)
 
     def show(self):
         """Override the base class show to fix a bug found in MAC"""
@@ -270,7 +272,7 @@ class BaseController(object):
             logger.warning('There is no information to save')
             raise IOError('There is no information to save')
         if not file_name:
-            file_name = 'manual_propseg.nii.gz'
+            file_name = 'manual.nii.gz'
         logger.debug('Data: {}'.format(np.where(self._overlay_image.data)))
         self._overlay_image.setFileName(file_name)
         self._overlay_image.save()
