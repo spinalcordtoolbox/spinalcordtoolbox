@@ -144,8 +144,13 @@ class AnalyzeLeion:
 
 		self.volumes = None
 
-		self.path_atlas = self.path_template+'atlas/'
-		self.path_levels = self.path_template+'template/PAM50_levels.nii.gz'
+		if self.path_template is not None:
+			self.path_atlas = self.path_template+'atlas/'
+			self.path_levels = self.path_template+'template/PAM50_levels.nii.gz'
+			self.dct_matrix = {}
+			self.pickle_name = extract_fname(self.fname_mask)[1]+'_analyzis.pkl'
+		else:
+			self.path_atlas, self.path_levels, self.pickle_name = None, None, None
 		self.vert_lst = None
 		self.atlas_roi_lst = None
 
@@ -195,17 +200,19 @@ class AnalyzeLeion:
 		printv('\nSave results files...', self.verbose, 'normal')
 		printv('\n... measures saved in the files:', self.verbose, 'normal')
 		printv('\n  - '+self.path_ofolder+self.excel_name, self.verbose, 'normal')
-		printv('\n  - '+self.path_ofolder+self.pickle_name, self.verbose, 'normal')
+		if self.pickle_name is not None:
+			printv('\n  - '+self.path_ofolder+self.pickle_name, self.verbose, 'normal')
 
 		for file in [self.fname_label, self.excel_name, self.pickle_name]:
-			shutil.copy(self.tmp_dir+file, self.path_ofolder+file)
+			if file is not None:
+				shutil.copy(self.tmp_dir+file, self.path_ofolder+file)
 
 	def pack_measures(self):
 
 		self.excel_name = extract_fname(self.fname_mask)[1]+'_analyzis.xlsx'
 		writer = pd.ExcelWriter(self.excel_name)
 		self.data_pd.to_excel(writer,sheet_name='measures', index=False, engine='xlsxwriter')
-		if self.dct_matrix:
+		if self.path_template is not None:
 			for sheet_name in self.dct_matrix:
 				if '#' in sheet_name:
 					df = self.dct_matrix[sheet_name].copy()
@@ -215,12 +222,14 @@ class AnalyzeLeion:
 					df.to_excel(writer,sheet_name=sheet_name, index=False, engine='xlsxwriter')
 				else:
 					self.dct_matrix[sheet_name].to_excel(writer,sheet_name=sheet_name, index=False, engine='xlsxwriter')
+
+			self.dct_matrix['measures'] = self.data_pd
+			with open(self.pickle_name, 'wb') as handle:
+				pickle.dump(self.dct_matrix, handle)
+
 		writer.save()
 
-		self.pickle_name = extract_fname(self.fname_mask)[1]+'_analyzis.pkl'
-		self.dct_matrix['measures'] = self.data_pd
-		with open(self.pickle_name, 'wb') as handle:
-			pickle.dump(self.dct_matrix, handle)
+
 
 	def show_total_results(self):
 
@@ -238,7 +247,7 @@ class AnalyzeLeion:
 	def reorient(self):
 		if not self.orientation == 'RPI':
 			printv('\nOrient output image to initial orientation...', self.verbose, 'normal')
-			self._orient(self.fname_label, 'RPI')
+			self._orient(self.fname_label, self.orientation)
 
 	def measure_within_im(self):
 		printv('\nCompute reference image features...', self.verbose, 'normal')
@@ -296,7 +305,7 @@ class AnalyzeLeion:
 				img_vert = Image(self.path_levels)
 				im_vert_data = img_vert.data
 				self.vert_lst = [v for v in np.unique(im_vert_data) if v]
-				self.dct_matrix = {}
+				
 			else:
 				im_vert_data = None
 				printv('WARNING: the file '+self.path_levels+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
