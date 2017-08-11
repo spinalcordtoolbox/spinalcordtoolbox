@@ -44,6 +44,8 @@ class PropSegController(base.BaseController):
                 raise TooManyPointsWarning()
 
     def select_point(self, x, y, z):
+        if self.mode == 'CUSTOM' and not self._slice:
+            raise InvalidActionWarning('Select a saggital slice before selecting a point.')
         x = self._slice
         if not self.valid_point(x, y, z):
             raise ValueError('Invalid point selected {}'.format((x, y, z)))
@@ -63,6 +65,8 @@ class PropSegController(base.BaseController):
     def _next_slice(self):
         if self.mode == 'AUTO':
             self._slice += self.INTERVAL
+        else:
+            self._slice = 0
 
     def select_slice(self, x, y, z):
         if self.mode != 'CUSTOM':
@@ -85,6 +89,7 @@ class PropSegController(base.BaseController):
             raise ValueError('Invalid mode %', value)
 
         if value != self._mode:
+            self._slice = 0 if value == 'CUSTOM' else self.INTERVAL
             self._mode = value
             self.points = []
             self.reset_position()
@@ -153,8 +158,8 @@ class PropSeg(base.BaseDialog):
             self.main_canvas.refresh()
             self.second_canvas.refresh()
             self.update_status('Sagittal slice seleted: {}'.format(self._controller._slice))
-        except (TooManyPointsWarning, InvalidActionWarning) as err:
-            self.update_warning(err.message)
+        except (TooManyPointsWarning, InvalidActionWarning) as warn:
+            self.update_warning(warn.message)
 
     def select_point(self, x, y, z):
         try:
@@ -164,7 +169,7 @@ class PropSeg(base.BaseDialog):
             self.second_canvas.refresh()
             self.update_status('Point {} selected: {}'.format(len(self._controller.points), self._controller.points))
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
-            self.update_warning(warn)
+            self.update_warning(warn.message)
 
 
 if __name__ == '__main__':

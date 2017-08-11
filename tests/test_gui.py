@@ -17,7 +17,6 @@ class PropsegTestCase(unittest.TestCase):
     def _init_auto(self):
         controller = propseg.PropSegController(self.image, self.params, max_points=3)
         controller.align_image()
-        controller.reset_position()
         controller.mode = 'AUTO'
         return controller
 
@@ -77,14 +76,16 @@ class PropsegTestCase(unittest.TestCase):
         input_slice = (100, 110, 40)
         input_point = (200, 146, 44)
         input_point_2 = (155, 71, 33)
-        expected = (100, 71, 33, 1)
+        expected = (100, 146, 44, 1)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidActionWarning):
             controller.select_point(33, 44, 55)
 
         controller.select_slice(*input_slice)
         controller.select_point(*input_point)
-        controller.select_point(*input_point_2)
+
+        with self.assertRaises(InvalidActionWarning):
+            controller.select_point(*input_point_2)
 
         assert controller.points == [expected]
 

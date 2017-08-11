@@ -25,6 +25,7 @@ class LabelVertebraeController(base.BaseController):
 
         logger.debug('Point Selected {}'.format((x, y, z, label)))
         self._label = label
+        x = self.init_x
 
         self.points.append((x, y, z, self._label))
         self.position = (x, y, z)
