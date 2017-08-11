@@ -1,4 +1,5 @@
 import logging
+from itertools import dropwhile, takewhile
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -47,12 +48,17 @@ class VertebraeWidget(QtGui.QWidget):
     def __init__(self, parent):
         super(VertebraeWidget, self).__init__(parent)
         self.parent = parent
+        params = parent._controller.params
+
+        labels = dropwhile(lambda x: x[0] != params.start_label, self.LABELS)
+        labels = takewhile(lambda x: x[0] != params.end_label, labels)
+
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
         font = QtGui.QFont()
         font.setPointSize(8)
 
-        for label, title in self.LABELS:
+        for label, title in labels:
             rdo = QtGui.QCheckBox(title)
             rdo.label = label
             rdo.setFont(font)

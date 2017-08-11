@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class LabelVertebraeController(base.BaseController):
-
     def __init__(self, image, params, init_values=None):
         super(LabelVertebraeController, self).__init__(image, params, init_values)
         self._label = 0
@@ -24,11 +23,10 @@ class LabelVertebraeController(base.BaseController):
             raise ValueError('Invalid point selected {}'.format((x, y, z)))
 
         logger.debug('Point Selected {}'.format((x, y, z, label)))
-        self._label = label
-        x = self.init_x
 
-        self.points.append((x, y, z, self._label))
+        self.points.append((x, y, z, label))
         self.position = (x, y, z)
+        self._label = label
 
     @property
     def label(self):
@@ -96,6 +94,8 @@ if __name__ == '__main__':
 
     params = base.AnatomicalParams()
     params.init_message = '1. Select a label -> 2. Select a point in the sagittal plane'
+    params.start_label = 3
+    params.end_label = 20
     img = Image(file_name)
     if os.path.exists(overlay_name):
         overlay = Image(overlay_name)
