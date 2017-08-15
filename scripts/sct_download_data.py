@@ -137,28 +137,31 @@ def download_data(url, verbose):
     connection
     """
 
-    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
-    session = requests.Session()
-    session.mount('https://', HTTPAdapter(max_retries=retry))
-    response = session.get(url, stream=True)
+    try:
+        retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
+        session = requests.Session()
+        session.mount('https://', HTTPAdapter(max_retries=retry))
+        response = session.get(url, stream=True)
 
-    _, content = cgi.parse_header(response.headers['Content-Disposition'])
-    tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-    sct.printv('\nDownloading %s...' % content['filename'], verbose)
+        _, content = cgi.parse_header(response.headers['Content-Disposition'])
+        tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
+        sct.printv('\nDownloading %s...' % content['filename'], verbose)
 
-    with open(tmp_path, 'wb') as tmp_file:
-        total = int(response.headers.get('content-length', 1))
-        tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
-                        desc="Status", ascii=True)
+        with open(tmp_path, 'wb') as tmp_file:
+            total = int(response.headers.get('content-length', 1))
+            tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
+                            desc="Status", ascii=True)
 
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                tmp_file.write(chunk)
-                if verbose > 0:
-                    dl_chunk = len(chunk)
-                    tqdm_bar.update(dl_chunk)
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    tmp_file.write(chunk)
+                    if verbose > 0:
+                        dl_chunk = len(chunk)
+                        tqdm_bar.update(dl_chunk)
 
-        tqdm_bar.close()
+            tqdm_bar.close()
+    except requests.RequestException as err:
+        sct.printv(err.message, type='error')
 
     sct.printv('\nDownload complete', verbose=verbose)
     return tmp_path
