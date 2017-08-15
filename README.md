@@ -47,10 +47,6 @@ procedures.
 - [Taso et al. Construction of an in vivo human spinal cord atlas based on high-resolution MR images at cervical and thoracic levels: preliminary results. MAGMA, Magn Reson Mater Phy 2014;27(3):257-267](https://dl.dropboxusercontent.com/u/20592661/publications/taso_magma_2014.pdf)
 - [Lévy et al. White matter atlas of the human spinal cord with estimation of partial volume effect. Neuroimage 2015 (in press); doi: 10.1016/j.neuroimage.2015.06.040](http://www.sciencedirect.com/science/article/pii/S1053811915005431)
 - [Cadotte et al. Characterizing the Location of Spinal and Vertebral Levels in the Human Cervical Spinal Cord. AJNR Am J Neuroradiol 2014;36(5):1-8.](https://dl.dropboxusercontent.com/u/20592661/publications/Cadotte_AJNR14_SpinalLevel.pdf)
-- [Taso et al. Tract-specific and age-related variations of the spinal cord microstructure: a multi-parametric MRI study using diffusion tensor imaging (DTI) and inhomogeneous magnetization transfer (ihMT). NMR Biomed 2016](https://www.ncbi.nlm.nih.gov/pubmed/27100385)
-- [Martin et al. Clinically Feasible Microstructural MRI to Quantify Cervical Spinal Cord Tissue Injury Using DTI, MT, and T2*-Weighted Imaging: Assessment of Normative Data and Reliability. AJNR 2017](https://www.ncbi.nlm.nih.gov/pubmed/28428213)
-- [Martin et al. A Novel MRI Biomarker of Spinal Cord White Matter Injury: T2*-Weighted White Matter to Gray Matter Signal Intensity Ratio. AJNR 2017](https://www.ncbi.nlm.nih.gov/pubmed/28428212)
-- [David et al. The efficiency of retrospective artifact correction methods in improving the statistical power of between-group differences in spinal cord DTI. Neuroimage 2017](http://www.sciencedirect.com/science/article/pii/S1053811917305220)
 
 #### Segmentation
 - [Dupont SM, De Leener B, Taso M, Le Troter A, Stikov N, Callot V, Cohen-Adad J. Fully-integrated framework for the segmentation and registration of the spinal cord white and gray matter. Neuroimage 2016. doi: 10.1016/j.neuroimage.2016.09.026](https://www.ncbi.nlm.nih.gov/pubmed/27663988)
@@ -88,11 +84,15 @@ procedures.
 - [Ventura et al. Cervical spinal cord atrophy in NMOSD without a history of myelitis or MRI-visible lesions. Neurol Neuroimmunol Neuroinflamm 2016](https://www.ncbi.nlm.nih.gov/pubmed/27144215)
 - [Battiston et al. Fast and reproducible in vivo T1 mapping of the human cervical spinal cord. Magnetic Resonance in Medicine 2017](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26852/full)
 - [Panara et al. Spinal cord microstructure integrating phase-sensitive inversion recovery and diffusional kurtosis imaging. Neuroradiology 2017](https://link.springer.com/article/10.1007%2Fs00234-017-1864-5)
+- [Taso et al. Tract-specific and age-related variations of the spinal cord microstructure: a multi-parametric MRI study using diffusion tensor imaging (DTI) and inhomogeneous magnetization transfer (ihMT). NMR Biomed 2016](https://www.ncbi.nlm.nih.gov/pubmed/27100385)
+- [Martin et al. Clinically Feasible Microstructural MRI to Quantify Cervical Spinal Cord Tissue Injury Using DTI, MT, and T2*-Weighted Imaging: Assessment of Normative Data and Reliability. AJNR 2017](https://www.ncbi.nlm.nih.gov/pubmed/28428213)
+- [Martin et al. A Novel MRI Biomarker of Spinal Cord White Matter Injury: T2*-Weighted White Matter to Gray Matter Signal Intensity Ratio. AJNR 2017](https://www.ncbi.nlm.nih.gov/pubmed/28428212)
+- [David et al. The efficiency of retrospective artifact correction methods in improving the statistical power of between-group differences in spinal cord DTI. Neuroimage 2017](http://www.sciencedirect.com/science/article/pii/S1053811917305220)
 
 
 ## Citing spinalcordtoolbox
 
-When citing spinalcordtoolbox in academic papers and thesis, please use this BibTeX entry:
+When citing SCT please use this BibTeX entry:
 
     @article{DeLeener201724,
     title = "SCT: Spinal Cord Toolbox, an open-source software for processing spinal cord \{MRI\} data ",
