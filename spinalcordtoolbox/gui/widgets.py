@@ -154,19 +154,19 @@ class SagittalCanvas(AnatomicalCanvas):
     def __init__(self, *args, **kwargs):
         super(SagittalCanvas, self).__init__(*args, **kwargs)
         self._init_ui(self.image.data[:, :, self._z])
-        self.points, = self.axes.plot([], [], '.r', markersize=10)
+        self.points, = self.axes.plot([], [], '.r', markersize=7)
+        self.position = None
 
     def refresh(self):
         self._x, self._y, self._z = self._parent._controller.position
         data = self.image.data[:, :, self._z]
         self.view.set_array(data)
 
-        if self._hslices:
-            self.plot_hslices()
-
-        self.view.figure.canvas.draw()
-
+        # if self._hslices:
+        #     self.plot_hslices()
+        self.plot_position()
         self.plot_points()
+        self.view.figure.canvas.draw()
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
@@ -174,7 +174,7 @@ class SagittalCanvas(AnatomicalCanvas):
 
     def plot_points(self):
         logger.debug('Plotting points {}'.format(self._parent._controller.points))
-        points = [x for x in self._parent._controller.points]
+        points = self._parent._controller.points
         try:
             xs, ys, zs, _ = zip(*points)
             self.points.set_xdata(ys)
@@ -182,7 +182,12 @@ class SagittalCanvas(AnatomicalCanvas):
         except ValueError:
             self.points.set_xdata([])
             self.points.set_ydata([])
-        self.view.figure.canvas.draw()
+
+    def plot_position(self):
+        position = self._parent._controller.position
+        if self.position:
+            self.position.remove()
+        self.position = self.axes.axhline(position[0], color='r')
 
     def plot_hslices(self):
         self._hslices = True
@@ -195,14 +200,10 @@ class SagittalCanvas(AnatomicalCanvas):
         for x in slices:
             self._slices.append(self.axes.axhline(x, color='w'))
 
-    def on_refresh_slice(self, x, y, z):
-        super(SagittalCanvas, self).on_refresh_slice(x, y, z)
-        self.plot_points()
-
 
 class CorrinalCanvas(AnatomicalCanvas):
-    def __init__(self, *args, **kwargs):
-        super(CorrinalCanvas, self).__init__(*args, **kwargs)
+    def __init__(self, parent, width=4, height=8, dpi=100, interactive=False):
+        super(CorrinalCanvas, self).__init__(parent, width, height, dpi, interactive)
         self._init_ui(self.image.data[:, self._y, :])
         self.points = self.axes.plot([], [], '.r', markersize=10)
 
@@ -217,8 +218,9 @@ class CorrinalCanvas(AnatomicalCanvas):
             self.point_selected_signal.emit(event.xdata, self._y, event.ydata)
 
     def plot_points(self):
+        logger.debug('Plotting points {}'.format(self._parent._controller.points))
         if self._parent._controller.points:
-            points = [x for x in self._parent._controller.points if self._y == x[0]]
+            points = [x for x in self._parent._controller.points]
             try:
                 xs, ys, zs, _ = zip(*points)
                 self.points.set_xdata(xs)
@@ -246,8 +248,9 @@ class AxialCanvas(AnatomicalCanvas):
             self.point_selected_signal.emit(self._x, event.ydata, event.xdata)
 
     def plot_points(self):
+        logger.debug('Plotting points {}'.format(self._parent._controller.points))
         if self._parent._controller.points:
-            points = [x for x in self._parent._controller.points if self._x == x[0]]
+            points = [x for x in self._parent._controller.points]
             try:
                 xs, ys, zs, _ = zip(*points)
                 self.points.set_xdata(ys)

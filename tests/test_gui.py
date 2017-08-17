@@ -40,32 +40,35 @@ class PropsegTestCase(unittest.TestCase):
         controller = propseg.PropSegController(self.image, self.params, max_points=3)
         controller.align_image()
         controller.mode = 'AUTO'
-        expected = [(15, 45, 33, 1), (30, 51, 11, 1), (60, 51, 11, 1)]
-        x, y, z, _ = expected[0]
+        expected = [(15, 45, 33, 1), (30, 51, 35, 1), (60, 71, 31, 1)]
+        points = [(x + controller.INTERVAL, y, z) for x, y, z, _ in expected]
 
         with self.assertRaises(InvalidActionWarning):
-            controller.select_slice(x + 100, y + 55, z + 34)
+            controller.select_slice(*points[0])
 
         # First point
+        x, y, z, _ = expected[0]
         controller.select_point(5, y, z)
-        assert controller.position == (x, y, z)
-        assert controller.points == expected[:-2]
+        assert controller.position == points[0]
+        assert controller.points == expected[0:1]
 
         # Second point
-        second_point = (20, 51, 11)
-        controller.select_point(*second_point)
-        assert controller.position == expected[1][:-1]
+        x, y, z, _ = expected[1]
+        controller.select_point(x, y, z)
+        assert controller.position == points[1]
         assert controller.points == expected[:-1]
 
         # Skip slice
         controller.skip_slice()
-        controller.select_point(*second_point)
-        assert controller.position == expected[-1][:-1]
+        x, y, z, _ = expected[2]
+        controller.select_point(x - 32, y, z)
+        assert controller.position == points[2]
         assert controller.points == expected
 
         # Undo
         controller.undo()
-        assert controller.position == expected[-1][:-1]
+        x, y, z, _ = expected[-1]
+        assert controller.position == (x, y, z)
         assert controller.points == expected[:-1]
 
         controller.save()

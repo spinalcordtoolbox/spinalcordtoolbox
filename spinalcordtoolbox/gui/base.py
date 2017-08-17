@@ -74,7 +74,7 @@ class BaseDialog(QtGui.QDialog):
         self._init_ui()
 
     def _init_ui(self):
-        self.resize(800, 800)
+        self.resize(1200, 800)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         layout = QtGui.QVBoxLayout(self)
 
@@ -174,19 +174,17 @@ class BaseDialog(QtGui.QDialog):
 
         Parameters
         ----------
-        msg : str
-            The message to display in the header of dialog
+        msg : str  The message to display in the header of dialog
         """
         self.lb_status.setText(msg)
         self.lb_warning.setText('')
 
     def update_warning(self, msg):
-        """
+        """Print the message into the dialog's warning widget and clear the status widget
 
         Parameters
         ----------
-        msg : str
-            The message to display in the header of dialog
+        msg : str  The message to display in the header of dialog
         """
         self.lb_warning.setText(msg)
         self.lb_status.setText('')
@@ -249,10 +247,11 @@ class BaseController(object):
     def undo(self):
         """Remove the last point selected and refresh the UI"""
         if self.points:
-            point = self.points[-1]
+            x, y, z, _ = self.points[-1]
+            self.position = (x, y, z)
             self.points = self.points[:-1]
-            self._slice = point[0]
-            logger.debug('Point removed {}'.format(point))
+            self._slice = self.position[0]
+            logger.debug('Point removed {}'.format(self.position))
         else:
             raise InvalidActionWarning('There is no points selected to undo')
 

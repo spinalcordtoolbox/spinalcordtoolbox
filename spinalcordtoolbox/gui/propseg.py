@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class PropSegController(base.BaseController):
-    _mode = 'AUTO'
+    _mode = ''
     INTERVAL = 15
     MODES = ['AUTO', 'CUSTOM']
 
@@ -41,7 +41,8 @@ class PropSegController(base.BaseController):
             self._slice += self.INTERVAL
             if self._slice >= self.image.dim[0]:
                 self._slice -= self.INTERVAL
-                raise TooManyPointsWarning()
+                raise InvalidActionWarning('The slice can not exceed the height of the anatomy')
+            self.position = (self._slice, self.position[1], self.position[2])
 
     def select_point(self, x, y, z):
         if self.mode == 'CUSTOM' and not self._slice:
@@ -65,6 +66,7 @@ class PropSegController(base.BaseController):
     def _next_slice(self):
         if self.mode == 'AUTO':
             self._slice += self.INTERVAL
+            self.position = (self.position[0] + self.INTERVAL, self.position[1], self.position[2])
         else:
             self._slice = 0
 
@@ -118,30 +120,38 @@ class PropSeg(base.BaseDialog):
     def _init_controls(self, parent):
         group = QtGui.QGroupBox()
         group.setFlat(True)
-
         layout = QtGui.QHBoxLayout()
-        auto_mode = QtGui.QRadioButton('Mode Auto')
-        auto_mode.setToolTip('Automatically move down the axis slice on the sagittal plane')
-        auto_mode.mode = 'AUTO'
+
         custom_mode = QtGui.QRadioButton('Mode Custom')
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
-        custom_mode.mode = 'CUSTOM'
-
-        auto_mode.toggled.connect(self.on_toggle_mode)
         custom_mode.toggled.connect(self.on_toggle_mode)
-
-        layout.addWidget(auto_mode)
+        custom_mode.mode = 'CUSTOM'
         layout.addWidget(custom_mode)
+
+        auto_mode = QtGui.QRadioButton('Mode Auto')
+        auto_mode.setToolTip('Automatically move down the axis slice on the sagittal plane')
+        auto_mode.toggled.connect(self.on_toggle_mode)
+        auto_mode.mode = 'AUTO'
+        layout.addWidget(auto_mode)
+
         group.setLayout(layout)
         parent.addWidget(group)
-        auto_mode.setChecked(True)
+        auto_mode.click()
 
     def _init_footer(self, parent):
         ctrl_layout = super(PropSeg, self)._init_footer(parent)
         skip = QtGui.QPushButton('Skip')
         ctrl_layout.insertWidget(2, skip)
 
-        skip.clicked.connect(self._controller.skip_slice)
+        skip.clicked.connect(self.on_skip_slice)
+
+    def on_skip_slice(self):
+        try:
+            logger.debug('Skipping slice')
+            self._controller.skip_slice()
+            self.second_canvas.refresh()
+        except InvalidActionWarning as warn:
+            self.update_warning(warn.message)
 
     def on_toggle_mode(self):
         widget = self.sender()
