@@ -40,17 +40,17 @@ class Param:
     def __init__(self):
         # self.path_template = path_sct+'/data/template/'
         self.shift_AP_initc2 = 35
-        self.size_AP_initc2 = 9  #15
-        self.shift_IS_initc2 = 15  #15
-        self.size_IS_initc2 = 30  #30
-        self.size_RL_initc2 = 1  #
-        self.shift_AP = 32  #0#32  # shift the centerline towards the spine (in voxel).
-        self.size_AP = 11  #41#11  # window size in AP direction (=y) (in voxel)
-        self.size_RL = 1  #1 # window size in RL direction (=x) (in voxel)
+        self.size_AP_initc2 = 9  # 15
+        self.shift_IS_initc2 = 15  # 15
+        self.size_IS_initc2 = 30  # 30
+        self.size_RL_initc2 = 1
+        self.shift_AP = 32  # 0#32  # shift the centerline towards the spine (in voxel).
+        self.size_AP = 11  # 41#11  # window size in AP direction (=y) (in voxel)
+        self.size_RL = 1  # 1 # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
-        self.shift_AP_visu = 15  #0#15  # shift AP for displaying disc values
+        self.shift_AP_visu = 15  # 0#15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
-        self.gaussian_std = 1  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
+        self.gaussian_std = 1.0  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -59,7 +59,10 @@ class Param:
             if len(object) < 2:
                 sct.printv('ERROR: Wrong usage.', 1, type='error')
             obj = object.split('=')
-            setattr(self, obj[0], float(obj[1]))
+            if obj[0] == 'gaussian_std':
+                setattr(self, obj[0], float(obj[1]))
+            else:
+                setattr(self, obj[0], int(obj[1]))
 
 
 # PARSER
@@ -139,8 +142,10 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                                   "size_AP [mm]: AP window size for disc search. Default=" + str(param_default.size_AP) + ".\n"
                                   "size_RL [mm]: RL window size for disc search. Default=" + str(param_default.size_RL) + ".\n"
                                   "size_IS [mm]: IS window size for disc search. Default=" + str(param_default.size_IS) + ".\n"
-                                  "gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting). Default=" + str(param_default.gaussian_std) + ".\n",
-                      mandatory = False)
+                                  "gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the image, "
+                                  "and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set "
+                                  "between 0.1 (strong weighting) and 999 (no weighting). Default=" + str(param_default.gaussian_std) + ".\n",
+                      mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
@@ -354,7 +359,6 @@ def main(args=None):
         sct.printv(err, verbose, 'warning')
         sct.printv('WARNING: Cannot generate report.', verbose, 'warning')
 
-
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv('fslview ' + fname_in + ' ' + path_output + file_seg + '_labeled' + ' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
@@ -362,7 +366,7 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose=1, path_template='', initc2='auto', path_output='../'):
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', initc2='auto', path_output='../'):
     """
     Find intervertebral discs in straightened image using template matching
     :param fname:
@@ -456,7 +460,10 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
         sct.printv('\nDetect C2/C3 disk...', verbose)
         zrange = range(0, nz)
         ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL_initc2, y=yc, yshift=param.shift_AP_initc2, ysize=param.size_AP_initc2, z=0, zshift=param.shift_IS_initc2, zsize=param.size_IS_initc2, xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_std=param.gaussian_std, path_output=path_output)
+        z_peak = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL_initc2,
+                                 y=yc, yshift=param.shift_AP_initc2, ysize=param.size_AP_initc2,
+                                 z=0, zshift=param.shift_IS_initc2, zsize=param.size_IS_initc2,
+                                 xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_std=param.gaussian_std, path_output=path_output)
         init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
@@ -528,8 +535,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc=[], verbose
             break
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
-        if not current_disc in [1]:
-            current_z = compute_corr_3d(src=data, target=data_template, x=xc, xshift=0, xsize=param.size_RL, y=yc, yshift=param.shift_AP, ysize=param.size_AP, z=current_z, zshift=0, zsize=param.size_IS, xtarget=xct, ytarget=yct, ztarget=current_z_template, zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc), gaussian_std=999, path_output=path_output)
+        if current_disc != 1:
+            current_z = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL,
+                                        y=yc, yshift=param.shift_AP, ysize=param.size_AP,
+                                        z=current_z, zshift=0, zsize=param.size_IS,
+                                        xtarget=xct, ytarget=yct, ztarget=current_z_template,
+                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc), gaussian_std=999, path_output=path_output)
 
         # display new disc
         if verbose == 2:
@@ -700,7 +711,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     im_label.save()
 
 
-def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ysize=0, z=0, zshift=0, zsize=0, xtarget=0, ytarget=0, ztarget=0, zrange=[], verbose=1, save_suffix='', gaussian_std=999, path_output='../'):
+def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, gaussian_std, path_output):
     """
     Find z that maximizes correlation between src and target 3d data.
     :param src: 3d source data
@@ -728,10 +739,9 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
     # get dimensions from src
     nx, ny, nz = src.shape
     # Get pattern from template
-    pattern = target[
-              xtarget - xsize: xtarget + xsize + 1,
-              ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
-              ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
+    pattern = target[xtarget - xsize: xtarget + xsize + 1,
+                     ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
+                     ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
     pattern1d = pattern.ravel()
     # initializations
     I_corr = np.zeros(len(zrange))
@@ -744,28 +754,24 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         if z + iz + zsize + 1 > nz:
             # sct.printv('iz='+str(iz)+': padding on top')
             padding_size = z + iz + zsize + 1 - nz
-            data_chunk3d = src[
-                           x - xsize: x + xsize + 1,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize: z + iz + zsize + 1 - padding_size]
+            data_chunk3d = src[x - xsize: x + xsize + 1,
+                               y + yshift - ysize: y + yshift + ysize + 1,
+                               z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
                                   constant_values=0)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif z + iz - zsize < 0:
             # sct.printv('iz='+str(iz)+': padding at bottom')
             padding_size = abs(iz - zsize)
-            data_chunk3d = src[
-                           x - xsize: x + xsize + 1,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize + padding_size: z + iz + zsize + 1]
+            data_chunk3d = src[x - xsize: x + xsize + 1,
+                               y + yshift - ysize: y + yshift + ysize + 1,
+                               z + iz - zsize + padding_size: z + iz + zsize + 1]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
                                   constant_values=0)
         else:
-            # sct.printv('iz='+str(iz)+': no padding')
-            data_chunk3d = src[
-                           x - xsize: x + xsize + 1,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize: z + iz + zsize + 1]
+            data_chunk3d = src[x - xsize: x + xsize + 1,
+                               y + yshift - ysize: y + yshift + ysize + 1,
+                               z + iz - zsize: z + iz + zsize + 1]
 
         # convert subject pattern to 1d
         data_chunk1d = data_chunk3d.ravel()
@@ -812,10 +818,9 @@ def compute_corr_3d(src=[], target=[], x=0, xshift=0, xsize=0, y=0, yshift=0, ys
         # display subject pattern at best z
         plt.subplot(132)
         iz = zrange[ind_peak]
-        data_chunk3d = src[
-                       x - xsize: x + xsize + 1,
-                       y + yshift - ysize: y + yshift + ysize + 1,
-                       z + iz - zsize: z + iz + zsize + 1]
+        data_chunk3d = src[x - xsize: x + xsize + 1,
+                           y + yshift - ysize: y + yshift + ysize + 1,
+                           z + iz - zsize: z + iz + zsize + 1]
         plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray,
                    clim=[0, 800], interpolation='none')
         plt.title('Subject at iz=' + str(iz))

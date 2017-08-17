@@ -102,7 +102,7 @@ def test(path_data='', parameters=''):
     fname_log = path_output + 'output.log'
 
     sct.pause_stream_logger()
-    filehandler = sct.add_file_handler_to_logger(filename=fname_log, mode='w', log_format="%(message)s")
+    file_handler = sct.add_file_handler_to_logger(filename=fname_log, mode='w', log_format="%(message)s")
     #
     # stdout_log = file(fname_log, 'w')
     # redirect to log file
@@ -161,8 +161,9 @@ def test(path_data='', parameters=''):
     results = DataFrame(data={'status': int(status), 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
 
     sct.log.info(output)
-    sct.stop_handler(filehandler)
+    sct.stop_handler(file_handler)
     sct.start_stream_logger()
+
     return status, output, results
 
 

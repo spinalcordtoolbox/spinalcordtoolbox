@@ -183,6 +183,7 @@ def main(args):
 
     # Initialization
     path_script = os.path.dirname(__file__)
+    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     processes = ['centerline', 'csa', 'length', 'shape']
     verbose = param.verbose
     start_time = time.time()
@@ -239,9 +240,11 @@ def main(args):
 
     if name_process == 'centerline':
         fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting, use_phys_coord=use_phys_coord)
+        if os.path.abspath(fname_output) != output_folder + fname_output:
+            shutil.copy(fname_output, output_folder)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
-        sct.printv('fslview ' + fname_segmentation + ' ' + fname_output + ' -l Red &\n', param.verbose, 'info')
+        sct.printv('fslview ' + fname_segmentation + ' ' + output_folder + fname_output + ' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
         compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length, angle_correction=angle_correction, use_phys_coord=use_phys_coord)
@@ -288,10 +291,6 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
                                                                                      remove_temp_files=remove_temp_files,
                                                                                      verbose=verbose)
 
-    # Inform user that flags z or vert will be ignored.
-    if slices != '' or vert_levels != '':
-        sct.printv('\nWARNING: Process "shape" cannot be used with flag -z or -vert. This flag will be ignored.\n', verbose, 'warning')
-
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
     fname_output_csv = output_folder + file_data + '_shape.csv'
 
@@ -330,7 +329,7 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
         sct.printv(df_shape_properties)
 
     # display info
-    sct.printv('\nDone! Results are save in the file: '+fname_output_csv, verbose, 'info')
+    sct.printv('\nDone! Results are save in the file: ' + fname_output_csv, verbose, 'info')
 
 
 # compute the length of the spinal cord
@@ -925,6 +924,9 @@ def label_vert(fname_seg, fname_label, verbose=1):
     for i in range(len(coord_label)):
         list_disc_z.insert(0, coord_label[i].z)
         list_disc_value.insert(0, coord_label[i].value)
+
+    list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
+    list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     # label segmentation
     from sct_label_vertebrae import label_segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)

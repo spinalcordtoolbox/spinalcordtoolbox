@@ -430,7 +430,7 @@ class Image(object):
     def getDataShape(self):
         """Return the data shape.
 
-        :returns: the data shape from the header. 
+        :returns: the data shape from the header.
         """
         data_shape = self.hdr.get_data_shape()
         return data_shape

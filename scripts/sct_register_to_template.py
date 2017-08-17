@@ -262,16 +262,6 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # copy header of anat to segmentation (issue #1168)
-    # from sct_image import copy_header
-    # im_data = Image(ftmp_data)
-    # im_seg = Image(ftmp_seg)
-    # copy_header(im_data, im_seg)
-    # im_seg.save()
-    # im_label = Image(ftmp_label)
-    # copy_header(im_data, im_label)
-    # im_label.save()
-
     # Generate labels from template vertebral labeling
     sct.printv('\nGenerate labels from template vertebral labeling', verbose)
     sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
