@@ -113,7 +113,7 @@ class LabelVertebraeTestCase(unittest.TestCase):
         controller = labelvertebrae.LabelVertebraeController(self.image, self.params, self.overlay)
         controller.align_image()
         expected = (160, 123, 36, 10)
-        input_point = (3, 123, 36, 10)
+        input_point = (160, 123, 36, 10)
 
         controller.label = 10
         controller.select_point(*input_point)

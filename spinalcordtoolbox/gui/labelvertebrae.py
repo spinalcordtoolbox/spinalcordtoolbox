@@ -49,7 +49,7 @@ class LabelVertebrae(base.BaseDialog):
         layout.addWidget(self.sag)
         parent.addLayout(layout)
 
-        self.sag.point_selected_signal.connect(self.select_point)
+        self.sag.point_selected_signal.connect(self.on_select_point)
 
     def _init_controls(self, parent):
         main_ctrl = QtGui.QWidget()
@@ -65,14 +65,14 @@ class LabelVertebrae(base.BaseDialog):
         skip = QtGui.QPushButton('Skip')
         ctrl_layout.addWidget(skip, -1)
 
-    def select_point(self, x, y, z):
+    def on_select_point(self, x, y, z):
         try:
             label = self.labels.label
+            message = 'Label {} selected {}'.format(label, (x, y, z))
+            logger.debug(message)
             self._controller.select_point(x, y, z, label)
             self.labels.selected_label(label)
             self.sag.refresh()
-            message = 'Label {} selected {}'.format(label, (x, y, z))
-            logger.debug(message)
             self.update_status(message)
         except (TooManyPointsWarning, MissingLabelWarning) as warn:
             self.update_warning(warn.message)

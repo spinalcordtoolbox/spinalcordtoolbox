@@ -105,7 +105,6 @@ class PropSeg(base.BaseDialog):
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
         self.second_canvas = widgets.SagittalCanvas(self)
-        self.second_canvas.plot_hslices()
         layout.addWidget(self.second_canvas)
 
         self.main_canvas = widgets.AxialCanvas(self, interactive=True)

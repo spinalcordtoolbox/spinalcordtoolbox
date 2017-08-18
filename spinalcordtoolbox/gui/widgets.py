@@ -48,8 +48,10 @@ class VertebraeWidget(QtGui.QWidget):
     def __init__(self, parent):
         super(VertebraeWidget, self).__init__(parent)
         self.parent = parent
-        params = parent._controller.params
+        self._init_ui(parent.params)
+        self.refresh()
 
+    def _init_ui(self, params):
         labels = dropwhile(lambda x: x[0] != params.start_label, self.LABELS)
         labels = takewhile(lambda x: x[0] != params.end_label, labels)
 
@@ -66,10 +68,6 @@ class VertebraeWidget(QtGui.QWidget):
             self._check_boxes[label] = rdo
             rdo.clicked.connect(self.on_select_label)
             layout.addWidget(rdo)
-
-    def _init_data(self, labels):
-        for label in labels:
-            self._active_label[label].setCheckState(QtCore.Qt.Checked)
 
     def on_select_label(self):
         label = self.sender()
@@ -111,7 +109,7 @@ class AnatomicalCanvas(FigureCanvas):
     _hslices = False
     _slices = []
 
-    def __init__(self, parent, width=8, height=8, dpi=100, interactive=False):
+    def __init__(self, parent, width=8, height=8, dpi=100, interactive=False, annotate=False):
         self._parent = parent
         self.image = parent.image
         self.params = parent.params
@@ -143,6 +141,20 @@ class AnatomicalCanvas(FigureCanvas):
         if self.interactive:
             self.cursor = Cursor(self.axes, useblit=True, color='red', linewidth=1)
 
+    def annotate(self, x, y, label):
+        self.annotations.append(self.axes.annotate(label, (x + 3, y + 3), color='r'))
+
+    def clear(self):
+        for i in self.annotations:
+            i.remove()
+        self.annotations = []
+        self.points.set_xdata([])
+        self.points.set_ydata([])
+
+    def plot_data(self, xdata, ydata):
+        self.points.set_xdata(xdata)
+        self.points.set_ydata(ydata)
+
     def __repr__(self):
         return '{}: {}, {}, {}'.format(self.__class__, self._x, self._y, self._z)
 
@@ -156,14 +168,12 @@ class SagittalCanvas(AnatomicalCanvas):
         self._init_ui(self.image.data[:, :, self._z])
         self.points, = self.axes.plot([], [], '.r', markersize=7)
         self.position = None
+        self.annotations = []
 
     def refresh(self):
         self._x, self._y, self._z = self._parent._controller.position
         data = self.image.data[:, :, self._z]
         self.view.set_array(data)
-
-        # if self._hslices:
-        #     self.plot_hslices()
         self.plot_position()
         self.plot_points()
         self.view.figure.canvas.draw()
@@ -173,32 +183,23 @@ class SagittalCanvas(AnatomicalCanvas):
             self.point_selected_signal.emit(int(event.ydata), int(event.xdata), self._z)
 
     def plot_points(self):
+        """Plot the controller's list of points (x, y) and annotate the point with the label"""
         logger.debug('Plotting points {}'.format(self._parent._controller.points))
         points = self._parent._controller.points
         try:
             xs, ys, zs, _ = zip(*points)
-            self.points.set_xdata(ys)
-            self.points.set_ydata(xs)
+            self.clear()
+            self.plot_data(ys, xs)
+            for x, y, z, label in points:
+                self.annotate(y, x, label)
         except ValueError:
-            self.points.set_xdata([])
-            self.points.set_ydata([])
+            self.clear()
 
     def plot_position(self):
         position = self._parent._controller.position
         if self.position:
             self.position.remove()
         self.position = self.axes.axhline(position[0], color='r')
-
-    def plot_hslices(self):
-        self._hslices = True
-        slices = [x[0] for x in self._parent._controller.points]
-        for s in self._slices:
-            s.remove()
-
-        self._slices = []
-
-        for x in slices:
-            self._slices.append(self.axes.axhline(x, color='w'))
 
 
 class CorrinalCanvas(AnatomicalCanvas):
