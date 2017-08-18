@@ -106,43 +106,45 @@ class AnatomicalCanvas(FigureCanvas):
 
     """
     point_selected_signal = QtCore.Signal(int, int, int)
-    _hslices = False
-    _slices = []
 
-    def __init__(self, parent, width=8, height=8, dpi=100, interactive=False, annotate=False):
+    def __init__(self, parent, width=8, height=8, dpi=100, crosshair=False, plot_points=False, annotate=False, plot_position=False):
         self._parent = parent
-        self.image = parent.image
-        self.params = parent.params
-        self.interactive = interactive
+        self._image = parent.image
+        self._params = parent.params
+        self._crosshair = crosshair
+        self._plot_points = plot_points
+        self._annotate_points = annotate
+        self._plot_position = plot_position
 
         self._x, self._y, self._z = self._parent._controller.position
 
-        self.fig = Figure(figsize=(width, height), dpi=dpi)
-        super(AnatomicalCanvas, self).__init__(self.fig)
+        self._fig = Figure(figsize=(width, height), dpi=dpi)
+        super(AnatomicalCanvas, self).__init__(self._fig)
         FigureCanvas.setSizePolicy(self,
                                    QtGui.QSizePolicy.Expanding,
                                    QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
     def _init_ui(self, data):
-        self.axes = self.fig.add_axes([0, 0, 1, 1])
-        self.axes.axis('off')
-        self.axes.set_frame_on(True)
-        self.fig.canvas.mpl_connect('button_release_event', self.on_update)
-        self.view = self.axes.imshow(
+        self._axes = self._fig.add_axes([0, 0, 1, 1])
+        self._axes.axis('off')
+        self._axes.set_frame_on(True)
+        self._fig.canvas.mpl_connect('button_release_event', self.on_update)
+        self.view = self._axes.imshow(
             data,
-            aspect=self.params.aspect,
-            cmap=self.params.cmap,
-            interpolation=self.params.interp,
-            vmin=self.params.vmin,
-            vmax=self.params.vmax,
-            alpha=self.params.alpha)
+            aspect=self._params.aspect,
+            cmap=self._params.cmap,
+            interpolation=self._params.interp,
+            vmin=self._params.vmin,
+            vmax=self._params.vmax,
+            alpha=self._params.alpha)
 
-        if self.interactive:
-            self.cursor = Cursor(self.axes, useblit=True, color='red', linewidth=1)
+        if self._crosshair:
+            self.cursor = Cursor(self._axes, useblit=True, color='r', linewidth=1)
+        self.points = self._axes.plot([], [], '.r', markersize=7)[0]
 
     def annotate(self, x, y, label):
-        self.annotations.append(self.axes.annotate(label, (x + 3, y + 3), color='r'))
+        self.annotations.append(self._axes.annotate(label, (x + 3, y + 3), color='r'))
 
     def clear(self):
         for i in self.annotations:
@@ -151,9 +153,13 @@ class AnatomicalCanvas(FigureCanvas):
         self.points.set_xdata([])
         self.points.set_ydata([])
 
-    def plot_data(self, xdata, ydata):
+    def plot_data(self, xdata, ydata, labels):
         self.points.set_xdata(xdata)
         self.points.set_ydata(ydata)
+
+        if self._annotate_points:
+            for x, y, label in zip(xdata, ydata, labels):
+                self.annotate(x, y, label)
 
     def __repr__(self):
         return '{}: {}, {}, {}'.format(self.__class__, self._x, self._y, self._z)
@@ -165,14 +171,13 @@ class AnatomicalCanvas(FigureCanvas):
 class SagittalCanvas(AnatomicalCanvas):
     def __init__(self, *args, **kwargs):
         super(SagittalCanvas, self).__init__(*args, **kwargs)
-        self._init_ui(self.image.data[:, :, self._z])
-        self.points, = self.axes.plot([], [], '.r', markersize=7)
+        self._init_ui(self._image.data[:, :, self._z])
         self.position = None
         self.annotations = []
 
     def refresh(self):
         self._x, self._y, self._z = self._parent._controller.position
-        data = self.image.data[:, :, self._z]
+        data = self._image.data[:, :, self._z]
         self.view.set_array(data)
         self.plot_position()
         self.plot_points()
@@ -184,33 +189,32 @@ class SagittalCanvas(AnatomicalCanvas):
 
     def plot_points(self):
         """Plot the controller's list of points (x, y) and annotate the point with the label"""
-        logger.debug('Plotting points {}'.format(self._parent._controller.points))
-        points = self._parent._controller.points
-        try:
-            xs, ys, zs, _ = zip(*points)
-            self.clear()
-            self.plot_data(ys, xs)
-            for x, y, z, label in points:
-                self.annotate(y, x, label)
-        except ValueError:
-            self.clear()
+        if self._plot_points:
+            logger.debug('Plotting points {}'.format(self._parent._controller.points))
+            points = self._parent._controller.points
+            try:
+                xs, ys, zs, labels = zip(*points)
+                self.clear()
+                self.plot_data(ys, xs, labels)
+            except ValueError:
+                self.clear()
 
     def plot_position(self):
-        position = self._parent._controller.position
-        if self.position:
-            self.position.remove()
-        self.position = self.axes.axhline(position[0], color='r')
+        if self._plot_position:
+            position = self._parent._controller.position
+            if self.position:
+                self.position.remove()
+            self.position = self._axes.axhline(position[0], color='r')
 
 
 class CorrinalCanvas(AnatomicalCanvas):
-    def __init__(self, parent, width=4, height=8, dpi=100, interactive=False):
-        super(CorrinalCanvas, self).__init__(parent, width, height, dpi, interactive)
-        self._init_ui(self.image.data[:, self._y, :])
-        self.points = self.axes.plot([], [], '.r', markersize=10)
+    def __init__(self, parent, width=4, height=8, dpi=100, crosshair=False):
+        super(CorrinalCanvas, self).__init__(parent, width, height, dpi, crosshair)
+        self._init_ui(self._image.data[:, self._y, :])
 
     def refresh(self):
         self._x, self._y, self._z = self._parent._controller.position
-        data = self.image.data[:, self._y, :]
+        data = self._image.data[:, self._y, :]
         self.view.set_array(data)
         self.view.figure.canvas.draw()
 
@@ -224,23 +228,21 @@ class CorrinalCanvas(AnatomicalCanvas):
             points = [x for x in self._parent._controller.points]
             try:
                 xs, ys, zs, _ = zip(*points)
-                self.points.set_xdata(xs)
-                self.points.set_ydata(zs)
+                self.clear()
+                self.plot_data(xs, zs)
             except ValueError:
-                self.points.set_xdata([])
-                self.points.set_ydata([])
+                self.clear()
             self.view.figure.canvas.draw()
 
 
 class AxialCanvas(AnatomicalCanvas):
-    def __init__(self, parent, width=4, height=8, dpi=100, interactive=False):
-        super(AxialCanvas, self).__init__(parent, width, height, dpi, interactive)
-        self._init_ui(self.image.data[self._x, :, :])
-        self.points = self.axes.plot([], [], '.r', markersize=10)
+    def __init__(self, parent, width=4, height=8, dpi=100, crosshair=False):
+        super(AxialCanvas, self).__init__(parent, width, height, dpi, crosshair)
+        self._init_ui(self._image.data[self._x, :, :])
 
     def refresh(self):
         self._x, self._y, self._z = self._parent._controller.position
-        data = self.image.data[self._x, :, :]
+        data = self._image.data[self._x, :, :]
         self.view.set_array(data)
         self.view.figure.canvas.draw()
 

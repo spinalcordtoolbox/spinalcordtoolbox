@@ -100,19 +100,19 @@ class PropSegController(base.BaseController):
 class PropSeg(base.BaseDialog):
     def __init__(self, *args, **kwargs):
         super(PropSeg, self).__init__(*args, **kwargs)
-        self.main_canvas.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.axial_canvas.setFocusPolicy(QtCore.Qt.StrongFocus)
 
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
-        self.second_canvas = widgets.SagittalCanvas(self)
-        layout.addWidget(self.second_canvas)
+        self.sagittal_canvas = widgets.SagittalCanvas(self, plot_points=True, plot_position=True)
+        layout.addWidget(self.sagittal_canvas)
 
-        self.main_canvas = widgets.AxialCanvas(self, interactive=True)
-        self.main_canvas.plot_points()
-        layout.addWidget(self.main_canvas)
+        self.axial_canvas = widgets.AxialCanvas(self, crosshair=True)
+        self.axial_canvas.plot_points()
+        layout.addWidget(self.axial_canvas)
 
-        self.main_canvas.point_selected_signal.connect(self.select_point)
-        self.second_canvas.point_selected_signal.connect(self.on_select_slice)
+        self.axial_canvas.point_selected_signal.connect(self.select_point)
+        self.sagittal_canvas.point_selected_signal.connect(self.on_select_slice)
 
         parent.addLayout(layout)
 
@@ -148,7 +148,7 @@ class PropSeg(base.BaseDialog):
         try:
             logger.debug('Skipping slice')
             self._controller.skip_slice()
-            self.second_canvas.refresh()
+            self.sagittal_canvas.refresh()
         except InvalidActionWarning as warn:
             self.update_warning(warn.message)
 
@@ -156,16 +156,16 @@ class PropSeg(base.BaseDialog):
         widget = self.sender()
         if widget.mode in self._controller.MODES and widget.isChecked() and widget.mode != self._controller.mode:
             self._controller.mode = widget.mode
-            self.main_canvas.refresh()
-            self.second_canvas.refresh()
+            self.axial_canvas.refresh()
+            self.sagittal_canvas.refresh()
             self.update_status('Reset manual segmentation: Now in mode {}'.format(widget.mode))
 
     def on_select_slice(self, x, y, z):
         try:
             logger.debug('Slice clicked {}'.format((x, y, z)))
             self._controller.select_slice(x, y, z)
-            self.main_canvas.refresh()
-            self.second_canvas.refresh()
+            self.axial_canvas.refresh()
+            self.sagittal_canvas.refresh()
             self.update_status('Sagittal slice seleted: {}'.format(self._controller._slice))
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
             self.update_warning(warn.message)
@@ -174,16 +174,16 @@ class PropSeg(base.BaseDialog):
         try:
             logger.debug('Point clicked {}'.format((x, y, z)))
             self._controller.select_point(x, y, z)
-            self.main_canvas.refresh()
-            self.second_canvas.refresh()
+            self.axial_canvas.refresh()
+            self.sagittal_canvas.refresh()
             self.update_status('Point {} selected: {}'.format(len(self._controller.points), self._controller.points))
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
             self.update_warning(warn.message)
 
     def on_undo(self):
         super(PropSeg, self).on_undo()
-        self.main_canvas.refresh()
-        self.second_canvas.refresh()
+        self.axial_canvas.refresh()
+        self.sagittal_canvas.refresh()
 
 
 if __name__ == '__main__':

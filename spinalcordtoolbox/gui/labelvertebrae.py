@@ -43,7 +43,7 @@ class LabelVertebrae(base.BaseDialog):
 
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
-        self.sag = widgets.SagittalCanvas(self, interactive=True)
+        self.sag = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
         self.labels = widgets.VertebraeWidget(self)
         layout.addWidget(self.labels)
         layout.addWidget(self.sag)
