@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Charley
-# Modified: 2017-07-26
+# Modified: 2017-08-19
 #
 # About the license: see the file LICENSE.TXT
 
@@ -12,9 +12,8 @@ import os
 import shutil
 import sys
 import numpy as np
-import itertools
-from math import radians, pi, sqrt
-from skimage.measure import label, regionprops
+from math import sqrt
+from skimage.measure import label
 import pandas as pd
 import pickle
 
@@ -30,12 +29,14 @@ from msct_types import Centerline
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Extraction of measures from each lesion. The input is a lesion mask (binary file) identified with value=1 (background=0). The function then assigns an ID value for each lesion (1, 2, 3, etc.) and outputs morphometric measures for each lesion:'
+    parser.usage.set_description('Compute statistics on lesions of the input binary file (1 for lesion, 0 for background). The function assigns an ID value to each lesion (1, 2, 3, etc.) and outputs morphometric measures for each lesion:'
                                     '\n- volume [mm^3]'
                                     '\n- length [mm]: length along the Superior-Inferior axis'
                                     '\n- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as a circle in the axial cross-sectional plane orthogonal to the spinal cord'
-                                    '\nIf an image (e.g. T2w or T1w image, texture image) is provided, it computes the averaged value of this image within each lesion.'
-                                    '\nIf a registered template is provided, it computes the proportion of lesion in (1) each vertebral level, (2) GM and WM (3), ... compared to the total lesion load.'
+                                    '\n\nIf an image (e.g. T2w or T1w image, texture image) is provided, it computes the mean and standard deviation values of this image within each lesion.'
+                                    '\n\nIf a registered template is provided, it computes:'
+                                    '\n- the distribution of each lesion depending on each vertebral level and on each region of the template (eg GM, WM, WM tracts).'
+                                    '\n- the proportion of ROI (eg vertebral level, GM, WM) occupied by lesion.'
                                     '\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.')
     parser.add_option(name="-m",
                       type_value="file",
@@ -581,19 +582,6 @@ def main(args=None):
                             path_template=path_template, 
                             path_ofolder=path_results,
                             verbose=verbose)
-  # print '\nROI=WM - vert=None'
-  # relative_ROIvol_in_mask(Image(lesion_obj.fname_mask), Image(lesion_obj.path_wm), verbose=lesion_obj.verbose)
-  # print '\nROI=WM - vert=5'
-  # relative_ROIvol_in_mask(Image(lesion_obj.fname_mask), Image(lesion_obj.path_wm), Image(lesion_obj.path_levels),5, verbose=lesion_obj.verbose)
-  # print '\nROI=WM - vert=3'
-  # vol_wm_lesion, _ = relative_ROIvol_in_mask(Image(lesion_obj.fname_mask), Image(lesion_obj.path_wm), Image(lesion_obj.path_levels),3, verbose=lesion_obj.verbose)
-  # print '\nROI=GM - vert=3'
-  # vol_gm_lesion, _ = relative_ROIvol_in_mask(Image(lesion_obj.fname_mask), Image(lesion_obj.path_gm), Image(lesion_obj.path_levels),3, verbose=lesion_obj.verbose)
-
-  # print '\n'
-  # vol_tot = vol_wm_lesion+vol_gm_lesion
-  # print 'Proportion of lesion in GM = '+str(round(vol_gm_lesion/vol_tot,3))
-  # print 'Proportion of lesion in WM = '+str(round(vol_wm_lesion/vol_tot,3))
 
   # run the analyze
   lesion_obj.analyze()
