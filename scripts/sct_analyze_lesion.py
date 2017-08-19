@@ -119,6 +119,9 @@ class AnalyzeLeion:
 	def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
 
 		self.fname_mask = fname_mask
+		if not set(np.unique(Image(fname_mask).data)) == set([0, 1]):
+  			printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
+
 		self.fname_sc = fname_sc
 		self.fname_ref = fname_ref
 		self.path_template = path_template
@@ -128,35 +131,41 @@ class AnalyzeLeion:
 		# create tmp directory
 		self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
 
+		# lesion file where each lesion has a different value
 		self.fname_label = None
 
-		data_dct = {}
-		column_lst = ['label', 'volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
+		# initialization of measure sheet
+		measure_lst = ['label', 'volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
 		if self.fname_ref is not None:
-			for feature in ['mean', 'std']:
-				column_lst.append(feature+'_'+extract_fname(self.fname_ref)[1])
-		for column in column_lst:
-			data_dct[column] = None
-		self.data_pd = pd.DataFrame(data=data_dct,index=range(0),columns=column_lst)
+			for measure in ['mean', 'std']:
+				measure_lst.append(measure+'_'+extract_fname(self.fname_ref)[1])
+		measure_dct = {}
+		for column in measure_lst:
+			measure_dct[column] = None
+		self.measure_pd = pd.DataFrame(data=measure_dct,index=range(0),columns=measure_lst)
 
+		# orientation of the input image
 		self.orientation = None
 
+		# angle correction
 		self.angles = None
 
+		# volume object
 		self.volumes = None
 
+		# initialization of proportion measures, related to registrated atlas
 		if self.path_template is not None:
 			self.path_atlas = self.path_template+'atlas/'
 			self.path_levels = self.path_template+'template/PAM50_levels.nii.gz'
-			self.dct_matrix = {}
-			self.pickle_name = extract_fname(self.fname_mask)[1]+'_analyzis.pkl'
 		else:
-			self.path_atlas, self.path_levels, self.pickle_name = None, None, None
+			self.path_atlas, self.path_levels = None, None
 		self.vert_lst = None
 		self.atlas_roi_lst = None
+		self.distrib_matrix_dct = {}
 
-		self.excel_name = None
-		self.pickle_name = None
+		# output names
+		self.pickle_name = extract_fname(self.fname_mask)[1]+'_analyzis.pkl'
+		self.excel_name = extract_fname(self.fname_mask)[1]+'_analyzis.xlsx'
 
 	def analyze(self):
 		self.ifolder2tmp()
@@ -210,7 +219,6 @@ class AnalyzeLeion:
 
 	def pack_measures(self):
 
-		self.excel_name = extract_fname(self.fname_mask)[1]+'_analyzis.xlsx'
 		writer = pd.ExcelWriter(self.excel_name)
 		self.data_pd.to_excel(writer,sheet_name='measures', index=False, engine='xlsxwriter')
 		if self.path_template is not None:
@@ -520,8 +528,6 @@ def main(args=None):
 
   # set param arguments ad inputted by user
   fname_mask = arguments["-m"]
-  if not set(np.unique(Image(fname_mask).data)) == set([0, 1]):
-  	printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
   # SC segmentation
   if '-s' in arguments:
@@ -572,13 +578,13 @@ def main(args=None):
   else:
     verbose = '1'
 
-  # # create the Lesion constructor
-  # lesion_obj = AnalyzeLeion(fname_mask=fname_mask, 
-  #                           fname_sc=fname_sc, 
-  #                           fname_ref=fname_ref, 
-  #                           path_template=path_template, 
-  #                           path_ofolder=path_results,
-  #                           verbose=verbose)
+  # create the Lesion constructor
+  lesion_obj = AnalyzeLeion(fname_mask=fname_mask, 
+                            fname_sc=fname_sc, 
+                            fname_ref=fname_ref, 
+                            path_template=path_template, 
+                            path_ofolder=path_results,
+                            verbose=verbose)
 
   # # run the analyze
   # lesion_obj.analyze()
