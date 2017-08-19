@@ -21,7 +21,7 @@ from sct_maths import binarise
 from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
-from sct_utils import (add_suffix, extract_fname, printv, run,
+from sct_utils import (add_suffix, extract_fname, printv, run, printv,
                        slash_at_the_end, Timer, tmp_create, get_absolute_path)
 from sct_straighten_spinalcord import smooth_centerline
 from msct_types import Centerline
@@ -514,15 +514,14 @@ def main(args=None):
   if args is None:
     args = sys.argv[1:]
 
-  # # create param object
-  # param = Param()
-
   # get parser
   parser = get_parser()
   arguments = parser.parse(args)
 
   # set param arguments ad inputted by user
   fname_mask = arguments["-m"]
+  if not set(np.unique(Image(fname_mask).data)) == set([0, 1]):
+  	printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
   # SC segmentation
   if '-s' in arguments:
@@ -547,7 +546,7 @@ def main(args=None):
     path_template = slash_at_the_end(arguments["-f"], slash=1)
     if not os.path.isdir(path_template) and os.path.exists(path_template):
       path_template = None
-      sct.printv("ERROR output directory %s is not a valid directory" % path_template, 1, 'error')
+      printv("ERROR output directory %s is not a valid directory" % path_template, 1, 'error')
   else:
     path_template = None
 
@@ -573,28 +572,26 @@ def main(args=None):
   else:
     verbose = '1'
 
+  # # create the Lesion constructor
+  # lesion_obj = AnalyzeLeion(fname_mask=fname_mask, 
+  #                           fname_sc=fname_sc, 
+  #                           fname_ref=fname_ref, 
+  #                           path_template=path_template, 
+  #                           path_ofolder=path_results,
+  #                           verbose=verbose)
 
+  # # run the analyze
+  # lesion_obj.analyze()
 
-  # create the Lesion constructor
-  lesion_obj = AnalyzeLeion(fname_mask=fname_mask, 
-                            fname_sc=fname_sc, 
-                            fname_ref=fname_ref, 
-                            path_template=path_template, 
-                            path_ofolder=path_results,
-                            verbose=verbose)
-
-  # run the analyze
-  lesion_obj.analyze()
-
-  # remove tmp_dir
-  if rm_tmp:
-    shutil.rmtree(lesion_obj.tmp_dir)
+  # # remove tmp_dir
+  # if rm_tmp:
+  #   shutil.rmtree(lesion_obj.tmp_dir)
         
-  # printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
-  # if fname_ref is not None:
-  #   printv('fslview ' + path_results + fname_mask + ' ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
-  # else:
-  #   printv('fslview ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')    
+  # # printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
+  # # if fname_ref is not None:
+  # #   printv('fslview ' + path_results + fname_mask + ' ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
+  # # else:
+  # #   printv('fslview ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')    
     
 if __name__ == "__main__":
     main()
