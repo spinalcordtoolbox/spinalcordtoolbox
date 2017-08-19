@@ -119,8 +119,12 @@ class AnalyzeLeion:
 	def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
 
 		self.fname_mask = fname_mask
-		if not set(np.unique(Image(fname_mask).data)) == set([0, 1]):
-  			printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
+		print np.unique(Image(fname_mask).data)
+		if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
+			if set(np.unique(Image(fname_mask).data)) == set([0.0]):
+				printv('WARNING: Empty masked image', self.verbose, 'warning')
+			else:
+  				printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
 		self.fname_sc = fname_sc
 		self.fname_ref = fname_ref
@@ -132,7 +136,7 @@ class AnalyzeLeion:
 		self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
 
 		# lesion file where each lesion has a different value
-		self.fname_label = None
+		self.fname_label = add_suffix(self.fname_mask, '_label')
 
 		# initialization of measure sheet
 		measure_lst = ['label', 'volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
@@ -148,7 +152,7 @@ class AnalyzeLeion:
 		self.orientation = None
 
 		# angle correction
-		self.angles = None
+		self.angles = np.zeros(Image(self.fname_mask).dim[2])
 
 		# volume object
 		self.volumes = None
@@ -173,34 +177,31 @@ class AnalyzeLeion:
 		# Orient input image(s) to RPI
 		self.orient2rpi()
 
-		# Binarize the input image if needed
-		self.binarize()
-
 		# Label connected regions of the masked image
 		self.label_lesion()
 
 		# Compute angle for CSA correction
 		self.angle_correction()
 
-		# Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
-		# if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
-		self.measure()
+		# # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
+		# # if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
+		# self.measure()
 
-		# Compute mean, median, min, max value in each labeled lesion
-		if self.fname_ref is not None:
-		  self.measure_within_im()
+		# # Compute mean, median, min, max value in each labeled lesion
+		# if self.fname_ref is not None:
+		#   self.measure_within_im()
 
-		# reorient data if needed
-		self.reorient()
+		# # reorient data if needed
+		# self.reorient()
 
-		# print averaged results
-		self.show_total_results()
+		# # print averaged results
+		# self.show_total_results()
 
-		# save results in excel and pickle files
-		self.pack_measures()
+		# # save results in excel and pickle files
+		# self.pack_measures()
 
-		# save results to ofolder
-		self.tmp2ofolder()
+		# # save results to ofolder
+		# self.tmp2ofolder()
 
 
 	def tmp2ofolder(self):
@@ -433,43 +434,25 @@ class AnalyzeLeion:
 					# compute the angle between the normal vector of the plane and the vector z
 					self.angles[zz] = np.arccos(np.vdot(tangent_vect, axis_Z))
 
-		else:
-			self.angles = np.zeros(Image(self.fname_mask).dim[2])
-
 	def label_lesion(self):
 		printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
 		im = Image(self.fname_mask)
 		im_2save = im.copy()
 		im_2save.data = label(im.data, connectivity=2)
-
-		self.fname_label = add_suffix(self.fname_mask, '_label')
 		im_2save.setFileName(self.fname_label)
 		im_2save.save()
 
-		self.data_pd['label'] = [l for l in np.unique(im_2save.data) if l]
-		printv('Lesion count = '+str(len(self.data_pd['label'])), self.verbose, 'info')
-
-	def binarize(self):
-		im = Image(self.fname_mask)
-		if len(np.unique(im.data))>2: # if the image is not binarized
-			printv('\nBinarize lesion file...', self.verbose, 'normal')
-			im_2save = im.copy()
-			im_2save.data = binarise(im.data)
-			im_2save.setFileName(self.fname_mask)
-			im_2save.save()
-
-		elif list(np.unique(im.data))==[0]:
-			printv('WARNING: Empty masked image', self.verbose, 'warning')
+		self.measure_pd['label'] = [l for l in np.unique(im_2save.data) if l]
+		printv('Lesion count = '+str(len(self.measure_pd['label'])), self.verbose, 'info')
 
 	def _orient(self, fname, orientation):
 
 		im = Image(fname)
-		im = set_orientation(im, orientation)
-		im.setFileName(fname)
-		im.save() 
+		im = set_orientation(im, orientation, fname_out=fname)
 
 	def orient2rpi(self):
 
+		# save input image orientation
 		self.orientation = get_orientation(Image(self.fname_mask))
 
 		if not self.orientation == 'RPI':
@@ -512,7 +495,7 @@ class AnalyzeLeion:
 			for fname_atlas_roi in os.listdir(self.path_atlas):
 				if fname_atlas_roi.endswith('.nii.gz'):
 					tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
-					if tract_id < 36:
+					if tract_id < 36: # Not interested in CSF
 						shutil.copy(self.path_atlas+fname_atlas_roi, self.tmp_dir)
 						self.atlas_roi_lst.append(fname_atlas_roi)
 
@@ -586,8 +569,8 @@ def main(args=None):
                             path_ofolder=path_results,
                             verbose=verbose)
 
-  # # run the analyze
-  # lesion_obj.analyze()
+  # run the analyze
+  lesion_obj.analyze()
 
   # # remove tmp_dir
   # if rm_tmp:
