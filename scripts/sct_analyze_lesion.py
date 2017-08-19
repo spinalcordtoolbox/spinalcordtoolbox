@@ -340,24 +340,24 @@ class AnalyzeLeion:
 			self._measure_length(im_lesion_data_cur, p_lst, label_idx)
 			self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
 
-		# 	if self.path_template is not None:
-		# 		sheet_name = 'lesion#'+str(lesion_label)+'_distribution'
-		# 		self.dct_matrix[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
+			# if self.path_template is not None:
+			# 	sheet_name = 'lesion#'+str(lesion_label)+'_distribution'
+			# 	self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
 
-		# 		for tract_id in dct_atlas_data:
-		# 			self.dct_matrix[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
+			# 	for tract_id in atlas_data_dct:
+			# 		self.distrib_matrix_dct[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
 				
-		# 		vol_mask_tot = 0.0
-		# 		for vert in self.vert_lst:
-		# 			im_vert_cur = np.copy(im_vert_data)
-		# 			im_vert_cur[np.where(im_vert_cur!=vert)] = 0.0
-		# 			if np.count_nonzero(im_vert_cur*np.copy(im_lesion_data_cur)):
-		# 				dct_tmp = {}
-		# 				idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
-		# 				for tract_id in dct_atlas_data:
-		# 					res_lst = relative_ROIvol_in_mask(np.copy(im_lesion_data_cur), np.copy(dct_atlas_data[tract_id]), p_lst, np.copy(im_vert_data), vert)
-		# 					self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = res_lst[0]
-		# 					vol_mask_tot += res_lst[0]
+			# 	vol_mask_tot = 0.0
+			# 	for vert in self.vert_lst:
+			# 		im_vert_cur = np.copy(im_vert_data)
+			# 		im_vert_cur[np.where(im_vert_cur!=vert)] = 0.0
+			# 		if np.count_nonzero(im_vert_cur*np.copy(im_lesion_data_cur)):
+			# 			dct_tmp = {}
+			# 			idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].vert==str(vert)].index
+			# 			for tract_id in dct_atlas_data:
+			# 				res_lst = relative_ROIvol_in_mask(np.copy(im_lesion_data_cur), np.copy(atlas_data_dct[tract_id]), p_lst, np.copy(im_vert_data), vert)
+			# 				self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = res_lst[0]
+			# 				vol_mask_tot += res_lst[0]
 				
 		# 		for vert in self.vert_lst:
 		# 			idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
