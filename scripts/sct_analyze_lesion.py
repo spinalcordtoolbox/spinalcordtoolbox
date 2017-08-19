@@ -12,7 +12,7 @@ import os
 import shutil
 import sys
 import numpy as np
-from math import sqrt
+from math import sqrt, pi
 from skimage.measure import label
 import pandas as pd
 import pickle
@@ -136,7 +136,7 @@ class AnalyzeLeion:
 		self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
 
 		# lesion file where each lesion has a different value
-		self.fname_label = add_suffix(self.fname_mask, '_label')
+		self.fname_label = extract_fname(self.fname_mask)[1]+'_label'+extract_fname(self.fname_mask)[2]
 
 		# initialization of measure sheet
 		measure_lst = ['label', 'volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
@@ -183,9 +183,9 @@ class AnalyzeLeion:
 		# Compute angle for CSA correction
 		self.angle_correction()
 
-		# # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
-		# # if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
-		# self.measure()
+		# Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
+		# if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
+		self.measure()
 
 		# # Compute mean, median, min, max value in each labeled lesion
 		# if self.fname_ref is not None:
@@ -279,24 +279,22 @@ class AnalyzeLeion:
 			self.volumes[zz,idx-1] = np.sum(im_data[:,:,zz]) * p_lst[0] * p_lst[1] * p_lst[2]
 
 		vol_tot_cur = np.sum(self.volumes[:,idx-1])
-		self.data_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
+		self.measure_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
 		printv('  Volume : '+str(round(vol_tot_cur,2))+' mm^3', self.verbose, type='info')
 
 	def _measure_length(self, im_data, p_lst, idx):
 
-		length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in list(np.unique(np.where(im_data)[2]))])
+		length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in np.unique(np.where(im_data)[2])])
 
-		self.data_pd.loc[idx, 'length [mm]'] = length_cur
+		self.measure_pd.loc[idx, 'length [mm]'] = length_cur
 		printv('  (S-I) length : '+str(round(length_cur,2))+' mm', self.verbose, type='info')
 
 	def _measure_diameter(self, im_data, p_lst, idx):
 
-		area_lst = []
-		for zz in range(im_data.shape[2]):
-			area_lst.append(np.sum(im_data[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1])
-			diameter_cur = sqrt(max(area_lst)/(4*pi))
-
-		self.data_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
+		area_lst = [np.sum(im_data[:,:,zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
+		
+		diameter_cur = 2*sqrt(max(area_lst)/(4*pi))
+		self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
 		printv('  Max. equivalent diameter : '+str(round(diameter_cur,2))+' mm', self.verbose, type='info')
 
 	def _regroup_per_tracts(self, dct, lim_lst):
@@ -308,93 +306,93 @@ class AnalyzeLeion:
 		im_lesion_data = im_lesion.data
 		p_lst = im_lesion.dim[3:6]
 
-		label_lst = [l for l in np.unique(im_lesion_data) if l]
+		label_lst = [l for l in np.unique(im_lesion_data) if l] # lesion label IDs list
 
 		if self.path_template is not None:
 			if os.path.isfile(self.path_levels):
 				img_vert = Image(self.path_levels)
 				im_vert_data = img_vert.data
-				self.vert_lst = [v for v in np.unique(im_vert_data) if v]
+				self.vert_lst = [v for v in np.unique(im_vert_data) if v] # list of vertebral levels available in the input image
 				
 			else:
 				im_vert_data = None
-				printv('WARNING: the file '+self.path_levels+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='warning')
+				printv('ERROR: the file '+self.path_levels+' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='error')
 			
-			# To open atlas images only once
-			dct_atlas_data = {}
+			# In order to open atlas images only one time
+			atlas_data_dct = {} # dict containing the np.array of the registrated atlas
 			for fname_atlas_roi in self.atlas_roi_lst:
-				if fname_atlas_roi.endswith('.nii.gz'):
-					tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
-					if tract_id < 36:
-						img_cur = Image(fname_atlas_roi)
-						img_cur_copy = img_cur.copy()
-						dct_atlas_data[tract_id] = img_cur_copy.data
+				tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
+				img_cur = Image(fname_atlas_roi)
+				img_cur_copy = img_cur.copy()
+				atlas_data_dct[tract_id] = img_cur_copy.data
+				del img_cur
 
 		self.volumes = np.zeros((im_lesion.dim[2],len(label_lst)))
 
+		# Iteration across each lesion to measure statistics
 		dct_lesion_tracts = {}
 		for lesion_label in label_lst:
 			im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
 			printv('\nMeasures on lesion #'+str(lesion_label)+'...', self.verbose, 'normal')
 
-			label_idx = self.data_pd[self.data_pd.label==lesion_label].index
+			label_idx = self.measure_pd[self.measure_pd.label==lesion_label].index
 			self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
 			self._measure_length(im_lesion_data_cur, p_lst, label_idx)
 			self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
 
-			if self.path_template is not None:
-				sheet_name = 'lesion#'+str(lesion_label)+'_distribution'
-				self.dct_matrix[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
+		# 	if self.path_template is not None:
+		# 		sheet_name = 'lesion#'+str(lesion_label)+'_distribution'
+		# 		self.dct_matrix[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
 
-				for tract_id in dct_atlas_data:
-					self.dct_matrix[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
+		# 		for tract_id in dct_atlas_data:
+		# 			self.dct_matrix[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
 				
-				vol_mask_tot = 0.0
-				for vert in self.vert_lst:
-					im_vert_cur = np.copy(im_vert_data)
-					im_vert_cur[np.where(im_vert_cur!=vert)] = 0.0
-					if np.count_nonzero(im_vert_cur*np.copy(im_lesion_data_cur)):
-						dct_tmp = {}
-						idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
-						for tract_id in dct_atlas_data:
-							res_lst = relative_ROIvol_in_mask(np.copy(im_lesion_data_cur), np.copy(dct_atlas_data[tract_id]), p_lst, np.copy(im_vert_data), vert)
-							self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = res_lst[0]
-							vol_mask_tot += res_lst[0]
+		# 		vol_mask_tot = 0.0
+		# 		for vert in self.vert_lst:
+		# 			im_vert_cur = np.copy(im_vert_data)
+		# 			im_vert_cur[np.where(im_vert_cur!=vert)] = 0.0
+		# 			if np.count_nonzero(im_vert_cur*np.copy(im_lesion_data_cur)):
+		# 				dct_tmp = {}
+		# 				idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
+		# 				for tract_id in dct_atlas_data:
+		# 					res_lst = relative_ROIvol_in_mask(np.copy(im_lesion_data_cur), np.copy(dct_atlas_data[tract_id]), p_lst, np.copy(im_vert_data), vert)
+		# 					self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = res_lst[0]
+		# 					vol_mask_tot += res_lst[0]
 				
-				for vert in self.vert_lst:
-					idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
-					for tract_id in dct_atlas_data:
-						val = self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)].values[0]
-						self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = val*100.0/vol_mask_tot				
+		# 		for vert in self.vert_lst:
+		# 			idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
+		# 			for tract_id in dct_atlas_data:
+		# 				val = self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)].values[0]
+		# 				self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = val*100.0/vol_mask_tot				
 
-		if self.path_template is not None:
+		# if self.path_template is not None:
 			
-			im_lesion_data_cur = np.copy(im_lesion_data > 0)
+		# 	im_lesion_data_cur = np.copy(im_lesion_data > 0)
 
-			sheet_name = 'ROI_occupied_by_lesion'
-			self.dct_matrix[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
+		# 	sheet_name = 'ROI_occupied_by_lesion'
+		# 	self.dct_matrix[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
 
-			for tract_id in dct_atlas_data:
-				self.dct_matrix[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
+		# 	for tract_id in dct_atlas_data:
+		# 		self.dct_matrix[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
 
-			for vert in self.vert_lst:
-				im_vert_cur = np.copy(im_vert_data)
-				im_vert_cur[np.where(im_vert_cur!=vert)] =0
-				if np.count_nonzero(im_vert_cur*np.copy(im_lesion_data)):
-					dct_tmp = {}
-					idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
-					for tract_id in dct_atlas_data:
-						res_lst = relative_ROIvol_in_mask(np.copy(im_lesion_data_cur), np.copy(dct_atlas_data[tract_id]), p_lst, np.copy(im_vert_data), vert)
-						dct_tmp[tract_id] = res_lst
+		# 	for vert in self.vert_lst:
+		# 		im_vert_cur = np.copy(im_vert_data)
+		# 		im_vert_cur[np.where(im_vert_cur!=vert)] =0
+		# 		if np.count_nonzero(im_vert_cur*np.copy(im_lesion_data)):
+		# 			dct_tmp = {}
+		# 			idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
+		# 			for tract_id in dct_atlas_data:
+		# 				res_lst = relative_ROIvol_in_mask(np.copy(im_lesion_data_cur), np.copy(dct_atlas_data[tract_id]), p_lst, np.copy(im_vert_data), vert)
+		# 				dct_tmp[tract_id] = res_lst
 					
-					self.dct_matrix[sheet_name].loc[idx, 'PAM50_GM'] = self._regroup_per_tracts(dct_tmp, [30,35])
-					self.dct_matrix[sheet_name].loc[idx, 'PAM50_WM'] = self._regroup_per_tracts(dct_tmp, [0,29])
-					self.dct_matrix[sheet_name].loc[idx, 'PAM50_DC'] = self._regroup_per_tracts(dct_tmp, [0,3])
-					self.dct_matrix[sheet_name].loc[idx, 'PAM50_VF'] = self._regroup_per_tracts(dct_tmp, [14,29])
-					self.dct_matrix[sheet_name].loc[idx, 'PAM50_LF'] = self._regroup_per_tracts(dct_tmp, [4,13])
+		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_GM'] = self._regroup_per_tracts(dct_tmp, [30,35])
+		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_WM'] = self._regroup_per_tracts(dct_tmp, [0,29])
+		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_DC'] = self._regroup_per_tracts(dct_tmp, [0,3])
+		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_VF'] = self._regroup_per_tracts(dct_tmp, [14,29])
+		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_LF'] = self._regroup_per_tracts(dct_tmp, [4,13])
 
-					for tract_id in dct_atlas_data:
-						self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = dct_tmp[tract_id][0]*100.0/dct_tmp[tract_id][1]
+		# 			for tract_id in dct_atlas_data:
+		# 				self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = dct_tmp[tract_id][0]*100.0/dct_tmp[tract_id][1]
 
 	def _normalize(self, vect):
 		norm = np.linalg.norm(vect)
