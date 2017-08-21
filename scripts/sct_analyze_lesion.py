@@ -78,48 +78,11 @@ def get_parser():
 
     return parser
 
-def pve_weighted_avg(im_mask_data, im_atlas_data):
-	return im_mask_data * im_atlas_data
-
-  
-def relative_ROIvol_in_mask(im_mask_data, im_atlas_roi_data, p_lst, im_template_vert_data=None, vert_level=None):
-	#
-	#   Goal:
-	#         This function computes the percentage of ROI occupied by binary mask
-	#         --> ie volume of the intersection between {im_mask and im_roi} divided by the volume of roi
-	#         If im_template_vert and vert are specified, the ROI is restricted to the given vert_level
-	#         The PVE is handled by the method 'weighted_average'
-	#
-	#   Inputs:
-	#           - im_mask_data - type=NumPyArray - binary mask (eg lesions)
-	#           - im_atlas_roi_data - type=NumPyArray - ROI in the same space as im_mask
-	#			- p_lst - type=list of float
-	#           - im_template_vert_data - type=NumPyArray - vertebral template in the same space as im_mask
-	#           - vert_level - type=int - vertebral level ID to restrict the ROI
-	#
-
-	if im_template_vert_data is not None and vert_level is not None:
-		im_atlas_roi_data[np.where(im_template_vert_data != vert_level)] = 0.0
-		im_mask_data[np.where(im_template_vert_data != vert_level)] = 0.0
-
-	im_mask_roi_data_wa = pve_weighted_avg(im_mask_data, im_atlas_roi_data)
-
-	vol_tot_roi = np.sum(im_atlas_roi_data) * p_lst[0] * p_lst[1] * p_lst[2]
-	# vol_mask_tot = np.sum(im_mask_data) * p_lst[0] * p_lst[1] * p_lst[2]
-	vol_mask_roi_wa = np.sum(im_mask_roi_data_wa) * p_lst[0] * p_lst[1] * p_lst[2]
-
-	# printv('\tTotal volume of ROI = '+str(round(vol_tot_roi,2))+' mm^3', verbose=0, type='info')
-	# printv('\tVolume of im_mask in ROI = '+str(round(vol_mask_roi_wa,2))+' mm^3', verbose=0, type='info')
-	# printv('\tPercentage of ROI occupied by im_mask = '+str(round(vol_mask_roi_wa/vol_tot_roi,2)*100.0)+'%', verbose=0, type='info')
-
-	return vol_mask_roi_wa, vol_tot_roi
-
 
 class AnalyzeLeion:
 	def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
 
 		self.fname_mask = fname_mask
-		print np.unique(Image(fname_mask).data)
 		if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
 			if set(np.unique(Image(fname_mask).data)) == set([0.0]):
 				printv('WARNING: Empty masked image', self.verbose, 'warning')
@@ -131,6 +94,7 @@ class AnalyzeLeion:
 		self.path_template = path_template
 		self.path_ofolder = path_ofolder
 		self.verbose = verbose
+		self.wrk_dir = os.getcwd()
 
 		# create tmp directory
 		self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
@@ -169,7 +133,7 @@ class AnalyzeLeion:
 
 		# output names
 		self.pickle_name = extract_fname(self.fname_mask)[1]+'_analyzis.pkl'
-		self.excel_name = extract_fname(self.fname_mask)[1]+'_analyzis.xlsx'
+		self.excel_name = extract_fname(self.fname_mask)[1]+'_analyzis.xls'
 
 	def analyze(self):
 		self.ifolder2tmp()
@@ -185,92 +149,83 @@ class AnalyzeLeion:
 
 		# Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
 		# if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
+		# if ref image is provided: Compute mean and std value in each labeled lesion
 		self.measure()
 
-		# # Compute mean, median, min, max value in each labeled lesion
-		# if self.fname_ref is not None:
-		#   self.measure_within_im()
+		# reorient data if needed
+		self.reorient()
 
-		# # reorient data if needed
-		# self.reorient()
+		# print averaged results
+		self.show_total_results()
 
-		# # print averaged results
-		# self.show_total_results()
+		# save results in excel and pickle files
+		self.pack_measures()
 
-		# # save results in excel and pickle files
-		# self.pack_measures()
-
-		# # save results to ofolder
-		# self.tmp2ofolder()
+		# save results to ofolder
+		self.tmp2ofolder()
 
 
 	def tmp2ofolder(self):
 
-		os.chdir('..') # go back to original directory
+		os.chdir(self.wrk_dir) # go back to working directory
 
 		printv('\nSave results files...', self.verbose, 'normal')
 		printv('\n... measures saved in the files:', self.verbose, 'normal')
-		printv('\n  - '+self.path_ofolder+self.excel_name, self.verbose, 'normal')
-		if self.pickle_name is not None:
-			printv('\n  - '+self.path_ofolder+self.pickle_name, self.verbose, 'normal')
-
 		for file in [self.fname_label, self.excel_name, self.pickle_name]:
-			if file is not None:
-				shutil.copy(self.tmp_dir+file, self.path_ofolder+file)
+			printv('\n  - '+self.path_ofolder+file, self.verbose, 'normal')
+			print self.path_ofolder+file
+			shutil.copy(self.tmp_dir+file, self.path_ofolder+file)
 
 	def pack_measures(self):
 
-		writer = pd.ExcelWriter(self.excel_name)
-		self.data_pd.to_excel(writer,sheet_name='measures', index=False, engine='xlsxwriter')
+		writer = pd.ExcelWriter(self.excel_name, engine='xlwt')
+		self.measure_pd.to_excel(writer,sheet_name='measures', index=False, engine='xlwt')
+
+		# Add the total column and row
 		if self.path_template is not None:
-			for sheet_name in self.dct_matrix:
+			for sheet_name in self.distrib_matrix_dct:
 				if '#' in sheet_name:
-					df = self.dct_matrix[sheet_name].copy()
+					df = self.distrib_matrix_dct[sheet_name].copy()
 					df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
 					df['total'] = df.sum(numeric_only=True, axis=1)
 					df.iloc[-1, df.columns.get_loc('vert')] = 'total'
-					df.to_excel(writer,sheet_name=sheet_name, index=False, engine='xlsxwriter')
+					df.to_excel(writer,sheet_name=sheet_name, index=False, engine='xlwt')
 				else:
-					self.dct_matrix[sheet_name].to_excel(writer,sheet_name=sheet_name, index=False, engine='xlsxwriter')
+					self.distrib_matrix_dct[sheet_name].to_excel(writer,sheet_name=sheet_name, index=False, engine='xlwt')
 
-			self.dct_matrix['measures'] = self.data_pd
-			with open(self.pickle_name, 'wb') as handle:
-				pickle.dump(self.dct_matrix, handle)
+		# Save pickle
+		self.distrib_matrix_dct['measures'] = self.measure_pd
+		with open(self.pickle_name, 'wb') as handle:
+			pickle.dump(self.distrib_matrix_dct, handle)
 
+		# Save Excel
 		writer.save()
-
-
 
 	def show_total_results(self):
 
 		printv('\n\nAveraged measures...', self.verbose, 'normal')
-		printv('  Volume = '+str(round(np.mean(self.data_pd['volume [mm3]']),2))+'+/-'+str(round(np.std(self.data_pd['volume [mm3]']),2))+' mm^3', self.verbose, type='info')
-		printv('  (S-I) Length = '+str(round(np.mean(self.data_pd['length [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['length [mm]']),2))+' mm', self.verbose, type='info')
-		printv('  Equivalent Diameter = '+str(round(np.mean(self.data_pd['max_equivalent_diameter [mm]']),2))+'+/-'+str(round(np.std(self.data_pd['max_equivalent_diameter [mm]']),2))+' mm', self.verbose, type='info')
+		for stg, key in zip(['  Volume [mm^3] = ', '  (S-I) Length [mm] = ', '  Equivalent Diameter [mm] = '],['volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']):
+			printv(stg+str(round(np.mean(self.measure_pd[key]),2))+'+/-'+str(round(np.std(self.measure_pd[key]),2)), self.verbose, type='info')
 
-		if 'GM [%]' in self.data_pd:
-			printv('  Proportion of lesions in WM / GM = '+str(round(np.mean(self.data_pd['WM [%]']),2))+'% / '+str(round(np.mean(self.data_pd['GM [%]']),2))+'%', self.verbose, type='info')
-
-		printv('\nTotal volume = '+str(round(np.sum(self.data_pd['volume [mm3]']),2))+' mm^3', self.verbose, 'info')
-		printv('Lesion count = '+str(len(self.data_pd['volume [mm3]'].values)), self.verbose, 'info')
+		printv('\nTotal volume = '+str(round(np.sum(self.measure_pd['volume [mm3]']),2))+' mm^3', self.verbose, 'info')
+		printv('Lesion count = '+str(len(self.measure_pd['volume [mm3]'].values)), self.verbose, 'info')
 
 	def reorient(self):
 		if not self.orientation == 'RPI':
 			printv('\nOrient output image to initial orientation...', self.verbose, 'normal')
 			self._orient(self.fname_label, self.orientation)
 
-	def measure_within_im(self):
+	def _measure_within_im(self, im_lesion, im_ref, label_lst):
 		printv('\nCompute reference image features...', self.verbose, 'normal')
-		im_label_data, im_ref_data = Image(self.fname_label).data, Image(self.fname_ref).data
 
-		for lesion_label in [l for l in np.unique(im_label_data) if l]:
-			im_label_data_cur = im_label_data == lesion_label
-			im_label_data_cur[np.where(im_ref_data==0)] = 0 # if the ref object is eroded compared to the labeled object
-			mean_cur, std_cur  = np.mean(im_ref_data[np.where(im_label_data_cur)]), np.std(im_ref_data[np.where(im_label_data_cur)])
+		for lesion_label in label_lst:
+			im_label_data_cur = im_lesion == lesion_label
+			im_label_data_cur[np.where(im_ref==0)] = 0 # if the ref object is eroded compared to the labeled object
+			mean_cur, std_cur  = np.mean(im_ref[np.where(im_label_data_cur)]), np.std(im_ref[np.where(im_label_data_cur)])
 
-			label_idx = self.data_pd[self.data_pd.label==lesion_label].index
-			self.data_pd.loc[label_idx, 'mean_'+extract_fname(self.fname_ref)[1]] = mean_cur
-			self.data_pd.loc[label_idx, 'std_'+extract_fname(self.fname_ref)[1]] = std_cur
+			label_idx = self.measure_pd[self.measure_pd.label==lesion_label].index
+			self.measure_pd.loc[label_idx, 'mean_'+extract_fname(self.fname_ref)[1]] = mean_cur
+			self.measure_pd.loc[label_idx, 'std_'+extract_fname(self.fname_ref)[1]] = std_cur
 			printv('Mean+/-std of lesion #'+str(lesion_label)+' in '+extract_fname(self.fname_ref)[1]+' file: '+str(round(mean_cur,2))+'+/-'+str(round(std_cur,2)), self.verbose, type='info')
 
 	def _measure_volume(self, im_data, p_lst, idx):
@@ -297,9 +252,104 @@ class AnalyzeLeion:
 		self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
 		printv('  Max. equivalent diameter : '+str(round(diameter_cur,2))+' mm', self.verbose, type='info')
 
-	def _regroup_per_tracts(self, dct, lim_lst):
-		res_mask, res_tot = [dct[t][0] for t in dct if t >=lim_lst[0] and t<=lim_lst[1]], [dct[t][1] for t in dct if t >=lim_lst[0] and t<=lim_lst[1]]
+	def ___pve_weighted_avg(self, im_mask_data, im_atlas_data):
+		return im_mask_data * im_atlas_data
+
+	def __relative_ROIvol_in_mask(self, im_mask_data, im_atlas_roi_data, p_lst, im_template_vert_data=None, vert_level=None):
+		#
+		#   Goal:
+		#         This function computes the percentage of ROI occupied by binary mask
+		#         --> ie volume of the intersection between {im_mask and im_roi} divided by the volume of roi
+		#         If im_template_vert and vert are specified, the ROI is restricted to the given vert_level
+		#         The PVE is handled by the method 'weighted_average'
+		#
+		#   Inputs:
+		#           - im_mask_data - type=NumPyArray - binary mask (eg lesions)
+		#           - im_atlas_roi_data - type=NumPyArray - ROI in the same space as im_mask
+		#			- p_lst - type=list of float
+		#           - im_template_vert_data - type=NumPyArray - vertebral template in the same space as im_mask
+		#           - vert_level - type=int - vertebral level ID to restrict the ROI
+		#
+
+		if im_template_vert_data is not None and vert_level is not None:
+			im_atlas_roi_data[np.where(im_template_vert_data != vert_level)] = 0.0
+			im_mask_data[np.where(im_template_vert_data != vert_level)] = 0.0
+
+		im_mask_roi_data_wa = self.___pve_weighted_avg(im_mask_data=im_mask_data, im_atlas_data=im_atlas_roi_data)
+
+		vol_tot_roi = np.sum(im_atlas_roi_data) * p_lst[0] * p_lst[1] * p_lst[2]
+		vol_mask_roi_wa = np.sum(im_mask_roi_data_wa) * p_lst[0] * p_lst[1] * p_lst[2]
+
+		return vol_mask_roi_wa, vol_tot_roi
+
+	def _measure_eachLesion_distribution(self, lesion_id, atlas_data, im_vert, im_lesion, p_lst):
+
+		sheet_name = 'lesion#'+str(lesion_id)+'_distribution'
+		self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
+
+		# initialized to 0 for each vertebral level and each PAM50 tract
+		for tract_id in atlas_data:
+			self.distrib_matrix_dct[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
+		
+		vol_mask_tot = 0.0 # vol tot of this lesion through the vertebral levels and PAM50 tracts
+		for vert in self.vert_lst: # Loop over vertebral levels
+			im_vert_cur = np.copy(im_vert)
+			im_vert_cur[np.where(im_vert_cur!=vert)] = 0.0
+			if np.count_nonzero(im_vert_cur*np.copy(im_lesion)): # if there is lesion in this vertebral level
+				idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].vert==str(vert)].index
+				for tract_id in atlas_data: # Loop over PAM50 tracts
+					res_lst = self.__relative_ROIvol_in_mask(im_mask_data=np.copy(im_lesion), 
+															im_atlas_roi_data=np.copy(atlas_data[tract_id]), 
+															p_lst=p_lst, 
+															im_template_vert_data=np.copy(im_vert_cur), 
+															vert_level=vert)
+					self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = res_lst[0]
+					vol_mask_tot += res_lst[0]
+		
+		# convert the volume values in distrib_matrix_dct to percentage values
+		for vert in self.vert_lst:
+			idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].vert==str(vert)].index
+			for tract_id in atlas_data:
+				val = self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)].values[0]
+				self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = val*100.0/vol_mask_tot	
+
+	def __regroup_per_tracts(self, vol_dct, tract_limit):
+		res_mask= [vol_dct[t][0] for t in vol_dct if t >=tract_limit[0] and t<=tract_limit[1]]
+		res_tot = [vol_dct[t][1] for t in vol_dct if t >=tract_limit[0] and t<=tract_limit[1]]
 		return np.sum(res_mask)*100.0/np.sum(res_tot)
+
+	def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
+
+		sheet_name = 'ROI_occupied_by_lesion'
+		self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
+
+		# initialized to 0 for each vertebral level and each PAM50 tract
+		for tract_id in atlas_data:
+			self.distrib_matrix_dct[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
+
+		for vert in self.vert_lst: # loop over the vertebral levels
+			im_vert_cur = np.copy(im_vert)
+			im_vert_cur[np.where(im_vert_cur!=vert)] =0
+			if np.count_nonzero(im_vert_cur*np.copy(im_lesion)):
+				res_perTract_dct = {} # for each tract compute the volume occupied by lesion and the volume of the tract
+				idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].vert==str(vert)].index
+				for tract_id in atlas_data: # loop over the tracts
+					res_perTract_dct[tract_id] = self.__relative_ROIvol_in_mask(im_mask_data=np.copy(im_lesion), 
+														im_atlas_roi_data=np.copy(atlas_data[tract_id]), 
+														p_lst=p_lst, 
+														im_template_vert_data=np.copy(im_vert_cur), 
+														vert_level=vert)
+				
+				# group tracts to compute involvement in GM, WM, DC, VF, LF
+				self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_GM'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[30,35])
+				self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_WM'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[0,29])
+				self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_DC'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[0,3])
+				self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_VF'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[14,29])
+				self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_LF'] = self.__regroup_per_tracts(vol_dct=res_perTract_dct, tract_limit=[4,13])
+
+				# save involvement in each PAM50 tracts
+				for tract_id in atlas_data:
+					self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = res_perTract_dct[tract_id][0]*100.0/res_perTract_dct[tract_id][1]
 
 	def measure(self):
 		im_lesion = Image(self.fname_label)
@@ -329,7 +379,7 @@ class AnalyzeLeion:
 
 		self.volumes = np.zeros((im_lesion.dim[2],len(label_lst)))
 
-		# Iteration across each lesion to measure statistics
+		# iteration across each lesion to measure statistics
 		dct_lesion_tracts = {}
 		for lesion_label in label_lst:
 			im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
@@ -340,59 +390,24 @@ class AnalyzeLeion:
 			self._measure_length(im_lesion_data_cur, p_lst, label_idx)
 			self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
 
-			# if self.path_template is not None:
-			# 	sheet_name = 'lesion#'+str(lesion_label)+'_distribution'
-			# 	self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
-
-			# 	for tract_id in atlas_data_dct:
-			# 		self.distrib_matrix_dct[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
-				
-			# 	vol_mask_tot = 0.0
-			# 	for vert in self.vert_lst:
-			# 		im_vert_cur = np.copy(im_vert_data)
-			# 		im_vert_cur[np.where(im_vert_cur!=vert)] = 0.0
-			# 		if np.count_nonzero(im_vert_cur*np.copy(im_lesion_data_cur)):
-			# 			dct_tmp = {}
-			# 			idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].vert==str(vert)].index
-			# 			for tract_id in dct_atlas_data:
-			# 				res_lst = relative_ROIvol_in_mask(np.copy(im_lesion_data_cur), np.copy(atlas_data_dct[tract_id]), p_lst, np.copy(im_vert_data), vert)
-			# 				self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = res_lst[0]
-			# 				vol_mask_tot += res_lst[0]
-				
-		# 		for vert in self.vert_lst:
-		# 			idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
-		# 			for tract_id in dct_atlas_data:
-		# 				val = self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)].values[0]
-		# 				self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = val*100.0/vol_mask_tot				
-
-		# if self.path_template is not None:
+			# compute lesion distribution for each lesion
+			if self.path_template is not None:
+				self._measure_eachLesion_distribution(lesion_id=lesion_label,
+														atlas_data=atlas_data_dct,
+														im_vert=im_vert_data,
+														im_lesion=im_lesion_data_cur,
+														p_lst=p_lst)
 			
-		# 	im_lesion_data_cur = np.copy(im_lesion_data > 0)
+		if self.path_template is not None:
+			# compute total lesion distribution
+			self._measure_totLesion_distribution(im_lesion=np.copy(im_lesion_data > 0),
+												atlas_data=atlas_data_dct,
+												im_vert=im_vert_data,
+												p_lst=p_lst)
 
-		# 	sheet_name = 'ROI_occupied_by_lesion'
-		# 	self.dct_matrix[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
-
-		# 	for tract_id in dct_atlas_data:
-		# 		self.dct_matrix[sheet_name]['PAM50_'+str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
-
-		# 	for vert in self.vert_lst:
-		# 		im_vert_cur = np.copy(im_vert_data)
-		# 		im_vert_cur[np.where(im_vert_cur!=vert)] =0
-		# 		if np.count_nonzero(im_vert_cur*np.copy(im_lesion_data)):
-		# 			dct_tmp = {}
-		# 			idx = self.dct_matrix[sheet_name][self.dct_matrix[sheet_name].vert==str(vert)].index
-		# 			for tract_id in dct_atlas_data:
-		# 				res_lst = relative_ROIvol_in_mask(np.copy(im_lesion_data_cur), np.copy(dct_atlas_data[tract_id]), p_lst, np.copy(im_vert_data), vert)
-		# 				dct_tmp[tract_id] = res_lst
-					
-		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_GM'] = self._regroup_per_tracts(dct_tmp, [30,35])
-		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_WM'] = self._regroup_per_tracts(dct_tmp, [0,29])
-		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_DC'] = self._regroup_per_tracts(dct_tmp, [0,3])
-		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_VF'] = self._regroup_per_tracts(dct_tmp, [14,29])
-		# 			self.dct_matrix[sheet_name].loc[idx, 'PAM50_LF'] = self._regroup_per_tracts(dct_tmp, [4,13])
-
-		# 			for tract_id in dct_atlas_data:
-		# 				self.dct_matrix[sheet_name].loc[idx, 'PAM50_'+str(tract_id).zfill(2)] = dct_tmp[tract_id][0]*100.0/dct_tmp[tract_id][1]
+		if self.fname_ref is not None:
+			# Compute mean and std value in each labeled lesion
+			self._measure_within_im(im_lesion=im_lesion_data, im_ref=Image(self.fname_ref).data, label_lst=label_lst)
 
 	def _normalize(self, vect):
 		norm = np.linalg.norm(vect)
@@ -570,15 +585,15 @@ def main(args=None):
   # run the analyze
   lesion_obj.analyze()
 
-  # # remove tmp_dir
-  # if rm_tmp:
-  #   shutil.rmtree(lesion_obj.tmp_dir)
+  # remove tmp_dir
+  if rm_tmp:
+    shutil.rmtree(lesion_obj.tmp_dir)
         
-  # # printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
-  # # if fname_ref is not None:
-  # #   printv('fslview ' + path_results + fname_mask + ' ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
-  # # else:
-  # #   printv('fslview ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')    
+  printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
+  if fname_ref is not None:
+    printv('fslview ' + fname_mask + ' ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
+  else:
+    printv('fslview ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')    
     
 if __name__ == "__main__":
     main()
