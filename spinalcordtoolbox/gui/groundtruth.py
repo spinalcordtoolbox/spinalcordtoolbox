@@ -7,6 +7,7 @@ from PyQt4 import QtGui, QtCore
 
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
+from spinalcordtoolbox.gui.base import TooManyPointsWarning, InvalidActionWarning, MissingLabelWarning
 
 
 logger = logging.getLogger(__name__)
@@ -17,10 +18,18 @@ class GroundTruthController(base.BaseController):
     def __init__(self, image, params, init_values=None):
         super(GroundTruthController, self).__init__(image, params, init_values)
 
-    def select_point(self, x, y, z):
-        logger.debug('Point Selected {}'.format((x, y, z, self._label)))
-        if self.valid_point(x, y, z) and self._label:
-            self.points.append((x, y, z, self._label))
+    def select_point(self, x, y, z, label):
+        logger.debug('Point Selected {}'.format((x, y, z, label)))
+        if self.valid_point(x, y, z) and label:
+            self.points.append((x, y, z, label))
+
+    def select_slice(self, x, y, z):
+        if not self.valid_point(x, y, z):
+            raise ValueError('Invalid slice selected {}'.format((x, y, z)))
+
+        _, _, z = self.position
+        logger.debug('Slice selected {}'. format((x, y, z)))
+        self.position = (x, y, z)
 
     @property
     def label(self):
@@ -39,30 +48,42 @@ class GroundTruth(base.BaseDialog):
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
         self.sagittal_canvas = widgets.SagittalCanvas(self)
-        self.sagittal_canvas.plot_hslices()
 
-        self.labels_checkboxes = widgets.VertebraeWidget(self)
+        self.labels = widgets.VertebraeWidget(self)
 
         self.corrinal_canvas = widgets.CorrinalCanvas(self)
         self.corrinal_canvas.plot_points()
 
-        layout.addWidget(self.labels_checkboxes)
-        layout.addWidget(self.sagittal_canvas)
+        layout.addWidget(self.labels)
         layout.addWidget(self.corrinal_canvas)
+        layout.addWidget(self.sagittal_canvas)
 
-        self.sagittal_canvas.point_selected_signal.connect(self._controller.select_point)
+        self.corrinal_canvas.point_selected_signal.connect(self.on_select_point)
+        self.sagittal_canvas.point_selected_signal.connect(self.on_select_slice)
         parent.addLayout(layout)
+
+    def _init_toolbar(self, parent):
+        pass
 
     def _init_controls(self, parent):
         pass
 
-    def set_slice(self, x=0, y=0, z=0):
-        self.sagittal_canvas.on_refresh_slice(x, y, z)
-        self.labels_checkboxes.refresh()
+    def on_select_point(self, x, y, z):
+        try:
+            self._controller.select_point(x, y, z, self.labels.label)
+            self.labels.refresh()
+            self.corrinal_canvas.refresh()
+            self.sagittal_canvas.refresh()
+        except (TooManyPointsWarning, InvalidActionWarning, MissingLabelWarning) as warn:
+            self.update_warning(warn.message)
 
-    @property
-    def selected_label(self):
-        return self.labels_checkboxes._active_label.label
+    def on_select_slice(self, x, y, z):
+        try:
+            logger.debug('Select slice {}'.format((x, y, z)))
+            self._controller.select_slice(x, y, z)
+            self.corrinal_canvas.refresh()
+        except (TooManyPointsWarning, InvalidActionWarning) as warn:
+            self.update_warning(warn.message)
 
 
 if __name__ == '__main__':
@@ -85,10 +106,13 @@ if __name__ == '__main__':
     img = Image(file_name)
     if os.path.exists:
         overlay = Image(overlay_name)
-    controller = GroundTruthController(img, params)
+    else:
+        overlay = Image(img)
+        overlay.file_name = overlay_name
+    controller = GroundTruthController(img, params, overlay)
     controller.align_image()
     base_win = GroundTruth(controller)
     base_win.show()
     app.exec_()
     print(base_win._controller.as_string())
-    base_win._controller.as_niftii()
+    base_win._controller.as_niftii(overlay_name)
