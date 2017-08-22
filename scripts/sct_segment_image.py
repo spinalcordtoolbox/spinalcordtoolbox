@@ -100,9 +100,9 @@ def segment_image_cli():
 
     params = base.AnatomicalParams()
     params.init_message = init_message
-    params.start_label = arguments.get('-start-label', None)
-    params.end_label = arguments.get('-end-label', None)
-    params.num_points = arguments.get('-n', 0)
+    params.start_label = arguments.get('-start-label', params.start_label)
+    params.end_label = arguments.get('-end-label', params.end_label)
+    params.num_points = arguments.get('-n', params.num_points)
     input_file = Image(input_file_name)
 
     if os.path.exists(output_file_name):

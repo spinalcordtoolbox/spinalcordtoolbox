@@ -27,9 +27,20 @@ class GroundTruthController(base.BaseController):
         super(GroundTruthController, self).__init__(image, params, init_values)
 
     def select_point(self, x, y, z, label):
+        if not self.valid_point(x, y, z):
+            raise ValueError('Invalid point selected {}'.format((x, y, z)))
+
         logger.debug('Point Selected {}'.format((x, y, z, label)))
-        if self.valid_point(x, y, z) and label:
+        existing_point = [i for i, j in enumerate(self.points) if j[3] == label]
+
+        if existing_point:
+            self.points[existing_point[0]] = (x, y, z, label)
+        else:
+            if self.params.num_points and len(self.points) >= self.params.num_points:
+                raise TooManyPointsWarning()
             self.points.append((x, y, z, label))
+        self.position = (x, y, z)
+        self._label = label
 
     def select_slice(self, x, y, z):
         if not self.valid_point(x, y, z):

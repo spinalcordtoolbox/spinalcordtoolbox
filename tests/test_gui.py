@@ -15,13 +15,13 @@ class PropsegTestCase(unittest.TestCase):
         self.params = base.AnatomicalParams()
 
     def _init_auto(self):
-        controller = propseg.PropSegController(self.image, self.params, max_points=3)
+        controller = propseg.PropSegController(self.image, self.params)
         controller.align_image()
         controller.mode = 'AUTO'
         return controller
 
     def _init_custom(self):
-        controller = propseg.PropSegController(self.image, self.params, max_points=3)
+        controller = propseg.PropSegController(self.image, self.params)
         controller.align_image()
         controller.mode = 'CUSTOM'
         return controller
@@ -37,7 +37,8 @@ class PropsegTestCase(unittest.TestCase):
         assert len(controller.points) == 0
 
     def test_select_auto_points(self):
-        controller = propseg.PropSegController(self.image, self.params, max_points=3)
+        self.params.num_points = 3
+        controller = propseg.PropSegController(self.image, self.params)
         controller.align_image()
         controller.mode = 'AUTO'
         expected = [(15, 45, 33, 1), (30, 51, 35, 1), (60, 71, 31, 1)]
@@ -138,7 +139,7 @@ class GroundtruthTestCase(unittest.TestCase):
         controller = groundtruth.GroundTruthController(self.image, self.params)
         controller.align_image()
         expected = (99, 89, 21, 21)
-        input_point = (99, 89, 21)
+        input_point = (99, 89, 21, 21)
 
         controller.label = 21
         controller.select_point(*input_point)

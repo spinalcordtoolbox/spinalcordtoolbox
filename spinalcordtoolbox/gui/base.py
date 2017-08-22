@@ -45,6 +45,7 @@ class AnatomicalParams(object):
         self.alpha = alpha
         self.start_label = 50
         self.end_label = -1
+        self.num_points = 0
 
 
 class BaseDialog(QtGui.QDialog):
@@ -199,10 +200,9 @@ class BaseController(object):
     _dialog = None
     position = None
 
-    def __init__(self, image, params, init_values=None, max_points=0):
+    def __init__(self, image, params, init_values=None):
         self.image = image
         self.params = params
-        self._max_points = max_points
         self.points = []
 
         if init_values:

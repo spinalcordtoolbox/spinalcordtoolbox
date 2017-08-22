@@ -24,8 +24,8 @@ class PropSegController(base.BaseController):
     INTERVAL = 15
     MODES = ['AUTO', 'CUSTOM']
 
-    def __init__(self, image, params, init_values=None, max_points=0):
-        super(PropSegController, self).__init__(image, params, init_values, max_points)
+    def __init__(self, image, params, init_values=None):
+        super(PropSegController, self).__init__(image, params, init_values)
         self._slice = self.INTERVAL
 
     def align_image(self):
@@ -33,8 +33,8 @@ class PropSegController(base.BaseController):
         self.init_x = self._slice
         if self.image.dim[0] < self.INTERVAL:
             self.INTERVAL = 1
-        if not self._max_points:
-            self._max_points = self.image.dim[0] / self.INTERVAL
+        if not self.params.num_points:
+            self.params.num_points = self.image.dim[0] / self.INTERVAL
 
     def reset_position(self):
         super(PropSegController, self).reset_position()
@@ -64,7 +64,7 @@ class PropSegController(base.BaseController):
         if existing_points:
             self.points[existing_points[0]] = (x, y, z, 1)
         else:
-            if len(self.points) >= self._max_points:
+            if len(self.points) >= self.params.num_points:
                 raise TooManyPointsWarning()
             self.points.append((x, y, z, 1))
         self.position = (x, y, z)
