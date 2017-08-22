@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+#  Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+#
+# About the license: see the file LICENSE.TXT
+
+""" Qt dialog for manually segmenting a spinalcord image """
+
 from __future__ import absolute_import
 from __future__ import division
 

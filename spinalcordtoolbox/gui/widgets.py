@@ -1,3 +1,9 @@
+#  Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+#
+# About the license: see the file LICENSE.TXT
+
+""" Qt widgets for manually segementing spinalcord images """
+
 import logging
 from itertools import dropwhile, takewhile
 

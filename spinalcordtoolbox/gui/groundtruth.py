@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+#  Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+#
+# About the license: see the file LICENSE.TXT
+
+""" Qt dialog for manually segmenting a spinalcord image """
+
+
 from __future__ import absolute_import
 from __future__ import division
 
@@ -97,7 +105,7 @@ if __name__ == '__main__':
     try:
         file_name = sys.argv[1]
         overlay_name = sys.argv[2]
-    except Exception:
+    except IndexError:
         file_name = '/Users/geper_admin/sct_example_data/t2/t2.nii.gz'
         overlay_name = '/Users/geper_admin/manual_propseg.nii.gz'
 

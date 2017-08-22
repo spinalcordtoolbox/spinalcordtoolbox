@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+#  Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+#
+# About the license: see the file LICENSE.TXT
+
+""" Qt dialog for manually segmenting a spinalcord image """
+
 from __future__ import absolute_import
 from __future__ import division
 
@@ -77,8 +84,9 @@ class PropSegController(base.BaseController):
         if not self.valid_point(x, y, z):
             raise ValueError('Invalid slice selected {}'.format((x, y, z)))
 
+        _, y, z = self.position
         logger.debug('Slice Selected {}'.format((x, y, z)))
-        self.position = (x, self.position[1], self.position[2])
+        self.position = (x, y, z)
         self._slice = x
 
     @property
