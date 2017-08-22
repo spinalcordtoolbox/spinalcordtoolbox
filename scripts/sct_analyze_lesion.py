@@ -81,11 +81,6 @@ def get_parser():
 class AnalyzeLeion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
         self.fname_mask = fname_mask
-        if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
-            if set(np.unique(Image(fname_mask).data)) == set([0.0]):
-                printv('WARNING: Empty masked image', self.verbose, 'warning')
-            else:
-                printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
         self.fname_sc = fname_sc
         self.fname_ref = fname_ref
@@ -93,6 +88,13 @@ class AnalyzeLeion:
         self.path_ofolder = path_ofolder
         self.verbose = verbose
         self.wrk_dir = os.getcwd()
+
+        if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
+            if set(np.unique(Image(fname_mask).data)) == set([0.0]):
+                printv('WARNING: Empty masked image', self.verbose, 'warning')
+            else:
+                printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
+
 
         # create tmp directory
         self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
@@ -187,13 +189,13 @@ class AnalyzeLeion:
                 else:
                     self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlwt')
 
-            # Save pickle
-            self.distrib_matrix_dct['measures'] = self.measure_pd
-            with open(self.pickle_name, 'wb') as handle:
-                pickle.dump(self.distrib_matrix_dct, handle)
+        # Save pickle
+        self.distrib_matrix_dct['measures'] = self.measure_pd
+        with open(self.pickle_name, 'wb') as handle:
+            pickle.dump(self.distrib_matrix_dct, handle)
 
-            # Save Excel
-            writer.save()
+        # Save Excel
+        writer.save()
 
     def show_total_results(self):
         printv('\n\nAveraged measures...', self.verbose, 'normal')
@@ -354,14 +356,14 @@ class AnalyzeLeion:
                 im_vert_data = None
                 printv('ERROR: the file ' + self.path_levels + ' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='error')
 
-        # In order to open atlas images only one time
-        atlas_data_dct = {}  # dict containing the np.array of the registrated atlas
-        for fname_atlas_roi in self.atlas_roi_lst:
-            tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
-            img_cur = Image(fname_atlas_roi)
-            img_cur_copy = img_cur.copy()
-            atlas_data_dct[tract_id] = img_cur_copy.data
-            del img_cur
+            # In order to open atlas images only one time
+            atlas_data_dct = {}  # dict containing the np.array of the registrated atlas
+            for fname_atlas_roi in self.atlas_roi_lst:
+                tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
+                img_cur = Image(fname_atlas_roi)
+                img_cur_copy = img_cur.copy()
+                atlas_data_dct[tract_id] = img_cur_copy.data
+                del img_cur
 
         self.volumes = np.zeros((im_lesion.dim[2], len(label_lst)))
 
