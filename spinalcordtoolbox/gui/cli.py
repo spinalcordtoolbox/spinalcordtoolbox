@@ -12,10 +12,10 @@
 # If you are interested into selecting manually some points in an image, you can use the following code.
 import os
 import sys
-
-from msct_parser import Parser
 from PyQt4 import QtGui
+
 from scripts.msct_image import Image
+from scripts.msct_parser import Parser
 from scripts.sct_utils import printv
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui.groundtruth import GroundTruth, GroundTruthController
@@ -24,7 +24,7 @@ from spinalcordtoolbox.gui.propseg import PropSeg, PropSegController
 
 
 def get_parser():
-    parser = Parser(__file__)
+    parser = Parser('sct_segment_image')
     parser.usage.set_description('Manually annotate Anatomic Images (nifti files)')
     parser.add_option(name="-i",
                       type_value="image_nifti",
@@ -34,7 +34,7 @@ def get_parser():
     parser.add_option(name='-mode',
                       type_value='multiple_choice',
                       description='Choice of dialog types.',
-                      mandatory=False,
+                      mandatory=True,
                       default_value='centerline',
                       example=['centerline', 'labelvertebrae', 'groundtruth'])
     parser.add_option(name='-start-label',
@@ -51,23 +51,23 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name='-param',
                       type_value=[[':'], 'str'],
-                      description="""Parameters for visualization. Separate parameters with ":".
-                     cmap: image colormap
-                     interp: image interpolation.
-                            Accepts: ['nearest' | 'bilinear' | 'bicubic' | 'spline16' |
-                           'spline36' | 'hanning' | 'hamming' | 'hermite' | 'kaiser' |
-                           'quadric' | 'catrom' | 'gaussian' | 'bessel' | 'mitchell' |
-                           'sinc' | 'lanczos' | 'none']
-                     vmin:
-                     vmax:
-                     vmean:
-                     perc:""",
+                      description=("Parameters for visualization. Separate parameters with ':'.\n"
+                                   "cmap: image colormap\n"
+                                   "interp: image interpolation.\n"
+                                   "Accepts: ['nearest' | 'bilinear' | 'bicubic' | 'spline16' |\n"
+                                   "'spline36' | 'hanning' | 'hamming' | 'hermite' | 'kaiser' |\n"
+                                   "'quadric' | 'catrom' | 'gaussian' | 'bessel' | 'mitchell' |\n"
+                                   "'sinc' | 'lanczos' | 'none']\n"
+                                   "vmin:\n"
+                                   "vmax:\n"
+                                   "vmean:\n"
+                                   "perc:\n"),
                       mandatory=False,
                       example=['cmap=red:vmin=0:vmax=1', 'cmap=grey'])
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="Output the nifti image file with the manual segments",
-                      mandatory=False,
+                      mandatory=True,
                       example="t2_seg.nii.gz")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
