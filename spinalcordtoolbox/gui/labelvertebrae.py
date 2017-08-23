@@ -101,7 +101,6 @@ if __name__ == '__main__':
     from scripts.msct_image import Image
 
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    app = QtGui.QApplication(sys.argv)
 
     try:
         file_name = sys.argv[1]
@@ -120,8 +119,7 @@ if __name__ == '__main__':
         overlay.file_name = overlay_name
     controller = LabelVertebraeController(img, params, overlay)
     controller.align_image()
-    base_win = LabelVertebrae(controller)
-    base_win.show()
-    app.exec_()
+    ctrl = base.launch_dialog(controller, LabelVertebrae)
     print(controller.as_string())
     controller.as_niftii(overlay_name)
+    sys.exit()

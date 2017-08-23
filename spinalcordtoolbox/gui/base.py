@@ -287,3 +287,11 @@ class InvalidActionWarning(ValueError):
 
 class MissingLabelWarning(ValueError):
     pass
+
+
+def launch_dialog(controller, dialog_class):
+    app = QtGui.QApplication([])
+    dialog = dialog_class(controller)
+    dialog.show()
+    app.exec_()
+    return controller

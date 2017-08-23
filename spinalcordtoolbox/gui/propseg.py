@@ -200,7 +200,6 @@ if __name__ == '__main__':
     from scripts.msct_image import Image
 
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    app = QtGui.QApplication(sys.argv)
 
     try:
         file_name = sys.argv[1]
@@ -217,10 +216,9 @@ if __name__ == '__main__':
     else:
         overlay = Image(img)
         overlay.file_name = overlay_name
-    controller = PropSegController(img, params, overlay, 12)
+    controller = PropSegController(img, params, overlay)
     controller.align_image()
-    base_win = PropSeg(controller)
-    base_win.show()
-    app.exec_()
-    print(base_win._controller.as_string())
-    base_win._controller.as_niftii(overlay_name)
+    base.launch_dialog(controller, PropSeg)
+    print(controller.as_string())
+    controller.as_niftii(overlay_name)
+    sys.exit()
