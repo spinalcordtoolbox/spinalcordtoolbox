@@ -55,13 +55,15 @@ class LabelVertebrae(base.BaseDialog):
 
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
-        self.sag = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
-        self.labels = widgets.VertebraeWidget(self)
-        layout.addWidget(self.labels)
-        layout.addWidget(self.sag)
         parent.addLayout(layout)
 
+        self.labels = widgets.VertebraeWidget(self)
+        self.labels.label = self.params.start_label
+        layout.addWidget(self.labels)
+
+        self.sag = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
         self.sag.point_selected_signal.connect(self.on_select_point)
+        layout.addWidget(self.sag)
 
     def _init_controls(self, parent):
         main_ctrl = QtGui.QWidget()
@@ -71,11 +73,6 @@ class LabelVertebrae(base.BaseDialog):
 
     def _init_toolbar(self, parent):
         pass
-
-    def _init_footer(self, parent):
-        ctrl_layout = super(LabelVertebrae, self)._init_footer(parent)
-        skip = QtGui.QPushButton('Skip')
-        ctrl_layout.addWidget(skip, -1)
 
     def on_select_point(self, x, y, z):
         try:

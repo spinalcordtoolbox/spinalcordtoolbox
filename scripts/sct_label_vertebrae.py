@@ -23,8 +23,6 @@ import numpy as np
 from sct_maths import mutual_information
 from msct_parser import Parser
 from msct_image import Image
-import sct_image
-import sct_label_utils
 import sct_utils as sct
 from sct_warp_template import get_file_label
 from scipy.ndimage.measurements import center_of_mass
@@ -468,27 +466,21 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # if manual mode, open viewer for user to click on C2/C3 disc
     if init_disc == [] and initc2 == 'manual':
-        from sct_viewer import ClickViewerLabelVertebrae
-        # reorient image to SAL to be compatible with viewer
-        im_input_SAL = im_input.copy()
-        im_input_SAL.change_orientation('SAL')
-        viewer = ClickViewerLabelVertebrae(im_input_SAL, orientation_subplot=['sag', 'ax'])
-        viewer.number_of_slices = 1
-        pz = 1
-        viewer.gap_inter_slice = int(10 / pz)
-        viewer.calculate_list_slices()
-        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_label_vertebrae/attachment/label_vertebrae_viewer.png'
-        # start the viewer that ask the user to enter a few points along the spinal cord
-        mask_points = viewer.start()
-        if mask_points:
-            # orient input as SAL
-            sct_image.main(args=['-i', 'data_straightr.nii', '-setorient', 'SAL', '-o', 'data_straightr_SAL.nii'])
-            # create label in SAL orientation
-            sct_label_utils.main(args=['-i', 'data_straightr_SAL.nii', '-create', mask_points, '-o', 'initlabel_SAL.nii.gz'])
-            # Orient label in native orientation
-            sct_image.main(args=['-i', 'initlabel_SAL.nii.gz', '-setorient', im_input.orientation, '-o', sct.add_suffix(fname, '_mask_viewer')])
-        else:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
+        from spinalcordtoolbox.gui.base import AnatomicalParams, launch_dialog
+        from spinalcordtoolbox.gui.labelvertebrae import LabelVertebrae, LabelVertebraeController
+
+        params = AnatomicalParams()
+        params.init_message = ''
+        params.num_points = 1
+        params.start_label = 3
+        params.end_label = 4
+        image = Image(fname)
+        controller = LabelVertebraeController(image, params)
+        controller.align_image()
+        launch_dialog(controller, LabelVertebrae)
+        controller.as_niftii(fname)
+        mask_points = controller.as_string()
+
         # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
         init_disc = [nz - int(mask_points.split(',')[0]), 2]
 

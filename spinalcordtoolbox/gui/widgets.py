@@ -64,7 +64,7 @@ class VertebraeWidget(QtGui.QWidget):
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
         font = QtGui.QFont()
-        font.setPointSize(8)
+        font.setPointSize(10)
 
         for label, title in labels:
             rdo = QtGui.QCheckBox(title)
@@ -77,9 +77,7 @@ class VertebraeWidget(QtGui.QWidget):
 
     def on_select_label(self):
         label = self.sender()
-        if self._active_label and self._active_label.checkState() == QtCore.Qt.PartiallyChecked:
-            self._active_label.setCheckState(QtCore.Qt.Unchecked)
-        self._active_label = label
+        self.label = label.label
 
     def refresh(self):
         for x in self._check_boxes.values():
@@ -100,6 +98,30 @@ class VertebraeWidget(QtGui.QWidget):
         if self._active_label:
             return self._active_label.label
         raise MissingLabelWarning('No vertebrae was selected')
+
+    @label.setter
+    def label(self, index):
+        if self._active_label:
+            if self._active_label.label in self._labels:
+                self._active_label.setCheckState(QtCore.Qt.Checked)
+            else:
+                self._active_label.setCheckState(QtCore.Qt.Unchecked)
+
+        self._active_label = self._check_boxes[index]
+        self._active_label.setCheckState(QtCore.Qt.PartiallyChecked)
+
+    @property
+    def labels(self):
+        return self._labels
+
+    @labels.setter
+    def labels(self, values):
+        self._labels = values
+        for x in self._check_boxes.values():
+            x.setCheckState(QtCore.Qt.Unchecked)
+
+        for label in self._labels:
+            self._check_boxes[label].setCheckState(QtCore.Qt.Checked)
 
 
 class AnatomicalCanvas(FigureCanvas):
@@ -124,7 +146,7 @@ class AnatomicalCanvas(FigureCanvas):
 
         self._x, self._y, self._z = self._parent._controller.position
 
-        self._fig = Figure(figsize=(width, height), dpi=dpi, tight_layout=True)
+        self._fig = Figure(figsize=(width, height), dpi=dpi)
         super(AnatomicalCanvas, self).__init__(self._fig)
         FigureCanvas.setSizePolicy(self,
                                    QtGui.QSizePolicy.Expanding,
