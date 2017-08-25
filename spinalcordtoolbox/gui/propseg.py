@@ -30,7 +30,6 @@ class PropSegController(base.BaseController):
 
     def align_image(self):
         super(PropSegController, self).align_image()
-        self.init_x = self._slice
         if self.image.dim[0] < self.INTERVAL:
             self.INTERVAL = 1
         if not self.params.num_points:

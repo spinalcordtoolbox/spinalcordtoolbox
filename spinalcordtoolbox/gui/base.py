@@ -1,3 +1,5 @@
+"""Base classes for creating GUI objects to create manually selected points."""
+
 from __future__ import absolute_import
 from __future__ import division
 
@@ -5,25 +7,26 @@ import logging
 import webbrowser
 
 import matplotlib as mpl
-
+import numpy as np
 
 mpl.use('Qt4Agg')
 
-import numpy as np
 from PyQt4 import QtCore, QtGui
 
 logger = logging.getLogger(__name__)
 
 
-"""Base classes for creating GUI objects to create manually selected points.
-"""
-
-
 class AnatomicalParams(object):
     """The base parameter object for GUI configuration"""
 
-    def __init__(self, cmap='gray', aspect=1.0, interp='nearest', vmin=5., vmax=95.,
-                 vmode='percentile', alpha=1.0):
+    def __init__(self,
+                 cmap='gray',
+                 aspect=1.0,
+                 interp='nearest',
+                 vmin=5.,
+                 vmax=95.,
+                 vmode='percentile',
+                 alpha=1.0):
         """
 
         Parameters
@@ -58,6 +61,11 @@ class BaseDialog(QtGui.QDialog):
 
     """
     _help_web_address = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
+    lb_status = None
+    lb_warning = None
+    btn_ok = None
+    btn_undo = None
+    btn_help = None
 
     def __init__(self, controller):
         """Initialize the UI parameters
@@ -115,10 +123,9 @@ class BaseDialog(QtGui.QDialog):
 
         parent.addWidget(self.lb_status)
         parent.addWidget(self.lb_warning)
-        parent.addItem(QtGui.QSpacerItem(20,
-                                         40,
-                                         QtGui.QSizePolicy.Minimum,
-                                         QtGui.QSizePolicy.Expanding))
+        parent.addItem(
+            QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum,
+                              QtGui.QSizePolicy.Expanding))
         message = getattr(self.params, 'init_message', '')
         self.update_status(message)
 
@@ -215,16 +222,14 @@ class BaseController(object):
         x, y, z, t, dx, dy, dz, dt = self.image.dim
         self.params.aspect = dx / dy
         self.params.offset = x * dx
-        clip = np.percentile(self.image.data, (self.params.min, self.params.max))
+        clip = np.percentile(self.image.data, (self.params.min,
+                                               self.params.max))
         self.params.vmin, self.params.vmax = clip
         self.reset_position()
 
     def reset_position(self):
         x, y, z, _, _, _, _, _ = self.image.dim
-        self.init_x = x // 2
-        self.init_y = y // 2
-        self.init_z = z // 2
-        self.position = (self.init_x, self.init_y, self.init_z)
+        self.position = (x // 2, y // 2, z // 2)
 
     def valid_point(self, x, y, z):
         dim = self.image.dim

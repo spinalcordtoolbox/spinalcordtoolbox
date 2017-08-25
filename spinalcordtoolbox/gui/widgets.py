@@ -124,7 +124,7 @@ class AnatomicalCanvas(FigureCanvas):
 
         self._x, self._y, self._z = self._parent._controller.position
 
-        self._fig = Figure(figsize=(width, height), dpi=dpi)
+        self._fig = Figure(figsize=(width, height), dpi=dpi, tight_layout=True)
         super(AnatomicalCanvas, self).__init__(self._fig)
         FigureCanvas.setSizePolicy(self,
                                    QtGui.QSizePolicy.Expanding,
@@ -148,6 +148,9 @@ class AnatomicalCanvas(FigureCanvas):
         if self._crosshair:
             self.cursor = Cursor(self._axes, useblit=True, color='r', linewidth=1)
         self.points = self._axes.plot([], [], '.r', markersize=7)[0]
+
+    def title(self, message):
+        self._fig.suptitle(message)
 
     def annotate(self, x, y, label):
         self.annotations.append(self._axes.annotate(label, (x + 3, y + 3), color='r'))
