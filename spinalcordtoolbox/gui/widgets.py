@@ -48,6 +48,8 @@ class VertebraeWidget(QtGui.QWidget):
               (24, 'posterior edge of L4/S1 intervertebral disk (label=24)'),
               (25, 'posterior edge of S1/S2 intervertebral disk (label=25)'),
               (26, 'posterior edge of S2/S3 intervertebral disk (label=26)'))
+    _unchecked = []
+    _checked = []
     _active_label = None
     _check_boxes = {}
 
@@ -58,15 +60,15 @@ class VertebraeWidget(QtGui.QWidget):
         self.refresh()
 
     def _init_ui(self, params):
-        labels = dropwhile(lambda x: x[0] != params.start_label, self.LABELS)
-        labels = takewhile(lambda x: x[0] != params.end_label, labels)
+        self._labels = dropwhile(lambda x: x[0] != params.start_label, self.LABELS)
+        self._labels = takewhile(lambda x: x[0] != params.end_label, self._labels)
 
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
         font = QtGui.QFont()
         font.setPointSize(10)
 
-        for label, title in labels:
+        for label, title in self._labels:
             rdo = QtGui.QCheckBox(title)
             rdo.label = label
             rdo.setFont(font)
@@ -79,9 +81,16 @@ class VertebraeWidget(QtGui.QWidget):
         label = self.sender()
         self.label = label.label
 
-    def refresh(self):
-        for x in self._check_boxes.values():
-            x.setCheckState(QtCore.Qt.Unchecked)
+    def refresh(self, labels=None):
+        if labels:
+            self._checked = labels
+            self._unchecked = set(self._check_boxes.keys()) - set(labels)
+
+        for i in self._unchecked:
+            self._check_boxes[i].setCheckState(QtCore.Qt.Unchecked)
+
+        for i in self._checked:
+            self._check_boxes[i].setCheckState(QtCore.Qt.Checked)
 
         logger.debug('refresh labels {}'.format(self.parent._controller.points))
         for point in self.parent._controller.points:
@@ -102,7 +111,7 @@ class VertebraeWidget(QtGui.QWidget):
     @label.setter
     def label(self, index):
         if self._active_label:
-            if self._active_label.label in self._labels:
+            if self._active_label.label in self._checked:
                 self._active_label.setCheckState(QtCore.Qt.Checked)
             else:
                 self._active_label.setCheckState(QtCore.Qt.Unchecked)

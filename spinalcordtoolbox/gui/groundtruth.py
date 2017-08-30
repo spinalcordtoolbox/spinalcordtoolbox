@@ -11,7 +11,7 @@ from __future__ import division
 
 import logging
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
@@ -62,27 +62,23 @@ class GroundTruthController(base.BaseController):
 class GroundTruth(base.BaseDialog):
     def __init__(self, *args, **kwargs):
         super(GroundTruth, self).__init__(*args, **kwargs)
-        self.corrinal_canvas.setFocusPolicy(QtCore.Qt.StrongFocus)
 
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
-        self.sagittal_canvas = widgets.SagittalCanvas(self)
 
         self.labels = widgets.VertebraeWidget(self)
-
-        self.corrinal_canvas = widgets.CorrinalCanvas(self)
-        self.corrinal_canvas.plot_points()
-
         layout.addWidget(self.labels)
-        layout.addWidget(self.corrinal_canvas)
+
+        self.sagittal_canvas = widgets.SagittalCanvas(self, plot_points=True, plot_position=True, annotate=True)
+        self.sagittal_canvas.point_selected_signal.connect(self.on_select_slice)
         layout.addWidget(self.sagittal_canvas)
 
-        self.corrinal_canvas.point_selected_signal.connect(self.on_select_point)
-        self.sagittal_canvas.point_selected_signal.connect(self.on_select_slice)
-        parent.addLayout(layout)
+        self.main_canvas = widgets.AxialCanvas(self, crosshair=True)
+        self.main_canvas.plot_points()
+        self.main_canvas.point_selected_signal.connect(self.on_select_point)
+        layout.addWidget(self.main_canvas)
 
-    def _init_toolbar(self, parent):
-        pass
+        parent.addLayout(layout)
 
     def _init_controls(self, parent):
         pass
@@ -91,7 +87,7 @@ class GroundTruth(base.BaseDialog):
         try:
             self._controller.select_point(x, y, z, self.labels.label)
             self.labels.refresh()
-            self.corrinal_canvas.refresh()
+            self.main_canvas.refresh()
             self.sagittal_canvas.refresh()
         except (TooManyPointsWarning, InvalidActionWarning, MissingLabelWarning) as warn:
             self.update_warning(warn.message)
@@ -100,7 +96,7 @@ class GroundTruth(base.BaseDialog):
         try:
             logger.debug('Select slice {}'.format((x, y, z)))
             self._controller.select_slice(x, y, z)
-            self.corrinal_canvas.refresh()
+            self.main_canvas.refresh()
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
             self.update_warning(warn.message)
 
