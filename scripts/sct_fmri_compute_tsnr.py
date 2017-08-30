@@ -57,53 +57,6 @@ class Tsnr:
         nii_tsnr.setFileName(fname_tsnr)
         nii_tsnr.save(type='float32')
 
-        # # create temporary folder
-        # sct.printv('\nCreate temporary folder...', self.param.verbose)
-        # path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S/")
-        # status, output = sct.run('mkdir '+path_tmp, self.param.verbose)
-
-        # # motion correct the fmri data
-        # # sct.printv('\nMotion correct the fMRI data...', self.param.verbose, 'normal')
-        # path_fmri, fname_fmri, ext_fmri = sct.extract_fname(self.fmri)
-        # fname_fmri_moco = fname_fmri
-        # # print sct.slash_at_the_end(path_fmri) + fname_fmri
-        # # sct.run('mcflirt -in ' + sct.slash_at_the_end(path_fmri, 1) + fname_fmri + ' -out ' + fname_fmri_moco)
-        #
-        # # compute mean
-        # fname_data_mean = sct.add_suffix(fname_data, '_mean')
-        # sct_maths.main(args=[
-        #     '-i', fname_data,
-        #     '-o', fname_data_mean,
-        #     '-mean', 't',
-        #     '-type', 'float32'
-        # ])
-        #
-        # # compute STD
-        # fname_data_std = sct.add_suffix(fname_data, '_std')
-        # sct_maths.main(args=[
-        #     '-i', fname_data,
-        #     '-o', fname_data_std,
-        #     '-std', 't',
-        #     '-type', 'float32'
-        # ])
-        #
-        # # compute tSNR
-        # fname_tsnr = sct.add_suffix(fname_data, '_tsnr')
-        # nii_mean = Image(fname_data_mean)
-        # data_mean = nii_mean.data
-        # data_std = Image(fname_data_std).data
-        # data_tsnr = data_mean / data_std
-        # nii_tsnr = nii_mean
-        # nii_tsnr.data = data_tsnr
-        # nii_tsnr.setFileName(fname_tsnr)
-        # nii_tsnr.save(type='float32')
-        #
-        # # Remove temp files
-        # sct.printv('\nRemove temporary files...', self.param.verbose, 'normal')
-        # import os
-        # os.remove(fname_data_mean)
-        # os.remove(fname_data_std)
-
         # to view results
         sct.printv('\nDone! To view results, type:', self.param.verbose, 'normal')
         sct.printv('fslview ' + fname_tsnr + ' &\n', self.param.verbose, 'info')
