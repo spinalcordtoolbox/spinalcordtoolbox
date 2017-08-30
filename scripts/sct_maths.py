@@ -279,7 +279,7 @@ def main(args = None):
         dim = dim_list.index(arguments['-std'])
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
-        data_out = std(data, dim)
+        data_out = std(data, dim, ddof=1)
 
     elif "-smooth" in arguments:
         sigmas = arguments["-smooth"]
