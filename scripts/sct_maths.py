@@ -164,6 +164,11 @@ def get_parser():
                       description='Symmetrize data along the specified dimension.',
                       mandatory=False,
                       example=['0', '1', '2'])
+    parser.add_option(name='-type',
+                      type_value='multiple_choice',
+                      description='Output type.',
+                      mandatory=False,
+                      example=['uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64', 'uint64'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -188,6 +193,10 @@ def main(args = None):
     fname_in = arguments["-i"]
     fname_out = arguments["-o"]
     verbose = int(arguments['-v'])
+    if '-type' in arguments:
+        output_type = arguments['-type']
+    else:
+        output_type = ''
 
     # Open file(s)
     im = Image(fname_in)
@@ -332,7 +341,7 @@ def main(args = None):
         nii_out = Image(fname_in)  # use header of input file
         nii_out.data = data_out
         nii_out.setFileName(fname_out)
-        nii_out.save()
+        nii_out.save(type=output_type)
     # TODO: case of multiple outputs
     # assert len(data_out) == n_out
     # if n_in == n_out:
