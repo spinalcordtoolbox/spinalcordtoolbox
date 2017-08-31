@@ -302,7 +302,7 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
     """
 
     # add full path to each subject
-    data_subjects = [sct.slash_at_the_end(folder_dataset + i, 1) for i in list_subj]
+    data_subjects = [sct.slash_at_the_end(folder_dataset + subject, 1) for subject in list_subj]
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
