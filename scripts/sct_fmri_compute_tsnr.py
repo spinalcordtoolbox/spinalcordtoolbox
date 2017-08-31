@@ -17,10 +17,8 @@ import sys
 import sct_maths
 import sct_utils as sct
 from msct_parser import Parser
-
-
-# from sct_average_data_across_dimension import average_data_across_dimension
-
+from msct_image import Image
+import numpy as np
 
 class Param:
     def __init__(self):
@@ -41,51 +39,23 @@ class Tsnr:
 
         fname_data = self.fmri
 
-        # # create temporary folder
-        # sct.printv('\nCreate temporary folder...', self.param.verbose)
-        # path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S/")
-        # status, output = sct.run('mkdir '+path_tmp, self.param.verbose)
-
-        # # motion correct the fmri data
-        # # sct.printv('\nMotion correct the fMRI data...', self.param.verbose, 'normal')
-        # path_fmri, fname_fmri, ext_fmri = sct.extract_fname(self.fmri)
-        # fname_fmri_moco = fname_fmri
-        # # sct.printv(sct.slash_at_the_end(path_fmri) + fname_fmri)
-        # # sct.run('mcflirt -in ' + sct.slash_at_the_end(path_fmri, 1) + fname_fmri + ' -out ' + fname_fmri_moco)
+        # open data
+        nii_data = Image(fname_data)
+        data = nii_data.data
 
         # compute mean
-        fname_data_mean = sct.add_suffix(fname_data, '_mean')
-        sct_maths.main(args=[
-            '-i', fname_data,
-            '-o', fname_data_mean,
-            '-mean', 't'
-        ])
-
+        data_mean = np.mean(data, 3)
         # compute STD
-        fname_data_std = sct.add_suffix(fname_data, '_std')
-        sct_maths.main(args=[
-            '-i', fname_data,
-            '-o', fname_data_std,
-            '-std', 't'
-        ])
-
-        # compute tSNR
-        fname_tsnr = sct.add_suffix(fname_data, '_tsnr')
-        from msct_image import Image
-        nii_mean = Image(fname_data_mean)
-        data_mean = nii_mean.data
-        data_std = Image(fname_data_std).data
+        data_std = np.std(data, 3, ddof=1)
+        # compute TSNR
         data_tsnr = data_mean / data_std
-        nii_tsnr = nii_mean
+
+        # save TSNR
+        fname_tsnr = sct.add_suffix(fname_data, '_tsnr')
+        nii_tsnr = nii_data
         nii_tsnr.data = data_tsnr
         nii_tsnr.setFileName(fname_tsnr)
-        nii_tsnr.save()
-
-        # Remove temp files
-        sct.printv('\nRemove temporary files...', self.param.verbose, 'normal')
-        import os
-        os.remove(fname_data_mean)
-        os.remove(fname_data_std)
+        nii_tsnr.save(type='float32')
 
         # to view results
         sct.printv('\nDone! To view results, type:', self.param.verbose, 'normal')
