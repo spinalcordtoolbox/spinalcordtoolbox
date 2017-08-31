@@ -40,7 +40,6 @@ LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
 LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
 log = logging.getLogger('sct')
 log.setLevel(logging.DEBUG)
-# log = logging.getLogger()
 
 stream_handler = logging.StreamHandler(sys.stdout)
 if not LOG_FORMAT:
@@ -74,9 +73,19 @@ def pause_stream_logger():
     log.removeHandler(stream_handler)
 
 
+class NoColorFormatter(logging.Formatter):
+    """
+    Formater removing terminal specific colors from outputs
+    """
+    def format(self, record):
+        for color in bcolors.colors:
+            record.msg = record.msg.remove(color)
+        return super(NoColorFormatter, self).format(record)
+
+
 def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log_format=None, log_level=None):
     """ Convenience fct to add a file handler to the sct log
-
+        Will remove colors from prints
     :param filename: 
     :param mode: 
     :param log_format: 
@@ -85,7 +94,7 @@ def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log
     """
     fh = logging.FileHandler(filename=filename, mode=mode)
     if log_format is None:
-        formatter = logging.Formatter(
+        formatter = NoColorFormatter(
             '"%(asctime)s - %(levelname)7s --%(lineno)5s %(funcName)25s():  %(message)s"')  # sct.printv() emulator)
     else:
         formatter = logging.Formatter(log_format)
@@ -116,6 +125,9 @@ class bcolors(object):
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
+    @property
+    def colors(self):
+        return self.__dict__.values()
 
 
 #=======================================================================================================================
@@ -759,6 +771,7 @@ def printv(string, verbose=1, type='normal'):
             if sys.stdout.isatty():
                 color = colors.get(type, bcolors.normal)
                 log.info('{0}{1}{2}'.format(color, string, bcolors.normal))
+
             else:
                 log.info(string)
         except Exception as e:
