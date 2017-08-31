@@ -22,7 +22,7 @@ import numpy as np
 
 class Param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.verbose = 1
 
 
