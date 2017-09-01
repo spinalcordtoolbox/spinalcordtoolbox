@@ -1,4 +1,5 @@
 import logging
+import os
 import unittest
 
 from scripts import msct_image
@@ -10,8 +11,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 class PropsegTestCase(unittest.TestCase):
     def setUp(self):
-        self.image = msct_image.Image('/Users/geper_admin/sct_example_data/t2/t2.nii.gz')
-        self.overlay = msct_image.Image('/Users/geper_admin/manual_propseg.nii.gz')
+        self.image = msct_image.Image(os.path.expanduser('~/sct_example_data/t2/t2.nii.gz'))
+        self.overlay = msct_image.Image(self.image)
         self.params = base.AnatomicalParams()
 
     def _init_auto(self):
@@ -99,8 +100,8 @@ class PropsegTestCase(unittest.TestCase):
 
 class LabelVertebraeTestCase(unittest.TestCase):
     def setUp(self):
-        self.image = msct_image.Image('/Users/geper_admin/sct_example_data/t2/t2.nii.gz')
-        self.overlay = msct_image.Image('/Users/geper_admin/manual_propseg.nii.gz')
+        self.image = msct_image.Image(os.path.expanduser('~/sct_example_data/t2/t2.nii.gz'))
+        self.overlay = msct_image.Image(self.image)
         self.params = base.AnatomicalParams()
 
     def test_init_labelvertebrae(self):
@@ -124,8 +125,8 @@ class LabelVertebraeTestCase(unittest.TestCase):
 
 class GroundtruthTestCase(unittest.TestCase):
     def setUp(self):
-        self.image = msct_image.Image('/Users/geper_admin/sct_example_data/t2/t2.nii.gz')
-        self.overlay = msct_image.Image('/Users/geper_admin/manual_propseg.nii.gz')
+        self.image = msct_image.Image(os.path.expanduser('~/sct_example_data/t2/t2.nii.gz'))
+        self.overlay = msct_image.Image(self.image)
         self.params = base.AnatomicalParams()
 
     def test_init_groundtruth(self):

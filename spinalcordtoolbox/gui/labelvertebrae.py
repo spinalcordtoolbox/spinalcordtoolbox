@@ -109,8 +109,8 @@ if __name__ == '__main__':
     params = base.AnatomicalParams()
     params.init_message = '1. Select a label -> 2. Select a point in the sagittal plane'
     params.num_points = 1
-    params.start_label = 3
-    params.end_label = 4
+    params.start_vertebrae = 3
+    params.end_vertebrae = 4
     img = Image(file_name)
     if os.path.exists(overlay_name):
         overlay = Image(overlay_name)

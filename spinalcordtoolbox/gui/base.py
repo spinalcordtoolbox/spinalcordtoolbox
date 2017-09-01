@@ -46,8 +46,8 @@ class AnatomicalParams(object):
         self.max = vmax
         self.vmode = vmode
         self.alpha = alpha
-        self.start_label = 50
-        self.end_label = -1
+        self.start_vertebrae = 50
+        self.end_vertebrae = -1
         self.num_points = 0
 
 
