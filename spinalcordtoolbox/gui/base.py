@@ -49,6 +49,13 @@ class AnatomicalParams(object):
         self.start_vertebrae = 50
         self.end_vertebrae = -1
         self.num_points = 0
+        self._title = ''
+
+    @property
+    def dialog_title(self):
+        if not self._title:
+            self._title = '{}: maunally segment'.format(self.input_file_name)
+        return self._title
 
 
 class BaseDialog(QtGui.QDialog):
@@ -91,6 +98,8 @@ class BaseDialog(QtGui.QDialog):
         self._init_canvas(layout)
         self._init_controls(layout)
         self._init_footer(layout)
+
+        self.setWindowTitle(self.params.dialog_title)
 
     def _init_canvas(self, parent):
         """

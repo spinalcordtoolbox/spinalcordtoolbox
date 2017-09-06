@@ -54,6 +54,8 @@ class VertebraeWidget(QtGui.QWidget):
     _checked = []
     _active_label = None
     _check_boxes = {}
+    _labels = None
+    _label = None
 
     def __init__(self, parent):
         super(VertebraeWidget, self).__init__(parent)
@@ -107,12 +109,7 @@ class VertebraeWidget(QtGui.QWidget):
 
     @label.setter
     def label(self, index):
-        if self._active_label:
-            if self._active_label.label in self._checked:
-                self._active_label.setCheckState(QtCore.Qt.Checked)
-            else:
-                self._active_label.setCheckState(QtCore.Qt.Unchecked)
-
+        self.refresh()
         self._active_label = self._check_boxes[index]
         self._active_label.setCheckState(QtCore.Qt.PartiallyChecked)
 
@@ -149,6 +146,7 @@ class AnatomicalCanvas(FigureCanvas):
         self._plot_points = plot_points
         self._annotate_points = annotate
         self._plot_position = plot_position
+        self.position = None
 
         self._x, self._y, self._z = self._parent._controller.position
 
@@ -209,7 +207,6 @@ class SagittalCanvas(AnatomicalCanvas):
     def __init__(self, *args, **kwargs):
         super(SagittalCanvas, self).__init__(*args, **kwargs)
         self._init_ui(self._image.data[:, :, self._z])
-        self.position = None
         self.annotations = []
 
     def refresh(self):

@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 class GroundTruthController(base.BaseController):
-
     def __init__(self, image, params, init_values=None):
         super(GroundTruthController, self).__init__(image, params, init_values)
 
@@ -71,11 +70,13 @@ class GroundTruth(base.BaseDialog):
 
         self.sagittal_canvas = widgets.SagittalCanvas(self, plot_points=True, plot_position=True, annotate=True)
         self.sagittal_canvas.point_selected_signal.connect(self.on_select_slice)
+        self.sagittal_canvas.title('Select an axial slice')
         layout.addWidget(self.sagittal_canvas)
 
         self.main_canvas = widgets.AxialCanvas(self, crosshair=True)
         self.main_canvas.plot_points()
         self.main_canvas.point_selected_signal.connect(self.on_select_point)
+        self.main_canvas.title('Select a point')
         layout.addWidget(self.main_canvas)
 
         parent.addLayout(layout)
@@ -96,6 +97,7 @@ class GroundTruth(base.BaseDialog):
         try:
             logger.debug('Select slice {}'.format((x, y, z)))
             self._controller.select_slice(x, y, z)
+            self.sagittal_canvas.refresh()
             self.main_canvas.refresh()
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
             self.update_warning(warn.message)
@@ -117,6 +119,7 @@ if __name__ == '__main__':
 
     params = base.AnatomicalParams()
     params.init_message = '1. Select a label -> 2. Select a axial slice -> 3. Select a point in the corrinal plane'
+    params.input_file_name = file_name
     img = Image(file_name)
     if os.path.exists:
         overlay = Image(overlay_name)
