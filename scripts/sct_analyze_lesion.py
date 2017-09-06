@@ -232,6 +232,8 @@ class AnalyzeLeion:
         printv('  Volume : ' + str(round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
+        print len(self.angles)
+        print len(np.unique(np.where(im_data)[2]))
         length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(round(length_cur, 2)) + ' mm', self.verbose, type='info')
@@ -426,12 +428,11 @@ class AnalyzeLeion:
                 # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
                 try:  # normalize the tangent vector to the centerline (i.e. its derivative)
                     tangent_vect = self._normalize(np.array([x_centerline_deriv_rescorr[zz], y_centerline_deriv_rescorr[zz], z_centerline_deriv_rescorr[zz]]))
-
+                    # compute the angle between the normal vector of the plane and the vector z
+                    self.angles[zz] = np.arccos(np.vdot(tangent_vect, axis_Z))
                 except IndexError:
                     printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
-
-                # compute the angle between the normal vector of the plane and the vector z
-                self.angles[zz] = np.arccos(np.vdot(tangent_vect, axis_Z))
+                    
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
