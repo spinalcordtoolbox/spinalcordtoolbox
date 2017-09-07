@@ -45,6 +45,7 @@ from sct_image import copy_header, split_data, concat_data
 from msct_parser import Parser
 
 
+# PARAMETERS
 class Param:
     # The constructor
     def __init__(self):
@@ -86,9 +87,135 @@ class Param:
             setattr(self, obj[0], obj[1])
 
 
-#=======================================================================================================================
-# main
-#=======================================================================================================================
+# PARSER
+# ==========================================================================================
+def get_parser():
+    # parser initialisation
+    parser = Parser(__file__)
+
+    # initialize parameters
+    param_default = Param()
+
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description(
+        '  Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (http://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n'
+        '- group-wise (-g)\n'
+        '- slice-wise regularized along z using polynomial function (-param). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'
+        '- masking (-m)\n'
+        '- iterative averaging of target volume\n')
+    parser.add_option(name='-i',
+                      type_value='file',
+                      description='Diffusion data',
+                      mandatory=True,
+                      example='dmri.nii.gz')
+    parser.add_option(name='-bvec',
+                      type_value='file',
+                      description='Bvecs file',
+                      mandatory=True,
+                      example='bvecs.nii.gz')
+    parser.add_option(name='-b',
+                      type_value=None,
+                      description='Bvecs file',
+                      mandatory=False,
+                      deprecated_by='-bvec')
+    parser.add_option(name='-bval',
+                      type_value='file',
+                      description='Bvals file',
+                      mandatory=False,
+                      example='bvals.nii.gz')
+    parser.add_option(name='-bvalmin',
+                      type_value='float',
+                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
+                      mandatory=False,
+                      example='50')
+    parser.add_option(name='-a',
+                      type_value=None,
+                      description='Bvals file',
+                      mandatory=False,
+                      deprecated_by='-bval')
+
+    parser.add_option(name='-g',
+                      type_value='int',
+                      description='Group nvols successive dMRI volumes for more robustness.',
+                      mandatory=False,
+                      default_value=param_default.group_size,
+                      example=['2'])
+    parser.add_option(name='-m',
+                      type_value='file',
+                      description='Binary mask to limit voxels considered by the registration metric.',
+                      mandatory=False,
+                      example=['dmri_mask.nii.gz'])
+    parser.add_option(name='-param',
+                      type_value=[[','], 'str'],
+                      description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+                                  "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + str(
+                          param_default.poly) + ".\n"
+                                                "smooth [mm]: Smoothing kernel. Default=" + str(
+                          param_default.smooth) + ".\n"
+                                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + str(
+                          param_default.metric) + ".\n"
+                                                  "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + str(
+                          param_default.gradStep) + ".\n"
+                                                    "sample [0-1]: Sampling rate used for registration metric. Default=" + str(
+                          param_default.sampling) + ".\n",
+                      mandatory=False)
+    # parser.add_option(name='-p',
+    #                   type_value=None,
+    #                   description='Parameters for registration.'
+    #                               'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.'
+    #                               '1) degree of polynomial function used for regularization along Z. For no regularization set to 0.'
+    #                               '2) smoothing kernel size (in mm).'
+    #                               '3) gradient step. The higher the more deformation allowed.'
+    #                               '4) metric: {MI,MeanSquares}. If you find very large deformations, switching to MeanSquares can help.',
+    #                   mandatory=False,
+    #                   deprecated_by='-param')
+    parser.add_option(name='-thr',
+                      type_value='float',
+                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
+                      mandatory=False,
+                      default_value=param_default.otsu,
+                      example=['25'])
+    parser.add_option(name='-t',
+                      type_value=None,
+                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
+                      mandatory=False,
+                      deprecated_by='-thr')
+    parser.add_option(name='-x',
+                      type_value='multiple_choice',
+                      description='Final Interpolation.',
+                      mandatory=False,
+                      default_value=param_default.interp,
+                      example=['nn', 'linear', 'spline'])
+    parser.add_option(name='-ofolder',
+                      type_value='folder_creation',
+                      description='Output folder',
+                      mandatory=False,
+                      default_value='./',
+                      example='dmri_moco_results/')
+    parser.add_option(name='-o',
+                      type_value=None,
+                      description='Output folder.',
+                      mandatory=False,
+                      deprecated_by='-o')
+    parser.usage.addSection('MISC')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
+    return parser
+
+
+# MAIN
+# ==========================================================================================
 def main(args=None):
 
     # initialization
@@ -422,127 +549,6 @@ def dmri_moco(param):
     if not param.fname_bvals == '':
         cmd = cmd + ' -m ' + param.fname_bvals
     sct.run(cmd, param.verbose)
-
-
-# PARSER
-# ==========================================================================================
-def get_parser():
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # initialize parameters
-    param_default = Param()
-
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('  Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (http://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n'
-                                 '- group-wise (-g)\n'
-                                 '- slice-wise regularized along z using polynomial function (-param). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'
-                                 '- masking (-m)\n'
-                                 '- iterative averaging of target volume\n')
-    parser.add_option(name='-i',
-                      type_value='file',
-                      description='Diffusion data',
-                      mandatory=True,
-                      example='dmri.nii.gz')
-    parser.add_option(name='-bvec',
-                      type_value='file',
-                      description='Bvecs file',
-                      mandatory=True,
-                      example='bvecs.nii.gz')
-    parser.add_option(name='-b',
-                      type_value=None,
-                      description='Bvecs file',
-                      mandatory=False,
-                      deprecated_by='-bvec')
-    parser.add_option(name='-bval',
-                      type_value='file',
-                      description='Bvals file',
-                      mandatory=False,
-                      example='bvals.nii.gz')
-    parser.add_option(name='-bvalmin',
-                      type_value='float',
-                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
-                      mandatory=False,
-                      example='50')
-    parser.add_option(name='-a',
-                      type_value=None,
-                      description='Bvals file',
-                      mandatory=False,
-                      deprecated_by='-bval')
-
-    parser.add_option(name='-g',
-                      type_value='int',
-                      description='Group nvols successive dMRI volumes for more robustness.',
-                      mandatory=False,
-                      default_value=param_default.group_size,
-                      example=['2'])
-    parser.add_option(name='-m',
-                      type_value='file',
-                      description='Binary mask to limit voxels considered by the registration metric.',
-                      mandatory=False,
-                      example=['dmri_mask.nii.gz'])
-    parser.add_option(name='-param',
-                      type_value=[[','], 'str'],
-                      description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-                                  "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + str(param_default.poly) + ".\n"
-                                  "smooth [mm]: Smoothing kernel. Default=" + str(param_default.smooth) + ".\n"
-                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + str(param_default.metric) + ".\n"
-                                  "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + str(param_default.gradStep) + ".\n"
-                                  "sample [0-1]: Sampling rate used for registration metric. Default=" + str(param_default.sampling) + ".\n",
-                      mandatory=False)
-    # parser.add_option(name='-p',
-    #                   type_value=None,
-    #                   description='Parameters for registration.'
-    #                               'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.'
-    #                               '1) degree of polynomial function used for regularization along Z. For no regularization set to 0.'
-    #                               '2) smoothing kernel size (in mm).'
-    #                               '3) gradient step. The higher the more deformation allowed.'
-    #                               '4) metric: {MI,MeanSquares}. If you find very large deformations, switching to MeanSquares can help.',
-    #                   mandatory=False,
-    #                   deprecated_by='-param')
-    parser.add_option(name='-thr',
-                      type_value='float',
-                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
-                      mandatory=False,
-                      default_value=param_default.otsu,
-                      example=['25'])
-    parser.add_option(name='-t',
-                      type_value=None,
-                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
-                      mandatory=False,
-                      deprecated_by='-thr')
-    parser.add_option(name='-x',
-                      type_value='multiple_choice',
-                      description='Final Interpolation.',
-                      mandatory=False,
-                      default_value=param_default.interp,
-                      example=['nn', 'linear', 'spline'])
-    parser.add_option(name='-ofolder',
-                      type_value='folder_creation',
-                      description='Output folder',
-                      mandatory=False,
-                      default_value='./',
-                      example='dmri_moco_results/')
-    parser.add_option(name='-o',
-                      type_value=None,
-                      description='Output folder.',
-                      mandatory=False,
-                      deprecated_by='-o')
-    parser.usage.addSection('MISC')
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
-    return parser
 
 
 #=======================================================================================================================
