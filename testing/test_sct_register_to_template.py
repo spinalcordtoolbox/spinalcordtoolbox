@@ -16,6 +16,7 @@
 import commands
 import sct_utils as sct
 import sct_register_to_template
+from sct_testing import write_to_log_file
 from pandas import DataFrame
 import os.path
 from copy import deepcopy
@@ -83,6 +84,8 @@ def test(path_data='', parameters=''):
         # return status, output, DataFrame(
         #     data={'status': status, 'output': output, 'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')}, index=[path_data])
 
+    # create output path
+    # TODO: create function for that
     import time, random
     subject_folder = path_data.split('/')
     if subject_folder[-1] == '' and len(subject_folder) > 1:
@@ -91,6 +94,16 @@ def test(path_data='', parameters=''):
         subject_folder = subject_folder[-1]
     path_output = sct.slash_at_the_end('sct_register_to_template_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
     param_with_path += ' -ofolder ' + path_output
+    sct.create_folder(path_output)
+
+    # log file
+    # TODO: create function for that
+    import sys
+    fname_log = path_output + 'output.log'
+    stdout_log = file(fname_log, 'w')
+    # redirect to log file
+    stdout_orig = sys.stdout
+    sys.stdout = stdout_log
 
     cmd = 'sct_register_to_template ' + param_with_path
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
@@ -142,6 +155,11 @@ def test(path_data='', parameters=''):
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': int(status), 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
+
+    # write log file
+    write_to_log_file(fname_log, output, mode='r+', prepend=True)
+
+    sys.stdout = stdout_orig
 
     return status, output, results
 

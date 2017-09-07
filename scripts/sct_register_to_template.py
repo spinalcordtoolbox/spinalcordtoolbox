@@ -262,16 +262,6 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # copy header of anat to segmentation (issue #1168)
-    # from sct_image import copy_header
-    # im_data = Image(ftmp_data)
-    # im_seg = Image(ftmp_seg)
-    # copy_header(im_data, im_seg)
-    # im_seg.save()
-    # im_label = Image(ftmp_label)
-    # copy_header(im_data, im_label)
-    # im_label.save()
-
     # Generate labels from template vertebral labeling
     sct.printv('\nGenerate labels from template vertebral labeling', verbose)
     sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
@@ -337,7 +327,16 @@ def main():
             # apply straightening
             sct.run('sct_apply_transfo -i ' + ftmp_seg + ' -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o ' + add_suffix(ftmp_seg, '_straight'))
         else:
-            sct.run('sct_straighten_spinalcord -i ' + ftmp_seg + ' -s ' + ftmp_seg + ' -o ' + add_suffix(ftmp_seg, '_straight') + ' -qc 0 -r 0 -v ' + str(verbose), verbose)
+            import sct_straighten_spinalcord
+            if __name__ == '__main__':
+                sct_straighten_spinalcord.main(args=[
+                    '-i', ftmp_seg,
+                    '-s', ftmp_seg,
+                    '-o', add_suffix(ftmp_seg, '_straight'),
+                    '-qc', '0',
+                    '-r', '0',
+                    '-v', str(verbose),
+                    '-param', 'template_orientation=1'])
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d ' + ftmp_data + ' -o warp_straight2curve.nii.gz')

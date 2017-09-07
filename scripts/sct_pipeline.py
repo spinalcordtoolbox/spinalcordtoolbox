@@ -36,27 +36,29 @@
 #########################################################################################
 usage:
 
-    sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8 
-
+    sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8
 """
+
+# TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
+
 import commands
 import copy_reg
-import json
+# import json
 import os
 import platform
 import signal
 import sys
 import types
+import copy
 from time import time, strftime
-
 if "SCT_MPI_MODE" in os.environ:
     from distribute2mpi import MpiPool as Pool
 else:
     from multiprocessing import Pool
 import pandas as pd
-
 import sct_utils as sct
 import msct_parser
+import glob
 
 # get path of the toolbox
 # TODO: put it back below when working again (julien 2016-04-04)
@@ -105,56 +107,125 @@ def _unpickle_method(func_name, obj, cls):
 copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
 
 
-def generate_data_list(folder_dataset, json_requirements=None, verbose=1):
+def generate_data_list(folder_dataset, verbose=1):
     """
     Construction of the data list from the data set
     This function return a list of directory (in folder_dataset) in which the contrast is present.
     :return data:
     """
-    data_subjects, subjects_dir = [], []
+    list_subj = []
 
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
         if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
-            if read_json(folder_dataset + subject_dir, json_requirements=json_requirements):
-                data_subjects.append(folder_dataset + subject_dir + '/')
-                subjects_dir.append(subject_dir)
+            # data_subjects.append(folder_dataset + subject_dir + '/')
+            list_subj.append(subject_dir)
 
-    if not data_subjects:
+    if not list_subj:
         sct.printv('ERROR: No subject data were found in ' + folder_dataset + '. '
                    'Please organize your data correctly or provide a correct dataset.',
                    verbose=verbose, type='error')
 
-    return data_subjects, subjects_dir
+    return list_subj
 
 
-def read_json(path_dir, json_requirements=None, fname_json='dataset_description.json'):
-    path_dir = sct.slash_at_the_end(path_dir, slash=1)
-    if fname_json not in os.listdir(path_dir) and json_requirements is not None:
-        accept_subject = False
-    elif json_requirements is None:
-        accept_subject = True
-    else:
-        json_file = open(path_dir + fname_json)
-        dic_info = json.load(json_file)
-        json_file.close()
-        # pass keys and items to lower case
-        dic_info = dict((k.lower(), v.lower()) for k, v in dic_info.iteritems())
-        # if no condition is not verified, accept subject
-        accept_subject = True
-        # read requirements:
-        list_conditions = json_requirements.split(',')
-        for condition in list_conditions:
-            key, val = condition.split('=')
-            key, val = key.lower(), val.lower()
-            # if key do not exist, do not accept subject
-            if key not in dic_info.keys():
-                accept_subject = False
-            # if value for this key is not the one required, do not accept subject
-            elif dic_info[key] != val:
-                accept_subject = False
+def read_database(folder_dataset, specifications=None, fname_database='', verbose=1):
+    """
+    Read subject database from xls file.
+    Parameters
+    ----------
+    folder_dataset: path to database
+    specifications: field-based specifications for subject selection
+    fname_database: fname of XLS file that contains database
+    verbose:
 
-    return accept_subject
+    Returns
+    -------
+    subj_selected: list of subjects selected
+    """
+    # initialization
+    subj_selected = []
+
+    # if fname_database is empty, check if xls or xlsx file exist in the database directory.
+    if fname_database == '':
+        sct.printv('  Looking for an XLS file describing the database...')
+        list_fname_database = glob.glob(folder_dataset+'*.xls*')
+        if list_fname_database == []:
+            sct.printv('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
+            return subj_selected
+        elif len(list_fname_database) > 1:
+            sct.printv('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
+            return subj_selected
+        else:
+            fname_database = list_fname_database[0]
+            # sct.printv('    XLS file found: ' + fname_database, verbose)
+
+    # read data base file and import to panda data frame
+    sct.printv('  Reading XLS: ' + fname_database, verbose, 'normal')
+    try:
+        data_base = pd.read_excel(fname_database)
+    except:
+        sct.printv('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.', verbose, 'error')
+    #
+    # correct some values and clean panda data base
+    # convert columns to int
+    to_int = ['gm_model', 'PAM50', 'MS_mapping']
+    for key in to_int:
+        data_base[key].fillna(0.0).astype(int)
+    #
+    for key in data_base.keys():
+        # remove 'unnamed' columns
+        if 'Unnamed' in key:
+            data_base = data_base.drop(key, axis=1)
+        # duplicate columns with lower case names and with space in names
+        else:
+            data_base[key.lower()] = data_base[key]
+            data_base['_'.join(key.split(' '))] = data_base[key]
+    #
+    ## parse specifications
+    ## specification format: "center=unf,twh:pathology=hc:sc_seg=t2"
+    list_fields = specifications.split(':')
+    dict_spec = {}
+    for f in list_fields:
+        field, value = f.split('=')
+        dict_spec[field] = value.split(',')
+    #
+    ## select subjects from specification
+    # type of field for which the subject should be selected if the field CONTAINS the requested value (as opposed to the field is equal to the requested value)
+    list_field_multiple_choice = ['contrasts', 'sc seg', 'gm seg', 'lesion seg']
+    list_field_multiple_choice_tmp = copy.deepcopy(list_field_multiple_choice)
+    for field in list_field_multiple_choice_tmp:
+        list_field_multiple_choice.append('_'.join(field.split(' ')))
+    #
+    data_selected = copy.deepcopy(data_base)
+    for field, list_val in dict_spec.items():
+        if field.lower() not in list_field_multiple_choice:
+            # select subject if field is equal to the requested value
+            data_selected = data_selected[data_selected[field].isin(list_val)]
+        else:
+            # select subject if field contains the requested value
+            data_selected = data_selected[data_selected[field].str.contains('|'.join(list_val)).fillna(False)]
+    #
+    ## retrieve list of subjects from database
+    database_subj = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_base['Center'], data_base['Study'], data_base['Subject'])]
+    ## retrieve list of subjects from database selected
+    database_subj_selected = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_selected['Center'], data_selected['Study'], data_selected['Subject'])]
+
+    # retrieve folders from folder_database
+    list_folder_dataset = [i for i in os.listdir(folder_dataset) if os.path.isdir(folder_dataset+i)]
+
+    # loop across folders
+    for ifolder in list_folder_dataset:
+        # check if folder is listed in database
+        if ifolder in database_subj:
+            # check if subject is selected
+            if ifolder in database_subj_selected:
+                subj_selected.append(ifolder)
+        # if not, report to user
+        else:
+            sct.printv('WARNING: Subject '+ifolder+' is not listed in the database.', verbose, 'warning')
+
+    return subj_selected
 
 
 def process_results(results, subjects_name, function, folder_dataset, parameters):
@@ -196,15 +267,42 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_requirements=None, verbose=1):
+def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
+    """
+    Generate list of eligible subjects from folder and file containing database
+    Parameters
+    ----------
+    folder_dataset: path to database
+    data_specifications: field-based specifications for subject selection
+    fname_database: fname of XLS file that contains database
+
+    Returns
+    -------
+    list_subj: list of subjects
+    """
+    if data_specifications is None:
+        list_subj = generate_data_list(folder_dataset)
+    else:
+        print 'Selecting subjects using the following specifications: ' + data_specifications
+        list_subj = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
+    print "  Number of subjects to process: " + str(len(list_subj))
+
+    # if no subject to process, raise exception
+    if len(list_subj) == 0:
+        raise Exception('No subject to process. Exit function.')
+
+    return list_subj
+
+
+def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None, verbose=1):
     """
     Run a test function on the dataset using multiprocessing and save the results
     :return: results
     # results are organized as the following: tuple of (status, output, DataFrame with results)
     """
 
-    # generate data list from folder containing
-    data_subjects, subjects_name = generate_data_list(folder_dataset, json_requirements=json_requirements)
+    # add full path to each subject
+    data_subjects = [sct.slash_at_the_end(folder_dataset + i, 1) for i in list_subj]
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -223,7 +321,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, json_req
         pool.join()  # waiting for all the jobs to be done
         compute_time = time() - compute_time
         all_results = async_results.get()
-        results = process_results(all_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        results = process_results(all_results, list_subj, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
 
     except KeyboardInterrupt:
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
@@ -267,10 +365,17 @@ def get_parser():
                                   "Image paths must be contains in the arguments list.",
                       mandatory=False)
 
-    parser.add_option(name="-json",
+    parser.add_option(name="-subj",
                       type_value="str",
-                      description="Requirements on center, study, ... that must be satisfied by the json file of each tested subjects\n"
-                                  "Syntax:  center=unf,study=errsm,gm_model=0",
+                      description="Choose the subjects to process based on center, study, [...] to select the testing dataset\n"
+                                  "Syntax:  field_1=val1,val2:field_2=val3:field_3=val4,val5",
+                      example="center=unf,twh:gm_model=0:contrasts=t2,t2s",
+                      mandatory=False)
+
+    parser.add_option(name="-subj-file",
+                      type_value="file",
+                      description="Excel spreadsheet containing database information (center, study, subject, demographics, ...). If this field is empty, it will search for an xls file located in the database folder. If no xls file is present, all subjects will be selected.",
+                      default_value='',
                       mandatory=False)
 
     parser.add_option(name="-cpu-nb",
@@ -278,6 +383,7 @@ def get_parser():
                       description="Number of CPU used for testing. 0: no multiprocessing. If not provided, "
                                   "it uses all the available cores.",
                       mandatory=False,
+                      default_value=1,
                       example='42')
 
     parser.add_option(name="-log",
@@ -288,8 +394,11 @@ def get_parser():
                       default_value='1')
 
     parser.add_option(name='-email',
-                      type_value='str',
-                      description='Email address to send results followed by SMTP passwd (separate with comma).',
+                      type_value=[[','], 'str'],
+                      description='Email information to send results. Fields are assigned with "=" and are separated with ",":\
+\nemail_to: address to send email to\
+\nemail_from: address to send email from (default value is: spinalcordtoolbox@gmail.com)\
+\npasswd_from: password for email_from',
                       mandatory=False,
                       default_value='')
 
@@ -308,28 +417,42 @@ def get_parser():
 # ====================================================================================================
 if __name__ == "__main__":
 
+    # initialization
+    addr_from = 'spinalcordtoolbox@gmail.com'
+
     # get parameters
-    print_if_error = False  # print error message if function crashes (could be messy)
+    print_if_error = True  # print error message if function crashes (could be messy)
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
-    dataset = arguments["-d"]
-    dataset = sct.slash_at_the_end(dataset, slash=1)
+    path_data = sct.slash_at_the_end(os.path.expanduser(arguments["-d"]), slash=1)
     parameters = ''
     if "-p" in arguments:
         parameters = arguments["-p"]
-    json_requirements = None
-    if "-json" in arguments:
-        json_requirements = arguments["-json"]
+    data_specifications = None
+    if "-subj" in arguments:
+        data_specifications = arguments["-subj"]
+    if "-subj-file" in arguments:
+        fname_database = arguments["-subj-file"]
+    else:
+        fname_database = ''  # if empty, it will look for xls file automatically in database folder
     nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
     create_log = int(arguments['-log'])
     if '-email' in arguments:
-        email, passwd = arguments['-email'].split(',')
         create_log = True
+        send_email = True
+        # loop across fields
+        for i in arguments['-email']:
+            if 'addr_to' in i:
+                addr_to = i.split('=')[1]
+            if 'addr_from' in i:
+                addr_from = i.split('=')[1]
+            if 'passwd_from' in i:
+                passwd_from = i.split('=')[1]
     else:
-        email = ''
+        send_email = False
     verbose = int(arguments["-v"])
 
     # start timer
@@ -344,26 +467,10 @@ if __name__ == "__main__":
         handle_log = sct.ForkStdoutToFile(fname_log)
     print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
-    # get path of the toolbox
-    path_script = os.path.dirname(__file__)
-    path_sct = os.path.dirname(path_script)
 
-    # fetch true commit number and branch (do not use commit.txt which is wrong)
-    path_curr = os.path.abspath(os.curdir)
-    os.chdir(path_sct)
-    sct_commit = commands.getoutput('git rev-parse HEAD')
-    if not sct_commit.isalnum():
-        print 'WARNING: Cannot retrieve SCT commit'
-        sct_commit = 'unknown'
-        sct_branch = 'unknown'
-    else:
-        sct_branch = commands.getoutput('git branch --contains ' + sct_commit).strip('* ')
-    # with open (path_sct+"/version.txt", "r") as myfile:
-    #     version_sct = myfile.read().replace('\n', '')
-    # with open (path_sct+"/commit.txt", "r") as myfile:
-    #     commit_sct = myfile.read().replace('\n', '')
-    print 'SCT commit/branch: ' + sct_commit + '/' + sct_branch
-    os.chdir(path_curr)
+    # fetch SCT version
+    install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
+    print 'SCT version/commit/branch: ' + version_sct + '/' + sct_commit + '/' + sct_branch
 
     # check OS
     platform_running = sys.platform
@@ -384,13 +491,22 @@ if __name__ == "__main__":
     # check RAM
     sct.checkRAM(os_running, 0)
 
+    # display command
+    print '\nCommand: "' + function_to_test + ' ' + parameters
+    print 'Dataset: ' + path_data
+
     # test function
     try:
+
+        # retrieve subjects list
+        list_subj = get_list_subj(path_data, data_specifications=data_specifications, fname_database=fname_database)
+
         # during testing, redirect to standard output to avoid stacking error messages in the general log
         if create_log:
             handle_log.pause()
 
-        tests_ret = test_function(function_to_test, dataset, parameters, nb_cpu, json_requirements, verbose)
+        # run function
+        tests_ret = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=None, verbose=1)
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
 
@@ -431,8 +547,6 @@ if __name__ == "__main__":
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
         results_display = results_display.set_index('subject').reset_index()
 
-        print '\nCommand: "' + function_to_test + ' ' + parameters
-        print 'Dataset: ' + dataset
         # display general results
         print '\nGLOBAL RESULTS:'
 
@@ -492,8 +606,16 @@ if __name__ == "__main__":
             print err
 
     # stop file redirection
+    # message = handle_log.read()
+    handle_log.close()
+
     # send email
-    if email:
-        print 'Sending email...'
-        handle_log.send_email(passwd_from=passwd, subject=file_log)
-        print 'done!'
+    if send_email:
+        print '\nSending email...'
+        # open log file and read content
+        with open(fname_log, "r") as fp:
+            message = fp.read()
+        # send email
+        sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log, html=True)
+        # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
+        print 'Email sent!\n'

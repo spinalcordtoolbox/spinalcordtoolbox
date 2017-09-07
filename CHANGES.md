@@ -1,5 +1,75 @@
 # CHANGES TO RELEASE
 
+## v3.0.7 (2017-08-02)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.6...v3.0.7)
+
+**BUG**
+
+ - The params attributes are initialized to the type integer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1431)
+ - Fixing stdout issue on sct_testing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1430)
+ - Changed destination image for concatenation of inverse warping field [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1413)
+ - crashes if apply transfo on 4d images [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1408)
+ - Allow the -winv parameter to write a file to disk [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1404)
+ - Change import path of resample [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1401)
+ - Precision error while calculating Dice coefficient #1098 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1398)
+
+**ENHANCEMENT**
+
+ - Enables to set Gaussian weighting of mutual information for finding C2-C3 disk [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1422)
+ - Adapt concat and apply transfo to work on 2d images [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1420)
+ - Fixed small issues in pipeline [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1417)
+ - Use custom template for sct_register_graymatter [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1407)
+ - compute_ernst_angle: set the parameter t1 default value to optional value of 850ms [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1400)
+ - Improvements on centerline and template generation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1378)
+
+**FEATURE**
+
+ - NEW: dmri_display_bvecs: new function to display bvecs [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1394)
+ - Function to extract texture features #1350 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1376)
+
+**TESTING**
+
+ - Various fixes to pipeline and testing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1424)
+ - New test for sct_label_utils compatible with sct_pipeline [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1402)
+
+**DOCUMENTATION**
+
+ - Changed default values and clarified doc [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1405)
+
+
+## v3.0.6 (2017-07-04)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.5...v3.0.6)
+
+**BUG**
+
+ - Catch the OSError exception thrown when the git command is missing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1396)
+ - BUG: register_multimodal: fixed typo when calling isct_antsRegistration [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1392)
+ - BUG: fix bug when slice is empty [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1390)
+ - Ignore using user packages when install with conda and pip [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1384)
+ - Fix referential for JIM centerline [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1377)
+ - image/pad: now copy input data type (fixes issue 1362) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1363)
+ - Use a pythonic way to compare a variable as  None [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1361)
+ - The init-mask accepts "viewer" as a value [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1357)
+ - Fixed unassigned variable in case -z or -vert is not used [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1354)
+
+**ENHANCEMENT**
+
+ - Restrict deformation for ANTs algo [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1388)
+ - Made error message more explicit if crash occurs [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1387)
+ - Insert previous and next buttons in the qc reports page [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1358)
+ - integrate new class for multiple stdout inside sct_check_dependencies [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1342)
+
+**DOCUMENTATION**
+
+ - Update README.md [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1346)
+
+**INSTALLATION**
+
+ - Ignore using user packages when install with conda and pip [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1384)
+ - Update sct testing data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1370)
+ - Added the dependency psutil in the conda requirements [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1359)
+ - Added egg files in the list of gitignore [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1355)
+
 ## v3.0.5 (2017-06-09)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.4...v3.0.5)
 
@@ -33,11 +103,11 @@
  - Added the command parameter `-noqc` [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1313)
  - Add dimension sanity checking for input file padding op [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1304)
 
- - **FEATURE**
+**FEATURE**
 
  - Introducing spinal cord shape symmetry [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1332)
 
- - **TESTING**
+**TESTING**
 
  - Validate the function name in sct_testing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1305)
  - Fix regression bug in sct_testing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1310)

@@ -216,6 +216,8 @@ class SpinalCordStraightener(object):
         self.elapsed_time = 0.0
         self.elapsed_time_accuracy = 0.0
 
+        self.template_orientation = 0
+
     def straighten(self):
         # Initialization
         fname_anat = self.input_filename
@@ -496,18 +498,21 @@ class SpinalCordStraightener(object):
                 #hdr_warp_s.structarr['srow_x'][-1] = origin[0]
                 #hdr_warp_s.structarr['srow_y'][-1] = origin[1]
                 #hdr_warp_s.structarr['srow_z'][-1] = origin[2]
-                """hdr_warp_s.structarr['quatern_b'] = 0.0
-                hdr_warp_s.structarr['quatern_c'] = 1.0
-                hdr_warp_s.structarr['quatern_d'] = 0.0
-                hdr_warp_s.structarr['srow_x'][0] = -px_s
-                hdr_warp_s.structarr['srow_x'][1] = 0.0
-                hdr_warp_s.structarr['srow_x'][2] = 0.0
-                hdr_warp_s.structarr['srow_y'][0] = 0.0
-                hdr_warp_s.structarr['srow_y'][1] = py_s
-                hdr_warp_s.structarr['srow_y'][2] = 0.0
-                hdr_warp_s.structarr['srow_z'][0] = 0.0
-                hdr_warp_s.structarr['srow_z'][1] = 0.0
-                hdr_warp_s.structarr['srow_z'][2] = pz_s"""
+
+                if self.template_orientation == 1:
+                    hdr_warp_s.structarr['quatern_b'] = 0.0
+                    hdr_warp_s.structarr['quatern_c'] = 1.0
+                    hdr_warp_s.structarr['quatern_d'] = 0.0
+                    hdr_warp_s.structarr['srow_x'][0] = -px_s
+                    hdr_warp_s.structarr['srow_x'][1] = 0.0
+                    hdr_warp_s.structarr['srow_x'][2] = 0.0
+                    hdr_warp_s.structarr['srow_y'][0] = 0.0
+                    hdr_warp_s.structarr['srow_y'][1] = py_s
+                    hdr_warp_s.structarr['srow_y'][2] = 0.0
+                    hdr_warp_s.structarr['srow_z'][0] = 0.0
+                    hdr_warp_s.structarr['srow_z'][1] = 0.0
+                    hdr_warp_s.structarr['srow_z'][2] = pz_s
+
                 image_centerline_straight.hdr = hdr_warp_s
                 image_centerline_straight.compute_transform_matrix()
                 image_centerline_straight.save()
@@ -536,11 +541,11 @@ class SpinalCordStraightener(object):
                 time_centerlines = time.time() - time_centerlines
                 sct.printv('Time to generate centerline: ' + str(np.round(time_centerlines * 1000.0)) + ' ms', verbose)
 
-            """
+            """ 
             import matplotlib.pyplot as plt
             curved_points = centerline.progressive_length
             straight_points = centerline_straight.progressive_length
-            range_points = linspace(0, 1, number_of_points)
+            range_points = np.linspace(0, 1, number_of_points)
             dist_curved = np.zeros(number_of_points)
             dist_straight = np.zeros(number_of_points)
             for i in range(1, number_of_points):
@@ -552,25 +557,56 @@ class SpinalCordStraightener(object):
             plt.show()
             """
 
+            #alignment_mode = 'length'
+            alignment_mode = 'levels'
+
             lookup_curved2straight = range(centerline.number_of_points)
             if self.disks_input_filename != "":
                 # create look-up table curved to straight
                 for index in range(centerline.number_of_points):
                     disk_label = centerline.l_points[index]
-                    relative_position = centerline.dist_points_rel[index]
-                    idx_closest = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)
+                    if alignment_mode == 'length':
+                        relative_position = centerline.dist_points[index]
+                    else:
+                        relative_position = centerline.dist_points_rel[index]
+                    idx_closest = centerline_straight.get_closest_to_absolute_position(disk_label, relative_position, backup_index=index, backup_centerline=centerline_straight, mode=alignment_mode)
                     if idx_closest is not None:
-                        lookup_curved2straight[index] = centerline_straight.get_closest_to_relative_position(disk_label, relative_position)[0]
+                        lookup_curved2straight[index] = idx_closest
+                    else:
+                        lookup_curved2straight[index] = 0
+            for p in range(0, len(lookup_curved2straight)/2):
+                if lookup_curved2straight[p] == lookup_curved2straight[p + 1]:
+                    lookup_curved2straight[p] = 0
+                else:
+                    break
+            for p in range(len(lookup_curved2straight)-1, len(lookup_curved2straight)/2, -1):
+                if lookup_curved2straight[p] == lookup_curved2straight[p - 1]:
+                    lookup_curved2straight[p] = 0
+                else:
+                    break
             lookup_curved2straight = np.array(lookup_curved2straight)
 
             lookup_straight2curved = range(centerline_straight.number_of_points)
             if self.disks_input_filename != "":
                 for index in range(centerline_straight.number_of_points):
                     disk_label = centerline_straight.l_points[index]
-                    relative_position = centerline_straight.dist_points_rel[index]
-                    idx_closest = centerline.get_closest_to_relative_position(disk_label, relative_position)
+                    if alignment_mode == 'length':
+                        relative_position = centerline_straight.dist_points[index]
+                    else:
+                        relative_position = centerline_straight.dist_points_rel[index]
+                    idx_closest = centerline.get_closest_to_absolute_position(disk_label, relative_position, backup_index=index, backup_centerline=centerline_straight, mode=alignment_mode)
                     if idx_closest is not None:
-                        lookup_straight2curved[index] = centerline.get_closest_to_relative_position(disk_label, relative_position)[0]
+                        lookup_straight2curved[index] = idx_closest
+            for p in range(0, len(lookup_straight2curved)/2):
+                if lookup_straight2curved[p] == lookup_straight2curved[p + 1]:
+                    lookup_straight2curved[p] = 0
+                else:
+                    break
+            for p in range(len(lookup_straight2curved)-1, len(lookup_straight2curved)/2, -1):
+                if lookup_straight2curved[p] == lookup_straight2curved[p - 1]:
+                    lookup_straight2curved[p] = 0
+                else:
+                    break
             lookup_straight2curved = np.array(lookup_straight2curved)
 
             # Create volumes containing curved and straight warping fields
@@ -584,18 +620,21 @@ class SpinalCordStraightener(object):
             # print nx * ny * nz, nx_s * ny_s * nz_s
 
             if self.curved2straight:
+                timer_straightening = sct.Timer(nz_s)
+                timer_straightening.start()
                 for u in range(nz_s):
-                    # print u+1, '/', nz_s
+                    timer_straightening.add_iteration()
                     x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u + 1]
                     indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
                     physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
                     nearest_indexes_straight = centerline_straight.find_nearest_indexes(physical_coordinates_straight)
                     distances_straight = centerline_straight.get_distances_from_planes(physical_coordinates_straight, nearest_indexes_straight)
-                    indexes_out_distance_straight = np.logical_or(distances_straight > self.threshold_distance, distances_straight < -self.threshold_distance)
+                    lookup = lookup_straight2curved[nearest_indexes_straight]
+                    indexes_out_distance_straight = np.logical_or(np.logical_or(distances_straight > self.threshold_distance, distances_straight < -self.threshold_distance), lookup == 0)
                     projected_points_straight = centerline_straight.get_projected_coordinates_on_planes(physical_coordinates_straight, nearest_indexes_straight)
                     coord_in_planes_straight = centerline_straight.get_in_plans_coordinates(projected_points_straight, nearest_indexes_straight)
 
-                    coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup_straight2curved[nearest_indexes_straight])
+                    coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup)
                     displacements_straight = coord_straight2curved - physical_coordinates_straight
                     # for some reason, displacement in Z is inverted. Probably due to left/right-handed definition of referential.
                     #displacements_straight[:, 0] = -displacements_straight[:, 0]
@@ -603,20 +642,24 @@ class SpinalCordStraightener(object):
                     displacements_straight[indexes_out_distance_straight] = [100000.0, 100000.0, 100000.0]
 
                     data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0, :] = -displacements_straight
+                timer_straightening.stop()
 
             if self.straight2curved:
+                timer_straightening = sct.Timer(nz)
+                timer_straightening.start()
                 for u in range(nz):
-                    # print u + 1, '/', nz
+                    timer_straightening.add_iteration()
                     x, y, z = np.mgrid[0:nx, 0:ny, u:u + 1]
                     indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
                     physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
                     nearest_indexes_curved = centerline.find_nearest_indexes(physical_coordinates)
                     distances_curved = centerline.get_distances_from_planes(physical_coordinates, nearest_indexes_curved)
-                    indexes_out_distance_curved = np.logical_or(distances_curved > self.threshold_distance, distances_curved < -self.threshold_distance)
+                    lookup = lookup_curved2straight[nearest_indexes_curved]
+                    indexes_out_distance_curved = np.logical_or(np.logical_or(distances_curved > self.threshold_distance, distances_curved < -self.threshold_distance), lookup == 0)
                     projected_points_curved = centerline.get_projected_coordinates_on_planes(physical_coordinates, nearest_indexes_curved)
                     coord_in_planes_curved = centerline.get_in_plans_coordinates(projected_points_curved, nearest_indexes_curved)
 
-                    coord_curved2straight = centerline_straight.points[lookup_curved2straight[nearest_indexes_curved]]
+                    coord_curved2straight = centerline_straight.points[lookup]
                     coord_curved2straight[:, 0:2] += coord_in_planes_curved[:, 0:2]
                     coord_curved2straight[:, 2] += distances_curved
 
@@ -627,6 +670,7 @@ class SpinalCordStraightener(object):
                     displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
                     data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
+                timer_straightening.stop()
 
             # Creation of the safe zone based on pre-calculated safe boundaries
             coord_bound_curved_inf, coord_bound_curved_sup = image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[0]]]), image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[1]]])
@@ -847,7 +891,8 @@ def get_parser():
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
                                   "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
                                   "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
-                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0",
+                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
+                                  "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
                       mandatory=False,
                       example="algo_fitting=nurbs")
     parser.add_option(name="-params",
@@ -869,9 +914,14 @@ def get_parser():
     return parser
 
 
-if __name__ == "__main__":
+# MAIN
+# ==========================================================================================
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     # assigning variables to arguments
     input_filename = arguments["-i"]
@@ -938,5 +988,14 @@ if __name__ == "__main__":
                 sc_straight.threshold_distance = float(param_split[1])
             if param_split[0] == 'accuracy_results':
                 sc_straight.accuracy_results = int(param_split[1])
+            if param_split[0] == 'template_orientation':
+                sc_straight.template_orientation = int(param_split[1])
 
     sc_straight.straighten()
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    # call main function
+    main()

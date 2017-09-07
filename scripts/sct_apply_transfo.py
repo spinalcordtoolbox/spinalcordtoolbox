@@ -167,7 +167,11 @@ class Transform:
             # Apply transformation
             sct.printv('\nApply transformation...', verbose)
             # print 'HOLA1'
-            sct.run('isct_antsApplyTransforms -d 3 -i ' + fname_src + ' -o ' + fname_out + ' -t ' + ' '.join(fname_warp_list_invert) + ' -r ' + fname_dest + interp, verbose)
+            if nz in [0, 1]:
+                dim = '2'
+            else:
+                dim = '3'
+            sct.run('isct_antsApplyTransforms -d '+dim+' -i ' + fname_src + ' -o ' + fname_out + ' -t ' + ' '.join(fname_warp_list_invert) + ' -r ' + fname_dest + interp, verbose)
 
         # if 4d, loop across the T dimension
         else:
@@ -180,7 +184,7 @@ class Transform:
             # convert to nifti into temp folder
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
             from sct_convert import convert
-            convert(fname_src, path_tmp + 'data.nii')
+            convert(fname_src, path_tmp + 'data.nii', squeeze_data=False)
             sct.run('cp ' + fname_dest + ' ' + path_tmp + file_dest + ext_dest)
             fname_warp_list_tmp = []
             for fname_warp in fname_warp_list:
@@ -216,7 +220,8 @@ class Transform:
             fname_list = glob.glob('data_reg_T*.nii')
             im_out = concat_data(fname_list, 3, im_header['pixdim'])
             im_out.setFileName(name_out + ext_out)
-            im_out.save()
+            im_out.save(squeeze_data=False)
+
             os.chdir('..')
             sct.generate_output_file(path_tmp + name_out + ext_out, fname_out)
             # Delete temporary folder if specified

@@ -37,17 +37,21 @@ DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
 
-
 # Force a clean exit
 finish ()
 {
-  # Get back to starting point
-  cd ${SCT_SOURCE}
-  # remove installation tmp files
-#  rm -Rf ${TMP_DIR}
+    # Catch the last return code
+    value=$?
+    # Get back to starting point
+    cd ${SCT_SOURCE}
+    if [ ${value} -eq 0 ]; then
+        echo "Installation finished successfully"
+    else
+        echo "Installation failed"
+    fi
+    exit ${value}
 }
 trap finish EXIT
-
 
 # Force bashrc loading
 force_bashrc_loading ()
@@ -349,6 +353,11 @@ cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run 
 # Copy binaries
 
 ## INSTALL PYTHON
+# We make sure that there is no conflict with local python install by unsetting PYTHONPATH
+# and forcing PYTHONNOUSERSITE
+unset PYTHONPATH
+export PYTHONNOUSERSITE=1
+
 if [ ${NO_CONDA_INSTALL} ]; then
   echo "python/ will not be (re)-install"
   # activate miniconda
@@ -382,8 +391,6 @@ else
 
   # Install Python dependencies
   echo -e "\nInstalling Python dependencies..."
-  # N.B. the flag --ignore-installed is required because locally install
-  # package are skip
   conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
   e_status=$?
   if [ ${e_status} != 0 ] ; then
@@ -391,7 +398,7 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
-  pip install --ignore-installed  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+  pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
   e_status=$?
   if [ ${e_status} != 0 ] ; then
     echo "pip install error with exit status $e_status. Check logs for more details

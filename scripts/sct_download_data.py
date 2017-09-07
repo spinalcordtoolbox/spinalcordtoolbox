@@ -67,7 +67,7 @@ def main(args=None):
     # initialization
     dict_url = {
         'sct_example_data': 'https://osf.io/4nnk3/?action=download',
-        'sct_testing_data': 'https://osf.io/uqcz5/?action=download',
+        'sct_testing_data': 'https://osf.io/zrbs7/?action=download',
         'PAM50': 'https://osf.io/gdwn6/?action=download',
         'MNI-Poly-AMU': 'https://osf.io/sh6h4/?action=download',
         'gm_model': 'https://osf.io/ugscu/?action=download',
@@ -125,11 +125,9 @@ def unzip(compressed, dest_folder, verbose):
             tar.extractall(path=dest_folder)
             return
         except tarfile.TarError:
-            sct.printv('ERROR: ZIP package corrupted. Please try again.',
-                   verbose, 'error')
+            sct.printv('ERROR: ZIP package corrupted. Please try again.', verbose, 'error')
     else:
-        sct.printv('ERROR: The file %s is of wrong format' % compressed, verbose,
-               'error')
+        sct.printv('ERROR: The file %s is of wrong format' % compressed, verbose, 'error')
 
 
 def download_data(url, verbose):
@@ -139,28 +137,31 @@ def download_data(url, verbose):
     connection
     """
 
-    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
-    session = requests.Session()
-    session.mount('https://', HTTPAdapter(max_retries=retry))
-    response = session.get(url, stream=True)
+    try:
+        retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
+        session = requests.Session()
+        session.mount('https://', HTTPAdapter(max_retries=retry))
+        response = session.get(url, stream=True)
 
-    _, content = cgi.parse_header(response.headers['Content-Disposition'])
-    tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-    sct.printv('\nDownloading %s...' % content['filename'], verbose)
+        _, content = cgi.parse_header(response.headers['Content-Disposition'])
+        tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
+        sct.printv('\nDownloading %s...' % content['filename'], verbose)
 
-    with open(tmp_path, 'wb') as tmp_file:
-        total = int(response.headers.get('content-length', 1))
-        tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
-                        desc="Status", ascii=True)
+        with open(tmp_path, 'wb') as tmp_file:
+            total = int(response.headers.get('content-length', 1))
+            tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
+                            desc="Status", ascii=True)
 
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                tmp_file.write(chunk)
-                if verbose > 0:
-                    dl_chunk = len(chunk)
-                    tqdm_bar.update(dl_chunk)
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    tmp_file.write(chunk)
+                    if verbose > 0:
+                        dl_chunk = len(chunk)
+                        tqdm_bar.update(dl_chunk)
 
-        tqdm_bar.close()
+            tqdm_bar.close()
+    except requests.RequestException as err:
+        sct.printv(err.message, type='error')
 
     sct.printv('\nDownload complete', verbose=verbose)
     return tmp_path

@@ -113,6 +113,64 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         return status_output, output_final[0:-1]
 
 
+# =======================================================================================================================
+# Get SCT version
+# =======================================================================================================================
+def get_sct_version():
+
+    sct_commit = ''
+    sct_branch = ''
+
+    # get path of SCT
+    path_script = os.path.dirname(__file__)
+    path_sct = os.path.dirname(path_script)
+
+    # fetch true commit number and branch
+    path_curr = os.path.abspath(os.curdir)
+    os.chdir(path_sct)
+    # first, make sure there is a .git folder
+    if os.path.isdir('.git'):
+        install_type = 'git'
+        sct_commit = commands.getoutput('git rev-parse HEAD')
+        sct_branch = commands.getoutput('git branch | grep \*').strip('* ')
+        if not (sct_commit.isalnum()):
+            sct_commit = 'unknown'
+            sct_branch = 'unknown'
+        # print '  branch: ' + sct_branch
+    else:
+        install_type = 'package'
+    # fetch version
+    with open(path_sct + '/version.txt', 'r') as myfile:
+        version_sct = myfile.read().replace('\n', '')
+        # print '  version: ' + version_sct
+
+    # go back to previous dir
+    os.chdir(path_curr)
+    return install_type, sct_commit, sct_branch, version_sct
+
+#
+#
+#     # check if there is a .git repos
+#     if [-e ${SCT_DIR} /.git]; then
+#     # retrieve commit
+#     SCT_COMMIT = `git - -git - dir =${SCT_DIR} /.git
+#     rev - parse
+#     HEAD
+#     `
+#     # retrieve branch
+#     SCT_BRANCH = `git - -git - dir =${SCT_DIR} /.git
+#     branch | grep \ * | awk
+#     '{print $2}'
+#     `
+#     echo
+#     "Spinal Cord Toolbox ($SCT_BRANCH/$SCT_COMMIT)"
+#
+# else
+# echo
+# "Spinal Cord Toolbox (version: $SCT_VERSION)"
+# fi
+
+
 #=======================================================================================================================
 # check RAM usage
 # work only on Mac OSX
@@ -240,7 +298,7 @@ class ForkStdoutToFile(object):
     """
     def __init__(self, filename="{}.log".format(__file__), to_file_only=False):
         self.terminal = sys.stdout
-        self.log = open(filename, "a")
+        self.log_file = open(filename, "a")
         self.filename = filename
         self.to_file_only = False
         sys.stdout = self
@@ -258,22 +316,27 @@ class ForkStdoutToFile(object):
     def write(self, message):
         if not self.to_file_only:
             self.terminal.write(message)
-        self.log.write(message)
+        self.log_file.write(message)
+
+    def flush(self):
+        if not self.to_file_only:
+            self.terminal.flush()
+        self.log_file.flush()
 
     def close(self):
-        self.log.close()
+        self.log_file.close()
+        sys.stdout = self.terminal
 
     def read(self):
         with open(self.filename, "r") as fp:
             fp.read()
 
-    def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
-        self.close()
-        if attachment:
-            filename = self.filename
-        else:
-            filename = None
-        send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
+    # def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
+    #     if attachment:
+    #         filename = self.filename
+    #     else:
+    #         filename = None
+    #     send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
 
 #=======================================================================================================================
 # extract_fname
@@ -612,10 +675,13 @@ def printv(string, verbose=1, type='normal'):
 
     if verbose:
         # Print color only if the output is the terminal
-        if sys.stdout.isatty():
-            color = colors.get(type, bcolors.normal)
-            print(color + string + bcolors.normal)
-        else:
+        try:
+            if sys.stdout.isatty():
+                color = colors.get(type, bcolors.normal)
+                print(color + string + bcolors.normal)
+            else:
+                print(string)
+        except Exception as e:
             print(string)
 
     if type == 'error':
@@ -633,7 +699,7 @@ def printv(string, verbose=1, type='normal'):
 #=======================================================================================================================
 # send email
 #=======================================================================================================================
-def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None):
+def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None, html=False):
     import smtplib
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMEText import MIMEText
@@ -647,7 +713,30 @@ def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', passwd_from='',
     msg['Subject'] = subject  # "SUBJECT OF THE EMAIL"
     body = message  # "TEXT YOU WANT TO SEND"
 
-    msg.attach(MIMEText(body, 'plain'))
+    # body in html format for monospaced formatting
+    body_html = """
+    <html><pre style="font: monospace"><body>
+    """+body+"""
+    </body></pre></html>
+    """
+
+    # # We must choose the body charset manually
+    # for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+    #     try:
+    #         body.encode(body_charset)
+    #     except UnicodeError:
+    #         pass
+    #     else:
+    #         break
+
+    # msg.set_charset("utf-8")
+
+    if html:
+        msg.attach(MIMEText(body_html, 'html'))
+    else:
+        msg.attach(MIMEText(body, 'plain'))
+
+    # msg.attach(MIMEText(body.encode(body_charset), 'plain', body_charset))
 
     # filename = "NAME OF THE FILE WITH ITS EXTENSION"
     if filename:
@@ -658,6 +747,7 @@ def send_email(addr_to, addr_from='spinalcordtoolbox@gmail.com', passwd_from='',
         part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
         msg.attach(part)
 
+    # send email
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
     server.login(addr_from, passwd_from)

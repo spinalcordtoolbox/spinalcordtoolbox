@@ -33,7 +33,7 @@ class Param:
 
 
 class MultiLabelRegistration:
-    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template2target, param=None, fname_warp_target2template=None, apply_warp_template=0):
+    def __init__(self, fname_gm, fname_wm, path_template, fname_warp_template2target, param=None, fname_warp_target2template=None, apply_warp_template=0, fname_template_dest=None):
         if param is None:
             self.param = Param()
         else:
@@ -41,14 +41,26 @@ class MultiLabelRegistration:
         self.im_gm = Image(fname_gm)
         self.im_wm = Image(fname_wm)
         self.path_template = sct.slash_at_the_end(path_template, 1)
-        if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir(self.path_template + 'template/'):
-            self.im_template_gm = Image(self.path_template + 'template/MNI-Poly-AMU_GM.nii.gz')
-            self.im_template_wm = Image(self.path_template + 'template/MNI-Poly-AMU_WM.nii.gz')
-            self.template = 'MNI-Poly-AMU'
-        else:
-            self.im_template_gm = Image(self.path_template + 'template/PAM50_gm.nii.gz')
-            self.im_template_wm = Image(self.path_template + 'template/PAM50_wm.nii.gz')
-            self.template = 'PAM50'
+
+        # get GM and WM files from template:
+        fname_template_gm, fname_template_wm = None, None
+        for fname in os.listdir(self.path_template + 'template/'):
+            if 'gm' in fname.lower():
+                fname_template_gm = self.path_template + 'template/'+fname
+            elif 'wm' in fname.lower():
+                fname_template_wm = self.path_template + 'template/'+fname
+        if fname_template_gm is not None and fname_template_wm is not None:
+            self.im_template_gm = Image(fname_template_gm)
+            self.im_template_wm = Image(fname_template_wm)
+            if fname_template_gm.split('/')[-1] == 'MNI-Poly-AMU_GM.nii.gz':
+                self.template = 'MNI-Poly-AMU'
+            elif fname_template_gm.split('/')[-1] == 'PAM50_gm.nii.gz':
+                self.template = 'PAM50'
+            else:
+                self.template = 'custom'
+
+        # template file in its original space:
+        self.fname_template_dest = fname_template_dest
 
         # Previous warping fields:
         self.fname_warp_template2target = fname_warp_template2target
@@ -56,7 +68,7 @@ class MultiLabelRegistration:
 
         # new warping fields:
         self.fname_warp_template2gm = ''
-        self.fname_wwarp_gm2template = ''
+        self.fname_warp_gm2template = ''
 
         # temporary fix - related to issue #871
         self.apply_warp_template = apply_warp_template
@@ -144,15 +156,16 @@ class MultiLabelRegistration:
         sct.run('sct_concat_transfo -w ' + file_warp_template2target + ext_warp_template2target + ',' + fname_warp_multilabel_template2auto + ' -d ' + file_gm + ext_gm + ' -o ' + self.fname_warp_template2gm)
 
         if self.fname_warp_target2template is not None:
-            path_script = os.path.dirname(__file__)
-            path_sct = os.path.dirname(path_script)
-            if self.template == 'MNI-Poly-AMU':
-                fname_dest = path_sct + '/data/MNI-Poly-AMU/template/MNI-Poly-AMU_T2.nii.gz'
-            elif self.template == 'PAM50':
-                fname_dest = path_sct + '/data/PAM50/template/PAM50_t2.nii.gz'
+            if self.fname_template_dest is None:
+                path_script = os.path.dirname(__file__)
+                path_sct = os.path.dirname(path_script)
+                if self.template == 'MNI-Poly-AMU':
+                    self.fname_template_dest = path_sct + '/data/MNI-Poly-AMU/template/MNI-Poly-AMU_T2.nii.gz'
+                elif self.template == 'PAM50':
+                    self.fname_template_dest = path_sct + '/data/PAM50/template/PAM50_t2.nii.gz'
 
             self.fname_warp_gm2template = sct.extract_fname(self.fname_warp_target2template)[1] + '_reg_gm' + sct.extract_fname(self.fname_warp_target2template)[2]
-            sct.run('sct_concat_transfo -w ' + fname_warp_multilabel_auto2template + ',' + file_warp_target2template + ext_warp_target2template + ' -d ' + fname_dest + ' -o ' + self.fname_warp_gm2template)
+            sct.run('sct_concat_transfo -w ' + fname_warp_multilabel_auto2template + ',' + file_warp_target2template + ext_warp_target2template + ' -d ' + self.fname_template_dest + ' -o ' + self.fname_warp_gm2template)
 
         os.chdir('..')
 
@@ -436,14 +449,20 @@ def get_parser():
                       example='t2star_wmseg.nii.gz')
     parser.add_option(name="-t",
                       type_value="folder",
-                      description="Path to template (registered on target image)",
+                      description="Path to template (registered on target image) to select the GM and WM files from the template. Template files must be in path/template/ and include \"gm\" (resp. \"wm\") in the file name.",
                       mandatory=False,
                       default_value='label/')
     parser.add_option(name="-w",
                       type_value="file",
-                      description="Warping field: template -> image",
+                      description="Warping field: [template -> anat]",
                       mandatory=True,
                       example='warp_template2t2star.nii.gz')
+    parser.add_option(name="-winv",
+                      type_value="file",
+                      description="Input the inverse warping field [anat -> template] if you need to output the corrected inverse warping field.",
+                      mandatory=False,
+                      example='warp_t2star2template.nii.gz')
+
 
     parser.add_option(name="-param",
                       type_value="str",
@@ -451,13 +470,13 @@ def get_parser():
                       mandatory=False,
                       default_value=Param().param_reg,
                       example='step=1,algo=slicereg,metric=MeanSquares,step=2,algo=syn,metric=MeanSquares,iter=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1')
+    parser.add_option(name="-template-original",
+                      type_value="file",
+                      description="File of the template in it's original space. Only needed if you are using a custom template and flag -winv. It will be used as a destination to concatenate the inverse warping field.",
+                      mandatory=False,
+                      example='.../custom_template/custom_template_t2.nii.gz')
 
     parser.usage.addSection('\nOUTPUT OTIONS')
-    parser.add_option(name="-winv",
-                      type_value="file",
-                      description="Warping field: image -> template.",
-                      mandatory=False,
-                      example='warp_t2star2teplate.nii.gz')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Path to an output folder",
@@ -520,6 +539,7 @@ if __name__ == "__main__":
     fname_warp_target2template = None
     fname_manual_gmseg = None
     fname_sc_seg = None
+    fname_template_dest = None
 
     if '-param' in arguments:
         ml_param.param_reg = arguments['-param']
@@ -529,6 +549,8 @@ if __name__ == "__main__":
         fname_sc_seg = arguments['-sc']
     if '-winv' in arguments:
         fname_warp_target2template = arguments['-winv']
+    if '-template-original' in arguments:
+        fname_template_dest = arguments['-template-original']
     if '-ofolder' in arguments:
         ml_param.output_folder = sct.slash_at_the_end(arguments['-ofolder'], 1)
     if '-qc' in arguments:
@@ -545,7 +567,7 @@ if __name__ == "__main__":
     if (fname_manual_gmseg is not None and fname_sc_seg is None) or (fname_manual_gmseg is None and fname_sc_seg is not None):
         sct.printv(parser.usage.generate(error='ERROR: you need to specify both arguments : -manual-gm and -sc.'))
 
-    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, param=ml_param, fname_warp_target2template=fname_warp_target2template, apply_warp_template=apply_warp)
+    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, param=ml_param, fname_warp_target2template=fname_warp_target2template, apply_warp_template=apply_warp, fname_template_dest=fname_template_dest)
     ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg)
