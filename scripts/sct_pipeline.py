@@ -240,9 +240,8 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
         return 'KeyboardException'
     except Exception as e:
         sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
-        sct.log.error(str(e))
-        sys.exit(2)
-
+        sct.log.exception(e)
+        raise
 
 def function_launcher(args):
     import importlib
@@ -330,14 +329,12 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
         sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
         pool.terminate()
         pool.join()
-        # return
-        # raise KeyboardInterrupt
-        # sys.exit(2)
     except Exception as e:
-        sct.log.exception('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
-        # sct.log.error(e)
-        # raise Exception
-        sys.exit(2)
+        sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
+        sct.log.exception(e)
+        pool.terminate()
+        pool.join()
+        raise
 
     return {'results': results, "compute_time": compute_time}
 

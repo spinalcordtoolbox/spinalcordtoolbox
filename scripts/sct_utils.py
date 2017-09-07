@@ -40,8 +40,6 @@ format and level
 
 log = logging.getLogger('sct')
 log.setLevel(logging.DEBUG)
-nh = logging.NullHandler()
-log.addHandler(nh)
 stream_handler = logging.StreamHandler(sys.stdout)
 LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
 LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
@@ -82,7 +80,7 @@ class NoColorFormatter(logging.Formatter):
     """
     def format(self, record):
         for color in bcolors.colors():
-            record.msg = record.msg.replace(color, "")
+            record.msg = record.msg.remove(color)
         return super(NoColorFormatter, self).format(record)
 
 
@@ -134,7 +132,8 @@ class bcolors(object):
     underline = '\033[4m'
     @classmethod
     def colors(cls):
-        return [v for k,v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
+        return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
+
 
 #=======================================================================================================================
 # add suffix
