@@ -154,7 +154,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
     failed_transfo = 0  # by default, failed matrix is 0 (i.e., no failure)
 
     # get metric radius (if MeanSquares, CC) or nb bins (if MI)
-    if param.param[3] == 'MI':
+    if param.metric == 'MI':
         metric_radius = '16'
     else:
         metric_radius = '4'

@@ -449,14 +449,6 @@ def dmri_moco(param):
         otsu.otsu(param_otsu)
         file_dwi_group = file_dwi_group + '_seg'
 
-    # extract first DWI volume as target for registration
-    nii = Image(file_dwi_group + ext_data)
-    data_crop = nii.data[:, :, :, index_dwi[0]:index_dwi[0] + 1]
-    nii.data = data_crop
-    target_dwi_name = 'target_dwi'
-    nii.setFileName(target_dwi_name + ext_data)
-    nii.save()
-
     # START MOCO
     #===================================================================================================================
 
@@ -466,6 +458,7 @@ def dmri_moco(param):
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco = param
     param_moco.file_data = 'b0'
+    # identify target image
     if index_dwi[0] != 0:
         # If first DWI is not the first volume (most common), then there is a least one b=0 image before. In that case
         # select it as the target image for registration of all b=0
@@ -483,9 +476,8 @@ def dmri_moco(param):
     sct.printv('  Estimating motion on DW images...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_dwi_group
-    param_moco.file_target = target_dwi_name  # target is the first DW image (closest to the first b=0)
+    param_moco.file_target = file_dwi_mean[0]  # target is the first DW image (closest to the first b=0)
     param_moco.path_out = ''
-    # param_moco.todo = 'estimate'
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_dwigroups'
     moco.moco(param_moco)
