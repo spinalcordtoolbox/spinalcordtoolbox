@@ -58,6 +58,7 @@ from msct_image import Image
 from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
 from msct_parser import Parser
 from sct_image import set_orientation
+import sct_utils as sct
 from sct_utils import (add_suffix, extract_fname, printv, run,
                        slash_at_the_end, tmp_create)
 

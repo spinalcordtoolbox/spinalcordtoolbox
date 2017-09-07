@@ -15,6 +15,7 @@ from msct_parser import Parser
 from dipy.data.fetcher import read_bvals_bvecs
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import sct_utils as sct
 
 bzero = 0.0001  # b-zero threshold
 

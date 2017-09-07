@@ -17,6 +17,7 @@
 import sys
 from msct_parser import Parser
 from msct_image import Image
+import sct_utils as sct
 
 # DEFAULT PARAMETERS
 

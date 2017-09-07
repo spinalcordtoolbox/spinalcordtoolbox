@@ -25,6 +25,7 @@
 import sys
 from msct_parser import Parser
 from sct_utils import extract_fname, printv
+import sct_utils as sct
 
 
 # PARSER

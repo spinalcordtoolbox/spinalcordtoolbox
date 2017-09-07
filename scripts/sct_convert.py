@@ -14,6 +14,7 @@
 
 from msct_parser import Parser
 import sys
+import sct_utils as sct
 
 
 # DEFAULT PARAMETERS

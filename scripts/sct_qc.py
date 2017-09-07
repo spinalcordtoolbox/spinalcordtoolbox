@@ -16,6 +16,7 @@ from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 from msct_parser import Parser
 from sct_utils import printv
+import sct_utils as sct
 
 import spinalcordtoolbox.reports as reports
 

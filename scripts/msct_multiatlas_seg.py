@@ -27,7 +27,7 @@ from msct_gmseg_utils import (apply_transfo, average_gm_wm, normalize_slice,
 from msct_image import Image
 from msct_parser import Parser
 from sct_utils import printv, slash_at_the_end
-
+import sct_utils as sct
 
 def get_parser():
     # Initialize the parser

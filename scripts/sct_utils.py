@@ -41,6 +41,8 @@ format and level
 log = logging.getLogger('sct')
 log.setLevel(logging.DEBUG)
 stream_handler = logging.StreamHandler(sys.stdout)
+nh = logging.NullHandler()
+log.addHandler(nh)
 LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
 LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
 if not LOG_FORMAT:

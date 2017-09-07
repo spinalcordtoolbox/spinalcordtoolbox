@@ -22,6 +22,7 @@ import os
 from numpy import asarray, sqrt
 import nibabel
 from sct_utils import printv
+import sct_utils as sct
 from msct_parser import Parser
 
 
