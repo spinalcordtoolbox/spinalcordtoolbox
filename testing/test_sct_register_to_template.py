@@ -161,7 +161,7 @@ def test(path_data='', parameters=''):
     results = DataFrame(data={'status': int(status), 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
 
     sct.log.info(output)
-    sct.stop_handler(file_handler)
+    sct.remove_handler(file_handler)
     sct.start_stream_logger()
 
     return status, output, results

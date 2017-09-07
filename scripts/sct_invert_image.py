@@ -30,6 +30,7 @@ class param:
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = param()
     # call main function

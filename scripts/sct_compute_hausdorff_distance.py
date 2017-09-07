@@ -467,6 +467,7 @@ def get_parser():
 ########################################################################################################################
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     param = Param()
     input_fname = None
     if param.debug:

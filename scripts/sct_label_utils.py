@@ -887,5 +887,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

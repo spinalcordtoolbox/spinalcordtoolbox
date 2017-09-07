@@ -240,7 +240,7 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
         return 'KeyboardException'
     except Exception as e:
         sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
-        sct.log.exception(str(e))
+        sct.log.error(str(e))
         sys.exit(2)
 
 
@@ -312,10 +312,13 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
     data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
     # Computing Pool for parallel process, distribute2mpi.MpiPool in MPI environment, multiprocessing.Pool otherwise
+    sct.log.debug("stating pool with {} thread(s)".format(nb_cpu))
     pool = Pool(nb_cpu)
-
+    results = None
+    compute_time = None
     try:
         compute_time = time()
+        sct.log.debug('paused but print')
         async_results = pool.map_async(function_launcher, data_and_params)
         pool.close()
         pool.join()  # waiting for all the jobs to be done
@@ -331,12 +334,10 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
         # raise KeyboardInterrupt
         # sys.exit(2)
     except Exception as e:
-        sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
-        sct.log.error(str(e))
-        pool.terminate()
-        pool.join()
+        sct.log.exception('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
+        # sct.log.error(e)
         # raise Exception
-        # sys.exit(2)
+        sys.exit(2)
 
     return {'results': results, "compute_time": compute_time}
 
@@ -416,12 +417,9 @@ def get_parser():
 # Start program
 # ====================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
 
-    # initialization
     addr_from = 'spinalcordtoolbox@gmail.com'
-
-    # get parameters
-    print_if_error = True  # print error message if function crashes (could be messy)
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
@@ -487,7 +485,9 @@ if __name__ == "__main__":
     # Check number of CPU cores
     from multiprocessing import cpu_count
     # status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    sct.log.info('CPU cores on machine: ' + str(cpu_count()))  # + ', Used by SCT: '+output
+    sct.log.info('CPU Thread on local machine: {} '.format(cpu_count()))
+
+    sct.log.info('    Requested threads:       {} '.format(nb_cpu))
 
     # check RAM
     sct.checkRAM(os_running, 0)
@@ -505,10 +505,12 @@ if __name__ == "__main__":
         # during testing, redirect to standard output to avoid stacking error messages in the general log
         if create_log:
             # handle_log.pause()
-            sct.stop_handler(file_handler)
+            sct.remove_handler(file_handler)
 
         # run function
-        tests_ret = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=None, verbose=1)
+        sct.log.debug("enter test fct")
+        tests_ret = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=nb_cpu, verbose=1)
+        sct.log.debug("exit test fct")
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
 
@@ -602,23 +604,18 @@ if __name__ == "__main__":
                     a.set_ylabel('')
             plt.savefig('fig_' + file_log + '.png', bbox_inches='tight', pad_inches=0.5)
             plt.close()
-
-    except Exception as err:
-        if print_if_error:
-            sct.log.error(err)
-
-    # stop file redirection
-    # message = handle_log.read()
+    finally:
         if create_log:
             file_handler.flush()
-            sct.stop_handler(file_handler)
-    # send email
-    if send_email:
-        sct.log.info('\nSending email...')
-        # open log file and read content
-        with open(fname_log, "r") as fp:
-            message = fp.read()
+            sct.remove_handler(file_handler)
         # send email
-        sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log, html=True)
-        # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
-        sct.log.info('Email sent!\n')
+        if send_email:
+            sct.log.info('\nSending email...')
+            # open log file and read content
+            with open(fname_log, "r") as fp:
+                message = fp.read()
+            # send email
+            sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log,
+                           message=message, filename=fname_log, html=True)
+            # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
+            sct.log.info('Email sent!\n')

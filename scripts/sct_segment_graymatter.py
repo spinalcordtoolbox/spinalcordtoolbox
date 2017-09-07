@@ -753,4 +753,5 @@ def main(args=None):
     printv('fslview ' + param_seg.fname_im_original + ' ' + seg_gm.fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col + ' -t 0.7 ' + seg_gm.fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', param.verbose, 'info')
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

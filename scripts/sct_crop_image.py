@@ -393,6 +393,7 @@ def find_mask_boundaries(fname_mask):
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     parser = get_parser()
     # Fetching script arguments
     arguments = parser.parse(sys.argv[1:])

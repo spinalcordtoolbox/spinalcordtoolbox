@@ -202,6 +202,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     # call main function

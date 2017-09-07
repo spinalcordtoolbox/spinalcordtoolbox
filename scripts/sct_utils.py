@@ -36,23 +36,28 @@ Basic logging setup for the sct
 set SCT_LOG_LEVEL and SCT_LOG_FORMAT in ~/.sctrc to change the sct log
 format and level
 """
-LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
-LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
+
+
 log = logging.getLogger('sct')
 log.setLevel(logging.DEBUG)
-
+nh = logging.NullHandler()
+log.addHandler(nh)
 stream_handler = logging.StreamHandler(sys.stdout)
+LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
+LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
 if not LOG_FORMAT:
-    formatter = logging.Formatter('%(message)s')  # sct.printv() emulator)
-else:
-    formatter = logging.Formatter(LOG_FORMAT)
-stream_handler.setFormatter(formatter)
+    LOG_FORMAT = None
+
 
 def start_stream_logger():
     """ Log to terminal, by default the formating is like a print() call
-    
+
     :return: 
     """
+
+    formatter = logging.Formatter(LOG_FORMAT)
+    stream_handler.setFormatter(formatter)
+
     if LOG_LEVEL in logging._levelNames:
         stream_handler.setLevel(LOG_LEVEL)
         log.addHandler(stream_handler)
@@ -61,8 +66,6 @@ def start_stream_logger():
     else:
         stream_handler.setLevel(logging.INFO)
         log.addHandler(stream_handler)
-# Default sct behavior is to have a stream logger
-start_stream_logger()
 
 
 def pause_stream_logger():
@@ -78,8 +81,8 @@ class NoColorFormatter(logging.Formatter):
     Formater removing terminal specific colors from outputs
     """
     def format(self, record):
-        for color in bcolors.colors:
-            record.msg = record.msg.remove(color)
+        for color in bcolors.colors():
+            record.msg = record.msg.replace(color, "")
         return super(NoColorFormatter, self).format(record)
 
 
@@ -92,12 +95,15 @@ def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log
     :param log_level: 
     :return: the file handler 
     """
+    log.debug('Adding file handler {}'.format(filename))
     fh = logging.FileHandler(filename=filename, mode=mode)
+
     if log_format is None:
-        formatter = NoColorFormatter(
-            '"%(asctime)s - %(levelname)7s --%(lineno)5s %(funcName)25s():  %(message)s"')  # sct.printv() emulator)
+        formatter = NoColorFormatter(LOG_FORMAT)  # sct.printv() emulator)
     else:
         formatter = logging.Formatter(log_format)
+    fh.setFormatter(formatter)
+
     if log_level:
         fh.setLevel(log_level)
     else:
@@ -106,12 +112,13 @@ def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log
     return fh
 
 
-def stop_handler(handler):
+def remove_handler(handler):
     """ Remore any handler from logs
     
     :param handler: 
     :return: 
     """
+    log.debug("Removing log handler {} ".format(handler))
     log.removeHandler(handler)
 
 # define class color
@@ -125,10 +132,9 @@ class bcolors(object):
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
-    @property
-    def colors(self):
-        return self.__dict__.values()
-
+    @classmethod
+    def colors(cls):
+        return [v for k,v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
 #=======================================================================================================================
 # add suffix

@@ -2052,6 +2052,7 @@ def clean():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     parser = get_parser()
 
     arguments = parser.parse(sys.argv[1:])

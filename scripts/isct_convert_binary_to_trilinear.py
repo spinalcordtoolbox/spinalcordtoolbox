@@ -179,6 +179,7 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     param_default = Param()

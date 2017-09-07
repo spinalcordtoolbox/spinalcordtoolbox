@@ -168,4 +168,5 @@ def download_data(url, verbose):
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

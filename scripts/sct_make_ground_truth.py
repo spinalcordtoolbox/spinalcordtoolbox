@@ -718,5 +718,6 @@ def check_labels(fname_landmarks):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

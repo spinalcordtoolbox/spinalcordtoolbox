@@ -924,5 +924,6 @@ def label_discs(fname_seg_labeled, verbose=1):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

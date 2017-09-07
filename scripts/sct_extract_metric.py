@@ -1263,6 +1263,7 @@ def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_l
 # Start program
 # =======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
 
     param_default = Param()
 

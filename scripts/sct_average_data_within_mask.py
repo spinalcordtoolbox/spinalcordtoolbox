@@ -176,4 +176,5 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

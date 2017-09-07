@@ -15,8 +15,8 @@
 from msct_image import Image
 from sct_utils import run, printv, extract_fname
 from scipy.misc import toimage
-# from sct_utils import tmp_create, tmp_copy_nifti
-# from os import chdir
+
+import sct_utils as sct
 
 
 class WarpingField(Image):
@@ -40,6 +40,7 @@ class WarpingField(Image):
             raise StopIteration()
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     from msct_parser import Parser
     import sys
 
