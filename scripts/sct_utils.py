@@ -82,7 +82,7 @@ class NoColorFormatter(logging.Formatter):
     """
     def format(self, record):
         for color in bcolors.colors():
-            record.msg = record.msg.remove(color)
+            record.msg = record.msg.replace(color, "")
         return super(NoColorFormatter, self).format(record)
 
 
