@@ -46,6 +46,7 @@ from msct_parser import Parser
 
 
 class Param:
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -61,10 +62,11 @@ class Param:
         self.verbose = 1
         self.plot_graph = 0
         self.suffix = '_moco'
-        self.param = ['2',  # degree of polynomial function for moco
-                      '2',  # smoothing sigma in mm
-                      '1',  # gradientStep
-                      'MI']  # metric: MI,MeanSquares
+        self.poly = '2'  # degree of polynomial function for moco
+        self.smooth = '2'  # smoothing sigma in mm
+        self.gradStep = '1'  # gradientStep for searching algorithm
+        self.metric = 'MI'  # metric: MI, MeanSquares, CC
+        self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
         self.run_eddy = 0
         self.mat_eddy = ''
@@ -74,15 +76,25 @@ class Param:
         self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
 
+    # update constructor with user's parameters
+    def update(self, param_user):
+        # list_objects = param_user.split(',')
+        for object in param_user:
+            if len(object) < 2:
+                sct.printv('ERROR: Wrong usage.', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], obj[1])
+
 
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
 
     # initialization
     start_time = time.time()
     path_out = '.'
+    param = Param()
 
     # reducing the number of CPU used for moco (see issue #201)
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -90,6 +102,11 @@ def main():
     # get path of the toolbox
     status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+
+    # Get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
@@ -105,7 +122,7 @@ def main():
     if '-m' in arguments:
         param.fname_mask = arguments['-m']
     if '-param' in arguments:
-        param.param = arguments['-param']
+        param.update(arguments['-param'])
     if '-thr' in arguments:
         param.otsu = arguments['-thr']
     if '-x' in arguments:
@@ -407,6 +424,8 @@ def dmri_moco(param):
     sct.run(cmd, param.verbose)
 
 
+# PARSER
+# ==========================================================================================
 def get_parser():
     # parser initialisation
     parser = Parser(__file__)
@@ -465,25 +484,23 @@ def get_parser():
                       example=['dmri_mask.nii.gz'])
     parser.add_option(name='-param',
                       type_value=[[','], 'str'],
-                      description='Parameters for registration.'
-                                  'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.\n'
-                                  '1) degree of polynomial function used for regularization along Z. For no regularization set to 0.\n'
-                                  '2) smoothing kernel size (in mm).\n'
-                                  '3) gradient step. The higher the more deformation allowed.\n'
-                                  '4) metric: {MI,MeanSquares}. If you find very large deformations, switching to MeanSquares can help.\n',
-                      default_value=param_default.param,
-                      mandatory=False,
-                      example=['2,1,0.5,MeanSquares'])
-    parser.add_option(name='-p',
-                      type_value=None,
-                      description='Parameters for registration.'
-                                  'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.'
-                                  '1) degree of polynomial function used for regularization along Z. For no regularization set to 0.'
-                                  '2) smoothing kernel size (in mm).'
-                                  '3) gradient step. The higher the more deformation allowed.'
-                                  '4) metric: {MI,MeanSquares}. If you find very large deformations, switching to MeanSquares can help.',
-                      mandatory=False,
-                      deprecated_by='-param')
+                      description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+                                  "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + str(param_default.poly) + ".\n"
+                                  "smooth [mm]: Smoothing kernel. Default=" + str(param_default.smooth) + ".\n"
+                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + str(param_default.metric) + ".\n"
+                                  "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + str(param_default.gradStep) + ".\n"
+                                  "sample [0-1]: Sampling rate used for registration metric. Default=" + str(param_default.sampling) + ".\n",
+                      mandatory=False)
+    # parser.add_option(name='-p',
+    #                   type_value=None,
+    #                   description='Parameters for registration.'
+    #                               'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.'
+    #                               '1) degree of polynomial function used for regularization along Z. For no regularization set to 0.'
+    #                               '2) smoothing kernel size (in mm).'
+    #                               '3) gradient step. The higher the more deformation allowed.'
+    #                               '4) metric: {MI,MeanSquares}. If you find very large deformations, switching to MeanSquares can help.',
+    #                   mandatory=False,
+    #                   deprecated_by='-param')
     parser.add_option(name='-thr',
                       type_value='float',
                       description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
@@ -532,6 +549,6 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = Param()
-    param_default = Param()
+    # param = Param()
+    # param_default = Param()
     main()
