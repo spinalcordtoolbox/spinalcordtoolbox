@@ -341,7 +341,6 @@ def dmri_moco(param):
     file_dwi = 'dwi'
     mat_final = 'mat_final/'
     file_dwi_group = 'dwi_averaged_groups'  # no extension
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     ext_mat = 'Warp.nii.gz'  # warping field
 
     # Get dimensions of data
@@ -369,9 +368,6 @@ def dmri_moco(param):
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', param.verbose)
-    # cmd = fsloutput + 'fslmerge -t ' + file_b0
-    # for it in range(nb_b0):
-    #     cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
     im_b0_list = []
     for it in range(nb_b0):
         im_b0_list.append(im_data_split_list[index_b0[it]])
@@ -384,10 +380,6 @@ def dmri_moco(param):
     sct.printv('\nAverage b=0...', param.verbose)
     file_b0_mean = file_b0 + '_mean'
     sct.run('sct_maths -i ' + file_b0 + ext_data + ' -o ' + file_b0_mean + ext_data + ' -mean t', param.verbose)
-    # if not average_data_across_dimension(file_b0+'.nii', file_b0_mean+'.nii', 3):
-    #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
-    # cmd = fsloutput + 'fslmaths ' + file_b0 + ' -Tmean ' + file_b0_mean
-    # status, output = sct.run(cmd, param.verbose)
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi / param.group_size))
@@ -437,9 +429,6 @@ def dmri_moco(param):
     im_dw_out = concat_data(im_dw_list, 3)
     im_dw_out.setFileName(file_dwi_group + ext_data)
     im_dw_out.save()
-    # cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
-    # for iGroup in range(nb_groups):
-    #     cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)
 
     # Average DW Images
     # TODO: USEFULL ???

@@ -50,10 +50,11 @@ def moco(param):
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  Input file ............' + file_data, param.verbose)
     sct.printv('  Reference file ........' + file_target, param.verbose)
-    sct.printv('  Polynomial degree .....' + param.param[0], param.verbose)
-    sct.printv('  Smoothing kernel ......' + param.param[1], param.verbose)
-    sct.printv('  Gradient step .........' + param.param[2], param.verbose)
-    sct.printv('  Metric ................' + param.param[3], param.verbose)
+    sct.printv('  Polynomial degree .....' + param.poly, param.verbose)
+    sct.printv('  Smoothing kernel ......' + param.smooth, param.verbose)
+    sct.printv('  Gradient step .........' + param.gradStep, param.verbose)
+    sct.printv('  Metric ................' + param.metric, param.verbose)
+    sct.printv('  Sampling ..............' + param.sampling, param.verbose)
     sct.printv('  Todo ..................' + todo, param.verbose)
     sct.printv('  Mask  .................' + param.fname_mask, param.verbose)
     sct.printv('  Output mat folder .....' + folder_mat, param.verbose)
@@ -161,12 +162,12 @@ def register(param, file_src, file_dest, file_mat, file_out):
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
         cmd = 'isct_antsSliceRegularizedRegistration' \
-              ' -p ' + param.param[0] + \
-              ' --transform Translation[' + param.param[2] + ']' \
-              ' --metric ' + param.param[3] + '[' + file_dest + '.nii, ' + file_src + '.nii, 1, ' + metric_radius + ', Regular, 0.2]' \
+              ' -p ' + param.poly + \
+              ' --transform Translation[' + param.gradStep + ']' \
+              ' --metric ' + param.metric + '[' + file_dest + '.nii, ' + file_src + '.nii, 1, ' + metric_radius + ', Regular, ' + param.sampling + ']' \
               ' --iterations 5' \
               ' --shrinkFactors 1' \
-              ' --smoothingSigmas ' + param.param[1] + \
+              ' --smoothingSigmas ' + param.smooth + \
               ' --output [' + file_mat + ',' + file_out + '.nii]' \
               + sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
         if not param.fname_mask == '':
