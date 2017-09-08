@@ -278,8 +278,9 @@ def main(args=None):
                 im.setFileName(fname_out[i])
                 im.save()
 
-        printv('Created file(s):\n--> ' + str(fname_out) + '\n', verbose, 'info')
-        # printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
+        # To view results
+        printv('\nFinished. To view results, type:', param.verbose)
+        printv('fslview ' + str(fname_out) + ' &\n', param.verbose, 'info')
     elif "-getorient" in arguments:
         print(orient)
     elif '-display-warp' in arguments:
