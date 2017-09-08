@@ -196,13 +196,9 @@ def main(args=None):
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, path_tmp + 'fmri.nii')
-    # sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
-    #
+
     # go to tmp folder
     os.chdir(path_tmp)
-    #
-    # # convert fmri to nii format
-    # convert('fmri'+ext_data, 'fmri.nii')
 
     # run moco
     fmri_moco(param)

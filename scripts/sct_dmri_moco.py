@@ -271,16 +271,13 @@ def main(args=None):
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct.run('cp ' + param.fname_data + ' ' + path_tmp + dmri_name + ext_data, param.verbose)
+    convert(param.fname_data, path_tmp + dmri_name + ext)
     sct.run('cp ' + param.fname_bvecs + ' ' + path_tmp + bvecs_fname, param.verbose)
     if param.fname_mask != '':
         sct.run('cp ' + param.fname_mask + ' ' + path_tmp + mask_name + ext_mask, param.verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
-
-    # convert dmri to nii format
-    convert(dmri_name + ext_data, dmri_name + ext)
 
     # update field in param (because used later).
     # TODO: make this cleaner...
