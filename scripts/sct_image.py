@@ -204,12 +204,12 @@ def main(args=None):
     elif '-keep-vol' in arguments:
         index_vol = arguments['-remove-vol']
         im_in = Image(fname_in[0])
-        im_out = remove_vol(im_in, index_vol, todo='keep')
+        im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
     elif '-remove-vol' in arguments:
         index_vol = arguments['-remove-vol']
         im_in = Image(fname_in[0])
-        im_out = remove_vol(im_in, index_vol, todo='remove')
+        im_out = [remove_vol(im_in, index_vol, todo='remove')]
 
     elif '-type' in arguments:
         output_type = arguments['-type']
