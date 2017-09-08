@@ -41,7 +41,7 @@ def get_parser():
     parser.add_option(name="-o",
                       type_value='file_output',
                       description='Output file.',
-                      mandatory=False,
+                      mandatory=True,
                       example='data_pad.nii.gz')
 
     parser.usage.addSection('\nBasic image operations:')
