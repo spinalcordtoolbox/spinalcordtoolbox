@@ -366,11 +366,11 @@ def concat_data(fname_in_list, dim, pixdim=None):
     data_concat_list = []
 
     # check if shape of first image is smaller than asked dim to concatenate along
-    data0 = Image(fname_in_list[0]).data
-    if len(data0.shape) <= dim:
-        expand_dim = True
-    else:
-        expand_dim = False
+    # data0 = Image(fname_in_list[0]).data
+    # if len(data0.shape) <= dim:
+    #     expand_dim = True
+    # else:
+    #     expand_dim = False
 
     for i, fname in enumerate(fname_in_list):
         # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
@@ -378,7 +378,8 @@ def concat_data(fname_in_list, dim, pixdim=None):
             data_concat_list.append(concatenate(dat_list, axis=dim))
             im = Image(fname)
             dat = im.data
-            if expand_dim:
+            # if image shape is smaller than asked dim, then expand dim
+            if len(dat.shape) <= dim:
                 dat = expand_dims(dat, dim)
             dat_list = [dat]
             del im
@@ -386,7 +387,8 @@ def concat_data(fname_in_list, dim, pixdim=None):
         else:
             im = Image(fname)
             dat = im.data
-            if expand_dim:
+            # if image shape is smaller than asked dim, then expand dim
+            if len(dat.shape) <= dim:
                 dat = expand_dims(dat, dim)
             dat_list.append(dat)
             del im
