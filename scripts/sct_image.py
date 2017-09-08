@@ -444,7 +444,7 @@ def remove_vol(im_in, index_vol_user, todo):
     nt = data.shape[3]
     # define index list of volumes to keep/remove
     if todo == 'remove':
-        index_vol = [i for i in range(0, 13) if not i in index_vol_user]
+        index_vol = [i for i in range(0, nt) if not i in index_vol_user]
     elif todo == 'keep':
         index_vol = index_vol_user
     else:
