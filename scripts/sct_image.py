@@ -70,6 +70,16 @@ def get_parser():
                       description='Concatenate data along the specified dimension',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
+    parser.add_option(name='-remove-vol',
+                      type_value=[[','], 'int'],
+                      description='Remove specific volumes from a 4d volume. Separate with ","',
+                      mandatory=False,
+                      example='0,5,10')
+    parser.add_option(name='-keep-vol',
+                      type_value=[[','], 'int'],
+                      description='Keep specific volumes from a 4d volume (remove others). Separate with ","',
+                      mandatory=False,
+                      example='1,2,3,11')
     parser.add_option(name='-type',
                       type_value='multiple_choice',
                       description='Change file type',
@@ -189,6 +199,17 @@ def main(args=None):
         assert dim in dim_list
         dim = dim_list.index(dim)
         im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
+
+
+    elif '-keep-vol' in arguments:
+        index_vol = arguments['-remove-vol']
+        im_in = Image(fname_in[0])
+        im_out = remove_vol(im_in, index_vol, todo='keep')
+
+    elif '-remove-vol' in arguments:
+        index_vol = arguments['-remove-vol']
+        im_in = Image(fname_in[0])
+        im_out = remove_vol(im_in, index_vol, todo='remove')
 
     elif '-type' in arguments:
         output_type = arguments['-type']
@@ -406,6 +427,32 @@ def concat_data(fname_in_list, dim, pixdim=None):
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
 
+    return im_out
+
+
+def remove_vol(im_in, index_vol_user, todo):
+    """
+    Remove specific volumes from 4D data.
+    :param im_in: [str] input image.
+    :param index_vol: [int] list of indices corresponding to volumes to remove
+    :param todo: {keep, remove} what to do
+    :return: 4d volume
+    """
+    # get data
+    data = im_in.data
+    nt = data.shape[3]
+    # define index list of volumes to keep/remove
+    if todo == 'remove':
+        index_vol = [i for i in range(0, 13) if not i in index_vol_user]
+    elif todo == 'keep':
+        index_vol = index_vol_user
+    else:
+        printv('ERROR: wrong assignment of variable "todo"', 1, 'error')
+    # define new 4d matrix with selected volumes
+    data_out = data[:, :, :, index_vol]
+    # save matrix inside new Image object
+    im_out = im_in.copy()
+    im_out.data = data_out
     return im_out
 
 
