@@ -180,6 +180,9 @@ class BaseDialog(QtGui.QDialog):
         except InvalidActionWarning as err:
             self.update_warning(err.message)
 
+    def on_help(self):
+        webbrowser.open(self._help_web_address, new=0, autoraise=True)
+
     def show(self):
         """Override the base class show to fix a bug found in MAC"""
         super(BaseDialog, self).show()
@@ -205,9 +208,6 @@ class BaseDialog(QtGui.QDialog):
         """
         self.lb_warning.setText(msg)
         self.lb_status.setText('')
-
-    def on_help(self):
-        webbrowser.open(self._help_web_address, new=0, autoraise=True)
 
 
 class BaseController(object):

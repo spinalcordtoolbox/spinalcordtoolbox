@@ -102,6 +102,12 @@ class GroundTruth(base.BaseDialog):
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
             self.update_warning(warn.message)
 
+    def on_undo(self):
+        super(GroundTruth, self).on_undo()
+        self.main_canvas.refresh()
+        self.sagittal_canvas.refresh()
+        self.labels.refresh()
+
 
 if __name__ == '__main__':
     import os
