@@ -149,27 +149,12 @@ def get_parser():
     parser.add_option(name='-param',
                       type_value=[[','], 'str'],
                       description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-                                  "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + str(
-                          param_default.poly) + ".\n"
-                                                "smooth [mm]: Smoothing kernel. Default=" + str(
-                          param_default.smooth) + ".\n"
-                                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + str(
-                          param_default.metric) + ".\n"
-                                                  "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + str(
-                          param_default.gradStep) + ".\n"
-                                                    "sample [0-1]: Sampling rate used for registration metric. Default=" + str(
-                          param_default.sampling) + ".\n",
+                                  "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + param_default.poly + ".\n"
+                                                "smooth [mm]: Smoothing kernel. Default=" + param_default.smooth + ".\n"
+                                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
+                                                  "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
+                                                    "sample [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n",
                       mandatory=False)
-    # parser.add_option(name='-p',
-    #                   type_value=None,
-    #                   description='Parameters for registration.'
-    #                               'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.'
-    #                               '1) degree of polynomial function used for regularization along Z. For no regularization set to 0.'
-    #                               '2) smoothing kernel size (in mm).'
-    #                               '3) gradient step. The higher the more deformation allowed.'
-    #                               '4) metric: {MI,MeanSquares}. If you find very large deformations, switching to MeanSquares can help.',
-    #                   mandatory=False,
-    #                   deprecated_by='-param')
     parser.add_option(name='-thr',
                       type_value='float',
                       description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
@@ -227,7 +212,7 @@ def main(args=None):
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
     # get path of the toolbox
-    status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    # status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # check user arguments
     if not args:
