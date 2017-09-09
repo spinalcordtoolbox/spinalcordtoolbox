@@ -18,6 +18,7 @@ import os
 import shutil
 import time
 import sct_utils as sct
+import sct_label_utils
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
@@ -281,7 +282,11 @@ def main(args=None):
 
     # Generate labels from template vertebral labeling
     sct.printv('\nGenerate labels from template vertebral labeling', verbose)
-    sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
+    sct_label_utils.main(args=[
+        '-i', fname_template_vertebral_labeling,
+        '-vert-body', '0',
+        '-o', ftmp_template_label])
+    # sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
 
     # check if provided labels are available in the template
     sct.printv('\nCheck if provided labels are available in the template', verbose)
