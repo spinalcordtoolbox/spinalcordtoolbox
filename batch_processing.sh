@@ -10,7 +10,7 @@
 # To prevent downloading sct_example_data and run from local folder, run:
 #   ./batch_processing.sh -nodownload
 #
-# tested with Spinal Cord Toolbox (v3.0.8)
+# Tested with Spinal Cord Toolbox (v3.0.8)
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
