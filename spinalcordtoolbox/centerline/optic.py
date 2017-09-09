@@ -3,6 +3,8 @@ import shutil
 
 import nibabel as nib
 
+import numpy as np
+
 import sct_utils as sct
 from sct_image import orientation
 from msct_image import Image
@@ -90,10 +92,19 @@ def detect_centerline(image_fname, contrast_type,
     temp_folder.copy_from(image_fname)
     temp_folder.chdir()
 
+    #: for images with float32 and large dynamic, a scaling is required before conversion to int16
+    if image_input.hdr.get_data_dtype() == 'float32' and np.nanmax(image_input.data) > 10000:
+        image_scaled_filename = sct.add_suffix(file_data + ext_data, "_scaled")
+        cmd_scaled = 'sct_maths -i "%s" -o "%s" -div 10000 -v 0' % \
+               (file_data + ext_data, image_scaled_filename)
+        sct.run(cmd_scaled, verbose=0)
+    else:
+        image_scaled_filename = file_data + ext_data
+
     # convert image data type to int16, as required by opencv (backend in OptiC)
     image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
     cmd_type = 'sct_image -i "%s" -o "%s" -type int16 -v 0' % \
-               (file_data + ext_data, image_int_filename)
+               (image_scaled_filename, image_int_filename)
     sct.run(cmd_type, verbose=0)
 
     # reorient the input image to RPI + convert to .nii
