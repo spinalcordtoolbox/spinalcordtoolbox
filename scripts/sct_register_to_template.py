@@ -80,7 +80,13 @@ def get_parser():
     parser.add_option(name="-l",
                       type_value="file",
                       description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
-                      mandatory=True,
+                      mandatory=False,
+                      default_value='',
+                      example="anat_labels.nii.gz")
+    parser.add_option(name="-ldisc",
+                      type_value="file",
+                      description="Labels centered at disks instead of mid-vertebral bodies. Several labels are possible (minimum 1). E.g.: Value=3 corresponds to C2-C3 disc. If only one label is used, no Z-scaling is performed. If more than 2 labels are used, then non-linear Z-scaling is performed (NOT IMPLEMENTED YET-- ADD LINK TO PAPER BEN).",
+                      mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ofolder",
@@ -147,18 +153,29 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main():
-    parser = get_parser()
+def main(args=None):
+
+    # initializations
     param = Param()
 
-    args = sys.argv[1:]
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
 
+
+    # Get parser info
+    parser = get_parser()
     arguments = parser.parse(args)
-
-    # get arguments
     fname_data = arguments['-i']
     fname_seg = arguments['-s']
-    fname_landmarks = arguments['-l']
+    if '-l' in arguments:
+        fname_landmarks = arguments['-l']
+        label_type = 'body'
+    elif '-ldisc' in arguments:
+        fname_landmarks = arguments['-ldisc']
+        label_type = 'disc'
+    else:
+        sct.printv('ERROR: Labels should be provided.', 1, 'error')
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
     else:
@@ -237,7 +254,7 @@ def main():
     #     sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
 
     # check input labels
-    labels = check_labels(fname_landmarks)
+    labels = check_labels(fname_landmarks, label_type=label_type)
 
     # create temporary folder
     path_tmp = sct.tmp_create(verbose=verbose)
@@ -609,13 +626,13 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     sct.run('sct_label_utils -i ' + fname_dest + ' -create ' + label_new_list + ' -v 1 -o ' + fname_output)
 
 
-def check_labels(fname_landmarks):
+def check_labels(fname_landmarks, label_type='body'):
     """
     Make sure input labels are consistent
     Parameters
     ----------
     fname_landmarks: file name of input labels
-
+    label_type: 'body', 'disc'
     Returns
     -------
     none
@@ -626,15 +643,18 @@ def check_labels(fname_landmarks):
     # -> all labels must be different
     labels = image_label.getNonZeroCoordinates(sorting='value')
     # check if there is two labels
-    if not len(labels) == 2:
+    if label_type=='body' and not len(labels) == 2:
         sct.printv('ERROR: Label file has ' + str(len(labels)) + ' label(s). It must contain exactly two labels.', 1, 'error')
-    # check if the two labels are integer
+    # check if labels are integer
     for label in labels:
         if not int(label.value) == label.value:
             sct.printv('ERROR: Label should be integer.', 1, 'error')
-    # check if the two labels are different
-    if labels[0].value == labels[1].value:
-        sct.printv('ERROR: The two labels must be different.', 1, 'error')
+    # check if there are duplicates in label values
+    n_labels = len(labels)
+    list_values = [labels[i].value for i in xrange(0,n_labels)]
+    list_duplicates = [x for x in list_values if list_values.count(x) > 1]
+    if not list_duplicates == []:
+        sct.printv('ERROR: Found two labels with same value.', 1, 'error')
     return labels
 
 
