@@ -299,6 +299,7 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def cubic_to_point(self):
         """
         Calculate the center of mass of each group of labels and returns a file of same size with only a
@@ -333,6 +334,7 @@ class ProcessLabels(object):
 
         return output_image
 
+
     def increment_z_inverse(self):
         """
         Take all non-zero values, sort them along the inverse z direction, and attributes the values 1,
@@ -347,6 +349,7 @@ class ProcessLabels(object):
             image_output.data[int(coord.x), int(coord.y), int(coord.z)] = i + 1
 
         return image_output
+
 
     def labelize_from_disks(self):
         """
@@ -368,6 +371,7 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def label_vertebrae(self, levels_user=None):
         """
         Find the center of mass of vertebral levels specified by the user.
@@ -388,6 +392,7 @@ class ProcessLabels(object):
                 image_cubic2point.data[int(list_coordinates[i_label].x), int(list_coordinates[i_label].y), int(list_coordinates[i_label].z)] = 0
         # list all labels
         return image_cubic2point
+
 
     # FUNCTION BELOW REMOVED BY JULIEN ON 2016-07-04 BECAUSE SEEMS NOT TO BE USED (AND DUPLICATION WITH ABOVE)
     # def label_vertebrae_from_disks(self, levels_user):
@@ -412,7 +417,7 @@ class ProcessLabels(object):
     #
     #     return image_cubic2point
 
-    # BELOW: UNFINISHED BUSINESS (JULIEN)
+
     # def label_disc(self, levels_user=None):
     #     """
     #     Find the edge of vertebral labeling file and assign value corresponding to middle coordinate between two levels.
