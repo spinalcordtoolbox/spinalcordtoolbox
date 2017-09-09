@@ -10,7 +10,7 @@
 # To prevent downloading sct_example_data and run from local folder, run:
 #   ./batch_processing.sh -nodownload
 #
-# tested with Spinal Cord Toolbox (jca-20170421-batchproc/7aeef321bd0b4ffed15e58f2b7f5a8b7d79c7e64)
+# tested with Spinal Cord Toolbox (v3.0.8)
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
@@ -28,6 +28,12 @@ else
   sct_download_data -d sct_example_data
   # go in folder
   cd sct_example_data
+fi
+
+# Remove QC folder
+if [ -d ~/qc_batch_processing ]; then
+  echo "Removing ~/qc_batch_processing folder folder."
+  rm -rf ~/qc_batch_processing
 fi
 
 # display starting time:
