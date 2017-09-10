@@ -19,6 +19,7 @@ import shutil
 import time
 import sct_utils as sct
 import sct_label_utils
+import sct_convert
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
@@ -226,6 +227,7 @@ def main(args=None):
     fname_template = path_template + 'template/' + file_template
     fname_template_vertebral_labeling = path_template + 'template/' + file_template_vertebral_labeling
     fname_template_seg = path_template + 'template/' + file_template_seg
+    fname_template_disc_labeling = path_template + 'template/' + 'PAM50_label_disc.nii.gz'
 
     # check file existence
     # TODO: no need to do that!
@@ -267,6 +269,7 @@ def main(args=None):
     ftmp_template = 'template.nii'
     ftmp_template_seg = 'template_seg.nii.gz'
     ftmp_template_label = 'template_label.nii.gz'
+    # ftmp_template_label_disc = 'template_label_disc.nii.gz'
 
     # copy files to temporary folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -275,17 +278,17 @@ def main(args=None):
     sct.run('sct_convert -i ' + fname_landmarks + ' -o ' + path_tmp + ftmp_label)
     sct.run('sct_convert -i ' + fname_template + ' -o ' + path_tmp + ftmp_template)
     sct.run('sct_convert -i ' + fname_template_seg + ' -o ' + path_tmp + ftmp_template_seg)
+    if label_type == 'disc':
+        sct_convert.main(args=['-i', fname_template_disc_labeling, '-o', path_tmp + ftmp_template_label])
     # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Generate labels from template vertebral labeling
-    sct.printv('\nGenerate labels from template vertebral labeling', verbose)
-    sct_label_utils.main(args=[
-        '-i', fname_template_vertebral_labeling,
-        '-vert-body', '0',
-        '-o', ftmp_template_label])
+    if label_type == 'body':
+        sct.printv('\nGenerate labels from template vertebral labeling', verbose)
+        sct_label_utils.main(args=['-i', fname_template_vertebral_labeling, '-vert-body', '0', '-o', ftmp_template_label])
     # sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
 
     # check if provided labels are available in the template
@@ -296,6 +299,12 @@ def main(args=None):
         sct.printv('ERROR: Wrong landmarks input. Labels must have correspondence in template space. \nLabel max '
                    'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
                    str(labels_template[-1].value), verbose, 'error')
+
+    # if only one label is present, force affine transformation to be Tx,Ty,Tz only (no scaling)
+    if len(labels) == 1:
+        paramreg.steps['0'].dof = 'Tx_Ty_Tz'
+        sct.printv('WARNING: Only one label is present. Forcing initial transformation to: ' + paramreg.steps['0'].dof,
+                   1, 'warning')
 
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
