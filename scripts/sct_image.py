@@ -28,8 +28,8 @@ class Param:
 
 
 def get_parser():
-    param = Param()
-
+    # initialize default param
+    param_default = Param()
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Perform manipulations on images (e.g., pad, change space, split along dimension). Inputs can be a number, a 4d image, or several 3d images separated with ","')
@@ -70,6 +70,16 @@ def get_parser():
                       description='Concatenate data along the specified dimension',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
+    parser.add_option(name='-remove-vol',
+                      type_value=[[','], 'int'],
+                      description='Remove specific volumes from a 4d volume. Separate with ","',
+                      mandatory=False,
+                      example='0,5,10')
+    parser.add_option(name='-keep-vol',
+                      type_value=[[','], 'int'],
+                      description='Keep specific volumes from a 4d volume (remove others). Separate with ","',
+                      mandatory=False,
+                      example='1,2,3,11')
     parser.add_option(name='-type',
                       type_value='multiple_choice',
                       description='Change file type',
@@ -109,19 +119,21 @@ def get_parser():
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
                       mandatory=False,
-                      default_value=param.verbose,
+                      default_value=param_default.verbose,
                       example=['0', '1', '2'])
     return parser
 
 
 def main(args=None):
+
+    # initializations
+    output_type = ''
+    param = Param()
     dim_list = ['x', 'y', 'z', 't']
 
+    # check user arguments
     if not args:
         args = sys.argv[1:]
-
-    # initialization
-    output_type = ''
 
     # Get parser info
     parser = get_parser()
@@ -190,6 +202,17 @@ def main(args=None):
         dim = dim_list.index(dim)
         im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
 
+
+    elif '-keep-vol' in arguments:
+        index_vol = arguments['-remove-vol']
+        im_in = Image(fname_in[0])
+        im_out = [remove_vol(im_in, index_vol, todo='keep')]
+
+    elif '-remove-vol' in arguments:
+        index_vol = arguments['-remove-vol']
+        im_in = Image(fname_in[0])
+        im_out = [remove_vol(im_in, index_vol, todo='remove')]
+
     elif '-type' in arguments:
         output_type = arguments['-type']
         im_in = Image(fname_in[0])
@@ -257,8 +280,9 @@ def main(args=None):
                 im.setFileName(fname_out[i])
                 im.save()
 
-        printv('Created file(s):\n--> ' + str(fname_out) + '\n', verbose, 'info')
-        # printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
+        # To view results
+        printv('\nFinished. To view results, type:', param.verbose)
+        printv('fslview ' + str(fname_out) + ' &\n', param.verbose, 'info')
     elif "-getorient" in arguments:
         print(orient)
     elif '-display-warp' in arguments:
@@ -366,11 +390,11 @@ def concat_data(fname_in_list, dim, pixdim=None):
     data_concat_list = []
 
     # check if shape of first image is smaller than asked dim to concatenate along
-    data0 = Image(fname_in_list[0]).data
-    if len(data0.shape) <= dim:
-        expand_dim = True
-    else:
-        expand_dim = False
+    # data0 = Image(fname_in_list[0]).data
+    # if len(data0.shape) <= dim:
+    #     expand_dim = True
+    # else:
+    #     expand_dim = False
 
     for i, fname in enumerate(fname_in_list):
         # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
@@ -378,7 +402,8 @@ def concat_data(fname_in_list, dim, pixdim=None):
             data_concat_list.append(concatenate(dat_list, axis=dim))
             im = Image(fname)
             dat = im.data
-            if expand_dim:
+            # if image shape is smaller than asked dim, then expand dim
+            if len(dat.shape) <= dim:
                 dat = expand_dims(dat, dim)
             dat_list = [dat]
             del im
@@ -386,7 +411,8 @@ def concat_data(fname_in_list, dim, pixdim=None):
         else:
             im = Image(fname)
             dat = im.data
-            if expand_dim:
+            # if image shape is smaller than asked dim, then expand dim
+            if len(dat.shape) <= dim:
                 dat = expand_dims(dat, dim)
             dat_list.append(dat)
             del im
@@ -404,6 +430,32 @@ def concat_data(fname_in_list, dim, pixdim=None):
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
 
+    return im_out
+
+
+def remove_vol(im_in, index_vol_user, todo):
+    """
+    Remove specific volumes from 4D data.
+    :param im_in: [str] input image.
+    :param index_vol: [int] list of indices corresponding to volumes to remove
+    :param todo: {keep, remove} what to do
+    :return: 4d volume
+    """
+    # get data
+    data = im_in.data
+    nt = data.shape[3]
+    # define index list of volumes to keep/remove
+    if todo == 'remove':
+        index_vol = [i for i in range(0, nt) if not i in index_vol_user]
+    elif todo == 'keep':
+        index_vol = index_vol_user
+    else:
+        printv('ERROR: wrong assignment of variable "todo"', 1, 'error')
+    # define new 4d matrix with selected volumes
+    data_out = data[:, :, :, index_vol]
+    # save matrix inside new Image object
+    im_out = im_in.copy()
+    im_out.data = data_out
     return im_out
 
 
