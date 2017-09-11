@@ -10,7 +10,6 @@
 
 import sys
 import time
-
 import os
 from msct_parser import Parser
 
@@ -54,7 +53,8 @@ class param:
         self.remove_tmp_file = 0
         self.verbose = 1
         # self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
-        self.path_tmp = ""
+        self.path_tmp = ''
+        self.fname_log = ''
 
 
 # START MAIN
@@ -99,7 +99,7 @@ def main(args=None):
     functions = fill_functions()
     if function_to_test:
         if not function_to_test in functions:
-            sct.printv('Function "%s" is not part of the list of testing functions' % function_to_test, type='warning')
+            sct.printv('ERROR: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
         # loop across all functions and test them
         status = [test_function(f) for f in functions if function_to_test == f]
     else:
@@ -275,6 +275,47 @@ def test_function(script_name):
     # return
     return status
 
+
+# init_testing
+# ==========================================================================================
+def init_testing(file_testing='', params='', path_data=''):
+    """
+
+    Parameters
+    ----------
+    file_testing
+
+    Returns
+    -------
+    path_output [str]: path where to output testing data
+    """
+    from copy import deepcopy
+
+    # retrieve SCT function to be tested by removing prefix "test_"
+    script_tested = importlib.import_module(file_testing[5:])
+
+    # get parser information
+    parser = script_tested.get_parser()
+    dict_param = parser.parse(params.split(), check_file_exist=False)
+    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
+    param_with_path = parser.dictionary_to_string(dict_param_with_path)
+
+    import time, random
+    # retrieve subject name
+    subject_folder = sct.slash_at_the_end(path_data, 0).split('/')
+    subject_folder = subject_folder[-1]
+    # build path_output variable
+    path_output = sct.slash_at_the_end(script_tested + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
+    param_with_path += ' -ofolder ' + path_output
+    sct.create_folder(path_output)
+
+    # log file
+    import sys
+    fname_log = path_output + 'output.log'
+    stdout_log = file(fname_log, 'w')
+    # redirect to log file
+    stdout_orig = sys.stdout
+    sys.stdout = stdout_log
 
 def get_parser():
     # Initialize the parser
