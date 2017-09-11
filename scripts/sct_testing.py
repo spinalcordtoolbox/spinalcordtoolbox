@@ -366,7 +366,7 @@ def test_function(param_test):
     param_test.duration = time.time() - time_start
 
     # test integrity
-    param_test.output += '\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
+    param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
     try:
         param_test = module_testing.test_integrity(param_test)
     except:
