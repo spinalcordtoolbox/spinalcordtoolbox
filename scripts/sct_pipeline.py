@@ -249,8 +249,14 @@ def function_launcher(args):
     # append local script to PYTHONPATH for import
     sys.path.append('{}/testing'.format(os.getenv('SCT_DIR')))
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
+    # retrieve param class from sct_testing
+    import sct_testing
+    param_testing = sct_testing.Param()
+    param_testing.function_to_test = args[0]
+    param_testing.path_data = args[1]
+    param_testing.args = args[2]
     try:
-        output = script_to_be_run.test(*args[1:])
+        output = script_to_be_run.test(param_testing)
     except:
         import traceback
         print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
@@ -307,7 +313,8 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
-    # create datasets with parameters
+    # create datasets with parameters. Example of one entry below:
+    # ('sct_propseg', '/Users/julien/data/sct_test_function/200_005_s2/', '-i t2/t2.nii.gz -c t2')
     import itertools
     data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
