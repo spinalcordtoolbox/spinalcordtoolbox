@@ -256,16 +256,26 @@ def function_launcher(args):
     param_testing.path_data = args[1]
     param_testing.args = args[2]
     try:
-        output = script_to_be_run.test(param_testing)
+        param_testing = sct_testing.test_function(param_testing)
+        # param_testing = script_to_be_run.test(param_testing)
     except:
         import traceback
         print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
         # output = (1, 'ERROR: Function crashed', 'No result')
         from pandas import DataFrame
-        status_script = 1
-        output_script = 'ERROR: Function crashed.'
-        output = (status_script, output_script, DataFrame(data={'status': int(status_script), 'output': output_script}, index=['']))
-    return output
+        # TODO: CHECK IF ASSIGNING INDEX WITH SUBJECT IS NECESSARY
+        param_testing.results = DataFrame(index=[''], data={'status': int(1), 'output': 'ERROR: Function crashed.'})
+        # status_script = 1
+        # output_script = 'ERROR: Function crashed.'
+        # output = (status_script, output_script, DataFrame(data={'status': int(status_script), 'output': output_script}, index=['']))
+
+    # TODO: THE THING BELOW: IMPLEMENT INSIDE SCT_TESTING SUB-FUNCTION
+    # sys.stdout.close()
+    # sys.stdout = stdout_orig
+    # # write log file
+    # write_to_log_file(fname_log, output, mode='r+', prepend=True)
+
+    return param_testing.results
     # return script_to_be_run.test(*args[1:])
 
 

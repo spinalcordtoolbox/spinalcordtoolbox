@@ -12,6 +12,7 @@ import sys
 import time, random
 from copy import deepcopy
 import os
+from pandas import DataFrame
 from msct_parser import Parser
 
 # get path of the toolbox
@@ -56,6 +57,8 @@ class Param:
         # self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
         self.path_tmp = ''
         self.args = ''  # input arguments to the function
+        self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
+        self.output = ''  # output string coded into DataFrame
 
 
 # START MAIN
@@ -303,7 +306,7 @@ def init_testing(param_test):
     subject_folder = sct.slash_at_the_end(param_test.path_data, 0).split('/')
     subject_folder = subject_folder[-1]
     # build path_output variable
-    param_test.path_output = sct.slash_at_the_end(param_test.function_to_test + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
+    param_test.path_output = sct.slash_at_the_end(param_test.function_to_test + '_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
     param_test.param_with_path += ' -ofolder ' + param_test.path_output
     sct.create_folder(param_test.path_output)
 
@@ -312,7 +315,49 @@ def init_testing(param_test):
     stdout_log = file(param_test.fname_log, 'w')
     # redirect to log file
     param_test.stdout_orig = sys.stdout
-    sys.stdout = stdout_log
+    # sys.stdout = stdout_log
+
+    # initialize panda dataframe
+    param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(0), 'output': param_test.output})
+
+    # retrieve input file (will be used later for integrity testing)
+    if '-i' in dict_param:
+        param_test.fname_input = dict_param['-i']
+
+    # Extract contrast
+    if '-c' in dict_param:
+        param_test.contrast = dict_param['-c']
+
+    # Check if input files exist
+    if not (os.path.isfile(dict_param_with_path['-i'])):
+        status = 200
+        param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
+        write_to_log_file(param_test.fname_log, param_test.output, 'w')
+        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(0), 'output': param_test.output})
+        return param_test
+
+    # TODO: DO STUFF BELOW
+    # Check if ground truth files exist
+    # if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
+    #     status = 201
+    #     output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
+    #     write_to_log_file(fname_log, output, 'w')
+    #     return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+
+    # run command
+    cmd = param_test.function_to_test + param_test.param_with_path
+    param_test.output += \
+        '\n====================================================================================================\n'\
+        + cmd + \
+        '\n====================================================================================================\n\n'  # copy command
+    time_start = time.time()
+    try:
+        param_test.status, o = sct.run(cmd, 0)
+    except:
+        param_test.status, o = 1, 'ERROR: Function crashed!'
+    param_test.output += o
+    param_test.duration = time.time() - time_start
+
     return param_test
 
 
