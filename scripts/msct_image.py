@@ -330,7 +330,7 @@ class Image(object):
         min_in = np.nanmin(self.data)
         max_in = np.nanmax(self.data)
 
-        if rescale_intensity:
+        if rescale_intensity and type in ['int8', 'uint8', 'int16', 'uint16']:
             # get min/max from output type
             min_out = iinfo(type).min
             max_out = iinfo(type).max
