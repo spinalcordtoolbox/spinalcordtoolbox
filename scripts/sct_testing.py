@@ -59,6 +59,7 @@ class Param:
         self.args = ''  # input arguments to the function
         self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
         self.output = ''  # output string coded into DataFrame
+        self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
 
 
 # START MAIN
@@ -240,48 +241,48 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
 
 # test function
 # ==========================================================================================
-def test_function(function_to_test):
-    # if script_name == 'test_debug':
-    #     return test_debug()  # JULIEN
-    # else:
-    # build script name
-    fname_log = '../' + function_to_test + '.log'
-    tmp_script_name = function_to_test
-    result_folder = 'results_' + function_to_test
-
-    sct.create_folder(result_folder)
-    os.chdir(result_folder)
-
-    # display script name
-    print_line('Checking ' + function_to_test)
-    # import function as a module
-    script_tested = importlib.import_module('test_' + function_to_test)
-    # test function
-    result_test = script_tested.test(param.path_data)
-    # test functions can return 2 or 3 variables, depending if there is results.
-    # In this script, we look only at the first two variables.
-    status, output = result_test[0], result_test[1]
-    # write log file
-    write_to_log_file(fname_log, output, 'w')
-    # manage status
-    if status == 0:
-        print_ok()
-    else:
-        if status == 99:
-            print_warning()
-        else:
-            print_fail()
-        print output
-    # go back to parent folder
-    os.chdir('..')
-
-    # return
-    return status
+# def test_function(function_to_test):
+#     # if script_name == 'test_debug':
+#     #     return test_debug()  # JULIEN
+#     # else:
+#     # build script name
+#     fname_log = '../' + function_to_test + '.log'
+#     tmp_script_name = function_to_test
+#     result_folder = 'results_' + function_to_test
+#
+#     sct.create_folder(result_folder)
+#     os.chdir(result_folder)
+#
+#     # display script name
+#     print_line('Checking ' + function_to_test)
+#     # import function as a module
+#     script_tested = importlib.import_module('test_' + function_to_test)
+#     # test function
+#     result_test = script_tested.test(param.path_data)
+#     # test functions can return 2 or 3 variables, depending if there is results.
+#     # In this script, we look only at the first two variables.
+#     status, output = result_test[0], result_test[1]
+#     # write log file
+#     write_to_log_file(fname_log, output, 'w')
+#     # manage status
+#     if status == 0:
+#         print_ok()
+#     else:
+#         if status == 99:
+#             print_warning()
+#         else:
+#             print_fail()
+#         print output
+#     # go back to parent folder
+#     os.chdir('..')
+#
+#     # return
+#     return status
 
 
 # init_testing
 # ==========================================================================================
-def init_testing(param_test):
+def test_function(param_test):
     """
 
     Parameters
@@ -293,8 +294,12 @@ def init_testing(param_test):
     path_output [str]: path where to output testing data
     """
 
-    # load module of function to test
+    # load modules of function to test
     module_function_to_test = importlib.import_module(param_test.function_to_test)
+    module_testing = importlib.import_module('test_' + param_test.function_to_test)
+
+    # initialize testing parameters specific to this function
+    param_test = module_testing.init(param_test)
 
     # get parser information
     parser = module_function_to_test.get_parser()
@@ -315,14 +320,15 @@ def init_testing(param_test):
     stdout_log = file(param_test.fname_log, 'w')
     # redirect to log file
     param_test.stdout_orig = sys.stdout
-    # sys.stdout = stdout_log
+    if param_test.redirect_stdout:
+        sys.stdout = stdout_log
 
     # initialize panda dataframe
     param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(0), 'output': param_test.output})
 
     # retrieve input file (will be used later for integrity testing)
     if '-i' in dict_param:
-        param_test.fname_input = dict_param['-i']
+        param_test.file_input = dict_param['-i'].split('/')[1]
 
     # Extract contrast
     if '-c' in dict_param:
@@ -330,33 +336,51 @@ def init_testing(param_test):
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i'])):
-        status = 200
         param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(0), 'output': param_test.output})
+        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(200), 'output': param_test.output})
         return param_test
 
-    # TODO: DO STUFF BELOW
     # Check if ground truth files exist
-    # if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
-    #     status = 201
-    #     output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
-    #     write_to_log_file(fname_log, output, 'w')
-    #     return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
+    param_test.fname_groundtruth = param_test.path_data + param_test.contrast + '/' + sct.add_suffix(param_test.file_input, param_test.suffix_groundtruth)
+    if not os.path.isfile(param_test.fname_groundtruth):
+        param_test.output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + param_test.fname_groundtruth
+        write_to_log_file(param_test.fname_log, param_test.output, 'w')
+        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(201), 'output': param_test.output})
+        return param_test
 
     # run command
     cmd = param_test.function_to_test + param_test.param_with_path
-    param_test.output += \
-        '\n====================================================================================================\n'\
-        + cmd + \
-        '\n====================================================================================================\n\n'  # copy command
+    param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
         param_test.status, o = sct.run(cmd, 0)
     except:
-        param_test.status, o = 1, 'ERROR: Function crashed!'
+        param_test.output += 'ERROR: Function crashed!'
+        write_to_log_file(param_test.fname_log, param_test.output, 'w')
+        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(1), 'output': param_test.output})
+        return param_test
+
+
     param_test.output += o
     param_test.duration = time.time() - time_start
+
+    # test integrity
+    param_test.output += '\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
+    try:
+        param_test = module_testing.test_integrity(param_test)
+    except:
+        param_test.output += 'ERROR: Integrity testing crashed!'
+        write_to_log_file(param_test.fname_log, param_test.output, 'w')
+        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(2), 'output': param_test.output})
+        return param_test
+
+    # manage stdout
+    if param_test.redirect_stdout:
+        sys.stdout.close()
+        sys.stdout = param_test.fname_log.stdout_orig
+    # write log file
+    write_to_log_file(param_test.fname_log, param_test.fname_log.output, mode='r+', prepend=True)
 
     return param_test
 

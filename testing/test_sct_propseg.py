@@ -13,17 +13,26 @@
 
 import sct_utils as sct
 import commands
-from sct_testing import write_to_log_file, init_testing
+# from sct_testing import write_to_log_file, init_testing
 from msct_image import Image, compute_dice
 from pandas import DataFrame
 
 
 def init(param_test):
+    """
+    Initialize testing.
+    Parameters
+    ----------
+    param_test: Class defined in sct_testing.py
 
+    Returns
+    -------
+    param_test
+    """
     # initialization
     default_args = '-i t2/t2.nii.gz -c t2'  # default parameters
     param_test.dice_threshold = 0.9
-    # param.dict_result = {'status': param.status, 'output': param.status, 'dice_segmentation': float('nan'), 'duration [s]': 0}
+    param_test.suffix_groundtruth = '_seg_manual'  # file name suffix for ground truth (used for integrity testing)
 
     # check if isct_propseg compatibility
     # TODO: MAKE SURE THIS CASE WORKS AFTER MAJOR REFACTORING
@@ -38,41 +47,48 @@ def init(param_test):
     if not param_test.args:
         param_test.args = default_args
 
+    return param_test
     # initialize testing and run function
-    param_test = init_testing(param_test)
+    # param_test = init_testing(param_test)
 
 def test_integrity(param_test):
     """
-
+    Test integrity of function
     Parameters
     ----------
-    param_test
+    param_test: Class defined in sct_testing.py
 
     Returns
     -------
-
+    param_test
     """
-    # extract name of manual segmentation
-    # by convention, manual segmentation are called inputname_seg_manual.nii.gz where inputname is the filename
-    # of the input image
-    segmentation_filename = param_test.path_output + sct.add_suffix(param_test.fname_input, '_seg')
-    manual_segmentation_filename = param_test.path_data + param_test.contrast + '/' + sct.add_suffix(param_test.fname_input, '_seg_manual')
+    # initializations
     dice_segmentation = float('nan')
 
-    # if command ran without error, test integrity
-    if param_test.status == 0:
-        # compute dice coefficient between generated image and image from database
-        dice_segmentation = compute_dice(Image(segmentation_filename), Image(manual_segmentation_filename), mode='3d', zboundaries=False)
+    # extract name of output segmentation: data_seg.nii.gz
+    file_seg = param_test.path_output + sct.add_suffix(param_test.file_input, '_seg')
 
-        if dice_segmentation < param_test.dice_threshold:
-            param_test.status = 99
+    # open output segmentation
+    try:
+        im_seg = Image(file_seg)
+    except:
+        param_test.output += 'ERROR: Cannot open output segmentation: ' + segmentation_filename
+        return param_test
+
+    # open ground truth
+    try:
+        im_seg_manual = Image(param_test.fname_groundtruth)
+    except:
+        param_test.output += 'ERROR: Cannot open ground truth segmentation: ' + param_test.fname_groundtruth
+        return param_test
+
+    # compute dice coefficient between generated image and image from database
+    dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+
+    if dice_segmentation < param_test.dice_threshold:
+        param_test.status = 99
 
     # transform results into Pandas structure
     param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'dice_segmentation': dice_segmentation, 'duration [s]': param_test.duration})
 
     return param_test
-
-
-if __name__ == "__main__":
-    # call main function
-    test()

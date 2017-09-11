@@ -14,6 +14,7 @@
 #########################################################################################
 
 import os.path
+import sys
 import commands
 from msct_image import Image
 from sct_get_centerline import ind2sub
@@ -26,12 +27,13 @@ import sct_get_centerline
 
 def test(path_data='', parameters=''):
 
-    if not parameters:
-        parameters = '-i t2/t2.nii.gz -c t2 -p auto'
-
     # parameters
-    folder_data = 't2/'
-    file_data = ['t2.nii.gz', 't2_centerline_init.nii.gz', 't2_centerline_labels.nii.gz', 't2_seg_manual.nii.gz']
+    output = ''
+    # folder_data = 't2/'
+    # file_data = ['t2.nii.gz', 't2_centerline_init.nii.gz', 't2_centerline_labels.nii.gz', 't2_seg_manual.nii.gz']
+
+    if not parameters:
+        parameters = '-i t2/t2.nii.gz -c t2'
 
     parser = sct_get_centerline.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
@@ -39,11 +41,29 @@ def test(path_data='', parameters=''):
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
+    # log file
+    fname_log = path_output + 'output.log'
+    stdout_log = file(fname_log, 'w')
+    # redirect to log file
+    stdout_orig = sys.stdout
+    sys.stdout = stdout_log
+
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i'])):
         status = 200
-        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
+        output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
+        write_to_log_file(fname_log, output, 'w')
+        return status, output, DataFrame(
+            data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
+
+    # Check if ground truth files exist
+    if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
+        status = 201
+        output += '\nERROR: the file *_seg_manual.nii.gz does not exist in folder: ' + path_data
+        write_to_log_file(fname_log, output, 'w')
+        return status, output, DataFrame(
+            data = {'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index = [path_data])
+
 
     cmd = 'sct_get_centerline '+param_with_path
     status, output = sct.run(cmd, 0)
