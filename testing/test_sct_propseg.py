@@ -14,18 +14,19 @@
 import sct_utils as sct
 import commands
 import sct_propseg
-from sct_testing import write_to_log_file
+from sct_testing import write_to_log_file, init_testing
 from msct_parser import Parser
 from pandas import DataFrame
 import os.path
 import time, random
-from copy import deepcopy
 from msct_image import Image, compute_dice
 
 
-def test(path_data='', parameters=''):
+def test(param):
 
     # initialization
+    default_args = '-i t2/t2.nii.gz -c t2'  # default parameters
+    dice_threshold = 0.9
     verbose = 0
     output = ''
 
@@ -37,16 +38,12 @@ def test(path_data='', parameters=''):
         output += '\nERROR: isct_propseg does not seem to be compatible with your system or is no up-to-date... Please contact SCT administrators.'
         return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
 
-    # parameters
-    if not parameters:
-        parameters = '-i t2/t2.nii.gz -c t2'
+    # assign default params
+    if not param.args:
+        param.args = default_args
 
-    dice_threshold = 0.9
-
-    parser = sct_propseg.get_parser()
-    dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
-    param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    # initialize testing
+    param = init_testing(param)
 
     # Extract contrast
     contrast = ''
@@ -63,24 +60,6 @@ def test(path_data='', parameters=''):
         status = 1
         output += '\nERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
-
-    import time, random
-    subject_folder = path_data.split('/')
-    if subject_folder[-1] == '' and len(subject_folder) > 1:
-        subject_folder = subject_folder[-2]
-    else:
-        subject_folder = subject_folder[-1]
-    path_output = sct.slash_at_the_end('sct_propseg_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
-    param_with_path += ' -ofolder ' + path_output
-    sct.create_folder(path_output)
-
-    # log file
-    import sys
-    fname_log = path_output + 'output.log'
-    stdout_log = file(fname_log, 'w')
-    # redirect to log file
-    stdout_orig = sys.stdout
-    sys.stdout = stdout_log
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i'])):
