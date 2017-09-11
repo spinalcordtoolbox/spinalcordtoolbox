@@ -332,11 +332,11 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
     pool = Pool(nb_cpu)
 
     try:
-        compute_time = time()
+        # compute_time = time()
         async_results = pool.map_async(function_launcher, data_and_params)
         pool.close()
         pool.join()  # waiting for all the jobs to be done
-        compute_time = time() - compute_time
+        # compute_time = time() - compute_time
         all_results = async_results.get()
         results = process_results(all_results, list_subj, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
 
@@ -525,7 +525,7 @@ if __name__ == "__main__":
         results = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=None, verbose=1)
         # results = tests_ret['results']
         # compute_time = tests_ret['compute_time']
-        duration = time.time() - time_start
+        duration = time() - time_start
 
         # after testing, redirect to log file
         if create_log:
