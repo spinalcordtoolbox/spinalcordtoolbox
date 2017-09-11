@@ -59,7 +59,7 @@ class Param:
         self.args = ''  # input arguments to the function
         self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
         self.output = ''  # output string coded into DataFrame
-        self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
+        self.redirect_stdout = 1  # for debugging, set to 0. Otherwise set to 1.
 
 
 # START MAIN
