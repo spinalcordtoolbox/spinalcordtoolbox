@@ -230,7 +230,8 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
         # if prepend, read current file and then overwrite
         if prepend:
             f = open(fname_log, 'r')
-            string_to_append = '\n\nOUTPUT:\n--\n' + f.read()
+            # string_to_append = '\n\nOUTPUT:\n--\n' + f.read()
+            string_to_append = f.read()
             f.close()
         f = open(fname_log, mode)
     except Exception as ex:

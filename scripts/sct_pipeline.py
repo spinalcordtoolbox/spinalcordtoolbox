@@ -230,7 +230,7 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
 
 def process_results(results, subjects_name, function, folder_dataset, parameters):
     try:
-        results_dataframe = pd.concat([result[2] for result in results])
+        results_dataframe = pd.concat([result for result in results])
         results_dataframe.loc[:, 'subject'] = pd.Series(subjects_name, index=results_dataframe.index)
         results_dataframe.loc[:, 'script'] = pd.Series([function] * len(subjects_name), index=results_dataframe.index)
         results_dataframe.loc[:, 'dataset'] = pd.Series([folder_dataset] * len(subjects_name), index=results_dataframe.index)
@@ -354,9 +354,8 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
         pool.join()
         # raise Exception
         # sys.exit(2)
-
-    return {'results': results, "compute_time": compute_time}
-
+    # return {'results': results, "compute_time": compute_time}
+    return results
 
 def get_parser():
     # Initialize parser
@@ -473,7 +472,7 @@ if __name__ == "__main__":
     verbose = int(arguments["-v"])
 
     # start timer
-    start_time = time()
+    time_start = time()
     # create single time variable for output names
     output_time = strftime("%y%m%d%H%M%S")
 
@@ -523,9 +522,10 @@ if __name__ == "__main__":
             handle_log.pause()
 
         # run function
-        tests_ret = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=None, verbose=1)
-        results = tests_ret['results']
-        compute_time = tests_ret['compute_time']
+        results = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=None, verbose=1)
+        # results = tests_ret['results']
+        # compute_time = tests_ret['compute_time']
+        duration = time.time() - time_start
 
         # after testing, redirect to log file
         if create_log:
@@ -567,7 +567,7 @@ if __name__ == "__main__":
         # display general results
         print '\nGLOBAL RESULTS:'
 
-        print 'Duration: ' + str(int(round(compute_time))) + 's'
+        print 'Duration: ' + str(int(round(duration))) + 's'
         # display results
         print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
         print 'Crashed: ' + str(count_crashed) + '/' + str(count_ran)
