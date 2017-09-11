@@ -378,7 +378,7 @@ def test_function(param_test):
     # manage stdout
     if param_test.redirect_stdout:
         sys.stdout.close()
-        sys.stdout = param_test.fname_log.stdout_orig
+        sys.stdout = param_test.stdout_orig
     # write log file
     write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
 
