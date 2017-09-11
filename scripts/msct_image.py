@@ -297,7 +297,7 @@ class Image(object):
         self.absolutepath = filename
         self.path, self.file_name, self.ext = extract_fname(filename)
 
-    def changeType(self, type=''):
+    def changeType(self, type='', rescale_intensity=1):
         """
         Change the voxel type of the image
         :param type:    if not set, the image is saved in standard type
@@ -317,16 +317,30 @@ class Image(object):
                         (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
                         (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
+        :param rescale_intensity: 0, 1. Rescale intensity to use the full range of output type.
         :return:
         """
+        from numpy import iinfo, uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64  # DON'T REMOVE THIS, IT IS MANDATORY FOR EVAL
+
+        # if not output type specified, use input type
         if type == '':
             type = self.hdr.get_data_dtype()
 
+        # get min/max from input image
+        min_in = np.nanmin(self.data)
+        max_in = np.nanmax(self.data)
+
+        if rescale_intensity:
+            # get min/max from output type
+            min_out = iinfo(type).min
+            max_out = iinfo(type).max
+            # rescale intensity
+            data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
+            self.data = data_rescaled - ( data_rescaled.min() - min_out )
+
+        # find optimum type for the input image
         if type == 'minimize' or type == 'minimize_int':
-            # compute max value in the image and choose the best pixel type to represent all the pixels within smallest memory space
             # warning: does not take intensity resolution into account, neither complex voxels
-            max_vox = np.nanmax(self.data)
-            min_vox = np.nanmin(self.data)
 
             # check if voxel values are real or integer
             isInteger = True
@@ -337,42 +351,42 @@ class Image(object):
                         break
 
             if isInteger:
-                if min_vox >= 0:  # unsigned
-                    if max_vox <= np.iinfo(np.uint8).max:
+                if min_in >= 0:  # unsigned
+                    if max_in <= np.iinfo(np.uint8).max:
                         type = 'uint8'
-                    elif max_vox <= np.iinfo(np.uint16):
+                    elif max_in <= np.iinfo(np.uint16):
                         type = 'uint16'
-                    elif max_vox <= np.iinfo(np.uint32).max:
+                    elif max_in <= np.iinfo(np.uint32).max:
                         type = 'uint32'
-                    elif max_vox <= np.iinfo(np.uint64).max:
+                    elif max_in <= np.iinfo(np.uint64).max:
                         type = 'uint64'
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
                 else:
-                    if max_vox <= np.iinfo(np.int8).max and min_vox >= np.iinfo(np.int8).min:
+                    if max_in <= np.iinfo(np.int8).max and min_in >= np.iinfo(np.int8).min:
                         type = 'int8'
-                    elif max_vox <= np.iinfo(np.int16).max and min_vox >= np.iinfo(np.int16).min:
+                    elif max_in <= np.iinfo(np.int16).max and min_in >= np.iinfo(np.int16).min:
                         type = 'int16'
-                    elif max_vox <= np.iinfo(np.int32).max and min_vox >= np.iinfo(np.int32).min:
+                    elif max_in <= np.iinfo(np.int32).max and min_in >= np.iinfo(np.int32).min:
                         type = 'int32'
-                    elif max_vox <= np.iinfo(np.int64).max and min_vox >= np.iinfo(np.int64).min:
+                    elif max_in <= np.iinfo(np.int64).max and min_in >= np.iinfo(np.int64).min:
                         type = 'int64'
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
             else:
-                # if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
+                # if max_in <= np.finfo(np.float16).max and min_in >= np.finfo(np.float16).min:
                 #    type = 'np.float16' # not supported by nibabel
-                if max_vox <= np.finfo(np.float32).max and min_vox >= np.finfo(np.float32).min:
+                if max_in <= np.finfo(np.float32).max and min_in >= np.finfo(np.float32).min:
                     type = 'float32'
-                elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
+                elif max_in <= np.finfo(np.float64).max and min_in >= np.finfo(np.float64).min:
                     type = 'float64'
 
         # print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
-        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64  # DON'T REMOVE THIS, IT IS MANDATORY FOR EVAL
         type_build = eval(type)
         self.data = type_build(self.data)
         self.hdr.set_data_dtype(type)
+
 
     def save(self, type='', squeeze_data=True,  verbose=1):
         """
