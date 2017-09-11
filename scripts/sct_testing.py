@@ -9,7 +9,8 @@
 
 
 import sys
-import time
+import time, random
+from copy import deepcopy
 import os
 from msct_parser import Parser
 
@@ -44,17 +45,17 @@ class bcolors:
 # status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
 
-class param:
+class Param:
     def __init__(self):
         self.download = 0
-        self.path_data = 'sct_testing_data/'
+        self.path_data = 'sct_testing_data/'  # path to the testing data
         self.function_to_test = None
         # self.function_to_avoid = None
         self.remove_tmp_file = 0
         self.verbose = 1
         # self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
         self.path_tmp = ''
-        self.fname_log = ''
+        self.args = ''  # input arguments to the function
 
 
 # START MAIN
@@ -241,9 +242,9 @@ def test_function(function_to_test):
     #     return test_debug()  # JULIEN
     # else:
     # build script name
-    fname_log = '../' + function_to_test + ".log"
+    fname_log = '../' + function_to_test + '.log'
     tmp_script_name = function_to_test
-    result_folder = "results_" + function_to_test
+    result_folder = 'results_' + function_to_test
 
     sct.create_folder(result_folder)
     os.chdir(result_folder)
@@ -277,7 +278,7 @@ def test_function(function_to_test):
 
 # init_testing
 # ==========================================================================================
-def init_testing(file_testing='', params='', path_data=''):
+def init_testing(param_test):
     """
 
     Parameters
@@ -288,33 +289,32 @@ def init_testing(file_testing='', params='', path_data=''):
     -------
     path_output [str]: path where to output testing data
     """
-    from copy import deepcopy
 
-    # retrieve SCT function to be tested by removing prefix "test_"
-    script_tested = importlib.import_module(file_testing[5:])
+    # load module of function to test
+    module_function_to_test = importlib.import_module(param_test.function_to_test)
 
     # get parser information
-    parser = script_tested.get_parser()
-    dict_param = parser.parse(params.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
-    param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    parser = module_function_to_test.get_parser()
+    dict_param = parser.parse(param_test.args.split(), check_file_exist=False)
+    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), param_test.path_data, input_file=True)
+    param_test.param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
-    import time, random
     # retrieve subject name
-    subject_folder = sct.slash_at_the_end(path_data, 0).split('/')
+    subject_folder = sct.slash_at_the_end(param_test.path_data, 0).split('/')
     subject_folder = subject_folder[-1]
     # build path_output variable
-    path_output = sct.slash_at_the_end(script_tested + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
-    param_with_path += ' -ofolder ' + path_output
-    sct.create_folder(path_output)
+    param_test.path_output = sct.slash_at_the_end(param_test.function_to_test + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
+    param_test.param_with_path += ' -ofolder ' + param_test.path_output
+    sct.create_folder(param_test.path_output)
 
     # log file
-    import sys
-    fname_log = path_output + 'output.log'
-    stdout_log = file(fname_log, 'w')
+    param_test.fname_log = param_test.path_output + param_test.function_to_test + '.log'
+    stdout_log = file(param_test.fname_log, 'w')
     # redirect to log file
-    stdout_orig = sys.stdout
+    param_test.stdout_orig = sys.stdout
     sys.stdout = stdout_log
+    return param_test
+
 
 def get_parser():
     # Initialize the parser
