@@ -106,20 +106,30 @@ def main(args=None):
     os.chdir(param.path_tmp)
 
     # get list of all scripts to test
-    functions = fill_functions()
+    list_functions = fill_functions()
     if function_to_test:
-        if not function_to_test in functions:
-            sct.printv('ERROR: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
+        if function_to_test in list_functions:
+            # overwrite variable to include only the function to test
+            list_functions = [function_to_test]
         else:
-            param.function_to_test = function_to_test
-            param = test_function(param)
-            list_status = [param.status]
-    else:
-        for f in functions:
-            param.function_to_test = f
-            param = test_function(param)
-            param.status.append(list_status)
-    print 'status: ' + str(param.status)
+            sct.printv('ERROR: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
+
+    # loop across functions and run tests
+    for f in list_functions:
+        param.function_to_test = f
+        param = test_function(param)
+        param.status.append(list_status)
+        # manage status
+        if param.status == 0:
+            print_ok()
+        else:
+            if param.status == 99:
+                print_warning()
+            else:
+                print_fail()
+            print param.output
+
+    print 'status: ' + str(list_status)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -131,7 +141,7 @@ def main(args=None):
         sct.run('rm -rf ' + param.path_tmp, param.verbose)
 
     e = 0
-    if sum(param.status) != 0:
+    if sum(list_status) != 0:
         e = 1
     print e
 
