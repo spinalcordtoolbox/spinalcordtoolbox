@@ -271,47 +271,6 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
     f.close()
 
 
-# test function
-# ==========================================================================================
-# def test_function(function_to_test):
-#     # if script_name == 'test_debug':
-#     #     return test_debug()  # JULIEN
-#     # else:
-#     # build script name
-#     fname_log = '../' + function_to_test + '.log'
-#     tmp_script_name = function_to_test
-#     result_folder = 'results_' + function_to_test
-#
-#     sct.create_folder(result_folder)
-#     os.chdir(result_folder)
-#
-#     # display script name
-#     print_line('Checking ' + function_to_test)
-#     # import function as a module
-#     script_tested = importlib.import_module('test_' + function_to_test)
-#     # test function
-#     result_test = script_tested.test(param.path_data)
-#     # test functions can return 2 or 3 variables, depending if there is results.
-#     # In this script, we look only at the first two variables.
-#     status, output = result_test[0], result_test[1]
-#     # write log file
-#     write_to_log_file(fname_log, output, 'w')
-#     # manage status
-#     if status == 0:
-#         print_ok()
-#     else:
-#         if status == 99:
-#             print_warning()
-#         else:
-#             print_fail()
-#         print output
-#     # go back to parent folder
-#     os.chdir('..')
-#
-#     # return
-#     return status
-
-
 # init_testing
 # ==========================================================================================
 def test_function(param_test):
