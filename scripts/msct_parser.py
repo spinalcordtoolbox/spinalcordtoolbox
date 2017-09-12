@@ -405,13 +405,15 @@ class Parser:
                 # if key is listed in the do_not_add_path variable, do nothing
                 if not key in do_not_add_path:
                     # If input file is a list, we need to check what type of list it is.
-                    # If it contains files, it must be updated.
-                    if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
-                        if isinstance(self.options[key].type_value, list):
-                            for i, value in enumerate(option):
-                                option[i] = path_to_add + value
-                            dictionary[key] = option
-                        else:
+                    if isinstance(self.options[key].type_value, list):
+                        for i, value in enumerate(option):
+                            # If it contains files, it must be updated.
+                            # TODO: CHECK IF CONTAINS FILE
+                            option[i] = path_to_add + value
+                    # if not a list:
+                    else:
+                        # If it contains files, it must be updated.
+                        if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
                             # if the option contains an "no image file", do nothing
                             if self.options[key].list_no_image is not None:
                                 if str(option) in self.options[key].list_no_image:
