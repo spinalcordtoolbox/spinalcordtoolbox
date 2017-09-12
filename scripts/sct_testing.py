@@ -141,6 +141,7 @@ def main(args=None):
         param.function_to_test = f
         # display script name
         print_line('Checking ' + f)
+        param.args = ''  # need to clean this variable otherwise it will use the value from the previous test
         param = test_function(param)
         list_status.append(param.status)
         # manage status
