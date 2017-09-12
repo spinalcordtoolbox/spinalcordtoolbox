@@ -96,7 +96,7 @@ def main(args=None):
 
     # check existence of testing data folder
     if not os.path.isdir(param.path_data) or param.download:
-        downloaddata()
+        downloaddata(param)
 
     # display path to data
     sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
@@ -150,11 +150,20 @@ def main(args=None):
     sys.exit(e)
 
 
-def downloaddata():
+def downloaddata(param):
+    """
+    Download testing data from internet.
+    Parameters
+    ----------
+    param
+
+    Returns
+    -------
+    None
+    """
     sct.printv('\nDownloading testing data...', param.verbose)
     import sct_download_data
     sct_download_data.main(['-d', 'sct_testing_data'])
-    # sct.run('sct_download_data -d sct_testing_data')
 
 
 # list of all functions to test
