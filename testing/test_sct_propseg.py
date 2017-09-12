@@ -13,7 +13,6 @@
 
 import sct_utils as sct
 import commands
-# from sct_testing import write_to_log_file, init_testing
 from msct_image import Image, compute_dice
 from pandas import DataFrame
 
