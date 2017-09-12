@@ -6,6 +6,7 @@
 # Updated: 2014-10-06
 
 # TODO: list functions to test in help (do a search in testing folder)
+# TODO: find a way to be able to have list of arguments and loop across list elements.
 
 
 import sys
