@@ -330,18 +330,6 @@ class Image(object):
         min_in = np.nanmin(self.data)
         max_in = np.nanmax(self.data)
 
-        # if output type is int, check if it needs intensity rescaling
-        if 'int' in type:
-            # get min/max from output type
-            min_out = iinfo(type).min
-            max_out = iinfo(type).max
-            # before rescaling, check if there would be an intensity overflow
-            if (min_in < min_out) or (max_in > max_out):
-                sct.printv('WARNING: To avoid intensity overflow due to convertion to '+type+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
-                # rescale intensity
-                data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
-                self.data = data_rescaled - ( data_rescaled.min() - min_out )
-
         # find optimum type for the input image
         if type == 'minimize' or type == 'minimize_int':
             # warning: does not take intensity resolution into account, neither complex voxels
@@ -384,6 +372,18 @@ class Image(object):
                     type = 'float32'
                 elif max_in <= np.finfo(np.float64).max and min_in >= np.finfo(np.float64).min:
                     type = 'float64'
+
+        # if output type is int, check if it needs intensity rescaling
+        elif 'int' in type:
+            # get min/max from output type
+            min_out = iinfo(type).min
+            max_out = iinfo(type).max
+            # before rescaling, check if there would be an intensity overflow
+            if (min_in < min_out) or (max_in > max_out):
+                sct.printv('WARNING: To avoid intensity overflow due to convertion to '+type+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
+                # rescale intensity
+                data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
+                self.data = data_rescaled - ( data_rescaled.min() - min_out )
 
         # print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
