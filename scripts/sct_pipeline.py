@@ -255,6 +255,7 @@ def function_launcher(args):
     param_testing.function_to_test = args[0]
     param_testing.path_data = args[1]
     param_testing.args = args[2]
+    param_testing.redirect_stdout = 1  # create individual logs for each subject.
     try:
         param_testing = sct_testing.test_function(param_testing)
         # param_testing = script_to_be_run.test(param_testing)
@@ -478,11 +479,11 @@ if __name__ == "__main__":
 
     # build log file name
     if create_log:
+        # global log:
         file_log = 'results_test_' + function_to_test + '_' + output_time
         fname_log = file_log + '.log'
         handle_log = sct.ForkStdoutToFile(fname_log)
     print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
-
 
     # fetch SCT version
     install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()

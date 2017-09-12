@@ -46,7 +46,8 @@ class Param:
         self.args = ''  # input arguments to the function
         self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
         self.output = ''  # output string coded into DataFrame
-        self.redirect_stdout = 1  # for debugging, set to 0. Otherwise set to 1.
+        self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
+        self.suffix_groundtruth = ''  # suffix used for ground truth data (for integrity testing)
 
 
 # PARSER
@@ -336,7 +337,7 @@ def test_function(param_test):
         sys.stdout = stdout_log
 
     # initialize panda dataframe
-    param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(0), 'output': param_test.output})
+    param_test.results = DataFrame(index=[param_test.path_data], data={'status': 0, 'output': param_test.output})
 
     # retrieve input file (will be used later for integrity testing)
     if '-i' in dict_param:
@@ -348,18 +349,22 @@ def test_function(param_test):
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i'])):
+        param_test.status = 200
         param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(200), 'output': param_test.output})
+        param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output})
         return param_test
 
-    # Check if ground truth files exist
-    param_test.fname_groundtruth = param_test.path_data + param_test.contrast + '/' + sct.add_suffix(param_test.file_input, param_test.suffix_groundtruth)
-    if not os.path.isfile(param_test.fname_groundtruth):
-        param_test.output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + param_test.fname_groundtruth
-        write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(201), 'output': param_test.output})
-        return param_test
+    # Is there a ground truth for this data?
+    if param_test.suffix_groundtruth:
+        # Check if ground truth files exist
+        param_test.fname_groundtruth = param_test.path_data + param_test.contrast + '/' + sct.add_suffix(param_test.file_input, param_test.suffix_groundtruth)
+        if not os.path.isfile(param_test.fname_groundtruth):
+            param_test.status = 201
+            param_test.output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + param_test.fname_groundtruth
+            write_to_log_file(param_test.fname_log, param_test.output, 'w')
+            param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output})
+            return param_test
 
     # run command
     cmd = param_test.function_to_test + param_test.param_with_path
@@ -368,11 +373,11 @@ def test_function(param_test):
     try:
         param_test.status, o = sct.run(cmd, 0)
     except:
+        param_test.status = 1
         param_test.output += 'ERROR: Function crashed!'
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(1), 'output': param_test.output})
+        param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output})
         return param_test
-
 
     param_test.output += o
     param_test.duration = time.time() - time_start
@@ -382,9 +387,10 @@ def test_function(param_test):
     try:
         param_test = module_testing.test_integrity(param_test)
     except:
+        param_test.status = 2
         param_test.output += 'ERROR: Integrity testing crashed!'
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        param_test.results = DataFrame(index=[param_test.path_data], data={'status': int(2), 'output': param_test.output})
+        param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output})
         return param_test
 
     # manage stdout
