@@ -65,13 +65,18 @@ class Param:
 # START MAIN
 # ==========================================================================================
 def main(args=None):
+
+    # initializations
+    list_status = []
+    param = Param()
+
+    # check user arguments
     if args is None:
         args = sys.argv[1:]
 
-    # get parser
+    # get parser info
     parser = get_parser()
     arguments = parser.parse(args)
-
     if '-d' in arguments:
         param.download = int(arguments['-d'])
     if '-p' in arguments:
@@ -105,11 +110,16 @@ def main(args=None):
     if function_to_test:
         if not function_to_test in functions:
             sct.printv('ERROR: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
-        # loop across all functions and test them
-        status = [test_function(f) for f in functions if function_to_test == f]
+        else:
+            param.function_to_test = function_to_test
+            param = test_function(param)
+            list_status = [param.status]
     else:
-        status = [test_function(f) for f in functions]
-    print 'status: ' + str(status)
+        for f in functions:
+            param.function_to_test = f
+            param = test_function(param)
+            param.status.append(list_status)
+    print 'status: ' + str(param.status)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -121,7 +131,7 @@ def main(args=None):
         sct.run('rm -rf ' + param.path_tmp, param.verbose)
 
     e = 0
-    if sum(status) != 0:
+    if sum(param.status) != 0:
         e = 1
     print e
 
@@ -159,7 +169,7 @@ def fill_functions():
         # 'sct_flatten_sagittal',
         'sct_fmri_compute_tsnr',
         'sct_fmri_moco',
-        # 'sct_get_centerline',
+        'sct_get_centerline',
         'sct_image',
         'sct_label_utils',
         'sct_label_vertebrae',
@@ -387,6 +397,8 @@ def test_function(param_test):
 
 
 def get_parser():
+    # initialize default param
+    param_default = Param()
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
@@ -399,13 +411,13 @@ def get_parser():
                       type_value="multiple_choice",
                       description="Download testing data.",
                       mandatory=False,
-                      default_value=param.download,
+                      default_value=param_default.download,
                       example=['0', '1'])
     parser.add_option(name="-p",
                       type_value="folder",
                       description='Path to testing data. NB: no need to set if using "-d 1"',
                       mandatory=False,
-                      default_value=param.path_data)
+                      default_value=param_default.path_data)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
@@ -416,7 +428,5 @@ def get_parser():
 
 
 if __name__ == "__main__":
-    # initialize parameters
-    param = param()
     # call main function
     main()
