@@ -11,6 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: estimate and apply, no need to reapply afterwards
 
 import sys
 import os
@@ -27,51 +28,154 @@ from sct_image import copy_header, split_data, concat_data
 from msct_parser import Parser
 
 
+# PARAMETERS
 class Param:
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
+        self.fname_bvecs = ''
+        self.fname_bvals = ''
         self.fname_target = ''
         self.fname_mask = ''
         self.mat_final = ''
-        self.num_target = 0  # target volume (or group) for moco
         self.todo = ''
-        self.group_size = 1  # number of consecutive images averaged
+        self.group_size = 3  # number of images averaged for 'dwi' method.
+        self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
+        self.plot_graph = 0
         self.suffix = '_moco'
-        self.param = ['2',  # degree of polynomial function for moco
-                      '2',  # smoothing sigma in mm
-                      '1',  # gradientStep
-                      'MeanSquares']  # metric: MI,MeanSquares
+        self.poly = '2'  # degree of polynomial function for moco
+        self.smooth = '2'  # smoothing sigma in mm
+        self.gradStep = '1'  # gradientStep for searching algorithm
+        self.metric = 'MI'  # metric: MI, MeanSquares, CC
+        self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
+        self.run_eddy = 0
+        self.mat_eddy = ''
         self.min_norm = 0.001
+        self.swapXY = 0
+        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
+        self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
+        self.num_target = '0'
+
+    # update constructor with user's parameters
+    def update(self, param_user):
+        # list_objects = param_user.split(',')
+        for object in param_user:
+            if len(object) < 2:
+                sct.printv('ERROR: Wrong usage.', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], obj[1])
+
+# PARSER
+# ==========================================================================================
+def get_parser():
+    # parser initialisation
+    parser = Parser(__file__)
+
+    # initialize parameters
+    param_default = Param()
+
+    parser.usage.set_description("""Motion correction of fMRI data. Some robust features include:
+  - group-wise (-g)
+  - slice-wise regularized along z using polynomial function (-p)
+    For more info about the method, type: isct_antsSliceRegularizedRegistration
+  - masking (-m)
+  - iterative averaging of target volume""")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='4D data',
+                      mandatory=True,
+                      example='fmri.nii.gz')
+    parser.add_option(name='-g',
+                      type_value='int',
+                      description='Group nvols successive fMRI volumes for more robustness.',
+                      mandatory=False,
+                      default_value=param_default.group_size)
+    parser.add_option(name='-m',
+                      type_value='image_nifti',
+                      description='Binary mask to limit voxels considered by the registration metric.',
+                      mandatory=False)
+    parser.add_option(name='-param',
+                      type_value=[[','], 'str'],
+                      description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+                                  "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + param_default.poly + ".\n"
+                                  "smooth [mm]: Smoothing kernel. Default=" + param_default.smooth + ".\n"
+                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
+                                  "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
+                                  "sample [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n"
+                                  "numTarget [int]: Target volume or group (starting with 0). Default=" + param_default.num_target + ".\n",
+                      mandatory=False)
+    parser.add_option(name='-ofolder',
+                      type_value='folder_creation',
+                      description='Output path.',
+                      mandatory=False,
+                      default_value='./')
+    parser.add_option(name='-o',
+                      type_value='folder_creation',
+                      description='Output path.',
+                      mandatory=False,
+                      default_value='./',
+                      deprecated_by='-ofolder')
+    parser.add_option(name="-x",
+                      type_value="multiple_choice",
+                      description="""Final interpolation.""",
+                      mandatory=False,
+                      default_value='linear',
+                      example=['nn', 'linear', 'spline'])
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="""Remove temporary files.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1', '2'])
+
+    return parser
 
 
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-def main(path_out, param_user):
+# MAIN
+# ==========================================================================================
+def main(args=None):
 
     # initialization
     start_time = time.time()
+    param = Param()
 
     # reducing the number of CPU used for moco (see issue #201)
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
 
-    # Parameters for debug mode
-    if param.debug:
-        # get path of the testing data
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data + '/fmri/fmri.nii.gz'
-        #param.fname_mask = path_sct_data+'/fmri/fmri.nii.gz'
-        param.verbose = 1
-        param.group_size = 3
-        #param_user = '2,1,0.5'
+    # Get parser info
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    param.fname_data = arguments['-i']
+    if '-g' in arguments:
+        param.group_size = arguments['-g']
+    if '-m' in arguments:
+        param.fname_mask = arguments['-m']
+    if '-param' in arguments:
+        param.update(arguments['-param'])
+    if '-x' in arguments:
+        param.interp = arguments['-x']
+    if '-ofolder' in arguments:
+        path_out = arguments['-ofolder']
+    if '-r' in arguments:
+        param.remove_tmp_files = int(arguments['-r'])
+    if '-v' in arguments:
+        param.verbose = int(arguments['-v'])
 
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  input file ............' + param.fname_data, param.verbose)
@@ -92,13 +196,9 @@ def main(path_out, param_user):
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, path_tmp + 'fmri.nii')
-    # sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
-    #
+
     # go to tmp folder
     os.chdir(path_tmp)
-    #
-    # # convert fmri to nii format
-    # convert('fmri'+ext_data, 'fmri.nii')
 
     # run moco
     fmri_moco(param)
@@ -204,9 +304,6 @@ def fmri_moco(param):
     # Merge groups means
     sct.printv('\nMerging volumes...', param.verbose)
     file_data_groups_means_merge = 'fmri_averaged_groups'
-    # cmd = fsloutput + 'fslmerge -t ' + file_data_groups_means_merge
-    # for iGroup in range(nb_groups):
-    #     cmd = cmd + ' ' + file_data + '_mean_' + str(iGroup)
     im_mean_list = []
     for iGroup in range(nb_groups):
         im_mean_list.append(Image(file_data + '_mean_' + str(iGroup) + ext_data))
@@ -214,13 +311,13 @@ def fmri_moco(param):
     im_mean_concat.setFileName(file_data_groups_means_merge + ext_data)
     im_mean_concat.save()
 
-    # Estimate moco on dwi groups
+    # Estimate moco
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Estimating motion...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco = param
     param_moco.file_data = 'fmri_averaged_groups'
-    param_moco.file_target = file_data + '_mean_' + str(param.num_target)
+    param_moco.file_target = file_data + '_mean_' + param.num_target
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_groups'
@@ -233,10 +330,6 @@ def fmri_moco(param):
     sct.printv('\nCopy transformations...', param.verbose)
     for iGroup in range(nb_groups):
         for data in range(len(group_indexes[iGroup])):
-            # if param.slicewise:
-            #     for iz in range(nz):
-            #         sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+ext_mat, param.verbose)
-            # else:
             sct.run('cp ' + 'mat_groups/' + 'mat.T' + str(iGroup) + ext_mat + ' ' + mat_final + 'mat.T' + str(group_indexes[iGroup][data]) + ext_mat, param.verbose)
 
     # Apply moco on all fmri data
@@ -260,110 +353,10 @@ def fmri_moco(param):
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
     sct.run('sct_maths -i fmri_moco.nii -o fmri_moco_mean.nii -mean t')
-    # if not average_data_across_dimension('fmri_moco.nii', 'fmri_moco_mean.nii', 3):
-    #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
-    # cmd = fsloutput + 'fslmaths fmri_moco -Tmean fmri_moco_mean'
-    # status, output = sct.run(cmd, param.verbose)
-
-
-def get_parser():
-    param_default = Param()
-    parser = Parser(__file__)
-    parser.usage.set_description("""Motion correction of fMRI data. Some robust features include:
-  - group-wise (-g)
-  - slice-wise regularized along z using polynomial function (-p)
-    For more info about the method, type: isct_antsSliceRegularizedRegistration
-  - masking (-m)
-  - iterative averaging of target volume""")
-    parser.add_option(name='-i',
-                      type_value='image_nifti',
-                      description='4D data',
-                      mandatory=True,
-                      example='fmri.nii.gz')
-    parser.add_option(name='-g',
-                      type_value='int',
-                      description='Group nvols successive fMRI volumes for more robustness.',
-                      mandatory=False,
-                      default_value=param.group_size)
-    parser.add_option(name='-m',
-                      type_value='image_nifti',
-                      description='Binary mask to limit voxels considered by the registration metric.',
-                      mandatory=False)
-    parser.add_option(name="-param",
-                      type_value='str',
-                      description="""Parameters. ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.
-1) degree of polynomial function used for regularization along Z.
-   For no regularization set to 0.
-2) smoothing kernel size (in mm).
-3) gradient step. The higher the more deformation allowed.
-4) metric: {MI,MeanSquares}.
-   If you find very large deformations, switching to MeanSquares can help.""",
-                      mandatory=False,
-                      example=param_default.param[0] + ',' + param_default.param[1] + ',' + param_default.param[2] + ',' + param_default.param[3])
-    parser.add_option(name="-p",
-                      type_value=None,
-                      description="""ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.
-1) degree of polynomial function used for regularization along Z.
-   For no regularization set to 0.
-2) smoothing kernel size (in mm).
-3) gradient step. The higher the more deformation allowed.
-4) metric: {MI,MeanSquares}.
-   If you find very large deformations, switching to MeanSquares can help.""",
-                      mandatory=False,
-                      deprecated_by='-param')
-    parser.add_option(name='-ofolder',
-                      type_value='folder_creation',
-                      description='Output path.',
-                      mandatory=False,
-                      default_value='./')
-    parser.add_option(name='-o',
-                      type_value='folder_creation',
-                      description='Output path.',
-                      mandatory=False,
-                      default_value='./',
-                      deprecated_by='-ofolder')
-    parser.add_option(name="-x",
-                      type_value="multiple_choice",
-                      description="""Final interpolation.""",
-                      mandatory=False,
-                      default_value='linear',
-                      example=['nn', 'linear', 'spline'])
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="""Remove temporary files.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1', '2'])
-
-    return parser
 
 
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = Param()
-    param_default = Param()
-
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
-    param.fname_data = arguments['-i']
-    if '-m' in arguments:
-        param.fname_mask = arguments['-m']
-    param.group_size = arguments['-g']
-    path_out = arguments['-ofolder']
-    param_user = ''
-    if '-param' in arguments:
-        param_user = arguments['-param']
-    param.interp = arguments['-x']
-    param.remove_tmp_files = arguments['-r']
-    param.verbose = arguments['-v']
-
-    main(path_out, param_user)
+    main()
