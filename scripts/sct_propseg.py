@@ -515,8 +515,8 @@ if __name__ == "__main__":
     fname_seg = os.path.normpath(folder_output + file_seg)
 
     # check consistency of segmentation
-    fname_centerline = folder_output + file_data + '_centerline' + ext_data
-    check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0, remove_temp_files=remove_temp_files, verbose=verbose)
+    # fname_centerline = folder_output + file_data + '_centerline' + ext_data
+    # check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # copy header from input to segmentation to make sure qform is the same
     from sct_image import copy_header
