@@ -325,7 +325,9 @@ def test_function(param_test):
     subject_folder = subject_folder[-1]
     # build path_output variable
     param_test.path_output = sct.slash_at_the_end(param_test.function_to_test + '_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
-    param_test.param_with_path += ' -ofolder ' + param_test.path_output
+    # check if parser has key '-ofolder'. If so, then assign output folder
+    if parser.options.has_key('-ofolder'):
+        param_test.param_with_path += ' -ofolder ' + param_test.path_output
     sct.create_folder(param_test.path_output)
 
     # log file
