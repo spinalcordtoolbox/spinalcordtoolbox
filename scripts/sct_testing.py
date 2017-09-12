@@ -14,25 +14,17 @@ from copy import deepcopy
 import os
 from pandas import DataFrame
 from msct_parser import Parser
-
-# get path of the toolbox
-# TODO: put it back below when working again (julien 2016-04-04)
-# <<<
-# OLD
-# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# NEW
+# get path of SCT
 path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
-# >>>
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 sys.path.append(path_sct + '/testing')
 import sct_utils as sct
 import importlib
 
+
 # define nice colors
-
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -41,20 +33,15 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
-# JULIEN: NOW THAT THE USER WILL HAVE ACCESS TO TEST_ALL, WE SHOULD NOT USE $SCT_TESTING_DATA_DIR ANYMORE.
-# get path of testing data
-# status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
-
+# Parameters
 class Param:
     def __init__(self):
         self.download = 0
         self.path_data = 'sct_testing_data/'  # path to the testing data
         self.function_to_test = None
-        # self.function_to_avoid = None
         self.remove_tmp_file = 0
         self.verbose = 1
-        # self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
         self.path_tmp = ''
         self.args = ''  # input arguments to the function
         self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
@@ -62,7 +49,41 @@ class Param:
         self.redirect_stdout = 1  # for debugging, set to 0. Otherwise set to 1.
 
 
-# START MAIN
+# PARSER
+# ==========================================================================================
+def get_parser():
+    # initialize default param
+    param_default = Param()
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description(
+        'Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
+    parser.add_option(name="-f",
+                      type_value="str",
+                      description="Test this specific script (do not add extension).",
+                      mandatory=False,
+                      example='sct_propseg')
+    parser.add_option(name="-d",
+                      type_value="multiple_choice",
+                      description="Download testing data.",
+                      mandatory=False,
+                      default_value=param_default.download,
+                      example=['0', '1'])
+    parser.add_option(name="-p",
+                      type_value="folder",
+                      description='Path to testing data. NB: no need to set if using "-d 1"',
+                      mandatory=False,
+                      default_value=param_default.path_data)
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    return parser
+
+
+# Main
 # ==========================================================================================
 def main(args=None):
 
@@ -376,37 +397,8 @@ def test_function(param_test):
     return param_test
 
 
-def get_parser():
-    # initialize default param
-    param_default = Param()
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
-    parser.add_option(name="-f",
-                      type_value="str",
-                      description="Test this specific script (do not add extension).",
-                      mandatory=False,
-                      example='sct_propseg')
-    parser.add_option(name="-d",
-                      type_value="multiple_choice",
-                      description="Download testing data.",
-                      mandatory=False,
-                      default_value=param_default.download,
-                      example=['0', '1'])
-    parser.add_option(name="-p",
-                      type_value="folder",
-                      description='Path to testing data. NB: no need to set if using "-d 1"',
-                      mandatory=False,
-                      default_value=param_default.path_data)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    return parser
-
-
+# START PROGRAM
+# ==========================================================================================
 if __name__ == "__main__":
     # call main function
     main()
