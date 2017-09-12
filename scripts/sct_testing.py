@@ -139,13 +139,13 @@ def main(args=None):
 
     # remove temp files
     if param.remove_tmp_file:
-        sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf ' + param.path_tmp, param.verbose)
+        sct.printv('\nRemove temporary files...', 0)
+        sct.run('rm -rf ' + param.path_tmp, 0)
 
     e = 0
     if sum(list_status) != 0:
         e = 1
-    print e
+    # print e
 
     sys.exit(e)
 
