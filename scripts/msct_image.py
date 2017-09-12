@@ -16,6 +16,7 @@
 
 
 import numpy as np
+import sct_utils as sct
 from scipy.ndimage import map_coordinates
 import math
 
@@ -297,7 +298,7 @@ class Image(object):
         self.absolutepath = filename
         self.path, self.file_name, self.ext = extract_fname(filename)
 
-    def changeType(self, type='', rescale_intensity=1):
+    def changeType(self, type=''):
         """
         Change the voxel type of the image
         :param type:    if not set, the image is saved in standard type
@@ -317,7 +318,6 @@ class Image(object):
                         (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
                         (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
-        :param rescale_intensity: 0, 1. Rescale intensity to use the full range of output type.
         :return:
         """
         from numpy import iinfo, uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64  # DON'T REMOVE THIS, IT IS MANDATORY FOR EVAL
@@ -330,13 +330,17 @@ class Image(object):
         min_in = np.nanmin(self.data)
         max_in = np.nanmax(self.data)
 
-        if rescale_intensity and type in ['int8', 'uint8', 'int16', 'uint16']:
+        # if output type is int, check if it needs intensity rescaling
+        if 'int' in type:
             # get min/max from output type
             min_out = iinfo(type).min
             max_out = iinfo(type).max
-            # rescale intensity
-            data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
-            self.data = data_rescaled - ( data_rescaled.min() - min_out )
+            # before rescaling, check if there would be an intensity overflow
+            if (min_in < min_out) or (max_in > max_out):
+                sct.printv('WARNING: To avoid intensity overflow due to convertion to '+type+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
+                # rescale intensity
+                data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
+                self.data = data_rescaled - ( data_rescaled.min() - min_out )
 
         # find optimum type for the input image
         if type == 'minimize' or type == 'minimize_int':
