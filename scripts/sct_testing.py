@@ -117,8 +117,10 @@ def main(args=None):
     # loop across functions and run tests
     for f in list_functions:
         param.function_to_test = f
+        # display script name
+        print_line('Checking ' + f)
         param = test_function(param)
-        param.status.append(list_status)
+        list_status.append(param.status)
         # manage status
         if param.status == 0:
             print_ok()
