@@ -71,12 +71,12 @@ def run_main():
     # Remove temporary files
     remove_temp_files = True
     if "-r" in arguments:
-        remove_temp_files = bool(arguments["-r"])
+        remove_temp_files = bool(int(arguments["-r"]))
 
     # Outputs a ROI file
     output_roi = False
     if "-roi" in arguments:
-        output_roi = bool(arguments["-roi"])
+        output_roi = bool(int(arguments["-roi"]))
 
     # Verbosity
     verbose = 0
