@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 class AnatomicalParams(object):
     """The base parameter object for GUI configuration"""
+    CODES = [50, 49, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+             16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
 
     def __init__(self,
                  cmap='gray',
@@ -50,12 +52,29 @@ class AnatomicalParams(object):
         self.end_vertebrae = -1
         self.num_points = 0
         self._title = ''
+        self._vertebraes = []
 
     @property
     def dialog_title(self):
         if not self._title:
             self._title = '{}: maunally segment'.format(self.input_file_name)
         return self._title
+
+    @property
+    def vertebraes(self):
+        return self._vertebraes
+
+    @vertebraes.setter
+    def vertebraes(self, values):
+        if not values:
+            return
+
+        if len(set(values) - set(self.CODES)) != 0:
+            raise ValueError('The values are not all valid vertebraes labels')
+
+        self._vertebraes = values
+        self.start_vertebrae = values[0]
+        self.end_vertebrae = values[-1]
 
 
 class BaseDialog(QtGui.QDialog):
@@ -132,9 +151,7 @@ class BaseDialog(QtGui.QDialog):
 
         parent.addWidget(self.lb_status)
         parent.addWidget(self.lb_warning)
-        parent.addItem(
-            QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum,
-                              QtGui.QSizePolicy.Expanding))
+        parent.addStretch()
         message = getattr(self.params, 'init_message', '')
         self.update_status(message)
 
@@ -156,9 +173,7 @@ class BaseDialog(QtGui.QDialog):
         self.btn_undo = QtGui.QPushButton('Undo')
         self.btn_help = QtGui.QPushButton('Help')
 
-        ctrl_layout.addItem(
-            QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding,
-                              QtGui.QSizePolicy.Minimum))
+        ctrl_layout.addStretch()
         ctrl_layout.addWidget(self.btn_help)
         ctrl_layout.addWidget(self.btn_undo)
         ctrl_layout.addWidget(self.btn_ok)
@@ -215,6 +230,7 @@ class BaseController(object):
     _overlay_image = None
     _dialog = None
     position = None
+    saved = False
 
     def __init__(self, image, params, init_values=None):
         self.image = image
@@ -257,6 +273,8 @@ class BaseController(object):
 
         if self.orientation != self._overlay_image.orientation:
             self._overlay_image.change_orientation(self.orientation)
+
+        self.saved = True
 
     def undo(self):
         """Remove the last point selected and refresh the UI"""

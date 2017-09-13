@@ -58,7 +58,7 @@ class LabelVertebrae(base.BaseDialog):
         parent.addLayout(layout)
 
         self.labels = widgets.VertebraeWidget(self)
-        self.labels.label = self.params.start_label
+        self.labels.label = self.params.start_vertebrae
         layout.addWidget(self.labels)
 
         self.sag = widgets.SagittalCanvas(self, plot_points=True, annotate=True)

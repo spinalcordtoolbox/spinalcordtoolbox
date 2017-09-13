@@ -57,10 +57,11 @@ class VertebraeWidget(QtGui.QWidget):
     _labels = None
     _label = None
 
-    def __init__(self, parent):
+    def __init__(self, parent, vertebraes):
         super(VertebraeWidget, self).__init__(parent)
         self.parent = parent
-        self.VERTEBRAES = zip(self.CODES, self.MESSAGES)
+        self.VERTEBRAES = dict(zip(self.CODES, self.MESSAGES))
+        self.vertebraes = vertebraes
         self._init_ui(parent.params)
         self.refresh()
 
@@ -73,14 +74,16 @@ class VertebraeWidget(QtGui.QWidget):
         font = QtGui.QFont()
         font.setPointSize(10)
 
-        for label, title in self._labels:
-            rdo = QtGui.QCheckBox(title)
-            rdo.label = label
+        for vertebrae in self.vertebraes:
+            rdo = QtGui.QCheckBox('Label {}'.format(vertebrae))
+            rdo.label = vertebrae
             rdo.setFont(font)
             rdo.setTristate()
-            self._check_boxes[label] = rdo
+            self._check_boxes[vertebrae] = rdo
             rdo.clicked.connect(self.on_select_label)
             layout.addWidget(rdo)
+
+        layout.addStretch()
 
     def on_select_label(self):
         label = self.sender()
