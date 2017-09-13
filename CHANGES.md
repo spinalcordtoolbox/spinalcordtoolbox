@@ -1,6 +1,23 @@
 # CHANGES TO RELEASE
 
-## v3.0.7 (2017-08-02)
+## v3.0.8 (2017-09-13)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.7...v3.0.8)
+
+**BUG**
+
+ - Added try/except for QC report [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1457)
+ - Conversion issue for float32 images with large dynamic [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1450)
+ - (Partly-)Fixed bug related to memory issue with diagonalization [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1446)
+ - DEV: fixed bug on centerline when referencing to the PMJ [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1436)
+**ENHANCEMENT**
+
+ - Now possible to input single label at disc (instead of mid-body) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1451)
+ - Now using N-1 instead of N as denominator for computing the STD. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1441)
+**FEATURE**
+
+ - Function to analyze lesions #1351 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1439)
+
+ ## v3.0.7 (2017-08-02)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.6...v3.0.7)
 
 **BUG**
