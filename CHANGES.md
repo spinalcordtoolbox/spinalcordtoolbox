@@ -9,10 +9,12 @@
  - Conversion issue for float32 images with large dynamic [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1450)
  - (Partly-)Fixed bug related to memory issue with diagonalization [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1446)
  - DEV: fixed bug on centerline when referencing to the PMJ [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1436)
+ 
 **ENHANCEMENT**
 
  - Now possible to input single label at disc (instead of mid-body) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1451)
  - Now using N-1 instead of N as denominator for computing the STD. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1441)
+
 **FEATURE**
 
  - Function to analyze lesions #1351 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1439)
