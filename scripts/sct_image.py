@@ -151,86 +151,31 @@ def main(args=None):
     # im_in_list = [Image(fn) for fn in fname_in]
 
     # run command
-    if "-pad" in arguments:
-        im_in = Image(fname_in[0])
-        ndims = len(im_in.getDataShape())
-        if ndims != 3:
-            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
-            return
-
-        pad_arguments = arguments["-pad"].split(',')
-        if len(pad_arguments) != 3:
-            printv('ERROR: you need to specify 3 padding values.', 1, 'error')
-
-        padx, pady, padz = pad_arguments
-        padx, pady, padz = int(padx), int(pady), int(padz)
-        im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady,
-                  pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
-
-    elif "-pad-asym" in arguments:
-        im_in = Image(fname_in[0])
-        ndims = len(im_in.getDataShape())
-        if ndims != 3:
-            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
-            return
-
-        pad_arguments = arguments["-pad-asym"].split(',')
-        if len(pad_arguments) != 6:
-            printv('ERROR: you need to specify 6 padding values.', 1, 'error')
-
-        padxi, padxf, padyi, padyf, padzi, padzf = pad_arguments
-        padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), \
-            int(padyf), int(padzi), int(padzf)
-        im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi,
-                  pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
+    if "-concat" in arguments:
+        dim = arguments["-concat"]
+        assert dim in dim_list
+        dim = dim_list.index(dim)
+        im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
 
     elif "-copy-header" in arguments:
         im_in = Image(fname_in[0])
         im_dest = Image(arguments["-copy-header"])
         im_out = [copy_header(im_in, im_dest)]
 
-    elif "-split" in arguments:
-        dim = arguments["-split"]
-        assert dim in dim_list
-        im_in = Image(fname_in[0])
-        dim = dim_list.index(dim)
-        im_out = split_data(im_in, dim)
-
-    elif "-concat" in arguments:
-        dim = arguments["-concat"]
-        assert dim in dim_list
-        dim = dim_list.index(dim)
-        im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
-
-
-    elif '-keep-vol' in arguments:
-        index_vol = arguments['-remove-vol']
-        im_in = Image(fname_in[0])
-        im_out = [remove_vol(im_in, index_vol, todo='keep')]
-
-    elif '-remove-vol' in arguments:
-        index_vol = arguments['-remove-vol']
-        im_in = Image(fname_in[0])
-        im_out = [remove_vol(im_in, index_vol, todo='remove')]
-
-    elif '-type' in arguments:
-        output_type = arguments['-type']
-        im_in = Image(fname_in[0])
-        im_out = [im_in]  # TODO: adapt to fname_in
+    elif '-display-warp' in arguments:
+        im_in = fname_in[0]
+        visualize_warp(im_in, fname_grid=None, step=3, rm_tmp=True)
+        im_out = None
 
     elif "-getorient" in arguments:
         im_in = Image(fname_in[0])
         orient = orientation(im_in, get=True, verbose=verbose)
         im_out = None
 
-    elif "-setorient" in arguments:
-        print fname_in[0]
+    elif '-keep-vol' in arguments:
+        index_vol = arguments['-remove-vol']
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose, fname_out=fname_out)]
-
-    elif "-setorient-data" in arguments:
-        im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
+        im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
     elif '-mcs' in arguments:
         im_in = Image(fname_in[0])
@@ -249,10 +194,62 @@ def main(args=None):
             del im
         im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
-    elif '-display-warp' in arguments:
-        im_in = fname_in[0]
-        visualize_warp(im_in, fname_grid=None, step=3, rm_tmp=True)
-        im_out = None
+    elif "-pad" in arguments:
+        im_in = Image(fname_in[0])
+        ndims = len(im_in.getDataShape())
+        if ndims != 3:
+            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            return
+
+        pad_arguments = arguments["-pad"].split(',')
+        if len(pad_arguments) != 3:
+            printv('ERROR: you need to specify 3 padding values.', 1, 'error')
+
+        padx, pady, padz = pad_arguments
+        padx, pady, padz = int(padx), int(pady), int(padz)
+        im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady,
+                            pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
+
+    elif "-pad-asym" in arguments:
+        im_in = Image(fname_in[0])
+        ndims = len(im_in.getDataShape())
+        if ndims != 3:
+            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            return
+
+        pad_arguments = arguments["-pad-asym"].split(',')
+        if len(pad_arguments) != 6:
+            printv('ERROR: you need to specify 6 padding values.', 1, 'error')
+
+        padxi, padxf, padyi, padyf, padzi, padzf = pad_arguments
+        padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
+        im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
+
+    elif '-remove-vol' in arguments:
+        index_vol = arguments['-remove-vol']
+        im_in = Image(fname_in[0])
+        im_out = [remove_vol(im_in, index_vol, todo='remove')]
+
+    elif "-setorient" in arguments:
+        print fname_in[0]
+        im_in = Image(fname_in[0])
+        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose, fname_out=fname_out)]
+
+    elif "-setorient-data" in arguments:
+        im_in = Image(fname_in[0])
+        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
+
+    elif "-split" in arguments:
+        dim = arguments["-split"]
+        assert dim in dim_list
+        im_in = Image(fname_in[0])
+        dim = dim_list.index(dim)
+        im_out = split_data(im_in, dim)
+
+    elif '-type' in arguments:
+        output_type = arguments['-type']
+        im_in = Image(fname_in[0])
+        im_out = [im_in]  # TODO: adapt to fname_in
 
     else:
         im_out = None
@@ -287,8 +284,6 @@ def main(args=None):
         print(orient)
     elif '-display-warp' in arguments:
         printv('Warping grid generated.\n', verbose, 'info')
-    else:
-        printv('An error occurred in sct_image...', verbose, "error")
 
 
 def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
