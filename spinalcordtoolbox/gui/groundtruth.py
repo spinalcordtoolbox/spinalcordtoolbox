@@ -133,7 +133,7 @@ if __name__ == '__main__':
         overlay = Image(img)
         overlay.file_name = overlay_name
     controller = GroundTruthController(img, params, overlay)
-    controller.align_image()
+    controller.reformat_image()
     base.launch_dialog(controller, GroundTruth)
     print(controller.as_string())
     controller.as_niftii(overlay_name)

@@ -28,8 +28,8 @@ class PropSegController(base.BaseController):
         super(PropSegController, self).__init__(image, params, init_values)
         self._slice = self.INTERVAL
 
-    def align_image(self):
-        super(PropSegController, self).align_image()
+    def reformat_image(self):
+        super(PropSegController, self).reformat_image()
         if self.image.dim[0] < self.INTERVAL:
             self.INTERVAL = 1
         if not self.params.num_points:
@@ -216,7 +216,7 @@ if __name__ == '__main__':
         overlay = Image(img)
         overlay.file_name = overlay_name
     controller = PropSegController(img, params, overlay)
-    controller.align_image()
+    controller.reformat_image()
     base.launch_dialog(controller, PropSeg)
     print(controller.as_string())
     controller.as_niftii(overlay_name)

@@ -240,19 +240,32 @@ class BaseController(object):
         if init_values:
             self._overlay_image = init_values
 
-    def align_image(self):
+    def reformat_image(self):
+        """Set the camera position and increase contrast.
+
+        The image orientation is set to SAL. And set the default contrast, and
+        axes position for all canvases. Need to run before displaying the GUI
+        with the image.
+
+        """
         logger.debug('Image orientation {}'.format(self.image.orientation))
         self.orientation = self.image.orientation
         self.image.change_orientation('SAL')
+
+        if self._overlay_image:
+            self._overlay_image.change_orientation('SAL')
+
         x, y, z, t, dx, dy, dz, dt = self.image.dim
         self.params.aspect = dx / dy
         self.params.offset = x * dx
+
         clip = np.percentile(self.image.data, (self.params.min,
                                                self.params.max))
         self.params.vmin, self.params.vmax = clip
         self.reset_position()
 
     def reset_position(self):
+        """Set the canvas position to the center of the image"""
         x, y, z, _, _, _, _, _ = self.image.dim
         self.position = (x // 2, y // 2, z // 2)
 
@@ -263,8 +276,6 @@ class BaseController(object):
         return False
 
     def save(self):
-        self._overlay_image = self.image.copy()
-        self._overlay_image.data *= 0
         logger.debug('Overlay shape {}'.format(self._overlay_image.data.shape))
 
         for point in self.points:
@@ -302,10 +313,13 @@ class BaseController(object):
         if not self._overlay_image:
             logger.warning('There is no information to save')
             raise IOError('There is no information to save')
-        if not file_name:
-            file_name = 'manual.nii.gz'
+        if file_name:
+            self._overlay_image.setFileName(file_name)
+
+        if self._overlay_image.absolutepath == self.image.absolutepath:
+            raise IOError('Aborting: the original file and the labeled file are the same', self._overlay_image.absolutepath)
+
         logger.debug('Data: {}'.format(np.where(self._overlay_image.data)))
-        self._overlay_image.setFileName(file_name)
         self._overlay_image.save()
 
 

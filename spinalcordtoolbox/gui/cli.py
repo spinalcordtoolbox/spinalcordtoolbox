@@ -64,7 +64,7 @@ def get_parser():
 
 def launch_propseg_dialog(input_file, output_file, params):
     controller = PropSegController(input_file, params, output_file)
-    controller.align_image()
+    controller.reformat_image()
 
     app = QtGui.QApplication([])
     dialog_ = PropSeg(controller)
@@ -77,7 +77,7 @@ def launch_labelvertebrae_dialog(input_file, output_file, params):
     if not params.vertebraes:
         params.vertebraes = [3, ]
     controller = SagittalControler(input_file, params, output_file)
-    controller.align_image()
+    controller.reformat_image()
 
     app = QtGui.QApplication(sys.argv)
     dialog = SagittalDialog(controller)
@@ -88,9 +88,9 @@ def launch_labelvertebrae_dialog(input_file, output_file, params):
 
 def launch_registertotemplate_dialog(input_file, output_file, params):
     if not params.vertebraes:
-        params.vertebraes = [2, 5]
+        params.vertebraes = [3, 5]
     controller = SagittalControler(input_file, params, output_file)
-    controller.align_image()
+    controller.reformat_image()
 
     app = QtGui.QApplication(sys.argv)
     dialog = SagittalDialog(controller)
@@ -130,7 +130,7 @@ def segment_image_cli():
     else:
         output_file = input_file.copy()
         output_file.data *= 0
-        output_file.file_name = output_file_name
+        output_file.setFileName(output_file_name)
 
     controller = launch_modes[mode](input_file, output_file, params)
     if controller.saved:
