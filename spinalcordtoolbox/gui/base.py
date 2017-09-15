@@ -57,7 +57,7 @@ class AnatomicalParams(object):
     @property
     def dialog_title(self):
         if not self._title:
-            self._title = '{}: maunally label'.format(self.input_file_name)
+            self._title = '{}: manually label'.format(self.input_file_name)
         return self._title
 
     @property
