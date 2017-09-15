@@ -132,12 +132,16 @@ class PropSeg(base.BaseDialog):
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
         custom_mode.mode = 'CUSTOM'
+        custom_mode.sagittal_title = '1. Select a axial slice'
+        custom_mode.axial_title = '2. Select the center of the spinalcord'
         layout.addWidget(custom_mode)
 
         auto_mode = QtGui.QRadioButton('Mode Auto')
         auto_mode.setToolTip('Automatically move down the axis slice on the sagittal plane')
         auto_mode.toggled.connect(self.on_toggle_mode)
         auto_mode.mode = 'AUTO'
+        auto_mode.sagittal_title = 'The axial slice is automatically selected'
+        auto_mode.axial_title = '1. Select the center of the spinalcord'
         layout.addWidget(auto_mode)
 
         group.setLayout(layout)
@@ -156,6 +160,7 @@ class PropSeg(base.BaseDialog):
             logger.debug('Skipping slice')
             self._controller.skip_slice()
             self.sagittal_canvas.refresh()
+            self.axial_canvas.refresh()
         except InvalidActionWarning as warn:
             self.update_warning(warn.message)
 
@@ -163,9 +168,12 @@ class PropSeg(base.BaseDialog):
         widget = self.sender()
         if widget.mode in self._controller.MODES and widget.isChecked() and widget.mode != self._controller.mode:
             self._controller.mode = widget.mode
-            self.axial_canvas.refresh()
+            self.update_status('Reset manual labels: Now in mode {}'.format(widget.mode))
+
+            self.sagittal_canvas.title(widget.sagittal_title)
             self.sagittal_canvas.refresh()
-            self.update_status('Reset manual segmentation: Now in mode {}'.format(widget.mode))
+            self.axial_canvas.title(widget.axial_title)
+            self.axial_canvas.refresh()
 
     def on_select_slice(self, x, y, z):
         try:
