@@ -173,7 +173,7 @@ def main(args=None):
         im_out = None
 
     elif '-keep-vol' in arguments:
-        index_vol = arguments['-remove-vol']
+        index_vol = arguments['-keep-vol']
         im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
