@@ -48,16 +48,10 @@ def get_parser():
                       description="Output the nifti image file with the manual segments",
                       mandatory=True,
                       example="t2_seg.nii.gz")
-    parser.add_option(name='-vertebraes',
+    parser.add_option(name='-labels',
                       type_value=[[','], 'int'],
                       description='List of vertebraes labels you are interested in capturing',
                       mandatory=False)
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="Verbose. 0: nothing. 1: basic. 2: extended.",
-                      mandatory=False,
-                      default_value="0",
-                      example=['0', '1', '2'])
 
     return parser
 
@@ -108,9 +102,8 @@ def segment_image_cli():
     except SyntaxError as err:
         printv(err.message, type='error')
 
-    launch_modes = {'propseg': launch_propseg_dialog,
-                    'labelvertebrae': launch_labelvertebrae_dialog,
-                    'registertotemplate': launch_registertotemplate_dialog}
+    launch_modes = {'centerline': launch_propseg_dialog,
+                    'sagittal': launch_registertotemplate_dialog}
 
     mode = arguments['-mode']
 
@@ -122,7 +115,7 @@ def segment_image_cli():
     params.start_label = arguments.get('-start-label', params.start_vertebrae)
     params.end_label = arguments.get('-end-label', params.end_vertebrae)
     params.num_points = arguments.get('-n', params.num_points)
-    params.vertebraes = arguments.get('-vertebraes', params.vertebraes)
+    params.vertebraes = arguments.get('-labels', params.vertebraes)
     input_file = Image(input_file_name)
 
     if os.path.exists(output_file_name):

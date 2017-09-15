@@ -191,7 +191,7 @@ class PropSeg(base.BaseDialog):
             self._controller.select_point(x, y, z)
             self.axial_canvas.refresh()
             self.sagittal_canvas.refresh()
-            self.update_status('Point {} selected: {}'.format(len(self._controller.points), self._controller.points))
+            self.update_status('{} point(s) selected'.format(len(self._controller.points)))
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
             self.update_warning(warn.message)
 

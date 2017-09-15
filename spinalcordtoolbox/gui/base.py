@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 class AnatomicalParams(object):
     """The base parameter object for GUI configuration"""
-    CODES = [50, 49, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-             16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+    CODES = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+             18, 19, 20, 21, 22, 23, 24, 25, 26]
 
     def __init__(self,
                  cmap='gray',
@@ -57,7 +57,7 @@ class AnatomicalParams(object):
     @property
     def dialog_title(self):
         if not self._title:
-            self._title = '{}: manually label'.format(self.input_file_name)
+            self._title = '{}: manual labeling'.format(self.input_file_name)
         return self._title
 
     @property
