@@ -14,12 +14,12 @@ from sct_viewer import ClickViewerPropseg
 from sct_straighten_spinalcord import smooth_centerline
 
 
-def viewer_centerline(image_fname, verbose):
+def viewer_centerline(image_fname, interslice_gap, verbose):
     image_input_reoriented = Image(image_fname)
     nx, ny, nz, nt, px, py, pz, pt = image_input_reoriented.dim
     viewer = ClickViewerPropseg(image_input_reoriented)
 
-    viewer.gap_inter_slice = int(10 / pz)
+    viewer.gap_inter_slice = int(interslice_gap / pz)
     viewer.number_of_slices = 0
     viewer.calculate_list_slices()
 
@@ -45,7 +45,7 @@ def viewer_centerline(image_fname, verbose):
 
 def run_main():
     parser = Parser(__file__)
-    parser.usage.set_description("""This program will use the OptiC method to detect the spinal cord centerline.""")
+    parser.usage.set_description("""This function allows the extraction of the spinal cord centerline. Two methods are available: OptiC (automatic) and Viewer (manual).""")
 
     parser.add_option(name="-i",
                       type_value="image_nifti",
@@ -76,11 +76,17 @@ def run_main():
     parser.add_option(name="-method",
                       type_value="multiple_choice",
                       description="Method used for extracting the centerline.\n"
-                                  "optic: \n"
+                                  "optic: automatic spinal cord detection method\n"
                                   "viewer: manually selected a few points, approximation with NURBS",
                       mandatory=False,
                       example=['optic', 'viewer'],
                       default_value='optic')
+
+    parser.add_option(name="-gap",
+                      type_value="float",
+                      description="Gap in mm between manually selected points when using the Viewer method.",
+                      mandatory=False,
+                      default_value='10.0')
 
     parser.add_option(name="-r",
                       type_value="multiple_choice",
@@ -117,6 +123,10 @@ def run_main():
         error = 'ERROR: -c is a mandatory argument when using Optic method.'
         sct.printv(error, type='error')
         return
+
+    # Ga between slices
+    if "-gap" in arguments:
+        interslice_gap = float(arguments["-gap"])
 
     # Output folder
     if "-ofolder" in arguments:
@@ -156,7 +166,7 @@ def run_main():
         sct.run(cmd_image, verbose=False)
 
         # extract points manually using the viewer
-        fname_points = viewer_centerline(image_fname=reoriented_image_filename, verbose=verbose)
+        fname_points = viewer_centerline(image_fname=reoriented_image_filename, interslice_gap=interslice_gap, verbose=verbose)
 
         if fname_points is not None:
             image_points_RPI = sct.add_suffix(fname_points, "_RPI")
