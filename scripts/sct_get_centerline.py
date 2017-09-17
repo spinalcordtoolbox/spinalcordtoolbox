@@ -19,7 +19,7 @@ def viewer_centerline(image_fname, interslice_gap, verbose):
     nx, ny, nz, nt, px, py, pz, pt = image_input_reoriented.dim
     viewer = ClickViewerPropseg(image_input_reoriented)
 
-    viewer.gap_inter_slice = int(interslice_gap / pz)
+    viewer.gap_inter_slice = int(interslice_gap / px)  # px because the image is supposed to be SAL orientation
     viewer.number_of_slices = 0
     viewer.calculate_list_slices()
 
@@ -125,6 +125,7 @@ def run_main():
         return
 
     # Ga between slices
+    interslice_gap = 10.0
     if "-gap" in arguments:
         interslice_gap = float(arguments["-gap"])
 
@@ -147,8 +148,7 @@ def run_main():
     # Verbosity
     verbose = 0
     if "-v" in arguments:
-        if arguments["-v"] is "1":
-            verbose = 2
+        verbose = int(arguments["-v"])
 
     if method == 'viewer':
         path_data, file_data, ext_data = sct.extract_fname(fname_data)
@@ -204,12 +204,28 @@ def run_main():
             sct.printv('\nSet to original orientation...', verbose)
             sct.run('sct_image -i ' + fname_centerline_oriented + ' -setorient ' + image_input_orientation + ' -o ' + fname_centerline_oriented)
 
+            # create a txt file with the centerline
+            fname_centerline_oriented_txt = file_data + '_centerline.txt'
+            file_results = open(fname_centerline_oriented_txt, 'w')
+            for i in range(min_z_index, max_z_index + 1):
+                file_results.write(str(int(i)) + ' ' + str(x_centerline_voxel[i - min_z_index]) + ' ' + str(y_centerline_voxel[i - min_z_index]) + '\n')
+            file_results.close()
+
+            fname_centerline_oriented_roi = optic.centerline2roi(fname_image=fname_centerline_oriented,
+                                                                     folder_output='./',
+                                                                     verbose=verbose)
+
             # return to initial folder
             temp_folder.chdir_undo()
 
             # copy result to output folder
             shutil.copy(temp_folder.get_path() + fname_centerline_oriented, folder_output)
+            shutil.copy(temp_folder.get_path() + fname_centerline_oriented_txt, folder_output)
+            if output_roi:
+                shutil.copy(temp_folder.get_path() + fname_centerline_oriented_roi, folder_output)
             centerline_filename = folder_output + fname_centerline_oriented
+
+
 
         else:
             centerline_filename = 'error'
@@ -219,6 +235,10 @@ def run_main():
             temp_folder.cleanup()
 
     else:
+        # condition on verbose when using OptiC
+        if verbose == 1:
+            verbose = 2
+
         # OptiC models
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
