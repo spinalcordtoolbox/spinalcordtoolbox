@@ -188,6 +188,12 @@ def run_main():
             y_centerline_voxel = [coord[1] for coord in voxel_coordinates]
             z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
 
+            # compute z_centerline in image coordinates with continuous precision
+            voxel_coordinates = image_input_reoriented.transfo_phys2continuouspix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
+            x_centerline_voxel_cont = [coord[0] for coord in voxel_coordinates]
+            y_centerline_voxel_cont = [coord[1] for coord in voxel_coordinates]
+            z_centerline_voxel_cont = [coord[2] for coord in voxel_coordinates]
+
             # Create an image with the centerline
             image_input_reoriented.data *= 0
             min_z_index, max_z_index = int(round(min(z_centerline_voxel))), int(round(max(z_centerline_voxel)))
@@ -208,7 +214,7 @@ def run_main():
             fname_centerline_oriented_txt = file_data + '_centerline.txt'
             file_results = open(fname_centerline_oriented_txt, 'w')
             for i in range(min_z_index, max_z_index + 1):
-                file_results.write(str(int(i)) + ' ' + str(x_centerline_voxel[i - min_z_index]) + ' ' + str(y_centerline_voxel[i - min_z_index]) + '\n')
+                file_results.write(str(int(i)) + ' ' + str(round(x_centerline_voxel_cont[i - min_z_index], 2)) + ' ' + str(round(y_centerline_voxel_cont[i - min_z_index], 2)) + '\n')
             file_results.close()
 
             fname_centerline_oriented_roi = optic.centerline2roi(fname_image=fname_centerline_oriented,
