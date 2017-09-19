@@ -17,11 +17,11 @@ from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
 
 
 def get_parser():
-    parser = Parser('sct_segment_image')
-    parser.usage.set_description('Manually annotate Anatomic Images (nifti files)')
+    parser = Parser('sct_label_image')
+    parser.usage.set_description('Manually create labels based on a reference nifti images.')
     parser.add_option(name='-i',
                       type_value='image_nifti',
-                      description='Image to annotate',
+                      description='Image to label',
                       mandatory=True,
                       example='t2.nii.gz')
     parser.add_option(name='-mode',
@@ -32,16 +32,16 @@ def get_parser():
                       example=['centerline', 'sagittal'])
     parser.add_option(name='-n',
                       type_value='int',
-                      description='Maximum number of points to capture',
+                      description='Maximum number of labels to capture',
                       mandatory=False)
     parser.add_option(name='-o',
                       type_value='file_output',
-                      description='Output the nifti image file with the manual segments',
+                      description='Output image file the created labels',
                       mandatory=True,
                       example='t2_seg.nii.gz')
     parser.add_option(name='-labels',
                       type_value=[[','], 'int'],
-                      description='List of vertebraes labels you are interested in capturing',
+                      description='List of labels to create, separated with ",". Example: 2,3,4,5',
                       mandatory=False)
     return parser
 
