@@ -67,3 +67,16 @@ class SagittalDialog(base.BaseDialog):
                 self.labels.label = self.params.vertebraes[index + 1]
         except (TooManyPointsWarning, MissingLabelWarning) as warn:
             self.update_warning(warn.message)
+
+
+def launch_sagittal_dialog(input_file, output_file, params):
+    if not params.vertebraes:
+        params.vertebraes = [3, 5]
+    controller = SagittalControler(input_file, params, output_file)
+    controller.reformat_image()
+
+    app = QtGui.QApplication([])
+    dialog = SagittalDialog(controller)
+    dialog.show()
+    app.exec_()
+    return controller

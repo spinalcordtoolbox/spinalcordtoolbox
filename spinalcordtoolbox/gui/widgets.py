@@ -5,7 +5,6 @@
 """ Qt widgets for manually segementing spinalcord images """
 
 import logging
-from itertools import dropwhile, takewhile
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -21,35 +20,6 @@ logger = logging.getLogger(__name__)
 
 class VertebraeWidget(QtGui.QWidget):
     """A group of checkboxes that list labels."""
-    CODES = [50, 49, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-             16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
-    MESSAGES = ['anterior base of pontomedullary junction (label=50)',
-                'pontomedullary groove (label=49)',
-                'top of C1 vertebrae (label=1)',
-                'posterior edge of C2/C3 intervertebral disk (label=3)',
-                'posterior edge of C3/C4 intervertebral disk (label=4)',
-                'posterior edge of C4/C5 intervertebral disk (label=5)',
-                'posterior edge of C5/C6 intervertebral disk (label=6)',
-                'posterior edge of C6/C7 intervertebral disk (label=7)',
-                'posterior edge of C7/T1 intervertebral disk (label=8)',
-                'posterior edge of T1/T2 intervertebral disk (label=9)',
-                'posterior edge of T2/T3 intervertebral disk (label=10)',
-                'posterior edge of T3/T4 intervertebral disk (label=11)',
-                'posterior edge of T4/T5 intervertebral disk (label=12)',
-                'posterior edge of T5/T6 intervertebral disk (label=13)',
-                'posterior edge of T6/T7 intervertebral disk (label=14)',
-                'posterior edge of T7/T8 intervertebral disk (label=15)',
-                'posterior edge of T8/T9 intervertebral disk (label=16)',
-                'posterior edge of T9/T10 intervertebral disk (label=17)',
-                'posterior edge of T10/T11 intervertebral disk (label=18)',
-                'posterior edge of T11/T12 intervertebral disk (label=19)',
-                'posterior edge of T12/L1 intervertebral disk (label=20)',
-                'posterior edge of L1/L2 intervertebral disk (label=21)',
-                'posterior edge of L2/L3 intervertebral disk (label=22)',
-                'posterior edge of L3/L4 intervertebral disk (label=23)',
-                'posterior edge of L4/S1 intervertebral disk (label=24)',
-                'posterior edge of S1/S2 intervertebral disk (label=25)',
-                'posterior edge of S2/S3 intervertebral disk (label=26)']
     _unchecked = []
     _checked = []
     _active_label = None
@@ -60,15 +30,11 @@ class VertebraeWidget(QtGui.QWidget):
     def __init__(self, parent, vertebraes):
         super(VertebraeWidget, self).__init__(parent)
         self.parent = parent
-        self.VERTEBRAES = dict(zip(self.CODES, self.MESSAGES))
         self.vertebraes = vertebraes
         self._init_ui(parent.params)
         self.refresh()
 
     def _init_ui(self, params):
-        self._labels = dropwhile(lambda x: x[0] != params.start_vertebrae, self.VERTEBRAES)
-        self._labels = takewhile(lambda x: x[0] != params.end_vertebrae, self._labels)
-
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
         font = QtGui.QFont()

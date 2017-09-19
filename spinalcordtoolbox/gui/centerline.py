@@ -19,24 +19,24 @@ from spinalcordtoolbox.gui.base import TooManyPointsWarning, InvalidActionWarnin
 logger = logging.getLogger(__name__)
 
 
-class PropSegController(base.BaseController):
+class CenterlineController(base.BaseController):
     _mode = ''
     INTERVAL = 15
     MODES = ['AUTO', 'CUSTOM']
 
     def __init__(self, image, params, init_values=None):
-        super(PropSegController, self).__init__(image, params, init_values)
+        super(CenterlineController, self).__init__(image, params, init_values)
         self._slice = self.INTERVAL
 
     def reformat_image(self):
-        super(PropSegController, self).reformat_image()
+        super(CenterlineController, self).reformat_image()
         if self.image.dim[0] < self.INTERVAL:
             self.INTERVAL = 1
         if not self.params.num_points:
             self.params.num_points = self.image.dim[0] / self.INTERVAL
 
     def reset_position(self):
-        super(PropSegController, self).reset_position()
+        super(CenterlineController, self).reset_position()
         if self.mode == 'AUTO':
             self.position = (self._slice, self.position[1], self.position[2])
 
@@ -104,9 +104,9 @@ class PropSegController(base.BaseController):
             self.reset_position()
 
 
-class PropSeg(base.BaseDialog):
+class Centerline(base.BaseDialog):
     def __init__(self, *args, **kwargs):
-        super(PropSeg, self).__init__(*args, **kwargs)
+        super(Centerline, self).__init__(*args, **kwargs)
         self.axial_canvas.setFocusPolicy(QtCore.Qt.StrongFocus)
 
     def _init_canvas(self, parent):
@@ -149,7 +149,7 @@ class PropSeg(base.BaseDialog):
         auto_mode.click()
 
     def _init_footer(self, parent):
-        ctrl_layout = super(PropSeg, self)._init_footer(parent)
+        ctrl_layout = super(Centerline, self)._init_footer(parent)
         skip = QtGui.QPushButton('Skip')
         ctrl_layout.insertWidget(2, skip)
 
@@ -196,36 +196,17 @@ class PropSeg(base.BaseDialog):
             self.update_warning(warn.message)
 
     def on_undo(self):
-        super(PropSeg, self).on_undo()
+        super(Centerline, self).on_undo()
         self.axial_canvas.refresh()
         self.sagittal_canvas.refresh()
 
 
-if __name__ == '__main__':
-    import os
-    import sys
-    from scripts.msct_image import Image
-
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-
-    try:
-        file_name = sys.argv[1]
-        overlay_name = sys.argv[2]
-    except Exception:
-        file_name = '/Users/geper_admin/sct_example_data/t2/t2.nii.gz'
-        overlay_name = '/Users/geper_admin/manual_propseg.nii.gz'
-
-    params = base.AnatomicalParams()
-    params.init_message = '1. Select saggital slice -> 2. Select the Axial center of the spinalcord'
-    img = Image(file_name)
-    if os.path.exists(overlay_name):
-        overlay = Image(overlay_name)
-    else:
-        overlay = Image(img)
-        overlay.file_name = overlay_name
-    controller = PropSegController(img, params, overlay)
+def launch_centerline_dialog(input_file, output_file, params):
+    controller = CenterlineController(input_file, params, output_file)
     controller.reformat_image()
-    base.launch_dialog(controller, PropSeg)
-    print(controller.as_string())
-    controller.as_niftii(overlay_name)
-    sys.exit()
+
+    app = QtGui.QApplication([])
+    dialog_ = Centerline(controller)
+    dialog_.show()
+    app.exec_()
+    return controller

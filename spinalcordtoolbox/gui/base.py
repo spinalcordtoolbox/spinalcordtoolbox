@@ -18,9 +18,6 @@ logger = logging.getLogger(__name__)
 
 class AnatomicalParams(object):
     """The base parameter object for GUI configuration"""
-    CODES = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-             18, 19, 20, 21, 22, 23, 24, 25, 26]
-
     def __init__(self,
                  cmap='gray',
                  aspect=1.0,
@@ -68,9 +65,6 @@ class AnatomicalParams(object):
     def vertebraes(self, values):
         if not values:
             return
-
-        if len(set(values) - set(self.CODES)) != 0:
-            raise ValueError('The values are not all valid vertebraes labels')
 
         self._vertebraes = values
         self.start_vertebrae = values[0]
