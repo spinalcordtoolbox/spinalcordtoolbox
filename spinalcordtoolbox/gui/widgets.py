@@ -145,7 +145,9 @@ class AnatomicalCanvas(FigureCanvas):
         self._fig.suptitle(message)
 
     def annotate(self, x, y, label):
-        self.annotations.append(self._axes.annotate(label, (x + 3, y + 3), color='r'))
+        self.annotations.append(self._axes.annotate(label, xy=(x, y), xytext=(-3, 3),
+                                                    textcoords='offset points', ha='right',
+                                                    va='bottom', color='r'))
 
     def clear(self):
         for i in self.annotations:
