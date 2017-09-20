@@ -68,6 +68,11 @@ class SagittalDialog(base.BaseDialog):
         except (TooManyPointsWarning, MissingLabelWarning) as warn:
             self.update_warning(warn.message)
 
+    def on_undo(self):
+        super(SagittalDialog, self).on_undo()
+        self.sagittal.refresh()
+        self.labels.refresh()
+
 
 def launch_sagittal_dialog(input_file, output_file, params):
     if not params.vertebraes:
