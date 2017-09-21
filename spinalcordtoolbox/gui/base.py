@@ -284,10 +284,11 @@ class BaseController(object):
     def undo(self):
         """Remove the last point selected and refresh the UI"""
         if self.points:
-            x, y, z, _ = self.points[-1]
+            x, y, z, label = self.points[-1]
             self.position = (x, y, z)
             self.points = self.points[:-1]
             self._slice = self.position[0]
+            self.label = label
             logger.debug('Point removed {}'.format(self.position))
         else:
             raise InvalidActionWarning('There is no points selected to undo')

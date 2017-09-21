@@ -72,6 +72,7 @@ class SagittalDialog(base.BaseDialog):
         super(SagittalDialog, self).on_undo()
         self.sagittal.refresh()
         self.labels.refresh()
+        self.labels.label = self._controller.label
 
 
 def launch_sagittal_dialog(input_file, output_file, params):
