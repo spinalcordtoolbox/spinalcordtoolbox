@@ -92,6 +92,8 @@ class ProcessLabels(object):
             self.output_image = self.create_label()
         if type_process == 'create-add':
             self.output_image = self.create_label(add=True)
+        if type_process == 'create-seg':
+            self.output_image = self.create_label_along_segmentation()
         if type_process == 'display-voxel':
             self.display_voxel()
             self.fname_output = None
@@ -163,8 +165,43 @@ class ProcessLabels(object):
             elif len(image_output.data.shape) == 2:
                 assert str(coord.z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(coord.z)
                 image_output.data[int(coord.x), int(coord.y)] = coord.value
-
         return image_output
+
+    def create_label_along_segmentation(self):
+        """
+        Create an image with labels defined along the spinal cord segmentation (or centerline)
+        Example:
+        object_define=ProcessLabels(fname_segmentation, coordinates=[coord_1, coord_2, coord_i]), where coord_i='z,value'. If z=-1, then use z=nz/2 (i.e. center of FOV in superior-inferior direction)
+        Returns
+        -------
+        image_output: Image object with labels.
+        """
+        # copy input Image object (will use the same header)
+        image_output = self.image_input.copy()
+        # set all voxels to 0
+        image_output.data *= 0
+        # loop across labels
+        for i, coord in enumerate(self.coordinates):
+            # split coord string
+            list_coord = coord.split(',')
+            # convert to int() and assign to variable
+            z, value = [int(i) for i in list_coord]
+            # if z=-1, replace with nz/2
+            if z == -1:
+                z = int(round(image_output.dim[2]/2.0))
+            # get center of mass of segmentation at given z
+            x, y = ndimage.measurements.center_of_mass(np.array(self.image_input.data[:, :, z]))
+            # round values to make indices
+            x, y = int(round(x)), int(round(y))
+            # display info
+            sct.printv('Label #' + str(i) + ': ' + str(x) + ',' + str(y) + ',' + str(z) + ' --> ' + str(value), 1)
+            if len(image_output.data.shape) == 3:
+                image_output.data[x, y, z] = value
+            elif len(image_output.data.shape) == 2:
+                assert str(z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(z)
+                image_output.data[x, y] = value
+        return image_output
+
 
     def cross(self):
         """
@@ -299,6 +336,7 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def cubic_to_point(self):
         """
         Calculate the center of mass of each group of labels and returns a file of same size with only a
@@ -333,6 +371,7 @@ class ProcessLabels(object):
 
         return output_image
 
+
     def increment_z_inverse(self):
         """
         Take all non-zero values, sort them along the inverse z direction, and attributes the values 1,
@@ -347,6 +386,7 @@ class ProcessLabels(object):
             image_output.data[int(coord.x), int(coord.y), int(coord.z)] = i + 1
 
         return image_output
+
 
     def labelize_from_disks(self):
         """
@@ -368,6 +408,7 @@ class ProcessLabels(object):
 
         return image_output
 
+
     def label_vertebrae(self, levels_user=None):
         """
         Find the center of mass of vertebral levels specified by the user.
@@ -388,6 +429,7 @@ class ProcessLabels(object):
                 image_cubic2point.data[int(list_coordinates[i_label].x), int(list_coordinates[i_label].y), int(list_coordinates[i_label].z)] = 0
         # list all labels
         return image_cubic2point
+
 
     # FUNCTION BELOW REMOVED BY JULIEN ON 2016-07-04 BECAUSE SEEMS NOT TO BE USED (AND DUPLICATION WITH ABOVE)
     # def label_vertebrae_from_disks(self, levels_user):
@@ -412,7 +454,7 @@ class ProcessLabels(object):
     #
     #     return image_cubic2point
 
-    # BELOW: UNFINISHED BUSINESS (JULIEN)
+
     # def label_disc(self, levels_user=None):
     #     """
     #     Find the edge of vertebral labeling file and assign value corresponding to middle coordinate between two levels.
@@ -727,7 +769,7 @@ def get_parser():
     parser.usage.set_description('Utility function for label image.')
     parser.add_option(name="-i",
                       type_value="file",
-                      description="Label image.",
+                      description="Input image.",
                       mandatory=True,
                       example="t2_labels.nii.gz")
     parser.add_option(name="-o",
@@ -747,8 +789,12 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name='-create-add',
                       type_value=[[':'], 'Coordinate'],
-                      description='Same as create, but add labels to input image instead of creating a new one.',
+                      description='Same as "-create", but add labels to the input image instead of creating a new image.',
                       example='12,34,32,1:12,35,33,2',
+                      mandatory=False)
+    parser.add_option(name='-create-seg',
+                      type_value=[[':'], 'str'],
+                      description='Create labels along cord segmentation (or centerline) defined by "-i". First value is "z", second is the value of the label. Separate labels with ":". Example: 5,1:14,2:23,3. To select the mid-point in the superior-inferior direction, set z to "-1". For example if you know that C2-C3 disc is centered in the S-I direction, then enter: -1,3',
                       mandatory=False)
     parser.add_option(name='-cross',
                       type_value='int',
@@ -834,6 +880,9 @@ def main(args=None):
     elif '-create-add' in arguments:
         process_type = 'create-add'
         input_coordinates = arguments['-create-add']
+    elif '-create-seg' in arguments:
+        process_type = 'create-seg'
+        input_coordinates = arguments['-create-seg']
     elif '-cross' in arguments:
         process_type = 'cross'
         input_cross_radius = arguments['-cross']

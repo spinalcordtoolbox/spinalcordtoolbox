@@ -45,7 +45,9 @@ from sct_image import copy_header, split_data, concat_data
 from msct_parser import Parser
 
 
+# PARAMETERS
 class Param:
+    # The constructor
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -61,10 +63,11 @@ class Param:
         self.verbose = 1
         self.plot_graph = 0
         self.suffix = '_moco'
-        self.param = ['2',  # degree of polynomial function for moco
-                      '2',  # smoothing sigma in mm
-                      '1',  # gradientStep
-                      'MI']  # metric: MI,MeanSquares
+        self.poly = '2'  # degree of polynomial function for moco
+        self.smooth = '2'  # smoothing sigma in mm
+        self.gradStep = '1'  # gradientStep for searching algorithm
+        self.metric = 'MI'  # metric: MI, MeanSquares, CC
+        self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
         self.run_eddy = 0
         self.mat_eddy = ''
@@ -74,22 +77,148 @@ class Param:
         self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
 
+    # update constructor with user's parameters
+    def update(self, param_user):
+        # list_objects = param_user.split(',')
+        for object in param_user:
+            if len(object) < 2:
+                sct.printv('ERROR: Wrong usage.', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], obj[1])
 
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-def main():
+
+# PARSER
+# ==========================================================================================
+def get_parser():
+    # parser initialisation
+    parser = Parser(__file__)
+
+    # initialize parameters
+    param_default = Param()
+
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description(
+        '  Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (http://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n'
+        '- group-wise (-g)\n'
+        '- slice-wise regularized along z using polynomial function (-param). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'
+        '- masking (-m)\n'
+        '- iterative averaging of target volume\n')
+    parser.add_option(name='-i',
+                      type_value='file',
+                      description='Diffusion data',
+                      mandatory=True,
+                      example='dmri.nii.gz')
+    parser.add_option(name='-bvec',
+                      type_value='file',
+                      description='Bvecs file',
+                      mandatory=True,
+                      example='bvecs.nii.gz')
+    parser.add_option(name='-b',
+                      type_value=None,
+                      description='Bvecs file',
+                      mandatory=False,
+                      deprecated_by='-bvec')
+    parser.add_option(name='-bval',
+                      type_value='file',
+                      description='Bvals file',
+                      mandatory=False,
+                      example='bvals.nii.gz')
+    parser.add_option(name='-bvalmin',
+                      type_value='float',
+                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
+                      mandatory=False,
+                      example='50')
+    parser.add_option(name='-a',
+                      type_value=None,
+                      description='Bvals file',
+                      mandatory=False,
+                      deprecated_by='-bval')
+
+    parser.add_option(name='-g',
+                      type_value='int',
+                      description='Group nvols successive dMRI volumes for more robustness.',
+                      mandatory=False,
+                      default_value=param_default.group_size,
+                      example=['2'])
+    parser.add_option(name='-m',
+                      type_value='file',
+                      description='Binary mask to limit voxels considered by the registration metric.',
+                      mandatory=False,
+                      example=['dmri_mask.nii.gz'])
+    parser.add_option(name='-param',
+                      type_value=[[','], 'str'],
+                      description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+                                  "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + param_default.poly + ".\n"
+                                                "smooth [mm]: Smoothing kernel. Default=" + param_default.smooth + ".\n"
+                                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
+                                                  "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
+                                                    "sample [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n",
+                      mandatory=False)
+    parser.add_option(name='-thr',
+                      type_value='float',
+                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
+                      mandatory=False,
+                      default_value=param_default.otsu,
+                      example=['25'])
+    parser.add_option(name='-t',
+                      type_value=None,
+                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
+                      mandatory=False,
+                      deprecated_by='-thr')
+    parser.add_option(name='-x',
+                      type_value='multiple_choice',
+                      description='Final Interpolation.',
+                      mandatory=False,
+                      default_value=param_default.interp,
+                      example=['nn', 'linear', 'spline'])
+    parser.add_option(name='-ofolder',
+                      type_value='folder_creation',
+                      description='Output folder',
+                      mandatory=False,
+                      default_value='./',
+                      example='dmri_moco_results/')
+    parser.add_option(name='-o',
+                      type_value=None,
+                      description='Output folder.',
+                      mandatory=False,
+                      deprecated_by='-o')
+    parser.usage.addSection('MISC')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
+    return parser
+
+
+# MAIN
+# ==========================================================================================
+def main(args=None):
 
     # initialization
     start_time = time.time()
     path_out = '.'
+    param = Param()
 
     # reducing the number of CPU used for moco (see issue #201)
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
     # get path of the toolbox
-    status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    # status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+
+    # Get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
@@ -105,7 +234,7 @@ def main():
     if '-m' in arguments:
         param.fname_mask = arguments['-m']
     if '-param' in arguments:
-        param.param = arguments['-param']
+        param.update(arguments['-param'])
     if '-thr' in arguments:
         param.otsu = arguments['-thr']
     if '-x' in arguments:
@@ -142,16 +271,13 @@ def main():
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct.run('cp ' + param.fname_data + ' ' + path_tmp + dmri_name + ext_data, param.verbose)
+    convert(param.fname_data, path_tmp + dmri_name + ext)
     sct.run('cp ' + param.fname_bvecs + ' ' + path_tmp + bvecs_fname, param.verbose)
     if param.fname_mask != '':
         sct.run('cp ' + param.fname_mask + ' ' + path_tmp + mask_name + ext_mask, param.verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
-
-    # convert dmri to nii format
-    convert(dmri_name + ext_data, dmri_name + ext)
 
     # update field in param (because used later).
     # TODO: make this cleaner...
@@ -197,7 +323,6 @@ def dmri_moco(param):
     file_dwi = 'dwi'
     mat_final = 'mat_final/'
     file_dwi_group = 'dwi_averaged_groups'  # no extension
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     ext_mat = 'Warp.nii.gz'  # warping field
 
     # Get dimensions of data
@@ -225,9 +350,6 @@ def dmri_moco(param):
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', param.verbose)
-    # cmd = fsloutput + 'fslmerge -t ' + file_b0
-    # for it in range(nb_b0):
-    #     cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
     im_b0_list = []
     for it in range(nb_b0):
         im_b0_list.append(im_data_split_list[index_b0[it]])
@@ -240,10 +362,6 @@ def dmri_moco(param):
     sct.printv('\nAverage b=0...', param.verbose)
     file_b0_mean = file_b0 + '_mean'
     sct.run('sct_maths -i ' + file_b0 + ext_data + ' -o ' + file_b0_mean + ext_data + ' -mean t', param.verbose)
-    # if not average_data_across_dimension(file_b0+'.nii', file_b0_mean+'.nii', 3):
-    #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
-    # cmd = fsloutput + 'fslmaths ' + file_b0 + ' -Tmean ' + file_b0_mean
-    # status, output = sct.run(cmd, param.verbose)
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi / param.group_size))
@@ -293,9 +411,6 @@ def dmri_moco(param):
     im_dw_out = concat_data(im_dw_list, 3)
     im_dw_out.setFileName(file_dwi_group + ext_data)
     im_dw_out.save()
-    # cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
-    # for iGroup in range(nb_groups):
-    #     cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)
 
     # Average DW Images
     # TODO: USEFULL ???
@@ -316,14 +431,6 @@ def dmri_moco(param):
         otsu.otsu(param_otsu)
         file_dwi_group = file_dwi_group + '_seg'
 
-    # extract first DWI volume as target for registration
-    nii = Image(file_dwi_group + ext_data)
-    data_crop = nii.data[:, :, :, index_dwi[0]:index_dwi[0] + 1]
-    nii.data = data_crop
-    target_dwi_name = 'target_dwi'
-    nii.setFileName(target_dwi_name + ext_data)
-    nii.save()
-
     # START MOCO
     #===================================================================================================================
 
@@ -333,6 +440,7 @@ def dmri_moco(param):
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco = param
     param_moco.file_data = 'b0'
+    # identify target image
     if index_dwi[0] != 0:
         # If first DWI is not the first volume (most common), then there is a least one b=0 image before. In that case
         # select it as the target image for registration of all b=0
@@ -350,9 +458,8 @@ def dmri_moco(param):
     sct.printv('  Estimating motion on DW images...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_dwi_group
-    param_moco.file_target = target_dwi_name  # target is the first DW image (closest to the first b=0)
+    param_moco.file_target = file_dwi_mean[0]  # target is the first DW image (closest to the first b=0)
     param_moco.path_out = ''
-    # param_moco.todo = 'estimate'
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_dwigroups'
     moco.moco(param_moco)
@@ -407,132 +514,9 @@ def dmri_moco(param):
     sct.run(cmd, param.verbose)
 
 
-def get_parser():
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # initialize parameters
-    param_default = Param()
-
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('  Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et al. (http://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n'
-                                 '- group-wise (-g)\n'
-                                 '- slice-wise regularized along z using polynomial function (-param). For more info about the method, type: isct_antsSliceRegularizedRegistration\n'
-                                 '- masking (-m)\n'
-                                 '- iterative averaging of target volume\n')
-    parser.add_option(name='-i',
-                      type_value='file',
-                      description='Diffusion data',
-                      mandatory=True,
-                      example='dmri.nii.gz')
-    parser.add_option(name='-bvec',
-                      type_value='file',
-                      description='Bvecs file',
-                      mandatory=True,
-                      example='bvecs.nii.gz')
-    parser.add_option(name='-b',
-                      type_value=None,
-                      description='Bvecs file',
-                      mandatory=False,
-                      deprecated_by='-bvec')
-    parser.add_option(name='-bval',
-                      type_value='file',
-                      description='Bvals file',
-                      mandatory=False,
-                      example='bvals.nii.gz')
-    parser.add_option(name='-bvalmin',
-                      type_value='float',
-                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
-                      mandatory=False,
-                      example='50')
-    parser.add_option(name='-a',
-                      type_value=None,
-                      description='Bvals file',
-                      mandatory=False,
-                      deprecated_by='-bval')
-
-    parser.add_option(name='-g',
-                      type_value='int',
-                      description='Group nvols successive dMRI volumes for more robustness.',
-                      mandatory=False,
-                      default_value=param_default.group_size,
-                      example=['2'])
-    parser.add_option(name='-m',
-                      type_value='file',
-                      description='Binary mask to limit voxels considered by the registration metric.',
-                      mandatory=False,
-                      example=['dmri_mask.nii.gz'])
-    parser.add_option(name='-param',
-                      type_value=[[','], 'str'],
-                      description='Parameters for registration.'
-                                  'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.\n'
-                                  '1) degree of polynomial function used for regularization along Z. For no regularization set to 0.\n'
-                                  '2) smoothing kernel size (in mm).\n'
-                                  '3) gradient step. The higher the more deformation allowed.\n'
-                                  '4) metric: {MI,MeanSquares}. If you find very large deformations, switching to MeanSquares can help.\n',
-                      default_value=param_default.param,
-                      mandatory=False,
-                      example=['2,1,0.5,MeanSquares'])
-    parser.add_option(name='-p',
-                      type_value=None,
-                      description='Parameters for registration.'
-                                  'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.'
-                                  '1) degree of polynomial function used for regularization along Z. For no regularization set to 0.'
-                                  '2) smoothing kernel size (in mm).'
-                                  '3) gradient step. The higher the more deformation allowed.'
-                                  '4) metric: {MI,MeanSquares}. If you find very large deformations, switching to MeanSquares can help.',
-                      mandatory=False,
-                      deprecated_by='-param')
-    parser.add_option(name='-thr',
-                      type_value='float',
-                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
-                      mandatory=False,
-                      default_value=param_default.otsu,
-                      example=['25'])
-    parser.add_option(name='-t',
-                      type_value=None,
-                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
-                      mandatory=False,
-                      deprecated_by='-thr')
-    parser.add_option(name='-x',
-                      type_value='multiple_choice',
-                      description='Final Interpolation.',
-                      mandatory=False,
-                      default_value=param_default.interp,
-                      example=['nn', 'linear', 'spline'])
-    parser.add_option(name='-ofolder',
-                      type_value='folder_creation',
-                      description='Output folder',
-                      mandatory=False,
-                      default_value='./',
-                      example='dmri_moco_results/')
-    parser.add_option(name='-o',
-                      type_value=None,
-                      description='Output folder.',
-                      mandatory=False,
-                      deprecated_by='-o')
-    parser.usage.addSection('MISC')
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
-    return parser
-
-
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
     sct.start_stream_logger()
-    param = Param()
-    param_default = Param()
     main()
