@@ -197,6 +197,9 @@ done
 
 # Catch SCT version
 if [ -e "version.txt" ]; then
+  if [ ${SCT_MPI_MODE} ]; then 
+  echo "$(cat version.txt) mpi" > version.txt
+  fi
   SCT_VERSION=`cat version.txt`
 else
   echo "ERROR: version.txt not found."
@@ -253,7 +256,7 @@ else
 fi
 
 # if installing from git folder, then becomes default installation folder
-if [[ $INSTALL_TYPE == "git" ]]; then
+if [[ ${INSTALL_TYPE} == "git" ]]; then
   INSTALL_DIR=$SCT_SOURCE
 else
   INSTALL_DIR="${HOME}/sct_${SCT_VERSION}"
