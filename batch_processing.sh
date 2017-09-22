@@ -10,7 +10,7 @@
 # To prevent downloading sct_example_data and run from local folder, run:
 #   ./batch_processing.sh -nodownload
 #
-# tested with Spinal Cord Toolbox (jca-20170421-batchproc/7aeef321bd0b4ffed15e58f2b7f5a8b7d79c7e64)
+# Tested with Spinal Cord Toolbox (v3.0.8)
 
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
@@ -30,6 +30,12 @@ else
   cd sct_example_data
 fi
 
+# Remove QC folder
+if [ -d ~/qc_batch_processing ]; then
+  echo "Removing ~/qc_batch_processing folder folder."
+  rm -rf ~/qc_batch_processing
+fi
+
 # display starting time:
 echo "Started at: $(date +%x_%r)"
 
@@ -43,8 +49,8 @@ if [ $DISPLAYQC = true ]; then
   fslview t2 -b 0,3000 t2_seg -l Red -t 0.5 &
 fi
 # Vertebral labeling
-# tips: here we use manual initialization of labeling by clicking at disc C2-C3
-sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2 -initc2 -qc ~/qc_batch_processing
+# tips: for manual initialization of labeling by clicking at disc C2-C3, use flag -initc2
+sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2 -qc ~/qc_batch_processing
 # Create labels at C2 and C5 vertebral levels
 sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 2,5
 # Register to template
