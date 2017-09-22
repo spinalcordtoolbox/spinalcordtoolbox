@@ -997,12 +997,14 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     labels2d = np.empty([nb_labels, nb_vox], dtype=float)
     for i in range(0, nb_labels):
         labels2d[i] = labels[i][ind_positive]
-    # if specified (flag -mask-weighted), define a matrix to weight voxels. If not, this matrix is set to identity.
-    if im_weight:
-        data_weight_1d = im_weight.data[ind_positive]
-    else:
-        data_weight_1d = np.ones(nb_vox)
-    W = np.diag(data_weight_1d)  # weight matrix
+
+    if method == 'map' or 'ml':
+        # if specified (flag -mask-weighted), define a matrix to weight voxels. If not, this matrix is set to identity.
+        if im_weight:
+            data_weight_1d = im_weight.data[ind_positive]
+        else:
+            data_weight_1d = np.ones(nb_vox)
+        W = np.diag(data_weight_1d)  # weight matrix
 
     # Display number of non-zero values
     sct.printv('  Number of non-null voxels: ' + str(nb_vox), verbose=verbose)
