@@ -37,17 +37,21 @@ DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
 
-
 # Force a clean exit
 finish ()
 {
-  # Get back to starting point
-  cd ${SCT_SOURCE}
-  # remove installation tmp files
-#  rm -Rf ${TMP_DIR}
+    # Catch the last return code
+    value=$?
+    # Get back to starting point
+    cd ${SCT_SOURCE}
+    if [ ${value} -eq 0 ]; then
+        echo "Installation finished successfully"
+    else
+        echo "Installation failed"
+    fi
+    exit ${value}
 }
 trap finish EXIT
-
 
 # Force bashrc loading
 force_bashrc_loading ()
