@@ -428,19 +428,16 @@ if __name__ == "__main__":
 
     # if centerline or mask is asked using viewer
     if use_viewer:
-        from spinalcordtoolbox.gui.base import AnatomicalParams, launch_dialog
-        from spinalcordtoolbox.gui.propseg import PropSegController, PropSeg
+        from spinalcordtoolbox.gui.base import AnatomicalParams
+        from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
         params = AnatomicalParams()
-        params.init_message = '1. Select saggital slice -> 2. Select the Axial center of the spinalcord'
         params.num_points = 3
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
         tmp_output_file.file_name = os.path.join(folder_output, file_data + 'manually_seg' + ext_data)
-        controller = PropSegController(image, params, tmp_output_file)
-        controller.align_image()
-        launch_dialog(controller, PropSeg)
+        controller = launch_centerline_dialog(image, tmp_output_file, params)
         try:
             controller.as_niftii(tmp_output_file.file_name)
             # add mask filename to parameters string

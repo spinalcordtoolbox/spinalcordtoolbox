@@ -466,19 +466,17 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # if manual mode, open viewer for user to click on C2/C3 disc
     if init_disc == [] and initc2 == 'manual':
-        from spinalcordtoolbox.gui.base import AnatomicalParams, launch_dialog
-        from spinalcordtoolbox.gui.labelvertebrae import LabelVertebrae, LabelVertebraeController
+        from spinalcordtoolbox.gui.base import AnatomicalParams
+        from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
 
         params = AnatomicalParams()
-        params.init_message = ''
         params.num_points = 1
-        params.start_label = 3
-        params.end_label = 4
-        image = Image(fname)
-        controller = LabelVertebraeController(image, params)
-        controller.align_image()
-        launch_dialog(controller, LabelVertebrae)
-        controller.as_niftii(fname)
+        params.vertebraes = [3, ]
+        input_file = Image(fname)
+        output_file = input_file.copy()
+        output_file.data *= 0
+        output_file.setFileName(os.path.join(path_output, 'labels.nii.gz'))
+        controller = launch_sagittal_dialog(input_file, output_file, params)
         mask_points = controller.as_string()
 
         # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
