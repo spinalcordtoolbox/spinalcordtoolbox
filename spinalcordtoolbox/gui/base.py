@@ -270,8 +270,8 @@ class BaseController(object):
         logger.debug('Overlay shape {}'.format(self._overlay_image.data.shape))
 
         for point in self.points:
-            x, y, z, label = point
-            self._overlay_image.data[int(x), int(y), int(z)] = label
+            x, y, z, label = [int(i) for i in point]
+            self._overlay_image.data[x, y, z] = label
 
         if self.orientation != self._overlay_image.orientation:
             self._overlay_image.change_orientation(self.orientation)
