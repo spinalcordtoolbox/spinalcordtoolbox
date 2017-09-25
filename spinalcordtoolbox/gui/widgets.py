@@ -123,14 +123,14 @@ class AnatomicalCanvas(FigureCanvas):
                                    QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
-    def _init_ui(self, data):
+    def _init_ui(self, data, aspect):
         self._axes = self._fig.add_axes([0, 0, 1, 1])
         self._axes.axis('off')
         self._axes.set_frame_on(True)
         self._fig.canvas.mpl_connect('button_release_event', self.on_update)
         self.view = self._axes.imshow(
             data,
-            aspect=self._params.aspect,
+            aspect=aspect,
             cmap=self._params.cmap,
             interpolation=self._params.interp,
             vmin=self._params.vmin,
@@ -174,7 +174,8 @@ class AnatomicalCanvas(FigureCanvas):
 class SagittalCanvas(AnatomicalCanvas):
     def __init__(self, *args, **kwargs):
         super(SagittalCanvas, self).__init__(*args, **kwargs)
-        self._init_ui(self._image.data[:, :, self._z])
+        _, _, _, _, dx, dy, dz, _ = self._image.dim
+        self._init_ui(self._image.data[:, :, self._z], dx / dy)
         self.annotations = []
 
     def refresh(self):
@@ -212,7 +213,8 @@ class SagittalCanvas(AnatomicalCanvas):
 class CorrinalCanvas(AnatomicalCanvas):
     def __init__(self, parent, width=4, height=8, dpi=100, crosshair=False):
         super(CorrinalCanvas, self).__init__(parent, width, height, dpi, crosshair)
-        self._init_ui(self._image.data[:, self._y, :])
+        _, _, _, _, dx, dy, dz, _ = self._image.dim
+        self._init_ui(self._image.data[:, self._y, :], dx / dz)
 
     def refresh(self):
         self._x, self._y, self._z = self._parent._controller.position
@@ -240,7 +242,8 @@ class CorrinalCanvas(AnatomicalCanvas):
 class AxialCanvas(AnatomicalCanvas):
     def __init__(self, parent, width=4, height=8, dpi=100, crosshair=False):
         super(AxialCanvas, self).__init__(parent, width, height, dpi, crosshair)
-        self._init_ui(self._image.data[self._x, :, :])
+        _, _, _, _, dx, dy, dz, _ = self._image.dim
+        self._init_ui(self._image.data[self._x, :, :], dy / dz)
 
     def refresh(self):
         self._x, self._y, self._z = self._parent._controller.position

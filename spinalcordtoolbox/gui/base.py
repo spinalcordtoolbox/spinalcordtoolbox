@@ -20,7 +20,6 @@ class AnatomicalParams(object):
     """The base parameter object for GUI configuration"""
     def __init__(self,
                  cmap='gray',
-                 aspect=1.0,
                  interp='nearest',
                  vmin=5.,
                  vmax=95.,
@@ -31,7 +30,6 @@ class AnatomicalParams(object):
         Parameters
         ----------
         cmap : str
-        aspect : float
         interp : str
         vmin : int
         vmax : int
@@ -39,7 +37,6 @@ class AnatomicalParams(object):
         alpha : float
         """
         self.cmap = cmap
-        self.aspect = aspect
         self.interp = interp
         self.min = vmin
         self.max = vmax
