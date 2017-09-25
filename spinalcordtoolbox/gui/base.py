@@ -271,7 +271,7 @@ class BaseController(object):
 
         for point in self.points:
             x, y, z, label = point
-            self._overlay_image.data[x, y, z] = label
+            self._overlay_image.data[int(x), int(y), int(z)] = label
 
         if self.orientation != self._overlay_image.orientation:
             self._overlay_image.change_orientation(self.orientation)

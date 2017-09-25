@@ -102,7 +102,7 @@ class AnatomicalCanvas(FigureCanvas):
         Create a event when user clicks on the canvas
 
     """
-    point_selected_signal = QtCore.Signal(int, int, int)
+    point_selected_signal = QtCore.Signal(float, float, float)
 
     def __init__(self, parent, width=8, height=8, dpi=100, crosshair=False, plot_points=False, annotate=False, plot_position=False):
         self._parent = parent
@@ -114,7 +114,7 @@ class AnatomicalCanvas(FigureCanvas):
         self._plot_position = plot_position
         self.position = None
 
-        self._x, self._y, self._z = self._parent._controller.position
+        self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
 
         self._fig = Figure(figsize=(width, height), dpi=dpi)
         super(AnatomicalCanvas, self).__init__(self._fig)
@@ -179,7 +179,7 @@ class SagittalCanvas(AnatomicalCanvas):
         self.annotations = []
 
     def refresh(self):
-        self._x, self._y, self._z = self._parent._controller.position
+        self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[:, :, self._z]
         self.view.set_array(data)
         self.plot_position()
@@ -188,7 +188,7 @@ class SagittalCanvas(AnatomicalCanvas):
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
-            self.point_selected_signal.emit(int(event.ydata), int(event.xdata), self._z)
+            self.point_selected_signal.emit(event.ydata, event.xdata, self._z)
 
     def plot_points(self):
         """Plot the controller's list of points (x, y) and annotate the point with the label"""
@@ -217,7 +217,7 @@ class CorrinalCanvas(AnatomicalCanvas):
         self._init_ui(self._image.data[:, self._y, :], dx / dz)
 
     def refresh(self):
-        self._x, self._y, self._z = self._parent._controller.position
+        self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[:, self._y, :]
         self.view.set_array(data)
         self.view.figure.canvas.draw()
@@ -246,7 +246,7 @@ class AxialCanvas(AnatomicalCanvas):
         self._init_ui(self._image.data[self._x, :, :], dy / dz)
 
     def refresh(self):
-        self._x, self._y, self._z = self._parent._controller.position
+        self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[self._x, :, :]
         self.view.set_array(data)
         self.view.figure.canvas.draw()
