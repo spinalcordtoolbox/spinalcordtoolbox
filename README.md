@@ -17,7 +17,7 @@ provide an integrative framework that is compatible with most usages and that is
 capable of reaching the community at large. This hinders cross-validation and
 the possibility to perform multi-center studies.
 
-Spinal Cord Toolbox (SCT) is a comprehensive, free and open-source software dedicated to the
+Spinal Cord Toolbox (SCT), a comprehensive -source software dedicated to the
 processing and analysis of spinal cord **MRI** data. **SCT** builds on
 previously-validated methods and includes state-of-the-art **MRI** templates and
 atlases of the spinal cord, algorithms to segment and register new data to the

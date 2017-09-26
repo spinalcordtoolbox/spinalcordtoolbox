@@ -9,8 +9,6 @@ sct_utils.pyc
 .nfs*
 *.pyc
 *.log
-*.egg-info/
-*.egg
 
 .idea/*
 
