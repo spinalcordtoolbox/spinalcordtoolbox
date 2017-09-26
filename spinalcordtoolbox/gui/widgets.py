@@ -188,7 +188,9 @@ class SagittalCanvas(AnatomicalCanvas):
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
-            self.point_selected_signal.emit(event.ydata, event.xdata, self._z)
+            x = int(event.xdata) + 0.5
+            y = int(event.ydata) + 0.5
+            self.point_selected_signal.emit(y, x, self._z)
 
     def plot_points(self):
         """Plot the controller's list of points (x, y) and annotate the point with the label"""
@@ -224,7 +226,9 @@ class CorrinalCanvas(AnatomicalCanvas):
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
-            self.point_selected_signal.emit(event.xdata, self._y, event.ydata)
+            x = int(event.xdata) + 0.5
+            y = int(event.ydata) + 0.5
+            self.point_selected_signal.emit(x, self._y, y)
 
     def plot_points(self):
         logger.debug('Plotting points {}'.format(self._parent._controller.points))
@@ -253,7 +257,9 @@ class AxialCanvas(AnatomicalCanvas):
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
-            self.point_selected_signal.emit(self._x, event.ydata, event.xdata)
+            x = int(event.xdata) + 0.5
+            y = int(event.ydata) + 0.5
+            self.point_selected_signal.emit(self._x, y, x)
 
     def plot_points(self):
         logger.debug('Plotting points {}'.format(self._parent._controller.points))

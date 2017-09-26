@@ -298,7 +298,7 @@ class BaseController(object):
         data = self._overlay_image.data
         xs, ys, zs = np.where(data)
         for x, y, z in zip(xs, ys, zs):
-            output.append('{},{},{},{}'.format(x, y, z, data[x, y, z]))
+            output.append('{},{},{},{}'.format(x, y, z, int(data[x, y, z])))
         return ':'.join(output)
 
     def as_niftii(self, file_name=None):
