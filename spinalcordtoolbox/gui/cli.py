@@ -69,12 +69,11 @@ def segment_image_cli():
     params.vertebraes = arguments.get('-labels', params.vertebraes)
     input_file = Image(input_file_name)
 
-    if os.path.exists(output_file_name):
-        output_file = Image(output_file_name)
-    else:
-        output_file = input_file.copy()
-        output_file.data *= 0
-        output_file.setFileName(output_file_name)
+    if os.path.exists:
+        printv('The output file exists, the contents will be overwritten', type='warning')
+    output_file = input_file.copy()
+    output_file.data *= 0
+    output_file.setFileName(output_file_name)
 
     controller = launch_modes[mode](input_file, output_file, params)
     if controller.saved:
