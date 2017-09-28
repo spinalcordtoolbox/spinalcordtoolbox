@@ -57,6 +57,7 @@ class SagittalDialog(base.BaseDialog):
 
     def on_select_point(self, x, y, z):
         try:
+            x, y, z,  = int(round(x)), int(round(y)), int(round(z))
             label = self.labels.label
             self._controller.select_point(x, y, z, label)
             self.labels.refresh()
