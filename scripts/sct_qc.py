@@ -15,7 +15,6 @@ from BaseHTTPServer import HTTPServer
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 from msct_parser import Parser
-from sct_utils import printv
 import sct_utils as sct
 
 import spinalcordtoolbox.reports as reports
@@ -56,7 +55,7 @@ if __name__ == "__main__":
     json_file = os.path.join(qc_path, 'qc_results.json')
 
     if not os.path.isfile(json_file):
-        printv('Can not start the quality control viewer.'
+        sct.log.info('Can not start the quality control viewer.'
                ' This is not a proper QC folder', type='error')
         sys.exit(-1)
 
@@ -65,11 +64,11 @@ if __name__ == "__main__":
 
     os.chdir(qc_path)
     httpd = HTTPServer(('', 8888), SimpleHTTPRequestHandler)
-    printv('QC viewer started on:')
-    printv('http://127.0.0.1:8888', type='info')
-    printv('Copy and paste the address into your web browser')
-    printv('Press "Ctrl" + "C" to stop sct_qc')
+    sct.log.info('QC viewer started on:')
+    sct.log.info('http://127.0.0.1:8888', type='info')
+    sct.log.info('Copy and paste the address into your web browser')
+    sct.log.info('Press "Ctrl" + "C" to stop sct_qc')
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        printv('QC viewer stopped')
+        sct.log.info('QC viewer stopped')

@@ -61,14 +61,12 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export PATH
   export PYTHONPATH
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
-fi
 
-if [ -e ${HOME}/.sctrc ]; then
-# Overwrite parameter with local config
-  . ${HOME}/.sctrc
-fi
+  if [ -e ${HOME}/.sctrc ]; then
+  # Overwrite parameter with local config
+    . ${HOME}/.sctrc
+  fi
 
-if [ -z "${SCT_LOADED_ONCE}" ]; then
 
   # Will use system python if conda or virtual env are not used
   echo ""

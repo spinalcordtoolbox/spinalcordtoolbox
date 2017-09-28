@@ -9,7 +9,7 @@ import numpy as np
 from scipy import ndimage
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("sct.{}".format(__file__))
 
 
 class Slice(object):

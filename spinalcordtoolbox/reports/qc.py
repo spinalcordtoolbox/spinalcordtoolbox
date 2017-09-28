@@ -19,7 +19,6 @@ from scipy import ndimage
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
-
 class QcImage(object):
     """
     Class used to create a .png file from a 2d image produced by the class "Slice"
