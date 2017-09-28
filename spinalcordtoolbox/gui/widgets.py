@@ -157,13 +157,6 @@ class AnatomicalCanvas(FigureCanvas):
         self.points.set_ydata([])
 
     def plot_data(self, xdata, ydata, labels):
-        def format_point(value):
-            if value < 1:
-                return 0
-            return int(value)
-
-        xdata = [format_point(x) for x in xdata]
-        ydata = [format_point(y) for y in ydata]
         self.points.set_xdata(xdata)
         self.points.set_ydata(ydata)
 
