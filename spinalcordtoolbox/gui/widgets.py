@@ -124,10 +124,10 @@ class AnatomicalCanvas(FigureCanvas):
         FigureCanvas.updateGeometry(self)
 
     def _init_ui(self, data, aspect):
-        self._axes = self._fig.add_axes([0, 0, 1, 1])
-        self._axes.axis('off')
-        self._axes.set_frame_on(True)
         self._fig.canvas.mpl_connect('button_release_event', self.on_update)
+
+        self._axes = self._fig.add_axes([0, 0, 1, 1], frameon=True)
+        self._axes.axis('off')
         self.view = self._axes.imshow(
             data,
             aspect=aspect,
@@ -157,6 +157,13 @@ class AnatomicalCanvas(FigureCanvas):
         self.points.set_ydata([])
 
     def plot_data(self, xdata, ydata, labels):
+        def format_point(value):
+            if value < 1:
+                return 0
+            return int(value)
+
+        xdata = [format_point(x) for x in xdata]
+        ydata = [format_point(y) for y in ydata]
         self.points.set_xdata(xdata)
         self.points.set_ydata(ydata)
 
@@ -187,10 +194,8 @@ class SagittalCanvas(AnatomicalCanvas):
         self.view.figure.canvas.draw()
 
     def on_update(self, event):
-        if event.xdata > 0 and event.ydata > 0 and event.button == 1:
-            x = int(event.xdata) + 0.5
-            y = int(event.ydata) + 0.5
-            self.point_selected_signal.emit(y, x, self._z)
+        if event.xdata > -1 and event.ydata > -1 and event.button == 1:
+            self.point_selected_signal.emit(event.ydata, event.xdata, self._z)
 
     def plot_points(self):
         """Plot the controller's list of points (x, y) and annotate the point with the label"""
@@ -225,10 +230,8 @@ class CorrinalCanvas(AnatomicalCanvas):
         self.view.figure.canvas.draw()
 
     def on_update(self, event):
-        if event.xdata > 0 and event.ydata > 0 and event.button == 1:
-            x = int(event.xdata) + 0.5
-            y = int(event.ydata) + 0.5
-            self.point_selected_signal.emit(x, self._y, y)
+        if event.xdata > -1 and event.ydata > -1 and event.button == 1:
+            self.point_selected_signal.emit(event.xdata, self._y, event.ydata)
 
     def plot_points(self):
         logger.debug('Plotting points {}'.format(self._parent._controller.points))
@@ -257,9 +260,7 @@ class AxialCanvas(AnatomicalCanvas):
 
     def on_update(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
-            x = int(event.xdata) + 0.5
-            y = int(event.ydata) + 0.5
-            self.point_selected_signal.emit(self._x, y, x)
+            self.point_selected_signal.emit(self._x, event.ydata, event.xdata)
 
     def plot_points(self):
         logger.debug('Plotting points {}'.format(self._parent._controller.points))

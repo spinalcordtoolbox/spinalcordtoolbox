@@ -262,7 +262,7 @@ class BaseController(object):
 
     def valid_point(self, x, y, z):
         dim = self.image.dim
-        if 0 <= x < dim[0] and 0 <= y < dim[1] and 0 <= z < dim[2]:
+        if -1 < x < dim[0] and -1 < y < dim[1] and -1 < z < dim[2]:
             return True
         return False
 
