@@ -24,8 +24,6 @@ from scipy import ndimage
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
-from spinalcordtoolbox.gui import base
-from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
 
 
 class Param:
@@ -642,6 +640,9 @@ class ProcessLabels(object):
         return im_output
 
     def launch_sagittal_viewer(self, labels):
+        from spinalcordtoolbox.gui import base
+        from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
+
         params = base.AnatomicalParams()
         params.vertebraes = labels
         params.input_file_name = self.image_input.file_name
