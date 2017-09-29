@@ -110,7 +110,7 @@ class ProcessLabels(object):
             self.output_image = self.label_vertebrae(self.vertebral_levels)
         if type_process == 'vert-continuous':
             self.output_image = self.continuous_vertebral_levels()
-        if type_process == 'sagittal-labels':
+        if type_process == 'create-viewer':
             self.output_image = self.launch_sagittal_viewer(self.value)
 
         # save the output image as minimized integers
@@ -733,9 +733,9 @@ def get_parser():
                       mandatory=False,
                       default_value=param_default.verbose,
                       example=['0', '1', '2'])
-    parser.add_option(name='-sagittal-labels',
+    parser.add_option(name='-create-viewer',
                       type_value=[[','], 'int'],
-                      description='Manually label from a sagittal view GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
+                      description='Manually label from a GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
                       mandatory=False)
     return parser
 
@@ -797,9 +797,9 @@ def main(args=None):
     elif '-remove-symm' in arguments:
         process_type = 'remove-symm'
         input_fname_ref = arguments['-r']
-    elif '-sagittal-labels' in arguments:
-        process_type = 'sagittal-labels'
-        value = arguments['-sagittal-labels']
+    elif '-create-viewer' in arguments:
+        process_type = 'create-viewer'
+        value = arguments['-create-viewer']
     else:
         # no process chosen
         sct.printv('ERROR: No process was chosen.', 1, 'error')
