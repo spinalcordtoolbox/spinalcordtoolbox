@@ -391,7 +391,6 @@ if __name__ == "__main__":
             use_optic = False
     if "-init" in arguments:
         init_option = float(arguments["-init"])
-        #cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
@@ -433,61 +432,24 @@ if __name__ == "__main__":
 
     # if centerline or mask is asked using viewer
     if use_viewer:
-        # make sure image is in SAL orientation, as it is the orientation used by PropSeg
-        image_input_orientation = orientation(image_input, get=True, verbose=False)
-        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_data + ext_data, "_SAL")
-        path_tmp_viewer = sct.tmp_create(verbose=verbose)
-        cmd_image = '-i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
-        sct_image.main(cmd_image.split())
+        from spinalcordtoolbox.gui.base import AnatomicalParams
+        from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
-        from sct_viewer import ClickViewerPropseg
-        image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
-        viewer = ClickViewerPropseg(image_input_reoriented)
-        if use_viewer == "mask":
-            viewer.input_type = 'mask'
-            viewer.number_of_slices = 3
-            viewer.gap_inter_slice = int(10 / pz)
-            if viewer.gap_inter_slice == 0:
-                viewer.gap_inter_slice = 1
-
-            if '-init' in arguments:
-                starting_slice = arguments['-init']
-                cmd += " -init " + str(arguments["-init"])
-
-                # starting_slice can be provided as a ratio of the number of slices
-                # we assume slice number/ratio is in RPI orientation, which is the inverse of the one used in viewer (SAL)
-                if 0 < starting_slice < 1:
-                    starting_slice = int((1.0 - starting_slice) * image_input_reoriented.data.shape[0])
-                else:
-                    starting_slice = image_input_reoriented.data.shape[0] - starting_slice
-
-                viewer.calculate_list_slices(starting_slice=starting_slice)
-            else:
-                viewer.calculate_list_slices()
-
-        # start the viewer that ask the user to enter a few points along the spinal cord
-        mask_points = viewer.start()
-
-        if not mask_points and viewer.closed:
-            mask_points = viewer.list_points_useful_notation
-
-        if mask_points:
-            # create the mask containing either the three-points or centerline mask for initialization
-            mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
-            sct.run("sct_label_utils -i " + path_tmp_viewer + reoriented_image_filename + " -create " + mask_points + " -o " + path_tmp_viewer + mask_filename, verbose=False)
-
-            # reorient the initialization mask to correspond to input image orientation
-            mask_reoriented_filename = sct.add_suffix(file_data + ext_data, "_mask_viewer")
-            cmd = ('-i ' + path_tmp_viewer + mask_filename + ' -o ' + folder_output + mask_reoriented_filename
-                   + ' -setorient ' + image_input_orientation + ' -v 0').split()
-            sct_image.main(cmd)
-
+        params = AnatomicalParams()
+        params.num_points = 3
+        image = Image(fname_data)
+        tmp_output_file = Image(image)
+        tmp_output_file.data *= 0
+        tmp_output_file.file_name = os.path.join(folder_output, file_data + 'manually_seg' + ext_data)
+        controller = launch_centerline_dialog(image, tmp_output_file, params)
+        try:
+            controller.as_niftii(tmp_output_file.file_name)
             # add mask filename to parameters string
             if use_viewer == "centerline":
-                cmd += " -init-centerline " + folder_output + mask_reoriented_filename
+                cmd += " -init-centerline " + tmp_output_file.file_name
             elif use_viewer == "mask":
-                cmd += " -init-mask " + folder_output + mask_reoriented_filename
-        else:
+                cmd += " -init-mask " + tmp_output_file.file_name
+        except ValueError:
             sct.log.error('the viewer has been closed before entering all manual points. Please try again.')
 
     # If using OptiC, enabled by default
@@ -531,10 +493,9 @@ if __name__ == "__main__":
     im_seg.save(type='int8')
 
     # remove temporary files
-    if remove_temp_files:
+    if remove_temp_files and use_viewer:
         sct.log.info("Remove temporary files...")
-        if use_viewer:
-            shutil.rmtree(path_tmp_viewer, ignore_errors=True)
+        os.remove(tmp_output_file.file_name)
 
     if '-qc' in arguments and not arguments.get('-noqc', False):
         qc_path = arguments['-qc']
