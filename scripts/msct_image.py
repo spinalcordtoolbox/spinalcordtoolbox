@@ -16,6 +16,7 @@
 
 
 import numpy as np
+import sct_utils as sct
 from scipy.ndimage import map_coordinates
 import math
 
@@ -319,14 +320,19 @@ class Image(object):
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         :return:
         """
+        from numpy import iinfo, uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64  # DON'T REMOVE THIS, IT IS MANDATORY FOR EVAL
+
+        # if not output type specified, use input type
         if type == '':
             type = self.hdr.get_data_dtype()
 
+        # get min/max from input image
+        min_in = np.nanmin(self.data)
+        max_in = np.nanmax(self.data)
+
+        # find optimum type for the input image
         if type == 'minimize' or type == 'minimize_int':
-            # compute max value in the image and choose the best pixel type to represent all the pixels within smallest memory space
             # warning: does not take intensity resolution into account, neither complex voxels
-            max_vox = np.nanmax(self.data)
-            min_vox = np.nanmin(self.data)
 
             # check if voxel values are real or integer
             isInteger = True
@@ -337,42 +343,54 @@ class Image(object):
                         break
 
             if isInteger:
-                if min_vox >= 0:  # unsigned
-                    if max_vox <= np.iinfo(np.uint8).max:
+                if min_in >= 0:  # unsigned
+                    if max_in <= np.iinfo(np.uint8).max:
                         type = 'uint8'
-                    elif max_vox <= np.iinfo(np.uint16):
+                    elif max_in <= np.iinfo(np.uint16):
                         type = 'uint16'
-                    elif max_vox <= np.iinfo(np.uint32).max:
+                    elif max_in <= np.iinfo(np.uint32).max:
                         type = 'uint32'
-                    elif max_vox <= np.iinfo(np.uint64).max:
+                    elif max_in <= np.iinfo(np.uint64).max:
                         type = 'uint64'
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
                 else:
-                    if max_vox <= np.iinfo(np.int8).max and min_vox >= np.iinfo(np.int8).min:
+                    if max_in <= np.iinfo(np.int8).max and min_in >= np.iinfo(np.int8).min:
                         type = 'int8'
-                    elif max_vox <= np.iinfo(np.int16).max and min_vox >= np.iinfo(np.int16).min:
+                    elif max_in <= np.iinfo(np.int16).max and min_in >= np.iinfo(np.int16).min:
                         type = 'int16'
-                    elif max_vox <= np.iinfo(np.int32).max and min_vox >= np.iinfo(np.int32).min:
+                    elif max_in <= np.iinfo(np.int32).max and min_in >= np.iinfo(np.int32).min:
                         type = 'int32'
-                    elif max_vox <= np.iinfo(np.int64).max and min_vox >= np.iinfo(np.int64).min:
+                    elif max_in <= np.iinfo(np.int64).max and min_in >= np.iinfo(np.int64).min:
                         type = 'int64'
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
             else:
-                # if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
+                # if max_in <= np.finfo(np.float16).max and min_in >= np.finfo(np.float16).min:
                 #    type = 'np.float16' # not supported by nibabel
-                if max_vox <= np.finfo(np.float32).max and min_vox >= np.finfo(np.float32).min:
+                if max_in <= np.finfo(np.float32).max and min_in >= np.finfo(np.float32).min:
                     type = 'float32'
-                elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
+                elif max_in <= np.finfo(np.float64).max and min_in >= np.finfo(np.float64).min:
                     type = 'float64'
+
+        # if output type is int, check if it needs intensity rescaling
+        elif 'int' in type:
+            # get min/max from output type
+            min_out = iinfo(type).min
+            max_out = iinfo(type).max
+            # before rescaling, check if there would be an intensity overflow
+            if (min_in < min_out) or (max_in > max_out):
+                sct.printv('WARNING: To avoid intensity overflow due to convertion to '+type+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
+                # rescale intensity
+                data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
+                self.data = data_rescaled - ( data_rescaled.min() - min_out )
 
         # print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
-        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64  # DON'T REMOVE THIS, IT IS MANDATORY FOR EVAL
         type_build = eval(type)
         self.data = type_build(self.data)
         self.hdr.set_data_dtype(type)
+
 
     def save(self, type='', squeeze_data=True,  verbose=1):
         """
@@ -1065,7 +1083,7 @@ class Image(object):
             printv(str(e), self.verbose, type='warning')
         return fname_png
 
-    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', path_output='./', verbose=1):
+    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', index_list=None, path_output='./', verbose=1):
         ori = self.change_orientation('RPI')
         if seg is not None:
             ori_seg = seg.change_orientation('RPI')
@@ -1082,14 +1100,16 @@ class Image(object):
             max_n_slices = None
             printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
 
-        if n_slices > max_n_slices:
-            index_list = range(max_n_slices)
-        elif n_slices == 1:
-            index_list = [int(round(max_n_slices / 2))]
-        else:
-            gap = max_n_slices / n_slices
-            index_list = [((i + 1) * gap) - 1 for i in range(n_slices)]
+        if index_list is None:
+            if n_slices > max_n_slices:
+                index_list = range(max_n_slices)
+            elif n_slices == 1:
+                index_list = [int(round(max_n_slices / 2))]
+            else:
+                gap = max_n_slices / n_slices
+                index_list = [((i + 1) * gap) - 1 for i in range(n_slices)]
         index_list.sort()
+
         try:
             filename_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane', index=index_list, format=format, path_output=path_output)
             info_str = 'QC output image: ' + filename_image_png
