@@ -75,18 +75,18 @@ def test(path_data='', parameters=''):
     sct.create_folder(path_output)
 
     # log file
-    import sys
-    fname_log = path_output + 'output.log'
-    stdout_log = file(fname_log, 'w')
+    # import sys
+    # fname_log = path_output + 'output.log'
+    # stdout_log = file(fname_log, 'w')
     # redirect to log file
-    stdout_orig = sys.stdout
-    sys.stdout = stdout_log
+    # stdout_orig = sys.stdout
+    # sys.stdout = stdout_log
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i'])):
         status = 200
         output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        write_to_log_file(fname_log, output, 'w')
+        # write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(
             data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
 
@@ -94,7 +94,7 @@ def test(path_data='', parameters=''):
     if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
         status = 201
         output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
-        write_to_log_file(fname_log, output, 'w')
+        # write_to_log_file(fname_log, output, 'w')
         return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 
     # run command
@@ -129,11 +129,11 @@ def test(path_data='', parameters=''):
     # transform results into Pandas structure
     results = DataFrame(data={'status': status, 'output': output, 'dice_segmentation': dice_segmentation, 'duration [s]': duration}, index=[path_data])
 
-    sys.stdout.close()
-    sys.stdout = stdout_orig
+    # sys.stdout.close()
+    # sys.stdout = stdout_orig
 
     # write log file
-    write_to_log_file(fname_log, output, mode='r+', prepend=True)
+    # write_to_log_file(fname_log, output, mode='r+', prepend=True)
 
     return status, output, results
 
