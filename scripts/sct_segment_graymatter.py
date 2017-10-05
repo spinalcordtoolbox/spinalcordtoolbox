@@ -58,6 +58,7 @@ from msct_image import Image
 from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
 from msct_parser import Parser
 from sct_image import set_orientation
+import sct_utils as sct
 from sct_utils import (add_suffix, extract_fname, printv, run,
                        slash_at_the_end, tmp_create)
 
@@ -728,7 +729,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
-    # save quality control and print info
+    # save quality control and sct.printv(info)
     if param_seg.type_seg == 'bin':
         wm_col = 'Red'
         gm_col = 'Blue'
@@ -753,4 +754,5 @@ def main(args=None):
     printv('fslview ' + param_seg.fname_im_original + ' ' + seg_gm.fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col + ' -t 0.7 ' + seg_gm.fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', param.verbose, 'info')
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

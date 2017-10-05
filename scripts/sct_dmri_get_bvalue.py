@@ -19,7 +19,7 @@ import os
 import getopt
 import math
 from msct_parser import Parser
-
+import sct_utils as sct
 
 # main
 #=======================================================================================================================
@@ -37,17 +37,17 @@ def main():
     bigdelta = arguments['-b']
     smalldelta = arguments['-d']
 
-    # print arguments
-    print '\nCheck parameters:'
-    print '  gradient amplitude ..... ' + str(gradamp * 1000) + ' mT/m'
-    print '  big delta .............. ' + str(bigdelta * 1000) + ' ms'
-    print '  small delta ............ ' + str(smalldelta * 1000) + ' ms'
-    print '  gyromagnetic ratio ..... ' + str(GYRO) + ' Hz/T'
-    print ''
+    # sct.printv(arguments)
+    sct.printv('\nCheck parameters:')
+    sct.printv('  gradient amplitude ..... ' + str(gradamp * 1000) + ' mT/m')
+    sct.printv('  big delta .............. ' + str(bigdelta * 1000) + ' ms')
+    sct.printv('  small delta ............ ' + str(smalldelta * 1000) + ' ms')
+    sct.printv('  gyromagnetic ratio ..... ' + str(GYRO) + ' Hz/T')
+    sct.printv('')
 
     bvalue = (2 * math.pi * GYRO * gradamp * smalldelta) ** 2 * (bigdelta - smalldelta / 3)
 
-    print 'b-value = ' + str(bvalue / 10**6) + ' mm^2/s\n'
+    sct.printv('b-value = ' + str(bvalue / 10**6) + ' mm^2/s\n')
     return bvalue
 
 
@@ -78,5 +78,6 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

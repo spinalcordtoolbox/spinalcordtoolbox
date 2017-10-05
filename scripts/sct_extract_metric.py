@@ -260,16 +260,16 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         del adv_param_user  # clean variable
         # TODO: check integrity of input
 
-    # print parameters
-    print '\nChecked parameters:'
-    print '  data ...................... ' + fname_data
-    print '  path to label ............. ' + path_label
-    print '  label ..................... ' + labels_user
-    print '  method .................... ' + method
-    print '  slices of interest ........ ' + slices_of_interest
-    print '  vertebral levels .......... ' + vertebral_levels
-    print '  vertebral labeling file.... ' + fname_vertebral_labeling
-    print '  advanced parameters ....... ' + str(adv_param) + '\n'
+    # sct.printv(parameters)
+    sct.printv('\nChecked parameters:')
+    sct.printv('  data ...................... ' + fname_data)
+    sct.printv('  path to label ............. ' + path_label)
+    sct.printv('  label ..................... ' + labels_user)
+    sct.printv('  method .................... ' + method)
+    sct.printv('  slices of interest ........ ' + slices_of_interest)
+    sct.printv('  vertebral levels .......... ' + vertebral_levels)
+    sct.printv('  vertebral labeling file.... ' + fname_vertebral_labeling)
+    sct.printv('  advanced parameters ....... ' + str(adv_param) + '\n')
 
     # parse labels according to the file info_label.txt
     if not single_label:
@@ -353,7 +353,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # Check dimensions consistency between atlas and data
     if (nx, ny, nz) != (nx_atlas, ny_atlas, nz_atlas):
-        print '\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.'
+        sct.printv('\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.')
         sys.exit(2)
 
     # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
@@ -569,7 +569,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
 
     # Check if there are only two values [start_level, end_level] and if the end level is higher than the start level
     if (len(vert_levels_list) > 2) or (vert_levels_list[0] > vert_levels_list[1]):
-        print '\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n'
+        sct.printv('\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n')
         sys.exit(2)
 
     # Extract the vertebral levels available in the metric image
@@ -628,23 +628,23 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
 
     # Check if sizes along X are the same
     if mx != vx:
-        print '\tERROR: Size of vertebral_labeling.nii.gz along X is not the same as the metric data.'
+        sct.printv('\tERROR: Size of vertebral_labeling.nii.gz along X is not the same as the metric data.')
         exit_program = 1
     # Check if sizes along Y are the same
     if my != vy:
-        print '\tERROR: Size of vertebral_labeling.nii.gz along Y is not the same as the metric data.'
+        sct.printv('\tERROR: Size of vertebral_labeling.nii.gz along Y is not the same as the metric data.')
         exit_program = 1
     # Check if sizes along Z are the same
     if mz != vz:
-        print '\tERROR: Size of vertebral_labeling.nii.gz along Z is not the same as the metric data.'
+        sct.printv('\tERROR: Size of vertebral_labeling.nii.gz along Z is not the same as the metric data.')
         exit_program = 1
 
     # Exit program if an error was detected
     if exit_program == 1:
-        print '\nExit program.\n'
+        sct.printv('\nExit program.\n')
         sys.exit(2)
     else:
-        print '    OK!'
+        sct.printv('    OK!')
 
     sct.printv('  Find slices corresponding to vertebral levels...', verbose)
     # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
@@ -1086,7 +1086,7 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
         beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))  # beta = (Xt . X)-1 . Xt . y
         #beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
         #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
-        # print beta, residuals, rank, singular_value
+        # sct.printv(beta, residuals, rank, singular_value)
         for i_label in range(0, nb_labels):
             metric_mean[i_label] = beta[i_label]
             metric_std[i_label] = 0  # need to assign a value for writing output file
@@ -1096,7 +1096,7 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
         for i_label in range(0, nb_labels):
             # check if all labels are equal to zero
             if sum(labels2d[i_label, :]) == 0:
-                print 'WARNING: labels #' + str(i_label) + ' contains only null voxels. Mean and std are set to 0.'
+                sct.printv('WARNING: labels #' + str(i_label) + ' contains only null voxels. Mean and std are set to 0.')
                 metric_mean[i_label] = 0
                 metric_std[i_label] = 0
             else:
@@ -1265,6 +1265,7 @@ def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_l
 # Start program
 # =======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
 
     param_default = Param()
 
