@@ -37,7 +37,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
     Returns: None
     """
-    sct.log.info('Check consistency of segmentation...')
+    sct.printv('\nCheck consistency of segmentation...', verbose)
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
     path_tmp = sct.tmp_create(verbose=verbose)
     from sct_convert import convert
@@ -60,7 +60,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_centerline = Image('tmp.centerline_RPI.nii.gz')
 
     # Get size of data
-    sct.log.info('Get data dimensions...')
+    sct.printv('\nGet data dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
 
     # extraction of centerline provided by isct_propseg and computation of center of mass for each slice
@@ -134,7 +134,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
     # remove temporary files
     if remove_temp_files:
-        sct.log.info("Remove temporary files...")
+        sct.printv("\nRemove temporary files...", verbose)
         shutil.rmtree(path_tmp, ignore_errors=True)
 
 
@@ -532,7 +532,7 @@ if __name__ == "__main__":
 
     # remove temporary files
     if remove_temp_files:
-        sct.log.info("Remove temporary files...")
+        sct.printv("\nRemove temporary files...", verbose)
         if use_viewer:
             shutil.rmtree(path_tmp_viewer, ignore_errors=True)
 
@@ -557,5 +557,5 @@ if __name__ == "__main__":
         except:
             sct.log.warning('Issue when creating QC report.')
 
-    sct.log.info('Done! To view results, type:')
-    sct.log.info("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &")
+    sct.printv('\nDone! To view results, type:', verbose)
+    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
