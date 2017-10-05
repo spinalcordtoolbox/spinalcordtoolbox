@@ -60,7 +60,7 @@ def main(args=None):
 
     # Parameters for debug mode
     if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data + '/mt/mt1.nii.gz'
@@ -277,7 +277,6 @@ def create_mask():
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
     sct.printv('fslview ' + param.fname_data + ' ' + param.fname_out + ' -l Red -t 0.5 &', param.verbose, 'info')
-    print
 
 
 # create_line
@@ -413,6 +412,7 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     param = Param()
     param_default = Param()
     main()

@@ -529,12 +529,12 @@ class ProcessLabels(object):
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
         useful_notation = ''
         for coord in coordinates_input:
-            print 'Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value)
+            sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value))
             if useful_notation:
                 useful_notation = useful_notation + ':'
             useful_notation = useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-        print 'All labels (useful syntax):'
-        print useful_notation
+        sct.printv('All labels (useful syntax):')
+        sct.printv(useful_notation)
         return coordinates_input
 
     def diff(self):
@@ -544,7 +544,7 @@ class ProcessLabels(object):
         coordinates_input = self.image_input.getNonZeroCoordinates()
         coordinates_ref = self.image_ref.getNonZeroCoordinates()
 
-        print "Label in input image that are not in reference image:"
+        sct.printv("Label in input image that are not in reference image:")
         for coord in coordinates_input:
             isIn = False
             for coord_ref in coordinates_ref:
@@ -552,9 +552,9 @@ class ProcessLabels(object):
                     isIn = True
                     break
             if not isIn:
-                print coord.value
+                sct.printv(coord.value)
 
-        print "Label in ref image that are not in input image:"
+        sct.printv("Label in ref image that are not in input image:")
         for coord_ref in coordinates_ref:
             isIn = False
             for coord in coordinates_input:
@@ -562,7 +562,7 @@ class ProcessLabels(object):
                     isIn = True
                     break
             if not isIn:
-                print coord_ref.value
+                sct.printv(coord_ref.value)
 
     def distance_interlabels(self, max_dist):
         """
@@ -575,10 +575,10 @@ class ProcessLabels(object):
         for i in range(0, len(coordinates_input) - 1):
             dist = math.sqrt((coordinates_input[i].x - coordinates_input[i + 1].x)**2 + (coordinates_input[i].y - coordinates_input[i + 1].y)**2 + (coordinates_input[i].z - coordinates_input[i + 1].z)**2)
             if dist < max_dist:
-                print 'Warning: the distance between label ' + str(i) + '[' + str(coordinates_input[i].x) + ',' + str(coordinates_input[i].y) + ',' + str(
+                sct.printv('Warning: the distance between label ' + str(i) + '[' + str(coordinates_input[i].x) + ',' + str(coordinates_input[i].y) + ',' + str(
                     coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i + 1) + '[' + str(
                     coordinates_input[i + 1].x) + ',' + str(coordinates_input[i + 1].y) + ',' + str(coordinates_input[i + 1].z) + ']=' + str(
-                    coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
+                    coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist))
 
     def continuous_vertebral_levels(self):
         """
@@ -815,5 +815,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

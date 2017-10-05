@@ -50,7 +50,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # Parameters for debug mode
     if param.debug == 1:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_anat = path_sct_data + '/t2/t2.nii.gz'
         fname_centerline = path_sct_data + '/t2/t2_seg.nii.gz'
@@ -59,10 +59,10 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
 
     # Display arguments
-    print '\nCheck input arguments...'
-    print '  Input volume ...................... ' + fname_anat
-    print '  Centerline ........................ ' + fname_centerline
-    print ''
+    sct.printv('\nCheck input arguments...')
+    sct.printv('  Input volume ...................... ' + fname_anat)
+    sct.printv('  Centerline ........................ ' + fname_centerline)
+    sct.printv('')
 
     # Get input image orientation
     im_anat = Image(fname_anat)
@@ -77,12 +77,12 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # Open centerline
     #==========================================================================================
-    print '\nGet dimensions of input centerline...'
+    sct.printv('\nGet dimensions of input centerline...')
     nx, ny, nz, nt, px, py, pz, pt = im_centerline_orient.dim
-    print '.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)
-    print '.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm'
+    sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz))
+    sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm')
 
-    print '\nOpen centerline volume...'
+    sct.printv('\nOpen centerline volume...')
     data = im_centerline_orient.data
 
     X, Y, Z = (data > 0).nonzero()
@@ -121,14 +121,14 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         try:
             x_centerline_fit, y_centerline_fit = b_spline_centerline(x_centerline, y_centerline, z_centerline)
         except ValueError:
-            print "splines fitting doesn't work, trying with polynomial fitting...\n"
+            sct.printv("splines fitting doesn't work, trying with polynomial fitting...\n")
             x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline, y_centerline, z_centerline)
     elif centerline_fitting == 'polynome':
         x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline, y_centerline, z_centerline)
 
     #==========================================================================================
     # Split input volume
-    print '\nSplit input volume...'
+    sct.printv('\nSplit input volume...')
     im_anat_orient_split_list = split_data(im_anat_orient, 2)
     file_anat_split = []
     for im in im_anat_orient_split_list:
@@ -141,7 +141,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     displacement_max_z_index = x_centerline_fit[z_init - min_z_index] - x_centerline_fit[max_z_index - min_z_index]
 
     # write centerline as text file
-    print '\nGenerate fitted transformation matrices...'
+    sct.printv('\nGenerate fitted transformation matrices...')
     file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
     for iz in range(min_z_index, max_z_index + 1, 1):
         # compute inverse cumulative fitted transformation matrix
@@ -173,14 +173,14 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         fid.close()
 
     # apply transformations to data
-    print '\nApply fitted transformation matrices...'
+    sct.printv('\nApply fitted transformation matrices...')
     file_anat_split_fit = ['tmp.anat_orient_fit_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
         sct.run(fsloutput + 'flirt -in ' + file_anat_split[iz] + ' -ref ' + file_anat_split[iz] + ' -applyxfm -init ' + file_mat_inv_cumul_fit[iz] + ' -out ' + file_anat_split_fit[iz] + ' -interp ' + interp)
 
     # Merge into 4D volume
-    print '\nMerge into 4D volume...'
+    sct.printv('\nMerge into 4D volume...')
     from glob import glob
     im_to_concat_list = [Image(fname) for fname in glob('tmp.anat_orient_fit_Z*.nii')]
     im_concat_out = concat_data(im_to_concat_list, 2)
@@ -189,22 +189,22 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     # sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
 
     # Reorient data as it was before
-    print '\nReorient data back into native orientation...'
+    sct.printv('\nReorient data back into native orientation...')
     fname_anat_fit_orient = set_orientation(im_concat_out.absolutepath, input_image_orientation, filename=True)
     move(fname_anat_fit_orient, 'tmp.anat_orient_fit_reorient.nii')
 
     # Generate output file (in current folder)
-    print '\nGenerate output file (in current folder)...'
+    sct.printv('\nGenerate output file (in current folder)...')
     sct.generate_output_file('tmp.anat_orient_fit_reorient.nii', file_anat + '_flatten' + ext_anat)
 
     # Delete temporary files
     if remove_temp_files == 1:
-        print '\nDelete temporary files...'
+        sct.printv('\nDelete temporary files...')
         sct.run('rm -rf tmp.*')
 
     # to view results
-    print '\nDone! To view results, type:'
-    print 'fslview ' + file_anat + ext_anat + ' ' + file_anat + '_flatten' + ext_anat + ' &\n'
+    sct.printv('\nDone! To view results, type:')
+    sct.printv('fslview ' + file_anat + ext_anat + ' ' + file_anat + '_flatten' + ext_anat + ' &\n')
 
 
 def b_spline_centerline(x_centerline, y_centerline, z_centerline):
@@ -225,13 +225,13 @@ def polynome_centerline(x_centerline, y_centerline, z_centerline):
     """Fit polynomial function through centerline"""
 
     # Fit centerline in the Z-X plane using polynomial function
-    print '\nFit centerline in the Z-X plane using polynomial function...'
+    sct.printv('\nFit centerline in the Z-X plane using polynomial function...')
     coeffsx = numpy.polyfit(z_centerline, x_centerline, deg=5)
     polyx = numpy.poly1d(coeffsx)
     x_centerline_fit = numpy.polyval(polyx, z_centerline)
 
     # Fit centerline in the Z-Y plane using polynomial function
-    print '\nFit centerline in the Z-Y plane using polynomial function...'
+    sct.printv('\nFit centerline in the Z-Y plane using polynomial function...')
     coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=5)
     polyy = numpy.poly1d(coeffsy)
     y_centerline_fit = numpy.polyval(polyy, z_centerline)
@@ -299,6 +299,7 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     param_default = Param()

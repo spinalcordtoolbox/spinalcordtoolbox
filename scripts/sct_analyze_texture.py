@@ -19,6 +19,7 @@ from skimage.feature import greycomatrix, greycoprops
 from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
+import sct_utils as sct
 from sct_utils import (add_suffix, extract_fname, printv, run,
                        slash_at_the_end, Timer, tmp_create)
 
@@ -339,4 +340,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

@@ -22,13 +22,104 @@ import commands
 import subprocess
 import re
 from sys import stdout
+import logging
 
 import glob
 import shutil
 
+
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
+"""
+Basic logging setup for the sct
+set SCT_LOG_LEVEL and SCT_LOG_FORMAT in ~/.sctrc to change the sct log
+format and level
+"""
+
+
+log = logging.getLogger('sct')
+log.setLevel(logging.DEBUG)
+stream_handler = logging.StreamHandler(sys.stdout)
+nh = logging.NullHandler()
+log.addHandler(nh)
+LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
+LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
+if not LOG_FORMAT:
+    LOG_FORMAT = None
+
+
+def start_stream_logger():
+    """ Log to terminal, by default the formating is like a print() call
+
+    :return: 
+    """
+
+    formatter = logging.Formatter(LOG_FORMAT)
+    stream_handler.setFormatter(formatter)
+
+    if LOG_LEVEL in logging._levelNames:
+        stream_handler.setLevel(LOG_LEVEL)
+        log.addHandler(stream_handler)
+    elif LOG_LEVEL == 'DISABLE':
+        stream_handler.setLevel(sys.maxint)
+    else:
+        stream_handler.setLevel(logging.INFO)
+        log.addHandler(stream_handler)
+
+
+def pause_stream_logger():
+    """ Pause the log to Terminal
+    
+    :return: 
+    """
+    log.removeHandler(stream_handler)
+
+
+class NoColorFormatter(logging.Formatter):
+    """
+    Formater removing terminal specific colors from outputs
+    """
+    def format(self, record):
+        for color in bcolors.colors():
+            record.msg = record.msg.replace(color, "")
+        return super(NoColorFormatter, self).format(record)
+
+
+def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log_format=None, log_level=None):
+    """ Convenience fct to add a file handler to the sct log
+        Will remove colors from prints
+    :param filename: 
+    :param mode: 
+    :param log_format: 
+    :param log_level: 
+    :return: the file handler 
+    """
+    log.debug('Adding file handler {}'.format(filename))
+    fh = logging.FileHandler(filename=filename, mode=mode)
+
+    if log_format is None:
+        formatter = NoColorFormatter(LOG_FORMAT)  # sct.printv() emulator)
+    else:
+        formatter = logging.Formatter(log_format)
+    fh.setFormatter(formatter)
+
+    if log_level:
+        fh.setLevel(log_level)
+    else:
+        fh.setLevel(logging.INFO)
+    log.addHandler(fh)
+    return fh
+
+
+def remove_handler(handler):
+    """ Remore any handler from logs
+    
+    :param handler: 
+    :return: 
+    """
+    log.debug("Removing log handler {} ".format(handler))
+    log.removeHandler(handler)
 
 # define class color
 class bcolors(object):
@@ -41,6 +132,9 @@ class bcolors(object):
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
+    @classmethod
+    def colors(cls):
+        return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
 
 #=======================================================================================================================
@@ -69,7 +163,7 @@ def add_suffix(fname, suffix):
 # Run UNIX command
 def run_old(cmd, verbose=1):
     if verbose:
-        print(bcolors.blue + cmd + bcolors.normal)
+        printv(bcolors.blue + cmd + bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
         printv('\nERROR! \n' + output + '\nExit program.\n', 1, 'error')
@@ -91,7 +185,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
             break
         if output:
             if verbose == 2:
-                print output.strip()
+                printv(output.strip())
             output_final += output.strip() + '\n'
     status_output = process.returncode
     # process.stdin.close()
@@ -104,7 +198,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         printv(output_final[0:-1], 1, error_exit)
         # in case error_exit is not error (immediate exit), the line below can be run
         return status_output, output_final[0:-1]
-        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
+        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # printv(name of parent function)
         # sys.exit()
         if raise_exception:
             raise Exception(output_final[0:-1])
@@ -178,16 +272,16 @@ def get_sct_version():
 def checkRAM(os, verbose=1):
     if (os == 'linux'):
         status, output = run('grep MemTotal /proc/meminfo', 0)
-        print 'RAM: ' + output
+        printv('RAM: ' + output)
         ram_split = output.split()
         ram_total = float(ram_split[1])
         status, output = run('free -m', 0)
-        print output
+        printv(output)
         return ram_total / 1024
 
     elif (os == 'osx'):
         status, output = run('hostinfo | grep memory', 0)
-        print 'RAM: ' + output
+        printv('RAM: ' + output)
         ram_split = output.split(' ')
         ram_total = float(ram_split[3])
 
@@ -218,11 +312,11 @@ def checkRAM(os, verbose=1):
             vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
 
         if verbose:
-            print '  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"] / 1024 / 1024)
-            print '  Active Memory:\t%d MB' % (vmStats["Pages active"] / 1024 / 1024)
-            print '  Inactive Memory:\t%d MB' % (vmStats["Pages inactive"] / 1024 / 1024)
-            print '  Free Memory:\t\t%d MB' % (vmStats["Pages free"] / 1024 / 1024)
-            # print 'Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 )
+            printv('  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"] / 1024 / 1024))
+            printv('  Active Memory:\t%d MB' % (vmStats["Pages active"] / 1024 / 1024))
+            printv('  Inactive Memory:\t%d MB' % (vmStats["Pages inactive"] / 1024 / 1024))
+            printv('  Free Memory:\t\t%d MB' % (vmStats["Pages free"] / 1024 / 1024))
+            # printv('Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 ))
 
         return ram_total
 
@@ -247,8 +341,9 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-        stdout.flush()
+        log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+        if log.handlers:
+            [h.flush() for h in log.handlers]
 
     def iterations_done(self, total_num_iterations_done):
         if total_num_iterations_done != 0:
@@ -259,8 +354,9 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            stdout.flush()
+            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+            if log.handlers:
+                [h.flush() for h in log.handlers]
 
     def stop(self):
         self.time_list.append(time.time() - self.start_timer)
@@ -276,8 +372,9 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            stdout.flush()
+            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+            if log.handlers:
+                [h.flush() for h in log.handlers]
         else:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
@@ -285,11 +382,11 @@ class Timer:
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            stdout.write('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
-            stdout.flush()
+            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            if log.handlers:
+                [h.flush() for h in log.handlers]
         else:
             printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
-
 
 class ForkStdoutToFile(object):
     """Use to redirect stdout to file
@@ -598,7 +695,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
         printv('  WARNING: fname_in and fname_out are the same. Do nothing.', verbose, 'warning')
-        print '  File created: ' + path_out + file_out + ext_out
+        printv('  File created: ' + path_out + file_out + ext_out)
         return path_out + file_out + ext_out
     # if fname_out already exists in nii or nii.gz format
     if os.path.isfile(path_out + file_out + ext_out):
@@ -632,7 +729,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     # display message
     printv('  File created: ' + path_out + file_out + ext_out, verbose)
     # if verbose:
-    #     print '  File created: '+path_out+file_out+ext_out
+    #     printv('  File created: '+path_out+file_out+ext_out)
     return path_out + file_out + ext_out
 
 
@@ -643,7 +740,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
 def check_if_installed(cmd, name_software):
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
-        print('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
+        printv('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
         sys.exit(2)
 
 
@@ -668,21 +765,24 @@ def check_if_same_space(fname_1, fname_2):
 
 
 def printv(string, verbose=1, type='normal'):
-    """enables to print color coded messages, depending on verbose status """
+    """enables to print (color coded messages, depending on verbose status) 
+    """
 
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
               'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
 
     if verbose:
         # Print color only if the output is the terminal
+        # Note jcohen: i added a try/except in case stdout does not have isatty field (it did happen to me)
         try:
             if sys.stdout.isatty():
                 color = colors.get(type, bcolors.normal)
-                print(color + string + bcolors.normal)
+                log.info('{0}{1}{2}'.format(color, string, bcolors.normal))
+
             else:
-                print(string)
+                log.info(string)
         except Exception as e:
-            print(string)
+            log.info(string)
 
     if type == 'error':
         from inspect import stack
@@ -690,9 +790,9 @@ def printv(string, verbose=1, type='normal'):
 
         frame, filename, line_number, function_name, lines, index = stack()[1]
         if sys.stdout.isatty():
-            print('\n' + bcolors.red + filename + traceback.format_exc() + bcolors.normal)
+            log.error('\n' + bcolors.red + filename + traceback.format_exc() + bcolors.normal)
         else:
-            print('\n' + filename + traceback.format_exc())
+            log.error('\n' + filename + traceback.format_exc())
         sys.exit(2)
 
 
@@ -891,7 +991,7 @@ class Version(object):
         self.version_sct = version_sct
 
         if not isinstance(version_sct, basestring):
-            print version_sct
+            printv(version_sct)
             raise Exception('Version is not a string.')
 
         # detect beta, if it exist
@@ -1106,30 +1206,30 @@ class MsgUser(object):
     def message(cls, msg):
         if cls.__quiet:
             return
-        print msg
+        printv(msg)
 
     @classmethod
     def question(cls, msg):
-        print msg,
+        printv(msg,)
 
     @classmethod
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        print "".join((bcolors.magenta, "[Skipped] ", bcolors.normal, msg))
+        printv("".join((bcolors.magenta, "[Skipped] ", bcolors.normal, msg)))
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        print "".join((bcolors.green, "[OK] ", bcolors.normal, msg))
+        log.info("".join((bcolors.green, "[OK] ", bcolors.normal, msg)))
 
     @classmethod
     def failed(cls, msg):
-        print "".join((bcolors.red, "[FAILED] ", bcolors.normal, msg))
+        log.error("".join((bcolors.red, "[FAILED] ", bcolors.normal, msg)))
 
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        print "".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg))
+        log.warning("".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg)))

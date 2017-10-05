@@ -209,4 +209,5 @@ def main(args=None):
     sct.printv('fslview ' + fname_dest + ' ' + os.path.abspath(param.fname_out) + ' &\n', param.verbose, 'info')
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

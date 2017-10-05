@@ -104,11 +104,11 @@ def main(args=None):
         status = [test_function(f) for f in functions if function_to_test == f]
     else:
         status = [test_function(f) for f in functions]
-    print 'status: ' + str(status)
+    sct.printv('status: ' + str(status))
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print 'Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n'
+    sct.printv('Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
 
     # remove temp files
     if param.remove_tmp_file:
@@ -118,7 +118,7 @@ def main(args=None):
     e = 0
     if sum(status) != 0:
         e = 1
-    print e
+    sct.printv(e)
 
     sys.exit(e)
 
@@ -136,11 +136,9 @@ def fill_functions():
     functions = [
         'sct_analyze_texture',
         'sct_apply_transfo',
-        # 'sct_check_atlas_integrity',
         'sct_compute_mtr',
         'sct_concat_transfo',
         'sct_convert',
-        # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
         'sct_crop_image',
         'sct_dmri_compute_dti',
@@ -151,10 +149,8 @@ def fill_functions():
         'sct_dmri_separate_b0_and_dwi',
         'sct_documentation',
         'sct_extract_metric',
-        # 'sct_flatten_sagittal',
         'sct_fmri_compute_tsnr',
         'sct_fmri_moco',
-        # 'sct_get_centerline',
         'sct_image',
         'sct_label_utils',
         'sct_label_vertebrae',
@@ -173,7 +169,7 @@ def fill_functions():
     return functions
 
 
-# print without carriage return
+# sct.printv(without carriage return)
 # ==========================================================================================
 def print_line(string):
     import sys
@@ -191,18 +187,18 @@ def make_dot_lines(string):
         return ''
 
 
-# print in color
+# sct.printv(in color)
 # ==========================================================================================
 def print_ok():
-    print "[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]"
+    sct.log.info("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
 
 
 def print_warning():
-    print "[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]"
+    sct.log.warning("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
 
 
 def print_fail():
-    print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
+    sct.log.error("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
 # write to log file
@@ -268,7 +264,7 @@ def test_function(script_name):
             print_warning()
         else:
             print_fail()
-        print output
+        sct.printv(output)
     # go back to parent folder
     os.chdir('..')
 
@@ -306,6 +302,7 @@ def get_parser():
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = param()
     # call main function

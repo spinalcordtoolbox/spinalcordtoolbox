@@ -46,7 +46,7 @@ def moco(param):
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-    # print arguments
+    # sct.printv(arguments)
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  Input file ............' + file_data, param.verbose)
     sct.printv('  Reference file ........' + file_target, param.verbose)

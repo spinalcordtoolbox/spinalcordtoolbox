@@ -47,7 +47,7 @@ def main():
 
     # Parameters for debug mode
     if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.log.debug('\n*** WARNING: DEBUG MODE ON ***\n')
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_label = path_sct_data + '/mt/mt1.nii.gz'
         param.labels = '5,5,2,1:5,7,2,3'
@@ -59,7 +59,7 @@ def main():
         try:
             opts, args = getopt.getopt(sys.argv[1:], 'hi:o:c:r:t:l:dx:')
         except getopt.GetoptError as err:
-            print str(err)
+            sct.log.error(str(err))
             usage()
         if not opts:
             usage()
@@ -116,7 +116,7 @@ def main():
         sct.printv('Error: voxel type not supported... See usage.', 1, 'error')
 
     hdr.set_data_dtype(type_output)  # set imagetype to uint8, previous: int32.
-    print '\nWrite NIFTI volumes...'
+    sct.printv('\nWrite NIFTI volumes...')
     # data.astype('int')
     img = nibabel.Nifti1Image(data, None, hdr)
     nibabel.save(img, 'tmp.' + file_output + '.nii.gz')
@@ -127,8 +127,8 @@ def main():
 # usage
 #=======================================================================================================================
 def usage():
-    print """
-""" + os.path.basename(__file__) + """
+    print("""
+{0}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
@@ -136,7 +136,7 @@ DESCRIPTION
   Change the type of voxel in the image
 
 USAGE
-  """ + os.path.basename(__file__) + """ -i <data> -o <outputname> -t <type>
+  {0} -i <data> -o <outputname> -t <type>
 
 MANDATORY ARGUMENTS
   -i <data>         input image name
@@ -147,7 +147,7 @@ OPTIONAL ARGUMENTS
                     Available:  int8, int16, int32, int64,
                                 uint8, uint16, uint32, uint64,
                                 float16, float32, float64
-"""
+""".format(os.path.basename(__file__)))
 
     # exit program
     sys.exit(2)
@@ -157,6 +157,7 @@ OPTIONAL ARGUMENTS
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     param_default = Param()

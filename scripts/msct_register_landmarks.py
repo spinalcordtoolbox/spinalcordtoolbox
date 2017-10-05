@@ -153,10 +153,10 @@ def Metric_Images(imageA, imageB, type=''):
         result_metric = 1.0 / (len(list_A)) * sum(absolute(array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])))
 
     if type == 'MI':
-        print '\nto do: MI'
+        sct.printv('\nto do: MI')
 
     # Return results
-    print '\nResult of metric is: ' + str(result_metric)
+    sct.printv('\nResult of metric is: ' + str(result_metric))
     return result_metric
 
 
@@ -213,7 +213,7 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
 
     # Get barycenter of the images if specified
     if center_rotation == 'BarycenterImage':
-        print '\nEvaluating barycenters of images...'
+        sct.printv('\nEvaluating barycenters of images...')
         # Importing data
         from nibabel import load
         from numpy import amax, cross, dot
@@ -228,9 +228,9 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
         coord_barycenter_moving_10percent = (1.0 / (sum(data_moving_10percent))) * sum(array([[data_moving_10percent[i, j, k] * i, data_moving_10percent[i, j, k] * j, data_moving_10percent[i, j, k] * k] for i in range(data_moving_10percent.shape[0]) for j in range(data_moving_10percent.shape[1]) for k in range(data_moving_10percent.shape[2])]), axis=0)
         coord_barycenter_fixed_10percent = (1.0 / (sum(data_fixed_10percent))) * sum(array([[data_fixed_10percent[i, j, k] * i, data_fixed_10percent[i, j, k] * j, data_fixed_10percent[i, j, k] * k] for i in range(data_fixed_10percent.shape[0]) for j in range(data_fixed_10percent.shape[1]) for k in range(data_fixed_10percent.shape[2])]), axis=0)
 
-        print '\nPosition of the barycenters:' \
-              '\n\t-moving image : ' + str(coord_barycenter_moving) +  \
-              '\n\t-fixed image: ' + str(coord_barycenter_fixed)
+        sct.printv('\nPosition of the barycenters:' 
+                   '\n\t-moving image : ' + str(coord_barycenter_moving) +
+                   '\n\t-fixed image: ' + str(coord_barycenter_fixed))
         # Evaluating initial translations to match the barycenters
         ini_param_trans_x_real = int(round(coord_barycenter_fixed[0] - coord_barycenter_moving[0]))
         ini_param_trans_y_real = int(round(coord_barycenter_fixed[1] - coord_barycenter_moving[1]))
@@ -336,9 +336,9 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     # apply transformation to moving points (src)
     points_src_reg = ((rotsc_matrix * (matrix(points_src) - points_src_barycenter).T).T + points_src_barycenter) + translation_array
     # display results
-    print 'Matrix:\n' + str(rotation_matrix)
-    print 'Center:\n' + str(points_src_barycenter)
-    print 'Translation:\n' + str(translation_array)
+    sct.printv('Matrix:\n' + str(rotation_matrix))
+    sct.printv('Center:\n' + str(points_src_barycenter))
+    sct.printv('Translation:\n' + str(translation_array))
 
     if verbose == 2:
         import matplotlib

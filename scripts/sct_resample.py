@@ -123,7 +123,7 @@ def resample():
         transfo = np.delete(transfo, 3, 1)
     # translate to account for voxel size (otherwise resulting image will be shifted by half a voxel). Modify the three first rows of the last column, corresponding to the translation.
     transfo[:3, -1] = np.array(((R[0, 0] - 1) / 2, (R[1, 1] - 1) / 2, (R[2, 2] - 1) / 2), dtype='f8')
-    # print transfo
+    # sct.printv(transfo)
     sct.printv('  transfo: \n' + str(transfo), verbose)
 
     # set interpolation method
@@ -225,7 +225,7 @@ def resample():
     # img = nibabel.Nifti1Image(input_im.data, affine=affine_new)
     # from nilearn.image import resample_img
     # new_data = resample_img(img, target_affine=np.eye(4), target_shape=(60, 60, 27))
-    # print new_data.shape
+    # sct.printv(new_data.shape)
 
     # display
     # from matplotlib.pylab import *
@@ -318,7 +318,7 @@ def main(args=None):
 
     # Parameters for debug mode
     if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data + '/fmri/fmri.nii.gz'
@@ -362,4 +362,5 @@ def main(args=None):
     resample()
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

@@ -222,7 +222,7 @@ def make_fname_of_templates(file_template,path_template,file_template_vertebral_
     fname_template_seg = path_template+'template/'+file_template_seg
     return(fname_template,fname_template_vertebral_labeling,fname_template_seg)
 
-def print_arguments(verbose,fname_data,fname_landmarks,fname_seg,path_template,remove_temp_files):
+def sct.printv(arguments(verbose,fname_data,fname_landmarks,fname_seg,path_template,remove_temp_files):)
     sct.printv('\nCheck parameters:', verbose)
     sct.printv('  Data:                 '+fname_data, verbose)
     sct.printv('  Landmarks:            '+fname_landmarks, verbose)
@@ -348,7 +348,7 @@ def main():
     """ Manage file of templates"""
     (fname_template, fname_template_vertebral_labeling, fname_template_seg)=make_fname_of_templates(file_template,path_template,file_template_vertebral_labeling,file_template_seg)
     check_do_files_exist(fname_template,fname_template_vertebral_labeling,fname_template_seg,verbose)
-    print_arguments(verbose, fname_data, fname_landmarks, fname_seg, path_template, remove_temp_files)
+    sct.printv(arguments(verbose, fname_data, fname_landmarks, fname_seg, path_template, remove_temp_files))
 
     """ Create QC folder """
     sct.create_folder(param.path_qc)
@@ -718,5 +718,6 @@ def check_labels(fname_landmarks):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

@@ -13,6 +13,7 @@
 import sys
 from msct_parser import Parser
 from sct_utils import extract_fname
+import sct_utils as sct
 from dipy.data.fetcher import read_bvals_bvecs
 
 # PARSER
@@ -73,5 +74,6 @@ def main():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

@@ -74,13 +74,13 @@ class WarpTemplate:
         # self.folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
         # self.folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
 
-        # print arguments
-        print '\nCheck parameters:'
-        print '  Working directory ........ ' + os.getcwd()
-        print '  Destination image ........ ' + self.fname_src
-        print '  Warping field ............ ' + self.fname_transfo
-        print '  Path template ............ ' + self.path_template
-        print '  Output folder ............ ' + self.folder_out + '\n'
+        # sct.printv(arguments)
+        sct.printv('\nCheck parameters:')
+        sct.printv('  Working directory ........ ' + os.getcwd())
+        sct.printv('  Destination image ........ ' + self.fname_src)
+        sct.printv('  Warping field ............ ' + self.fname_transfo)
+        sct.printv('  Path template ............ ' + self.path_template)
+        sct.printv('  Output folder ............ ' + self.folder_out + '\n')
 
         # create output folder
         if os.path.exists(self.folder_out):
@@ -300,6 +300,7 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     param_default = Param()
