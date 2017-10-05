@@ -17,6 +17,7 @@
 import sys
 from msct_parser import Parser
 from msct_image import Image
+import sct_utils as sct
 
 # DEFAULT PARAMETERS
 
@@ -30,6 +31,7 @@ class param:
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = param()
     # call main function

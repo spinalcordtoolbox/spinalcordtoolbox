@@ -19,6 +19,7 @@ import numpy as np
 import sct_utils as sct
 from scipy.ndimage import map_coordinates
 import math
+import sct_utils as sct
 
 
 def striu2mat(striu):
@@ -480,8 +481,7 @@ class Image(object):
                     X, Y, Z = (self.data > 0).nonzero()
                     list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
         except Exception, e:
-            print 'ERROR', e
-            printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
+            sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
             from msct_types import CoordinateValue
@@ -621,7 +621,7 @@ class Image(object):
             buffer = []
 
         new_data = np.asarray(new_data)
-        # print data_mask
+        # sct.printv(data_mask)
         self.data = new_data
         #self.dim = self.data.shape
 
@@ -703,7 +703,7 @@ class Image(object):
             # do nothing
             pass
         else:
-            print 'Error: wrong orientation'
+            sct.printv('Error: wrong orientation')
         # update dim
         # http://math.stackexchange.com/questions/122916/what-is-the-inverse-cycle-of-permutation
         # TODO: change permutations
@@ -775,7 +775,7 @@ class Image(object):
 
             coordi_phys = np.concatenate((result_temp, coordi_phys), axis=0)
             coordi_phys_list = coordi_phys.tolist()
-            # print coordi_phys.shape
+            # sct.printv(coordi_phys.shape)
 
             return coordi_phys_list
         """
@@ -1279,7 +1279,7 @@ def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
         # do nothing
         pass
     else:
-        print 'Error: wrong orientation'
+        sct.printv('Error: wrong orientation')
 
     return data
 
@@ -1287,6 +1287,7 @@ def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     from msct_parser import Parser
     from sct_utils import add_suffix
     import sys

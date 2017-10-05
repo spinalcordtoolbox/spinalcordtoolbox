@@ -52,7 +52,7 @@ def main():
 
     # Parameters for debug mode
     if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
     else:
         # Check input parameters
         parser = get_parser()
@@ -124,14 +124,14 @@ def read_label_file(path_info_label):
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
-    print '\nCheck existence of all files listed in ' + param.file_info_label + ' ...'
+    sct.printv('\nCheck existence of all files listed in ' + param.file_info_label + ' ...')
     for fname in label_file:
         if os.path.isfile(path_info_label + fname) or os.path.isfile(path_info_label + fname + '.nii') or \
                 os.path.isfile(path_info_label + fname + '.nii.gz'):
-            print('  OK: ' + path_info_label + fname)
+            sct.printv('  OK: ' + path_info_label + fname)
         else:
-            print('  WARNING: ' + path_info_label + fname + ' does not exist but is listed in '
-                  + param.file_info_label + '.\n')
+            sct.printv('  WARNING: ' + path_info_label + fname + ' does not exist but is listed in '
+                       + param.file_info_label + '.\n')
 
     # Close file.txt
     f.close()
@@ -184,7 +184,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
 
         # Check dimensions consistency between atlas and segmentation image
         if (nx_seg, ny_seg, nz_seg) != (nx_atlas, ny_atlas, nz_atlas):
-            print '\nERROR: Segmentation image and the atlas DO NOT HAVE SAME DIMENSIONS.'
+            sct.printv('\nERROR: Segmentation image and the atlas DO NOT HAVE SAME DIMENSIONS.')
             sys.exit(2)
 
         tracts_are_inside_SC = True
@@ -219,7 +219,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
 
         # Check dimensions consistency between atlas and spinal cord gray matter image
         if (nx_gm, ny_gm, nz_gm) != (nx_atlas, ny_atlas, nz_atlas):
-            print '\nERROR: Gray matter image and the atlas DO NOT HAVE SAME DIMENSIONS.'
+            sct.printv('\nERROR: Gray matter image and the atlas DO NOT HAVE SAME DIMENSIONS.')
             sys.exit(2)
 
         tracts_overlap_GM = False
@@ -304,6 +304,7 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     param_default = Param()

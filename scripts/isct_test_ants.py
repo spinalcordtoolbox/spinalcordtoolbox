@@ -128,17 +128,17 @@ def main():
         sys.exit(1)
 
 
-# printv: enables to print or not, depending on verbose status
+# printv: enables to sct.printv(or not, depending on verbose status)
 #=======================================================================================================================
 def printv(string, verbose):
     if verbose:
-        print(string)
+        sct.log.info(string)
 
 
-# Print usage
+# sct.printv(usage)
 # ==========================================================================================
 def usage():
-    print '\n' \
+    print('\n' \
         '' + os.path.basename(__file__) + '\n' \
         '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
@@ -154,7 +154,7 @@ def usage():
         '  -h                         show this help\n' \
         '  -r {0, 1}                  remove temp files. Default=1\n' \
         '  -v {0, 1}                  verbose. Default=1\n' \
-        '\n'\
+        '\n')
 
     # exit program
     sys.exit(2)
@@ -163,5 +163,6 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

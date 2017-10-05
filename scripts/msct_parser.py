@@ -61,7 +61,7 @@
 # if "-dim" in arguments:
 #     dim = arguments["-dim"]
 # else:
-#     print string_usage
+#     sct.printv(string_usage)
 # exit(1)
 # for non mandatory arguments :
 # if "-output" in arguments:
@@ -277,13 +277,13 @@ class Parser:
         # if you only want to parse a string and not checking for file existence, change flag check_file_exist
         self.check_file_exist = check_file_exist
 
-        # if no arguments, print usage and quit
+        # if no arguments, sct.printv(usage and quit)
         if len(arguments) == 0 and len([opt for opt in self.options if self.options[opt].mandatory]) != 0:
             self.usage.error()
 
         # check if help is asked by the user
         if "-h" in arguments:
-            print(self.usage.generate())
+            sct.printv(self.usage.generate())
             exit(1)
 
         if "-sf" in arguments:
@@ -571,7 +571,7 @@ class Usage:
         if error:
             self.generate(error)
         else:
-            print self.generate()
+            sct.printv(self.generate())
             from sys import exit
             exit(0)
 
@@ -752,13 +752,13 @@ class DocSourceForge:
         file_doc_sf.write(doc)
         file_doc_sf.close()
 
-        print doc
+        sct.printv(doc)
 
     def error(self, error=None):
         if error:
             self.generate(error)
         else:
-            print self.generate()
+            sct.printv(self.generate())
             from sys import exit
             exit(0)
 

@@ -122,7 +122,7 @@ def generate_data_list(folder_dataset, verbose=1):
             list_subj.append(subject_dir)
 
     if not list_subj:
-        sct.printv('ERROR: No subject data were found in ' + folder_dataset + '. '
+        sct.log.error('ERROR: No subject data were found in ' + folder_dataset + '. '
                    'Please organize your data correctly or provide a correct dataset.',
                    verbose=verbose, type='error')
 
@@ -148,24 +148,24 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
 
     # if fname_database is empty, check if xls or xlsx file exist in the database directory.
     if fname_database == '':
-        sct.printv('  Looking for an XLS file describing the database...')
+        sct.log.info('  Looking for an XLS file describing the database...')
         list_fname_database = glob.glob(folder_dataset+'*.xls*')
         if list_fname_database == []:
-            sct.printv('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
+            sct.log.warning('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
             return subj_selected
         elif len(list_fname_database) > 1:
-            sct.printv('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
+            sct.log.warning('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
             return subj_selected
         else:
             fname_database = list_fname_database[0]
             # sct.printv('    XLS file found: ' + fname_database, verbose)
 
     # read data base file and import to panda data frame
-    sct.printv('  Reading XLS: ' + fname_database, verbose, 'normal')
+    sct.log.info('  Reading XLS: ' + fname_database, verbose, 'normal')
     try:
         data_base = pd.read_excel(fname_database)
     except:
-        sct.printv('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.', verbose, 'error')
+        sct.log.error('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.', verbose, 'error')
     #
     # correct some values and clean panda data base
     # convert columns to int
@@ -223,7 +223,7 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
                 subj_selected.append(ifolder)
         # if not, report to user
         else:
-            sct.printv('WARNING: Subject '+ifolder+' is not listed in the database.', verbose, 'warning')
+            sct.log.warning('WARNING: Subject '+ifolder+' is not listed in the database.', verbose, 'warning')
 
     return subj_selected
 
@@ -239,10 +239,9 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
     except KeyboardInterrupt:
         return 'KeyboardException'
     except Exception as e:
-        sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
-        sct.printv(str(e), 1, 'warning')
-        sys.exit(2)
-
+        sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
+        sct.log.exception(e)
+        raise
 
 def function_launcher(args):
     import importlib
@@ -253,7 +252,7 @@ def function_launcher(args):
         output = script_to_be_run.test(*args[1:])
     except:
         import traceback
-        print('%s: %s' % ('test_' + args[0], traceback.format_exc()))
+        sct.log.error('%s: %s' % ('test_' + args[0], traceback.format_exc()))
         # output = (1, 'ERROR: Function crashed', 'No result')
         from pandas import DataFrame
         status_script = 1
@@ -283,9 +282,9 @@ def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
     if data_specifications is None:
         list_subj = generate_data_list(folder_dataset)
     else:
-        print 'Selecting subjects using the following specifications: ' + data_specifications
+        sct.log.info('Selecting subjects using the following specifications: ' + data_specifications)
         list_subj = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
-    print "  Number of subjects to process: " + str(len(list_subj))
+    sct.log.info('  Number of subjects to process: ' + str(len(list_subj)))
 
     # if no subject to process, raise exception
     if len(list_subj) == 0:
@@ -302,7 +301,7 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
     """
 
     # add full path to each subject
-    data_subjects = [sct.slash_at_the_end(folder_dataset + i, 1) for i in list_subj]
+    data_subjects = [sct.slash_at_the_end(folder_dataset + subject, 1) for subject in list_subj]
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -312,10 +311,13 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
     data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
     # Computing Pool for parallel process, distribute2mpi.MpiPool in MPI environment, multiprocessing.Pool otherwise
+    sct.log.debug("stating pool with {} thread(s)".format(nb_cpu))
     pool = Pool(nb_cpu)
-
+    results = None
+    compute_time = None
     try:
         compute_time = time()
+        sct.log.debug('paused but print')
         async_results = pool.map_async(function_launcher, data_and_params)
         pool.close()
         pool.join()  # waiting for all the jobs to be done
@@ -324,19 +326,15 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
         results = process_results(all_results, list_subj, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
 
     except KeyboardInterrupt:
-        print "\nWarning: Caught KeyboardInterrupt, terminating workers"
+        sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
         pool.terminate()
         pool.join()
-        # return
-        # raise KeyboardInterrupt
-        # sys.exit(2)
     except Exception as e:
-        sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
-        sct.printv(str(e), 1, 'warning')
+        sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
+        sct.log.exception(e)
         pool.terminate()
         pool.join()
-        # raise Exception
-        # sys.exit(2)
+        raise
 
     return {'results': results, "compute_time": compute_time}
 
@@ -416,12 +414,9 @@ def get_parser():
 # Start program
 # ====================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
 
-    # initialization
     addr_from = 'spinalcordtoolbox@gmail.com'
-
-    # get parameters
-    print_if_error = True  # print error message if function crashes (could be messy)
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
@@ -464,13 +459,14 @@ if __name__ == "__main__":
     if create_log:
         file_log = 'results_test_' + function_to_test + '_' + output_time
         fname_log = file_log + '.log'
-        handle_log = sct.ForkStdoutToFile(fname_log)
-    print('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
+        # handle_log = sct.ForkStdoutToFile(fname_log)
+        file_handler = sct.add_file_handler_to_logger(fname_log)
 
+    sct.log.info('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
     # fetch SCT version
     install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
-    print 'SCT version/commit/branch: ' + version_sct + '/' + sct_commit + '/' + sct_branch
+    sct.log.info('SCT version/commit/branch: ' + version_sct + '/' + sct_commit + '/' + sct_branch)
 
     # check OS
     platform_running = sys.platform
@@ -478,22 +474,24 @@ if __name__ == "__main__":
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print 'OS: ' + os_running + ' (' + platform.platform() + ')'
+    sct.log.info('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # check hostname
-    print 'Hostname:', platform.node()
+    sct.log.info('Hostname: {}'.format(platform.node()))
 
     # Check number of CPU cores
     from multiprocessing import cpu_count
     # status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'CPU cores: ' + str(cpu_count())  # + ', Used by SCT: '+output
+    sct.log.info('CPU Thread on local machine: {} '.format(cpu_count()))
+
+    sct.log.info('    Requested threads:       {} '.format(nb_cpu))
 
     # check RAM
     sct.checkRAM(os_running, 0)
 
     # display command
-    print '\nCommand: "' + function_to_test + ' ' + parameters
-    print 'Dataset: ' + path_data
+    sct.log.info('\nCommand: "' + function_to_test + ' ' + parameters)
+    sct.log.info('Dataset: ' + path_data)
 
     # test function
     try:
@@ -503,16 +501,19 @@ if __name__ == "__main__":
 
         # during testing, redirect to standard output to avoid stacking error messages in the general log
         if create_log:
-            handle_log.pause()
+            # handle_log.pause()
+            sct.remove_handler(file_handler)
 
         # run function
-        tests_ret = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=None, verbose=1)
+        sct.log.debug("enter test fct")
+        tests_ret = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=nb_cpu, verbose=1)
+        sct.log.debug("exit test fct")
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
 
         # after testing, redirect to log file
         if create_log:
-            handle_log.restart()
+            sct.log.addHandler(file_handler)
 
         # build results
         pd.set_option('display.max_rows', 500)
@@ -548,26 +549,26 @@ if __name__ == "__main__":
         results_display = results_display.set_index('subject').reset_index()
 
         # display general results
-        print '\nGLOBAL RESULTS:'
+        sct.log.info('\nGLOBAL RESULTS:')
 
-        print 'Duration: ' + str(int(round(compute_time))) + 's'
+        sct.log.info('Duration: ' + str(int(round(compute_time))) + 's')
         # display results
-        print 'Passed: ' + str(count_passed) + '/' + str(count_ran)
-        print 'Crashed: ' + str(count_crashed) + '/' + str(count_ran)
+        sct.log.info('Passed: ' + str(count_passed) + '/' + str(count_ran))
+        sct.log.info('Crashed: ' + str(count_crashed) + '/' + str(count_ran))
         # build mean/std entries
         dict_mean = results_mean.to_dict()
         dict_mean.pop('status')
         dict_mean.pop('subject')
-        print 'Mean: ' + str(dict_mean)
+        sct.log.info('Mean: ' + str(dict_mean))
         dict_std = results_std.to_dict()
         dict_std.pop('status')
         dict_std.pop('subject')
-        print 'STD: ' + str(dict_std)
+        sct.log.info('STD: ' + str(dict_std))
 
-        # print detailed results
-        print '\nDETAILED RESULTS:'
-        print results_display.to_string()
-        print 'Status Legend - 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing'
+        # sct.log.info(detailed results)
+        sct.log.info('\nDETAILED RESULTS:')
+        sct.log.info(results_display.to_string())
+        sct.log.info('Status Legend - 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing')
 
         if verbose == 2:
             import seaborn as sns
@@ -600,22 +601,18 @@ if __name__ == "__main__":
                     a.set_ylabel('')
             plt.savefig('fig_' + file_log + '.png', bbox_inches='tight', pad_inches=0.5)
             plt.close()
-
-    except Exception as err:
-        if print_if_error:
-            print err
-
-    # stop file redirection
-    # message = handle_log.read()
-    handle_log.close()
-
-    # send email
-    if send_email:
-        print '\nSending email...'
-        # open log file and read content
-        with open(fname_log, "r") as fp:
-            message = fp.read()
+    finally:
+        if create_log:
+            file_handler.flush()
+            sct.remove_handler(file_handler)
         # send email
-        sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log, message=message, filename=fname_log, html=True)
-        # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
-        print 'Email sent!\n'
+        if send_email:
+            sct.log.info('\nSending email...')
+            # open log file and read content
+            with open(fname_log, "r") as fp:
+                message = fp.read()
+            # send email
+            sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log,
+                           message=message, filename=fname_log, html=True)
+            # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
+            sct.log.info('Email sent!\n')

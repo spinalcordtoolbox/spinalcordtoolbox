@@ -14,6 +14,7 @@
 
 from msct_parser import Parser
 import sys
+import sct_utils as sct
 
 
 # DEFAULT PARAMETERS
@@ -92,6 +93,7 @@ def main(args = None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     # call main function
@@ -125,7 +127,7 @@ if __name__ == "__main__":
 #
 #     # Parameters for debug mode
 #     if param.debug:
-#         print '\n*** WARNING: DEBUG MODE ON ***\n'
+#         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
 #     else:
 #         # Check input parameters
 #         try:
@@ -192,13 +194,13 @@ if __name__ == "__main__":
 # # Convert file from nifti to minc
 # # ==========================================================================================
 # def nii2mnc(fname_data,fname_out):
-#     print "Converting from nifti to minc"
+#     sct.printv("Converting from nifti to minc")
 #     sct.run("nii2mnc "+fname_data+" "+fname_out)
 #
 # # Convert file from nifti to minc
 # # ==========================================================================================
 # def niigz2mnc(fname_data,fname_out):
-#     print "Converting from nifti to minc"
+#     sct.printv("Converting from nifti to minc")
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
 #     fname_data_tmp=path_in+"tmp."+file_in+".nii"
 #     sct.run("gunzip -c "+fname_data+" >"+fname_data_tmp)
@@ -207,13 +209,13 @@ if __name__ == "__main__":
 # # Convert file from minc to nifti
 # # ==========================================================================================
 # def mnc2nii(fname_data,fname_out):
-#     print "Converting from minc to nifti"
+#     sct.printv("Converting from minc to nifti")
 #     sct.run("mnc2nii "+fname_data+" "+fname_out)
 #
 # # Convert file from minc to nifti
 # # ==========================================================================================
 # def mnc2niigz(fname_data,fname_out):
-#     print "Converting from minc to nifti"
+#     sct.printv("Converting from minc to nifti")
 #     path_out, file_out, ext_out = sct.extract_fname(fname_out)
 #     fname_data_tmp=path_out+file_out+".nii"
 #     sct.run("mnc2nii "+fname_data+" "+fname_data_tmp)
@@ -222,7 +224,7 @@ if __name__ == "__main__":
 # # Convert file from nifti to volumeviewer
 # # ==========================================================================================
 # def nii2volviewer(fname_data,fname_out):
-#     print "Converting from nifti to volume viewer"
+#     sct.printv("Converting from nifti to volume viewer")
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
 #     path_out, file_out, ext_out = sct.extract_fname(fname_out)
 #     fname_data_nii = path_out+"tmp."+file_out+'.mnc'
@@ -232,7 +234,7 @@ if __name__ == "__main__":
 # # Convert file from nifti to volumeviewer
 # # ==========================================================================================
 # def niigz2volviewer(fname_data,fname_out):
-#     print "Converting from nifti to volume viewer"
+#     sct.printv("Converting from nifti to volume viewer")
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
 #     path_out, file_out, ext_out = sct.extract_fname(fname_out)
 #     fname_data_mnc = path_out+"tmp."+file_out+'.mnc'
@@ -242,14 +244,14 @@ if __name__ == "__main__":
 # # Convert file from minc to volumeviewer
 # # ==========================================================================================
 # def mnc2volviewer(fname_data,fname_out):
-#     print "Converting from minc to volume viewer"
+#     sct.printv("Converting from minc to volume viewer")
 #     sct.run("isct_minc2volume-viewer "+fname_data+" -o "+fname_out)
 #
 #
-# # Print usage
+# # sct.printv(usage)
 # # ==========================================================================================
 # def usage():
-#     print """
+#     print("""
 #         """+os.path.basename(__file__)+"""
 #             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #             Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>

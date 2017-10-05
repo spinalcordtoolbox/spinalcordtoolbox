@@ -50,7 +50,7 @@ def main(file_to_denoise, param, output_file_name) :
     if '-std' in arguments:
         sigma = std_noise
         # Application of NLM filter to the image
-        print 'Applying Non-local mean filter...'
+        sct.printv('Applying Non-local mean filter...')
         if param.parameter == 'Rician':
             den = nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
         else :
@@ -60,15 +60,15 @@ def main(file_to_denoise, param, output_file_name) :
         mask = data > noise_threshold
         sigma = np.std(data[~mask])
         # Application of NLM filter to the image
-        print 'Applying Non-local mean filter...'
+        sct.printv('Applying Non-local mean filter...')
         if param.parameter == 'Rician':
             den = nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
         else:
             den = nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
 
     t = time()
-    print("total time", time() - t)
-    print("vol size", den.shape)
+    sct.printv("total time", time() - t))
+    sct.printv("vol size", den.shape))
 
     axial_middle = data.shape[2] / 2
 
@@ -109,6 +109,7 @@ def main(file_to_denoise, param, output_file_name) :
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
 
     # Initialize the parser

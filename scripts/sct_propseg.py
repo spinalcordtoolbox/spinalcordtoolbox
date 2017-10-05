@@ -19,6 +19,7 @@ import shutil
 from scipy import ndimage as ndi
 import numpy as np
 from sct_image import orientation
+import sct_image
 
 from spinalcordtoolbox.centerline import optic
 
@@ -50,8 +51,9 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     # convert segmentation image to RPI
     im_input = Image('tmp.segmentation.nii.gz')
     image_input_orientation = orientation(im_input, get=True, verbose=False)
-    sct.run('sct_image -i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz', verbose)
-    sct.run('sct_image -i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz', verbose)
+
+    sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz".split())
+    sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz".split())
 
     # go through segmentation image, and compare with centerline from propseg
     im_seg = Image('tmp.segmentation_RPI.nii.gz')
@@ -123,7 +125,8 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_seg.save()
 
     # replacing old segmentation with the corrected one
-    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_seg_absolute, verbose)
+    sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {}'.
+                   format(image_input_orientation, fname_seg_absolute).split())
 
     os.chdir('..')
 
@@ -315,6 +318,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
@@ -335,7 +339,7 @@ if __name__ == "__main__":
         folder_output = './'
     cmd += ' -o "%s"' % folder_output
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
-        sct.printv("ERROR output directory %s is not a valid directory" % folder_output, 1, 'error')
+        sct.log.error("output directory %s is not a valid directory" % folder_output)
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
@@ -422,7 +426,7 @@ if __name__ == "__main__":
     image_input = Image(fname_data)
     nx, ny, nz, nt, px, py, pz, pt = image_input.dim
     if nt > 1:
-        sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
+        sct.log.error('ERROR: your input image needs to be 3D in order to be segmented.')
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
@@ -446,7 +450,7 @@ if __name__ == "__main__":
             elif use_viewer == "mask":
                 cmd += " -init-mask " + tmp_output_file.file_name
         except ValueError:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
+            sct.log.error('the viewer has been closed before entering all manual points. Please try again.')
 
     # If using OptiC, enabled by default
     elif use_optic:
@@ -471,7 +475,8 @@ if __name__ == "__main__":
 
     # check status is not 0
     if not status == 0:
-        sct.printv('\nERROR: Automatic cord detection failed. Please initialize using -init-centerline or -init-mask (see help).', 1, type='error')
+        sct.log.error('Automatic cord detection failed. Please initialize using -init-centerline or '
+                      '-init-mask (see help).')
 
     # build output filename
     file_seg = file_data + "_seg" + ext_data
@@ -489,7 +494,7 @@ if __name__ == "__main__":
 
     # remove temporary files
     if remove_temp_files and use_viewer:
-        sct.printv("\nRemove temporary files...", verbose)
+        sct.log.info("Remove temporary files...")
         os.remove(tmp_output_file.file_name)
 
     if '-qc' in arguments and not arguments.get('-noqc', False):
@@ -507,11 +512,11 @@ if __name__ == "__main__":
 
         try:
             test(qcslice.Axial(Image(fname_input_data), Image(fname_seg)))
-            sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
-            sct.printv('Use the following command to see the results in a browser:')
-            sct.printv('sct_qc -folder %s' % qc_path, type='info')
+            sct.log.info('Sucessfully generated the QC results in %s' % param.qc_results)
+            sct.log.info('Use the following command to see the results in a browser:')
+            sct.log.info('sct_qc -folder %s' % qc_path)
         except:
-            sct.printv('WARNING: Issue when creating QC report.', 1, 'warning')
+            sct.log.warning('Issue when creating QC report.')
 
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')

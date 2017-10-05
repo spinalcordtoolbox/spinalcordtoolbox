@@ -100,10 +100,14 @@ def test(path_data='', parameters=''):
     # TODO: create function for that
     import sys
     fname_log = path_output + 'output.log'
-    stdout_log = file(fname_log, 'w')
+
+    sct.pause_stream_logger()
+    file_handler = sct.add_file_handler_to_logger(filename=fname_log, mode='w', log_format="%(message)s")
+    #
+    # stdout_log = file(fname_log, 'w')
     # redirect to log file
-    stdout_orig = sys.stdout
-    sys.stdout = stdout_log
+    # stdout_orig = sys.stdout
+    # sys.stdout = stdout_log
 
     cmd = 'sct_register_to_template ' + param_with_path
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
@@ -156,10 +160,9 @@ def test(path_data='', parameters=''):
     # transform results into Pandas structure
     results = DataFrame(data={'status': int(status), 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
 
-    # write log file
-    write_to_log_file(fname_log, output, mode='r+', prepend=True)
-
-    sys.stdout = stdout_orig
+    sct.log.info(output)
+    sct.remove_handler(file_handler)
+    sct.start_stream_logger()
 
     return status, output, results
 

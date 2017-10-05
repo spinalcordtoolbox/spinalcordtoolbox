@@ -86,7 +86,7 @@ def main():
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.fname_bvecs == '':
-        print '\n\nAll mandatory arguments are not provided \n'
+        sct.printv('\n\nAll mandatory arguments are not provided \n')
         usage()
 
     if param.output_path == '':
@@ -107,12 +107,12 @@ def main():
 
     # Delete temporary files
     if param.delete_tmp_files == 1:
-        print '\nDelete temporary files...'
+        sct.printv('\nDelete temporary files...')
         sct.run('rm -rf ' + path_tmp, param.verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's'
+    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's')
 
 #=======================================================================================================================
 # Function eddy_correct
@@ -356,7 +356,7 @@ def eddy_correct(param):
     if param.swapXY == 1:
         fname_data_final = fname_data
         sct.printv('\nSwap back X-Y dimensions', verbose)
-        cmd = fsloutput_temp + 'fslswapdim ' + fname_data_corr + ' -y -x -z ' + fname_data_final
+        cmd = fsloutput + 'fslswapdim ' + fname_data_corr + ' -y -x -z ' + fname_data_final
         status, output = sct.run(cmd, verbose)
     else:
         fname_data_final = fname_data_corr
@@ -372,33 +372,33 @@ def eddy_correct(param):
 # usage
 #=======================================================================================================================
 def usage():
-    print '\n' \
-        ' ' + os.path.basename(__file__) + '\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        'Correct Eddy-current distortions using pairs of DW images acquired at reversed gradient polarities' \
-        '\nUSAGE: \n' \
-        '  ' + os.path.basename(__file__) + ' -i <filename> -b <bvecs_file>\n' \
-        '\n'\
-        'MANDATORY ARGUMENTS\n' \
-        '  -i           input_file \n' \
-        '  -b           bvecs file \n' \
-        '\n'\
-        'OPTIONAL ARGUMENTS\n' \
-        '  -o           Specify Output path.\n' \
-        '  -s           Set value to 0 for volume based correction. Default value is 1 i.e slicewise correction\n' \
-        '  -m           matrix folder \n' \
-        '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
-        '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
-        '  -g {0,1}     Set value to 1 for plotting graphs. Default value is 0 \n' \
-        '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
-        '  -v {0,1}     Set verbose=1 for printing text. Default value is 0 \n' \
-        '  -h           help. Show this message.\n' \
-        '\n'\
-        'EXAMPLE:\n' \
-        '  ' + os.path.basename(__file__) + ' -i KS_HCP34.nii -b KS_HCP_bvec.txt \n'
+    print('\n'
+        ' ' + os.path.basename(__file__) + '\n'
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n'
+        '\n'
+        'DESCRIPTION\n'
+        'Correct Eddy-current distortions using pairs of DW images acquired at reversed gradient polarities'
+        '\nUSAGE: \n'
+        '  ' + os.path.basename(__file__) + ' -i <filename> -b <bvecs_file>\n'
+        '\n'
+        'MANDATORY ARGUMENTS\n'
+        '  -i           input_file \n'
+        '  -b           bvecs file \n'
+        '\n'
+        'OPTIONAL ARGUMENTS\n'
+        '  -o           Specify Output path.\n'
+        '  -s           Set value to 0 for volume based correction. Default value is 1 i.e slicewise correction\n'
+        '  -m           matrix folder \n'
+        '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n'
+        '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n'
+        '  -g {0,1}     Set value to 1 for plotting graphs. Default value is 0 \n'
+        '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n'
+        '  -v {0,1}     Set verbose=1 for sct.printv(ng text. Default value is 0 \n'
+        '  -h           help. Show this message.\n'
+        '\n'
+        'EXAMPLE:\n'
+        '  ' + os.path.basename(__file__) + ' -i KS_HCP34.nii -b KS_HCP_bvec.txt \n')
 
     # Exit Program
     sys.exit(2)
@@ -408,6 +408,7 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     param = Param()
     # call main function
     main()
