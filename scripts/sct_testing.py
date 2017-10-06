@@ -25,6 +25,25 @@ import sct_utils as sct
 import importlib
 
 
+# Parameters
+class Param:
+    def __init__(self):
+        self.download = 0
+        self.path_data = 'sct_testing_data/'  # path to the testing data
+        self.path_output = []  # list of output folders
+        self.function_to_test = None
+        self.remove_tmp_file = 0
+        self.verbose = 1
+        self.path_tmp = ''
+        self.args = []  # list of input arguments to the function
+        self.args_with_path = ''  # input arguments to the function, with path
+        self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
+        self.output = ''  # output string
+        self.results = ''  # results in Panda DataFrame
+        self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
+        self.suffix_groundtruth = ''  # suffix used for ground truth data (for integrity testing)
+
+
 # define nice colors
 class bcolors:
     HEADER = '\033[95m'
@@ -33,22 +52,6 @@ class bcolors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
-
-
-# Parameters
-class Param:
-    def __init__(self):
-        self.download = 0
-        self.path_data = 'sct_testing_data/'  # path to the testing data
-        self.function_to_test = None
-        self.remove_tmp_file = 0
-        self.verbose = 1
-        self.path_tmp = ''
-        self.args = ''  # input arguments to the function
-        self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
-        self.output = ''  # output string coded into DataFrame
-        self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
-        self.suffix_groundtruth = ''  # suffix used for ground truth data (for integrity testing)
 
 
 # PARSER
@@ -142,18 +145,35 @@ def main(args=None):
         param.function_to_test = f
         # display script name
         print_line('Checking ' + f)
-        param.args = ''  # need to clean this variable otherwise it will use the value from the previous test
-        param = test_function(param)
-        list_status.append(param.status)
+        # load modules of function to test
+        module_function_to_test = importlib.import_module(f)
+        module_testing = importlib.import_module('test_' + f)
+        # initialize default parameters of function to test
+        param = module_testing.init(param)
+        # loop over parameters to test
+        list_status_function = []
+        list_output = []
+        for i in range(0, len(param.args)):
+            param_test = deepcopy(param)
+            param_test.args = param.args[i]
+            # test function
+            param_test = test_function(param_test)
+            list_status_function.append(param_test.status)
+            list_output.append(param_test.output)
         # manage status
-        if param.status == 0:
-            print_ok()
-        else:
-            if param.status == 99:
-                print_warning()
-            else:
+        if any(list_status_function):
+            if 1 in list_status_function:
                 print_fail()
-            print param.output
+                status = 1
+            else:
+                print_warning()
+                status = 99
+            print list_output
+        else:
+            print_ok()
+            status = 0
+        # append status function to global list of status
+        list_status.append(status)
 
     print 'status: ' + str(list_status)
 
@@ -314,13 +334,13 @@ def test_function(param_test):
     module_testing = importlib.import_module('test_' + param_test.function_to_test)
 
     # initialize testing parameters specific to this function
-    param_test = module_testing.init(param_test)
+    # param_test = module_testing.init(param_test)
 
     # get parser information
     parser = module_function_to_test.get_parser()
-    dict_param = parser.parse(param_test.args.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), param_test.path_data, input_file=True)
-    param_test.param_with_path = parser.dictionary_to_string(dict_param_with_path)
+    dict_args = parser.parse(param_test.args.split(), check_file_exist=False)
+    dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args), param_test.path_data, input_file=True)
+    param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
 
     # retrieve subject name
     subject_folder = sct.slash_at_the_end(param_test.path_data, 0).split('/')
@@ -329,7 +349,7 @@ def test_function(param_test):
     param_test.path_output = sct.slash_at_the_end(param_test.function_to_test + '_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
     # check if parser has key '-ofolder'. If so, then assign output folder
     if parser.options.has_key('-ofolder'):
-        param_test.param_with_path += ' -ofolder ' + param_test.path_output
+        param_test.args_with_path += ' -ofolder ' + param_test.path_output
     sct.create_folder(param_test.path_output)
 
     # log file
@@ -341,18 +361,18 @@ def test_function(param_test):
         sys.stdout = stdout_log
 
     # initialize panda dataframe
-    param_test.results = DataFrame(index=[param_test.path_data], data={'status': 0, 'output': param_test.output})
+    param_test.results = DataFrame(index=[param_test.path_data], data={'status': 0, 'output': ''})
 
     # retrieve input file (will be used later for integrity testing)
-    if '-i' in dict_param:
-        param_test.file_input = dict_param['-i'].split('/')[1]
+    if '-i' in dict_args:
+        param_test.file_input = dict_args['-i'].split('/')[1]
 
     # Extract contrast
-    if '-c' in dict_param:
-        param_test.contrast = dict_param['-c']
+    if '-c' in dict_args:
+        param_test.contrast = dict_args['-c']
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i'])):
+    if not (os.path.isfile(dict_args_with_path['-i'])):
         param_test.status = 200
         param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
@@ -371,7 +391,7 @@ def test_function(param_test):
             return param_test
 
     # run command
-    cmd = param_test.function_to_test + param_test.param_with_path
+    cmd = param_test.function_to_test + param_test.args_with_path
     param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
