@@ -4,9 +4,8 @@
 # Test function sct_propseg
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Augustin Roux
-# modified: 2014/10/09
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -29,7 +28,7 @@ def init(param_test):
     param_test
     """
     # initialization
-    default_args = '-i t2/t2.nii.gz -c t2'  # default parameters
+    default_args = ['-i t2/t2.nii.gz -c t2']  # default parameters
     param_test.dice_threshold = 0.9
     param_test.suffix_groundtruth = '_seg_manual'  # file name suffix for ground truth (used for integrity testing)
 
@@ -47,8 +46,7 @@ def init(param_test):
         param_test.args = default_args
 
     return param_test
-    # initialize testing and run function
-    # param_test = init_testing(param_test)
+
 
 def test_integrity(param_test):
     """
