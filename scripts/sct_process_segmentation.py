@@ -234,9 +234,9 @@ def main(args):
     # update fields
     param.verbose = verbose
 
-    # print arguments
-    print '\nCheck parameters:'
-    print '.. segmentation file:             ' + fname_segmentation
+    # sct.printv(arguments)
+    sct.printv('\nCheck parameters:')
+    sct.printv('.. segmentation file:             ' + fname_segmentation)
 
     if name_process == 'centerline':
         fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting, use_phys_coord=use_phys_coord)
@@ -326,7 +326,7 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
     df_shape_properties.to_csv(fname_output_csv, sep=',')
 
     if verbose == 1:
-        print df_shape_properties
+        sct.printv(df_shape_properties)
 
     # display info
     sct.printv('\nDone! Results are save in the file: ' + fname_output_csv, verbose, 'info')
@@ -1150,7 +1150,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
 
 
 def b_spline_centerline(x_centerline, y_centerline, z_centerline):
-    print '\nFitting centerline using B-spline approximation...'
+    sct.printv('\nFitting centerline using B-spline approximation...')
     points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
     nurbs = NURBS(3, 3000, points)
     # BE very careful with the spline order that you choose :
@@ -1249,6 +1249,7 @@ def edge_detection(f):
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     param_default = Param()

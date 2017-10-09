@@ -17,7 +17,7 @@ from msct_image import Image, get_dimension
 from msct_parser import Parser
 from numpy import newaxis, shape
 from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
-
+import sct_utils as sct
 
 class Param:
     def __init__(self):
@@ -151,86 +151,31 @@ def main(args=None):
     # im_in_list = [Image(fn) for fn in fname_in]
 
     # run command
-    if "-pad" in arguments:
-        im_in = Image(fname_in[0])
-        ndims = len(im_in.getDataShape())
-        if ndims != 3:
-            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
-            return
-
-        pad_arguments = arguments["-pad"].split(',')
-        if len(pad_arguments) != 3:
-            printv('ERROR: you need to specify 3 padding values.', 1, 'error')
-
-        padx, pady, padz = pad_arguments
-        padx, pady, padz = int(padx), int(pady), int(padz)
-        im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady,
-                  pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
-
-    elif "-pad-asym" in arguments:
-        im_in = Image(fname_in[0])
-        ndims = len(im_in.getDataShape())
-        if ndims != 3:
-            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
-            return
-
-        pad_arguments = arguments["-pad-asym"].split(',')
-        if len(pad_arguments) != 6:
-            printv('ERROR: you need to specify 6 padding values.', 1, 'error')
-
-        padxi, padxf, padyi, padyf, padzi, padzf = pad_arguments
-        padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), \
-            int(padyf), int(padzi), int(padzf)
-        im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi,
-                  pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
+    if "-concat" in arguments:
+        dim = arguments["-concat"]
+        assert dim in dim_list
+        dim = dim_list.index(dim)
+        im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
 
     elif "-copy-header" in arguments:
         im_in = Image(fname_in[0])
         im_dest = Image(arguments["-copy-header"])
         im_out = [copy_header(im_in, im_dest)]
 
-    elif "-split" in arguments:
-        dim = arguments["-split"]
-        assert dim in dim_list
-        im_in = Image(fname_in[0])
-        dim = dim_list.index(dim)
-        im_out = split_data(im_in, dim)
-
-    elif "-concat" in arguments:
-        dim = arguments["-concat"]
-        assert dim in dim_list
-        dim = dim_list.index(dim)
-        im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
-
-
-    elif '-keep-vol' in arguments:
-        index_vol = arguments['-remove-vol']
-        im_in = Image(fname_in[0])
-        im_out = [remove_vol(im_in, index_vol, todo='keep')]
-
-    elif '-remove-vol' in arguments:
-        index_vol = arguments['-remove-vol']
-        im_in = Image(fname_in[0])
-        im_out = [remove_vol(im_in, index_vol, todo='remove')]
-
-    elif '-type' in arguments:
-        output_type = arguments['-type']
-        im_in = Image(fname_in[0])
-        im_out = [im_in]  # TODO: adapt to fname_in
+    elif '-display-warp' in arguments:
+        im_in = fname_in[0]
+        visualize_warp(im_in, fname_grid=None, step=3, rm_tmp=True)
+        im_out = None
 
     elif "-getorient" in arguments:
         im_in = Image(fname_in[0])
         orient = orientation(im_in, get=True, verbose=verbose)
         im_out = None
 
-    elif "-setorient" in arguments:
-        print fname_in[0]
+    elif '-keep-vol' in arguments:
+        index_vol = arguments['-keep-vol']
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose, fname_out=fname_out)]
-
-    elif "-setorient-data" in arguments:
-        im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
+        im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
     elif '-mcs' in arguments:
         im_in = Image(fname_in[0])
@@ -249,10 +194,62 @@ def main(args=None):
             del im
         im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
-    elif '-display-warp' in arguments:
-        im_in = fname_in[0]
-        visualize_warp(im_in, fname_grid=None, step=3, rm_tmp=True)
-        im_out = None
+    elif "-pad" in arguments:
+        im_in = Image(fname_in[0])
+        ndims = len(im_in.getDataShape())
+        if ndims != 3:
+            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            return
+
+        pad_arguments = arguments["-pad"].split(',')
+        if len(pad_arguments) != 3:
+            printv('ERROR: you need to specify 3 padding values.', 1, 'error')
+
+        padx, pady, padz = pad_arguments
+        padx, pady, padz = int(padx), int(pady), int(padz)
+        im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady,
+                            pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
+
+    elif "-pad-asym" in arguments:
+        im_in = Image(fname_in[0])
+        ndims = len(im_in.getDataShape())
+        if ndims != 3:
+            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            return
+
+        pad_arguments = arguments["-pad-asym"].split(',')
+        if len(pad_arguments) != 6:
+            printv('ERROR: you need to specify 6 padding values.', 1, 'error')
+
+        padxi, padxf, padyi, padyf, padzi, padzf = pad_arguments
+        padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
+        im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
+
+    elif '-remove-vol' in arguments:
+        index_vol = arguments['-remove-vol']
+        im_in = Image(fname_in[0])
+        im_out = [remove_vol(im_in, index_vol, todo='remove')]
+
+    elif "-setorient" in arguments:
+        sct.printv(fname_in[0])
+        im_in = Image(fname_in[0])
+        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose, fname_out=fname_out)]
+
+    elif "-setorient-data" in arguments:
+        im_in = Image(fname_in[0])
+        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
+
+    elif "-split" in arguments:
+        dim = arguments["-split"]
+        assert dim in dim_list
+        im_in = Image(fname_in[0])
+        dim = dim_list.index(dim)
+        im_out = split_data(im_in, dim)
+
+    elif '-type' in arguments:
+        output_type = arguments['-type']
+        im_in = Image(fname_in[0])
+        im_out = [im_in]  # TODO: adapt to fname_in
 
     else:
         im_out = None
@@ -260,7 +257,7 @@ def main(args=None):
 
     # Write output
     if im_out is not None:
-        printv('\nGenerate output files...', verbose)
+        printv('Generate output files...', verbose)
         # if only one output
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
@@ -281,14 +278,12 @@ def main(args=None):
                 im.save()
 
         # To view results
-        printv('\nFinished. To view results, type:', param.verbose)
-        printv('fslview ' + str(fname_out) + ' &\n', param.verbose, 'info')
+        printv('Finished. To view results, type:', param.verbose)
+        printv('fslview ' + str(fname_out) + ' &', param.verbose, 'info')
     elif "-getorient" in arguments:
-        print(orient)
+        sct.printv(orient)
     elif '-display-warp' in arguments:
-        printv('Warping grid generated.\n', verbose, 'info')
-    else:
-        printv('An error occurred in sct_image...', verbose, "error")
+        printv('Warping grid generated.', verbose, 'info')
 
 
 def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
@@ -563,7 +558,7 @@ def multicomponent_merge(fname_list):
 
 def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=''):
     verbose = 0 if get else verbose
-    printv('\nGet dimensions of data...', verbose)
+    printv('Get dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
@@ -573,15 +568,15 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
     if (nz == 1 or nt == 1) and len(im.data.shape) < 5:
         if get:
             try:
-                printv('\nGet orientation...', verbose)
+                printv('Get orientation...', verbose)
                 im_out = None
                 ori = get_orientation(im)
             except Exception, e:
-                printv('ERROR: an error occurred: \n' + str(e), verbose, 'error')
+                printv('ERROR: an error occurred: ' + str(e), verbose, 'error')
             return ori
         elif set:
             # set orientation
-            printv('\nChange orientation...', verbose)
+            printv('Change orientation...', verbose)
             im_out = set_orientation(im, ori)
         elif set_data:
             im_out = set_orientation(im, ori, True)
@@ -597,12 +592,12 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
         chdir(tmp_folder)
         if len(im.data.shape) == 5 and im.data.shape[-1] not in [0, 1]:
             # 5D data
-            printv('\nSplit along 5th dimension...', verbose)
+            printv('Split along 5th dimension...', verbose)
             im_split_list = multicomponent_split(im)
             dim = 5
         else:
             # 4D data
-            printv('\nSplit along T dimension...', verbose)
+            printv('Split along T dimension...', verbose)
             im_split_list = split_data(im, 3)
             dim = 4
         for im_s in im_split_list:
@@ -610,7 +605,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
 
         if get:
             # get orientation
-            printv('\nGet orientation...', verbose)
+            printv('Get orientation...', verbose)
             im_out = None
             ori = get_orientation(im_split_list[0])
             chdir('..')
@@ -618,19 +613,19 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             return ori
         elif set:
             # set orientation
-            printv('\nChange orientation...', verbose)
+            printv('Change orientation...', verbose)
             im_changed_ori_list = []
             for im_s in im_split_list:
                 im_set = set_orientation(im_s, ori)
                 im_changed_ori_list.append(im_set)
-            printv('\nMerge file back...', verbose)
+            printv('Merge file back...', verbose)
             if dim == 4:
                 im_out = concat_data(im_changed_ori_list, 3)
             elif dim == 5:
                 fname_changed_ori_list = [im_ch_ori.absolutepath for im_ch_ori in im_changed_ori_list]
                 im_out = multicomponent_merge(fname_changed_ori_list)
         elif set_data:
-            printv('\nSet orientation of the data only is not compatible with 4D data...', verbose, 'error')
+            printv('Set orientation of the data only is not compatible with 4D data...', verbose, 'error')
         else:
             im_out = None
 
@@ -762,6 +757,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # # initialize parameters
     param = Param()
     # call main function

@@ -16,6 +16,7 @@ import numpy as np
 from msct_parser import Parser
 from msct_image import Image
 from sct_utils import printv, extract_fname
+import sct_utils as sct
 
 ALMOST_ZERO = 0.000000001
 
@@ -716,6 +717,7 @@ def correlation(x, y, type='pearson'):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # # initialize parameters
     param = Param()
     # call main function

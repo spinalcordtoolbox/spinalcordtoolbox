@@ -518,6 +518,5 @@ def dmri_moco(param):
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # param = Param()
-    # param_default = Param()
+    sct.start_stream_logger()
     main()

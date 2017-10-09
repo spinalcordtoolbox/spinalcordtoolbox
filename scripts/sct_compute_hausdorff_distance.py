@@ -49,7 +49,7 @@ class Thinning:
         elif self.dim_im == 3:
             if not self.image.orientation == 'IRP':
                 from sct_image import set_orientation
-                print '-- changing orientation ...'
+                sct.printv('-- changing orientation ...')
                 self.image = set_orientation(self.image, 'IRP')
 
             thinned_data = np.asarray([self.zhang_suen(im_slice) for im_slice in self.image.data])
@@ -71,7 +71,7 @@ class Thinning:
         neighbours = [image[x_1][y], image[x_1][y1], image[x][y1], image[x1][y1],     # P2,P3,P4,P5
                       image[x1][y], image[x1][y_1], image[x][y_1], image[x_1][y_1]]    # P6,P7,P8,P9
         # t = time.time() - now
-        # print 't neighbours: ', t
+        # sct.printv('t neighbours: ', t)
         return neighbours
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ class Thinning:
         n = neighbours + neighbours[0:1]      # P2, P3, ... , P8, P9, P2
         s = np.sum((n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]))  # (P2,P3), (P3,P4), ... , (P8,P9), (P9,P2)
         # t = time.time() - now
-        # print 't transitions sum: ', t
+        # sct.printv('t transitions sum: ', t)
         return s
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -137,7 +137,7 @@ class Thinning:
             for x, y in changing2:
                 image_thinned[x][y] = 0
         # t = time.time() - now
-        # print 't thinning: ', t
+        # sct.printv('t thinning: ', t)
         return image_thinned
 
 
@@ -164,7 +164,7 @@ class HausdorffDistance:
         # Hausdorff's distance in pixel
         self.H = max(self.h1, self.h2)
         # t = time.time() - now
-        # print 'Hausdorff dist time :', t
+        # sct.printv('Hausdorff dist time :', t)
 
     # ------------------------------------------------------------------------------------------------------------------
     def relative_hausdorff_dist(self, dat1, dat2, v=1):
@@ -467,10 +467,11 @@ def get_parser():
 ########################################################################################################################
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     param = Param()
     input_fname = None
     if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
     else:
         param_default = Param()
         parser = get_parser()
@@ -524,4 +525,4 @@ if __name__ == "__main__":
                 sct.run('cp ' + computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext + ' ../' + sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2])
 
         os.chdir('..')
-        # print 'Total time: ', time.time() - now
+        # sct.printv('Total time: ', time.time() - now)

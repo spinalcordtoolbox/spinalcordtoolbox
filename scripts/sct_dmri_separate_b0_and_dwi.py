@@ -41,7 +41,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     # Initialization
     start_time = time.time()
 
-    # print arguments
+    # sct.printv(arguments)
     sct.printv('\nInput parameters:', verbose)
     sct.printv('  input file ............' + fname_data, verbose)
     sct.printv('  bvecs file ............' + fname_bvecs, verbose)
@@ -90,7 +90,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     sct.printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
 
     # Identify b=0 and DWI images
-    print fname_bvals
+    sct.printv(fname_bvals)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, param.bval_min, verbose)
 
     # Split into T dimension
@@ -227,11 +227,11 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     return index_b0, index_dwi, nb_b0, nb_dwi
 
 
-# Print usage
+# sct.printv(usage)
 # ==========================================================================================
 def usage():
-    print """
-""" + os.path.basename(__file__) + """
+    print("""
+{0}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
@@ -239,22 +239,23 @@ DESCRIPTION
   Separate b=0 and DW images from diffusion dataset.
 
 USAGE
-  """ + os.path.basename(__file__) + """ -i <dmri> -b <bvecs>
+  {0} -i <dmri> -b <bvecs>
 
 MANDATORY ARGUMENTS
   -i <dmri>        diffusion data
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -a {0,1}         average b=0 and DWI data. Default=""" + str(param_default.average) + """
+  -a {0,1}         average b=0 and DWI data. Default={1}
   -m <bvals>       bvals file. Used to identify low b-values (in case different from 0).
   -o <output>      output folder. Default = local folder.
-  -v {0,1}         verbose. Default=""" + str(param_default.verbose) + """
-  -r {0,1}         remove temporary files. Default=""" + str(param_default.remove_tmp_files) + """
+  -v {0,1}         verbose. Default={2}
+  -r {0,1}         remove temporary files. Default={3}
   -h               help. Show this message
 
 EXAMPLE
-  """ + os.path.basename(__file__) + """ -i dmri.nii.gz -b bvecs.txt -a 1\n"""
+  {0} -i dmri.nii.gz -b bvecs.txt -a 1\n""".format(
+        os.path.basename(__file__)), param_default.average, param_default.verbose, param_default.remove_tmp_files)
 
     # Exit Program
     sys.exit(2)
@@ -334,6 +335,7 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     param_default = Param()

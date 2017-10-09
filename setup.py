@@ -38,7 +38,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
-    packages=find_packages(exclude=['scripts', 'dev', 'dev.*', 'install', 'testing']),
+    packages=find_packages(exclude=['dev', 'dev.*', 'install', 'testing']),
     package_data={},
     install_requires=requirements,
     include_package_data=True,
@@ -46,5 +46,5 @@ setup(
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
-    # entry_points={'console_scripts': ['sct=spinalcordtoolbox.qc.serve:spinalcordtoolbox'], },
+    entry_points={'console_scripts': ['sct_label_image=spinalcordtoolbox.gui.cli:segment_image_cli'], },
 )

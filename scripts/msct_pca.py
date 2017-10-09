@@ -276,7 +276,7 @@ class PCA:
             coord_projected_img = self.kept_modes.T.dot(target - self.mean_data_vect)
             return coord_projected_img.reshape(coord_projected_img.shape[:-1])
         else:
-            print "target dimension is {}, must be {}.\n".format(image_as_array.shape, self.N)
+            sct.printv("target dimension is {}, must be {}.\n".format(image_as_array.shape, self.N))
 
     # ------------------------------------------------------------------------------------------------------------------
     def save_data(self, path):
@@ -408,8 +408,8 @@ class PCA:
             nb_modes = int(round(len(self.kept_eigenval) / 3))
 
         elif len(self.kept_eigenval) < nb_modes:
-            print "Can't plot {} modes, not enough modes kept. " \
-                  "Try to increase k, which is curently {}".format(nb_modes, self.k)
+            sct.printv("Can't plot {} modes, not enough modes kept. " 
+                       "Try to increase k, which is curently {}".format(nb_modes, self.k))
             exit(2)
         assert self.dataset_coord.shape == (len(self.kept_eigenval), self.J), \
             "The matrix is {}".format(self.dataset_coord.shape)

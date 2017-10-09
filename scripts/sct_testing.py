@@ -179,7 +179,7 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print 'Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n'
+    sct.printv('Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
 
     # remove temp files
     if param.remove_tmp_file:
@@ -274,15 +274,15 @@ def make_dot_lines(string):
 # print in color
 # ==========================================================================================
 def print_ok():
-    print "[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]"
+    sct.log.info("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
 
 
 def print_warning():
-    print "[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]"
+    sct.log.warning("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
 
 
 def print_fail():
-    print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
+    sct.log.error("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
 # write to log file
@@ -430,5 +430,8 @@ def test_function(param_test):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
+    # initialize parameters
+    param = param()
     # call main function
     main()

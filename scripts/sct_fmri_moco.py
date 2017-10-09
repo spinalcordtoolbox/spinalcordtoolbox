@@ -211,8 +211,8 @@ def main(args=None):
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
     if os.path.isfile(path_tmp + 'fmri' + param.suffix + '.nii'):
-        print path_tmp + 'fmri' + param.suffix + '.nii'
-        print path_out + file_data + param.suffix + ext_data
+        sct.printv(path_tmp + 'fmri' + param.suffix + '.nii')
+        sct.printv(path_out + file_data + param.suffix + ext_data)
     sct.generate_output_file(path_tmp + 'fmri' + param.suffix + '.nii', path_out + file_data + param.suffix + ext_data, param.verbose)
     sct.generate_output_file(path_tmp + 'fmri' + param.suffix + '_mean.nii', path_out + file_data + param.suffix + '_mean' + ext_data, param.verbose)
 
@@ -359,4 +359,5 @@ def fmri_moco(param):
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

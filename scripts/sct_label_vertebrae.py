@@ -23,8 +23,6 @@ import numpy as np
 from sct_maths import mutual_information
 from msct_parser import Parser
 from msct_image import Image
-import sct_image
-import sct_label_utils
 import sct_utils as sct
 from sct_warp_template import get_file_label
 from scipy.ndimage.measurements import center_of_mass
@@ -468,27 +466,19 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # if manual mode, open viewer for user to click on C2/C3 disc
     if init_disc == [] and initc2 == 'manual':
-        from sct_viewer import ClickViewerLabelVertebrae
-        # reorient image to SAL to be compatible with viewer
-        im_input_SAL = im_input.copy()
-        im_input_SAL.change_orientation('SAL')
-        viewer = ClickViewerLabelVertebrae(im_input_SAL, orientation_subplot=['sag', 'ax'])
-        viewer.number_of_slices = 1
-        pz = 1
-        viewer.gap_inter_slice = int(10 / pz)
-        viewer.calculate_list_slices()
-        viewer.help_url = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/sct_label_vertebrae/attachment/label_vertebrae_viewer.png'
-        # start the viewer that ask the user to enter a few points along the spinal cord
-        mask_points = viewer.start()
-        if mask_points:
-            # orient input as SAL
-            sct_image.main(args=['-i', 'data_straightr.nii', '-setorient', 'SAL', '-o', 'data_straightr_SAL.nii'])
-            # create label in SAL orientation
-            sct_label_utils.main(args=['-i', 'data_straightr_SAL.nii', '-create', mask_points, '-o', 'initlabel_SAL.nii.gz'])
-            # Orient label in native orientation
-            sct_image.main(args=['-i', 'initlabel_SAL.nii.gz', '-setorient', im_input.orientation, '-o', sct.add_suffix(fname, '_mask_viewer')])
-        else:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', verbose, type='error')
+        from spinalcordtoolbox.gui.base import AnatomicalParams
+        from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
+
+        params = AnatomicalParams()
+        params.num_points = 1
+        params.vertebraes = [3, ]
+        input_file = Image(fname)
+        output_file = input_file.copy()
+        output_file.data *= 0
+        output_file.setFileName(os.path.join(path_output, 'labels.nii.gz'))
+        controller = launch_sagittal_dialog(input_file, output_file, params)
+        mask_points = controller.as_string()
+
         # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
         init_disc = [nz - int(mask_points.split(',')[0]), 2]
 
@@ -752,7 +742,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     for iz in zrange:
         # if pattern extends towards the top part of the image, then crop and pad with zeros
         if z + iz + zsize + 1 > nz:
-            # print 'iz='+str(iz)+': padding on top'
+            # sct.printv('iz='+str(iz)+': padding on top')
             padding_size = z + iz + zsize + 1 - nz
             data_chunk3d = src[x - xsize: x + xsize + 1,
                                y + yshift - ysize: y + yshift + ysize + 1,
@@ -761,7 +751,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
                                   constant_values=0)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif z + iz - zsize < 0:
-            # print 'iz='+str(iz)+': padding at bottom'
+            # sct.printv('iz='+str(iz)+': padding at bottom')
             padding_size = abs(iz - zsize)
             data_chunk3d = src[x - xsize: x + xsize + 1,
                                y + yshift - ysize: y + yshift + ysize + 1,
@@ -769,7 +759,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
                                   constant_values=0)
         else:
-            # print 'iz='+str(iz)+': no padding'
             data_chunk3d = src[x - xsize: x + xsize + 1,
                                y + yshift - ysize: y + yshift + ysize + 1,
                                z + iz - zsize: z + iz + zsize + 1]
@@ -867,7 +856,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
         else:
             # assign vertebral level (add one because iz is BELOW the disk)
             vertebral_level = list_disc_value[ind_above_iz] + 1
-            # print vertebral_level
+            # sct.printv(vertebral_level)
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
@@ -911,7 +900,7 @@ def label_discs(fname_seg_labeled, verbose=1):
             # if smaller than previous level, then labeled as a disc
             if vertebral_level < vertebral_level_previous:
                 # label disc
-                # print 'iz='+iz+', disc='+vertebral_level
+                # sct.printv('iz='+iz+', disc='+vertebral_level)
                 data_disc[cx, cy, iz] = vertebral_level
             # update variable
             vertebral_level_previous = vertebral_level
@@ -925,5 +914,6 @@ def label_discs(fname_seg_labeled, verbose=1):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()
