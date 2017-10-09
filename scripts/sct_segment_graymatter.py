@@ -213,7 +213,7 @@ class ParamSeg:
 
         self.type_seg = 'prob'  # 'prob' or 'bin'
         self.thr_bin = 0.5
-        self.ratio = '0'  # '0', 'slice' or 'level'
+        self.ratio = 'slice'  # '0', 'slice' or 'level'
 
         self.qc = True
 
@@ -632,8 +632,8 @@ class SegmentGM:
             fname_gmseg = im_res_gmseg.absolutepath
             fname_wmseg = im_res_wmseg.absolutepath
 
-        sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa'])
-        sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa'])
+        sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa', '-no-angle', '1'])
+        sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa', '-no-angle', '1'])
 
         gm_csa = open('gm_csa/csa_per_slice.txt', 'r')
         wm_csa = open('wm_csa/csa_per_slice.txt', 'r')
