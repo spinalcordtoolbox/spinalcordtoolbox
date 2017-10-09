@@ -146,9 +146,9 @@ def main(args=None):
         # display script name
         print_line('Checking ' + f)
         # load modules of function to test
-        module_function_to_test = importlib.import_module(f)
         module_testing = importlib.import_module('test_' + f)
         # initialize default parameters of function to test
+        param.args = []
         param = module_testing.init(param)
         # loop over parameters to test
         list_status_function = []
