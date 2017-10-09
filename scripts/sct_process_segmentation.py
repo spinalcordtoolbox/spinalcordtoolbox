@@ -185,9 +185,11 @@ def main(args):
     path_script = os.path.dirname(__file__)
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     processes = ['centerline', 'csa', 'length', 'shape']
-    verbose = param.verbose
     start_time = time.time()
-    remove_temp_files = param.remove_temp_files
+    if "-v" in arguments:
+        verbose = int(arguments["-v"])
+    if "-r" in arguments:
+        remove_temp_files = int(arguments["-r"])
     # spline_smoothing = param.spline_smoothing
     step = param.step
     smoothing_param = param.smoothing_param
