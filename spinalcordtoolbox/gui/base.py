@@ -98,6 +98,9 @@ class BaseDialog(QtGui.QDialog):
         self.image = controller.image
         self._controller._dialog = self
         self._init_ui()
+        QtGui.QShortcut(QtGui.QKeySequence.Undo, self, self.on_undo)
+        QtGui.QShortcut(QtGui.QKeySequence.Save, self, self.on_save_quit)
+        QtGui.QShortcut(QtGui.QKeySequence.HelpContents, self, self.on_help)
 
     def _init_ui(self):
         self.resize(1200, 800)
