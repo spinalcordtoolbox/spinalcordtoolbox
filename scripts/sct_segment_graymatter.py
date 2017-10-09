@@ -82,9 +82,12 @@ def get_parser():
                       description="Spinal cord segmentation",
                       mandatory=True,
                       example='sc_seg.nii.gz')
+
+    parser.usage.addSection('SEGMENTATION OPTIONS')
+
     parser.add_option(name="-vertfile",
                       type_value="str",
-                      description='Labels of vertebral levels. This could either be an image (e.g., label/template/PAM50_levels.nii.gz) or a text file that specifies "slice,level" at each line. Example:\n'
+                      description='Labels of vertebral levels used as prior for the segmentation. This could either be an image (e.g., label/template/PAM50_levels.nii.gz) or a text file that specifies "slice,level" at each line. Example:\n'
                       "0,3\n"
                       "1,3\n"
                       "2,4\n"
@@ -99,7 +102,6 @@ def get_parser():
                       mandatory=False,
                       deprecated_by='-vertfile')
 
-    parser.usage.addSection('SEGMENTATION OPTIONS')
     parser.add_option(name="-denoising",
                       type_value='multiple_choice',
                       description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been computed with denoising too)",
@@ -141,7 +143,9 @@ def get_parser():
                       description="Path to the computed model",
                       mandatory=False,
                       example='/home/jdoe/gm_seg_model/')
-    parser.usage.addSection('\nOUTPUT OTIONS')
+
+    parser.usage.addSection('\nOUTPUT OPTIONS')
+
     parser.add_option(name="-res-type",
                       type_value='multiple_choice',
                       description="Type of result segmentation : binary or probabilistic",
@@ -154,18 +158,22 @@ def get_parser():
                       mandatory=False,
                       default_value=ParamSeg().ratio,
                       example=['0', 'slice', 'level'])
-    parser.add_option(name="-ref",
-                      type_value="file",
-                      description="Reference segmentation of the gray matter for segmentation validation --> output Dice coefficient and Hausdorff's and median distances)",
-                      mandatory=False,
-                      example='manual_gm_seg.nii.gz')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
                       mandatory=False,
                       default_value=ParamSeg().path_results,
                       example='gm_segmentation_results/')
-    parser.usage.addSection('MISC')
+
+    parser.usage.addSection('\nQC OPTIONS')
+
+    parser.add_option(name="-ref",
+                      type_value="file",
+                      description="Compute DICE coefficient, Hausdorff's and median distances between output segmentation and gold-standard segmentation specified here",
+                      mandatory=False,
+                      example='manual_gm_seg.nii.gz')
+
+    parser.usage.addSection('\nMISC')
     parser.add_option(name='-qc',
                       type_value='multiple_choice',
                       description='Output images for quality control.',
