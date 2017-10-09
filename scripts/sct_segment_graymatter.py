@@ -154,7 +154,7 @@ def get_parser():
                       example=['bin', 'prob'])
     parser.add_option(name="-ratio",
                       type_value='multiple_choice',
-                      description="Compute GM/WM CSA ratio by slice or by vertebral level (average across levels)",
+                      description="Compute GM/WM CSA ratio by slice or by vertebral level (average across levels). For no computation of ratio, set to 0.",
                       mandatory=False,
                       default_value=ParamSeg().ratio,
                       example=['0', 'slice', 'level'])
@@ -213,7 +213,7 @@ class ParamSeg:
 
         self.type_seg = 'prob'  # 'prob' or 'bin'
         self.thr_bin = 0.5
-        self.ratio = 'slice'  # '0', 'slice' or 'level'
+        self.ratio = '0'  # '0', 'slice' or 'level'
 
         self.qc = True
 
