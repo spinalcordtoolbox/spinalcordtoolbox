@@ -125,6 +125,7 @@ class AnatomicalCanvas(FigureCanvas):
 
     def _init_ui(self, data, aspect):
         self._fig.canvas.mpl_connect('button_release_event', self.on_update)
+        self._fig.canvas.mpl_connect('scroll_event', self.on_zoom)
 
         self._axes = self._fig.add_axes([0, 0, 1, 1], frameon=True)
         self._axes.axis('off')
@@ -164,6 +165,30 @@ class AnatomicalCanvas(FigureCanvas):
             for x, y, label in zip(xdata, ydata, labels):
                 self.annotate(x, y, label)
 
+    def on_zoom(self, event):
+        if event.button == 'up':
+            scale_factor = 1.3
+        else:
+            scale_factor = 1 / 1.3
+
+        x = event.xdata
+        y = event.ydata
+
+        x_lim = self._axes.get_xlim()
+        y_lim = self._axes.get_ylim()
+
+        left = (x - x_lim[0]) * scale_factor
+        right = (x_lim[1] - x) * scale_factor
+        top = (y - y_lim[0]) * scale_factor
+        bottom = (y_lim[1] - y) * scale_factor
+
+        if x + right - left >= self.x_max or y + bottom - top >= self.y_max:
+            return
+
+        self._axes.set_xlim(x - left, x + right)
+        self._axes.set_ylim(y - top, y + bottom)
+        self.view.figure.canvas.draw()
+
     def __repr__(self):
         return '{}: {}, {}, {}'.format(self.__class__, self._x, self._y, self._z)
 
@@ -174,9 +199,11 @@ class AnatomicalCanvas(FigureCanvas):
 class SagittalCanvas(AnatomicalCanvas):
     def __init__(self, *args, **kwargs):
         super(SagittalCanvas, self).__init__(*args, **kwargs)
-        _, _, _, _, dx, dy, dz, _ = self._image.dim
+        x, y, z, _, dx, dy, dz, _ = self._image.dim
         self._init_ui(self._image.data[:, :, self._z], dx / dy)
         self.annotations = []
+        self.x_max = y
+        self.y_max = x
 
     def refresh(self):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
@@ -213,8 +240,10 @@ class SagittalCanvas(AnatomicalCanvas):
 class CorrinalCanvas(AnatomicalCanvas):
     def __init__(self, parent, width=4, height=8, dpi=100, crosshair=False):
         super(CorrinalCanvas, self).__init__(parent, width, height, dpi, crosshair)
-        _, _, _, _, dx, dy, dz, _ = self._image.dim
+        x, y, z, _, dx, dy, dz, _ = self._image.dim
         self._init_ui(self._image.data[:, self._y, :], dx / dz)
+        self.x_max = x
+        self.y_max = z
 
     def refresh(self):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
@@ -242,8 +271,10 @@ class CorrinalCanvas(AnatomicalCanvas):
 class AxialCanvas(AnatomicalCanvas):
     def __init__(self, parent, width=4, height=8, dpi=100, crosshair=False):
         super(AxialCanvas, self).__init__(parent, width, height, dpi, crosshair)
-        _, _, _, _, dx, dy, dz, _ = self._image.dim
+        x, y, z, _, dx, dy, dz, _ = self._image.dim
         self._init_ui(self._image.data[self._x, :, :], dy / dz)
+        self.x_max = z
+        self.y_max = y
 
     def refresh(self):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
