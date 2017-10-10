@@ -238,7 +238,7 @@ def fill_functions():
         # 'sct_image',
         # 'sct_label_utils',
         # 'sct_label_vertebrae',
-        # 'sct_maths',
+        'sct_maths',
         # 'sct_process_segmentation',
         'sct_propseg',
         # 'sct_register_graymatter',
@@ -376,8 +376,7 @@ def test_function(param_test):
         param_test.status = 200
         param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output})
-        return param_test
+        return update_param(param_test)
 
     # Is there a ground truth for this data?
     if param_test.suffix_groundtruth:
@@ -387,8 +386,7 @@ def test_function(param_test):
             param_test.status = 201
             param_test.output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + param_test.fname_groundtruth
             write_to_log_file(param_test.fname_log, param_test.output, 'w')
-            param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output})
-            return param_test
+            return update_param(param_test)
 
     # run command
     cmd = param_test.function_to_test + param_test.args_with_path
@@ -400,8 +398,7 @@ def test_function(param_test):
         param_test.status = 1
         param_test.output += 'ERROR: Function crashed!'
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output})
-        return param_test
+        return update_param(param_test)
 
     param_test.output += o
     param_test.duration = time.time() - time_start
@@ -414,8 +411,7 @@ def test_function(param_test):
         param_test.status = 2
         param_test.output += 'ERROR: Integrity testing crashed!'
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output})
-        return param_test
+        return update_param(param_test)
 
     # manage stdout
     if param_test.redirect_stdout:
@@ -426,6 +422,13 @@ def test_function(param_test):
 
     return param_test
 
+
+def update_param(param):
+    """
+    Update field "results" in param class
+    """
+    param.results = DataFrame(index=[param.path_data],
+                              data={'status': param.status, 'output': param.output, 'param': param.args})
 
 # START PROGRAM
 # ==========================================================================================
