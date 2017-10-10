@@ -420,7 +420,7 @@ def test_function(param_test):
     # write log file
     write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
 
-    return param_test
+    return update_param(param_test)
 
 
 def update_param(param):
@@ -429,6 +429,8 @@ def update_param(param):
     """
     param.results = DataFrame(index=[param.path_data],
                               data={'status': param.status, 'output': param.output, 'param': param.args})
+    return param
+
 
 # START PROGRAM
 # ==========================================================================================
