@@ -31,7 +31,7 @@ def test(path_data, parameters=''):
     if not parameters:
         # get file name of vertebral labeling from template
         # file_vertfile = get_file_label(path_data+'mt/label/template', 'vertebral', output='file')
-        parameters = '-i t2s/t2s.nii.gz -s t2s/t2s_seg.nii.gz -vertfile t2s/MNI-Poly-AMU_level_crop.nii.gz -ref t2s/t2s_gmseg_manual.nii.gz -qc 0'
+        parameters = '-i t2s/t2s.nii.gz -s t2s/t2s_seg.nii.gz -vertfile t2s/MNI-Poly-AMU_level_crop.nii.gz -ref t2s/t2s_gmseg_manual.nii.gz -qc 0 -ratio level'
 
     parser = sct_segment_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
