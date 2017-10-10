@@ -55,10 +55,13 @@ if "SCT_MPI_MODE" in os.environ:
     from distribute2mpi import MpiPool as Pool
 else:
     from multiprocessing import Pool
+import itertools
 import pandas as pd
+import glob
+import importlib
 import sct_utils as sct
 import msct_parser
-import glob
+import sct_testing
 
 # get path of the toolbox
 # TODO: put it back below when working again (julien 2016-04-04)
@@ -244,12 +247,10 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
         raise
 
 def function_launcher(args):
-    import importlib
     # append local script to PYTHONPATH for import
     sys.path.append('{}/testing'.format(os.getenv('SCT_DIR')))
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
     # retrieve param class from sct_testing
-    import sct_testing
     param_testing = sct_testing.Param()
     param_testing.function_to_test = args[0]
     param_testing.path_data = args[1]
@@ -275,7 +276,8 @@ def function_launcher(args):
     # # write log file
     # write_to_log_file(fname_log, output, mode='r+', prepend=True)
 
-    return param_testing.results
+    return param_testing
+    # return param_testing.results
     # return script_to_be_run.test(*args[1:])
 
 
@@ -301,7 +303,7 @@ def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
     else:
         sct.log.info('Selecting subjects using the following specifications: ' + data_specifications)
         list_subj = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
-    sct.log.info('  Number of subjects to process: ' + str(len(list_subj)))
+    sct.log.info('  Total number of subjects: ' + str(len(list_subj)))
 
     # if no subject to process, raise exception
     if len(list_subj) == 0:
@@ -310,7 +312,7 @@ def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
     return list_subj
 
 
-def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None, verbose=1):
+def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None, verbose=1):
     """
     Run a test function on the dataset using multiprocessing and save the results
     :return: results
@@ -318,15 +320,15 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
     """
 
     # add full path to each subject
-    data_subjects = [sct.slash_at_the_end(folder_dataset + subject, 1) for subject in list_subj]
+    list_subj_path = [sct.slash_at_the_end(folder_dataset + subject, 1) for subject in list_subj]
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
-    # create datasets with parameters. Example of one entry below:
+    # create list that finds all the combinations for function + subject path + arguments. Example of one list element:
     # ('sct_propseg', '/Users/julien/data/sct_test_function/200_005_s2/', '-i t2/t2.nii.gz -c t2')
-    import itertools
-    data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
+    list_func_subj_args = list(itertools.product(*[[function], list_subj_path, list_args]))
+        # data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
     # Computing Pool for parallel process, distribute2mpi.MpiPool in MPI environment, multiprocessing.Pool otherwise
     sct.log.debug("stating pool with {} thread(s)".format(nb_cpu))
@@ -336,7 +338,7 @@ def run_function(function, folder_dataset, list_subj, parameters='', nb_cpu=None
     try:
         # compute_time = time()
         sct.log.debug('paused but print')
-        async_results = pool.map_async(function_launcher, data_and_params)
+        async_results = pool.map_async(function_launcher, list_func_subj_args)
         pool.close()
         pool.join()  # waiting for all the jobs to be done
         # compute_time = time() - compute_time
@@ -362,7 +364,9 @@ def get_parser():
     parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
-    parser.usage.set_description("")
+    parser.usage.set_description("Run a specific SCT function in a list of subjects countained within a given folder. Multiple parameters can be selected.\n"
+                                 "Exemple of command:\n"
+                                 "sct_pipeline -f sct_propseg -d /Users/julien/data/sct_test_function -p \\\"-i t2/t2.nii.gz -c t2\",\"-i t1/t1.nii.gz -c t1\\\"")
     parser.add_option(name="-f",
                       type_value="str",
                       description="Function to test.",
@@ -439,9 +443,10 @@ if __name__ == "__main__":
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
     path_data = sct.slash_at_the_end(os.path.expanduser(arguments["-d"]), slash=1)
-    parameters = ''
     if "-p" in arguments:
-        parameters = arguments["-p"]
+        list_args = arguments["-p"].split(',')
+    else:
+        list_args = []
     data_specifications = None
     if "-subj" in arguments:
         data_specifications = arguments["-subj"]
@@ -509,7 +514,9 @@ if __name__ == "__main__":
     sct.checkRAM(os_running, 0)
 
     # display command
-    sct.log.info('\nCommand: "' + function_to_test + ' ' + parameters)
+    sct.log.info('\nCommand(s):')
+    for args in list_args:
+        sct.log.info('  ' + function_to_test + ' ' + args)
     sct.log.info('Dataset: ' + path_data)
 
     # test function
@@ -525,7 +532,7 @@ if __name__ == "__main__":
 
         # run function
         sct.log.debug("enter test fct")
-        tests_ret = run_function(function_to_test, path_data, list_subj, parameters=parameters, nb_cpu=nb_cpu, verbose=1)
+        tests_ret = run_function(function_to_test, path_data, list_subj, list_args=list_args, nb_cpu=nb_cpu, verbose=1)
         sct.log.debug("exit test fct")
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
