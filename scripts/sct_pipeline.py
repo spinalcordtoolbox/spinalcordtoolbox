@@ -39,6 +39,7 @@ usage:
     sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8
 """
 
+# TODO: create a dictionnary for param, such that results can display reduced param instead of full. Example: -param t1="blablabla",t2="blablabla"
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
 
 import commands
@@ -231,13 +232,13 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     return subj_selected
 
 
-def process_results(results, subjects_name, function, folder_dataset, parameters):
+def process_results(results, subjects_name, function, folder_dataset):
     try:
         results_dataframe = pd.concat([result for result in results])
         results_dataframe.loc[:, 'subject'] = pd.Series(subjects_name, index=results_dataframe.index)
         results_dataframe.loc[:, 'script'] = pd.Series([function] * len(subjects_name), index=results_dataframe.index)
         results_dataframe.loc[:, 'dataset'] = pd.Series([folder_dataset] * len(subjects_name), index=results_dataframe.index)
-        results_dataframe.loc[:, 'parameters'] = pd.Series([parameters] * len(subjects_name), index=results_dataframe.index)
+        # results_dataframe.loc[:, 'parameters'] = pd.Series([parameters] * len(subjects_name), index=results_dataframe.index)
         return results_dataframe
     except KeyboardInterrupt:
         return 'KeyboardException'
@@ -276,7 +277,7 @@ def function_launcher(args):
     # # write log file
     # write_to_log_file(fname_log, output, mode='r+', prepend=True)
 
-    return param_testing
+    return param_testing.results
     # return param_testing.results
     # return script_to_be_run.test(*args[1:])
 
@@ -336,14 +337,14 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     results = None
     compute_time = None
     try:
-        # compute_time = time()
+        compute_time = time()
         sct.log.debug('paused but print')
         async_results = pool.map_async(function_launcher, list_func_subj_args)
         pool.close()
         pool.join()  # waiting for all the jobs to be done
-        # compute_time = time() - compute_time
+        compute_time = time() - compute_time
         all_results = async_results.get()
-        results = process_results(all_results, list_subj, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        results = process_results(all_results, list_subj, function, folder_dataset)  # get the sorted results once all jobs are finished
 
     except KeyboardInterrupt:
         sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
@@ -545,7 +546,8 @@ if __name__ == "__main__":
         pd.set_option('display.max_rows', 500)
         pd.set_option('display.max_columns', 500)
         pd.set_option('display.width', 1000)
-        results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
+        results_subset = results.drop('script', 1).drop('dataset', 1).drop('output', 1)
+        # results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
         results_display = results_subset
 
         # save panda structure
