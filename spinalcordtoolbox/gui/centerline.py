@@ -202,6 +202,7 @@ class Centerline(base.BaseDialog):
 
 
 def launch_centerline_dialog(input_file, output_file, params):
+    params.input_file_name = input_file.absolutepath
     controller = CenterlineController(input_file, params, output_file)
     controller.reformat_image()
 

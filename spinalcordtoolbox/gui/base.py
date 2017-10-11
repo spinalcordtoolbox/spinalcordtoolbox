@@ -47,6 +47,7 @@ class AnatomicalParams(object):
         self.num_points = 0
         self._title = ''
         self._vertebraes = []
+        self.input_file_name = ""
 
     @property
     def dialog_title(self):
