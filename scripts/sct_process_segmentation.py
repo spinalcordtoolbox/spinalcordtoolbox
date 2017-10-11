@@ -41,9 +41,7 @@ class Param:
         self.step = 1  # step of discretized plane in mm default is min(x_scale,py)
         self.remove_temp_files = 1
         self.smoothing_param = 0  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
-        self.figure_fit = 0
         self.slices = ''
-        self.vertebral_levels = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
@@ -180,20 +178,17 @@ def main(args):
 
     parser = get_parser()
     arguments = parser.parse(args)
+    param = Param()
 
     # Initialization
     path_script = os.path.dirname(__file__)
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     processes = ['centerline', 'csa', 'length', 'shape']
-    verbose = param.verbose
     start_time = time.time()
-    remove_temp_files = param.remove_temp_files
     # spline_smoothing = param.spline_smoothing
     step = param.step
     smoothing_param = param.smoothing_param
-    figure_fit = param.figure_fit
     slices = param.slices
-    vert_lev = param.vertebral_levels
     angle_correction = True
     use_phys_coord = True
 
@@ -208,6 +203,8 @@ def main(args):
         overwrite = arguments['-overwrite']
     if '-vert' in arguments:
         vert_lev = arguments['-vert']
+    else:
+        vert_lev = ''
     if '-r' in arguments:
         remove_temp_files = arguments['-r']
     if '-size' in arguments:
@@ -247,7 +244,7 @@ def main(args):
         sct.printv('fslview ' + fname_segmentation + ' ' + output_folder + fname_output + ' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, fname_vertebral_labeling, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length, angle_correction=angle_correction, use_phys_coord=use_phys_coord)
+        compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, slices, vert_lev, fname_vertebral_labeling, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length, angle_correction=angle_correction, use_phys_coord=use_phys_coord)
 
     if name_process == 'label-vert':
         if '-discfile' in arguments:
@@ -613,7 +610,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True, use_phys_coord=True):
+def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True, use_phys_coord=True):
 
     from math import degrees
     import pandas as pd
@@ -652,31 +649,33 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
-    if use_phys_coord:
-        # fit centerline, smooth it and return the first derivative (in physical space)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
-        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+    # if angle correction is required, get segmentation centerline
+    if angle_correction:
+        if use_phys_coord:
+            # fit centerline, smooth it and return the first derivative (in physical space)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
-        # average centerline coordinates over slices of the image
-        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
+            # average centerline coordinates over slices of the image
+            x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
 
-        # compute Z axis of the image, in physical coordinate
-        axis_X, axis_Y, axis_Z = im_seg.get_directions()
+            # compute Z axis of the image, in physical coordinate
+            axis_X, axis_Y, axis_Z = im_seg.get_directions()
 
-        # compute z_centerline in image coordinates for usage in vertebrae mapping
-        z_centerline_voxel = [coord[2] for coord in im_seg.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])]
+            # compute z_centerline in image coordinates for usage in vertebrae mapping
+            z_centerline_voxel = [coord[2] for coord in im_seg.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])]
 
-    else:
-        # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+        else:
+            # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
 
-        # correct centerline fitted coordinates according to the data resolution
-        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit * px, y_centerline_fit * py, z_centerline * pz, x_centerline_deriv * px, y_centerline_deriv * py, z_centerline_deriv * pz
+            # correct centerline fitted coordinates according to the data resolution
+            x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit * px, y_centerline_fit * py, z_centerline * pz, x_centerline_deriv * px, y_centerline_deriv * py, z_centerline_deriv * pz
 
-        axis_Z = [0.0, 0.0, 1.0]
+            axis_Z = [0.0, 0.0, 1.0]
 
-        # compute z_centerline in image coordinates for usage in vertebrae mapping
-        z_centerline_voxel = z_centerline
+            # compute z_centerline in image coordinates for usage in vertebrae mapping
+            z_centerline_voxel = z_centerline
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
@@ -899,11 +898,11 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         sct.run('rm -rf ' + path_tmp, error_exit='warning')
 
     # Sum up the output file names
-    sct.printv('\nOutput a nifti file of CSA values along the segmentation: ' + output_folder + 'csa_image.nii.gz', param.verbose, 'info')
-    sct.printv('Output result text file of CSA per slice: ' + output_folder + 'csa_per_slice.txt', param.verbose, 'info')
+    sct.printv('\nOutput a nifti file of CSA values along the segmentation: ' + output_folder + 'csa_image.nii.gz', verbose, 'info')
+    sct.printv('Output result text file of CSA per slice: ' + output_folder + 'csa_per_slice.txt', verbose, 'info')
     if slices or vert_levels:
-        sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t' + output_folder + 'csa_mean.txt\n\t\t' + output_folder + 'csa_mean.xls\n\t\t' + output_folder + 'csa_mean.pickle', param.verbose, 'info')
-        sct.printv('Output result files of the volume in between the selected slices: \n\t\t' + output_folder + 'csa_volume.txt\n\t\t' + output_folder + 'csa_volume.xls\n\t\t' + output_folder + 'csa_volume.pickle', param.verbose, 'info')
+        sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t' + output_folder + 'csa_mean.txt\n\t\t' + output_folder + 'csa_mean.xls\n\t\t' + output_folder + 'csa_mean.pickle', verbose, 'info')
+        sct.printv('Output result files of the volume in between the selected slices: \n\t\t' + output_folder + 'csa_volume.txt\n\t\t' + output_folder + 'csa_volume.xls\n\t\t' + output_folder + 'csa_volume.pickle', verbose, 'info')
 
 
 def label_vert(fname_seg, fname_label, verbose=1):
