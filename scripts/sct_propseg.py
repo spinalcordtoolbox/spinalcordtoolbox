@@ -396,6 +396,7 @@ if __name__ == "__main__":
             use_viewer = "mask"
         else:
             cmd += " -init-mask " + str(arguments["-init-mask"])
+            use_optic = False
     if "-mask-correction" in arguments:
         cmd += " -mask-correction " + str(arguments["-mask-correction"])
     if "-radius" in arguments:
