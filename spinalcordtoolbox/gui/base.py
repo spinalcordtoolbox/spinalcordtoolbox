@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import logging
-import webbrowser
+import sys
 
 import matplotlib as mpl
 import numpy as np
@@ -77,12 +77,10 @@ class BaseDialog(QtGui.QDialog):
         Signal emits when dialog has a point to add to the
 
     """
-    _help_web_address = 'https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/attachment/propseg_viewer.png'
     lb_status = None
     lb_warning = None
     btn_ok = None
     btn_undo = None
-    btn_help = None
 
     def __init__(self, controller):
         """Initialize the UI parameters
@@ -160,18 +158,23 @@ class BaseDialog(QtGui.QDialog):
         """
         ctrl_layout = QtGui.QHBoxLayout()
 
-        self.btn_ok = QtGui.QPushButton('Save and Quit')
-        self.btn_undo = QtGui.QPushButton('Undo')
-        self.btn_help = QtGui.QPushButton('Help')
+        if sys.platform.lower() == 'darwin':
+            cmd_key = 'Cmd'
+        else:
+            cmd_key = 'Ctrl'
+
+        self.btn_ok = QtGui.QPushButton('Save and Quit [%s+S]' % cmd_key)
+        self.btn_undo = QtGui.QPushButton('Undo [%s+Z]' % cmd_key)
 
         ctrl_layout.addStretch()
-        ctrl_layout.addWidget(self.btn_help)
         ctrl_layout.addWidget(self.btn_undo)
         ctrl_layout.addWidget(self.btn_ok)
 
-        self.btn_help.clicked.connect(self.on_help)
         self.btn_undo.clicked.connect(self.on_undo)
         self.btn_ok.clicked.connect(self.on_save_quit)
+
+        QtGui.QShortcut(QtGui.QKeySequence.Undo, self, self.on_undo)
+        QtGui.QShortcut(QtGui.QKeySequence.Save, self, self.on_save_quit)
 
         parent.addLayout(ctrl_layout)
         return ctrl_layout
@@ -185,9 +188,6 @@ class BaseDialog(QtGui.QDialog):
             self._controller.undo()
         except InvalidActionWarning as err:
             self.update_warning(err.message)
-
-    def on_help(self):
-        webbrowser.open(self._help_web_address, new=0, autoraise=True)
 
     def show(self):
         """Override the base class show to fix a bug found in MAC"""
