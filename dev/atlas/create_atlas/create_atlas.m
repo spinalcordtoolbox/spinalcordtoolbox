@@ -1,121 +1,45 @@
-
-%-------------- White matter tracts template construction -----------------
-%--------------------------------------------------------------------------
-
-% This script is made to construct a partial volume white
-% matter tracts template, using raw anatomic atlas information which
-% contains the white matter tracts and a spinal cord template (or data) on
-% which we want to intergrate information on the white matter tracts
-
-%----------------------------- Dependencies -------------------------------
-% Matlab dependencies:
-% - image processing toolbox functions
-% - m_normalize.m : normalization function
-% - dnsamplelin.m : function for downsampling by computing mean value for
-%   each region
-% - m_linear_interp.m
-%
-% Other dependencies: 
-% - FSL
-% - c3d
-% - ANTs
-
-dbstop if error
-
-% get path of running script
-[path_script, b, c] = fileparts(which('create_atlas.m'));
-% go to this path
-cd(path_script)
-
-% ADD TO PATH
-% addpath(genpath('~'));
-addpath(pwd);
-
-%------------------------------- Inputs -----------------------------------
-% file_template: the template slice we want to show tracts on
-% file_atlas: the raw atlas information containing labeled regions 
-% file_mask: a binary version of the altas with a white matter mask
-% ext_atlas: extension for the image file of the altas and its mask
+% White matter tracts template construction
 % 
-% num_slice_ref: the number of the reference slice which will be used for
-%   direct registration of the atlas
-% interp_factor: the interpolation factor appropriate for getting the
-%   template close to the atlas slice
-% label_values: vector containing the list of label values in the atlas,
-%   which should be integers in range [0,255]
+% This script creates an atlas of white matter tracts registered to a
+% given 3D MRI template of the spinal cord, using a 2D existing atlas.
+%
+% Usage:
+% - Using 'pathtool' add the folder containing this script.
+% - Create a folder raw_data/ that contains:
+%   - A 2D atlas in single-channel PNG format, with a single value assigned per label.
+%     Example: $SCTDIR/dev/atlas/raw_data/atlas_grays_cerv_sym_correc_r6.png
+%   - A binarized version of the 2D atlas (use the script binarize_atlas.sh)
+%     Example: $SCTDIR/dev/atlas/raw_data/mask_grays_cerv_sym_correc_r5
+%   - A CSV text file with the following information: LabelID,LabelValue,Description
+%     Note: it is important that 'Description' includes the term 'left' or 'right' for the symmetrization procedure. For the CSF or background, indicate the label value.
+%     Example: $SCTDIR/dev/atlas/raw_data/atlas_grays_cerv_sym_correc_r6_label.txt
+% - Create a file parameters_NAMEOFTEMPLATE.m
+%   Example: parameters_PAM50.m
+% - Start MATLAB from the Terminal so that the environment variables for FSL, c3d and ANTs will be declared inside Matlab's environment.
+%
+% Dependencies:
+%   Matlab:         image processing toolbox
+%   m_normalize.m   normalization function
+%   dnsamplelin.m   function for downsampling by computing mean value for each region
+%   m_linear_interp.m
+%   FSL
+%   c3d
+%   ANTs
 
-% Absolute path of output results (add "/" at the end)
-path_out = ['~/data/PAM50_atlas/', date, filesep];
+% load parameters (modify the line below to use your parameters)
+run parameters_PAM50.m  % default: parameters_PAM50.m
+
+% use debugger
+dbstop if error
 % get path of FSL
 [status, path_fsl] = unix('echo $FSLDIR');
 % get FSL matlab functions
 path_fsl_matlab = strcat(path_fsl, '/etc/matlab');
 % add to path
 addpath(path_fsl_matlab);
-% define SCT path
-%path_sct = '/Users/julien/code/spinalcordtoolbox/';
-% define path of template
-path_template = [path_script,'/../raw_data/']; %/Users/julien/data/sct_dev/PAM50/template/';
-% name of the WM template to build the atlas from. Don't put extension.
-file_template = 'PAM50_wm';  % PAM50_WM
-
-%--------------------------------------------------------------------------
-% LABEL PARAMETERS
-%--------------------------------------------------------------------------
-% path to the image file that contains the drawing of the WM atlas from Grays anatomy.
-path_atlas_data = [path_script,'/../raw_data/']; %strcat(path_sct, 'dev/atlas/raw_data/');
-% file name of the full atlas
-file_atlas = 'atlas_grays_cerv_sym_correc_r6';
-% file name of the binary mask that helps for the registration to the MNI-Poly-AMU
-file_mask = 'mask_grays_cerv_sym_correc_r5';
-ext_atlas = '.png';
-% text file linking label values, ID and description
-file_atlas_txt = 'atlas_grays_cerv_sym_correc_r6_label.txt';
-% values of the label in the atlas file (file_atlas). Each value corresponds to a given tract, e.g., corticospinal left.
-% NB: 238=WM, 255=CSF (added by jcohen on 2014-12-08)
-% label_values = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121 146 152 159 167 173 180 187 194 199 204 208 214 219 224 230 238 255];
-label_left = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121 45 80 120];
-label_right = [146 152 159 167 173 180 187 194 199 204 208 214 219 224 230 150 190 220];
-label_pve = [255];
-label_values = [label_left, label_right, label_pve];
-
-%--------------------------------------------------------------------------
-% TEMPLATE PARAMETERS
-%--------------------------------------------------------------------------
-which_template = 'PAM50'; % 'MNI-Poly-AMU'
-if strcmp(which_template, 'MNI-Poly-AMU')
-    % MNI-Poly-AMU template:
-    % corresponds to mid-C4 in the MNI-Poly-AMU template
-    z_slice_ref = 387;
-    % interpolation factor for the MNI-Poly-AMU template in order to match the hi-res grays atlas
-    interp_factor = 6;
-    % these are the value corresponding to the slice number (z) on the MNI-Poly-AMU template, at which the atlas will be warped. It corresponds to the mid-levels as well as the level of the intervertebral disks.
-    % NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template.
-    z_disks_mid = [483 476 466 455 440 423 406 387 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
-    % same as before-- except that C4 mid-vertebral is not listed. 
-    z_disks_mid_noC4 = [483 476 466 455 440 423 406 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
-elseif strcmp(which_template, 'PAM50')
-    % PAM50 template:
-    % corresponds to mid-C4 in the template, at the maximum cervical enlargement
-    z_slice_ref = 850;
-    % interpolation factor for the template in order to match the hi-res grays atlas
-    interp_factor = 6;
-    crop_size = '43x33x1100vox'; % size to crop the template (only along X and Y) for computational reasons
-    % values of the label in the atlas file (file_atlas). Each value corresponds to a given tract, e.g., corticospinal left.
-    % NB: 238=WM, 255=CSF (added by jcohen on 2014-12-08)
-    % these are the value corresponding to the slice number (z) on the template, at which the atlas will be warped. It corresponds to the levels of the intervertebral disks.
-    % NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template
-    z_disks_mid = [[80:5:990], 990]; %[82 151 185 246 301 355 409 460 509 557 601 641 682 721 757 789 823 855 891 921 945 993];
-end
-
-%--------------------------------------------------------------------------
-% OUTPUT PARAMETERS
-%--------------------------------------------------------------------------
-folder_tracts = ['WMtracts_outputs/'];
-folder_ctrl = ['registered_template/'];
-folder_final = ['final_results/'];
-prefix_out = 'PAM50_atlas';
-ext = '.nii.gz'; % .nii.gz. N.B. THIS NEEDS TO BE IN nii.gz BECAUSE THE FUNCTION save_avw SAVES IN nii.gz!!!
+% extension of atlas files. N.B. THIS NEEDS TO BE IN nii.gz BECAUSE THE FUNCTION save_avw SAVES IN nii.gz!
+ext = '.nii.gz'; 
+% set FSL output to nii.gz
 fsloutputype = 'export FSLOUTPUTTYPE=NIFTI_GZ; ';
 
 
@@ -134,7 +58,6 @@ templateci_thresh = [template_cropped_interp '_thrp6'];
 templateci_srt_nohd = [templateci_slice_ref_thresh '_nohd'];
 templatecit_slice_ref = [templateci_thresh, '_slice', num2str(z_slice_ref)];
 
-tracts_atlas = cell(1,length(label_values));
 mask_nohd = [file_mask];
 atlas_nifti = [file_atlas];
 
@@ -165,8 +88,39 @@ mkdir(folder_ctrl);
 mkdir(folder_final);
 
 
-%--------------------------------------------------------------------------
-%--- Preliminary operations: cropping and interpolation of the template ---
+%% Read tract description file
+fprintf('\n*** Open label description file ***\n')
+fid = fopen([path_atlas_data, file_atlas_txt]);
+tline = fgetl(fid);
+struct_label = {};
+label_right = [];
+label_left = [];
+label_pve = [];
+i=1;
+while ischar(tline)
+    disp(tline)
+    tline_split = strsplit(tline,',');
+    struct_label{i}.id = tline_split{1};
+    struct_label{i}.value = tline_split{2};
+    struct_label{i}.description = tline_split{3};
+    % check if this label is right or left
+    if ~isempty(strfind(struct_label{i}.description, 'right'))
+        label_right = [label_right, str2num(struct_label{i}.value)];
+    elseif ~isempty(strfind(struct_label{i}.description, 'left'))
+        label_left = [label_left, str2num(struct_label{i}.value)];
+    else
+        label_pve = [label_pve, str2num(struct_label{i}.value)];
+    end
+    % go to next line
+    tline = fgetl(fid);
+    i = i+1;
+end
+fclose (fid);
+label_values = [label_left, label_right, label_pve];
+
+
+%% Preliminary operations: cropping and interpolation of the template
+fprintf('\n*** Preliminary operations: cropping and interpolation of the template ***\n')
 
 % go to WMtracts folder
 cd(folder_tracts)
@@ -180,13 +134,11 @@ disp(cmd); [status,result] = unix(cmd);
 if(status), error(result); end
 
 % Cropping the template
-% cmd = ['c3d ' template_mask ext ' -trim 6vox -o ' template_cropped ext];
 cmd = ['c3d ' template_mask ext ' -trim-to-size ' crop_size ' -o ' template_cropped ext];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
 % Interpolation of the template
-cmd = ['c3d ' template_cropped ext ' -interpolation Linear -resample ',...
-    num2str(perc_up) 'x' num2str(perc_up) 'x100% -o ' template_cropped_interp ext];
+cmd = ['c3d ' template_cropped ext ' -interpolation Linear -resample ' num2str(perc_up) 'x' num2str(perc_up) 'x100% -o ' template_cropped_interp ext];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
 % Extract reference slice
@@ -196,11 +148,6 @@ disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 % change field dim0 from 3 to 2
 cmd = [fsloutputype 'fslroi ' templateci_slice_ref ' ' templateci_slice_ref ' 0 -1 0 -1 0 -1'];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
-
-% % remove geometrical information -- WHY?
-% [sliceref,~,scales] = read_avw(templateci_slice_ref);
-% sliceref = m_normalize(sliceref);
-% save_avw(sliceref,templateci_sr_nohd,'d',scales);
 
 % Binarization of the reference slice for the registration of the atlas
 cmd = ['c3d ' templateci_slice_ref ext ' -pim r -threshold 0% 60% 0 1 -o ' templateci_slice_ref_thresh ext];
@@ -216,17 +163,11 @@ disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 cmd = [fsloutputype 'fslroi ' templateci_thresh ' ' templateci_thresh ' 0 -1 0 -1 0 -1'];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
-% % Get a version of binarized ref slice without geometrical information.-- WHY???
-% [sliceref,~,scales] = read_avw(templateci_slice_ref_thresh);
-% sliceref = m_normalize(sliceref);
-% save_avw(sliceref,templateci_srt_nohd,'d',scales);
-
-
-
 % Save the atlas and mask into a nifti with the same scales as the template
 [slice_ref,~,scales] = read_avw(templateci_slice_ref_thresh);
 % [slice_ref,~,scales] = read_avw(templateci_srt_nohd);
 atlas = imread([path_atlas_data file_atlas ext_atlas]);
+tracts_atlas = cell(1,length(label_values));
 % create one file for each tract
 for label = 1:length(label_values)
     temp = zeros(size(atlas));
@@ -268,9 +209,8 @@ for label = 1:length(label_values)
 end
 
 
-
-%--------------------------------------------------------------------------
-% Initial registration of the atlas to the reference slice of the template
+%% Initial registration of the atlas to the reference slice of the template
+fprintf('\n*** Initial registration of the atlas to the reference slice of the template ***\n')
 
 % write initialization affine transfo (empirically found)
 fid=fopen('affine_init.txt','w');
@@ -398,28 +338,22 @@ for label = length([label_left, label_right])+1:length(label_values)
 end
 
 
-%--------------------------------------------------------------------------
-%---------------------- Construction of the template ----------------------
-
-
-
+%% Construction of the template
+fprintf('\n*** Construction of the template ***\n')
+% extract reference slice
 cmd = ['c3d ' templateci_thresh ext ' -slice z ' num2str(z_slice_ref) ' -o ' templatecit_slice_ref ext];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
-
 [mstatus,msg] = copyfile([templateci_slice_ref ext],[template_cropped_interp '_slice' z_slice_ref ext]);
 if(~mstatus), error(msg); end
-
 reference_slice = [template_cropped_interp '_slice' z_slice_ref];
-%thr_ref_slice = templatecit_slice_ref;
 
 % insert z_ref into vector list
 izref = min(find(z_slice_ref < z_disks_mid));
 z_disks_mid = [z_disks_mid(1:izref-1), z_slice_ref, z_disks_mid(izref:end)];
-
 nb_slices = length(z_disks_mid);
 
+% Move up: ref --> max(z_disks_mid)
 fprintf('\n*** Register slice i+1 to slice i ***\n')
-%% Move up: ref --> max(z_disks_mid)
 for iz = izref:nb_slices-1
     % identify current and next slice
     zslice = z_disks_mid(iz);
@@ -448,17 +382,14 @@ for iz = izref:nb_slices-1
         '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slicenext ext ',' file_moving ',1,4] ',... 
         '--convergence 500x10 --shrink-factors 2x1 --smoothing-sigmas 1x0vox ',...
         '--output [' prefix_ants num2str(z_slice_ref) 'to' num2str(zslicenext) '_,' templatecit_slice_ref 'to' num2str(zslicenext) ext ']'];
-%     cmd =['isct_antsRegistration --dimensionality 2 ',...
-%         '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slicenext ext ',' file_moving ',1,4] ',... 
-%         '--convergence 500x10 --shrink-factors 2x1 --smoothing-sigmas 1x0vox ',...
-%         '--output [' prefix_ants num2str(z_slice_ref) 'to' num2str(zslicenext) '_,' templatecit_slice_ref 'to' num2str(zslicenext) ext ']'];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
     % concat ref->slice and slice->slicenext
     cmd = ['isct_ComposeMultiTransform 2 ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), ext, ' -R ', templatecit_slice, ext, ' ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), '_0GenericAffine.mat ', prefix_ants, num2str(z_slice_ref), 'to', num2str(zslicenext), '_1Warp.nii.gz ', warp_ref2slice];
     disp(cmd); [status,result] = unix(cmd);
 end
 
-%% Move down: ref --> min(z_disks_mid)
+% Move down: ref --> min(z_disks_mid)
+fprintf('\n*** Register slice i-1 to slice i ***\n')
 for iz = izref:-1:2
     % identify current and next slice
     zslice = z_disks_mid(iz);
@@ -496,7 +427,7 @@ end
 
 
 %% Symmetrize warping fields
-disp('*** Symmetrize warping fields ***')
+fprintf('\n*** Symmetrize warping fields ***\n')
 % nb_slices = length(z_disks_mid_noC4);
 for iz = 1:nb_slices
     zslice = z_disks_mid(iz);
@@ -705,24 +636,6 @@ end
 imagesc(tract_sum_norm(:,:,800)), axis square, title('tract norm sum'), colorbar
 % update variable
 tracts = tracts_norm
-
-%% open tract description file
-disp('*** Open label description file ***')
-fid = fopen([path_atlas_data, file_atlas_txt]);
-tline = fgetl(fid);
-struct_label = {};
-i=1;
-while ischar(tline)
-    disp(tline)
-    tline_split = strsplit(tline,',');
-    struct_label{i}.id = tline_split{1};
-    struct_label{i}.value = tline_split{2};
-    struct_label{i}.description = tline_split{3};
-    % go to next line
-    tline = fgetl(fid);
-    i = i+1;
-end
-fclose (fid);
 
 %% Save tracts to file
 disp('*** Save tracts to file ***')
