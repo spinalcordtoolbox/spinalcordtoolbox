@@ -1,3 +1,4 @@
+function create_atlas(file_param)
 % White matter tracts template construction
 % 
 % This script creates an atlas of white matter tracts registered to a
@@ -16,6 +17,8 @@
 % - Create a file parameters_NAMEOFTEMPLATE.m
 %   Example: parameters_PAM50.m
 % - Start MATLAB from the Terminal so that the environment variables for FSL, c3d and ANTs will be declared inside Matlab's environment.
+% - run this function:
+%   create_atlas(my_param_file.m)
 %
 % Dependencies:
 %   Matlab:         image processing toolbox
@@ -27,7 +30,7 @@
 %   ANTs
 
 % load parameters (modify the line below to use your parameters)
-run parameters_PAM50.m  % default: parameters_PAM50.m
+run(file_param)  % default: parameters_PAM50.m
 
 % use debugger
 dbstop if error
