@@ -444,15 +444,16 @@ if __name__ == "__main__":
         tmp_output_file.data *= 0
         tmp_output_file.setFileName(sct.add_suffix(fname_data, '_mask_viewer'))
         controller = launch_centerline_dialog(image, tmp_output_file, params)
-        try:
-            controller.as_niftii(tmp_output_file.absolutepath)
-            # add mask filename to parameters string
-            if use_viewer == "centerline":
-                cmd += " -init-centerline " + tmp_output_file.absolutepath
-            elif use_viewer == "mask":
-                cmd += " -init-mask " + tmp_output_file.absolutepath
-        except ValueError:
+
+        if not controller.saved:
             sct.log.error('the viewer has been closed before entering all manual points. Please try again.')
+
+        controller.as_niftii(tmp_output_file.absolutepath)
+        # add mask filename to parameters string
+        if use_viewer == "centerline":
+            cmd += " -init-centerline " + tmp_output_file.absolutepath
+        elif use_viewer == "mask":
+            cmd += " -init-mask " + tmp_output_file.absolutepath
 
     # If using OptiC, enabled by default
     elif use_optic:

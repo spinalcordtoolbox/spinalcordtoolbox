@@ -23,10 +23,10 @@ class CenterlineController(base.BaseController):
     _mode = ''
     INTERVAL = 15
     MODES = ['AUTO', 'CUSTOM']
+    _slice = 0.0
 
     def __init__(self, image, params, init_values=None):
         super(CenterlineController, self).__init__(image, params, init_values)
-        self._slice = self.INTERVAL
 
     def reformat_image(self):
         super(CenterlineController, self).reformat_image()
@@ -71,8 +71,9 @@ class CenterlineController(base.BaseController):
 
     def _next_slice(self):
         if self.mode == 'AUTO':
-            self._slice += self.INTERVAL
-            self.position = (self.position[0] + self.INTERVAL, self.position[1], self.position[2])
+            if self.valid_point(self._slice + self.INTERVAL, self.position[1], self.position[2]):
+                self._slice += self.INTERVAL
+                self.position = (self._slice, self.position[1], self.position[2])
         else:
             self._slice = 0
 
@@ -98,7 +99,7 @@ class CenterlineController(base.BaseController):
             raise ValueError('Invalid mode %', value)
 
         if value != self._mode:
-            self._slice = 0 if value == 'CUSTOM' else self.INTERVAL
+            self._slice = 0
             self._mode = value
             self.points = []
             self.reset_position()
@@ -132,8 +133,8 @@ class Centerline(base.BaseDialog):
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
         custom_mode.mode = 'CUSTOM'
-        custom_mode.sagittal_title = '1. Select a axial slice'
-        custom_mode.axial_title = '2. Select the center of the spinalcord'
+        custom_mode.sagittal_title = 'Select a axial slice'
+        custom_mode.axial_title = 'Select the center of the spinal cord'
         layout.addWidget(custom_mode)
 
         auto_mode = QtGui.QRadioButton('Mode Auto')
