@@ -1877,15 +1877,15 @@ class ClickViewerGroundTruth(ClickViewer):
             self.skip_all_remaining_labels()
             self.update_title_text('confirm_to_quit')
 
-    def sct.printv(useful_points(self):)
-        sct.printv('Labels positions are : '))
-        sct.printv(self.list_points_useful_notation))
+    def print_useful_points(self):
+        sct.printv('Labels positions are : ')
+        sct.printv(self.list_points_useful_notation)
 
     def press_save_and_quit(self, event):
         if event.inaxes == self.dic_axis_buttons['save_and_quit']:
             if self.check_all_labels_are_done():
                 self.save_data()
-                self.sct.printv(useful_points())
+                self.print_useful_points()
                 self.closed = True
                 plt.close('all')
 
