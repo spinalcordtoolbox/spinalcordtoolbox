@@ -408,9 +408,11 @@ class Parser:
                     # If input file is a list, we need to check what type of list it is.
                     if isinstance(self.options[key].type_value, list):
                         for i, value in enumerate(option):
-                            # If value is a file, path must be updated
-                            if os.path.isfile(path_to_add + value):
-                                option[i] = path_to_add + value
+                            # check if value is a string
+                            if isinstance(value, str):
+                                # If value is a file, path must be updated
+                                if os.path.isfile(path_to_add + value):
+                                    option[i] = path_to_add + value
                     # if not a list:
                     else:
                         # If it contains files, it must be updated.
