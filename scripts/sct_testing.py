@@ -217,7 +217,7 @@ def fill_functions():
         # 'sct_analyze_texture',
         'sct_apply_transfo',
         # 'sct_compute_mtr',
-        # 'sct_concat_transfo',
+        'sct_concat_transfo',
         # 'sct_convert',
         # 'sct_convert_binary_to_trilinear',  # not useful
         # 'sct_create_mask',
@@ -365,17 +365,16 @@ def test_function(param_test):
     # retrieve input file (will be used later for integrity testing)
     if '-i' in dict_args:
         param_test.file_input = dict_args['-i'].split('/')[1]
+        # Check if input files exist
+        if not (os.path.isfile(dict_args_with_path['-i'])):
+            param_test.status = 200
+            param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
+            write_to_log_file(param_test.fname_log, param_test.output, 'w')
+            return update_param(param_test)
 
     # Extract contrast
     if '-c' in dict_args:
         param_test.contrast = dict_args['-c']
-
-    # Check if input files exist
-    if not (os.path.isfile(dict_args_with_path['-i'])):
-        param_test.status = 200
-        param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
-        write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        return update_param(param_test)
 
     # Is there a ground truth for this data?
     if param_test.suffix_groundtruth:
