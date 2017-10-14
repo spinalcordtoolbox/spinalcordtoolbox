@@ -14,22 +14,30 @@
 import sct_utils as sct
 import commands
 
+def init(param_test):
+    """
+    Initialize testing.
+    Parameters
+    ----------
+    param_test: Class defined in sct_testing.py
 
-def test(data_path):
+    Returns
+    -------
+    param_test
+    """
+    # initialization
+    default_args = ['-i t2/t2.nii.gz -s t2_centerline_init.nii.gz']  # default parameters
 
-    # parameters
-    folder_data = 't2/'
-    file_data = ['t2.nii.gz','t2_centerline_init.nii.gz']
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
 
-    # define command
-    cmd = 'sct_flatten_sagittal -i ' + data_path + folder_data + file_data[0] \
-          + ' -s ' + data_path + folder_data + file_data[1]
-
-    # return
-    #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
+    return param_test
 
 
-if __name__ == "__main__":
-    # call main function
-    test()
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    """
+    param_test.output += '\nNot implemented.'
+    return param_test

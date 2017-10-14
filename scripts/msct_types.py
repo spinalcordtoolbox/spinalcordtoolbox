@@ -617,7 +617,6 @@ class Centerline:
 
         return coordinate_result
 
-
     def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
         coordinates_grid = np.array(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel()))
