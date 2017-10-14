@@ -152,7 +152,7 @@ class Centerline(base.BaseDialog):
         auto_mode.toggled.connect(self.on_toggle_mode)
         auto_mode.mode = 'AUTO'
         auto_mode.sagittal_title = 'The axial slice is automatically selected'
-        auto_mode.axial_title = '1. Select the center of the spinalcord'
+        auto_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(auto_mode)
 
         group.setLayout(layout)
