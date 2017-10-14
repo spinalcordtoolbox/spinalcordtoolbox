@@ -143,7 +143,7 @@ class Centerline(base.BaseDialog):
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
         custom_mode.mode = 'CUSTOM'
-        custom_mode.sagittal_title = 'Select a axial slice'
+        custom_mode.sagittal_title = 'Select an axial slice'
         custom_mode.axial_title = 'Select the center of the spinal cord'
         layout.addWidget(custom_mode)
 
