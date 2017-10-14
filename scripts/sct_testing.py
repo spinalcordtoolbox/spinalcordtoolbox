@@ -149,6 +149,7 @@ def main(args=None):
         module_testing = importlib.import_module('test_' + f)
         # initialize default parameters of function to test
         param.args = []
+        param.suffix_groundtruth = ''
         param = module_testing.init(param)
         # loop over parameters to test
         list_status_function = []
