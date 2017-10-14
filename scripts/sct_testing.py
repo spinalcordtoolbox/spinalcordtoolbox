@@ -223,6 +223,8 @@ def fill_functions():
         'sct_create_mask',
         'sct_crop_image',
         'sct_dmri_compute_dti',
+        'sct_dmri_concat_bvals',
+        'sct_dmri_concat_bvecs',
         # 'sct_dmri_create_noisemask',
         # 'sct_dmri_get_bvalue',
         # 'sct_dmri_transpose_bvecs',
@@ -338,6 +340,7 @@ def test_function(param_test):
     # get parser information
     parser = module_function_to_test.get_parser()
     dict_args = parser.parse(param_test.args.split(), check_file_exist=False)
+    # TODO: if file in list does not exist, raise exception and assign status=200
     dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args), param_test.path_data, input_file=True)
     param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
 
@@ -364,13 +367,22 @@ def test_function(param_test):
 
     # retrieve input file (will be used later for integrity testing)
     if '-i' in dict_args:
-        param_test.file_input = dict_args['-i'].split('/')[1]
-        # Check if input files exist
-        if not (os.path.isfile(dict_args_with_path['-i'])):
-            param_test.status = 200
-            param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
-            write_to_log_file(param_test.fname_log, param_test.output, 'w')
-            return update_param(param_test)
+        # check if list in case of multiple input files
+        if not isinstance(dict_args_with_path['-i'], list):
+            list_file_to_check = [dict_args_with_path['-i']]
+            # assign field file_input for integrity testing
+            param_test.file_input = dict_args['-i'].split('/')[1]
+        else:
+            list_file_to_check = dict_args_with_path['-i']
+            # TODO: assign field file_input for integrity testing
+        for file_to_check in list_file_to_check:
+            # file_input = file_to_check.split('/')[1]
+            # Check if input files exist
+            if not (os.path.isfile(file_to_check)):
+                param_test.status = 200
+                param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
+                write_to_log_file(param_test.fname_log, param_test.output, 'w')
+                return update_param(param_test)
 
     # Extract contrast
     if '-c' in dict_args:
