@@ -77,6 +77,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
 import sct_utils as sct
 from msct_types import Coordinate  # DO NOT REMOVE THIS LINE!!!!!!! IT IS MANDATORY!
 
@@ -407,9 +408,9 @@ class Parser:
                     # If input file is a list, we need to check what type of list it is.
                     if isinstance(self.options[key].type_value, list):
                         for i, value in enumerate(option):
-                            # If it contains files, it must be updated.
-                            # TODO: CHECK IF CONTAINS FILE
-                            option[i] = path_to_add + value
+                            # If value is a file, path must be updated
+                            if os.path.isfile(path_to_add + value):
+                                option[i] = path_to_add + value
                     # if not a list:
                     else:
                         # If it contains files, it must be updated.

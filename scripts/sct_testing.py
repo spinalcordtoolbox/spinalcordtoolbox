@@ -220,7 +220,7 @@ def fill_functions():
         'sct_concat_transfo',
         # 'sct_convert',
         # 'sct_convert_binary_to_trilinear',  # not useful
-        # 'sct_create_mask',
+        'sct_create_mask',
         # 'sct_crop_image',
         # 'sct_dmri_compute_dti',
         # 'sct_dmri_create_noisemask',
