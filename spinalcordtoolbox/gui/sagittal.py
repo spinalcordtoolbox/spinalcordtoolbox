@@ -57,7 +57,7 @@ class SagittalDialog(base.BaseDialog):
 
     def on_select_point(self, x, y, z):
         try:
-            x, y, z,  = int(round(x)), int(round(y)), int(round(z))
+            x, y, z = int(round(x)), int(round(y)), int(round(z))
             label = self.labels.label
             self._controller.select_point(x, y, z, label)
             self.labels.refresh()
@@ -79,6 +79,7 @@ class SagittalDialog(base.BaseDialog):
 def launch_sagittal_dialog(input_file, output_file, params):
     if not params.vertebraes:
         params.vertebraes = [3, 5]
+    params.input_file_name = input_file.absolutepath
     controller = SagittalControler(input_file, params, output_file)
     controller.reformat_image()
 

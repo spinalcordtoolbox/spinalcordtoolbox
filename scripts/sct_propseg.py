@@ -436,22 +436,30 @@ if __name__ == "__main__":
         from spinalcordtoolbox.gui.base import AnatomicalParams
         from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
+        starting_slice = arguments.get('-init', 0)
+
         params = AnatomicalParams()
-        params.num_points = 3
+        params.starting_slice = starting_slice
+        if use_viewer == 'mask':
+            params.num_points = 3
+            params.starting_slice = int(round(nz/2))  # starting slice in the middle of the FOV
+        if use_viewer == 'centerline' and not starting_slice:
+            params.starting_slice = 0
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
-        tmp_output_file.file_name = os.path.join(folder_output, file_data + 'manually_seg' + ext_data)
+        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_mask_viewer'))
         controller = launch_centerline_dialog(image, tmp_output_file, params)
-        try:
-            controller.as_niftii(tmp_output_file.file_name)
-            # add mask filename to parameters string
-            if use_viewer == "centerline":
-                cmd += " -init-centerline " + tmp_output_file.file_name
-            elif use_viewer == "mask":
-                cmd += " -init-mask " + tmp_output_file.file_name
-        except ValueError:
+
+        if not controller.saved:
             sct.log.error('the viewer has been closed before entering all manual points. Please try again.')
+
+        controller.as_niftii(tmp_output_file.absolutepath)
+        # add mask filename to parameters string
+        if use_viewer == "centerline":
+            cmd += " -init-centerline " + tmp_output_file.absolutepath
+        elif use_viewer == "mask":
+            cmd += " -init-mask " + tmp_output_file.absolutepath
 
     # If using OptiC, enabled by default
     elif use_optic:
@@ -496,7 +504,7 @@ if __name__ == "__main__":
     # remove temporary files
     if remove_temp_files and use_viewer:
         sct.log.info("Remove temporary files...")
-        os.remove(tmp_output_file.file_name)
+        os.remove(tmp_output_file.absolutepath)
 
     if '-qc' in arguments and not arguments.get('-noqc', False):
         qc_path = arguments['-qc']
