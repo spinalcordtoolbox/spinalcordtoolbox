@@ -319,7 +319,7 @@ class BaseController(object):
 
 
 class TooManyPointsWarning(StopIteration):
-    message = 'Reached the maximum superior / inferior axis length'
+    message = 'Reached the maximum number of points'
 
 
 class InvalidActionWarning(ValueError):
