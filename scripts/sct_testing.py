@@ -369,8 +369,11 @@ def test_function(param_test):
         # check if list in case of multiple input files
         if not isinstance(dict_args_with_path['-i'], list):
             list_file_to_check = [dict_args_with_path['-i']]
+            # assign field file_input for integrity testing
+            param_test.file_input = dict_args['-i'].split('/')[1]
         else:
             list_file_to_check = dict_args_with_path['-i']
+            # TODO: assign field file_input for integrity testing
         for file_to_check in list_file_to_check:
             # file_input = file_to_check.split('/')[1]
             # Check if input files exist
@@ -379,8 +382,6 @@ def test_function(param_test):
                 param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
                 write_to_log_file(param_test.fname_log, param_test.output, 'w')
                 return update_param(param_test)
-        # assign field file_input for integrity testing
-        param_test.file_input = dict_args['-i'].split('/')[1]
 
     # Extract contrast
     if '-c' in dict_args:
