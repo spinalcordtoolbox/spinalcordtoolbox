@@ -47,6 +47,8 @@ class AnatomicalParams(object):
         self.num_points = 0
         self._title = ''
         self._vertebraes = []
+        self.input_file_name = ""
+        self.starting_slice = 0
 
     @property
     def dialog_title(self):
@@ -220,6 +222,7 @@ class BaseController(object):
     orientation = None
     _overlay_image = None
     _dialog = None
+    default_position = ()
     position = None
     saved = False
 
@@ -249,6 +252,7 @@ class BaseController(object):
         x, y, z, t, dx, dy, dz, dt = self.image.dim
         self.params.aspect = dx / dy
         self.params.offset = x * dx
+        self.default_position = (x // 2, y // 2, z // 2)
 
         clip = np.percentile(self.image.data, (self.params.min,
                                                self.params.max))
@@ -257,8 +261,7 @@ class BaseController(object):
 
     def reset_position(self):
         """Set the canvas position to the center of the image"""
-        x, y, z, _, _, _, _, _ = self.image.dim
-        self.position = (x // 2, y // 2, z // 2)
+        self.position = self.default_position
 
     def valid_point(self, x, y, z):
         dim = self.image.dim
@@ -316,7 +319,7 @@ class BaseController(object):
 
 
 class TooManyPointsWarning(StopIteration):
-    message = 'Reached the maximum superior / inferior axis length'
+    message = 'Reached the maximum number of points'
 
 
 class InvalidActionWarning(ValueError):
