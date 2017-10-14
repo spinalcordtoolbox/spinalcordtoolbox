@@ -218,7 +218,7 @@ def fill_functions():
         'sct_apply_transfo',
         # 'sct_compute_mtr',
         'sct_concat_transfo',
-        # 'sct_convert',
+        'sct_convert',
         # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
         'sct_crop_image',
@@ -247,9 +247,9 @@ def fill_functions():
         # 'sct_register_to_template',
         # 'sct_resample',
         # 'sct_segment_graymatter',
-        # 'sct_smooth_spinalcord',
+        'sct_smooth_spinalcord',
         # 'sct_straighten_spinalcord',
-        # 'sct_warp_template',
+        'sct_warp_template',
     ]
     return functions
 
