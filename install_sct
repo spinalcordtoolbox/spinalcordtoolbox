@@ -148,6 +148,7 @@ usage()
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
   echo -e "\n\t--mpi,-p \v Will use the MPI interface to run pipelines (Linux support only)"
+  echo -e "\n\t-z \v Will install spinalcordtoolbox in development mode"
 }
 
 
@@ -166,7 +167,7 @@ done
 
 
 
-while getopts ":dmhbp" opt; do
+while getopts ":dmhbpz" opt; do
   case $opt in
     d)
       echo " data directory will not be (re)-installed"
@@ -184,6 +185,10 @@ while getopts ":dmhbp" opt; do
       echo " Multiprocessing using MPI activated"
       export SCT_MPI_MODE=yes
       ;;
+    z)
+      echo " Development mode"
+      export SCT_DEV_MODE=yes
+      ;;
     h)
       usage
       exit 0
@@ -197,7 +202,7 @@ done
 
 # Catch SCT version
 if [ -e "version.txt" ]; then
-  if [ ${SCT_MPI_MODE} ]; then 
+  if [ ${SCT_MPI_MODE} ]; then
   echo "$(cat version.txt) mpi" > version.txt
   fi
   SCT_VERSION=`cat version.txt`
@@ -413,10 +418,12 @@ else
 
 fi
 
-
 ## Install the spinalcordtoolbox into conda
-pip install ${SCT_SOURCE}
-
+if [ ${SCT_DEV_MODE} ]; then
+    pip install -e ${SCT_SOURCE}
+else
+    pip install ${SCT_SOURCE}
+fi
 
 ## Install binaries
 if [ ${NO_SCT_BIN_INSTALL} ]; then
