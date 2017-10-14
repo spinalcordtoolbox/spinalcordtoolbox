@@ -439,7 +439,7 @@ if __name__ == "__main__":
         starting_slice = arguments.get('-init', 0)
 
         params = AnatomicalParams()
-        params.starting_slice = starting_slicee
+        params.starting_slice = starting_slice
         if use_viewer == 'mask':
             params.num_points = 3
             params.starting_slice = int(round(nz/2))  # starting slice in the middle of the FOV
