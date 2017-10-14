@@ -379,6 +379,8 @@ def test_function(param_test):
                 param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
                 write_to_log_file(param_test.fname_log, param_test.output, 'w')
                 return update_param(param_test)
+        # assign field file_input for integrity testing
+        param_test.file_input = dict_args['-i'].split('/')[1]
 
     # Extract contrast
     if '-c' in dict_args:
