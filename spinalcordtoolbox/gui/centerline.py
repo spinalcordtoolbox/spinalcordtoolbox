@@ -23,17 +23,27 @@ class CenterlineController(base.BaseController):
     _mode = ''
     INTERVAL = 15
     MODES = ['AUTO', 'CUSTOM']
+    _slice = 0.0
 
     def __init__(self, image, params, init_values=None):
         super(CenterlineController, self).__init__(image, params, init_values)
-        self._slice = self.INTERVAL
 
     def reformat_image(self):
         super(CenterlineController, self).reformat_image()
-        if self.image.dim[0] < self.INTERVAL:
-            self.INTERVAL = 1
+        self.INTERVAL = int(10 / self.image.dim[4]) or 1
         if not self.params.num_points:
             self.params.num_points = self.image.dim[0] / self.INTERVAL
+
+        starting_slice = self.params.starting_slice
+        if starting_slice < 0:
+            self._default_slice = self.default_position[0]
+        # if the starting slice is a fraction, recalculate the starting slice as a ratio.
+        elif 0 < starting_slice < 1:
+            self._default_slice = int(10 / self.image.dim[4]) or 1
+        else:
+            self._default_slice = starting_slice
+        self._slice = self._default_slice
+        self.reset_position()
 
     def reset_position(self):
         super(CenterlineController, self).reset_position()
@@ -71,8 +81,9 @@ class CenterlineController(base.BaseController):
 
     def _next_slice(self):
         if self.mode == 'AUTO':
-            self._slice += self.INTERVAL
-            self.position = (self.position[0] + self.INTERVAL, self.position[1], self.position[2])
+            if self.valid_point(self._slice + self.INTERVAL, self.position[1], self.position[2]):
+                self._slice += self.INTERVAL
+                self.position = (self._slice, self.position[1], self.position[2])
         else:
             self._slice = 0
 
@@ -98,7 +109,7 @@ class CenterlineController(base.BaseController):
             raise ValueError('Invalid mode %', value)
 
         if value != self._mode:
-            self._slice = 0 if value == 'CUSTOM' else self.INTERVAL
+            self._slice = self._default_slice
             self._mode = value
             self.points = []
             self.reset_position()
@@ -132,8 +143,8 @@ class Centerline(base.BaseDialog):
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
         custom_mode.mode = 'CUSTOM'
-        custom_mode.sagittal_title = '1. Select a axial slice'
-        custom_mode.axial_title = '2. Select the center of the spinalcord'
+        custom_mode.sagittal_title = 'Select an axial slice'
+        custom_mode.axial_title = 'Select the center of the spinal cord'
         layout.addWidget(custom_mode)
 
         auto_mode = QtGui.QRadioButton('Mode Auto')
@@ -141,7 +152,7 @@ class Centerline(base.BaseDialog):
         auto_mode.toggled.connect(self.on_toggle_mode)
         auto_mode.mode = 'AUTO'
         auto_mode.sagittal_title = 'The axial slice is automatically selected'
-        auto_mode.axial_title = '1. Select the center of the spinalcord'
+        auto_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(auto_mode)
 
         group.setLayout(layout)
@@ -202,6 +213,7 @@ class Centerline(base.BaseDialog):
 
 
 def launch_centerline_dialog(input_file, output_file, params):
+    params.input_file_name = input_file.absolutepath
     controller = CenterlineController(input_file, params, output_file)
     controller.reformat_image()
 
