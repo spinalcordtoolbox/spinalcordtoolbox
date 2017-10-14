@@ -30,10 +30,20 @@ class CenterlineController(base.BaseController):
 
     def reformat_image(self):
         super(CenterlineController, self).reformat_image()
-        if self.image.dim[0] < self.INTERVAL:
-            self.INTERVAL = 1
+        self.INTERVAL = int(10 / self.image.dim[4]) or 1
         if not self.params.num_points:
             self.params.num_points = self.image.dim[0] / self.INTERVAL
+
+        starting_slice = self.params.starting_slice
+        if starting_slice < 0:
+            self._default_slice = self.default_position[0]
+        # if the starting slice is a fraction, recalculate the starting slice as a ratio.
+        elif 0 < starting_slice < 1:
+            self._default_slice = int(10 / self.image.dim[4]) or 1
+        else:
+            self._default_slice = starting_slice
+        self._slice = self._default_slice
+        self.reset_position()
 
     def reset_position(self):
         super(CenterlineController, self).reset_position()
@@ -99,7 +109,7 @@ class CenterlineController(base.BaseController):
             raise ValueError('Invalid mode %', value)
 
         if value != self._mode:
-            self._slice = 0
+            self._slice = self._default_slice
             self._mode = value
             self.points = []
             self.reset_position()

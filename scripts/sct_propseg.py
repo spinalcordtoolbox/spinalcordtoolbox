@@ -436,9 +436,14 @@ if __name__ == "__main__":
         from spinalcordtoolbox.gui.base import AnatomicalParams
         from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
+        starting_slice = arguments.get('-init', 0)
+
         params = AnatomicalParams()
+        params.starting_slice = starting_slice
         if use_viewer == 'mask':
             params.num_points = 3
+        if use_viewer == 'centerline' and not starting_slice:
+            params.starting_slice = 0
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
