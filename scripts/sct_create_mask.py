@@ -47,8 +47,8 @@ class Param:
         self.verbose = 1
         self.remove_tmp_files = 1
         self.offset = '0,0'
-param = Param()
-param_default = Param()
+# param = Param()
+# param_default = Param()
 
 
 # main
@@ -344,6 +344,8 @@ def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
 
 
 def get_parser():
+    # Initialize default parameters
+    param_default = Param()
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Create mask along z direction.')
@@ -387,7 +389,7 @@ def get_parser():
                       description='Shape of the mask.',
                       mandatory=False,
                       default_value=param_default.shape,
-                      example=param.shape_list)
+                      example=param_default.shape_list)
     parser.add_option(name='-o',
                       type_value='file_output',
                       description='Name of output mask.',
@@ -414,5 +416,4 @@ def get_parser():
 if __name__ == "__main__":
     sct.start_stream_logger()
     param = Param()
-    param_default = Param()
     main()
