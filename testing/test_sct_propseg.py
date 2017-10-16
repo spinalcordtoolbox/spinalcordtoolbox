@@ -69,7 +69,7 @@ def test_integrity(param_test):
     try:
         im_seg = Image(file_seg)
     except:
-        param_test.output += 'ERROR: Cannot open output segmentation: ' + segmentation_filename
+        param_test.output += 'ERROR: Cannot open output segmentation: ' + file_seg
         return param_test
 
     # open ground truth

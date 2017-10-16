@@ -3,136 +3,116 @@
 #
 # Test function for sct_get_centerline script
 #
-#   replace the shell test script in sct 1.0
-#
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Augustin Roux
-# modified: 2014/09/28
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: charley
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os.path
-import sys
-import commands
-from msct_image import Image
-from sct_get_centerline import ind2sub
-import math
-import sct_utils as sct
+from scipy.ndimage.measurements import center_of_mass
+from math import sqrt
 import numpy as np
+import sct_utils as sct
+from msct_image import Image
 from pandas import DataFrame
-import sct_get_centerline
 
 
-def test(path_data='', parameters=''):
+def compute_mse(im_true, im_pred):
+    mse_dist = []
+    count_slice = 0
+    for z in range(im_true.dim[2]):
 
-    # parameters
-    output = ''
-    # folder_data = 't2/'
-    # file_data = ['t2.nii.gz', 't2_centerline_init.nii.gz', 't2_centerline_labels.nii.gz', 't2_seg_manual.nii.gz']
+        if np.sum(im_true.data[:, :, z]):
+            x_true, y_true = [np.where(im_true.data[:, :, z] > 0)[i][0] for i in range(len(np.where(im_true.data[:, :, z] > 0)))]
+            x_pred, y_pred = [np.where(im_pred.data[:, :, z] > 0)[i][0] for i in range(len(np.where(im_pred.data[:, :, z] > 0)))]
 
-    if not parameters:
-        parameters = '-i t2/t2.nii.gz -c t2'
+            x_true, y_true = im_true.transfo_pix2phys([[x_true, y_true, z]])[0][0], im_true.transfo_pix2phys([[x_true, y_true, z]])[0][1]
+            x_pred, y_pred = im_pred.transfo_pix2phys([[x_pred, y_pred, z]])[0][0], im_pred.transfo_pix2phys([[x_pred, y_pred, z]])[0][1]
 
-    parser = sct_get_centerline.get_parser()
-    dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    contrast = dict_param['-c']
-    dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
-    param_with_path = parser.dictionary_to_string(dict_param_with_path)
+            dist = ((x_true - x_pred))**2 + ((y_true - y_pred))**2
+            mse_dist.append(dist)
 
-    # log file
-    fname_log = path_output + 'output.log'
-    stdout_log = file(fname_log, 'w')
-    # redirect to log file
-    stdout_orig = sys.stdout
-    sys.stdout = stdout_log
+            count_slice += 1
 
-    # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i'])):
-        status = 200
-        output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        write_to_log_file(fname_log, output, 'w')
-        return status, output, DataFrame(
-            data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
-
-    # Check if ground truth files exist
-    if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
-        status = 201
-        output += '\nERROR: the file *_seg_manual.nii.gz does not exist in folder: ' + path_data
-        write_to_log_file(fname_log, output, 'w')
-        return status, output, DataFrame(
-            data = {'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index = [path_data])
+    return sqrt(sum(mse_dist) / float(count_slice))
 
 
-    cmd = 'sct_get_centerline '+param_with_path
-    status, output = sct.run(cmd, 0)
-    scad_centerline = Image(contrast+"_centerline.nii.gz")
-    manual_seg = Image(path_data + folder_data + contrast +'_seg_manual.nii.gz')
+def init(param_test):
+    """
+    Initialize testing.
+    Parameters
+    ----------
+    param_test: Class defined in sct_testing.py
 
-    max_distance = 0
-    standard_deviation = 0
-    average = 0
-    root_mean_square = 0
-    overall_distance = 0
-    max_distance = 0
-    overall_std = 0
-    rmse = 0
+    Returns
+    -------
+    param_test
+    """
+    # initialization
+    default_args = ['-i t2/t2.nii.gz -c t2']  # default parameters
+    param_test.mse_threshold = 1.0
+    param_test.suffix_groundtruth = '_seg_manual'  # file name suffix for ground truth (used for integrity testing)
 
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
+
+    return param_test
+
+
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    Parameters
+    ----------
+    param_test: Class defined in sct_testing.py
+
+    Returns
+    -------
+    param_test
+    """
+    # initializations
+    mse_detection = float('nan')
+
+    # extract name of output centerline: data_centerline_optic.nii.gz
+    file_ctr = param_test.path_output + sct.add_suffix(param_test.file_input, '_centerline_optic')
+
+    # open output segmentation
     try:
-        if status == 0:
-            manual_seg.change_orientation()
-            scad_centerline.change_orientation()
-            from scipy.ndimage.measurements import center_of_mass
-            # find COM
-            iterator = range(manual_seg.data.shape[2])
-            com_x = [0 for ix in iterator]
-            com_y = [0 for iy in iterator]
+        im_ctr = Image(file_ctr)
+    except:
+        param_test.output += 'ERROR: Cannot open output centerline: ' + file_ctr
+        return param_test
 
-            for iz in iterator:
-                com_x[iz], com_y[iz] = center_of_mass(manual_seg.data[:, :, iz])
-            max_distance = {}
-            distance = {}
-            for iz in range(1, scad_centerline.data.shape[2]-1):
-                ind1 = np.argmax(scad_centerline.data[:, :, iz])
-                X,Y = ind2sub(scad_centerline.data[:, :, iz].shape,ind1)
-                com_phys = np.array(manual_seg.transfo_pix2phys([[com_x[iz], com_y[iz], iz]]))
-                scad_phys = np.array(scad_centerline.transfo_pix2phys([[X, Y, iz]]))
-                distance_magnitude = np.linalg.norm([com_phys[0][0]-scad_phys[0][0], com_phys[0][1]-scad_phys[0][1], 0])
-                if math.isnan(distance_magnitude):
-                    print "Value is nan"
-                else:
-                    distance[iz] = distance_magnitude
+    # open ground truth
+    try:
+        im_seg_manual = Image(param_test.fname_groundtruth)
+        im_ctr_manual = im_seg_manual.copy() # Create Ctr GT from SC seg GT
 
-            max_distance = max(distance.values())
-            standard_deviation = np.std(np.array(distance.values()))
-            average = sum(distance.values())/len(distance)
-            root_mean_square = np.sqrt(np.mean(np.square(distance.values())))
-            overall_distance = average
-            max_distance = max(distance.values())
-            overall_std = standard_deviation
-            rmse = root_mean_square
+        if im_ctr_manual.orientation != 'RPI':
+            im_ctr_manual.change_orientation('RPI')
 
-    except Exception, e:
-        sct.printv("Exception found while testing scad integrity")
-        output = e.message
+        # Compute center of mass of the SC seg on each axial slice.
+        center_of_mass_x_y_z_lst = [[int(xx), int(yy), zz] for zz in range(im_ctr_manual.dim[2]) for xx, yy in center_of_mass(im_ctr_manual.data[:,:,zz])]
 
-    result_mse, result_dist_max = rmse, max_distance
-    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
+        im_ctr_manual.data *= 0
+        for x_y_z in center_of_mass_x_y_z_lst:
+            im_ctr_manual.data[x_y_z[0], x_y_z[1], x_y_z[2]] = 1
+    except:
+        param_test.output += 'ERROR: Cannot open ground truth segmentation: ' + param_test.fname_groundtruth
+        return param_test
 
-    # define command
-    cmd = 'sct_get_centerline -i ' + path_data + folder_data + file_data[0] \
-        + ' -p labels ' \
-        + ' -l ' + path_data + folder_data + file_data[2] \
-        + ' -v 1'
-    output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
-    s, o = commands.getstatusoutput(cmd)
-    status += s
-    output += o
+    # compute MSE between generated ctr and ctr from database
+    mse_detection = compute_mse(im_ctr, im_ctr_manual)
 
-    return status, output, results
+    param_test.output += 'Computed MSE: ' + str(mse_detection)
+    param_test.output += 'MSE threshold (if computed MSE higher: fail): ' + str(param_test.mse_threshold)
 
+    if mse_detection > param_test.mse_threshold:
+        param_test.status = 99
 
-if __name__ == "__main__":
-    # call main function
-    test()
+    # transform results into Pandas structure
+    param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'mse_detection': mse_detection, 'duration [s]': param_test.duration})
+
+    return param_test
