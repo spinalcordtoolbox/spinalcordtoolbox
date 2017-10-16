@@ -217,6 +217,7 @@ def fill_functions():
     functions = [
         # 'sct_analyze_texture',
         'sct_apply_transfo',
+        'sct_compute_hausdorff_distance',
         # 'sct_compute_mtr',
         'sct_compute_mscc',
         'sct_concat_transfo',
@@ -225,6 +226,7 @@ def fill_functions():
         'sct_create_mask',
         'sct_crop_image',
         'sct_dice_coefficient',
+        'sct_detect_pmj',
         'sct_dmri_compute_dti',
         'sct_dmri_concat_bvals',
         'sct_dmri_concat_bvecs',
