@@ -58,38 +58,26 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    # Parameters for debug mode
-    if param.debug:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-        # get path of the testing data
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data + '/mt/mt1.nii.gz'
-        param.process = 'point,' + path_sct_data + '/mt/mt1_point.nii.gz'  # 'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
-        param.shape = 'cylinder'
-        param.size = '20'
-        param.remove_tmp_files = 1
-        param.verbose = 1
-    else:
-        # Check input parameters
-        parser = get_parser()
-        arguments = parser.parse(args)
+    # Check input parameters
+    parser = get_parser()
+    arguments = parser.parse(args)
 
-        param.fname_data = arguments['-i']
+    param.fname_data = arguments['-i']
 
-        if '-p' in arguments:
-            param.process = arguments['-p']
-            if param.process[0] not in param.process_list:
-                sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
-        if '-size' in arguments:
-            param.size = arguments['-size']
-        if '-f' in arguments:
-            param.shape = arguments['-f']
-        if '-o' in arguments:
-            param.fname_out = arguments['-o']
-        if '-r' in arguments:
-            param.remove_tmp_files = int(arguments['-r'])
-        if '-v' in arguments:
-            param.verbose = int(arguments['-v'])
+    if '-p' in arguments:
+        param.process = arguments['-p']
+        if param.process[0] not in param.process_list:
+            sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
+    if '-size' in arguments:
+        param.size = arguments['-size']
+    if '-f' in arguments:
+        param.shape = arguments['-f']
+    if '-o' in arguments:
+        param.fname_out = arguments['-o']
+    if '-r' in arguments:
+        param.remove_tmp_files = int(arguments['-r'])
+    if '-v' in arguments:
+        param.verbose = int(arguments['-v'])
 
     # run main program
     create_mask()
