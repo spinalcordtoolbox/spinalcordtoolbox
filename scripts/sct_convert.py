@@ -74,7 +74,7 @@ def convert(fname_in, fname_out, squeeze_data=True, type=None, verbose=1):
 
 # MAIN
 # ==========================================================================================
-def main(args = None):
+def main(args=None):
 
     if not args:
         args = sys.argv[1:]

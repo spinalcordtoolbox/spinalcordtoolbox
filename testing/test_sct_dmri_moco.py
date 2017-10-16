@@ -1,36 +1,30 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_dmri_moco
+# Test function for sct_dmri_moco
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Augustin Roux
-# modified: 2014/10/06
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
-import commands
+def init(param_test):
+    """
+    Initialize class: param_test
+    """
+    # initialization
+    default_args = ['-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -x nn -r 0']
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
+    return param_test
 
 
-def test(path_data):
-
-    folder_data = 'dmri/'
-    file_data = ['dmri.nii.gz', 'bvecs.txt']
-
-
-    cmd = 'sct_dmri_moco -i ' + path_data + folder_data + file_data[0] \
-                + ' -bvec '+ path_data + folder_data + file_data[1] \
-                + ' -v 1'\
-                + ' -g 3'\
-                + ' -r 0'\
-                + ' -x spline'
-
-    return commands.getstatusoutput(cmd)
-
-
-if __name__ == "__main__":
-    # call main function
-    test()
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    """
+    param_test.output += '\nNot implemented.'
+    return param_test

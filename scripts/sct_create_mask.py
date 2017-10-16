@@ -47,8 +47,8 @@ class Param:
         self.verbose = 1
         self.remove_tmp_files = 1
         self.offset = '0,0'
-param = Param()
-param_default = Param()
+# param = Param()
+# param_default = Param()
 
 
 # main
@@ -58,38 +58,26 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    # Parameters for debug mode
-    if param.debug:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-        # get path of the testing data
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data + '/mt/mt1.nii.gz'
-        param.process = 'point,' + path_sct_data + '/mt/mt1_point.nii.gz'  # 'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
-        param.shape = 'cylinder'
-        param.size = '20'
-        param.remove_tmp_files = 1
-        param.verbose = 1
-    else:
-        # Check input parameters
-        parser = get_parser()
-        arguments = parser.parse(args)
+    # Check input parameters
+    parser = get_parser()
+    arguments = parser.parse(args)
 
-        param.fname_data = arguments['-i']
+    param.fname_data = arguments['-i']
 
-        if '-p' in arguments:
-            param.process = arguments['-p']
-            if param.process[0] not in param.process_list:
-                sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
-        if '-size' in arguments:
-            param.size = arguments['-size']
-        if '-f' in arguments:
-            param.shape = arguments['-f']
-        if '-o' in arguments:
-            param.fname_out = arguments['-o']
-        if '-r' in arguments:
-            param.remove_tmp_files = int(arguments['-r'])
-        if '-v' in arguments:
-            param.verbose = int(arguments['-v'])
+    if '-p' in arguments:
+        param.process = arguments['-p']
+        if param.process[0] not in param.process_list:
+            sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
+    if '-size' in arguments:
+        param.size = arguments['-size']
+    if '-f' in arguments:
+        param.shape = arguments['-f']
+    if '-o' in arguments:
+        param.fname_out = arguments['-o']
+    if '-r' in arguments:
+        param.remove_tmp_files = int(arguments['-r'])
+    if '-v' in arguments:
+        param.verbose = int(arguments['-v'])
 
     # run main program
     create_mask()
@@ -344,6 +332,8 @@ def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
 
 
 def get_parser():
+    # Initialize default parameters
+    param_default = Param()
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Create mask along z direction.')
@@ -387,7 +377,7 @@ def get_parser():
                       description='Shape of the mask.',
                       mandatory=False,
                       default_value=param_default.shape,
-                      example=param.shape_list)
+                      example=param_default.shape_list)
     parser.add_option(name='-o',
                       type_value='file_output',
                       description='Name of output mask.',
@@ -414,5 +404,4 @@ def get_parser():
 if __name__ == "__main__":
     sct.start_stream_logger()
     param = Param()
-    param_default = Param()
     main()

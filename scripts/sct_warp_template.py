@@ -83,10 +83,11 @@ class WarpTemplate:
         sct.printv('  Output folder ............ ' + self.folder_out + '\n')
 
         # create output folder
-        if os.path.exists(self.folder_out):
-            sct.printv('WARNING: Output folder already exists. Deleting it...', self.verbose, 'warning')
-            sct.run('rm -rf ' + self.folder_out)
-        sct.run('mkdir ' + self.folder_out)
+        if not os.path.exists(self.folder_out):
+            os.makedirs(self.folder_out)
+            # sct.run('mkdir ' + self.folder_out)
+            # sct.printv('WARNING: Output folder already exists. Deleting it...', self.verbose, 'warning')
+            # sct.run('rm -rf ' + self.folder_out)
 
         # Warp template objects
         sct.printv('\nWARP TEMPLATE:', self.verbose)
@@ -216,11 +217,10 @@ def get_interp(file_label):
 # PARSER
 # ==========================================================================================
 def get_parser():
-
+    # Initialize default parameters
+    param_default = Param()
     # Initialize parser
     parser = Parser(__file__)
-
-    # Mandatory arguments
     parser.usage.set_description('This function warps the template and all atlases to a given image (e.g. fMRI, DTI, MTR, etc.).')
     parser.add_option(name="-d",
                       type_value="file",
@@ -301,8 +301,5 @@ def main(args=None):
 # ==========================================================================================
 if __name__ == "__main__":
     sct.start_stream_logger()
-    # initialize parameters
     param = Param()
-    param_default = Param()
-    # call main function
     main()
