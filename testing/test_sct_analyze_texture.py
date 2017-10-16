@@ -27,7 +27,7 @@ def init(param_test):
     param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz']  # default parameters
+    default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1']  # default parameters
     param_test.difference_threshold = 0.95
     param_test.suffix_groundtruth = '_contrast_1_mean_ref'  # file name suffix for ground truth (used for integrity testing)
     param_test.contrast = 't2'
@@ -58,6 +58,7 @@ def test_integrity(param_test):
         im_texture = Image(file_texture)
     except:
         param_test.output += 'ERROR: Cannot open output texture file: ' + im_texture
+        param_test.status = 99
         return param_test
 
     # open ground truth
@@ -65,6 +66,7 @@ def test_integrity(param_test):
         im_texture_ref = Image(param_test.fname_groundtruth)
     except:
         param_test.output += 'ERROR: Cannot open ground truth texture file: ' + param_test.fname_groundtruth
+        param_test.status = 99
         return param_test
 
     # Substract generated image and image from database
