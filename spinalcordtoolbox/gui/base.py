@@ -98,9 +98,6 @@ class BaseDialog(QtGui.QDialog):
         self.image = controller.image
         self._controller._dialog = self
         self._init_ui()
-        QtGui.QShortcut(QtGui.QKeySequence.Undo, self, self.on_undo)
-        QtGui.QShortcut(QtGui.QKeySequence.Save, self, self.on_save_quit)
-        QtGui.QShortcut(QtGui.QKeySequence.HelpContents, self, self.on_help)
 
     def _init_ui(self):
         self.resize(1200, 800)
@@ -111,6 +108,10 @@ class BaseDialog(QtGui.QDialog):
         self._init_canvas(layout)
         self._init_controls(layout)
         self._init_footer(layout)
+
+        QtGui.QShortcut(QtGui.QKeySequence.Undo, self, self.on_undo)
+        QtGui.QShortcut(QtGui.QKeySequence.Save, self, self.on_save_quit)
+        QtGui.QShortcut(QtGui.QKeySequence.Quit, self, self.close)
 
         self.setWindowTitle(self.params.dialog_title)
 
@@ -177,10 +178,6 @@ class BaseDialog(QtGui.QDialog):
 
         self.btn_undo.clicked.connect(self.on_undo)
         self.btn_ok.clicked.connect(self.on_save_quit)
-
-        QtGui.QShortcut(QtGui.QKeySequence.Undo, self, self.on_undo)
-        QtGui.QShortcut(QtGui.QKeySequence.Save, self, self.on_save_quit)
-        QtGui.QShortcut(QtGui.QKeySequence.Quit, self, self.close)
 
         parent.addLayout(ctrl_layout)
         return ctrl_layout
