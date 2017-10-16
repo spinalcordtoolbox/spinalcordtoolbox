@@ -180,6 +180,7 @@ class BaseDialog(QtGui.QDialog):
 
         QtGui.QShortcut(QtGui.QKeySequence.Undo, self, self.on_undo)
         QtGui.QShortcut(QtGui.QKeySequence.Save, self, self.on_save_quit)
+        QtGui.QShortcut(QtGui.QKeySequence.Quit, self, self.close)
 
         parent.addLayout(ctrl_layout)
         return ctrl_layout

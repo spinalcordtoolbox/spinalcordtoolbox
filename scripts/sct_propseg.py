@@ -453,6 +453,7 @@ if __name__ == "__main__":
 
         if not controller.saved:
             sct.log.error('the viewer has been closed before entering all manual points. Please try again.')
+            sys.exit(1)
 
         controller.as_niftii(tmp_output_file.absolutepath)
         # add mask filename to parameters string
@@ -486,6 +487,7 @@ if __name__ == "__main__":
     if not status == 0:
         sct.log.error('Automatic cord detection failed. Please initialize using -init-centerline or '
                       '-init-mask (see help).')
+        sys.exit(1)
 
     # build output filename
     file_seg = file_data + "_seg" + ext_data
