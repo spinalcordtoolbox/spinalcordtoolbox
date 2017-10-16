@@ -379,7 +379,7 @@ def test_function(param_test):
         if not isinstance(dict_args_with_path['-i'], list):
             list_file_to_check = [dict_args_with_path['-i']]
             # assign field file_input for integrity testing
-            param_test.file_input = dict_args['-i'].split('/')[1]
+            param_test.file_input = dict_args['-i'].split('/')[-1]
         else:
             list_file_to_check = dict_args_with_path['-i']
             # TODO: assign field file_input for integrity testing
