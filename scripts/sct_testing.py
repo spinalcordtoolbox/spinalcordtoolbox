@@ -237,7 +237,7 @@ def fill_functions():
         'sct_dmri_separate_b0_and_dwi',
         'sct_dmri_transpose_bvecs',
         # 'sct_documentation',
-        # 'sct_extract_metric',
+        'sct_extract_metric',
         # 'sct_flatten_sagittal',
         # 'sct_fmri_compute_tsnr',
         # 'sct_fmri_moco',
