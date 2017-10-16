@@ -120,27 +120,17 @@ def main(args=None):
 
     fname_data = arguments['-i']
     fname_bvecs = arguments['-bvec']
-
-    fname_bvals = ''
-    path_out = ''
-    average = param.average
-    verbose = param.verbose
-    remove_tmp_files = param.remove_tmp_files
+    average = arguments['-a']
+    verbose = int(arguments['-v'])
+    remove_tmp_files = int(arguments['-r'])
+    path_out = arguments['-ofolder']
 
     if '-bval' in arguments:
         fname_bvals = arguments['-bval']
+    else:
+        fname_bvals = ''
     if '-bvalmin' in arguments:
         param.bval_min = arguments['-bvalmin']
-    if '-a' in arguments:
-        average = arguments['-a']
-    if '-ofolder' in arguments:
-        path_out = arguments['-ofolder']
-    if '-v' in arguments:
-        verbose = int(arguments['-v'])
-    if '-r' in arguments:
-        remove_tmp_files = int(arguments['-r'])
-
-    main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files)
 
     # Initialization
     start_time = time.time()
@@ -335,5 +325,4 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 # ==========================================================================================
 if __name__ == "__main__":
     sct.start_stream_logger()
-    param = Param()
     main()
