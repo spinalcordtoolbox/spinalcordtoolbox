@@ -42,7 +42,7 @@ def test_integrity(param_test):
     max_hausdorff_distance = float('nan')
 
     # extract name of output: hausdorff_distance.txt
-    file_hausdorff = param_test.path_output + 'hausdorff_distance.txt'
+    file_hausdorff = 'hausdorff_distance.txt'
 
     # open output segmentation
     try:
