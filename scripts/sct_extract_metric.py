@@ -89,19 +89,6 @@ max: for each z-slice of the input data, extract the max value for each slice of
                       example=['ml', 'map', 'wa', 'wath', 'bin', 'max'],
                       mandatory=False,
                       default_value=param_default.method)
-    parser.add_option(name='-m',
-                      type_value='multiple_choice',
-                      description="""Method to extract metrics.
-ml: maximum likelihood (only use with well-defined regions and low noise)
-  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
-map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.
-  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
-wa: weighted average
-wath: weighted average (only consider values >0.5)
-bin: binarize mask (threshold=0.5)""",
-                      mandatory=False,
-                      default_value=param_default.method,
-                      deprecated_by='-method')
     parser.add_option(name='-overwrite',
                       type_value='int',
                       description="""In the case you choose \".xls\" for the output file extension and you specify a pre-existing output file (see flag \"-o\"),
