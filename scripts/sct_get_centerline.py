@@ -104,6 +104,7 @@ def get_parser():
     return parser
 
 def run_main():
+    sct.start_stream_logger()
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
