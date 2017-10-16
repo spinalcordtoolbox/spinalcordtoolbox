@@ -237,14 +237,22 @@ class ComputeDistances:
         if self.dim_im == 3:
             self.dist1_distribution = []
             self.dist2_distribution = []
+
             for d in self.distances:
-                self.dist1_distribution.append(d.min_distances_1[np.nonzero(d.min_distances_1)])
-                self.dist2_distribution.append(d.min_distances_2[np.nonzero(d.min_distances_2)])
+                if np.nonzero(d.min_distances_1)[0].size:  # Exist non zero values
+                    self.dist1_distribution.append(d.min_distances_1[np.nonzero(d.min_distances_1)])
+                else:  # all values are zero
+                    self.dist1_distribution.append(0)
+                if np.nonzero(d.min_distances_2)[0].size:  # Exist non zero values
+                    self.dist2_distribution.append(d.min_distances_2[np.nonzero(d.min_distances_2)])
+                else:  # all values are zero
+                    self.dist2_distribution.append(0)
 
             self.res = 'Hausdorff\'s distance  -  First relative Hausdorff\'s distance median - Second relative Hausdorff\'s distance median(all in mm)\n'
             for i, d in enumerate(self.distances):
                 med1 = np.median(self.dist1_distribution[i])
                 med2 = np.median(self.dist2_distribution[i])
+                sct.printv(str(med1))
                 if self.im2 is None:
                     self.res += 'Slice ' + str(i) + ' - slice ' + str(i + 1) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
                 else:
