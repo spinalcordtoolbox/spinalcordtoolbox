@@ -216,7 +216,7 @@ def downloaddata(param):
 # ==========================================================================================
 def fill_functions():
     functions = [
-        # 'sct_analyze_texture',
+        'sct_analyze_texture',
         'sct_apply_transfo',
         'sct_compute_hausdorff_distance',
         # 'sct_compute_mtr',

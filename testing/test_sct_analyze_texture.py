@@ -1,136 +1,85 @@
 #!/usr/bin/env python
-
-# Test function sct_analyze_texture
+#########################################################################################
 #
+# Test function for sct_analyze_texture script
+#
+# ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Charley
-# modified: 2017/06/18
+# Author: charley
 #
 # About the license: see the file LICENSE.TXT
+#########################################################################################
 
-import os.path
-import random
-import time
-from copy import deepcopy
-
-import numpy as np
-import sct_analyze_texture
-import sct_utils as sct
-from msct_image import Image
 from pandas import DataFrame
-from sct_testing import write_to_log_file
+import numpy as np
+from msct_image import Image
+import sct_utils as sct
 
+def init(param_test):
+    """
+    Initialize testing.
+    Parameters
+    ----------
+    param_test: Class defined in sct_testing.py
 
-def test(path_data='', parameters=''):
-
+    Returns
+    -------
+    param_test
+    """
     # initialization
-    output = ''
-    difference_threshold = 0.95
+    default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz']  # default parameters
+    param_test.difference_threshold = 0.95
+    param_test.suffix_groundtruth = '_contrast_1_mean_ref'  # file name suffix for ground truth (used for integrity testing)
+    param_test.contrast = 't2'
 
-    # parameters
-    if not parameters:
-        # parameters = '-i t2/t2.nii.gz -m '+mask_filename_tmp
-        parameters = '-i t2/t2.nii.gz -m t2/t2_seg.nii.gz'
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
 
-    # retrieve flags
+    return param_test
+
+
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    Parameters
+    ----------
+    param_test: Class defined in sct_testing.py
+
+    Returns
+    -------
+    param_test
+    """
+    # extract name of output texture file
+    file_texture = param_test.path_output + sct.add_suffix(param_test.file_input, '_contrast_1_mean')
+
+    # open output
     try:
-        parser = sct_analyze_texture.get_parser()
-        dict_param = parser.parse(parameters.split(), check_file_exist=False)
-        dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
-
-        subject_folder = path_data.split('/')
-        if subject_folder[-1] == '' and len(subject_folder) > 1:
-            subject_folder = subject_folder[-2]
-        else:
-            subject_folder = subject_folder[-1]
-        path_output = sct.slash_at_the_end('sct_analyze_texture_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
-        sct.create_folder(path_output)
-
-        dict_param_with_path['-ofolder'] = path_output
-        dict_param_with_path['-feature'] = 'contrast'
-        param_with_path = parser.dictionary_to_string(dict_param_with_path) 
-    # in case not all mandatory flags are filled
-    except SyntaxError as err:
-        print err
-        status = 1
-        output = err
-        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-
-    # Extract contrast
-    contrast = ''
-    input_filename = ''
-    if dict_param['-i'][0] == '/':
-        dict_param['-i'] = dict_param['-i'][1:]
-    input_split = dict_param['-i'].split('/')
-    if len(input_split) == 2:
-        contrast = input_split[0]
-        input_filename = input_split[1]
-    else:
-        input_filename = input_split[0]
-    if not contrast:  # if no contrast folder, send error.
-        status = 1
-        output += '\nERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'texture_difference': float('nan')}, index=[path_data])
-
-    # log file
-    import sys
-    fname_log = path_output + 'output.log'
-    stdout_log = file(fname_log, 'w')
-    # redirect to log file
-    stdout_orig = sys.stdout
-    sys.stdout = stdout_log
-
-    # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and
-            os.path.isfile(dict_param_with_path['-m'])):
-        status = 200
-        output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        write_to_log_file(fname_log, output, 'w')
-        return status, output, DataFrame(
-            data={'status': status, 'output': output, 'texture_difference': float('nan')}, index=[path_data])
-
-    # run command
-    cmd = 'sct_analyze_texture ' + param_with_path
-    output += '\n====================================================================================================\n'\
-              + cmd + \
-              '\n====================================================================================================\n\n'  # copy command
-    time_start = time.time()
-    try:
-        status, o = sct.run(cmd, 0)
+        im_texture = Image(file_texture)
     except:
-        status, o = 1, 'ERROR: Function crashed!'
-    output += o
-    duration = time.time() - time_start
+        param_test.output += 'ERROR: Cannot open output texture file: ' + im_texture
+        return param_test
 
-    # extract name of one texture file: inputname_contrast_1_mean.nii.gz
-    # where inputname is the filename of the input image
-    texture_test_filename = path_output + sct.add_suffix(input_filename, '_contrast_1_mean')
-    texture_ref_filename = path_data + contrast + '/' + sct.add_suffix(input_filename, '_contrast_1_mean_ref')
+    # open ground truth
+    try:
+        im_texture_ref = Image(param_test.fname_groundtruth)
+    except:
+        param_test.output += 'ERROR: Cannot open ground truth texture file: ' + param_test.fname_groundtruth
+        return param_test
 
-    # if command ran without error, test integrity
-    if status == 0:
-        # Substract generated image and image from database
-        diff_im = Image(texture_test_filename).data - Image(texture_ref_filename).data
-        cmpt_diff_vox = np.count_nonzero(diff_im)
-        cmpt_tot_vox = np.count_nonzero(Image(texture_ref_filename).data)
-        difference_vox = float(cmpt_tot_vox - cmpt_diff_vox) / cmpt_tot_vox
-        if difference_vox < difference_threshold:
-            status = 99
-    else:
-        difference_vox = 0.0
+    # Substract generated image and image from database
+    diff_im = im_texture.data - im_texture_ref.data
+    cmpt_diff_vox = np.count_nonzero(diff_im)
+    cmpt_tot_vox = np.count_nonzero(im_texture_ref.data)
+    difference_vox = float(cmpt_tot_vox - cmpt_diff_vox) / cmpt_tot_vox
+
+    param_test.output += 'Computed difference: ' + str(difference_vox)
+    param_test.output += 'Difference threshold (if computed difference lower: fail): ' + str(param_test.difference_threshold)
+
+    if difference_vox < param_test.difference_threshold:
+        param_test.status = 99
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'texture_similarity': difference_vox, 'duration [s]': duration}, index=[path_data])
+    param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'difference_vox': difference_vox, 'duration [s]': param_test.duration})
 
-    sys.stdout.close()
-    sys.stdout = stdout_orig
-
-    # write log file
-    write_to_log_file(fname_log, output, mode='r+', prepend=True)
-
-    return status, output, results
-
-
-if __name__ == "__main__":
-    # call main function
-    test(path_data='/Users/chgroc/spinalcordtoolbox/testing/sct_testing_data/')
+    return param_test
