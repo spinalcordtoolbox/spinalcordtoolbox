@@ -224,6 +224,7 @@ def fill_functions():
         # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
         'sct_crop_image',
+        'sct_dice_coefficient',
         'sct_dmri_compute_dti',
         'sct_dmri_concat_bvals',
         'sct_dmri_concat_bvecs',
