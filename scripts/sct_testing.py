@@ -156,6 +156,7 @@ def main(args=None):
         list_output = []
         for i in range(0, len(param.args)):
             param_test = deepcopy(param)
+            param_test.default_args = param.args
             param_test.args = param.args[i]
             # test function
             param_test = test_function(param_test)
