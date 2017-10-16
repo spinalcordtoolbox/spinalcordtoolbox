@@ -219,6 +219,7 @@ def fill_functions():
         'sct_apply_transfo',
         'sct_compute_hausdorff_distance',
         # 'sct_compute_mtr',
+        'sct_compute_mscc',
         'sct_concat_transfo',
         'sct_convert',
         # 'sct_convert_binary_to_trilinear',  # not useful
