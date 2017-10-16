@@ -55,6 +55,7 @@ def test_integrity(param_test):
         max_hausdorff_distance = max(hausdorff_distance_lst)
     except:
         param_test.output += 'ERROR: Cannot open output hausdorff text file: ' + file_hausdorff
+        param_test.status = 99
         return param_test
 
     param_test.output += 'Max Computed Hausdorff distance: ' + str(max_hausdorff_distance)

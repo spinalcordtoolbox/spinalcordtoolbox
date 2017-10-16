@@ -50,9 +50,9 @@ def init(param_test):
     param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -c t2']  # default parameters
-    param_test.mse_threshold = 1.0
-    param_test.suffix_groundtruth = '_seg_manual'  # file name suffix for ground truth (used for integrity testing)
+    default_args = ['-i t2s/t2s.nii.gz -c t2s']  # default parameters
+    param_test.mse_threshold = 3.0
+    param_test.suffix_groundtruth = '_seg'  # file name suffix for ground truth (used for integrity testing)
 
     # assign default params
     if not param_test.args:
@@ -83,6 +83,7 @@ def test_integrity(param_test):
         im_ctr = Image(file_ctr)
     except:
         param_test.output += 'ERROR: Cannot open output centerline: ' + file_ctr
+        param_test.status = 99
         return param_test
 
     # open ground truth
@@ -93,14 +94,17 @@ def test_integrity(param_test):
         if im_ctr_manual.orientation != 'RPI':
             im_ctr_manual.change_orientation('RPI')
 
+        im_ctr_manua_data = im_ctr_manual.data
+
         # Compute center of mass of the SC seg on each axial slice.
-        center_of_mass_x_y_z_lst = [[int(xx), int(yy), zz] for zz in range(im_ctr_manual.dim[2]) for xx, yy in center_of_mass(im_ctr_manual.data[:,:,zz])]
+        center_of_mass_x_y_z_lst = [[int(center_of_mass(im_ctr_manua_data[:,:,zz])[0]), int(center_of_mass(im_ctr_manua_data[:,:,zz])[1]), zz] for zz in range(im_ctr_manual.dim[2])]
 
         im_ctr_manual.data *= 0
         for x_y_z in center_of_mass_x_y_z_lst:
             im_ctr_manual.data[x_y_z[0], x_y_z[1], x_y_z[2]] = 1
     except:
-        param_test.output += 'ERROR: Cannot open ground truth segmentation: ' + param_test.fname_groundtruth
+        param_test.output += 'ERROR: Cannot open ground truth segmentation or incorrect GT: ' + param_test.fname_groundtruth
+        param_test.status = 99
         return param_test
 
     # compute MSE between generated ctr and ctr from database
