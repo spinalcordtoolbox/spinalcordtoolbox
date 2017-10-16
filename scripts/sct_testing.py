@@ -246,6 +246,7 @@ def fill_functions():
         # 'sct_label_utils',
         # 'sct_label_vertebrae',
         'sct_maths',
+        'sct_merge_images',
         # 'sct_process_segmentation',
         'sct_propseg',
         # 'sct_register_graymatter',
