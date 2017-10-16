@@ -30,7 +30,7 @@ def init(param_test):
     # initialization
     default_args = ['-i t2/t2.nii.gz -c t2']  # default parameters
     param_test.dice_threshold = 0.9
-    param_test.suffix_groundtruth = '_seg_manual'  # file name suffix for ground truth (used for integrity testing)
+    param_test.fname_groundtruth = param_test.path_data + 't2/t2_seg_manual.nii.gz'  # file name suffix for ground truth (used for integrity testing)
 
     # check if isct_propseg compatibility
     # TODO: MAKE SURE THIS CASE WORKS AFTER MAJOR REFACTORING
@@ -70,6 +70,7 @@ def test_integrity(param_test):
         im_seg = Image(file_seg)
     except:
         param_test.output += 'ERROR: Cannot open output segmentation: ' + file_seg
+        param_test.status = 99
         return param_test
 
     # open ground truth
@@ -77,6 +78,7 @@ def test_integrity(param_test):
         im_seg_manual = Image(param_test.fname_groundtruth)
     except:
         param_test.output += 'ERROR: Cannot open ground truth segmentation: ' + param_test.fname_groundtruth
+        param_test.status = 99
         return param_test
 
     # compute dice coefficient between generated image and image from database

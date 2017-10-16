@@ -29,8 +29,8 @@ def init(param_test):
     # initialization
     default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1']  # default parameters
     param_test.difference_threshold = 0.95
-    param_test.suffix_groundtruth = '_contrast_1_mean_ref'  # file name suffix for ground truth (used for integrity testing)
-    param_test.contrast = 't2'
+    param_test.fname_groundtruth = param_test.path_data + 't2/t2_contrast_1_mean_ref.nii.gz'  # file name suffix for ground truth (used for integrity testing)
+    # param_test.contrast = 't2'
 
     # assign default params
     if not param_test.args:

@@ -52,7 +52,7 @@ def init(param_test):
     # initialization
     default_args = ['-i t2s/t2s.nii.gz -c t2s']  # default parameters
     param_test.mse_threshold = 3.0
-    param_test.suffix_groundtruth = '_seg'  # file name suffix for ground truth (used for integrity testing)
+    param_test.fname_groundtruth = param_test.path_data + 't2s/t2s_seg.nii.gz'  # file name suffix for ground truth (used for integrity testing)
 
     # assign default params
     if not param_test.args:

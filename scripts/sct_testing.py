@@ -41,7 +41,7 @@ class Param:
         self.output = ''  # output string
         self.results = ''  # results in Panda DataFrame
         self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
-        self.suffix_groundtruth = ''  # suffix used for ground truth data (for integrity testing)
+        self.fname_groundtruth = ''  # fname used for ground truth data (for integrity testing), do not put absolute path, but relative to self.path_data
 
 
 # define nice colors
@@ -149,7 +149,7 @@ def main(args=None):
         module_testing = importlib.import_module('test_' + f)
         # initialize default parameters of function to test
         param.args = []
-        param.suffix_groundtruth = ''
+        param.fname_groundtruth = ''
         param = module_testing.init(param)
         # loop over parameters to test
         list_status_function = []
@@ -397,12 +397,12 @@ def test_function(param_test):
         param_test.contrast = dict_args['-c']
 
     # Is there a ground truth for this data?
-    if param_test.suffix_groundtruth:
+    if param_test.fname_groundtruth:
         # Check if ground truth files exist
-        param_test.fname_groundtruth = param_test.path_data + param_test.contrast + '/' + sct.add_suffix(param_test.file_input, param_test.suffix_groundtruth)
+        # param_test.fname_groundtruth = param_test.path_data + param_test.contrast + '/' + sct.add_suffix(param_test.file_input, param_test.suffix_groundtruth)
         if not os.path.isfile(param_test.fname_groundtruth):
             param_test.status = 201
-            param_test.output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + param_test.fname_groundtruth
+            param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_groundtruth
             write_to_log_file(param_test.fname_log, param_test.output, 'w')
             return update_param(param_test)
 
