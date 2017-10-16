@@ -42,8 +42,8 @@ def viewer_centerline(image_fname, interslice_gap, verbose):
 
     return fname_output
 
-
-def run_main():
+def get_parser():
+    # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description("""This function allows the extraction of the spinal cord centerline. Two methods are available: OptiC (automatic) and Viewer (manual).""")
 
@@ -101,7 +101,10 @@ def run_main():
                       mandatory=False,
                       example=["0", "1"],
                       default_value="1")
+    return parser
 
+def run_main():
+    parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
 
