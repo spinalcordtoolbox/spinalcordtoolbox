@@ -236,13 +236,11 @@ class Option:
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
         if self.parser.check_file_exist:
-            sct.printv("Check folder existence...")
             sct.check_folder_exist(param, 0)
         return param
 
     def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
-        sct.printv("Check folder existence...")
         if self.parser.check_file_exist:
             result_creation = sct.create_folder(param)
         else:
