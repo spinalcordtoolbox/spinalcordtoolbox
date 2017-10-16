@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_flatten_sagital
+# Test function sct_compute_mscc
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Augustin Roux
-# modified: 2014/10/19
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Benjamin De Leener
+# modified: 2017/10/16
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
 import sct_utils as sct
 import commands
+from pandas import DataFrame
+import sct_compute_mscc
 
 
 def init(param_test):
@@ -27,7 +29,9 @@ def init(param_test):
     param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -s t2_centerline_init.nii.gz']  # default parameters
+    param_test.default_args_values = {'di': 6.85, 'da': 7.65, 'db': 7.02}
+    default_args = ['-di 6.85 -da 7.65 -db 7.02']  # default parameters
+    param_test.default_result = 6.612133606
 
     # assign default params
     if not param_test.args:
@@ -40,5 +44,13 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    param_test.output += '\nNot implemented.'
+    mscc = sct_compute_mscc.mscc(di=param_test.default_args_values['di'],
+                                 da=param_test.default_args_values['da'],
+                                 db=param_test.default_args_values['db'])
+
+    error = abs(round(mscc, 4) - round(param_test.default_result, 4))
+
+    if error != 0.0:
+        param_test.status = 99
+
     return param_test
