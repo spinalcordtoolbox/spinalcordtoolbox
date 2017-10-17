@@ -37,13 +37,6 @@ def init(param_test):
 def test_integrity(param_test):
     """
     Test integrity of function
-    Parameters
-    ----------
-    param_test: Class defined in sct_testing.py
-
-    Returns
-    -------
-    param_test
     """
     # initializations
     distance_detection = float('nan')
