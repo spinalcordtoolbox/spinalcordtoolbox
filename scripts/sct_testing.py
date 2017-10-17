@@ -240,7 +240,7 @@ def fill_functions():
         # 'sct_documentation',
         'sct_extract_metric',
         # 'sct_flatten_sagittal',
-        # 'sct_fmri_compute_tsnr',
+        'sct_fmri_compute_tsnr',
         # 'sct_fmri_moco',
         'sct_get_centerline',
         'sct_image',
