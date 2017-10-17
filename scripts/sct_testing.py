@@ -345,29 +345,24 @@ def test_function(param_test):
     # initialize testing parameters specific to this function
     # param_test = module_testing.init(param_test)
 
+    # retrieve subject name
+    subject_folder = sct.slash_at_the_end(param_test.path_data, 0).split('/')
+    subject_folder = subject_folder[-1]
+    # build path_output variable
+    param_test.path_output = sct.slash_at_the_end(param_test.function_to_test + '_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
+    sct.create_folder(param_test.path_output)
+
     # get parser information
     parser = module_function_to_test.get_parser()
     dict_args = parser.parse(param_test.args.split(), check_file_exist=False)
     # TODO: if file in list does not exist, raise exception and assign status=200
     dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args), param_test.path_data, input_file=True)
-
-    # retrieve subject name
-    subject_folder = sct.slash_at_the_end(param_test.path_data, 0).split('/')
-    subject_folder = subject_folder[-1]
-    # build path_output variable
-    param_test.path_output = sct.slash_at_the_end(
-        param_test.function_to_test + '_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(
-            random.randint(1, 1000000)), slash=1)
-
-    if '-o' in dict_args_with_path:
-        if not os.path.isabs(dict_args_with_path['-o']):
-            dict_args_with_path['-o'] = param_test.path_output + dict_args_with_path['-o']
+    dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args_with_path), param_test.path_output, input_file=False, output_file=True)
     param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
 
-    # check if parser has key '-ofolder'. If so, then assign output folder
-    if parser.options.has_key('-ofolder'):
+    # check if parser has key '-ofolder' that has not been added already. If so, then assign output folder
+    if parser.options.has_key('-ofolder') and '-ofolder' not in dict_args_with_path:
         param_test.args_with_path += ' -ofolder ' + param_test.path_output
-    sct.create_folder(param_test.path_output)
 
     # log file
     param_test.fname_log = param_test.path_output + param_test.function_to_test + '.log'
