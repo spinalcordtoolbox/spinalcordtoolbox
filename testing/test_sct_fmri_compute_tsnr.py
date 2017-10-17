@@ -27,4 +27,5 @@ def test_integrity(param_test):
     Test integrity of function
     """
     param_test.output += '\nNot implemented.'
+    # TODO: implement integrity testing using the fmri_tsnr file already existing in sct_testing_data
     return param_test
