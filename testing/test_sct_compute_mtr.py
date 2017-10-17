@@ -16,7 +16,7 @@ def init(param_test):
      Initialize class: param_test
      """
      # initialization
-     default_args = ['-mto mt/mto.nii.gz -mt1 mt/mt1.nii.gz']
+     default_args = ['-mt0 mt/mt0.nii.gz -mt1 mt/mt1.nii.gz']
 
     # assign default params
      if not param_test.args:
@@ -31,4 +31,3 @@ def test_integrity(param_test):
      param_test.output += '\nNot implemented.'
      
      return param_test
-     
