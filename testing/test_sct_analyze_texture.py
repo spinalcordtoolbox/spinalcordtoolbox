@@ -17,14 +17,7 @@ import sct_utils as sct
 
 def init(param_test):
     """
-    Initialize testing.
-    Parameters
-    ----------
-    param_test: Class defined in sct_testing.py
-
-    Returns
-    -------
-    param_test
+    Initialize class: param_test
     """
     # initialization
     default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1']  # default parameters
@@ -42,13 +35,6 @@ def init(param_test):
 def test_integrity(param_test):
     """
     Test integrity of function
-    Parameters
-    ----------
-    param_test: Class defined in sct_testing.py
-
-    Returns
-    -------
-    param_test
     """
     # extract name of output texture file
     file_texture = param_test.path_output + sct.add_suffix(param_test.file_input, '_contrast_1_mean')

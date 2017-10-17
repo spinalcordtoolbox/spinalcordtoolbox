@@ -40,14 +40,7 @@ def compute_mse(im_true, im_pred):
 
 def init(param_test):
     """
-    Initialize testing.
-    Parameters
-    ----------
-    param_test: Class defined in sct_testing.py
-
-    Returns
-    -------
-    param_test
+    Initialize class: param_test
     """
     # initialization
     default_args = ['-i t2s/t2s.nii.gz -c t2s']  # default parameters
@@ -64,13 +57,6 @@ def init(param_test):
 def test_integrity(param_test):
     """
     Test integrity of function
-    Parameters
-    ----------
-    param_test: Class defined in sct_testing.py
-
-    Returns
-    -------
-    param_test
     """
     # initializations
     mse_detection = float('nan')
