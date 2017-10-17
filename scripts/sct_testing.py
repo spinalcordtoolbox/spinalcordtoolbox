@@ -243,7 +243,7 @@ def fill_functions():
         # 'sct_fmri_compute_tsnr',
         # 'sct_fmri_moco',
         'sct_get_centerline',
-        # 'sct_image',
+        'sct_image',
         # 'sct_label_utils',
         # 'sct_label_vertebrae',
         'sct_maths',
