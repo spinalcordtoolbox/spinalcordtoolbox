@@ -414,7 +414,9 @@ class Parser:
                     # if not a list:
                     else:
                         # If it contains files, it must be updated.
-                        if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
+                        if self.options[key].type_value is None:
+                            dictionary[key] = ''
+                        elif (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
                             # if the option contains an "no image file", do nothing
                             if self.options[key].list_no_image is not None:
                                 if str(option) in self.options[key].list_no_image:
