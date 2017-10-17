@@ -71,7 +71,7 @@ def test_integrity(param_test):
     # checking the integrity of padding an image
     if index_args == 0:
         nx, ny, nz, nt, px, py, pz, pt = Image(param_test.path_data + param_test.folder_data[0] + param_test.file_data[0]).dim
-        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = Image("test.nii.gz").dim
+        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = Image(param_test.path_output + 'test.nii.gz').dim
 
         if nz2 != nz + 2 * param_test.pad:
             param_test.status = 99
@@ -97,7 +97,7 @@ def test_integrity(param_test):
         try:
             threshold = 1e-3
             ref = Image(param_test.path_data + param_test.folder_data[2] + param_test.file_data[2])
-            new = Image('dmri_concat.nii.gz')
+            new = Image(param_test.path_output + 'dmri_concat.nii.gz')
             diff = ref.data - new.data
             if np.sum(diff) > threshold:
                 param_test.status = 99
