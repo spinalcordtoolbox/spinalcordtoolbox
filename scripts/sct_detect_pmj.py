@@ -96,7 +96,7 @@ class DetectPMJ:
         self.dection_map_pmj = extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
-        self.pmj_model = os.path.join((commands.getoutput('$SCT_DIR')).split(': ')[1],
+        self.pmj_model = os.path.join(commands.getstatusoutput('echo $SCT_DIR')[1],
                                             'data/pmj_models',
                                             '{}_model'.format(self.contrast))
 
