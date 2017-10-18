@@ -255,7 +255,7 @@ def fill_functions():
         # 'sct_register_multimodal',
         # 'sct_register_to_template',
         'sct_resample',
-        # 'sct_segment_graymatter',
+        'sct_segment_graymatter',
         'sct_smooth_spinalcord',
         # 'sct_straighten_spinalcord',
         'sct_warp_template',
