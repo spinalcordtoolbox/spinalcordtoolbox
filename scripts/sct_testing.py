@@ -406,7 +406,7 @@ def test_function(param_test):
         param_test.contrast = dict_args['-c']
 
     # Is there a ground truth for this data?
-    if param_test.fname_gt:
+    if hasattr(param_test, 'fname_gt'):
         # Check if ground truth files exist
         # param_test.fname_groundtruth = param_test.path_data + param_test.contrast + '/' + sct.add_suffix(param_test.file_input, param_test.suffix_groundtruth)
         if not os.path.isfile(param_test.path_data + param_test.fname_gt):
