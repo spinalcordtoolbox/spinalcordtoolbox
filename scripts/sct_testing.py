@@ -407,13 +407,14 @@ def test_function(param_test):
 
     # Is there a ground truth for this data?
     if hasattr(param_test, 'fname_gt'):
-        # Check if ground truth files exist
-        # param_test.fname_groundtruth = param_test.path_data + param_test.contrast + '/' + sct.add_suffix(param_test.file_input, param_test.suffix_groundtruth)
-        if not os.path.isfile(param_test.path_data + param_test.fname_gt):
-            param_test.status = 201
-            param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
-            write_to_log_file(param_test.fname_log, param_test.output, 'w')
-            return update_param(param_test)
+        # check if ground truch file is defined
+        if not param_test.fname_gt == '':
+            # Check if ground truth files exist
+            if not os.path.isfile(param_test.path_data + param_test.fname_gt):
+                param_test.status = 201
+                param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
+                write_to_log_file(param_test.fname_log, param_test.output, 'w')
+                return update_param(param_test)
 
     # go to specific testing directory
     os.chdir(param_test.path_output)
