@@ -10,11 +10,10 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-from msct_parser import Parser
 
+from msct_parser import Parser
 import sys
 import sct_utils as sct
-#import numpy as np
 
 
 # DEFAULT PARAMETERS
@@ -69,7 +68,12 @@ class ErnstAngle:
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Function to get the Ernst Angle. For examples of T1 values, see Stikov et al. MRM 2015. Example in the white matter at 3T: 850ms.')
+    parser.usage.set_description('Function to compute the Ernst Angle. For examples of T1 values, see Stikov et al. MRM 2015. Example in the white matter at 3T: 850ms.')
+    parser.add_option(name="-tr",
+                      type_value='float',
+                      description="Value of TR (in ms) to get the Ernst Angle. ",
+                      mandatory=True,
+                      example='2000')
     parser.add_option(name="-t1",
                       type_value="float",
                       description="T1 value (in ms).",
@@ -81,11 +85,6 @@ def get_parser():
                       description="Boundaries TR parameter (in ms) in case -v 2 is used.",
                       mandatory=False,
                       example='500,3500')
-    parser.add_option(name="-tr",
-                      type_value='float',
-                      description="Value of TR (in ms) to get the Ernst Angle. ",
-                      mandatory=False,
-                      example='2000')
     parser.add_option(name="-d",
                       type_value=None,
                       description="Display option. The graph isn't display if 0.  ",
@@ -104,17 +103,21 @@ def get_parser():
                       default_value='1')
     return parser
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
-    sct.start_stream_logger()
-    # initialize parameters
-    param = Param()
-    param_default = Param()
 
+# main
+#=======================================================================================================================
+def main(args=None):
+
+    # Initialization
+    param = Param()
+
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+
+    # Check input parameters
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     input_t1 = arguments["-t1"]
     input_fname_output = None
@@ -140,5 +143,14 @@ if __name__ == "__main__":
             input_tr_max = input_tr + 500
         elif input_tr < input_tr_min:
             input_tr_min = input_tr - 500
+
     if verbose == 2 :
         graph.draw(input_tr_min, input_tr_max)
+
+
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+    sct.start_stream_logger()
+    main()
