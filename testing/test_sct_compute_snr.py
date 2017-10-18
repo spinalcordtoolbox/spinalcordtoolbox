@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_compute_mtr
+# Test function for sct_compute_snr
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Stephanie Alley
-#
+# 
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
 
 def init(param_test):
      """
      Initialize class: param_test
      """
      # initialization
-     default_args = ['-mt0 mt/mt0.nii.gz -mt1 mt/mt1.nii.gz']
+     default_args = ['-i t2/t2.nii.gz -m t2/t2_seg_manual.nii.gz']
 
     # assign default params
      if not param_test.args:

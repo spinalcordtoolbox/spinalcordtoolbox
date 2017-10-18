@@ -29,7 +29,7 @@ def test_integrity(param_test):
     import pickle
     mtr_groundtruth = 32.7919  # ground truth value
     threshold_diff = 0.001  # threshold for computing difference between result and ground truth
-    mtr_result = pickle.load(open("quantif_mtr.pickle", "rb"))['Metric value'][0]
+    mtr_result = pickle.load(open(param_test.path_output +"quantif_mtr.pickle", "rb"))['Metric value'][0]
     param_test.output += 'Computed MTR:     ' + str(mtr_result)
     param_test.output += '\nGround truth MTR: ' + str(mtr_groundtruth)
     if abs(mtr_result - mtr_groundtruth) < threshold_diff:
