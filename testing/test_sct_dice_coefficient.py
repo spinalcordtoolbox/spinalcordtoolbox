@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_propseg
+# Test function for sct_dice_coefficient
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
