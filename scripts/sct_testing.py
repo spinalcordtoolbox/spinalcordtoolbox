@@ -130,6 +130,7 @@ def main(args=None):
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.tmp_create(verbose=0)
     os.chdir(param.path_tmp)
+    param.full_path_tmp = os.getcwd() + '/'
 
     # get list of all scripts to test
     list_functions = fill_functions()
@@ -249,7 +250,7 @@ def fill_functions():
         'sct_label_vertebrae',
         'sct_maths',
         'sct_merge_images',
-        # 'sct_process_segmentation',
+        'sct_process_segmentation',
         'sct_propseg',
         # 'sct_register_graymatter',
         # 'sct_register_multimodal',
