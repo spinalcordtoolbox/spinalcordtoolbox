@@ -57,6 +57,7 @@ def main(args=None):
 
     if args is None:
         args = sys.argv[1:]
+    param = Param()
 
     # Check input parameters
     parser = get_parser()
@@ -80,12 +81,12 @@ def main(args=None):
         param.verbose = int(arguments['-v'])
 
     # run main program
-    create_mask()
+    create_mask(param)
 
 
 # create_mask
 #=======================================================================================================================
-def create_mask():
+def create_mask(param):
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
     # parse argument for method
@@ -179,7 +180,7 @@ def create_mask():
     else:
         # generate volume with line along Z at coordinates 'coord'
         sct.printv('\nCreate line...', param.verbose)
-        fname_centerline = create_line('data_RPI.nii', coord, nz)
+        fname_centerline = create_line(param, 'data_RPI.nii', coord, nz)
 
     # create mask
     sct.printv('\nCreate mask...', param.verbose)
@@ -209,7 +210,7 @@ def create_mask():
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
         else:
             center = numpy.array([cx[iz], cy[iz]])
-            mask2d = create_mask2d(center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
+            mask2d = create_mask2d(param, center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(mask2d, None, hdr)
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
@@ -269,7 +270,7 @@ def create_mask():
 
 # create_line
 # ==========================================================================================
-def create_line(fname, coord, nz):
+def create_line(param, fname, coord, nz):
 
     # duplicate volume (assumes input file is nifti)
     sct.run('cp ' + fname + ' line.nii', param.verbose)
@@ -291,7 +292,7 @@ def create_line(fname, coord, nz):
 
 # create_mask2d
 # ==========================================================================================
-def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
+def create_mask2d(param, center, shape, size, nx, ny, even=0, spacing=None):
     # extract offset d = 2r+1 --> r=ceil((d-1)/2.0)
     # s=11 -> r=5
     # s=10 -> r=5
@@ -403,5 +404,4 @@ def get_parser():
 #=======================================================================================================================
 if __name__ == "__main__":
     sct.start_stream_logger()
-    param = Param()
     main()
