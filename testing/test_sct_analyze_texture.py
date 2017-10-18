@@ -15,12 +15,13 @@ import numpy as np
 from msct_image import Image
 import sct_utils as sct
 
+
 def init(param_test):
     """
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1']  # default parameters
+    default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1 -ofolder .']  # default parameters
     param_test.difference_threshold = 0.95
     param_test.fname_groundtruth = param_test.path_data + 't2/t2_contrast_1_mean_ref.nii.gz'  # file name suffix for ground truth (used for integrity testing)
     # param_test.contrast = 't2'
@@ -37,7 +38,8 @@ def test_integrity(param_test):
     Test integrity of function
     """
     # extract name of output texture file
-    file_texture = param_test.path_output + sct.add_suffix(param_test.file_input, '_contrast_1_mean')
+    # file_texture = param_test.path_output + sct.add_suffix(param_test.file_input, '_contrast_1_mean')
+    file_texture = sct.add_suffix(param_test.file_input, '_contrast_1_mean')
 
     # open output
     try:
