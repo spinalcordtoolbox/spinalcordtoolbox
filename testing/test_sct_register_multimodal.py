@@ -1,224 +1,71 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_register_multimodal script
+# Test function for sct_register_multimodal
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Augustin Roux
-# modified: 2014/09/28
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
-import sct_utils as sct
-import sct_register_multimodal
-from copy import deepcopy
-from pandas import DataFrame
-import os
+from msct_image import Image
+import numpy as np
 
-def test(path_data='', parameters=''):
-    output = ''
-    status = 0
-    verbose = 0
 
-    if not parameters:
-        folder_data = 'mt/'
-        file_data = ['mt0.nii.gz', 'mt1.nii.gz', 'mt0_seg.nii.gz', 'mt1_seg.nii.gz']
+def init(param_test):
+    """
+    Initialize class: param_test
+    """
+    # initialization
+    default_args = ['-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=syn,type=im,iter=1,smooth=1,shrink=2,metric=MI -x linear -r 0',
+                    '-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares -x linear -r 0',
+                    '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=centermassrot,type=seg,smooth=1 -x linear -r 0',
+                    '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=columnwise,type=seg,smooth=1 -x linear -r 0']
+    param_test.list_fname_gt = ['mt/mt0_reg_syn_goldstandard.nii.gz',
+                                'mt/mt0_reg_slicereg_goldstandard.nii.gz',
+                                '',
+                                '']
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
+    return param_test
 
-        parameters = []
-        list_validation = []
 
-        # check syn
-        algo = 'syn'
-        cmd = '-i '  + folder_data + file_data[0] \
-              + ' -d ' +  folder_data + file_data[1] \
-              + ' -o ' + sct.add_suffix(file_data[0], '_reg_'+algo)  \
-              + ' -param step=1,algo='+algo+',type=im,iter=1,smooth=1,shrink=2,metric=MI'  \
-              + ' -x linear' \
-              + ' -r 0' \
-              + ' -v 1'
-
-        parameters.append(cmd)
-        list_validation.append((algo, sct.add_suffix(file_data[0], '_reg_'+algo), path_data+folder_data+sct.add_suffix(file_data[0], '_reg_'+algo+'_goldstandard') ))
-
-        # output += '\n====================================================================================================\n'\
-        #           +cmd+\
-        #           '\n====================================================================================================\n\n'  # copy command
-        # s, o = commands.getstatusoutput(cmd)
-        # status += s
-        # output += o
-        # if status == 0:
-        #     s, o = check_integrity(algo=algo, fname_result=sct.add_suffix(file_data[0], '_reg_'+algo), fname_goldstandard=path_data+folder_data+sct.add_suffix(file_data[0], '_reg_'+algo+'_goldstandard'))
-        #     status += s
-        #     output += o
-
-        # check slicereg
-        algo = 'slicereg'
-        cmd = '-i ' +  folder_data + file_data[0] \
-              + ' -d ' +  folder_data + file_data[1] \
-              + ' -o ' + sct.add_suffix(file_data[0], '_reg_'+algo)  \
-              + ' -param step=1,algo='+algo+',type=im,iter=5,smooth=0,metric=MeanSquares'  \
-              + ' -x linear' \
-              + ' -r 0' \
-              + ' -v 1'
-
-        parameters.append(cmd)
-        list_validation.append((algo, sct.add_suffix(file_data[0], '_reg_'+algo), path_data+folder_data+sct.add_suffix(file_data[0], '_reg_'+algo+'_goldstandard') ))
-
-        # output += '\n====================================================================================================\n'\
-        #           +cmd+\
-        #           '\n====================================================================================================\n\n'  # copy command
-        # s, o = commands.getstatusoutput(cmd)
-        # status += s
-        # output += o
-        # if status == 0:
-        #     s, o = check_integrity(algo=algo, fname_result=sct.add_suffix(file_data[0], '_reg_'+algo), fname_goldstandard=path_data+folder_data+sct.add_suffix(file_data[0], '_reg_'+algo+'_goldstandard'))
-        #     status += s
-        #     output += o
-
-        # check centermass
-        algo = 'centermass'
-        cmd = ' -i ' +  folder_data + file_data[0] \
-              + ' -d ' +  folder_data + file_data[1] \
-              + ' -iseg ' +  folder_data + file_data[2] \
-              + ' -dseg ' +  folder_data + file_data[3] \
-              + ' -o ' + sct.add_suffix(file_data[0], '_reg_'+algo)  \
-              + ' -param step=1,type=seg,algo='+algo+',smooth=1'  \
-              + ' -x linear' \
-              + ' -r 0' \
-              + ' -v 1'
-
-        parameters.append(cmd)
-        list_validation.append(None)
-
-        # output += '\n====================================================================================================\n'\
-        #           +cmd+\
-        #           '\n====================================================================================================\n\n'  # copy command
-        # s, o = commands.getstatusoutput(cmd)
-        # status += s
-        # output += o
-
-        # check centermassrot
-        algo = 'centermassrot'
-        cmd = ' -i ' +  folder_data + file_data[0] \
-              + ' -d ' +  folder_data + file_data[1] \
-              + ' -iseg ' +  folder_data + file_data[2] \
-              + ' -dseg ' +  folder_data + file_data[3] \
-              + ' -o ' + sct.add_suffix(file_data[0], '_reg_'+algo)  \
-              + ' -param step=1,type=seg,algo='+algo+',smooth=1'  \
-              + ' -x linear' \
-              + ' -r 0' \
-              + ' -v 1'
-
-        parameters.append(cmd)
-        list_validation.append(None)
-
-        # output += '\n====================================================================================================\n'\
-        #           +cmd+\
-        #           '\n====================================================================================================\n\n'  # copy command
-        # s, o = commands.getstatusoutput(cmd)
-        # status += s
-        # output += o
-
-        # check columnwise
-        algo = 'columnwise'
-        cmd = ' -i ' +  folder_data + file_data[0] \
-              + ' -d ' +  folder_data + file_data[1] \
-              + ' -iseg ' +  folder_data + file_data[2] \
-              + ' -dseg ' +  folder_data + file_data[3] \
-              + ' -o ' + sct.add_suffix(file_data[0], '_reg_'+algo)  \
-              + ' -param step=1,type=seg,algo='+algo+',smooth=1'  \
-              + ' -x linear' \
-              + ' -r 0' \
-              + ' -v 1'
-
-        parameters.append(cmd)
-        list_validation.append(None)
-
-        # output += '\n====================================================================================================\n'\
-        #           +cmd+\
-        #           '\n====================================================================================================\n\n'  # copy command
-        # s, o = commands.getstatusoutput(cmd)
-        # status += s
-        # output += o
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    """
+    # find the test that is performed and check the integrity of the output
+    index_args = param_test.default_args.index(param_test.args)
+    # compare result and groundtruth images
+    if index_args in [0, 1]:
+        param_test = compare_two_images('mt0_reg.nii.gz', param_test.fname_gt, param_test)
     else:
-        parameters = [parameters]
-        list_validation = [None]
-
-    for param, val in zip(parameters, list_validation):
-        parser = sct_register_multimodal.get_parser()
-        dict_param = parser.parse(param.split(), check_file_exist=False)
-        dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
-        param_with_path = parser.dictionary_to_string(dict_param_with_path)
-
-        if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-d'])):
-            status = 200
-            output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-            return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-
-        import time, random
-        subject_folder = path_data.split('/')
-        if subject_folder[-1] == '' and len(subject_folder) > 1:
-            subject_folder = subject_folder[-2]
-        else:
-            subject_folder = subject_folder[-1]
-        path_output = sct.slash_at_the_end(
-            'sct_register_multimodal_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(
-                random.randint(1, 1000000)), slash=1)
-        param_with_path += ' -ofolder ' + path_output
-
-        cmd = 'sct_register_multimodal ' + param_with_path
-        output = '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
-        time_start = time.time()
-        try:
-            status, o = sct.run(cmd, verbose)
-        except:
-            status, o = 1, 'ERROR: Function crashed!'
-        output += o
-        duration = time.time() - time_start
-
-        if val is not None:
-            s, o = check_integrity(val[0], path_output+val[1], val[2])
-            status += s
-            output += o
-
-    results = DataFrame(data={'status': int(status), 'output': output, 'duration [s]': duration}, index=[path_data])
-
-    return status, output, results
+        param_test.output += '\nNot implemented.'
+    return param_test
 
 
-def check_integrity(algo='', fname_result='', fname_goldstandard=''):
+def compare_two_images(fname_result, fname_gt, param_test):
     """
-    Check integrity between registered image and gold-standard
-    :param algo:
-    :return:
+    Compare two images and return status=99 if difference is above threshold
     """
-    status = 0
-    output = '\nChecking integrity between: \n  Result: '+fname_result+'\n  Gold-standard: '+fname_goldstandard
+    output = '\nComparing: ' + fname_result + ' and ' + fname_gt
 
-    from msct_image import Image
-    # compare with gold-standard registration
-    im_gold = Image(fname_goldstandard)
-    data_gold = im_gold.data
-    data_res = Image(fname_result).data
+    im_gt = Image(fname_gt)
+    data_gt = im_gt.data
+    data_result = Image(fname_result).data
     # get dimensions
-    nx, ny, nz, nt, px, py, pz, pt = im_gold.dim
+    nx, ny, nz, nt, px, py, pz, pt = im_gt.dim
     # set the difference threshold to 1e-3 pe voxel
     threshold = 1e-3 * nx * ny * nz * nt
     # check if non-zero elements are present when computing the difference of the two images
-    diff = data_gold - data_res
-    # report result
-    import numpy as np
-    output += '\nDifference between the two images: '+str(abs(np.sum(diff)))
-    output += '\nThreshold: '+str(threshold)
+    diff = data_gt - data_result
+    # compare images
     if abs(np.sum(diff)) > threshold:
-        Image(param=diff, absolutepath='res_differences_from_gold_standard.nii.gz').save()
-        status = 99
-        output += '\nWARNING: Difference is higher than threshold.'
-    return status, output
-
-if __name__ == "__main__":
-    # call main function
-    test()
+        param_test.status = 99
+        param_test.output += '\n--> FAIL'
+    else:
+        param_test.output += '\n--> PASS'
+    return param_test

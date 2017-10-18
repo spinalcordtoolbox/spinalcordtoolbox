@@ -41,7 +41,7 @@ class Param:
         self.output = ''  # output string
         self.results = ''  # results in Panda DataFrame
         self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
-        self.fname_groundtruth = ''  # fname used for ground truth data (for integrity testing), do not put absolute path, but relative to self.path_data
+        # self.fname_groundtruth = ''  # fname used for ground truth data (for integrity testing), do not put absolute path, but relative to self.path_data
 
 
 # define nice colors
@@ -149,7 +149,7 @@ def main(args=None):
         module_testing = importlib.import_module('test_' + f)
         # initialize default parameters of function to test
         param.args = []
-        param.fname_groundtruth = ''
+        # param.fname_groundtruth = ''
         param = module_testing.init(param)
         # loop over parameters to test
         list_status_function = []
@@ -158,6 +158,9 @@ def main(args=None):
             param_test = deepcopy(param)
             param_test.default_args = param.args
             param_test.args = param.args[i]
+            # if list_fname_gt exists, assign it
+            if hasattr(param_test, 'list_fname_gt'):
+                param_test.fname_gt = param_test.list_fname_gt[i]
             # test function
             param_test = test_function(param_test)
             list_status_function.append(param_test.status)
@@ -252,7 +255,7 @@ def fill_functions():
         # 'sct_process_segmentation',
         'sct_propseg',
         'sct_register_graymatter',
-        # 'sct_register_multimodal',
+        'sct_register_multimodal',
         # 'sct_register_to_template',
         'sct_resample',
         'sct_segment_graymatter',
@@ -402,12 +405,12 @@ def test_function(param_test):
         param_test.contrast = dict_args['-c']
 
     # Is there a ground truth for this data?
-    if param_test.fname_groundtruth:
+    if param_test.fname_gt:
         # Check if ground truth files exist
         # param_test.fname_groundtruth = param_test.path_data + param_test.contrast + '/' + sct.add_suffix(param_test.file_input, param_test.suffix_groundtruth)
-        if not os.path.isfile(param_test.fname_groundtruth):
+        if not os.path.isfile(param_test.path_data + param_test.fname_gt):
             param_test.status = 201
-            param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_groundtruth
+            param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
             write_to_log_file(param_test.fname_log, param_test.output, 'w')
             return update_param(param_test)
 
