@@ -350,10 +350,10 @@ def test_function(param_test):
     subject_folder = sct.slash_at_the_end(param_test.path_data, 0).split('/')
     subject_folder = subject_folder[-1]
     # build path_output variable
-    testing_path = os.getcwd() + '/'
+    path_testing = os.getcwd() + '/'
     param_test.path_output = sct.slash_at_the_end(param_test.function_to_test + '_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
     sct.create_folder(param_test.path_output)
-    param_test.path_output = testing_path + param_test.path_output
+    param_test.path_output = path_testing + param_test.path_output
 
     # get parser information
     parser = module_function_to_test.get_parser()
@@ -447,7 +447,7 @@ def test_function(param_test):
     write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
 
     # go back to parent directory
-    os.chdir(testing_path)
+    os.chdir(path_testing)
 
     return update_param(param_test)
 
