@@ -19,14 +19,7 @@ import sct_compute_mscc
 
 def init(param_test):
     """
-    Initialize testing.
-    Parameters
-    ----------
-    param_test: Class defined in sct_testing.py
-
-    Returns
-    -------
-    param_test
+    Initialize class: param_test
     """
     # initialization
     param_test.default_args_values = {'di': 6.85, 'da': 7.65, 'db': 7.02}

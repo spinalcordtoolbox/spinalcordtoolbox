@@ -19,14 +19,7 @@ import numpy as np
 
 def init(param_test):
     """
-    Initialize testing.
-    Parameters
-    ----------
-    param_test: Class defined in sct_testing.py
-
-    Returns
-    -------
-    param_test
+    Initialize class: param_test
     """
     # initialization
     param_test.folder_data = ['mt/', 't2/', 'dmri/']
@@ -56,15 +49,7 @@ def init(param_test):
 def test_integrity(param_test):
     """
     Test integrity of function
-    Parameters
-    ----------
-    param_test: Class defined in sct_testing.py
-
-    Returns
-    -------
-    param_test
     """
-
     # find the test that is performed and check the integrity of the output
     index_args = param_test.default_args.index(param_test.args)
 
