@@ -41,7 +41,7 @@ def test_integrity(param_test):
     index_args = param_test.default_args.index(param_test.args)
     # compare result and groundtruth images
     if index_args in [0, 1]:
-        param_test = compare_two_images('mt0_reg.nii.gz', param_test.fname_gt, param_test)
+        param_test = compare_two_images('mt0_reg.nii.gz', param_test.path_data + param_test.fname_gt, param_test)
     else:
         param_test.output += '\nNot implemented.'
     return param_test
