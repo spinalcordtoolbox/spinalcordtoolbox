@@ -245,7 +245,7 @@ def fill_functions():
         'sct_get_centerline',
         'sct_image',
         # 'sct_invert_image',  # function not available from command-line
-        # 'sct_label_utils',
+        'sct_label_utils',
         # 'sct_label_vertebrae',
         'sct_maths',
         'sct_merge_images',

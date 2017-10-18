@@ -15,56 +15,53 @@
 
 import commands
 from pandas import DataFrame
-import time
 
-def test(path_data='', parameters=''):
 
-    # parameters
+def init(param_test):
+    """
+    Initialize class: param_test
+    """
+    # initialization
     folder_data = ['t2/']
     file_data = ['t2_seg.nii.gz', 't2_seg_labeled.nii.gz']
-    output = ''
-    status = 0
-    list_status = []
 
-    # start timer
-    time_start = time.time()
+    default_args = ['-i ' + folder_data[0] + file_data[0] + ' -create 1,1,1,1:2,2,2,2',
+                    '-i ' + folder_data[0] + file_data[0] + ' -cubic-to-point -o test_centerofmass.nii.gz']
+    param_test.centers_of_mass = '31,28,25,1'
 
-    # TEST CREATE
-    cmd = 'sct_label_utils -i ' + path_data + folder_data[0] + file_data[0] + ' -create 1,1,1,1:2,2,2,2'
-    output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
-    s, o = commands.getstatusoutput(cmd)
-    list_status.append(s)
-    output += o
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
 
-    # TEST cubic-to-point
-    cmd = 'sct_label_utils -i ' + path_data + folder_data[0] + file_data[1] + ' -cubic-to-point -o test_centerofmass.nii.gz'
-    output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
-    s, o = commands.getstatusoutput(cmd)
-    list_status.append(s)
-    output += o
+    return param_test
 
-    duration = time.time() - time_start
 
-    # Integrity testing
-    if s == 0:
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    Parameters
+    ----------
+    param_test: Class defined in sct_testing.py
+
+    Returns
+    -------
+    param_test
+    """
+
+    # find the test that is performed and check the integrity of the output
+    index_args = param_test.default_args.index(param_test.args)
+
+    if index_args == 1:
         # compute center of mass of labeled segmentation
-        status_mass, output_mass = commands.getstatusoutput('sct_label_utils -i test_centerofmass.nii.gz -display')
-        centers_of_mass = '30,25,25,4:30,42,25,3:31,9,25,5:32,0,25,6:30,52,26,2'
-        if output_mass.split('\n')[-1] != centers_of_mass:
-            output += 'WARNING: Center of mass different from gold-standard. \n--> Results:   ' + output_mass.split('\n')[-1] + '\n--> Should be: ' + centers_of_mass + '\n'
-            list_status.append(99)
+        status_mass, output_mass = commands.getstatusoutput('sct_label_utils -i ' + 'test_centerofmass.nii.gz -display')
+        centers_of_mass_image = output_mass.split('\n')[-1]
 
-    # check if at least one integrity status was equal to 99
-    if 99 in list_status:
-        status = 99
+        if centers_of_mass_image != param_test.centers_of_mass:
+            param_test.output += 'WARNING: Center of mass different from gold-standard. \n--> Results:   ' + centers_of_mass_image + '\n--> Should be: ' + param_test.centers_of_mass + '\n'
+            param_test.status = 99
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'duration [s]': duration}, index=[path_data])
+    param_test.results = DataFrame(data={'status': param_test.status, 'output': param_test.output, 'duration [s]': param_test.duration}, index=[param_test.path_data])
 
     # end test
-    return status, output, results
-
-
-if __name__ == "__main__":
-    # call main function
-    test()
+    return param_test
