@@ -79,7 +79,7 @@ class Coordinate(Point):
         return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
 
     def __str__(self):
-        return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
+        return str(self.x) + "," + str(self.y) + "," + str(self.z) + "," + str(self.value)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
