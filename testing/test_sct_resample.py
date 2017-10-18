@@ -19,14 +19,12 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i fmri/fmri.nii.gz -f 0.5x0.5x1 -v 1 -o resampled.nii.gz',  # 3D, factor
-                    '-i dmri/dmri.nii.gz -f 0.5x0.5x1 -v 1 -o resampled.nii.gz',  # 4D, factor
+    default_args = ['-i dmri/dmri.nii.gz -f 0.5x0.5x1 -v 1 -o resampled.nii.gz',  # 4D, factor
                     '-i t2/t2.nii.gz -mm 0.97x1.14x1.2 -v 1 -o resampled.nii.gz',  # 3D, mm
                     '-i t2/t2.nii.gz -vox 120x110x26 -v 1 -o resampled.nii.gz'  # 3D, vox
                     ]
 
-    param_test.results_dims = [(34, 34, 6, 30, 1.9117647, 1.9117646, 16.800001, 1.13),  # 3D, factor
-                               (20, 21, 5, 7, 1.6826923, 1.6826923, 17.5, 2.2),  # 4D, factor
+    param_test.results_dims = [(20, 21, 5, 7, 1.6826923, 1.6826923, 17.5, 2.2),  # 4D, factor
                                (62, 48, 43, 1, 0.96774191, 1.1458334, 1.2093023, 1),  # 3D, mm
                                (120, 110, 26, 1, 0.5, 0.5, 2.0, 1)  # 3D, vox
                                ]
