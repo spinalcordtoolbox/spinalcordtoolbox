@@ -257,7 +257,7 @@ def fill_functions():
         'sct_resample',
         'sct_segment_graymatter',
         'sct_smooth_spinalcord',
-        # 'sct_straighten_spinalcord',
+        'sct_straighten_spinalcord',
         'sct_warp_template',
     ]
     return functions
