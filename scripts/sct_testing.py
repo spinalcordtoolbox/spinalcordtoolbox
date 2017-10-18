@@ -251,7 +251,7 @@ def fill_functions():
         'sct_merge_images',
         # 'sct_process_segmentation',
         'sct_propseg',
-        # 'sct_register_graymatter',
+        'sct_register_graymatter',
         # 'sct_register_multimodal',
         # 'sct_register_to_template',
         'sct_resample',
