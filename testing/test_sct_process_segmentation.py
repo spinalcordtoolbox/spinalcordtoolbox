@@ -40,7 +40,7 @@ def init(param_test):
 
         # create folder with data
         param_test.full_path_tmp_data = param_test.full_path_tmp + 'data/'
-        sct.create_folder(param_test.full_path_tmp + 'data/')
+        sct.create_folder(param_test.full_path_tmp + 'data_sct_process_segmentation/')
 
         # Initialise numpy volumes
         data_seg = np.zeros((size_data, size_data, size_data), dtype=np.int16)
