@@ -48,7 +48,7 @@ def main(args=None):
 
     # Check input parameters
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
