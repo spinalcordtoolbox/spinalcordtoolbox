@@ -92,9 +92,14 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name="-o",
                       type_value="file_output",
-                      description="Name of the output graph of the Ernst angle.",
+                      description="Name of the output file containing Ernst angle result.",
                       mandatory=False,
-                      example="ernst_angle.png")
+                      default_value="ernst_angle.txt")
+    parser.add_option(name="-ofig",
+                      type_value="file_output",
+                      description="Name of the output graph (only if -v 2 is used).",
+                      mandatory=False,
+                      default_value="ernst_angle.png")
     parser.add_option(name="-v",
                       type_value='multiple_choice',
                       description="verbose: 0 = nothing, 1 = classic, 2 = expended (graph)",
@@ -125,8 +130,9 @@ def main(args=None):
     input_tr_max = 3500
     input_tr = None
     verbose = 1
-    if "-o" in arguments:
-        input_fname_output = arguments["-o"]
+    fname_output_file = arguments['-o']
+    if "-ofig" in arguments:
+        input_fname_output = arguments["-ofig"]
     if "-b" in arguments:
         input_tr_min = arguments["-b"][0]
         input_tr_max = arguments["-b"][1]
@@ -143,8 +149,15 @@ def main(args=None):
             input_tr_max = input_tr + 500
         elif input_tr < input_tr_min:
             input_tr_min = input_tr - 500
+        # save text file
+        try:
+            f = open(fname_output_file, 'w')
+            f.write(str(graph.getErnstAngle(input_tr)))
+            f.close()
+        except:
+            sct.printv('\nERROR: Cannot open file'+fname_output_file, '1', 'error')
 
-    if verbose == 2 :
+    if verbose == 2:
         graph.draw(input_tr_min, input_tr_max)
 
 

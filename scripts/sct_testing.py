@@ -223,6 +223,7 @@ def fill_functions():
         'sct_analyze_lesion',
         'sct_analyze_texture',
         'sct_apply_transfo',
+        'sct_compute_ernst_angle',
         'sct_compute_hausdorff_distance',
         # 'sct_compute_mtr',
         'sct_compute_mscc',
