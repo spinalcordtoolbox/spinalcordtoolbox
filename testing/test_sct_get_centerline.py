@@ -67,10 +67,9 @@ def test_integrity(param_test):
     # open output segmentation
     try:
         im_ctr = Image(file_ctr)
-    except:
-        param_test.output += 'ERROR: Cannot open output centerline: ' + file_ctr
-        param_test.status = 99
-        return param_test
+    except Exception as err:
+        param_test.output += str(err)
+        raise
 
     # open ground truth
     try:
@@ -88,10 +87,9 @@ def test_integrity(param_test):
         im_ctr_manual.data *= 0
         for x_y_z in center_of_mass_x_y_z_lst:
             im_ctr_manual.data[x_y_z[0], x_y_z[1], x_y_z[2]] = 1
-    except:
-        param_test.output += 'ERROR: Cannot open ground truth segmentation or incorrect GT: ' + param_test.fname_groundtruth
-        param_test.status = 99
-        return param_test
+    except Exception as err:
+        param_test.output += str(err)
+        raise
 
     # compute MSE between generated ctr and ctr from database
     mse_detection = compute_mse(im_ctr, im_ctr_manual)
@@ -101,6 +99,8 @@ def test_integrity(param_test):
 
     if mse_detection > param_test.mse_threshold:
         param_test.status = 99
+    else:
+        param_test.output += '--> PASSED'
 
     # transform results into Pandas structure
     param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'mse_detection': mse_detection, 'duration [s]': param_test.duration})

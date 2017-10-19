@@ -44,18 +44,16 @@ def test_integrity(param_test):
     # open output
     try:
         im_texture = Image(file_texture)
-    except:
-        param_test.output += 'ERROR: Cannot open output texture file: ' + im_texture
-        param_test.status = 99
-        return param_test
+    except Exception as err:
+        param_test.output += str(err)
+        raise
 
     # open ground truth
     try:
         im_texture_ref = Image(param_test.fname_groundtruth)
-    except:
-        param_test.output += 'ERROR: Cannot open ground truth texture file: ' + param_test.fname_groundtruth
-        param_test.status = 99
-        return param_test
+    except Exception as err:
+        param_test.output += str(err)
+        raise
 
     # Substract generated image and image from database
     diff_im = im_texture.data - im_texture_ref.data
@@ -68,6 +66,8 @@ def test_integrity(param_test):
 
     if difference_vox < param_test.difference_threshold:
         param_test.status = 99
+    else:
+        param_test.output += '--> PASSED'
 
     # transform results into Pandas structure
     param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'difference_vox': difference_vox, 'duration [s]': param_test.duration})

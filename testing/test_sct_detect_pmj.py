@@ -47,18 +47,16 @@ def test_integrity(param_test):
     # open output segmentation
     try:
         im_pmj = Image(file_pmj)
-    except:
-        param_test.output += 'ERROR: Cannot open output pmj mask: ' + file_pmj
-        param_test.status = 99
-        return param_test
+    except Exception as err:
+        param_test.output += str(err)
+        raise
 
     # open ground truth
     try:
         im_pmj_manual = Image(param_test.fname_groundtruth)
-    except:
-        param_test.output += 'ERROR: Cannot open ground truth pmj mask: ' + param_test.fname_groundtruth
-        param_test.status = 99
-        return param_test
+    except Exception as err:
+        param_test.output += str(err)
+        raise
 
     # compute Euclidean distance between predicted and GT PMJ label
     x_true, y_true, z_true = np.where(im_pmj_manual.data == 50)
@@ -74,6 +72,8 @@ def test_integrity(param_test):
 
     if distance_detection > param_test.dist_threshold:
         param_test.status = 99
+    else:
+        param_test.output += '--> PASSED'
 
     # transform results into Pandas structure
     param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'distance_detection': distance_detection, 'duration [s]': param_test.duration})
