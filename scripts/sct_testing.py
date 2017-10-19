@@ -227,7 +227,8 @@ def fill_functions():
         'sct_compute_hausdorff_distance',
         'sct_compute_mtr',
         'sct_compute_mscc',
-        'sct_concat_transfo',
+        'sct_compute_snr',
+	    'sct_concat_transfo',
         'sct_convert',
         # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
@@ -441,7 +442,7 @@ def test_function(param_test):
         param_test = module_testing.test_integrity(param_test)
     except:
         param_test.status = 2
-        param_test.output += 'ERROR: Integrity testing crashed!'
+        param_test.output += '\nERROR: Integrity testing crashed.'
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
         return update_param(param_test)
 
