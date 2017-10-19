@@ -17,7 +17,7 @@ def init(param_test):
      Initialize class: param_test
      """
      # initialization
-     default_args = ['-i t2/t2.nii.gz -m t2/t2_seg_manual.nii.gz']
+     default_args = ['-i dmri/dwi.nii.gz -m dmri/dmri_T0001.nii.gz -vertfile template/template/PAM50_small_levels.nii.gz -vol 0,5']
 
     # assign default params
      if not param_test.args:
