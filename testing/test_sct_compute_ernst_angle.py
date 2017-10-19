@@ -40,7 +40,6 @@ def test_integrity(param_test):
                param_test.output = 'FAIL'
                param_test.status = 99
      except Exception as err:
-          param_test.status = 99
           param_test.output += str(err)
-
+          raise
      return param_test
