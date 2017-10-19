@@ -35,9 +35,9 @@ def test_integrity(param_test):
           f.close()
           # compare with GT
           if abs(angle_result - param_test.angle_gt) < param_test.threshold:
-               param_test.output = 'PASS'
+               param_test.output += '--> PASSED'
           else:
-               param_test.output = 'FAIL'
+               param_test.output += '--> FAILED'
                param_test.status = 99
      except Exception as err:
           param_test.output += str(err)
