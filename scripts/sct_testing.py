@@ -151,6 +151,7 @@ def main(args=None):
         module_testing = importlib.import_module('test_' + f)
         # initialize default parameters of function to test
         param.args = []
+        param.list_fname_gt = []
         # param.fname_groundtruth = ''
         param = module_testing.init(param)
         # loop over parameters to test
@@ -160,8 +161,8 @@ def main(args=None):
             param_test = deepcopy(param)
             param_test.default_args = param.args
             param_test.args = param.args[i]
-            # if list_fname_gt exists, assign it
-            if hasattr(param_test, 'list_fname_gt'):
+            # if list_fname_gt is not empty, assign it
+            if param_test.list_fname_gt:
                 param_test.fname_gt = param_test.list_fname_gt[i]
             # test function
             param_test = test_function(param_test)
