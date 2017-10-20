@@ -38,23 +38,20 @@ def test_integrity(param_test):
     file_hausdorff = 'hausdorff_distance.txt'
 
     # open output segmentation
-    try:
-        hausdorff_txt = open(file_hausdorff, 'r')
-        hausdorff_distance_lst = []
-        for i, line in enumerate(hausdorff_txt):
-            if line.startswith('Slice'):
-                hausdorff_distance_lst.append(float(line.split(': ')[1].split(' -')[0]))
-        hausdorff_txt.close()
-        max_hausdorff_distance = max(hausdorff_distance_lst)
-    except Exception as err:
-        param_test.output += str(err)
-        raise
+    hausdorff_txt = open(file_hausdorff, 'r')
+    hausdorff_distance_lst = []
+    for i, line in enumerate(hausdorff_txt):
+        if line.startswith('Slice'):
+            hausdorff_distance_lst.append(float(line.split(': ')[1].split(' -')[0]))
+    hausdorff_txt.close()
+    max_hausdorff_distance = max(hausdorff_distance_lst)
 
     param_test.output += 'Max Computed Hausdorff distance: ' + str(max_hausdorff_distance)
     param_test.output += 'Hausdorff distance threshold (if Max Computed Hausdorff distance higher: fail): ' + str(param_test.max_hausdorff_distance)
 
     if max_hausdorff_distance > param_test.max_hausdorff_distance:
         param_test.status = 99
+        param_test.output += '--> FAILED'
     else:
         param_test.output += '--> PASSED'
 

@@ -32,16 +32,12 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    try:
-        mtr_result = pickle.load(open(param_test.path_output +"quantif_mtr.pickle", "rb"))['Metric value'][0]
-        param_test.output += 'Computed MTR:     ' + str(mtr_result)
-        param_test.output += '\nGround truth MTR: ' + str(param_test.mtr_groundtruth) + '\n'
-        if abs(mtr_result - param_test.mtr_groundtruth) < param_test.threshold_diff:
-            param_test.output += '--> PASSED'
-        else:
-            param_test.status = 99
-            param_test.output += '--> FAILED'
-    except Exception as err:
-        param_test.output += str(err)
-        raise
+    mtr_result = pickle.load(open(param_test.path_output +"quantif_mtr.pickle", "rb"))['Metric value'][0]
+    param_test.output += 'Computed MTR:     ' + str(mtr_result)
+    param_test.output += '\nGround truth MTR: ' + str(param_test.mtr_groundtruth) + '\n'
+    if abs(mtr_result - param_test.mtr_groundtruth) < param_test.threshold_diff:
+        param_test.output += '--> PASSED'
+    else:
+        param_test.status = 99
+        param_test.output += '--> FAILED'
     return param_test

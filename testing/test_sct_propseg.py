@@ -22,8 +22,8 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i t2/t2.nii.gz -c t2']  # default parameters
+    param_test.list_fname_gt = [param_test.path_data + 't2/t2_seg_manual.nii.gz']  # file name suffix for ground truth (used for integrity testing)
     param_test.dice_threshold = 0.9
-    param_test.fname_groundtruth = param_test.path_data + 't2/t2_seg_manual.nii.gz'  # file name suffix for ground truth (used for integrity testing)
 
     # check if isct_propseg compatibility
     # TODO: MAKE SURE THIS CASE WORKS AFTER MAJOR REFACTORING
@@ -46,34 +46,23 @@ def test_integrity(param_test):
     Test integrity of function
     """
     dice_segmentation = float('nan')
-
     # extract name of output segmentation: data_seg.nii.gz
     file_seg = param_test.path_output + sct.add_suffix(param_test.file_input, '_seg')
-
     # open output segmentation
-    try:
-        im_seg = Image(file_seg)
-    except:
-        param_test.output += 'ERROR: Cannot open output segmentation: ' + file_seg
-        param_test.status = 99
-        return param_test
-
+    im_seg = Image(file_seg)
     # open ground truth
-    try:
-        im_seg_manual = Image(param_test.fname_groundtruth)
-    except:
-        param_test.output += 'ERROR: Cannot open ground truth segmentation: ' + param_test.fname_groundtruth
-        param_test.status = 99
-        return param_test
-
+    im_seg_manual = Image(param_test.fname_gt)
     # compute dice coefficient between generated image and image from database
     dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
-
+    # display
     param_test.output += 'Computed dice: '+str(dice_segmentation)
     param_test.output += 'Dice threshold (if computed dice smaller: fail): '+str(param_test.dice_threshold)
 
     if dice_segmentation < param_test.dice_threshold:
         param_test.status = 99
+        param_test.output += '\n--> FAILED'
+    else:
+        param_test.output += '\n--> PASSED'
 
     # transform results into Pandas structure
     param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'dice_segmentation': dice_segmentation, 'duration [s]': param_test.duration})

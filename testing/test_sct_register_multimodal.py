@@ -23,8 +23,8 @@ def init(param_test):
                     '-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares -x linear -r 0',
                     '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=centermassrot,type=seg,smooth=1 -x linear -r 0',
                     '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=columnwise,type=seg,smooth=1 -x linear -r 0']
-    param_test.list_fname_gt = ['mt/mt0_reg_syn_goldstandard.nii.gz',
-                                'mt/mt0_reg_slicereg_goldstandard.nii.gz',
+    param_test.list_fname_gt = [param_test.path_data + 'mt/mt0_reg_syn_goldstandard.nii.gz',
+                                param_test.path_data + 'mt/mt0_reg_slicereg_goldstandard.nii.gz',
                                 '',
                                 '']
     # assign default params
@@ -41,7 +41,7 @@ def test_integrity(param_test):
     index_args = param_test.default_args.index(param_test.args)
     # compare result and groundtruth images
     if index_args in [0, 1]:
-        param_test = compare_two_images('mt0_reg.nii.gz', param_test.path_data + param_test.fname_gt, param_test)
+        param_test = compare_two_images('mt0_reg.nii.gz', param_test.fname_gt, param_test)
     else:
         param_test.output += '\nNot implemented.'
     return param_test
@@ -65,7 +65,7 @@ def compare_two_images(fname_result, fname_gt, param_test):
     # compare images
     if abs(np.sum(diff)) > threshold:
         param_test.status = 99
-        param_test.output += '\n--> FAIL'
+        param_test.output += '\n--> FAILED'
     else:
-        param_test.output += '\n--> PASS'
+        param_test.output += '\n--> PASSED'
     return param_test

@@ -25,7 +25,7 @@ def init(param_test):
     default_args = ['-i template/template/PAM50_small_t2.nii.gz -c t2']
     param_test.dist_threshold = 10.0
     # param_test.suffix_groundtruth = '_pmj_manual'  # file name suffix for ground truth (used for integrity testing)
-    param_test.fname_groundtruth = param_test.path_data + 'template/template/PAM50_small_t2_pmj_manual.nii.gz'
+    param_test.list_fname_gt = [param_test.path_data + 'template/template/PAM50_small_t2_pmj_manual.nii.gz']
 
     # assign default params
     if not param_test.args:
@@ -45,18 +45,10 @@ def test_integrity(param_test):
     file_pmj = param_test.path_output + sct.add_suffix(param_test.file_input, '_pmj')
 
     # open output segmentation
-    try:
-        im_pmj = Image(file_pmj)
-    except Exception as err:
-        param_test.output += str(err)
-        raise
+    im_pmj = Image(file_pmj)
 
     # open ground truth
-    try:
-        im_pmj_manual = Image(param_test.fname_groundtruth)
-    except Exception as err:
-        param_test.output += str(err)
-        raise
+    im_pmj_manual = Image(param_test.fname_gt)
 
     # compute Euclidean distance between predicted and GT PMJ label
     x_true, y_true, z_true = np.where(im_pmj_manual.data == 50)
@@ -72,6 +64,7 @@ def test_integrity(param_test):
 
     if distance_detection > param_test.dist_threshold:
         param_test.status = 99
+        param_test.output += '--> FAILED'
     else:
         param_test.output += '--> PASSED'
 

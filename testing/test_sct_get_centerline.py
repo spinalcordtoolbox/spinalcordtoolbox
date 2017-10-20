@@ -45,7 +45,7 @@ def init(param_test):
     # initialization
     default_args = ['-i t2s/t2s.nii.gz -c t2s']  # default parameters
     param_test.mse_threshold = 3.0
-    param_test.fname_groundtruth = param_test.path_data + 't2s/t2s_seg.nii.gz'  # file name suffix for ground truth (used for integrity testing)
+    param_test.list_fname_gt = [param_test.path_data + 't2s/t2s_seg.nii.gz']
 
     # assign default params
     if not param_test.args:
@@ -65,31 +65,23 @@ def test_integrity(param_test):
     file_ctr = param_test.path_output + sct.add_suffix(param_test.file_input, '_centerline_optic')
 
     # open output segmentation
-    try:
-        im_ctr = Image(file_ctr)
-    except Exception as err:
-        param_test.output += str(err)
-        raise
+    im_ctr = Image(file_ctr)
 
     # open ground truth
-    try:
-        im_seg_manual = Image(param_test.fname_groundtruth)
-        im_ctr_manual = im_seg_manual.copy() # Create Ctr GT from SC seg GT
+    im_seg_manual = Image(param_test.fname_gt)
+    im_ctr_manual = im_seg_manual.copy() # Create Ctr GT from SC seg GT
 
-        if im_ctr_manual.orientation != 'RPI':
-            im_ctr_manual.change_orientation('RPI')
+    if im_ctr_manual.orientation != 'RPI':
+        im_ctr_manual.change_orientation('RPI')
 
-        im_ctr_manua_data = im_ctr_manual.data
+    im_ctr_manua_data = im_ctr_manual.data
 
-        # Compute center of mass of the SC seg on each axial slice.
-        center_of_mass_x_y_z_lst = [[int(center_of_mass(im_ctr_manua_data[:,:,zz])[0]), int(center_of_mass(im_ctr_manua_data[:,:,zz])[1]), zz] for zz in range(im_ctr_manual.dim[2])]
+    # Compute center of mass of the SC seg on each axial slice.
+    center_of_mass_x_y_z_lst = [[int(center_of_mass(im_ctr_manua_data[:,:,zz])[0]), int(center_of_mass(im_ctr_manua_data[:,:,zz])[1]), zz] for zz in range(im_ctr_manual.dim[2])]
 
-        im_ctr_manual.data *= 0
-        for x_y_z in center_of_mass_x_y_z_lst:
-            im_ctr_manual.data[x_y_z[0], x_y_z[1], x_y_z[2]] = 1
-    except Exception as err:
-        param_test.output += str(err)
-        raise
+    im_ctr_manual.data *= 0
+    for x_y_z in center_of_mass_x_y_z_lst:
+        im_ctr_manual.data[x_y_z[0], x_y_z[1], x_y_z[2]] = 1
 
     # compute MSE between generated ctr and ctr from database
     mse_detection = compute_mse(im_ctr, im_ctr_manual)
@@ -99,6 +91,7 @@ def test_integrity(param_test):
 
     if mse_detection > param_test.mse_threshold:
         param_test.status = 99
+        param_test.output += '--> FAILED'
     else:
         param_test.output += '--> PASSED'
 

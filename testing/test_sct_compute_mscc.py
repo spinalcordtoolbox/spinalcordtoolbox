@@ -11,9 +11,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
-import commands
-from pandas import DataFrame
 import sct_compute_mscc
 
 

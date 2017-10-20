@@ -2,8 +2,10 @@
 #
 # Test major functions.
 #
+# The following fields should be defined under the init() function of each test script:
+#   param_test.list_fname_gt     list containing the relative file name for ground truth data. See test_sct_propseg
+#
 # Authors: Julien Cohen-Adad, Benjamin De Leener, Augustin Roux
-# Updated: 2014-10-06
 
 # TODO: list functions to test in help (do a search in testing folder)
 # TODO: find a way to be able to have list of arguments and loop across list elements.
@@ -41,7 +43,6 @@ class Param:
         self.output = ''  # output string
         self.results = ''  # results in Panda DataFrame
         self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
-        # self.fname_groundtruth = ''  # fname used for ground truth data (for integrity testing), do not put absolute path, but relative to self.path_data
 
 
 # define nice colors
@@ -365,7 +366,9 @@ def test_function(param_test):
     parser = module_function_to_test.get_parser()
     dict_args = parser.parse(param_test.args.split(), check_file_exist=False)
     # TODO: if file in list does not exist, raise exception and assign status=200
+    # add data path to each input argument
     dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args), param_test.path_data, input_file=True)
+    # add data path to each output argument
     dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args_with_path), param_test.path_output, input_file=False, output_file=True)
     param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
 
@@ -412,7 +415,7 @@ def test_function(param_test):
         # check if ground truch file is defined
         if not param_test.fname_gt == '':
             # Check if ground truth files exist
-            if not os.path.isfile(param_test.path_data + param_test.fname_gt):
+            if not os.path.isfile(param_test.fname_gt):
                 param_test.status = 201
                 param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
                 write_to_log_file(param_test.fname_log, param_test.output, 'w')
@@ -427,9 +430,9 @@ def test_function(param_test):
     time_start = time.time()
     try:
         param_test.status, o = sct.run(cmd, 0)
-    except:
+    except Exception, err:
         param_test.status = 1
-        param_test.output += 'ERROR: Function crashed!'
+        param_test.output += str(err)
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
         return update_param(param_test)
 
@@ -440,9 +443,9 @@ def test_function(param_test):
     param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
     try:
         param_test = module_testing.test_integrity(param_test)
-    except:
+    except Exception, err:
         param_test.status = 2
-        param_test.output += '\nERROR: Integrity testing crashed.'
+        param_test.output += str(err)
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
         return update_param(param_test)
 

@@ -16,11 +16,9 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i t2/t2.nii.gz -o cropped_normal.nii.gz -dim 1 -start 10 -end 50']
-
     # assign default params
     if not param_test.args:
         param_test.args = default_args
-
     return param_test
 
 

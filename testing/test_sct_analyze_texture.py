@@ -23,8 +23,7 @@ def init(param_test):
     # initialization
     default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1 -ofolder .']  # default parameters
     param_test.difference_threshold = 0.95
-    param_test.fname_groundtruth = param_test.path_data + 't2/t2_contrast_1_mean_ref.nii.gz'  # file name suffix for ground truth (used for integrity testing)
-    # param_test.contrast = 't2'
+    param_test.list_fname_gt = [param_test.path_data + 't2/t2_contrast_1_mean_ref.nii.gz']
 
     # assign default params
     if not param_test.args:
@@ -42,18 +41,10 @@ def test_integrity(param_test):
     file_texture = sct.add_suffix(param_test.file_input, '_contrast_1_mean')
 
     # open output
-    try:
-        im_texture = Image(file_texture)
-    except Exception as err:
-        param_test.output += str(err)
-        raise
+    im_texture = Image(file_texture)
 
     # open ground truth
-    try:
-        im_texture_ref = Image(param_test.fname_groundtruth)
-    except Exception as err:
-        param_test.output += str(err)
-        raise
+    im_texture_ref = Image(param_test.fname_gt)
 
     # Substract generated image and image from database
     diff_im = im_texture.data - im_texture_ref.data
