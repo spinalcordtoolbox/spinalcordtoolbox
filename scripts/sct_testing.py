@@ -261,7 +261,7 @@ def fill_functions():
         'sct_propseg',
         'sct_register_graymatter',
         'sct_register_multimodal',
-        # 'sct_register_to_template',
+        'sct_register_to_template',
         'sct_resample',
         'sct_segment_graymatter',
         'sct_smooth_spinalcord',
@@ -371,6 +371,8 @@ def test_function(param_test):
     dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args), param_test.path_data, input_file=True)
     # add data path to each output argument
     dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args_with_path), param_test.path_output, input_file=False, output_file=True)
+    # save into class
+    param_test.dict_args_with_path = dict_args_with_path
     param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
 
     # check if parser has key '-ofolder' that has not been added already. If so, then assign output folder
