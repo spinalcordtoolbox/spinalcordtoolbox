@@ -469,9 +469,9 @@ def update_param(param):
     """
     Update field "results" in param class
     """
-    for param_attr in param.results.columns:
-        getattr(param, param_attr)
-        # param.results[field] = getattr(param, param_attr)
+    for results_attr in param.results.columns:
+        if hasattr(param, results_attr):
+            param.results[results_attr] = getattr(param, results_attr)
     return param
 
 
